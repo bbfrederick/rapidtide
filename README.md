@@ -32,9 +32,9 @@ analysis.
 any information about" - maybe EtCO2 variation, or sympathetic nervous 
 system activity - so not really random.
 
-Yes, but correlation is easy - why use this package?
+Yes, but correlation analysis is easy - why use this package?
 =======================
-The simple answer is "correlation is easy, but using a prewritten
+The simple answer is "correlation analysis is easy, but using a prewritten
 package that handles file I/O, filtering, resampling, windowing, and the
 rest for you is even easier".  A slightly more complex answer is that
 while correlation analysis is pretty easy to do, it's hard to do right;
@@ -49,7 +49,7 @@ Ok, I'm sold.  What's in here?
 - **rapidtide2**  - This is the heart of the package - this is the
 	workhorse program that will determine the time lagged
 	correlations between all the voxels in a NIFTI file and a
-	temporal regressor (which can come from a number of places,
+	temporal "probe" regressor (which can come from a number of places,
 	including the data itself).  There are a truly bewildering array
 	of options, and just about everything can be adjusted, however
 	I've tried to pick a good set of default options for the most
