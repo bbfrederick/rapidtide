@@ -16,14 +16,21 @@
 #
 #
 #       $Author: frederic $
+<<<<<<< Updated upstream
 #       $Date: 2016/06/14 13:51:27 $
 #       $Id: showhist,v 1.4 2016/06/14 13:51:27 frederic Exp $
 #
 from __future__ import print_function
+=======
+#       $Date: 2016/06/14 12:04:51 $
+#       $Id: showhist,v 1.3 2016/06/14 12:04:51 frederic Exp $
+#
+>>>>>>> Stashed changes
 import sys
 import getopt
 import matplotlib
 import platform
+<<<<<<< Updated upstream
 import tide_funcs as tide
 from pylab import plot, xlabel, ylabel, title, legend, show
 
@@ -45,20 +52,50 @@ def usage():
 # get the command line parameters
 nargs = len(sys.argv)
 if nargs < 2:
+=======
+if platform.system()=='Darwin':
+    matplotlib.use('MacOSX')
+else:
+    matplotlib.use('TkAgg')
+import tide_funcs as tide
+from scipy import arange
+
+from pylab import plot, xlabel, ylabel, title, legend, show, hold, bar
+
+def usage():
+    print "usage: showxy textfilename"
+    print "	plots xy data in text file"
+    print ""
+    print "required arguments:"
+    print "	textfilename	- a text file containing one timepoint per line"
+    return()
+
+# get the command line parameters
+nargs = len(sys.argv)
+if (nargs<2):
+>>>>>>> Stashed changes
     usage()
     exit()
 
 # set default variable values
+<<<<<<< Updated upstream
 dolegend = True
 
 # handle required args first
 textfilename = sys.argv[1]
+=======
+dolegend=True
+
+# handle required args first
+textfilename=sys.argv[1]
+>>>>>>> Stashed changes
 
 # now check options
 try:
     opts, args = getopt.getopt(sys.argv[2:], "x:y:l:t:", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
+<<<<<<< Updated upstream
     print(str(err))  # will print something like "option -a not recognized"
     usage()
     sys.exit(2)
@@ -98,6 +135,42 @@ yvecs = indata[1, :]
 plot(xvecs, yvecs, 'r')
 if uselegend:
     legend(thelegendlabel, loc=1)
+=======
+    print str(err) # will print something like "option -a not recognized"
+    usage()
+    sys.exit(2)
+   
+usexlabel=False
+useylabel=False
+usetitle=False
+uselegend=False
+for o, a in opts:
+    if o == "-x":
+        usexlabel = True
+	thexlabel=a
+	print "labelling x axis with ",thexlabel
+    elif o == "-y":
+        useylabel = True
+	theylabel=a
+	print "labelling y axis with ",theylabel
+    elif o == "-l":
+        uselegend = True
+	thelegendlabel=a
+	print "using legend ",thelegend
+    elif o == "-t":
+        usetitle = True
+	thetitle=a
+	print "using title ",thetitle
+    else:
+        assert False, "unhandled option"
+
+indata=tide.readvecs(textfilename)
+xvecs=indata[0,:]
+yvecs=indata[1,:]
+plot(xvecs,yvecs,'r')
+if uselegend:
+    legend(thelegend,loc=1)
+>>>>>>> Stashed changes
 if usetitle:
     title(thetitle)
 if usexlabel:

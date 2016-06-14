@@ -16,8 +16,8 @@
 #
 #
 # $Author: frederic $
-# $Date: 2016/06/10 20:33:31 $
-# $Id: rapidtide,v 1.156 2016/06/10 20:33:31 frederic Exp $
+# $Date: 2016/06/14 14:05:01 $
+# $Id: rapidtide,v 1.158 2016/06/14 14:05:01 frederic Exp $
 #
 #
 #
@@ -49,12 +49,12 @@ from scipy.stats.stats import pearsonr
 
 
 def version():
-    return '$Id: rapidtide,v 1.156 2016/06/10 20:33:31 frederic Exp $'
+    return '$Id: rapidtide,v 1.158 2016/06/14 14:05:01 frederic Exp $'
 
 
 def startendcheck(timepoints, startpoint, endpoint):
     if startpoint > timepoints - 1:
-        print('startpoint is too large (maximum is ', timepoints - 1,')')
+        print('startpoint is too large (maximum is ', timepoints - 1, ')')
         sys.exit()
     if startpoint < 0:
         realstart = 0
@@ -63,7 +63,7 @@ def startendcheck(timepoints, startpoint, endpoint):
         realstart = startpoint
     if endpoint > timepoints - 1:
         realend = timepoints - 1
-        print('endppoint set to maximum, (',timepoints - 1,')')
+        print('endppoint set to maximum, (', timepoints - 1, ')')
     else:
         realend = endpoint
     if realstart >= realend:
@@ -364,10 +364,10 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, lagstrengths, lagti
     print()
     print(str(
         volumetotal) + ' voxels used for refinement:',
-          '\n	', locationfails, ' locationfails',
-          '\n	', ampfails, ' ampfails',
-          '\n	', lagfails, ' lagfails',
-          '\n	', sigmafails, ' sigmafails')
+        '\n	', locationfails, ' locationfails',
+        '\n	', ampfails, ' ampfails',
+        '\n	', lagfails, ' lagfails',
+        '\n	', sigmafails, ' sigmafails')
 
     return volumetotal, outputdata
 
@@ -430,12 +430,12 @@ def usage(argstyle):
     else:
         print("usage: rapidtide2 fmrifilename outputname ")
     print("[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [-G] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] "
-        "[-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME]"
-        " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS]"
-        "[--refineweighting=REFINETYPE] [--refinepasses=NUMPASSES] [--excludemask=MASKNAME] [--includemask=MASKNAME] "
-        "[--lagminthresh=LAGMINTHRESH] [--lagmaxthresh=LAGMAXTHRESH] [--ampthresh=AMPTHRESH]"
-        "[--sigmathresh=SIGMATHRESH] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE]"
-        "[--limitoutput] [--timerange=STARTPOINT,ENDPOINT] ")
+          "[-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME]"
+          " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS]"
+          "[--refineweighting=REFINETYPE] [--refinepasses=NUMPASSES] [--excludemask=MASKNAME] [--includemask=MASKNAME] "
+          "[--lagminthresh=LAGMINTHRESH] [--lagmaxthresh=LAGMAXTHRESH] [--ampthresh=AMPTHRESH]"
+          "[--sigmathresh=SIGMATHRESH] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE]"
+          "[--limitoutput] [--timerange=STARTPOINT,ENDPOINT] ")
     if argstyle == 'old':
         print("")
         print("required arguments:")
@@ -450,7 +450,8 @@ def usage(argstyle):
         print("    outputname    - the root name for the output files")
         print("")
     else:
-        print("[--numskip=SKIP] [--sliceorder=ORDER] [--regressorfreq=FREQ] [--regressor=FILENAME] [--regressorstart=STARTTIME]")
+        print(
+            "[--numskip=SKIP] [--sliceorder=ORDER] [--regressorfreq=FREQ] [--regressor=FILENAME] [--regressorstart=STARTTIME]")
         print("")
         print("required arguments:")
         print("    fmrifilename    - the BOLD fmri file")
@@ -574,8 +575,8 @@ def main():
     optiondict['invertregressor'] = False  # invert the initial regressor during startup
     optiondict['sliceorder'] = 0  # do not apply any slice order correction by default
     optiondict['startpoint'] = -1  # by default, analyze the entire length of the dataset
-    optiondict['endpoint'] = 10000000    # by default, analyze the entire length of the dataset
-    optiondict['preprocskip'] = 0   # number of trs skipped in preprocessing
+    optiondict['endpoint'] = 10000000  # by default, analyze the entire length of the dataset
+    optiondict['preprocskip'] = 0  # number of trs skipped in preprocessing
 
     # correlation options
     optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
@@ -699,39 +700,39 @@ def main():
         outputname = sys.argv[2]
         optparsestart = 3
     else:
-        print('unhandled option - called as ',sys.argv[0])
+        print('unhandled option - called as ', sys.argv[0])
         sys.exit()
 
     # now scan for optional arguments
     try:
         opts, args = getopt.getopt(sys.argv[optparsestart:], 'abcdf:gh:i:mo:ps:r:t:vBCF:GILMN:O:PRSTVZ:', ['help',
-                                                                                               'nowindow',
-                                                                                               'lagminthresh=',
-                                                                                               'lagmaxthresh=',
-                                                                                               'ampthresh=',
-                                                                                               'sigmathresh=',
-                                                                                               'refineweighting=',
-                                                                                               'refinepasses=',
-                                                                                               'includemask=',
-                                                                                               'excludemask=',
-                                                                                               'refineoffset',
-                                                                                               'pca',
-                                                                                               'ica',
-                                                                                               'noglm',
-                                                                                               'tmask=',
-                                                                                               'nodetrend',
-                                                                                               'sliceorder=',
-                                                                                               'numskip=',
-                                                                                               'limitoutput',
-                                                                                               'regressor=',
-                                                                                               'regressorfreq=',
-                                                                                               'regressorstart=',
-                                                                                               'timerange=',
-                                                                                               'refineupperlag',
-                                                                                               'refinelowerlag',
-                                                                                               'fastgauss',
-                                                                                               'nogaussrefine',
-                                                                                               'AR='])
+                                                                                                           'nowindow',
+                                                                                                           'lagminthresh=',
+                                                                                                           'lagmaxthresh=',
+                                                                                                           'ampthresh=',
+                                                                                                           'sigmathresh=',
+                                                                                                           'refineweighting=',
+                                                                                                           'refinepasses=',
+                                                                                                           'includemask=',
+                                                                                                           'excludemask=',
+                                                                                                           'refineoffset',
+                                                                                                           'pca',
+                                                                                                           'ica',
+                                                                                                           'noglm',
+                                                                                                           'tmask=',
+                                                                                                           'nodetrend',
+                                                                                                           'sliceorder=',
+                                                                                                           'numskip=',
+                                                                                                           'limitoutput',
+                                                                                                           'regressor=',
+                                                                                                           'regressorfreq=',
+                                                                                                           'regressorstart=',
+                                                                                                           'timerange=',
+                                                                                                           'refineupperlag',
+                                                                                                           'refinelowerlag',
+                                                                                                           'fastgauss',
+                                                                                                           'nogaussrefine',
+                                                                                                           'AR='])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like 'option -a not recognized'
@@ -830,7 +831,8 @@ def main():
                 optiondict['estimate_significance'] = False
                 print('Will not estimate significance thresholds from null correlations')
             else:
-                print('Will estimate p<0.05 significance threshold from ', optiondict['numestreps'], ' null correlations')
+                print('Will estimate p<0.05 significance threshold from ', optiondict['numestreps'],
+                      ' null correlations')
         elif o == '-s':
             optiondict['widthlimit'] = float(a)
             print('Setting gaussian fit width limit to ', optiondict['widthlimit'], 'Hz')
@@ -852,7 +854,8 @@ def main():
             optiondict['startpoint'] = int(limitvec[0])
             optiondict['endpoint'] = int(limitvec[1])
             linkchar = '='
-            print('Analysis will be performed only on data from point ', optiondict['startpoint'], ' to ', optiondict['endpoint'])
+            print('Analysis will be performed only on data from point ', optiondict['startpoint'], ' to ',
+                  optiondict['endpoint'])
         elif o == '-r':
             lagvec = a.split(',')
             if not optiondict['fixdelay']:
@@ -900,7 +903,7 @@ def main():
         elif o == '--numskip':
             optiondict['preprocskip'] = int(a)
             linkchar = '='
-            print('Setting preprocessing trs skipped to ',optiondict['preprocskip'])
+            print('Setting preprocessing trs skipped to ', optiondict['preprocskip'])
         elif o == '--regressor':
             filename = a
             linkchar = '='
@@ -908,15 +911,15 @@ def main():
         elif o == '--regressorfreq':
             inputfreq = float(a)
             linkchar = '='
-            print('Setting regressor sample frequency to ',inputfreq)
+            print('Setting regressor sample frequency to ', inputfreq)
         elif o == '--regressorstart':
             inputstarttime = float(a)
             linkchar = '='
-            print('Setting regressor start time to ',inputstarttime)
+            print('Setting regressor start time to ', inputstarttime)
         elif o == '--sliceorder':
             optiondict['sliceorder'] = int(a)
             linkchar = '='
-            print('Setting slice order to ',optiondict['sliceorder'])
+            print('Setting slice order to ', optiondict['sliceorder'])
         elif o == '--nodetrend':
             optiondict['dodetrend'] = False
             print('Disabling linear trend removal in regressor generation and correlation preparation')
@@ -1033,7 +1036,7 @@ def main():
     # if the user has specified start and stop points, limit check, then use these numbers
     validstart, validend = startendcheck(timepoints, optiondict['startpoint'], optiondict['endpoint'])
     if optiondict['dogaussianfilter']:
-        print('applying gaussian spatial filter to timepoints ',validstart,' to ',validend)
+        print('applying gaussian spatial filter to timepoints ', validstart, ' to ', validend)
         for i in range(validstart, validend):
             tide.progressbar(i + 1, timepoints, label='Percent complete')
             nim_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, optiondict['gausssigma'],
@@ -1041,7 +1044,7 @@ def main():
         timings.append(['End 3D smoothing', time.time(), None, None])
 
     # reshape the data and trim to a time range, if specified
-    fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:,validstart:validend + 1]
+    fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
     timepoints = validend - validstart + 1
 
     # read in the optional masks
@@ -1079,7 +1082,7 @@ def main():
     else:
         if inputfreq is None:
             print('no regressor frequency specified - defaulting to 1/tr')
-            inputfreq = 1.0/fmritr
+            inputfreq = 1.0 / fmritr
         if inputstarttime is None:
             print('no regressor start time specified - defaulting to 0.0')
             inputstarttime = 0.0
@@ -1569,13 +1572,14 @@ def main():
     else:
         theheader['dim'][4] = len(initial_fmri_x)
     if optiondict['savelagregressors']:
-        tide.savetonifti(lagtc.reshape(nativefmrishape), theheader, thesizes, outputname + '_lagregressor' + outsuffix4d)
+        tide.savetonifti(lagtc.reshape(nativefmrishape), theheader, thesizes,
+                         outputname + '_lagregressor' + outsuffix4d)
     if optiondict['dorefineregressor']:
         tide.savetonifti(shiftedtcs.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_shiftedtcs' + outsuffix4d)
         tide.savetonifti(refinemask.reshape(nativespaceshape), theheader, thesizes,
                          outputname + '_refinemask' + outsuffix3d)
-    if optiondict['doglmfilt']  and optiondict['saveglmfiltered']:
+    if optiondict['doglmfilt'] and optiondict['saveglmfiltered']:
         tide.savetonifti(datatoremove.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_datatoremove' + outsuffix4d)
         tide.savetonifti(filtereddata.reshape(nativefmrishape), theheader, thesizes,
