@@ -1,0 +1,6 @@
+# OS Things
+.DS_Store
+.thumbnails
+
+# cache
+__pycache__
