@@ -1,6 +1,7 @@
 # OS Things
 .DS_Store
 .thumbnails
+.gitignore
 
 # cache
 __pycache__
