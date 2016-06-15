@@ -50,7 +50,7 @@ Ok, I'm sold.  What's in here?
 	workhorse program that will determine the time lagged
 	correlations between all the voxels in a NIFTI file and a
 	temporal "probe" regressor (which can come from a number of places,
-	including the data itself) - it rapidly determines  time delays...
+	including the data itself) - it rapidly determines time delays...
         There are a truly bewildering array of options, and just about 
         everything can be adjusted, however I've tried to pick a good 
         set of default options for the most basic processing to get you 
