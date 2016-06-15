@@ -1,8 +1,8 @@
 delaytools
 =======================
-Delaytools is a suite of python programs used to analyze time resolved
-imaging data to find time lagged correlations between the voxelwise time
-series and other time series.
+Delaytools is a suite of python programs used to perform time delay 
+analysis on functional imaging data to find time lagged  correlations 
+between the voxelwise time series and other time series.
 
 Why do I want to know about time lagged correlations?
 =======================
@@ -50,17 +50,17 @@ Ok, I'm sold.  What's in here?
 	workhorse program that will determine the time lagged
 	correlations between all the voxels in a NIFTI file and a
 	temporal "probe" regressor (which can come from a number of places,
-	including the data itself).  There are a truly bewildering array
-	of options, and just about everything can be adjusted, however
-	I've tried to pick a good set of default options for the most
-	basic processing to get you going.  At a minimum, it requires
-        a 4D NIFTI file as input, and a root name for all of the output
-        files.  It generates a number of 3D NIFTI file maps of various
-        parameters (lag time of maximum correlation, maximum correlation
-        value, a mask of which voxels have valid fits, etc.) and some
-        text files with useful information (significance threshholds, 
-        processing timing information, a list of values of configurable
-        options).
+	including the data itself) - it rapidly determines  time delays...
+        There are a truly bewildering array of options, and just about 
+        everything can be adjusted, however I've tried to pick a good 
+        set of default options for the most basic processing to get you 
+        going.  At a minimum, it requires a 4D NIFTI file as input,
+        and a root name for all of the output files.  It generates a 
+        number of 3D NIFTI file maps of various parameters (lag time
+        of maximum correlation, maximum correlation value, a mask of which
+        voxels have valid fits, etc.) and some text files with useful 
+        information (significance threshholds, processing timing 
+        information, a list of values of configurable options).
 
 - **showxcorr** - Like rapidtide2, but for single time courses.  Takes two 
         text files as input, calculates and displays the time lagged cross
