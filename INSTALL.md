@@ -19,17 +19,18 @@ If you want to use tidepool for image display, you will alto need to install the
 Installation
 ------------
 
-Once you have installed the prerequisites, switch to the delaytools directory and run either of the following commands to install it:
+Once you have installed the prerequisites, add the delaytools installation directory to your path and execute any of the commands:
 
 ```bash
-# a) Install for your user:
-python setup.py install --user
-# b) Install for your user, but with pip:
-pip install --user .
-# c) Install system-wide:
-sudo python setup.py install
-# d) Install system-wide, but with pip:
-sudo pip install .
+# a) run rapidtide2 to perform dynamic global mean regression on an fMRI file:
+rapidtide2 inputfmrifile.nii.gz outputrootname -L --refinepasses=
+
+# b) run tidepool to look at the results from a):
+tidepool
+(then select the file outputrootname_lagtimes.nii.gz to load the maps)
+
+# c) look at the refined regressors produced during dGSR:
+showtc outputrootname_reference_fmrires_pass[123].txt
 ```
 
 Testing
@@ -38,7 +39,7 @@ Testing
 To test your setup, run the included unit tests and optionally the benchmark:
 
 ```bash
-cd example
+cd testdata
 # Run tests
-nosetests
+under construction
 ```
