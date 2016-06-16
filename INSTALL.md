@@ -22,7 +22,7 @@ Installation
 Once you have installed the prerequisites, add the delaytools installation directory to your path and execute any of the commands:
 
 ```bash
-# a) run rapidtide2 to perform dynamic global mean regression on an fMRI file:
+# a) run rapidtide2 to perform dynamic global signal regression on an fMRI file[1]:
 rapidtide2 inputfmrifile.nii.gz outputrootname -L --refinepasses=3
 
 # b) run tidepool to look at the results from a):
