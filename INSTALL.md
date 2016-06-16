@@ -12,7 +12,7 @@ The processing programs in delaytools require the following to be installed firs
 The following optional dependencies will be used if present
 * numba for faster performance
 
-If you want to use tidepool for image display, you will alto need to install the following:
+If you want to use tidepool for image display, you will also need to install the following:
 * pyqt4
 * pyqtgraph
 
@@ -43,3 +43,7 @@ cd testdata
 # Run tests
 under construction
 ```
+
+References
+----------
+1) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B (2016). Correcting resting state fMRI-BOLD signals for blood arrival time enhances functional connectivity analysis. Front Hum Neurosci. 2016, In Press.
