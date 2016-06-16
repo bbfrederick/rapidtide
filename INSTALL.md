@@ -22,15 +22,18 @@ Installation
 Once you have installed the prerequisites, add the delaytools installation directory to your path and execute any of the commands:
 
 ```bash
-# a) run rapidtide2 to perform dynamic global signal regression on an fMRI file[1]:
-rapidtide2 inputfmrifile.nii.gz outputrootname -L --refinepasses=3
+# run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
+rapidtide2 inputfmrifile.nii.gz dgsr_outputrootname -L --refinepasses=3
+
+# run rapidtide2 to perform static global signal regression (sGSR) on an fMRI file[1]:
+rapidtide2 inputfmrifile.nii.gz sgsr_outputrootname -L -Z 0.0
 
 # b) run tidepool to look at the results from a):
 tidepool
-(then select the file outputrootname_lagtimes.nii.gz to load the maps)
+(then select the file dgsr_outputrootname_lagtimes.nii.gz to load the maps)
 
 # c) look at the refined regressors produced during dGSR:
-showtc outputrootname_reference_fmrires_pass[123].txt
+showtc dgsr_outputrootname_reference_fmrires_pass[123].txt
 ```
 
 Testing
