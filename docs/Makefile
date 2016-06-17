@@ -96,9 +96,9 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/delaytools.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/rapidtide.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/delaytools.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/rapidtide.qhc"
 
 .PHONY: applehelp
 applehelp:
@@ -115,8 +115,8 @@ devhelp:
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/delaytools"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/delaytools"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/rapidtide"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/rapidtide"
 	@echo "# devhelp"
 
 .PHONY: epub
