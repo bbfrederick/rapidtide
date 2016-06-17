@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to delaytools’s documentation! &mdash; delaytools 0.1.0 documentation</title>
+    <title>Delaytools &mdash; delaytools 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -36,9 +36,9 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="welcome-to-delaytools-s-documentation">
-<h1>Welcome to delaytools&#8217;s documentation!<a class="headerlink" href="#welcome-to-delaytools-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Contents:</p>
+  <div class="section" id="delaytools">
+<h1>Delaytools<a class="headerlink" href="#delaytools" title="Permalink to this headline">¶</a></h1>
+<p>Delaytools is a suite of python programs used to perform time delay analysis on functional imaging data to find time lagged correlations between the voxelwise time series and other time series.</p>
 <div class="toctree-wrapper compound">
 <ul class="simple">
 </ul>
@@ -62,20 +62,48 @@
 </div>
 <div class="section" id="why-are-you-releasing-your-code">
 <h2>Why are you releasing your code?<a class="headerlink" href="#why-are-you-releasing-your-code" title="Permalink to this headline">¶</a></h2>
-<p>For a number of reasons.</p>
-<blockquote>
-<div><ol class="arabic simple">
+<dl class="docutils">
+<dt>For a number of reasons.</dt>
+<dd><ol class="first last arabic simple">
 <li>I want people to use it!  I think if it were easier for people to do time delay analysis, they’d be more likely to do it.  I don’t have enough time or people in my group to do every experiment that I think would be interesting, so I’m hoping other people will, so I can read their papers and learn interesting things.</li>
 <li>It’s the right way to do science – I can say lots of things, but if nobody can replicate my results, nobody will believe it (we’ve gotten that a lot, because some of the implications of what we’ve seen in resting state data can be a little uncomfortable).  We’ve reached a stage in fMRI where getting from data to results involves a huge amount of processing, so part of confirming results involves being able to see how the data were processed. If you had to do everything from scratch, you’d never even try to confirm anybody’s results.</li>
 <li>In any complicated processing scheme, it’s quite possible (or in my case, likely) to make dumb mistakes, either coding errors or conceptual errors, and I almost certainly have made some (although hopefully the worst ones have been dealt with at this point).  More users and more eyes on the code make it more likely that they will be found.  As much as I’m queasy about somebody potentially finding a mistake in my code, I’d rather that they did so, so I can fix it[‡].</li>
 <li>It’s giving back to the community.  I benefit from the generosity of a lot of authors who have made the open source tools I use for work and play, so I figure I can pony up too.</li>
 </ol>
-</div></blockquote>
+</dd>
+</dl>
 </div>
 <div class="section" id="how-do-i-cite-this">
 <h2>How do I cite this?<a class="headerlink" href="#how-do-i-cite-this" title="Permalink to this headline">¶</a></h2>
 <p>Good question!  I think the following will work, although I should probably get a DOI for this.
 Frederick, B, delaytools [Computer Software] (2016).  Retrieved from <a class="reference external" href="https://github.com/bbfrederick/delaytools">https://github.com/bbfrederick/delaytools</a>.</p>
+</div>
+<div class="section" id="whats-included-in-this-package">
+<h2>What’s included in this package?<a class="headerlink" href="#whats-included-in-this-package" title="Permalink to this headline">¶</a></h2>
+<p>I’ve included a number of tools to get you going – I’ll add in a number of other utilities as I get them closer to the point that I can release them without people laughing at my code.  For the time being, I’m including the following:</p>
+<blockquote>
+<div><p>The central program in this package is rapidtide2.  This is the program that quantifies the time strength and time delay of pervasive signals in a BOLD fMRI dataset.</p>
+<p>At its core, rapidtide is simply performing a full crosscorrelation between a &#8220;probe&#8221; timecourse and every voxel in an fMRI dataset (by “full” I mean over all time lags, rather than only at zero lag, as in a Pearson correlation).  As with many things, however, the devil is in the details, and so rapidtide provides a number of features which make it pretty good at this particular task.  A few highlights:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>There are lots of ways to do something even as simple as a cross-correlation in a nonoptimal way (not windowing, improper normalization, doing it in the time rather than frequency domain, etc.).  I&#8217;m pretty sure what rapidtide does is, if not the best way, at least a very good and very fast way.</li>
+<li>rapidtide has been optimized and profiled to speed it up quite a bit; it has an optional dependency on numba – if it’s installed, some of the most heavily used routines will speed up significantly due to judicious use of &#64;jit.</li>
+<li>The sample rate of your probe regressor and the fMRI data do not have to match - rapidtide resamples the probe regressor to an integral multiple of the fMRI data rate automatically</li>
+<li>The probe and data can be temporally prefiltered to the LFO, respiratory, or cardiac frequency band with a command line switch, or you can specify any low, high, or bandpass range you want.</li>
+<li>The data can be spatially smoothed at runtime (so you don&#8217;t have to keep smoothed versions of big datasets around).  This is quite fast, so no reason not to do it this way.</li>
+<li>rapidtide can generate a probe regressor from the global mean of the data itself - no externally recorded timecourse is required.  Optionally you can input both a mask of regions that you want to be included in the mean, and the voxels that you want excluded from the mean (there are situations when you might want to do one or the other or both).</li>
+<li>Determining the significance threshold for filtered correlations where the optimal delay has been selected is nontrivial; using the conventional formulae for the significance of a correlation leads to wildly inflated p values.  rapidtide estimates the spurious correlation threshold by calculating the distribution of null correlation values obtained with a shuffling  procedure at the beginning of each run (the default is to use 10000 shuffled correlations), and uses this value to mask correlation maps it calculates.</li>
+<li>rapidtide can do an iterative refinement of the probe regressor by aligning the voxel timecourses in time and regenerating the test regressor.</li>
+<li>rapidtide fits the peak of the correlation function, so you can make fine grained distinctions between close lag times. The resolution of the time lag discrimination is set by the length of the timecourse, not the timestep – this is a feature of correlations, not rapidtide.</li>
+<li>Once the time delay in each voxel has been found, rapidtide outputs a 4D file of delayed probe regressors for using as voxel specific confound regressors or to estimate the strength of the probe regressor in each voxel.  This regression is performed by default, but these outputs let you do it yourself if you are so inclined.</li>
+<li>I&#8217;ve put a lot of effort into making the outputs as informative as possible - lots of useful maps, histograms, timecourses, etc.</li>
+<li>There are a lot of tuning parameters you can mess with if you feel the need.  I&#8217;ve tried to make intelligent defaults so things will work well out of the box, but you have the ability to set most of the interesting parameters yourself.</li>
+</ol>
+</div></blockquote>
+<p>At a minimum, rapidtide needs a Nifti file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2; I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti in workbench, run rapidtide, then convert back. As soon as nibabel finishes their Cifti support, I&#8217;ll add that.
+The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a time by voxel array for simplicity.</p>
+</div></blockquote>
+<p>Outputs are space or space by time Nifti files (depending on the file), and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.</p>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
@@ -95,13 +123,14 @@ Frederick, B, delaytools [Computer Software] (2016).  Retrieved from <a class="r
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Welcome to delaytools&#8217;s documentation!</a></li>
+<li><a class="reference internal" href="#">Delaytools</a></li>
 <li><a class="reference internal" href="#introduction">Introduction</a><ul>
 <li><a class="reference internal" href="#why-do-i-want-to-know-about-time-lagged-correlations">Why do I want to know about time lagged correlations?</a></li>
 <li><a class="reference internal" href="#a-note-on-coding-quality-and-style">A note on coding quality and style:</a></li>
 <li><a class="reference internal" href="#python-version-compatibility">Python version compatibility:</a></li>
 <li><a class="reference internal" href="#why-are-you-releasing-your-code">Why are you releasing your code?</a></li>
 <li><a class="reference internal" href="#how-do-i-cite-this">How do I cite this?</a></li>
+<li><a class="reference internal" href="#whats-included-in-this-package">What’s included in this package?</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
