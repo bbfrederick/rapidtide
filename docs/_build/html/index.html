@@ -42,11 +42,19 @@
 <li><a class="reference internal" href="#">Delaytools</a></li>
 <li><a class="reference internal" href="#introduction">Introduction</a><ul>
 <li><a class="reference internal" href="#why-do-i-want-to-know-about-time-lagged-correlations">Why do I want to know about time lagged correlations?</a></li>
+<li><a class="reference internal" href="#why-are-you-releasing-your-code">Why are you releasing your code?</a></li>
 <li><a class="reference internal" href="#a-note-on-coding-quality-and-style">A note on coding quality and style:</a></li>
 <li><a class="reference internal" href="#python-version-compatibility">Python version compatibility:</a></li>
-<li><a class="reference internal" href="#why-are-you-releasing-your-code">Why are you releasing your code?</a></li>
 <li><a class="reference internal" href="#how-do-i-cite-this">How do I cite this?</a></li>
-<li><a class="reference internal" href="#whats-included-in-this-package">What’s included in this package?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#whats-included-in-this-package">What’s included in this package?</a><ul>
+<li><a class="reference internal" href="#rapidtide2">rapidtide2</a><ul>
+<li><a class="reference internal" href="#description">Description:</a></li>
+<li><a class="reference internal" href="#inputs">Inputs:</a></li>
+<li><a class="reference internal" href="#outputs">Outputs:</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
@@ -96,14 +104,6 @@
 <p>After working with this for several years we&#8217;ve also found that you don&#8217;t need to used simultaneous NIRS to find this blood borne signal - you can get it from blood rich BOLD voxels for example in the superior sagittal sinus, or bootstrap it out of the global mean signal in the BOLD data. You can also track exogenously applied waveforms, such as hypercarbic and/or hyperoxic gas challenges to really boost your signal to noise.  So there are lots of times when you might want to do this type of correlation analysis.  This package provides the tools to make that easier.</p>
 <p>As an aside, some of these tools are just generally useful for looking at correlations between timecourses from other sources – for example doing PPI, or even some seed based analyses.</p>
 </div>
-<div class="section" id="a-note-on-coding-quality-and-style">
-<h2>A note on coding quality and style:<a class="headerlink" href="#a-note-on-coding-quality-and-style" title="Permalink to this headline">¶</a></h2>
-<p>This code has been in active development since June of 2012.  This has two implications.  The first is that it has been tuned and refined quite a bit over the years, with a lot of optimizations and bug fixes - most of the core routines have been tested fairly extensively to get rid of the stupidest bugs.  I find new bugs all the time, but most of the showstoppers seem to be gone.  The second result is that the coding style is all over the place.  When I started writing this, I had just moved over from C, and it was basically a mental port of how I would write it in C, and was extremely unpythonic (I’ve been told by a somewhat reliable source that looking over some of my early python efforts “made his eyes bleed”).  Over the years, as I&#8217;ve gone back and added functions, I periodically get embarassed and upgrade things to a somewhat more modern coding style.  I even put in some classes - that&#8217;s what the cool kids do, right?  But the pace of that effort has to be balanced with the fact that when I make major architectural changes, I tend to break things.  So be patient with me, and keep in mind that you get what you pay for, and this cost you nothing!  Function before form.</p>
-</div>
-<div class="section" id="python-version-compatibility">
-<h2>Python version compatibility:<a class="headerlink" href="#python-version-compatibility" title="Permalink to this headline">¶</a></h2>
-<p>This code has been extensively tested in python 2.7.  I dragged my feet somewhat making it python 3 compatible, since a number of the libraries I needed have took a long time to get ported to python 3, and I honestly saw no advantage to doing it.  I since decided that I’m going to have to do it eventually, so why not now?  As far as I know, the code all works fine in python 3.5 now - I’ve switched over to that on my development machine, and have not hit any version related issues in a while now, and according to PyCharm’s code inspection, there are no incompatible constructions.  However that’s no guarantee that there isn’t a problem in some option I haven’t bothered to test yet, so be vigilant, and please let me know if there is some issue with python 3 that I haven’t caught (or any bugs, really).</p>
-</div>
 <div class="section" id="why-are-you-releasing-your-code">
 <h2>Why are you releasing your code?<a class="headerlink" href="#why-are-you-releasing-your-code" title="Permalink to this headline">¶</a></h2>
 <dl class="docutils">
@@ -117,37 +117,53 @@
 </dd>
 </dl>
 </div>
+<div class="section" id="a-note-on-coding-quality-and-style">
+<h2>A note on coding quality and style:<a class="headerlink" href="#a-note-on-coding-quality-and-style" title="Permalink to this headline">¶</a></h2>
+<p>This code has been in active development since June of 2012.  This has two implications.  The first is that it has been tuned and refined quite a bit over the years, with a lot of optimizations and bug fixes - most of the core routines have been tested fairly extensively to get rid of the stupidest bugs.  I find new bugs all the time, but most of the showstoppers seem to be gone.  The second result is that the coding style is all over the place.  When I started writing this, I had just moved over from C, and it was basically a mental port of how I would write it in C, and was extremely unpythonic (I’ve been told by a somewhat reliable source that looking over some of my early python efforts “made his eyes bleed”).  Over the years, as I&#8217;ve gone back and added functions, I periodically get embarassed and upgrade things to a somewhat more modern coding style.  I even put in some classes - that&#8217;s what the cool kids do, right?  But the pace of that effort has to be balanced with the fact that when I make major architectural changes, I tend to break things.  So be patient with me, and keep in mind that you get what you pay for, and this cost you nothing!  Function before form.</p>
+</div>
+<div class="section" id="python-version-compatibility">
+<h2>Python version compatibility:<a class="headerlink" href="#python-version-compatibility" title="Permalink to this headline">¶</a></h2>
+<p>This code has been extensively tested in python 2.7.  I dragged my feet somewhat making it python 3 compatible, since a number of the libraries I needed have took a long time to get ported to python 3, and I honestly saw no advantage to doing it.  I since decided that I’m going to have to do it eventually, so why not now?  As far as I know, the code all works fine in python 3.5 now - I’ve switched over to that on my development machine, and have not hit any version related issues in a while now, and according to PyCharm’s code inspection, there are no incompatible constructions.  However that’s no guarantee that there isn’t a problem in some option I haven’t bothered to test yet, so be vigilant, and please let me know if there is some issue with python 3 that I haven’t caught (or any bugs, really).</p>
+</div>
 <div class="section" id="how-do-i-cite-this">
 <h2>How do I cite this?<a class="headerlink" href="#how-do-i-cite-this" title="Permalink to this headline">¶</a></h2>
 <p>Good question!  I think the following will work, although I should probably get a DOI for this.
 Frederick, B, delaytools [Computer Software] (2016).  Retrieved from <a class="reference external" href="https://github.com/bbfrederick/delaytools">https://github.com/bbfrederick/delaytools</a>.</p>
 </div>
+</div>
 <div class="section" id="whats-included-in-this-package">
-<h2>What’s included in this package?<a class="headerlink" href="#whats-included-in-this-package" title="Permalink to this headline">¶</a></h2>
+<h1>What’s included in this package?<a class="headerlink" href="#whats-included-in-this-package" title="Permalink to this headline">¶</a></h1>
 <p>I’ve included a number of tools to get you going – I’ll add in a number of other utilities as I get them closer to the point that I can release them without people laughing at my code.  For the time being, I’m including the following:</p>
-<blockquote>
-<div><p>The central program in this package is rapidtide2.  This is the program that quantifies the time strength and time delay of pervasive signals in a BOLD fMRI dataset.</p>
-<p>At its core, rapidtide is simply performing a full crosscorrelation between a &#8220;probe&#8221; timecourse and every voxel in an fMRI dataset (by “full” I mean over all time lags, rather than only at zero lag, as in a Pearson correlation).  As with many things, however, the devil is in the details, and so rapidtide provides a number of features which make it pretty good at this particular task.  A few highlights:</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li>There are lots of ways to do something even as simple as a cross-correlation in a nonoptimal way (not windowing, improper normalization, doing it in the time rather than frequency domain, etc.).  I&#8217;m pretty sure what rapidtide does is, if not the best way, at least a very good and very fast way.</li>
-<li>rapidtide has been optimized and profiled to speed it up quite a bit; it has an optional dependency on numba – if it’s installed, some of the most heavily used routines will speed up significantly due to judicious use of &#64;jit.</li>
-<li>The sample rate of your probe regressor and the fMRI data do not have to match - rapidtide resamples the probe regressor to an integral multiple of the fMRI data rate automatically</li>
+<div class="section" id="rapidtide2">
+<h2>rapidtide2<a class="headerlink" href="#rapidtide2" title="Permalink to this headline">¶</a></h2>
+<p>The central program in this package is rapidtide2.  This is the program that quantifies the time strength and time delay of pervasive signals in a BOLD fMRI dataset.</p>
+<div class="section" id="description">
+<h3>Description:<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h3>
+<p>At its core, rapidtide2 is simply performing a full crosscorrelation between a &#8220;probe&#8221; timecourse and every voxel in an fMRI dataset (by “full” I mean over all time lags, rather than only at zero lag, as in a Pearson correlation).  As with many things, however, the devil is in the details, and so rapidtide2 provides a number of features which make it pretty good at this particular task.  A few highlights:</p>
+<ol class="arabic simple">
+<li>There are lots of ways to do something even as simple as a cross-correlation in a nonoptimal way (not windowing, improper normalization, doing it in the time rather than frequency domain, etc.).  I&#8217;m pretty sure what rapidtide2 does by default is, if not the best way, at least a very good and very fast way.</li>
+<li>rapidtide2 has been optimized and profiled to speed it up quite a bit; it has an optional dependency on numba – if it’s installed, some of the most heavily used routines will speed up significantly due to judicious use of &#64;jit.</li>
+<li>The sample rate of your probe regressor and the fMRI data do not have to match - rapidtide2 resamples the probe regressor to an integral multiple of the fMRI data rate automatically.</li>
 <li>The probe and data can be temporally prefiltered to the LFO, respiratory, or cardiac frequency band with a command line switch, or you can specify any low, high, or bandpass range you want.</li>
 <li>The data can be spatially smoothed at runtime (so you don&#8217;t have to keep smoothed versions of big datasets around).  This is quite fast, so no reason not to do it this way.</li>
-<li>rapidtide can generate a probe regressor from the global mean of the data itself - no externally recorded timecourse is required.  Optionally you can input both a mask of regions that you want to be included in the mean, and the voxels that you want excluded from the mean (there are situations when you might want to do one or the other or both).</li>
-<li>Determining the significance threshold for filtered correlations where the optimal delay has been selected is nontrivial; using the conventional formulae for the significance of a correlation leads to wildly inflated p values.  rapidtide estimates the spurious correlation threshold by calculating the distribution of null correlation values obtained with a shuffling  procedure at the beginning of each run (the default is to use 10000 shuffled correlations), and uses this value to mask correlation maps it calculates.</li>
-<li>rapidtide can do an iterative refinement of the probe regressor by aligning the voxel timecourses in time and regenerating the test regressor.</li>
-<li>rapidtide fits the peak of the correlation function, so you can make fine grained distinctions between close lag times. The resolution of the time lag discrimination is set by the length of the timecourse, not the timestep – this is a feature of correlations, not rapidtide.</li>
-<li>Once the time delay in each voxel has been found, rapidtide outputs a 4D file of delayed probe regressors for using as voxel specific confound regressors or to estimate the strength of the probe regressor in each voxel.  This regression is performed by default, but these outputs let you do it yourself if you are so inclined.</li>
+<li>rapidtide2 can generate a probe regressor from the global mean of the data itself - no externally recorded timecourse is required.  Optionally you can input both a mask of regions that you want to be included in the mean, and the voxels that you want excluded from the mean (there are situations when you might want to do one or the other or both).</li>
+<li>Determining the significance threshold for filtered correlations where the optimal delay has been selected is nontrivial; using the conventional formulae for the significance of a correlation leads to wildly inflated p values.  rapidtide2 estimates the spurious correlation threshold by calculating the distribution of null correlation values obtained with a shuffling  procedure at the beginning of each run (the default is to use 10000 shuffled correlations), and uses this value to mask correlation maps it calculates.</li>
+<li>rapidtide2 can do an iterative refinement of the probe regressor by aligning the voxel timecourses in time and regenerating the test regressor.</li>
+<li>rapidtide2 fits the peak of the correlation function, so you can make fine grained distinctions between close lag times. The resolution of the time lag discrimination is set by the length of the timecourse, not the timestep – this is a feature of correlations, not rapidtide2.</li>
+<li>Once the time delay in each voxel has been found, rapidtide2 outputs a 4D file of delayed probe regressors for using as voxel specific confound regressors or to estimate the strength of the probe regressor in each voxel.  This regression is performed by default, but these outputs let you do it yourself if you are so inclined.</li>
 <li>I&#8217;ve put a lot of effort into making the outputs as informative as possible - lots of useful maps, histograms, timecourses, etc.</li>
 <li>There are a lot of tuning parameters you can mess with if you feel the need.  I&#8217;ve tried to make intelligent defaults so things will work well out of the box, but you have the ability to set most of the interesting parameters yourself.</li>
 </ol>
-</div></blockquote>
-<p>At a minimum, rapidtide needs a Nifti file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2; I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti in workbench, run rapidtide, then convert back. As soon as nibabel finishes their Cifti support, I&#8217;ll add that.
-The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a time by voxel array for simplicity.</p>
-</div></blockquote>
+</div>
+<div class="section" id="inputs">
+<h3>Inputs:<a class="headerlink" href="#inputs" title="Permalink to this headline">¶</a></h3>
+<p>At a minimum, rapidtide2 needs a Nifti file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2; I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti in workbench, run rapidtide2, then convert back. As soon as nibabel finishes their Cifti support, I&#8217;ll add that.</p>
+<p>The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a time by voxel array for simplicity.</p>
+</div>
+<div class="section" id="outputs">
+<h3>Outputs:<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h3>
 <p>Outputs are space or space by time Nifti files (depending on the file), and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.</p>
+</div>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
