@@ -25,7 +25,8 @@ before_install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib sklearn nibabel PyQt4
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib scikit-learn pyqt
+  - conda install --yes -c conda-forge nibabel
   - source activate test-environment
   - python setup.py install
 
