@@ -1,6 +1,6 @@
-delaytools
+rapidtide
 =======================
-Delaytools is a suite of python programs used to perform time delay 
+Rapidtide is a suite of python programs used to perform rapid time delay 
 analysis on functional imaging data to find time lagged  correlations 
 between the voxelwise time series and other time series.
 

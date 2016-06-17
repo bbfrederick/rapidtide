@@ -1,11 +1,11 @@
-.. delaytools documentation master file, created by
+.. rapidtide documentation master file, created by
    sphinx-quickstart on Thu Jun 16 15:27:19 2016.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Delaytools
+Rapidtide
 ==========
-Delaytools is a suite of python programs used to perform time delay analysis on functional imaging data to find time lagged correlations between the voxelwise time series and other time series. 
+Rapidtide is a suite of python programs used to perform time delay analysis on functional imaging data to find time lagged correlations between the voxelwise time series and other time series. 
 
 .. toctree::
    :maxdepth: 2
@@ -42,7 +42,7 @@ This code has been extensively tested in python 2.7.  I dragged my feet somewhat
 How do I cite this?
 -------------------
 Good question!  I think the following will work, although I should probably get a DOI for this.
-Frederick, B, delaytools [Computer Software] (2016).  Retrieved from https://github.com/bbfrederick/delaytools.
+Frederick, B, rapidtide [Computer Software] (2016).  Retrieved from https://github.com/bbfrederick/delaytools.
 
 What’s included in this package?
 ================================

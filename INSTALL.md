@@ -1,7 +1,7 @@
 Prerequisites
 -------------
 
-The processing programs in delaytools require the following to be installed first:
+The processing programs in rapidtide require the following to be installed first:
 
 * Python 2.x or 3.x
 * numpy
@@ -19,7 +19,7 @@ If you want to use tidepool for image display, you will also need to install the
 Installation
 ------------
 
-Once you have installed the prerequisites, add the delaytools installation directory to your path and execute any of the commands:
+Once you have installed the prerequisites, add the rapidtide installation directory to your path and execute any of the commands:
 
 ```bash
 # run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
