@@ -1,4 +1,4 @@
-rapidtide
+Rapidtide
 =======================
 Rapidtide is a suite of python programs used to perform rapid time delay 
 analysis on functional imaging data to find time lagged  correlations 
