@@ -16,13 +16,8 @@
 #
 #
 # $Author: frederic $
-<<<<<<< Updated upstream
 #       $Date: 2016/06/14 13:51:27 $
 #       $Id: showtc,v 1.15 2016/06/14 13:51:27 frederic Exp $
-=======
-#       $Date: 2016/06/14 12:04:51 $
-#       $Id: showtc,v 1.14 2016/06/14 12:04:51 frederic Exp $
->>>>>>> Stashed changes
 #
 from __future__ import print_function
 import sys
@@ -31,10 +26,6 @@ from cycler import cycler
 
 import matplotlib
 
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 if platform.system() == 'Darwin':
     matplotlib.use('MacOSX')
 else:
@@ -46,7 +37,6 @@ from pylab import plot, legend, show, hold
 
 
 def usage():
-<<<<<<< Updated upstream
     print("usage: showtc texfilename")
     print("	plots the data in a text file")
     print("")
@@ -58,18 +48,6 @@ def usage():
 # get the command line parameters
 nargs = len(sys.argv)
 if nargs < 2:
-=======
-    print( "usage: showtc texfilename")
-    print( "	plots the data in a text file")
-    print( "")
-    print( "required arguments:")
-    print( "	textfilename	- a text file containing one timepoint per line")
-    return ()
-
-# get the command line parameters
-nargs = len(sys.argv)
-if (nargs < 2):
->>>>>>> Stashed changes
     usage()
     exit()
 
@@ -84,15 +62,9 @@ linelabels = []
 numfiles = 1
 numvecs = 0
 textfilename.append(sys.argv[1])
-<<<<<<< Updated upstream
 if nargs > 2:
     for i in range(2, nargs):
         numfiles += 1
-=======
-if (nargs > 2):
-    for i in range(2, nargs):
-        numfiles = numfiles + 1
->>>>>>> Stashed changes
         textfilename.append(sys.argv[i])
 
 for i in range(0, numfiles):
@@ -100,26 +72,16 @@ for i in range(0, numfiles):
     invecs = tide.readvecs(textfilename[i])
     print('   ', invecs.shape[0], ' columns')
     for j in range(0, invecs.shape[0]):
-<<<<<<< Updated upstream
         print('appending vector number ', j)
-=======
-        print('appending vector number ',j)
->>>>>>> Stashed changes
         yvecs.append(invecs[j])
         xvecs.append(arange(0.0, len(yvecs[numvecs]), 1.0))
         if invecs.shape[0] > 1:
             linelabels.append(textfilename[i] + '_column' + str(j).zfill(2))
         else:
             linelabels.append(textfilename[i])
-<<<<<<< Updated upstream
         numvecs += 1
 
 colorlist = ['r', 'g', 'b', 'k']
-=======
-        numvecs = numvecs + 1
-
-colorlist = ['r','g','b','k']
->>>>>>> Stashed changes
 hold(True)
 for i in range(0, numvecs):
     plot(xvecs[i], yvecs[i], colorlist[i % len(colorlist)], label=linelabels[i])

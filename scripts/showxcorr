@@ -16,13 +16,8 @@
 #
 #
 # $Author: frederic $
-<<<<<<< Updated upstream
 #       $Date: 2016/06/14 13:50:53 $
 #       $Id: showxcorr,v 1.39 2016/06/14 13:50:53 frederic Exp $
-=======
-#       $Date: 2016/06/14 12:04:51 $
-#       $Id: showxcorr,v 1.38 2016/06/14 12:04:51 frederic Exp $
->>>>>>> Stashed changes
 #
 from __future__ import print_function, division
 
@@ -107,7 +102,6 @@ def usage():
     print("optional arguments:")
     print("    -t 	     - detrend the data")
     print("    -w 	     - prewindow the data")
-<<<<<<< Updated upstream
     print("    -g 	     - perform phase alignment transform (phat) rather than ")
     print("                    standard crosscorrelation")
     print("    -l LABEL	     - label for the delay value")
@@ -119,23 +113,12 @@ def usage():
     print("    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.")
     print("                    LOWERSTOP and UPPERSTOP can be specified, or will be ")
     print("                    calculated automatically")
-=======
-    print("    -g 	     - perform phase alignment transform (phat) rather than standard crosscorrelation")
-    print("    -l LABEL	     - label for the delay value")
-    print("    -s STARTTIME  - time of first datapoint to use in seconds in the first file")
-    print("    -D DURATION   - amount of data to use in seconds")
-    print("    -r RANGE      - restrict peak search range to +/- RANGE seconds (default is +/-15)")
-    print("    -d            - turns off display of graph")
-    print("    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.")
-    print("                    LOWERSTOP and UPPERSTOP can be specified, or will be calculated automatically")
->>>>>>> Stashed changes
     print("    -V            - filter data and regressors to VLF band")
     print("    -L            - filter data and regressors to LFO band")
     print("    -R            - filter data and regressors to respiratory band")
     print("    -C            - filter data and regressors to cardiac band")
     print("    -T            - trim data to match")
     print("    -A            - print data on a single summary line")
-<<<<<<< Updated upstream
     print("    -a            - if summary mode is on, add a header line showing what values ")
     print("                    mean")
     print("    -f            - negate (flip) second regressor")
@@ -143,12 +126,6 @@ def usage():
     print("                    return the partial correlation")
     print("    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS ")
     print("                    repetition")
-=======
-    print("    -a            - if summary mode is on, add a header line showing what values mean")
-    print("    -f            - negate (flip) second regressor")
-    print("    -z FILENAME   - use the columns of FILENAME as controlling variables and return the partial correlation")
-    print("    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS repetition")
->>>>>>> Stashed changes
     print("")
     return ()
 
