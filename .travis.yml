@@ -25,10 +25,10 @@ before_install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib scikit-learn pyqt
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib scikit-learn pyqt pytest
   - conda install --yes -c conda-forge nibabel
   - python setup.py install
 
 # command to run tests
 #
-#script: nosetests
+script: dotest
