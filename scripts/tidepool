@@ -31,12 +31,12 @@ from pyqtgraph.Qt import QtGui, QtCore
 
 import pyqtgraph as pg
 import numpy as np
-import tidepoolTemplate as uiTemplate
-import lib.tide_funcs as tide
+import rapidtide.tidepoolTemplate as uiTemplate
+import rapidtide.tide_funcs as tide
 import sys
 import getopt
 import argparse
-from OrthoImageItem import OrthoImageItem
+from rapidtide.OrthoImageItem import OrthoImageItem
 import os
 
 from nibabel.affines import apply_affine

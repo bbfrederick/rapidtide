@@ -32,7 +32,7 @@ if platform.system() == 'Darwin':
 else:
     matplotlib.use('TkAgg')
 import getopt
-import lib.tide_funcs as tide
+import rapidtide.tide_funcs as tide
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy.stats import skew

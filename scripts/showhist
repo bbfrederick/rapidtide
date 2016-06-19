@@ -24,7 +24,7 @@ import sys
 import getopt
 import matplotlib
 import platform
-import lib.tide_funcs as tide
+import rapidtide.tide_funcs as tide
 from pylab import plot, xlabel, ylabel, title, legend, show
 
 if platform.system() == 'Darwin':
