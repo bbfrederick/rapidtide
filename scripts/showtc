@@ -30,7 +30,7 @@ if platform.system() == 'Darwin':
     matplotlib.use('MacOSX')
 else:
     matplotlib.use('TkAgg')
-import tide_funcs as tide
+import lib.tide_funcs as tide
 from scipy import arange
 
 from pylab import plot, legend, show, hold

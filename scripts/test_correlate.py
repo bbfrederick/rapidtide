@@ -1,4 +1,4 @@
-from tide_funcs import fastcorrelate
+from lib.tide_funcs import fastcorrelate
 
 sig1 = np.array([0.0,0.0,0,0,1.0,0.0,0,0,0.0])
 sig2 = np.array([0.0,0.0,0,0,1.0,0.0,0,0,0.0])

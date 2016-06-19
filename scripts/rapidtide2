@@ -33,7 +33,7 @@ import sys
 
 from sklearn.decomposition import FastICA, PCA
 
-import tide_funcs as tide
+import lib.tide_funcs as tide
 
 from pylab import figure, plot, show
 import numpy as np
