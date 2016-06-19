@@ -1,0 +1,11 @@
+numpy
+scipy
+sklearn
+nibabel
+matplotlib
+
+[gui]
+pyqtgraph
+
+[jit]
+numba

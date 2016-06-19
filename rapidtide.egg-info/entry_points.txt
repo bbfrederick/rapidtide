@@ -1,0 +1,4 @@
+[console_scripts]
+rapidtide2 = rapidtide2:main
+tidepool = tidepool:main
+
