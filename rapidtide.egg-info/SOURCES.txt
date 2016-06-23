@@ -1,5 +1,10 @@
 setup.cfg
 setup.py
+console_scripts/rapidtide2.py
+console_scripts/showhist.py
+console_scripts/showtc.py
+console_scripts/showxcorr.py
+console_scripts/tidepool.py
 rapidtide/OrthoImageItem.py
 rapidtide/__init__.py
 rapidtide/tide_funcs.py
