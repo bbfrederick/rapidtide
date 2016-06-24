@@ -1,1 +1,1 @@
-rapidtide
+tide_funcs

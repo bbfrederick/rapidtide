@@ -71,12 +71,12 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    #packages=find_packages(exclude=['contrib', 'docs', 'tests']),
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
     #   py_modules=["my_module"],
-    #py_modules=["tide_funcs","tidepoolTemplate","OrthoImageItem","console_scripts/rapidtide2","console_scripts/tidepool","console_scripts/showtc","console_scripts/showxcorr","console_scripts/showhist"],
+    py_modules=['tide_funcs'],
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
@@ -109,10 +109,11 @@ setup(
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
-    entry_points={
-        'console_scripts': [
-            'rapidtide2=rapidtide2:main',
-            'tidepool=tidepool:main',
-        ],
-    },
+    scripts=['bin/rapidtide2', 'bin/tidepool', 'bin/showxcorr', 'bin/showtc', 'bin/showhist'],
+    #entry_points={
+        #'console_scripts': [
+            #'rapidtide2=rapidtide2:main',
+            #'tidepool=tidepool:main',
+        #],
+    #},
 )
