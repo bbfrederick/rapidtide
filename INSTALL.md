@@ -19,7 +19,17 @@ If you want to use tidepool for image display, you will also need to install the
 Installation
 ------------
 
-Once you have installed the prerequisites, add the rapidtide installation directory to your path and execute any of the commands:
+Once you have installed the prerequisites, cd into the package directory, and type the following:
+```bash
+python setup.py install
+```
+to install the rapidtide package.
+
+
+Usage
+------------
+
+Execute any of the commands:
 
 ```bash
 # run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
