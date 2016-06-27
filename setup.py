@@ -109,7 +109,13 @@ setup(
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
-    scripts=['bin/rapidtide2', 'bin/tidepool', 'bin/showxcorr', 'bin/showtc', 'bin/showhist'],
+    scripts=['bin/rapidtide2',
+             'bin/tidepool',
+             'bin/showxcorr',
+             'bin/resamp1tc',
+             'bin/resamplenifti',
+             'bin/showtc',
+             'bin/showhist'],
     #entry_points={
         #'console_scripts': [
             #'rapidtide2=rapidtide2:main',

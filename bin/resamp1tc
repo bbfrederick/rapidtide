@@ -1,0 +1,117 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+# $Author: frederic $
+# $Date: 2016/06/14 12:04:50 $
+#       $Id: resamp1tc,v 1.10 2016/06/14 12:04:50 frederic Exp $
+#
+
+from __future__ import print_function, division
+
+import sys
+import platform
+
+import matplotlib
+import tide_funcs as tide
+from scipy import arange
+from numpy import max, floor
+from pylab import plot, legend, show, hold
+
+if platform.system() == 'Darwin':
+    matplotlib.use('MacOSX')
+else:
+    matplotlib.use('TkAgg')
+
+
+def usage():
+    print("resamp1tc - resample a timeseries file")
+    print("")
+    print("usage: resamp1tc infilename insamplerate outputfile outsamplerate [-s]")
+    print("")
+    print("required arguments:")
+    print("	inputfile	- the name of the input text file")
+    print("	insamplerate	- the sample rate of the input file in Hz")
+    print("	outputfile	- the name of the output text file")
+    print("	outsamplerate	- the sample rate of the output file in Hz")
+    print("")
+    print(" options:")
+    print("     -s    split output data into physiological bands (LFO, respiratory, cardiac)")
+    return ()
+
+
+def main():
+    usebutterworthfilter = False
+    splittcs = False
+    # get the command line parameters
+    nargs = len(sys.argv)
+    if nargs < 5:
+        usage()
+        exit()
+    filename = sys.argv[1]
+    insamplerate = float(sys.argv[2])
+    outputfile = sys.argv[3]
+    outsamplerate = float(sys.argv[4])
+    if nargs == 6:
+        if sys.argv[5] == '-s':
+            splittcs = True
+
+    print('splittcs=', splittcs)
+
+    intimestep = 1.0 / insamplerate
+    outtimestep = 1.0 / outsamplerate
+    inputdata = tide.readvec(filename)
+    totaltime = intimestep * len(inputdata)
+    numoutpoints = floor(totaltime / outtimestep) + 1
+
+    in_t = arange(0.0, totaltime, intimestep)
+    out_t = arange(0.0, outtimestep * numoutpoints, outtimestep)
+    outputdata = tide.doresample(in_t, inputdata, out_t, method='cubic')
+    IF = max([60.0, 2.0 * insamplerate])
+    if outsamplerate < insamplerate:
+        outputdata2 = tide.dotwostepresample(in_t, inputdata, IF, outsamplerate)
+        print(len(out_t), len(outputdata2))
+        if len(out_t) < len(outputdata2):
+            outputdata2 = outputdata2[0:len(out_t)]
+
+    plot(in_t, inputdata + 0.4, 'k')
+    hold(True)
+
+    if splittcs:
+        outputdata_lf = tide.lfo_pass(outsamplerate, outputdata, usebutterworthfilter)
+        outputdata_resp = tide.resp_pass(outsamplerate, outputdata, usebutterworthfilter)
+        outputdata_card = tide.card_pass(outsamplerate, outputdata, usebutterworthfilter)
+        plot(out_t, outputdata_lf - 0.4, 'b')
+        plot(out_t, outputdata_resp - 0.4, 'g')
+        plot(out_t, outputdata_card - 0.4, 'r')
+        tide.writevec(outputdata_lf, outputfile + '_lf')
+        tide.writevec(outputdata_resp, outputfile + '_resp')
+        tide.writevec(outputdata_card, outputfile + '_card')
+    else:
+        plot(out_t, outputdata - 0.4, 'r')
+        tide.writevec(outputdata, outputfile)
+        tide.writevec(outputdata, outputfile + '_dual')
+        if outsamplerate < insamplerate:
+            plot(out_t, outputdata2 - 0.8, 'g')
+            legend(('original signal', 'resampled', 'dualresampled'))
+        else:
+            legend(('original signal', 'resampled'))
+
+    hold(False)
+    show()
+
+if __name__ == '__main__':
+    main()

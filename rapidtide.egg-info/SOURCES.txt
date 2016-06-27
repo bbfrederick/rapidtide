@@ -2,6 +2,8 @@ setup.cfg
 setup.py
 tide_funcs.py
 bin/rapidtide2
+bin/resamp1tc
+bin/resamplenifti
 bin/showhist
 bin/showtc
 bin/showxcorr
