@@ -9,7 +9,7 @@ NOTE
 I'm still constructing this repository - including doing some last minute
 code reformatting, writing documentation, making a working setup.py file,
 and deciding what should and should not be included.  I'm also adding
-automated testing, so it'spossible some things may turn up during this 
+automated testing, so it's possible some things may turn up during this 
 process.  If you are downloadingthe 0.1.0 release, check back frequently
 over the next month or so as I nail everything down.  There will probably
 be MANY commits, and I'll try do document exactly why.
@@ -206,5 +206,5 @@ Physiological noise identification and removal using time delay methods
 	
 5) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B (2016). Correcting
 	resting state fMRI-BOLD signals for blood arrival time enhances
-	functional connectivity analysis. Front Hum Neurosci. 2016, In
-	Press.
+	functional connectivity analysis. Front. Hum. Neurosci., 28 June 2016
+	| http://dx.doi.org/10.3389/fnhum.2016.00311
