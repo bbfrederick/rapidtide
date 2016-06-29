@@ -23,7 +23,9 @@ Once you have installed the prerequisites, cd into the package directory, and ty
 ```bash
 python setup.py install
 ```
-to install the rapidtide package.
+to install all of the tools in the package.  You should be able to run them from the command line
+then (after rehashing).  NOTE: I haven't figured out how to install pyqt4 automatically yet, so you
+have install it and pyqtgraph manually.  If you do that, tidepool should work, otherwise it won't.
 
 
 Usage
@@ -59,4 +61,7 @@ under construction
 
 References
 ----------
-1) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B (2016). Correcting resting state fMRI-BOLD signals for blood arrival time enhances functional connectivity analysis. Front Hum Neurosci. 2016, In Press.
+1) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B (2016). Correcting
+	resting state fMRI-BOLD signals for blood arrival time enhances
+	functional connectivity analysis. Front. Hum. Neurosci., 28 June 2016
+	| http://dx.doi.org/10.3389/fnhum.2016.00311
