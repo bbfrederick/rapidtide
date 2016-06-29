@@ -97,7 +97,10 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        'example': ['examples/fmri.nii.gz', 'examples/nirs.txt'],
+        'example': ['examples/src/fmri.nii.gz',
+                    'examples/src/timecourse1.txt',
+                    'examples/src/timecourse2.txt',
+                    'examples/src/nirs.txt'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
