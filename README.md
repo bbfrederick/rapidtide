@@ -8,7 +8,9 @@ NOTE
 ====
 I'm still constructing this repository - including doing some last minute
 code reformatting, writing documentation, making a working setup.py file,
-and deciding what should and should not be included.  I'm also adding
+and deciding what should and should not be included. **It's very possible
+I could break something while doing this, so check back for status updates
+if you download the code in this initial period**.  I'm also adding
 automated testing, so it's possible some things may turn up during this 
 process.  If you are downloadingthe 0.1.0 release, check back frequently
 over the next month or so as I nail everything down.  There will probably
