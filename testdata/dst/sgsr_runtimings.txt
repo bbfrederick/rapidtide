@@ -1,0 +1,17 @@
+Processed on bbf-rmbp.local
+Clock time	Program time	Duration	Description
+20160629T111755      0.00	      0.00	Start
+20160629T111755      0.00	      0.00	Argument parsing done
+20160629T111758      2.64	      2.64	Finish reading fmrifile
+20160629T111800      4.12	      1.48	Start of reference prep
+20160629T111801      5.92	      1.80	End of reference prep
+20160629T111801      6.08	      0.17	Significance estimation start, pass 1
+20160629T111810     14.83	      8.75	Significance estimation end, pass 1 (1143.13 repetitions/second)
+20160629T111810     14.83	      0.00	Time lag estimation start, pass 1
+20160629T111854     58.86	     44.03	Time lag estimation end, pass 1 (1118.28 voxels/second)
+20160629T111854     58.86	      0.00	Correlation fitting start, pass 1
+20160629T111856     60.96	      2.10	Correlation fitting end, pass 1 (23435.05 voxels/second)
+20160629T111856     60.96	      0.00	GLM filtering start, pass 1
+20160629T111919     83.73	     22.77	Start saving histograms
+20160629T111919     83.75	      0.02	Start saving maps
+20160629T111942    106.97	     23.22	Done

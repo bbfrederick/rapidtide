@@ -276,7 +276,7 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
 def printthresholds(pcts, thepercentiles, labeltext):
     print(labeltext)
     for i in range(0, len(pcts)):
-        print('\tp <', 1.0 - thepercentiles[i], ': ', pcts[i])
+        print('\tp <', "{:1.4f}".format(1.0 - thepercentiles[i]), ': ', pcts[i])
 
 
 def fitpdf(thehist, histlen, endtrim, thedata, displayplots=False):

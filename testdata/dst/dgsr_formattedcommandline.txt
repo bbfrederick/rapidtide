@@ -1,0 +1,5 @@
+/Users/frederic/anaconda/bin/rapidtide2 \
+	../testdata/src/filtered_func_data.nii.gz \
+	../testdata/dst/dgsr \
+	-F 0.0,0.15 \
+	--refinepasses=3
