@@ -1343,12 +1343,12 @@ def main():
             thepercentiles = [0.95, 0.99, 0.995, 0.999]
             thepvalnames = []
             for thispercentile in thepercentiles:
-                thepvalnames.append(str(1.0 - thispercentile).replace('.', 'p'))
+                thepvalnames.append("{:1.4f}".format(1.0 - thispercentile).replace('.', 'p'))
 
             pcts, pcts_fit = tide.sigFromDistributionData(corrdistdata, optiondict['sighistlen'],
                                                           thepercentiles, nozero=optiondict['nohistzero'])
             if optiondict['ampthreshfromsig']:
-                print('setting ampthresh to the p<', 1.0 - thepercentiles[0], ' threshhold')
+                print('setting ampthresh to the p<', "{:1.4f}".format(1.0 - thepercentiles[0]), ' threshhold')
                 optiondict['ampthresh'] = pcts[2]
             tide.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
             tide.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
