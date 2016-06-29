@@ -1365,7 +1365,7 @@ def main():
     print('loading datasets...')
 
     # first the functional maps
-    funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'R2', 'rCBV', 'fitcoff']
+    funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'R2', 'fitNorm', 'fitcoff']
     if userise:
         funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'R2', 'risetime_epoch_0', 'starttime_epoch_0', 'maxamp_epoch_0']
     if usecorrout:
@@ -1531,10 +1531,10 @@ def main():
                 'colormap': spectrum_state,
                 'label': 'MTT',
                 'funcmask': 'p_lt_0p05_mask'},
-        'rCBV':
+        'fitNorm':
             {
                 'colormap': thermal_state,
-                'label': 'rCBV',
+                'label': 'fitNorm',
                 'funcmask': 'p_lt_0p05_mask'},
         'R2':
             {

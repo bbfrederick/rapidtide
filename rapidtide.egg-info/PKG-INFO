@@ -12,6 +12,18 @@ Description: Rapidtide
         analysis on functional imaging data to find time lagged  correlations 
         between the voxelwise time series and other time series.
         
+        NOTE
+        ====
+        I'm still constructing this repository - including doing some last minute
+        code reformatting, writing documentation, making a working setup.py file,
+        and deciding what should and should not be included. **It's very possible
+        I could break something while doing this, so check back for status updates
+        if you download the code in this initial period**.  I'm also adding
+        automated testing, so it's possible some things may turn up during this 
+        process.  If you are downloadingthe 0.1.0 release, check back frequently
+        over the next month or so as I nail everything down.  There will probably
+        be MANY commits, and I'll try do document exactly why.
+        
         Why do I want to know about time lagged correlations?
         =======================
         This comes out of work by our group (The Opto-Magnetic group at McLean
@@ -204,12 +216,12 @@ Description: Rapidtide
         	
         5) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B (2016). Correcting
         	resting state fMRI-BOLD signals for blood arrival time enhances
-        	functional connectivity analysis. Front Hum Neurosci. 2016, In
-        	Press.
+        	functional connectivity analysis. Front. Hum. Neurosci., 28 June 2016
+        	| http://dx.doi.org/10.3389/fnhum.2016.00311
         
 Keywords: fMRI,correlation,RIPTiDe,noise
 Platform: UNKNOWN
-Classifier: Development Status :: 4 - Alpha
+Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Science/Research
 Classifier: Topic :: Scientific/Engineering :: Medical Science Apps.
 Classifier: License :: OSI Approved :: Apache Software License
