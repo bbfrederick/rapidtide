@@ -451,7 +451,7 @@ def usage(argstyle):
         print("")
     else:
         print(
-            "[--numskip=SKIP] [--sliceorder=ORDER] [--regressorfreq=FREQ] [--regressor=FILENAME] [--regressorstart=STARTTIME]")
+            "[--numskip=SKIP] [--sliceorder=ORDER] [--regressorfreq=FREQ] [--regressortstep=TSTEP] [--regressor=FILENAME] [--regressorstart=STARTTIME]")
         print("")
         print("required arguments:")
         print("    fmrifilename    - the BOLD fmri file")
@@ -496,7 +496,11 @@ def usage(argstyle):
         print("    --regressor      - Read probe regressor from file FILENAME (if none ")
         print("                       specified, generate and use global regressor)")
         print("    --regressorfreq  - Probe regressor in file has sample frequency FREQ ")
-        print("                       (default is 1/tr)")
+        print("                       (default is 1/tr) NB: --regressorfreq and --regressortstep")
+        print("                       are two ways to specify the same thing")
+        print("    --regressortstep - Probe regressor in file has sample time step TSTEP ")
+        print("                       (default is tr) NB: --regressorfreq and --regressortstep")
+        print("                       are two ways to specify the same thing")
         print("    --regressorstart - First TR of fmri file occurs at time STARTTIME ")
         print("                       in the regressor file (default is 0.0)")
     print("    -G               - use generalized cross-correlation with phase alignment ")
@@ -912,6 +916,10 @@ def main():
             inputfreq = float(a)
             linkchar = '='
             print('Setting regressor sample frequency to ', inputfreq)
+        elif o == '--regressortstep':
+            inputfreq = 1.0/float(a)
+            linkchar = '='
+            print('Setting regressor sample time step to ', float(a))
         elif o == '--regressorstart':
             inputstarttime = float(a)
             linkchar = '='
