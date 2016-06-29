@@ -543,7 +543,7 @@ def usage(argstyle):
     print("    --timerange      - limit analysis to data between timepoints STARTPOINT ")
     print("                       and ENDPOINT in the fmri file")
     print("    --noglm          - turn off GLM filtering to remove delayed regressor ")
-    print("                       from each voxel (disables output of rCBV)")
+    print("                       from each voxel (disables output of fitNorm)")
     print("")
     print("miscellaneous options:")
     print("    -c               - data file is a converted CIFTI")
@@ -1290,7 +1290,7 @@ def main():
         meanvalue = np.zeros(internalspaceshape)
         rvalue = np.zeros(internalspaceshape)
         r2value = np.zeros(internalspaceshape)
-        rCBV = np.zeros(internalspaceshape)
+        fitNorm = np.zeros(internalspaceshape)
         fitcoff = np.zeros(internalspaceshape)
         datatoremove = np.zeros(internalfmrishape)
         filtereddata = np.zeros(internalfmrishape)
@@ -1449,7 +1449,7 @@ def main():
                 rvalue[vox] = R
                 r2value[vox] = R * R
                 fitcoff[vox] = thefit[0, 1]
-                rCBV[vox] = thefit[0, 1] / thefit[0, 0]
+                fitNorm[vox] = thefit[0, 1] / thefit[0, 0]
                 datatoremove[vox, :] = fitcoff[vox] * lagtc[vox, :]
                 thefilttc = inittc - datatoremove[vox, :]
                 filtereddata[vox, :] = thefilttc
@@ -1539,7 +1539,7 @@ def main():
         tide.savetonifti(r2value.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitR2' + outsuffix3d)
         tide.savetonifti(meanvalue.reshape(nativespaceshape), theheader, thesizes, outputname + '_mean' + outsuffix3d)
         tide.savetonifti(fitcoff.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitcoff' + outsuffix3d)
-        tide.savetonifti(rCBV.reshape(nativespaceshape), theheader, thesizes, outputname + '_rCBV' + outsuffix3d)
+        tide.savetonifti(fitNorm.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitNorm' + outsuffix3d)
     if optiondict['estimate_significance']:
         for i in range(0, len(thepercentiles)):
             pmask = np.where(lagstrengths > pcts[i], lagmask, 0 * lagmask)
