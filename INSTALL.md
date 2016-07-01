@@ -31,32 +31,23 @@ have install it and pyqtgraph manually.  If you do that, tidepool should work, o
 Usage
 ------------
 
-Execute any of the commands:
+Execute any of the commands to run rapidtide on the sample data:
 
 ```bash
 # run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
-rapidtide2 inputfmrifile.nii.gz dgsr_outputrootname -L --refinepasses=3
+rapidtide2 examples/src/.nii.gz examples/dst/dgsr -L -r -15,15 --refinepasses=3
 
-# run rapidtide2 to perform static global signal regression (sGSR) on an fMRI file[1]:
+# run rapidtide2 to perform static global signal regression (sGSR) on an fMRI file[1] 
+# (this is just global mean regression):
 rapidtide2 inputfmrifile.nii.gz sgsr_outputrootname -L -Z 0.0
 
 # b) run tidepool to look at the results from a):
 tidepool
-(then select the file dgsr_outputrootname_lagtimes.nii.gz to load the maps)
+(then select the file examples/dst/dgsr_lagtimes.nii.gz to load the maps)
 
 # c) look at the refined regressors produced during dGSR:
-showtc dgsr_outputrootname_reference_fmrires_pass[123].txt
-```
-
-Testing
--------
-
-To test your setup, run the included unit tests and optionally the benchmark:
-
-```bash
-cd testdata
-# Run tests
-under construction
+# (the "pass1" regressor is the initial global mean before refinement)
+showtc examples/dst/dgsr_reference_fmrires_pass[123].txt
 ```
 
 References
