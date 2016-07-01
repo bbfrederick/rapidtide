@@ -107,6 +107,13 @@ Ok, I'm sold.  What's in here?
 	correlation, resampling, filtering, normalization, significance
 	estimation, file I/O, etc.
 
+- **OrthoImageItem.py** - This is a class that implements the orthographic
+        projection module that is used to display all of the maps in tidepool.
+        It uses pyqtgraph to do all the heavy lifting.  None of the built-ins
+        in pyqtgraph did exactly what I wanted in terms of allowing 3D selection,
+        overlays and the like, so I cobbled this together.  It may be generally
+        useful to anybody wanting to display functional data.
+
 References
 =======================
 
