@@ -35,18 +35,18 @@ Execute any of the commands to run rapidtide on the sample data:
 
 ```bash
 # run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
-rapidtide2 examples/src/.nii.gz examples/dst/dgsr -L -r -15,15 --refinepasses=3
+rapidtide2 examples/src/fmri.nii.gz examples/dst/dgsr -L -r -15,15 --refinepasses=3
 
 # run rapidtide2 to perform static global signal regression (sGSR) on an fMRI file[1] 
 # (this is just global mean regression):
-rapidtide2 inputfmrifile.nii.gz sgsr_outputrootname -L -Z 0.0
+rapidtide2 fmri.nii.gz sgsr -L -Z 0.0
 
 # b) run tidepool to look at the results from a):
 tidepool
 (then select the file examples/dst/dgsr_lagtimes.nii.gz to load the maps)
 
 # c) look at the refined regressors produced during dGSR:
-# (the "pass1" regressor is the initial global mean before refinement)
+# (the "dgsr_pass1" regressor is the initial global mean before refinement)
 showtc examples/dst/dgsr_reference_fmrires_pass[123].txt
 ```
 
