@@ -17,6 +17,22 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+addtidepool = True
+
+modules_list= ['tide_funcs']
+if addtidepool:
+    modules_list.append('tidepoolTemplate')
+    modules_list.append('OrthoImageItem')
+
+script_list = ['bin/rapidtide2',
+               'bin/showxcorr',
+               'bin/resamp1tc',
+               'bin/resamplenifti',
+               'bin/showtc',
+               'bin/showhist']
+if addtidepool:
+    script_list.append('bin/tidepool')
+
 setup(
     name='rapidtide',
 
@@ -76,7 +92,12 @@ setup(
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
     #   py_modules=["my_module"],
-    py_modules=['tide_funcs'],
+    #py_modules=['tide_funcs'],
+    #
+    #if addtidepool:
+    #    py_modules.append('tidepoolTemplate.py')
+    #    py_modules.append('OrthoImageItem.py')
+    py_modules=modules_list,
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
@@ -112,13 +133,16 @@ setup(
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
-    scripts=['bin/rapidtide2',
-             'bin/tidepool',
-             'bin/showxcorr',
-             'bin/resamp1tc',
-             'bin/resamplenifti',
-             'bin/showtc',
-             'bin/showhist'],
+    #scripts=['bin/rapidtide2',
+    #         'bin/showxcorr',
+    #         'bin/resamp1tc',
+    #         'bin/resamplenifti',
+    #         'bin/showtc',
+    #         'bin/showhist'],
+    #if addtidepool:
+    #         scripts.append('bin/tidepool')
+    scripts=script_list,
+
     #entry_points={
         #'console_scripts': [
             #'rapidtide2=rapidtide2:main',
