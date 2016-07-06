@@ -61,11 +61,13 @@ def startendcheck(timepoints, startpoint, endpoint):
         print('startpoint set to minimum, (0)')
     else:
         realstart = startpoint
+        print('startpoint set to ', startpoint)
     if endpoint > timepoints - 1:
         realend = timepoints - 1
         print('endppoint set to maximum, (', timepoints - 1, ')')
     else:
         realend = endpoint
+        print('endpoint set to ', endpoint)
     if realstart >= realend:
         print('endpoint (', realend, ') must be greater than startpoint (', realstart, ')')
         sys.exit()
@@ -1175,7 +1177,6 @@ def main():
                 print('    fmri freq:', fmrifreq)
                 print('    npoints:', len(reference_y))
                 print('    filtorder:', optiondict['filtorder'])
-            print(inputfreq, fmrifreq, optiondict['filtorder'])  # debug
             reference_y_filt = tide.dolpfiltfilt(inputfreq, 0.5 * fmrifreq, reference_y, optiondict['filtorder'],
                                                  padlen=int(inputfreq * optiondict['padseconds']))
         else:
