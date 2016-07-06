@@ -99,12 +99,13 @@ def newViewWindow(view, xdim, ydim, left, top, scalefacx, scalefacy, imgsize, en
 class OrthoImageItem(QtGui.QWidget):
     updated = QtCore.pyqtSignal()
 
-    def __init__(self, map, view, enableMouse=False, button=None, imgsize=64, arrangement=0, bgmap=None):
+    def __init__(self, map, view, enableMouse=False, button=None, imgsize=64, arrangement=0, bgmap=None, verbose=False):
         QtGui.QWidget.__init__(self)
         self.map = map
         self.bgmap = bgmap
         self.view = view
         self.button = button
+        self.verbose = verbose
         self.enableMouse = enableMouse
         self.xdim = self.map.xdim
         self.ydim = self.map.ydim
@@ -125,9 +126,21 @@ class OrthoImageItem(QtGui.QWidget):
         self.scalefacx = self.imgsize * (self.xfov / self.maxfov) / self.xdim
         self.scalefacy = self.imgsize * (self.yfov / self.maxfov) / self.ydim
         self.scalefacz = self.imgsize * (self.zfov / self.maxfov) / self.zdim
+        self.revscalefacx = self.imgsize / (self.maxfov * self.scalefacx)
+        self.revscalefacy = self.imgsize / (self.maxfov * self.scalefacy)
+        self.revscalefacz = self.imgsize / (self.maxfov * self.scalefacz)
         self.offsetx = self.imgsize * (0.5 - self.xfov / (2.0 * self.maxfov))
         self.offsety = self.imgsize * (0.5 - self.yfov / (2.0 * self.maxfov))
         self.offsetz = self.imgsize * (0.5 - self.zfov / (2.0 * self.maxfov))
+        if self.verbose:
+            print('OrthoImageItem intialization:')
+            print('    Dimensions:', self.xdim, self.ydim, self.zdim)
+            print('    Voxel sizes:', self.xsize, self.ysize, self.zsize)
+            print('    FOVs:', self.xfov, self.yfov, self.zfov)
+            print('    Maxfov, imgsize:', self.maxfov, self.imgsize)
+            print('    Scale factors:', self.scalefacx, self.scalefacy, self.scalefacz)
+            print('    Reverse scale factors:', self.revscalefacx, self.revscalefacy, self.revscalefacz)
+            print('    Offsets:', self.offsetx, self.offsety, self.offsetz)
         self.buttonisdown = False
 
         self.arrangement = arrangement
@@ -178,7 +191,7 @@ class OrthoImageItem(QtGui.QWidget):
         return int(np.round(self.offsetz + self.scalefacz * zpos))
 
     def xpix2pos(self, xpix):
-        thepos = self.xdim / 2.0 + (xpix - self.imgsize / 2) / self.scalefacx
+        thepos = self.xdim / 2.0 + (xpix - self.imgsize / 2) * self.revscalefacx
         if thepos > self.xdim - 1:
             thepos = self.xdim - 1
         if thepos < 0:
@@ -186,7 +199,7 @@ class OrthoImageItem(QtGui.QWidget):
         return int(np.round(thepos))
 
     def ypix2pos(self, ypix):
-        thepos = self.ydim / 2.0 + (ypix - self.imgsize / 2) / self.scalefacy
+        thepos = self.ydim / 2.0 + (ypix - self.imgsize / 2) * self.revscalefacy
         if thepos > self.ydim - 1:
             thepos = self.ydim - 1
         if thepos < 0:
@@ -194,7 +207,7 @@ class OrthoImageItem(QtGui.QWidget):
         return int(np.round(thepos))
 
     def zpix2pos(self, zpix):
-        thepos = self.zdim / 2.0 + (zpix - self.imgsize / 2) / self.scalefacz
+        thepos = self.zdim / 2.0 + (zpix - self.imgsize / 2) * self.revscalefacz
         if thepos > self.zdim - 1:
             thepos = self.zdim - 1
         if thepos < 0:
@@ -338,6 +351,7 @@ class OrthoImageItem(QtGui.QWidget):
     def handleaxclick(self, event):
         self.xpos = self.xpix2pos(event.pos().x())
         self.ypos = self.ypix2pos(self.imgsize - event.pos().y())
+        print(event.pos().x(), self.xpos, self.imgsize, event.pos().y(), self.ypos)
         self.buttonisdown = True
         self.updateAllViews()
         self.updateCursors()
