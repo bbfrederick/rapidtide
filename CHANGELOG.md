@@ -1,5 +1,5 @@
 # History of changes
 
-## Version 0.1.1 (6/16/16)
+## Version 0.1.1 (7/8/16)
 
 * First release
