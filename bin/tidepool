@@ -791,7 +791,7 @@ def set_0p05():
     print('setting functional mask to p<0.05')
     ui.setMask_Button.setText('p<0.05')
     for themap in loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays['p_lt_0p05_mask'].data)
+        overlays[themap].setFuncMask(overlays['p_lt_0p050_mask'].data)
     updateOrthoImages()
     updateHistogram()
 
@@ -801,7 +801,7 @@ def set_0p01():
     print('setting functional mask to p<0.01')
     ui.setMask_Button.setText('p<0.01')
     for themap in loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays['p_lt_0p01_mask'].data)
+        overlays[themap].setFuncMask(overlays['p_lt_0p010_mask'].data)
     updateOrthoImages()
     updateHistogram()
 
@@ -1402,7 +1402,7 @@ def main():
         allloadedmaps.append('anatomic')
 
     # then the functional masks
-    funcmasks = ['lagmask', 'p_lt_0p05_mask', 'p_lt_0p01_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
+    funcmasks = ['lagmask', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
     loadedfuncmasks = loadfuncmasks(datafileroot, overlays, funcmasks)
 
     # then the geometric masks
@@ -1481,12 +1481,12 @@ def main():
                 'colormap': gray_state,
                 'label': 'Refine mask',
                 'funcmask': None},
-        'p_lt_0p05_mask':
+        'p_lt_0p050_mask':
             {
                 'colormap': gray_state,
                 'label': 'p<0.05',
                 'funcmask': None},
-        'p_lt_0p01_mask':
+        'p_lt_0p010_mask':
             {
                 'colormap': gray_state,
                 'label': 'p<0.01',
@@ -1505,47 +1505,47 @@ def main():
             {
                 'colormap': viridis_state,
                 'label': 'Rise times',
-                'funcmask': 'p_lt_0p05_mask'},
+                'funcmask': 'p_lt_0p050_mask'},
         'maxamp_epoch_0':
             {
                 'colormap': viridis_state,
                 'label': 'CVR',
-                'funcmask': 'p_lt_0p05_mask'},
+                'funcmask': 'p_lt_0p050_mask'},
         'starttime_epoch_0':
             {
                 'colormap': viridis_state,
                 'label': 'Start times',
-                'funcmask': 'p_lt_0p05_mask'},
+                'funcmask': 'p_lt_0p050_mask'},
         'lagtimes':
             {
                 'colormap': viridis_state,
                 'label': 'Lag times',
-                'funcmask': 'p_lt_0p05_mask'},
+                'funcmask': 'p_lt_0p050_mask'},
         'lagstrengths':
             {
                 'colormap': thermal_state,
                 'label': 'Correlation coefficient',
-                'funcmask': 'p_lt_0p05_mask'},
+                'funcmask': 'p_lt_0p050_mask'},
         'lagsigma':
             {
                 'colormap': spectrum_state,
                 'label': 'MTT',
-                'funcmask': 'p_lt_0p05_mask'},
+                'funcmask': 'p_lt_0p050_mask'},
         'fitNorm':
             {
                 'colormap': thermal_state,
                 'label': 'fitNorm',
-                'funcmask': 'p_lt_0p05_mask'},
+                'funcmask': 'p_lt_0p050_mask'},
         'R2':
             {
                 'colormap': thermal_state,
                 'label': 'R2',
-                'funcmask': 'p_lt_0p05_mask'},
+                'funcmask': 'p_lt_0p050_mask'},
         'corrout':
             {
                 'colormap': thermal_state,
                 'label': 'Correlation function',
-                'funcmask': 'p_lt_0p05_mask'},
+                'funcmask': 'p_lt_0p050_mask'},
         'anatomic':
             {
                 'colormap': gray_state,
@@ -1560,7 +1560,7 @@ def main():
             {
                 'colormap': thermal_state,
                 'label': 'GLM fit coefficient',
-                'funcmask': 'p_lt_0p05_mask'}}
+                'funcmask': 'p_lt_0p050_mask'}}
 
     print('setting overlay defaults')
     for themap in allloadedmaps + loadedfuncmasks:
@@ -1584,8 +1584,8 @@ def main():
 
     print('setting functional masks')
     for theoverlay in loadedfuncmaps:
-        if 'p_lt_0p05_mask' in overlays:
-            overlays[theoverlay].setFuncMask(overlays['p_lt_0p05_mask'].data)
+        if 'p_lt_0p050_mask' in overlays:
+            overlays[theoverlay].setFuncMask(overlays['p_lt_0p050_mask'].data)
             ui.setMask_Button.setText('p<0.05')
         else:
             overlays[theoverlay].setFuncMask(overlays['lagmask'].data)
@@ -1659,9 +1659,9 @@ def main():
         if numspecial > 0:
             popMenu.addSeparator()
         """
-        if 'p_lt_0p05_mask' in loadedfuncmasks:
+        if 'p_lt_0p050_mask' in loadedfuncmasks:
             popMenu.addAction(sel_0p05)
-        if 'p_lt_0p01_mask' in loadedfuncmasks:
+        if 'p_lt_0p010_mask' in loadedfuncmasks:
             popMenu.addAction(sel_0p01)
         if 'p_lt_0p005_mask' in loadedfuncmasks:
             popMenu.addAction(sel_0p005)
