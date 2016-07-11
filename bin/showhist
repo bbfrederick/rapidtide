@@ -27,10 +27,10 @@ import platform
 import tide_funcs as tide
 from pylab import plot, xlabel, ylabel, title, legend, show
 
-if platform.system() == 'Darwin':
-    matplotlib.use('MacOSX')
-else:
-    matplotlib.use('TkAgg')
+#if platform.system() == 'Darwin':
+#    matplotlib.use('MacOSX')
+#else:
+#    matplotlib.use('TkAgg')
 
 
 def usage():

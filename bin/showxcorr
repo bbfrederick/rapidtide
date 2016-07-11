@@ -27,10 +27,11 @@ import platform
 import matplotlib
 import numpy as np
 
-if platform.system() == 'Darwin':
-    matplotlib.use('MacOSX')
-else:
-    matplotlib.use('TkAgg')
+#if platform.system() == 'Darwin':
+#    matplotlib.use('MacOSX')
+#else:
+#    matplotlib.use('TkAgg')
+
 import getopt
 import tide_funcs as tide
 from scipy.signal import correlate

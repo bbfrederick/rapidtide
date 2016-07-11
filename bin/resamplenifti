@@ -32,10 +32,10 @@ from numpy import r_, zeros, ones, shape, where
 from pylab import *
 import nibabel as nib
 
-if platform.system() == 'Darwin':
-    matplotlib.use('MacOSX')
-else:
-    matplotlib.use('TkAgg')
+#if platform.system() == 'Darwin':
+#    matplotlib.use('MacOSX')
+#else:
+#    matplotlib.use('TkAgg')
 
 
 def usage():

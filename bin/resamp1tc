@@ -31,11 +31,10 @@ from scipy import arange
 from numpy import max, floor
 from pylab import plot, legend, show, hold
 
-if platform.system() == 'Darwin':
-    matplotlib.use('MacOSX')
-else:
-    matplotlib.use('TkAgg')
-
+#if platform.system() == 'Darwin':
+#    matplotlib.use('MacOSX')
+#else:
+#    matplotlib.use('TkAgg')
 
 def usage():
     print("resamp1tc - resample a timeseries file")
