@@ -16,8 +16,8 @@
 #
 #
 # $Author: frederic $
-#       $Date: 2016/06/14 13:51:27 $
-#       $Id: showtc,v 1.15 2016/06/14 13:51:27 frederic Exp $
+#       $Date: 2016/07/11 14:50:43 $
+#       $Id: showtc,v 1.16 2016/07/11 14:50:43 frederic Exp $
 #
 from __future__ import print_function
 import sys

@@ -16,8 +16,8 @@
 #
 #
 # $Author: frederic $
-# $Date: 2016/06/14 14:05:01 $
-# $Id: rapidtide,v 1.158 2016/06/14 14:05:01 frederic Exp $
+# $Date: 2016/07/11 14:50:43 $
+# $Id: rapidtide,v 1.161 2016/07/11 14:50:43 frederic Exp $
 #
 #
 #
@@ -49,7 +49,7 @@ from scipy.stats.stats import pearsonr
 
 
 def version():
-    return '$Id: rapidtide,v 1.158 2016/06/14 14:05:01 frederic Exp $'
+    return '$Id: rapidtide,v 1.161 2016/07/11 14:50:43 frederic Exp $'
 
 
 def startendcheck(timepoints, startpoint, endpoint):
