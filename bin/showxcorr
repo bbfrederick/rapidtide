@@ -84,11 +84,6 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
     return corrlist, corrlist_pear
 
 
-def printthresholds(pcts, thepercentiles, labeltext):
-    print(labeltext)
-    for i in range(0, len(pcts)):
-        print('\tp <', 1.0 - thepercentiles[i], ': ', pcts[i])
-
 def usage():
     print("showxcorr - calculate and display crosscorrelation between two timeseries")
     print("")
@@ -150,6 +145,7 @@ summarymode = False
 dofftcorr = True
 labelline = False
 estimate_significance = False
+writecorrlists = False
 flipregressor = False
 
 debug = False
@@ -377,15 +373,22 @@ if estimate_significance:
         tide.printthresholds(pearpcts, thepercentiles, 'Pearson correlation significance thresholds from data:')
         tide.printthresholds(pearpcts_fit, thepercentiles, 'Pearson correlation significance thresholds from fit:')
 
-    tide.writenpvecs(corrlist, "corrlist.txt")
-    tide.writenpvecs(corrlist_pear, "corrlist_pear.txt")
+    if writecorrlists:
+        tide.writenpvecs(corrlist, "corrlist.txt")
+        tide.writenpvecs(corrlist_pear, "corrlist_pear.txt")
+
+def printthresholds(pcts, thepercentiles, labeltext):
+    print(labeltext)
+    for i in range(0, len(pcts)):
+        print('\tp <', "{:.3f}".format(1.0 - thepercentiles[i]), ': ', pcts[i])
+
 
 # report the pearson correlation
 if showpearson and verbose:
     print('Pearson_R:\t', thepxcorr[0])
     if estimate_significance:
         for idx, percentile in enumerate(thepercentiles):
-            print("    pear_p("+str(1.0 - percentile)+"):\t",pearpcts[idx])
+            print('    pear_p(', "{:.3f}".format(1.0 - percentile), '):\t', pearpcts[idx])
     print("")
 
 if debug:
@@ -399,7 +402,7 @@ if verbose:
         print("Crosscorrelation_maxdelay:\t", maxdelay)
         if estimate_significance:
             for idx, percentile in enumerate(thepercentiles):
-                print("    xc_p("+str(1.0 - percentile)+"):\t",pcts[idx])
+                print('    xc_p(', "{:.3f}".format(1.0 - percentile), '):\t', pcts[idx])
         print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
 
 if summarymode:
