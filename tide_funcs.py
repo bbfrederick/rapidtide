@@ -15,8 +15,8 @@
 #   limitations under the License.
 #
 # $Author: frederic $
-# $Date: 2016/06/10 20:27:34 $
-# $Id: tide_funcs.py,v 1.1 2016/06/10 20:27:34 frederic Exp $
+# $Date: 2016/07/12 13:50:29 $
+# $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
 from __future__ import print_function, division
 
@@ -106,7 +106,7 @@ CARD_UPPERPASS = 2.5
 CARD_UPPERSTOP = 3.0
 
 def version():
-    return '$Id: tide_funcs.py,v 1.1 2016/06/10 20:27:34 frederic Exp $'
+    return '$Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $'
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
@@ -499,7 +499,7 @@ def quickcorr(data1, data2):
 
 
 def shorttermcorr_1D(data1, data2, sampletime, windowtime, prewindow=False, dodetrend=False):
-    windowsize = windowtime // sampletime
+    windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
     corrpertime = data1 * 0.0
     ppertime = data1 * 0.0
@@ -513,7 +513,7 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, prewindow=False, dode
 
 
 def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dodetrend=False, display=False):
-    windowsize = windowtime // sampletime
+    windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
 
     dataseg1 = corrnormalize(data1[0:2 * halfwindow], prewindow, dodetrend)
@@ -521,7 +521,7 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dode
     thexcorr = fastcorrelate(dataseg1, dataseg2)
     xcorrlen = len(thexcorr)
     xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
-    corrzero = xcorrlen // 2
+    corrzero = int(xcorrlen // 2)
     xcorrpertime = np.zeros((xcorrlen, len(data1)))
     Rvals = np.zeros((len(data1)))
     valid = np.zeros((len(data1)))
@@ -857,7 +857,7 @@ def makemask(image, threshpct=25.0, verbose=False):
 
 
 def makelaglist(lagstart, lagend, lagstep):
-    numsteps = np.floor((lagend - lagstart) / lagstep) + 1
+    numsteps = int((lagend - lagstart) // lagstep + 1)
     lagend = lagstart + lagstep * (numsteps - 1)
     print("creating list of ", numsteps, " lag steps (", lagstart, " to ", lagend, " in steps of ", lagstep, ")")
     thelags = np.r_[0.0:1.0 * numsteps] * lagstep + lagstart
@@ -1148,8 +1148,8 @@ def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio,
     hires_x_padded = np.r_[-padvalue:fmritr * numtrs + padvalue:hiresstep]
     hiresstart = hires_x_padded[0]
     hires_y = doresample(orig_x, orig_y, hires_x_padded, method='univariate')
-    hires_y[:padvalue//hiresstep] = 0.0
-    hires_y[-padvalue//hiresstep:] = 0.0
+    hires_y[:int(padvalue // hiresstep)] = 0.0
+    hires_y[-int(padvalue // hiresstep):] = 0.0
     if doplot:
         fig = pl.figure()
         ax = fig.add_subplot(111)
@@ -1190,12 +1190,12 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
     # upsample
     endpoint = orig_x[-1] - orig_x[0]
     intermed_ts = 1.0 / intermed_freq
-    numresamppts = np.floor(endpoint / intermed_ts) + 1
+    numresamppts = int(endpoint // intermed_ts + 1)
     intermed_x = np.arange(0.0, intermed_ts * numresamppts, intermed_ts)
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
 
     # antialias
-    aafilter = noncausalfilter(type='arb', usebutterworth=True)
+    aafilter = noncausalfilter(filtertype='arb', usebutterworth=True)
     aafilter.setarb(0.0, 0.0, 0.95 * final_freq, final_freq)
     antialias_y = aafilter.apply(intermed_freq, intermed_y)
     # antialias_y = dolptrapfftfilt(intermed_freq,0.9*final_freq,final_freq,intermed_y)
@@ -1372,7 +1372,7 @@ def timeshift2(inputtc, shifttrs, padtrs, doplot=False, dopostfilter=False):
     offset = padtrs
 
     # initialize the postfilter
-    theringfilter = noncausalfilter(type='ringstop')
+    theringfilter = noncausalfilter(filtertype='ringstop')
 
     # initialize variables
     preshifted_y = np.zeros(thepaddedlen)  # initialize the working buffer (with pad)
@@ -1438,7 +1438,7 @@ def hann(length):
 
 
 def hamming(length):
-    return 0.54 - 0.46 * np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi)
+    return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
 
 
 def envdetect(vector, filtwidth=3.0):
@@ -1487,6 +1487,7 @@ def corrnormalize(thedata, prewindow, dodetrend):
         intervec = stdnormalize(thedata)
 
     # then window
+    #print('corrnormalize: len(thedata)=',len(thedata),'len(hamming(len(thedata)))=',len(hamming(len(thedata))))
     if prewindow:
         return stdnormalize(hamming(len(thedata)) * intervec) / np.sqrt(len(thedata))
     else:
