@@ -5,9 +5,9 @@ rapidtide2 ../examples/src/fmri.nii.gz ../examples/dst/sgsr \
 
 rapidtide2 ../examples/src/fmri.nii.gz ../examples/dst/dgsr \
     -N 10000 \
-    -F 0.0,0.15 -r -15,15 --refinepasses=3 --lagminthresh=0.5 &
+    -F 0.0,0.15 -r -7.5,7.5 --refinepasses=3 --lagminthresh=0.5 &
 
 rapidtide2 ../examples/src/fmri.nii.gz ../examples/dst/finger_tHb_hf \
     -N 10000 \
     --regressor=../examples/src/lf_tHb --regressorfreq=12.5 --regressorstart=656.4 \
-    -F 0.1,0.2 -r -15,15 &
+    -F 0.1,0.2 -r -7.5,7.5 &
