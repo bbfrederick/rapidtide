@@ -18,8 +18,9 @@ be MANY commits, and I'll try do document exactly why.
 
 **IMPORTANT:  I've gotten some of the automated testing up and running again,
 and sure enough, I seem to have broken something in the packaging and
-updating routines for python 3 compatibility.  The package is currently
-NOT working properly**
+updating routines for python 3 compatibility.  rapidtide2 is currently
+NOT working properly - there is a time shift in the delay maps, and perhaps
+more subtle problems that I need to work through.**
 
 Why do I want to know about time lagged correlations?
 =======================
