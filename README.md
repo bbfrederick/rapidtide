@@ -16,6 +16,11 @@ process.  If you are downloadingthe 0.1.0 release, check back frequently
 over the next month or so as I nail everything down.  There will probably
 be MANY commits, and I'll try do document exactly why.
 
+**IMPORTANT:  I've gotten some of the automated testing up and running again,
+and sure enough, I seem to have broken something in the packaging and
+updating routines for python 3 compatibility.  The package is currently
+NOT working properly**
+
 Why do I want to know about time lagged correlations?
 =======================
 This comes out of work by our group (The Opto-Magnetic group at McLean
