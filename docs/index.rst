@@ -12,6 +12,24 @@ Rapidtide is a suite of python programs used to perform time delay analysis on f
 .. toctree::
    :maxdepth: 2
 
+NOTE
+====
+I'm still constructing this repository - including doing some last minute
+code reformatting, writing documentation, making a working setup.py file,
+and deciding what should and should not be included. **It's very possible
+I could break something while doing this, so check back for status updates
+if you download the code in this initial period**.  I'm also adding
+automated testing, so it's possible some things may turn up during this 
+process.  If you are downloadingthe 0.1.0 release, check back frequently
+over the next month or so as I nail everything down.  There will probably
+be MANY commits, and I'll try do document exactly why.
+
+**IMPORTANT:  I've gotten some of the automated testing up and running again,
+and sure enough, I seem to have broken something in the packaging and
+updating routines for python 3 compatibility.  rapidtide2 is currently
+NOT working properly - there is a time shift in the delay maps, and perhaps
+more subtle problems that I need to work through.**
+
 Introduction
 ============
 Why do I want to know about time lagged correlations?
