@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+The pretty html version of this file can be found here: http://rapidtide.readthedocs.io/en/latest/
+
 Rapidtide
 ==========
 Rapidtide is a suite of python programs used to perform time delay analysis on functional imaging data to find time lagged correlations between the voxelwise time series and other time series. 
