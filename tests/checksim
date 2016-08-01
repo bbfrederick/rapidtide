@@ -1,0 +1,9 @@
+#!/bin/csh
+rapidtide2 ../examples/src/sim_bolddata.nii.gz ../examples/dst/sim_dgsr \
+    -N 10000 \
+    -L -r -10,10 --refinepasses=3 --lagminthresh=0.5 &
+
+rapidtide2 ../examples/src/sim_bolddata.nii.gz ../examples/dst/sim_tHb_lf \
+    -N 10000 \
+    --regressor=../examples/src/lf_tHb --regressorfreq=12.5 --regressorstart=656.4 \
+    -L -r -10,10 &
