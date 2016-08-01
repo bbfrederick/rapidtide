@@ -3,12 +3,32 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+The pretty html version of this file can be found here: http://rapidtide.readthedocs.io/en/latest/
+
 Rapidtide
 ==========
 Rapidtide is a suite of python programs used to perform time delay analysis on functional imaging data to find time lagged correlations between the voxelwise time series and other time series. 
 
 .. toctree::
    :maxdepth: 2
+
+NOTE
+====
+I'm still constructing this repository - including doing some last minute
+code reformatting, writing documentation, making a working setup.py file,
+and deciding what should and should not be included. **It's very possible
+I could break something while doing this, so check back for status updates
+if you download the code in this initial period**.  I'm also adding
+automated testing, so it's possible some things may turn up during this 
+process.  If you are downloadingthe 0.1.0 release, check back frequently
+over the next month or so as I nail everything down.  There will probably
+be MANY commits, and I'll try do document exactly why.
+
+**IMPORTANT:  I've gotten some of the automated testing up and running again,
+and sure enough, I seem to have broken something in the packaging and
+updating routines for python 3 compatibility.  rapidtide2 is currently
+NOT working properly - there is a time shift in the delay maps, and perhaps
+more subtle problems that I need to work through.**
 
 Introduction
 ============
@@ -85,6 +105,8 @@ Inputs:
 At a minimum, rapidtide2 needs a Nifti file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2; I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti in workbench, run rapidtide2, then convert back. As soon as nibabel finishes their Cifti support, I'll add that.
 
 The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a time by voxel array for simplicity.
+
+The file you input here should be the result of any preprocessing you intend to do.  The expectation is that rapidtide will be run as the last preprocessing step before resting state or task based analysis.  So any slice time correction, motion correction, spike removal, etc. should already have been done.  If you use FSL, this means that if you've run preprocessing, you would use the filtered_func_data.nii.gz file as input.  Temporal and spatial filtering are the two (partial) exceptions here.  Generally rapidtide is most useful for looking at low frequency oscillations, so when you run it, you usually use the "-L" option or some other to limit the analysis to the detection and removal of low frequency systemic physiological oscillations.  So rapidtide will generally apply it's own temporal filtering on top of whatever you do in preprocessing.  Also, you have the option of doing spatial smoothing in rapidtide to boost the SNR of the analysis; the hemodynamic signals rapidtide looks for are often very smooth, so you rather than smooth your functional data excessively, you can do it within rapidtide so that only the hemodynamic data is smoothed at that level.
      
 Outputs:
 ^^^^^^^^

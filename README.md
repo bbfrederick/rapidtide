@@ -4,6 +4,8 @@ Rapidtide is a suite of python programs used to perform rapid time delay
 analysis on functional imaging data to find time lagged  correlations 
 between the voxelwise time series and other time series.
 
+HTML documentation is here: http://rapidtide.readthedocs.io/en/latest/
+
 NOTE
 ====
 I'm still constructing this repository - including doing some last minute
@@ -15,6 +17,12 @@ automated testing, so it's possible some things may turn up during this
 process.  If you are downloadingthe 0.1.0 release, check back frequently
 over the next month or so as I nail everything down.  There will probably
 be MANY commits, and I'll try do document exactly why.
+
+**IMPORTANT:  I've gotten some of the automated testing up and running again,
+and sure enough, I seem to have broken something in the packaging and
+updating routines for python 3 compatibility.  rapidtide2 is currently
+NOT working properly - there is a time shift in the delay maps, and perhaps
+more subtle problems that I need to work through.**
 
 Why do I want to know about time lagged correlations?
 =======================
