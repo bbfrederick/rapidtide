@@ -1124,7 +1124,11 @@ class fastresampler:
             pl.show()
     
     def yfromx(self, newtimeaxis, doplot=False):
-        outindices = ((newtimeaxis -  self.hiresstart) // self.hiresstep).astype(int)
+        #print('initstep, hiresstep:',self.initstep, self.hiresstep)
+        #print('newtimeaxis:',newtimeaxis)
+        #print('hiresstart:', self.hiresstart)
+        outindices = (np.floor((newtimeaxis -  self.hiresstart) / self.hiresstep)).astype(int)
+        print('shifted time axis:', newtimeaxis - self.hiresstart)
         try:
             out_y = self.hires_y[outindices]
         except IndexError:
