@@ -68,7 +68,7 @@ def usage():
 
 # set default variable values
 displayplots = False
-fastresample = True
+fastresample = False
 
 # get the command line parameters
 if len(sys.argv) != 12:
