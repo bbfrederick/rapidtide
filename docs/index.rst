@@ -117,114 +117,118 @@ Usage:
 
 ::
 
-    usage: rapidtide2 fmrifilename outputname
-    [-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [-G] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] [-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME] [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS][--refineweighting=REFINETYPE] [--refinepasses=NUMPASSES] [--excludemask=MASKNAME] [--includemask=MASKNAME] [--lagminthresh=LAGMINTHRESH] [--lagmaxthresh=LAGMAXTHRESH] [--ampthresh=AMPTHRESH][--sigmathresh=SIGMATHRESH] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE][--limitoutput] [--timerange=STARTPOINT,ENDPOINT]
-    [--numskip=SKIP] [--sliceorder=ORDER] [--regressorfreq=FREQ] [--regressor=FILENAME] [--regressorstart=STARTTIME]
- 
-    required arguments:
-        fmrifilename    - the BOLD fmri file
-        outputname    - the root name for the output files
- 
-    preprocessing options:
-        -t TRvalue       - override the TR in the fMRI file with the value
-                           TRvalue
-        -a               - disable antialiasing filter
-        --nodetrend      - disable linear trend removal
-        -I               - invert the sign of the regressor before processing
-        -i               - use specified interpolation type (options are 'cubic',
-                           'quadratic', and 'univariate (default)')
-        -o               - apply an offset OFFSETTIME to the lag regressors
-        -b               - use butterworth filter for band splitting instead of
-                           trapezoidal FFT filter
-        -F               - filter data and regressors from LOWERFREQ to UPPERFREQ.
-                           LOWERSTOP and UPPERSTOP can be specified, or will be
-                           calculated automatically
-        -V               - filter data and regressors to VLF band
-        -L               - filter data and regressors to LFO band
-        -R               - filter data and regressors to respiratory band
-        -C               - filter data and regressors to cardiac band
-        -N               - estimate significance threshold by running NREPS null
-                           correlations (default is 10000, set to 0 to disable)
-        --nowindow       - disable precorrelation windowing
-        -f GAUSSSIGMA    - spatially filter fMRI data prior to analysis using
-                           GAUSSSIGMA in mm
-        -M               - generate a global mean regressor and use that as the
-                           reference regressor
-        -m               - mean scale regressors during global mean estimation
-        --sliceorder     - use ORDER as slice acquisition order used (6 is Siemens
-                           interleave, default is 0 (do nothing))
-        --numskip SKIP   - SKIP tr's were previously deleted during preprocessing
-                           (default is 0)
- 
-    correlation options:
-        -O OVERSAMPFAC      - oversample the fMRI data by the following integral
-                              factor (default is 2)
-        --regressor      - Read probe regressor from file FILENAME (if none
-                           specified, generate and use global regressor)
-        --regressorfreq  - Probe regressor in file has sample frequency FREQ
-                           (default is 1/tr)
-        --regressorstart - First TR of fmri file occurs at time STARTTIME
-                           in the regressor file (default is 0.0)
-        -G               - use generalized cross-correlation with phase alignment
-                           transform (GCC-PHAT) instead of correlation
-     
-    correlation fitting options:
-        -Z DELAYTIME     - don't fit the delay time - set it to DELAYTIME seconds
-                           for all voxels
-        -r LAGMIN,LAGMAX - limit fit to a range of lags from LAGMIN to LAGMAX
-        -s SIGMALIMIT    - reject lag fits with linewidth wider than SIGMALIMIT
-     
-    regressor refinement options:
-        --refineweighting  - apply REFINETYPE weighting to each timecourse prior
-                             to refinement (valid weightings are 'None',
-                             'R', 'R2' (default)
-        --refinepasses     - set the number of refinement passes to NUMPASSES
-                             (default is 1)
-        --includemask      - only use voxels in MASKNAME for global regressor
-                             generation and regressor refinement
-        --excludemask      - do not use voxels in MASKNAME for global regressor
-                             generation and regressor refinement
-        --lagminthresh     - for refinement, exclude voxels with delays less
-                             than LAGMINTHRESH (default is 1.5s)
-        --lagmaxthresh     - for refinement, exclude voxels with delays greater
-                             than LAGMAXTHRESH (default is 1000s)
-        --ampthresh        - for refinement, exclude voxels with correlation
-                             coefficients less than AMPTHRESH (default is 0.3)
-        --sigmathresh      - for refinement, exclude voxels with widths greater
-                             than SIGMATHRESH (default is 50s)
-        --refineoffset     - adjust offset time during refinement to bring peak
-                             delay to zero
-        --refineupperlag   - only use positive lags for regressor refinement
-        --refinelowerlag   - only use negative lags for regressor refinement
-        --pca              - use pca to derive refined regressor (default is
-                             averaging)
-        --ica              - use ica to derive refined regressor (default is
-                             averaging)
-     
-    output options:
-        --limitoutput    - don't save some of the large and rarely used files
-        -T               - save a table of lagtimes used
-        -h HISTLEN       - change the histogram length to HISTLEN (default is
-                           100)
-        --timerange      - limit analysis to data between timepoints STARTPOINT
-                           and ENDPOINT in the fmri file
-        --noglm          - turn off GLM filtering to remove delayed regressor
-                           from each voxel (disables output of rCBV)
-     
-    miscellaneous options:
-        -c               - data file is a converted CIFTI
-        -S               - simulate a run - just report command line options
-        -d               - display plots of interesting timecourses
-     
-    experimental options (not fully tested, may not work):
-        --tmask=MASKFILE - only correlate during epochs specified in
-                           MASKFILE (NB: each line of MASKFILE contains the
-                           time and duration of an epoch to include
-        -p               - prewhiten and refit data
-        -P               - save prewhitened data (turns prewhitening on)
-        -A, --AR         - set AR model order to ORDER (default is 1)
-        -B               - biphasic mode - match peak correlation ignoring sign
- 
+usage: rapidtide2 fmrifilename outputname 
+[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [-G] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] [-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME] [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS][--refineweighting=REFINETYPE] [--refinepasses=NUMPASSES] [--excludemask=MASKNAME] [--includemask=MASKNAME] [--lagminthresh=LAGMINTHRESH] [--lagmaxthresh=LAGMAXTHRESH] [--ampthresh=AMPTHRESH][--sigmathresh=SIGMATHRESH] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE][--limitoutput] [--timerange=STARTPOINT,ENDPOINT] 
+[--numskip=SKIP] [--sliceorder=ORDER] [--regressorfreq=FREQ] [--regressortstep=TSTEP] [--regressor=FILENAME] [--regressorstart=STARTTIME]
+
+required arguments:
+    fmrifilename    - the BOLD fmri file
+    outputname      - the root name for the output files
+
+preprocessing options:
+    -t TRvalue       - override the TR in the fMRI file with the value 
+                       TRvalue
+    -a               - disable antialiasing filter
+    --nodetrend      - disable linear trend removal
+    -I               - invert the sign of the regressor before processing
+    -i               - use specified interpolation type (options are 'cubic',
+                       'quadratic', and 'univariate (default)')
+    -o               - apply an offset OFFSETTIME to the lag regressors
+    -b               - use butterworth filter for band splitting instead of
+                       trapezoidal FFT filter
+    -F               - filter data and regressors from LOWERFREQ to UPPERFREQ.
+                       LOWERSTOP and UPPERSTOP can be specified, or will be
+                       calculated automatically
+    -V               - filter data and regressors to VLF band
+    -L               - filter data and regressors to LFO band
+    -R               - filter data and regressors to respiratory band
+    -C               - filter data and regressors to cardiac band
+    -N               - estimate significance threshold by running NREPS null 
+                       correlations (default is 10000, set to 0 to disable)
+    --nowindow       - disable precorrelation windowing
+    -f GAUSSSIGMA    - spatially filter fMRI data prior to analysis using 
+                       GAUSSSIGMA in mm
+    -M               - generate a global mean regressor and use that as the 
+                       reference regressor
+    -m               - mean scale regressors during global mean estimation
+    --sliceorder     - use ORDER as slice acquisition order used (6 is Siemens 
+                       interleave, default is 0 (do nothing))
+    --numskip SKIP   - SKIP tr's were previously deleted during preprocessing
+                        (default is 0)
+
+correlation options:
+    -O OVERSAMPFAC      - oversample the fMRI data by the following integral 
+                       factor (default is 2)
+    --regressor      - Read probe regressor from file FILENAME (if none 
+                       specified, generate and use global regressor)
+    --regressorfreq  - Probe regressor in file has sample frequency FREQ 
+                       (default is 1/tr) NB: --regressorfreq and --regressortstep
+                       are two ways to specify the same thing
+    --regressortstep - Probe regressor in file has sample time step TSTEP 
+                       (default is tr) NB: --regressorfreq and --regressortstep
+                       are two ways to specify the same thing
+    --regressorstart - the time delay in seconds into the regressor file, corresponding
+                       in the first TR of the fmri file (default is 0.0)
+    -G               - use generalized cross-correlation with phase alignment 
+                       transform (GCC-PHAT) instead of correlation
+
+correlation fitting options:
+    -Z DELAYTIME     - don't fit the delay time - set it to DELAYTIME seconds 
+                       for all voxels
+    -r LAGMIN,LAGMAX - limit fit to a range of lags from LAGMIN to LAGMAX
+    -s SIGMALIMIT    - reject lag fits with linewidth wider than SIGMALIMIT
+
+regressor refinement options:
+    --refineweighting  - apply REFINETYPE weighting to each timecourse prior 
+                         to refinement (valid weightings are 'None', 
+                         'R', 'R2' (default)
+    --refinepasses     - set the number of refinement passes to NUMPASSES 
+                         (default is 1)
+    --includemask      - only use voxels in MASKNAME for global regressor 
+                         generation and regressor refinement
+    --excludemask      - do not use voxels in MASKNAME for global regressor 
+                         generation and regressor refinement
+    --lagminthresh     - for refinement, exclude voxels with delays less 
+                         than LAGMINTHRESH (default is 1.5s)
+    --lagmaxthresh     - for refinement, exclude voxels with delays greater 
+                         than LAGMAXTHRESH (default is 1000s)
+    --ampthresh        - for refinement, exclude voxels with correlation 
+                         coefficients less than AMPTHRESH (default is 0.3)
+    --sigmathresh      - for refinement, exclude voxels with widths greater 
+                         than SIGMATHRESH (default is 50s)
+    --refineoffset     - adjust offset time during refinement to bring peak 
+                         delay to zero
+    --refineupperlag   - only use positive lags for regressor refinement
+    --refinelowerlag   - only use negative lags for regressor refinement
+    --pca              - use pca to derive refined regressor (default is 
+                         averaging)
+    --ica              - use ica to derive refined regressor (default is 
+                         averaging)
+
+output options:
+    --limitoutput    - don't save some of the large and rarely used files
+    -T               - save a table of lagtimes used
+    -h HISTLEN       - change the histogram length to HISTLEN (default is
+                       100)
+    --timerange      - limit analysis to data between timepoints STARTPOINT 
+                       and ENDPOINT in the fmri file
+    --noglm          - turn off GLM filtering to remove delayed regressor 
+                       from each voxel (disables output of fitNorm)
+
+miscellaneous options:
+    -c               - data file is a converted CIFTI
+    -S               - simulate a run - just report command line options
+    -d               - display plots of interesting timecourses
+
+experimental options (not fully tested, may not work):
+    --tmask=MASKFILE - only correlate during epochs specified in 
+                       MASKFILE (NB: each line of MASKFILE contains the 
+                       time and duration of an epoch to include
+    -p               - prewhiten and refit data
+    -P               - save prewhitened data (turns prewhitening on)
+    -A, --AR         - set AR model order to ORDER (default is 1)
+    -B               - biphasic mode - match peak correlation ignoring sign
+    
 These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
 
     
