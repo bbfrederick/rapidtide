@@ -1106,7 +1106,6 @@ def gaussfit(height, loc, width, xvals, yvals):
 # --------------------------- Resampling and time shifting functions -------------------------------------------
 class fastresampler:
     def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100, doplot=False):
-        #print('initializing fastresampler with padvalue =',padvalue)
         self.upsampleratio = upsampleratio
         self.initstep = timeaxis[1] - timeaxis[0]
         self.hiresstep = self.initstep / self.upsampleratio
@@ -1128,7 +1127,7 @@ class fastresampler:
         #print('newtimeaxis:',newtimeaxis)
         #print('hiresstart:', self.hiresstart)
         outindices = (np.floor((newtimeaxis -  self.hiresstart) / self.hiresstep)).astype(int)
-        print('shifted time axis:', newtimeaxis - self.hiresstart)
+        #print('shifted time axis:', newtimeaxis - self.hiresstart)
         try:
             out_y = self.hires_y[outindices]
         except IndexError:
