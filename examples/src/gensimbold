@@ -5,12 +5,11 @@
 #       $Id: gensimbold,v 1.14 2013/12/17 17:54:46 frederic Exp $
 #
 
-set thesourcedir=../examples/src
-set thedestdir=../examples/dst
+set thesourcedir=.
+set thedestdir=.
 set meanval=1000.0
-set noisepct=0.01
+set noisepct=0.005
 set noiselevel=`echo $meanval $noisepct | awk '{print $1*$2}'`
-echo $noiselevel
 set samplerate=12.5
 set starttime=656.4
 set thbfile=$thesourcedir'/lf_tHb'
@@ -21,11 +20,12 @@ set numskip=30
 set sliceordertype=0	# no slice delay
 echo 'simulated NIRS timecourse has a sample rate of '$samplerate' and starts at '$starttime
 
-# pull one volume out of our example bold file to serve as a basis for constructing our dataset
-fslroi $fmrifile $thesourcedir'/sim_lags' 0 1
+set makesimsources='True'
 
-set makesimsources='False'
 if ( $makesimsources == 'True' ) then
+    # pull one volume out of our example bold file to serve as a basis for constructing our dataset
+    fslroi $fmrifile $thesourcedir'/sim_lags' 0 1
+
     # do simsubject1
     # make a 'head' with a mean value of 1000.0 and a matching mask
     fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add 1000.0 -roi 16 32 16 32 5 20 0 1 $thesourcedir'/sim_mean'
@@ -82,4 +82,11 @@ simdata $fmrifile $thesourcedir'/sim_mean.nii.gz' \
 fslmaths $thesourcedir'/sim_boldtemp_tHb' -add $thesourcedir'/sim_boldtemp_HbR' \
     -div 2 $thesourcedir'/sim_boldtemp'
 fslmaths $thesourcedir'/sim_boldtemp' -mul 1.0 $thesourcedir'/sim_bolddata' -odt short
+
+simdata $fmrifile $thesourcedir'/sim_mean.nii.gz' \
+    $thesourcedir'/sim_boldpc.nii.gz' \
+    $thesourcedir'/sim_lags.nii.gz' \
+    $thbfile $samplerate $numskip $starttime $thesourcedir'/sim_boldtemp' 0.0 $sliceordertype
+fslmaths $thesourcedir'/sim_boldtemp' -mul 1.0 $thesourcedir'/sim_bolddata_nonoise' -odt short
+
 rm $thesourcedir'/sim_boldtemp'*'.nii.gz'

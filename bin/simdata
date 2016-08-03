@@ -69,6 +69,7 @@ def usage():
 # set default variable values
 displayplots = False
 fastresample = True
+debug = True
 
 # get the command line parameters
 if len(sys.argv) != 12:
@@ -112,10 +113,13 @@ print("Input regressor has ", simregressorpts, " points")
 inputstep = 1.0 / inputfreq
 nirs_x = r_[0.0:1.0 * simregressorpts] * inputstep - inputstarttime
 nirs_y = inputvec[0:simregressorpts]
+print('nirs regressor runs from ', nirs_x[0], ' to ', nirs_x[-1])
 
 # prepare the output timepoints
 fmrifreq = 1.0 / fmritr
-initial_fmri_x = r_[0.0:fmritr * numtrs:fmritr] + fmritr * fmriskip
+initial_fmri_x = r_[0.0:fmritr * (numtrs - fmriskip):fmritr] + fmritr * fmriskip
+print('length of fmri after removing skip:',len(initial_fmri_x))
+print('fmri time runs from ', initial_fmri_x[0], ' to ', initial_fmri_x[-1])
 
 # read in the immean, boldpc and lag files
 print("reading in source files")
@@ -158,31 +162,33 @@ padvalue = fmritr * numpadtrs
 genlagtc = tide.fastresampler(nirs_x, nirs_y, padvalue=padvalue, doplot=False)
 fmri_y_f = genlagtc.yfromx(initial_fmri_x)
 fmri_y = tide.doresample(nirs_x, nirs_y, initial_fmri_x)
-fig = figure()
-ax = fig.add_subplot(111)
-plot(initial_fmri_x, fmri_y_f, initial_fmri_x, fmri_y)
-# show()
+#fig = figure()
+#ax = fig.add_subplot(111)
+#plot(initial_fmri_x, fmri_y_f + 1.0, initial_fmri_x, fmri_y)
+#show()
 
-fig = figure()
-ax = fig.add_subplot(111)
-ax.set_title('Regressors')
-plot(nirs_x, nirs_y)
+#fig = figure()
+#ax = fig.add_subplot(111)
+#ax.set_title('Regressors')
+#plot(nirs_x, nirs_y)
 # show()
 
 # loop over space
-for i in range(0, numslices):
-    sliceoffsettime = tide.calcsliceoffset(sliceordertype, i, numslices, fmritr)
-    print("processing slice ", i, ": sliceoffsettime=", sliceoffsettime)
+for k in range(0, numslices):
+    sliceoffsettime = tide.calcsliceoffset(sliceordertype, k, numslices, fmritr)
+    print("processing slice ", k, ": sliceoffsettime=", sliceoffsettime)
     for j in range(0, ysize):
-        for k in range(0, xsize):
+        for i in range(0, xsize):
             # correct the output time points
-            fmri_x = initial_fmri_x - lagdata[k, j, i] - sliceoffsettime
+            fmri_x = initial_fmri_x - lagdata[i, j, k] - sliceoffsettime
+            if debug:
+                print(i, j, k, fmri_x[0], initial_fmri_x[0], lagdata[i, j, k], sliceoffsettime)
 
             if fastresample:
                 fmri_y = genlagtc.yfromx(fmri_x)
             else:
                 fmri_y = tide.doresample(nirs_x, nirs_y, fmri_x)
             thenoise = noiselevel * standard_normal(len(fmri_y))
-            simdata[k, j, i, :] = abs(immeandata[k, j, i] * (1.0 + (boldpcdata[k, j, i] / 100.0) * fmri_y) + thenoise)
+            simdata[i, j, k, :] = abs(immeandata[i, j, k] * (1.0 + (boldpcdata[i, j, k] / 100.0) * fmri_y) + thenoise)
 
 tide.savetonifti(simdata, fmriheader, fmrisizes, outputname)
