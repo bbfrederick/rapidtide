@@ -1,92 +1,194 @@
-#!/bin/csh
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
 #
 #       $Author: frederic $
-#       $Date: 2013/12/17 17:54:46 $
-#       $Id: gensimbold,v 1.14 2013/12/17 17:54:46 frederic Exp $
+#       $Date: 2016/06/14 12:04:51 $
+#       $Id: simdata,v 1.18 2016/06/14 12:04:51 frederic Exp $
 #
+from __future__ import print_function
+import sys
+import getopt
+import string
+import tide_funcs as tide
 
-set thesourcedir=.
-set thedestdir=.
-set meanval=1000.0
-set noisepct=0.005
-set noiselevel=`echo $meanval $noisepct | awk '{print $1*$2}'`
-set samplerate=12.5
-set starttime=656.4
-set thbfile=$thesourcedir'/lf_tHb'
-set hbofile=$thesourcedir'/lf_HbO'
-set hbrfile=$thesourcedir'/lf_HbR'
-set fmrifile=$thesourcedir'/fmri.nii.gz'
-set numskip=30
-set sliceordertype=0	# no slice delay
-echo 'simulated NIRS timecourse has a sample rate of '$samplerate' and starts at '$starttime
+from numpy import r_, zeros, ones, shape, random, abs
+from scipy.signal import cspline1d, cspline1d_eval, butter, lfilter, correlate
+from scipy import fftpack, argmax
+from scipy.stats import histogram
+from pylab import *
+import nibabel as nib
 
-set makesimsources='True'
 
-if ( $makesimsources == 'True' ) then
-    # pull one volume out of our example bold file to serve as a basis for constructing our dataset
-    fslroi $fmrifile $thesourcedir'/sim_lags' 0 1
+def thedist(x1, y1, z1, x2, y2, z2):
+    return np.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2))
 
-    # do simsubject1
-    # make a 'head' with a mean value of 1000.0 and a matching mask
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add 1000.0 -roi 16 32 16 32 5 20 0 1 $thesourcedir'/sim_mean'
-    fslmaths $thesourcedir'/sim_mean' -thr 1.0 -bin $thesourcedir'/sim_mask'
 
-    # define an area within the 'head' with a BOLD signal
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add 1.0 -roi 16 32 16 32 5  5 0 1 $thesourcedir'/boldpc1'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add 2.0 -roi 16 32 16 32 10 5 0 1 $thesourcedir'/boldpc2'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add 3.5 -roi 16 32 16 32 15 5 0 1 $thesourcedir'/boldpc3'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add 4.0 -roi 16 32 16 32 20 5 0 1 $thesourcedir'/boldpc4'
-    fslmaths $thesourcedir'/boldpc1' \
-	-add $thesourcedir'/boldpc2' \
-	-add $thesourcedir'/boldpc3' \
-	-add $thesourcedir'/boldpc4' \
-        $thesourcedir'/sim_boldpc'
-    
-    # define 9 columns of various delay values
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add -3.5 -roi 20 6 20 6 5 20 0 1 $thesourcedir'/lag1'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add -2.5 -roi 20 6 29 6 5 20 0 1 $thesourcedir'/lag2'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add -1.5 -roi 20 6 38 6 5 20 0 1 $thesourcedir'/lag3'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add -0.5 -roi 29 6 20 6 5 20 0 1 $thesourcedir'/lag4'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add  0.0 -roi 29 6 29 6 5 20 0 1 $thesourcedir'/lag5'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add  0.5 -roi 29 6 38 6 5 20 0 1 $thesourcedir'/lag6'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add  1.5 -roi 38 6 20 6 5 20 0 1 $thesourcedir'/lag7'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add  2.5 -roi 38 6 29 6 5 20 0 1 $thesourcedir'/lag8'
-    fslmaths $thesourcedir'/sim_lags' -mul 0.0 -add  3.5 -roi 38 6 38 6 5 20 0 1 $thesourcedir'/lag9'
-    fslmaths $thesourcedir'/lag1' \
-	-add $thesourcedir'/lag2' \
-	-add $thesourcedir'/lag3' \
-	-add $thesourcedir'/lag4' \
-	-add $thesourcedir'/lag5' \
-	-add $thesourcedir'/lag6' \
-	-add $thesourcedir'/lag7' \
-	-add $thesourcedir'/lag8' \
-	-add $thesourcedir'/lag9' \
-	$thesourcedir'/sim_lags'
-    
-    echo $starttime > $thesourcedir'/sim_starttime.txt'
-    echo $samplerate > $thesourcedir'/sim_samplerate.txt'
-    
-    # clean up
-    rm $thesourcedir'/boldpc'[1-9]'.nii.gz' $thesourcedir'/lag'[1-9]'.nii.gz'
-    endif
+def usage():
+    print(
+        "usage: simdata fmrifilename immeanfilename boldpcfilename lagfilename regressor regressorsamprate numskip inputstarttime outputname noiselevel sliceorder")
+    print("")
+    print("required arguments:")
+    print("	fmrifilename		- the example BOLD fmri file")
+    print("	immeanfilename		- the 3D mean image file")
+    print("	boldpcfilename		- the 3D bold percentage file")
+    print("	lagfilename		- the 3D time delay (in seconds) at every point")
+    print("	regressorfile		- the name of the regressor text file")
+    print("	regressorsamprate	- the sample rate of the regressor file, in Hz")
+    print("	numskip			- the use to simulate tr periods deleted during preprocessing")
+    print(
+        "	inputstarttime		- the time delay, in seconds, into the inputfile that matches the start time of the fmrifile")
+    print("	outputname		- the root name for the output files")
+    print("	noiselevel		- the variance of the noise")
+    print("	sliceorder		- slice acquisition order:")
+    print("					0 : None")
+    print("					1 : Regular up (0, 1, 2, 3, ...)")
+    print("					2 : Regular down")
+    print("					3 : Use slice order file")
+    print("					4 : Use slice timings file")
+    print("					5 : Standard Interleaved (0, 2, 4 ... 1, 3, 5 ... )")
+    print("					6 : Siemens Interleaved (0, 2, 4 ... 1, 3, 5 ... for odd number of slices)")
+    print("					                        (1, 3, 5 ... 0, 2, 4 ... for even number of slices)")
 
-# generate the simulated datasets from the source files
-simdata $fmrifile $thesourcedir'/sim_mean.nii.gz' \
-    $thesourcedir'/sim_boldpc.nii.gz' \
-    $thesourcedir'/sim_lags.nii.gz' \
-    $hbrfile $samplerate $numskip $starttime $thesourcedir'/sim_boldtemp_HbR' $noiselevel $sliceordertype
-simdata $fmrifile $thesourcedir'/sim_mean.nii.gz' \
-    $thesourcedir'/sim_boldpc.nii.gz' \
-    $thesourcedir'/sim_lags.nii.gz' \
-    $thbfile $samplerate $numskip $starttime $thesourcedir'/sim_boldtemp_tHb' $noiselevel $sliceordertype
-fslmaths $thesourcedir'/sim_boldtemp_tHb' -add $thesourcedir'/sim_boldtemp_HbR' \
-    -div 2 $thesourcedir'/sim_boldtemp'
-fslmaths $thesourcedir'/sim_boldtemp' -mul 1.0 $thesourcedir'/sim_bolddata' -odt short
+    return ()
 
-simdata $fmrifile $thesourcedir'/sim_mean.nii.gz' \
-    $thesourcedir'/sim_boldpc.nii.gz' \
-    $thesourcedir'/sim_lags.nii.gz' \
-    $thbfile $samplerate $numskip $starttime $thesourcedir'/sim_boldtemp' 0.0 $sliceordertype
-fslmaths $thesourcedir'/sim_boldtemp' -mul 1.0 $thesourcedir'/sim_bolddata_nonoise' -odt short
 
-rm $thesourcedir'/sim_boldtemp'*'.nii.gz'
+# set default variable values
+displayplots = False
+fastresample = True
+debug = True
+
+# get the command line parameters
+if len(sys.argv) != 12:
+    usage()
+    exit()
+
+# handle required args first
+fmrifilename = sys.argv[1]
+immeanfilename = sys.argv[2]
+boldpcfilename = sys.argv[3]
+lagfilename = sys.argv[4]
+filename = sys.argv[5]
+inputfreq = float(sys.argv[6])
+fmriskip = int(sys.argv[7])
+inputstarttime = float(sys.argv[8])
+outputname = sys.argv[9]
+noiselevel = float(sys.argv[10])
+sliceordertype = int(sys.argv[11])
+
+print("fmrifilename", fmrifilename)
+print("immeanfilename", immeanfilename)
+print("boldpcfilename", boldpcfilename)
+print("lagfilename", lagfilename)
+print("filename", filename)
+print("inputfreq", inputfreq)
+print("fmriskip", fmriskip)
+print("inputstarttime", inputstarttime)
+print("outputname", outputname)
+print("noiselevel", noiselevel)
+
+fmritr, numtrs = tide.fmritimeinfo(fmrifilename)
+nim_fmri, fmridata, fmriheader, fmridims, fmrisizes = tide.readfromnifti(fmrifilename)
+print("fmri data: ", numtrs, " timepoints, tr = ", fmritr)
+
+# read in the timecourse to resample
+inputvec = tide.stdnormalize(tide.readvec(filename))
+simregressorpts = len(inputvec)
+
+# prepare the input data for interpolation
+print("Input regressor has ", simregressorpts, " points")
+inputstep = 1.0 / inputfreq
+nirs_x = r_[0.0:1.0 * simregressorpts] * inputstep - inputstarttime
+nirs_y = inputvec[0:simregressorpts]
+print('nirs regressor runs from ', nirs_x[0], ' to ', nirs_x[-1])
+
+# prepare the output timepoints
+fmrifreq = 1.0 / fmritr
+initial_fmri_x = r_[0.0:fmritr * (numtrs - fmriskip):fmritr] + fmritr * fmriskip
+print('length of fmri after removing skip:',len(initial_fmri_x))
+print('fmri time runs from ', initial_fmri_x[0], ' to ', initial_fmri_x[-1])
+
+# read in the immean, boldpc and lag files
+print("reading in source files")
+nim_immean, immeandata, immeanheader, immeandims, immeansizes = tide.readfromnifti(immeanfilename)
+if not tide.checkspacematch(immeandims, fmridims):
+    print("immean file does not match")
+    exit()
+nim_boldpc, boldpcdata, boldpcheader, boldpcdims, boldpcsizes = tide.readfromnifti(boldpcfilename)
+if not tide.checkspacematch(boldpcdims, fmridims):
+    print("boldpc file does not match")
+    exit()
+nim_lag, lagdata, lagheader, lagdims, lagsizes = tide.readfromnifti(lagfilename)
+if not tide.checkspacematch(lagdims, fmridims):
+    print("lag file does not match")
+    exit()
+
+# now set up the simulated data array
+thesizes = fmrisizes
+xdim = thesizes[0]
+ydim = thesizes[1]
+slicethickness = thesizes[2]
+tr = thesizes[3]
+
+thedims = fmridims
+xsize = thedims[1]
+ysize = thedims[2]
+numslices = thedims[3]
+timepoints = thedims[4]
+
+simdata = zeros((xsize, ysize, numslices, len(initial_fmri_x)), dtype='float')
+
+fmrilcut = 0.0
+fmriucut = fmrifreq / 2.0
+
+# set up fast resampling
+padvalue = 60.0
+numpadtrs = int(padvalue / fmritr)
+padvalue = fmritr * numpadtrs
+
+genlagtc = tide.fastresampler(nirs_x, nirs_y, padvalue=padvalue, doplot=False)
+fmri_y_f = genlagtc.yfromx(initial_fmri_x)
+fmri_y = tide.doresample(nirs_x, nirs_y, initial_fmri_x)
+#fig = figure()
+#ax = fig.add_subplot(111)
+#plot(initial_fmri_x, fmri_y_f + 1.0, initial_fmri_x, fmri_y)
+#show()
+
+#fig = figure()
+#ax = fig.add_subplot(111)
+#ax.set_title('Regressors')
+#plot(nirs_x, nirs_y)
+# show()
+
+# loop over space
+for k in range(0, numslices):
+    sliceoffsettime = tide.calcsliceoffset(sliceordertype, k, numslices, fmritr)
+    print("processing slice ", k, ": sliceoffsettime=", sliceoffsettime)
+    for j in range(0, ysize):
+        for i in range(0, xsize):
+            # correct the output time points
+            fmri_x = initial_fmri_x - lagdata[i, j, k] - sliceoffsettime
+            if debug:
+                print(i, j, k, fmri_x[0], initial_fmri_x[0], lagdata[i, j, k], sliceoffsettime)
+
+            if fastresample:
+                fmri_y = genlagtc.yfromx(fmri_x)
+            else:
+                fmri_y = tide.doresample(nirs_x, nirs_y, fmri_x)
+            thenoise = noiselevel * standard_normal(len(fmri_y))
+            simdata[i, j, k, :] = immeandata[i, j, k] * (1.0 + (boldpcdata[i, j, k] / 100.0) * fmri_y)
+
+tide.savetonifti(simdata, fmriheader, fmrisizes, outputname)
