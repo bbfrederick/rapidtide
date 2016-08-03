@@ -25,7 +25,7 @@ import getopt
 import string
 import tide_funcs as tide
 
-from numpy import r_, zeros, ones, shape, random, abs
+from numpy import r_, zeros, ones, shape, random
 from scipy.signal import cspline1d, cspline1d_eval, butter, lfilter, correlate
 from scipy import fftpack, argmax
 from scipy.stats import histogram
@@ -69,7 +69,7 @@ def usage():
 # set default variable values
 displayplots = False
 fastresample = True
-debug = True
+debug = False
 
 # get the command line parameters
 if len(sys.argv) != 12:
@@ -189,6 +189,6 @@ for k in range(0, numslices):
             else:
                 fmri_y = tide.doresample(nirs_x, nirs_y, fmri_x)
             thenoise = noiselevel * standard_normal(len(fmri_y))
-            simdata[i, j, k, :] = abs(immeandata[i, j, k] * (1.0 + (boldpcdata[i, j, k] / 100.0) * fmri_y) + thenoise)
+            simdata[i, j, k, :] = immeandata[i, j, k] * (1.0 + (boldpcdata[i, j, k] / 100.0) * fmri_y) + thenoise
 
 tide.savetonifti(simdata, fmriheader, fmrisizes, outputname)
