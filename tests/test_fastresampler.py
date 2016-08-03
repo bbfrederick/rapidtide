@@ -7,14 +7,9 @@ def mse(vec1, vec2):
     return np.mean(np.square(vec2 - vec1))
 
 
-def testfastcorrelate(sig1, sig2):
-    result = fastcorrelate(sig1,sig2)
-    print(result)
-    assert fastcorrelate(sig1,sig2) == result
-
-def main():
-    testlen = 100
-    shiftdist = 10
+def testfastresampler():
+    testlen = 1000
+    shiftdist = 100
     timeaxis = np.arange(0.0, 1.0 * testlen)
     timecoursein = np.zeros((testlen), dtype='float')
     midpoint = int(testlen // 2) + 1
@@ -22,10 +17,10 @@ def main():
     tcrolled = np.roll(timecoursein, shiftdist)
     genlaggedtc = fastresampler(timeaxis, timecoursein)
     tcshifted = genlaggedtc.yfromx(timeaxis - shiftdist)
-    #plot(timeaxis, timecoursein, timeaxis, 1.1 + tcrolled, timeaxis, 2.2 + tcshifted)
-    plot (timeaxis, tcshifted - tcrolled)
-    print('mean squared error:', mse(tcrolled, tcshifted)) 
-    show()
+    assert mse(tcrolled, tcshifted) < 1e-10
     
+def main():
+    testfastresampler()
+
 if __name__ == '__main__':
     main()
