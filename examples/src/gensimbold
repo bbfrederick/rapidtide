@@ -16,7 +16,7 @@ set thbfile=$thesourcedir'/lf_tHb'
 set hbofile=$thesourcedir'/lf_HbO'
 set hbrfile=$thesourcedir'/lf_HbR'
 set fmrifile=$thesourcedir'/fmri.nii.gz'
-set numskip=30
+set numskip=0
 set sliceordertype=0	# no slice delay
 echo 'simulated NIRS timecourse has a sample rate of '$samplerate' and starts at '$starttime
 
@@ -71,6 +71,7 @@ if ( $makesimsources == 'True' ) then
     endif
 
 # generate the simulated datasets from the source files
+echo $numskip > $thesourcedir'/sim_skip.txt'
 simdata $fmrifile $thesourcedir'/sim_mean.nii.gz' \
     $thesourcedir'/sim_boldpc.nii.gz' \
     $thesourcedir'/sim_lags.nii.gz' \
