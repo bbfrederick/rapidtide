@@ -5,8 +5,8 @@
 #       $Id: gensimbold,v 1.14 2013/12/17 17:54:46 frederic Exp $
 #
 
-set thesourcedir=.
-set thedestdir=.
+set thesourcedir=../src
+set thedestdir=../src
 set meanval=1000.0
 set noisepct=0.005
 set noiselevel=`echo $meanval $noisepct | awk '{print $1*$2}'`

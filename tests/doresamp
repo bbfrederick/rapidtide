@@ -1,1 +1,0 @@
-resamp1tc testdata/nirstc 12.5 -10 /Users/frederic/Documents/MR_data/CBV_test/resting_9/yt_resting_225.nii.gz 10 testdata/hoot -s
