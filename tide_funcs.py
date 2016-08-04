@@ -87,23 +87,23 @@ MAXLINES = 10000000
 
 THRESHFRAC = 0.1
 
-VLF_UPPERPASS = 0.009
-VLF_UPPERSTOP = 0.010
+#VLF_UPPERPASS = 0.009
+#VLF_UPPERSTOP = 0.010
 
-LF_LOWERSTOP = VLF_UPPERPASS
-LF_LOWERPASS = VLF_UPPERSTOP
-LF_UPPERPASS = 0.15
-LF_UPPERSTOP = 0.20
+#LF_LOWERSTOP = VLF_UPPERPASS
+#LF_LOWERPASS = VLF_UPPERSTOP
+#LF_UPPERPASS = 0.15
+#LF_UPPERSTOP = 0.20
 
-RESP_LOWERSTOP = LF_UPPERPASS
-RESP_LOWERPASS = LF_UPPERSTOP
-RESP_UPPERPASS = 0.4
-RESP_UPPERSTOP = 0.5
+#RESP_LOWERSTOP = LF_UPPERPASS
+#RESP_LOWERPASS = LF_UPPERSTOP
+#RESP_UPPERPASS = 0.4
+#RESP_UPPERSTOP = 0.5
 
-CARD_LOWERSTOP = RESP_UPPERPASS
-CARD_LOWERPASS = RESP_UPPERSTOP
-CARD_UPPERPASS = 2.5
-CARD_UPPERSTOP = 3.0
+#CARD_LOWERSTOP = RESP_UPPERPASS
+#CARD_LOWERPASS = RESP_UPPERSTOP
+#CARD_UPPERPASS = 2.5
+#CARD_UPPERSTOP = 3.0
 
 def version():
     return '$Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $'
@@ -314,7 +314,7 @@ def tfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
         tval = float("inf")
         pval = 0.0
     else:
-        dof = (dfcorrfac * nsamps) / oversampfactor
+        dof = int((dfcorrfac * nsamps) // oversampfactor)
         tval = r * np.sqrt(dof / (1 - r * r))
         pval = sp.stats.t.sf(abs(tval), dof) * 2.0
     if returnp:
@@ -328,7 +328,7 @@ def zfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
         zval = float("inf")
         pval = 0.0
     else:
-        dof = (dfcorrfac * nsamps) / oversampfactor
+        dof = int((dfcorrfac * nsamps) // oversampfactor)
         zval = r / np.sqrt(1.0 / (dof - 3))
         pval = 1.0 - sp.stats.norm.cdf(abs(zval))
     if returnp:
@@ -976,7 +976,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
     failreason = 0
     numlagbins = len(thexcorr_y)
     binwidth = thexcorr_x[1] - thexcorr_x[0]
-    searchbins = int(widthlimit / binwidth)
+    searchbins = int(widthlimit // binwidth)
     lowerlim = int(numlagbins * edgebufferfrac)
     upperlim = numlagbins - lowerlim - 1
     FML_BADAMP = 0x01
@@ -1105,7 +1105,7 @@ def gaussfit(height, loc, width, xvals, yvals):
 
 # --------------------------- Resampling and time shifting functions -------------------------------------------
 class fastresampler:
-    def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100, doplot=False):
+    def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100.0, doplot=False):
         self.upsampleratio = upsampleratio
         self.initstep = timeaxis[1] - timeaxis[0]
         self.hiresstep = self.initstep / self.upsampleratio
@@ -1515,16 +1515,20 @@ def ssmooth(xsize, ysize, zsize, sigma, thedata):
 
 
 # - butterworth filters
-def dolpfiltfilt(samplefreq, cutofffreq, indata, order, padlen=20):
-    if cutofffreq > samplefreq/2.0:
-        cutofffreq = samplefreq/2.0
+def dolpfiltfilt(samplefreq, cutofffreq, indata, order, padlen=20, debug=False):
+    if cutofffreq > samplefreq / 2.0:
+        cutofffreq = samplefreq / 2.0
+    if debug:
+        print('dolpfiltfilt - samplefreq, cutofffreq, len(indata), order:', samplefreq, cutofffreq, len(indata), order)
     [b, a] = sp.signal.butter(order, 2.0 * cutofffreq / samplefreq)
     return unpadvec(sp.signal.filtfilt(b, a, padvec(indata, padlen=padlen)).real, padlen=padlen)
 
 
-def dohpfiltfilt(samplefreq, cutofffreq, indata, order, padlen=20):
+def dohpfiltfilt(samplefreq, cutofffreq, indata, order, padlen=20, debug=False):
     if cutofffreq < 0.0:
         cutofffreq = 0.0
+    if debug:
+        print('dohpfiltfilt - samplefreq, cutofffreq, len(indata), order:', samplefreq, cutofffreq, len(indata), order)
     [b, a] = sp.signal.butter(order, 2.0 * cutofffreq / samplefreq, 'highpass')
     return unpadvec(sp.signal.filtfilt(b, a, padvec(indata, padlen=padlen)).real, padlen=padlen)
 
@@ -1558,10 +1562,12 @@ def dobpfastfiltfiltinit(samplefreq, cutofffreq_low, cutofffreq_high, indata, or
 
 
 # - fft brickwall filters
-def getlpfftfunc(samplefreq, cutofffreq, indata):
+def getlpfftfunc(samplefreq, cutofffreq, indata, debug=False):
     filterfunc = np.ones(len(indata))
     # cutoffbin = int((cutofffreq / samplefreq) * len(filterfunc) / 2.0)
     cutoffbin = int((cutofffreq / samplefreq) * len(filterfunc))
+    if debug:
+        print('getlpfftfunc - samplefreq, cutofffreq, len(indata):', samplefreq, cutofffreq, len(indata))
     filterfunc[cutoffbin:-cutoffbin] = 0.0
     return filterfunc
 
@@ -1572,37 +1578,40 @@ def doprecalcfftfilt(filterfunc, indata):
     return fftpack.ifft(indata_trans).real
 
 
-def dolpfftfilt(samplefreq, cutofffreq, indata, padlen=20):
+def dolpfftfilt(samplefreq, cutofffreq, indata, padlen=20, debug=False):
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
-    filterfunc = getlpfftfunc(samplefreq, cutofffreq, padindata)
+    filterfunc = getlpfftfunc(samplefreq, cutofffreq, padindata, debug=debug)
     indata_trans = indata_trans * filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
-def dohpfftfilt(samplefreq, cutofffreq, indata, padlen=20):
+def dohpfftfilt(samplefreq, cutofffreq, indata, padlen=20, debug=False):
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
-    filterfunc = 1.0 - getlpfftfunc(samplefreq, cutofffreq, padindata)
+    filterfunc = 1.0 - getlpfftfunc(samplefreq, cutofffreq, padindata, debug=debug)
     indata_trans = indata_trans * filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
-def dobpfftfilt(samplefreq, cutofffreq_low, cutofffreq_high, indata, padlen=20):
+def dobpfftfilt(samplefreq, cutofffreq_low, cutofffreq_high, indata, padlen=20, debug=False):
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
-    filterfunc = getlpfftfunc(samplefreq, cutofffreq_high, padindata) * (
-        1.0 - getlpfftfunc(samplefreq, cutofffreq_low, padindata))
+    filterfunc = getlpfftfunc(samplefreq, cutofffreq_high, padindata, debug=debug) * (
+        1.0 - getlpfftfunc(samplefreq, cutofffreq_low, padindata, debug=debug))
     indata_trans = indata_trans * filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
 # - fft trapezoidal filters
-def getlptrapfftfunc(samplefreq, passfreq, stopfreq, indata):
+def getlptrapfftfunc(samplefreq, passfreq, stopfreq, indata, debug=False):
     filterfunc = np.ones(len(indata))
     passbin = int((passfreq / samplefreq) * len(filterfunc))
     cutoffbin = int((stopfreq / samplefreq) * len(filterfunc))
     translength = cutoffbin - passbin
+    if debug:
+        print('getlptrapfftfunc - passfreq, stopfreq:', passfreq, stopfreq)
+        print('getlptrapfftfunc - cutoffbin, passbin, translength, len(indata):', cutoffbin, passbin, translength, len(indata))
     if translength > 0:
         transvector = np.arange(1.0 * translength) / translength
         filterfunc[passbin:cutoffbin] = 1.0 - transvector
@@ -1612,30 +1621,30 @@ def getlptrapfftfunc(samplefreq, passfreq, stopfreq, indata):
     return filterfunc
 
 
-def dolptrapfftfilt(samplefreq, passfreq, stopfreq, indata, padlen=20):
+def dolptrapfftfilt(samplefreq, passfreq, stopfreq, indata, padlen=20, debug=False):
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
-    filterfunc = getlptrapfftfunc(samplefreq, passfreq, stopfreq, padindata)
+    filterfunc = getlptrapfftfunc(samplefreq, passfreq, stopfreq, padindata, debug=debug)
     indata_trans = indata_trans * filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
-def dohptrapfftfilt(samplefreq, stopfreq, passfreq, indata, padlen=20):
+def dohptrapfftfilt(samplefreq, stopfreq, passfreq, indata, padlen=20, debug=False):
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
-    filterfunc = 1.0 - getlptrapfftfunc(samplefreq, stopfreq, passfreq, padindata)
+    filterfunc = 1.0 - getlptrapfftfunc(samplefreq, stopfreq, passfreq, padindata, debug=debug)
     indata_trans = indata_trans * filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
-def dobptrapfftfilt(samplefreq, stopfreq_low, passfreq_low, passfreq_high, stopfreq_high, indata, padlen=20):
+def dobptrapfftfilt(samplefreq, stopfreq_low, passfreq_low, passfreq_high, stopfreq_high, indata, padlen=20, debug=False):
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
     if False:
         print("samplefreq=", samplefreq, " Fstopl=", stopfreq_low, " Fpassl=", passfreq_low, " Fpassu=", passfreq_high,
               " Fstopu=", stopfreq_high)
-    filterfunc = getlptrapfftfunc(samplefreq, passfreq_high, stopfreq_high, padindata) * (
-        1.0 - getlptrapfftfunc(samplefreq, stopfreq_low, passfreq_low, padindata))
+    filterfunc = getlptrapfftfunc(samplefreq, passfreq_high, stopfreq_high, padindata, debug=debug) * (
+        1.0 - getlptrapfftfunc(samplefreq, stopfreq_low, passfreq_low, padindata, debug=debug))
     if False:
         freqs = np.arange(0.0, samplefreq, samplefreq / len(filterfunc))
         pl.plot(freqs, filterfunc)
@@ -1681,93 +1690,93 @@ def specsplit(samplerate, inputdata, bandwidth, usebutterworth=False):
 @conditionaljit()
 def arb_pass(samplerate, inputdata, arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop, 
             usebutterworth=False, butterorder=defaultbutterorder,
-            usetrapfftfilt=True, padlen=20):
+            usetrapfftfilt=True, padlen=20, debug=False):
     # check filter limits to see if we should do a lowpass, bandpass, or highpass
     if arb_lowerpass <= 0.0:
         # set up for lowpass
         if usebutterworth:
-            return dolpfiltfilt(samplerate, arb_upperpass, inputdata, butterorder, padlen=padlen)
+            return dolpfiltfilt(samplerate, arb_upperpass, inputdata, butterorder, padlen=padlen, debug=debug)
         else:
             if usetrapfftfilt:
-                return dolptrapfftfilt(samplerate, arb_upperpass, arb_upperstop, inputdata, padlen=padlen)
+                return dolptrapfftfilt(samplerate, arb_upperpass, arb_upperstop, inputdata, padlen=padlen, debug=debug)
             else:
-                return dolpfftfilt(samplerate, arb_upperpass, inputdata, padlen=padlen)
+                return dolpfftfilt(samplerate, arb_upperpass, inputdata, padlen=padlen, debug=debug)
     elif (arb_upperpass >= samplerate / 2.0) or (arb_upperpass <= 0.0):
         # set up for highpass
         if usebutterworth:
-            return dohpfiltfilt(samplerate, arb_lowerpass, inputdata, butterorder, padlen=padlen)
+            return dohpfiltfilt(samplerate, arb_lowerpass, inputdata, butterorder, padlen=padlen, debug=debug)
         else:
             if usetrapfftfilt:
-                return dohptrapfftfilt(samplerate, arb_lowerstop, arb_lowerpass, inputdata, padlen=padlen)
+                return dohptrapfftfilt(samplerate, arb_lowerstop, arb_lowerpass, inputdata, padlen=padlen, debug=debug)
             else:
-                return dohpfftfilt(samplerate, arb_lowerpass, inputdata, padlen=padlen)
+                return dohpfftfilt(samplerate, arb_lowerpass, inputdata, padlen=padlen, debug=debug)
     else:
         # set up for bandpass
         if usebutterworth:
             return (dohpfiltfilt(samplerate, arb_lowerpass,
                                  dolpfiltfilt(samplerate, arb_upperpass, inputdata, butterorder, padlen=padlen),
-                                 butterorder, padlen=padlen))
+                                 butterorder, padlen=padlen, debug=debug))
         else:
             if usetrapfftfilt:
                 return (
-                    dobptrapfftfilt(samplerate, arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop, inputdata, padlen=padlen))
+                    dobptrapfftfilt(samplerate, arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop, inputdata, padlen=padlen, debug=debug))
             else:
-                return dobpfftfilt(samplerate, arb_lowerpass, arb_upperpass, inputdata, padlen=padlen)
+                return dobpfftfilt(samplerate, arb_lowerpass, arb_upperpass, inputdata, padlen=padlen, debug=debug)
 
 
-def ringstop(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True):
-    if usebutterworth:
-        return dolpfiltfilt(samplerate, samplerate / 4.0, inputdata, butterorder), 2
-    else:
-        if usetrapfftfilt:
-            return dolptrapfftfilt(samplerate, samplerate / 4.0, 1.1 * samplerate / 4.0, inputdata)
-        else:
-            return dolpfftfilt(samplerate, samplerate / 4.0, inputdata)
-
-
-def vlf_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True):
-    if usebutterworth:
-        return dolpfiltfilt(samplerate, VLF_UPPERPASS, inputdata, butterorder), 2
-    else:
-        if usetrapfftfilt:
-            return dolptrapfftfilt(samplerate, VLF_UPPERPASS, VLF_UPPERSTOP, inputdata)
-        else:
-            return dolpfftfilt(samplerate, VLF_UPPERPASS, inputdata)
-
-
-def lfo_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True):
-    if usebutterworth:
-        return (
-            dohpfiltfilt(samplerate, LF_LOWERPASS,
-                         dolpfiltfilt(samplerate, LF_UPPERPASS, inputdata, butterorder),
-                         2))
-    else:
-        if usetrapfftfilt:
-            return dobptrapfftfilt(samplerate, LF_LOWERSTOP, LF_LOWERPASS, LF_UPPERPASS, LF_UPPERSTOP, inputdata)
-        else:
-            return dobpfftfilt(samplerate, LF_LOWERPASS, LF_UPPERPASS, inputdata)
-
-
-def resp_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True):
-    if usebutterworth:
-        return dobpfiltfilt(samplerate, RESP_LOWERPASS, RESP_UPPERPASS, inputdata, butterorder)
-    else:
-        if usetrapfftfilt:
-            return (
-                dobptrapfftfilt(samplerate, RESP_LOWERSTOP, RESP_LOWERPASS, RESP_UPPERPASS, RESP_UPPERSTOP, inputdata))
-        else:
-            return dobpfftfilt(samplerate, RESP_LOWERPASS, RESP_UPPERPASS, inputdata)
-
-
-def card_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True):
-    if usebutterworth:
-        return dobpfiltfilt(samplerate, CARD_LOWERPASS, CARD_UPPERPASS, inputdata, butterorder)
-    else:
-        if usetrapfftfilt:
-            return (
-                dobptrapfftfilt(samplerate, CARD_LOWERSTOP, CARD_LOWERPASS, CARD_UPPERPASS, CARD_UPPERSTOP, inputdata))
-        else:
-            return dobpfftfilt(samplerate, CARD_LOWERPASS, CARD_UPPERPASS, inputdata)
+#def ringstop(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True, debug=False):
+#    if usebutterworth:
+#        return dolpfiltfilt(samplerate, samplerate / 4.0, inputdata, butterorder), 2
+#    else:
+#        if usetrapfftfilt:
+#            return dolptrapfftfilt(samplerate, samplerate / 4.0, 1.1 * samplerate / 4.0, inputdata, debug=debug)
+#        else:
+#            return dolpfftfilt(samplerate, samplerate / 4.0, inputdata, debug=debug)
+#
+#
+#def vlf_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True, debug=False):
+#    if usebutterworth:
+#        return dolpfiltfilt(samplerate, VLF_UPPERPASS, inputdata, butterorder, debug=debug), 2
+#    else:
+#        if usetrapfftfilt:
+#            return dolptrapfftfilt(samplerate, VLF_UPPERPASS, VLF_UPPERSTOP, inputdata, debug=debug)
+#        else:
+#            return dolpfftfilt(samplerate, VLF_UPPERPASS, inputdata, debug=debug)
+#
+#
+#def lfo_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True, debug=False):
+#    if usebutterworth:
+#        return (
+#            dohpfiltfilt(samplerate, LF_LOWERPASS,
+#                         dolpfiltfilt(samplerate, LF_UPPERPASS, inputdata, butterorder, debug=debug),
+#                         2))
+#    else:
+#        if usetrapfftfilt:
+#            return dobptrapfftfilt(samplerate, LF_LOWERSTOP, LF_LOWERPASS, LF_UPPERPASS, LF_UPPERSTOP, inputdata, debug=debug)
+#        else:
+#            return dobpfftfilt(samplerate, LF_LOWERPASS, LF_UPPERPASS, inputdata, debug=debug)
+#
+#
+#def resp_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True, debug=False):
+#    if usebutterworth:
+#        return dobpfiltfilt(samplerate, RESP_LOWERPASS, RESP_UPPERPASS, inputdata, butterorder, debug=debug)
+#    else:
+#        if usetrapfftfilt:
+#            return (
+#                dobptrapfftfilt(samplerate, RESP_LOWERSTOP, RESP_LOWERPASS, RESP_UPPERPASS, RESP_UPPERSTOP, inputdata, debug=debug))
+#        else:
+#            return dobpfftfilt(samplerate, RESP_LOWERPASS, RESP_UPPERPASS, inputdata, debug=debug)
+#
+#
+#def card_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True, debug=False):
+#    if usebutterworth:
+#        return dobpfiltfilt(samplerate, CARD_LOWERPASS, CARD_UPPERPASS, inputdata, butterorder, debug=debug)
+#    else:
+#        if usetrapfftfilt:
+#            return (
+#                dobptrapfftfilt(samplerate, CARD_LOWERSTOP, CARD_LOWERPASS, CARD_UPPERPASS, CARD_UPPERSTOP, inputdata, debug=debug))
+#        else:
+#            return dobpfftfilt(samplerate, CARD_LOWERPASS, CARD_UPPERPASS, inputdata, debug=debug)
 
 
 class noncausalfilter:
@@ -1787,6 +1796,20 @@ class noncausalfilter:
         self.correctfreq = correctfreq
         self.padtime = padtime
         self.debug = debug
+        self.VLF_UPPERPASS = 0.009
+        self.VLF_UPPERSTOP = 0.010
+        self.LF_LOWERSTOP = self.VLF_UPPERPASS
+        self.LF_LOWERPASS = self.VLF_UPPERSTOP
+        self.LF_UPPERPASS = 0.15
+        self.LF_UPPERSTOP = 0.20
+        self.RESP_LOWERSTOP = self.LF_UPPERPASS
+        self.RESP_LOWERPASS = self.LF_UPPERSTOP
+        self.RESP_UPPERPASS = 0.4
+        self.RESP_UPPERSTOP = 0.5
+        self.CARD_LOWERSTOP = self.RESP_UPPERPASS
+        self.CARD_LOWERPASS = self.RESP_UPPERSTOP
+        self.CARD_UPPERPASS = 2.5
+        self.CARD_UPPERSTOP = 3.0
         self.settype(self.filtertype)
 
     def settype(self, thetype):
@@ -1794,23 +1817,23 @@ class noncausalfilter:
         if self.filtertype == 'vlf' or self.filtertype == 'vlf_stop':
             self.lowerstop = 0.0
             self.lowerpass = 0.0
-            self.upperpass = 1.0 * VLF_UPPERPASS
-            self.upperstop = 1.0 * VLF_UPPERSTOP
+            self.upperpass = 1.0 * self.VLF_UPPERPASS
+            self.upperstop = 1.0 * self.VLF_UPPERSTOP
         elif self.filtertype == 'lfo' or self.filtertype == 'lfo_stop':
-            self.lowerstop = 1.0 * LF_LOWERSTOP
-            self.lowerpass = 1.0 * LF_LOWERPASS
-            self.upperpass = 1.0 * LF_UPPERPASS
-            self.upperstop = 1.0 * LF_UPPERSTOP
+            self.lowerstop = 1.0 * self.LF_LOWERSTOP
+            self.lowerpass = 1.0 * self.LF_LOWERPASS
+            self.upperpass = 1.0 * self.LF_UPPERPASS
+            self.upperstop = 1.0 * self.LF_UPPERSTOP
         elif self.filtertype == 'resp' or self.filtertype == 'resp_stop':
-            self.lowerstop = 1.0 * RESP_LOWERSTOP
-            self.lowerpass = 1.0 * RESP_LOWERPASS
-            self.upperpass = 1.0 * RESP_UPPERPASS
-            self.upperstop = 1.0 * RESP_UPPERSTOP
+            self.lowerstop = 1.0 * self.RESP_LOWERSTOP
+            self.lowerpass = 1.0 * self.RESP_LOWERPASS
+            self.upperpass = 1.0 * self.RESP_UPPERPASS
+            self.upperstop = 1.0 * self.RESP_UPPERSTOP
         elif self.filtertype == 'cardiac' or self.filtertype == 'cardiac_stop':
-            self.lowerstop = 1.0 * CARD_LOWERSTOP
-            self.lowerpass = 1.0 * CARD_LOWERPASS
-            self.upperpass = 1.0 * CARD_UPPERPASS
-            self.upperstop = 1.0 * CARD_UPPERSTOP
+            self.lowerstop = 1.0 * self.CARD_LOWERSTOP
+            self.lowerpass = 1.0 * self.CARD_LOWERPASS
+            self.upperpass = 1.0 * self.CARD_UPPERPASS
+            self.upperstop = 1.0 * self.CARD_UPPERSTOP
         elif self.filtertype == 'arb' or self.filtertype == 'arb_stop':
             self.lowerstop = 1.0 * self.arb_lowerstop
             self.lowerpass = 1.0 * self.arb_lowerpass
@@ -1861,6 +1884,26 @@ class noncausalfilter:
         # do some bounds checking
         nyquistlimit = 0.5 * samplerate
         lowestfreq = 2.0 * samplerate / len(data)
+
+        # first see if entire range is out of bounds
+        if self.lowerpass >= nyquistlimit:
+            print('noncausalfilter error: filter lower pass ', self.lowerpass, ' exceeds nyquist frequency ',
+                  nyquistlimit)
+            sys.exit()
+        if self.lowerstop >= nyquistlimit:
+            print('noncausalfilter error: filter lower stop ', self.lowerstop, ' exceeds nyquist frequency ',
+                  nyquistlimit)
+            sys.exit()
+        if self.upperpass <= lowestfreq:
+            print('noncausalfilter error: filter upper pass ', self.upperpass, ' is below minimum frequency ',
+                  lowestfreq)
+            sys.exit()
+        if self.upperstop <= lowestfreq:
+            print('noncausalfilter error: filter upper stop ', self.upperstop, ' is below minimum frequency ',
+                  lowestfreq)
+            sys.exit()
+
+        # now look for fixable errors
         if self.upperpass >= nyquistlimit:
             if self.correctfreq:
                 self.upperpass = nyquistlimit
@@ -1910,29 +1953,29 @@ class noncausalfilter:
             return (arb_pass(samplerate, data,
                              0.0, 0.0, samplerate / 4.0, 1.1 * samplerate / 4.0,
                              usebutterworth=self.usebutterworth, butterorder=self.butterworthorder, 
-                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen))
+                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
         elif self.filtertype == 'vlf' or self.filtertype == 'lfo' \
                 or self.filtertype == 'resp' or self.filtertype == 'cardiac':
             return (arb_pass(samplerate, data,
                              self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
                              usebutterworth=self.usebutterworth, butterorder=self.butterworthorder, 
-                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen))
+                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
         elif self.filtertype == 'vlf_stop' or self.filtertype == 'lfo_stop' \
                 or self.filtertype == 'resp_stop' or self.filtertype == 'cardiac_stop':
             return (data - arb_pass(samplerate, data,
                              self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
                              usebutterworth=self.usebutterworth, butterorder=self.butterworthorder, 
-                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen))
+                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
         elif self.filtertype == 'arb':
             return (arb_pass(samplerate, data,
                              self.arb_lowerstop, self.arb_lowerpass, self.arb_upperpass, self.arb_upperstop,
                              usebutterworth=self.usebutterworth, butterorder=self.butterworthorder, 
-                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen))
+                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
         elif self.filtertype == 'arb_stop':
             return (data - arb_pass(samplerate, data,
                              self.arb_lowerstop, self.arb_lowerpass, self.arb_upperpass, self.arb_upperstop,
                              usebutterworth=self.usebutterworth, butterorder=self.butterworthorder, 
-                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen))
+                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
         else:
             print("bad filter type")
             sys.exit()
