@@ -457,7 +457,7 @@ def usage(argstyle):
         print("")
         print("required arguments:")
         print("    fmrifilename    - the BOLD fmri file")
-        print("    outputname    - the root name for the output files")
+        print("    outputname      - the root name for the output files")
     print("")
     print("preprocessing options:")
     print("    -t TRvalue       - override the TR in the fMRI file with the value ")
