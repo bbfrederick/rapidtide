@@ -1112,8 +1112,10 @@ class fastresampler:
         self.hires_x = np.r_[timeaxis[0]-padvalue:self.initstep * len(timeaxis) + padvalue:self.hiresstep]
         self.hiresstart = self.hires_x[0]
         self.hires_y = doresample(timeaxis, timecourse, self.hires_x, method='univariate')
-        self.hires_y[:int(padvalue // self.hiresstep)] = 0.0
-        self.hires_y[-int(padvalue // self.hiresstep):] = 0.0
+        self.hires_y[:int(padvalue // self.hiresstep)] = self.hires_y[int(padvalue // self.hiresstep)]
+        self.hires_y[-int(padvalue // self.hiresstep):] = self.hires_y[-int(padvalue // self.hiresstep)]
+        #self.hires_y[:int(padvalue // self.hiresstep)] = 0.0
+        #self.hires_y[-int(padvalue // self.hiresstep):] = 0.0
         if doplot:
             fig = pl.figure()
             ax = fig.add_subplot(111)
@@ -1151,8 +1153,8 @@ def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio,
     hires_x_padded = np.r_[-padvalue:fmritr * numtrs + padvalue:hiresstep]
     hiresstart = hires_x_padded[0]
     hires_y = doresample(orig_x, orig_y, hires_x_padded, method='univariate')
-    hires_y[:int(padvalue // hiresstep)] = 0.0
-    hires_y[-int(padvalue // hiresstep):] = 0.0
+    hires_y[:int(padvalue // hiresstep)] = hires_y[int(padvalue // hiresstep)]
+    hires_y[-int(padvalue // hiresstep):] = hires_y[-int(padvalue // hiresstep)]
     if doplot:
         fig = pl.figure()
         ax = fig.add_subplot(111)
