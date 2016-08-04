@@ -1894,11 +1894,11 @@ class noncausalfilter:
             print('noncausalfilter error: filter lower stop ', self.lowerstop, ' exceeds nyquist frequency ',
                   nyquistlimit)
             sys.exit()
-        if self.upperpass <= lowestfreq:
+        if -1.0 < self.upperpass <= lowestfreq:
             print('noncausalfilter error: filter upper pass ', self.upperpass, ' is below minimum frequency ',
                   lowestfreq)
             sys.exit()
-        if self.upperstop <= lowestfreq:
+        if -1.0 < self.upperstop <= lowestfreq:
             print('noncausalfilter error: filter upper stop ', self.upperstop, ' is below minimum frequency ',
                   lowestfreq)
             sys.exit()
