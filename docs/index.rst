@@ -30,6 +30,12 @@ updating routines for python 3 compatibility.  rapidtide2 is currently
 NOT working properly - there is a time shift in the delay maps, and perhaps
 more subtle problems that I need to work through.**
 
+**UPDATE 8/5/2016*:  It seems that what I broke was the data simulation code.
+From what I can determine, rapidtide2 itself works fine.  I've been doing some
+tweaks to the code, most notably fully implementing biphasic mode, which I think
+is going to be more important given what we now know about the arterial BOLD
+signal (spoiler - it's opposite in sign to "normal" venous BOLD).
+
 Introduction
 ============
 Why do I want to know about time lagged correlations?
@@ -88,7 +94,7 @@ At its core, rapidtide2 is simply performing a full crosscorrelation between a "
 
 #.    rapidtide2 can generate a probe regressor from the global mean of the data itself - no externally recorded timecourse is required.  Optionally you can input both a mask of regions that you want to be included in the mean, and the voxels that you want excluded from the mean (there are situations when you might want to do one or the other or both).
 
-#.    Determining the significance threshold for filtered correlations where the optimal delay has been selected is nontrivial; using the conventional formulae for the significance of a correlation leads to wildly inflated p values.  rapidtide2 estimates the spurious correlation threshold by calculating the distribution of null correlation values obtained with a shuffling  procedure at the beginning of each run (the default is to use 10000 shuffled correlations), and uses this value to mask correlation maps it calculates.
+#.    Determining the significance threshold for filtered correlations where the optimal delay has been selected is nontrivial; using the conventional formulae for the significance of a correlation leads to wildly inflated p values.  rapidtide2 estimates the spurious correlation threshold by calculating the distribution of null correlation values obtained with a shuffling  procedure at the beginning of each run (the default is to use 10000 shuffled correlations), and uses this value to mask the correlation maps it calculates.  As of version 0.1.2 it will also handle two-tailed significance, which you need when using biphasic mode.
 
 #.    rapidtide2 can do an iterative refinement of the probe regressor by aligning the voxel timecourses in time and regenerating the test regressor.
 
