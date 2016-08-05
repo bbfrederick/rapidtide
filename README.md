@@ -24,6 +24,11 @@ updating routines for python 3 compatibility.  rapidtide2 is currently
 NOT working properly - there is a time shift in the delay maps, and perhaps
 more subtle problems that I need to work through.**
 
+**UPDATE 8/5/16:  It seems that the problem was in the simulation code, not
+rapidtide2 itself, so not to worry.  I have fixed some filtering and resampling
+issues that could cause problems in edge cases though, so moving to 0.1.2 is
+not a bad idea.**
+
 Why do I want to know about time lagged correlations?
 =======================
 This comes out of work by our group (The Opto-Magnetic group at McLean
