@@ -302,8 +302,11 @@ def fitpdf(thehist, histlen, endtrim, thedata, displayplots=False):
 
 
 def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False):
-    thehistogram = makehistogram(vallist, histlen)
+    thehistogram = makehistogram(np.abs(vallist), histlen)
     histfit = fitpdf(thehistogram, histlen, 0, vallist, displayplots=displayplots)
+    if twotail:
+        thepercentiles = 1.0 - (1.0 - thepercentiles)/2.0
+        print('thepercentiles adapted for two tailed distribution:', thepercentiles)
     pcts_data = getfracvals(vallist, thepercentiles, numbins=int(np.sqrt(len(vallist)) * 5.0), nozero=nozero)
     pcts_fit = getfracvalsfromfit(histfit, thepercentiles, numbins=100000)
     return pcts_data, pcts_fit
