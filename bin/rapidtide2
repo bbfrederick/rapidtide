@@ -172,6 +172,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False):
             fastgauss=optiondict['fastgauss'],
             enforcethresh=optiondict['enforcethresh'],
             displayplots=displayplots)
+        maxval *= flipfac
     else:
         # do something different
         failreason = 0
@@ -555,6 +556,7 @@ def usage(argstyle):
     print("    -c               - data file is a converted CIFTI")
     print("    -S               - simulate a run - just report command line options")
     print("    -d               - display plots of interesting timecourses")
+    print("    -B               - biphasic mode - match peak correlation ignoring sign")
     print("")
     print("experimental options (not fully tested, may not work):")
     print("    --tmask=MASKFILE - only correlate during epochs specified in ")
@@ -563,7 +565,6 @@ def usage(argstyle):
     print("    -p               - prewhiten and refit data")
     print("    -P               - save prewhitened data (turns prewhitening on)")
     print("    -A, --AR         - set AR model order to ORDER (default is 1)")
-    print("    -B               - biphasic mode - match peak correlation ignoring sign")
     return ()
 
 
@@ -1350,13 +1351,14 @@ def main():
 
             # calculate percentiles for the crosscorrelation from the distribution data
             optiondict['sighistlen'] = 100
-            thepercentiles = [0.95, 0.99, 0.995, 0.999]
+            thepercentiles = np.array([0.95, 0.99, 0.995, 0.999])
             thepvalnames = []
             for thispercentile in thepercentiles:
                 thepvalnames.append("{:.3f}".format(1.0 - thispercentile).replace('.', 'p'))
 
             pcts, pcts_fit = tide.sigFromDistributionData(corrdistdata, optiondict['sighistlen'],
-                                                          thepercentiles, nozero=optiondict['nohistzero'])
+                                                          thepercentiles, twotail=optiondict['biphasic'],
+                                                          nozero=optiondict['nohistzero'])
             if optiondict['ampthreshfromsig']:
                 print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
                 optiondict['ampthresh'] = pcts[2]
@@ -1555,7 +1557,7 @@ def main():
         tide.savetonifti(fitNorm.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitNorm' + outsuffix3d)
     if optiondict['estimate_significance']:
         for i in range(0, len(thepercentiles)):
-            pmask = np.where(lagstrengths > pcts[i], lagmask, 0 * lagmask)
+            pmask = np.where(np.abs(lagstrengths) > pcts[i], lagmask, 0 * lagmask)
             tide.writenpvecs(np.array([pcts[i]]), outputname + '_p_lt_' + thepvalnames[i] + '_thresh.txt')
             tide.savetonifti(pmask.reshape(nativespaceshape), theheader, thesizes,
                              outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d)
