@@ -279,10 +279,14 @@ def printthresholds(pcts, thepercentiles, labeltext):
         print('\tp <', "{:.3f}".format(1.0 - thepercentiles[i]), ': ', pcts[i])
 
 
-def fitpdf(thehist, histlen, endtrim, thedata, displayplots=False):
+def fitpdf(thehist, histlen, endtrim, thedata, displayplots=False, nozero=False):
     thestore = np.zeros((2, histlen))
     thestore[0, :] = thehist[1][-histlen:]
-    thestore[1, :] = thehist[0][-histlen:]
+    thestore[1, :] = thehist[0][-histlen:] / (1.0 * len(thedata))
+    if nozero:
+        zeroterm = 0.0
+    else:
+        zeroterm = thehist[0][0] / (1.0 * len(thedata))
     theamp = max(thestore[1, :])
     themean = thedata.mean()
     thestd = thedata.std()
@@ -298,19 +302,25 @@ def fitpdf(thehist, histlen, endtrim, thedata, displayplots=False):
         pl.plot(thestore[0, :(-1 - endtrim)], thestore[1, :(-1 - endtrim)])
         pl.plot(thestore[0, :(-1 - endtrim)], gausssk_eval(thestore[0, :(-1 - endtrim)], thefit))
         pl.show()
-    return thefit
+    return thefit.append(zeroterm)
 
 
 def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False):
     thehistogram = makehistogram(np.abs(vallist), histlen)
-    histfit = fitpdf(thehistogram, histlen, 0, vallist, displayplots=displayplots)
+    histfit = fitpdf(thehistogram, histlen, 0, vallist, displayplots=displayplots, nozero=nozero)
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles)/2.0
         print('thepercentiles adapted for two tailed distribution:', thepercentiles)
     pcts_data = getfracvals(vallist, thepercentiles, numbins=int(np.sqrt(len(vallist)) * 5.0), nozero=nozero)
     pcts_fit = getfracvalsfromfit(histfit, thepercentiles, numbins=100000)
-    return pcts_data, pcts_fit
+    return pcts_data, pcts_fit, histfit
 
+
+def rfromp(fitfile, thepercentiles, numbins=10000):
+    thefit = readvecs(fitfile)[0]
+    print(thefit)
+    return getfracvalsfromfit(thefit, thepercentiles, numbins=numbins)
+    
 
 def tfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
     if r >= 1.0:
@@ -831,7 +841,8 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=False):
     themax = 1.0
     themin = -1.0
     bins = np.arange(themin, themax, (themax - themin) / numbins)
-    meanhist = gausssk_eval(bins, histfit)
+    meanhist = gausssk_eval(bins, histfit[:-1])
+    meanhist[0] = histfit[-1]
     cummeanhist = np.cumsum(meanhist)
     thevals = []
     if displayplots:

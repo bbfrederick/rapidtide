@@ -1,0 +1,5 @@
+#!/bin/csh
+rapidtide2 ../src/fmri.nii.gz ../dst/quick \
+    -N 10000 \
+    --regressor=../src/lf_tHb --regressorfreq=12.5 --regressorstart=656.4 \
+    -F 0.01,0.2 -r -7.5,7.5 
