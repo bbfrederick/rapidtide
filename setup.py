@@ -29,6 +29,7 @@ script_list = ['bin/rapidtide2',
                'bin/resamp1tc',
                'bin/resamplenifti',
                'bin/simdata',
+               'bin/pixelcomp',
                'bin/showtc',
                'bin/showhist']
 if addtidepool:
