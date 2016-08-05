@@ -30,7 +30,7 @@ updating routines for python 3 compatibility.  rapidtide2 is currently
 NOT working properly - there is a time shift in the delay maps, and perhaps
 more subtle problems that I need to work through.**
 
-**UPDATE 8/5/2016*:  It seems that what I broke was the data simulation code.
+**UPDATE 8/5/2016**:  It seems that what I broke was the data simulation code.
 From what I can determine, rapidtide2 itself works fine.  I've been doing some
 tweaks to the code, most notably fully implementing biphasic mode, which I think
 is going to be more important given what we now know about the arterial BOLD
@@ -183,7 +183,8 @@ correlation fitting options:
                        for all voxels
     -r LAGMIN,LAGMAX - limit fit to a range of lags from LAGMIN to LAGMAX
     -s SIGMALIMIT    - reject lag fits with linewidth wider than SIGMALIMIT
-
+    -B               - biphasic mode - match peak correlation ignoring sign
+    
 regressor refinement options:
     --refineweighting  - apply REFINETYPE weighting to each timecourse prior 
                          to refinement (valid weightings are 'None', 
@@ -233,8 +234,7 @@ experimental options (not fully tested, may not work):
     -p               - prewhiten and refit data
     -P               - save prewhitened data (turns prewhitening on)
     -A, --AR         - set AR model order to ORDER (default is 1)
-    -B               - biphasic mode - match peak correlation ignoring sign
-    
+
 These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
 
     
