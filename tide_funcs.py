@@ -30,6 +30,7 @@ import sys
 import bisect
 
 from scipy import signal
+from scipy.stats import johnsonsb
 
 #from memory_profiler import profile
 
@@ -279,47 +280,58 @@ def printthresholds(pcts, thepercentiles, labeltext):
         print('\tp <', "{:.3f}".format(1.0 - thepercentiles[i]), ': ', pcts[i])
 
 
-def fitpdf(thehist, histlen, endtrim, thedata, displayplots=False, nozero=False):
+def fitpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     thestore = np.zeros((2, histlen))
-    thestore[0, :] = thehist[1][-histlen:]
-    thestore[1, :] = thehist[0][-histlen:] / (1.0 * len(thedata))
+    thestore[0, :] = thehist[1][:-1]
+    thestore[1, :] = thehist[0][:] / (1.0 * len(thedata))
+    
+    # store the zero term for later
+    zeroterm = thestore[1, 0]
+    thestore[1, 0] = 0.0
+
+    # fit the gumel_r function
+    params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
+    print('len params = ',len(params))
+    numinfit = len(thedata)
+    print('johnson SB fit parameters for pdf:',params)
+    
+    # restore the zero term if neded
     if nozero:
         zeroterm = 0.0
     else:
-        zeroterm = thehist[0][0] / (1.0 * len(thedata))
-    theamp = max(thestore[1, :])
-    themean = thedata.mean()
-    thestd = thedata.std()
-    theskew = sp.stats.stats.skew(thedata)
-    # print('initial histogram stats:', theamp, themean, thestd, theskew)
-    thefit = gaussfitsk(theamp, themean, thestd, theskew, thestore[0, :], thestore[1, :])
-    # print('final histogram stats:', thefit[0], thefit[1], thefit[2], thefit[3])
+        thestore[1, 0] = zeroterm
+
+    # generate the johnsonsb function
+    johnsonsbvals = johnsonsb.pdf(thestore[0, :], params[0], params[1], params[2], params[3])
+    corrfac = (1.0 - zeroterm) / (1.0 * histlen)
+    johnsonsbvals *= corrfac
+    johnsonsbvals[0] = zeroterm
+    
     if displayplots:
-        displaytitle = 'histogram fit to skewed normal distribution'
         fig = pl.figure()
         ax = fig.add_subplot(111)
-        ax.set_title(displaytitle)
-        pl.plot(thestore[0, :(-1 - endtrim)], thestore[1, :(-1 - endtrim)])
-        pl.plot(thestore[0, :(-1 - endtrim)], gausssk_eval(thestore[0, :(-1 - endtrim)], thefit))
+        ax.set_title('fitpdf: histogram')
+        pl.plot(thestore[0, :], thestore[1, :], 'b', 
+                thestore[0, :], johnsonsbvals, 'r')
+        pl.legend(['histogram', 'fit to johnsonsb'])
         pl.show()
-    return thefit.append(zeroterm)
+    return np.append(params, np.array([zeroterm]))
 
 
 def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False):
-    thehistogram = makehistogram(np.abs(vallist), histlen)
-    histfit = fitpdf(thehistogram, histlen, 0, vallist, displayplots=displayplots, nozero=nozero)
+    thehistogram = makehistogram(np.abs(vallist), histlen, therange=[0.0, 1.0])
+    histfit = fitpdf(thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero)
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles)/2.0
         print('thepercentiles adapted for two tailed distribution:', thepercentiles)
     pcts_data = getfracvals(vallist, thepercentiles, numbins=int(np.sqrt(len(vallist)) * 5.0), nozero=nozero)
-    pcts_fit = getfracvalsfromfit(histfit, thepercentiles, numbins=100000)
+    pcts_fit = getfracvalsfromfit(histfit, thepercentiles, numbins=histlen, displayplots=displayplots)
     return pcts_data, pcts_fit, histfit
 
 
-def rfromp(fitfile, thepercentiles, numbins=10000):
+def rfromp(fitfile, thepercentiles, numbins=1000):
     thefit = readvecs(fitfile)[0]
-    print(thefit)
-    return getfracvalsfromfit(thefit, thepercentiles, numbins=numbins)
+    return getfracvalsfromfit(thefit, thepercentiles, numbins=numbins, displayplots=True)
     
 
 def tfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
@@ -839,15 +851,21 @@ def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False
 
 def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=False):
     themax = 1.0
-    themin = -1.0
+    themin = 0.0
     bins = np.arange(themin, themax, (themax - themin) / numbins)
-    meanhist = gausssk_eval(bins, histfit[:-1])
+    meanhist = johnsonsb.pdf(bins, histfit[0], histfit[1], histfit[2], histfit[3])
+    corrfac = (1.0 - histfit[-1]) / (1.0 * numbins)
+    meanhist *= corrfac
     meanhist[0] = histfit[-1]
-    cummeanhist = np.cumsum(meanhist)
+    
+    cummeanhist = histfit[-1] + (1.0 - histfit[-1]) * johnsonsb.cdf(bins, histfit[0], histfit[1], histfit[2], histfit[3])
     thevals = []
     if displayplots:
         fig = pl.figure()
-        ax = fig.add_subplot(111)
+        ax = fig.add_subplot(211)
+        ax.set_title('probability histogram')
+        pl.plot(bins[-numbins:], meanhist[-numbins:])
+        ax = fig.add_subplot(212)
         ax.set_title('cumulative mean sum of histogram')
         pl.plot(bins[-numbins:], cummeanhist[-numbins:])
         pl.show()
