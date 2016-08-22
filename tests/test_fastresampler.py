@@ -39,6 +39,10 @@ def testfastresampler(debug=False):
         # generate the fast resampled regressor
         tcshifted = genlaggedtc.yfromx(timeaxis - shiftdist, debug=debug)
 
+        # print out all elements
+        for i in range(0, len(tcrolled)):
+            print(i, tcrolled[i], tcshifted[i])
+
         # plot if we are doing that
         if debug:
             offset += 1.0
