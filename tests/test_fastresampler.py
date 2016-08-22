@@ -13,7 +13,8 @@ def testfastresampler(debug=False):
     testlen = 1000
     shiftdist = 30
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
-    timecoursein = np.zeros((testlen), dtype='float')
+    #timecoursein = np.zeros((testlen), dtype='float')
+    timecoursein = timeaxis * 0.0
     midpoint = int(testlen // 2) + 1
     timecoursein[midpoint] = 1.0
     timecoursein -= 0.5
