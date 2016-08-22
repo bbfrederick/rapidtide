@@ -41,7 +41,7 @@ def testfastresampler(debug=False):
 
         # print out all elements
         for i in range(0, len(tcrolled)):
-            print(i, tcrolled[i], tcshifted[i])
+            print(i, tcrolled[i], tcshifted[i], tcshifted[i] - tcrolled[i])
 
         # plot if we are doing that
         if debug:
