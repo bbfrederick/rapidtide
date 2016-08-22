@@ -1311,7 +1311,6 @@ def main():
     # prepare for fast resampling
     padvalue = max((-optiondict['lagmin'], optiondict['lagmax'])) + 30.0
     # print('setting up fast resampling with padvalue =',padvalue)
-    upsampleratio = 100.0
     numpadtrs = int(padvalue / fmritr)
     padvalue = fmritr * numpadtrs
     genlagtc = tide.fastresampler(reference_x, reference_y, padvalue=padvalue)
