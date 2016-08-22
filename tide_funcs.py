@@ -1137,17 +1137,28 @@ def gaussfit(height, loc, width, xvals, yvals):
 
 # --------------------------- Resampling and time shifting functions -------------------------------------------
 class fastresampler:
-    def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100.0, doplot=False):
+    def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100.0, doplot=False, debug=False):
         self.upsampleratio = upsampleratio
+        self.padvalue = padvalue
         self.initstep = timeaxis[1] - timeaxis[0]
+        self.initstart = timeaxis[0]
+        self.initend = timeaxis[-1]
         self.hiresstep = self.initstep / self.upsampleratio
-        self.hires_x = np.r_[timeaxis[0]-padvalue:self.initstep * len(timeaxis) + padvalue:self.hiresstep]
+        self.hires_x = np.r_[timeaxis[0]-self.padvalue:self.initstep * len(timeaxis) + self.padvalue:self.hiresstep]
         self.hiresstart = self.hires_x[0]
+        self.hiresend = self.hires_x[-1]
         self.hires_y = doresample(timeaxis, timecourse, self.hires_x, method='univariate')
-        self.hires_y[:int(padvalue // self.hiresstep)] = self.hires_y[int(padvalue // self.hiresstep)]
-        self.hires_y[-int(padvalue // self.hiresstep):] = self.hires_y[-int(padvalue // self.hiresstep)]
-        #self.hires_y[:int(padvalue // self.hiresstep)] = 0.0
-        #self.hires_y[-int(padvalue // self.hiresstep):] = 0.0
+        self.hires_y[:int(self.padvalue // self.hiresstep)] = self.hires_y[int(self.padvalue // self.hiresstep)]
+        self.hires_y[-int(self.padvalue // self.hiresstep):] = self.hires_y[-int(self.padvalue // self.hiresstep)]
+        if debug:
+            print('fastresampler __init__:')
+            print('    padvalue:, ', self.padvalue)
+            print('    initstep, hiresstep:',self.initstep, self.hiresstep)
+            print('    initial axis limits:', self.initstart, self.initend)
+            print('    hires axis limits:', self.hiresstart, self.hiresend)
+            
+        #self.hires_y[:int(self.padvalue // self.hiresstep)] = 0.0
+        #self.hires_y[-int(self.padvalue // self.hiresstep):] = 0.0
         if doplot:
             fig = pl.figure()
             ax = fig.add_subplot(111)
@@ -1156,18 +1167,26 @@ class fastresampler:
             pl.legend(('input', 'hires'))
             pl.show()
     
-    def yfromx(self, newtimeaxis, doplot=False):
-        #print('initstep, hiresstep:',self.initstep, self.hiresstep)
-        #print('newtimeaxis:',newtimeaxis)
-        #print('hiresstart:', self.hiresstart)
-        outindices = (np.floor((newtimeaxis -  self.hiresstart) / self.hiresstep)).astype(int)
-        #print('shifted time axis:', newtimeaxis - self.hiresstart)
+    def yfromx(self, newtimeaxis, doplot=False, debug=False):
+        if debug:
+            print('fastresampler: yfromx called with following parameters')
+            print('    padvalue:, ', self.padvalue)
+            print('    initstep, hiresstep:',self.initstep, self.hiresstep)
+            print('    initial axis limits:', self.initstart, self.initend)
+            print('    hires axis limits:', self.hiresstart, self.hiresend)
+            print('    requested axis limits:',newtimeaxis[0],newtimeaxis[-1])
+        outindices = ((newtimeaxis -  self.hiresstart) // self.hiresstep).astype(int)
+        if debug:
+            print('len(self.hires_y):', len(self.hires_y))
         try:
             out_y = self.hires_y[outindices]
         except IndexError:
             print('')
             print('indexing out of bounds in fastresampler')
-            print('    hirestart,hiresstep,hiresend:',self.hiresstart,self.hiresstep,self.hires_x[-1])
+            print('    padvalue:, ', self.padvalue)
+            print('    initstep, hiresstep:',self.initstep, self.hiresstep)
+            print('    initial axis limits:', self.initstart, self.initend)
+            print('    hires axis limits:', self.hiresstart, self.hiresend)
             print('    requested axis limits:',newtimeaxis[0],newtimeaxis[-1])
             sys.exit()
         if doplot:
