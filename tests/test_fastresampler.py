@@ -53,8 +53,10 @@ def testfastresampler(debug=False):
             legend.append('Fastresampler ' + str(shiftdist))
 
         # do the tests
-        assert mse(tcrolled, tcshifted) < 1e-10
-        np.testing.assert_almost_equal(tcrolled, tcshifted, 6)
+        msethresh = 1e-6
+        aethresh = 4
+        assert mse(tcrolled, tcshifted) < msethresh
+        np.testing.assert_almost_equal(tcrolled, tcshifted, aethresh)
 
     if debug:
         plt.legend(legend)
