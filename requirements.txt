@@ -2,4 +2,3 @@ matplotlib
 nibabel
 numpy
 scipy
-nomkl
