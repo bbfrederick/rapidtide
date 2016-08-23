@@ -27,6 +27,7 @@ before_install:
   - conda install --yes -c conda-forge nibabel
   - python setup.py install
   - pip install pytest pytest-cov
+  - conda list
 
 # command to run tests
 #
