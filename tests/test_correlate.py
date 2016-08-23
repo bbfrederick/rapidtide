@@ -25,7 +25,9 @@ def testfastcorrelate(display=False):
         plt.legend(['Fast correlate', 'Standard correlate'])
         plt.show()
 
-    assert (fastcorrelate_result == stdcorrelate_result).all
+    #assert (fastcorrelate_result == stdcorrelate_result).all
+    aethresh = 10
+    np.testing.assert_almost_equal(fastcorrelate_result, stdcorrelate_result, aethresh)
 
 def main():
     testfastcorrelate(display=True)
