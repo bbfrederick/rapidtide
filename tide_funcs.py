@@ -83,28 +83,8 @@ def checkpoint6():
     pass
 
 # ---------------------------------------- Global defaults ----------------------------------
-defaultbutterorder = 3
+defaultbutterorder = 6
 MAXLINES = 10000000
-
-THRESHFRAC = 0.1
-
-#VLF_UPPERPASS = 0.009
-#VLF_UPPERSTOP = 0.010
-
-#LF_LOWERSTOP = VLF_UPPERPASS
-#LF_LOWERPASS = VLF_UPPERSTOP
-#LF_UPPERPASS = 0.15
-#LF_UPPERSTOP = 0.20
-
-#RESP_LOWERSTOP = LF_UPPERPASS
-#RESP_LOWERPASS = LF_UPPERSTOP
-#RESP_UPPERPASS = 0.4
-#RESP_UPPERSTOP = 0.5
-
-#CARD_LOWERSTOP = RESP_UPPERPASS
-#CARD_LOWERPASS = RESP_UPPERSTOP
-#CARD_UPPERPASS = 2.5
-#CARD_UPPERSTOP = 3.0
 
 def version():
     return '$Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $'
@@ -580,7 +560,7 @@ def eckart(input1, input2, doplot=False):
     return gccphatraw(input1, input2, doplot=doplot) / normfac
 
 
-def eckartraw(input1, input2, doplot=False):
+def eckartraw(input1, input2, doplot=False, threshfrac=0.1):
     fft1 = fftpack.fft(input1)
     fft2 = fftpack.fft(input2)
     G12 = fft1 * np.conj(fft2)
@@ -589,11 +569,10 @@ def eckartraw(input1, input2, doplot=False):
     denom = G11 * G22
     absdenom = abs(denom)
     print("max(abs(denom))", max(absdenom))
-    thresh = max(absdenom) * THRESHFRAC
+    thresh = max(absdenom) * threshfrac
     print("thresh", thresh)
     G = np.where(absdenom > thresh, G12 / denom, 0.0)
     g = np.real(fftpack.fftshift(fftpack.ifft(G)))
-    # g=np.real(fftpack.ifft(G))
     if doplot:
         xvec = range(0, len(fft1))
 
@@ -650,14 +629,14 @@ def gccphat(input1, input2, doplot=False):
     return gccphatraw(input1, input2, doplot=doplot) / normfac
 
 
-def gccphatraw(input1, input2, doplot):
+def gccphatraw(input1, input2, doplot, threshfrac=0.1):
     fft1 = fftpack.fft(input1)
     fft2 = fftpack.fft(input2)
     G12 = fft1 * np.conjugate(fft2)
     # denom=G12.real
     denom = G12
     absdenom = abs(denom)
-    thresh = max(abs(denom)) * THRESHFRAC
+    thresh = max(abs(denom)) * threshfrac
     G = np.where(absdenom > thresh, G12 / absdenom, 0.0)
     g = np.real(fftpack.fftshift(fftpack.ifft(G)))
     if doplot:
@@ -1775,61 +1754,6 @@ def arb_pass(samplerate, inputdata, arb_lowerstop, arb_lowerpass, arb_upperpass,
                 return dobpfftfilt(samplerate, arb_lowerpass, arb_upperpass, inputdata, padlen=padlen, debug=debug)
 
 
-#def ringstop(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True, debug=False):
-#    if usebutterworth:
-#        return dolpfiltfilt(samplerate, samplerate / 4.0, inputdata, butterorder), 2
-#    else:
-#        if usetrapfftfilt:
-#            return dolptrapfftfilt(samplerate, samplerate / 4.0, 1.1 * samplerate / 4.0, inputdata, debug=debug)
-#        else:
-#            return dolpfftfilt(samplerate, samplerate / 4.0, inputdata, debug=debug)
-#
-#
-#def vlf_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True, debug=False):
-#    if usebutterworth:
-#        return dolpfiltfilt(samplerate, VLF_UPPERPASS, inputdata, butterorder, debug=debug), 2
-#    else:
-#        if usetrapfftfilt:
-#            return dolptrapfftfilt(samplerate, VLF_UPPERPASS, VLF_UPPERSTOP, inputdata, debug=debug)
-#        else:
-#            return dolpfftfilt(samplerate, VLF_UPPERPASS, inputdata, debug=debug)
-#
-#
-#def lfo_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True, debug=False):
-#    if usebutterworth:
-#        return (
-#            dohpfiltfilt(samplerate, LF_LOWERPASS,
-#                         dolpfiltfilt(samplerate, LF_UPPERPASS, inputdata, butterorder, debug=debug),
-#                         2))
-#    else:
-#        if usetrapfftfilt:
-#            return dobptrapfftfilt(samplerate, LF_LOWERSTOP, LF_LOWERPASS, LF_UPPERPASS, LF_UPPERSTOP, inputdata, debug=debug)
-#        else:
-#            return dobpfftfilt(samplerate, LF_LOWERPASS, LF_UPPERPASS, inputdata, debug=debug)
-#
-#
-#def resp_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True, debug=False):
-#    if usebutterworth:
-#        return dobpfiltfilt(samplerate, RESP_LOWERPASS, RESP_UPPERPASS, inputdata, butterorder, debug=debug)
-#    else:
-#        if usetrapfftfilt:
-#            return (
-#                dobptrapfftfilt(samplerate, RESP_LOWERSTOP, RESP_LOWERPASS, RESP_UPPERPASS, RESP_UPPERSTOP, inputdata, debug=debug))
-#        else:
-#            return dobpfftfilt(samplerate, RESP_LOWERPASS, RESP_UPPERPASS, inputdata, debug=debug)
-#
-#
-#def card_pass(samplerate, inputdata, usebutterworth=False, butterorder=defaultbutterorder, usetrapfftfilt=True, debug=False):
-#    if usebutterworth:
-#        return dobpfiltfilt(samplerate, CARD_LOWERPASS, CARD_UPPERPASS, inputdata, butterorder, debug=debug)
-#    else:
-#        if usetrapfftfilt:
-#            return (
-#                dobptrapfftfilt(samplerate, CARD_LOWERSTOP, CARD_LOWERPASS, CARD_UPPERPASS, CARD_UPPERSTOP, inputdata, debug=debug))
-#        else:
-#            return dobpfftfilt(samplerate, CARD_LOWERPASS, CARD_UPPERPASS, inputdata, debug=debug)
-
-
 class noncausalfilter:
     def __init__(self, filtertype='none', usebutterworth=False, butterworthorder=3, usetrapfftfilt=True, correctfreq=True, padtime=30.0, debug=False):
         self.filtertype = filtertype
@@ -2033,11 +1957,16 @@ class noncausalfilter:
 
 
 # --------------------------- Utility functions -------------------------------------------------
+def valtoindex(thearray, thevalue, toleft=True):
+    if toleft:
+        return bisect.bisect_left(thearray, thevalue)
+    else:
+        return bisect.bisect_right(thearray, thevalue)
+    
+
 def progressbar(thisval, end_val, label='Percent', barsize=60):
     percent = float(thisval) / end_val
     hashes = '#' * int(round(percent * barsize))
     spaces = ' ' * (barsize - len(hashes))
     sys.stdout.write("\r{0}: [{1}] {2:.3f}%".format(label, hashes + spaces, 100.0 * percent))
     sys.stdout.flush()
-
-
