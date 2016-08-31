@@ -150,7 +150,7 @@ def correlationpass(fmridata, referencetc,
 
 # @profile(precision=4)
 def onecorrfit(thetc, corrscale, optiondict, displayplots=False):
-    if optiondict['biphasic']:
+    if optiondict['bipolar']:
         if max(thetc) < -1.0 * min(thetc):
             flipfac = -1.0
         else:
@@ -514,7 +514,7 @@ def usage(argstyle):
     print("                       for all voxels")
     print("    -r LAGMIN,LAGMAX - limit fit to a range of lags from LAGMIN to LAGMAX")
     print("    -s SIGMALIMIT    - reject lag fits with linewidth wider than SIGMALIMIT")
-    print("    -B               - biphasic mode - match peak correlation ignoring sign")
+    print("    -B               - bipolar mode - match peak correlation ignoring sign")
     print("")
     print("regressor refinement options:")
     print("    --refineweighting  - apply REFINETYPE weighting to each timecourse prior ")
@@ -594,7 +594,7 @@ def main():
     optiondict['tmaskname'] = ''  # file name for tmask regressor
 
     # correlation fitting options
-    optiondict['biphasic'] = False  # find peak with highest magnitude, regardless of sign
+    optiondict['bipolar'] = False  # find peak with highest magnitude, regardless of sign
     optiondict['gaussrefine'] = True  # fit gaussian after initial guess at parameters
     optiondict['fastgauss'] = False  # use a non-iterative gaussian peak fit (DOES NOT WORK)
     optiondict['lthreshval'] = 0.0  # zero out peaks with correlations lower than this value
@@ -766,8 +766,8 @@ def main():
             optiondict['invertregressor'] = True
             print('Invert the regressor prior to running')
         elif o == '-B':
-            optiondict['biphasic'] = True
-            print('Enabled biphasic correlation fitting')
+            optiondict['bipolar'] = True
+            print('Enabled bipolar correlation fitting')
         elif o == '-S':
             optiondict['fakerun'] = True
             print('report command line options and quit')
@@ -1356,7 +1356,7 @@ def main():
                 thepvalnames.append("{:.3f}".format(1.0 - thispercentile).replace('.', 'p'))
 
             pcts, pcts_fit, sigfit = tide.sigFromDistributionData(corrdistdata, optiondict['sighistlen'],
-                                                          thepercentiles, twotail=optiondict['biphasic'],
+                                                          thepercentiles, twotail=optiondict['bipolar'],
                                                           displayplots=optiondict['displayplots'],
                                                           nozero=optiondict['nohistzero'])
             if optiondict['ampthreshfromsig']:
