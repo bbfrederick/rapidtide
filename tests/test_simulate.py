@@ -76,11 +76,12 @@ def test_simulate(display=False):
     genlagtc = tide.fastresampler(nirs_x, nirs_y, padvalue=padvalue, doplot=False)
     initial_fmri_y = genlagtc.yfromx(initial_fmri_x)
     
-    fig = figure()
-    ax = fig.add_subplot(111)
-    ax.set_title('Regressors')
-    plot(nirs_x, nirs_y, initial_fmri_x, initial_fmri_y)
-    show()
+    if display:
+        fig = figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('Regressors')
+        plot(nirs_x, nirs_y, initial_fmri_x, initial_fmri_y)
+        show()
     
     # loop over space
     sliceoffsettime = 0.0
@@ -89,8 +90,9 @@ def test_simulate(display=False):
     fmri_y = genlagtc.yfromx(fmri_x)
     thenoise = noiselevel * standard_normal(len(fmri_y))
     simdata[:] = immean * (1.0 + (boldpc / 100.0) * fmri_y) + thenoise
-    plot(initial_fmri_x, simdata, initial_fmri_x, initial_fmri_y)
-    show()
+    if display:
+        plot(initial_fmri_x, simdata, initial_fmri_x, initial_fmri_y)
+        show()
 
 def main():
     test_simulate(display=True)
