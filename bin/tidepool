@@ -38,6 +38,7 @@ import getopt
 import argparse
 from OrthoImageItem import OrthoImageItem
 import os
+from pkg_resources import resource_string
 
 from nibabel.affines import apply_affine
 
@@ -1042,7 +1043,8 @@ def loadanatomics(thefileroot, theoverlays, anatname, MNIcoords, xsize, ysize, z
         fsldir = os.environ['FSLDIR']
     except KeyError:
         fsldir = None
-    referencedir = os.path.join(sys.path[0], 'reference')
+
+    referencedir = resource_string('rapidtide', 'reference')
 
     if anatname != '':
         print('using user input anatomic name')
@@ -1409,15 +1411,19 @@ def main():
     if loadgeommask(datafileroot, overlays, geommaskname, MNIcoords, xsize, ysize, zsize):
         allloadedmaps.append('geommask')
 
-    if MNIcoords and xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
+    if MNIcoords:
         referencedir = os.path.join(sys.path[0], 'reference')
-        aspectsname = os.path.join(referencedir, 'ASPECTS.nii.gz')
-        if os.path.isfile(aspectsname):
-            overlays['aspects'] = overlay('aspects', aspectsname, 'ASPECTS', report=True)
-            allloadedmaps.append('aspects')
-            dispmaps.append('aspects')
-        else:
-            print('ASPECTS template: ', aspectsname, ' does not exist!')
+        if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
+            aspectsname = os.path.join(referencedir, 'ASPECTS_2mm.nii.gz')
+        if xsize == 3.0 and ysize == 3.0 and zsize == 3.0:
+            aspectsname = os.path.join(referencedir, 'ASPECTS_3mm.nii.gz')
+        if aspectsname is not None:
+            if os.path.isfile(aspectsname):
+                overlays['aspects'] = overlay('aspects', aspectsname, 'ASPECTS', report=True)
+                allloadedmaps.append('aspects')
+                dispmaps.append('aspects')
+            else:
+                print('ASPECTS template: ', aspectsname, ' does not exist!')
     try:
         test = overlays['aspects']
         ui.aspects_checkBox.show()
