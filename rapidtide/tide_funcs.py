@@ -87,7 +87,8 @@ defaultbutterorder = 6
 MAXLINES = 10000000
 
 def version():
-    return '$Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $'
+    #return '$Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $'
+    return __version__
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
