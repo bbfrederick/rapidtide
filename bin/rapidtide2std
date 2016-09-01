@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+#
+#       $Author: frederic $
+#       $Date: 2015/03/06 14:12:29 $
+#       $Id: preprocess_spo2.py,v 1.1 2015/03/06 14:12:29 frederic Exp $
+#
+from __future__ import print_function
+
+import sys
+import time
+
+import glob
+import os
+import subprocess
+
+fsldir = os.environ.get('FSLDIR')
+if fsldir is not None:
+    fslsubcmd = os.path.join(fsldir, 'bin', 'fsl_sub')
+    flirtcmd = os.path.join(fsldir,'bin', 'flirt')
+else:
+    print('FSL directory not found - aborting')
+    sys.exit()
+
+def makethecmd(theinputfile, xform, outputname):
+    thecommand = []
+    thecommand.append(fslsubcmd)
+    thecommand.append(flirtcmd)
+    thecommand.append('-in')
+    thecommand.append(theinputfile)
+    thecommand.append('-ref')
+    thecommand.append(os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm'))
+    thecommand.append('-applyxfm')
+    thecommand.append('-init')
+    thecommand.append(xform)
+    thecommand.append('-out')
+    thecommand.append(outputname)
+    return(thecommand)
+
+def usage():
+    print('rapidtide2std:  register rapidtide output maps to standard space')
+    print('')
+    print('    usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY')
+    print('')
+
+
+##########################################################################################
+##########################################################################################
+#
+# control flow starts here
+#
+##########################################################################################
+##########################################################################################
+
+nargs = len(sys.argv)
+if (nargs != 4):
+    usage()
+    sys.exit(1)
+
+fileroot = sys.argv[1]
+outputdir = sys.argv[2]
+featdir = sys.argv[3]
+
+theoutputdir = os.path.join(os.path.abspath('.'), outputdir)
+thefileroot = glob.glob(os.path.join(fileroot + '*corrout.nii.gz'))[0]
+
+thefmrimaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'lagmask', 'R2', 'fitNorm', 'fitCoff', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
+theanatmaps = ['highres', 'standard']
+
+preponly = False
+
+absname = os.path.abspath(thefileroot)
+thepath, thebase = os.path.split(absname)
+theprevpath,theprevbase = os.path.split(thepath)
+subjroot = thebase[:-15]
+for themap in thefmrimaps:
+    inputname = os.path.abspath(os.path.join(thepath, subjroot+'_'+themap+'.nii.gz'))
+    outputname = os.path.abspath(os.path.join(theoutputdir,subjroot+'_std_'+themap+'.nii.gz'))
+    xform = os.path.abspath(glob.glob(os.path.join(featdir,
+        'reg','example_func2standard.mat'))[0])
+    thecommand = makethecmd(inputname, xform, outputname)
+
+    if preponly:
+        print(" ".join(thecommand))
+    else:
+        subprocess.call(thecommand)
+
+for themap in theanatmaps:
+    inputname = os.path.abspath(glob.glob(os.path.join(featdir,
+        'reg',themap + '.nii.gz'))[0])
+    outputname = os.path.abspath(os.path.join(theoutputdir,subjroot+'_std_'+themap.replace('standard','anat')+'.nii.gz'))
+    xform = os.path.abspath(glob.glob(os.path.join(featdir,
+        'reg','highres2standard.mat'))[0])
+    thecommand = makethecmd(inputname, xform, outputname)
+
+    if preponly:
+        print(" ".join(thecommand))
+    else:
+        subprocess.call(thecommand)
