@@ -93,6 +93,10 @@ Ok, I'm sold.  What's in here?
         the significance of the correlation.  It has a range of filtering,
         windowing, and correlation options.
 
+- **rapidtide2std** - This is a utility for registering rapidtide output maps
+	to standard coordinates.  It's usually much faster to run rapidtide
+        in native space then transform afterwards to MNI152 space.
+
 - **showtc** - A very simple command line utility that takes a text file
         and plots the data in it in a matplotlib window.  That's it.  A
         good tool for quickly seeing what's in a file.  Has some options
