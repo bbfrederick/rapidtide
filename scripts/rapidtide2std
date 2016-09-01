@@ -39,7 +39,7 @@ def makethecmd(theinputfile, xform, outputname):
 def usage():
     print('rapidtide2std:  register rapidtide output maps to standard space')
     print('')
-    print('    usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY')
+    print('    usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [all]')
     print('')
 
 
@@ -51,14 +51,17 @@ def usage():
 ##########################################################################################
 ##########################################################################################
 
+do4Dmaps = False
 nargs = len(sys.argv)
-if (nargs != 4):
+if nargs < 4 or nargs > 5:
     usage()
     sys.exit(1)
 
 fileroot = sys.argv[1]
 outputdir = sys.argv[2]
 featdir = sys.argv[3]
+if nargs==5:
+    do4Dmaps = True
 
 theoutputdir = os.path.join(os.path.abspath('.'), outputdir)
 thefileroot = glob.glob(os.path.join(fileroot + '*corrout.nii.gz'))[0]
@@ -66,6 +69,8 @@ thefileroot = glob.glob(os.path.join(fileroot + '*corrout.nii.gz'))[0]
 thefmrimaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'lagmask', 'R2', 'fitNorm', 'fitCoff', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
 theanatmaps = ['highres', 'standard']
 
+if do4Dmaps:
+    thefmrimaps.append('corrout')
 preponly = False
 
 absname = os.path.abspath(thefileroot)
