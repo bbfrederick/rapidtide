@@ -28,6 +28,8 @@ import warnings
 import time
 import sys
 import bisect
+import version
+import _gittag
 
 from scipy import signal
 from scipy.stats import johnsonsb
@@ -87,8 +89,7 @@ defaultbutterorder = 6
 MAXLINES = 10000000
 
 def version():
-    #return '$Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $'
-    return __version__
+    return __version__, __gittag__
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
