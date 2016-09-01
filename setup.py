@@ -24,17 +24,17 @@ if addtidepool:
     modules_list.append('tidepoolTemplate')
     modules_list.append('OrthoImageItem')
 
-script_list = ['bin/rapidtide2',
-               'bin/rapidtide2std',
-               'bin/showxcorr',
-               'bin/resamp1tc',
-               'bin/resamplenifti',
-               'bin/simdata',
-               'bin/pixelcomp',
-               'bin/showtc',
-               'bin/showhist']
+script_list = ['scripts/rapidtide2',
+               'scripts/rapidtide2std',
+               'scripts/showxcorr',
+               'scripts/resamp1tc',
+               'scripts/resamplenifti',
+               'scripts/simdata',
+               'scripts/pixelcomp',
+               'scripts/showtc',
+               'scripts/showhist']
 if addtidepool:
-    script_list.append('bin/tidepool')
+    script_list.append('scripts/tidepool')
 
 setup(
     name='rapidtide',
