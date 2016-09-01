@@ -25,6 +25,7 @@ if addtidepool:
     modules_list.append('OrthoImageItem')
 
 script_list = ['bin/rapidtide2',
+               'bin/rapidtide2std',
                'bin/showxcorr',
                'bin/resamp1tc',
                'bin/resamplenifti',
@@ -89,7 +90,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    #packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
@@ -119,15 +120,16 @@ setup(
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
+    include_package_data = True,
+    zip_safe=False,
+    #packages = find_packages(['reference', 'examples']),
+    #package_dir = {'': 'rapidtide'},
     package_data={
         'example':  ['examples/src/fmri.nii.gz',
                      'examples/src/timecourse1.txt',
                      'examples/src/timecourse2.txt',
                      'examples/src/nirs.txt'],
-        'reference': ['reference/ASPECTS_2mm.nii.gz',
-                     'reference/ASPECTS_3mm.nii.gz',
-                     'reference MNI152_T1_3mm.nii.gz',
-                     'reference MNI152_T1_3mm_brain_mask.nii.gz'],
+        'reference': ['reference/*.nii.gz'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
@@ -139,20 +141,5 @@ setup(
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
-    #scripts=['bin/rapidtide2',
-    #         'bin/showxcorr',
-    #         'bin/resamp1tc',
-    #         'bin/resamplenifti',
-    #         'bin/showtc',
-    #         'bin/showhist'],
-    #if addtidepool:
-    #         scripts.append('bin/tidepool')
     scripts=script_list,
-
-    #entry_points={
-        #'console_scripts': [
-            #'rapidtide2=rapidtide2:main',
-            #'tidepool=tidepool:main',
-        #],
-    #},
 )
