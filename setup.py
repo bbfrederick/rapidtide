@@ -120,10 +120,14 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        'example': ['examples/src/fmri.nii.gz',
-                    'examples/src/timecourse1.txt',
-                    'examples/src/timecourse2.txt',
-                    'examples/src/nirs.txt'],
+        'example':  ['examples/src/fmri.nii.gz',
+                     'examples/src/timecourse1.txt',
+                     'examples/src/timecourse2.txt',
+                     'examples/src/nirs.txt'],
+        'reference': ['reference/ASPECTS_2mm.nii.gz',
+                     'reference/ASPECTS_3mm.nii.gz',
+                     'reference MNI152_T1_3mm.nii.gz',
+                     'reference MNI152_T1_3mm_brain_mask.nii.gz'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
