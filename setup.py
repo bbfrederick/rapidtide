@@ -32,17 +32,17 @@ if addtidepool:
     modules_list.append('tidepoolTemplate')
     modules_list.append('OrthoImageItem')
 
-script_list = ['rapidtide/scripts/rapidtide2',
-               'rapidtide/scripts/rapidtide2std',
-               'rapidtide/scripts/showxcorr',
-               'rapidtide/scripts/resamp1tc',
-               'rapidtide/scripts/resamplenifti',
-               'rapidtide/scripts/simdata',
-               'rapidtide/scripts/pixelcomp',
-               'rapidtide/scripts/showtc',
-               'rapidtide/scripts/showhist']
+script_list = ['scripts/rapidtide2',
+               'scripts/rapidtide2std',
+               'scripts/showxcorr',
+               'scripts/resamp1tc',
+               'scripts/resamplenifti',
+               'scripts/simdata',
+               'scripts/pixelcomp',
+               'scripts/showtc',
+               'scripts/showhist']
 if addtidepool:
-    script_list.append('rapidtide/scripts/tidepool')
+    script_list.append('scripts/tidepool')
 
 def update_gittag_py():
     if not path.isdir(".git"):
@@ -77,15 +77,15 @@ def update_gittag_py():
                               "--tags", "--dirty", "--always"],
                              stdout=subprocess.PIPE)
     except EnvironmentError:
-        print("unable to run git, leaving rapidtide/_gittag.py alone")
+        print("unable to run git, leaving _gittag.py alone")
         return
     stdout = p.communicate()[0]
     if p.returncode != 0:
-        print("unable to run git, leaving rapidtide/_gittag.py alone")
+        print("unable to run git, leaving _gittag.py alone")
         return
     # we use tags like "python-rapidtide-0.5", so strip the prefix
     ver = str(stdout.strip(), "utf-8")
-    f = open("rapidtide/_gittag.py", "w")
+    f = open("_gittag.py", "w")
     f.write(VERSION_PY % ver)
     f.close()
 
@@ -93,7 +93,7 @@ def update_gittag_py():
 def get_gittag():
     update_gittag_py()
     try:
-        f = open("rapidtide/_gittag.py")
+        f = open("_gittag.py")
     except EnvironmentError:
         return None
     for line in f.readlines():
@@ -161,8 +161,8 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    #packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    packages=['rapidtide'],
+    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    #packages=['rapidtide'],
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
@@ -197,11 +197,11 @@ setup(
     #packages = find_packages(['reference', 'examples']),
     #package_dir = {'': 'rapidtide'},
     package_data={
-        'example':  ['rapidtide/examples/src/fmri.nii.gz',
-                     'rapidtide/examples/src/timecourse1.txt',
-                     'rapidtide/examples/src/timecourse2.txt',
-                     'rapidtide/examples/src/nirs.txt'],
-        'reference': ['rapidtide/reference/*.nii.gz'],
+        'example':  ['examples/src/fmri.nii.gz',
+                     'examples/src/timecourse1.txt',
+                     'examples/src/timecourse2.txt',
+                     'examples/src/nirs.txt'],
+        'reference': ['reference/*.nii.gz'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
