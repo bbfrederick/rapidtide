@@ -122,8 +122,8 @@ usage: rapidtide2 fmrifilename outputname
 	[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [-G] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] [-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME] [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS][--refineweighting=REFINETYPE] [--refinepasses=NUMPASSES] [--excludemask=MASKNAME] [--includemask=MASKNAME] [--lagminthresh=LAGMINTHRESH] [--lagmaxthresh=LAGMAXTHRESH] [--ampthresh=AMPTHRESH][--sigmathresh=SIGMATHRESH] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE][--limitoutput] [--timerange=STARTPOINT,ENDPOINT] [--numskip=SKIP] [--sliceorder=ORDER] [--regressorfreq=FREQ] [--regressortstep=TSTEP] [--regressor=FILENAME] [--regressorstart=STARTTIME]
 
 required arguments:
-    fmrifilename    - the BOLD fmri file
-    outputname      - the root name for the output files
+    fmrifilename     - the BOLD fmri file
+    outputname       - the root name for the output files
 
 preprocessing options:
     -t TRvalue       - override the TR in the fMRI file with the value 
@@ -255,8 +255,9 @@ Usage:
 
 showxcorr - calculate and display crosscorrelation between two timeseries
 
-usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME] [-N TRIALS]
-
+usage: showxcorr timecourse1 timecourse2 samplerate 
+    [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME] [-N TRIALS]
+    
 required arguments:
     timecoursefile1     - text file containing a timeseries
     timecoursefile2     - text file containing a timeseries
