@@ -156,77 +156,77 @@ preprocessing options:
                         (default is 0)
 
 correlation options:
-    -O OVERSAMPFAC      - oversample the fMRI data by the following integral 
-                       factor (default is 2)
-    --regressor      - Read probe regressor from file FILENAME (if none 
-                       specified, generate and use global regressor)
-    --regressorfreq  - Probe regressor in file has sample frequency FREQ 
-                       (default is 1/tr) NB: --regressorfreq and --regressortstep
-                       are two ways to specify the same thing
-    --regressortstep - Probe regressor in file has sample time step TSTEP 
-                       (default is tr) NB: --regressorfreq and --regressortstep
-                       are two ways to specify the same thing
-    --regressorstart - the time delay in seconds into the regressor file, corresponding
-                       in the first TR of the fmri file (default is 0.0)
-    -G               - use generalized cross-correlation with phase alignment 
-                       transform (GCC-PHAT) instead of correlation
+    -O OVERSAMPFAC       - oversample the fMRI data by the following integral 
+                         factor (default is 2)
+    --regressor          - Read probe regressor from file FILENAME (if none 
+                         specified, generate and use global regressor)
+    --regressorfreq      - Probe regressor in file has sample frequency FREQ 
+                         (default is 1/tr) NB: --regressorfreq and --regressortstep
+                         are two ways to specify the same thing
+    --regressortstep     - Probe regressor in file has sample time step TSTEP 
+                         (default is tr) NB: --regressorfreq and --regressortstep
+                         are two ways to specify the same thing
+    --regressorstart     - the time delay in seconds into the regressor file, corresponding
+                         in the first TR of the fmri file (default is 0.0)
+    -G                   - use generalized cross-correlation with phase alignment 
+                         transform (GCC-PHAT) instead of correlation
 
 correlation fitting options:
-    -Z DELAYTIME     - don't fit the delay time - set it to DELAYTIME seconds 
-                       for all voxels
-    -r LAGMIN,LAGMAX - limit fit to a range of lags from LAGMIN to LAGMAX
-    -s SIGMALIMIT    - reject lag fits with linewidth wider than SIGMALIMIT
-    -B               - bipolar mode - match peak correlation ignoring sign
+    -Z DELAYTIME         - don't fit the delay time - set it to DELAYTIME seconds 
+                         for all voxels
+    -r LAGMIN,LAGMAX     - limit fit to a range of lags from LAGMIN to LAGMAX
+    -s SIGMALIMIT        - reject lag fits with linewidth wider than SIGMALIMIT
+    -B                   - bipolar mode - match peak correlation ignoring sign
     
 regressor refinement options:
-    --refineweighting  - apply REFINETYPE weighting to each timecourse prior 
+    --refineweighting    - apply REFINETYPE weighting to each timecourse prior 
                          to refinement (valid weightings are 'None', 
                          'R', 'R2' (default)
-    --refinepasses     - set the number of refinement passes to NUMPASSES 
+    --refinepasses       - set the number of refinement passes to NUMPASSES 
                          (default is 1)
-    --includemask      - only use voxels in MASKNAME for global regressor 
+    --includemask        - only use voxels in MASKNAME for global regressor 
                          generation and regressor refinement
-    --excludemask      - do not use voxels in MASKNAME for global regressor 
+    --excludemask        - do not use voxels in MASKNAME for global regressor 
                          generation and regressor refinement
-    --lagminthresh     - for refinement, exclude voxels with delays less 
+    --lagminthresh       - for refinement, exclude voxels with delays less 
                          than LAGMINTHRESH (default is 1.5s)
-    --lagmaxthresh     - for refinement, exclude voxels with delays greater 
+    --lagmaxthresh       - for refinement, exclude voxels with delays greater 
                          than LAGMAXTHRESH (default is 1000s)
-    --ampthresh        - for refinement, exclude voxels with correlation 
+    --ampthresh          - for refinement, exclude voxels with correlation 
                          coefficients less than AMPTHRESH (default is 0.3)
-    --sigmathresh      - for refinement, exclude voxels with widths greater 
+    --sigmathresh        - for refinement, exclude voxels with widths greater 
                          than SIGMATHRESH (default is 50s)
-    --refineoffset     - adjust offset time during refinement to bring peak 
+    --refineoffset       - adjust offset time during refinement to bring peak 
                          delay to zero
-    --refineupperlag   - only use positive lags for regressor refinement
-    --refinelowerlag   - only use negative lags for regressor refinement
-    --pca              - use pca to derive refined regressor (default is 
+    --refineupperlag     - only use positive lags for regressor refinement
+    --refinelowerlag     - only use negative lags for regressor refinement
+    --pca                - use pca to derive refined regressor (default is 
                          averaging)
-    --ica              - use ica to derive refined regressor (default is 
+    --ica                - use ica to derive refined regressor (default is 
                          averaging)
 
 output options:
-    --limitoutput    - don't save some of the large and rarely used files
-    -T               - save a table of lagtimes used
-    -h HISTLEN       - change the histogram length to HISTLEN (default is
-                       100)
-    --timerange      - limit analysis to data between timepoints STARTPOINT 
-                       and ENDPOINT in the fmri file
-    --noglm          - turn off GLM filtering to remove delayed regressor 
-                       from each voxel (disables output of fitNorm)
+    --limitoutput        - don't save some of the large and rarely used files
+    -T                   - save a table of lagtimes used
+    -h HISTLEN           - change the histogram length to HISTLEN (default is
+                         100)
+    --timerange          - limit analysis to data between timepoints STARTPOINT 
+                         and ENDPOINT in the fmri file
+    --noglm              - turn off GLM filtering to remove delayed regressor 
+                         from each voxel (disables output of fitNorm)
 
 miscellaneous options:
-    -c               - data file is a converted CIFTI
-    -S               - simulate a run - just report command line options
-    -d               - display plots of interesting timecourses
+    -c                   - data file is a converted CIFTI
+    -S                   - simulate a run - just report command line options
+    -d                   - display plots of interesting timecourses
 
 experimental options (not fully tested, may not work):
-    --tmask=MASKFILE - only correlate during epochs specified in 
-                       MASKFILE (NB: each line of MASKFILE contains the 
-                       time and duration of an epoch to include
-    -p               - prewhiten and refit data
-    -P               - save prewhitened data (turns prewhitening on)
-    -A, --AR         - set AR model order to ORDER (default is 1)
+    --tmask=MASKFILE     - only correlate during epochs specified in 
+                          MASKFILE (NB: each line of MASKFILE contains the 
+                          time and duration of an epoch to include
+    -p                   - prewhiten and refit data
+    -P                   - save prewhitened data (turns prewhitening on)
+    -A, --AR             - set AR model order to ORDER (default is 1)
 
 These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
 
