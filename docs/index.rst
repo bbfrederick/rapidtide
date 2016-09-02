@@ -14,27 +14,20 @@ Rapidtide is a suite of python programs used to perform time delay analysis on f
 
 NOTE
 ====
-I'm still constructing this repository - including doing some last minute
-code reformatting, writing documentation, making a working setup.py file,
-and deciding what should and should not be included. **It's very possible
+This is an evolving code base.  I'm constantly tinkering with it.  That said,
+now that I'm releasing this to the world, I'm being somewhat more responsible
+about locking down stable release points.  In between releases, however, I'll
+be messing with things. **It's very possible
 I could break something while doing this, so check back for status updates
-if you download the code in this initial period**.  I'm also adding
-automated testing, so it's possible some things may turn up during this 
-process.  If you are downloadingthe 0.1.0 release, check back frequently
-over the next month or so as I nail everything down.  There will probably
-be MANY commits, and I'll try do document exactly why.
+if you download the code in between releases**.  I've finally become a little
+more modern and started adding
+automated testing, so as time goes by hopefully the "in between" releases will
+be somewhat more reliable.  Check back often for exciting new features and bug
+fixes!
 
-**IMPORTANT:  I've gotten some of the automated testing up and running again,
-and sure enough, I seem to have broken something in the packaging and
-updating routines for python 3 compatibility.  rapidtide2 is currently
-NOT working properly - there is a time shift in the delay maps, and perhaps
-more subtle problems that I need to work through.**
-
-**UPDATE 8/5/2016**:  It seems that what I broke was the data simulation code.
-From what I can determine, rapidtide2 itself works fine.  I've been doing some
-tweaks to the code, most notably fully implementing bipolar mode, which I think
-is going to be more important given what we now know about the arterial BOLD
-signal (spoiler - it's opposite in sign to "normal" venous BOLD).
+**UPDATE 9/2/16:  I have worked out the outstanding issues that arose when I added
+Python 3 compatiblity (with the help of unit tests - who knew?).  So things seem to be
+working ok.**
 
 Introduction
 ============
