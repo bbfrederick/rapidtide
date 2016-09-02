@@ -39,8 +39,15 @@ def makethecmd(theinputfile, xform, outputname):
 def usage():
     print('rapidtide2std:  register rapidtide output maps to standard space')
     print('')
-    print('    usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [all]')
+    print('usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [all]')
     print('')
+    print('required arguments:')
+    print('    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore')
+    print('    OUTPUTDIR          - The location for the output files')
+    print('    FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed')
+    print('')
+    print('optional arguments:')
+    print('    all                - If present, rapidtide2feat will transform the _corrout file to MNI152')
 
 
 ##########################################################################################
