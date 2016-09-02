@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
 
-from tide_funcs import noncausalfilter, valtoindex
+from rapidtide.tide_funcs import noncausalfilter, valtoindex
 import numpy as np
 import scipy as sp
 import pylab as plt

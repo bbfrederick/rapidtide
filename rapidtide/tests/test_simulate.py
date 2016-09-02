@@ -23,7 +23,7 @@ from __future__ import print_function
 import sys
 import getopt
 import string
-import tide_funcs as tide
+import rapidtide.tide_funcs as tide
 
 from numpy import r_, zeros, ones, random
 from pylab import *
