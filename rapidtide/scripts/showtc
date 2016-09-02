@@ -31,7 +31,7 @@ import matplotlib
 #else:
 #    matplotlib.use('TkAgg')
 
-import tide_funcs as tide
+import rapidtide.tide_funcs as tide
 from scipy import arange
 
 from pylab import plot, legend, show, hold

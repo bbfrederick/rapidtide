@@ -11,9 +11,10 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 import subprocess, re
+import sys
 
 
-VERSION_PY = """
+GITTAG_PY = """
 # This file is originally generated from Git information by running 'setup.py
 # install'. Distribution tarballs contain a pre-generated copy of this file.
 __gittag__ = '%s'
@@ -32,17 +33,18 @@ if addtidepool:
     modules_list.append('tidepoolTemplate')
     modules_list.append('OrthoImageItem')
 
-script_list = ['scripts/rapidtide2',
-               'scripts/rapidtide2std',
-               'scripts/showxcorr',
-               'scripts/resamp1tc',
-               'scripts/resamplenifti',
-               'scripts/simdata',
-               'scripts/pixelcomp',
-               'scripts/showtc',
-               'scripts/showhist']
+script_list = ['rapidtide/scripts/rapidtide2',
+               'rapidtide/scripts/rapidtide2std',
+               'rapidtide/scripts/showxcorr',
+               'rapidtide/scripts/resamp1tc',
+               'rapidtide/scripts/resamplenifti',
+               'rapidtide/scripts/simdata',
+               'rapidtide/scripts/pixelcomp',
+               'rapidtide/scripts/showtc',
+               'rapidtide/scripts/showhist']
 if addtidepool:
-    script_list.append('scripts/tidepool')
+    script_list.append('rapidtide/scripts/tidepool')
+
 
 def update_gittag_py():
     if not path.isdir(".git"):
@@ -53,55 +55,21 @@ def update_gittag_py():
                               "--tags", "--dirty", "--always"],
                              stdout=subprocess.PIPE)
     except EnvironmentError:
-        print("unable to run git, leaving _gittag.py alone")
+        print("unable to run git, leaving rapidtide/_gittag.py alone")
         return
     stdout = p.communicate()[0]
     if p.returncode != 0:
-        print("unable to run git, leaving _gittag.py alone")
+        print("unable to run git, leaving rapidtide/_gittag.py alone")
         return
     # we use tags like "python-rapidtide-0.5", so strip the prefix
-    ver = str(stdout.strip(), "utf-8")
+    if sys.version_info[0] == 3:
+        ver = str(stdout.strip(), "utf-8")
+    else:
+        ver = stdout.strip()
     print(ver)
-    f = open("_gittag.py", "w")
-    f.write(VERSION_PY % ver)
+    f = open("rapidtide/_gittag.py", "w")
+    f.write(GITTAG_PY % ver)
     f.close()
-
-
-
-def update_gittag_py():
-    if not path.isdir(".git"):
-        print("This does not appear to be a Git repository.")
-        return
-    try:
-        p = subprocess.Popen(["git", "describe",
-                              "--tags", "--dirty", "--always"],
-                             stdout=subprocess.PIPE)
-    except EnvironmentError:
-        print("unable to run git, leaving _gittag.py alone")
-        return
-    stdout = p.communicate()[0]
-    if p.returncode != 0:
-        print("unable to run git, leaving _gittag.py alone")
-        return
-    # we use tags like "python-rapidtide-0.5", so strip the prefix
-    ver = str(stdout.strip(), "utf-8")
-    f = open("_gittag.py", "w")
-    f.write(VERSION_PY % ver)
-    f.close()
-
-
-def get_gittag():
-    update_gittag_py()
-    try:
-        f = open("_gittag.py")
-    except EnvironmentError:
-        return None
-    for line in f.readlines():
-        mo = re.match("__gittag__ = '([^']+)'", line)
-        if mo:
-            ver = mo.group(1)
-            return ver
-    return None
 
 
 update_gittag_py()
@@ -167,11 +135,6 @@ setup(
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
     #   py_modules=["my_module"],
-    #py_modules=['tide_funcs'],
-    #
-    #if addtidepool:
-    #    py_modules.append('tidepoolTemplate.py')
-    #    py_modules.append('OrthoImageItem.py')
     py_modules=modules_list,
 
     # List run-time dependencies here.  These will be installed by pip when
@@ -197,7 +160,7 @@ setup(
     #packages = find_packages(['reference', 'examples']),
     #package_dir = {'': 'rapidtide'},
     package_data={
-        'example':  ['examples/src/fmri.nii.gz',
+        'examples':  ['examples/src/fmri.nii.gz',
                      'examples/src/timecourse1.txt',
                      'examples/src/timecourse2.txt',
                      'examples/src/nirs.txt'],

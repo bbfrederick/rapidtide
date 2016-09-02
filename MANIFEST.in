@@ -1,4 +1,4 @@
-include *.py
-include examples/src/fmri.nii.gz examples/src/timecourse1.txt examples/src/timecourse2.txt examples/src/nirs.txt
-recursive-include scripts *
-recursive-include reference *.nii.gz
+recursive-include rapidtide *.py
+recursive-include rapidtide/data/examples/src fmri.nii.gz timecourse1.txt timecourse2.txt nirs.txt
+recursive-include rapidtide/scripts *
+recursive-include rapidtide/data/reference *.nii.gz
