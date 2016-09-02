@@ -1044,7 +1044,7 @@ def loadanatomics(thefileroot, theoverlays, anatname, MNIcoords, xsize, ysize, z
     except KeyError:
         fsldir = None
 
-    referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'reference')
+    referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data', 'reference')
 
     if anatname != '':
         print('using user input anatomic name')
@@ -1105,7 +1105,7 @@ def loadfuncmasks(thefileroot, theoverlays, thefuncmasks):
 
 
 def loadgeommask(thefileroot, theoverlays, geommaskname, MNIcoords, xsize, ysize, zsize):
-    referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'reference')
+    referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data', 'reference')
     if geommaskname != '':
         if os.path.isfile(geommaskname):
             thepath, thebase = os.path.split(geommaskname)
@@ -1412,7 +1412,7 @@ def main():
         allloadedmaps.append('geommask')
 
     if MNIcoords:
-        referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'reference')
+        referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data', 'reference')
         if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
             aspectsname = os.path.join(referencedir, 'ASPECTS_2mm.nii.gz')
         if xsize == 3.0 and ysize == 3.0 and zsize == 3.0:
