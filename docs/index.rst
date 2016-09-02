@@ -251,45 +251,43 @@ Usage:
 
 ::
 
-showxcorr - calculate and display crosscorrelation between two timeseries
+	showxcorr - calculate and display crosscorrelation between two timeseries
 
-usage: showxcorr timecourse1 timecourse2 samplerate 
-    [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME] [-N TRIALS]
+	usage: showxcorr timecourse1 timecourse2 samplerate 
+	    [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME] [-N TRIALS]
     
-required arguments:
-    timecoursefile1     - text file containing a timeseries
-    
-    timecoursefile2     - text file containing a timeseries
-    
-    samplerate          - the sample rate of the timecourses, in Hz
+	required arguments:
+	    timecoursefile1     - text file containing a timeseries
+	    timecoursefile2     - text file containing a timeseries
+	    samplerate          - the sample rate of the timecourses, in Hz
 
-optional arguments:
-    -t 	     - detrend the data
-    -w 	     - prewindow the data
-    -g 	     - perform phase alignment transform (phat) rather than 
-                    standard crosscorrelation
-    -l LABEL	     - label for the delay value
-    -s STARTTIME  - time of first datapoint to use in seconds in the first file
-    -D DURATION   - amount of data to use in seconds
-    -r RANGE      - restrict peak search range to +/- RANGE seconds (default is 
-                    +/-15)
-    -d            - turns off display of graph
-    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.
-                    LOWERSTOP and UPPERSTOP can be specified, or will be 
-                    calculated automatically
-    -V            - filter data and regressors to VLF band
-    -L            - filter data and regressors to LFO band
-    -R            - filter data and regressors to respiratory band
-    -C            - filter data and regressors to cardiac band
-    -T            - trim data to match
-    -A            - print data on a single summary line
-    -a            - if summary mode is on, add a header line showing what values 
-                    mean
-    -f            - negate (flip) second regressor
-    -z FILENAME   - use the columns of FILENAME as controlling variables and 
-                    return the partial correlation
-    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS 
-                    repetition
+	optional arguments:
+	    -t 	     - detrend the data
+	    -w 	     - prewindow the data
+	    -g 	     - perform phase alignment transform (phat) rather than 
+	                    standard crosscorrelation
+	    -l LABEL	     - label for the delay value
+	    -s STARTTIME  - time of first datapoint to use in seconds in the first file
+	    -D DURATION   - amount of data to use in seconds
+	    -r RANGE      - restrict peak search range to +/- RANGE seconds (default is 
+	                    +/-15)
+	    -d            - turns off display of graph
+	    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.
+	                    LOWERSTOP and UPPERSTOP can be specified, or will be 
+	                    calculated automatically
+	    -V            - filter data and regressors to VLF band
+	    -L            - filter data and regressors to LFO band
+	    -R            - filter data and regressors to respiratory band
+	    -C            - filter data and regressors to cardiac band
+	    -T            - trim data to match
+	    -A            - print data on a single summary line
+	    -a            - if summary mode is on, add a header line showing what values 
+	                    mean
+	    -f            - negate (flip) second regressor
+	    -z FILENAME   - use the columns of FILENAME as controlling variables and 
+	                    return the partial correlation
+	    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS 
+	                    repetition
 
 
 rapidtide2std
