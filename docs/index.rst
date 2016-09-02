@@ -56,7 +56,7 @@ This code has been in active development since June of 2012.  This has two impli
 
 Python version compatibility: 
 -----------------------------
-This code has been extensively tested in python 2.7.  I dragged my feet somewhat making it python 3 compatible, since a number of the libraries I needed took a long time to get ported to python 3, and I honestly saw no advantage to doing it.  I since decided that I’m going to have to do it eventually, so why not now?  As far as I know, the code all works fine in python 3.5 now - I’ve switched over to that on my development machine, and have not hit any version related issues in a while now, and according to PyCharm’s code inspection, there are no incompatible constructions.  However that’s no guarantee that there isn’t a problem in some option I haven’t bothered to test yet, so be vigilant, and please let me know if there is some issue with python 3 that I haven’t caught (or any bugs, really).
+This code has been extensively tested in python 2.7.  I dragged my feet somewhat making it python 3 compatible, since a number of the libraries I needed took a long time to get ported to python 3, and I honestly saw no advantage to doing it.  I have since decided that I’m going to have to do it eventually, so why not now?  As far as I know, the code all works fine in python 3.5 now - I’ve switched over to that on my development machine, and have not hit any version related issues in a while now, and according to PyCharm’s code inspection, there are no incompatible constructions.  However that’s no guarantee that there isn’t a problem in some option I haven’t bothered to test yet, so be vigilant, and please let me know if there is some issue with python 3 that I haven’t caught (or any bugs, really).
       
 How do I cite this?
 -------------------
@@ -69,10 +69,12 @@ I’ve included a number of tools to get you going – I’ll add in a number of
 
 rapidtide2
 ----------
+
 The central program in this package is rapidtide2.  This is the program that quantifies the correlation strength and time delay of pervasive signals in a BOLD fMRI dataset.
 
 Description:
 ^^^^^^^^^^^^
+
 At its core, rapidtide2 is simply performing a full crosscorrelation between a "probe" timecourse and every voxel in an fMRI dataset (by “full” I mean over a range of time lags that account for any delays between the signals, rather than only at zero lag, as in a Pearson correlation).  As with many things, however, the devil is in the details, and so rapidtide2 provides a number of features which make it pretty good at this particular task.  A few highlights:
 
 #.    There are lots of ways to do something even as simple as a cross-correlation in a nonoptimal way (not windowing, improper normalization, doing it in the time rather than frequency domain, etc.).  I'm pretty sure what rapidtide2 does by default is, if not the best way, at least a very good and very fast way.
@@ -156,81 +158,386 @@ preprocessing options:
                         (default is 0)
 
 correlation options:
-    -O OVERSAMPFAC      - oversample the fMRI data by the following integral 
-                       factor (default is 2)
-    --regressor      - Read probe regressor from file FILENAME (if none 
-                       specified, generate and use global regressor)
-    --regressorfreq  - Probe regressor in file has sample frequency FREQ 
-                       (default is 1/tr) NB: --regressorfreq and --regressortstep
-                       are two ways to specify the same thing
-    --regressortstep - Probe regressor in file has sample time step TSTEP 
-                       (default is tr) NB: --regressorfreq and --regressortstep
-                       are two ways to specify the same thing
-    --regressorstart - the time delay in seconds into the regressor file, corresponding
-                       in the first TR of the fmri file (default is 0.0)
-    -G               - use generalized cross-correlation with phase alignment 
-                       transform (GCC-PHAT) instead of correlation
+    -O OVERSAMPFAC       - oversample the fMRI data by the following integral 
+                         factor (default is 2)
+    --regressor          - Read probe regressor from file FILENAME (if none 
+                         specified, generate and use global regressor)
+    --regressorfreq      - Probe regressor in file has sample frequency FREQ 
+                         (default is 1/tr) NB: --regressorfreq and --regressortstep
+                         are two ways to specify the same thing
+    --regressortstep     - Probe regressor in file has sample time step TSTEP 
+                         (default is tr) NB: --regressorfreq and --regressortstep
+                         are two ways to specify the same thing
+    --regressorstart     - the time delay in seconds into the regressor file, corresponding
+                         in the first TR of the fmri file (default is 0.0)
+    -G                   - use generalized cross-correlation with phase alignment 
+                         transform (GCC-PHAT) instead of correlation
 
 correlation fitting options:
-    -Z DELAYTIME     - don't fit the delay time - set it to DELAYTIME seconds 
-                       for all voxels
-    -r LAGMIN,LAGMAX - limit fit to a range of lags from LAGMIN to LAGMAX
-    -s SIGMALIMIT    - reject lag fits with linewidth wider than SIGMALIMIT
-    -B               - bipolar mode - match peak correlation ignoring sign
+    -Z DELAYTIME         - don't fit the delay time - set it to DELAYTIME seconds 
+                         for all voxels
+    -r LAGMIN,LAGMAX     - limit fit to a range of lags from LAGMIN to LAGMAX
+    -s SIGMALIMIT        - reject lag fits with linewidth wider than SIGMALIMIT
+    -B                   - bipolar mode - match peak correlation ignoring sign
     
 regressor refinement options:
-    --refineweighting  - apply REFINETYPE weighting to each timecourse prior 
+    --refineweighting    - apply REFINETYPE weighting to each timecourse prior 
                          to refinement (valid weightings are 'None', 
                          'R', 'R2' (default)
-    --refinepasses     - set the number of refinement passes to NUMPASSES 
+    --refinepasses       - set the number of refinement passes to NUMPASSES 
                          (default is 1)
-    --includemask      - only use voxels in MASKNAME for global regressor 
+    --includemask        - only use voxels in MASKNAME for global regressor 
                          generation and regressor refinement
-    --excludemask      - do not use voxels in MASKNAME for global regressor 
+    --excludemask        - do not use voxels in MASKNAME for global regressor 
                          generation and regressor refinement
-    --lagminthresh     - for refinement, exclude voxels with delays less 
+    --lagminthresh       - for refinement, exclude voxels with delays less 
                          than LAGMINTHRESH (default is 1.5s)
-    --lagmaxthresh     - for refinement, exclude voxels with delays greater 
+    --lagmaxthresh       - for refinement, exclude voxels with delays greater 
                          than LAGMAXTHRESH (default is 1000s)
-    --ampthresh        - for refinement, exclude voxels with correlation 
+    --ampthresh          - for refinement, exclude voxels with correlation 
                          coefficients less than AMPTHRESH (default is 0.3)
-    --sigmathresh      - for refinement, exclude voxels with widths greater 
+    --sigmathresh        - for refinement, exclude voxels with widths greater 
                          than SIGMATHRESH (default is 50s)
-    --refineoffset     - adjust offset time during refinement to bring peak 
+    --refineoffset       - adjust offset time during refinement to bring peak 
                          delay to zero
-    --refineupperlag   - only use positive lags for regressor refinement
-    --refinelowerlag   - only use negative lags for regressor refinement
-    --pca              - use pca to derive refined regressor (default is 
+    --refineupperlag     - only use positive lags for regressor refinement
+    --refinelowerlag     - only use negative lags for regressor refinement
+    --pca                - use pca to derive refined regressor (default is 
                          averaging)
-    --ica              - use ica to derive refined regressor (default is 
+    --ica                - use ica to derive refined regressor (default is 
                          averaging)
 
 output options:
-    --limitoutput    - don't save some of the large and rarely used files
-    -T               - save a table of lagtimes used
-    -h HISTLEN       - change the histogram length to HISTLEN (default is
-                       100)
-    --timerange      - limit analysis to data between timepoints STARTPOINT 
-                       and ENDPOINT in the fmri file
-    --noglm          - turn off GLM filtering to remove delayed regressor 
-                       from each voxel (disables output of fitNorm)
+    --limitoutput        - don't save some of the large and rarely used files
+    -T                   - save a table of lagtimes used
+    -h HISTLEN           - change the histogram length to HISTLEN (default is
+                         100)
+    --timerange          - limit analysis to data between timepoints STARTPOINT 
+                         and ENDPOINT in the fmri file
+    --noglm              - turn off GLM filtering to remove delayed regressor 
+                         from each voxel (disables output of fitNorm)
 
 miscellaneous options:
-    -c               - data file is a converted CIFTI
-    -S               - simulate a run - just report command line options
-    -d               - display plots of interesting timecourses
+    -c                   - data file is a converted CIFTI
+    -S                   - simulate a run - just report command line options
+    -d                   - display plots of interesting timecourses
 
 experimental options (not fully tested, may not work):
-    --tmask=MASKFILE - only correlate during epochs specified in 
-                       MASKFILE (NB: each line of MASKFILE contains the 
-                       time and duration of an epoch to include
-    -p               - prewhiten and refit data
-    -P               - save prewhitened data (turns prewhitening on)
-    -A, --AR         - set AR model order to ORDER (default is 1)
+    --tmask=MASKFILE     - only correlate during epochs specified in 
+                          MASKFILE (NB: each line of MASKFILE contains the 
+                          time and duration of an epoch to include
+    -p                   - prewhiten and refit data
+    -P                   - save prewhitened data (turns prewhitening on)
+    -A, --AR             - set AR model order to ORDER (default is 1)
 
 These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
 
-    
+showxcorr
+---------
+
+Description:
+^^^^^^^^^^^^
+
+Like rapidtide2, but for single time courses.  Takes two text files as input, calculates and displays 
+the time lagged crosscorrelation between them, fits the maximum time lag, and estimates
+the significance of the correlation.  It has a range of filtering,
+windowing, and correlation options.
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+::
+
+showxcorr - calculate and display crosscorrelation between two timeseries
+
+usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME] [-N TRIALS]
+
+required arguments:
+	timcoursefile1:	text file containing a timeseries
+	timcoursefile2:	text file containing a timeseries
+	samplerate:	the sample rate of the timecourses, in Hz
+
+optional arguments:
+    -t 	     - detrend the data
+    -w 	     - prewindow the data
+    -g 	     - perform phase alignment transform (phat) rather than 
+                    standard crosscorrelation
+    -l LABEL	     - label for the delay value
+    -s STARTTIME  - time of first datapoint to use in seconds in the first file
+    -D DURATION   - amount of data to use in seconds
+    -r RANGE      - restrict peak search range to +/- RANGE seconds (default is 
+                    +/-15)
+    -d            - turns off display of graph
+    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.
+                    LOWERSTOP and UPPERSTOP can be specified, or will be 
+                    calculated automatically
+    -V            - filter data and regressors to VLF band
+    -L            - filter data and regressors to LFO band
+    -R            - filter data and regressors to respiratory band
+    -C            - filter data and regressors to cardiac band
+    -T            - trim data to match
+    -A            - print data on a single summary line
+    -a            - if summary mode is on, add a header line showing what values 
+                    mean
+    -f            - negate (flip) second regressor
+    -z FILENAME   - use the columns of FILENAME as controlling variables and 
+                    return the partial correlation
+    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS 
+                    repetition
+
+
+rapidtide2std
+-------------
+
+Description:
+^^^^^^^^^^^^
+
+This is a utility for registering rapidtide output maps
+to standard coordinates.  It's usually much faster to run rapidtide
+in native space then transform afterwards to MNI152 space.  NB: this 
+will only work if you have a working FSL installation.
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+::
+
+rapidtide2std:  register rapidtide output maps to standard space
+
+usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [all]
+
+required arguments:
+    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
+    OUTPUTDIR          - The location for the output files
+    FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
+
+optional arguments:
+    all                - If present, rapidtide2feat will transform the _corrout file to MNI152
+
+
+showtc
+------
+
+Description:
+^^^^^^^^^^^^
+
+A very simple command line utility that takes a text file
+and plots the data in it in a matplotlib window.  That's it.  A
+good tool for quickly seeing what's in a file.  Has some options
+to make the plot prettier.
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+::
+
+showtc - plots the data in text files
+
+usage: showtc texfilename [textfilename]...
+
+required arguments:
+	textfilename	- a text file containing whitespace separated timecourses, one timepoint per line
+
+
+showhist
+--------
+
+Description:
+^^^^^^^^^^^^
+Another simple command line utility that displays the 
+histograms generated by rapidtide2.
+
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+::
+
+usage: showxy textfilename
+	plots xy data in text file
+
+required arguments:
+	textfilename	- a text file containing one timepoint per line
+
+
+resamp1tc
+---------
+
+Description:
+^^^^^^^^^^^^
+This takes an input text file at some sample rate and outputs
+a text file resampled to the specified sample rate.
+
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+::
+
+resamp1tc - resample a timeseries file
+
+usage: resamp1tc infilename insamplerate outputfile outsamplerate [-s]
+
+required arguments:
+	inputfile	- the name of the input text file
+	insamplerate	- the sample rate of the input file in Hz
+	outputfile	- the name of the output text file
+	outsamplerate	- the sample rate of the output file in Hz
+
+ options:
+     -s    split output data into physiological bands (LFO, respiratory, cardiac)
+
+resamplenifti
+-------------
+
+Description:
+^^^^^^^^^^^^
+This takes an input nifti file at some TR and outputs
+a nifti file resampled to the specified TR.
+
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+::
+
+usage: resamplenifti inputfile inputtr outputname outputtr [-a]
+
+required arguments:
+	inputfile	- the name of the input nifti file
+	inputtr		- the tr of the input file in seconds
+	outputfile	- the name of the output nifti file
+	outputtr	- the tr of the output file in seconds
+
+options:
+	-a		- disable antialiasing filter (only relevant if you are downsampling in time)
+
+
+tidepool
+--------
+
+Description:
+^^^^^^^^^^^^
+This is a very experimental tool for displaying all of the
+various maps generated by rapidtide2 in one place, overlayed on
+an anatomic image.  This makes it a bit easier to see how all the
+maps are related to one another.  To use it, launch tidepool from
+the command line, and then select a lag time map - tidpool will 
+figure out the root name and pull in all of the other associated
+maps.  Works in native or standard space.
+
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+::
+
+usage: tidepool [-h] [-o OFFSETTIME] [-r] [-n] [-t TRVAL] [-d DATAFILEROOT]
+                [-a ANATNAME] [-m GEOMASKNAME]
+
+A program to display the results of a time delay analysis
+
+optional arguments:
+  -h, --help       show this help message and exit
+  -o OFFSETTIME    Set lag offset
+  -r               enable risetime display
+  -n               enable movie mode
+  -t TRVAL         Set correlation TR
+  -d DATAFILEROOT  Use this dataset (skip initial selection step)
+  -a ANATNAME      Set anatomic mask image
+  -m GEOMASKNAME   Set geometric mask image
+
+
+tide_funcs.py
+-------------
+
+Description:
+^^^^^^^^^^^^
+This is the library of the various helper routines
+that are used by pretty much every program in here for
+correlation, resampling, filtering, normalization, significance
+estimation, file I/O, etc.
+
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+::
+
+
+OrthoImageItem.py
+-----------------
+
+Description:
+^^^^^^^^^^^^
+This is a class that implements the orthographic
+projection module that is used to display all of the maps in tidepool.
+It uses pyqtgraph to do all the heavy lifting.  None of the built-ins
+in pyqtgraph did exactly what I wanted in terms of allowing 3D selection,
+overlays and the like, so I cobbled this together.  It may be generally
+useful to anybody wanting to display functional data.
+        
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+::
+
+
 Indices and tables
 ==================
 
