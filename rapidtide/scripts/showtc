@@ -38,11 +38,12 @@ from pylab import plot, legend, show, hold
 
 
 def usage():
-    print("usage: showtc texfilename")
-    print("	plots the data in a text file")
+    print("showtc - plots the data in text files")
+    print("")
+    print("usage: showtc texfilename [textfilename]...")
     print("")
     print("required arguments:")
-    print("	textfilename	- a text file containing one timepoint per line")
+    print("	textfilename	- a text file containing whitespace separated timecourses, one timepoint per line")
     return ()
 
 
