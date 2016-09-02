@@ -8,18 +8,19 @@ HTML documentation is here: http://rapidtide.readthedocs.io/en/latest/
 
 NOTE
 ====
-I'm still constructing this repository - including doing some last minute
-code reformatting, writing documentation, making a working setup.py file,
-and deciding what should and should not be included. **It's very possible
+This is an evolving code base.  I'm constantly tinkering with it.  That said,
+now that I'm releasing this to the world, I'm being somewhat more responsible
+about locking down stable release points.  In between releases, however, I'll
+be messing with things. **It's very possible
 I could break something while doing this, so check back for status updates
-if you download the code in this initial period**.  I'm also adding
-automated testing, so it's possible some things may turn up during this 
-process.  If you are downloadingthe 0.1.0 release, check back frequently
-over the next month or so as I nail everything down.  There will probably
-be MANY commits, and I'll try do document exactly why.
+if you download the code in between releases**.  I've finally become a little
+more modern and started adding
+automated testing, so as time goes by hopefully the "in between" releases will
+be somewhat more reliable.  Check back often for exciting new features and bug
+fixes!
 
-**UPDATE 9/2/16:  I have worked out the outstanding issues that arose in the
-conversion (with the help of unit tests - who knew?).  So things seem to be
+**UPDATE 9/2/16:  I have worked out the outstanding issues that arose when I added
+Python 3 compatiblity (with the help of unit tests - who knew?).  So things seem to be
 working ok.**
 
 Why do I want to know about time lagged correlations?
@@ -88,7 +89,8 @@ Ok, I'm sold.  What's in here?
 
 - **rapidtide2std** - This is a utility for registering rapidtide output maps
 	to standard coordinates.  It's usually much faster to run rapidtide
-        in native space then transform afterwards to MNI152 space.
+        in native space then transform afterwards to MNI152 space.  NB: this 
+        will only work if you have a working FSL installation.
 
 - **showtc** - A very simple command line utility that takes a text file
         and plots the data in it in a matplotlib window.  That's it.  A
