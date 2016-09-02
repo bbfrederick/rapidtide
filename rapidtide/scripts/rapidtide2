@@ -33,7 +33,7 @@ import sys
 
 from sklearn.decomposition import FastICA, PCA
 
-import tide_funcs as tide
+import rapidtide.tide_funcs as tide
 
 from pylab import figure, plot, show
 import numpy as np
@@ -46,10 +46,6 @@ from scipy.stats.stats import pearsonr
 # else:
 #    matplotlib.use('TkAgg')
 # from memory_profiler import profile
-
-
-def version():
-    return '$Id: rapidtide,v 1.161 2016/07/11 14:50:43 frederic Exp $'
 
 
 def startendcheck(timepoints, startpoint, endpoint):
@@ -667,8 +663,7 @@ def main():
     optiondict['debug'] = False
     optiondict['enforcethresh'] = True
     optiondict['verbose'] = False
-    optiondict['version_rapidtide'] = version()
-    optiondict['version_tideuncs'] = tide.version()
+    optiondict['release_version'], optiondict['git_tag'] = tide.version()
 
     realtr = 0.0
     theprefilter = tide.noncausalfilter()

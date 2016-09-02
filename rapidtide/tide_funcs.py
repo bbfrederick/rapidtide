@@ -28,8 +28,7 @@ import warnings
 import time
 import sys
 import bisect
-import version
-import _gittag
+import os
 
 from scipy import signal
 from scipy.stats import johnsonsb
@@ -89,7 +88,16 @@ defaultbutterorder = 6
 MAXLINES = 10000000
 
 def version():
-    return __version__, __gittag__
+    version = 'UNKNOWN'
+    gittag = 'UNKNOWN'
+    thispath,thisfile = os.path.split(__file__)
+    print(thispath)
+    with open(os.path.join(thispath, '_gittag.py')) as f:
+        for line in f:
+            if line.startswith('__gittag__'):
+                fulltag = (line.split()[2]).split('-')
+                break
+    return fulltag[0], '-'.join(fulltag[1:])
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
