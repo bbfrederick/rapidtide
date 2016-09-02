@@ -260,7 +260,9 @@ usage: showxcorr timecourse1 timecourse2 samplerate
     
 required arguments:
     timecoursefile1     - text file containing a timeseries
+    
     timecoursefile2     - text file containing a timeseries
+    
     samplerate          - the sample rate of the timecourses, in Hz
 
 optional arguments:
