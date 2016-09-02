@@ -69,10 +69,12 @@ I’ve included a number of tools to get you going – I’ll add in a number of
 
 rapidtide2
 ----------
+
 The central program in this package is rapidtide2.  This is the program that quantifies the correlation strength and time delay of pervasive signals in a BOLD fMRI dataset.
 
 Description:
 ^^^^^^^^^^^^
+
 At its core, rapidtide2 is simply performing a full crosscorrelation between a "probe" timecourse and every voxel in an fMRI dataset (by “full” I mean over a range of time lags that account for any delays between the signals, rather than only at zero lag, as in a Pearson correlation).  As with many things, however, the devil is in the details, and so rapidtide2 provides a number of features which make it pretty good at this particular task.  A few highlights:
 
 #.    There are lots of ways to do something even as simple as a cross-correlation in a nonoptimal way (not windowing, improper normalization, doing it in the time rather than frequency domain, etc.).  I'm pretty sure what rapidtide2 does by default is, if not the best way, at least a very good and very fast way.
@@ -235,6 +237,7 @@ showxcorr
 
 Description:
 ^^^^^^^^^^^^
+
 Like rapidtide2, but for single time courses.  Takes two 
         text files as input, calculates and displays the time lagged cross
         correlation between them, fits the maximum time lag, and estimates
@@ -258,6 +261,7 @@ rapidtide2std
 
 Description:
 ^^^^^^^^^^^^
+
 This is a utility for registering rapidtide output maps
 	to standard coordinates.  It's usually much faster to run rapidtide
         in native space then transform afterwards to MNI152 space.  NB: this 
@@ -281,6 +285,7 @@ showtc
 
 Description:
 ^^^^^^^^^^^^
+
 A very simple command line utility that takes a text file
         and plots the data in it in a matplotlib window.  That's it.  A
         good tool for quickly seeing what's in a file.  Has some options
