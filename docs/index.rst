@@ -254,6 +254,43 @@ Usage:
 
 ::
 
+showxcorr - calculate and display crosscorrelation between two timeseries
+
+usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME] [-N TRIALS]
+
+required arguments:
+	timcoursefile1:	text file containing a timeseries
+	timcoursefile2:	text file containing a timeseries
+	samplerate:	the sample rate of the timecourses, in Hz
+
+optional arguments:
+    -t 	     - detrend the data
+    -w 	     - prewindow the data
+    -g 	     - perform phase alignment transform (phat) rather than 
+                    standard crosscorrelation
+    -l LABEL	     - label for the delay value
+    -s STARTTIME  - time of first datapoint to use in seconds in the first file
+    -D DURATION   - amount of data to use in seconds
+    -r RANGE      - restrict peak search range to +/- RANGE seconds (default is 
+                    +/-15)
+    -d            - turns off display of graph
+    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.
+                    LOWERSTOP and UPPERSTOP can be specified, or will be 
+                    calculated automatically
+    -V            - filter data and regressors to VLF band
+    -L            - filter data and regressors to LFO band
+    -R            - filter data and regressors to respiratory band
+    -C            - filter data and regressors to cardiac band
+    -T            - trim data to match
+    -A            - print data on a single summary line
+    -a            - if summary mode is on, add a header line showing what values 
+                    mean
+    -f            - negate (flip) second regressor
+    -z FILENAME   - use the columns of FILENAME as controlling variables and 
+                    return the partial correlation
+    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS 
+                    repetition
+
 
 rapidtide2std
 -------------
@@ -277,6 +314,17 @@ Usage:
 
 ::
 
+rapidtide2std:  register rapidtide output maps to standard space
+
+usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [all]
+
+required arguments:
+    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
+    OUTPUTDIR          - The location for the output files
+    FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
+
+optional arguments:
+    all                - If present, rapidtide2feat will transform the _corrout file to MNI152
 
 
 showtc
@@ -301,6 +349,12 @@ Usage:
 
 ::
 
+showtc - plots the data in text files
+
+usage: showtc texfilename [textfilename]...
+
+required arguments:
+	textfilename	- a text file containing whitespace separated timecourses, one timepoint per line
 
 
 showhist
@@ -323,6 +377,12 @@ Usage:
 
 ::
 
+usage: showxy textfilename
+	plots xy data in text file
+
+required arguments:
+	textfilename	- a text file containing one timepoint per line
+
 
 resamp1tc
 ---------
@@ -344,6 +404,18 @@ Usage:
 
 ::
 
+resamp1tc - resample a timeseries file
+
+usage: resamp1tc infilename insamplerate outputfile outsamplerate [-s]
+
+required arguments:
+	inputfile	- the name of the input text file
+	insamplerate	- the sample rate of the input file in Hz
+	outputfile	- the name of the output text file
+	outsamplerate	- the sample rate of the output file in Hz
+
+ options:
+     -s    split output data into physiological bands (LFO, respiratory, cardiac)
 
 resamplenifti
 -------------
@@ -364,6 +436,17 @@ Usage:
 ^^^^^^
 
 ::
+
+usage: resamplenifti inputfile inputtr outputname outputtr [-a]
+
+required arguments:
+	inputfile	- the name of the input nifti file
+	inputtr		- the tr of the input file in seconds
+	outputfile	- the name of the output nifti file
+	outputtr	- the tr of the output file in seconds
+
+options:
+	-a		- disable antialiasing filter (only relevant if you are downsampling in time)
 
 
 tidepool
@@ -390,6 +473,21 @@ Usage:
 ^^^^^^
 
 ::
+
+usage: tidepool [-h] [-o OFFSETTIME] [-r] [-n] [-t TRVAL] [-d DATAFILEROOT]
+                [-a ANATNAME] [-m GEOMASKNAME]
+
+A program to display the results of a time delay analysis
+
+optional arguments:
+  -h, --help       show this help message and exit
+  -o OFFSETTIME    Set lag offset
+  -r               enable risetime display
+  -n               enable movie mode
+  -t TRVAL         Set correlation TR
+  -d DATAFILEROOT  Use this dataset (skip initial selection step)
+  -a ANATNAME      Set anatomic mask image
+  -m GEOMASKNAME   Set geometric mask image
 
 
 tide_funcs.py
