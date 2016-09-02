@@ -116,8 +116,7 @@ Outputs are space or space by time Nifti files (depending on the file), and some
 Usage:
 ^^^^^^
 
-``
-usage: rapidtide2 fmrifilename outputname 
+``usage: rapidtide2 fmrifilename outputname 
 	[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [-G] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] [-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME] [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS][--refineweighting=REFINETYPE] [--refinepasses=NUMPASSES] [--excludemask=MASKNAME] [--includemask=MASKNAME] [--lagminthresh=LAGMINTHRESH] [--lagmaxthresh=LAGMAXTHRESH] [--ampthresh=AMPTHRESH][--sigmathresh=SIGMATHRESH] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE][--limitoutput] [--timerange=STARTPOINT,ENDPOINT] [--numskip=SKIP] [--sliceorder=ORDER] [--regressorfreq=FREQ] [--regressortstep=TSTEP] [--regressor=FILENAME] [--regressorstart=STARTTIME]
 
 required arguments:
@@ -226,8 +225,7 @@ experimental options (not fully tested, may not work):
                           time and duration of an epoch to include
     -p                   - prewhiten and refit data
     -P                   - save prewhitened data (turns prewhitening on)
-    -A, --AR             - set AR model order to ORDER (default is 1)
-``
+    -A, --AR             - set AR model order to ORDER (default is 1)``
 
 These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
 
