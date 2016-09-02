@@ -117,7 +117,6 @@ Usage:
 ^^^^^^
 
 ::
-
 usage: rapidtide2 fmrifilename outputname 
 [-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [-G] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] [-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME] [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS][--refineweighting=REFINETYPE] [--refinepasses=NUMPASSES] [--excludemask=MASKNAME] [--includemask=MASKNAME] [--lagminthresh=LAGMINTHRESH] [--lagmaxthresh=LAGMAXTHRESH] [--ampthresh=AMPTHRESH][--sigmathresh=SIGMATHRESH] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE][--limitoutput] [--timerange=STARTPOINT,ENDPOINT] 
 [--numskip=SKIP] [--sliceorder=ORDER] [--regressorfreq=FREQ] [--regressortstep=TSTEP] [--regressor=FILENAME] [--regressorstart=STARTTIME]
