@@ -258,9 +258,9 @@ showxcorr - calculate and display crosscorrelation between two timeseries
 usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME] [-N TRIALS]
 
 required arguments:
-	timecoursefile1:    text file containing a timeseries
-	timecoursefile2:    text file containing a timeseries
-	samplerate:         the sample rate of the timecourses, in Hz
+    timecoursefile1     - text file containing a timeseries
+    timecoursefile2     - text file containing a timeseries
+    samplerate          - the sample rate of the timecourses, in Hz
 
 optional arguments:
     -t 	     - detrend the data
