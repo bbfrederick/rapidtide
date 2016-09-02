@@ -18,16 +18,9 @@ process.  If you are downloadingthe 0.1.0 release, check back frequently
 over the next month or so as I nail everything down.  There will probably
 be MANY commits, and I'll try do document exactly why.
 
-**IMPORTANT:  I've gotten some of the automated testing up and running again,
-and sure enough, I seem to have broken something in the packaging and
-updating routines for python 3 compatibility.  rapidtide2 is currently
-NOT working properly - there is a time shift in the delay maps, and perhaps
-more subtle problems that I need to work through.**
-
-**UPDATE 8/5/16:  It seems that the problem was in the simulation code, not
-rapidtide2 itself, so not to worry.  I have fixed some filtering and resampling
-issues that could cause problems in edge cases though, so moving to 0.1.2 is
-not a bad idea.**
+**UPDATE 9/2/16:  I have worked out the outstanding issues that arose in the
+conversion (with the help of unit tests - who knew?).  So things seem to be
+working ok.**
 
 Why do I want to know about time lagged correlations?
 =======================
