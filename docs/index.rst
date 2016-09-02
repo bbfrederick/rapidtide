@@ -238,11 +238,10 @@ showxcorr
 Description:
 ^^^^^^^^^^^^
 
-Like rapidtide2, but for single time courses.  Takes two 
-        text files as input, calculates and displays the time lagged cross
-        correlation between them, fits the maximum time lag, and estimates
-        the significance of the correlation.  It has a range of filtering,
-        windowing, and correlation options.
+Like rapidtide2, but for single time courses.  Takes two text files as input, calculates and displays 
+the time lagged crosscorrelation between them, fits the maximum time lag, and estimates
+the significance of the correlation.  It has a range of filtering,
+windowing, and correlation options.
 
 Inputs:
 ^^^^^^^
@@ -263,9 +262,9 @@ Description:
 ^^^^^^^^^^^^
 
 This is a utility for registering rapidtide output maps
-	to standard coordinates.  It's usually much faster to run rapidtide
-        in native space then transform afterwards to MNI152 space.  NB: this 
-        will only work if you have a working FSL installation.
+to standard coordinates.  It's usually much faster to run rapidtide
+in native space then transform afterwards to MNI152 space.  NB: this 
+will only work if you have a working FSL installation.
 
 Inputs:
 ^^^^^^^
@@ -287,9 +286,9 @@ Description:
 ^^^^^^^^^^^^
 
 A very simple command line utility that takes a text file
-        and plots the data in it in a matplotlib window.  That's it.  A
-        good tool for quickly seeing what's in a file.  Has some options
-        to make the plot prettier.
+and plots the data in it in a matplotlib window.  That's it.  A
+good tool for quickly seeing what's in a file.  Has some options
+to make the plot prettier.
 
 Inputs:
 ^^^^^^^
