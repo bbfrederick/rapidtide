@@ -97,7 +97,7 @@ def version():
             if line.startswith('__gittag__'):
                 fulltag = (line.split()[2]).split('-')
                 break
-    return fulltag[0], '-'.join(fulltag[1:])
+    return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
@@ -763,6 +763,10 @@ def gaussresiduals(p, y, x):
     return y - gauss_eval(x, p)
 
 
+def trapezoidresiduals(p, y, x, toplength):
+    return y - trapezoid_eval_loop(x, toplength, p)
+
+
 def risetimeresiduals(p, y, x):
     return y - risetime_eval_loop(x, p)
 
@@ -785,11 +789,29 @@ def gauss_eval(x, p):
     return p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
 
 
+def trapezoid_eval_loop(x, toplength, p):
+    r = np.zeros(len(x))
+    for i in range(0, len(x)):
+        r[i] = trapezoid_eval(x[i], toplength, p)
+    return r
+
+
 def risetime_eval_loop(x, p):
     r = np.zeros(len(x))
     for i in range(0, len(x)):
         r[i] = risetime_eval(x[i], p)
     return r
+
+
+@conditionaljit()
+def trapezoid_eval(x, p):
+    corrx = x - p[0]
+    if corrx < 0.0:
+        return 0.0
+    elif corrx >= 0.0 and corrx < toplength:
+        return p[1] * (1.0 - np.exp(-corrx/p[2]))
+    else:
+        return p[1] * (np.exp(-(corrx - toplength)/p[3]))
 
 
 @conditionaljit()
@@ -956,6 +978,33 @@ def findfirstabove(theyvals, thevalue):
             return i
     return i
 
+
+def findtrapezoidfunc(thexvals, theyvals, thetoplength, initguess=None, debug=False, 
+    minrise=0.0, maxrise=200.0, minfall=0.0, maxfall=200.0, minstart=-100.0, maxstart=100.0, refine=False, displayplots=False):
+    # guess at parameters: risestart, riseamplitude, risetime
+    if initguess is None:
+        initstart = 0.0
+        initamp = np.mean(theyvals[-10:-1])
+        initrisetime = 5.0
+        initfalltime = 5.0
+    else:
+        initstart = initguess[0]
+        initamp = initguess[1]
+        initrisetime = initguess[2]
+        initfalltime = initguess[3]
+
+    p0 = np.array([initstart, initamp, initrisetime, initfalltime])
+    if debug:
+        for i in range(0,len(theyvals)):
+            print(thexvals[i], theyvals[i])
+    plsq, dummy = sp.optimize.leastsq(trapezoidresiduals, p0, args=(theyvals, thexvals, thetoplength), maxfev=5000)
+    #except ValueError:
+    #    return 0.0, 0.0, 0.0, 0
+    if (minrise <= plsq[2] <= maxrise) and (minfall <= plsq[3] <= maxfall) and (minstart <= plsq[0] <= maxstart):
+        return plsq[0], plsq[1], plsq[2], plsq[3], 1
+    else:
+        return 0.0, 0.0, 0.0, 0.0, 0
+        
 
 def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False, 
     minrise=0.0, maxrise=200.0, minstart=-100.0, maxstart=100.0, refine=False, displayplots=False):
