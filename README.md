@@ -129,8 +129,8 @@ Ok, I'm sold.  What's in here?
 References
 =======================
 
-Links to PDFs of all papers mentioned here can be found on the OMG website:
-| http://www.nirs-fmri.net/publications
+Links to PDFs of all papers mentioned here can be found on the OMG website: 
+http://www.nirs-fmri.net/publications
 
 Multimodal Cerebral circulation Imaging
 -----------------------
