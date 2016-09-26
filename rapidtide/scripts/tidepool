@@ -539,15 +539,15 @@ class overlay:
 
 
     def setXYZpos(self, xpos, ypos, zpos):
-        self.xpos = xpos
-        self.ypos = ypos
-        self.zpos = zpos
+        self.xpos = int(xpos)
+        self.ypos = int(ypos)
+        self.zpos = int(zpos)
 
     def setTpos(self, tpos):
         if tpos > self.tdim - 1:
             self.tpos = self.tdim - 1
         else:
-            self.tpos = tpos
+            self.tpos = int(tpos)
 
     def getFocusVal(self):
         if self.tdim > 1:

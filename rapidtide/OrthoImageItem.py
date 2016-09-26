@@ -118,10 +118,10 @@ class OrthoImageItem(QtGui.QWidget):
         self.xfov = self.xdim * self.xsize
         self.yfov = self.ydim * self.ysize
         self.zfov = self.zdim * self.zsize
-        self.xpos = self.xdim // 2
-        self.ypos = self.ydim // 2
-        self.zpos = self.zdim // 2
-        self.tpos = 0
+        self.xpos = int(self.xdim // 2)
+        self.ypos = int(self.ydim // 2)
+        self.zpos = int(self.zdim // 2)
+        self.tpos = int(0)
         self.maxfov = np.max([self.xfov, self.yfov, self.zfov])
         self.scalefacx = self.imgsize * (self.xfov / self.maxfov) / self.xdim
         self.scalefacy = self.imgsize * (self.yfov / self.maxfov) / self.ydim
@@ -374,9 +374,9 @@ class OrthoImageItem(QtGui.QWidget):
         self.updated.emit()
 
     def setXYZpos(self, xpos, ypos, zpos, emitsignal=True):
-        self.xpos = xpos
-        self.ypos = ypos
-        self.zpos = zpos
+        self.xpos = int(xpos)
+        self.ypos = int(ypos)
+        self.zpos = int(zpos)
         self.updateAllViews()
         self.updateCursors()
         if emitsignal:
