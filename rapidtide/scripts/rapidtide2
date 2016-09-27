@@ -705,6 +705,7 @@ def main():
         print('unhandled option - called as ', sys.argv[0])
         sys.exit()
 
+
     # now scan for optional arguments
     try:
         opts, args = getopt.getopt(sys.argv[optparsestart:], 'abcdf:gh:i:mo:ps:r:t:vBCF:GILMN:O:PRSTVZ:', ['help',
@@ -908,6 +909,7 @@ def main():
             print('Setting preprocessing trs skipped to ', optiondict['preprocskip'])
         elif o == '--regressor':
             filename = a
+            optiondict['useglobalref'] = False
             linkchar = '='
             print('Will use regressor file', a)
         elif o == '--regressorfreq':
@@ -1008,6 +1010,11 @@ def main():
     tide.writevec(formattedcmdline, outputname + '_formattedcommandline.txt')
     tide.writevec([' '.join(sys.argv)], outputname + '_commandline.txt')
 
+    # add additional information to option structure for debugging
+    optiondict['fmrifilename'] = fmrifilename
+    optiondict['outputname'] = outputname
+    optiondict['regressorfile'] = filename
+
     # open the fmri datafile
     nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
     if nim_hdr['intent_code'] == 3002:
@@ -1096,6 +1103,8 @@ def main():
         inputperiod = 1.0 / inputfreq
         inputvec = tide.readvec(filename)
     numreference = len(inputvec)
+    optiondict['inputfreq'] = inputfreq
+    optiondict['inputstarttime'] = inputstarttime
     print('regressor start time, end time, and step', inputstarttime, inputstarttime + numreference * inputperiod,
           inputperiod)
 
