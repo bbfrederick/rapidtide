@@ -609,6 +609,7 @@ def main():
     optiondict['usebutterworthfilter'] = False
     optiondict['filtorder'] = 3
     optiondict['padseconds'] = 30.0  # the number of seconds of padding to add to each end of a filtered timecourse
+    optiondict['filtertype'] = None
 
     # output options
     optiondict['savelagregressors'] = True
@@ -635,8 +636,6 @@ def main():
     optiondict['widthlimit'] = 100.0
     optiondict['offsettime'] = 0.0
     optiondict['offsettime_total'] = 0.0
-    optiondict['arb_lower'] = 0.05
-    optiondict['arb_upper'] = 0.20
     optiondict['addedskip'] = 0
 
     # refinement options
@@ -791,12 +790,15 @@ def main():
             print('prefiltering to vlf band')
         elif o == '-L':
             theprefilter.settype('lfo')
+            optiondict['filtertype'] = 'lfo'
             print('prefiltering to lfo band')
         elif o == '-R':
             theprefilter.settype('resp')
+            optiondict['filtertype'] = 'resp'
             print('prefiltering to respiratory band')
         elif o == '-C':
             theprefilter.settype('cardiac')
+            optiondict['filtertype'] = 'cardiac'
             print('prefiltering to cardiac band')
         elif o == '-F':
             arbvec = a.split(',')
@@ -814,6 +816,7 @@ def main():
                 optiondict['arb_lowerstop'] = float(arbvec[2])
                 optiondict['arb_upperstop'] = float(arbvec[3])
             theprefilter.settype('arb')
+            optiondict['filtertype'] = 'arb'
             theprefilter.setarb(optiondict['arb_lowerstop'], optiondict['arb_lower'],
                                 optiondict['arb_upper'], optiondict['arb_upperstop'])
             print('prefiltering to ', optiondict['arb_lower'], optiondict['arb_upper'],
