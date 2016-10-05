@@ -41,13 +41,6 @@ from statsmodels.tsa.stattools import pacf_yw
 from scipy.stats.stats import pearsonr
 
 
-# if platform.system() == 'Darwin':
-#    matplotlib.use('MacOSX')
-# else:
-#    matplotlib.use('TkAgg')
-# from memory_profiler import profile
-
-
 def startendcheck(timepoints, startpoint, endpoint):
     if startpoint > timepoints - 1:
         print('startpoint is too large (maximum is ', timepoints - 1, ')')
@@ -167,6 +160,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False):
             useguess=optiondict['useguess'],
             fastgauss=optiondict['fastgauss'],
             enforcethresh=optiondict['enforcethresh'],
+            zerooutbadfit=optiondict['zerooutbadfit'],
             displayplots=displayplots)
         maxval *= flipfac
     else:
@@ -220,15 +214,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, tr,
 
             # now tuck everything away in the appropriate output array
             lagmask[vox] = maskval
-            if maskval > 0:
-                volumetotal += 1
-                lagtimes[vox] = maxlag
-                lagstrengths[vox] = maxval
-                lagsigma[vox] = maxsigma
-                if not optiondict['fixdelay']:
-                    gaussout[vox, :] = tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma])
-                R2[vox] = lagstrengths[vox] * lagstrengths[vox]
-            else:
+            if (maskval == 0) and optiondict['zerooutbadfit']:
                 lagtimes[vox] = 0.0
                 lagstrengths[vox] = 0.0
                 lagsigma[vox] = 0.0
@@ -244,6 +230,14 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, tr,
                     edgefails += 1
                 if failreason & FML_FITFAIL:
                     fitfails += 1
+            else:
+                volumetotal += 1
+                lagtimes[vox] = maxlag
+                lagstrengths[vox] = maxval
+                lagsigma[vox] = maxsigma
+                if not optiondict['fixdelay']:
+                    gaussout[vox, :] = tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma])
+                R2[vox] = lagstrengths[vox] * lagstrengths[vox]
         else:
             lagtc[vox, :] = zerolagtc
             lagtimes[vox] = 0.0
@@ -597,6 +591,8 @@ def main():
     optiondict['uthreshval'] = 1.0  # zero out peaks with correlations higher than this value
     optiondict['edgebufferfrac'] = 0.0  # what fraction of the correlation window to avoid on either end when fitting
     optiondict['useguess'] = False  # supply an initial guess for the correlation peak location
+    optiondict['enforcethresh'] = True  # only do fits in voxels that exceed threshhold
+    optiondict['zerooutbadfit'] = False	# if true zero out all fit parameters if the fit fails
 
     # postprocessing options
     optiondict['doglmfilt'] = True  # use a glm filter to remove the delayed regressor from the data in each voxel
@@ -660,7 +656,6 @@ def main():
     optiondict['fakerun'] = False
     optiondict['displayplots'] = False
     optiondict['debug'] = False
-    optiondict['enforcethresh'] = True
     optiondict['verbose'] = False
     optiondict['release_version'], optiondict['git_tag'] = tide.version()
 
@@ -704,7 +699,6 @@ def main():
         print('unhandled option - called as ', sys.argv[0])
         sys.exit()
 
-
     # now scan for optional arguments
     try:
         opts, args = getopt.getopt(sys.argv[optparsestart:], 'abcdf:gh:i:mo:ps:r:t:vBCF:GILMN:O:PRSTVZ:', ['help',
@@ -718,6 +712,7 @@ def main():
                                                                                                            'includemask=',
                                                                                                            'excludemask=',
                                                                                                            'refineoffset',
+                                                                                                           'zerooutbadfits',
                                                                                                            'pca',
                                                                                                            'ica',
                                                                                                            'noglm',
@@ -903,6 +898,9 @@ def main():
         elif o == '--ica':
             optiondict['refinetype'] = 'ica'
             print('Will use ICA procedure to refine regressor rather than simple averaging')
+        elif o == '--zerooutbadfits':
+            optiondict['zerooutbadfit'] = True
+            print('Correlation fits will be evaluated and scrubbed if out of bounds')
         elif o == '--pca':
             optiondict['refinetype'] = 'pca'
             print('Will use PCA procedure to refine regressor rather than simple averaging')
@@ -1370,6 +1368,7 @@ def main():
                 print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
                 optiondict['ampthresh'] = pcts[2]
             tide.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
+            tide.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
             tide.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
                                       outputname + '_nullcorrelationhist_pass' + str(thepass),
                                       displaytitle='Null correlation histogram, pass' + str(thepass),

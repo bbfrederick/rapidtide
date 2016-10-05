@@ -860,7 +860,7 @@ def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False
     return thevals
 
 
-def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=False):
+def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
     themax = 1.0
     themin = 0.0
     bins = np.arange(themin, themax, (themax - themin) / numbins)
@@ -889,6 +889,18 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=False):
                 break
     return thevals
 
+def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=False):
+    thevals = johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3])
+    if displayplots:
+        themin = 0.001
+        themax = 0.999
+        bins = np.arange(themin, themax, (themax - themin) / numbins)
+        fig = pl.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('probability histogram')
+        pl.plot(bins, johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3]))
+        pl.show()
+    return thevals
 
 def makemask(image, threshpct=25.0, verbose=False):
     fracval = getfracval(image, 0.98)
@@ -1033,7 +1045,7 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
 
 @conditionaljit()
 def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
-               debug=False, refine=False, maxguess=0.0, useguess=False, fastgauss=False, enforcethresh=True, displayplots=False):
+               debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False, fastgauss=False, enforcethresh=True, displayplots=False):
     # set initial parameters 
     # widthlimit is in seconds
     # maxsigma is in Hz
@@ -1049,6 +1061,13 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
     searchbins = int(widthlimit // binwidth)
     lowerlim = int(numlagbins * edgebufferfrac)
     upperlim = numlagbins - lowerlim - 1
+    if tweaklims:
+        lowerlim = 0
+        upperlim = numlagbins - 1
+        while (thexcorr_y[lowerlim + 1] < thexcorr_y[lowerlim]) and (lowerlim + 1) < upperlim:
+            lowerlim += 1
+        while (thexcorr_y[upperlim - 1] < thexcorr_y[upperlim]) and (upperlim - 1) > lowerlim:
+            upperlim -= 1
     FML_BADAMP = 0x01
     FML_BADLAG = 0x02
     FML_BADWIDTH = 0x04
@@ -1067,7 +1086,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
             nlowerlim = upperlim
             nlowerlim = upperlim - int(widthlimit)
         maxindex = np.argmax(thexcorr_y[nlowerlim:nupperlim]) + nlowerlim
-        maxval_init = 1.0 * max(thexcorr_y[nlowerlim:nupperlim])
+        maxval_init = thexcorr_y[maxindex]
     else:
         maxindex = np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim
         maxval_init = thexcorr_y[maxindex]
@@ -1104,12 +1123,10 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
         failreason += FML_BADWIDTH
     if (maxval_init < threshval) and enforcethresh:
         failreason += FML_BADAMP
-    #if (not ((lagmin + binwidth) <= maxlag_init <= (lagmax - binwidth)) or \
-    #            not (binwidth / 2.355 < maxsigma_init < widthlimit) or \
-    #                maxval_init < threshval) and enforcethresh:
     if failreason > 0:
-        maxlag = 0.0
         maskval = 0.0
+    if failreason > 0 and zerooutbadfit:
+        maxlag = 0.0
         maxsigma = 0.0
         maskval = 0
     else:
@@ -1134,19 +1151,27 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
                     maxlag = 1.0 * plsq[1]
                     maxsigma = 1.0 * plsq[2]
                 else:
-                    maxval = 0.0
+                    if zerooutbadfit:
+                        maxval = 0.0
+                        maxlag = 0.0
+                        maxsigma = 0.0
+                        maskval = 0
+                    else:
+                        maxval = maxval_init
+                        maxlag = maxlag_init
+                        maxsigma = maxsigma_init
         else:
             maxval = maxval_init
             maxlag = maxlag_init
             maxsigma = maxsigma_init
-        #if (maxval == 0.0) or (maxlag >= lagmax) or (maxlag <= lagmin):
         if maxval == 0.0:
             failreason += FML_FITFAIL
         if not (lagmin <= maxlag <= lagmax):
             failreason += FML_BADLAG
         if failreason > 0:
-            maxval = 0.0
             maskval = 0
+        if failreason > 0 and zerooutbadfit:
+            maxval = 0.0
             maxlag = 0.0
             maxsigma = 0.0
     if debug or displayplots:
