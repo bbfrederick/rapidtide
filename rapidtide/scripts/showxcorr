@@ -362,13 +362,13 @@ if estimate_significance:
     histlen = 100
     thepercentiles = [0.95, 0.99, 0.995]
 
-    pcts, pcts_fit = tide.sigFromDistributionData(corrlist, histlen, thepercentiles)
+    pcts, pcts_fit, histfit = tide.sigFromDistributionData(corrlist, histlen, thepercentiles)
     if debug:
         tide.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
         tide.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
 
     # calculate significance for the pearson correlation
-    pearpcts, pearpcts_fit = tide.sigFromDistributionData(corrlist_pear, histlen, thepercentiles)
+    pearpcts, pearpcts_fit, histfit = tide.sigFromDistributionData(corrlist_pear, histlen, thepercentiles)
     if debug:
         tide.printthresholds(pearpcts, thepercentiles, 'Pearson correlation significance thresholds from data:')
         tide.printthresholds(pearpcts_fit, thepercentiles, 'Pearson correlation significance thresholds from fit:')
