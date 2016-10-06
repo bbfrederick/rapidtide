@@ -1151,6 +1151,10 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
                     maxval = 1.0 * plsq[0]
                     maxlag = 1.0 * plsq[1]
                     maxsigma = 1.0 * plsq[2]
+                if np.fabs(maxval) > 1.0:
+                    maxval = maxval_init
+                    maxlag = maxlag_init
+                    maxsitma = maxsigma_init
                 else:
                     if zerooutbadfit:
                         maxval = 0.0
