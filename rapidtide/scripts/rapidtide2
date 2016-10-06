@@ -31,10 +31,9 @@ import bisect
 import warnings
 import sys
 
-from sklearn.decomposition import FastICA, PCA
-
 import rapidtide.tide_funcs as tide
 
+from sklearn.decomposition import FastICA, PCA
 from pylab import figure, plot, show
 import numpy as np
 from statsmodels.tsa.stattools import pacf_yw
