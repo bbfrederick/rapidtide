@@ -1353,6 +1353,7 @@ def main():
             corrdistdata = getNullDistributionData(referencetc, corrscale, theprefilter,
                                                    oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
                                                    optiondict)
+            tide.writenpvecs(corrdistdata, outputname + '_corrdistdata_pass' + str(thepass) + '.txt')
 
             # calculate percentiles for the crosscorrelation from the distribution data
             optiondict['sighistlen'] = 1000
