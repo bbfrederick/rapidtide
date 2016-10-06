@@ -27,6 +27,15 @@ to install all of the tools in the package.  You should be able to run them from
 then (after rehashing).  NOTE: I haven't figured out how to install pyqt4 automatically yet, so you
 have install it and pyqtgraph manually.  If you do that, tidepool should work, otherwise it won't.
 
+Updating
+--------
+
+If you've previously installed rapidtide and want to update, cd into the package directory and do a git pull first:
+```bash
+git pull
+python setup.py install
+```
+
 
 Usage
 ------------
