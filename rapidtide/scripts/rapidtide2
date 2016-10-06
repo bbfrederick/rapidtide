@@ -902,7 +902,7 @@ def main():
         elif o == '--nofitfilt':
             optiondict['zerooutbadfit'] = False
             optiondict['nohistzero'] = True
-            print('Correlation fits will be evaluated and scrubbed if out of bounds')
+            print('Correlation parameters will be recorded even if out of bounds')
         elif o == '--pca':
             optiondict['refinetype'] = 'pca'
             print('Will use PCA procedure to refine regressor rather than simple averaging')
