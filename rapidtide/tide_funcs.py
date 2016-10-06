@@ -285,7 +285,8 @@ def fitpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     numinfit = len(thedata)
     print('johnson SB fit parameters for pdf:',params)
     
-    # restore the zero term if neded
+    # restore the zero term if needed
+    # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the histogram at zero from failed fits)
     if nozero:
         zeroterm = 0.0
     else:

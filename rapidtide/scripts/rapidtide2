@@ -505,6 +505,7 @@ def usage(argstyle):
     print("    -r LAGMIN,LAGMAX - limit fit to a range of lags from LAGMIN to LAGMAX")
     print("    -s SIGMALIMIT    - reject lag fits with linewidth wider than SIGMALIMIT")
     print("    -B               - bipolar mode - match peak correlation ignoring sign")
+    print("    --nofitfilt      - do not zero out peak fit values if fit fails")
     print("")
     print("regressor refinement options:")
     print("    --refineweighting  - apply REFINETYPE weighting to each timecourse prior ")
@@ -592,7 +593,7 @@ def main():
     optiondict['edgebufferfrac'] = 0.0  # what fraction of the correlation window to avoid on either end when fitting
     optiondict['useguess'] = False  # supply an initial guess for the correlation peak location
     optiondict['enforcethresh'] = True  # only do fits in voxels that exceed threshhold
-    optiondict['zerooutbadfit'] = False	# if true zero out all fit parameters if the fit fails
+    optiondict['zerooutbadfit'] = True	# if true zero out all fit parameters if the fit fails
 
     # postprocessing options
     optiondict['doglmfilt'] = True  # use a glm filter to remove the delayed regressor from the data in each voxel
@@ -620,8 +621,8 @@ def main():
 
     # significance estimation options
     optiondict['estimate_significance'] = True
-    optiondict['numestreps'] = 10000
-    optiondict['nohistzero'] = False
+    optiondict['numestreps'] = 10000		# the number of sham correlations to perform to estimate significance
+    optiondict['nohistzero'] = False		# if False, there is a spike at R=0 in the significance histogra
     optiondict['ampthreshfromsig'] = True
     optiondict['sighistlen'] = 100
 
@@ -712,7 +713,7 @@ def main():
                                                                                                            'includemask=',
                                                                                                            'excludemask=',
                                                                                                            'refineoffset',
-                                                                                                           'zerooutbadfits',
+                                                                                                           'nofitfilt',
                                                                                                            'pca',
                                                                                                            'ica',
                                                                                                            'noglm',
@@ -898,8 +899,9 @@ def main():
         elif o == '--ica':
             optiondict['refinetype'] = 'ica'
             print('Will use ICA procedure to refine regressor rather than simple averaging')
-        elif o == '--zerooutbadfits':
-            optiondict['zerooutbadfit'] = True
+        elif o == '--nofitfilt':
+            optiondict['zerooutbadfit'] = False
+            optiondict['nohistzero'] = True
             print('Correlation fits will be evaluated and scrubbed if out of bounds')
         elif o == '--pca':
             optiondict['refinetype'] = 'pca'
