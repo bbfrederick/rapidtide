@@ -92,12 +92,15 @@ def version():
     gittag = 'UNKNOWN'
     thispath,thisfile = os.path.split(__file__)
     print(thispath)
-    with open(os.path.join(thispath, '_gittag.py')) as f:
-        for line in f:
-            if line.startswith('__gittag__'):
-                fulltag = (line.split()[2]).split('-')
-                break
-    return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
+    if os.path.isfile(os.path.join(thispath, '_gittag.py')):
+        with open(os.path.join(thispath, '_gittag.py')) as f:
+            for line in f:
+                if line.startswith('__gittag__'):
+                    fulltag = (line.split()[2]).split('-')
+                    break
+        return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
+    else:
+        return 'UNKNOWN', 'UNKNOWN'
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------

@@ -24,3 +24,12 @@
   but work on my local machine.  It seems to be a numerical precision issue.  The answers
   are rightish, just not right on Travis.
 
+## Version 0.1.4 (10/10/16)
+
+* Some fixes to usage output.
+* Added functions for fitting trapezoids (for risetime calculations).
+* Changed argument parsing and option output to avoid conflicts
+* Added an option to not zero out bad fits (so as not to skew lag statistics)
+* Improved fitting of probability distributions.
+* Better handling of failed correlation peak fits.
+* Now installations should work properly if not installed using git (fixed _gittag import problem).
