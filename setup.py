@@ -49,6 +49,9 @@ if addtidepool:
 def update_gittag_py():
     if not path.isdir(".git"):
         print("This does not appear to be a Git repository.")
+        f = open("rapidtide/_gittag.py", "w")
+        f.write(GITTAG_PY % "UNKNOWN-UNKNOWN")
+        f.close()
         return
     try:
         p = subprocess.Popen(["git", "describe",
