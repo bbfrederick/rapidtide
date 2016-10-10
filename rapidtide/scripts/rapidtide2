@@ -665,6 +665,7 @@ def main():
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
+    print('rapidtide2 version:', optiondict['release_version'], optiondict['git_tag'])
 
     # get the command line parameters
     filename = None
