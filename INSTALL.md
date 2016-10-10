@@ -8,6 +8,8 @@ The processing programs in rapidtide require the following to be installed first
 * scipy
 * sklearn
 * nibabel
+* matplotlib
+* statsmodels
 
 The following optional dependencies will be used if present
 * numba for faster performance
