@@ -28,10 +28,10 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 addtidepool = True
 
-modules_list= ['tide_funcs']
+modules_list= ['rapidtide/tide_funcs']
 if addtidepool:
-    modules_list.append('tidepoolTemplate')
-    modules_list.append('OrthoImageItem')
+    modules_list.append('rapidtide/tidepoolTemplate')
+    modules_list.append('rapidtide/OrthoImageItem')
 
 script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/rapidtide2std',
@@ -84,7 +84,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.1.4',
+    version='0.1.5',
 
     description='Tools for performing correlation analysis on fMRI data.',
     long_description=long_description,
@@ -144,7 +144,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy', 'scipy', 'sklearn', 'nibabel', 'matplotlib', 'statsmodels'],
+    install_requires=['numpy', 'scipy', 'pandas', 'sklearn', 'nibabel', 'matplotlib', 'statsmodels'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

@@ -35,6 +35,7 @@ from scipy.stats import johnsonsb
 
 #from memory_profiler import profile
 
+donotusenumba = False
 try:
     from numba import jit
     numbaexists = True
@@ -50,7 +51,7 @@ except ImportError:
 
 def conditionaljit():
     def resdec(f):
-        if not numbaexists:
+        if (not numbaexists) or donotusenumba:
             return f
         return jit(f)
     return resdec
@@ -102,6 +103,8 @@ def version():
     else:
         return 'UNKNOWN', 'UNKNOWN'
 
+def disablenumba():
+    donotusenumba = True
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 if nibabelexists:

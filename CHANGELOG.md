@@ -33,3 +33,10 @@
 * Improved fitting of probability distributions.
 * Better handling of failed correlation peak fits.
 * Now installations should work properly if not installed using git (fixed _gittag import problem).
+
+## Version 0.1.5 (10/11/16)
+
+* Fixed a bug that made it impossible to specify --regressortstep.
+* Added undocumented option --nonumba to turn off just in time compilation if there's a problem with it.
+* Print rapidtide version on launch.
+* Made pandas import explicit (sklearn requires it).
