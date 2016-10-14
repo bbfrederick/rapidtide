@@ -841,6 +841,7 @@ def main():
             optiondict['numestreps'] = int(a)
             if optiondict['numestreps'] == 0:
                 optiondict['estimate_significance'] = False
+                optiondict['ampthreshfromsig'] = False
                 print('Will not estimate significance thresholds from null correlations')
             else:
                 print('Will estimate p<0.05 significance threshold from ', optiondict['numestreps'],
