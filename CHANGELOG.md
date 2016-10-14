@@ -40,3 +40,11 @@
 * Added undocumented option --nonumba to turn off just in time compilation if there's a problem with it.
 * Print rapidtide version on launch.
 * Made pandas import explicit (sklearn requires it).
+
+## Version 0.1.6 (10/15/16)
+
+* Fixed a critical bug that had been introduced in the last round of changes to findmaxlag.
+* Disabled numba for findmaxlag (it seems to cause problems for some users).
+* New option --skipsighistfit to omit fitting a Johnson SB function to the significance histogram.
+* Fixed the usage statement.
+* Fixed a bug that set ampthresh to zero when not doing significance estimation.
