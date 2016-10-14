@@ -427,7 +427,7 @@ def usage(argstyle):
           "[--refineweighting=REFINETYPE] [--refinepasses=NUMPASSES] [--excludemask=MASKNAME] [--includemask=MASKNAME] "
           "[--lagminthresh=LAGMINTHRESH] [--lagmaxthresh=LAGMAXTHRESH] [--ampthresh=AMPTHRESH]"
           "[--sigmathresh=SIGMATHRESH] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE]"
-          "[--limitoutput] [--timerange=STARTPOINT,ENDPOINT] ")
+          "[--limitoutput] [--timerange=STARTPOINT,ENDPOINT] [--dosighistfit]")
     if argstyle == 'old':
         print("")
         print("required arguments:")
@@ -469,6 +469,7 @@ def usage(argstyle):
     print("    -C               - filter data and regressors to cardiac band")
     print("    -N               - estimate significance threshold by running NREPS null ")
     print("                       correlations (default is 10000, set to 0 to disable)")
+    print("    --dosighistfit   - fit significance histogram with a Johnson SB function")
     print("    --nowindow       - disable precorrelation windowing")
     print("    -f GAUSSSIGMA    - spatially filter fMRI data prior to analysis using ")
     print("                       GAUSSSIGMA in mm")
@@ -625,6 +626,7 @@ def main():
     optiondict['nohistzero'] = False		# if False, there is a spike at R=0 in the significance histogra
     optiondict['ampthreshfromsig'] = True
     optiondict['sighistlen'] = 100
+    optiondict['dosighistfit'] = False
 
     optiondict['histlen'] = 250
     optiondict['oversampfactor'] = 2
@@ -709,6 +711,7 @@ def main():
                                                                                                            'lagminthresh=',
                                                                                                            'lagmaxthresh=',
                                                                                                            'ampthresh=',
+                                                                                                           'dosighistfit',
                                                                                                            'sigmathresh=',
                                                                                                            'refineweighting=',
                                                                                                            'refinepasses=',
@@ -968,6 +971,9 @@ def main():
             optiondict['dorefineregressor'] = True
             linkchar = '='
             print('Using lagmaxthresh of ', optiondict['lagmaxthresh'])
+        elif o == '--dosighistfit':
+            optiondict['dosighistfit'] = True
+            print('will fit significance histogram with a Johnson SB function')
         elif o == '--ampthresh':
             optiondict['ampthresh'] = float(a)
             optiondict['ampthreshfromsig'] = False
@@ -1377,13 +1383,15 @@ def main():
             pcts, pcts_fit, sigfit = tide.sigFromDistributionData(corrdistdata, optiondict['sighistlen'],
                                                           thepercentiles, twotail=optiondict['bipolar'],
                                                           displayplots=optiondict['displayplots'],
-                                                          nozero=optiondict['nohistzero'])
+                                                          nozero=optiondict['nohistzero'],
+                                                          dosighistfit=optiondict['dosighistfit'])
             if optiondict['ampthreshfromsig']:
                 print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
                 optiondict['ampthresh'] = pcts[2]
             tide.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
-            tide.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
-            tide.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
+            if optiondict['dosighistfit']:
+                tide.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
+                tide.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
                                       outputname + '_nullcorrelationhist_pass' + str(thepass),
                                       displaytitle='Null correlation histogram, pass' + str(thepass),
                                       displayplots=optiondict['displayplots'], refine=False)
@@ -1578,7 +1586,8 @@ def main():
     if optiondict['estimate_significance']:
         for i in range(0, len(thepercentiles)):
             pmask = np.where(np.abs(lagstrengths) > pcts[i], lagmask, 0 * lagmask)
-            tide.writenpvecs(sigfit, outputname + '_sigfit' + '.txt')
+            if optiondict['dosighistfit']:
+                tide.writenpvecs(sigfit, outputname + '_sigfit' + '.txt')
             tide.writenpvecs(np.array([pcts[i]]), outputname + '_p_lt_' + thepvalnames[i] + '_thresh.txt')
             tide.savetonifti(pmask.reshape(nativespaceshape), theheader, thesizes,
                              outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d)

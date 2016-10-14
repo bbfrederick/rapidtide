@@ -315,15 +315,19 @@ def fitpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     return np.append(params, np.array([zeroterm]))
 
 
-def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False):
+def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False, dosighistfit=True):
     thehistogram = makehistogram(np.abs(vallist), histlen, therange=[0.0, 1.0])
-    histfit = fitpdf(thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero)
+    if dosighistfit:
+        histfit = fitpdf(thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero)
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles)/2.0
         print('thepercentiles adapted for two tailed distribution:', thepercentiles)
     pcts_data = getfracvals(vallist, thepercentiles, numbins=int(np.sqrt(len(vallist)) * 5.0), nozero=nozero)
-    pcts_fit = getfracvalsfromfit(histfit, thepercentiles, numbins=histlen, displayplots=displayplots)
-    return pcts_data, pcts_fit, histfit
+    if dosighistfit:
+        pcts_fit = getfracvalsfromfit(histfit, thepercentiles, numbins=histlen, displayplots=displayplots)
+        return pcts_data, pcts_fit, histfit
+    else:
+        return pcts_data, 0, 0
 
 
 def rfromp(fitfile, thepercentiles, numbins=1000):
@@ -1050,7 +1054,7 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
         return 0.0, 0.0, 0.0, 0
         
 
-@conditionaljit()
+#@conditionaljit()
 def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False, fastgauss=False, enforcethresh=True, displayplots=False):
     # set initial parameters 
@@ -1567,6 +1571,7 @@ def hann(length):
     return 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
 
 
+#@conditionaljit()
 def hamming(length):
     return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
 
