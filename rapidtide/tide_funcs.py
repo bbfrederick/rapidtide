@@ -1135,8 +1135,9 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
     if (maxval_init < threshval) and enforcethresh:
         failreason += FML_BADAMP
     if failreason > 0:
-        maskval = 0.0
+        maskval = 0
     if failreason > 0 and zerooutbadfit:
+        maxval = 0.0
         maxlag = 0.0
         maxsigma = 0.0
         maskval = 0
@@ -1161,11 +1162,8 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
                     maxval = 1.0 * plsq[0]
                     maxlag = 1.0 * plsq[1]
                     maxsigma = 1.0 * plsq[2]
-                if np.fabs(maxval) > 1.0:
-                    maxval = maxval_init
-                    maxlag = maxlag_init
-                    maxsitma = maxsigma_init
-                else:
+                # if maxval > 1.0, fit failed catastrophically, zero out or reset to initial value
+                if (np.fabs(maxval)) > 1.0 or (lagmin > maxlag)  or (maxlag > lagmax):
                     if zerooutbadfit:
                         maxval = 0.0
                         maxlag = 0.0

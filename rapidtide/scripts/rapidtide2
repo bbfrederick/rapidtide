@@ -427,7 +427,7 @@ def usage(argstyle):
           "[--refineweighting=REFINETYPE] [--refinepasses=NUMPASSES] [--excludemask=MASKNAME] [--includemask=MASKNAME] "
           "[--lagminthresh=LAGMINTHRESH] [--lagmaxthresh=LAGMAXTHRESH] [--ampthresh=AMPTHRESH]"
           "[--sigmathresh=SIGMATHRESH] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE]"
-          "[--limitoutput] [--timerange=STARTPOINT,ENDPOINT] [--dosighistfit]")
+          "[--limitoutput] [--timerange=STARTPOINT,ENDPOINT] [--skipsighistfit]")
     if argstyle == 'old':
         print("")
         print("required arguments:")
@@ -469,7 +469,7 @@ def usage(argstyle):
     print("    -C               - filter data and regressors to cardiac band")
     print("    -N               - estimate significance threshold by running NREPS null ")
     print("                       correlations (default is 10000, set to 0 to disable)")
-    print("    --dosighistfit   - fit significance histogram with a Johnson SB function")
+    print("    --skipsighistfit - do not fit significance histogram with a Johnson SB function")
     print("    --nowindow       - disable precorrelation windowing")
     print("    -f GAUSSSIGMA    - spatially filter fMRI data prior to analysis using ")
     print("                       GAUSSSIGMA in mm")
@@ -626,7 +626,7 @@ def main():
     optiondict['nohistzero'] = False		# if False, there is a spike at R=0 in the significance histogra
     optiondict['ampthreshfromsig'] = True
     optiondict['sighistlen'] = 100
-    optiondict['dosighistfit'] = False
+    optiondict['dosighistfit'] = True
 
     optiondict['histlen'] = 250
     optiondict['oversampfactor'] = 2
@@ -972,9 +972,9 @@ def main():
             optiondict['dorefineregressor'] = True
             linkchar = '='
             print('Using lagmaxthresh of ', optiondict['lagmaxthresh'])
-        elif o == '--dosighistfit':
-            optiondict['dosighistfit'] = True
-            print('will fit significance histogram with a Johnson SB function')
+        elif o == '--skipsighistfit':
+            optiondict['dosighistfit'] = False
+            print('will not fit significance histogram with a Johnson SB function')
         elif o == '--ampthresh':
             optiondict['ampthresh'] = float(a)
             optiondict['ampthreshfromsig'] = False
