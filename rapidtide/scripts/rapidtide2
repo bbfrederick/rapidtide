@@ -424,10 +424,10 @@ def usage(argstyle):
     print("[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [-G] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] "
           "[-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME]"
           " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP"
-          "[--refineweighting=REFINETYPE] [--refinepasses=NUMPASSES] [--excludemask=MASKNAME] [--includemask=MASKNAME] "
-          "[--lagminthresh=LAGMINTHRESH] [--lagmaxthresh=LAGMAXTHRESH] [--ampthresh=AMPTHRESH]"
-          "[--sigmathresh=SIGMATHRESH] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE]"
-          "[--limitoutput] [--timerange=STARTPOINT,ENDPOINT] [--skipsighistfit]")
+          "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
+          "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP]"
+          "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE]"
+          "[--limitoutput] [--timerange=START,END] [--skipsighistfit]")
     if argstyle == 'old':
         print("")
         print("required arguments:")
