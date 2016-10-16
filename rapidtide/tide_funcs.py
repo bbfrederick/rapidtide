@@ -276,7 +276,7 @@ def printthresholds(pcts, thepercentiles, labeltext):
         print('\tp <', "{:.3f}".format(1.0 - thepercentiles[i]), ': ', pcts[i])
 
 
-def fitpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
+def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     thestore = np.zeros((2, histlen))
     thestore[0, :] = thehist[1][:-1]
     thestore[1, :] = thehist[0][:] / (1.0 * len(thedata))
@@ -307,7 +307,7 @@ def fitpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     if displayplots:
         fig = pl.figure()
         ax = fig.add_subplot(111)
-        ax.set_title('fitpdf: histogram')
+        ax.set_title('fitjsbpdf: histogram')
         pl.plot(thestore[0, :], thestore[1, :], 'b', 
                 thestore[0, :], johnsonsbvals, 'r')
         pl.legend(['histogram', 'fit to johnsonsb'])
@@ -318,7 +318,7 @@ def fitpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
 def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False, dosighistfit=True):
     thehistogram = makehistogram(np.abs(vallist), histlen, therange=[0.0, 1.0])
     if dosighistfit:
-        histfit = fitpdf(thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero)
+        histfit = fitjsbpdf(thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero)
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles)/2.0
         print('thepercentiles adapted for two tailed distribution:', thepercentiles)
