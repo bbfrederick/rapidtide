@@ -846,6 +846,11 @@ def getfracval(datamat, thefrac, numbins=200):
             return bins[i]
     return 0.0
 
+def makepmask(rvals, pval, sighistfit, onesided=True):
+    if onesided:
+        return np.where(rvals > getfracvalsfromfit(sighistfit, 1.0 - pval), 1, 0)
+    else:
+        return np.where(np.abs(rvals) > getfracvalsfromfit(sighistfit, 1.0 - pval / 2.0), 1, 0)
 
 def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False):
     themax = datamat.max()
