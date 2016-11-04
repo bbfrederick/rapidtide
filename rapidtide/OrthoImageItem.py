@@ -45,9 +45,9 @@ def newColorbar(view, left, top, scalefacx, scalefacy, imgsize):
     cb_xdim = imgsize // 10
     cb_ydim = imgsize
     theviewbox = pg.ViewBox(enableMouse=False)
-    theviewbox.setRange(QtCore.QRectF(0, 0, cb_xdim, cb_ydim), 
-                         xRange=(0, cb_xdim - 1), yRange=(0, cb_ydim - 1), padding=0.0,
-                         disableAutoRange=True)
+    theviewbox.setRange(QtCore.QRectF(0, 0, cb_xdim, cb_ydim),
+                        xRange=(0, cb_xdim - 1), yRange=(0, cb_ydim - 1), padding=0.0,
+                        disableAutoRange=True)
     theviewbox.setAspectLocked()
 
     thecolorbarwin = pg.ImageItem()
@@ -58,12 +58,12 @@ def newColorbar(view, left, top, scalefacx, scalefacy, imgsize):
     colorbarvals = np.zeros((cb_xdim, cb_ydim), dtype=np.float64)
     for i in range(0, cb_ydim):
         colorbarvals[:, i] = i * (1.0 / (cb_ydim - 1.0))
-    thecolorbar.setImage(colorbarvals, levels=[0.0, 1.0])
-    return(thecolorbarwin, theviewbox)
+    thecolorbarwin.setImage(colorbarvals, levels=[0.0, 1.0])
+    return thecolorbarwin, theviewbox
 
 
 def newViewWindow(view, xdim, ydim, left, top, scalefacx, scalefacy, imgsize, enableMouse=False):
-    #print(left, top, scalefacx, scalefacy, imgsize)
+    # print(left, top, scalefacx, scalefacy, imgsize)
     theviewbox = view.addViewBox(enableMouse=enableMouse, enableMenu=False, lockAspect=1.0)
     theviewbox.setAspectLocked()
     # theviewbox.enableAutoRange(enable=False)
@@ -93,7 +93,7 @@ def newViewWindow(view, xdim, ydim, left, top, scalefacx, scalefacy, imgsize, en
     theviewhLine.setZValue(20)
     theviewbox.addItem(theviewhLine)
 
-    return (theviewfgwin, theviewbgwin, theviewvLine, theviewhLine, theviewbox)
+    return theviewfgwin, theviewbgwin, theviewvLine, theviewhLine, theviewbox
 
 
 class OrthoImageItem(QtGui.QWidget):
@@ -282,7 +282,7 @@ class OrthoImageItem(QtGui.QWidget):
             self.button.show()
         self.view.show()
 
-    def applyLUT(self,theimage, mask, theLUT, dispmin, dispmax):
+    def applyLUT(self, theimage, mask, theLUT, dispmin, dispmax):
         offset = dispmin
         if dispmax - dispmin > 0:
             scale = len(theLUT) / (dispmax - dispmin)
@@ -293,13 +293,13 @@ class OrthoImageItem(QtGui.QWidget):
         scaleddata[np.where(scaleddata > (len(theLUT) - 1))] = len(theLUT) - 1
         mappeddata = theLUT[scaleddata]
         mappeddata[:, :, 3][np.where(mask < 1)] = 0
-        return (mappeddata)
+        return mappeddata
 
     def updateCursors(self):
         xpix = self.xpos2pix(self.xpos)
         ypix = self.ypos2pix(self.ypos)
         zpix = self.zpos2pix(self.zpos)
-        #print('xpix, ypix, zpix = ', xpix, ypix, zpix)
+        # print('xpix, ypix, zpix = ', xpix, ypix, zpix)
         self.axviewvLine.setValue(xpix)
         self.axviewhLine.setValue(ypix)
         self.corviewvLine.setValue(xpix)
@@ -316,7 +316,7 @@ class OrthoImageItem(QtGui.QWidget):
         if self.buttonisdown:
             self.xpos = self.xpix2pos(event.pos().x())
             self.ypos = self.ypix2pos(self.imgsize - event.pos().y())
-            #print('ax move:', self.xpos, self.ypos)
+            # print('ax move:', self.xpos, self.ypos)
             self.updateCursors()
             self.updateAllViews()
             self.updated.emit()
@@ -325,7 +325,7 @@ class OrthoImageItem(QtGui.QWidget):
         if self.buttonisdown:
             self.xpos = self.xpix2pos(event.pos().x())
             self.zpos = self.zpix2pos(self.imgsize - event.pos().y())
-            #print('cor move:', self.xpos, self.zpos)
+            # print('cor move:', self.xpos, self.zpos)
             self.updateCursors()
             self.updateAllViews()
             self.updated.emit()
@@ -334,16 +334,16 @@ class OrthoImageItem(QtGui.QWidget):
         if self.buttonisdown:
             self.ypos = self.ypix2pos(event.pos().x())
             self.zpos = self.zpix2pos(self.imgsize - event.pos().y())
-            #print('sag move:', self.ypos, self.zpos)
+            # print('sag move:', self.ypos, self.zpos)
             self.updateCursors()
             self.updateAllViews()
             self.updated.emit()
 
     def handleaxkey(self, event):
         print(event)
-        #self.xpos = self.xpix2pos(event.pos().x())
-        #self.ypos = self.ypix2pos(self.imgsize - event.pos().y())
-        #self.buttonisdown = True
+        # self.xpos = self.xpix2pos(event.pos().x())
+        # self.ypos = self.ypix2pos(self.imgsize - event.pos().y())
+        # self.buttonisdown = True
         self.updateAllViews()
         self.updateCursors()
         self.updated.emit()
@@ -394,13 +394,13 @@ class OrthoImageItem(QtGui.QWidget):
 
     def getFocusVal(self):
         if self.tdim > 1:
-            return (self.map.maskeddata[self.xpos, self.ypos, self.zpos, self.tpos])
+            return self.map.maskeddata[self.xpos, self.ypos, self.zpos, self.tpos]
         else:
-            return (self.map.maskeddata[self.xpos, self.ypos, self.zpos])
+            return self.map.maskeddata[self.xpos, self.ypos, self.zpos]
 
     def saveandcomposite(self, fg_img, bg_img, name, savedir, scalefach, scalefacv):
         if PILexists:
-            print('using PIL to save ',name)
+            print('using PIL to save ', name)
             fgname = os.path.join(savedir, name + '_foreground.png')
             bgname = os.path.join(savedir, name + '_background.png')
             compositename = os.path.join(savedir, name + '.jpg')
@@ -413,8 +413,8 @@ class OrthoImageItem(QtGui.QWidget):
             flipped = background.transpose(Image.FLIP_TOP_BOTTOM)
             print('scaling')
             basesize = 512
-            hsize = int(basesize/scalefach)
-            vsize = int(basesize/scalefacv)
+            hsize = int(basesize / scalefach)
+            vsize = int(basesize / scalefacv)
             print('scaling to ', hsize, vsize)
             flipped = flipped.resize((hsize, vsize), Image.ANTIALIAS)
             print('saving to ', compositename)
@@ -423,26 +423,27 @@ class OrthoImageItem(QtGui.QWidget):
             os.remove(fgname)
             os.remove(bgname)
         else:
-            print('saving ',name)
+            print('saving ', name)
             fg_img.save(os.path.join(savedir, name + '_fg.png'))
             bg_img.save(os.path.join(savedir, name + '_bg.png'))
-
 
     def saveDisp(self):
         print('saving main window')
         mydialog = QtGui.QFileDialog()
         options = mydialog.Options()
         thedir = str(mydialog.getExistingDirectory(options=options, caption="Image output directory"))
-        print('thedir=',thedir)
+        print('thedir=', thedir)
         thename = self.map.namebase + self.map.name
         self.saveandcomposite(self.axviewwin, self.axviewbgwin, thename + '_ax', thedir, self.scalefacx, self.scalefacy)
-        self.saveandcomposite(self.corviewwin, self.corviewbgwin, thename + '_cor', thedir, self.scalefacx, self.scalefacz)
-        self.saveandcomposite(self.sagviewwin, self.sagviewbgwin, thename + '_sag', thedir, self.scalefacy, self.scalefacz)
+        self.saveandcomposite(self.corviewwin, self.corviewbgwin, thename + '_cor', thedir, self.scalefacx,
+                              self.scalefacz)
+        self.saveandcomposite(self.sagviewwin, self.sagviewbgwin, thename + '_sag', thedir, self.scalefacy,
+                              self.scalefacz)
         with open(os.path.join(thedir, thename + '_lims.txt'), 'w') as FILE:
             FILE.writelines(str(self.map.dispmin) + '\t' + str(self.map.dispmax))
-        #img_colorbar.save(thedir + self.map.name + '_colorbar.png')
+            # img_colorbar.save(thedir + self.map.name + '_colorbar.png')
 
     def summarize(self):
         if self.map is not None:
-            #print('OrthoImageItem[', self.map.name, ']: map is set')
+            # print('OrthoImageItem[', self.map.name, ']: map is set')
             pass
