@@ -415,7 +415,7 @@ class Ui_MainWindow(object):
         self.label_11.setFont(font)
         self.label_11.setObjectName(_fromUtf8("label_11"))
         self.runMovieButton = QtGui.QPushButton(self.groupBox)
-        self.runMovieButton.setGeometry(QtCore.QRect(170, 125, 110, 32))
+        self.runMovieButton.setGeometry(QtCore.QRect(170, 127, 110, 32))
         self.runMovieButton.setObjectName(_fromUtf8("runMovieButton"))
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
