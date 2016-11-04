@@ -115,7 +115,7 @@ def correlationpass(fmridata, referencetc,
                     corrmask, corrout, meanval,
                     ncprefilter,
                     optiondict):
-    corrmask[:] = tide.makemask(np.mean(fmridata, axis=1), threshpct=1.0)
+    corrmask[:] = tide.makemask(np.mean(fmridata, axis=1), threshpct=optiondict['corrmaskthresh'])
     oversampfreq = optiondict['oversampfactor'] / tr
     inputshape = np.shape(fmridata)
     volumetotal = 0
@@ -392,7 +392,7 @@ def prewhiten(indata, arcoffs):
 
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     # mask to interesting voxels
-    themask = tide.makemask(np.mean(indata, axis=1), threshpct=1.0)
+    themask = tide.makemask(np.mean(indata, axis=1), optiondict['corrmaskthresh'])
     if includemask is not None:
         themask = themask * includemask
     if excludemask is not None:
@@ -425,7 +425,7 @@ def usage(argstyle):
           "[-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME]"
           " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP"
           "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
-          "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP]"
+          "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
           "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE]"
           "[--limitoutput] [--timerange=START,END] [--skipsighistfit]")
     if argstyle == 'old':
@@ -498,6 +498,8 @@ def usage(argstyle):
         print("                               in the first TR of the fmri file (default is 0.0)")
     print("    -G                       - use generalized cross-correlation with phase alignment ")
     print("                               transform (GCC-PHAT) instead of correlation")
+    print("    --corrmaskthresh=PCT     - do correlations in voxels where the mean exceeeds this ")
+    print("                               percentage of the robust max (default is 1.0)")
     print("")
     print("correlation fitting options:")
     print("    -Z DELAYTIME             - don't fit the delay time - set it to DELAYTIME seconds ")
@@ -569,37 +571,38 @@ def main():
 
     # preprocessing options
     optiondict['dogaussianfilter'] = False  # apply a spatial filter to the fmri data prior to analysis
-    optiondict['gausssigma'] = 0.0  # the width of the spatial filter kernel in mm
-    optiondict['antialias'] = True  # apply an antialiasing filter to any regressors prior to filtering
-    optiondict['invertregressor'] = False  # invert the initial regressor during startup
-    optiondict['sliceorder'] = 0  # do not apply any slice order correction by default
-    optiondict['startpoint'] = -1  # by default, analyze the entire length of the dataset
-    optiondict['endpoint'] = 10000000  # by default, analyze the entire length of the dataset
-    optiondict['preprocskip'] = 0  # number of trs skipped in preprocessing
+    optiondict['gausssigma'] = 0.0          # the width of the spatial filter kernel in mm
+    optiondict['antialias'] = True          # apply an antialiasing filter to any regressors prior to filtering
+    optiondict['invertregressor'] = False   # invert the initial regressor during startup
+    optiondict['sliceorder'] = 0            # do not apply any slice order correction by default
+    optiondict['startpoint'] = -1           # by default, analyze the entire length of the dataset
+    optiondict['endpoint'] = 10000000       # by default, analyze the entire length of the dataset
+    optiondict['preprocskip'] = 0           # number of trs skipped in preprocessing
 
     # correlation options
-    optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
-    optiondict['dodetrend'] = True  # remove linear trends prior to correlation
+    optiondict['dodemean'] = True       # remove the mean from signals prior to correlation
+    optiondict['dodetrend'] = True      # remove linear trends prior to correlation
     optiondict['usewindowfunc'] = True  # apply a hamming window prior to correlation
-    optiondict['gccphat'] = False  # use a phase alignment transform rather than crosscorrelation
-    optiondict['usetmask'] = False  # premultiply the regressor with the tmask timecourse
-    optiondict['tmaskname'] = ''  # file name for tmask regressor
+    optiondict['gccphat'] = False       # use a phase alignment transform rather than crosscorrelation
+    optiondict['usetmask'] = False      # premultiply the regressor with the tmask timecourse
+    optiondict['tmaskname'] = ''        # file name for tmask regressor
+    optiondict['corrmaskthresh'] = 1.0  # percentage of robust maximum of mean to mask correlations
 
     # correlation fitting options
-    optiondict['bipolar'] = False  # find peak with highest magnitude, regardless of sign
-    optiondict['gaussrefine'] = True  # fit gaussian after initial guess at parameters
-    optiondict['fastgauss'] = False  # use a non-iterative gaussian peak fit (DOES NOT WORK)
-    optiondict['lthreshval'] = 0.0  # zero out peaks with correlations lower than this value
-    optiondict['uthreshval'] = 1.0  # zero out peaks with correlations higher than this value
+    optiondict['bipolar'] = False       # find peak with highest magnitude, regardless of sign
+    optiondict['gaussrefine'] = True    # fit gaussian after initial guess at parameters
+    optiondict['fastgauss'] = False     # use a non-iterative gaussian peak fit (DOES NOT WORK)
+    optiondict['lthreshval'] = 0.0      # zero out peaks with correlations lower than this value
+    optiondict['uthreshval'] = 1.0      # zero out peaks with correlations higher than this value
     optiondict['edgebufferfrac'] = 0.0  # what fraction of the correlation window to avoid on either end when fitting
-    optiondict['useguess'] = False  # supply an initial guess for the correlation peak location
+    optiondict['useguess'] = False      # supply an initial guess for the correlation peak location
     optiondict['enforcethresh'] = True  # only do fits in voxels that exceed threshhold
     optiondict['zerooutbadfit'] = True	# if true zero out all fit parameters if the fit fails
 
     # postprocessing options
-    optiondict['doglmfilt'] = True  # use a glm filter to remove the delayed regressor from the data in each voxel
-    optiondict['doprewhiten'] = False  # prewhiten the data (I have no idea if this works)
-    optiondict['armodelorder'] = 1  # AR model order for prewhitening the data (I have no idea if this works)
+    optiondict['doglmfilt'] = True      # use a glm filter to remove the delayed regressor from the data in each voxel
+    optiondict['doprewhiten'] = False   # prewhiten the data (I have no idea if this works)
+    optiondict['armodelorder'] = 1      # AR model order for prewhitening the data (I have no idea if this works)
 
     # filter options
     optiondict['zpfilter'] = True
@@ -621,7 +624,7 @@ def main():
     optiondict['fixeddelayvalue'] = 0.0
 
     # significance estimation options
-    optiondict['estimate_significance'] = True
+    optiondict['estimate_significance'] = True  # if True, estimate null correlation distribution prior to each pass
     optiondict['numestreps'] = 10000		# the number of sham correlations to perform to estimate significance
     optiondict['nohistzero'] = False		# if False, there is a spike at R=0 in the significance histogra
     optiondict['ampthreshfromsig'] = True
@@ -714,6 +717,7 @@ def main():
                                                                                                            'dosighistfit',
                                                                                                            'sigmathresh=',
                                                                                                            'refineweighting=',
+                                                                                                           'corrmaskthresh=',
                                                                                                            'refinepasses=',
                                                                                                            'includemask=',
                                                                                                            'excludemask=',
@@ -760,6 +764,10 @@ def main():
             optiondict['gccphat'] = True
             optiondict['dodetrend'] = True
             print('Enabled GCC-PHAT fitting')
+        elif o == '--corrmaskthresh':
+            optiondict['corrmaskthresh'] = float(a)
+            linkchar = '='
+            print('Will perform correlations in voxels where mean exceeds', optiondict['corrmaskthresh'], '% of robust maximum')
         elif o == '-I':
             optiondict['invertregressor'] = True
             print('Invert the regressor prior to running')
