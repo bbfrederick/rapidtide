@@ -42,6 +42,7 @@ from pkg_resources import resource_string
 
 from nibabel.affines import apply_affine
 
+# list of the names of the ASPECTS vascular territories
 aspects = ['None', 'L_A', 'L_C', 'L_I', 'L_IC', 'L_L', 'L_M1', 'L_M2', 'L_M3', 'L_M4', 'L_M5', 'L_M6', 'L_P', 'R_A',
            'R_C', 'R_I', 'R_IC', 'R_L', 'R_M1', 'R_M2', 'R_M3', 'R_M4', 'R_M5', 'R_M6', 'R_P']
 
@@ -401,6 +402,7 @@ class xyztlocation(QtGui.QWidget):
     
     def readTimeSlider(self):
         self.tpos = self.TimeSlider.value()
+        self.tcoord = self.tr2real(self.tpos)
         self.updateTValues()
 
     def updateMovie(self):
@@ -422,6 +424,7 @@ class xyztlocation(QtGui.QWidget):
             if self.runMovieButton is not None:
                 self.runMovieButton.setText('Stop Movie')
             self.movieTimer.start(int(self.frametime))
+        print('leaving runMovieToggle')
 
     def setFrametime(self, frametime):
         if self.movierunning:
@@ -434,7 +437,7 @@ class overlay:
     "Store a data overlay and some information about it"
 
     def __init__(self, name, filename, namebase, funcmask=None, geommask=None, label=None, report=False,
-                 lut_state=gray_state):
+                 lut_state=gray_state, isaMask=False):
         print('reading map ',name,' from ',filename,'...')
         self.name = name
         if label is None:
@@ -445,6 +448,10 @@ class overlay:
         self.filename = filename
         self.namebase = namebase
         self.nim, self.data, self.header, self.dims, self.sizes = tide.readfromnifti(self.filename)
+        if isaMask:
+            self.data[np.where(self.data < 0.5)] = 0.0
+            self.data[np.where(self.data > 0.5)] = 1.0
+        print('overlay data range:', np.min(self.data), np.max(self.data))
         self.xdim, self.ydim, self.zdim, self.tdim = \
             tide.parseniftisizes(self.dims)
         self.xsize, self.ysize, self.zsize, self.tr = \
@@ -453,6 +460,7 @@ class overlay:
         self.mask = None
         self.maskeddata = None
         if geommask is None:
+            print('no geometric mask specified - filling with ones')
             print('tdim is ',self.tdim)
             print('data shape is ',np.shape(self.data))
             if self.tdim == 1:
@@ -460,6 +468,7 @@ class overlay:
             else:
                 self.geommask = 1.0 + 0.0 * self.data[:, :, :, 0]
         else:
+            print('using geometric mask')
             self.geommask = geommask
         if funcmask is None:
             if self.tdim == 1:
@@ -762,7 +771,7 @@ def set_lagmask():
     print('Using valid fit points as functional mask')
     ui.setMask_Button.setText('Valid mask')
     for themap in loadedfuncmaps:
-        overlays[themap].setFuncMask('lagmask')
+        overlays[themap].setFuncMask(overlays['lagmask'].data)
     updateOrthoImages()
     updateHistogram()
 
@@ -772,7 +781,7 @@ def set_refinemask():
     print('Voxel refinement mask')
     ui.setMask_Button.setText('Refine mask')
     for themap in loadedfuncmaps:
-        overlays[themap].setFuncMask('refinemask')
+        overlays[themap].setFuncMask(overlays['refinemask'].data)
     updateOrthoImages()
     updateHistogram()
 
@@ -791,8 +800,10 @@ def set_0p05():
     global overlays, loadedfuncmaps, ui
     print('setting functional mask to p<0.05')
     ui.setMask_Button.setText('p<0.05')
+    #overlays['jit_mask'] = tide.makepmask(overlays['lagstrengths'], 0.05, sighistfit, onesided=True)
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['p_lt_0p050_mask'].data)
+        #overlays[themap].setFuncMask(overlays['jit_mask'].data)
     updateOrthoImages()
     updateHistogram()
 
@@ -1097,10 +1108,13 @@ def loadfuncmasks(thefileroot, theoverlays, thefuncmasks):
     for themap in thefuncmasks:
         if os.path.isfile(thefileroot + themap + '.nii.gz'):
             thepath, thebase = os.path.split(thefileroot)
-            theoverlays[themap] = overlay(themap, thefileroot + themap + '.nii.gz', thebase)
+            theoverlays[themap] = overlay(themap, thefileroot + themap + '.nii.gz', thebase, isaMask=True)
             loadedfuncmasks.append(themap)
         else:
             print('mask: ', thefileroot + themap + '.nii.gz', ' does not exist!')
+    #theoverlays['jit_mask'] = overlay('jit_mask', thefileroot + 'lagmask' + '.nii.gz', thebase)
+    #loadedfuncmasks.append('jit_mask')
+    print(loadedfuncmasks)
     return(loadedfuncmasks)
 
 
@@ -1109,7 +1123,7 @@ def loadgeommask(thefileroot, theoverlays, geommaskname, MNIcoords, xsize, ysize
     if geommaskname != '':
         if os.path.isfile(geommaskname):
             thepath, thebase = os.path.split(geommaskname)
-            theoverlays['geommask'] = overlay('geommask', geommaskname, thebase)
+            theoverlays['geommask'] = overlay('geommask', geommaskname, thebase, isaMask=True)
             print('using ', geommaskname, ' as geometric mask')
             #allloadedmaps.append('geommask')
             return(True)
@@ -1126,7 +1140,7 @@ def loadgeommask(thefileroot, theoverlays, geommaskname, MNIcoords, xsize, ysize
             geommaskname = os.path.join(referencedir, 'MNI152_T1_3mm_brain_mask_bin.nii.gz')
         if os.path.isfile(geommaskname):
             thepath, thebase = os.path.split(geommaskname)
-            theoverlays['geommask'] = overlay('geommask', geommaskname, thebase)
+            theoverlays['geommask'] = overlay('geommask', geommaskname, thebase, isaMask=True)
             print('using ', geommaskname, ' as background')
             #allloadedmaps.append('geommask')
             return(True)
@@ -1642,8 +1656,8 @@ def main():
                  bgmap=overlays[bgmap])
     print('done loading panes')
 
-    print('about to set up the histogram')
     # set up the histogram window
+    print('about to set up the histogram')
     global hist_ax
     histwin = ui.histogram_graphicsView
     hist_ax = histwin.addPlot()
@@ -1652,10 +1666,11 @@ def main():
     ui.saveDisp_Button.clicked.connect(mainwin.saveDisp)
     ui.dispmin_doubleSpinBox.valueChanged.connect(getMinDispLimit)
     ui.dispmax_doubleSpinBox.valueChanged.connect(getMaxDispLimit)
+    print('done setting up histogram window')
 
+    print('loadedfuncmasks', loadedfuncmasks)
     if len(loadedfuncmasks) > 0:
         popMenu.addSeparator()
-        """
         if 'lagmask' in loadedfuncmasks:
             popMenu.addAction(sel_lagmask)
             numspecial += 1
@@ -1664,7 +1679,6 @@ def main():
             numspecial += 1
         if numspecial > 0:
             popMenu.addSeparator()
-        """
         if 'p_lt_0p050_mask' in loadedfuncmasks:
             popMenu.addAction(sel_0p05)
         if 'p_lt_0p010_mask' in loadedfuncmasks:
