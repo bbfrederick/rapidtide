@@ -33,11 +33,12 @@ import os
 from scipy import signal
 from scipy.stats import johnsonsb
 
-#from memory_profiler import profile
+# from memory_profiler import profile
 
 donotusenumba = False
 try:
     from numba import jit
+
     numbaexists = True
 except ImportError:
     numbaexists = False
@@ -49,49 +50,56 @@ try:
 except ImportError:
     nibabelexists = False
 
+
 def conditionaljit():
     def resdec(f):
         if (not numbaexists) or donotusenumba:
             return f
         return jit(f)
+
     return resdec
 
 
 # ---------------------------------------- Global constants -------------------------------------------
 
 # ---------------------------------------- Debugging/profiling functions ------------------------------
-#@profile(precision=4)
+# @profile(precision=4)
 def checkpoint1():
     pass
 
-#@profile(precision=4)
+
+# @profile(precision=4)
 def checkpoint2():
     pass
 
-#@profile(precision=4)
+
+# @profile(precision=4)
 def checkpoint3():
     pass
 
-#@profile(precision=4)
+
+# @profile(precision=4)
 def checkpoint4():
     pass
 
-#@profile(precision=4)
+
+# @profile(precision=4)
 def checkpoint5():
     pass
 
-#@profile(precision=4)
+
+# @profile(precision=4)
 def checkpoint6():
     pass
+
 
 # ---------------------------------------- Global defaults ----------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
 
+
 def version():
-    version = 'UNKNOWN'
-    gittag = 'UNKNOWN'
-    thispath,thisfile = os.path.split(__file__)
+    thispath, thisfile = os.path.split(__file__)
     print(thispath)
     if os.path.isfile(os.path.join(thispath, '_gittag.py')):
         with open(os.path.join(thispath, '_gittag.py')) as f:
@@ -103,8 +111,11 @@ def version():
     else:
         return 'UNKNOWN', 'UNKNOWN'
 
+
 def disablenumba():
+    global donotusenumba
     donotusenumba = True
+
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 if nibabelexists:
@@ -129,15 +140,15 @@ if nibabelexists:
         outputaffine = theheader.get_best_affine()
         qaffine, qcode = theheader.get_qform(coded=True)
         saffine, scode = theheader.get_sform(coded=True)
-        if theheader['magic']=='n+2':
+        if theheader['magic'] == 'n+2':
             output_nifti = nib.Nifti2Image(thearray, outputaffine, header=theheader)
-            suffix='.nii'
+            suffix = '.nii'
         else:
             output_nifti = nib.Nifti1Image(thearray, outputaffine, header=theheader)
-            suffix='.nii.gz'
+            suffix = '.nii.gz'
         output_nifti.set_qform(qaffine, code=int(qcode))
         output_nifti.set_sform(saffine, code=int(scode))
-        output_nifti.to_filename(thename+suffix)
+        output_nifti.to_filename(thename + suffix)
 
 
     def checkifnifti(filename):
@@ -153,7 +164,7 @@ if nibabelexists:
         thedims = hdr['dim']
         thesizes = hdr['pixdim']
         if hdr.get_xyzt_units()[1] == 'msec':
-            tr = thesizes[4]/1000.0
+            tr = thesizes[4] / 1000.0
         else:
             tr = thesizes[4]
         timepoints = thedims[4]
@@ -280,19 +291,20 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     thestore = np.zeros((2, histlen))
     thestore[0, :] = thehist[1][:-1]
     thestore[1, :] = thehist[0][:] / (1.0 * len(thedata))
-    
+
     # store the zero term for later
     zeroterm = thestore[1, 0]
     thestore[1, 0] = 0.0
 
     # fit the gumel_r function
     params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
-    print('len params = ',len(params))
+    print('len params = ', len(params))
     numinfit = len(thedata)
-    print('johnson SB fit parameters for pdf:',params)
-    
+    print('johnson SB fit parameters for pdf:', params)
+
     # restore the zero term if needed
-    # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the histogram at zero from failed fits)
+    # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
+    # histogram at zero from failed fits)
     if nozero:
         zeroterm = 0.0
     else:
@@ -303,24 +315,25 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     corrfac = (1.0 - zeroterm) / (1.0 * histlen)
     johnsonsbvals *= corrfac
     johnsonsbvals[0] = zeroterm
-    
+
     if displayplots:
         fig = pl.figure()
         ax = fig.add_subplot(111)
         ax.set_title('fitjsbpdf: histogram')
-        pl.plot(thestore[0, :], thestore[1, :], 'b', 
+        pl.plot(thestore[0, :], thestore[1, :], 'b',
                 thestore[0, :], johnsonsbvals, 'r')
         pl.legend(['histogram', 'fit to johnsonsb'])
         pl.show()
     return np.append(params, np.array([zeroterm]))
 
 
-def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False, dosighistfit=True):
+def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False,
+                            dosighistfit=True):
     thehistogram = makehistogram(np.abs(vallist), histlen, therange=[0.0, 1.0])
     if dosighistfit:
         histfit = fitjsbpdf(thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero)
     if twotail:
-        thepercentiles = 1.0 - (1.0 - thepercentiles)/2.0
+        thepercentiles = 1.0 - (1.0 - thepercentiles) / 2.0
         print('thepercentiles adapted for two tailed distribution:', thepercentiles)
     pcts_data = getfracvals(vallist, thepercentiles, numbins=int(np.sqrt(len(vallist)) * 5.0), nozero=nozero)
     if dosighistfit:
@@ -333,7 +346,7 @@ def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False
 def rfromp(fitfile, thepercentiles, numbins=1000):
     thefit = readvecs(fitfile)[0]
     return getfracvalsfromfit(thefit, thepercentiles, numbins=numbins, displayplots=True)
-    
+
 
 def tfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
     if r >= 1.0:
@@ -558,8 +571,8 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dode
         xcorrpertime[:, i] = fastcorrelate(dataseg1, dataseg2)
         maxindex, delayvals[i], Rvals[i], maxsigma, maskval, failreason = findmaxlag(
             xcorr_x,
-            xcorrpertime[:,i],
-            -windowtime/2.0,windowtime/2.0,1000.0,
+            xcorrpertime[:, i],
+            -windowtime / 2.0, windowtime / 2.0, 1000.0,
             refine=True,
             useguess=False,
             fastgauss=False,
@@ -795,6 +808,7 @@ def gausssk_eval(x, p):
     t = (x - p[1]) / p[2]
     return p[0] * sp.stats.norm.pdf(t) * sp.stats.norm.cdf(p[3] * t)
 
+
 @conditionaljit()
 def gauss_eval(x, p):
     return p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
@@ -819,10 +833,10 @@ def trapezoid_eval(x, p):
     corrx = x - p[0]
     if corrx < 0.0:
         return 0.0
-    elif corrx >= 0.0 and corrx < toplength:
-        return p[1] * (1.0 - np.exp(-corrx/p[2]))
+    elif 0.0 <= corrx < toplength:
+        return p[1] * (1.0 - np.exp(-corrx / p[2]))
     else:
-        return p[1] * (np.exp(-(corrx - toplength)/p[3]))
+        return p[1] * (np.exp(-(corrx - toplength) / p[3]))
 
 
 @conditionaljit()
@@ -831,7 +845,7 @@ def risetime_eval(x, p):
     if corrx < 0.0:
         return 0.0
     else:
-        return p[1] * (1.0 - np.exp(-corrx/p[2]))
+        return p[1] * (1.0 - np.exp(-corrx / p[2]))
 
 
 # Find the image intensity value which thefrac of the non-zero voxels in the image exceed
@@ -846,11 +860,13 @@ def getfracval(datamat, thefrac, numbins=200):
             return bins[i]
     return 0.0
 
+
 def makepmask(rvals, pval, sighistfit, onesided=True):
     if onesided:
         return np.where(rvals > getfracvalsfromfit(sighistfit, 1.0 - pval), 1, 0)
     else:
         return np.where(np.abs(rvals) > getfracvalsfromfit(sighistfit, 1.0 - pval / 2.0), 1, 0)
+
 
 def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False):
     themax = datamat.max()
@@ -884,8 +900,9 @@ def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
     corrfac = (1.0 - histfit[-1]) / (1.0 * numbins)
     meanhist *= corrfac
     meanhist[0] = histfit[-1]
-    
-    cummeanhist = histfit[-1] + (1.0 - histfit[-1]) * johnsonsb.cdf(bins, histfit[0], histfit[1], histfit[2], histfit[3])
+
+    cummeanhist = histfit[-1] + (1.0 - histfit[-1]) * johnsonsb.cdf(bins, histfit[0], histfit[1], histfit[2],
+                                                                    histfit[3])
     thevals = []
     if displayplots:
         fig = pl.figure()
@@ -905,6 +922,7 @@ def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
                 break
     return thevals
 
+
 def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=False):
     thevals = johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3])
     if displayplots:
@@ -917,6 +935,7 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=False):
         pl.plot(bins, johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3]))
         pl.show()
     return thevals
+
 
 def makemask(image, threshpct=25.0, verbose=False):
     fracval = getfracval(image, 0.98)
@@ -991,6 +1010,7 @@ def trendgen(thexvals, thefitcoffs, demean):
         thefit = thefit + thefitcoffs[order]
     return thefit
 
+
 @conditionaljit()
 def detrend(inputdata, order=1, demean=False):
     thetimepoints = np.arange(0.0, len(inputdata), 1.0)
@@ -1004,11 +1024,12 @@ def findfirstabove(theyvals, thevalue):
     for i in range(0, len(theyvals)):
         if theyvals[i] >= thevalue:
             return i
-    return i
+    return len(theyvals)
 
 
-def findtrapezoidfunc(thexvals, theyvals, thetoplength, initguess=None, debug=False, 
-    minrise=0.0, maxrise=200.0, minfall=0.0, maxfall=200.0, minstart=-100.0, maxstart=100.0, refine=False, displayplots=False):
+def findtrapezoidfunc(thexvals, theyvals, thetoplength, initguess=None, debug=False,
+                      minrise=0.0, maxrise=200.0, minfall=0.0, maxfall=200.0, minstart=-100.0, maxstart=100.0,
+                      refine=False, displayplots=False):
     # guess at parameters: risestart, riseamplitude, risetime
     if initguess is None:
         initstart = 0.0
@@ -1023,19 +1044,19 @@ def findtrapezoidfunc(thexvals, theyvals, thetoplength, initguess=None, debug=Fa
 
     p0 = np.array([initstart, initamp, initrisetime, initfalltime])
     if debug:
-        for i in range(0,len(theyvals)):
+        for i in range(0, len(theyvals)):
             print(thexvals[i], theyvals[i])
     plsq, dummy = sp.optimize.leastsq(trapezoidresiduals, p0, args=(theyvals, thexvals, thetoplength), maxfev=5000)
-    #except ValueError:
+    # except ValueError:
     #    return 0.0, 0.0, 0.0, 0
     if (minrise <= plsq[2] <= maxrise) and (minfall <= plsq[3] <= maxfall) and (minstart <= plsq[0] <= maxstart):
         return plsq[0], plsq[1], plsq[2], plsq[3], 1
     else:
         return 0.0, 0.0, 0.0, 0.0, 0
-        
 
-def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False, 
-    minrise=0.0, maxrise=200.0, minstart=-100.0, maxstart=100.0, refine=False, displayplots=False):
+
+def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
+                     minrise=0.0, maxrise=200.0, minstart=-100.0, maxstart=100.0, refine=False, displayplots=False):
     # guess at parameters: risestart, riseamplitude, risetime
     if initguess is None:
         initstart = 0.0
@@ -1048,20 +1069,21 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
 
     p0 = np.array([initstart, initamp, initrisetime])
     if debug:
-        for i in range(0,len(theyvals)):
+        for i in range(0, len(theyvals)):
             print(thexvals[i], theyvals[i])
     plsq, dummy = sp.optimize.leastsq(risetimeresiduals, p0, args=(theyvals, thexvals), maxfev=5000)
-    #except ValueError:
+    # except ValueError:
     #    return 0.0, 0.0, 0.0, 0
     if (minrise <= plsq[2] <= maxrise) and (minstart <= plsq[0] <= maxstart):
         return plsq[0], plsq[1], plsq[2], 1
     else:
         return 0.0, 0.0, 0.0, 0
-        
 
-#@conditionaljit()
+
+@conditionaljit()
 def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
-               debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False, fastgauss=False, enforcethresh=True, displayplots=False):
+               debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
+               fastgauss=False, enforcethresh=True, displayplots=False):
     # set initial parameters 
     # widthlimit is in seconds
     # maxsigma is in Hz
@@ -1116,7 +1138,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
     lowerlimit = 0
     i = 0
     j = 0
-    searchfrac=0.5
+    searchfrac = 0.5
     while (maxindex + i <= upperlimit) and (thexcorr_y[maxindex + i] > searchfrac * maxval_init) and (i < searchbins):
         i += 1
     i -= 1
@@ -1163,13 +1185,13 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
                 p0 = np.array([maxval_init, maxlag_init, maxsigma_init])
                 if fitend - fitstart >= 3:
                     plsq, dummy = sp.optimize.leastsq(gaussresiduals, p0,
-                                          args=(data,X), maxfev=5000)
+                                                      args=(data, X), maxfev=5000)
                     maxval = 1.0 * plsq[0]
                     maxlag = 1.0 * plsq[1]
                     maxsigma = 1.0 * plsq[2]
                 # if maxval > 1.0, fit failed catastrophically, zero out or reset to initial value
                 #     corrected logic for 1.1.6
-                if (np.fabs(maxval)) > 1.0 or (lagmin > maxlag)  or (maxlag > lagmax):
+                if (np.fabs(maxval)) > 1.0 or (lagmin > maxlag) or (maxlag > lagmax):
                     if zerooutbadfit:
                         maxval = 0.0
                         maxlag = 0.0
@@ -1200,7 +1222,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
         fig = pl.figure()
         ax = fig.add_subplot(111)
         ax.set_title('Data and fit')
-        hiresx=np.arange(X[0],X[-1],(X[1]-X[0])/10.0)
+        hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
         pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
         pl.show()
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason
@@ -1208,7 +1230,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
 
 def gaussfitsk(height, loc, width, skewness, xvals, yvals):
     plsq, dummy = sp.optimize.leastsq(gaussresidualssk, np.array([height, loc, width, skewness]),
-                          args=(yvals, xvals), maxfev=5000)
+                                      args=(yvals, xvals), maxfev=5000)
     return plsq
 
 
@@ -1226,7 +1248,7 @@ class fastresampler:
         self.initstart = timeaxis[0]
         self.initend = timeaxis[-1]
         self.hiresstep = self.initstep / self.upsampleratio
-        self.hires_x = np.r_[timeaxis[0]-self.padvalue:self.initstep * len(timeaxis) + self.padvalue:self.hiresstep]
+        self.hires_x = np.r_[timeaxis[0] - self.padvalue:self.initstep * len(timeaxis) + self.padvalue:self.hiresstep]
         self.hiresstart = self.hires_x[0]
         self.hiresend = self.hires_x[-1]
         self.hires_y = doresample(timeaxis, timecourse, self.hires_x, method='univariate')
@@ -1235,12 +1257,12 @@ class fastresampler:
         if debug:
             print('fastresampler __init__:')
             print('    padvalue:, ', self.padvalue)
-            print('    initstep, hiresstep:',self.initstep, self.hiresstep)
+            print('    initstep, hiresstep:', self.initstep, self.hiresstep)
             print('    initial axis limits:', self.initstart, self.initend)
             print('    hires axis limits:', self.hiresstart, self.hiresend)
-            
-        #self.hires_y[:int(self.padvalue // self.hiresstep)] = 0.0
-        #self.hires_y[-int(self.padvalue // self.hiresstep):] = 0.0
+
+        # self.hires_y[:int(self.padvalue // self.hiresstep)] = 0.0
+        # self.hires_y[-int(self.padvalue // self.hiresstep):] = 0.0
         if doplot:
             fig = pl.figure()
             ax = fig.add_subplot(111)
@@ -1248,16 +1270,16 @@ class fastresampler:
             pl.plot(timeaxis, timecourse, self.hires_x, self.hires_y)
             pl.legend(('input', 'hires'))
             pl.show()
-    
+
     def yfromx(self, newtimeaxis, doplot=False, debug=False):
         if debug:
             print('fastresampler: yfromx called with following parameters')
             print('    padvalue:, ', self.padvalue)
-            print('    initstep, hiresstep:',self.initstep, self.hiresstep)
+            print('    initstep, hiresstep:', self.initstep, self.hiresstep)
             print('    initial axis limits:', self.initstart, self.initend)
             print('    hires axis limits:', self.hiresstart, self.hiresend)
-            print('    requested axis limits:',newtimeaxis[0],newtimeaxis[-1])
-        outindices = ((newtimeaxis -  self.hiresstart) // self.hiresstep).astype(int)
+            print('    requested axis limits:', newtimeaxis[0], newtimeaxis[-1])
+        outindices = ((newtimeaxis - self.hiresstart) // self.hiresstep).astype(int)
         if debug:
             print('len(self.hires_y):', len(self.hires_y))
         try:
@@ -1266,10 +1288,10 @@ class fastresampler:
             print('')
             print('indexing out of bounds in fastresampler')
             print('    padvalue:, ', self.padvalue)
-            print('    initstep, hiresstep:',self.initstep, self.hiresstep)
+            print('    initstep, hiresstep:', self.initstep, self.hiresstep)
             print('    initial axis limits:', self.initstart, self.initend)
             print('    hires axis limits:', self.hiresstart, self.hiresend)
-            print('    requested axis limits:',newtimeaxis[0],newtimeaxis[-1])
+            print('    requested axis limits:', newtimeaxis[0], newtimeaxis[-1])
             sys.exit()
         if doplot:
             fig = pl.figure()
@@ -1279,7 +1301,7 @@ class fastresampler:
             pl.legend(('hires', 'output'))
             pl.show()
         return 1.0 * out_y
-        
+
 
 def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio, doplot=False):
     hiresstep = fmritr / upsampleratio
@@ -1297,7 +1319,7 @@ def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio,
     return hires_x_padded, hires_y, hiresstep, hiresstart
 
 
-#@profile(precision=4)
+# @profile(precision=4)
 def dofastresample(orig_x, orig_y, new_x, hrstep, hrstart, upsampleratio):
     starthrindex = int((new_x[0] - hrstart) / hrstep)
     stride = int(upsampleratio)
@@ -1466,7 +1488,7 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
     osfftdata[0:int(fftlen // 2)] = fftdata[0:int(fftlen // 2)]
     osfftdata[-int(fftlen // 2):] = fftdata[-int(fftlen // 2):]
     shifted_y = fftpack.ifft(modvec * osfftdata).real
-    butterorder=4
+    butterorder = 4
     filt_shifted_y = dolpfiltfilt(2.0 * osfac, 1.0, shifted_y, butterorder)
     ds_shifted_y = filt_shifted_y[::osfac] * osfac
 
@@ -1575,7 +1597,7 @@ def hann(length):
     return 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
 
 
-#@conditionaljit()
+@conditionaljit()
 def hamming(length):
     return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
 
@@ -1617,6 +1639,7 @@ def ppnormalize(vector):
     else:
         return demeaned
 
+
 @conditionaljit()
 def corrnormalize(thedata, prewindow, dodetrend):
     # detrend first
@@ -1626,7 +1649,7 @@ def corrnormalize(thedata, prewindow, dodetrend):
         intervec = stdnormalize(thedata)
 
     # then window
-    #print('corrnormalize: len(thedata)=',len(thedata),'len(hamming(len(thedata)))=',len(hamming(len(thedata))))
+    # print('corrnormalize: len(thedata)=',len(thedata),'len(hamming(len(thedata)))=',len(hamming(len(thedata))))
     if prewindow:
         return stdnormalize(hamming(len(thedata)) * intervec) / np.sqrt(len(thedata))
     else:
@@ -1668,11 +1691,12 @@ def dohpfiltfilt(samplefreq, cutofffreq, indata, order, padlen=20, debug=False):
 
 
 def dobpfiltfilt(samplefreq, cutofffreq_low, cutofffreq_high, indata, order, padlen=20):
-    if cutofffreq_high > samplefreq/2.0:
-        cutofffreq_high = samplefreq/2.0
+    if cutofffreq_high > samplefreq / 2.0:
+        cutofffreq_high = samplefreq / 2.0
     if cutofffreq_log < 0.0:
         cutofffreq_low = 0.0
-    [b, a] = sp.signal.butter(order, [2.0 * cutofffreq_low / samplefreq, 2.0 * cutofffreq_high / samplefreq], 'bandpass')
+    [b, a] = sp.signal.butter(order, [2.0 * cutofffreq_low / samplefreq, 2.0 * cutofffreq_high / samplefreq],
+                              'bandpass')
     return unpadvec(sp.signal.filtfilt(b, a, padvec(indata, padlen=padlen)).real, padlen=padlen)
 
 
@@ -1745,7 +1769,8 @@ def getlptrapfftfunc(samplefreq, passfreq, stopfreq, indata, debug=False):
     translength = cutoffbin - passbin
     if debug:
         print('getlptrapfftfunc - passfreq, stopfreq:', passfreq, stopfreq)
-        print('getlptrapfftfunc - cutoffbin, passbin, translength, len(indata):', cutoffbin, passbin, translength, len(indata))
+        print('getlptrapfftfunc - cutoffbin, passbin, translength, len(indata):', cutoffbin, passbin, translength,
+              len(indata))
     if translength > 0:
         transvector = np.arange(1.0 * translength) / translength
         filterfunc[passbin:cutoffbin] = 1.0 - transvector
@@ -1771,7 +1796,8 @@ def dohptrapfftfilt(samplefreq, stopfreq, passfreq, indata, padlen=20, debug=Fal
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
-def dobptrapfftfilt(samplefreq, stopfreq_low, passfreq_low, passfreq_high, stopfreq_high, indata, padlen=20, debug=False):
+def dobptrapfftfilt(samplefreq, stopfreq_low, passfreq_low, passfreq_high, stopfreq_high, indata, padlen=20,
+                    debug=False):
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
     if False:
@@ -1821,10 +1847,11 @@ def specsplit(samplerate, inputdata, bandwidth, usebutterworth=False):
         upperlim = upperlim * bandwidth
     return bandcenters, lowestfreq, upperlim, alldata
 
+
 @conditionaljit()
-def arb_pass(samplerate, inputdata, arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop, 
-            usebutterworth=False, butterorder=defaultbutterorder,
-            usetrapfftfilt=True, padlen=20, debug=False):
+def arb_pass(samplerate, inputdata, arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop,
+             usebutterworth=False, butterorder=defaultbutterorder,
+             usetrapfftfilt=True, padlen=20, debug=False):
     # check filter limits to see if we should do a lowpass, bandpass, or highpass
     if arb_lowerpass <= 0.0:
         # set up for lowpass
@@ -1853,13 +1880,15 @@ def arb_pass(samplerate, inputdata, arb_lowerstop, arb_lowerpass, arb_upperpass,
         else:
             if usetrapfftfilt:
                 return (
-                    dobptrapfftfilt(samplerate, arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop, inputdata, padlen=padlen, debug=debug))
+                    dobptrapfftfilt(samplerate, arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop, inputdata,
+                                    padlen=padlen, debug=debug))
             else:
                 return dobpfftfilt(samplerate, arb_lowerpass, arb_upperpass, inputdata, padlen=padlen, debug=debug)
 
 
 class noncausalfilter:
-    def __init__(self, filtertype='none', usebutterworth=False, butterworthorder=3, usetrapfftfilt=True, correctfreq=True, padtime=30.0, debug=False):
+    def __init__(self, filtertype='none', usebutterworth=False, butterworthorder=3, usetrapfftfilt=True,
+                 correctfreq=True, padtime=30.0, debug=False):
         self.filtertype = filtertype
         self.arb_lowerpass = 0.05
         self.arb_lowerstop = 0.9 * self.arb_lowerpass
@@ -2014,16 +2043,16 @@ class noncausalfilter:
 
         padlen = int(self.padtime * samplerate)
         if self.debug:
-            print('samplerate=',samplerate)
-            print('lowerstop=',self.lowerstop)
-            print('lowerpass=',self.lowerpass)
-            print('upperpass=',self.upperpass)
-            print('upperstop=',self.upperstop)
-            print('usebutterworth=',self.usebutterworth)
-            print('butterworthorder=',self.butterworthorder)
-            print('usetrapfftfilt=',self.usetrapfftfilt)
-            print('padtime=',self.padtime)
-            print('padlen=',padlen)
+            print('samplerate=', samplerate)
+            print('lowerstop=', self.lowerstop)
+            print('lowerpass=', self.lowerpass)
+            print('upperpass=', self.upperpass)
+            print('upperstop=', self.upperstop)
+            print('usebutterworth=', self.usebutterworth)
+            print('butterworthorder=', self.butterworthorder)
+            print('usetrapfftfilt=', self.usetrapfftfilt)
+            print('padtime=', self.padtime)
+            print('padlen=', padlen)
 
         # now do the actual filtering
         if self.filtertype == 'none':
@@ -2031,30 +2060,30 @@ class noncausalfilter:
         elif self.filtertype == 'ringstop':
             return (arb_pass(samplerate, data,
                              0.0, 0.0, samplerate / 4.0, 1.1 * samplerate / 4.0,
-                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder, 
+                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
                              usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
         elif self.filtertype == 'vlf' or self.filtertype == 'lfo' \
                 or self.filtertype == 'resp' or self.filtertype == 'cardiac':
             return (arb_pass(samplerate, data,
                              self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
-                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder, 
+                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
                              usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
         elif self.filtertype == 'vlf_stop' or self.filtertype == 'lfo_stop' \
                 or self.filtertype == 'resp_stop' or self.filtertype == 'cardiac_stop':
             return (data - arb_pass(samplerate, data,
-                             self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
-                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder, 
-                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
+                                    self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
+                                    usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
+                                    usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
         elif self.filtertype == 'arb':
             return (arb_pass(samplerate, data,
                              self.arb_lowerstop, self.arb_lowerpass, self.arb_upperpass, self.arb_upperstop,
-                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder, 
+                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
                              usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
         elif self.filtertype == 'arb_stop':
             return (data - arb_pass(samplerate, data,
-                             self.arb_lowerstop, self.arb_lowerpass, self.arb_upperpass, self.arb_upperstop,
-                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder, 
-                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
+                                    self.arb_lowerstop, self.arb_lowerpass, self.arb_upperpass, self.arb_upperstop,
+                                    usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
+                                    usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, debug=self.debug))
         else:
             print("bad filter type")
             sys.exit()
@@ -2066,7 +2095,7 @@ def valtoindex(thearray, thevalue, toleft=True):
         return bisect.bisect_left(thearray, thevalue)
     else:
         return bisect.bisect_right(thearray, thevalue)
-    
+
 
 def progressbar(thisval, end_val, label='Percent', barsize=60):
     percent = float(thisval) / end_val
