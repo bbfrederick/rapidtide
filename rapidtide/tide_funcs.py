@@ -296,7 +296,7 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     zeroterm = thestore[1, 0]
     thestore[1, 0] = 0.0
 
-    # fit the gumel_r function
+    # fit the johnsonSB function
     params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
     print('len params = ', len(params))
     numinfit = len(thedata)
@@ -344,8 +344,9 @@ def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False
 
 
 def rfromp(fitfile, thepercentiles, numbins=1000):
-    thefit = readvecs(fitfile)[0]
-    return getfracvalsfromfit(thefit, thepercentiles, numbins=numbins, displayplots=True)
+    thefit = np.array(readvecs(fitfile)[0]).astype('float')
+    print('thefit = ', thefit)
+    return getfracvalsfromfit(thefit, thepercentiles, numbins=1000, displayplots=True)
 
 
 def tfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
@@ -923,8 +924,10 @@ def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
     return thevals
 
 
-def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=False):
-    thevals = johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3])
+def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
+    print('entering getfracvalsfromfit: histfit=',histfit, ' thefracs=', thefracs)
+    thedist = johnsonsb(histfit[0], histfit[1], histfit[2], histfit[3])
+    print('froze the distribution')
     if displayplots:
         themin = 0.001
         themax = 0.999
@@ -934,6 +937,8 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=False):
         ax.set_title('probability histogram')
         pl.plot(bins, johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3]))
         pl.show()
+    #thevals = johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3])
+    thevals = thedist.ppf(thefracs)
     return thevals
 
 

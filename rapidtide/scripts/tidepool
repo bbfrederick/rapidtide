@@ -1453,6 +1453,18 @@ def main():
 
     win.setWindowTitle('TiDePool - ' + datafileroot)
 
+    # read in the significance distribution
+    if os.path.isfile(datafileroot + 'sigfit.txt'):
+        sighistfitname = datafileroot + 'sigfit.txt'
+    else:
+        sighistfitname = None
+
+    #  This is currently very broken, so it's disabled
+    #if sighistfitname is not None:
+    #    thepcts = np.array([0.95, 0.99, 0.995, 0.999])
+    #    thervals = tide.rfromp(sighistfitname, thepcts)
+    #    tide.printthresholds(thepcts, thervals, 'Crosscorrelation significance thresholds from data:')
+
     # set the background image
     if 'anatomic' in overlays:
         bgmap = 'anatomic'
