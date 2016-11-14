@@ -41,6 +41,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/simdata',
                'rapidtide/scripts/pixelcomp',
                'rapidtide/scripts/showtc',
+               'rapidtide/scripts/showspec',
                'rapidtide/scripts/showhist']
 if addtidepool:
     script_list.append('rapidtide/scripts/tidepool')

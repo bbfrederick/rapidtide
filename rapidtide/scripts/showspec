@@ -1,0 +1,141 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+#       $Author: frederic $
+#       $Date: 2016/06/14 12:04:51 $
+#       $Id: showspec,v 1.9 2016/06/14 12:04:51 frederic Exp $
+#
+from __future__ import print_function, division
+import platform
+
+import matplotlib
+from pylab import *
+from numpy import mean
+from pylab import plot, show, savefig, figure
+
+import rapidtide.tide_funcs as tide
+
+def phase(mcv): 
+    return np.arctan2(mcv.imag, mcv.real) 
+
+
+def adjustFigAspect(fig, aspect=1):
+    """
+    Adjust the subplot parameters so that the figure has the correct
+    aspect ratio.
+    """
+    xsize, ysize = fig.get_size_inches()
+    minsize = min(xsize, ysize)
+    xlim = 0.5 * minsize / xsize
+    ylim = 0.5 * minsize / ysize
+    if aspect < 1:
+        xlim *= aspect
+    else:
+        ylim /= aspect
+    fig.subplots_adjust(left=.5 - xlim,
+                        right=.5 + xlim,
+                        bottom=.5 - ylim,
+                        top=.5 + ylim)
+
+
+def usage():
+    print("usage: showspec texfilename samplerate")
+    print("	plots the data in a text file")
+    print("")
+    print("required arguments:")
+    print("	textfilename	- a text file containing one timepoint per line")
+    print("	samplerate	- the sample rate of the time series")
+    return ()
+
+
+# get the command line parameters
+nargs = len(sys.argv)
+if nargs < 3:
+    usage()
+    exit()
+
+# set default variable values
+dolegend = False
+domag = False
+useHamming = True
+demean = True
+detrend = True
+
+# handle required args first
+textfilename = []
+samplerate = []
+xvecs = []
+yvecs = []
+numfiles = 1
+textfilename.append(sys.argv[1])
+samplerate.append(float(sys.argv[2]))
+if nargs > 3:
+    for i in range(3, nargs, 2):
+        numfiles += 1
+        textfilename.append(sys.argv[i])
+        samplerate.append(float(sys.argv[i + 1]))
+
+
+# read in all the data
+xvecs = []
+yvecs = []
+linelabels = []
+numfiles = 1
+numvecs = 0
+for i in range(0, numfiles):
+    print('filename ', i, textfilename[i])
+    invecs = tide.readvecs(textfilename[i])
+    print('   ', invecs.shape[0], ' columns')
+    for j in range(0, invecs.shape[0]):
+        print('appending vector number ', j)
+        if invecs.shape[1] % 2 == 1:
+            invec = invecs[j, :-1]
+        else:
+            invec = invecs[j, :]
+        if detrend:
+            invec = tide.detrend(invec, order=1, demean=True)
+        elif demean:
+            invec = invec = mean(invec)
+        if useHamming:
+            pspec = fft(hamming(len(invec)) * invec)[0:len(invec) // 2]
+        else:
+            pspec = fft(invec)[0:len(invec) // 2]
+        #yvecs.append(abs(pspec))
+        if domag:
+            yvecs.append(abs(pspec))
+        else:
+            yvecs.append(phase(pspec))
+        maxfreq = samplerate[i] / 2.0
+        xvecs.append(arange(0.0, maxfreq, maxfreq / (len(yvecs[i]))))
+        #xvecs.append(arange(0.0, len(yvecs[numvecs]), 1.0))
+        if invecs.shape[0] > 1:
+            linelabels.append(textfilename[i] + '_column' + str(j).zfill(2))
+        else:
+            linelabels.append(textfilename[i])
+        numvecs += 1
+
+# now plot it out
+colorlist = ['r', 'g', 'b', 'k', 'B', 'y']
+hold(True)
+for i in range(0, numvecs):
+    plot(xvecs[i], yvecs[i], colorlist[i % len(colorlist)], label=linelabels[i])
+if dolegend:
+    legend()
+
+xlabel('Frequency (Hz)', fontsize=16, fontweight='bold')
+ylabel('Signal power', fontsize=16, fontweight='bold')
+show()
