@@ -1,0 +1,8 @@
+#!/bin/csh -f
+rapidtide2 \
+	fmri.nii.gz \
+	../dst/dgsr \
+	-r -15,15 \
+	--noglm  \
+	--refinepasses=3 \
+	-s 2 &
