@@ -48,3 +48,15 @@
 * New option --skipsighistfit to omit fitting a Johnson SB function to the significance histogram.
 * Fixed the usage statement.
 * Fixed a bug that set ampthresh to zero when not doing significance estimation.
+
+## Version 0.1.7 (11/15/16)
+
+* I think I've resolved the issue of crashes due to numba functioning differently on machines other than mine.
+* Fixed a masking bug in tidepool that was due to numbers being very close to, but not exactly, 1.
+* Made a number of internal changes to rapidtide2 and tidepool to allow dynamic significance masking (not yet working - actually failing spectacularly for the most part, but it's currently commented out).
+* Added showstxcorr to the distribution.
+* Added the ability to set the mask threshold for correlation and global mask inclusion (this turns out to be needed if you use non-skull-stripped data.)
+* Put in some code to start to figure out how to account for dispersion in the delay function.
+* Moved the "start movie" button in tidepool to better align with the numerical spin boxes.
+* showtc has gotten a significant upgrade in functionality, adding the ability to display power spectra, phase spectra, and set the sample rate to make the x-axis correct.
+* Lots of internal formatting/style fixes, and fixed some formatting in the usage statements and documentation.
