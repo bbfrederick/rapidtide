@@ -252,10 +252,9 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, tr,
 
 
 # @profile(precision=4)
-def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, lagstrengths, lagtimes, lagsigma, R2, theprefilter,
+def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengths, lagtimes, lagsigma, R2, theprefilter,
                     optiondict, padtrs=60, includemask=None, excludemask=None):
     inputshape = np.shape(fmridata)
-    outputdata = np.zeros(inputshape[1])
     ampmask = np.where(lagstrengths >= optiondict['ampthresh'], 1, 0)
     if optiondict['lagmaskside'] == 'upper':
         delaymask = \
@@ -307,17 +306,41 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, lagstrengths, lagti
                 normtc = tide.detrend(fmridata[vox, :] * thisweight, demean=True)
             else:
                 normtc = fmridata[vox, :] * thisweight
-            shifttrs = -(-optiondict['offsettime'] + lagtimes[vox]) / fmritr  # lagtimes is in seconds
-            [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide.timeshift(normtc, shifttrs, padtrs)
+            shifttr = -(-optiondict['offsettime'] + lagtimes[vox]) / fmritr  # lagtimes is in seconds
+            [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide.timeshift(normtc, shifttr, padtrs)
             if optiondict['filterbeforePCA']:
                 shiftedtcs[vox, :] = theprefilter.apply(optiondict['fmrifreq'], shiftedtc)
             else:
                 shiftedtcs[vox, :] = 1.0 * shiftedtc
     print()
 
-    # now generate the refined timecourse
-    refinevoxels = shiftedtcs[np.where(maskarray > 0)]
+    # now generate the refined timecourse(s)
+    validlist = np.where(maskarray > 0)[0]
+    refinevoxels = shiftedtcs[validlist]
     averagedata = np.sum(refinevoxels, axis=0) / volumetotal
+    if optiondict['dofiltcalc']:
+        print('splitting regressors by time lag for phase delay estimation')
+        laglist = np.arange(optiondict['filtcalc_lower'], optiondict['filtcalc_upper'], optiondict['filtcalc_step'])
+        filtcalcout = np.zeros((len(laglist), inputshape[1]), dtype='float')
+        fftlen = int(inputshape[1] // 2)
+        fftlen -= fftlen % 2
+        filtcalcspecmag = np.zeros((len(laglist), fftlen), dtype='float')
+        filtcalcspecphase = np.zeros((len(laglist), fftlen), dtype='float')
+        for lagnum in range(0, len(laglist)):
+            lower = laglist[lagnum] - optiondict['filtcalc_step']/2.0
+            upper = laglist[lagnum] + optiondict['filtcalc_step']/2.0
+            inlagrange = np.where(locationmask * ampmask * np.where(lower < lagtimes, 1.0, 0.0) * np.where(lagtimes < upper, 1.0, 0))[0]
+            print('    summing', np.shape(inlagrange)[0], 'regressors with lags from', lower, 'to', upper)
+            if False:
+                filtcalcout[lagnum, :] = tide.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0), False, True)
+            else:
+                filtcalcout[lagnum, :] = tide.corrnormalize(np.mean(fmridata[inlagrange], axis=0), False, True)
+            freqs, filtcalcspecmag[lagnum, :], filtcalcspecphase[lagnum, :] = tide.polarfft(filtcalcout[lagnum, :], 1.0 / fmritr)
+        tide.writenpvecs(filtcalcout, optiondict['outputname'] + '_filtcalcvecs_pass' + str(passnum) + '.txt')
+        tide.writenpvecs(filtcalcspecmag, optiondict['outputname'] + '_filtcalcspecmag_pass' + str(passnum) + '.txt')
+        tide.writenpvecs(filtcalcspecphase, optiondict['outputname'] + '_filtcalcspecphase_pass' + str(passnum) + '.txt')
+        tide.writenpvecs(freqs, optiondict['outputname'] + '_filtcalcfreqs_pass' + str(passnum) + '.txt')
+        
     if optiondict['estimatePCAdims']:
         pcacomponents = 'mle'
     else:
@@ -657,6 +680,10 @@ def main():
     optiondict['estimatePCAdims'] = False
     optiondict['filterbeforePCA'] = True
     optiondict['fmrifreq'] = 0.0
+    optiondict['dofiltcalc'] = True
+    optiondict['filtcalc_lower'] = -5.0
+    optiondict['filtcalc_upper'] = 5.0
+    optiondict['filtcalc_step'] = 0.25
 
     # debugging options
     optiondict['nonumba'] = False
@@ -1444,7 +1471,7 @@ def main():
 
             # regenerate regressor for next pass
             voxelsprocessed_rr, outputdata = refineregressor(
-                fmri_data[:, :], fmritr, shiftedtcs, refinemask,
+                fmri_data[:, :], fmritr, shiftedtcs, refinemask, thepass,
                 lagstrengths, lagtimes, lagsigma, R2, theprefilter, optiondict, includemask=internalincludemask,
                 excludemask=internalexcludemask)
             normoutputdata = tide.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
