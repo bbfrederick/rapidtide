@@ -326,17 +326,17 @@ Usage:
 
 ::
 
-rapidtide2std:  register rapidtide output maps to standard space
+    rapidtide2std:  register rapidtide output maps to standard space
 
-usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [all]
+    usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [all]
 
-required arguments:
-    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
-    OUTPUTDIR          - The location for the output files
-    FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
+    required arguments:
+        INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
+        OUTPUTDIR          - The location for the output files
+        FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
 
-optional arguments:
-    all                - If present, rapidtide2feat will transform the _corrout file to MNI152
+    optional arguments:
+        all                - If present, rapidtide2feat will transform the _corrout file to MNI152
 
 
 showtc
@@ -353,20 +353,31 @@ to make the plot prettier.
 Inputs:
 ^^^^^^^
 
+Text files containing time series data
+
 Outputs:
 ^^^^^^^^
+
+None
 
 Usage:
 ^^^^^^
 
 ::
 
-showtc - plots the data in text files
+	showtc - plots the data in text files
 
-usage: showtc texfilename [textfilename]...
+	usage: showtc texfilename [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate] [--sampletime]
 
-required arguments:
-	textfilename	- a text file containing whitespace separated timecourses, one timepoint per line
+	required arguments:
+	    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line
+
+	optional arguments:
+	    --nolegend               - turn off legend label
+	    --pspec                  - show the power spectra magnitudes of the input data instead of the timecourses
+	    --phase                  - show the power spectra phases of the input data instead of the timecourses
+	    --samplerate             - the sample rate of the input data (default is 1Hz)
+	    --sampletime             - the sample time (1/samplerate) of the input data (default is 1s)
 
 
 showhist
@@ -384,16 +395,18 @@ Inputs:
 Outputs:
 ^^^^^^^^
 
+None
+
 Usage:
 ^^^^^^
 
 ::
 
-usage: showxy textfilename
-	plots xy data in text file
+	usage: showhist textfilename
+		plots xy histogram data in text file
 
-required arguments:
-	textfilename	- a text file containing one timepoint per line
+	required arguments:
+		textfilename	- a text file containing one timepoint per line
 
 
 resamp1tc
@@ -416,18 +429,18 @@ Usage:
 
 ::
 
-resamp1tc - resample a timeseries file
+	resamp1tc - resample a timeseries file
 
-usage: resamp1tc infilename insamplerate outputfile outsamplerate [-s]
+	usage: resamp1tc infilename insamplerate outputfile outsamplerate [-s]
 
-required arguments:
-        inputfile        - the name of the input text file
-        insamplerate     - the sample rate of the input file in Hz
-        outputfile       - the name of the output text file
-        outsamplerate    - the sample rate of the output file in Hz
+	required arguments:
+	        inputfile        - the name of the input text file
+	        insamplerate     - the sample rate of the input file in Hz
+	        outputfile       - the name of the output text file
+	        outsamplerate    - the sample rate of the output file in Hz
 
- options:
-        -s               - split output data into physiological bands (LFO, respiratory, cardiac)
+	 options:
+		-s               - split output data into physiological bands (LFO, respiratory, cardiac)
 
 resamplenifti
 -------------
@@ -449,16 +462,16 @@ Usage:
 
 ::
 
-usage: resamplenifti inputfile inputtr outputname outputtr [-a]
+	usage: resamplenifti inputfile inputtr outputname outputtr [-a]
 
-required arguments:
-	inputfile	- the name of the input nifti file
-	inputtr		- the tr of the input file in seconds
-	outputfile	- the name of the output nifti file
-	outputtr	- the tr of the output file in seconds
+	required arguments:
+		inputfile	- the name of the input nifti file
+		inputtr		- the tr of the input file in seconds
+		outputfile	- the name of the output nifti file
+		outputtr	- the tr of the output file in seconds
 
-options:
-	-a		- disable antialiasing filter (only relevant if you are downsampling in time)
+	options:
+		-a		- disable antialiasing filter (only relevant if you are downsampling in time)
 
 
 tidepool
@@ -486,20 +499,20 @@ Usage:
 
 ::
 
-usage: tidepool [-h] [-o OFFSETTIME] [-r] [-n] [-t TRVAL] [-d DATAFILEROOT]
+	usage: tidepool [-h] [-o OFFSETTIME] [-r] [-n] [-t TRVAL] [-d DATAFILEROOT]
                 [-a ANATNAME] [-m GEOMASKNAME]
 
-A program to display the results of a time delay analysis
+	A program to display the results of a time delay analysis
 
-optional arguments:
-  -h, --help       show this help message and exit
-  -o OFFSETTIME    Set lag offset
-  -r               enable risetime display
-  -n               enable movie mode
-  -t TRVAL         Set correlation TR
-  -d DATAFILEROOT  Use this dataset (skip initial selection step)
-  -a ANATNAME      Set anatomic mask image
-  -m GEOMASKNAME   Set geometric mask image
+	optional arguments:
+	  -h, --help       show this help message and exit
+	  -o OFFSETTIME    Set lag offset
+	  -r               enable risetime display
+	  -n               enable movie mode
+	  -t TRVAL         Set correlation TR
+	  -d DATAFILEROOT  Use this dataset (skip initial selection step)
+	  -a ANATNAME      Set anatomic mask image
+	  -m GEOMASKNAME   Set geometric mask image
 
 
 tide_funcs.py
