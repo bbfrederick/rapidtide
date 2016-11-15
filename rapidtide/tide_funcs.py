@@ -812,8 +812,8 @@ def gausssk_eval(x, p):
 
 @conditionaljit()
 def gauss_eval(x, p):
+    #return p[0] * np.exp(np.square(-(x - p[1])) / (2 * np.square(p[2])))
     return p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
-
 
 def trapezoid_eval_loop(x, toplength, p):
     r = np.zeros(len(x))
@@ -987,6 +987,7 @@ def locpeak(data, samplerate, lastpeaktime, winsizeinsecs=5.0, thresh=0.75, hyst
             fitdata = data[fitstart:]
             X = currenttime + (np.arange(0.0, len(fitdata)) - len(fitdata) + 1.0) / samplerate
             maxtime = sum(X * fitdata) / sum(fitdata)
+            #maxsigma = np.sqrt(abs(np.square(sum((X - maxtime)) * fitdata) / sum(fitdata)))
             maxsigma = np.sqrt(abs(sum((X - maxtime) ** 2 * fitdata) / sum(fitdata)))
             maxval = fitdata.max()
             peakheight, peakloc, peakwidth = gaussfit(maxval, maxtime, maxsigma, X, fitdata)
@@ -1085,6 +1086,7 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
         return 0.0, 0.0, 0.0, 0
 
 
+# disabled conditionaljit on 11/8/16.  This causes crashes on some machines (but not mine, strangely enough)
 #@conditionaljit()
 def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
@@ -1183,6 +1185,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
                 # do a non-iterative fit over the top of the peak
                 # 6/12/2015  This is just broken.  Gives quantized maxima
                 maxlag = 1.0 * sum(X * data) / sum(data)
+                #maxsigma = np.sqrt(abs(np.square(sum((X - maxlag)) * data) / sum(data)))
                 maxsigma = np.sqrt(abs(sum((X - maxlag) ** 2 * data) / sum(data)))
                 maxval = data.max()
             else:
@@ -1602,7 +1605,6 @@ def hann(length):
     return 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
 
 
-#@conditionaljit()
 def hamming(length):
     return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
 
@@ -2093,6 +2095,22 @@ class noncausalfilter:
             print("bad filter type")
             sys.exit()
 
+
+# --------------------------- Spectral analysis functions ---------------------------------------
+def phase(mcv): 
+    return np.arctan2(mcv.imag, mcv.real) 
+
+def polarfft(invec, samplerate):
+    if len(invec) % 2 == 1:
+        thevec = invec[:-1]
+    else:
+        thevec = invec
+    spec = fftpack.fft(hamming(len(thevec)) * thevec)[0:len(thevec) // 2]
+    magspec = abs(spec)
+    phspec = phase(spec)
+    maxfreq = samplerate / 2.0
+    freqs = np.arange(0.0, maxfreq, maxfreq / (len(spec)))
+    return freqs, magspec, phspec
 
 # --------------------------- Utility functions -------------------------------------------------
 def valtoindex(thearray, thevalue, toleft=True):
