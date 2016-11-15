@@ -22,39 +22,90 @@
 from __future__ import print_function
 import sys
 import platform
+import getopt
 from cycler import cycler
 
 import matplotlib
 
-#if platform.system() == 'Darwin':
-#    matplotlib.use('MacOSX')
-#else:
-#    matplotlib.use('TkAgg')
-
 import rapidtide.tide_funcs as tide
-from scipy import arange
+import numpy as np
+from scipy import arange, fftpack
 
-from pylab import plot, legend, show, hold
+from pylab import plot, legend, show, hold, xlabel, ylabel
+
+
+def phase(mcv): 
+    return np.arctan2(mcv.imag, mcv.real) 
 
 
 def usage():
     print("showtc - plots the data in text files")
     print("")
-    print("usage: showtc texfilename [textfilename]...")
+    print("usage: showtc texfilename [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate] [--sampletime]")
     print("")
     print("required arguments:")
     print("	textfilename	- a text file containing whitespace separated timecourses, one timepoint per line")
+    print("")
+    print("optional arguments:")
+    print("    --nolegend               - turn off legend label")
+    print("    --pspec                  - show the power spectra magnitudes of the input data instead of the timecourses")
+    print("    --phase                  - show the power spectra phases of the input data instead of the timecourses")
+    print("    --samplerate             - the sample rate of the input data (default is 1Hz)")
+    print("    --sampletime             - the sample time (1/samplerate) of the input data (default is 1s)")
     return ()
 
+# set default variable values
+dolegend = True
+dopspec = False
+detrend = True
+useHamming = True
+domag = True
+samplerate = 1.0
 
 # get the command line parameters
-nargs = len(sys.argv)
+try:
+    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "nolegend", "pspec", "phase", "samplerate=", "sampletime="])
+except getopt.GetoptError as err:
+    # print help information and exit:
+    print(str(err))  # will print something like 'option -a not recognized'
+    usage()
+    sys.exit(2)
+
+# check for filename arguments
+nargs = len(args)
 if nargs < 2:
     usage()
     exit()
 
-# set default variable values
-dolegend = True
+# now parse options
+for o, a in opts:
+    linkchar = ' '
+    if o == "--nolegend":
+        dolegend = False
+        print('turning off legend label')
+    elif o == '--pspec':
+        dopspec = True
+        domag = True
+        print('showing power spectra magnitude')
+    elif o == '--phase':
+        dopspec = True
+        domag = False
+        print('showing power spectra phase')
+    elif o == '--samplerate':
+        samplerate = float(a)
+        linkchar = '='
+        print('Samplerate set to ', samplerate)
+    elif o == '--sampletime':
+        samplerate = 1.0 / float(a)
+        linkchar = '='
+        print('Samplerate set to ', samplerate)
+    elif o == '-F':
+        print('got the -F option')
+    elif o in ('-h', '--help'):
+        usage(optiondict['argstyle'])
+        sys.exit()
+    else:
+        assert False, 'unhandled option'
 
 # handle required args first
 textfilename = []
@@ -63,31 +114,63 @@ yvecs = []
 linelabels = []
 numfiles = 1
 numvecs = 0
-textfilename.append(sys.argv[1])
+#textfilename.append(sys.argv[1])
+textfilename.append(args[1])
 if nargs > 2:
     for i in range(2, nargs):
         numfiles += 1
-        textfilename.append(sys.argv[i])
+        textfilename.append(args[i])
 
+# read in all the data
 for i in range(0, numfiles):
     print('filename ', i, textfilename[i])
     invecs = tide.readvecs(textfilename[i])
     print('   ', invecs.shape[0], ' columns')
     for j in range(0, invecs.shape[0]):
         print('appending vector number ', j)
-        yvecs.append(invecs[j])
-        xvecs.append(arange(0.0, len(yvecs[numvecs]), 1.0))
+        if dopspec:
+            if invecs.shape[1] % 2 == 1:
+                invec = invecs[j, :-1]
+            else:
+                invec = invecs[j, :]
+            if detrend:
+                invec = tide.detrend(invec, order=1, demean=True)
+            elif demean:
+                invec = invec = mean(invec)
+            if useHamming:
+                pspec = fftpack.fft(tide.hamming(len(invec)) * invec)[0:len(invec) // 2]
+            else:
+                pspec = fftpack.fft(invec)[0:len(invec) // 2]
+            if domag:
+                yvecs.append(abs(pspec))
+            else:
+                yvecs.append(phase(pspec))
+            maxfreq = samplerate / 2.0
+            xvecs.append(arange(0.0, maxfreq, maxfreq / (len(yvecs[i]))))
+        else:
+            yvecs.append(invecs[j])
+            xvecs.append(arange(0.0, len(yvecs[numvecs]), 1.0))
         if invecs.shape[0] > 1:
             linelabels.append(textfilename[i] + '_column' + str(j).zfill(2))
         else:
             linelabels.append(textfilename[i])
         numvecs += 1
 
-colorlist = ['r', 'g', 'b', 'k']
+
+# now plot it out
+colorlist = ['r', 'g', 'b', 'k', 'B', 'y']
 hold(True)
 for i in range(0, numvecs):
     plot(xvecs[i], yvecs[i], colorlist[i % len(colorlist)], label=linelabels[i])
 if dolegend:
     legend()
+if dopspec:
+    xlabel('Frequency (Hz)', fontsize=16, fontweight='bold')
+    if domag:
+        ylabel('Signal power', fontsize=16, fontweight='bold')
+    else:
+        ylabel('Signal phase', fontsize=16, fontweight='bold')
+else:
+    xlabel('Time (s)', fontsize=16, fontweight='bold')
 
 show()
