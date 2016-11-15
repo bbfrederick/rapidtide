@@ -44,7 +44,7 @@ def usage():
     print("usage: showtc texfilename [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate] [--sampletime]")
     print("")
     print("required arguments:")
-    print("	textfilename	- a text file containing whitespace separated timecourses, one timepoint per line")
+    print("    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line")
     print("")
     print("optional arguments:")
     print("    --nolegend               - turn off legend label")
