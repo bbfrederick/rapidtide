@@ -75,7 +75,7 @@ except getopt.GetoptError as err:
 nargs = len(args)
 if nargs < 2:
     usage()
-    exit()
+    sys.exit(1)
 
 # now parse options
 for o, a in opts:
@@ -102,7 +102,7 @@ for o, a in opts:
     elif o == '-F':
         print('got the -F option')
     elif o in ('-h', '--help'):
-        usage(optiondict['argstyle'])
+        usage()
         sys.exit()
     else:
         assert False, 'unhandled option'
