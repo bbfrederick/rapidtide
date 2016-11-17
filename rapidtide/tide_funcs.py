@@ -533,6 +533,29 @@ def writenpvecs(thevecs, outputfile, lineend=''):
 
 
 # --------------------------- correlation functions -------------------------------------------------
+def parabfit(x_axis, y_axis, peakloc, peaksize):
+    func = lambda x, a, tau, c: a * ((x - tau) ** 2) + c
+    fitted_peaks = []
+    distance = abs(x_axis[raw_peaks[1][0]] - x_axis[raw_peaks[0][0]]) / 4
+    index = peakloc
+    x_data = x_axis[index - points // 2: index + points // 2 + 1]
+    y_data = y_axis[index - points // 2: index + points // 2 + 1]
+    # get a first approximation of tau (peak position in time)
+    tau = x_axis[index]
+    # get a first approximation of peak amplitude
+    c = y_axis[index]
+    a = np.sign(c) * (-1) * (np.sqrt(abs(c))/distance)**2
+    """Derived from ABC formula to result in a solution where A=(rot(c)/t)**2"""
+
+    # build list of approximations
+
+    p0 = (a, tau, c)
+    popt, pcov = curve_fit(func, x_data, y_data, p0)
+    # retrieve tau and c i.e x and y value of peak
+    x, y = popt[1:3]
+    return x, y
+
+
 def _datacheck_peakdetect(x_axis, y_axis):
     if x_axis is None:
         x_axis = range(len(y_axis))
@@ -665,25 +688,31 @@ def peakdetect(y_axis, x_axis = None, lookahead = 200, delta=0):
         
     return [max_peaks, min_peaks]
     
-def autocorrcheck(data, Fs, delta=0.1, minperiod=5.0):
+def autocorrcheck(data, Fs, delta=0.1, acampthresh=0.1, acfreqthresh=10.0):
     filtdata = corrnormalize(data, True, True)
     thexcorr = fastcorrelate(filtdata, filtdata)
     numlags = 2 * len(filtdata) - 1
     tstep = 1.0 / Fs
-    print('minperiod, tstep, f', minperiod, tstep, 4)
     lookahead = 2
-    print('lookahead = ', lookahead)
     corrscale = np.r_[0.0:numlags] * tstep - (numlags * tstep) / 2.0 + 0.5 * tstep
     peaks = peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
-    maxpeaks = peaks[0]
-    minpeaks = peaks[1]
-    print(len(maxpeaks))
-    zeropkindex = np.argmin(abs(peaks[0, :, 0]))
-    print(zeropkindex)
-    sidelobetime = peaks[0, zeropkindex + 1, 0]
-    sidelobeamp = peaks[0, zeropkindex + 1, 1]
-    print(zeropkindex, sidelobetime, sidelobeindex)
-    return sidelobetime, sidelobeamp
+    maxpeaks = np.asarray(peaks[0], dtype='float')
+    minpeaks = np.asarray(peaks[1], dtype='float')
+    zeropkindex = np.argmin(abs(maxpeaks[:, 0]))
+    for i in range(zeropkindex + 1, maxpeaks.shape[0]):
+        if maxpeaks[i, 0] > acfreqthresh:
+            return None
+        if maxpeaks[i, 1] > acampthresh:
+            sidelobetime = maxpeaks[i, 0]
+            sidelobeindex = valtoindex(corrscale, sidelobetime)
+            sidelobeamp = thexcorr[sidelobeindex]
+            numbins = 1
+            while (sidelobeindex + numbins < len(corrscale) - 1) and (thexcorr[sidelobeindex + numbins] > sidelobeamp / 2.0):
+                numbins += 1
+            sidelobewidth = (corrscale[sidelobeindex + numbins] - corrscale[sidelobeindex]) * 2.0
+            sidelobeamp, sidelobetime, sidelobewidth = gaussfit(sidelobeamp, sidelobetime, sidelobewidth, corrscale, thexcorr)
+            return sidelobetime
+    return None
     
     
 def quickcorr(data1, data2):
