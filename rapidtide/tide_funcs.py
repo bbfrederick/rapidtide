@@ -688,13 +688,8 @@ def peakdetect(y_axis, x_axis = None, lookahead = 200, delta=0):
         
     return [max_peaks, min_peaks]
     
-def autocorrcheck(data, Fs, delta=0.1, acampthresh=0.1, acfreqthresh=10.0):
-    filtdata = corrnormalize(data, True, True)
-    thexcorr = fastcorrelate(filtdata, filtdata)
-    numlags = 2 * len(filtdata) - 1
-    tstep = 1.0 / Fs
+def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=10.0, displayplots=False, prewindow=True, dodetrend=True):
     lookahead = 2
-    corrscale = np.r_[0.0:numlags] * tstep - (numlags * tstep) / 2.0 + 0.5 * tstep
     peaks = peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
     maxpeaks = np.asarray(peaks[0], dtype='float')
     minpeaks = np.asarray(peaks[1], dtype='float')
@@ -710,7 +705,16 @@ def autocorrcheck(data, Fs, delta=0.1, acampthresh=0.1, acfreqthresh=10.0):
             while (sidelobeindex + numbins < len(corrscale) - 1) and (thexcorr[sidelobeindex + numbins] > sidelobeamp / 2.0):
                 numbins += 1
             sidelobewidth = (corrscale[sidelobeindex + numbins] - corrscale[sidelobeindex]) * 2.0
-            sidelobeamp, sidelobetime, sidelobewidth = gaussfit(sidelobeamp, sidelobetime, sidelobewidth, corrscale, thexcorr)
+            fitstart = sidelobeindex - numbins
+            fitend = sidelobeindex + numbins
+            sidelobeamp, sidelobetime, sidelobewidth = gaussfit(sidelobeamp, sidelobetime, sidelobewidth,
+                corrscale[fitstart:fitend + 1], thexcorr[fitstart:fitend + 1])
+
+            if displayplots:
+                pl.plot(corrscale[fitstart:fitend + 1], thexcorr[fitstart:fitend + 1], 'k',
+                    corrscale[fitstart:fitend + 1],
+                    gauss_eval(corrscale[fitstart:fitend + 1], [sidelobeamp, sidelobetime, sidelobewidth]), 'r')
+                pl.show()
             return sidelobetime
     return None
     

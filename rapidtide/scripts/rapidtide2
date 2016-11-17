@@ -450,7 +450,7 @@ def usage(argstyle):
           "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
           "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
           "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag] [--tmask=MASKFILE]"
-          "[--limitoutput] [--timerange=START,END] [--skipsighistfit]")
+          "[--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck]")
     if argstyle == 'old':
         print("")
         print("required arguments:")
@@ -523,6 +523,7 @@ def usage(argstyle):
     print("                               transform (GCC-PHAT) instead of correlation")
     print("    --corrmaskthresh=PCT     - do correlations in voxels where the mean exceeeds this ")
     print("                               percentage of the robust max (default is 1.0)")
+    print("    --accheck                  check for (and remove) periodic components that corrupt the autocorrelation")
     print("")
     print("correlation fitting options:")
     print("    -Z DELAYTIME             - don't fit the delay time - set it to DELAYTIME seconds ")
@@ -603,13 +604,14 @@ def main():
     optiondict['preprocskip'] = 0           # number of trs skipped in preprocessing
 
     # correlation options
-    optiondict['dodemean'] = True       # remove the mean from signals prior to correlation
-    optiondict['dodetrend'] = True      # remove linear trends prior to correlation
-    optiondict['usewindowfunc'] = True  # apply a hamming window prior to correlation
-    optiondict['gccphat'] = False       # use a phase alignment transform rather than crosscorrelation
-    optiondict['usetmask'] = False      # premultiply the regressor with the tmask timecourse
-    optiondict['tmaskname'] = ''        # file name for tmask regressor
-    optiondict['corrmaskthresh'] = 1.0  # percentage of robust maximum of mean to mask correlations
+    optiondict['dodemean'] = True                # remove the mean from signals prior to correlation
+    optiondict['dodetrend'] = True               # remove linear trends prior to correlation
+    optiondict['usewindowfunc'] = True           # apply a hamming window prior to correlation
+    optiondict['gccphat'] = False                # use a phase alignment transform rather than crosscorrelation
+    optiondict['usetmask'] = False               # premultiply the regressor with the tmask timecourse
+    optiondict['tmaskname'] = ''                 # file name for tmask regressor
+    optiondict['corrmaskthresh'] = 1.0           # percentage of robust maximum of mean to mask correlations
+    optiondict['check_autocorrelation'] = False  # check for and remove periodic components that corrupt the autocorrelation
 
     # correlation fitting options
     optiondict['bipolar'] = False       # find peak with highest magnitude, regardless of sign
@@ -745,6 +747,7 @@ def main():
                                                                                                            'sigmathresh=',
                                                                                                            'refineweighting=',
                                                                                                            'corrmaskthresh=',
+                                                                                                           'accheck',
                                                                                                            'refinepasses=',
                                                                                                            'includemask=',
                                                                                                            'excludemask=',
@@ -881,6 +884,9 @@ def main():
             else:
                 print('Will estimate p<0.05 significance threshold from ', optiondict['numestreps'],
                       ' null correlations')
+        elif o == '--accheck':
+            optiondict['check_autocorrelation'] = True
+            print('Will check for and remove periodic components in the autocorrelation function (experimental)')
         elif o == '-s':
             optiondict['widthlimit'] = float(a)
             print('Setting gaussian fit width limit to ', optiondict['widthlimit'], 'Hz')
@@ -1395,12 +1401,32 @@ def main():
             print('Pass number ', thepass)
 
         referencetc = tide.corrnormalize(resampref_y, optiondict['usewindowfunc'], optiondict['dodetrend'])
+        oversampfreq = optiondict['oversampfactor'] / fmritr
+
+        # Step -1 - check the regressor for periodic components in the passband
+        if optiondict['check_autocorrelation']:
+            acmininpts = lagmininpts + 10
+            acmaxinpts = lagmaxinpts + 10
+            thexcorr = onecorrelation(referencetc, oversampfreq, corrorigin, acmininpts, acmaxinpts, theprefilter, referencetc,
+                                  optiondict)
+            sidelobetime = tide.autocorrcheck(corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts], thexcorr, acampthresh=0.1,
+                aclagthresh=np.min((abs(optiondict['lagmin']), abs(optiondict['lagmax']))),
+                prewindow=optiondict['usewindowfunc'], dodetrend=optiondict['dodetrend'])
+            if sidelobetime is not None:
+                print('\n\nWARNING: autocorrcheck found bad sidelobe at', sidelobetime, 'seconds (', 1.0/sidelobetime,'Hz)\n\n')
+                tide.writenpvecs(np.array([sidelobetime]), outputname + '_autocorr_sidelobetime.txt') 
+                acstopfreq = 1.0/sidelobetime
+                acfixfilter = tide.noncausalfilter()
+                acfixfilter.settype('arb_stop')
+                acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
+                cleaned_referencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
+            else:
+                cleaned_referencetc = 1.0 * referencetc
 
         # Step 0 - estimate significance
         if optiondict['estimate_significance']:
             timings.append(['Significance estimation start, pass ' + str(thepass), time.time(), None, None])
             print('\n\nSignificance estimation, pass ' + str(thepass))
-            oversampfreq = optiondict['oversampfactor'] / fmritr
             if optiondict['verbose']:
                 print('calling getNullDistributionData with args:', oversampfreq, fmritr, corrorigin, lagmininpts,
                       lagmaxinpts)
@@ -1434,21 +1460,21 @@ def main():
             timings.append(['Significance estimation end, pass ' + str(thepass), time.time(), optiondict['numestreps'],
                             'repetitions'])
 
-        # Step 1 - time lag estimation
-        print('\n\nTime lag estimation, pass ' + str(thepass))
-        timings.append(['Time lag estimation start, pass ' + str(thepass), time.time(), None, None])
-        voxelsprocessed_cp = correlationpass(fmri_data[:, optiondict['addedskip']:], referencetc,
+        # Step 1 - Correlation step
+        print('\n\nCorrelation calculation, pass ' + str(thepass))
+        timings.append(['Correlation calculation start, pass ' + str(thepass), time.time(), None, None])
+        voxelsprocessed_cp = correlationpass(fmri_data[:, optiondict['addedskip']:], cleaned_referencetc,
                                              initial_fmri_x, os_fmri_x,
                                              fmritr,
                                              corrorigin, lagmininpts, lagmaxinpts,
                                              corrmask, corrout, meanval,
                                              theprefilter,
                                              optiondict)
-        timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
+        timings.append(['Correlation calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
-        # Step 2 - correlation fitting
-        print('\n\nCorrelation fitting, pass ' + str(thepass))
-        timings.append(['Correlation fitting start, pass ' + str(thepass), time.time(), None, None])
+        # Step 2 - correlation fitting and time lag estimation
+        print('\n\nTime lag estimation pass ' + str(thepass))
+        timings.append(['Time lag estimation start, pass ' + str(thepass), time.time(), None, None])
 
         voxelsprocessed_fc = fitcorr(genlagtc, initial_fmri_x,
                                      lagtc, fmritr,
@@ -1456,7 +1482,7 @@ def main():
                                      corrmask, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
                                      R2,
                                      optiondict)
-        timings.append(['Correlation fitting end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
+        timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
 
         # Step 3 - regressor refinement for next pass
         if optiondict['dorefineregressor'] and thepass < optiondict['refinepasses']:
