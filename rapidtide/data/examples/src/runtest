@@ -2,6 +2,7 @@
 rapidtide2 \
 	fmri.nii.gz \
 	../dst/dgsr \
+        --accheck \
 	-r -15,15 \
 	--noglm  \
 	--refinepasses=3 \
