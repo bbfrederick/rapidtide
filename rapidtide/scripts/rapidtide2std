@@ -132,7 +132,7 @@ subjroot = thebase[:-15]
 # make sure the appropriate transformation matrix and targets exist
 if dohires:
     xformmat = os.path.abspath(glob.glob(os.path.join(featdir,
-        'reg','example_func2standard.mat'))[0])
+        'reg','example_func2highres.mat'))[0])
     reftarget = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg','highres.nii.gz'))[0])
     outputtag = '_hires_'
