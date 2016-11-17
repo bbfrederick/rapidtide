@@ -131,20 +131,20 @@ subjroot = thebase[:-15]
 
 # make sure the appropriate transformation matrix and targets exist
 if dohires:
-    xformmat = os.path.abspath(glob.glob(os.path.join(featdir,
+    xformfuncmat = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg','example_func2highres.mat'))[0])
     reftarget = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg','highres.nii.gz'))[0])
     outputtag = '_hires_'
     theanatmaps = ['highres']
 else:
-    xformmat = os.path.abspath(glob.glob(os.path.join(featdir,
+    xformfuncmat = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg','example_func2standard.mat'))[0])
     reftarget = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm.nii.gz')
     outputtag = '_std_'
     theanatmaps = ['highres', 'standard']
 
-if os.path.isfile(xformmat):
+if os.path.isfile(xformfuncmat):
     if os.path.isfile(reftarget):
         print('found alignment files - proceeding')
     else:
@@ -157,9 +157,7 @@ else:
 for themap in thefmrimaps:
     inputname = os.path.abspath(os.path.join(thepath, subjroot + '_' + themap + '.nii.gz'))
     outputname = os.path.abspath(os.path.join(theoutputdir,subjroot + outputtag + themap + '.nii.gz'))
-    xform = os.path.abspath(glob.glob(os.path.join(featdir,
-        'reg','example_func2standard.mat'))[0])
-    thecommand = makethecmd(inputname, reftarget, xform, outputname)
+    thecommand = makethecmd(inputname, reftarget, xformfuncmat, outputname)
 
     if preponly:
         print(" ".join(thecommand))
@@ -170,9 +168,12 @@ for themap in theanatmaps:
     inputname = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg',themap + '.nii.gz'))[0])
     outputname = os.path.abspath(os.path.join(theoutputdir,subjroot + outputtag + themap.replace('standard','anat') + '.nii.gz'))
-    xform = os.path.abspath(glob.glob(os.path.join(featdir,
-        'reg','highres2standard.mat'))[0])
-    thecommand = makethecmd(inputname, reftarget, xform, outputname)
+    if dohires:
+        thecommand = ['cp', inputname, outputname]
+    else:
+        xform = os.path.abspath(glob.glob(os.path.join(featdir,
+            'reg','highres2standard.mat'))[0])
+        thecommand = makethecmd(inputname, reftarget, xform, outputname)
 
     if preponly:
         print(" ".join(thecommand))
