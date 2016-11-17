@@ -533,6 +533,13 @@ def writenpvecs(thevecs, outputfile, lineend=''):
 
 
 # --------------------------- correlation functions -------------------------------------------------
+# The following three functions are taken from the peakdetect distribution by Sixten Bergman
+# They were distributed under the DWTFYWTPL, so I'm relicensing them under Apache 2.0
+# From his header:
+# You can redistribute it and/or modify it under the terms of the Do What The
+# Fuck You Want To Public License, Version 2, as published by Sam Hocevar. See
+# http://www.wtfpl.net/ for more details.
+
 def parabfit(x_axis, y_axis, peakloc, peaksize):
     func = lambda x, a, tau, c: a * ((x - tau) ** 2) + c
     fitted_peaks = []
