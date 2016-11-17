@@ -26,6 +26,8 @@ import sys
 import time
 
 import glob
+import getopt
+import platform
 import os
 import subprocess
 
@@ -37,14 +39,14 @@ else:
     print('FSL directory not found - aborting')
     sys.exit()
 
-def makethecmd(theinputfile, xform, outputname):
+def makethecmd(theinputfile, reftarget, xform, outputname):
     thecommand = []
     thecommand.append(fslsubcmd)
     thecommand.append(flirtcmd)
     thecommand.append('-in')
     thecommand.append(theinputfile)
     thecommand.append('-ref')
-    thecommand.append(os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm'))
+    thecommand.append(reftarget)
     thecommand.append('-applyxfm')
     thecommand.append('-init')
     thecommand.append(xform)
@@ -55,15 +57,16 @@ def makethecmd(theinputfile, xform, outputname):
 def usage():
     print('rapidtide2std:  register rapidtide output maps to standard space')
     print('')
-    print('usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [all]')
+    print('usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]')
     print('')
     print('required arguments:')
     print('    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore')
     print('    OUTPUTDIR          - The location for the output files')
     print('    FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed')
     print('')
-    print('optional arguments:')
-    print('    all                - If present, rapidtide2feat will transform the _corrout file to MNI152')
+    print("optional arguments:")
+    print("    --all              - also transform the corrout file (warning - file may be huge)")
+    print("    --hires            - transform to match the high resolution anatomic image rather than the standard")
 
 
 ##########################################################################################
@@ -74,23 +77,48 @@ def usage():
 ##########################################################################################
 ##########################################################################################
 
+# option control
 do4Dmaps = False
-nargs = len(sys.argv)
-if nargs < 4 or nargs > 5:
+dohires = False
+
+# get the command line parameters
+try:
+    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "all", "hires"])
+except getopt.GetoptError as err:
+    # print help information and exit:
+    print(str(err))  # will print something like 'option -a not recognized'
+    usage()
+    sys.exit(2)
+
+# check for filename arguments
+nargs = len(args)
+if nargs < 4:
     usage()
     sys.exit(1)
 
-fileroot = sys.argv[1]
-outputdir = sys.argv[2]
-featdir = sys.argv[3]
-if nargs==5:
-    do4Dmaps = True
+# now parse options
+for o, a in opts:
+    linkchar = ' '
+    if o == "--all":
+        do4Dmaps = True
+        print('will also transofrm corrout map')
+    elif o == '--hires':
+        dohires = True
+        print('transforming to hires anatomic instead of MNI152')
+    elif o in ('-h', '--help'):
+        usage()
+        sys.exit()
+    else:
+        assert False, 'unhandled option'
+
+fileroot = args[1]
+outputdir = args[2]
+featdir = args[3]
 
 theoutputdir = os.path.join(os.path.abspath('.'), outputdir)
 thefileroot = glob.glob(os.path.join(fileroot + '*corrout.nii.gz'))[0]
 
 thefmrimaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'lagmask', 'R2', 'fitNorm', 'fitCoff', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
-theanatmaps = ['highres', 'standard']
 
 if do4Dmaps:
     thefmrimaps.append('corrout')
@@ -100,12 +128,38 @@ absname = os.path.abspath(thefileroot)
 thepath, thebase = os.path.split(absname)
 theprevpath,theprevbase = os.path.split(thepath)
 subjroot = thebase[:-15]
+
+# make sure the appropriate transformation matrix and targets exist
+if dohires:
+    xformmat = os.path.abspath(glob.glob(os.path.join(featdir,
+        'reg','example_func2standard.mat'))[0])
+    reftarget = os.path.abspath(glob.glob(os.path.join(featdir,
+        'reg','highres.nii.gz'))[0])
+    outputtag = '_hires_'
+    theanatmaps = ['highres']
+else:
+    xformmat = os.path.abspath(glob.glob(os.path.join(featdir,
+        'reg','example_func2standard.mat'))[0])
+    reftarget = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm.nii.gz')
+    outputtag = '_std_'
+    theanatmaps = ['highres', 'standard']
+
+if os.path.isfile(xformmat):
+    if os.path.isfile(reftarget):
+        print('found alignment files - proceeding')
+    else:
+        print('cannot find reference file', reftarget, ' - exiting')
+        sys.exit(1)
+else:
+    print('cannot find transform matrix', xfomrmat, ' - exiting')
+    sys.exit(1)
+    
 for themap in thefmrimaps:
-    inputname = os.path.abspath(os.path.join(thepath, subjroot+'_'+themap+'.nii.gz'))
-    outputname = os.path.abspath(os.path.join(theoutputdir,subjroot+'_std_'+themap+'.nii.gz'))
+    inputname = os.path.abspath(os.path.join(thepath, subjroot + '_' + themap + '.nii.gz'))
+    outputname = os.path.abspath(os.path.join(theoutputdir,subjroot + outputtag + themap + '.nii.gz'))
     xform = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg','example_func2standard.mat'))[0])
-    thecommand = makethecmd(inputname, xform, outputname)
+    thecommand = makethecmd(inputname, reftarget, xform, outputname)
 
     if preponly:
         print(" ".join(thecommand))
@@ -115,10 +169,10 @@ for themap in thefmrimaps:
 for themap in theanatmaps:
     inputname = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg',themap + '.nii.gz'))[0])
-    outputname = os.path.abspath(os.path.join(theoutputdir,subjroot+'_std_'+themap.replace('standard','anat')+'.nii.gz'))
+    outputname = os.path.abspath(os.path.join(theoutputdir,subjroot + outputtag + themap.replace('standard','anat') + '.nii.gz'))
     xform = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg','highres2standard.mat'))[0])
-    thecommand = makethecmd(inputname, xform, outputname)
+    thecommand = makethecmd(inputname, reftarget, xform, outputname)
 
     if preponly:
         print(" ".join(thecommand))

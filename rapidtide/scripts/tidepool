@@ -1075,6 +1075,13 @@ def loadanatomics(thefileroot, theoverlays, anatname, MNIcoords, xsize, ysize, z
         print('using ', thefileroot + 'highres_head.nii.gz', ' as background')
         #allloadedmaps.append('anatomic')
         return(True)
+    elif os.path.isfile(thefileroot + 'highres.nii.gz'):
+        print('using hires anatomic name')
+        thepath, thebase = os.path.split(thefileroot)
+        theoverlays['anatomic'] = overlay('anatomic', thefileroot + 'highres.nii.gz', thebase)
+        print('using ', thefileroot + 'highres.nii.gz', ' as background')
+        #allloadedmaps.append('anatomic')
+        return(True)
     elif MNIcoords:
         mniname = ''
         if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
