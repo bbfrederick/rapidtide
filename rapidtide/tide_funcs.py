@@ -298,9 +298,7 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
 
     # fit the johnsonSB function
     params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
-    print('len params = ', len(params))
-    numinfit = len(thedata)
-    print('johnson SB fit parameters for pdf:', params)
+    #print('Johnson SB fit parameters for pdf:', params)
 
     # restore the zero term if needed
     # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
@@ -620,7 +618,6 @@ def peakdetect(y_axis, x_axis = None, lookahead = 200, delta=0):
     dump = []   #Used to pop the first hit which almost always is false
        
     # check input data
-    print(len(x_axis), len(y_axis))
     x_axis, y_axis = _datacheck_peakdetect(x_axis, y_axis)
     # store data length for later use
     length = len(y_axis)
@@ -702,8 +699,8 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
     minpeaks = np.asarray(peaks[1], dtype='float')
     zeropkindex = np.argmin(abs(maxpeaks[:, 0]))
     for i in range(zeropkindex + 1, maxpeaks.shape[0]):
-        if maxpeaks[i, 0] > acfreqthresh:
-            return None
+        if maxpeaks[i, 0] > aclagthresh:
+            return None, None
         if maxpeaks[i, 1] > acampthresh:
             sidelobetime = maxpeaks[i, 0]
             sidelobeindex = valtoindex(corrscale, sidelobetime)
@@ -722,8 +719,8 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
                     corrscale[fitstart:fitend + 1],
                     gauss_eval(corrscale[fitstart:fitend + 1], [sidelobeamp, sidelobetime, sidelobewidth]), 'r')
                 pl.show()
-            return sidelobetime
-    return None
+            return sidelobetime, sidelobeamp
+    return None, None
     
     
 def quickcorr(data1, data2):
@@ -1118,9 +1115,9 @@ def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
 
 
 def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
-    print('entering getfracvalsfromfit: histfit=',histfit, ' thefracs=', thefracs)
+    #print('entering getfracvalsfromfit: histfit=',histfit, ' thefracs=', thefracs)
     thedist = johnsonsb(histfit[0], histfit[1], histfit[2], histfit[3])
-    print('froze the distribution')
+    #print('froze the distribution')
     if displayplots:
         themin = 0.001
         themax = 0.999
@@ -1283,7 +1280,7 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
 #@conditionaljit()
 def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
-               fastgauss=False, enforcethresh=True, displayplots=False):
+               fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
     # set initial parameters 
     # widthlimit is in seconds
     # maxsigma is in Hz
@@ -1330,7 +1327,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
         maxval_init = thexcorr_y[maxindex]
 
     # now get a location for that value
-    maxlag_init = 1.0 * thexcorr_x[maxindex]
+    maxlag_init = (1.0 * thexcorr_x[maxindex])
 
     # and calculate the width of the peak
     maxsigma_init = 0.0
@@ -1383,12 +1380,12 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
                 maxval = data.max()
             else:
                 # do a least squares fit over the top of the peak
-                p0 = np.array([maxval_init, maxlag_init, maxsigma_init])
+                p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init])
                 if fitend - fitstart >= 3:
                     plsq, dummy = sp.optimize.leastsq(gaussresiduals, p0,
                                                       args=(data, X), maxfev=5000)
                     maxval = 1.0 * plsq[0]
-                    maxlag = 1.0 * plsq[1]
+                    maxlag = np.fmod((1.0 * plsq[1]), lagmod)
                     maxsigma = 1.0 * plsq[2]
                 # if maxval > 1.0, fit failed catastrophically, zero out or reset to initial value
                 #     corrected logic for 1.1.6
@@ -1404,7 +1401,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
                         maxsigma = maxsigma_init
         else:
             maxval = maxval_init
-            maxlag = maxlag_init
+            maxlag = np.fmod(maxlag_init, lagmod)
             maxsigma = maxsigma_init
         if maxval == 0.0:
             failreason += FML_FITFAIL
