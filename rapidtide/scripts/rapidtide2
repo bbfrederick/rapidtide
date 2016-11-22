@@ -454,7 +454,7 @@ def usage():
           "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
           "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
           "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag]"
-          "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck]"
+          "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
           "[--numskip=SKIP] [--slicetimes=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
           "[--regressor=FILENAME] [--regressorstart=STARTTIME]")
     print("")
@@ -510,7 +510,8 @@ def usage():
     print("                               transform (GCC-PHAT) instead of correlation")
     print("    --corrmaskthresh=PCT     - do correlations in voxels where the mean exceeeds this ")
     print("                               percentage of the robust max (default is 1.0)")
-    print("    --accheck                  check for (and remove) periodic components that corrupt the autocorrelation")
+    print("    --accheck                - check for periodic components that corrupt the autocorrelation")
+    print("    --acfix                  - remove periodic components that corrupt the autocorrelation (enables --accheck).  Experimental.")
     print("")
     print("correlation fitting options:")
     print("    -Z DELAYTIME             - don't fit the delay time - set it to DELAYTIME seconds ")
@@ -599,7 +600,9 @@ def main():
     optiondict['tmaskname'] = ''  # file name for tmask regressor
     optiondict['corrmaskthresh'] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict[
-        'check_autocorrelation'] = False  # check for and remove periodic components that corrupt the autocorrelation
+        'check_autocorrelation'] = False  # check for periodic components that corrupt the autocorrelation
+    optiondict[
+        'fix_autocorrelation'] = False  # remove periodic components that corrupt the autocorrelation
 
     # correlation fitting options
     optiondict['bipolar'] = False  # find peak with highest magnitude, regardless of sign
@@ -717,6 +720,7 @@ def main():
                                                                                                            'refineweighting=',
                                                                                                            'corrmaskthresh=',
                                                                                                            'accheck',
+                                                                                                           'acfix',
                                                                                                            'refinepasses=',
                                                                                                            'includemask=',
                                                                                                            'excludemask=',
@@ -856,7 +860,11 @@ def main():
                       ' null correlations')
         elif o == '--accheck':
             optiondict['check_autocorrelation'] = True
-            print('Will check for and remove periodic components in the autocorrelation function (experimental)')
+            print('Will check for periodic components in the autocorrelation function')
+        elif o == '--acfix':
+            optiondict['fix_autocorrelation'] = True
+            optiondict['check_autocorrelation'] = True
+            print('Will remove periodic components in the autocorrelation function (experimental)')
         elif o == '-s':
             optiondict['widthlimit'] = float(a)
             print('Setting gaussian fit width limit to ', optiondict['widthlimit'], 'Hz')
@@ -1376,19 +1384,23 @@ def main():
         oversampfreq = optiondict['oversampfactor'] / fmritr
 
         # Step -1 - check the regressor for periodic components in the passband
-        dolagmod = False
-        doreferencenotch = True
+        dolagmod = True
+        doreferencenotch = False
         if optiondict['check_autocorrelation']:
             print('checking reference regressor autocorrelation properties')
             optiondict['lagmod'] = 1000.0
-            acmininpts = lagmininpts + 10
-            acmaxinpts = lagmaxinpts + 10
+            lagindpad = (len(corrscale) // 2 - 1) - np.max((lagmininpts, lagmaxinpts))
+            print('lagindpad:', lagindpad)
+            acmininpts = lagmininpts + lagindpad
+            acmaxinpts = lagmaxinpts + lagindpad
             thexcorr = onecorrelation(referencetc, oversampfreq, corrorigin, acmininpts, acmaxinpts, theprefilter,
                                       referencetc,
                                       optiondict)
+            outputarray = np.asarray([corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts], thexcorr])
+            tide.writenpvecs(outputarray, outputname + '_referenceautocorr_pass' + str(thepass) + '.txt')
             thelagthresh = np.min((abs(optiondict['lagmin']), abs(optiondict['lagmax'])))
             theampthresh = 0.1
-            print('will suppress sidelobes with amplitude >', theampthresh, 'with abs(lag) <', thelagthresh, 's')
+            print('searching for sidelobes with amplitude >', theampthresh, 'with abs(lag) <', thelagthresh, 's')
             sidelobetime, sidelobeamp = tide.autocorrcheck(corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts],
                                                            thexcorr, acampthresh=theampthresh,
                                                            aclagthresh=thelagthresh,
@@ -1401,17 +1413,18 @@ def main():
                 print('\n\nWARNING: autocorrcheck found bad sidelobe at', sidelobetime, 'seconds (', 1.0 / sidelobetime,
                       'Hz)... removing')
                 tide.writenpvecs(np.array([sidelobetime]), outputname + '_autocorr_sidelobetime.txt')
-                if dolagmod:
-                    print('subjecting lag times to modulus')
-                    optiondict['lagmod'] = sidelobetime / 2.0
-                if doreferencenotch:
-                    print('removing spectral component at sidelobe frequency')
-                    acstopfreq = 1.0 / sidelobetime
-                    acfixfilter = tide.noncausalfilter()
-                    acfixfilter.settype('arb_stop')
-                    acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
-                    cleaned_referencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
-                    tide.writenpvecs(cleaned_referencetc, outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
+                if optiondict['fix_autocorrelation']:
+                    if dolagmod:
+                        print('subjecting lag times to modulus')
+                        optiondict['lagmod'] = sidelobetime / 2.0
+                    if doreferencenotch:
+                        print('removing spectral component at sidelobe frequency')
+                        acstopfreq = 1.0 / sidelobetime
+                        acfixfilter = tide.noncausalfilter()
+                        acfixfilter.settype('arb_stop')
+                        acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
+                        cleaned_referencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
+                        tide.writenpvecs(cleaned_referencetc, outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
                 else:
                     cleaned_referencetc = 1.0 * referencetc
             else:
