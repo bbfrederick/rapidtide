@@ -192,9 +192,9 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     widthfails = 0
     edgefails = 0
     fitfails = 0
-    sliceoffsettime = 0.0
     reportstep = 1000
     zerolagtc = genlagtc.yfromx(initial_fmri_x)
+    sliceoffsettime = 0.0
 
     for vox in range(0, inputshape[0]):
         if vox % reportstep == 0 or vox == inputshape[0] - 1:
