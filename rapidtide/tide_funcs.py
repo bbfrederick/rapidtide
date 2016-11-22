@@ -298,7 +298,7 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
 
     # fit the johnsonSB function
     params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
-    #print('Johnson SB fit parameters for pdf:', params)
+    # print('Johnson SB fit parameters for pdf:', params)
 
     # restore the zero term if needed
     # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
@@ -549,7 +549,7 @@ def parabfit(x_axis, y_axis, peakloc, peaksize):
     tau = x_axis[index]
     # get a first approximation of peak amplitude
     c = y_axis[index]
-    a = np.sign(c) * (-1) * (np.sqrt(abs(c))/distance)**2
+    a = np.sign(c) * (-1) * (np.sqrt(abs(c)) / distance) ** 2
     """Derived from ABC formula to result in a solution where A=(rot(c)/t)**2"""
 
     # build list of approximations
@@ -564,18 +564,18 @@ def parabfit(x_axis, y_axis, peakloc, peaksize):
 def _datacheck_peakdetect(x_axis, y_axis):
     if x_axis is None:
         x_axis = range(len(y_axis))
-    
+
     if len(y_axis) != len(x_axis):
-        raise ValueError( 
-                "Input vectors y_axis and x_axis must have same length")
-    
-    #needs to be a numpy array
+        raise ValueError(
+            "Input vectors y_axis and x_axis must have same length")
+
+    # needs to be a numpy array
     y_axis = np.array(y_axis)
     x_axis = np.array(x_axis)
     return x_axis, y_axis
-    
 
-def peakdetect(y_axis, x_axis = None, lookahead = 200, delta=0):
+
+def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0):
     """
     Converted from/based on a MATLAB script at: 
     http://billauer.co.il/peakdet.html
@@ -615,71 +615,69 @@ def peakdetect(y_axis, x_axis = None, lookahead = 200, delta=0):
     """
     max_peaks = []
     min_peaks = []
-    dump = []   #Used to pop the first hit which almost always is false
-       
+    dump = []  # Used to pop the first hit which almost always is false
+
     # check input data
     x_axis, y_axis = _datacheck_peakdetect(x_axis, y_axis)
     # store data length for later use
     length = len(y_axis)
-    
-    
-    #perform some checks
+
+    # perform some checks
     if lookahead < 1:
         raise ValueError("Lookahead must be '1' or above in value")
     if not (np.isscalar(delta) and delta >= 0):
         raise ValueError("delta must be a positive number")
-    
-    #maxima and minima candidates are temporarily stored in
-    #mx and mn respectively
+
+    # maxima and minima candidates are temporarily stored in
+    # mx and mn respectively
     mn, mx = np.Inf, -np.Inf
-    
-    #Only detect peak if there is 'lookahead' amount of points after it
-    for index, (x, y) in enumerate(zip(x_axis[:-lookahead], 
-                                        y_axis[:-lookahead])):
+
+    # Only detect peak if there is 'lookahead' amount of points after it
+    for index, (x, y) in enumerate(zip(x_axis[:-lookahead],
+                                       y_axis[:-lookahead])):
         if y > mx:
             mx = y
             mxpos = x
         if y < mn:
             mn = y
             mnpos = x
-        
+
         ####look for max####
-        if y < mx-delta and mx != np.Inf:
-            #Maxima peak candidate found
-            #look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index:index+lookahead].max() < mx:
+        if y < mx - delta and mx != np.Inf:
+            # Maxima peak candidate found
+            # look ahead in signal to ensure that this is a peak and not jitter
+            if y_axis[index:index + lookahead].max() < mx:
                 max_peaks.append([mxpos, mx])
                 dump.append(True)
-                #set algorithm to only find minima now
+                # set algorithm to only find minima now
                 mx = np.Inf
                 mn = np.Inf
-                if index+lookahead >= length:
-                    #end is within lookahead no more peaks can be found
+                if index + lookahead >= length:
+                    # end is within lookahead no more peaks can be found
                     break
                 continue
-            #else:  #slows shit down this does
-            #    mx = ahead
-            #    mxpos = x_axis[np.where(y_axis[index:index+lookahead]==mx)]
-        
+                # else:  #slows shit down this does
+                #    mx = ahead
+                #    mxpos = x_axis[np.where(y_axis[index:index+lookahead]==mx)]
+
         ####look for min####
-        if y > mn+delta and mn != -np.Inf:
-            #Minima peak candidate found 
-            #look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index:index+lookahead].min() > mn:
+        if y > mn + delta and mn != -np.Inf:
+            # Minima peak candidate found
+            # look ahead in signal to ensure that this is a peak and not jitter
+            if y_axis[index:index + lookahead].min() > mn:
                 min_peaks.append([mnpos, mn])
                 dump.append(False)
-                #set algorithm to only find maxima now
+                # set algorithm to only find maxima now
                 mn = -np.Inf
                 mx = -np.Inf
-                if index+lookahead >= length:
-                    #end is within lookahead no more peaks can be found
+                if index + lookahead >= length:
+                    # end is within lookahead no more peaks can be found
                     break
-            #else:  #slows shit down this does
-            #    mn = ahead
-            #    mnpos = x_axis[np.where(y_axis[index:index+lookahead]==mn)]
-    
-    
-    #Remove the false hit on the first value of the y_axis
+                    # else:  #slows shit down this does
+                    #    mn = ahead
+                    #    mnpos = x_axis[np.where(y_axis[index:index+lookahead]==mn)]
+
+    # Remove the false hit on the first value of the y_axis
     try:
         if dump[0]:
             max_peaks.pop(0)
@@ -687,12 +685,14 @@ def peakdetect(y_axis, x_axis = None, lookahead = 200, delta=0):
             min_peaks.pop(0)
         del dump
     except IndexError:
-        #no peaks were found, should the function return empty lists?
+        # no peaks were found, should the function return empty lists?
         pass
-        
+
     return [max_peaks, min_peaks]
-    
-def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=10.0, displayplots=False, prewindow=True, dodetrend=True):
+
+
+def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=10.0, displayplots=False, prewindow=True,
+                  dodetrend=True):
     lookahead = 2
     peaks = peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
     maxpeaks = np.asarray(peaks[0], dtype='float')
@@ -706,23 +706,25 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
             sidelobeindex = valtoindex(corrscale, sidelobetime)
             sidelobeamp = thexcorr[sidelobeindex]
             numbins = 1
-            while (sidelobeindex + numbins < len(corrscale) - 1) and (thexcorr[sidelobeindex + numbins] > sidelobeamp / 2.0):
+            while (sidelobeindex + numbins < len(corrscale) - 1) and (
+                thexcorr[sidelobeindex + numbins] > sidelobeamp / 2.0):
                 numbins += 1
             sidelobewidth = (corrscale[sidelobeindex + numbins] - corrscale[sidelobeindex]) * 2.0
             fitstart = sidelobeindex - numbins
             fitend = sidelobeindex + numbins
             sidelobeamp, sidelobetime, sidelobewidth = gaussfit(sidelobeamp, sidelobetime, sidelobewidth,
-                corrscale[fitstart:fitend + 1], thexcorr[fitstart:fitend + 1])
+                                                                corrscale[fitstart:fitend + 1],
+                                                                thexcorr[fitstart:fitend + 1])
 
             if displayplots:
                 pl.plot(corrscale[fitstart:fitend + 1], thexcorr[fitstart:fitend + 1], 'k',
-                    corrscale[fitstart:fitend + 1],
-                    gauss_eval(corrscale[fitstart:fitend + 1], [sidelobeamp, sidelobetime, sidelobewidth]), 'r')
+                        corrscale[fitstart:fitend + 1],
+                        gauss_eval(corrscale[fitstart:fitend + 1], [sidelobeamp, sidelobetime, sidelobewidth]), 'r')
                 pl.show()
             return sidelobetime, sidelobeamp
     return None, None
-    
-    
+
+
 def quickcorr(data1, data2):
     thepcorr = sp.stats.stats.pearsonr(corrnormalize(data1, True, True), corrnormalize(data2, True, True))
     return thepcorr
@@ -1002,8 +1004,9 @@ def gausssk_eval(x, p):
 
 @conditionaljit()
 def gauss_eval(x, p):
-    #return p[0] * np.exp(np.square(-(x - p[1])) / (2 * np.square(p[2])))
+    # return p[0] * np.exp(np.square(-(x - p[1])) / (2 * np.square(p[2])))
     return p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
+
 
 def trapezoid_eval_loop(x, toplength, p):
     r = np.zeros(len(x))
@@ -1115,9 +1118,9 @@ def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
 
 
 def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
-    #print('entering getfracvalsfromfit: histfit=',histfit, ' thefracs=', thefracs)
+    # print('entering getfracvalsfromfit: histfit=',histfit, ' thefracs=', thefracs)
     thedist = johnsonsb(histfit[0], histfit[1], histfit[2], histfit[3])
-    #print('froze the distribution')
+    # print('froze the distribution')
     if displayplots:
         themin = 0.001
         themax = 0.999
@@ -1127,7 +1130,7 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
         ax.set_title('probability histogram')
         pl.plot(bins, johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3]))
         pl.show()
-    #thevals = johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3])
+    # thevals = johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3])
     thevals = thedist.ppf(thefracs)
     return thevals
 
@@ -1177,7 +1180,7 @@ def locpeak(data, samplerate, lastpeaktime, winsizeinsecs=5.0, thresh=0.75, hyst
             fitdata = data[fitstart:]
             X = currenttime + (np.arange(0.0, len(fitdata)) - len(fitdata) + 1.0) / samplerate
             maxtime = sum(X * fitdata) / sum(fitdata)
-            #maxsigma = np.sqrt(abs(np.square(sum((X - maxtime)) * fitdata) / sum(fitdata)))
+            # maxsigma = np.sqrt(abs(np.square(sum((X - maxtime)) * fitdata) / sum(fitdata)))
             maxsigma = np.sqrt(abs(sum((X - maxtime) ** 2 * fitdata) / sum(fitdata)))
             maxval = fitdata.max()
             peakheight, peakloc, peakwidth = gaussfit(maxval, maxtime, maxsigma, X, fitdata)
@@ -1277,7 +1280,7 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
 
 
 # disabled conditionaljit on 11/8/16.  This causes crashes on some machines (but not mine, strangely enough)
-#@conditionaljit()
+# @conditionaljit()
 def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
                fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
@@ -1375,7 +1378,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfra
                 # do a non-iterative fit over the top of the peak
                 # 6/12/2015  This is just broken.  Gives quantized maxima
                 maxlag = 1.0 * sum(X * data) / sum(data)
-                #maxsigma = np.sqrt(abs(np.square(sum((X - maxlag)) * data) / sum(data)))
+                # maxsigma = np.sqrt(abs(np.square(sum((X - maxlag)) * data) / sum(data)))
                 maxsigma = np.sqrt(abs(sum((X - maxlag) ** 2 * data) / sum(data)))
                 maxval = data.max()
             else:
@@ -2287,8 +2290,9 @@ class noncausalfilter:
 
 
 # --------------------------- Spectral analysis functions ---------------------------------------
-def phase(mcv): 
-    return np.arctan2(mcv.imag, mcv.real) 
+def phase(mcv):
+    return np.arctan2(mcv.imag, mcv.real)
+
 
 def polarfft(invec, samplerate):
     if len(invec) % 2 == 1:
@@ -2301,6 +2305,7 @@ def polarfft(invec, samplerate):
     maxfreq = samplerate / 2.0
     freqs = np.arange(0.0, maxfreq, maxfreq / (len(spec)))
     return freqs, magspec, phspec
+
 
 # --------------------------- Utility functions -------------------------------------------------
 def valtoindex(thearray, thevalue, toleft=True):
