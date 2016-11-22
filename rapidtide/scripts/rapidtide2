@@ -1389,7 +1389,7 @@ def main():
         if optiondict['check_autocorrelation']:
             print('checking reference regressor autocorrelation properties')
             optiondict['lagmod'] = 1000.0
-            lagindpad = (len(corrscale) // 2 - 1) - np.max((lagmininpts, lagmaxinpts))
+            lagindpad = corrorigin - 2 * np.max((lagmininpts, lagmaxinpts))
             print('lagindpad:', lagindpad)
             acmininpts = lagmininpts + lagindpad
             acmaxinpts = lagmaxinpts + lagindpad
