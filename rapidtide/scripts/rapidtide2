@@ -455,7 +455,7 @@ def usage():
           "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
           "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag]"
           "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
-          "[--numskip=SKIP] [--slicetimes=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
+          "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
           "[--regressor=FILENAME] [--regressorstart=STARTTIME]")
     print("")
     print("required arguments:")
@@ -555,6 +555,8 @@ def usage():
     print("                               100)")
     print("    --timerange=START,END    - limit analysis to data between timepoints START ")
     print("                               and END in the fmri file")
+    print("    --glmsourcefile=FILE     - regress delayed regressors out of FILE instead of the ")
+    print("                               initial fmri file used to estimate delays")
     print("    --noglm                  - turn off GLM filtering to remove delayed regressor ")
     print("                               from each voxel (disables output of fitNorm)")
     print("")
@@ -619,6 +621,7 @@ def main():
 
     # postprocessing options
     optiondict['doglmfilt'] = True  # use a glm filter to remove the delayed regressor from the data in each voxel
+    optiondict['glmsourcefile'] = None  # name of the file from which to regress delayed regressors (if not the original data)
     optiondict['doprewhiten'] = False  # prewhiten the data (I have no idea if this works)
     optiondict['armodelorder'] = 1  # AR model order for prewhitening the data (I have no idea if this works)
 
@@ -733,6 +736,7 @@ def main():
                                                                                                            'tmask=',
                                                                                                            'nodetrend',
                                                                                                            'slicetimes=',
+                                                                                                           'glmsourcefile=',
                                                                                                            'numskip=',
                                                                                                            'limitoutput',
                                                                                                            'regressor=',
@@ -767,6 +771,10 @@ def main():
             optiondict['gccphat'] = True
             optiondict['dodetrend'] = True
             print('Enabled GCC-PHAT fitting')
+        elif o == '--glmsourcefile':
+            optiondict['glmsourcefile'] = a
+            linkchar = '='
+            print('Will regress delayed regressors out of', optiondict['glmsourcefile'])
         elif o == '--corrmaskthresh':
             optiondict['corrmaskthresh'] = float(a)
             linkchar = '='
@@ -1548,9 +1556,13 @@ def main():
         if optiondict['doprewhiten']:
             print('\n\nPrewhitening')
         reportstep = 1000
-        if optiondict['dogaussianfilter']:
-            print('rereading input file, please wait')
-            nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
+        if optiondict['dogaussianfilter'] or (optiondict['glmsourcefile'] is not None):
+            if optiondict['glmsourefile'] is not None:
+                print('reading in source data to filter, please wait')
+                nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(optiondict['glmsourcefile'])
+            else:
+                print('rereading input file, please wait')
+                nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
         for vox in range(0, numspatiallocs):
             if vox % reportstep == 0 or vox == numspatiallocs - 1:
                 tide.progressbar(vox + 1, numspatiallocs, label='Percent complete')
