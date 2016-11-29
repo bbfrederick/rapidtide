@@ -1557,7 +1557,7 @@ def main():
             print('\n\nPrewhitening')
         reportstep = 1000
         if optiondict['dogaussianfilter'] or (optiondict['glmsourcefile'] is not None):
-            if optiondict['glmsourefile'] is not None:
+            if optiondict['glmsourcefile'] is not None:
                 print('reading in source data to filter, please wait')
                 nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(optiondict['glmsourcefile'])
             else:
