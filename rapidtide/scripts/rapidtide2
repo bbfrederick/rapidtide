@@ -1558,10 +1558,10 @@ def main():
         reportstep = 1000
         if optiondict['dogaussianfilter'] or (optiondict['glmsourcefile'] is not None):
             if optiondict['glmsourcefile'] is not None:
-                print('reading in source data to filter, please wait')
+                print('reading in ', optiondict['glmsourcefile'], for GLM filter, please wait')
                 nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(optiondict['glmsourcefile'])
             else:
-                print('rereading input file, please wait')
+                print('rereading', fmrifilename, ' for GLM filter, please wait')
                 nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
         for vox in range(0, numspatiallocs):
             if vox % reportstep == 0 or vox == numspatiallocs - 1:
