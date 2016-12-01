@@ -60,3 +60,14 @@
 * Moved the "start movie" button in tidepool to better align with the numerical spin boxes.
 * showtc has gotten a significant upgrade in functionality, adding the ability to display power spectra, phase spectra, and set the sample rate to make the x-axis correct.
 * Lots of internal formatting/style fixes, and fixed some formatting in the usage statements and documentation.
+
+## Version 0.1.8 (11/30/16)
+
+* Fixed a bug in the GLM filtering code - if spatial filtering was applied in rapidtide2, the smoothed data was filtered rather than the original data.
+* Added an option in rapidtide2 ("--glmsourcefile=FILE") to apply GLM filter to a different dataset than the one used to estimate the delays (this is used for HCP data - the "hp2000_clean" data has had LFO signals partially removed and may compromise delay estimation, so that should be done on the un-"FIX"ed data).
+* Added the ability to detect autocorrelation properties of the test regressor that may cause delay estimation to fail with the "--accheck" flag.
+* Added an option "--acfix" to try to correct for bad test regressor autocorrelation properties.  This is not yet working correctly.
+* Added the ability to specify a slicetimes file ("--slicetimes=FILE") if slicetime correction has not yet been applied to the dataset.  Not fully tested.
+* (rapidtide2std, tidepool) Added the ability to transform and display functional data to highres anatomic space in addition to MNI152 space.
+* Various small bugfixes and format cleanups.
+
