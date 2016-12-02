@@ -33,7 +33,21 @@ import os
 from scipy import signal
 from scipy.stats import johnsonsb
 
-# from memory_profiler import profile
+donotuseprofiler = True
+try:
+    from memory_profiler import profile
+
+    memprofilerexists = True
+except ImportError:
+    memprofilerexists = False
+
+def conditionalprofile():
+    def resdec(f):
+        if (not memprofilerexists) or donotuseprofiler:
+            return f
+        return profile(f)
+
+    return resdec
 
 donotusenumba = False
 try:
@@ -63,32 +77,32 @@ def conditionaljit():
 # ---------------------------------------- Global constants -------------------------------------------
 
 # ---------------------------------------- Debugging/profiling functions ------------------------------
-# @profile(precision=4)
+@conditionalprofile()
 def checkpoint1():
     pass
 
 
-# @profile(precision=4)
+@conditionalprofile()
 def checkpoint2():
     pass
 
 
-# @profile(precision=4)
+@conditionalprofile()
 def checkpoint3():
     pass
 
 
-# @profile(precision=4)
+@conditionalprofile()
 def checkpoint4():
     pass
 
 
-# @profile(precision=4)
+@conditionalprofile()
 def checkpoint5():
     pass
 
 
-# @profile(precision=4)
+@conditionalprofile()
 def checkpoint6():
     pass
 
@@ -1520,7 +1534,7 @@ def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio,
     return hires_x_padded, hires_y, hiresstep, hiresstart
 
 
-# @profile(precision=4)
+#@conditionalprofile()
 def dofastresample(orig_x, orig_y, new_x, hrstep, hrstart, upsampleratio):
     starthrindex = int((new_x[0] - hrstart) / hrstep)
     stride = int(upsampleratio)
