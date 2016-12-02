@@ -39,6 +39,23 @@ import numpy as np
 from statsmodels.tsa.stattools import pacf_yw
 from scipy.stats.stats import pearsonr
 
+global donotuseprofiler
+domemprofile = False
+try:
+    from memory_profiler import profile
+
+    memprofilerexists = True
+except ImportError:
+    memprofilerexists = False
+
+def conditionalprofile():
+    def resdec(f):
+        if memprofilerexists and domemprofile:
+            # should figure out how to pass argument 'precision=4'
+            return profile(f)
+        return f
+    return resdec
+
 
 def startendcheck(timepoints, startpoint, endpoint):
     if startpoint > timepoints - 1:
@@ -107,7 +124,7 @@ def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, nc
     return thexcorr[corrorigin - lagmininpts:corrorigin + lagmaxinpts]
 
 
-# @profile(precision=4)
+@conditionalprofile()
 def correlationpass(fmridata, referencetc,
                     fmri_x, os_fmri_x,
                     tr,
@@ -136,7 +153,9 @@ def correlationpass(fmridata, referencetc,
     return volumetotal
 
 
-# @profile(precision=4)
+
+
+#@conditionalprofile()
 def onecorrfit(thetc, corrscale, optiondict, displayplots=False):
     if optiondict['bipolar']:
         if max(thetc) < -1.0 * min(thetc):
@@ -175,7 +194,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False):
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason
 
 
-# @profile(precision=4)
+@conditionalprofile()
 def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             corrscale, corrmask, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
             R2, optiondict):
@@ -237,8 +256,10 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                 lagtimes[vox] = np.fmod(maxlag, optiondict['lagmod'])
                 lagstrengths[vox] = maxval
                 lagsigma[vox] = maxsigma
-                if not optiondict['fixdelay']:
+                if (not optiondict['fixdelay']) and (maxsigma != 0.0):
                     gaussout[vox, :] = tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma])
+                else:
+                    gaussout[vox, :] = 0.0
                 R2[vox] = lagstrengths[vox] * lagstrengths[vox]
         else:
             lagtc[vox, :] = zerolagtc
@@ -254,7 +275,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     return volumetotal
 
 
-# @profile(precision=4)
+@conditionalprofile()
 def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengths, lagtimes, lagsigma, R2,
                     theprefilter,
                     optiondict, padtrs=60, includemask=None, excludemask=None):
@@ -685,11 +706,13 @@ def main():
 
     # debugging options
     optiondict['nonumba'] = False
+    optiondict['memprofile'] = False
     optiondict['fakerun'] = False
     optiondict['displayplots'] = False
     optiondict['debug'] = False
     optiondict['verbose'] = False
     optiondict['release_version'], optiondict['git_tag'] = tide.version()
+    optiondict['python_version'] = sys.version_info
 
     realtr = 0.0
     theprefilter = tide.noncausalfilter()
@@ -747,6 +770,7 @@ def main():
                                                                                                            'refineupperlag',
                                                                                                            'refinelowerlag',
                                                                                                            'fastgauss',
+                                                                                                           'memprofile',
                                                                                                            'nogaussrefine',
                                                                                                            'AR='])
     except getopt.GetoptError as err:
@@ -805,6 +829,11 @@ def main():
         elif o == '--nonumba':
             optiondict['nonumba'] = True
             print('disabling numba if present')
+        elif o == '--memprofile':
+            optiondict['memprofile'] = True
+            global domemprofile
+            domemprofile = True
+            print('enabling memory profiling')
         elif o == '--noglm':
             optiondict['doglmfilt'] = False
             print('disabling GLM filter')
