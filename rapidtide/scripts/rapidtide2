@@ -39,7 +39,7 @@ import numpy as np
 from statsmodels.tsa.stattools import pacf_yw
 from scipy.stats.stats import pearsonr
 
-global donotuseprofiler
+global domemprofile
 domemprofile = False
 try:
     from memory_profiler import profile
