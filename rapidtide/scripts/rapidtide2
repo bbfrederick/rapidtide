@@ -84,6 +84,8 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
     print('\tEstimating significance from ' + str(optiondict['numestreps']) + ' repetitions')
     corrlist = np.zeros((optiondict['numestreps']))
 
+    maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 1
+
     for i in range(0, optiondict['numestreps']):
         # make a shuffled copy of the regressors
         shuffleddata = np.random.permutation(indata)
@@ -94,7 +96,9 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
 
         # fit the correlation
         maxindex, maxlag, maxval, maxsigma, maskval, failreason = \
-            onecorrfit(thexcorr, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts], optiondict)
+            onecorrfit(thexcorr, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts], 
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason,
+            optiondict)
 
         # find and tabulate correlation coefficient at optimal lag
         corrlist[i] = maxval
@@ -156,7 +160,9 @@ def correlationpass(fmridata, referencetc,
 
 
 #@conditionalprofile()
-def onecorrfit(thetc, corrscale, optiondict, displayplots=False):
+def onecorrfit(thetc, corrscale, 
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason,
+        optiondict, displayplots=False):
     if optiondict['bipolar']:
         if max(thetc) < -1.0 * min(thetc):
             flipfac = -1.0
@@ -214,6 +220,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     reportstep = 1000
     zerolagtc = genlagtc.yfromx(initial_fmri_x)
     sliceoffsettime = 0.0
+    maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 1
 
     for vox in range(0, inputshape[0]):
         if vox % reportstep == 0 or vox == inputshape[0] - 1:
@@ -223,8 +230,9 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                 sliceoffsettime = optiondict['slicetimes'][vox % slicesize]
             else:
                 sliceoffsettime = 0.0
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason = onecorrfit(corrout[vox, :], corrscale, optiondict,
-                                                                                 displayplots=displayplots)
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason = onecorrfit(corrout[vox, :], corrscale,
+                maxindex, maxlag, maxval, maxsigma, maskval, failreason,
+                optiondict, displayplots=displayplots)
 
             if maxval > 0.3:
                 displayplots = False
