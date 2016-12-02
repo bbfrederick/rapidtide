@@ -2,8 +2,9 @@
 rapidtide2 \
 	fmri.nii.gz \
 	../dst/dgsr \
-        --accheck \
-	-r -15,15 \
 	--noglm  \
 	--refinepasses=3 \
-	-s 2 &
+        --accheck \
+        --nofitfilt \
+	-r -15,15 \
+	-f 2 &
