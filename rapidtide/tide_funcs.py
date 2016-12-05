@@ -772,14 +772,14 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dode
     Rvals = np.zeros((len(data1)))
     valid = np.zeros((len(data1)))
     delayvals = np.zeros((len(data1)))
+    maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 0
     for i in range(halfwindow, len(data1) - halfwindow):
         dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         xcorrpertime[:, i] = fastcorrelate(dataseg1, dataseg2)
         maxindex, delayvals[i], Rvals[i], maxsigma, maskval, failreason = findmaxlag(
-            xcorr_x,
-            xcorrpertime[:, i],
-            -windowtime / 2.0, windowtime / 2.0, 1000.0,
+            xcorr_x, xcorrpertime[:, i], -windowtime / 2.0, windowtime / 2.0, 1000.0,
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason, 
             refine=True,
             useguess=False,
             fastgauss=False,
@@ -1295,7 +1295,9 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
 
 # disabled conditionaljit on 11/8/16.  This causes crashes on some machines (but not mine, strangely enough)
 # @conditionaljit()
-def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
+def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, 
+               maxindex, maxlag, maxval, maxsigma, maskval, failreason, 
+               edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
                fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
     # set initial parameters 
