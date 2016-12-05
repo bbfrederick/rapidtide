@@ -84,7 +84,7 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
     print('\tEstimating significance from ' + str(optiondict['numestreps']) + ' repetitions')
     corrlist = np.zeros((optiondict['numestreps']))
 
-    maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 1
+    maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 0
 
     for i in range(0, optiondict['numestreps']):
         # make a shuffled copy of the regressors
@@ -175,6 +175,7 @@ def onecorrfit(thetc, corrscale,
             corrscale,
             flipfac * thetc,
             optiondict['lagmin'], optiondict['lagmax'], optiondict['widthlimit'],
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason,
             edgebufferfrac=optiondict['edgebufferfrac'],
             threshval=optiondict['lthreshval'],
             uthreshval=optiondict['uthreshval'],
@@ -220,7 +221,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     reportstep = 1000
     zerolagtc = genlagtc.yfromx(initial_fmri_x)
     sliceoffsettime = 0.0
-    maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 1
+    maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 0
 
     for vox in range(0, inputshape[0]):
         if vox % reportstep == 0 or vox == inputshape[0] - 1:
@@ -412,6 +413,7 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
     else:
         print('performing averaging refinement')
         outputdata = averagedata
+    refinevoxels = None
     print()
     print(str(
         volumetotal) + ' voxels used for refinement:',
