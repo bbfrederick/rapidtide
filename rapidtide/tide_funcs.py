@@ -33,7 +33,7 @@ import os
 from scipy import signal
 from scipy.stats import johnsonsb
 
-donotuseprofiler = True
+domemprofile = False
 try:
     from memory_profiler import profile
 
@@ -43,9 +43,9 @@ except ImportError:
 
 def conditionalprofile():
     def resdec(f):
-        if (not memprofilerexists) or donotuseprofiler:
-            return f
-        return profile(f)
+        if memprofilerexists and domemprofile:
+            return profile(f)
+        return f
 
     return resdec
 
