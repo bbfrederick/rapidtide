@@ -39,7 +39,7 @@ import numpy as np
 from statsmodels.tsa.stattools import pacf_yw
 from scipy.stats.stats import pearsonr
 
-domemprofile = False
+domemprofile = True
 try:
     from memory_profiler import profile
 
@@ -54,6 +54,11 @@ def conditionalprofile():
             return profile(f)
         return f
     return resdec
+
+
+@conditionalprofile()
+def memcheckpoint(message):
+    print(message)
 
 
 def startendcheck(timepoints, startpoint, endpoint):
@@ -78,6 +83,7 @@ def startendcheck(timepoints, startpoint, endpoint):
     return realstart, realend
 
 
+@conditionalprofile()
 def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
                             optiondict):
     print('\tEstimating significance from ' + str(optiondict['numestreps']) + ' repetitions')
@@ -728,6 +734,7 @@ def main():
     theprefilter.setbutter(optiondict['usebutterworthfilter'], optiondict['filtorder'])
 
     # start the clock!
+    memcheckpoint('clockstart')
     timings = [['Start', time.time(), None, None]]
     print('rapidtide2 version:', optiondict['release_version'], optiondict['git_tag'])
 
@@ -1087,6 +1094,7 @@ def main():
     formattedcmdline[len(formattedcmdline) - 1] = formattedcmdline[len(formattedcmdline) - 1][:-2]
 
     timings.append(['Argument parsing done', time.time(), None, None])
+    memcheckpoint('Argument parsing done')
 
     # disable numba now if we're going to do it (before any jits)
     if optiondict['nonumba']:
@@ -1116,6 +1124,8 @@ def main():
         xsize, ysize, numslices, timepoints = tide.parseniftidims(thedims)
         numspatiallocs = int(xsize) * int(ysize) * int(numslices)
         slicesize = numspatiallocs / int(numslices)
+
+    memcheckpoint('Datafile opened')
 
     # correct some fields if necessary
     if optiondict['isgrayordinate']:
@@ -1148,6 +1158,7 @@ def main():
     # reshape the data and trim to a time range, if specified
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
     timepoints = validend - validstart + 1
+    memcheckpoint('Reformatting done')
 
     # read in the optional masks
     internalincludemask = None
@@ -1167,6 +1178,8 @@ def main():
             print('Dimensions of exclude mask do not match the fmri data - exiting')
             sys.exit()
         internalexcludemask = theexcludemask.reshape(numspatiallocs)
+
+    memcheckpoint('Masks read')
 
     # read in the timecourse to resample
     timings.append(['Start of reference prep', time.time(), None, None])
@@ -1285,6 +1298,8 @@ def main():
         reference_y = reference_y_filt.real
 
     warnings.filterwarnings('ignore', 'Casting*')
+
+    memcheckpoint('Antialiasing applied')
 
     if optiondict['fakerun']:
         sys.exit()
@@ -1420,6 +1435,8 @@ def main():
     if optiondict['verbose']:
         print('edgebufferfrac set to ', optiondict['edgebufferfrac'])
 
+    memcheckpoint('Entering pass loop')
+
     for thepass in range(1, optiondict['refinepasses'] + 1):
         # initialize the pass
         if optiondict['dorefineregressor']:
@@ -1430,6 +1447,8 @@ def main():
         oversampfreq = optiondict['oversampfactor'] / fmritr
 
         # Step -1 - check the regressor for periodic components in the passband
+        memcheckpoint('Pre step -1')
+
         dolagmod = True
         doreferencenotch = False
         if optiondict['check_autocorrelation']:
@@ -1480,6 +1499,7 @@ def main():
             cleaned_referencetc = 1.0 * referencetc
 
         # Step 0 - estimate significance
+        memcheckpoint('Pre step 0')
         if optiondict['estimate_significance']:
             timings.append(['Significance estimation start, pass ' + str(thepass), time.time(), None, None])
             print('\n\nSignificance estimation, pass ' + str(thepass))
@@ -1517,6 +1537,7 @@ def main():
                             'repetitions'])
 
         # Step 1 - Correlation step
+        memcheckpoint('Pre step 1')
         print('\n\nCorrelation calculation, pass ' + str(thepass))
         timings.append(['Correlation calculation start, pass ' + str(thepass), time.time(), None, None])
         voxelsprocessed_cp = correlationpass(fmri_data[:, optiondict['addedskip']:], cleaned_referencetc,
@@ -1529,6 +1550,7 @@ def main():
         timings.append(['Correlation calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
         # Step 2 - correlation fitting and time lag estimation
+        memcheckpoint('Pre step 2')
         print('\n\nTime lag estimation pass ' + str(thepass))
         timings.append(['Time lag estimation start, pass ' + str(thepass), time.time(), None, None])
 
@@ -1539,6 +1561,7 @@ def main():
         timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
 
         # Step 3 - regressor refinement for next pass
+        memcheckpoint('Pre step 3')
         if optiondict['dorefineregressor'] and thepass < optiondict['refinepasses']:
             print('\n\nRegressor refinement, pass' + str(thepass))
             timings.append(['Regressor refinement start, pass ' + str(thepass), time.time(), None, None])
@@ -1587,6 +1610,7 @@ def main():
                 ['Regressor refinement end, pass ' + str(thepass), time.time(), voxelsprocessed_rr, 'voxels'])
 
     # Post refinement step 1 - GLM fitting to remove moving signal
+    memcheckpoint('Post step 1')
     if optiondict['doglmfilt'] or optiondict['doprewhiten']:
         timings.append(['GLM filtering start, pass ' + str(thepass), time.time(), None, None])
         if optiondict['doglmfilt']:
@@ -1648,6 +1672,7 @@ def main():
             plot(os_fmri_x, referencetc, os_fmri_x, referencetc_pw)
 
     # Post refinement step 2 - prewhitening
+    memcheckpoint('Post step 2')
     if optiondict['doprewhiten']:
         print('Step 3 - reprocessing prewhitened data')
         timings.append(['Step 3 start', time.time(), None, None])
@@ -1660,6 +1685,7 @@ def main():
                         optiondict)
 
     # Post refinement step 3 - make and save interesting histograms
+    memcheckpoint('Post step 3')
     timings.append(['Start saving histograms', time.time(), None, None])
     tide.makeandsavehistogram(lagtimes[np.where(lagmask > 0)], optiondict['histlen'], 0, outputname + '_laghist',
                               displaytitle='lagtime histogram', displayplots=optiondict['displayplots'], refine=False)
@@ -1674,6 +1700,7 @@ def main():
                                   displaytitle='correlation R2 histogram', displayplots=optiondict['displayplots'])
 
     # Post refinement step 4 - save out all of the important arrays to nifti files
+    memcheckpoint('Post step 4')
     # write out the options used
     tide.writedict(optiondict, outputname + '_options.txt')
 
