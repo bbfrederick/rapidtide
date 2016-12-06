@@ -461,7 +461,7 @@ def readvecs(inputfilename):
     thefile = open(inputfilename, 'rU')
     lines = thefile.readlines()
     numvecs = len(lines[0].split())
-    inputvec = np.zeros((numvecs, MAXLINES))
+    inputvec = np.zeros((numvecs, MAXLINES), dtype='float')
     numvals = 0
     for line in lines:
         numvals += 1
@@ -472,7 +472,7 @@ def readvecs(inputfilename):
 
 
 def readvec(inputfilename):
-    inputvec = np.zeros(MAXLINES)
+    inputvec = np.zeros(MAXLINES, dtype='float')
     numvals = 0
     with open(inputfilename, 'rU') as thefile:
         lines = thefile.readlines()
@@ -1399,6 +1399,8 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                 maxval = data.max()
             else:
                 # do a least squares fit over the top of the peak
+                #maxval, maxlag, maxsigma = gaussfit(maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init, X, data)
+                #maxlag = np.fmod(maxlag, lagmod)
                 p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init])
                 if fitend - fitstart >= 3:
                     plsq, dummy = sp.optimize.leastsq(gaussresiduals, p0,
@@ -1415,13 +1417,13 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                         maxsigma = 0.0
                         maskval = 0
                     else:
-                        maxval = maxval_init
-                        maxlag = maxlag_init
-                        maxsigma = maxsigma_init
+                        maxval = 1.0 * maxval_init
+                        maxlag = 1.0 * maxlag_init
+                        maxsigma = 1.0 * maxsigma_init
         else:
-            maxval = maxval_init
+            maxval = 1.0 * maxval_init
             maxlag = np.fmod(maxlag_init, lagmod)
-            maxsigma = maxsigma_init
+            maxsigma = 1.0 * maxsigma_init
         if maxval == 0.0:
             failreason += FML_FITFAIL
         if not (lagmin <= maxlag <= lagmax):
