@@ -210,21 +210,12 @@ def onecorrfit(thetc, corrscale,
 def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             corrscale, corrmask, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
             R2, optiondict):
-    FML_BADAMP = 0x01
-    FML_BADLAG = 0x02
-    FML_BADWIDTH = 0x04
-    FML_HITEDGE = 0x08
-    FML_FITFAIL = 0x0f
+    FML_BADAMP, FML_BADLAG , FML_BADWIDTH, FML_HITEDGE, FML_FITFAIL = 0x01, 0x02, 0x04, 0x08, 0x0f
     displayplots = False
     inputshape = np.shape(corrout)
-    volumetotal = 0
-    ampfails = 0
-    lagfails = 0
-    widthfails = 0
-    edgefails = 0
-    fitfails = 0
+    volumetotal, ampfails, lagfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0
     reportstep = 1000
-    zerolagtc = genlagtc.yfromx(initial_fmri_x)
+    zerolagtc = 1.0 * genlagtc.yfromx(initial_fmri_x)
     sliceoffsettime = 0.0
     maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 0
 
@@ -377,6 +368,7 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
                 # filtcalcout[lagnum, :] = tide.corrnormalize(np.mean(fmridata[inlagrange], axis=0), False, True)
                 freqs, filtcalcspecmag[lagnum, :], filtcalcspecphase[lagnum, :] = tide.polarfft(filtcalcout[lagnum, :],
                                                                                                 1.0 / fmritr)
+            inlagrange = None
         tide.writenpvecs(filtcalcout, optiondict['outputname'] + '_filtcalcvecs_pass' + str(passnum) + '.txt')
         tide.writenpvecs(filtcalcspecmag, optiondict['outputname'] + '_filtcalcspecmag_pass' + str(passnum) + '.txt')
         tide.writenpvecs(filtcalcspecphase,
