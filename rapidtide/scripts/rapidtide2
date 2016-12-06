@@ -30,6 +30,7 @@ import platform
 import bisect
 import warnings
 import sys
+import gc
 
 import rapidtide.tide_funcs as tide
 
@@ -159,9 +160,12 @@ def correlationpass(fmridata, referencetc,
                                              referencetc, optiondict)
             volumetotal += 1
     print('\nCorrelation performed on ' + str(volumetotal) + ' voxels')
+
+    # garbage collect
+    collected = gc.collect()
+    print("Garbage collector: collected %d objects." % (collected))
+
     return volumetotal
-
-
 
 
 #@conditionalprofile()
@@ -276,6 +280,10 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
     print('\tampfails=', ampfails, ' lagfails=', lagfails, ' widthfail=', widthfails, ' edgefail=', edgefails,
           ' fitfail=', fitfails)
+
+    # garbage collect
+    collected = gc.collect()
+    print("Garbage collector: collected %d objects." % (collected))
 
     return volumetotal
 
@@ -418,6 +426,10 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
           '\n	', ampfails, ' ampfails',
           '\n	', lagfails, ' lagfails',
           '\n	', sigmafails, ' sigmafails')
+
+    # garbage collect
+    collected = gc.collect()
+    print("Garbage collector: collected %d objects." % (collected))
 
     return volumetotal, outputdata
 
@@ -1447,7 +1459,6 @@ def main():
             print('checking reference regressor autocorrelation properties')
             optiondict['lagmod'] = 1000.0
             lagindpad = corrorigin - 2 * np.max((lagmininpts, lagmaxinpts))
-            print('lagindpad:', lagindpad)
             acmininpts = lagmininpts + lagindpad
             acmaxinpts = lagmaxinpts + lagindpad
             thexcorr = onecorrelation(referencetc, oversampfreq, corrorigin, acmininpts, acmaxinpts, theprefilter,
