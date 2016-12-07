@@ -84,13 +84,11 @@ def startendcheck(timepoints, startpoint, endpoint):
     return realstart, realend
 
 
-@conditionalprofile()
+#@conditionalprofile()
 def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
                             optiondict):
     print('\tEstimating significance from ' + str(optiondict['numestreps']) + ' repetitions')
-    corrlist = np.zeros((optiondict['numestreps']))
-
-    maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 0
+    corrlist = np.zeros((optiondict['numestreps']), dtype='float')
 
     for i in range(0, optiondict['numestreps']):
         # make a shuffled copy of the regressors
@@ -103,11 +101,10 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
         # fit the correlation
         maxindex, maxlag, maxval, maxsigma, maskval, failreason = \
             onecorrfit(thexcorr, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts], 
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason,
             optiondict)
 
         # find and tabulate correlation coefficient at optimal lag
-        corrlist[i] = maxval
+        corrlist[i] = 1.0 * maxval
 
         # progress
         tide.progressbar(i + 1, optiondict['numestreps'], label='Percent complete')
@@ -134,7 +131,7 @@ def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, nc
     return thexcorr[corrorigin - lagmininpts:corrorigin + lagmaxinpts]
 
 
-@conditionalprofile()
+#@conditionalprofile()
 def correlationpass(fmridata, referencetc,
                     fmri_x, os_fmri_x,
                     tr,
@@ -170,7 +167,6 @@ def correlationpass(fmridata, referencetc,
 
 #@conditionalprofile()
 def onecorrfit(thetc, corrscale, 
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason,
         optiondict, displayplots=False):
     if optiondict['bipolar']:
         if max(thetc) < -1.0 * min(thetc):
@@ -184,7 +180,6 @@ def onecorrfit(thetc, corrscale,
             corrscale,
             flipfac * thetc,
             optiondict['lagmin'], optiondict['lagmax'], optiondict['widthlimit'],
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason,
             edgebufferfrac=optiondict['edgebufferfrac'],
             threshval=optiondict['lthreshval'],
             uthreshval=optiondict['uthreshval'],
@@ -200,12 +195,12 @@ def onecorrfit(thetc, corrscale,
         maxval *= flipfac
     else:
         # do something different
-        failreason = 0
-        maxlag = optiondict['fixeddelayvalue']
-        maxindex = bisect.bisect_left(corrscale, optiondict['fixeddelayvalue'])
-        maxval = flipfac * thetc[maxindex]
-        maxsigma = 1.0
-        maskval = 1
+        failreason = np.int_(0)
+        maxlag = np.float_(optiondict['fixeddelayvalue'])
+        maxindex = np.int_(bisect.bisect_left(corrscale, optiondict['fixeddelayvalue']))
+        maxval = np.float_(flipfac * thetc[maxindex])
+        maxsigma = np.float_(1.0)
+        maskval = np.int_(1)
 
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason
 
@@ -221,7 +216,6 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     reportstep = 1000
     zerolagtc = 1.0 * genlagtc.yfromx(initial_fmri_x)
     sliceoffsettime = 0.0
-    maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 0
 
     for vox in range(0, inputshape[0]):
         if vox % reportstep == 0 or vox == inputshape[0] - 1:
@@ -232,7 +226,6 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             else:
                 sliceoffsettime = 0.0
             maxindex, maxlag, maxval, maxsigma, maskval, failreason = onecorrfit(corrout[vox, :], corrscale,
-                maxindex, maxlag, maxval, maxsigma, maskval, failreason,
                 optiondict, displayplots=displayplots)
 
             if maxval > 0.3:
@@ -288,7 +281,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     return volumetotal
 
 
-@conditionalprofile()
+#@conditionalprofile()
 def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengths, lagtimes, lagsigma, R2,
                     theprefilter,
                     optiondict, padtrs=60, includemask=None, excludemask=None):
@@ -738,7 +731,6 @@ def main():
     theprefilter.setbutter(optiondict['usebutterworthfilter'], optiondict['filtorder'])
 
     # start the clock!
-    memcheckpoint('clockstart')
     timings = [['Start', time.time(), None, None]]
     print('rapidtide2 version:', optiondict['release_version'], optiondict['git_tag'])
 
@@ -1098,7 +1090,6 @@ def main():
     formattedcmdline[len(formattedcmdline) - 1] = formattedcmdline[len(formattedcmdline) - 1][:-2]
 
     timings.append(['Argument parsing done', time.time(), None, None])
-    memcheckpoint('Argument parsing done')
 
     # disable numba now if we're going to do it (before any jits)
     if optiondict['nonumba']:
@@ -1128,8 +1119,6 @@ def main():
         xsize, ysize, numslices, timepoints = tide.parseniftidims(thedims)
         numspatiallocs = int(xsize) * int(ysize) * int(numslices)
         slicesize = numspatiallocs / int(numslices)
-
-    memcheckpoint('Datafile opened')
 
     # correct some fields if necessary
     if optiondict['isgrayordinate']:
@@ -1162,7 +1151,6 @@ def main():
     # reshape the data and trim to a time range, if specified
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
     timepoints = validend - validstart + 1
-    memcheckpoint('Reformatting done')
 
     # read in the optional masks
     internalincludemask = None
@@ -1182,8 +1170,6 @@ def main():
             print('Dimensions of exclude mask do not match the fmri data - exiting')
             sys.exit()
         internalexcludemask = theexcludemask.reshape(numspatiallocs)
-
-    memcheckpoint('Masks read')
 
     # read in the timecourse to resample
     timings.append(['Start of reference prep', time.time(), None, None])
@@ -1303,8 +1289,6 @@ def main():
 
     warnings.filterwarnings('ignore', 'Casting*')
 
-    memcheckpoint('Antialiasing applied')
-
     if optiondict['fakerun']:
         sys.exit()
 
@@ -1380,13 +1364,13 @@ def main():
         nativearmodelshape = (xsize, ysize, numslices, optiondict['armodelorder'])
     internalspaceshape = numspatiallocs
     internalarmodelshape = (numspatiallocs, optiondict['armodelorder'])
-    meanval = np.zeros(internalspaceshape)
-    lagtimes = np.zeros(internalspaceshape)
-    lagstrengths = np.zeros(internalspaceshape)
-    lagsigma = np.zeros(internalspaceshape)
-    lagmask = np.zeros(internalspaceshape)
-    corrmask = np.zeros(internalspaceshape)
-    R2 = np.zeros(internalspaceshape)
+    meanval = np.zeros(internalspaceshape, dtype='float')
+    lagtimes = np.zeros(internalspaceshape, dtype='float')
+    lagstrengths = np.zeros(internalspaceshape, dtype='float')
+    lagsigma = np.zeros(internalspaceshape, dtype='float')
+    lagmask = np.zeros(internalspaceshape, dtype='int')
+    corrmask = np.zeros(internalspaceshape, dtype='int')
+    R2 = np.zeros(internalspaceshape, dtype='float')
 
     corroutlen = len(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
     if fileiscifti:
@@ -1394,30 +1378,30 @@ def main():
     else:
         nativecorrshape = (xsize, ysize, numslices, corroutlen)
     internalcorrshape = (numspatiallocs, corroutlen)
-    corrout = np.zeros(internalcorrshape)
-    gaussout = np.zeros(internalcorrshape)
+    corrout = np.zeros(internalcorrshape, dtype='float')
+    gaussout = np.zeros(internalcorrshape, dtype='float')
 
     if fileiscifti:
         nativefmrishape = (1, 1, 1, len(initial_fmri_x), numspatiallocs)
     else:
         nativefmrishape = (xsize, ysize, numslices, len(initial_fmri_x))
     internalfmrishape = (numspatiallocs, len(initial_fmri_x))
-    lagtc = np.zeros(internalfmrishape)
+    lagtc = np.zeros(internalfmrishape, dtype='float')
 
     if optiondict['dorefineregressor']:
-        shiftedtcs = np.zeros(internalfmrishape)
-        refinemask = np.zeros(internalspaceshape, dtype='int16')
+        shiftedtcs = np.zeros(internalfmrishape, dtype='float')
+        refinemask = np.zeros(internalspaceshape, dtype='int')
 
     if optiondict['doglmfilt'] or optiondict['doprewhiten']:
-        meanvalue = np.zeros(internalspaceshape)
-        rvalue = np.zeros(internalspaceshape)
-        r2value = np.zeros(internalspaceshape)
-        fitNorm = np.zeros(internalspaceshape)
-        fitcoff = np.zeros(internalspaceshape)
-        datatoremove = np.zeros(internalfmrishape)
-        filtereddata = np.zeros(internalfmrishape)
-        prewhiteneddata = np.zeros(internalfmrishape)
-        arcoffs = np.zeros(internalarmodelshape)
+        meanvalue = np.zeros(internalspaceshape, dtype='float')
+        rvalue = np.zeros(internalspaceshape, dtype='float')
+        r2value = np.zeros(internalspaceshape, dtype='float')
+        fitNorm = np.zeros(internalspaceshape, dtype='float')
+        fitcoff = np.zeros(internalspaceshape, dtype='float')
+        datatoremove = np.zeros(internalfmrishape, dtype='float')
+        filtereddata = np.zeros(internalfmrishape, dtype='float')
+        prewhiteneddata = np.zeros(internalfmrishape, dtype='float')
+        arcoffs = np.zeros(internalarmodelshape, dtype='float')
 
     # prepare for fast resampling
     padvalue = max((-optiondict['lagmin'], optiondict['lagmax'])) + 30.0
@@ -1439,8 +1423,6 @@ def main():
     if optiondict['verbose']:
         print('edgebufferfrac set to ', optiondict['edgebufferfrac'])
 
-    memcheckpoint('Entering pass loop')
-
     for thepass in range(1, optiondict['refinepasses'] + 1):
         # initialize the pass
         if optiondict['dorefineregressor']:
@@ -1451,8 +1433,6 @@ def main():
         oversampfreq = optiondict['oversampfactor'] / fmritr
 
         # Step -1 - check the regressor for periodic components in the passband
-        memcheckpoint('Pre step -1')
-
         dolagmod = True
         doreferencenotch = False
         if optiondict['check_autocorrelation']:
@@ -1502,7 +1482,6 @@ def main():
             cleaned_referencetc = 1.0 * referencetc
 
         # Step 0 - estimate significance
-        memcheckpoint('Pre step 0')
         if optiondict['estimate_significance']:
             timings.append(['Significance estimation start, pass ' + str(thepass), time.time(), None, None])
             print('\n\nSignificance estimation, pass ' + str(thepass))
@@ -1540,7 +1519,6 @@ def main():
                             'repetitions'])
 
         # Step 1 - Correlation step
-        memcheckpoint('Pre step 1')
         print('\n\nCorrelation calculation, pass ' + str(thepass))
         timings.append(['Correlation calculation start, pass ' + str(thepass), time.time(), None, None])
         voxelsprocessed_cp = correlationpass(fmri_data[:, optiondict['addedskip']:], cleaned_referencetc,
@@ -1553,7 +1531,6 @@ def main():
         timings.append(['Correlation calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
         # Step 2 - correlation fitting and time lag estimation
-        memcheckpoint('Pre step 2')
         print('\n\nTime lag estimation pass ' + str(thepass))
         timings.append(['Time lag estimation start, pass ' + str(thepass), time.time(), None, None])
 
@@ -1564,7 +1541,6 @@ def main():
         timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
 
         # Step 3 - regressor refinement for next pass
-        memcheckpoint('Pre step 3')
         if optiondict['dorefineregressor'] and thepass < optiondict['refinepasses']:
             print('\n\nRegressor refinement, pass' + str(thepass))
             timings.append(['Regressor refinement start, pass ' + str(thepass), time.time(), None, None])
@@ -1613,7 +1589,6 @@ def main():
                 ['Regressor refinement end, pass ' + str(thepass), time.time(), voxelsprocessed_rr, 'voxels'])
 
     # Post refinement step 1 - GLM fitting to remove moving signal
-    memcheckpoint('Post step 1')
     if optiondict['doglmfilt'] or optiondict['doprewhiten']:
         timings.append(['GLM filtering start, pass ' + str(thepass), time.time(), None, None])
         if optiondict['doglmfilt']:
@@ -1675,7 +1650,6 @@ def main():
             plot(os_fmri_x, referencetc, os_fmri_x, referencetc_pw)
 
     # Post refinement step 2 - prewhitening
-    memcheckpoint('Post step 2')
     if optiondict['doprewhiten']:
         print('Step 3 - reprocessing prewhitened data')
         timings.append(['Step 3 start', time.time(), None, None])
@@ -1688,7 +1662,6 @@ def main():
                         optiondict)
 
     # Post refinement step 3 - make and save interesting histograms
-    memcheckpoint('Post step 3')
     timings.append(['Start saving histograms', time.time(), None, None])
     tide.makeandsavehistogram(lagtimes[np.where(lagmask > 0)], optiondict['histlen'], 0, outputname + '_laghist',
                               displaytitle='lagtime histogram', displayplots=optiondict['displayplots'], refine=False)
@@ -1703,7 +1676,6 @@ def main():
                                   displaytitle='correlation R2 histogram', displayplots=optiondict['displayplots'])
 
     # Post refinement step 4 - save out all of the important arrays to nifti files
-    memcheckpoint('Post step 4')
     # write out the options used
     tide.writedict(optiondict, outputname + '_options.txt')
 
