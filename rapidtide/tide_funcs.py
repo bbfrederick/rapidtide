@@ -239,7 +239,7 @@ def proctiminginfo(thetimings, outputfile='', extraheader=None):
 
 # --------------------------- histogram functions -------------------------------------------------
 def gethistprops(indata, histlen, refine=False, therange=None):
-    thestore = np.zeros((2, histlen))
+    thestore = np.zeros((2, histlen), dtype='float')
     if therange is None:
         thehist = np.histogram(indata, histlen)
     else:
@@ -270,7 +270,7 @@ def makehistogram(indata, histlen, therange=None):
 def makeandsavehistogram(indata, histlen, endtrim, outname,
                          displaytitle='histogram', displayplots=False,
                          refine=False, therange=None):
-    thestore = np.zeros((2, histlen))
+    thestore = np.zeros((2, histlen), dtype='float')
     thehist = makehistogram(indata, histlen, therange)
     thestore[0, :] = thehist[1][-histlen:]
     thestore[1, :] = thehist[0][-histlen:]
@@ -302,7 +302,7 @@ def printthresholds(pcts, thepercentiles, labeltext):
 
 
 def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
-    thestore = np.zeros((2, histlen))
+    thestore = np.zeros((2, histlen), dtype='float')
     thestore[0, :] = thehist[1][:-1]
     thestore[1, :] = thehist[0][:] / (1.0 * len(thedata))
 
@@ -768,10 +768,10 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dode
     xcorrlen = len(thexcorr)
     xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     corrzero = int(xcorrlen // 2)
-    xcorrpertime = np.zeros((xcorrlen, len(data1)))
-    Rvals = np.zeros((len(data1)))
-    valid = np.zeros((len(data1)))
-    delayvals = np.zeros((len(data1)))
+    xcorrpertime = np.zeros((xcorrlen, len(data1)), dtype='float')
+    Rvals = np.zeros((len(data1)), dtype='float')
+    valid = np.zeros((len(data1)), dtype='float')
+    delayvals = np.zeros((len(data1)), dtype='float')
     maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 0
     for i in range(halfwindow, len(data1) - halfwindow):
         dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
@@ -779,7 +779,6 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dode
         xcorrpertime[:, i] = fastcorrelate(dataseg1, dataseg2)
         maxindex, delayvals[i], Rvals[i], maxsigma, maskval, failreason = findmaxlag(
             xcorr_x, xcorrpertime[:, i], -windowtime / 2.0, windowtime / 2.0, 1000.0,
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason, 
             refine=True,
             useguess=False,
             fastgauss=False,
@@ -927,7 +926,7 @@ def lfilter_zi(b, a):
     n = max(len(a), len(b))
 
     zin = (np.eye(n - 1) - np.hstack((-a[1:n, np.newaxis],
-                                      np.vstack((np.eye(n - 2), np.zeros(n - 2))))))
+                                      np.vstack((np.eye(n - 2), np.zeros(n - 2, dtype='float'))))))
 
     zid = b[1:n] - a[1:n] * b[0]
 
@@ -955,10 +954,10 @@ def fastfiltfiltinit(b, a, x):
         raise ValueError("Input vector needs to be bigger than 3 * max(len(a),len(b).")
 
     if len(a) < ntaps:
-        a = np.r_[a, np.zeros(len(b) - len(a))]
+        a = np.r_[a, np.zeros(len(b) - len(a), dtype='float')]
 
     if len(b) < ntaps:
-        b = np.r_[b, np.zeros(len(a) - len(b))]
+        b = np.r_[b, np.zeros(len(a) - len(b), dtype='float')]
 
     zi = sp.signal.lfilter_zi(b, a)
 
@@ -1023,14 +1022,14 @@ def gauss_eval(x, p):
 
 
 def trapezoid_eval_loop(x, toplength, p):
-    r = np.zeros(len(x))
+    r = np.zeros(len(x), dtype='float')
     for i in range(0, len(x)):
         r[i] = trapezoid_eval(x[i], toplength, p)
     return r
 
 
 def risetime_eval_loop(x, p):
-    r = np.zeros(len(x))
+    r = np.zeros(len(x), dtype='float')
     for i in range(0, len(x)):
         r[i] = risetime_eval(x[i], p)
     return r
@@ -1296,7 +1295,6 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
 # disabled conditionaljit on 11/8/16.  This causes crashes on some machines (but not mine, strangely enough)
 # @conditionaljit()
 def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, 
-               maxindex, maxlag, maxval, maxsigma, maskval, failreason, 
                edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
                fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
@@ -1305,11 +1303,11 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # maxsigma is in Hz
     # maxlag is in seconds
     warnings.filterwarnings("ignore", "Number*")
-    maskval = 1
-    maxval = 0.0
-    maxlag = 0.0
-    maxsigma = 0.0
-    failreason = 0
+    maskval = np.int_(1)
+    maxval = np.float_(0.0)
+    maxlag = np.float_(0.0)
+    maxsigma = np.float_(0.0)
+    failreason = np.int_(0)
     numlagbins = len(thexcorr_y)
     binwidth = thexcorr_x[1] - thexcorr_x[0]
     searchbins = int(widthlimit // binwidth)
@@ -1681,8 +1679,8 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
     imag = 1.j
 
     # initialize variables
-    preshifted_y = np.zeros(thepaddedlen)  # initialize the working buffer (with pad)
-    weights = np.zeros(thepaddedlen)  # initialize the weight buffer (with pad)
+    preshifted_y = np.zeros(thepaddedlen, dtype='float')  # initialize the working buffer (with pad)
+    weights = np.zeros(thepaddedlen, dtype='float')  # initialize the weight buffer (with pad)
 
     # now do the math
     preshifted_y[padtrs:padtrs + thelen] = inputtc[:]  # copy initial data into shift buffer
@@ -1703,7 +1701,7 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 
     # process the data (fft->oversample->modulate->ifft->filter->downsample)
     fftdata = fftpack.fft(preshifted_y)  # do the actual shifting
-    osfftdata = (1.0 + imag) * np.zeros(fftlen * osfac)
+    osfftdata = (1.0 + imag) * np.zeros(fftlen * osfac, dtype='float')
     osfftdata[0:int(fftlen // 2)] = fftdata[0:int(fftlen // 2)]
     osfftdata[-int(fftlen // 2):] = fftdata[-int(fftlen // 2):]
     shifted_y = fftpack.ifft(modvec * osfftdata).real
@@ -1713,7 +1711,7 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 
     # process the weights
     w_fftdata = fftpack.fft(weights)  # do the actual shifting
-    w_osfftdata = (1.0 + imag) * np.zeros(fftlen * osfac)
+    w_osfftdata = (1.0 + imag) * np.zeros(fftlen * osfac, dtype='float')
     w_osfftdata[0:int(fftlen // 2)] = w_fftdata[0:int(fftlen // 2)]
     w_osfftdata[-int(fftlen // 2):] = w_fftdata[-int(fftlen // 2):]
     shifted_weights = fftpack.ifft(modvec * w_osfftdata).real
@@ -1754,8 +1752,8 @@ def timeshift2(inputtc, shifttrs, padtrs, doplot=False, dopostfilter=False):
     theringfilter = noncausalfilter(filtertype='ringstop')
 
     # initialize variables
-    preshifted_y = np.zeros(thepaddedlen)  # initialize the working buffer (with pad)
-    weights = np.zeros(thepaddedlen)  # initialize the weight buffer (with pad)
+    preshifted_y = np.zeros(thepaddedlen, dtype='float')  # initialize the working buffer (with pad)
+    weights = np.zeros(thepaddedlen, dtype='float')  # initialize the weight buffer (with pad)
 
     # now do the math
     preshifted_x = np.arange(0.0, len(preshifted_y), 1.0)
@@ -2051,8 +2049,8 @@ def specsplit(samplerate, inputdata, bandwidth, usebutterworth=False):
     print("dividing into ", numbands, " bands")
     lowerlim = lowestfreq
     upperlim = lowerlim * bandwidth
-    alldata = np.zeros((len(inputdata), numbands))
-    bandcenters = np.zeros(numbands)
+    alldata = np.zeros((len(inputdata), numbands), dtype='float')
+    bandcenters = np.zeros(numbands, dtype='float')
     print(alldata.shape)
     for theband in range(0, numbands):
         print("filtering from ", lowerlim, " to ", upperlim)
