@@ -334,12 +334,10 @@ maxdelay = xcorr_x_trim[argmax(thexcorr_trim)]
 if debug:
     print('maxdelay before refinement',maxdelay)
 dofindmaxlag=True
-maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 0
 if dofindmaxlag:
     print('executing findmaxlag')
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason = tide.findmaxlag(
             xcorr_x_trim, thexcorr_trim, -searchrange,searchrange,1000.0,
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason,
             refine=True,
             useguess=False,
             fastgauss=False,
