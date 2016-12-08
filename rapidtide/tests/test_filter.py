@@ -151,13 +151,13 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
             plt.show()
 
 
-def test_filterprops(display=False):
+def testfilterprops(display=False):
     eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=display)
     eval_filterprops(sampletime=2.0,  tclengthinsecs=300.0, numruns=100, display=display)
     eval_filterprops(sampletime=0.1,  tclengthinsecs=1000.0, numruns=10, display=display)
 
 def main():
-    test_filterprops(display=True)
+    testfilterprops(display=True)
 
 if __name__ == '__main__':
     main()
