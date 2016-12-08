@@ -239,7 +239,7 @@ def proctiminginfo(thetimings, outputfile='', extraheader=None):
 
 # --------------------------- histogram functions -------------------------------------------------
 def gethistprops(indata, histlen, refine=False, therange=None):
-    thestore = np.zeros((2, histlen), dtype='float')
+    thestore = np.zeros((2, histlen), dtype='float64')
     if therange is None:
         thehist = np.histogram(indata, histlen)
     else:
@@ -270,7 +270,7 @@ def makehistogram(indata, histlen, therange=None):
 def makeandsavehistogram(indata, histlen, endtrim, outname,
                          displaytitle='histogram', displayplots=False,
                          refine=False, therange=None):
-    thestore = np.zeros((2, histlen), dtype='float')
+    thestore = np.zeros((2, histlen), dtype='float64')
     thehist = makehistogram(indata, histlen, therange)
     thestore[0, :] = thehist[1][-histlen:]
     thestore[1, :] = thehist[0][-histlen:]
@@ -302,7 +302,7 @@ def printthresholds(pcts, thepercentiles, labeltext):
 
 
 def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
-    thestore = np.zeros((2, histlen), dtype='float')
+    thestore = np.zeros((2, histlen), dtype='float64')
     thestore[0, :] = thehist[1][:-1]
     thestore[1, :] = thehist[0][:] / (1.0 * len(thedata))
 
@@ -356,7 +356,7 @@ def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False
 
 
 def rfromp(fitfile, thepercentiles, numbins=1000):
-    thefit = np.array(readvecs(fitfile)[0]).astype('float')
+    thefit = np.array(readvecs(fitfile)[0]).astype('float64')
     print('thefit = ', thefit)
     return getfracvalsfromfit(thefit, thepercentiles, numbins=1000, displayplots=True)
 
@@ -461,24 +461,24 @@ def readvecs(inputfilename):
     thefile = open(inputfilename, 'rU')
     lines = thefile.readlines()
     numvecs = len(lines[0].split())
-    inputvec = np.zeros((numvecs, MAXLINES), dtype='float')
+    inputvec = np.zeros((numvecs, MAXLINES), dtype='float64')
     numvals = 0
     for line in lines:
         numvals += 1
         thetokens = line.split()
         for vecnum in range(0, numvecs):
-            inputvec[vecnum, numvals - 1] = float(thetokens[vecnum])
+            inputvec[vecnum, numvals - 1] = np.float64(thetokens[vecnum])
     return 1.0 * inputvec[:, 0:numvals]
 
 
 def readvec(inputfilename):
-    inputvec = np.zeros(MAXLINES, dtype='float')
+    inputvec = np.zeros(MAXLINES, dtype='float64')
     numvals = 0
     with open(inputfilename, 'rU') as thefile:
         lines = thefile.readlines()
         for line in lines:
             numvals += 1
-            inputvec[numvals - 1] = float(line)
+            inputvec[numvals - 1] = np.float64(line)
     return 1.0 * inputvec[0:numvals]
 
 
@@ -709,8 +709,8 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
                   dodetrend=True):
     lookahead = 2
     peaks = peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
-    maxpeaks = np.asarray(peaks[0], dtype='float')
-    minpeaks = np.asarray(peaks[1], dtype='float')
+    maxpeaks = np.asarray(peaks[0], dtype='float64')
+    minpeaks = np.asarray(peaks[1], dtype='float64')
     zeropkindex = np.argmin(abs(maxpeaks[:, 0]))
     for i in range(zeropkindex + 1, maxpeaks.shape[0]):
         if maxpeaks[i, 0] > aclagthresh:
@@ -768,11 +768,10 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dode
     xcorrlen = len(thexcorr)
     xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     corrzero = int(xcorrlen // 2)
-    xcorrpertime = np.zeros((xcorrlen, len(data1)), dtype='float')
-    Rvals = np.zeros((len(data1)), dtype='float')
-    valid = np.zeros((len(data1)), dtype='float')
-    delayvals = np.zeros((len(data1)), dtype='float')
-    maxindex, maxlag, maxval, maxsigma, maskval, failreason = 0, 0.0, 0.0, 0.0, 1, 0
+    xcorrpertime = np.zeros((xcorrlen, len(data1)), dtype='float64')
+    Rvals = np.zeros((len(data1)), dtype='float64')
+    valid = np.zeros((len(data1)), dtype='float64')
+    delayvals = np.zeros((len(data1)), dtype='float64')
     for i in range(halfwindow, len(data1) - halfwindow):
         dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend)
@@ -926,7 +925,7 @@ def lfilter_zi(b, a):
     n = max(len(a), len(b))
 
     zin = (np.eye(n - 1) - np.hstack((-a[1:n, np.newaxis],
-                                      np.vstack((np.eye(n - 2), np.zeros(n - 2, dtype='float'))))))
+                                      np.vstack((np.eye(n - 2), np.zeros(n - 2, dtype='float64'))))))
 
     zid = b[1:n] - a[1:n] * b[0]
 
@@ -935,7 +934,7 @@ def lfilter_zi(b, a):
 
     # convert the result into a regular array (not a matrix)
     for i in range(len(zi_matrix)):
-        zi_return.append(float(zi_matrix[i][0]))
+        zi_return.append(np.float64(zi_matrix[i][0]))
 
     return np.array(zi_return)
 
@@ -954,10 +953,10 @@ def fastfiltfiltinit(b, a, x):
         raise ValueError("Input vector needs to be bigger than 3 * max(len(a),len(b).")
 
     if len(a) < ntaps:
-        a = np.r_[a, np.zeros(len(b) - len(a), dtype='float')]
+        a = np.r_[a, np.zeros(len(b) - len(a), dtype='float64')]
 
     if len(b) < ntaps:
-        b = np.r_[b, np.zeros(len(a) - len(b), dtype='float')]
+        b = np.r_[b, np.zeros(len(a) - len(b), dtype='float64')]
 
     zi = sp.signal.lfilter_zi(b, a)
 
@@ -1022,14 +1021,14 @@ def gauss_eval(x, p):
 
 
 def trapezoid_eval_loop(x, toplength, p):
-    r = np.zeros(len(x), dtype='float')
+    r = np.zeros(len(x), dtype='float64')
     for i in range(0, len(x)):
         r[i] = trapezoid_eval(x[i], toplength, p)
     return r
 
 
 def risetime_eval_loop(x, p):
-    r = np.zeros(len(x), dtype='float')
+    r = np.zeros(len(x), dtype='float64')
     for i in range(0, len(x)):
         r[i] = risetime_eval(x[i], p)
     return r
@@ -1303,11 +1302,12 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # maxsigma is in Hz
     # maxlag is in seconds
     warnings.filterwarnings("ignore", "Number*")
-    maskval = np.int_(1)
-    maxval = np.float_(0.0)
-    maxlag = np.float_(0.0)
-    maxsigma = np.float_(0.0)
-    failreason = np.int_(0)
+    failreason = np.uint16(0)
+    maxlag = np.float64(0.0)
+    maxindex = np.uint16(0)
+    maxval = np.float64(0.0)
+    maxsigma = np.float64(0.0)
+    maskval = np.uint16(1)
     numlagbins = len(thexcorr_y)
     binwidth = thexcorr_x[1] - thexcorr_x[0]
     searchbins = int(widthlimit // binwidth)
@@ -1320,11 +1320,11 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             lowerlim += 1
         while (thexcorr_y[upperlim - 1] < thexcorr_y[upperlim]) and (upperlim - 1) > lowerlim:
             upperlim -= 1
-    FML_BADAMP = 0x01
-    FML_BADLAG = 0x02
-    FML_BADWIDTH = 0x04
-    FML_HITEDGE = 0x08
-    FML_FITFAIL = 0x0f
+    FML_BADAMP = np.uint16(0x01)
+    FML_BADLAG = np.uint16(0x02)
+    FML_BADWIDTH = np.uint16(0x04)
+    FML_HITEDGE = np.uint16(0x08)
+    FML_FITFAIL = np.uint16(0x0f)
 
     # make an initial guess at the fit parameters for the gaussian
     # start with finding the maximum value
@@ -1337,10 +1337,10 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         if nupperlim > upperlim:
             nlowerlim = upperlim
             nlowerlim = upperlim - int(widthlimit)
-        maxindex = np.argmax(thexcorr_y[nlowerlim:nupperlim]) + nlowerlim
+        maxindex = (np.argmax(thexcorr_y[nlowerlim:nupperlim]) + nlowerlim).astype('int16')
         maxval_init = thexcorr_y[maxindex]
     else:
-        maxindex = np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim
+        maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int16')
         maxval_init = thexcorr_y[maxindex]
 
     # now get a location for that value
@@ -1376,12 +1376,11 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     if (maxval_init < threshval) and enforcethresh:
         failreason += FML_BADAMP
     if failreason > 0:
-        maskval = 0
+        maskval = np.uint16(0)
     if failreason > 0 and zerooutbadfit:
-        maxval = 0.0
-        maxlag = 0.0
-        maxsigma = 0.0
-        maskval = 0
+        maxval = np.float64(0.0)
+        maxlag = np.float64(0.0)
+        maxsigma = np.float64(0.0)
     else:
         if refine:
             fitend = min(maxindex + i + 1, upperlimit)
@@ -1427,11 +1426,11 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         if not (lagmin <= maxlag <= lagmax):
             failreason += FML_BADLAG
         if failreason > 0:
-            maskval = 0
+            maskval = np.uint16(0)
         if failreason > 0 and zerooutbadfit:
-            maxval = 0.0
-            maxlag = 0.0
-            maxsigma = 0.0
+            maxval = np.float64(0.0)
+            maxlag = np.float64(0.0)
+            maxsigma = np.float64(0.0)
     if debug or displayplots:
         print("init to final: maxval", maxval_init, maxval, ", maxlag:", maxlag_init, maxlag, ", width:", maxsigma_init,
               maxsigma)
@@ -1458,17 +1457,26 @@ def gaussfit(height, loc, width, xvals, yvals):
 
 # --------------------------- Resampling and time shifting functions -------------------------------------------
 class fastresampler:
-    def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100.0, doplot=False, debug=False):
+    def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100, doplot=False, debug=False, method='univariate'):
         self.upsampleratio = upsampleratio
         self.padvalue = padvalue
         self.initstep = timeaxis[1] - timeaxis[0]
         self.initstart = timeaxis[0]
         self.initend = timeaxis[-1]
-        self.hiresstep = self.initstep / self.upsampleratio
+        self.hiresstep = self.initstep / np.float64(self.upsampleratio)
         self.hires_x = np.r_[timeaxis[0] - self.padvalue:self.initstep * len(timeaxis) + self.padvalue:self.hiresstep]
         self.hiresstart = self.hires_x[0]
         self.hiresend = self.hires_x[-1]
-        self.hires_y = doresample(timeaxis, timecourse, self.hires_x, method='univariate')
+        if method == 'poly':
+            self.hires_y = 0.0 * self.hires_x
+            self.hires_y[int(self.padvalue // self.hiresstep) + 1:-(int(self.padvalue // self.hiresstep) + 1)] = \
+                sp.signal.resample_poly(timecourse, np.int(self.upsampleratio * 10), 10)
+        elif method == 'fourier':
+            self.hires_y = 0.0 * self.hires_x
+            self.hires_y[int(self.padvalue // self.hiresstep) + 1:-(int(self.padvalue // self.hiresstep) + 1)] = \
+                sp.signal.resample(timecourse, self.upsampleratio * len(timeaxis))
+        else:
+            self.hires_y = doresample(timeaxis, timecourse, self.hires_x, method=method)
         self.hires_y[:int(self.padvalue // self.hiresstep)] = self.hires_y[int(self.padvalue // self.hiresstep)]
         self.hires_y[-int(self.padvalue // self.hiresstep):] = self.hires_y[-int(self.padvalue // self.hiresstep)]
         if debug:
@@ -1517,7 +1525,7 @@ class fastresampler:
             pl.plot(self.hires_x, self.hires_y, newtimeaxis, out_y)
             pl.legend(('hires', 'output'))
             pl.show()
-        return 1.0 * out_y
+        return out_y
 
 
 def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio, doplot=False):
@@ -1547,13 +1555,13 @@ def dofastresample(orig_x, orig_y, new_x, hrstep, hrstart, upsampleratio):
 def doresample(orig_x, orig_y, new_x, method='cubic'):
     if method == 'cubic':
         cj = sp.signal.cspline1d(orig_y)
-        return sp.signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])
+        return np.float64(sp.signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
     elif method == 'quadratic':
         qj = sp.signal.qspline1d(orig_y)
-        return sp.signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])
+        return np.float64(sp.signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
     elif method == 'univariate':
         interpolator = sp.interpolate.UnivariateSpline(orig_x, orig_y, k=3, s=0)  # s=0 interpolates
-        return interpolator(new_x)
+        return np.float64(interpolator(new_x))
     else:
         print('invalid interpolation method')
         return None
