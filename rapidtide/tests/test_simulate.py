@@ -28,7 +28,10 @@ import rapidtide.tide_funcs as tide
 from numpy import r_, zeros, ones, random
 from pylab import *
 
-def test_simulate(display=False):
+def mse(vec1, vec2):
+    return np.mean(np.square(vec2 - vec1))
+
+def testsimulate(display=False):
     fmritr = 1.5
     numtrs = 260
     fmriskip =  0
@@ -94,8 +97,14 @@ def test_simulate(display=False):
         plot(initial_fmri_x, simdata, initial_fmri_x, initial_fmri_y)
         show()
 
+    # tests
+    msethresh = 1e-6
+    aethresh = 2
+    assert mse(simdata, initial_fmri_y) < msethresh
+    np.testing.assert_almost_equal(simdata, initial_fmri_y)
+
 def main():
-    test_simulate(display=True)
+    testsimulate(display=True)
 
 if __name__ == '__main__':
     main()
