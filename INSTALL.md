@@ -6,7 +6,7 @@ The processing programs in rapidtide require the following to be installed first
 * Python 2.x or 3.x
 * numpy
 * scipy
-* sklearn
+* scikit-learn
 * nibabel
 * matplotlib
 * statsmodels
