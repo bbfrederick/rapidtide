@@ -61,4 +61,4 @@ MINOR = _version_minor
 MICRO = _version_micro
 VERSION = __version__
 PACKAGE_DATA = {'rapidtide': [pjoin('data', '*')]}
-REQUIRES = ["numpy", "scipy", "matplotlib", "sklearn"]
+REQUIRES = ['numpy', 'scipy', 'pandas', 'scikit-learn', 'nibabel', 'matplotlib', 'statsmodels']
