@@ -137,8 +137,8 @@ if nibabelexists:
         nim = nib.load(inputfile)
         nim_data = nim.get_data()
         nim_hdr = nim.get_header()
-        thedims = nim_hdr['dim']
-        thesizes = nim_hdr['pixdim']
+        thedims = nim_hdr['dim'].copy()
+        thesizes = nim_hdr['pixdim'].copy()
         return nim, nim_data, nim_hdr, thedims, thesizes
 
 
@@ -163,6 +163,7 @@ if nibabelexists:
         output_nifti.set_qform(qaffine, code=int(qcode))
         output_nifti.set_sform(saffine, code=int(scode))
         output_nifti.to_filename(thename + suffix)
+        output_nifti = None
 
 
     def checkifnifti(filename):
@@ -1338,16 +1339,16 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             nlowerlim = upperlim
             nlowerlim = upperlim - int(widthlimit)
         maxindex = (np.argmax(thexcorr_y[nlowerlim:nupperlim]) + nlowerlim).astype('int16')
-        maxval_init = thexcorr_y[maxindex]
+        maxval_init = thexcorr_y[maxindex].astype('float64')
     else:
         maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int16')
-        maxval_init = thexcorr_y[maxindex]
+        maxval_init = thexcorr_y[maxindex].astype('float64')
 
     # now get a location for that value
-    maxlag_init = (1.0 * thexcorr_x[maxindex])
+    maxlag_init = (1.0 * thexcorr_x[maxindex]).astype('float64')
 
     # and calculate the width of the peak
-    maxsigma_init = 0.0
+    maxsigma_init = np.float64(0.0)
     upperlimit = len(thexcorr_y) - 1
     lowerlimit = 0
     i = 0
@@ -1359,7 +1360,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     while (maxindex - j >= lowerlimit) and (thexcorr_y[maxindex - j] > searchfrac * maxval_init) and (j < searchbins):
         j += 1
     j -= 1
-    maxsigma_init = (2.0 * searchfrac) * 2.0 * (i + j + 1) * binwidth / 2.355
+    maxsigma_init = np.float64((2.0 * searchfrac) * 2.0 * (i + j + 1) * binwidth / 2.355)
     if (debug and (maxval_init != 0.0)) or displayplots:
         print("maxval_init=", maxval_init, "maxindex=", maxindex, "maxlag_init=", maxlag_init, "maxsigma_init=",
               maxsigma_init, "maskval=", maskval, lagmin, lagmax, widthlimit, threshval)
@@ -1390,10 +1391,10 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             if fastgauss:
                 # do a non-iterative fit over the top of the peak
                 # 6/12/2015  This is just broken.  Gives quantized maxima
-                maxlag = 1.0 * sum(X * data) / sum(data)
+                maxlag = np.float64(1.0 * sum(X * data) / sum(data))
                 # maxsigma = np.sqrt(abs(np.square(sum((X - maxlag)) * data) / sum(data)))
-                maxsigma = np.sqrt(abs(sum((X - maxlag) ** 2 * data) / sum(data)))
-                maxval = data.max()
+                maxsigma = np.float64(np.sqrt(abs(sum((X - maxlag) ** 2 * data) / sum(data))))
+                maxval = np.float64(data.max())
             else:
                 # do a least squares fit over the top of the peak
                 #maxval, maxlag, maxsigma = gaussfit(maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init, X, data)
@@ -1402,25 +1403,25 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                 if fitend - fitstart >= 3:
                     plsq, dummy = sp.optimize.leastsq(gaussresiduals, p0,
                                                       args=(data, X), maxfev=5000)
-                    maxval = 1.0 * plsq[0]
+                    maxval = plsq[0]
                     maxlag = np.fmod((1.0 * plsq[1]), lagmod)
-                    maxsigma = 1.0 * plsq[2]
+                    maxsigma = plsq[2]
                 # if maxval > 1.0, fit failed catastrophically, zero out or reset to initial value
                 #     corrected logic for 1.1.6
                 if (np.fabs(maxval)) > 1.0 or (lagmin > maxlag) or (maxlag > lagmax):
                     if zerooutbadfit:
-                        maxval = 0.0
-                        maxlag = 0.0
-                        maxsigma = 0.0
-                        maskval = 0
+                        maxval = np.float64(0.0)
+                        maxlag = np.float64(0.0)
+                        maxsigma = np.float64(0.0)
+                        maskval = np.int16(0)
                     else:
-                        maxval = 1.0 * maxval_init
-                        maxlag = 1.0 * maxlag_init
-                        maxsigma = 1.0 * maxsigma_init
+                        maxval = np.float64(maxval_init)
+                        maxlag = np.float64(maxlag_init)
+                        maxsigma = np.float64(maxsigma_init)
         else:
-            maxval = 1.0 * maxval_init
-            maxlag = np.fmod(maxlag_init, lagmod)
-            maxsigma = 1.0 * maxsigma_init
+            maxval = np.float64(maxval_init)
+            maxlag = np.float64(np.fmod(maxlag_init, lagmod))
+            maxsigma = np.float64(maxsigma_init)
         if maxval == 0.0:
             failreason += FML_FITFAIL
         if not (lagmin <= maxlag <= lagmax):
