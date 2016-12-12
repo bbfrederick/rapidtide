@@ -767,7 +767,8 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dode
     dataseg2 = corrnormalize(data2[0:2 * halfwindow], prewindow, dodetrend)
     thexcorr = fastcorrelate(dataseg1, dataseg2)
     xcorrlen = len(thexcorr)
-    xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
+    #xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
+    xcorr_x = np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     corrzero = int(xcorrlen // 2)
     xcorrpertime = np.zeros((xcorrlen, len(data1)), dtype='float64')
     Rvals = np.zeros((len(data1)), dtype='float64')
@@ -1160,7 +1161,8 @@ def makelaglist(lagstart, lagend, lagstep):
     numsteps = int((lagend - lagstart) // lagstep + 1)
     lagend = lagstart + lagstep * (numsteps - 1)
     print("creating list of ", numsteps, " lag steps (", lagstart, " to ", lagend, " in steps of ", lagstep, ")")
-    thelags = np.r_[0.0:1.0 * numsteps] * lagstep + lagstart
+    #thelags = np.r_[0.0:1.0 * numsteps] * lagstep + lagstart
+    thelags = np.arange(0.0, 1.0 * numsteps) * lagstep + lagstart
     return thelags
 
 
@@ -1335,7 +1337,7 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             nlowerlim = lowerlim
             nupperlim = lowerlim + int(widthlimit)
         if nupperlim > upperlim:
-            nlowerlim = upperlim
+            nupperlim = upperlim
             nlowerlim = upperlim - int(widthlimit)
         maxindex = (np.argmax(thexcorr_y[nlowerlim:nupperlim]) + nlowerlim).astype('int16')
         maxval_init = thexcorr_y[maxindex].astype('float64')
@@ -1463,7 +1465,8 @@ class fastresampler:
         self.initstart = timeaxis[0]
         self.initend = timeaxis[-1]
         self.hiresstep = self.initstep / np.float64(self.upsampleratio)
-        self.hires_x = np.r_[timeaxis[0] - self.padvalue:self.initstep * len(timeaxis) + self.padvalue:self.hiresstep]
+        #self.hires_x = np.r_[timeaxis[0] - self.padvalue:self.initstep * len(timeaxis) + self.padvalue:self.hiresstep]
+        self.hires_x = np.arange(timeaxis[0] - self.padvalue, self.initstep * len(timeaxis) + self.padvalue, self.hiresstep)
         self.hiresstart = self.hires_x[0]
         self.hiresend = self.hires_x[-1]
         if method == 'poly':
@@ -1529,7 +1532,8 @@ class fastresampler:
 
 def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio, doplot=False):
     hiresstep = fmritr / upsampleratio
-    hires_x_padded = np.r_[-padvalue:fmritr * numtrs + padvalue:hiresstep]
+    #hires_x_padded = np.r_[-padvalue:fmritr * numtrs + padvalue:hiresstep]
+    hires_x_padded = np.arange(-padvalue, fmritr * numtrs + padvalue, hiresstep)
     hiresstart = hires_x_padded[0]
     hires_y = doresample(orig_x, orig_y, hires_x_padded, method='univariate')
     hires_y[:int(padvalue // hiresstep)] = hires_y[int(padvalue // hiresstep)]
