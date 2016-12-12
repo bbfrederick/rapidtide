@@ -1017,7 +1017,6 @@ def gausssk_eval(x, p):
 
 @conditionaljit()
 def gauss_eval(x, p):
-    # return p[0] * np.exp(np.square(-(x - p[1])) / (2 * np.square(p[2])))
     return p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
 
 
@@ -1393,13 +1392,12 @@ def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                 # 6/12/2015  This is just broken.  Gives quantized maxima
                 maxlag = np.float64(1.0 * sum(X * data) / sum(data))
                 # maxsigma = np.sqrt(abs(np.square(sum((X - maxlag)) * data) / sum(data)))
-                maxsigma = np.float64(np.sqrt(abs(sum((X - maxlag) ** 2 * data) / sum(data))))
+                maxsigma = np.float64(np.sqrt(np.fabs(np.sum((X - maxlag) ** 2 * data) / np.sum(data))))
                 maxval = np.float64(data.max())
             else:
                 # do a least squares fit over the top of the peak
-                #maxval, maxlag, maxsigma = gaussfit(maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init, X, data)
-                #maxlag = np.fmod(maxlag, lagmod)
-                p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init])
+                p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
+
                 if fitend - fitstart >= 3:
                     plsq, dummy = sp.optimize.leastsq(gaussresiduals, p0,
                                                       args=(data, X), maxfev=5000)
