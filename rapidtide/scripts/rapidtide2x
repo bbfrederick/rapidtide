@@ -187,7 +187,6 @@ def onecorrfit(thetc, corrscale,
             debug=optiondict['debug'],
             refine=optiondict['gaussrefine'],
             maxguess=0.0,
-            useguess=optiondict['useguess'],
             fastgauss=optiondict['fastgauss'],
             enforcethresh=optiondict['enforcethresh'],
             zerooutbadfit=optiondict['zerooutbadfit'],
@@ -651,7 +650,6 @@ def main():
     optiondict['lthreshval'] = 0.0  # zero out peaks with correlations lower than this value
     optiondict['uthreshval'] = 1.0  # zero out peaks with correlations higher than this value
     optiondict['edgebufferfrac'] = 0.0  # what fraction of the correlation window to avoid on either end when fitting
-    optiondict['useguess'] = False  # supply an initial guess for the correlation peak location
     optiondict['enforcethresh'] = True  # only do fits in voxels that exceed threshhold
     optiondict['zerooutbadfit'] = True  # if true zero out all fit parameters if the fit fails
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
