@@ -47,12 +47,17 @@ try:
 except ImportError:
     memprofilerexists = False
 
+
 def conditionalprofile():
     def resdec(f):
         if memprofilerexists:
             return profile(f)
         return f
+
     return resdec
+
+
+global rt_floatset, rt_floattype
 
 
 @conditionalprofile()
@@ -85,7 +90,7 @@ def startendcheck(timepoints, startpoint, endpoint):
 def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
                             optiondict):
     print('\tEstimating significance from ' + str(optiondict['numestreps']) + ' repetitions')
-    corrlist = np.zeros((optiondict['numestreps']), dtype='float64')
+    corrlist = np.zeros((optiondict['numestreps']), dtype=rt_floattype)
 
     for i in range(0, optiondict['numestreps']):
         # make a shuffled copy of the regressors
@@ -97,8 +102,8 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
 
         # fit the correlation
         maxindex, maxlag, maxval, maxsigma, maskval, failreason = \
-            onecorrfit(thexcorr, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts], 
-            optiondict)
+            onecorrfit(thexcorr, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
+                       optiondict)
 
         # find and tabulate correlation coefficient at optimal lag
         corrlist[i] = maxval
@@ -140,7 +145,7 @@ def correlationpass(fmridata, referencetc,
     inputshape = np.shape(fmridata)
     volumetotal = 0
     reportstep = 1000
-    thetc = np.zeros(len(os_fmri_x), dtype='float64')
+    thetc = np.zeros(np.shape(os_fmri_x), dtype=rt_floattype)
     for vox in range(0, inputshape[0]):
         if vox % reportstep == 0 or vox == inputshape[0] - 1:
             tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
@@ -157,20 +162,20 @@ def correlationpass(fmridata, referencetc,
 
     # garbage collect
     collected = gc.collect()
-    print("Garbage collector: collected %d objects." % (collected))
+    print("Garbage collector: collected %d objects." % collected)
 
     return volumetotal
 
 
-def onecorrfit(thetc, corrscale, 
-        optiondict, displayplots=False):
+def onecorrfit(thetc, corrscale,
+               optiondict, displayplots=False):
     if optiondict['bipolar']:
         if max(thetc) < -1.0 * min(thetc):
-            flipfac = np.float64(-1.0)
+            flipfac = rt_floatset(-1.0)
         else:
-            flipfac = np.float64(1.0)
+            flipfac = rt_floatset(1.0)
     else:
-        flipfac = np.float64(1.0)
+        flipfac = rt_floatset(1.0)
     if not optiondict['fixdelay']:
         maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag(
             corrscale,
@@ -182,7 +187,6 @@ def onecorrfit(thetc, corrscale,
             debug=optiondict['debug'],
             refine=optiondict['gaussrefine'],
             maxguess=0.0,
-            useguess=optiondict['useguess'],
             fastgauss=optiondict['fastgauss'],
             enforcethresh=optiondict['enforcethresh'],
             zerooutbadfit=optiondict['zerooutbadfit'],
@@ -192,10 +196,10 @@ def onecorrfit(thetc, corrscale,
     else:
         # do something different
         failreason = np.int16(0)
-        maxlag = np.float64(optiondict['fixeddelayvalue'])
+        maxlag = rt_floatset(optiondict['fixeddelayvalue'])
         maxindex = np.int16(bisect.bisect_left(corrscale, optiondict['fixeddelayvalue']))
-        maxval = np.float64(flipfac * thetc[maxindex])
-        maxsigma = np.float64(1.0)
+        maxval = rt_floatset(flipfac * thetc[maxindex])
+        maxsigma = rt_floatset(1.0)
         maskval = np.uint16(1)
 
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason
@@ -204,12 +208,12 @@ def onecorrfit(thetc, corrscale,
 def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             corrscale, corrmask, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
             R2, optiondict):
-    FML_BADAMP, FML_BADLAG , FML_BADWIDTH, FML_HITEDGE, FML_FITFAIL = 0x01, 0x02, 0x04, 0x08, 0x0f
+    FML_BADAMP, FML_BADLAG, FML_BADWIDTH, FML_HITEDGE, FML_FITFAIL = 0x01, 0x02, 0x04, 0x08, 0x0f
     displayplots = False
     inputshape = np.shape(corrout)
     volumetotal, ampfails, lagfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0
     reportstep = 1000
-    zerolagtc = np.float64(genlagtc.yfromx(initial_fmri_x))
+    zerolagtc = rt_floatset(genlagtc.yfromx(initial_fmri_x))
     sliceoffsettime = 0.0
 
     for vox in range(0, inputshape[0]):
@@ -221,24 +225,24 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             else:
                 sliceoffsettime = 0.0
             maxindex, maxlag, maxval, maxsigma, maskval, failreason = onecorrfit(corrout[vox, :], corrscale,
-                optiondict, displayplots=displayplots)
-            #print(maxindex.dtype, maxlag.dtype, maxval.dtype, maxsigma.dtype, maskval.dtype, failreason.dtype)
+                                                                                 optiondict, displayplots=displayplots)
+            # print(maxindex.dtype, maxlag.dtype, maxval.dtype, maxsigma.dtype, maskval.dtype, failreason.dtype)
 
             if maxval > 0.3:
                 displayplots = False
 
             # question - should maxlag be added or subtracted?  As of 10/18, it is subtracted
             #  potential answer - tried adding, results are terrible.
-            lagtc[vox, :] = np.float64(genlagtc.yfromx(initial_fmri_x - maxlag))
+            lagtc[vox, :] = rt_floatset(genlagtc.yfromx(initial_fmri_x - maxlag))
 
             # now tuck everything away in the appropriate output array
             lagmask[vox] = maskval
             if (maskval == 0) and optiondict['zerooutbadfit']:
-                lagtimes[vox] = np.float64(0.0)
-                lagstrengths[vox] = np.float64(0.0)
-                lagsigma[vox] = np.float64(0.0)
-                gaussout[vox, :] = np.float64(0.0)
-                R2[vox] = np.float64(0.0)
+                lagtimes[vox] = rt_floatset(0.0)
+                lagstrengths[vox] = rt_floatset(0.0)
+                lagsigma[vox] = rt_floatset(0.0)
+                gaussout[vox, :] = rt_floatset(0.0)
+                R2[vox] = rt_floatset(0.0)
                 if failreason & FML_BADAMP:
                     ampfails += 1
                 if failreason & FML_BADLAG:
@@ -251,51 +255,51 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                     fitfails += 1
             else:
                 volumetotal += 1
-                lagtimes[vox] = np.float64(np.fmod(maxlag, optiondict['lagmod']))
-                lagstrengths[vox] = np.float64(maxval)
-                lagsigma[vox] = np.float64(maxsigma)
+                lagtimes[vox] = rt_floatset(np.fmod(maxlag, optiondict['lagmod']))
+                lagstrengths[vox] = rt_floatset(maxval)
+                lagsigma[vox] = rt_floatset(maxsigma)
                 if (not optiondict['fixdelay']) and (maxsigma != 0.0):
-                    gaussout[vox, :] = np.float64(tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
+                    gaussout[vox, :] = rt_floatset(tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
                 else:
-                    gaussout[vox, :] = np.float64(0.0)
-                R2[vox] = np.float64(lagstrengths[vox] * lagstrengths[vox])
+                    gaussout[vox, :] = rt_floatset(0.0)
+                R2[vox] = rt_floatset(lagstrengths[vox] * lagstrengths[vox])
         else:
-            lagtc[vox, :] = np.float64(zerolagtc)
-            lagtimes[vox] = np.float64(0.0)
-            lagstrengths[vox] = np.float64(0.0)
-            lagsigma[vox] = np.float64(0.0)
-            gaussout[vox, :] = np.float64(0.0)
-            R2[vox] = np.float64(0.0)
+            lagtc[vox, :] = rt_floatset(zerolagtc)
+            lagtimes[vox] = rt_floatset(0.0)
+            lagstrengths[vox] = rt_floatset(0.0)
+            lagsigma[vox] = rt_floatset(0.0)
+            gaussout[vox, :] = rt_floatset(0.0)
+            R2[vox] = rt_floatset(0.0)
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
     print('\tampfails=', ampfails, ' lagfails=', lagfails, ' widthfail=', widthfails, ' edgefail=', edgefails,
           ' fitfail=', fitfails)
 
     # garbage collect
     collected = gc.collect()
-    print("Garbage collector: collected %d objects." % (collected))
+    print("Garbage collector: collected %d objects." % collected)
 
     return volumetotal
 
 
 def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengths, lagtimes, lagsigma, R2,
-                    theprefilter,
+                     theprefilter,
                     optiondict, padtrs=60, includemask=None, excludemask=None):
     inputshape = np.shape(fmridata)
-    ampmask = np.where(lagstrengths >= optiondict['ampthresh'], 1, 0)
+    ampmask = np.where(lagstrengths >= optiondict['ampthresh'], np.int16(1), np.int16(0))
     if optiondict['lagmaskside'] == 'upper':
         delaymask = \
-            np.where(lagtimes > optiondict['lagminthresh'], 1, 0) * \
-            np.where(lagtimes < optiondict['lagmaxthresh'], 1, 0)
+            np.where(lagtimes > optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
+            np.where(lagtimes < optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
     elif optiondict['lagmaskside'] == 'lower':
         delaymask = \
-            np.where(lagtimes < -optiondict['lagminthresh'], 1, 0) * \
-            np.where(lagtimes > -optiondict['lagmaxthresh'], 1, 0)
+            np.where(lagtimes < -optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
+            np.where(lagtimes > -optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
     else:
         abslag = abs(lagtimes)
         delaymask = \
-            np.where(abslag > optiondict['lagminthresh'], 1, 0) * \
-            np.where(abslag < optiondict['lagmaxthresh'], 1, 0)
-    sigmamask = np.where(lagsigma < optiondict['sigmathresh'], 1, 0)
+            np.where(abslag > optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
+            np.where(abslag < optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
+    sigmamask = np.where(lagsigma < optiondict['sigmathresh'], np.int16(1), np.int16(0))
     locationmask = 0 * ampmask + 1
     if includemask is not None:
         locationmask = locationmask * includemask
@@ -347,16 +351,17 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
     if optiondict['dofiltcalc']:
         print('splitting regressors by time lag for phase delay estimation')
         laglist = np.arange(optiondict['filtcalc_lower'], optiondict['filtcalc_upper'], optiondict['filtcalc_step'])
-        filtcalcout = np.zeros((len(laglist), inputshape[1]), dtype='float64')
+        filtcalcout = np.zeros((np.shape(laglist)[0], inputshape[1]), dtype=rt_floattype)
         fftlen = int(inputshape[1] // 2)
         fftlen -= fftlen % 2
-        filtcalcspecmag = np.zeros((len(laglist), fftlen), dtype='float64')
-        filtcalcspecphase = np.zeros((len(laglist), fftlen), dtype='float64')
-        for lagnum in range(0, len(laglist)):
+        filtcalcspecmag = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
+        filtcalcspecphase = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
+        for lagnum in range(0, np.shape(laglist)[0]):
             lower = laglist[lagnum] - optiondict['filtcalc_step'] / 2.0
             upper = laglist[lagnum] + optiondict['filtcalc_step'] / 2.0
             inlagrange = np.where(
-                locationmask * ampmask * np.where(lower < lagtimes, 1.0, 0.0) * np.where(lagtimes < upper, 1.0, 0))[0]
+                locationmask * ampmask * np.where(lower < lagtimes, np.int16(1), np.int16(0))
+                * np.where(lagtimes < upper, np.int16(1), np.int16(0)))[0]
             print('    summing', np.shape(inlagrange)[0], 'regressors with lags from', lower, 'to', upper)
             if np.shape(inlagrange)[0] > 0:
                 filtcalcout[lagnum, :] = tide.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0), False, True)
@@ -417,7 +422,7 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
 
     # garbage collect
     collected = gc.collect()
-    print("Garbage collector: collected %d objects." % (collected))
+    print("Garbage collector: collected %d objects." % collected)
 
     return volumetotal, outputdata
 
@@ -457,7 +462,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
         themask = themask * excludemask
 
     # add up all the voxels
-    globalmean = np.float64(indata[0, :])
+    globalmean = rt_floatset(indata[0, :])
     thesize = np.shape(themask)
     numvoxelsused = 0
     for vox in range(0, thesize[0]):
@@ -484,7 +489,7 @@ def usage():
           "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag]"
           "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
           "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
-          "[--regressor=FILENAME] [--regressorstart=STARTTIME]")
+          "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp]")
     print("")
     print("required arguments:")
     print("    fmrifilename             - the BOLD fmri file")
@@ -588,14 +593,17 @@ def usage():
     print("                               from each voxel (disables output of fitNorm)")
     print("")
     print("miscellaneous options:")
+    print("    --usesp                  - use single precision for internal calculations (may be useful when RAM is limited")
     print("    -c                       - data file is a converted CIFTI")
     print("    -S                       - simulate a run - just report command line options")
     print("    -d                       - display plots of interesting timecourses")
     print("    --nonumba                - disable jit compilation with numba")
-    print("    --memprofile             - enable memory profiling for debugging - warning: this slows things down a lot.")
+    print(
+        "    --memprofile             - enable memory profiling for debugging - warning: this slows things down a lot.")
     print("")
     print("experimental options (not fully tested, may not work):")
-    print("    --acfix                  - remove periodic components that corrupt the autocorrelation (enables --accheck).  Experimental.")
+    print(
+        "    --acfix                  - remove periodic components that corrupt the autocorrelation (enables --accheck).  Experimental.")
     print("    --tmask=MASKFILE         - only correlate during epochs specified in ")
     print("                               MASKFILE (NB: each line of MASKFILE contains the ")
     print("                               time and duration of an epoch to include")
@@ -642,7 +650,6 @@ def main():
     optiondict['lthreshval'] = 0.0  # zero out peaks with correlations lower than this value
     optiondict['uthreshval'] = 1.0  # zero out peaks with correlations higher than this value
     optiondict['edgebufferfrac'] = 0.0  # what fraction of the correlation window to avoid on either end when fitting
-    optiondict['useguess'] = False  # supply an initial guess for the correlation peak location
     optiondict['enforcethresh'] = True  # only do fits in voxels that exceed threshhold
     optiondict['zerooutbadfit'] = True  # if true zero out all fit parameters if the fit fails
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
@@ -650,7 +657,8 @@ def main():
 
     # postprocessing options
     optiondict['doglmfilt'] = True  # use a glm filter to remove the delayed regressor from the data in each voxel
-    optiondict['glmsourcefile'] = None  # name of the file from which to regress delayed regressors (if not the original data)
+    optiondict[
+        'glmsourcefile'] = None  # name of the file from which to regress delayed regressors (if not the original data)
     optiondict['doprewhiten'] = False  # prewhiten the data (I have no idea if this works)
     optiondict['armodelorder'] = 1  # AR model order for prewhitening the data (I have no idea if this works)
 
@@ -713,7 +721,8 @@ def main():
     optiondict['filtcalc_step'] = 0.50
 
     # debugging options
-    optiondict['precision'] = 'double'
+    optiondict['internalprecision'] = 'double'
+    optiondict['outputprecision'] = 'single'
     optiondict['nonumba'] = False
     optiondict['memprofile'] = False
     optiondict['fakerun'] = False
@@ -781,6 +790,7 @@ def main():
                                                                                                            'fastgauss',
                                                                                                            'memprofile',
                                                                                                            'nogaussrefine',
+                                                                                                           'usesp',
                                                                                                            'AR='])
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -804,6 +814,9 @@ def main():
             optiondict['gccphat'] = True
             optiondict['dodetrend'] = True
             print('Enabled GCC-PHAT fitting')
+        elif o == '--usesp':
+            optiondict['internalprecision'] = 'single'
+            print('Will use single precision for internal calculations')
         elif o == '--glmsourcefile':
             optiondict['glmsourcefile'] = a
             linkchar = '='
@@ -1094,14 +1107,26 @@ def main():
         tide.disablenumba()
 
     # set the internal precision
-    if optiondict['precision'] == 'double':
-        print('setting precision to double')
-        floattype = 'float64'
-        floatset = np.float64
+    global rt_floatset, rt_floattype
+    if optiondict['internalprecision'] == 'double':
+        print('setting internal precision to double')
+        rt_floattype = 'float64'
+        rt_floatset = np.float64
     else:
-        print('setting precision to single')
-        floattype = 'float32'
-        floatset = np.float32
+        print('setting internal precision to single')
+        rt_floattype = 'float32'
+        rt_floatset = np.float32
+
+    # set the output precision
+    if optiondict['outputprecision'] == 'double':
+        print('setting output precision to double')
+        rt_outfloattype = 'float64'
+        rt_outfloatset = np.float64
+    else:
+        print('setting output precision to single')
+        rt_outfloattype = 'float32'
+        rt_outfloatset = np.float32
+
     # write out the command used
     tide.writevec(formattedcmdline, outputname + '_formattedcommandline.txt')
     tide.writevec([' '.join(sys.argv)], outputname + '_commandline.txt')
@@ -1148,8 +1173,10 @@ def main():
     validstart, validend = startendcheck(timepoints, optiondict['startpoint'], optiondict['endpoint'])
     if optiondict['dogaussianfilter']:
         print('applying gaussian spatial filter to timepoints ', validstart, ' to ', validend)
+        reportstep = 10
         for i in range(validstart, validend):
-            tide.progressbar(i + 1, timepoints, label='Percent complete')
+            if i % reportstep == 0 or i == validend - 1:
+                tide.progressbar(i - validstart + 1, timepoints - 1, label='Percent complete')
             nim_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, optiondict['gausssigma'],
                                                 nim_data[:, :, :, i])
         timings.append(['End 3D smoothing', time.time(), None, None])
@@ -1209,10 +1236,7 @@ def main():
     if optiondict['verbose']:
         print('input vector length', len(inputvec), 'input freq', inputfreq, 'input start time', inputstarttime)
 
-    # make numreference divisible by 4
-    # numreference = numreference - numreference % 4
-    # reference_x = np.r_[0.0:1.0 * numreference] / inputfreq - (inputstarttime + optiondict['offsettime'])
-    reference_x = np.r_[0.0:numreference] * inputperiod - (inputstarttime + optiondict['offsettime'])
+    reference_x = np.arange(0.0, numreference) * inputperiod - (inputstarttime + optiondict['offsettime'])
 
     # Print out initial information
     if optiondict['verbose']:
@@ -1225,12 +1249,17 @@ def main():
     optiondict['fmrifreq'] = fmrifreq
     skiptime = fmritr * (optiondict['preprocskip'] + optiondict['addedskip'])
     print('first fMRI point is at ', skiptime, ' seconds relative to time origin')
-    initial_fmri_x = np.r_[0.0:(timepoints - optiondict['addedskip'])] * fmritr + skiptime
-    os_fmri_x = np.r_[0.0:(timepoints - optiondict['addedskip']) * optiondict['oversampfactor'] - (
-        optiondict['oversampfactor'] - 1)] * oversamptr + skiptime
+    # initial_fmri_x = np.r_[0.0:(timepoints - optiondict['addedskip'])] * fmritr + skiptime
+    initial_fmri_x = np.arange(0.0, timepoints - optiondict['addedskip']) * fmritr + skiptime
+
+    # os_fmri_x = np.r_[0.0:(timepoints - optiondict['addedskip']) * optiondict['oversampfactor'] - (
+    #    optiondict['oversampfactor'] - 1)] * oversamptr + skiptime
+    os_fmri_x = np.arange(0.0, (timepoints - optiondict['addedskip']) * optiondict['oversampfactor'] - (
+        optiondict['oversampfactor'] - 1)) * oversamptr + skiptime
+
     if optiondict['verbose']:
-        print(len(os_fmri_x))
-        print(len(initial_fmri_x))
+        print(np.shape(os_fmri_x)[0])
+        print(np.shape(initial_fmri_x)[0])
 
     # Clip the data
     if not optiondict['useglobalref'] and False:
@@ -1279,7 +1308,7 @@ def main():
             if optiondict['verbose']:
                 print('    input freq:', inputfreq)
                 print('    fmri freq:', fmrifreq)
-                print('    npoints:', len(reference_y))
+                print('    npoints:', np.shape(reference_y)[0])
                 print('    filtorder:', optiondict['filtorder'])
             reference_y_filt = tide.dolpfiltfilt(inputfreq, 0.5 * fmrifreq, reference_y, optiondict['filtorder'],
                                                  padlen=int(inputfreq * optiondict['padseconds']))
@@ -1292,7 +1321,7 @@ def main():
                 print('applying brickwall antialiasing filter')
                 reference_y_filt = tide.dolpfftfilt(inputfreq, 0.5 * fmrifreq, reference_y,
                                                     padlen=int(inputfreq * optiondict['padseconds']))
-        reference_y = reference_y_filt.real
+        reference_y = rt_floatset(reference_y_filt.real)
 
     warnings.filterwarnings('ignore', 'Casting*')
 
@@ -1301,7 +1330,7 @@ def main():
 
     # prepare the temporal mask
     if optiondict['usetmask']:
-        tmask_y = maketmask(optiondict['tmaskname'], reference_x, 0.0 * reference_y)
+        tmask_y = maketmask(optiondict['tmaskname'], reference_x, rt_floatset(reference_y))
         tmaskos_y = tide.doresample(reference_x, tmask_y, os_fmri_x, method=optiondict['interptype'])
         tide.writenpvecs(tmask_y, outputname + '_temporalmask.txt')
 
@@ -1348,9 +1377,10 @@ def main():
     # Realized 12/11/15 from simulation that this is actually a mistake. The real expression is more complicated.
     # Fixed and tested.  Lagtime is now estimated without bias at all oversample factors (and oversampling doesn't actually
     #     seem to contribute any increase in accuracy
-    corrscale = np.r_[0.0:numccorrlags] * corrtr - (numccorrlags * corrtr) / 2.0 + (optiondict[
-                                                                                        'oversampfactor'] - 0.5) * corrtr
-
+    # corrscale = np.r_[0.0:numccorrlags] * corrtr - (numccorrlags * corrtr) / 2.0 + (optiondict[
+    #                                                                                    'oversampfactor'] - 0.5) * corrtr
+    corrscale = np.arange(0.0, numccorrlags) * corrtr - (numccorrlags * corrtr) / 2.0 + (optiondict[
+                                                                                             'oversampfactor'] - 0.5) * corrtr
     corrorigin = numccorrlags // 2 + 1
     lagmininpts = int((-optiondict['lagmin'] / corrtr) - 0.5)
     lagmaxinpts = int((optiondict['lagmax'] / corrtr) + 0.5)
@@ -1371,44 +1401,44 @@ def main():
         nativearmodelshape = (xsize, ysize, numslices, optiondict['armodelorder'])
     internalspaceshape = numspatiallocs
     internalarmodelshape = (numspatiallocs, optiondict['armodelorder'])
-    meanval = np.zeros(internalspaceshape, dtype='float64')
-    lagtimes = np.zeros(internalspaceshape, dtype='float64')
-    lagstrengths = np.zeros(internalspaceshape, dtype='float64')
-    lagsigma = np.zeros(internalspaceshape, dtype='float64')
+    meanval = np.zeros(internalspaceshape, dtype=rt_floattype)
+    lagtimes = np.zeros(internalspaceshape, dtype=rt_floattype)
+    lagstrengths = np.zeros(internalspaceshape, dtype=rt_floattype)
+    lagsigma = np.zeros(internalspaceshape, dtype=rt_floattype)
     lagmask = np.zeros(internalspaceshape, dtype='uint16')
     corrmask = np.zeros(internalspaceshape, dtype='uint16')
-    R2 = np.zeros(internalspaceshape, dtype='float64')
+    R2 = np.zeros(internalspaceshape, dtype=rt_floattype)
 
-    corroutlen = len(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
+    corroutlen = np.shape(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])[0]
     if fileiscifti:
         nativecorrshape = (1, 1, 1, corroutlen, numspatiallocs)
     else:
         nativecorrshape = (xsize, ysize, numslices, corroutlen)
     internalcorrshape = (numspatiallocs, corroutlen)
-    corrout = np.zeros(internalcorrshape, dtype='float64')
-    gaussout = np.zeros(internalcorrshape, dtype='float64')
+    corrout = np.zeros(internalcorrshape, dtype=rt_floattype)
+    gaussout = np.zeros(internalcorrshape, dtype=rt_floattype)
 
     if fileiscifti:
-        nativefmrishape = (1, 1, 1, len(initial_fmri_x), numspatiallocs)
+        nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
     else:
-        nativefmrishape = (xsize, ysize, numslices, len(initial_fmri_x))
-    internalfmrishape = (numspatiallocs, len(initial_fmri_x))
-    lagtc = np.zeros(internalfmrishape, dtype='float64')
+        nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
+    internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
+    lagtc = np.zeros(internalfmrishape, dtype=rt_floattype)
 
     if optiondict['dorefineregressor']:
-        shiftedtcs = np.zeros(internalfmrishape, dtype='float64')
+        shiftedtcs = np.zeros(internalfmrishape, dtype=rt_floattype)
         refinemask = np.zeros(internalspaceshape, dtype='uint16')
 
     if optiondict['doglmfilt'] or optiondict['doprewhiten']:
-        meanvalue = np.zeros(internalspaceshape, dtype='float32')
-        rvalue = np.zeros(internalspaceshape, dtype='float32')
-        r2value = np.zeros(internalspaceshape, dtype='float32')
-        fitNorm = np.zeros(internalspaceshape, dtype='float32')
-        fitcoff = np.zeros(internalspaceshape, dtype='float32')
-        datatoremove = np.zeros(internalfmrishape, dtype='float32')
-        filtereddata = np.zeros(internalfmrishape, dtype='float32')
-        prewhiteneddata = np.zeros(internalfmrishape, dtype='float32')
-        arcoffs = np.zeros(internalarmodelshape, dtype='float32')
+        meanvalue = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        rvalue = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        r2value = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        fitNorm = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        fitcoff = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        datatoremove = np.zeros(internalfmrishape, dtype=rt_outfloattype)
+        filtereddata = np.zeros(internalfmrishape, dtype=rt_outfloattype)
+        prewhiteneddata = np.zeros(internalfmrishape, dtype=rt_outfloattype)
+        arcoffs = np.zeros(internalarmodelshape, dtype=rt_outfloattype)
 
     # prepare for fast resampling
     padvalue = max((-optiondict['lagmin'], optiondict['lagmax'])) + 30.0
@@ -1426,7 +1456,7 @@ def main():
     refine = True
     if optiondict['verbose']:
         print('refine is set to ', refine)
-    optiondict['edgebufferfrac'] = max([optiondict['edgebufferfrac'], 2.0 / len(corrscale)])
+    optiondict['edgebufferfrac'] = max([optiondict['edgebufferfrac'], 2.0 / np.shape(corrscale)[0]])
     if optiondict['verbose']:
         print('edgebufferfrac set to ', optiondict['edgebufferfrac'])
 
@@ -1479,7 +1509,8 @@ def main():
                         acfixfilter.settype('arb_stop')
                         acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
                         cleaned_referencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
-                        tide.writenpvecs(cleaned_referencetc, outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
+                        tide.writenpvecs(cleaned_referencetc,
+                                         outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
                 else:
                     cleaned_referencetc = 1.0 * referencetc
             else:
@@ -1500,8 +1531,8 @@ def main():
             else:
                 getNullDistributionData_func = getNullDistributionData
             corrdistdata = getNullDistributionData_func(referencetc, corrscale, theprefilter,
-                                                   oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
-                                                   optiondict)
+                                                        oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
+                                                        optiondict)
             tide.writenpvecs(corrdistdata, outputname + '_corrdistdata_pass' + str(thepass) + '.txt')
 
             # calculate percentiles for the crosscorrelation from the distribution data
@@ -1537,12 +1568,12 @@ def main():
         else:
             correlationpass_func = correlationpass
         voxelsprocessed_cp = correlationpass_func(fmri_data[:, optiondict['addedskip']:], cleaned_referencetc,
-                                             initial_fmri_x, os_fmri_x,
-                                             fmritr,
-                                             corrorigin, lagmininpts, lagmaxinpts,
-                                             corrmask, corrout, meanval,
-                                             theprefilter,
-                                             optiondict)
+                                                  initial_fmri_x, os_fmri_x,
+                                                  fmritr,
+                                                  corrorigin, lagmininpts, lagmaxinpts,
+                                                  corrmask, corrout, meanval,
+                                                  theprefilter,
+                                                  optiondict)
         timings.append(['Correlation calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
         # Step 2 - correlation fitting and time lag estimation
@@ -1554,9 +1585,11 @@ def main():
         else:
             fitcorr_func = fitcorr
         voxelsprocessed_fc = fitcorr_func(genlagtc, initial_fmri_x,
-                                     lagtc, slicesize, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
-                                     corrmask, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
-                                     R2, optiondict)
+                                          lagtc, slicesize,
+                                          corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
+                                          corrmask, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval,
+                                          gaussout,
+                                          R2, optiondict)
         timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
 
         # Step 3 - regressor refinement for next pass
@@ -1627,7 +1660,7 @@ def main():
                 print('rereading', fmrifilename, ' for GLM filter, please wait')
                 nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
             fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
-        inittc = np.zeros(np.shape(fmri_data)[1] - optiondict['addedskip'], dtype='float64')
+        inittc = np.zeros(np.shape(fmri_data)[1] - optiondict['addedskip'], dtype=rt_floattype)
         if optiondict['memprofile']:
             memcheckpoint('about to start glm noise removal...')
         for vox in range(0, numspatiallocs):
@@ -1637,39 +1670,40 @@ def main():
             if np.mean(inittc) >= threshval:
                 # slope, intercept , R, pval, thestderr = scipy.linregress(lagtc[vox, :], inittc)
                 thefit, R = tide.mlregress(lagtc[vox, :], inittc)
-                meanvalue[vox] = np.float32(thefit[0, 0])
-                rvalue[vox] = np.float32(R)
-                r2value[vox] = np.float32(R * R)
-                fitcoff[vox] = np.float32(thefit[0, 1])
-                fitNorm[vox] = np.float32(thefit[0, 1] / thefit[0, 0])
-                datatoremove[vox, :] = np.float32(fitcoff[vox] * lagtc[vox, :])
+                meanvalue[vox] = rt_floatset(thefit[0, 0])
+                rvalue[vox] = rt_floatset(R)
+                r2value[vox] = rt_floatset(R * R)
+                fitcoff[vox] = rt_floatset(thefit[0, 1])
+                fitNorm[vox] = rt_floatset(thefit[0, 1] / thefit[0, 0])
+                datatoremove[vox, :] = rt_floatset(fitcoff[vox] * lagtc[vox, :])
                 thefilttc = inittc - datatoremove[vox, :]
-                filtereddata[vox, :] = np.float32(thefilttc)
+                filtereddata[vox, :] = rt_floatset(thefilttc)
                 if optiondict['doprewhiten']:
                     arcoffs[vox, :] = pacf_yw(thefilttc, nlags=optiondict['armodelorder'])[1:]
-                    prewhiteneddata[vox, :] = np.float32(prewhiten(inittc, arcoffs[vox, :]))
+                    prewhiteneddata[vox, :] = rt_floatset(prewhiten(inittc, arcoffs[vox, :]))
         if optiondict['memprofile']:
             memcheckpoint('...done')
         if optiondict['doprewhiten']:
             arcoff_ref = pacf_yw(resampref_y, nlags=optiondict['armodelorder'])[1:]
             print('\nAR coefficient(s) for reference waveform: ', arcoff_ref)
-            resampref_y_pw = prewhiten(resampref_y, arcoff_ref)
+            resampref_y_pw = rt_floatset(prewhiten(resampref_y, arcoff_ref))
         else:
-            resampref_y_pw = 1.0 * resampref_y
+            resampref_y_pw = rt_floatset(resampref_y)
         if optiondict['usewindowfunc']:
             if optiondict['gccphat']:
-                referencetc_pw = tide.hamming(len(resampref_y_pw)) * tide.detrend(
-                    tide.stdnormalize(resampref_y_pw)) / len(resampref_y_pw)
+                referencetc_pw = tide.hamming(np.shape(resampref_y_pw)[0]) * tide.detrend(
+                    tide.stdnormalize(resampref_y_pw)) / np.shape(resampref_y_pw)[0]
             else:
                 referencetc_pw = tide.stdnormalize(
-                    tide.hamming(len(resampref_y_pw)) * tide.detrend(tide.stdnormalize(resampref_y_pw))) / len(
-                    resampref_y_pw)
+                    tide.hamming(np.shape(resampref_y_pw)[0]) * tide.detrend(tide.stdnormalize(resampref_y_pw))) / \
+                                 np.shape(
+                                     resampref_y_pw)[0]
         else:
             if optiondict['gccphat']:
-                referencetc_pw = tide.detrend(tide.stdnormalize(resampref_y_pw)) / len(resampref_y_pw)
+                referencetc_pw = tide.detrend(tide.stdnormalize(resampref_y_pw)) / np.shape(resampref_y_pw)[0]
             else:
-                referencetc_pw = tide.stdnormalize(tide.detrend(tide.stdnormalize(resampref_y_pw))) / len(
-                    resampref_y_pw)
+                referencetc_pw = tide.stdnormalize(tide.detrend(tide.stdnormalize(resampref_y_pw))) / np.shape(
+                    resampref_y_pw)[0]
         print('')
         if optiondict['displayplots']:
             fig = figure()
@@ -1763,7 +1797,7 @@ def main():
     if fileiscifti:
         theheader['intent_code'] = 3002
     else:
-        theheader['dim'][4] = len(corrscale)
+        theheader['dim'][4] = np.shape(corrscale)[0]
     theheader['toffset'] = corrscale[corrorigin - lagmininpts]
     theheader['pixdim'][4] = corrtr
     tide.savetonifti(gaussout.reshape(nativecorrshape), theheader, thesizes, outputname + '_gaussout' + outsuffix4d)
@@ -1783,7 +1817,7 @@ def main():
     if fileiscifti:
         theheader['intent_code'] = 3002
     else:
-        theheader['dim'][4] = len(initial_fmri_x)
+        theheader['dim'][4] = np.shape(initial_fmri_x)[0]
     if optiondict['savelagregressors']:
         tide.savetonifti(lagtc.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_lagregressor' + outsuffix4d)
