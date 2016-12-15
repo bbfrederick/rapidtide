@@ -963,10 +963,6 @@ def gaussskresiduals(p, y, x):
 
 
 @conditionaljit()
-def gaussresiduals_old(p, y, x):
-    return y - gauss_eval(x, p)
-
-@conditionaljit()
 def gaussresiduals(p, y, x):
     return y - p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
 
