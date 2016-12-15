@@ -593,7 +593,7 @@ def usage():
     print("                               from each voxel (disables output of fitNorm)")
     print("")
     print("miscellaneous options:")
-    print("    --usesp                  - use single precision for internal calculations (may be useful when RAM is limited")
+    print("    --usesp                  - use single precision for internal calculations (may be useful when RAM is limited)")
     print("    -c                       - data file is a converted CIFTI")
     print("    -S                       - simulate a run - just report command line options")
     print("    -d                       - display plots of interesting timecourses")
