@@ -33,7 +33,11 @@ import os
 from scipy import signal
 from scipy.stats import johnsonsb
 
-domemprofile = False
+# ---------------------------------------- Global constants -------------------------------------------
+defaultbutterorder = 6
+MAXLINES = 10000000
+
+# ----------------------------------------- Conditional imports ---------------------------------------
 try:
     from memory_profiler import profile
 
@@ -41,15 +45,7 @@ try:
 except ImportError:
     memprofilerexists = False
 
-def conditionalprofile():
-    def resdec(f):
-        if memprofilerexists and domemprofile:
-            return profile(f)
-        return f
 
-    return resdec
-
-donotusenumba = False
 try:
     from numba import jit
 
@@ -57,12 +53,16 @@ try:
 except ImportError:
     numbaexists = False
 
+
 try:
     import nibabel as nib
 
     nibabelexists = True
 except ImportError:
     nibabelexists = False
+
+
+donotusenumba = False
 
 
 def conditionaljit():
@@ -74,44 +74,22 @@ def conditionaljit():
     return resdec
 
 
-# ---------------------------------------- Global constants -------------------------------------------
+donotbeaggressive = True
+def conditionaljit2():
+    def resdec(f):
+        if (not numbaexists) or donotusenumba or donotbeaggressive:
+            return f
+        return jit(f)
 
-# ---------------------------------------- Debugging/profiling functions ------------------------------
-@conditionalprofile()
-def checkpoint1():
-    pass
-
-
-@conditionalprofile()
-def checkpoint2():
-    pass
+    return resdec
 
 
-@conditionalprofile()
-def checkpoint3():
-    pass
+def disablenumba():
+    global donotusenumba
+    donotusenumba = True
 
 
-@conditionalprofile()
-def checkpoint4():
-    pass
-
-
-@conditionalprofile()
-def checkpoint5():
-    pass
-
-
-@conditionalprofile()
-def checkpoint6():
-    pass
-
-
-# ---------------------------------------- Global defaults ----------------------------------
-defaultbutterorder = 6
-MAXLINES = 10000000
-
-
+# ------------------------------------------ Version function ----------------------------------
 def version():
     thispath, thisfile = os.path.split(__file__)
     print(thispath)
@@ -124,11 +102,6 @@ def version():
         return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
     else:
         return 'UNKNOWN', 'UNKNOWN'
-
-
-def disablenumba():
-    global donotusenumba
-    donotusenumba = True
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
@@ -535,7 +508,7 @@ def writenpvecs(thevecs, outputfile, lineend=''):
         thelineending = '\n'
         openmode = 'w'
     with open(outputfile, openmode) as FILE:
-        if len(theshape) == 2:
+        if thevecs.ndim == 2:
             for i in range(0, theshape[1]):
                 for j in range(0, theshape[0]):
                     FILE.writelines(str(thevecs[j, i]) + '\t')
@@ -580,7 +553,7 @@ def _datacheck_peakdetect(x_axis, y_axis):
     if x_axis is None:
         x_axis = range(len(y_axis))
 
-    if len(y_axis) != len(x_axis):
+    if np.shape(y_axis) != np.shape(x_axis):
         raise ValueError(
             "Input vectors y_axis and x_axis must have same length")
 
@@ -590,7 +563,7 @@ def _datacheck_peakdetect(x_axis, y_axis):
     return x_axis, y_axis
 
 
-def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0):
+def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0.0):
     """
     Converted from/based on a MATLAB script at: 
     http://billauer.co.il/peakdet.html
@@ -635,7 +608,7 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0):
     # check input data
     x_axis, y_axis = _datacheck_peakdetect(x_axis, y_axis)
     # store data length for later use
-    length = len(y_axis)
+    length = np.shape(y_axis)[0]
 
     # perform some checks
     if lookahead < 1:
@@ -721,7 +694,7 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
             sidelobeindex = valtoindex(corrscale, sidelobetime)
             sidelobeamp = thexcorr[sidelobeindex]
             numbins = 1
-            while (sidelobeindex + numbins < len(corrscale) - 1) and (
+            while (sidelobeindex + numbins < np.shape(corrscale)[0] - 1) and (
                 thexcorr[sidelobeindex + numbins] > sidelobeamp / 2.0):
                 numbins += 1
             sidelobewidth = (corrscale[sidelobeindex + numbins] - corrscale[sidelobeindex]) * 2.0
@@ -750,7 +723,7 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, prewindow=False, dode
     halfwindow = int((windowsize + 1) // 2)
     corrpertime = data1 * 0.0
     ppertime = data1 * 0.0
-    for i in range(halfwindow, len(data1) - halfwindow):
+    for i in range(halfwindow, np.shape(data1)[0] - halfwindow):
         dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         thepcorr = sp.stats.stats.pearsonr(dataseg1, dataseg2)
@@ -766,15 +739,15 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dode
     dataseg1 = corrnormalize(data1[0:2 * halfwindow], prewindow, dodetrend)
     dataseg2 = corrnormalize(data2[0:2 * halfwindow], prewindow, dodetrend)
     thexcorr = fastcorrelate(dataseg1, dataseg2)
-    xcorrlen = len(thexcorr)
+    xcorrlen = np.shape(thexcorr)[0]
     #xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     xcorr_x = np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     corrzero = int(xcorrlen // 2)
-    xcorrpertime = np.zeros((xcorrlen, len(data1)), dtype='float64')
-    Rvals = np.zeros((len(data1)), dtype='float64')
-    valid = np.zeros((len(data1)), dtype='float64')
-    delayvals = np.zeros((len(data1)), dtype='float64')
-    for i in range(halfwindow, len(data1) - halfwindow):
+    xcorrpertime = np.zeros((xcorrlen, np.shape(data1)[0]), dtype='float64')
+    Rvals = np.zeros(np.shape(data1), dtype='float64')
+    valid = np.zeros(np.shape(data1), dtype='float64')
+    delayvals = np.zeros(np.shape(data1), dtype='float64')
+    for i in range(halfwindow,np.shape(data1)[0] - halfwindow):
         dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         xcorrpertime[:, i] = fastcorrelate(dataseg1, dataseg2)
@@ -812,7 +785,7 @@ def eckartraw(input1, input2, doplot=False, threshfrac=0.1):
     print("max(abs(denom))", max(absdenom))
     thresh = max(absdenom) * threshfrac
     print("thresh", thresh)
-    G = np.where(absdenom > thresh, G12 / denom, 0.0)
+    G = np.where(absdenom > thresh, G12 / denom, np.float64(0.0))
     g = np.real(fftpack.fftshift(fftpack.ifft(G)))
     if doplot:
         xvec = range(0, len(fft1))
@@ -866,7 +839,7 @@ def fastcorrelate(input1, input2, usefft=True):
 def gccphat(input1, input2, doplot=False):
     g1 = gccphatraw(input1, input1, doplot=False)
     g2 = gccphatraw(input2, input2, doplot=False)
-    normfac = np.sqrt(g1[len(g1) / 2 + 1] * g2[len(g2) / 2 + 1])
+    normfac = np.sqrt(g1[np.shape(g1)[0] / 2 + 1] * g2[np.shape(g2)[0] / 2 + 1])
     return gccphatraw(input1, input2, doplot=doplot) / normfac
 
 
@@ -878,7 +851,7 @@ def gccphatraw(input1, input2, doplot, threshfrac=0.1):
     denom = G12
     absdenom = abs(denom)
     thresh = max(abs(denom)) * threshfrac
-    G = np.where(absdenom > thresh, G12 / absdenom, 0.0)
+    G = np.where(absdenom > thresh, G12 / absdenom, np.float64(0.0))
     g = np.real(fftpack.fftshift(fftpack.ifft(G)))
     if doplot:
         xvec = range(0, len(fft1))
@@ -990,8 +963,12 @@ def gaussskresiduals(p, y, x):
 
 
 @conditionaljit()
-def gaussresiduals(p, y, x):
+def gaussresiduals_old(p, y, x):
     return y - gauss_eval(x, p)
+
+@conditionaljit()
+def gaussresiduals(p, y, x):
+    return y - p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
 
 
 def trapezoidresiduals(p, y, x, toplength):
@@ -1070,9 +1047,9 @@ def getfracval(datamat, thefrac, numbins=200):
 
 def makepmask(rvals, pval, sighistfit, onesided=True):
     if onesided:
-        return np.where(rvals > getfracvalsfromfit(sighistfit, 1.0 - pval), 1, 0)
+        return np.where(rvals > getfracvalsfromfit(sighistfit, 1.0 - pval), np.int16(1), np.int16(0))
     else:
-        return np.where(np.abs(rvals) > getfracvalsfromfit(sighistfit, 1.0 - pval / 2.0), 1, 0)
+        return np.where(np.abs(rvals) > getfracvalsfromfit(sighistfit, 1.0 - pval / 2.0), np.int16(1), np.int16(0))
 
 
 def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False):
@@ -1153,7 +1130,7 @@ def makemask(image, threshpct=25.0, verbose=False):
     threshval = (threshpct / 100.0) * fracval
     if verbose:
         print('fracval:', fracval, ' threshpct:', threshpct, ' mask threshhold:', threshval)
-    themask = np.where(image > threshval, 1.0, 0.0)
+    themask = np.where(image > threshval, np.int16(1), np.int16(0))
     return themask
 
 
@@ -1217,7 +1194,7 @@ def trendgen(thexvals, thefitcoffs, demean):
     thefit = 0.0 * thexvals
     if order > 0:
         for i in range(1, order + 1):
-            thefit = thefit + thefitcoffs[order - i] * thepoly
+            thefit += thefitcoffs[order - i] * thepoly
             thepoly = np.multiply(thepoly, thexvals)
     if demean:
         thefit = thefit + thefitcoffs[order]
@@ -1294,7 +1271,7 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
 
 
 # disabled conditionaljit on 11/8/16.  This causes crashes on some machines (but not mine, strangely enough)
-# @conditionaljit()
+@conditionaljit2()
 def findmaxlag(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit, 
                edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
@@ -1547,7 +1524,6 @@ def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio,
     return hires_x_padded, hires_y, hiresstep, hiresstart
 
 
-#@conditionalprofile()
 def dofastresample(orig_x, orig_y, new_x, hrstep, hrstart, upsampleratio):
     starthrindex = int((new_x[0] - hrstart) / hrstep)
     stride = int(upsampleratio)
@@ -1685,7 +1661,7 @@ def calcsliceoffset(sotype, slicenum, numslices, tr, multiband=1):
 # timeshift using fourier phase multiplication
 def timeshift(inputtc, shifttrs, padtrs, doplot=False):
     # set up useful parameters
-    thelen = len(inputtc)
+    thelen = np.shape(inputtc)[0]
     thepaddedlen = thelen + 2 * padtrs
     imag = 1.j
 
@@ -1702,7 +1678,7 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 
     # finish initializations
     osfac = 8
-    fftlen = len(preshifted_y)
+    fftlen = np.shape(preshifted_y)[0]
     osfftlen = osfac * fftlen
 
     # create the phase modulation timecourse
@@ -1755,7 +1731,7 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 # timeshift using direct resampling
 def timeshift2(inputtc, shifttrs, padtrs, doplot=False, dopostfilter=False):
     # set up useful parameters
-    thelen = len(inputtc)
+    thelen = np.shape(inputtc)[0]
     thepaddedlen = thelen + 2 * padtrs
     offset = padtrs
 
@@ -1767,7 +1743,7 @@ def timeshift2(inputtc, shifttrs, padtrs, doplot=False, dopostfilter=False):
     weights = np.zeros(thepaddedlen, dtype='float')  # initialize the weight buffer (with pad)
 
     # now do the math
-    preshifted_x = np.arange(0.0, len(preshifted_y), 1.0)
+    preshifted_x = np.arange(0.0, np.shape(preshifted_y)[0], 1.0)
     shifted_x = preshifted_x - shifttrs
     preshifted_y[offset:offset + thelen] = inputtc[:]  # copy initial data into shift buffer
     revtc = inputtc[::-1]
@@ -1878,9 +1854,9 @@ def corrnormalize(thedata, prewindow, dodetrend):
     # then window
     # print('corrnormalize: len(thedata)=',len(thedata),'len(hamming(len(thedata)))=',len(hamming(len(thedata))))
     if prewindow:
-        return stdnormalize(hamming(len(thedata)) * intervec) / np.sqrt(len(thedata))
+        return stdnormalize(hamming(np.shape(thedata)[0]) * intervec) / np.sqrt(np.shape(thedata)[0])
     else:
-        return stdnormalize(intervec) / np.sqrt(len(thedata))
+        return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
 
 
 # --------------------------- Filtering functions -------------------------------------------------
@@ -1948,11 +1924,11 @@ def dobpfastfiltfiltinit(samplefreq, cutofffreq_low, cutofffreq_high, indata, or
 
 # - fft brickwall filters
 def getlpfftfunc(samplefreq, cutofffreq, indata, debug=False):
-    filterfunc = np.ones(len(indata))
+    filterfunc = np.ones(np.shape(indata), dtype=np.float64)
     # cutoffbin = int((cutofffreq / samplefreq) * len(filterfunc) / 2.0)
-    cutoffbin = int((cutofffreq / samplefreq) * len(filterfunc))
+    cutoffbin = int((cutofffreq / samplefreq) * np.shape(filterfunc)[0])
     if debug:
-        print('getlpfftfunc - samplefreq, cutofffreq, len(indata):', samplefreq, cutofffreq, len(indata))
+        print('getlpfftfunc - samplefreq, cutofffreq, len(indata):', samplefreq, cutofffreq, np.shpae(indata)[0])
     filterfunc[cutoffbin:-cutoffbin] = 0.0
     return filterfunc
 
@@ -1967,7 +1943,7 @@ def dolpfftfilt(samplefreq, cutofffreq, indata, padlen=20, debug=False):
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
     filterfunc = getlpfftfunc(samplefreq, cutofffreq, padindata, debug=debug)
-    indata_trans = indata_trans * filterfunc
+    indata_trans *= filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
@@ -1975,7 +1951,7 @@ def dohpfftfilt(samplefreq, cutofffreq, indata, padlen=20, debug=False):
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
     filterfunc = 1.0 - getlpfftfunc(samplefreq, cutofffreq, padindata, debug=debug)
-    indata_trans = indata_trans * filterfunc
+    indata_trans *= filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
@@ -1984,15 +1960,15 @@ def dobpfftfilt(samplefreq, cutofffreq_low, cutofffreq_high, indata, padlen=20, 
     indata_trans = fftpack.fft(padindata)
     filterfunc = getlpfftfunc(samplefreq, cutofffreq_high, padindata, debug=debug) * (
         1.0 - getlpfftfunc(samplefreq, cutofffreq_low, padindata, debug=debug))
-    indata_trans = indata_trans * filterfunc
+    indata_trans *= filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
 # - fft trapezoidal filters
 def getlptrapfftfunc(samplefreq, passfreq, stopfreq, indata, debug=False):
-    filterfunc = np.ones(len(indata))
-    passbin = int((passfreq / samplefreq) * len(filterfunc))
-    cutoffbin = int((stopfreq / samplefreq) * len(filterfunc))
+    filterfunc = np.ones(np.shape(indata), dtype='float64')
+    passbin = int((passfreq / samplefreq) * np.shape(filterfunc)[0])
+    cutoffbin = int((stopfreq / samplefreq) * np.shape(filterfunc)[0])
     translength = cutoffbin - passbin
     if debug:
         print('getlptrapfftfunc - passfreq, stopfreq:', passfreq, stopfreq)
@@ -2011,7 +1987,7 @@ def dolptrapfftfilt(samplefreq, passfreq, stopfreq, indata, padlen=20, debug=Fal
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
     filterfunc = getlptrapfftfunc(samplefreq, passfreq, stopfreq, padindata, debug=debug)
-    indata_trans = indata_trans * filterfunc
+    indata_trans *= filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
@@ -2019,7 +1995,7 @@ def dohptrapfftfilt(samplefreq, stopfreq, passfreq, indata, padlen=20, debug=Fal
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
     filterfunc = 1.0 - getlptrapfftfunc(samplefreq, stopfreq, passfreq, padindata, debug=debug)
-    indata_trans = indata_trans * filterfunc
+    indata_trans *= filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
@@ -2033,16 +2009,16 @@ def dobptrapfftfilt(samplefreq, stopfreq_low, passfreq_low, passfreq_high, stopf
     filterfunc = getlptrapfftfunc(samplefreq, passfreq_high, stopfreq_high, padindata, debug=debug) * (
         1.0 - getlptrapfftfunc(samplefreq, stopfreq_low, passfreq_low, padindata, debug=debug))
     if False:
-        freqs = np.arange(0.0, samplefreq, samplefreq / len(filterfunc))
+        freqs = np.arange(0.0, samplefreq, samplefreq / np.shape(filterfunc)[0])
         pl.plot(freqs, filterfunc)
         pl.show()
         sys.exit()
-    indata_trans = indata_trans * filterfunc
+    indata_trans *= filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
 
 def specsplit(samplerate, inputdata, bandwidth, usebutterworth=False):
-    lowestfreq = samplerate / (2.0 * len(inputdata))
+    lowestfreq = samplerate / (2.0 * np.shape(inputdata)[0])
     highestfreq = samplerate / 2.0
     if lowestfreq < 0.01:
         lowestfreq = 0.01
@@ -2060,7 +2036,7 @@ def specsplit(samplerate, inputdata, bandwidth, usebutterworth=False):
     print("dividing into ", numbands, " bands")
     lowerlim = lowestfreq
     upperlim = lowerlim * bandwidth
-    alldata = np.zeros((len(inputdata), numbands), dtype='float')
+    alldata = np.zeros((np.shape(inputdata), numbands), dtype='float64')
     bandcenters = np.zeros(numbands, dtype='float')
     print(alldata.shape)
     for theband in range(0, numbands):
@@ -2218,7 +2194,7 @@ class noncausalfilter:
     def apply(self, samplerate, data):
         # do some bounds checking
         nyquistlimit = 0.5 * samplerate
-        lowestfreq = 2.0 * samplerate / len(data)
+        lowestfreq = 2.0 * samplerate / np.shape(data)[0]
 
         # first see if entire range is out of bounds
         if self.lowerpass >= nyquistlimit:
@@ -2322,15 +2298,15 @@ def phase(mcv):
 
 
 def polarfft(invec, samplerate):
-    if len(invec) % 2 == 1:
+    if np.shape(invec)[0] % 2 == 1:
         thevec = invec[:-1]
     else:
         thevec = invec
-    spec = fftpack.fft(hamming(len(thevec)) * thevec)[0:len(thevec) // 2]
+    spec = fftpack.fft(hamming(np.shape(thevec)[0]) * thevec)[0:np.shape(thevec)[0] // 2]
     magspec = abs(spec)
     phspec = phase(spec)
     maxfreq = samplerate / 2.0
-    freqs = np.arange(0.0, maxfreq, maxfreq / (len(spec)))
+    freqs = np.arange(0.0, maxfreq, maxfreq / (np.shape(spec)[0]))
     return freqs, magspec, phspec
 
 
