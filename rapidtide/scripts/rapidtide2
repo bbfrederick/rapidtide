@@ -177,7 +177,7 @@ def onecorrfit(thetc, corrscale,
     else:
         flipfac = rt_floatset(1.0)
     if not optiondict['fixdelay']:
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag(
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag_gauss(
             corrscale,
             flipfac * thetc,
             optiondict['lagmin'], optiondict['lagmax'], optiondict['widthlimit'],

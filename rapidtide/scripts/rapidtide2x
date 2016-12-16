@@ -177,21 +177,38 @@ def onecorrfit(thetc, corrscale,
     else:
         flipfac = rt_floatset(1.0)
     if not optiondict['fixdelay']:
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag(
-            corrscale,
-            flipfac * thetc,
-            optiondict['lagmin'], optiondict['lagmax'], optiondict['widthlimit'],
-            edgebufferfrac=optiondict['edgebufferfrac'],
-            threshval=optiondict['lthreshval'],
-            uthreshval=optiondict['uthreshval'],
-            debug=optiondict['debug'],
-            refine=optiondict['gaussrefine'],
-            maxguess=0.0,
-            fastgauss=optiondict['fastgauss'],
-            enforcethresh=optiondict['enforcethresh'],
-            zerooutbadfit=optiondict['zerooutbadfit'],
-            lagmod=optiondict['lagmod'],
-            displayplots=displayplots)
+        if optiondict['findmaxtype'] == 'gauss':
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag_gauss(
+                corrscale,
+                flipfac * thetc,
+                optiondict['lagmin'], optiondict['lagmax'], optiondict['widthlimit'],
+                edgebufferfrac=optiondict['edgebufferfrac'],
+                threshval=optiondict['lthreshval'],
+                uthreshval=optiondict['uthreshval'],
+                debug=optiondict['debug'],
+                refine=optiondict['gaussrefine'],
+                maxguess=0.0,
+                fastgauss=optiondict['fastgauss'],
+                enforcethresh=optiondict['enforcethresh'],
+                zerooutbadfit=optiondict['zerooutbadfit'],
+                lagmod=optiondict['lagmod'],
+                displayplots=displayplots)
+        else:
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag_quad(
+                corrscale,
+                flipfac * thetc,
+                optiondict['lagmin'], optiondict['lagmax'], optiondict['widthlimit'],
+                edgebufferfrac=optiondict['edgebufferfrac'],
+                threshval=optiondict['lthreshval'],
+                uthreshval=optiondict['uthreshval'],
+                debug=optiondict['debug'],
+                refine=optiondict['gaussrefine'],
+                maxguess=0.0,
+                fastgauss=optiondict['fastgauss'],
+                enforcethresh=optiondict['enforcethresh'],
+                zerooutbadfit=optiondict['zerooutbadfit'],
+                lagmod=optiondict['lagmod'],
+                displayplots=displayplots)
         maxval *= flipfac
     else:
         # do something different
@@ -489,7 +506,7 @@ def usage():
           "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag]"
           "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
           "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
-          "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp]")
+          "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE")
     print("")
     print("required arguments:")
     print("    fmrifilename             - the BOLD fmri file")
@@ -552,6 +569,8 @@ def usage():
     print("    -s SIGMALIMIT            - reject lag fits with linewidth wider than SIGMALIMIT")
     print("    -B                       - bipolar mode - match peak correlation ignoring sign")
     print("    --nofitfilt              - do not zero out peak fit values if fit fails")
+    print("    --maxfittype=FITTYPE     - Method for fitting the correlation peak (default is 'gauss'). ")
+    print("                               'quad' uses a quadratic fit.  Faster but not as well tested")
     print("")
     print("regressor refinement options:")
     print("    --refineweighting=TYPE   - apply TYPE weighting to each timecourse prior ")
@@ -653,6 +672,7 @@ def main():
     optiondict['enforcethresh'] = True  # only do fits in voxels that exceed threshhold
     optiondict['zerooutbadfit'] = True  # if true zero out all fit parameters if the fit fails
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
+    optiondict['findmaxtype'] = 'quad' # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
     #     move delay peaks back to the correct position if they hit a sidelobe
 
     # postprocessing options
@@ -791,6 +811,7 @@ def main():
                                                                                                            'memprofile',
                                                                                                            'nogaussrefine',
                                                                                                            'usesp',
+                                                                                                           'maxfittype=',
                                                                                                            'AR='])
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -1092,6 +1113,10 @@ def main():
             optiondict['refinepasses'] = int(a)
             linkchar = '='
             print('Will do ', optiondict['refinepasses'], ' refinement passes')
+        elif o == '--maxfittype':
+            optiondict['findmaxtype'] = a
+            linkchar = '='
+            print('Will do ', optiondict['findmaxtype'], ' peak fitting')
         elif o in ('-h', '--help'):
             usage()
             sys.exit()
