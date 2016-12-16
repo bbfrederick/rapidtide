@@ -672,7 +672,7 @@ def main():
     optiondict['enforcethresh'] = True  # only do fits in voxels that exceed threshhold
     optiondict['zerooutbadfit'] = True  # if true zero out all fit parameters if the fit fails
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
-    optiondict['findmaxtype'] = 'quad' # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
+    optiondict['findmaxtype'] = 'gauss' # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
     #     move delay peaks back to the correct position if they hit a sidelobe
 
     # postprocessing options
