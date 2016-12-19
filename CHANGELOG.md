@@ -71,3 +71,13 @@
 * (rapidtide2std, tidepool) Added the ability to transform and display functional data to highres anatomic space in addition to MNI152 space.
 * Various small bugfixes and format cleanups.
 
+## Version 0.1.9 (12/19/16)
+
+* Added code to allow runtime memory profiling if memory_profile library is present.
+* Extensive casting of variables to lower memory footprint and allow future optimizations.
+* Added explicit garbage collection to reduce memory usage.
+* Added optional single precision calculation mode to lower memory footprint.
+* Added a second script, "rapidtide2x" where I can distribute and test new features without breaking the main code branch.
+* Did some speed optimizations in findmaxlag, including faster gaussian fitting and new MUCH faster parabolic fitting (still experimental).
+* Minor bug fixes, code reorganization and cleanup.
+
