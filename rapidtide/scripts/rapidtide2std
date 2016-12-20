@@ -35,23 +35,35 @@ fsldir = os.environ.get('FSLDIR')
 if fsldir is not None:
     fslsubcmd = os.path.join(fsldir, 'bin', 'fsl_sub')
     flirtcmd = os.path.join(fsldir,'bin', 'flirt')
+    applywarpcmd = os.path.join(fsldir,'bin', 'applywarp')
 else:
     print('FSL directory not found - aborting')
     sys.exit()
 
-def makethecmd(theinputfile, reftarget, xform, outputname):
+def makethecmd(theinputfile, reftarget, xform, outputname, warpfile=None):
     thecommand = []
-    thecommand.append(fslsubcmd)
-    thecommand.append(flirtcmd)
-    thecommand.append('-in')
-    thecommand.append(theinputfile)
-    thecommand.append('-ref')
-    thecommand.append(reftarget)
-    thecommand.append('-applyxfm')
-    thecommand.append('-init')
-    thecommand.append(xform)
-    thecommand.append('-out')
-    thecommand.append(outputname)
+    if warpfile is None:
+        print('doing linear transformation')
+        thecommand.append(fslsubcmd)
+        thecommand.append(flirtcmd)
+        thecommand.append('-in')
+        thecommand.append(theinputfile)
+        thecommand.append('-ref')
+        thecommand.append(reftarget)
+        thecommand.append('-applyxfm')
+        thecommand.append('-init')
+        thecommand.append(xform)
+        thecommand.append('-out')
+        thecommand.append(outputname)
+    else:
+        print('doing nonlinear transformation')
+        thecommand.append(fslsubcmd)
+        thecommand.append(applywarpcmd)
+        thecommand.append('--in=' + theinputfile)
+        thecommand.append('--ref=' + reftarget)
+        thecommand.append('--out=' + outputname)
+        thecommand.append('--warp=' + warpfile)
+        thecommand.append('--premat=' + xform)
     return(thecommand)
 
 def usage():
@@ -133,6 +145,12 @@ subjroot = thebase[:-15]
 if dohires:
     xformfuncmat = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg','example_func2highres.mat'))[0])
+    warpfuncfile = os.path.abspath(glob.glob(os.path.join(featdir,
+        'reg','example_func2highres_warp.nii.gz'))
+    if len(warpfuncfile < 1) or dohires:
+        warpfuncfile = None
+    else:
+        warpfuncfile = warpfuncfile[0]
     reftarget = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg','highres.nii.gz'))[0])
     outputtag = '_hires_'
@@ -140,6 +158,12 @@ if dohires:
 else:
     xformfuncmat = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg','example_func2standard.mat'))[0])
+    warpfuncfile = os.path.abspath(glob.glob(os.path.join(featdir,
+        'reg','example_func2standard_warp.nii.gz'))
+    if len(warpfuncfile < 1) or dohires:
+        warpfuncfile = None
+    else:
+        warpfuncfile = warpfuncfile[0]
     reftarget = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm.nii.gz')
     outputtag = '_std_'
     theanatmaps = ['highres', 'standard']
@@ -157,7 +181,7 @@ else:
 for themap in thefmrimaps:
     inputname = os.path.abspath(os.path.join(thepath, subjroot + '_' + themap + '.nii.gz'))
     outputname = os.path.abspath(os.path.join(theoutputdir,subjroot + outputtag + themap + '.nii.gz'))
-    thecommand = makethecmd(inputname, reftarget, xformfuncmat, outputname)
+    thecommand = makethecmd(inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile)
 
     if preponly:
         print(" ".join(thecommand))
