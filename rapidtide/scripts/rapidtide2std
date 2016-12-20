@@ -143,27 +143,19 @@ subjroot = thebase[:-15]
 
 # make sure the appropriate transformation matrix and targets exist
 if dohires:
-    xformfuncmat = os.path.abspath(glob.glob(os.path.join(featdir,
-        'reg','example_func2highres.mat'))[0])
-    warpfuncfile = os.path.abspath(glob.glob(os.path.join(featdir,
+    xformfuncmat = os.path.abspath(os.path.join(featdir,
+        'reg','example_func2highres.mat'))
+    warpfuncfile = os.path.abspath(os.path.join(featdir,
         'reg','example_func2highres_warp.nii.gz'))
-    if len(warpfuncfile < 1) or dohires:
-        warpfuncfile = None
-    else:
-        warpfuncfile = warpfuncfile[0]
-    reftarget = os.path.abspath(glob.glob(os.path.join(featdir,
-        'reg','highres.nii.gz'))[0])
+    reftarget = os.path.abspath(os.path.join(featdir,
+        'reg','highres.nii.gz'))
     outputtag = '_hires_'
     theanatmaps = ['highres']
 else:
-    xformfuncmat = os.path.abspath(glob.glob(os.path.join(featdir,
-        'reg','example_func2standard.mat'))[0])
-    warpfuncfile = os.path.abspath(glob.glob(os.path.join(featdir,
+    xformfuncmat = os.path.abspath(os.path.join(featdir,
+        'reg','example_func2standard.mat'))
+    warpfuncfile = os.path.abspath(os.path.join(featdir,
         'reg','example_func2standard_warp.nii.gz'))
-    if len(warpfuncfile < 1) or dohires:
-        warpfuncfile = None
-    else:
-        warpfuncfile = warpfuncfile[0]
     reftarget = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm.nii.gz')
     outputtag = '_std_'
     theanatmaps = ['highres', 'standard']
@@ -174,6 +166,11 @@ if os.path.isfile(xformfuncmat):
     else:
         print('cannot find reference file', reftarget, ' - exiting')
         sys.exit(1)
+    if os.path.isfile(warpfuncfile):
+        print('found warp file - will do nonlinear transformation')
+    else:
+        print('no warp file found - will do linear transformation')
+        warpfuncfile = None
 else:
     print('cannot find transform matrix', xfomrmat, ' - exiting')
     sys.exit(1)
