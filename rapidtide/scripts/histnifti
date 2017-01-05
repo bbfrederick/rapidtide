@@ -1,0 +1,113 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+#       $Author: frederic $
+#       $Date: 2016/06/14 12:04:50 $
+#       $Id: histnifti,v 1.8 2016/06/14 12:04:50 frederic Exp $
+#
+from __future__ import print_function
+import sys
+import getopt
+import string
+import rapidtide.tide_funcs as tide
+
+from numpy import r_, zeros, ones, shape, where, sort
+from pylab import *
+import nibabel as nib
+
+def usage():
+    print('usage: histnifti inputfile outputroot')
+    print('')
+    print('required arguments:')
+    print('	inputfile	- the name of the input nifti file')
+    print('	outputroot	- the root of the output nifti names')
+    print('')
+    return()
+
+def progressbar(thisval, end_val, label='Percent', barsize=60):
+    percent = float(thisval) / end_val
+    hashes = '#' * int(round(percent * barsize))
+    spaces = ' ' * (barsize - len(hashes))
+    sys.stdout.write('\r{0}: [{1}] {2:.3f}%'.format(label, hashes + spaces, 100.0*percent))
+    sys.stdout.flush()
+
+# set default variable values
+histlen=101
+thepercentiles = [0.95, 0.99, 0.995, 0.999]
+thepvalnames = []
+for thispercentile in thepercentiles:
+    thepvalnames.append(str(1.0 - thispercentile).replace('.', 'p'))
+
+# get the command line parameters
+if len(sys.argv) != 3:
+    usage()
+    exit()
+
+# handle required args first
+inputfilename=sys.argv[1]
+outputroot=sys.argv[2]
+
+print('loading data')
+input_img = nib.load(inputfilename)
+input_data = input_img.get_data()
+input_hdr = input_img.get_header()
+thedims=input_hdr['dim']
+thesizes=input_hdr['pixdim']
+tr=thesizes[4]
+Fs=1.0/tr
+print('tr from header =',tr,', sample frequency is ',Fs)
+    
+xsize=thedims[1]
+ysize=thedims[2]
+numslices=thedims[3]
+numtrials=thedims[4]
+    
+numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+corr_data = input_data.reshape((numspatiallocs,numtrials))
+
+print('allocating arrays')
+sorteddata = zeros((numspatiallocs,numtrials),dtype='float')
+outputhists = zeros((numspatiallocs,histlen),dtype='float')
+outputhistfits = zeros((numspatiallocs,histlen),dtype='float')
+pcts_data = zeros((numspatiallocs,len(thepercentiles)),dtype='float')
+pcts_fit = zeros((numspatiallocs,len(thepercentiles)),dtype='float')
+
+# cycle over all voxels
+#therange=(0,1.1*tide.getfracvals(corr_data,[0.95],numbins=1000,nozero=True)[0])
+therange=(0,np.max(corr_data))
+print('the range is ',therange)
+
+print('now cycling over all voxels')
+for spatialloc in range(0,numspatiallocs):
+    sorteddata[spatialloc,:]=sort(corr_data[spatialloc,:])
+    #temphist = tide.makehistogram(corr_data[spatialloc,:], histlen, therange)
+    #outputhists[spatialloc,:] = temphist[0]
+    #histfit = tide.fitpdf(temphist, histlen, 0, corr_data[spatialloc,:])
+    #pcts_data[spatialloc,:] = tide.getfracvals(corr_data[spatialloc,:], \
+    #    thepercentiles, numbins=int(np.sqrt(len(corr_data[spatialloc,:])) * 5.0), nozero=True)
+    #pcts_fit[spatialloc,:] = tide.getfracvalsfromfit(histfit, thepercentiles, numbins=100000)
+    if spatialloc % 100 == 0:
+        progressbar(spatialloc + 1, numspatiallocs, label='Percent complete')
+    
+# now do the ones with other numbers of time points
+theheader=input_hdr
+tide.savetonifti(sorteddata.reshape((xsize,ysize,numslices,numtrials)), theheader, thesizes, outputroot + '_sorted')
+#theheader['dim'][4] = histlen
+#tide.savetonifti(outputhists.reshape((xsize,ysize,numslices,histlen)), theheader, thesizes, outputroot + '_hists')
+#theheader['dim'][4] = 1
+#for i in range(0, len(thepercentiles)):
+#    tide.savetonifti(pcts_data[:,i].reshape((xsize,ysize,numslices)), theheader, thesizes, outputroot + '_p_lt_' + thepvalnames[i] + '_mask')
