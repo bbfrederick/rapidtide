@@ -365,33 +365,33 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
     validlist = np.where(maskarray > 0)[0]
     refinevoxels = shiftedtcs[validlist]
     averagedata = np.sum(refinevoxels, axis=0) / volumetotal
-    if optiondict['dofiltcalc']:
+    if optiondict['dodispersioncalc']:
         print('splitting regressors by time lag for phase delay estimation')
-        laglist = np.arange(optiondict['filtcalc_lower'], optiondict['filtcalc_upper'], optiondict['filtcalc_step'])
-        filtcalcout = np.zeros((np.shape(laglist)[0], inputshape[1]), dtype=rt_floattype)
+        laglist = np.arange(optiondict['dispersioncalc_lower'], optiondict['dispersioncalc_upper'], optiondict['dispersioncalc_step'])
+        dispersioncalcout = np.zeros((np.shape(laglist)[0], inputshape[1]), dtype=rt_floattype)
         fftlen = int(inputshape[1] // 2)
         fftlen -= fftlen % 2
-        filtcalcspecmag = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
-        filtcalcspecphase = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
+        dispersioncalcspecmag = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
+        dispersioncalcspecphase = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
         for lagnum in range(0, np.shape(laglist)[0]):
-            lower = laglist[lagnum] - optiondict['filtcalc_step'] / 2.0
-            upper = laglist[lagnum] + optiondict['filtcalc_step'] / 2.0
+            lower = laglist[lagnum] - optiondict['dispersioncalc_step'] / 2.0
+            upper = laglist[lagnum] + optiondict['dispersioncalc_step'] / 2.0
             inlagrange = np.where(
                 locationmask * ampmask * np.where(lower < lagtimes, np.int16(1), np.int16(0))
                 * np.where(lagtimes < upper, np.int16(1), np.int16(0)))[0]
             print('    summing', np.shape(inlagrange)[0], 'regressors with lags from', lower, 'to', upper)
             if np.shape(inlagrange)[0] > 0:
-                filtcalcout[lagnum, :] = tide.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0), False, True)
+                dispersioncalcout[lagnum, :] = tide.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0), False, True)
                 # else:
-                # filtcalcout[lagnum, :] = tide.corrnormalize(np.mean(fmridata[inlagrange], axis=0), False, True)
-                freqs, filtcalcspecmag[lagnum, :], filtcalcspecphase[lagnum, :] = tide.polarfft(filtcalcout[lagnum, :],
+                # dispersioncalcout[lagnum, :] = tide.corrnormalize(np.mean(fmridata[inlagrange], axis=0), False, True)
+                freqs, dispersioncalcspecmag[lagnum, :], dispersioncalcspecphase[lagnum, :] = tide.polarfft(dispersioncalcout[lagnum, :],
                                                                                                 1.0 / fmritr)
             inlagrange = None
-        tide.writenpvecs(filtcalcout, optiondict['outputname'] + '_filtcalcvecs_pass' + str(passnum) + '.txt')
-        tide.writenpvecs(filtcalcspecmag, optiondict['outputname'] + '_filtcalcspecmag_pass' + str(passnum) + '.txt')
-        tide.writenpvecs(filtcalcspecphase,
-                         optiondict['outputname'] + '_filtcalcspecphase_pass' + str(passnum) + '.txt')
-        tide.writenpvecs(freqs, optiondict['outputname'] + '_filtcalcfreqs_pass' + str(passnum) + '.txt')
+        tide.writenpvecs(dispersioncalcout, optiondict['outputname'] + '_dispersioncalcvecs_pass' + str(passnum) + '.txt')
+        tide.writenpvecs(dispersioncalcspecmag, optiondict['outputname'] + '_dispersioncalcspecmag_pass' + str(passnum) + '.txt')
+        tide.writenpvecs(dispersioncalcspecphase,
+                         optiondict['outputname'] + '_dispersioncalcspecphase_pass' + str(passnum) + '.txt')
+        tide.writenpvecs(freqs, optiondict['outputname'] + '_dispersioncalcfreqs_pass' + str(passnum) + '.txt')
 
     if optiondict['estimatePCAdims']:
         pcacomponents = 'mle'
@@ -503,7 +503,7 @@ def usage():
           " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP"
           "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
           "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
-          "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--refineupperlag] [--refinelowerlag]"
+          "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--nodispersioncalc] [--refineupperlag] [--refinelowerlag]"
           "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
           "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
           "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE")
@@ -598,6 +598,7 @@ def usage():
     print("                               averaging)")
     print("    --ica                    - use ica to derive refined regressor (default is ")
     print("                               averaging)")
+    print("    --nodispersioncalc       - disable dispersion calculation during refinement")
     print("")
     print("output options:")
     print("    --limitoutput            - don't save some of the large and rarely used files")
@@ -735,10 +736,10 @@ def main():
     optiondict['estimatePCAdims'] = False
     optiondict['filterbeforePCA'] = True
     optiondict['fmrifreq'] = 0.0
-    optiondict['dofiltcalc'] = True
-    optiondict['filtcalc_lower'] = -4.0
-    optiondict['filtcalc_upper'] = 4.0
-    optiondict['filtcalc_step'] = 0.50
+    optiondict['dodispersioncalc'] = True
+    optiondict['dispersioncalc_lower'] = -4.0
+    optiondict['dispersioncalc_upper'] = 4.0
+    optiondict['dispersioncalc_step'] = 0.50
 
     # debugging options
     optiondict['internalprecision'] = 'double'
@@ -792,6 +793,7 @@ def main():
                                                                                                            'nofitfilt',
                                                                                                            'pca',
                                                                                                            'ica',
+                                                                                                           'nodispersioncalc',
                                                                                                            'noglm',
                                                                                                            'nonumba',
                                                                                                            'tmask=',
@@ -1010,6 +1012,9 @@ def main():
         elif o == '--ica':
             optiondict['refinetype'] = 'ica'
             print('Will use ICA procedure to refine regressor rather than simple averaging')
+        elif o == '--nodispersioncalc':
+            optiondict['dodispersioncalc'] = False
+            print('Will disable dispersion calculation during regressor refinement')
         elif o == '--nofitfilt':
             optiondict['zerooutbadfit'] = False
             optiondict['nohistzero'] = True
