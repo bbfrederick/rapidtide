@@ -31,26 +31,28 @@ from pylab import *
 import nibabel as nib
 
 def usage():
-    print("usage: spatialfit datafile [--dmask=DATAMASK] templatefile [--tmask=TEMPLATEMASK] outputroot")
+    print("usage: spatialfit datafile [--dmask=DATAMASK] templatefile [--tmask=TEMPLATEMASK] outputroot [--order=ORDER]")
     print("")
     print("required arguments:")
-    print("	datafile	- the name of the nifti file to fit")
-    print("	templatefile	- the name of the nifti file to fit")
+    print("	datafile	- the name of the 3 or 4 dimensional nifti file to fit")
+    print("	templatefile	- the name of the 3 dimensional nifti file to use as a template")
     print("	outputroot	- the root name of the output nifti files")
     print("")
     print("optional arguments:")
-    print("	--dmask=datamask	- specify which voxels in the data to use")
-    print("	--dmask=templatemask	- specify which voxels in the template to use")
+    print("	--dmask=DATAMASK	- use DATAMASK to specify which voxels in the data to use")
+    print("	--dmask=TEMPLATEMASK	- use TEMPLATEMASK to specify which voxels in the template to use")
+    print("	--order=ORDER   	- fit up to ORDER order - default is 1 - linear")
     print("")
     return()
 
 # set default variable values
-usedmask=False
-usetmask=False
+usedmask = False
+usetmask = False
+order = 1
 
 # parse command line arguments
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "tmask="])
+    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "tmask=", "order="])
 except getopt.GetoptError as err:
     # print(help information and exit:
     print(str(err)) # will print something like "option -a not recognized"
@@ -79,6 +81,15 @@ for o, a in opts:
         usetmask = True
         templatemaskname = a
         print('using', templatemaskname, 'as template mask')
+    elif o == "--order":
+        order = int(a)
+        if not (0 <= order <=4):
+            print('order should be between 0 and 4')
+            sys.exit()
+        if order == 1:
+            print('fitting to 1st order')
+        else:
+            print('fitting to', order, 'th order')
     elif o in ("-h", "--help"):
         usage()
         sys.exit()
@@ -163,6 +174,7 @@ bin_templatemask = where(rs_templatemask > 0.1, 1.0, 0.0)
 
 fitdata = zeros((numspatiallocs, timepoints),dtype='float')
 residuals = zeros((numspatiallocs, timepoints),dtype='float')
+normalized = zeros((numspatiallocs, timepoints),dtype='float')
 newtemplate = zeros((numspatiallocs),dtype='float')
 newmask = zeros((numspatiallocs),dtype='float')
 lincoffs = zeros((timepoints),dtype='float')
@@ -184,6 +196,7 @@ for thetime in range(0,timepoints):
     fitdata[:, thetime] = lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
     newtemplate += nan_to_num(maskeddata[:, thetime]/ lincoffs[thetime]) * rs_datamask[:, thetime]
     newmask += rs_datamask[:, thetime] * bin_templatemask
+    normalized[:, thetime] = (rs_datafile - offsets[thetime]) / lincoffs[thetime]
 residuals = rs_datafile - fitdata
     
 # write out the data files
@@ -197,5 +210,6 @@ print("offset mean, std:", mean(offsets), std(offsets))
 print("writing nifti series")
 tide.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes, outputrootname + '_fit')
 tide.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes, outputrootname + '_residuals')
+tide.savetonifti(normalized.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes, outputrootname + '_normalized')
 newtemplate = where(newmask > 0, newtemplate / newmask, 0.0)
 tide.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr, templatefilesizes, outputrootname + '_newtemplate')
