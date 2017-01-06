@@ -60,7 +60,6 @@ except getopt.GetoptError as err:
     sys.exit(2)
 
 # handle required args first
-print(args)
 if len(args) != 4:
     print('spatial fit has 3 required arguments - ', len(args) - 1, 'found')
     usage()
