@@ -196,7 +196,7 @@ for thetime in range(0,timepoints):
     fitdata[:, thetime] = lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
     newtemplate += nan_to_num(maskeddata[:, thetime]/ lincoffs[thetime]) * rs_datamask[:, thetime]
     newmask += rs_datamask[:, thetime] * bin_templatemask
-    normalized[:, thetime] = (rs_datafile - offsets[thetime]) / lincoffs[thetime]
+    normalized[:, thetime] = (rs_datafile[:, thetime] - offsets[thetime]) / lincoffs[thetime]
 residuals = rs_datafile - fitdata
     
 # write out the data files
