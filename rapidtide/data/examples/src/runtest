@@ -2,9 +2,9 @@
 rapidtide2 \
 	fmri.nii.gz \
 	../dst/dgsr \
-	--noglm  \
-	--refinepasses=3 \
-        --accheck \
-        --nofitfilt \
+	--noglm \
+	--refinepasses=3 --refineoffset \
+	--accheck \
+	--nofitfilt \
 	-r -15,15 \
 	-f 2 &
