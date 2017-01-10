@@ -41,7 +41,7 @@ def phase(mcv):
 def usage():
     print("showtc - plots the data in text files")
     print("")
-    print("usage: showtc texfilename [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate] [--sampletime]")
+    print("usage: showtc texfilename [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate=Fs] [--sampletime=Ts]")
     print("")
     print("required arguments:")
     print("    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line")
@@ -50,8 +50,8 @@ def usage():
     print("    --nolegend               - turn off legend label")
     print("    --pspec                  - show the power spectra magnitudes of the input data instead of the timecourses")
     print("    --phase                  - show the power spectra phases of the input data instead of the timecourses")
-    print("    --samplerate             - the sample rate of the input data (default is 1Hz)")
-    print("    --sampletime             - the sample time (1/samplerate) of the input data (default is 1s)")
+    print("    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)")
+    print("    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)")
     return ()
 
 # set default variable values
@@ -149,7 +149,7 @@ for i in range(0, numfiles):
             xvecs.append(arange(0.0, maxfreq, maxfreq / (len(yvecs[i]))))
         else:
             yvecs.append(invecs[j])
-            xvecs.append(arange(0.0, len(yvecs[numvecs]), 1.0))
+            xvecs.append(arange(0.0, len(yvecs[numvecs]), 1.0) / samplerate)
         if invecs.shape[0] > 1:
             linelabels.append(textfilename[i] + '_column' + str(j).zfill(2))
         else:
