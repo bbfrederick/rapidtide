@@ -126,10 +126,7 @@ def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, nc
     preppedtc = tide.corrnormalize(thetc, optiondict['usewindowfunc'], optiondict['dodetrend'])
 
     # now actually do the correlation
-    if optiondict['gccphat']:
-        thexcorr = tide.gccphat(preppedtc, referencetc, False)
-    else:
-        thexcorr = tide.fastcorrelate(preppedtc, referencetc, usefft=True)
+    thexcorr = tide.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=optiondict['corrweighting'])
     return thexcorr[corrorigin - lagmininpts:corrorigin + lagmaxinpts]
 
 
@@ -498,7 +495,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
 
 def usage():
     print("usage: rapidtide2 fmrifilename outputname ")
-    print("[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [-G] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] "
+    print("[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [--phat] [--liang] [--eckart] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] "
           "[-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME]"
           " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP"
           "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
@@ -556,8 +553,11 @@ def usage():
     print("                               are two ways to specify the same thing")
     print("    --regressorstart=START   - The time delay in seconds into the regressor file, corresponding")
     print("                               in the first TR of the fmri file (default is 0.0)")
-    print("    -G                       - use generalized cross-correlation with phase alignment ")
-    print("                               transform (GCC-PHAT) instead of correlation")
+    print("    --phat                   - use generalized cross-correlation with phase alignment ")
+    print("                               transform (PHAT) instead of correlation")
+    print("    --eckart                 - use generalized cross-correlation with Eckart weighting function")
+    print("    --liang                  - use generalized cross-correlation with Liang weighting function")
+    print("                               (Liang, et al, doi:10.1109/IMCCC.2015.283)")
     print("    --corrmaskthresh=PCT     - do correlations in voxels where the mean exceeeds this ")
     print("                               percentage of the robust max (default is 1.0)")
     print("    --accheck                - check for periodic components that corrupt the autocorrelation")
@@ -654,7 +654,7 @@ def main():
     optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
     optiondict['dodetrend'] = True  # remove linear trends prior to correlation
     optiondict['usewindowfunc'] = True  # apply a hamming window prior to correlation
-    optiondict['gccphat'] = False  # use a phase alignment transform rather than crosscorrelation
+    optiondict['corrweighting'] = 'none'  # use a standard unweighted crosscorrelation for calculate time delays
     optiondict['usetmask'] = False  # premultiply the regressor with the tmask timecourse
     optiondict['tmaskname'] = ''  # file name for tmask regressor
     optiondict['corrmaskthresh'] = 1.0  # percentage of robust maximum of mean to mask correlations
@@ -775,7 +775,7 @@ def main():
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(sys.argv[optparsestart:], 'abcdf:gh:i:mo:ps:r:t:vBCF:GILMN:O:PRSTVZ:', ['help',
+        opts, args = getopt.getopt(sys.argv[optparsestart:], 'abcdf:gh:i:mo:ps:r:t:vBCF:ILMN:O:PRSTVZ:', ['help',
                                                                                                            'nowindow',
                                                                                                            'lagminthresh=',
                                                                                                            'lagmaxthresh=',
@@ -813,6 +813,9 @@ def main():
                                                                                                            'memprofile',
                                                                                                            'nogaussrefine',
                                                                                                            'usesp',
+                                                                                                           'liang',
+                                                                                                           'eckart',
+                                                                                                           'phat',
                                                                                                            'maxfittype=',
                                                                                                            'AR='])
     except getopt.GetoptError as err:
@@ -833,8 +836,16 @@ def main():
         elif o == '-v':
             optiondict['verbose'] = True
             print('Turned on verbose mode')
-        elif o == '-G':
-            optiondict['gccphat'] = True
+        elif o == '--liang':
+            optiondict['corrweighting'] = 'Liang'
+            optiondict['dodetrend'] = True
+            print('Enabled Liang weighted crosscorrelation')
+        elif o == '--eckart':
+            optiondict['corrweighting'] = 'Eckart'
+            optiondict['dodetrend'] = True
+            print('Enabled Eckart weighted crosscorrelation')
+        elif o == '--phat':
+            optiondict['corrweighting'] = 'PHAT'
             optiondict['dodetrend'] = True
             print('Enabled GCC-PHAT fitting')
         elif o == '--usesp':
@@ -1399,10 +1410,11 @@ def main():
     if optiondict['verbose']:
         print('corrtr=', corrtr)
 
-    if optiondict['gccphat']:
-        numccorrlags = optiondict['oversampfactor'] * (timepoints - optiondict['addedskip'])
-    else:
-        numccorrlags = 2 * optiondict['oversampfactor'] * (timepoints - optiondict['addedskip']) - 1
+    numccorrlags = 2 * optiondict['oversampfactor'] * (timepoints - optiondict['addedskip']) - 1
+    #if optiondict['corrweighting'] != 'none':
+    #    numccorrlags = optiondict['oversampfactor'] * (timepoints - optiondict['addedskip'])
+    #else:
+    #    numccorrlags = 2 * optiondict['oversampfactor'] * (timepoints - optiondict['addedskip']) - 1
     # Offset by -tr/2 11/5/15 to remove a systematic bias in the lag times
     # Realized 12/11/15 from simulation that this is actually a mistake. The real expression is more complicated.
     # Fixed and tested.  Lagtime is now estimated without bias at all oversample factors (and oversampling doesn't actually
@@ -1526,9 +1538,10 @@ def main():
                 optiondict['acsidelobelag' + passsuffix] = sidelobetime
                 optiondict['acsidelobeamp' + passsuffix] = sidelobeamp
                 print('\n\nWARNING: autocorrcheck found bad sidelobe at', sidelobetime, 'seconds (', 1.0 / sidelobetime,
-                      'Hz)... removing')
+                      'Hz)...')
                 tide.writenpvecs(np.array([sidelobetime]), outputname + '_autocorr_sidelobetime.txt')
                 if optiondict['fix_autocorrelation']:
+                    print('Removing sidelobe')
                     if dolagmod:
                         print('subjecting lag times to modulus')
                         optiondict['lagmod'] = sidelobetime / 2.0
@@ -1720,20 +1733,12 @@ def main():
         else:
             resampref_y_pw = rt_floatset(resampref_y)
         if optiondict['usewindowfunc']:
-            if optiondict['gccphat']:
-                referencetc_pw = tide.hamming(np.shape(resampref_y_pw)[0]) * tide.detrend(
-                    tide.stdnormalize(resampref_y_pw)) / np.shape(resampref_y_pw)[0]
-            else:
-                referencetc_pw = tide.stdnormalize(
-                    tide.hamming(np.shape(resampref_y_pw)[0]) * tide.detrend(tide.stdnormalize(resampref_y_pw))) / \
-                                 np.shape(
-                                     resampref_y_pw)[0]
+            referencetc_pw = tide.stdnormalize(
+                tide.hamming(np.shape(resampref_y_pw)[0]) * tide.detrend(tide.stdnormalize(resampref_y_pw))) / \
+                                 np.shape(resampref_y_pw)[0]
         else:
-            if optiondict['gccphat']:
-                referencetc_pw = tide.detrend(tide.stdnormalize(resampref_y_pw)) / np.shape(resampref_y_pw)[0]
-            else:
-                referencetc_pw = tide.stdnormalize(tide.detrend(tide.stdnormalize(resampref_y_pw))) / np.shape(
-                    resampref_y_pw)[0]
+            referencetc_pw = tide.stdnormalize(tide.detrend(tide.stdnormalize(resampref_y_pw))) / np.shape(
+                resampref_y_pw)[0]
         print('')
         if optiondict['displayplots']:
             fig = figure()

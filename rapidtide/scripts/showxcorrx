@@ -21,6 +21,7 @@
 #
 from __future__ import print_function, division
 
+import warnings
 import sys
 import platform
 
@@ -46,8 +47,7 @@ import nibabel as nib
 from pylab import plot, legend, show, hold, figure
 
 
-
-def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend, numreps=1000):
+def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend, corrweighting='none', numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
     corrlist = zeros((numreps), dtype='float')
     corrlist_pear = zeros((numreps), dtype='float')
@@ -59,13 +59,10 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
         shuffleddata = permutation(indata)
 
         # filter it
-        filteredshuffleddata = tide.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend)
+        filteredshuffleddata = np.nan_to_num(tide.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend))
 
         # crosscorrelate with original
-        if gccphat:
-            theshuffledxcorr = tide.gccphat(filteredindata, filteredshuffleddata, False)
-        else:
-            theshuffledxcorr = tide.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr)
+        theshuffledxcorr = tide.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr, weighting=corrweighting)
 
         # find and tabulate correlation coefficient at optimal lag
         theshuffledxcorr_trim = theshuffledxcorr[searchstart:searchend + 1]
@@ -89,7 +86,7 @@ def usage():
     print("showxcorr - calculate and display crosscorrelation between two timeseries")
     print("")
     print(
-        "usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME] [-N TRIALS]")
+        "usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [--phat] [--liang] [--eckart] [-z FILENAME] [-N TRIALS]")
     print("")
     print("required arguments:")
     print("	timcoursefile1:	text file containing a timeseries")
@@ -99,7 +96,11 @@ def usage():
     print("optional arguments:")
     print("    -t 	     - detrend the data")
     print("    -w 	     - prewindow the data")
-    print("    -g 	     - perform phase alignment transform (phat) rather than ")
+    print("    --phat 	     - perform phase alignment transform (PHAT) rather than ")
+    print("                    standard crosscorrelation")
+    print("    --liang 	     - perform phase alignment transform with Liang weighting function rather than ")
+    print("                    standard crosscorrelation")
+    print("    --eckart	     - perform phase alignment transform with Eckart weighting function rather than ")
     print("                    standard crosscorrelation")
     print("    -l LABEL	     - label for the delay value")
     print("    -s STARTTIME  - time of first datapoint to use in seconds in the first file")
@@ -130,7 +131,7 @@ def usage():
 searchrange = 15.0
 uselabel = False
 display = True
-gccphat = False
+corrweighting = 'none'
 prewindow = False
 dodetrend = False
 dopartial = False
@@ -173,7 +174,7 @@ numpoints = len(inputdata1)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:wg", ["help"])
+    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w", ["phat", "liang", "eckart", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -189,8 +190,16 @@ for o, a in opts:
         trimdata = True
         if verbose:
             print('trimming data to match')
-    elif o == "-g":
-        gccphat = True
+    elif o == "--liang":
+        corrweighting = 'Liang'
+        if verbose:
+            print('doing Liang weighted correlation')
+    elif o == "--eckart":
+        corrweighting = 'Eckart'
+        if verbose:
+            print('doing Eckart weighted correlation')
+    elif o == "--phat":
+        corrweighting = 'PHAT'
         if verbose:
             print('doing phase alignment transform')
     elif o == "-f":
@@ -314,10 +323,7 @@ if dopartial:
     if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
         thefit, filtereddata2 = tide.mlregress(regressorvec, filtereddata2)
 
-if gccphat:
-    thexcorr = tide.gccphat(filtereddata1, filtereddata2, doplot)
-else:
-    thexcorr = tide.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr)
+thexcorr = tide.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr, weighting=corrweighting, displayplots=debug)
 thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
 # calculate the coherence
@@ -367,7 +373,8 @@ else:
 if estimate_significance:
     # generate a list of correlations from shuffled data
     corrlist, corrlist_pear = getNullDistributionData(trimdata1, xcorr_x, theprefilter,
-                                                      prewindow, dodetrend, searchstart, searchend, numreps=numreps)
+                                                      prewindow, dodetrend, searchstart, searchend,
+                                                      corrweighting=corrweighting, numreps=numreps)
 
     # calculate percentiles for the crosscorrelation from the distribution data
     histlen = 100
@@ -441,9 +448,10 @@ if display:
     ax = fig.add_subplot(111)
     # ax.set_title('GCC')
     plot(xcorr_x, thexcorr, 'k')
-    fig = figure()
-    plot(f, Cxy)
-    fig = figure()
-    plot(f, np.sqrt(np.abs(Pxy))/np.max(np.sqrt(np.abs(Pxy))))
-    plot(f, np.angle(Pxy)/(2.0 * pi * f))
+    if debug:
+        fig = figure()
+        plot(f, Cxy)
+        fig = figure()
+        plot(f, np.sqrt(np.abs(Pxy))/np.max(np.sqrt(np.abs(Pxy))))
+        plot(f, np.angle(Pxy)/(2.0 * pi * f))
     show()
