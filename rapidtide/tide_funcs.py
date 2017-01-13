@@ -23,6 +23,7 @@ from __future__ import print_function, division
 import numpy as np
 import scipy as sp
 from scipy import fftpack
+from numpy.fft import rfftn, irfftn
 import pylab as pl
 import warnings
 import time
@@ -432,7 +433,7 @@ def checkifparfile(filename):
 
 
 def readvecs(inputfilename):
-    thefile = open(inputfilename, 'rU')
+    thefile = open(inputfilename, 'r')
     lines = thefile.readlines()
     numvecs = len(lines[0].split())
     inputvec = np.zeros((numvecs, MAXLINES), dtype='float64')
@@ -448,7 +449,7 @@ def readvecs(inputfilename):
 def readvec(inputfilename):
     inputvec = np.zeros(MAXLINES, dtype='float64')
     numvals = 0
-    with open(inputfilename, 'rU') as thefile:
+    with open(inputfilename, 'r') as thefile:
         lines = thefile.readlines()
         for line in lines:
             numvals += 1
@@ -764,129 +765,149 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dode
     return xcorrpertime, Rvals, delayvals, valid
 
 
-def eckart(input1, input2, doplot=False):
-    g1 = eckartraw(input1, input1, doplot=False)
-    g2 = eckartraw(input2, input2, doplot=False)
-    # normfac = 2.0*np.sqrt(np.sqrt(g1[len(g1) / 2 + 1] * g2[len(g2) / 2 + 1]))
-    normfac = 2.0 * np.sqrt(np.sqrt(max(g1) * max(g2)))
-    print("normfac=", normfac)
-    # normfac = g1[len(g1) / 2 + 1] * g2[len(g2) / 2 + 1]
-    return gccphatraw(input1, input2, doplot=doplot) / normfac
-
-
-def eckartraw(input1, input2, doplot=False, threshfrac=0.1):
-    fft1 = fftpack.fft(input1)
-    fft2 = fftpack.fft(input2)
-    G12 = fft1 * np.conj(fft2)
-    G11 = fft1 * np.conj(fft1)
-    G22 = fft2 * np.conj(fft2)
-    denom = G11 * G22
-    absdenom = abs(denom)
-    print("max(abs(denom))", max(absdenom))
-    thresh = max(absdenom) * threshfrac
-    print("thresh", thresh)
-    G = np.where(absdenom > thresh, G12 / denom, np.float64(0.0))
-    g = np.real(fftpack.fftshift(fftpack.ifft(G)))
-    if doplot:
-        xvec = range(0, len(fft1))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('fft1')
-        pl.plot(xvec, abs(fft1))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('fft2')
-        pl.plot(xvec, abs(fft2))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('G12')
-        pl.plot(xvec, abs(G12))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('G11')
-        pl.plot(xvec, abs(G11))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('G22')
-        pl.plot(xvec, abs(G22))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('denom')
-        pl.plot(xvec, abs(denom))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('G')
-        pl.plot(xvec, abs(G))
-    return g
-
-
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
-def fastcorrelate(input1, input2, usefft=True):
+def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=False):
     if usefft:
         # Do an array flipped convolution, which is a correlation.
-        return sp.signal.fftconvolve(input1, input2[::-1], mode='full')
+        if weighting == 'none':
+            return sp.signal.fftconvolve(input1, input2[::-1], mode='full')
+        else:
+            return weightedfftconvolve(input1, input2[::-1], mode='full', weighting=weighting, displayplots=displayplots)
     else:
         return np.correlate(input1, input2, mode='full')
 
 
-def gccphat(input1, input2, doplot=False):
-    g1 = gccphatraw(input1, input1, doplot=False)
-    g2 = gccphatraw(input2, input2, doplot=False)
-    normfac = np.sqrt(g1[np.shape(g1)[0] / 2 + 1] * g2[np.shape(g2)[0] / 2 + 1])
-    return gccphatraw(input1, input2, doplot=doplot) / normfac
+def _centered(arr, newsize):
+    # Return the center newsize portion of the array.
+    newsize = np.asarray(newsize)
+    currsize = np.array(arr.shape)
+    startind = (currsize - newsize) // 2
+    endind = startind + newsize
+    myslice = [slice(startind[k], endind[k]) for k in range(len(endind))]
+    return arr[tuple(myslice)]
 
 
-def gccphatraw(input1, input2, doplot, threshfrac=0.1):
-    fft1 = fftpack.fft(input1)
-    fft2 = fftpack.fft(input2)
-    G12 = fft1 * np.conjugate(fft2)
-    # denom=G12.real
-    denom = G12
-    absdenom = abs(denom)
-    thresh = max(abs(denom)) * threshfrac
-    G = np.where(absdenom > thresh, G12 / absdenom, np.float64(0.0))
-    g = np.real(fftpack.fftshift(fftpack.ifft(G)))
-    if doplot:
-        xvec = range(0, len(fft1))
+def _check_valid_mode_shapes(shape1, shape2):
+    for d1, d2 in zip(shape1, shape2):
+        if not d1 >= d2:
+            raise ValueError(
+                "in1 should have at least as many items as in2 in "
+                "every dimension for 'valid' mode.")
 
+
+def weightedfftconvolve(in1, in2, mode="full", weighting='none', displayplots=False):
+    """Convolve two N-dimensional arrays using FFT.
+    Convolve `in1` and `in2` using the fast Fourier transform method, with
+    the output size determined by the `mode` argument.
+    This is generally much faster than `convolve` for large arrays (n > ~500),
+    but can be slower when only a few output values are needed, and can only
+    output float arrays (int or object array inputs will be cast to float).
+    Parameters
+    ----------
+    in1 : array_like
+        First input.
+    in2 : array_like
+        Second input. Should have the same number of dimensions as `in1`;
+        if sizes of `in1` and `in2` are not equal then `in1` has to be the
+        larger array.
+    mode : str {'full', 'valid', 'same'}, optional
+        A string indicating the size of the output:
+        ``full``
+           The output is the full discrete linear convolution
+           of the inputs. (Default)
+        ``valid``
+           The output consists only of those elements that do not
+           rely on the zero-padding.
+        ``same``
+           The output is the same size as `in1`, centered
+           with respect to the 'full' output.
+    Returns
+    -------
+    out : array
+        An N-dimensional array containing a subset of the discrete linear
+        convolution of `in1` with `in2`.
+    """
+    in1 = np.asarray(in1)
+    in2 = np.asarray(in2)
+
+    if np.isscalar(in1) and np.isscalar(in2):  # scalar inputs
+        return in1 * in2
+    elif not in1.ndim == in2.ndim:
+        raise ValueError("in1 and in2 should have the same rank")
+    elif in1.size == 0 or in2.size == 0:  # empty arrays
+        return np.array([])
+
+    s1 = np.array(in1.shape)
+    s2 = np.array(in2.shape)
+    complex_result = (np.issubdtype(in1.dtype, np.complex) or
+                      np.issubdtype(in2.dtype, np.complex))
+    size = s1 + s2 - 1
+
+    if mode == "valid":
+        _check_valid_mode_shapes(s1, s2)
+
+    # Always use 2**n-sized FFT
+    fsize = 2 ** np.ceil(np.log2(size)).astype(int)
+    fslice = tuple([slice(0, int(sz)) for sz in size])
+    if not complex_result:
+        fft1 = rfftn(in1, fsize)
+        fft2 = rfftn(in2, fsize)
+        theorigmax = np.max(np.absolute(irfftn(gccproduct(fft1, fft2, 'none'), fsize)[fslice]))
+        ret = irfftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots), fsize)[fslice].copy()
+        ret = irfftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots), fsize)[fslice].copy()
+        ret = ret.real
+        ret *= theorigmax / np.max(np.absolute(ret))
+    else:
+        fft1 = fftpack.fftn(in1, fsize)
+        fft2 = fftpack.fftn(in2, fsize)
+        theorigmax = np.max(np.absolute(fftpack.ifftn(gccproduct(fft1, fft2, 'none'))[fslice]))
+        ret = fftpack.ifftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots))[fslice].copy()
+        ret *= theorigmax / np.max(np.absolute(ret))
+
+    # scale to preserve the maximum
+   
+
+    if mode == "full":
+        return ret
+    elif mode == "same":
+        return _centered(ret, s1)
+    elif mode == "valid":
+        return _centered(ret, s1 - s2 + 1)
+
+
+def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
+    product = fft1 * fft2
+    if weighting == 'none':
+        return product
+
+    # calculate the weighting function
+    if weighting == 'Liang':
+        denom = np.square(np.sqrt(np.absolute(fft1 * np.conjugate(fft1))) + np.sqrt(np.absolute(fft2 * np.conjugate(fft2))))
+    elif weighting == 'Eckart':
+        denom = np.sqrt(np.absolute(fft1 * np.conjugate(fft1))) * np.sqrt(np.absolute(fft2 * np.conjugate(fft2)))
+    elif weighting == 'PHAT':
+        denom = np.absolute(product)
+    else:
+        print('illegal weighting function specified in gccproduct')
+        sys.exit()
+
+    if displayplots:
+        xvec = range(0, len(denom))
         fig = pl.figure()
         ax = fig.add_subplot(111)
-        ax.set_title('fft1')
-        pl.plot(xvec, abs(fft1))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('fft2')
-        pl.plot(xvec, abs(fft2))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('G12')
-        pl.plot(xvec, abs(G12))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('denom')
+        ax.set_title('reciprocal weighting function')
         pl.plot(xvec, abs(denom))
+        pl.show()
 
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('angle(G)')
-        pl.plot(xvec, np.angle(G))
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('abs(G)')
-        pl.plot(xvec, abs(G))
-    return g
-
+    # now apply it while preserving the max
+    theorigmax = np.max(np.absolute(denom))
+    thresh = theorigmax * threshfrac
+    if thresh > 0.0: 
+        with np.errstate(invalid='ignore', divide='ignore'):
+            return np.nan_to_num(np.where(np.absolute(denom) > thresh, product / denom, np.float64(0.0)))
+    else:
+        return 0.0 * product
+    
 
 #### taken from filtfilt from scipy.org Cookbook http://www.scipy.org/Cookbook/FiltFilt
 def lfilter_zi(b, a):
