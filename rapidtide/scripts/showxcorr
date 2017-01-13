@@ -88,7 +88,7 @@ def usage():
     print("showxcorr - calculate and display crosscorrelation between two timeseries")
     print("")
     print(
-        "usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME] [-N TRIALS]")
+        "usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-z FILENAME] [-N TRIALS]")
     print("")
     print("required arguments:")
     print("	timcoursefile1:	text file containing a timeseries")
@@ -98,8 +98,6 @@ def usage():
     print("optional arguments:")
     print("    -t 	     - detrend the data")
     print("    -w 	     - prewindow the data")
-    print("    -g 	     - perform phase alignment transform (phat) rather than ")
-    print("                    standard crosscorrelation")
     print("    -l LABEL	     - label for the delay value")
     print("    -s STARTTIME  - time of first datapoint to use in seconds in the first file")
     print("    -D DURATION   - amount of data to use in seconds")
@@ -172,7 +170,7 @@ numpoints = len(inputdata1)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:wg", ["help"])
+    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
