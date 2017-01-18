@@ -166,7 +166,7 @@ else:
     theanatmaps = ['highres', 'standard']
 
 if forcelinear:
-    warpfuncfile = None
+    warpfuncfile += "ridiculous_suffix" 
 
 if os.path.isfile(xformfuncmat):
     if os.path.isfile(reftarget):
