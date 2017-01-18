@@ -79,6 +79,7 @@ def usage():
     print("optional arguments:")
     print("    --all              - also transform the corrout file (warning - file may be huge)")
     print("    --hires            - transform to match the high resolution anatomic image rather than the standard")
+    print("    --linear           - only do linear transformation, even if warpfile exists")
 
 
 ##########################################################################################
@@ -92,10 +93,11 @@ def usage():
 # option control
 do4Dmaps = False
 dohires = False
+forcelinear = False
 
 # get the command line parameters
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "all", "hires"])
+    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "all", "hires", "linear"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like 'option -a not recognized'
@@ -114,6 +116,9 @@ for o, a in opts:
     if o == "--all":
         do4Dmaps = True
         print('will also transofrm corrout map')
+    elif o == '--linear':
+        forcelinear = True
+        print('forcing linear transformation')
     elif o == '--hires':
         dohires = True
         print('transforming to hires anatomic instead of MNI152')
@@ -159,6 +164,9 @@ else:
     reftarget = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm.nii.gz')
     outputtag = '_std_'
     theanatmaps = ['highres', 'standard']
+
+if forcelinear:
+    warpfuncfile = None
 
 if os.path.isfile(xformfuncmat):
     if os.path.isfile(reftarget):
