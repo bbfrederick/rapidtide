@@ -59,11 +59,10 @@ def makethecmd(theinputfile, reftarget, xform, outputname, warpfile=None):
         print('doing nonlinear transformation')
         thecommand.append(fslsubcmd)
         thecommand.append(applywarpcmd)
-        thecommand.append('--in=' + theinputfile)
         thecommand.append('--ref=' + reftarget)
+        thecommand.append('--in=' + theinputfile)
         thecommand.append('--out=' + outputname)
         thecommand.append('--warp=' + warpfile)
-        thecommand.append('--premat=' + xform)
     return(thecommand)
 
 def usage():
@@ -148,11 +147,11 @@ subjroot = thebase[:-15]
 
 # make sure the appropriate transformation matrix and targets exist
 if dohires:
-    xformfuncmat = os.path.abspath(os.path.join(featdir,
-        'reg','example_func2highres.mat'))
-    warpfuncfile=''
     reftarget = os.path.abspath(os.path.join(featdir,
         'reg','highres.nii.gz'))
+    warpfuncfile=''
+    xformfuncmat = os.path.abspath(os.path.join(featdir,
+        'reg','example_func2highres.mat'))
     outputtag = '_hires_'
     theanatmaps = ['highres']
 else:
