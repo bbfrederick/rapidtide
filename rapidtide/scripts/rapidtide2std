@@ -158,7 +158,7 @@ else:
     xformfuncmat = os.path.abspath(os.path.join(featdir,
         'reg','example_func2standard.mat'))
     warpfuncfile = os.path.abspath(os.path.join(featdir,
-        'reg','highres2standard_warp.nii.gz'))
+        'reg','example_func2standard_warp.nii.gz'))
     reftarget = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm.nii.gz')
     outputtag = '_std_'
     theanatmaps = ['highres', 'standard']
