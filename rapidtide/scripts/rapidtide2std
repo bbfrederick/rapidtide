@@ -150,8 +150,7 @@ subjroot = thebase[:-15]
 if dohires:
     xformfuncmat = os.path.abspath(os.path.join(featdir,
         'reg','example_func2highres.mat'))
-    warpfuncfile = os.path.abspath(os.path.join(featdir,
-        'reg','example_func2highres_warp.nii.gz'))
+    warpfuncfile=''
     reftarget = os.path.abspath(os.path.join(featdir,
         'reg','highres.nii.gz'))
     outputtag = '_hires_'
@@ -160,7 +159,7 @@ else:
     xformfuncmat = os.path.abspath(os.path.join(featdir,
         'reg','example_func2standard.mat'))
     warpfuncfile = os.path.abspath(os.path.join(featdir,
-        'reg','example_func2standard_warp.nii.gz'))
+        'reg','highres2standard_warp.nii.gz'))
     reftarget = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm.nii.gz')
     outputtag = '_std_'
     theanatmaps = ['highres', 'standard']
