@@ -103,7 +103,7 @@ Outputs:
 Usage:
 ^^^^^^
 
-::
+	::
 
 	usage: rapidtide2 fmrifilename outputname 
 	[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [--phat] [--liang] [--eckart] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] [-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME] [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] [--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT][--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--nodispersioncalc] [--refineupperlag] [--refinelowerlag][--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix][--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP][--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE
@@ -261,7 +261,7 @@ Outputs:
 Usage:
 ^^^^^^
 
-::
+	::
 
 	showxcorr - calculate and display crosscorrelation between two timeseries
 
@@ -359,7 +359,7 @@ Outputs:
 Usage:
 ^^^^^^
 
-::
+	::
 
 	showtc - plots the data in text files
 
@@ -425,7 +425,7 @@ Outputs:
 Usage:
 ^^^^^^
 
-::
+	::
 
 	usage: showhist textfilename
 		plots xy histogram data in text file
@@ -451,7 +451,7 @@ Outputs:
 Usage:
 ^^^^^^
 
-::
+	::
 
 	resamp1tc - resample a timeseries file
 
@@ -483,7 +483,7 @@ Outputs:
 Usage:
 ^^^^^^
 
-::
+	::
 
 	usage: resamplenifti inputfile inputtr outputname outputtr [-a]
 
@@ -514,7 +514,7 @@ Outputs:
 Usage:
 ^^^^^^
 
-::
+	::
 
 	usage: tidepool [-h] [-o OFFSETTIME] [-r] [-n] [-t TRVAL] [-d DATAFILEROOT]
                 [-a ANATNAME] [-m GEOMASKNAME]
