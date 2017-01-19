@@ -305,37 +305,37 @@ Usage:
 rapidtide2std
 -------------
 
-Description:
-^^^^^^^^^^^^
+	Description:
+	^^^^^^^^^^^^
 
-This is a utility for registering rapidtide output maps
-to standard coordinates.  It's usually much faster to run rapidtide
-in native space then transform afterwards to MNI152 space.  NB: this 
-will only work if you have a working FSL installation.
+	This is a utility for registering rapidtide output maps
+	to standard coordinates.  It's usually much faster to run rapidtide
+	in native space then transform afterwards to MNI152 space.  NB: this 
+	will only work if you have a working FSL installation.
 
-Inputs:
-^^^^^^^
+	Inputs:
+	^^^^^^^
 
-Outputs:
-^^^^^^^^
-New versions of the rapidtide output maps, registered to either MNI152 space or to the hires anatomic images for the subject.  All maps are named with the specified root name with '_std' appended.
+	Outputs:
+	^^^^^^^^
+	New versions of the rapidtide output maps, registered to either MNI152 space or to the hires anatomic images for the subject.  All maps are named with the specified root name with '_std' appended.
 
-Usage:
-^^^^^^
+	Usage:
+	^^^^^^
 
-::
+	::
 
-	usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]
+		usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]
 
-	required arguments:
-		INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
-		OUTPUTDIR          - The location for the output files
-		FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
+		required arguments:
+			INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
+			OUTPUTDIR          - The location for the output files
+			FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
 
-	optional arguments:
-		--all              - also transform the corrout file (warning - file may be huge)
-		--hires            - transform to match the high resolution anatomic image rather than the standard
-		--linear           - only do linear transformation, even if warpfile exists
+		optional arguments:
+			--all              - also transform the corrout file (warning - file may be huge)
+			--hires            - transform to match the high resolution anatomic image rather than the standard
+			--linear           - only do linear transformation, even if warpfile exists
 
 
 showtc
