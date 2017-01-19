@@ -257,6 +257,7 @@ showxcorr requires two text files containing timecourses with the same sample ra
 Outputs:
 ^^^^^^^^
 showxcorr outputs everything to standard out, including the Pearson correlation, the maximum cross correlation, the time of maximum cross correlation, and estimates of the significance levels (if specified).  There are no output files.
+
 Usage:
 ^^^^^^
 
@@ -317,23 +318,24 @@ Inputs:
 
 Outputs:
 ^^^^^^^^
+New versions of the rapidtide output maps, registered to either MNI152 space or to the hires anatomic images for the subject.  All maps are named with the specified root name with '_std' appended.
 
 Usage:
 ^^^^^^
 
 ::
 
-    rapidtide2std:  register rapidtide output maps to standard space
+	usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]
 
-    usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [all]
+	required arguments:
+		INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
+		OUTPUTDIR          - The location for the output files
+		FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
 
-    required arguments:
-        INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
-        OUTPUTDIR          - The location for the output files
-        FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
-
-    optional arguments:
-        all                - If present, rapidtide2feat will transform the _corrout file to MNI152
+	optional arguments:
+		--all              - also transform the corrout file (warning - file may be huge)
+		--hires            - transform to match the high resolution anatomic image rather than the standard
+		--linear           - only do linear transformation, even if warpfile exists
 
 
 showtc
