@@ -57,48 +57,48 @@ I’ve included a number of tools to get you going – I’ll add in a number of
 rapidtide2
 ----------
 
-The central program in this package is rapidtide2.  This is the program that quantifies the correlation strength and time delay of pervasive signals in a BOLD fMRI dataset.
-
 Description:
 ^^^^^^^^^^^^
 
-At its core, rapidtide2 is simply performing a full crosscorrelation between a "probe" timecourse and every voxel in an fMRI dataset (by “full” I mean over a range of time lags that account for any delays between the signals, rather than only at zero lag, as in a Pearson correlation).  As with many things, however, the devil is in the details, and so rapidtide2 provides a number of features which make it pretty good at this particular task.  A few highlights:
+	The central program in this package is rapidtide2.  This is the program that quantifies the correlation strength and time delay of pervasive signals in a BOLD fMRI dataset.
 
-#. There are lots of ways to do something even as simple as a cross-correlation in a nonoptimal way (not windowing, improper normalization, doing it in the time rather than frequency domain, etc.).  I'm pretty sure what rapidtide2 does by default is, if not the best way, at least a very good and very fast way.
+	At its core, rapidtide2 is simply performing a full crosscorrelation between a "probe" timecourse and every voxel in an fMRI dataset (by “full” I mean over a range of time lags that account for any delays between the signals, rather than only at zero lag, as in a Pearson correlation).  As with many things, however, the devil is in the details, and so rapidtide2 provides a number of features which make it pretty good at this particular task.  A few highlights:
 
-#. rapidtide2 has been optimized and profiled to speed it up quite a bit; it has an optional dependency on numba – if it’s installed, some of the most heavily used routines will speed up significantly due to judicious use of @jit.
+	#. There are lots of ways to do something even as simple as a cross-correlation in a nonoptimal way (not windowing, improper normalization, doing it in the time rather than frequency domain, etc.).  I'm pretty sure what rapidtide2 does by default is, if not the best way, at least a very good and very fast way.
 
-#. The sample rate of your probe regressor and the fMRI data do not have to match - rapidtide2 resamples the probe regressor to an integral multiple of the fMRI data rate automatically.
+	#. rapidtide2 has been optimized and profiled to speed it up quite a bit; it has an optional dependency on numba – if it’s installed, some of the most heavily used routines will speed up significantly due to judicious use of @jit.
 
-#. The probe and data can be temporally prefiltered to the LFO, respiratory, or cardiac frequency band with a command line switch, or you can specify any low, high, or bandpass range you want.
+	#. The sample rate of your probe regressor and the fMRI data do not have to match - rapidtide2 resamples the probe regressor to an integral multiple of the fMRI data rate automatically.
 
-#. The data can be spatially smoothed at runtime (so you don't have to keep smoothed versions of big datasets around).  This is quite fast, so no reason not to do it this way.
+	#. The probe and data can be temporally prefiltered to the LFO, respiratory, or cardiac frequency band with a command line switch, or you can specify any low, high, or bandpass range you want.
 
-#. rapidtide2 can generate a probe regressor from the global mean of the data itself - no externally recorded timecourse is required.  Optionally you can input both a mask of regions that you want to be included in the mean, and the voxels that you want excluded from the mean (there are situations when you might want to do one or the other or both).
+	#. The data can be spatially smoothed at runtime (so you don't have to keep smoothed versions of big datasets around).  This is quite fast, so no reason not to do it this way.
+
+	#. rapidtide2 can generate a probe regressor from the global mean of the data itself - no externally recorded timecourse is required.  Optionally you can input both a mask of regions that you want to be included in the mean, and the voxels that you want excluded from the mean (there are situations when you might want to do one or the other or both).
 	
-#. Determining the significance threshold for filtered correlations where the optimal delay has been selected is nontrivial; using the conventional formulae for the significance of a correlation leads to wildly inflated p values.  rapidtide2 estimates the spurious correlation threshold by calculating the distribution of null correlation values obtained with a shuffling  procedure at the beginning of each run (the default is to use 10000 shuffled correlations), and uses this value to mask the correlation maps it calculates.  As of version 0.1.2 it will also handle two-tailed significance, which you need when using bipolar mode.
+	#. Determining the significance threshold for filtered correlations where the optimal delay has been selected is nontrivial; using the conventional formulae for the significance of a correlation leads to wildly inflated p values.  rapidtide2 estimates the spurious correlation threshold by calculating the distribution of null correlation values obtained with a shuffling  procedure at the beginning of each run (the default is to use 10000 shuffled correlations), and uses this value to mask the correlation maps it calculates.  As of version 0.1.2 it will also handle two-tailed significance, which you need when using bipolar mode.
 
-#. rapidtide2 can do an iterative refinement of the probe regressor by aligning the voxel timecourses in time and regenerating the test regressor.
+	#. rapidtide2 can do an iterative refinement of the probe regressor by aligning the voxel timecourses in time and regenerating the test regressor.
 
-#. rapidtide2 fits the peak of the correlation function, so you can make fine grained distinctions between close lag times. The resolution of the time lag discrimination is set by the length of the timecourse, not the timestep – this is a feature of correlations, not rapidtide2.
+	#. rapidtide2 fits the peak of the correlation function, so you can make fine grained distinctions between close lag times. The resolution of the time lag discrimination is set by the length of the timecourse, not the timestep – this is a feature of correlations, not rapidtide2.
 
-#. Once the time delay in each voxel has been found, rapidtide2 outputs a 4D file of delayed probe regressors for using as voxel specific confound regressors or to estimate the strength of the probe regressor in each voxel.  This regression is performed by default, but these outputs let you do it yourself if you are so inclined.
+	#. Once the time delay in each voxel has been found, rapidtide2 outputs a 4D file of delayed probe regressors for using as voxel specific confound regressors or to estimate the strength of the probe regressor in each voxel.  This regression is performed by default, but these outputs let you do it yourself if you are so inclined.
 
-#. I've put a lot of effort into making the outputs as informative as possible - lots of useful maps, histograms, timecourses, etc.
+	#. I've put a lot of effort into making the outputs as informative as possible - lots of useful maps, histograms, timecourses, etc.
 
-#. There are a lot of tuning parameters you can mess with if you feel the need.  I've tried to make intelligent defaults so things will work well out of the box, but you have the ability to set most of the interesting parameters yourself.
+	#. There are a lot of tuning parameters you can mess with if you feel the need.  I've tried to make intelligent defaults so things will work well out of the box, but you have the ability to set most of the interesting parameters yourself.
      
 Inputs:
 ^^^^^^^
-At a minimum, rapidtide2 needs a Nifti file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2; I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti in workbench, run rapidtide2, then convert back. As soon as nibabel finishes their Cifti support, I'll add that.
+	At a minimum, rapidtide2 needs a Nifti file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2; I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti in workbench, run rapidtide2, then convert back. As soon as nibabel finishes their Cifti support, I'll add that.
 
-The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a time by voxel array for simplicity.
+	The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a time by voxel array for simplicity.
 
-The file you input here should be the result of any preprocessing you intend to do.  The expectation is that rapidtide will be run as the last preprocessing step before resting state or task based analysis.  So any slice time correction, motion correction, spike removal, etc. should already have been done.  If you use FSL, this means that if you've run preprocessing, you would use the filtered_func_data.nii.gz file as input.  Temporal and spatial filtering are the two (partial) exceptions here.  Generally rapidtide is most useful for looking at low frequency oscillations, so when you run it, you usually use the "-L" option or some other to limit the analysis to the detection and removal of low frequency systemic physiological oscillations.  So rapidtide will generally apply it's own temporal filtering on top of whatever you do in preprocessing.  Also, you have the option of doing spatial smoothing in rapidtide to boost the SNR of the analysis; the hemodynamic signals rapidtide looks for are often very smooth, so you rather than smooth your functional data excessively, you can do it within rapidtide so that only the hemodynamic data is smoothed at that level.
+	The file you input here should be the result of any preprocessing you intend to do.  The expectation is that rapidtide will be run as the last preprocessing step before resting state or task based analysis.  So any slice time correction, motion correction, spike removal, etc. should already have been done.  If you use FSL, this means that if you've run preprocessing, you would use the filtered_func_data.nii.gz file as input.  Temporal and spatial filtering are the two (partial) exceptions here.  Generally rapidtide is most useful for looking at low frequency oscillations, so when you run it, you usually use the "-L" option or some other to limit the analysis to the detection and removal of low frequency systemic physiological oscillations.  So rapidtide will generally apply it's own temporal filtering on top of whatever you do in preprocessing.  Also, you have the option of doing spatial smoothing in rapidtide to boost the SNR of the analysis; the hemodynamic signals rapidtide looks for are often very smooth, so you rather than smooth your functional data excessively, you can do it within rapidtide so that only the hemodynamic data is smoothed at that level.
      
 Outputs:
 ^^^^^^^^
-Outputs are space or space by time Nifti files (depending on the file), and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
+	Outputs are space or space by time Nifti files (depending on the file), and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
     
 Usage:
 ^^^^^^
@@ -237,7 +237,7 @@ Usage:
 
 
         
-These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
+	These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
 
 showxcorr
 ---------
@@ -245,18 +245,18 @@ showxcorr
 Description:
 ^^^^^^^^^^^^
 
-Like rapidtide2, but for single time courses.  Takes two text files as input, calculates and displays 
-the time lagged crosscorrelation between them, fits the maximum time lag, and estimates
-the significance of the correlation.  It has a range of filtering,
-windowing, and correlation options.
+	Like rapidtide2, but for single time courses.  Takes two text files as input, calculates and displays 
+	the time lagged crosscorrelation between them, fits the maximum time lag, and estimates
+	the significance of the correlation.  It has a range of filtering,
+	windowing, and correlation options.
 
 Inputs:
 ^^^^^^^
-showxcorr requires two text files containing timecourses with the same sample rate, one timepoint per line, which are to be correlated, and the sample rate.
+	showxcorr requires two text files containing timecourses with the same sample rate, one timepoint per line, which are to be correlated, and the sample rate.
 
 Outputs:
 ^^^^^^^^
-showxcorr outputs everything to standard out, including the Pearson correlation, the maximum cross correlation, the time of maximum cross correlation, and estimates of the significance levels (if specified).  There are no output files.
+	showxcorr outputs everything to standard out, including the Pearson correlation, the maximum cross correlation, the time of maximum cross correlation, and estimates of the significance levels (if specified).  There are no output files.
 
 Usage:
 ^^^^^^
@@ -343,21 +343,18 @@ showtc
 
 Description:
 ^^^^^^^^^^^^
-
-A very simple command line utility that takes a text file
-and plots the data in it in a matplotlib window.  That's it.  A
-good tool for quickly seeing what's in a file.  Has some options
-to make the plot prettier.
+	A very simple command line utility that takes a text file
+	and plots the data in it in a matplotlib window.  That's it.  A
+	good tool for quickly seeing what's in a file.  Has some options
+	to make the plot prettier.
 
 Inputs:
 ^^^^^^^
-
-Text files containing time series data
+	Text files containing time series data
 
 Outputs:
 ^^^^^^^^
-
-None
+	None
 
 Usage:
 ^^^^^^
@@ -384,16 +381,16 @@ histnifti
 
 Description:
 ^^^^^^^^^^^^
-A command line tool to generate a histogram for a nifti file
+	A command line tool to generate a histogram for a nifti file
 
 
 Inputs:
 ^^^^^^^
-A nifti file
+	A nifti file
 
 Outputs:
 ^^^^^^^^
-A text file containing the histogram information
+	A text file containing the histogram information
 
 None
 
@@ -415,17 +412,15 @@ showhist
 
 Description:
 ^^^^^^^^^^^^
-Another simple command line utility that displays the 
-histograms generated by rapidtide2.
-
+	Another simple command line utility that displays the histograms generated by rapidtide2.
 
 Inputs:
 ^^^^^^^
-A textfile generated by rapidtide2 containing histogram information
+	A textfile generated by rapidtide2 containing histogram information
 
 Outputs:
 ^^^^^^^^
-None
+	None
 
 Usage:
 ^^^^^^
@@ -444,8 +439,7 @@ resamp1tc
 
 Description:
 ^^^^^^^^^^^^
-This takes an input text file at some sample rate and outputs
-a text file resampled to the specified sample rate.
+	This takes an input text file at some sample rate and outputs a text file resampled to the specified sample rate.
 
 
 Inputs:
@@ -477,9 +471,8 @@ resamplenifti
 
 Description:
 ^^^^^^^^^^^^
-This takes an input nifti file at some TR and outputs
-a nifti file resampled to the specified TR.
-
+	This takes an input nifti file at some TR and outputs a nifti file resampled to the specified TR.
+ 
 
 Inputs:
 ^^^^^^^
@@ -509,13 +502,7 @@ tidepool
 
 Description:
 ^^^^^^^^^^^^
-This is a very experimental tool for displaying all of the
-various maps generated by rapidtide2 in one place, overlayed on
-an anatomic image.  This makes it a bit easier to see how all the
-maps are related to one another.  To use it, launch tidepool from
-the command line, and then select a lag time map - tidpool will 
-figure out the root name and pull in all of the other associated
-maps.  Works in native or standard space.
+	This is a very experimental tool for displaying all of the various maps generated by rapidtide2 in one place, overlayed on an anatomic image.  This makes it a bit easier to see how all the maps are related to one another.  To use it, launch tidepool from the command line, and then select a lag time map - tidpool will figure out the root name and pull in all of the other associated maps.  Works in native or standard space.
 
 
 Inputs:
@@ -550,10 +537,7 @@ tide_funcs.py
 
 Description:
 ^^^^^^^^^^^^
-This is the library of the various helper routines
-that are used by pretty much every program in here for
-correlation, resampling, filtering, normalization, significance
-estimation, file I/O, etc.
+	This is the library of the various helper routines that are used by pretty much every program in here for correlation, resampling, filtering, normalization, significance estimation, file I/O, etc.
 
 
 Inputs:
@@ -573,14 +557,8 @@ OrthoImageItem.py
 
 Description:
 ^^^^^^^^^^^^
-This is a class that implements the orthographic
-projection module that is used to display all of the maps in tidepool.
-It uses pyqtgraph to do all the heavy lifting.  None of the built-ins
-in pyqtgraph did exactly what I wanted in terms of allowing 3D selection,
-overlays and the like, so I cobbled this together.  It may be generally
-useful to anybody wanting to display functional data.
+	This is a class that implements the orthographic projection module that is used to display all of the maps in tidepool. It uses pyqtgraph to do all the heavy lifting.  None of the built-ins in pyqtgraph did exactly what I wanted in terms of allowing 3D selection, overlays and the like, so I cobbled this together.  It may be generally useful to anybody wanting to display functional data.
         
-
 Inputs:
 ^^^^^^^
 
