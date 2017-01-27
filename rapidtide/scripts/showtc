@@ -31,7 +31,7 @@ import rapidtide.tide_funcs as tide
 import numpy as np
 from scipy import arange, fftpack
 
-from pylab import plot, legend, show, hold, xlabel, ylabel
+from pylab import plot, legend, show, xlabel, ylabel
 
 
 def phase(mcv): 
@@ -159,7 +159,6 @@ for i in range(0, numfiles):
 
 # now plot it out
 colorlist = ['r', 'g', 'b', 'k', 'B', 'y']
-hold(True)
 for i in range(0, numvecs):
     plot(xvecs[i], yvecs[i], colorlist[i % len(colorlist)], label=linelabels[i])
 if dolegend:
