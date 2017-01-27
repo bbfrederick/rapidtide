@@ -29,7 +29,7 @@ import matplotlib
 import rapidtide.tide_funcs as tide
 from scipy import arange
 from numpy import max, floor
-from pylab import plot, legend, show, hold
+from pylab import plot, legend, show
 
 #if platform.system() == 'Darwin':
 #    matplotlib.use('MacOSX')
@@ -87,7 +87,6 @@ def main():
             outputdata2 = outputdata2[0:len(out_t)]
 
     plot(in_t, inputdata + 0.4, 'k')
-    hold(True)
 
     if splittcs:
         outputdata_lf = tide.lfo_pass(outsamplerate, outputdata, usebutterworthfilter)
@@ -109,7 +108,6 @@ def main():
         else:
             legend(('original signal', 'resampled'))
 
-    hold(False)
     show()
 
 if __name__ == '__main__':
