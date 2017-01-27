@@ -42,7 +42,7 @@ from numpy import r_, argmax, zeros, shape, reshape, eye, sqrt
 from numpy.random import shuffle, permutation
 import nibabel as nib
 
-from pylab import plot, legend, show, hold, figure
+from pylab import plot, legend, show, figure
 
 
 
