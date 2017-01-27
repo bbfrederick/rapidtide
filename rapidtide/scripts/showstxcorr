@@ -27,13 +27,13 @@ import rapidtide.tide_funcs as tide
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy import sin, arange, pi, randn
-from numpy import r_, argmax, zeros, shape, reshape, eye
+from numpy import r_, argmax, zeros, shape, reshape, eye, round
 import nibabel as nib
 
-from pylab import plot, legend, show, hold, figure
+from pylab import plot, legend, show, figure
 
 
-def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend, numreps=1000):
+def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend, corrweighting='none', numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
     corrlist = zeros((numreps), dtype='float')
     corrlist_pear = zeros((numreps), dtype='float')
@@ -48,11 +48,7 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
         filteredshuffleddata = tide.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend)
 
         # crosscorrelate with original
-        if gccphat:
-            theshuffledxcorr = tide.gccphat(filteredindata, filteredshuffleddata, False)
-        else:
-            theshuffledxcorr = tide.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr)
-            # theshuffledxcorr = correlate(filteredindata, filteredshuffleddata, mode='full')
+        theshuffledxcorr = tide.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr, weighting=corrweighting)
 
         # find and tabulate correlation coefficient at optimal lag
         theshuffledxcorr_trim = theshuffledxcorr[searchstart:searchend + 1]
@@ -81,7 +77,8 @@ def printthresholds(pcts, thepercentiles, labeltext):
 def usage():
     print("showstxcorr - calculate and display the short term crosscorrelation between two timeseries")
     print("")
-    print("usage: showstxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME]")
+    print(
+        "usage: showstxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [--phat] [--liang] [--eckart] [-z FILENAME]")
     print("")
     print("required arguments:")
     print("	timcoursefile1:	text file containing a timeseries")
@@ -92,7 +89,12 @@ def usage():
     print("optional arguments:")
     print("    -t 	     - detrend the data")
     print("    -w 	     - prewindow the data")
-    print("    -g 	     - perform phase alignment transform (phat) rather than standard crosscorrelation")
+    print("    --phat        - perform phase alignment transform (PHAT) rather than ")
+    print("                    standard crosscorrelation")
+    print("    --liang       - perform phase alignment transform with Liang weighting function rather than ")
+    print("                    standard crosscorrelation")
+    print("    --eckart      - perform phase alignment transform with Eckart weighting function rather than ")
+    print("                    standard crosscorrelation")
     print("    -l LABEL	     - label for the delay value")
     print("    -s STARTTIME  - time of first datapoint to use in seconds in the first file")
     print("    -D DURATION   - amount of data to use in seconds")
@@ -108,58 +110,64 @@ def usage():
     print("    -a            - if summary mode is on, add a header line showing what values mean")
     print("    -z FILENAME   - use the columns of FILENAME as controlling variables and return the partial correlation")
     print("    -W WINDOWLEN  - use a window length of WINDOWLEN seconds (default is 50.0s)")
+    print("    -S STEPSIZE   - timestep between subsequent measurements (default is 25.0s).  Will be rounded to the nearest sample time")
     print("    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS repetition")
     print("    -f            - negate second regressor")
     print("    -i            - output intermediate steps in crosscorrelation calculation")
     print("")
-    return()
+    return ()
+
 
 # get the command line parameters
-searchrange=15.0
-uselabel=False
-display=True
-gccphat=False
-prewindow=False
-dodetrend=False
-dopartial=False
-duration=1000000.0
-starttime=0.0
-doplot=False
-usebutterworthfilter=False
-filtorder=3
-thelabel=""
-trimdata=False
-verbose=True
-summarymode=False
-labelline=False
-windowtime=50.0
+searchrange = 15.0
+uselabel = False
+display = True
+corrweighting = 'none'
+prewindow = False
+dodetrend = False
+dopartial = False
+duration = 1000000.0
+starttime = 0.0
+doplot = False
+usebutterworthfilter = False
+filtorder = 3
+thelabel = ""
+trimdata = False
+verbose = True
+summarymode = False
+labelline = False
+windowtime = 50.0
+stepsize = 25.0
 estimate_significance = False
 flipregressor = False
 dumpfiltered = False
 
 nargs = len(sys.argv)
-if nargs<5:
-    print(nargs,' arguments found, need 4 or more')
+if nargs < 5:
+    print(nargs, ' arguments found, need 4 or more')
     usage()
     exit()
-infilename1=sys.argv[1]
-infilename2=sys.argv[2]
-Fs=float(sys.argv[3])
-outfilename=sys.argv[4]
+infilename1 = sys.argv[1]
+infilename2 = sys.argv[2]
+Fs = float(sys.argv[3])
+sampletime = 1.0 / Fs
+outfilename = sys.argv[4]
+
+stepsize = sampletime * round(stepsize / sampletime)
 
 theprefilter = tide.noncausalfilter()
-theprefilter.setbutter(usebutterworthfilter,filtorder)
+theprefilter.setbutter(usebutterworthfilter, filtorder)
 
-inputdata1=tide.readvec(infilename1)
-inputdata2=tide.readvec(infilename2)
-numpoints=len(inputdata1)
+inputdata1 = tide.readvec(infilename1)
+inputdata2 = tide.readvec(infilename2)
+numpoints = len(inputdata1)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[5:], "ifN:W:z:aATtVLRCF:dl:s:D:wg", ["help"])
+    opts, args = getopt.getopt(sys.argv[5:], "ifN:W:S:z:aATtVLRCF:dl:s:D:wg", ["phat", "liang", "eckart", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
-    print(str(err)) # will print something like "option -x not recognized"
+    print(str(err))  # will print something like "option -x not recognized"
     usage()
     sys.exit(2)
 
@@ -172,8 +180,16 @@ for o, a in opts:
         trimdata = True
         if verbose:
             print('trimming data to match')
-    elif o == "-g":
-        gccphat = True
+    elif o == "--liang":
+        corrweighting = 'Liang'
+        if verbose:
+            print('doing Liang weighted correlation')
+    elif o == "--eckart":
+        corrweighting = 'Eckart'
+        if verbose:
+            print('doing Eckart weighted correlation')
+    elif o == "--phat":
+        corrweighting = 'PHAT'
         if verbose:
             print('doing phase alignment transform')
     elif o == "-i":
@@ -197,30 +213,34 @@ for o, a in opts:
         if verbose:
             print('enabling prewindowing')
     elif o == "-z":
-        controlvariablefile=a
-        dopartial=True
+        controlvariablefile = a
+        dopartial = True
         if verbose:
             print('performing partial correlations')
     elif o == "-l":
-        thelabel=a
-        uselabel=True
+        thelabel = a
+        uselabel = True
         if verbose:
             print('label set to', thelabel)
     elif o == "-D":
-        duration=float(a)
+        duration = float(a)
         if verbose:
             print('duration set to', duration)
     elif o == "-W":
-        windowtime=float(a)
+        windowtime = float(a)
         if verbose:
             print('windowtime set to', windowtime)
+    elif o == "-S":
+        stepsize = sampletime * round(float(a) / sampletime)
+        if verbose:
+            print('stepsize set to', stepsize)
     elif o == "-N":
         numreps = int(a)
         estimate_significance = True
         if verbose:
             print('estimating significance threshold with ', numreps, ' trials')
     elif o == "-s":
-        starttime=float(a)
+        starttime = float(a)
         if verbose:
             print('starttime set to', starttime)
     elif o == "-V":
@@ -240,42 +260,42 @@ for o, a in opts:
         if verbose:
             print('prefiltering to cardiac band')
     elif o == "-A":
-        verbose=False
-        summarymode=True 
+        verbose = False
+        summarymode = True
     elif o == "-F":
-        arbvec=a.split(',')
-        if len(arbvec)!=2 and len(arbvec)!=4:
+        arbvec = a.split(',')
+        if len(arbvec) != 2 and len(arbvec) != 4:
             usage()
             sys.exit()
-        if len(arbvec)==2:
-            arb_lower=float(arbvec[0])
-            arb_upper=float(arbvec[1])
-            arb_lowerstop=0.9*float(arbvec[0])
-            arb_upperstop=1.1*float(arbvec[1])
-        if len(arbvec)==4:
-            arb_lower=float(arbvec[0])
-            arb_upper=float(arbvec[1])
-            arb_lowerstop=float(arbvec[2])
-            arb_upperstop=float(arbvec[3])
+        if len(arbvec) == 2:
+            arb_lower = float(arbvec[0])
+            arb_upper = float(arbvec[1])
+            arb_lowerstop = 0.9 * float(arbvec[0])
+            arb_upperstop = 1.1 * float(arbvec[1])
+        if len(arbvec) == 4:
+            arb_lower = float(arbvec[0])
+            arb_upper = float(arbvec[1])
+            arb_lowerstop = float(arbvec[2])
+            arb_upperstop = float(arbvec[3])
         theprefilter.settype('arb')
-        theprefilter.setarb(arb_lowerstop,arb_lower,arb_upper,arb_upperstop)
+        theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
         if verbose:
-            print('prefiltering to ', arb_lower, arb_upper, "(stops at ",arb_lowerstop, arb_upperstop,")")
+            print('prefiltering to ', arb_lower, arb_upper, "(stops at ", arb_lowerstop, arb_upperstop, ")")
     else:
         assert False, "unhandled option"
 
-startpoint1=max([int(starttime*Fs),0])
-endpoint1=min([startpoint1+int(duration*Fs),int(len(inputdata1)),int(len(inputdata2))])
-endpoint2=min([int(duration*Fs),int(len(inputdata1)),int(len(inputdata2))])
-trimdata1=inputdata1[startpoint1:endpoint1]
-trimdata2=inputdata2[0:endpoint2]
+startpoint1 = max([int(starttime * Fs), 0])
+endpoint1 = min([startpoint1 + int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))])
+endpoint2 = min([int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))])
+trimdata1 = inputdata1[startpoint1:endpoint1]
+trimdata2 = inputdata2[0:endpoint2]
 
 # band limit the regressor if that is needed
-if theprefilter.gettype()!='none':
+if theprefilter.gettype() != 'none':
     if verbose:
-        print("filtering to ",theprefilter.gettype()," band")
-filtereddata1 = tide.corrnormalize(theprefilter.apply(Fs,trimdata1),False,dodetrend)
-filtereddata2 = tide.corrnormalize(theprefilter.apply(Fs,trimdata2),False,dodetrend)
+        print("filtering to ", theprefilter.gettype(), " band")
+filtereddata1 = tide.corrnormalize(theprefilter.apply(Fs, trimdata1), False, dodetrend)
+filtereddata2 = tide.corrnormalize(theprefilter.apply(Fs, trimdata2), False, dodetrend)
 if flipregressor:
     filtereddata2 *= -1.0
 if dumpfiltered:
@@ -283,19 +303,18 @@ if dumpfiltered:
     tide.writenpvecs(filtereddata2, "filtereddata2.txt")
 
 if dopartial:
-    controlvars=tide.readnpvecs(controlvariablefile)
+    controlvars = tide.readnpvecs(controlvariablefile)
     regressorvec = []
     for j in range(0, numregressors):
-        regressorvec.append(tide.corrnormalize(theprefilter.apply(Fs,controlvars[j,:]),prewindow,dodetrend))
-    if (np.max(filtereddata1)-np.min(filtereddata1))>0.0:
+        regressorvec.append(tide.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]), prewindow, dodetrend))
+    if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
         thefit, filtereddata1 = tide.mlregress(regressorvec, filtereddata1)
-    if (np.max(filtereddata2)-np.min(filtereddata2))>0.0:
+    if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
         thefit, filtereddata2 = tide.mlregress(regressorvec, filtereddata2)
 
 # set the significance threshold
 if estimate_significance:
     xcorrlen = len(thexcorr)
-    sampletime = 1.0 / Fs
     xcorr_x = r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
 
     # generate a list of correlations from shuffled data
@@ -318,28 +337,34 @@ if estimate_significance:
     tide.writenpvecs(corrlist, "corrlist.txt")
     tide.writenpvecs(corrlist_pear, "corrlist_pear.txt")
 
-thepxcorr=pearsonr(filtereddata1,filtereddata2)
+thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
 if verbose:
     print(thepxcorr)
-sampletime=1.0/Fs
-corrpertime,ppertime=tide.shorttermcorr_1D(filtereddata1, filtereddata2, sampletime, windowtime, \
-    prewindow=prewindow, dodetrend=False)
-xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(filtereddata1, filtereddata2, sampletime, windowtime, \
-    prewindow=prewindow, dodetrend=False, display=display)
-tide.writenpvecs(corrpertime,outfilename+"_pearson.txt")
-tide.writenpvecs(ppertime,outfilename+"_pvalue.txt")
+sampletime = 1.0 / Fs
+times, corrpertime, ppertime = tide.shorttermcorr_1D(filtereddata1, filtereddata2, sampletime, windowtime, \
+                                              samplestep=int(stepsize // sampletime), prewindow=prewindow, dodetrend=False)
+times, xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(filtereddata1, filtereddata2, sampletime, windowtime, \
+                                                              samplestep=int(stepsize // sampletime), prewindow=prewindow, dodetrend=False, display=False)
+tide.writenpvecs(corrpertime, outfilename + "_pearson.txt")
+tide.writenpvecs(ppertime, outfilename + "_pvalue.txt")
 tide.writenpvecs(Rvals, outfilename + "_Rvalue.txt")
 tide.writenpvecs(delayvals, outfilename + "_delay.txt")
 tide.writenpvecs(valid, outfilename + "_mask.txt")
 
 if display:
-    timeaxis=r_[0.0:len(filtereddata1)]*sampletime
-    fig,ax1=plt.subplots()
-    ax1.plot(timeaxis,corrpertime,'k')
+    #timeaxis = r_[0.0:len(filtereddata1)] * sampletime
+    fig, ax1 = plt.subplots()
+    ax1.plot(times, corrpertime, 'k')
     ax1.set_ylabel('Pearson R', color='k')
-    ax2=ax1.twinx()
-    ax2.plot(timeaxis,ppertime,'r')
+    ax2 = ax1.twinx()
+    ax2.plot(times, ppertime, 'r')
     ax2.set_ylabel('p value', color='r')
-    #ax2.set_yscale('log')
+    fig, ax3 = plt.subplots()
+    ax3.plot(times, Rvals, 'k')
+    ax3.set_ylabel('Xcorr max R', color='k')
+    ax4 = ax3.twinx()
+    ax4.plot(times,delayvals, 'r')
+    ax4.set_ylabel('Delay (s)', color='r')
+    # ax2.set_yscale('log')
     plt.show()
