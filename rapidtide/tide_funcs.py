@@ -719,50 +719,56 @@ def quickcorr(data1, data2):
     return thepcorr
 
 
-def shorttermcorr_1D(data1, data2, sampletime, windowtime, prewindow=False, dodetrend=False):
+def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewindow=False, dodetrend=False):
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
-    corrpertime = data1 * 0.0
-    ppertime = data1 * 0.0
-    for i in range(halfwindow, np.shape(data1)[0] - halfwindow):
+    times = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
+    corrpertime = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
+    ppertime = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
+    for i in range(halfwindow, np.shape(data1)[0] - halfwindow, samplestep):
         dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         thepcorr = sp.stats.stats.pearsonr(dataseg1, dataseg2)
-        corrpertime[i] = thepcorr[0]
-        ppertime[i] = thepcorr[1]
-    return corrpertime, ppertime
+        times[int(i // samplestep)] = i * sampletime
+        corrpertime[int(i // samplestep)] = thepcorr[0]
+        ppertime[int(i // samplestep)] = thepcorr[1]
+    return times, corrpertime, ppertime
 
 
-def shorttermcorr_2D(data1, data2, sampletime, windowtime, prewindow=False, dodetrend=False, display=False):
+def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimit=None, weighting='none', prewindow=False, dodetrend=False, display=False):
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
 
+    if laglimit is None:
+        laglimit = windowtime / 2.0
+
     dataseg1 = corrnormalize(data1[0:2 * halfwindow], prewindow, dodetrend)
     dataseg2 = corrnormalize(data2[0:2 * halfwindow], prewindow, dodetrend)
-    thexcorr = fastcorrelate(dataseg1, dataseg2)
+    thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
     xcorrlen = np.shape(thexcorr)[0]
-    #xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     xcorr_x = np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     corrzero = int(xcorrlen // 2)
-    xcorrpertime = np.zeros((xcorrlen, np.shape(data1)[0]), dtype='float64')
-    Rvals = np.zeros(np.shape(data1), dtype='float64')
-    valid = np.zeros(np.shape(data1), dtype='float64')
-    delayvals = np.zeros(np.shape(data1), dtype='float64')
-    for i in range(halfwindow,np.shape(data1)[0] - halfwindow):
+    xcorrpertime = np.zeros((xcorrlen, int(np.shape(data1)[0] // samplestep)), dtype='float64')
+    times = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
+    Rvals = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
+    valid = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
+    delayvals = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
+    for i in range(halfwindow,np.shape(data1)[0] - halfwindow, samplestep):
         dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend)
-        xcorrpertime[:, i] = fastcorrelate(dataseg1, dataseg2)
-        maxindex, delayvals[i], Rvals[i], maxsigma, maskval, failreason = findmaxlag_gauss(
-            xcorr_x, xcorrpertime[:, i], -windowtime / 2.0, windowtime / 2.0, 1000.0,
+        times[int(i // samplestep)] = i * sampletime
+        xcorrpertime[:, int(i // samplestep)] = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
+        maxindex, delayvals[int(i // samplestep)], Rvals[int(i // samplestep)], maxsigma, maskval, failreason = findmaxlag_gauss(
+            xcorr_x, xcorrpertime[:, int(i // samplestep)], -laglimit, laglimit, 1000.0,
             refine=True,
             useguess=False,
             fastgauss=False,
             displayplots=False)
         if failreason == 0:
-            valid[i] = 1
+            valid[int(i // samplestep)] = 1
     if display:
         pl.imshow(xcorrpertime)
-    return xcorrpertime, Rvals, delayvals, valid
+    return times, xcorrpertime, Rvals, delayvals, valid
 
 
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
