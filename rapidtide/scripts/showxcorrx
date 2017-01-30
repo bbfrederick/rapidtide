@@ -86,7 +86,7 @@ def usage():
     print("showxcorr - calculate and display crosscorrelation between two timeseries")
     print("")
     print(
-        "usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [--phat] [--liang] [--eckart] [-z FILENAME] [-N TRIALS]")
+        "usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [--nowindow] [-f] [--phat] [--liang] [--eckart] [-z FILENAME] [-N TRIALS]")
     print("")
     print("required arguments:")
     print("    timcoursefile1: text file containing a timeseries")
@@ -94,8 +94,8 @@ def usage():
     print("    samplerate:     the sample rate of the timecourses, in Hz")
     print("")
     print("optional arguments:")
-    print("    -t            - detrend the data")
-    print("    -w            - prewindow the data")
+    print("    --nodetrend   - do not detrend the data before correlation")
+    print("    --nowindow    - do not prewindow data before corrlation")
     print("    --phat        - perform phase alignment transform (PHAT) rather than ")
     print("                    standard crosscorrelation")
     print("    --liang       - perform phase alignment transform with Liang weighting function rather than ")
@@ -132,8 +132,8 @@ searchrange = 15.0
 uselabel = False
 display = True
 corrweighting = 'none'
-prewindow = False
-dodetrend = False
+prewindow = True
+dodetrend = True
 dopartial = False
 duration = 1000000.0
 starttime = 0.0
@@ -174,7 +174,7 @@ numpoints = len(inputdata1)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w", ["phat", "liang", "eckart", "help"])
+    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w", ["phat", "liang", "eckart", "nodetrend", "nowindow", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -211,13 +211,17 @@ for o, a in opts:
         if verbose:
             print('turning on label line')
     elif o == "-t":
-        dodetrend = True
+        print("DEPRECATION WARNING: detrending is now on by default.  Use --nodetrend to disable it")
+    elif o == "--nodetrend":
+        dodetrend = False
         if verbose:
-            print('enabling detrending')
+            print('disabling detrending')
     elif o == "-w":
-        prewindow = True
+        print("DEPRECATION WARNING: windowing is now on by default.  Use --nowindow to disable it")
+    elif o == "--nowindow":
+        prewindow = False
         if verbose:
-            print('enabling prewindowing')
+            print('disabling prewindowing')
     elif o == "-z":
         controlvariablefile = a
         dopartial = True
