@@ -267,7 +267,8 @@ class OrthoImageItem(QtGui.QWidget):
 
     def updateOneView(self, data, mask, background, theLUT, thefgwin, thebgwin):
         im = self.applyLUT(data, mask, theLUT, self.map.dispmin, self.map.dispmax)
-        thefgwin.setImage(im.astype('float'), autoLevels=False)
+        #thefgwin.setImage(im.astype('float'), autoLevels=False)
+        thefgwin.setImage(im.astype('float'))
         if background is not None:
             thebgwin.setImage(background.astype('float'), autoLevels=True)
 
