@@ -1843,7 +1843,7 @@ def main():
             if optiondict['verbose']:
                 print('calling getNullDistributionData with args:', oversampfreq, fmritr, corrorigin, lagmininpts,
                       lagmaxinpts)
-            if optiondict['multiproc']:
+            if optiondict['multiproc'] and False:
                 if optiondict['memprofile']:
                     getNullDistributionData_func = profile(getNullDistributionData_mp, precision=2)
                 else:
