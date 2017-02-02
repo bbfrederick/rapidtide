@@ -1,10 +1,30 @@
 #!/bin/csh -f
-rapidtide2 \
+rapidtide2x \
 	fmri.nii.gz \
-	../dst/dgsr \
+	../dst/dgsr_multiproc \
 	--noglm \
 	--refinepasses=3 --refineoffset \
 	--accheck \
 	--nofitfilt \
 	-r -15,15 \
-	-f 2 &
+	-f 2 -N 10000 --multiproc
+
+rapidtide2x \
+	fmri.nii.gz \
+	../dst/dgsr_refactor \
+	--noglm \
+	--refinepasses=3 --refineoffset \
+	--accheck \
+	--nofitfilt \
+	-r -15,15 \
+	-f 2 -N 10000
+
+rapidtide2 \
+	fmri.nii.gz \
+	../dst/dgsr_original \
+	--noglm \
+	--refinepasses=3 --refineoffset \
+	--accheck \
+	--nofitfilt \
+	-r -15,15 \
+	-f 2 -N 10000 
