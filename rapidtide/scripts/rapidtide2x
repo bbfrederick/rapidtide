@@ -210,10 +210,10 @@ def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
         # queue the chunk
         for i,dat in enumerate(data_in[thechunk * chunksize:(thechunk + 1) * chunksize]):
             inQ.put(dat)
-        numreturned = 0
         offset = thechunk * chunksize
 
         # retrieve the chunk
+        numreturned = 0
         while True:
             ret = outQ.get()
             if ret is not None:
@@ -221,12 +221,13 @@ def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
             numreturned += 1
             if ((numreturned + offset + 1) % reportstep) == 0:
                 tide.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
-            if numreturned >= chunksize - 1: 
+            if numreturned > chunksize - 1: 
                 break
 
     # queue the remainder
     for i,dat in enumerate(data_in[numchunks * chunksize:numchunks * chunksize + remainder]):
         inQ.put(dat)
+    numreturned = 0
     offset = numchunks * chunksize
 
     # retrieve the remainder
@@ -237,93 +238,13 @@ def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
         numreturned += 1
         if ((numreturned + offset + 1) % reportstep) == 0:
             tide.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
-        if numreturned >= remainder - 1: 
+        if numreturned > remainder - 1: 
                 break
     tide.progressbar(totalnum, totalnum, label="Percent complete")
     print()
 
     return data_out
 
-def correlationpass_mp(fmridata, referencetc,
-                    fmri_x, os_fmri_x,
-                    tr,
-                    corrorigin, lagmininpts, lagmaxinpts,
-                    corrmask, corrout, meanval,
-                    ncprefilter,
-                    optiondict):
-    corrmask[:] = tide.makemask(np.mean(fmridata, axis=1), threshpct=optiondict['corrmaskthresh'])
-    oversampfreq = optiondict['oversampfactor'] / tr
-    inputshape = np.shape(fmridata)
-    volumetotal = 0
-    reportstep = 1000
-    thetc = np.zeros(np.shape(os_fmri_x), dtype=rt_floattype)
-
-    # define the consumer function here so it inherits most of the arguments
-    def correlation_consumer(inQ, outQ):
-        while True:
-            try:
-                # get a new message
-                val = inQ.get()
-    
-                # this is the 'TERM' signal
-                if val is None:
-                    print("terminating consumer")
-                    break;
-    
-                # unpack the message
-                #vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, oversampfreq, \
-                #    corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc = val
-    
-                # process and send the data
-                #outQ.put(doOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, oversampfreq,
-                #    corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc))
-                outQ.put(doOneVoxelCorrelation(val, thetc, optiondict, fmri_x, fmridata[val, :], os_fmri_x, oversampfreq,
-                    corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc))
-    
-            except Exception as e:
-                print("error!", e)
-                break
-
-    # initialize the workers and the queues
-    n_workers = mp.cpu_count() - 1
-    inQ = mp.Queue()
-    outQ = mp.Queue()
-    workers = [mp.Process(target=correlation_consumer, args=(inQ, outQ)) for i in range(n_workers)]
-    for i,w in enumerate(workers):
-        w.start()
-    # pack the data and send to workers
-    #data_in = [d for d in range(inputshape[0])]
-    data_in = []
-    for d in range(inputshape[0]):
-        if corrmask[d] > 0:
-            data_in.append(d)
-    #data_in = [(d, thetc, corrmask[d], optiondict, fmri_x, fmridata[d, :], os_fmri_x, oversampfreq, \
-                #corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc) for d in range(inputshape[0])]
-    print('calling process_data')
-    data_out = process_data(data_in, inQ, outQ)
-
-    # shut down workers
-    print('terminating workers')
-    for i in range(n_workers):
-        inQ.put(None)
-    print('joining workers')
-    #for w in workers:
-        #w.join()
-
-    # unpack the data
-    volumetotal = 0
-    for voxel in data_out:
-        corrmask[voxel[0]] = 1
-        meanval[voxel[0]] = voxel[1]
-        corrout[voxel[0], :] = voxel[2]
-        volumetotal += 1
-    print('\nCorrelation performed on ' + str(volumetotal) + ' voxels')
-
-    # garbage collect
-    collected = gc.collect()
-    print("Garbage collector: collected %d objects." % collected)
-
-    return volumetotal
 
 def correlationpass(fmridata, referencetc,
                     fmri_x, os_fmri_x,
@@ -348,7 +269,6 @@ def correlationpass(fmridata, referencetc,
         
                     # this is the 'TERM' signal
                     if val is None:
-                        print("terminating consumer")
                         break;
         
                     # process and send the data
@@ -372,16 +292,16 @@ def correlationpass(fmridata, referencetc,
         for d in range(inputshape[0]):
             if corrmask[d] > 0:
                 data_in.append(d)
-        print('calling process_data')
-        data_out = process_data(data_in, inQ, outQ)
+        #chunksize = min((int(len(data_in) // n_workers), 50000))
+        chunksize = 50000
+        print('calling process_data for', len(data_in), 'voxels')
+        data_out = process_data(data_in, inQ, outQ, chunksize=chunksize)
     
         # shut down workers
-        print('terminating workers')
         for i in range(n_workers):
             inQ.put(None)
-        print('joining workers')
-        #for w in workers:
-            #w.join()
+        for w in workers:
+            w.join()
     
         # unpack the data
         volumetotal = 0
@@ -396,14 +316,7 @@ def correlationpass(fmridata, referencetc,
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
             if corrmask[vox] > 0.0:
                 dummy, meanval[vox], corrout[vox, :] = doOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmridata[vox, :], os_fmri_x, oversampfreq,
-                        corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc))
-                #if optiondict['oversampfactor'] >= 1:
-                    #thetc[:] = tide.doresample(fmri_x, fmridata[vox, :], os_fmri_x, method=optiondict['interptype'])
-                #else:
-                    #thetc[:] = fmridata[vox, :]
-                #meanval[vox] = np.mean(thetc)
-                #corrout[vox, :] = onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
-                                                 #referencetc, optiondict)
+                        corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc)
                 volumetotal += 1
     print('\nCorrelation performed on ' + str(volumetotal) + ' voxels')
 
@@ -469,6 +382,52 @@ def onecorrfit(thetc, corrscale,
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason
 
 
+def doOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, optiondict, displayplots):
+    if optiondict['slicetimes'] is not None:
+        sliceoffsettime = optiondict['slicetimes'][vox % slicesize]
+    else:
+        sliceoffsettime = 0.0
+    maxindex, maxlag, maxval, maxsigma, maskval, failreason = onecorrfit(corrtc, corrscale,
+                                                                         optiondict, displayplots=displayplots)
+
+    if maxval > 0.3:
+        displayplots = False
+
+    # question - should maxlag be added or subtracted?  As of 10/18, it is subtracted
+    #  potential answer - tried adding, results are terrible.
+    thelagtc = rt_floatset(genlagtc.yfromx(initial_fmri_x - maxlag))
+
+    # now tuck everything away in the appropriate output array
+    volumetotalinc = 0
+    if (maskval == 0) and optiondict['zerooutbadfit']:
+        thetime = rt_floatset(0.0)
+        thestrength = rt_floatset(0.0)
+        thesigma = rt_floatset(0.0)
+        thegaussout = 0.0 * corrtc
+        theR2 = rt_floatset(0.0)
+        if failreason & FML_BADAMP:
+            ampfails += 1
+        if failreason & FML_BADLAG:
+            lagfails += 1
+        if failreason & FML_BADWIDTH:
+            widthfails += 1
+        if failreason & FML_HITEDGE:
+            edgefails += 1
+        if failreason & FML_FITFAIL:
+            fitfails += 1
+    else:
+        volumetotalinc = 1
+        thetime = rt_floatset(np.fmod(maxlag, optiondict['lagmod']))
+        thestrength = rt_floatset(maxval)
+        thesigma = rt_floatset(maxsigma)
+        if (not optiondict['fixdelay']) and (maxsigma != 0.0):
+            thegaussout = rt_floatset(tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
+        else:
+            thegaussout = rt_floatset(0.0)
+        theR2 = rt_floatset(thestrength * thestrength)
+
+    return vox, volumetotalinc, thelagtc, thetime, thestrength, thesigma, thegaussout, theR2, maskval, failreason
+
 def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             corrscale, corrmask, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
             R2, optiondict):
@@ -480,60 +439,68 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     zerolagtc = rt_floatset(genlagtc.yfromx(initial_fmri_x))
     sliceoffsettime = 0.0
 
-    for vox in range(0, inputshape[0]):
-        if vox % reportstep == 0 or vox == inputshape[0] - 1:
-            tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
-        if corrmask[vox] > 0.0:
-            if optiondict['slicetimes'] is not None:
-                sliceoffsettime = optiondict['slicetimes'][vox % slicesize]
-            else:
-                sliceoffsettime = 0.0
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason = onecorrfit(corrout[vox, :], corrscale,
-                                                                                 optiondict, displayplots=displayplots)
-            # print(maxindex.dtype, maxlag.dtype, maxval.dtype, maxsigma.dtype, maskval.dtype, failreason.dtype)
+    if optiondict['multiproc']:
+        # define the consumer function here so it inherits most of the arguments
+        def fitcorr_consumer(inQ, outQ):
+            while True:
+                try:
+                    # get a new message
+                    val = inQ.get()
+        
+                    # this is the 'TERM' signal
+                    if val is None:
+                        break;
+        
+                    # process and send the data
+                    outQ.put(doOneVoxelFitcorr(val, corrout[val, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots))
+        
+                except Exception as e:
+                    print("error!", e)
+                    break
+    
+        # initialize the workers and the queues
+        n_workers = mp.cpu_count() - 1
+        inQ = mp.Queue()
+        outQ = mp.Queue()
+        workers = [mp.Process(target=fitcorr_consumer, args=(inQ, outQ)) for i in range(n_workers)]
+        for i,w in enumerate(workers):
+            w.start()
 
-            if maxval > 0.3:
-                displayplots = False
-
-            # question - should maxlag be added or subtracted?  As of 10/18, it is subtracted
-            #  potential answer - tried adding, results are terrible.
-            lagtc[vox, :] = rt_floatset(genlagtc.yfromx(initial_fmri_x - maxlag))
-
-            # now tuck everything away in the appropriate output array
-            lagmask[vox] = maskval
-            if (maskval == 0) and optiondict['zerooutbadfit']:
-                lagtimes[vox] = rt_floatset(0.0)
-                lagstrengths[vox] = rt_floatset(0.0)
-                lagsigma[vox] = rt_floatset(0.0)
-                gaussout[vox, :] = rt_floatset(0.0)
-                R2[vox] = rt_floatset(0.0)
-                if failreason & FML_BADAMP:
-                    ampfails += 1
-                if failreason & FML_BADLAG:
-                    lagfails += 1
-                if failreason & FML_BADWIDTH:
-                    widthfails += 1
-                if failreason & FML_HITEDGE:
-                    edgefails += 1
-                if failreason & FML_FITFAIL:
-                    fitfails += 1
-            else:
-                volumetotal += 1
-                lagtimes[vox] = rt_floatset(np.fmod(maxlag, optiondict['lagmod']))
-                lagstrengths[vox] = rt_floatset(maxval)
-                lagsigma[vox] = rt_floatset(maxsigma)
-                if (not optiondict['fixdelay']) and (maxsigma != 0.0):
-                    gaussout[vox, :] = rt_floatset(tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
-                else:
-                    gaussout[vox, :] = rt_floatset(0.0)
-                R2[vox] = rt_floatset(lagstrengths[vox] * lagstrengths[vox])
-        else:
-            lagtc[vox, :] = rt_floatset(zerolagtc)
-            lagtimes[vox] = rt_floatset(0.0)
-            lagstrengths[vox] = rt_floatset(0.0)
-            lagsigma[vox] = rt_floatset(0.0)
-            gaussout[vox, :] = rt_floatset(0.0)
-            R2[vox] = rt_floatset(0.0)
+        # pack the data and send to workers
+        data_in = []
+        for d in range(inputshape[0]):
+            if corrmask[d] > 0:
+                data_in.append(d)
+        #chunksize = min((int(len(data_in) // n_workers), 50000))
+        chunksize = 50000
+        print('calling process_data for', len(data_in), 'voxels')
+        data_out = process_data(data_in, inQ, outQ, chunksize=chunksize)
+    
+        # shut down workers
+        for i in range(n_workers):
+            inQ.put(None)
+        for w in workers:
+            w.join()
+    
+        # unpack the data
+        volumetotal = 0
+        for voxel in data_out:
+            volumetotal += voxel[1]
+            lagtc[voxel[0], :] = voxel[2]
+            lagtimes[voxel[0]] = voxel[3]
+            lagstrengths[voxel[0]] = voxel[4]
+            lagsigma[voxel[0]] = voxel[5]
+            gaussout[voxel[0], :] = voxel[6]
+            R2[voxel[0]] = voxel[7]
+            lagmask[voxel[0]] = voxel[8]
+    else:
+        for vox in range(0, inputshape[0]):
+            if vox % reportstep == 0 or vox == inputshape[0] - 1:
+                tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
+            if corrmask[vox] > 0.0:
+                dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[vox], lagmask[vox], failreason = \
+                    doOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots)
+                volumetotal += volumetotalinc
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
     print('\tampfails=', ampfails, ' lagfails=', lagfails, ' widthfail=', widthfails, ' edgefail=', edgefails,
           ' fitfail=', fitfails)
@@ -545,31 +512,28 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     return volumetotal
 
 
-def doTimeShift(vox, maskval, fmritc, optiondict, lagstrength, R2val, lagtime, padtrs, fmritr, theprefilter):
-    if maskval == 1:
-        themean = np.mean(fmritc)
-        if themean != 0.0:
-            normfac = 1.0 / themean
-        else:
-            normfac = 0.0
-        if optiondict['refineweighting'] == 'R':
-            thisweight = normfac * lagstrength
-        elif optiondict['refineweighting'] == 'R2':
-            thisweight = normfac * R2val
-        else:
-            thisweight = normfac
-        if optiondict['dodetrend']:
-            normtc = tide.detrend(fmritc * thisweight, demean=True)
-        else:
-            normtc = fmritc * thisweight
-        shifttr = -(-optiondict['offsettime'] + lagtime) / fmritr  # lagtime is in seconds
-        [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide.timeshift(normtc, shifttr, padtrs)
-        if optiondict['filterbeforePCA']:
-            return vox, theprefilter.apply(optiondict['fmrifreq'], shiftedtc)
-        else:
-            return vox, shiftedtc
+def doOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, padtrs, fmritr, theprefilter):
+    themean = np.mean(fmritc)
+    if themean != 0.0:
+        normfac = 1.0 / themean
     else:
-        return vox, None
+        normfac = 0.0
+    if optiondict['refineweighting'] == 'R':
+        thisweight = normfac * lagstrength
+    elif optiondict['refineweighting'] == 'R2':
+        thisweight = normfac * R2val
+    else:
+        thisweight = normfac
+    if optiondict['dodetrend']:
+        normtc = tide.detrend(fmritc * thisweight, demean=True)
+    else:
+        normtc = fmritc * thisweight
+    shifttr = -(-optiondict['offsettime'] + lagtime) / fmritr  # lagtime is in seconds
+    [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide.timeshift(normtc, shifttr, padtrs)
+    if optiondict['filterbeforePCA']:
+        return vox, theprefilter.apply(optiondict['fmrifreq'], shiftedtc)
+    else:
+        return vox, 1.0 * shiftedtc
 
 def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengths, lagtimes, lagsigma, R2,
                      theprefilter,
@@ -607,33 +571,59 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
     reportstep = 1000
 
     # timeshift the valid voxels
-    if optiondict['multiproc'] and False:
-        doTimeShiftpartial = partial(doTimeShift,
-            maskarray=maskarray,
-            fmritc=fmridata,
-            optiondict=optiondict,
-            lagstrengths=lagstrengths,
-            R2=R2,
-            lagtimes=lagtimes,
-            padtrs=padtrs,
-            fmritr=fmritr,
-            theprefilter=theprefilter)
-        with mp.Pool() as workerpool:
-            pp = PoolProgress(workerpool, inputshape[0])
-            res = workerpool.map_async(doTimeShiftpartial, range(inputshape[0]), 1000)
-            pp.track(res)
-            print()
-        shiftdata = res.get()
-        print('unpacking results')
-        for vox in range(0, inputshape[0]):
-            if shiftdata[vox][1] is not None:
-                shiftedtcs[retvals[0], :] = np.asarray(shiftdata[vox][1], dtype=rt_floattype)
+    if optiondict['multiproc']:
+        # define the consumer function here so it inherits most of the arguments
+        def timeshift_consumer(inQ, outQ):
+            while True:
+                try:
+                    # get a new message
+                    val = inQ.get()
+        
+                    # this is the 'TERM' signal
+                    if val is None:
+                        break;
+        
+                    # process and send the data
+                    outQ.put(doOneVoxelTimeShift(val, fmridata[val, :], optiondict,
+                        lagstrengths[val], R2[val], lagtimes[val], padtrs, fmritr, theprefilter))
+        
+                except Exception as e:
+                    print("error!", e)
+                    break
+    
+        # initialize the workers and the queues
+        n_workers = mp.cpu_count() - 1
+        inQ = mp.Queue()
+        outQ = mp.Queue()
+        workers = [mp.Process(target=timeshift_consumer, args=(inQ, outQ)) for i in range(n_workers)]
+        for i,w in enumerate(workers):
+            w.start()
+
+        # pack the data and send to workers
+        data_in = []
+        for d in range(inputshape[0]):
+            if maskarray[d] > 0:
+                data_in.append(d)
+        #chunksize = min((int(len(data_in) // n_workers), 50000))
+        chunksize = 50000
+        print('calling process_data for', len(data_in), 'voxels')
+        data_out = process_data(data_in, inQ, outQ, chunksize=chunksize)
+    
+        # shut down workers
+        for i in range(n_workers):
+            inQ.put(None)
+        for w in workers:
+            w.join()
+    
+        # unpack the data
+        for voxel in data_out:
+            shiftedtcs[voxel[0], :] = voxel[1]
     else:
         for vox in range(0, inputshape[0]):
             if vox % reportstep == 0 or vox == inputshape[0] - 1:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete (timeshifting)')
-            retvals = doTimeShift(vox, maskarray[vox], fmridata[vox, :], optiondict, lagstrengths[vox], R2[vox], lagtimes[vox], padtrs, fmritr, theprefilter)
-            if retvals[1] is not None:
+            if maskarray[vox]:
+                retvals = doOneVoxelTimeShift(vox, fmridata[vox, :], optiondict, lagstrengths[vox], R2[vox], lagtimes[vox], padtrs, fmritr, theprefilter)
                 shiftedtcs[retvals[0], :] = retvals[1]
         print()
 
@@ -1896,16 +1886,10 @@ def main():
         # Step 1 - Correlation step
         print('\n\nCorrelation calculation, pass ' + str(thepass))
         timings.append(['Correlation calculation start, pass ' + str(thepass), time.time(), None, None])
-        if optiondict['multiproc']:
-            if optiondict['memprofile']:
-                correlationpass_func = profile(correlationpass_mp, precision=2)
-            else:
-                correlationpass_func = correlationpass_mp
+        if optiondict['memprofile']:
+            correlationpass_func = profile(correlationpass, precision=2)
         else:
-            if optiondict['memprofile']:
-                correlationpass_func = profile(correlationpass, precision=2)
-            else:
-                correlationpass_func = correlationpass
+            correlationpass_func = correlationpass
         voxelsprocessed_cp = correlationpass_func(fmri_data[:, optiondict['addedskip']:], cleaned_referencetc,
                                                   initial_fmri_x, os_fmri_x,
                                                   fmritr,
