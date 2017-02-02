@@ -2,7 +2,6 @@
 rapidtide2x \
 	fmri.nii.gz \
 	../dst/dgsr_multiproc \
-	--noglm \
 	--refinepasses=3 --refineoffset \
 	--accheck \
 	--nofitfilt \
