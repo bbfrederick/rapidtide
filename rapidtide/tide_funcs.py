@@ -722,17 +722,17 @@ def quickcorr(data1, data2):
 def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewindow=False, dodetrend=False):
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
-    times = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
-    corrpertime = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
-    ppertime = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
+    times = []
+    corrpertime = []
+    ppertime = []
     for i in range(halfwindow, np.shape(data1)[0] - halfwindow, samplestep):
         dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         thepcorr = sp.stats.stats.pearsonr(dataseg1, dataseg2)
-        times[int(i // samplestep)] = i * sampletime
-        corrpertime[int(i // samplestep)] = thepcorr[0]
-        ppertime[int(i // samplestep)] = thepcorr[1]
-    return times, corrpertime, ppertime
+        times.append(i * sampletime)
+        corrpertime.append(thepcorr[0])
+        ppertime.append(thepcorr[1])
+    return np.asarray(times, dtype='float64'), np.asarray(corrpertime, dtype='float64'), np.asarray(ppertime, dtype='float64')
 
 
 def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimit=None, weighting='none', prewindow=False, dodetrend=False, display=False):
@@ -748,27 +748,35 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     xcorrlen = np.shape(thexcorr)[0]
     xcorr_x = np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     corrzero = int(xcorrlen // 2)
-    xcorrpertime = np.zeros((xcorrlen, int(np.shape(data1)[0] // samplestep)), dtype='float64')
-    times = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
-    Rvals = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
-    valid = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
-    delayvals = np.zeros((int(np.shape(data1)[0] // samplestep)), dtype='float64')
+    xcorrpertime = []
+    times = []
+    Rvals = []
+    delayvals = []
+    valid = []
     for i in range(halfwindow,np.shape(data1)[0] - halfwindow, samplestep):
         dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
         dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend)
-        times[int(i // samplestep)] = i * sampletime
-        xcorrpertime[:, int(i // samplestep)] = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
-        maxindex, delayvals[int(i // samplestep)], Rvals[int(i // samplestep)], maxsigma, maskval, failreason = findmaxlag_gauss(
-            xcorr_x, xcorrpertime[:, int(i // samplestep)], -laglimit, laglimit, 1000.0,
+        times.append(i * sampletime)
+        xcorrpertime.append(fastcorrelate(dataseg1, dataseg2, weighting=weighting))
+        maxindex, thedelayval, theRval, maxsigma, maskval, failreason = findmaxlag_gauss(
+            xcorr_x, xcorrpertime[-1], -laglimit, laglimit, 1000.0,
             refine=True,
             useguess=False,
             fastgauss=False,
             displayplots=False)
+        delayvals.append(thedelayval)
+        Rvals.append(theRval)
         if failreason == 0:
-            valid[int(i // samplestep)] = 1
+            valid.append(1)
+        else:
+            valid.append(0)
     if display:
         pl.imshow(xcorrpertime)
-    return times, xcorrpertime, Rvals, delayvals, valid
+    return np.asarray(times, dtype='float64'), \
+        np.asarray(xcorrpertime, dtype='float64'), \
+        np.asarray(Rvals, dtype='float64'), \
+        np.asarray(delayvals, dtype='float64'), \
+        np.asarray(valid, dtype='float64')
 
 
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
