@@ -137,6 +137,8 @@ verbose = True
 summarymode = False
 labelline = False
 windowtime = 50.0
+window_lowestfreq = 1.0/windowtime
+window_upperfreq = 0.15
 stepsize = 25.0
 estimate_significance = False
 flipregressor = False
@@ -157,6 +159,11 @@ stepsize = sampletime * round(stepsize / sampletime)
 
 theprefilter = tide.noncausalfilter()
 theprefilter.setbutter(usebutterworthfilter, filtorder)
+
+# set the default characteristics
+print('setting default filter to pass', window_lowestfreq, 'to', window_upperfreq)
+theprefilter.settype('arb')
+theprefilter.setarb(window_lowestfreq, window_lowestfreq * 1.05, window_upperfreq / 1.05, window_upperfreq )
 
 inputdata1 = tide.readvec(infilename1)
 inputdata2 = tide.readvec(infilename2)
@@ -232,8 +239,12 @@ for o, a in opts:
             print('duration set to', duration)
     elif o == "-W":
         windowtime = float(a)
+        window_lowestfreq = 1.0 / windowtime
+        theprefilter.settype('arb')
+        theprefilter.setarb(window_lowestfreq, window_lowestfreq * 1.05, window_upperfreq / 1.05, window_upperfreq )
         if verbose:
             print('windowtime set to', windowtime)
+            print('setting default filter to pass', window_lowestfreq, 'to', window_upperfreq)
     elif o == "-S":
         stepsize = sampletime * round(float(a) / sampletime)
         if verbose:
