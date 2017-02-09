@@ -22,7 +22,7 @@ from __future__ import print_function, division
 
 import numpy as np
 import scipy as sp
-from scipy import fftpack
+from scipy import fftpack, ndimage
 from numpy.fft import rfftn, irfftn
 import pylab as pl
 import warnings
@@ -1999,7 +1999,12 @@ def unpadvec(indata, padlen=20):
 
 
 def ssmooth(xsize, ysize, zsize, sigma, thedata):
-    return sp.ndimage.gaussian_filter(thedata, [sigma / xsize, sigma / ysize, sigma / zsize])
+    return ndimage.gaussian_filter(thedata, [sigma / xsize, sigma / ysize, sigma / zsize])
+
+
+# - direct filter with specified transfer function
+def xfuncfilt(indata, xfunc, debug=False):
+    return fftpack.ifft(xfunc * fftpack.fft(indata)).real
 
 
 # - butterworth filters
@@ -2144,6 +2149,26 @@ def dobptrapfftfilt(samplefreq, stopfreq_low, passfreq_low, passfreq_high, stopf
     indata_trans *= filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
+
+# Simple example of Wiener deconvolution in Python.
+# We use a fixed SNR across all frequencies in this example.
+#
+# Written 2015 by Dan Stowell. Public domain.
+def wiener_deconvolution(signal, kernel, lambd):
+    "lambd is the SNR"
+    kernel = np.hstack((kernel, np.zeros(len(signal) - len(kernel)))) # zero pad the kernel to same length
+    H = fft(kernel)
+    deconvolved = np.real(ifft(fft(signal)*np.conj(H)/(H*np.conj(H) + lambd**2)))
+    return deconvolved
+
+def csdfilter(obsdata, commondata, padlen=20, debug=False):
+    padobsdata = padvec(obsdata, padlen=padlen)
+    padcommondata = padvec(commondata, padlen=padlen)
+    obsdata_trans = fftpack.fft(padobsdata)
+    filterfunc = np.sqrt(np.abs(fftpack.fft(padobsdata)*np.conj(fftpack.fft(padcommondata))))
+    obsdata_trans *= filterfunc
+    return unpadvec(fftpack.ifft(obsdata_trans).real, padlen=padlen)
+    
 
 def specsplit(samplerate, inputdata, bandwidth, usebutterworth=False):
     lowestfreq = samplerate / (2.0 * np.shape(inputdata)[0])
