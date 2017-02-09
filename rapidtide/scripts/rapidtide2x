@@ -41,6 +41,7 @@ from pylab import figure, plot, show
 import numpy as np
 from statsmodels.tsa.stattools import pacf_yw
 from scipy.stats.stats import pearsonr
+from scipy.signal import welch
 
 try:
     from memory_profiler import profile
@@ -164,25 +165,6 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
         # unpack the data
         volumetotal = 0
         corrlist = np.asarray(data_out, dtype=rt_floattype)
-#    if optiondict['multiproc'] and False:
-#        print('\tEstimating significance from ' + str(optiondict['numestreps']) + ' repetitions')
-#
-#        procOneNullpartial = partial(procOneNull,
-#            indata=indata,
-#            ncprefilter=ncprefilter,
-#            oversampfreq=oversampfreq,
-#            corrscale=corrscale,
-#            corrorigin=corrorigin,
-#            lagmininpts=lagmininpts,
-#            lagmaxinpts=lagmaxinpts,
-#            optiondict=optiondict)
-#        with mp.Pool() as workerpool:
-#            pp = PoolProgress(workerpool, optiondict['numestreps'])
-#            res = workerpool.map_async(procOneNullpartial, range(optiondict['numestreps']), 1000)
-#            pp.track(res)
-#            print()
-#        corrlist = np.asarray(res.get(), dtype=rt_floattype)
-#
     else:
         corrlist = np.zeros((optiondict['numestreps']), dtype=rt_floattype)
 
@@ -565,11 +547,16 @@ def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, 
     shifttr = -(-optiondict['offsettime'] + lagtime) / fmritr  # lagtime is in seconds
     [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide.timeshift(normtc, shifttr, padtrs)
     if optiondict['filterbeforePCA']:
-        return vox, theprefilter.apply(optiondict['fmrifreq'], shiftedtc)
+        outtc = theprefilter.apply(optiondict['fmrifreq'], shiftedtc)
     else:
-        return vox, 1.0 * shiftedtc
+        outtc = 1.0 * shiftedtc
+    if optiondict['psdfilter']:
+        freqs, psd = welch(tide.corrnormalize(shiftedtc, True, True), fmritr, scaling='spectrum', window='hamming', return_onesided=False, nperseg=len(shiftedtc))
+        return vox, outtc, np.sqrt(psd)
+    else:
+        return vox, outtc, None
 
-def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengths, lagtimes, lagsigma, R2,
+def refineregressor(reference, fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengths, lagtimes, lagsigma, R2,
                      theprefilter,
                     optiondict, padtrs=60, includemask=None, excludemask=None):
     inputshape = np.shape(fmridata)
@@ -619,7 +606,7 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
         
                     # process and send the data
                     outQ.put(procOneVoxelTimeShift(val, fmridata[val, :], optiondict,
-                        lagstrengths[val], R2[val], lagtimes[val], padtrs, fmritr, theprefilter))
+                         lagstrengths[val], R2[val], lagtimes[val], padtrs, fmritr, theprefilter))
         
                 except Exception as e:
                     print("error!", e)
@@ -648,17 +635,41 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
             w.join()
     
         # unpack the data
+        psdlist = []
         for voxel in data_out:
             shiftedtcs[voxel[0], :] = voxel[1]
+            if optiondict['psdfilter']:
+                psdlist.append(voxel[2])
     else:
+        psdlist = []
         for vox in range(0, inputshape[0]):
             if vox % reportstep == 0 or vox == inputshape[0] - 1:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete (timeshifting)')
             if maskarray[vox]:
                 retvals = procOneVoxelTimeShift(vox, fmridata[vox, :], optiondict, lagstrengths[vox], R2[vox], lagtimes[vox], padtrs, fmritr, theprefilter)
                 shiftedtcs[retvals[0], :] = retvals[1]
+                if optiondict['psdfilter']:
+                    psdlist.append(retvals[2])
         print()
 
+    if optiondict['psdfilter']:
+        print(len(psdlist))
+        print(psdlist[0])
+        print(np.shape(np.asarray(psdlist, dtype=rt_floattype)))
+        averagepsd = np.mean(np.asarray(psdlist, dtype=rt_floattype), axis=0)
+        stdpsd = np.std(np.asarray(psdlist, dtype=rt_floattype), axis=0)
+        snr = np.nan_to_num(averagepsd/stdpsd)
+        #fig = figure()
+        #ax = fig.add_subplot(111)
+        #ax.set_title('Average and stedev of PSD')
+        #plot(averagepsd)
+        #plot(stdpsd)
+        #show()
+        #fig = figure()
+        #ax = fig.add_subplot(111)
+        #ax.set_title('SNR')
+        #plot(snr)
+        #show()
     # now generate the refined timecourse(s)
     validlist = np.where(maskarray > 0)[0]
     refinevoxels = shiftedtcs[validlist]
@@ -733,6 +744,9 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
           '\n	', lagfails, ' lagfails',
           '\n	', sigmafails, ' sigmafails')
 
+    if optiondict['psdfilter']:
+        outputdata = tide.xfuncfilt(outputdata, snr)
+
     # garbage collect
     collected = gc.collect()
     print("Garbage collector: collected %d objects." % collected)
@@ -741,18 +755,8 @@ def refineregressor(fmridata, fmritr, shiftedtcs, maskarray, passnum, lagstrengt
 
 def procOneVoxelGLM(vox, lagtc, inittc):
     thefit, R = tide.mlregress(lagtc, inittc)
-    #meanvalue = rt_floatset(thefit[0, 0])
-    #rvalue = rt_floatset(R)
-    #r2value = rt_floatset(R * R)
     fitcoff = rt_floatset(thefit[0, 1])
-    #fitNorm = rt_floatset(thefit[0, 1] / thefit[0, 0])
     datatoremove = rt_floatset(fitcoff * lagtc)
-    #thefilttc = inittc - datatoremove
-    #filtereddata = rt_floatset(thefilttc)
-    #if optiondict['doprewhiten']:
-    #    arcoffs[vox, :] = pacf_yw(thefilttc, nlags=optiondict['armodelorder'])[1:]
-    #    prewhiteneddata[vox, :] = rt_floatset(prewhiten(inittc, arcoffs[vox, :]))
-    #return vox, meanvalue, rvalue, r2value, fitcoff, fitNorm, datatoremove, filtereddata
     return vox, rt_floatset(thefit[0, 0]), rt_floatset(R), rt_floatset(R * R), fitcoff, \
         rt_floatset(thefit[0, 1] / thefit[0, 0]), datatoremove, rt_floatset(inittc - datatoremove)
 
@@ -815,7 +819,7 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
         for vox in range(0, numspatiallocs):
             if vox % reportstep == 0 or vox == numspatiallocs - 1:
                 tide.progressbar(vox + 1, numspatiallocs, label='Percent complete')
-            inittc[:] = fmri_data[vox, optiondict['addedskip']:]
+            inittc = fmri_data[vox, optiondict['addedskip']:].copy()
             if np.mean(inittc) >= threshval:
                 dummy, meanvalue[vox], rvalue[vox], r2value[vox], fitcoff[vox], fitNorm[vox], datatoremove[vox], filtereddata[vox] = \
                     procOneVoxelGLM(vox, lagtc[vox, :], inittc)
@@ -886,7 +890,7 @@ def usage():
           " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP"
           "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
           "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
-          "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--nodispersioncalc] [--refineupperlag] [--refinelowerlag]"
+          "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--psdfilter] [--nodispersioncalc] [--refineupperlag] [--refinelowerlag]"
           "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
           "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
           "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc]")
@@ -984,6 +988,8 @@ def usage():
     print("                               averaging)")
     print("    --ica                    - Use ica to derive refined regressor (default is ")
     print("                               averaging)")
+    print("    --psdfilter              - Apply a PSD weighted Weiner filter to shifted")
+    print("                               timecourses prior to refinement")
     print("    --nodispersioncalc       - Disable dispersion calculation during refinement")
     print("")
     print("Output options:")
@@ -1128,6 +1134,7 @@ def main():
     optiondict['dispersioncalc_lower'] = -4.0
     optiondict['dispersioncalc_upper'] = 4.0
     optiondict['dispersioncalc_step'] = 0.50
+    optiondict['psdfilter'] = False
 
     # debugging options
     optiondict['internalprecision'] = 'double'
@@ -1183,6 +1190,7 @@ def main():
                                                                                                            'nofitfilt',
                                                                                                            'pca',
                                                                                                            'ica',
+                                                                                                           'psdfilter',
                                                                                                            'nodispersioncalc',
                                                                                                            'noglm',
                                                                                                            'multiproc',
@@ -1414,6 +1422,9 @@ def main():
                 print('oversampling factor must be an integer greater than or equal to 1')
                 sys.exit()
             print('oversampling factor set to ', optiondict['oversampfactor'])
+        elif o == '--psdfilter':
+            optiondict['psdfilter'] = True
+            print('Will use a cross-spectral density filter on shifted timecourses prior to refinement')
         elif o == '--ica':
             optiondict['refinetype'] = 'ica'
             print('Will use ICA procedure to refine regressor rather than simple averaging')
@@ -1903,6 +1914,7 @@ def main():
             print('Pass number ', thepass)
 
         referencetc = tide.corrnormalize(resampref_y, optiondict['usewindowfunc'], optiondict['dodetrend'])
+        nonosreferencetc = tide.corrnormalize(resampnonosref_y, optiondict['usewindowfunc'], optiondict['dodetrend'])
         oversampfreq = optiondict['oversampfactor'] / fmritr
 
         # Step -1 - check the regressor for periodic components in the passband
@@ -1946,15 +1958,19 @@ def main():
                         acfixfilter.settype('arb_stop')
                         acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
                         cleaned_referencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
+                        cleaned_nonosreferencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, nonosreferencetc))
                         tide.writenpvecs(cleaned_referencetc,
                                          outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
                 else:
                     cleaned_referencetc = 1.0 * referencetc
+                    cleaned_nonosreferencetc = 1.0 * nonosreferencetc
             else:
                 print('no sidelobes found in range')
                 cleaned_referencetc = 1.0 * referencetc
+                cleaned_nonosreferencetc = 1.0 * nonosreferencetc
         else:
             cleaned_referencetc = 1.0 * referencetc
+            cleaned_nonosreferencetc = 1.0 * nonosreferencetc
 
         # Step 0 - estimate significance
         if optiondict['estimate_significance']:
@@ -1967,7 +1983,7 @@ def main():
                 getNullDistributionData_func = profile(getNullDistributionData, precision=2)
             else:
                 getNullDistributionData_func = getNullDistributionData
-            corrdistdata = getNullDistributionData_func(referencetc, corrscale, theprefilter,
+            corrdistdata = getNullDistributionData_func(cleaned_referencetc, corrscale, theprefilter,
                                                         oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
                                                         optiondict)
             tide.writenpvecs(corrdistdata, outputname + '_corrdistdata_pass' + str(thepass) + '.txt')
@@ -2046,7 +2062,7 @@ def main():
             else:
                 refineregressor_func = refineregressor
             voxelsprocessed_rr, outputdata = refineregressor_func(
-                fmri_data[:, :], fmritr, shiftedtcs, refinemask, thepass,
+                cleaned_nonosreferencetc, fmri_data[:, :], fmritr, shiftedtcs, refinemask, thepass,
                 lagstrengths, lagtimes, lagsigma, R2, theprefilter, optiondict, includemask=internalincludemask,
                 excludemask=internalexcludemask)
             normoutputdata = tide.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
@@ -2177,27 +2193,37 @@ def main():
     if optiondict['memprofile']:
         memcheckpoint('about to write lagtimes')
     tide.savetonifti(lagtimes.reshape(nativespaceshape), theheader, thesizes, outputname + '_lagtimes' + outsuffix3d)
+    lagtimes = None
     if optiondict['memprofile']:
         memcheckpoint('about to write lagstrengths')
     tide.savetonifti(lagstrengths.reshape(nativespaceshape), theheader, thesizes,
                      outputname + '_lagstrengths' + outsuffix3d)
+    lagstrengths = None
     if optiondict['memprofile']:
         memcheckpoint('about to write R2')
     tide.savetonifti(R2.reshape(nativespaceshape), theheader, thesizes, outputname + '_R2' + outsuffix3d)
+    R2 = None
     if optiondict['memprofile']:
         memcheckpoint('about to write lagsigma')
     tide.savetonifti(lagsigma.reshape(nativespaceshape), theheader, thesizes, outputname + '_lagsigma' + outsuffix3d)
+    lagsigma = None
     if optiondict['memprofile']:
         memcheckpoint('about to write lagmask')
     tide.savetonifti(lagmask.reshape(nativespaceshape), theheader, thesizes, outputname + '_lagmask' + outsuffix3d)
+    lagmask = None
     if optiondict['doglmfilt']:
         if optiondict['memprofile']:
             memcheckpoint('about to write rvalue, r2value, meanvalue, fitcoff, and fitNorm...')
         tide.savetonifti(rvalue.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitR' + outsuffix3d)
+        rvalue = None
         tide.savetonifti(r2value.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitR2' + outsuffix3d)
+        r2value = None
         tide.savetonifti(meanvalue.reshape(nativespaceshape), theheader, thesizes, outputname + '_mean' + outsuffix3d)
+        meanvalue = None
         tide.savetonifti(fitcoff.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitcoff' + outsuffix3d)
+        fitcoff = None
         tide.savetonifti(fitNorm.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitNorm' + outsuffix3d)
+        fitNorm = None
         if optiondict['memprofile']:
             memcheckpoint('...done')
 
@@ -2219,7 +2245,9 @@ def main():
     theheader['toffset'] = corrscale[corrorigin - lagmininpts]
     theheader['pixdim'][4] = corrtr
     tide.savetonifti(gaussout.reshape(nativecorrshape), theheader, thesizes, outputname + '_gaussout' + outsuffix4d)
+    gaussout = None
     tide.savetonifti(corrout.reshape(nativecorrshape), theheader, thesizes, outputname + '_corrout' + outsuffix4d)
+    corrout = None
     theheader['toffset'] = 0.0
     if optiondict['saveprewhiten']:
         theheader = nim.header
@@ -2228,6 +2256,7 @@ def main():
         else:
             theheader['dim'][4] = optiondict['armodelorder']
         tide.savetonifti(arcoffs.reshape(nativearmodelshape), theheader, thesizes, outputname + '_arN' + outsuffix4d)
+        arcoffs = None
 
     theheader = nim_hdr
     theheader['pixdim'][4] = fmritr
@@ -2239,19 +2268,25 @@ def main():
     if optiondict['savelagregressors']:
         tide.savetonifti(lagtc.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_lagregressor' + outsuffix4d)
+        lagtc = None
     if optiondict['dorefineregressor']:
         tide.savetonifti(shiftedtcs.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_shiftedtcs' + outsuffix4d)
+        shiftedtcs = None
         tide.savetonifti(refinemask.reshape(nativespaceshape), theheader, thesizes,
                          outputname + '_refinemask' + outsuffix3d)
+        refinemask = None
     if optiondict['doglmfilt'] and optiondict['saveglmfiltered']:
         tide.savetonifti(datatoremove.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_datatoremove' + outsuffix4d)
+        datatoremove = None
         tide.savetonifti(filtereddata.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_filtereddata' + outsuffix4d)
+        filtereddata = None
     if optiondict['saveprewhiten']:
         tide.savetonifti(prewhiteneddata.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_prewhiteneddata' + outsuffix4d)
+        prewhiteneddata = None
     timings.append(['Finished saving maps', time.time(), None, None])
     print('done')
 
