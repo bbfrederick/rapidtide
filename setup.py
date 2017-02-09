@@ -165,13 +165,11 @@ setup(
     # have to be included in MANIFEST.in as well.
     include_package_data = True,
     zip_safe=False,
-    #packages = find_packages(['reference', 'examples']),
-    #package_dir = {'': 'rapidtide'},
     package_data={
-        'examples':  ['examples/src/fmri.nii.gz',
-                     'examples/src/timecourse1.txt',
-                     'examples/src/timecourse2.txt',
-                     'examples/src/nirs.txt'],
+    #    'examples':  ['examples/src/fmri.nii.gz',
+    #                 'examples/src/timecourse1.txt',
+    #                 'examples/src/timecourse2.txt',
+    #                 'examples/src/nirs.txt'],
         'reference': ['reference/*.nii.gz'],
     },
 
