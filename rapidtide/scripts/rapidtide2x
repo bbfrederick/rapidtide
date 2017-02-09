@@ -328,6 +328,7 @@ def correlationpass(fmridata, referencetc,
             meanval[voxel[0]] = voxel[1]
             corrout[voxel[0], :] = voxel[2]
             volumetotal += 1
+        data_out = []
     else:
         for vox in range(0, inputshape[0]):
             if vox % reportstep == 0 or vox == inputshape[0] - 1:
@@ -509,6 +510,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             gaussout[voxel[0], :] = voxel[6]
             R2[voxel[0]] = voxel[7]
             lagmask[voxel[0]] = voxel[8]
+        data_out = []
     else:
         for vox in range(0, inputshape[0]):
             if vox % reportstep == 0 or vox == inputshape[0] - 1:
@@ -640,6 +642,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, maskarray, passnum,
             shiftedtcs[voxel[0], :] = voxel[1]
             if optiondict['psdfilter']:
                 psdlist.append(voxel[2])
+        data_out = []
     else:
         psdlist = []
         for vox in range(0, inputshape[0]):
@@ -814,6 +817,7 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
             datatoremove[voxel[0], :] = voxel[6]
             filtereddata[voxel[0], :] = voxel[7]
             volumetotal += 1
+        data_out = []
     else:
         volumetotal = 0
         for vox in range(0, numspatiallocs):
@@ -1876,17 +1880,6 @@ def main():
         shiftedtcs = np.zeros(internalfmrishape, dtype=rt_floattype)
         refinemask = np.zeros(internalspaceshape, dtype='uint16')
 
-    if optiondict['doglmfilt'] or optiondict['doprewhiten']:
-        meanvalue = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        rvalue = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        r2value = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        fitNorm = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        fitcoff = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        datatoremove = np.zeros(internalfmrishape, dtype=rt_outfloattype)
-        filtereddata = np.zeros(internalfmrishape, dtype=rt_outfloattype)
-        prewhiteneddata = np.zeros(internalfmrishape, dtype=rt_outfloattype)
-        arcoffs = np.zeros(internalarmodelshape, dtype=rt_outfloattype)
-
     # prepare for fast resampling
     padvalue = max((-optiondict['lagmin'], optiondict['lagmax'])) + 30.0
     # print('setting up fast resampling with padvalue =',padvalue)
@@ -2010,6 +2003,7 @@ def main():
                                           outputname + '_nullcorrelationhist_pass' + str(thepass),
                                           displaytitle='Null correlation histogram, pass' + str(thepass),
                                           displayplots=optiondict['displayplots'], refine=False)
+            corrdistdata = None
             timings.append(['Significance estimation end, pass ' + str(thepass), time.time(), optiondict['numestreps'],
                             'repetitions'])
 
@@ -2113,13 +2107,27 @@ def main():
                 print('rereading', fmrifilename, ' for GLM filter, please wait')
                 nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
             fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
-        inittc = np.zeros(np.shape(fmri_data)[1] - optiondict['addedskip'], dtype=rt_floattype)
+
+        # now allocate the arrays needed for GLM filtering
+        meanvalue = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        rvalue = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        r2value = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        fitNorm = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        fitcoff = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        datatoremove = np.zeros(internalfmrishape, dtype=rt_outfloattype)
+        filtereddata = np.zeros(internalfmrishape, dtype=rt_outfloattype)
+        if optiondict['doprewhiten']:
+            prewhiteneddata = np.zeros(internalfmrishape, dtype=rt_outfloattype)
+            arcoffs = np.zeros(internalarmodelshape, dtype=rt_outfloattype)
+
+        #inittc = np.zeros(np.shape(fmri_data)[1] - optiondict['addedskip'], dtype=rt_floattype)
         if optiondict['memprofile']:
             memcheckpoint('about to start glm noise removal...')
 
         voxelsprocessed_glm = glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc,
                                         optiondict, meanvalue, rvalue, r2value, fitcoff, fitNorm,
                                         datatoremove, filtereddata)
+        fmri_data = None
 
         timings.append(['GLM filtering end, pass ' + str(thepass), time.time(), voxelsprocessed_glm, 'voxels'])
         if optiondict['memprofile']:
@@ -2193,24 +2201,19 @@ def main():
     if optiondict['memprofile']:
         memcheckpoint('about to write lagtimes')
     tide.savetonifti(lagtimes.reshape(nativespaceshape), theheader, thesizes, outputname + '_lagtimes' + outsuffix3d)
-    lagtimes = None
     if optiondict['memprofile']:
         memcheckpoint('about to write lagstrengths')
     tide.savetonifti(lagstrengths.reshape(nativespaceshape), theheader, thesizes,
                      outputname + '_lagstrengths' + outsuffix3d)
-    lagstrengths = None
     if optiondict['memprofile']:
         memcheckpoint('about to write R2')
     tide.savetonifti(R2.reshape(nativespaceshape), theheader, thesizes, outputname + '_R2' + outsuffix3d)
-    R2 = None
     if optiondict['memprofile']:
         memcheckpoint('about to write lagsigma')
     tide.savetonifti(lagsigma.reshape(nativespaceshape), theheader, thesizes, outputname + '_lagsigma' + outsuffix3d)
-    lagsigma = None
     if optiondict['memprofile']:
         memcheckpoint('about to write lagmask')
     tide.savetonifti(lagmask.reshape(nativespaceshape), theheader, thesizes, outputname + '_lagmask' + outsuffix3d)
-    lagmask = None
     if optiondict['doglmfilt']:
         if optiondict['memprofile']:
             memcheckpoint('about to write rvalue, r2value, meanvalue, fitcoff, and fitNorm...')
@@ -2235,6 +2238,13 @@ def main():
             tide.writenpvecs(np.array([pcts[i]]), outputname + '_p_lt_' + thepvalnames[i] + '_thresh.txt')
             tide.savetonifti(pmask.reshape(nativespaceshape), theheader, thesizes,
                              outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d)
+
+    # clean up arrays that will no longer be needed
+    lagtimes = None
+    lagstrengths = None
+    lagsigma = None
+    R2 = None
+    lagmask = None
 
     # now do the ones with other numbers of time points
     theheader = nim_hdr
