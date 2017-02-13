@@ -81,3 +81,21 @@
 * Did some speed optimizations in findmaxlag, including faster gaussian fitting and new MUCH faster parabolic fitting (still experimental).
 * Minor bug fixes, code reorganization and cleanup.
 
+## Version 1.0.0 (2/13/17)
+* I decided to stop hedging and actually commit myself - this is version 1.0.0 - out of beta!
+* To promote stability, new features will be put into test versions (the name of the program will have an "x" appended).  This way I can do major internal changes and have them available to users without breaking something they might rely on.  The "x" versions will sync with the "normal" versions after extensive testing.
+* Major new feature (rapidtide2x only for now).  Multiprocessing!  Significant speedup when using the --multiproc option on machines with multiple cores.
+* showxcorrx has new features and defaults.
+* Memory allocation has been reorganized to reduce footprint (rapidtide2x).
+* Changed imports for better compatibility when running in the NITRC-CE environment (rapidtide2x).
+* rapidtide2std now supports nonlinear alignment.
+* histnifti is added to the distribution.
+* I've added some additional outputs to rapidtide2 and rapidtide2x during refinement to help figure out if the brain is a dispersive filter.  This doesn't change how rapidtide2 does the refinement - it's just informational at this point.
+* Added spatialfit to the distribution.  I use this to analyze delay maps.  More on this later.
+* Fully implemented samplerate and sampletime options (rapidtide2)
+* Corrected and enhanced the use of alternative correlation weighting functions (PHAT, Liang, and Eckart weighting) (rapidtide).
+* Updated all scripts for compatibility with matplotlib 2.0.
+* Fixed tidepool for compatibility with the new version of pyqtgraph.
+* Significant enhancements to showstxcorr (this is a work in progress).
+* Example data is no longer installed in the python directory (this never made sense to do).
+* Added code to do matched filtering of regressors with mean PSD and/or cross-spectral density.  It works, but doesn't do much (rapidtide2x).
