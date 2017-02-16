@@ -155,7 +155,7 @@ matrixoutput = False
 
 # scan the command line arguments
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[:], "i:IfN:W:S:z:aATtVLRCF:dl:s:D:wgo:", ["infile=", "outfile=",
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "i:IfN:W:S:z:aATtVLRCF:dl:s:D:wgo:", ["infile=", "outfile=",
                                                                                     "phat", "liang", "eckart",
                                                                                     "nodetrend", "nowindow",
                                                                                     "samplefreq=", "sampletime=", "help"])
