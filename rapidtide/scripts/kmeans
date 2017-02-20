@@ -24,7 +24,7 @@ import sys
 import getopt
 import string
 import rapidtide.tide_funcs as tide
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
 
 from numpy import r_, zeros, ones, shape, where, sort
 from pylab import *
@@ -78,7 +78,11 @@ print('corr_data shape:',corr_data.shape)
 
 print('calculating kmeans')
 numclusters = 8
-kmeans = KMeans(n_clusters=numclusters).fit(np.nan_to_num(np.transpose(corr_data)))
+minibatch = True
+if minibatch:
+    kmeans = MiniBatchKMeans(n_clusters=numclusters).fit(np.nan_to_num(np.transpose(corr_data)))
+else:
+    kmeans = KMeans(n_clusters=numclusters).fit(np.nan_to_num(np.transpose(corr_data)))
 
 theheader=input_hdr
 theheader['dim'][4] = numclusters
