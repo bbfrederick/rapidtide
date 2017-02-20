@@ -402,6 +402,11 @@ def onecorrfit(thetc, corrscale,
 
 
 def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, optiondict, displayplots):
+    FML_BADAMP = np.uint16(0x01)
+    FML_BADLAG = np.uint16(0x02)
+    FML_BADWIDTH = np.uint16(0x04)
+    FML_HITEDGE = np.uint16(0x08)
+    FML_FITFAIL = np.uint16(0x0f)
     if optiondict['slicetimes'] is not None:
         sliceoffsettime = optiondict['slicetimes'][vox % slicesize]
     else:
@@ -894,7 +899,7 @@ def usage():
           " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP"
           "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
           "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
-          "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--psdfilter] [--nodispersioncalc] [--refineupperlag] [--refinelowerlag]"
+          "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--psdfilter] [--dispersioncalc] [--refineupperlag] [--refinelowerlag]"
           "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
           "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
           "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc]")
@@ -994,7 +999,7 @@ def usage():
     print("                               averaging)")
     print("    --psdfilter              - Apply a PSD weighted Weiner filter to shifted")
     print("                               timecourses prior to refinement")
-    print("    --nodispersioncalc       - Disable dispersion calculation during refinement")
+    print("    --dispersioncalc         - Generate extra data during refinement to allow calculation of dispersion")
     print("")
     print("Output options:")
     print("    --limitoutput            - Don't save some of the large and rarely used files")
@@ -1134,7 +1139,7 @@ def main():
     optiondict['estimatePCAdims'] = False
     optiondict['filterbeforePCA'] = True
     optiondict['fmrifreq'] = 0.0
-    optiondict['dodispersioncalc'] = True
+    optiondict['dodispersioncalc'] = False
     optiondict['dispersioncalc_lower'] = -4.0
     optiondict['dispersioncalc_upper'] = 4.0
     optiondict['dispersioncalc_step'] = 0.50
@@ -1195,7 +1200,7 @@ def main():
                                                                                                            'pca',
                                                                                                            'ica',
                                                                                                            'psdfilter',
-                                                                                                           'nodispersioncalc',
+                                                                                                           'dispersioncalc',
                                                                                                            'noglm',
                                                                                                            'multiproc',
                                                                                                            'nonumba',
@@ -1432,9 +1437,9 @@ def main():
         elif o == '--ica':
             optiondict['refinetype'] = 'ica'
             print('Will use ICA procedure to refine regressor rather than simple averaging')
-        elif o == '--nodispersioncalc':
-            optiondict['dodispersioncalc'] = False
-            print('Will disable dispersion calculation during regressor refinement')
+        elif o == '--dispersioncalc':
+            optiondict['dodispersioncalc'] = True
+            print('Will do dispersion calculation during regressor refinement')
         elif o == '--nofitfilt':
             optiondict['zerooutbadfit'] = False
             optiondict['nohistzero'] = True
