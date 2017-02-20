@@ -1,0 +1,84 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+# $Author: frederic $
+#       $Date: 2016/07/11 14:50:43 $
+#       $Id: showxcorr,v 1.41 2016/07/11 14:50:43 frederic Exp $
+#
+from __future__ import print_function, division
+
+import sys
+import platform
+
+import numpy as np
+
+import getopt
+import rapidtide.tide_funcs as tide
+
+
+def usage():
+    print("demeantcs - remove the mean (and optionally the trend) from all timecourses in a text file")
+    print("")
+    print(
+        "usage: demeantcs infile outfile [-t]")
+    print("")
+    print("required arguments:")
+    print("	infile:      a text file containing one or more time series in whitespace separated columns")
+    print("	outfile:     the name of the processes output file")
+    print("")
+    print("optional arguments:")
+    print("     -t           - detrend the data")
+    print("")
+    return ()
+
+# get the command line parameters
+dodetrend = False
+
+nargs = len(sys.argv)
+if nargs < 3:
+    usage()
+    exit()
+infilename = sys.argv[1]
+outfilename = sys.argv[2]
+
+
+# now scan for optional arguments
+try:
+    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w", ["help"])
+except getopt.GetoptError as err:
+    # print help information and exit:
+    print(str(err))  # will print something like "option -x not recognized"
+    usage()
+    sys.exit(2)
+
+for o, a in opts:
+    if o == "-t":
+        dodetrend = True
+        print('detrending data')
+    else:
+        assert False, "unhandled option"
+
+inputdata = tide.readvecs(infilename)
+outputdata = inputdata * 0.0
+for i in range(inputdata.shape[0]):
+    print('processing column', i)
+    if dodetrend:
+        outputdata[i, :] = tide.detrend(inputdata[i, :], detrend=True)
+    else:
+        outputdata[i, :] = inputdata[i, :] - np.mean(inputdata[i, :])
+
+tide.writenpvecs(outputdata, outfilename)
