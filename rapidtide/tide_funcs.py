@@ -34,6 +34,7 @@ import os
 from scipy import signal
 from scipy.stats import johnsonsb
 
+
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
@@ -65,6 +66,40 @@ except ImportError:
 
 donotusenumba = False
 
+
+try:
+    import pyfftw
+    pyfftwexists = True
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
+except ImportError:
+    pyfftwexists = False
+
+
+def checkimports(optiondict):
+    if pyfftwexists:
+        print('monkey patched scipy.fftpack to use pyfftw')
+    else:
+        print('using standard scipy.fftpack')
+    optiondict['pyfftwexists'] = pyfftwexists
+
+    if numbaexists:
+        print('numba exists')
+    else:
+        print('numba does not exist')
+    optiondict['numbaexists'] = numbaexists
+
+    if memprofilerexists:
+        print('memprofiler exists')
+    else:
+        print('memprofiler does not exist')
+    optiondict['memprofilerexists'] = memprofilerexists
+
+    if nibabelexists:
+        print('nibabel exists')
+    else:
+        print('nibabel does not exist')
+    optiondict['nibabelexists'] = nibabelexists
 
 def conditionaljit():
     def resdec(f):
@@ -1929,8 +1964,15 @@ def hann(length):
     return 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
 
 
+hammingwindows = {}
 def hamming(length):
-    return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
+#   return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
+    try:
+        return hammingwindows[str(length)]
+    except:
+        hammingwindows[str(length)] = 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
+        print('initialized hamming window for length', length)
+        return hammingwindows[str(length)]
 
 
 def envdetect(vector, filtwidth=3.0):
@@ -2157,8 +2199,8 @@ def dobptrapfftfilt(samplefreq, stopfreq_low, passfreq_low, passfreq_high, stopf
 def wiener_deconvolution(signal, kernel, lambd):
     "lambd is the SNR"
     kernel = np.hstack((kernel, np.zeros(len(signal) - len(kernel)))) # zero pad the kernel to same length
-    H = fft(kernel)
-    deconvolved = np.real(ifft(fft(signal)*np.conj(H)/(H*np.conj(H) + lambd**2)))
+    H = fftpack.fft(kernel)
+    deconvolved = np.real(fftpack.ifft(fftpack.fft(signal)*np.conj(H)/(H*np.conj(H) + lambd**2)))
     return deconvolved
 
 def csdfilter(obsdata, commondata, padlen=20, debug=False):
