@@ -453,64 +453,7 @@ else:
     filtereddata1 = tide.corrnormalize(theprefilter.apply(Fs, trimmeddata[0, :]), False, dodetrend)
     filtereddata2 = tide.corrnormalize(theprefilter.apply(Fs, trimmeddata[1, :]), False, dodetrend)
 
-
 """
-    if flipregressor:
-        flipfac = -1.0
-    else:
-        flipfac = 1.0
-    
-    if dopartial:
-        controlvars = tide.readnpvecs(controlvariablefile)
-        regressorvec = []
-        for j in range(0, numregressors):
-            regressorvec.append(tide.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]), prewindow, dodetrend))
-        if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
-            thefit, filtereddata1 = tide.mlregress(regressorvec, filtereddata1)
-        if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
-            thefit, filtereddata2 = tide.mlregress(regressorvec, filtereddata2)
-    
-    # set the significance threshold
-    if estimate_significance:
-        xcorrlen = len(thexcorr)
-        xcorr_x = r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
-    
-        # generate a list of correlations from shuffled data
-        corrlist, corrlist_pear = getNullDistributionData(filtereddata1, xcorr_x, theprefilter,
-                                                          prewindow, dodetrend, searchstart, searchend, corrweighting=corrweighting, numreps=numreps)
-    
-        # calculate percentiles for the crosscorrelation from the distribution data
-        histlen = 100
-        thepercentiles = [0.95, 0.99, 0.995]
-    
-        pcts, pcts_fit = tide.sigFromDistributionData(corrlist, histlen, thepercentiles)
-        printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
-        printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
-    
-        # calculate significance for the pearson correlation
-        pearpcts, pearpcts_fit = tide.sigFromDistributionData(corrlist_pear, histlen, thepercentiles)
-        printthresholds(pearpcts, thepercentiles, 'Pearson correlation significance thresholds from data:')
-        printthresholds(pearpcts_fit, thepercentiles, 'Pearson correlation significance thresholds from fit:')
-    
-        tide.writenpvecs(corrlist, "corrlist.txt")
-        tide.writenpvecs(corrlist_pear, "corrlist_pear.txt")
-    
-    thepxcorr = pearsonr(filtereddata1, filtereddata2)
-    
-    if verbose:
-        print(thepxcorr)
-    sampletime = 1.0 / Fs
-    times, corrpertime, ppertime = tide.shorttermcorr_1D(filtereddata1, flipfac * filtereddata2, sampletime, windowtime, \
-                                                  samplestep=int(stepsize // sampletime), prewindow=prewindow, dodetrend=False)
-    times, xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(filtereddata1, flipfac * filtereddata2, sampletime, windowtime, \
-                                                                  samplestep=int(stepsize // sampletime), weighting=corrweighting, \
-                                                                  prewindow=prewindow, dodetrend=False, display=False)
-    tide.writenpvecs(corrpertime, outfilename + "_pearson.txt")
-    tide.writenpvecs(ppertime, outfilename + "_pvalue.txt")
-    tide.writenpvecs(Rvals, outfilename + "_Rvalue.txt")
-    tide.writenpvecs(delayvals, outfilename + "_delay.txt")
-    tide.writenpvecs(valid, outfilename + "_mask.txt")
-    
     if display:
         #timeaxis = r_[0.0:len(filtereddata1)] * sampletime
         fig, ax1 = plt.subplots()
