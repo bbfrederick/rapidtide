@@ -402,11 +402,6 @@ def onecorrfit(thetc, corrscale,
 
 
 def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, optiondict, displayplots):
-    FML_BADAMP = np.uint16(0x01)
-    FML_BADLAG = np.uint16(0x02)
-    FML_BADWIDTH = np.uint16(0x04)
-    FML_HITEDGE = np.uint16(0x08)
-    FML_FITFAIL = np.uint16(0x0f)
     if optiondict['slicetimes'] is not None:
         sliceoffsettime = optiondict['slicetimes'][vox % slicesize]
     else:
@@ -429,16 +424,6 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
         thesigma = rt_floatset(0.0)
         thegaussout = 0.0 * corrtc
         theR2 = rt_floatset(0.0)
-        if failreason & FML_BADAMP:
-            ampfails += 1
-        if failreason & FML_BADLAG:
-            lagfails += 1
-        if failreason & FML_BADWIDTH:
-            widthfails += 1
-        if failreason & FML_HITEDGE:
-            edgefails += 1
-        if failreason & FML_FITFAIL:
-            fitfails += 1
     else:
         volumetotalinc = 1
         thetime = rt_floatset(np.fmod(maxlag, optiondict['lagmod']))
@@ -1059,7 +1044,7 @@ def main():
     optiondict['usewindowfunc'] = True  # apply a hamming window prior to correlation
     optiondict['corrweighting'] = 'none'  # use a standard unweighted crosscorrelation for calculate time delays
     optiondict['usetmask'] = False  # premultiply the regressor with the tmask timecourse
-    optiondict['tmaskname'] = ''  # file name for tmask regressor
+    optiondict['tmaskname'] = None  # file name for tmask regressor
     optiondict['corrmaskthresh'] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict[
         'check_autocorrelation'] = False  # check for periodic components that corrupt the autocorrelation
@@ -1166,6 +1151,7 @@ def main():
     # start the clock!
     timings = [['Start', time.time(), None, None]]
     print('rapidtide2 version:', optiondict['release_version'], optiondict['git_tag'])
+    tide.checkimports(optiondict)
 
     # get the command line parameters
     filename = None
