@@ -46,8 +46,6 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/showtc',
                'rapidtide/scripts/spatialfit',
                'rapidtide/scripts/histnifti',
-               'rapidtide/scripts/kmeans',
-               'rapidtide/scripts/demeantcs',
                'rapidtide/scripts/showhist']
 if addtidepool:
     script_list.append('rapidtide/scripts/tidepool')
