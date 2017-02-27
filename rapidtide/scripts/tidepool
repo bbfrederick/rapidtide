@@ -39,6 +39,9 @@ import argparse
 from rapidtide.OrthoImageItem import OrthoImageItem
 import os
 from pkg_resources import resource_string
+import pandas as pd
+import copy
+from statsmodels.robust.scale import mad
 
 from nibabel.affines import apply_affine
 
@@ -514,6 +517,12 @@ class overlay:
         print('overlay initialized:', self.name, self.filename, self.minval, self.dispmin, self.dispmax, self.maxval)
         #self.summarize()
 
+
+    def duplicate(self, newname, newlabel):
+        return overlay(newname, self.filename, self.namebase, funcmask=self.funcmask, geommask=self.geommask, label=newlabel, report=self.report,
+                 lut_state=self.lut_state)
+
+
     def updateStats(self):
         self.minval = self.maskeddata.min()
         self.maxval = self.maskeddata.max()
@@ -696,21 +705,74 @@ def updateHistogram():
     updateDispLimits()
 
 
-def reportAspects():
-    print('report aspects')
-
+def calcAspectsStats():
+    global overlays, datafileroot, aspectsstats, activestat
+    print('calculate aspects stats')
+    if 'aspects' in overlays:
+        aspectsavgmaps = []
+        aspectsstats = {}
+        print('performing ASPECTS averaging')
+        for idx, themap in enumerate(loadedfuncmaps):
+            aspstatmap = overlays[themap].duplicate(themap + '_aspstat', overlays[themap].label)
+            aspstatmap.data *= 0.0
+            aspectsstats[themap] = {}
+            for regnum, region in enumerate(aspects[1:]):
+                aspectsstats[themap][region] = {}
+                aspectsstats[themap][region]['mean'] = np.mean(overlays[themap].data[np.where(overlays['aspects'].data == regnum)])
+                aspectsstats[themap][region]['std'] = np.std(overlays[themap].data[np.where(overlays['aspects'].data == regnum)])
+                aspectsstats[themap][region]['robustmean'] = mad(overlays[themap].data[np.where(overlays['aspects'].data == regnum)])
+                aspectsstats[themap][region]['median'] = np.median(overlays[themap].data[np.where(overlays['aspects'].data == regnum)])
+                aspstatmap.data[np.where(overlays['aspects'].data == regnum)] = aspectsstats[themap][region][activestat]
+            aspstatmap.maskData()
+            aspstatmap.updateStats()
+            overlays[themap + '_aspstat'] = aspstatmap
+        print('done performing ASPECTS averaging')
+        for thestat in ['mean', 'std', 'robustmean', 'median']:
+            d = {}
+            cols = []
+            d['Region'] = np.asarray(aspects[1:])
+            cols.append('Region')
+            for idx, themap in enumerate(loadedfuncmaps):
+                templist = []
+                for regnum, region in enumerate(aspects[1:]):
+                    templist.append(aspectsstats[themap][aspects[1:][regnum]][thestat])
+                d[themap] = np.asarray(templist)
+                cols.append(themap)
+            df = pd.DataFrame(data=d)
+            df = df[cols]
+            df.to_csv(datafileroot + 'aspects_' + thestat + '.txt', sep='\t', index=False)
+    else:
+        print('cannot perform average - no ASPECTS map found')
 
 
 def toggleAveraging(state):
-    global aspectsaverage
+    global doaspectsaverage
     if state == QtCore.Qt.Checked:
-        aspectsaverage = True
+        doaspectsaverage = True
         print('aspects averaging is turned on')
     else:
-        aspectsaverage = False
+        doaspectsaverage = False
         print('aspects averaging is turned off')
-    
 
+def mean_radioButton_clicked(enabled):
+    global activestat
+    if enabled:
+        activestat = 'mean'
+
+def std_radioButton_clicked(enabled):
+    global activestat
+    if enabled:
+        activestat = 'std'
+
+def robustmean_radioButton_clicked(enabled):
+    global activestat
+    if enabled:
+        activestat = 'robustmean'
+
+def median_radioButton_clicked(enabled):
+    global activestat
+    if enabled:
+        activestat = 'median'
 
 def gray_radioButton_clicked(enabled):
     global imageadj, overlays, focusmap
@@ -872,13 +934,16 @@ def overlay_radioButton_08_clicked(enabled):
 
 def overlay_radioButton_clicked(which, enabled):
     global imageadj, overlays, focusmap, panetomap, ui, overlaybuttons
-    global currentloc
+    global currentloc, doaspectsaverage
     if enabled:
         overlaybuttons[which].setChecked(True)
         #print('selected ', which)
         if panetomap[which] != '':
-            focusmap = panetomap[which]
-            #print('focusmap set to ', focusmap)
+            if doaspectsaverage:
+                focusmap = panetomap[which] + '_aspstat'
+            else:
+                focusmap = panetomap[which]
+            print('focusmap set to ', focusmap)
             if overlays[focusmap].lut_state == gray_state:
                 #print('checking gray')
                 ui.gray_radioButton.setChecked(True)
@@ -1167,7 +1232,7 @@ def main():
     global focusmap, bgmap
     global maps
     global roi
-    global overlays, loadedfuncmaps
+    global overlays, loadedfuncmaps, aspectsavgmaps, aspectsstats, activestat
     global mainwin, orthoimages, overlaybuttons, panetomap
     global img_colorbar
     global lg_imgsize, scalefacx, scalefacy, scalefacz
@@ -1178,10 +1243,11 @@ def main():
     global imageadj
     global harvestcolormaps
     global datafileroot
-    global aspectsaverage
+    global doaspectsaverage
 
     # initialize default values
-    aspectsaverage = False
+    activestat = 'mean'
+    doaspectsaverage = False
     forcetr = False
     forceoffset = False
     usecorrout = False
@@ -1314,7 +1380,7 @@ def main():
 
     # wire up the aspects averaging checkbox
     ui.aspects_checkBox.stateChanged.connect(toggleAveraging)
-    ui.report_pushButton.clicked.connect(reportAspects)
+    ui.report_pushButton.clicked.connect(calcAspectsStats)
 
     # wire up the radio buttons
     ui.gray_radioButton.toggled.connect(gray_radioButton_clicked)
@@ -1323,6 +1389,11 @@ def main():
     ui.viridis_radioButton.toggled.connect(viridis_radioButton_clicked)
     ui.jet_radioButton.toggled.connect(jet_radioButton_clicked)
     ui.rainbow_radioButton.toggled.connect(rainbow_radioButton_clicked)
+
+    ui.mean_radioButton.toggled.connect(mean_radioButton_clicked)
+    ui.std_radioButton.toggled.connect(std_radioButton_clicked)
+    ui.robustmean_radioButton.toggled.connect(robustmean_radioButton_clicked)
+    ui.median_radioButton.toggled.connect(median_radioButton_clicked)
 
     overlaybuttons = [ui.overlay_radioButton_01,
                       ui.overlay_radioButton_02,

@@ -124,7 +124,7 @@
        <x>10</x>
        <y>20</y>
        <width>1091</width>
-       <height>271</height>
+       <height>276</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="largeimage_horizontalLayout">
@@ -277,69 +277,78 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Colormap</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QRadioButton" name="gray_radioButton">
-          <property name="text">
-           <string>Gray</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QRadioButton" name="thermal_radioButton">
-          <property name="text">
-           <string>Thermal</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QRadioButton" name="GYR_radioButton">
-          <property name="text">
-           <string>GYR</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QRadioButton" name="rainbow_radioButton">
-          <property name="text">
-           <string>Rainbow</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QRadioButton" name="viridis_radioButton">
-          <property name="text">
-           <string>Viridis</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QRadioButton" name="jet_radioButton">
-          <property name="text">
-           <string>Jet</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_5">
+         <layout class="QVBoxLayout" name="colormap_verticalLayout">
           <item>
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Colormap</string>
             </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
+           </widget>
           </item>
+          <item>
+           <widget class="QRadioButton" name="gray_radioButton">
+            <property name="text">
+             <string>Gray</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">colormap_buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="thermal_radioButton">
+            <property name="text">
+             <string>Thermal</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">colormap_buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="GYR_radioButton">
+            <property name="text">
+             <string>GYR</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">colormap_buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="rainbow_radioButton">
+            <property name="text">
+             <string>Rainbow</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">colormap_buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="viridis_radioButton">
+            <property name="text">
+             <string>Viridis</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">colormap_buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="jet_radioButton">
+            <property name="text">
+             <string>Jet</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">colormap_buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="aspects_verticalLayout">
           <item>
            <widget class="QLabel" name="label_5">
             <property name="text">
@@ -348,31 +357,93 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="aspects_checkBox">
-            <property name="text">
-             <string>Average</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QPushButton" name="report_pushButton">
-            <property name="text">
-             <string>Report</string>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer_3">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
+            <property name="minimumSize">
              <size>
-              <width>20</width>
-              <height>40</height>
+              <width>0</width>
+              <height>24</height>
              </size>
             </property>
-           </spacer>
+            <property name="text">
+             <string>Calculate</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="aspects_checkBox">
+            <property name="text">
+             <string>Show stat image</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="mean_radioButton">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Mean</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">stats_buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="std_radioButton">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Std dev</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">stats_buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="robustmean_radioButton">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Robust mean</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">stats_buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="median_radioButton">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Median</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">stats_buttonGroup</string>
+            </attribute>
+           </widget>
           </item>
          </layout>
         </item>
@@ -1220,4 +1291,8 @@
    <bool>true</bool>
   </property>
  </designerdata>
+ <buttongroups>
+  <buttongroup name="colormap_buttonGroup"/>
+  <buttongroup name="stats_buttonGroup"/>
+ </buttongroups>
 </ui>
