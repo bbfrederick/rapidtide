@@ -1996,6 +1996,15 @@ def stdnormalize(vector):
         return demeaned
 
 
+def varnormalize(vector):
+    demeaned = vector - np.mean(vector)
+    sigvar = np.var(demeaned)
+    if sigvar > 0.0:
+        return demeaned / sigvar
+    else:
+        return demeaned
+
+
 def pcnormalize(vector):
     sigmean = np.mean(vector)
     if sigmean > 0.0:
@@ -2006,7 +2015,7 @@ def pcnormalize(vector):
 
 def ppnormalize(vector):
     demeaned = vector - np.mean(vector)
-    sigpp = max(demeaned) - min(demeaned)
+    sigpp = np.max(demeaned) - np.min(demeaned)
     if sigpp > 0.0:
         return demeaned / sigpp
     else:
