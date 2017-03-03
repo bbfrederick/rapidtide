@@ -62,7 +62,7 @@ except getopt.GetoptError as err:
     usage()
     sys.exit(2)
    
-# check for filename arguments
+# make sure there is at least one filename argument
 nargs = len(args)
 if nargs < 2:
     usage()
@@ -82,7 +82,7 @@ textfilename = []
 for i in range(nargs):
     numfiles += 1
     textfilename.append(args[i])
-    print('will process', textfilename[-1])
+    print('will plot', textfilename[-1])
 
 usebarplot=False
 usexlabel=False
@@ -90,7 +90,6 @@ useylabel=False
 usetitle=False
 uselegend=False
 usepoints=False
-numfiles=1
 for o, a in opts:
     if o == "-x":
         usexlabel = True
