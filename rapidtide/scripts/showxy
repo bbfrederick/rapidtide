@@ -55,7 +55,7 @@ if (nargs<2):
 
 # now check options
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, "pbi:x:y:l:t:", ["help"])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "pbi:x:y:l:t:", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err)) # will print something like "option -a not recognized"
@@ -63,7 +63,6 @@ except getopt.GetoptError as err:
     sys.exit(2)
    
 # check for filename arguments
-print(opts, args)
 nargs = len(args)
 if nargs < 2:
     usage()
@@ -79,11 +78,11 @@ argvec = sys.argv[1].split(',')
 #    thelegend=[argvec[0]]
 
 numfiles = 0
-textfilename.append(args[1])
-if nargs > 2:
-    for i in range(2, nargs):
-        numfiles += 1
-        textfilename.append(args[i])
+textfilename = []
+for i in range(nargs):
+    numfiles += 1
+    textfilename.append(args[i])
+    print('will process', textfilename[-1])
 
 usebarplot=False
 usexlabel=False
