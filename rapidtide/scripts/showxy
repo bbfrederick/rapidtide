@@ -55,7 +55,7 @@ if (nargs<2):
 
 # now check options
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[2:], "pbi:x:y:l:t:", ["help"])
+    opts, args = getopt.gnu_getopt(sys.argv, "pbi:x:y:l:t:", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err)) # will print something like "option -a not recognized"
