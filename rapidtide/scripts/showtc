@@ -26,6 +26,7 @@ import getopt
 from cycler import cycler
 
 import matplotlib
+import matplotlib.cm as cm
 
 import rapidtide.tide_funcs as tide
 import numpy as np
@@ -158,9 +159,10 @@ for i in range(0, numfiles):
 
 
 # now plot it out
-colorlist = ['r', 'g', 'b', 'k', 'B', 'y']
+colorlist = [cm.spectral(float(i) / numvecs) for i in range(numvecs)]
 for i in range(0, numvecs):
-    plot(xvecs[i], yvecs[i], colorlist[i % len(colorlist)], label=linelabels[i])
+    #plot(xvecs[i], yvecs[i], colorlist[i % len(colorlist)], label=linelabels[i])
+    plot(xvecs[i], yvecs[i], color=colorlist[i], label=linelabels[i])
 if dolegend:
     legend()
 if dopspec:
