@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+#       $Author: frederic $
+#       $Date: 2016/06/14 12:04:51 $
+#       $Id: showxy,v 1.12 2016/06/14 12:04:51 frederic Exp $
+#
+from __future__ import print_function
+import sys
+import getopt
+import matplotlib
+import platform
+import rapidtide.tide_funcs as tide
+import matplotlib.cm as cm
+from scipy import arange
+
+from pylab import plot, xlabel, ylabel, title, legend, show, hold, bar
+
+def usage():
+    print("usage: showxy textfilename[,LINELABEL] [-x XLABEL] [-y YLABEL] [-t TITLE], [-i FILENAME[,LINELABEL]]")
+    print("	plots xy data in text file")
+    print("")
+    print("required arguments:")
+    print("	textfilename	- a text file containing one timepoint per line")
+    print("")
+    print("optional arguments:")
+    print("	-x	use XLABEL on the x axis")
+    print("	-y	use YLABEL on the y axis")
+    print("	-t	use TITLE at the top of the graph")
+    print("	-i	add FILENAME to the plot, with label LINELABEL")
+    print("	-p	plot as individual points (do not connect points)")
+    return()
+    return()
+
+# get the command line parameters
+nargs = len(sys.argv)
+if (nargs<2):
+    usage()
+    exit()
+
+# handle required args first
+argvec = sys.argv[1].split(',')
+textfilename=[argvec[0]]
+if len(argvec) > 1:
+    thelegend=[argvec[1]]
+    uselegend=True
+else:
+    thelegend=[argvec[0]]
+
+# now check options
+try:
+    opts, args = getopt.getopt(sys.argv[2:], "pbi:x:y:l:t:", ["help"])
+except getopt.GetoptError as err:
+    # print help information and exit:
+    print(str(err)) # will print something like "option -a not recognized"
+    usage()
+    sys.exit(2)
+   
+usebarplot=False
+usexlabel=False
+useylabel=False
+usetitle=False
+uselegend=False
+usepoints=False
+numfiles=1
+for o, a in opts:
+    if o == "-x":
+        usexlabel = True
+        thexlabel=a
+        print("labelling x axis with ",thexlabel)
+    elif o == "-y":
+        useylabel = True
+        theylabel=a
+        print("labelling y axis with ",theylabel)
+    elif o == "-t":
+        usetitle = True
+        thetitle=a
+        print("using title ",thetitle)
+    elif o == '-i':
+        argvec = a.split(',')
+        if not (0 < len(argvec) <= 2):
+            usage()
+            sys.exit()
+        textfilename.append(argvec[0])
+        if len(argvec) == 2:
+            thelegend.append(argvec[1])
+            uselegend=True
+        else:
+            thelegend.append(argvec[0])
+        numfiles += 1
+        print('input file number ',numfiles,' is ',thelegend[-1],', label is',thelegend[-1])
+    elif o == '-p':
+        usepoints = True
+    elif o == '-b':
+        usebarplot = True
+        print("doing bar plot")
+    else:
+        assert False, "unhandled option"
+
+xvecs = []
+yvecs = []
+for i in range(0, numfiles):
+    indata=tide.readvecs(textfilename[i])
+    xvecs.append(indata[0,:])
+    yvecs.append(indata[1,:])
+
+numvecs = len(xvecs)
+colorlist = [cm.spectral(float(i) / numvecs) for i in range(numvecs)]
+for i in range(0, numfiles):
+    if usebarplot:
+        bar(xvecs[i],yvecs[i],width=1.5,color='lightgray',align='center',edgecolor=None)
+    else:
+        if usepoints:
+            plot(xvecs[i],yvecs[i], color=colorlist[i], marker='.', linestyle='None')
+        else:
+            plot(xvecs[i],yvecs[i], color=colorlist[i])
+if uselegend:
+    legend(thelegend,loc=1)
+if usetitle:
+    title(thetitle, fontsize=18, fontweight='bold')
+if usexlabel:
+    xlabel(thexlabel, fontsize=16, fontweight='bold')
+if useylabel:
+    ylabel(theylabel, fontsize=16, fontweight='bold')
+show()

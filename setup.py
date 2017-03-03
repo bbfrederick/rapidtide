@@ -44,6 +44,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/simdata',
                'rapidtide/scripts/pixelcomp',
                'rapidtide/scripts/showtc',
+               'rapidtide/scripts/showxy',
                'rapidtide/scripts/spatialfit',
                'rapidtide/scripts/histnifti',
                'rapidtide/scripts/showhist']
