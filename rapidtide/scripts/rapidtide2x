@@ -967,9 +967,9 @@ def usage():
     print("    --excludemask=MASK       - Do not use voxels in NAME for global regressor ")
     print("                               generation and regressor refinement")
     print("    --lagminthresh=MIN       - For refinement, exclude voxels with delays less ")
-    print("                               than MIN (default is 1.5s)")
+    print("                               than MIN (default is 0.5s)")
     print("    --lagmaxthresh=MAX       - For refinement, exclude voxels with delays greater ")
-    print("                               than MAX (default is 1000s)")
+    print("                               than MAX (default is 5s)")
     print("    --ampthresh=AMP          - For refinement, exclude voxels with correlation ")
     print("                               coefficients less than AMP (default is 0.3)")
     print("    --sigmathresh=SIGMA      - For refinement, exclude voxels with widths greater ")
@@ -982,9 +982,8 @@ def usage():
     print("                               averaging)")
     print("    --ica                    - Use ica to derive refined regressor (default is ")
     print("                               averaging)")
-    print("    --psdfilter              - Apply a PSD weighted Weiner filter to shifted")
+    print("    --psdfilter              - Apply a PSD weighted Wiener filter to shifted")
     print("                               timecourses prior to refinement")
-    print("    --dispersioncalc         - Generate extra data during refinement to allow calculation of dispersion")
     print("")
     print("Output options:")
     print("    --limitoutput            - Don't save some of the large and rarely used files")
@@ -999,6 +998,7 @@ def usage():
     print("                               from each voxel (disables output of fitNorm)")
     print("")
     print("Miscellaneous options:")
+    print("    --wiener                 - Perform Wiener deconvolution to get voxel transfer functions")
     print("    --usesp                  - Use single precision for internal calculations (may")
     print("                               be useful when RAM is limited)")
     print("    -c                       - Data file is a converted CIFTI")
@@ -1007,9 +1007,12 @@ def usage():
     print("    --nonumba                - Disable jit compilation with numba")
     print("    --memprofile             - Enable memory profiling for debugging - warning:")
     print("                               this slows things down a lot.")
-    print("    --multiproc              - Enable multiprocessing versions of key subroutines.")
+    print("    --multiproc              - Enable multiprocessing versions of key subroutines.  This")
+    print("                               speeds things up dramatically.  Almost certainly will NOT")
+    print("                               work on Windows (due to different forking behavior).")
     print("")
     print("Experimental options (not fully tested, may not work):")
+    print("    --dispersioncalc         - Generate extra data during refinement to allow calculation of dispersion")
     print("    --acfix                  - Remove periodic components that corrupt the autocorrelation")
     print("                               (enables --accheck).  Experimental.")
     print("    --tmask=MASKFILE         - Only correlate during epochs specified in ")
@@ -1070,6 +1073,7 @@ def main():
         'glmsourcefile'] = None  # name of the file from which to regress delayed regressors (if not the original data)
     optiondict['doprewhiten'] = False  # prewhiten the data (I have no idea if this works)
     optiondict['armodelorder'] = 1  # AR model order for prewhitening the data (I have no idea if this works)
+    optiondict['dodeconv'] = False  # do Wiener deconvolution to find voxel transfer function
 
     # filter options
     optiondict['zpfilter'] = True
@@ -1112,8 +1116,8 @@ def main():
     optiondict['lagmaskside'] = 'both'
     optiondict['refineweighting'] = 'R2'
     optiondict['sigmathresh'] = 100.0
-    optiondict['lagminthresh'] = 1.5
-    optiondict['lagmaxthresh'] = 1000.0
+    optiondict['lagminthresh'] = 0.5
+    optiondict['lagmaxthresh'] = 5.0
     optiondict['ampthresh'] = 0.3
     optiondict['dorefineregressor'] = False
     optiondict['refinepasses'] = 1
@@ -1210,6 +1214,8 @@ def main():
                                                                                                            'liang',
                                                                                                            'eckart',
                                                                                                            'phat',
+                                                                                                           'wiener',
+                                                                                                           'weiner',
                                                                                                            'maxfittype=',
                                                                                                            'AR='])
     except getopt.GetoptError as err:
@@ -1242,6 +1248,15 @@ def main():
             optiondict['corrweighting'] = 'PHAT'
             optiondict['dodetrend'] = True
             print('Enabled GCC-PHAT fitting')
+        elif o == '--weiner':
+            print('It\'s spelled wiener, not weiner')
+            print('The filter is named after Norbert Wiener, an MIT mathemetician.  The name')
+            print('probably indicates that his family came from Vienna.')
+            print('Spell it right and try again.')
+            sys.exit()
+        elif o == '--wiener':
+            optiondict['dodeconv'] = True
+            print('Will perform Wiener deconvolution')
         elif o == '--usesp':
             optiondict['internalprecision'] = 'single'
             print('Will use single precision for internal calculations')
