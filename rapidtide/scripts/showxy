@@ -63,6 +63,7 @@ except getopt.GetoptError as err:
     sys.exit(2)
    
 # check for filename arguments
+print(opts, args)
 nargs = len(args)
 if nargs < 2:
     usage()
