@@ -52,24 +52,38 @@ if (nargs<2):
     usage()
     exit()
 
-# handle required args first
-argvec = sys.argv[1].split(',')
-textfilename=[argvec[0]]
-if len(argvec) > 1:
-    thelegend=[argvec[1]]
-    uselegend=True
-else:
-    thelegend=[argvec[0]]
 
 # now check options
 try:
-    opts, args = getopt.getopt(sys.argv[2:], "pbi:x:y:l:t:", ["help"])
+    opts, args = getopt.gnu_getopt(sys.argv[2:], "pbi:x:y:l:t:", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err)) # will print something like "option -a not recognized"
     usage()
     sys.exit(2)
    
+# check for filename arguments
+nargs = len(args)
+if nargs < 2:
+    usage()
+    sys.exit(1)
+
+# handle filename args
+argvec = sys.argv[1].split(',')
+#textfilename=[argvec[0]]
+#if len(argvec) > 1:
+#    thelegend=[argvec[1]]
+#    uselegend=True
+#else:
+#    thelegend=[argvec[0]]
+
+numfiles = 0
+textfilename.append(args[1])
+if nargs > 2:
+    for i in range(2, nargs):
+        numfiles += 1
+        textfilename.append(args[i])
+
 usebarplot=False
 usexlabel=False
 useylabel=False
