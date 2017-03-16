@@ -31,7 +31,7 @@ import sys
 import bisect
 import os
 
-from scipy import signal
+#from scipy import signal
 from scipy.stats import johnsonsb
 
 
@@ -2021,7 +2021,6 @@ def ppnormalize(vector):
     else:
         return demeaned
 
-
 @conditionaljit()
 def corrnormalize(thedata, prewindow, dodetrend):
     # detrend first
@@ -2031,11 +2030,29 @@ def corrnormalize(thedata, prewindow, dodetrend):
         intervec = stdnormalize(thedata)
 
     # then window
-    # print('corrnormalize: len(thedata)=',len(thedata),'len(hamming(len(thedata)))=',len(hamming(len(thedata))))
     if prewindow:
         return stdnormalize(hamming(np.shape(thedata)[0]) * intervec) / np.sqrt(np.shape(thedata)[0])
     else:
         return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
+
+
+@conditionaljit()
+def corrnormalize_new(thedata, prewindow, dodetrend):
+    # detrend first
+    if dodetrend:
+        intervec = sp.signal.detrend(thedata)
+    else:
+        intervec = thedata
+
+    sigstd = np.std(intervec)
+    if sigstd > 0.0:
+        intervec /= sigstd
+
+    # then window
+    if prewindow:
+        return stdnormalize(hamming(np.shape(thedata)[0]) * intervec) / np.sqrt(np.shape(thedata)[0])
+    else:
+        return intervec / np.sqrt(np.shape(thedata)[0])
 
 
 # --------------------------- Filtering functions -------------------------------------------------
@@ -2206,11 +2223,18 @@ def dobptrapfftfilt(samplefreq, stopfreq_low, passfreq_low, passfreq_high, stopf
 #
 # Written 2015 by Dan Stowell. Public domain.
 def wiener_deconvolution(signal, kernel, lambd):
-    "lambd is the SNR"
+    "lambd is the SNR in the fourier domain"
     kernel = np.hstack((kernel, np.zeros(len(signal) - len(kernel)))) # zero pad the kernel to same length
     H = fftpack.fft(kernel)
-    deconvolved = np.real(fftpack.ifft(fftpack.fft(signal)*np.conj(H)/(H*np.conj(H) + lambd**2)))
+    #deconvolved = np.real(fftpack.ifft(fftpack.fft(signal)*np.conj(H)/(H*np.conj(H) + lambd**2)))
+    deconvolved = np.roll(np.real(fftpack.ifft(fftpack.fft(signal)*np.conj(H)/(H*np.conj(H) + lambd**2))),
+        int(len(signal) // 2))
     return deconvolved
+
+def pspec(signal):
+    S = fftpack.fft(signal)
+    return(np.sqrt(S * np.conj(S)))
+
 
 def csdfilter(obsdata, commondata, padlen=20, debug=False):
     padobsdata = padvec(obsdata, padlen=padlen)
