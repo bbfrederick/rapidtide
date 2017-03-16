@@ -746,6 +746,82 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, maskarray, passnum,
 
     return volumetotal, outputdata
 
+def procOneVoxelWiener(vox, lagtc, inittc):
+    thefit, R = tide.mlregress(lagtc, inittc)
+    fitcoff = rt_floatset(thefit[0, 1])
+    datatoremove = rt_floatset(fitcoff * lagtc)
+    return vox, rt_floatset(thefit[0, 0]), rt_floatset(R), rt_floatset(R * R), fitcoff, \
+        rt_floatset(thefit[0, 1] / thefit[0, 0]), datatoremove, rt_floatset(inittc - datatoremove)
+
+
+def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict, meanvalue, rvalue, r2value, fitcoff, fitNorm, datatoremove, filtereddata):
+    if optiondict['multiproc']:
+        # define the consumer function here so it inherits most of the arguments
+        def Wiener_consumer(inQ, outQ):
+            while True:
+                try:
+                    # get a new message
+                    val = inQ.get()
+        
+                    # this is the 'TERM' signal
+                    if val is None:
+                        break;
+        
+                    # process and send the data
+                    outQ.put(procOneVoxelWiener(val, lagtc[val, :], fmri_data[val, optiondict['addedskip']:]))
+        
+                except Exception as e:
+                    print("error!", e)
+                    break
+    
+        # initialize the workers and the queues
+        n_workers = mp.cpu_count() - 1
+        inQ = mp.Queue()
+        outQ = mp.Queue()
+        workers = [mp.Process(target=Wiener_consumer, args=(inQ, outQ)) for i in range(n_workers)]
+        for i,w in enumerate(workers):
+            w.start()
+
+        # pack the data and send to workers
+        data_in = []
+        for d in range(numspatiallocs):
+            if np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval:
+                data_in.append(d)
+        print('processing', len(data_in), 'voxels with', n_workers, 'processes')
+        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+    
+        # shut down workers
+        for i in range(n_workers):
+            inQ.put(None)
+        for w in workers:
+            w.join()
+    
+        # unpack the data
+        volumetotal = 0
+        for voxel in data_out:
+            meanvalue[voxel[0]] = voxel[1]
+            rvalue[voxel[0]] = voxel[2]
+            r2value[voxel[0]] = voxel[3]
+            fitcoff[voxel[0]] = voxel[4]
+            fitNorm[voxel[0]] = voxel[5]
+            datatoremove[voxel[0], :] = voxel[6]
+            filtereddata[voxel[0], :] = voxel[7]
+            volumetotal += 1
+        data_out = []
+    else:
+        volumetotal = 0
+        for vox in range(0, numspatiallocs):
+            if vox % reportstep == 0 or vox == numspatiallocs - 1:
+                tide.progressbar(vox + 1, numspatiallocs, label='Percent complete')
+            inittc = fmri_data[vox, optiondict['addedskip']:].copy()
+            if np.mean(inittc) >= threshval:
+                dummy, meanvalue[vox], rvalue[vox], r2value[vox], fitcoff[vox], fitNorm[vox], datatoremove[vox], filtereddata[vox] = \
+                    procOneVoxelWiener(vox, lagtc[vox, :], inittc)
+                volumetotal += 1
+
+    return volumetotal
+
+
 def procOneVoxelGLM(vox, lagtc, inittc):
     thefit, R = tide.mlregress(lagtc, inittc)
     fitcoff = rt_floatset(thefit[0, 1])
@@ -2097,9 +2173,23 @@ def main():
             timings.append(
                 ['Regressor refinement end, pass ' + str(thepass), time.time(), voxelsprocessed_rr, 'voxels'])
 
+    # Post refinement step 0 - Wiener deconvolution
+    if optiondict['dodeconv']:
+        timings.append(['Wiener deconvolution start', time.time(), None, None])
+        print('\n\nWiener deconvolution')
+        reportstep = 1000
+
+        # now allocate the arrays needed for Wiener deconvolution
+        wienerdeconv = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        wpeak = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+
+        voxelsprocessed_wiener = wienerpass(numspatiallocs, reportstep, fmri_data, threshval, 
+                                        optiondict, wienerdeconv, wpeak, resampref_y)
+        timings.append(['Wiener deconvolution end', time.time(), voxelsprocessed_wiener, 'voxels'])
+
     # Post refinement step 1 - GLM fitting to remove moving signal
     if optiondict['doglmfilt'] or optiondict['doprewhiten']:
-        timings.append(['GLM filtering start, pass ' + str(thepass), time.time(), None, None])
+        timings.append(['GLM filtering start', time.time(), None, None])
         if optiondict['doglmfilt']:
             print('\n\nGLM filtering')
         if optiondict['doprewhiten']:
