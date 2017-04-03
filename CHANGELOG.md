@@ -99,3 +99,13 @@
 * Significant enhancements to showstxcorr (this is a work in progress).
 * Example data is no longer installed in the python directory (this never made sense to do).
 * Added code to do matched filtering of regressors with mean PSD and/or cross-spectral density.  It works, but doesn't do much (rapidtide2x).
+
+## Version 1.1.0 (4/3/17)
+* I have now synced all of the changes in rapidtide2x back to rapidtide2.
+* rapidtide now has multiprocessing support using the --multiproc flag.  This can cause a dramatic increase in processing speed on multicore/processor machines.
+* Dispersion calculation is now off by default.
+* Tidepool is now compatible with both PyQt4 and 5.
+* Reordered some memory allocation and deallocation to keep the RAM footprint down.
+* Some additional significant speedups (support for ffftw if present, caching hamming windows).
+* Added an optional cross-spectral density filter for adaptive timecourse filtering.  This is a work in progress - not really ready for general use.
+* Skeleton of support for Wiener deconvolution to sharpen the correlation function (off by default, not ready for general use).
