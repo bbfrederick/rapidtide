@@ -27,11 +27,20 @@ A simple GUI for looking at the results of a rapidtide analysis
 
 from __future__ import print_function, division
 
+qtbinding = 'pyqt4'
 from pyqtgraph.Qt import QtGui, QtCore
+try:
+    from PyQt5.QtWidgets import *
+    qtbinding = 'pyqt5'
+except:
+    qtbindign = 'pyqt4'
 
 import pyqtgraph as pg
 import numpy as np
-import rapidtide.tidepoolTemplate as uiTemplate
+if qtbinding == 'pyqt4':
+    import rapidtide.tidepoolTemplate_qt4 as uiTemplate
+else:
+    import rapidtide.tidepoolTemplate_qt5 as uiTemplate
 import rapidtide.tide_funcs as tide
 import sys
 import getopt
@@ -176,7 +185,10 @@ def selectFile():
     global datafileroot
     mydialog = QtGui.QFileDialog()
     options = mydialog.Options()
-    lagfilename = mydialog.getOpenFileName(options=options, filter="Lag time files (*_lagtimes.nii.gz)")
+    if qtbinding == 'pyqt4':
+        lagfilename = mydialog.getOpenFileName(options=options, filter="Lag time files (*_lagtimes.nii.gz)")
+    else:
+        lagfilename = mydialog.getOpenFileName(options=options, filter="Lag time files (*_lagtimes.nii.gz)")[0]
     datafileroot = str(lagfilename[:-15])
 
 

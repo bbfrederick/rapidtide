@@ -27,7 +27,13 @@ A widget for orthographically displaying 3 and 4 dimensional data
 
 from __future__ import print_function, division
 
+qtbinding = 'pyqt4'
 from pyqtgraph.Qt import QtGui, QtCore
+try:
+    from PyQt5.QtWidgets import *
+    qtbinding = 'pyqt5'
+except:
+    qtbinding = 'pyqt4'
 
 import pyqtgraph as pg
 import numpy as np

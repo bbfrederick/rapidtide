@@ -30,7 +30,8 @@ addtidepool = True
 
 modules_list= ['rapidtide/tide_funcs']
 if addtidepool:
-    modules_list.append('rapidtide/tidepoolTemplate')
+    modules_list.append('rapidtide/tidepoolTemplate_qt4')
+    modules_list.append('rapidtide/tidepoolTemplate_qt5')
     modules_list.append('rapidtide/OrthoImageItem')
 
 script_list = ['rapidtide/scripts/rapidtide2',
