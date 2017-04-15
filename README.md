@@ -9,19 +9,18 @@ HTML documentation is here: http://rapidtide.readthedocs.io/en/latest/
 NOTE
 ====
 This is an evolving code base.  I'm constantly tinkering with it.  That said,
-now that I'm releasing this to the world, I'm being somewhat more responsible
+now that I've released this to the world, I'm being somewhat more responsible
 about locking down stable release points.  In between releases, however, I'll
-be messing with things. **It's very possible
+be messing with things, although for the most part this will be restricted
+to the "x" version of programs (e.g. the bleeding edge version of rapidtide2 is
+rapidtide2x - use the former if you want stability, the latter if you want 
+the newest and and most exciting features). **It's very possible
 I could break something while doing this, so check back for status updates
 if you download the code in between releases**.  I've finally become a little
 more modern and started adding
 automated testing, so as time goes by hopefully the "in between" releases will
 be somewhat more reliable.  Check back often for exciting new features and bug
 fixes!
-
-**UPDATE 9/2/16:  I have worked out the outstanding issues that arose when I added
-Python 3 compatiblity (with the help of unit tests - who knew?).  So things seem to be
-working ok.**
 
 Why do I want to know about time lagged correlations?
 =======================
@@ -126,9 +125,14 @@ Ok, I'm sold.  What's in here?
         overlays and the like, so I cobbled this together.  It may be generally
         useful to anybody wanting to display functional data.
 
+
+Support
+=======================
+This code base is being developed and supported by a grant from the US NIH (1R01 NS097512).
+
+
 References
 =======================
-
 Links to PDFs of all papers mentioned here can be found on the OMG website: 
 http://www.nirs-fmri.net/publications
 
