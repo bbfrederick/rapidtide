@@ -188,16 +188,20 @@ class OrthoImageItem(QtGui.QWidget):
         self.updateAllViews()
 
     def xpos2pix(self, xpos):
+        #print('xpos2pix: (offset, scalefac, pos, pix):', self.offsetx, self.scalefacx, xpos, int(np.round(self.offsetx + self.scalefacx * xpos)))
         return int(np.round(self.offsetx + self.scalefacx * xpos))
 
     def ypos2pix(self, ypos):
+        #print('ypos2pix: (offset, scalefac, pos, pix):', self.offsety, self.scalefacy, ypos, int(np.round(self.offsety + self.scalefacy * ypos)))
         return int(np.round(self.offsety + self.scalefacy * ypos))
 
     def zpos2pix(self, zpos):
+        #print('zpos2pix: (offset, scalefac, pos, pix):', self.offsetz, self.scalefacz, zpos, int(np.round(self.offsetz + self.scalefacz * zpos)))
         return int(np.round(self.offsetz + self.scalefacz * zpos))
 
     def xpix2pos(self, xpix):
         thepos = self.xdim / 2.0 + (xpix - self.imgsize / 2) * self.revscalefacx
+        #print('xpix2pos: (dim, imgsize, revscalefac, pix, pos):', self.xdim, self.imgsize, self.revscalefacx, xpix, int(np.round(thepos)))
         if thepos > self.xdim - 1:
             thepos = self.xdim - 1
         if thepos < 0:
@@ -206,6 +210,7 @@ class OrthoImageItem(QtGui.QWidget):
 
     def ypix2pos(self, ypix):
         thepos = self.ydim / 2.0 + (ypix - self.imgsize / 2) * self.revscalefacy
+        #print('ypix2pos: (dim, imgsize, revscalefac, pix, pos):', self.ydim, self.imgsize, self.revscalefacy, ypix, int(np.round(thepos)))
         if thepos > self.ydim - 1:
             thepos = self.ydim - 1
         if thepos < 0:
@@ -214,6 +219,7 @@ class OrthoImageItem(QtGui.QWidget):
 
     def zpix2pos(self, zpix):
         thepos = self.zdim / 2.0 + (zpix - self.imgsize / 2) * self.revscalefacz
+        #print('zpix2pos: (dim, imgsize, revscalefac, pix, pos):', self.zdim, self.imgsize, self.revscalefacz, zpix, int(np.round(thepos)))
         if thepos > self.zdim - 1:
             thepos = self.zdim - 1
         if thepos < 0:
@@ -323,8 +329,8 @@ class OrthoImageItem(QtGui.QWidget):
         if self.buttonisdown:
             self.xpos = self.xpix2pos(event.pos().x())
             self.ypos = self.ypix2pos(self.imgsize - event.pos().y())
-            # print('ax move:', self.xpos, self.ypos)
-            self.updateCursors()
+            #print('ax move:', self.xpos, self.ypos)
+            #self.updateCursors()
             self.updateAllViews()
             self.updated.emit()
 
@@ -333,7 +339,7 @@ class OrthoImageItem(QtGui.QWidget):
             self.xpos = self.xpix2pos(event.pos().x())
             self.zpos = self.zpix2pos(self.imgsize - event.pos().y())
             # print('cor move:', self.xpos, self.zpos)
-            self.updateCursors()
+            #self.updateCursors()
             self.updateAllViews()
             self.updated.emit()
 
@@ -342,7 +348,7 @@ class OrthoImageItem(QtGui.QWidget):
             self.ypos = self.ypix2pos(event.pos().x())
             self.zpos = self.zpix2pos(self.imgsize - event.pos().y())
             # print('sag move:', self.ypos, self.zpos)
-            self.updateCursors()
+            #self.updateCursors()
             self.updateAllViews()
             self.updated.emit()
 
@@ -352,32 +358,34 @@ class OrthoImageItem(QtGui.QWidget):
         # self.ypos = self.ypix2pos(self.imgsize - event.pos().y())
         # self.buttonisdown = True
         self.updateAllViews()
-        self.updateCursors()
+        #self.updateCursors()
         self.updated.emit()
 
     def handleaxclick(self, event):
         self.xpos = self.xpix2pos(event.pos().x())
         self.ypos = self.ypix2pos(self.imgsize - event.pos().y())
-        print(event.pos().x(), self.xpos, self.imgsize, event.pos().y(), self.ypos)
+        print('evx, xpos, evy, ypos, imgsize', event.pos().x(), self.xpos, event.pos().y(), self.ypos, self.imgsize)
         self.buttonisdown = True
         self.updateAllViews()
-        self.updateCursors()
+        #self.updateCursors()
         self.updated.emit()
 
     def handlecorclick(self, event):
         self.xpos = self.xpix2pos(event.pos().x())
         self.zpos = self.zpix2pos(self.imgsize - event.pos().y())
+        print('evx, xpos, evy, zpos, imgsize', event.pos().x(), self.xpos, event.pos().y(), self.zpos, self.imgsize)
         self.buttonisdown = True
         self.updateAllViews()
-        self.updateCursors()
+        #self.updateCursors()
         self.updated.emit()
 
     def handlesagclick(self, event):
         self.ypos = self.ypix2pos(event.pos().x())
         self.zpos = self.zpix2pos(self.imgsize - event.pos().y())
+        print('evx, ypos, evy, zpos, imgsize', event.pos().x(), self.ypos, event.pos().y(), self.zpos, self.imgsize)
         self.buttonisdown = True
         self.updateAllViews()
-        self.updateCursors()
+        #self.updateCursors()
         self.updated.emit()
 
     def setXYZpos(self, xpos, ypos, zpos, emitsignal=True):
@@ -385,7 +393,7 @@ class OrthoImageItem(QtGui.QWidget):
         self.ypos = int(ypos)
         self.zpos = int(zpos)
         self.updateAllViews()
-        self.updateCursors()
+        #self.updateCursors()
         if emitsignal:
             self.updated.emit()
 
@@ -395,7 +403,7 @@ class OrthoImageItem(QtGui.QWidget):
         else:
             self.tpos = tpos
         self.updateAllViews()
-        self.updateCursors()
+        #self.updateCursors()
         if emitsignal:
             self.updated.emit()
 
