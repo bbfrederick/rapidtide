@@ -2383,8 +2383,8 @@ def main():
                          outputname + '_refinemask' + outsuffix3d)
         refinemask = None
     if optiondict['doglmfilt'] and optiondict['saveglmfiltered']:
-        tide.savetonifti(datatoremove.reshape(nativefmrishape), theheader, thesizes,
-                         outputname + '_datatoremove' + outsuffix4d)
+        #tide.savetonifti(datatoremove.reshape(nativefmrishape), theheader, thesizes,
+        #                 outputname + '_datatoremove' + outsuffix4d)
         datatoremove = None
         tide.savetonifti(filtereddata.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_filtereddata' + outsuffix4d)
