@@ -22,7 +22,7 @@ from __future__ import print_function, division
 
 import numpy as np
 import scipy as sp
-from scipy import fftpack, ndimage
+from scipy import fftpack, ndimage, signal
 from numpy.fft import rfftn, irfftn
 import pylab as pl
 import warnings
@@ -819,7 +819,7 @@ def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=Fa
     if usefft:
         # Do an array flipped convolution, which is a correlation.
         if weighting == 'none':
-            return sp.signal.fftconvolve(input1, input2[::-1], mode='full')
+            return signal.fftconvolve(input1, input2[::-1], mode='full')
         else:
             return weightedfftconvolve(input1, input2[::-1], mode='full', weighting=weighting, displayplots=displayplots)
     else:
@@ -1003,7 +1003,7 @@ def fastfiltfiltinit(b, a, x):
     if len(b) < ntaps:
         b = np.r_[b, np.zeros(len(a) - len(b), dtype='float64')]
 
-    zi = sp.signal.lfilter_zi(b, a)
+    zi = signal.lfilter_zi(b, a)
 
     return b, a, zi, edge
 
@@ -1016,9 +1016,9 @@ def fastfiltfilt(b, a, zi, edge, x):
     # in the case of one go we only need one of the extrems
     # both are needed for filtfilt
 
-    (y, zf) = sp.signal.lfilter(b, a, s, -1, zi * s[0])
+    (y, zf) = signal.lfilter(b, a, s, -1, zi * s[0])
 
-    (y, zf) = sp.signal.lfilter(b, a, np.flipud(y), -1, zi * y[-1])
+    (y, zf) = signal.lfilter(b, a, np.flipud(y), -1, zi * y[-1])
 
     return np.flipud(y[edge - 1:-edge + 1])
 
@@ -1612,11 +1612,11 @@ class fastresampler:
         if method == 'poly':
             self.hires_y = 0.0 * self.hires_x
             self.hires_y[int(self.padvalue // self.hiresstep) + 1:-(int(self.padvalue // self.hiresstep) + 1)] = \
-                sp.signal.resample_poly(timecourse, np.int(self.upsampleratio * 10), 10)
+                signal.resample_poly(timecourse, np.int(self.upsampleratio * 10), 10)
         elif method == 'fourier':
             self.hires_y = 0.0 * self.hires_x
             self.hires_y[int(self.padvalue // self.hiresstep) + 1:-(int(self.padvalue // self.hiresstep) + 1)] = \
-                sp.signal.resample(timecourse, self.upsampleratio * len(timeaxis))
+                signal.resample(timecourse, self.upsampleratio * len(timeaxis))
         else:
             self.hires_y = doresample(timeaxis, timecourse, self.hires_x, method=method)
         self.hires_y[:int(self.padvalue // self.hiresstep)] = self.hires_y[int(self.padvalue // self.hiresstep)]
@@ -1696,11 +1696,11 @@ def dofastresample(orig_x, orig_y, new_x, hrstep, hrstart, upsampleratio):
 
 def doresample(orig_x, orig_y, new_x, method='cubic'):
     if method == 'cubic':
-        cj = sp.signal.cspline1d(orig_y)
-        return np.float64(sp.signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
+        cj = signal.cspline1d(orig_y)
+        return np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
     elif method == 'quadratic':
-        qj = sp.signal.qspline1d(orig_y)
-        return np.float64(sp.signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
+        qj = signal.qspline1d(orig_y)
+        return np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
     elif method == 'univariate':
         interpolator = sp.interpolate.UnivariateSpline(orig_x, orig_y, k=3, s=0)  # s=0 interpolates
         return np.float64(interpolator(new_x))
@@ -1840,33 +1840,29 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
     preshifted_y[padtrs + thelen:] = revtc[0:padtrs]
 
     # finish initializations
-    osfac = 8
     fftlen = np.shape(preshifted_y)[0]
-    osfftlen = osfac * fftlen
 
     # create the phase modulation timecourse
-    initargvec = (np.arange(0.0, 2.0 * np.pi, 2.0 * np.pi / float(osfftlen)) - np.pi)
-    argvec = np.roll(initargvec * osfac * shifttrs, -int(osfftlen / 2))
+    initargvec = (np.arange(0.0, 2.0 * np.pi, 2.0 * np.pi / float(fftlen)) - np.pi)
+    if len(initargvec) > fftlen:
+        initargvec = initargvec[:fftlen]
+    argvec = np.roll(initargvec * shifttrs, -int(fftlen // 2))
     modvec = np.cos(argvec) - imag * np.sin(argvec)
 
-    # process the data (fft->oversample->modulate->ifft->filter->downsample)
+    # process the data (fft->modulate->ifft->filter)
     fftdata = fftpack.fft(preshifted_y)  # do the actual shifting
-    osfftdata = (1.0 + imag) * np.zeros(fftlen * osfac, dtype='float')
-    osfftdata[0:int(fftlen // 2)] = fftdata[0:int(fftlen // 2)]
-    osfftdata[-int(fftlen // 2):] = fftdata[-int(fftlen // 2):]
-    shifted_y = fftpack.ifft(modvec * osfftdata).real
+    shifted_y = fftpack.ifft(modvec * fftdata).real
     butterorder = 4
-    filt_shifted_y = dolpfiltfilt(2.0 * osfac, 1.0, shifted_y, butterorder)
-    ds_shifted_y = filt_shifted_y[::osfac] * osfac
+    #filt_shifted_y = dolpfiltfilt(2.0, 1.0, shifted_y, butterorder)
+    #ds_shifted_y = filt_shifted_y[::1]
+    #ds_shifted_y = shifted_y[::1]
 
     # process the weights
     w_fftdata = fftpack.fft(weights)  # do the actual shifting
-    w_osfftdata = (1.0 + imag) * np.zeros(fftlen * osfac, dtype='float')
-    w_osfftdata[0:int(fftlen // 2)] = w_fftdata[0:int(fftlen // 2)]
-    w_osfftdata[-int(fftlen // 2):] = w_fftdata[-int(fftlen // 2):]
-    shifted_weights = fftpack.ifft(modvec * w_osfftdata).real
-    filt_shifted_weights = dolpfiltfilt(2.0 * osfac, 1.0, shifted_weights, butterorder)
-    ds_shifted_weights = filt_shifted_weights[::osfac] * osfac
+    shifted_weights = fftpack.ifft(modvec * w_fftdata).real
+    #filt_shifted_weights = dolpfiltfilt(2.0, 1.0, shifted_weights, butterorder)
+    #ds_shifted_weights = filt_shifted_weights[::1]
+    #ds_shifted_weights = shifted_weights[::1]
 
     if doplot:
         xvec = range(0, thepaddedlen)  # make a ramp vector (with pad)
@@ -1883,12 +1879,12 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
         fig = pl.figure()
         ax = fig.add_subplot(111)
         ax.set_title('Initial and shifted vector')
-        pl.plot(xvec, preshifted_y, xvec, ds_shifted_y)
+        pl.plot(xvec, preshifted_y, xvec, shifted_y)
 
         pl.show()
 
-    return ([ds_shifted_y[padtrs:padtrs + thelen], ds_shifted_weights[padtrs:padtrs + thelen], ds_shifted_y,
-             ds_shifted_weights])
+    return ([shifted_y[padtrs:padtrs + thelen], shifted_weights[padtrs:padtrs + thelen], shifted_y,
+             shifted_weights])
 
 
 # timeshift using direct resampling
@@ -2040,7 +2036,7 @@ def corrnormalize(thedata, prewindow, dodetrend):
 def corrnormalize_new(thedata, prewindow, dodetrend):
     # detrend first
     if dodetrend:
-        intervec = sp.signal.detrend(thedata)
+        intervec = signal.detrend(thedata)
     else:
         intervec = thedata
 
@@ -2081,8 +2077,8 @@ def dolpfiltfilt(samplefreq, cutofffreq, indata, order, padlen=20, debug=False):
         cutofffreq = samplefreq / 2.0
     if debug:
         print('dolpfiltfilt - samplefreq, cutofffreq, len(indata), order:', samplefreq, cutofffreq, len(indata), order)
-    [b, a] = sp.signal.butter(order, 2.0 * cutofffreq / samplefreq)
-    return unpadvec(sp.signal.filtfilt(b, a, padvec(indata, padlen=padlen)).real, padlen=padlen)
+    [b, a] = signal.butter(order, 2.0 * cutofffreq / samplefreq)
+    return unpadvec(signal.filtfilt(b, a, padvec(indata, padlen=padlen)).real, padlen=padlen)
 
 
 def dohpfiltfilt(samplefreq, cutofffreq, indata, order, padlen=20, debug=False):
@@ -2090,8 +2086,8 @@ def dohpfiltfilt(samplefreq, cutofffreq, indata, order, padlen=20, debug=False):
         cutofffreq = 0.0
     if debug:
         print('dohpfiltfilt - samplefreq, cutofffreq, len(indata), order:', samplefreq, cutofffreq, len(indata), order)
-    [b, a] = sp.signal.butter(order, 2.0 * cutofffreq / samplefreq, 'highpass')
-    return unpadvec(sp.signal.filtfilt(b, a, padvec(indata, padlen=padlen)).real, padlen=padlen)
+    [b, a] = signal.butter(order, 2.0 * cutofffreq / samplefreq, 'highpass')
+    return unpadvec(signal.filtfilt(b, a, padvec(indata, padlen=padlen)).real, padlen=padlen)
 
 
 def dobpfiltfilt(samplefreq, cutofffreq_low, cutofffreq_high, indata, order, padlen=20):
@@ -2099,27 +2095,27 @@ def dobpfiltfilt(samplefreq, cutofffreq_low, cutofffreq_high, indata, order, pad
         cutofffreq_high = samplefreq / 2.0
     if cutofffreq_log < 0.0:
         cutofffreq_low = 0.0
-    [b, a] = sp.signal.butter(order, [2.0 * cutofffreq_low / samplefreq, 2.0 * cutofffreq_high / samplefreq],
+    [b, a] = signal.butter(order, [2.0 * cutofffreq_low / samplefreq, 2.0 * cutofffreq_high / samplefreq],
                               'bandpass')
-    return unpadvec(sp.signal.filtfilt(b, a, padvec(indata, padlen=padlen)).real, padlen=padlen)
+    return unpadvec(signal.filtfilt(b, a, padvec(indata, padlen=padlen)).real, padlen=padlen)
 
 
 def doprecalcfiltfilt(b, a, indata):
-    return sp.signal.filtfilt(b, a, indata).real
+    return signal.filtfilt(b, a, indata).real
 
 
 def dolpfastfiltfiltinit(samplefreq, cutofffreq, indata, order):
-    [b, a] = sp.signal.butter(order, cutofffreq / samplefreq)
+    [b, a] = signal.butter(order, cutofffreq / samplefreq)
     return fastfiltfiltinit(b, a, indata)
 
 
 def dohpfastfiltfiltinit(samplefreq, cutofffreq, indata, order):
-    [b, a] = sp.signal.butter(order, cutofffreq / samplefreq, 'highpass')
+    [b, a] = signal.butter(order, cutofffreq / samplefreq, 'highpass')
     return fastfiltfiltinit(b, a, indata)
 
 
 def dobpfastfiltfiltinit(samplefreq, cutofffreq_low, cutofffreq_high, indata, order):
-    [b, a] = sp.signal.butter(order, [cutofffreq_low / samplefreq, cutofffreq_high / samplefreq], 'bandpass')
+    [b, a] = signal.butter(order, [cutofffreq_low / samplefreq, cutofffreq_high / samplefreq], 'bandpass')
     return fastfiltfiltinit(b, a, indata)
 
 
