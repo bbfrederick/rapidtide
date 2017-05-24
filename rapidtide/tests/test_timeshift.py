@@ -10,7 +10,7 @@ def mse(vec1, vec2):
 
 def testtimeshift(debug=False):
     tr = 1.0
-    padvalue = 30.0
+    padvalue = 300.0
     testlen = 1000
     shiftdist = 30
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
@@ -25,6 +25,7 @@ def testtimeshift(debug=False):
     timecoursein = 0.5 * dolpfiltfilt(1.0, 0.25, timecoursein, butterorder) + 0.5
 
     shiftlist = [-30, -20, -10, 0, 10, 20, 30]
+    shiftlist = [-100]
 
     if debug:
         plt.figure()
@@ -54,6 +55,8 @@ def testtimeshift(debug=False):
             offset += 1.0
             plt.plot(tcshifted + offset)
             legend.append('Timeshift ' + str(shiftdist))
+            plt.plot(weights + offset)
+            legend.append('Weights ' + str(shiftdist))
 
         # do the tests
         msethresh = 1e-6
