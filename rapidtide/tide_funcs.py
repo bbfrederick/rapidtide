@@ -1670,40 +1670,55 @@ class fastresampler:
         return out_y
 
 
-def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio, doplot=False):
-    hiresstep = fmritr / upsampleratio
-    #hires_x_padded = np.r_[-padvalue:fmritr * numtrs + padvalue:hiresstep]
-    hires_x_padded = np.arange(-padvalue, fmritr * numtrs + padvalue, hiresstep)
-    hiresstart = hires_x_padded[0]
-    hires_y = doresample(orig_x, orig_y, hires_x_padded, method='univariate')
-    hires_y[:int(padvalue // hiresstep)] = hires_y[int(padvalue // hiresstep)]
-    hires_y[-int(padvalue // hiresstep):] = hires_y[-int(padvalue // hiresstep)]
-    if doplot:
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('Initial resampled vector')
-        pl.plot(hires_x_padded, hires_y)
-        pl.show()
-    return hires_x_padded, hires_y, hiresstep, hiresstart
+#def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio, doplot=False):
+#    hiresstep = fmritr / upsampleratio
+#    #hires_x_padded = np.r_[-padvalue:fmritr * numtrs + padvalue:hiresstep]
+#    hires_x_padded = np.arange(-padvalue, fmritr * numtrs + padvalue, hiresstep)
+#    hiresstart = hires_x_padded[0]
+#    hires_y = doresample(orig_x, orig_y, hires_x_padded, method='univariate')
+#    hires_y[:int(padvalue // hiresstep)] = hires_y[int(padvalue // hiresstep)]
+#    hires_y[-int(padvalue // hiresstep):] = hires_y[-int(padvalue // hiresstep)]
+#    if doplot:
+#        fig = pl.figure()
+#        ax = fig.add_subplot(111)
+#        ax.set_title('Initial resampled vector')
+#        pl.plot(hires_x_padded, hires_y)
+#        pl.show()
+#    return hires_x_padded, hires_y, hiresstep, hiresstart
+#
+#
+#def dofastresample(orig_x, orig_y, new_x, hrstep, hrstart, upsampleratio):
+#    starthrindex = int((new_x[0] - hrstart) / hrstep)
+#    stride = int(upsampleratio)
+#    endhrindex = starthrindex + stride * len(new_x) - 1
+#    return 1.0 * orig_y[starthrindex:endhrindex:stride]
 
 
-def dofastresample(orig_x, orig_y, new_x, hrstep, hrstart, upsampleratio):
-    starthrindex = int((new_x[0] - hrstart) / hrstep)
-    stride = int(upsampleratio)
-    endhrindex = starthrindex + stride * len(new_x) - 1
-    return 1.0 * orig_y[starthrindex:endhrindex:stride]
-
-
-def doresample(orig_x, orig_y, new_x, method='cubic'):
+def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
+    pad_y = padvec(orig_y, padlen=padlen)
+    tstep = orig_x[1] - orig_x[0]
+    if padlen > 0:
+        pad_x = np.concatenate((np.arange(orig_x[0] - padlen * tstep, orig_x[0], tstep),
+            orig_x,
+            np.arange(orig_x[-1] + tstep, orig_x[-1] + tstep * (padlen + 1), tstep)))
+    else:
+        pad_x = orig_x
+    if padlen > 0:
+        print('padlen=',padlen)
+        print('tstep=',tstep)
+        print(pad_x)
     if method == 'cubic':
-        cj = signal.cspline1d(orig_y)
-        return np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
+        cj = signal.cspline1d(pad_y)
+        return unpadvec(np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
+        #return np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
     elif method == 'quadratic':
-        qj = signal.qspline1d(orig_y)
-        return np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
+        qj = signal.qspline1d(pad_y)
+        return unpadvec(np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
+        #return np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
     elif method == 'univariate':
-        interpolator = sp.interpolate.UnivariateSpline(orig_x, orig_y, k=3, s=0)  # s=0 interpolates
-        return np.float64(interpolator(new_x))
+        interpolator = sp.interpolate.UnivariateSpline(pad_x, pad_y, k=3, s=0)  # s=0 interpolates
+        return unpadvec(np.float64(interpolator(new_x)), padlen=padlen)
+        #return np.float64(interpolator(new_x))
     else:
         print('invalid interpolation method')
         return None
@@ -1852,17 +1867,10 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
     # process the data (fft->modulate->ifft->filter)
     fftdata = fftpack.fft(preshifted_y)  # do the actual shifting
     shifted_y = fftpack.ifft(modvec * fftdata).real
-    butterorder = 4
-    #filt_shifted_y = dolpfiltfilt(2.0, 1.0, shifted_y, butterorder)
-    #ds_shifted_y = filt_shifted_y[::1]
-    #ds_shifted_y = shifted_y[::1]
 
     # process the weights
     w_fftdata = fftpack.fft(weights)  # do the actual shifting
     shifted_weights = fftpack.ifft(modvec * w_fftdata).real
-    #filt_shifted_weights = dolpfiltfilt(2.0, 1.0, shifted_weights, butterorder)
-    #ds_shifted_weights = filt_shifted_weights[::1]
-    #ds_shifted_weights = shifted_weights[::1]
 
     if doplot:
         xvec = range(0, thepaddedlen)  # make a ramp vector (with pad)
@@ -1888,62 +1896,62 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 
 
 # timeshift using direct resampling
-def timeshift2(inputtc, shifttrs, padtrs, doplot=False, dopostfilter=False):
-    # set up useful parameters
-    thelen = np.shape(inputtc)[0]
-    thepaddedlen = thelen + 2 * padtrs
-    offset = padtrs
-
-    # initialize the postfilter
-    theringfilter = noncausalfilter(filtertype='ringstop')
-
-    # initialize variables
-    preshifted_y = np.zeros(thepaddedlen, dtype='float')  # initialize the working buffer (with pad)
-    weights = np.zeros(thepaddedlen, dtype='float')  # initialize the weight buffer (with pad)
-
-    # now do the math
-    preshifted_x = np.arange(0.0, np.shape(preshifted_y)[0], 1.0)
-    shifted_x = preshifted_x - shifttrs
-    preshifted_y[offset:offset + thelen] = inputtc[:]  # copy initial data into shift buffer
-    revtc = inputtc[::-1]
-    preshifted_y[0:offset] = revtc[-offset:]
-    preshifted_y[offset + thelen:] = revtc[0:offset]
-    weights[offset:offset + thelen] = 1.0  # put in the weight vector
-    shifted_y = doresample(preshifted_x, preshifted_y, shifted_x, method='univariate')  # do the actual shifting
-    shifted_weights = doresample(preshifted_x, weights, shifted_x, method='univariate')  # do the actual shifting
-    if dopostfilter:
-        shifted_y = theringfilter.apply(1.0, shifted_y)
-        shifted_weights = theringfilter.apply(1.0, shifted_weights)
-
-    if doplot:
-        print("shifttrs:", shifttrs)
-        print("offset:", offset)
-        print("thelen:", thelen)
-        print("thepaddedlen:", thepaddedlen)
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('Initial vector')
-        pl.plot(preshifted_x, preshifted_y)
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('Shifted vector')
-        pl.plot(shifted_x, shifted_y)
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('Initial and shifted vector')
-        pl.plot(preshifted_x, preshifted_y, shifted_x, shifted_y)
-
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('Initial and shifted weight vector')
-        pl.plot(preshifted_x, weights, shifted_x, shifted_weights)
-
-        pl.show()
-
-    return [shifted_y[offset:offset + thelen], shifted_weights[offset:offset + thelen], shifted_y, shifted_weights]
+#def timeshift2(inputtc, shifttrs, padtrs, doplot=False, dopostfilter=False):
+#    # set up useful parameters
+#    thelen = np.shape(inputtc)[0]
+#    thepaddedlen = thelen + 2 * padtrs
+#    offset = padtrs
+#
+#    # initialize the postfilter
+#    theringfilter = noncausalfilter(filtertype='ringstop')
+#
+#    # initialize variables
+#    preshifted_y = np.zeros(thepaddedlen, dtype='float')  # initialize the working buffer (with pad)
+#    weights = np.zeros(thepaddedlen, dtype='float')  # initialize the weight buffer (with pad)
+#
+#    # now do the math
+#    preshifted_x = np.arange(0.0, np.shape(preshifted_y)[0], 1.0)
+#    shifted_x = preshifted_x - shifttrs
+#    preshifted_y[offset:offset + thelen] = inputtc[:]  # copy initial data into shift buffer
+#    revtc = inputtc[::-1]
+#    preshifted_y[0:offset] = revtc[-offset:]
+#    preshifted_y[offset + thelen:] = revtc[0:offset]
+#    weights[offset:offset + thelen] = 1.0  # put in the weight vector
+#    shifted_y = doresample(preshifted_x, preshifted_y, shifted_x, method='univariate')  # do the actual shifting
+#    shifted_weights = doresample(preshifted_x, weights, shifted_x, method='univariate')  # do the actual shifting
+#    if dopostfilter:
+#        shifted_y = theringfilter.apply(1.0, shifted_y)
+#        shifted_weights = theringfilter.apply(1.0, shifted_weights)
+#
+#    if doplot:
+#        print("shifttrs:", shifttrs)
+#        print("offset:", offset)
+#        print("thelen:", thelen)
+#        print("thepaddedlen:", thepaddedlen)
+#
+#        fig = pl.figure()
+#        ax = fig.add_subplot(111)
+#        ax.set_title('Initial vector')
+#        pl.plot(preshifted_x, preshifted_y)
+#
+#        fig = pl.figure()
+#        ax = fig.add_subplot(111)
+#        ax.set_title('Shifted vector')
+#        pl.plot(shifted_x, shifted_y)
+#
+#        fig = pl.figure()
+#        ax = fig.add_subplot(111)
+#        ax.set_title('Initial and shifted vector')
+#        pl.plot(preshifted_x, preshifted_y, shifted_x, shifted_y)
+#
+#        fig = pl.figure()
+#        ax = fig.add_subplot(111)
+#        ax.set_title('Initial and shifted weight vector')
+#        pl.plot(preshifted_x, weights, shifted_x, shifted_weights)
+#
+#        pl.show()
+#
+#    return [shifted_y[offset:offset + thelen], shifted_weights[offset:offset + thelen], shifted_y, shifted_weights]
 
 
 # --------------------------- Window functions -------------------------------------------------
@@ -2055,11 +2063,17 @@ def corrnormalize_new(thedata, prewindow, dodetrend):
 # NB: No automatic padding for precalculated filters
 
 def padvec(indata, padlen=20):
-    return np.concatenate((indata[::-1][-padlen:], indata, indata[::-1][0:padlen]))
+    if padlen > 0:
+        return np.concatenate((indata[::-1][-padlen:], indata, indata[::-1][0:padlen]))
+    else:
+        return indata
 
 
 def unpadvec(indata, padlen=20):
-    return indata[padlen:-padlen]
+    if padlen > 0:
+        return indata[padlen:-padlen]
+    else:
+        return indata
 
 
 def ssmooth(xsize, ysize, zsize, sigma, thedata):
