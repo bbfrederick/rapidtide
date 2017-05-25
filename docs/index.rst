@@ -576,6 +576,38 @@ Usage:
 
 ::
 
+Recipes and Tips
+================
+Rapidtide can do many things - as I've found more interesting things to do with time delay processing, it's gained new functions and options to support these new applications.  As a result, it can be a little hard to know what to use for a new experiment.  To help with that, I've decided to add this section to the manual to get you started.  It's broken up by type of data/analysis you might want to do.
+
+Removing low frequency physiological noise from resting state data
+------------------------------------------------------------------
+This is what I thought most people would use rapidtide for - finding and removing the low frequency (LFO) signal from an existing dataset.  This presupposes you have not made a simultaneous physiological recording (well, you may have, but it assumes you aren't using it).  For this, you can use a minimal set of optinos, since the defaults are probably right.
+
+The base command you'd use would be:
+rapidtide2 inputfmrifile outputname
+
+This will do the simplest analysis - it will construct a regressor from the global mean of the signal, and then use it to determine the time delay in each voxel.  It will then use a GLM filter to remove that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also be the normal complement of delay, correlation strength and so on maps.
+
+If you are really going to use this for noise removal, I suggest adding the following options:
+
+-L --refinepasses=3 --refineoffset
+
+This will run the delay analysis 3 times, each time generating a new estimate of the global signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.
+
+Mapping long time delays in response to a gas challenge experiment
+------------------------------------------------------------------
+This is a very different set of options from the previous case.  Instead of the distribution of delays you expect in healthy controls (a slightly skewed somewhat normal distribution with a tail on the positive side, ranging from about -5 to 5 seconds), in this case, the maximum delay can be extremely long (100-120 seconds is not uncommon in stroke, moyamoya disesase, and atherosclerosis).  To do this, you need to radically change what options you use.
+
+In addition to the standard command, shown above, you probably want to add the following:
+-N 0 -r -10,140 -F 0.0,0.2 --lagmaxthresh=40 --ampthresh=0.2 --noglm --nofitfilt
+
+
+If you are using rapidtide to estimate and remove low frequency noise from resting state or task fMRI data, the last step is to use a glm filter to remove this circulatory signal, leaving "pure" neuronal activations.  That's not relevant here - the signal you'd be removing is the one you care about. So this option skips that step to save time and disk space.
+
+
+3) Is see there is now a --nofitfilt which says '- Do not zero out peak fit values if fit fails'. Would you recommend us using this? Seems like we should. Ill try both ways on the patient coming it tomorrow to see if there are a lot of fit fails. If you don't zero them out and the fit fails, is the data from that point meaningful?
+Yes. Estimating the delay and correlation amplitude in each voxel is a two step process. First you make a quick estimate (where is the maximum point of the correlation function, and what is its amplitude?), then you refine it by fitting a Gaussian function to the peak to improve the estimate.  If this step fails, which it can if the peak is too close to the end of the lag range, or strangely shaped, the default behavior is to mark the point as bad and zero out the parameters for the voxel.  The nofitfilt option means that if the fit fails, output the initial estimates rather than all zeros.   This means that you get some information, even if it's not fully refined.  In my experience it does tend to make the maps for the gas challenge experiments a lot cleaner to use this option since the correlation function is pretty well behaved (this is not the case if you are doing bootstrap estimates of the systemic low frequency noise, but you aren't).
 
 Indices and tables
 ==================
