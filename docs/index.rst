@@ -585,13 +585,16 @@ Removing low frequency physiological noise from resting state data
 This is what I thought most people would use rapidtide for - finding and removing the low frequency (LFO) signal from an existing dataset.  This presupposes you have not made a simultaneous physiological recording (well, you may have, but it assumes you aren't using it).  For this, you can use a minimal set of options, since the defaults are mostly right.
 
 The base command you'd use would be:
-rapidtide2 inputfmrifile outputname
+
+	::
+		rapidtide2 inputfmrifile outputname
 
 This will do the simplest analysis - it will construct a regressor from the global mean of the signal, and then use it to determine the time delay in each voxel.  It will then use a GLM filter to remove a lagged copy of that mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also be the normal complement of delay, correlation strength and so on maps.
 
 If you are really going to use this for noise removal, I suggest adding the following options:
 
--L --refinepasses=3 --refineoffset
+	::
+		-L --refinepasses=3 --refineoffset
 
 This will prefilter the data to the LFO band (0.009-0.15Hz), then run the delay analysis 3 times, each time generating a new estimate of the global signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.
 
@@ -600,7 +603,9 @@ Mapping long time delays in response to a gas challenge experiment
 Processing this sort of data requires a very different set of options from the previous case.  Instead of the distribution of delays you expect in healthy controls (a slightly skewed, somewhat normal distribution with a tail on the positive side, ranging from about -5 to 5 seconds), in this case, the maximum delay can be extremely long (100-120 seconds is not uncommon in stroke, moyamoya disesase, and atherosclerosis).  To do this, you need to radically change what options you use, not just the delay range, but a number of other options having to do with refinement and statistical measures.
 
 In addition to the standard command, shown above, you probably want to add the following:
--N 0 -r -10,140 -F 0.0,0.2 --lagmaxthresh=40 --ampthresh=0.2 --noglm --nofitfilt
+
+	::
+		-N 0 -r -10,140 -F 0.0,0.2 --lagmaxthresh=40 --ampthresh=0.2 --noglm --nofitfilt
 
 The first option (-N 0), shuts off the calculation of the null correlation distribution.  This is used to determine the significance threshold, but the method currently implemented in rapidtide2 is a bit simplistic - it assumes that all the time points in the data are exchangable.  This is certainly true for resting state data (see above), but it is very much NOT true for block paradigm gas challenges.  To properly analyze those, I need to consider what time points are 'equivalent', and up to now, I don't, so setting the number of iterations in the Monte Carlo analysis to zero omits this step.
 
