@@ -1656,6 +1656,9 @@ def main():
 
     optiondict['dispersioncalc_lower'] = optiondict['lagmin']
     optiondict['dispersioncalc_upper'] = optiondict['lagmax']
+    optiondict['dispersioncalc_step'] = np.max(
+        [optiondict['dispersioncalc_upper'] - optiondict['dispersioncalc_lower'] / 20,
+         optiondict['dispersioncalc_step']])
     timings.append(['Argument parsing done', time.time(), None, None])
 
     # disable numba now if we're going to do it (before any jits)
