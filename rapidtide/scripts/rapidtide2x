@@ -737,7 +737,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, maskarray,
     else:
         print('performing unweighted averaging refinement')
         outputdata = averagedata
-    refinevoxels = None
+
     print()
     print(str(
         volumetotal) + ' voxels used for refinement:',
@@ -1814,11 +1814,7 @@ def main():
     optiondict['fmrifreq'] = fmrifreq
     skiptime = fmritr * (optiondict['preprocskip'] + optiondict['addedskip'])
     print('first fMRI point is at ', skiptime, ' seconds relative to time origin')
-    # initial_fmri_x = np.r_[0.0:(timepoints - optiondict['addedskip'])] * fmritr + skiptime
     initial_fmri_x = np.arange(0.0, timepoints - optiondict['addedskip']) * fmritr + skiptime
-
-    # os_fmri_x = np.r_[0.0:(timepoints - optiondict['addedskip']) * optiondict['oversampfactor'] - (
-    #    optiondict['oversampfactor'] - 1)] * oversamptr + skiptime
     os_fmri_x = np.arange(0.0, (timepoints - optiondict['addedskip']) * optiondict['oversampfactor'] - (
         optiondict['oversampfactor'] - 1)) * oversamptr + skiptime
 
@@ -1843,13 +1839,14 @@ def main():
         print('WARNING: extrapolating ', os_fmri_x[0] - reference_x[0], ' seconds of data at beginning of timecourse')
     if os_fmri_x[-1] > reference_x[-1]:
         print('WARNING: extrapolating ', os_fmri_x[-1] - reference_x[-1], ' seconds of data at end of timecourse')
-    ##########################
+
     # invert the regressor if necessary
     if optiondict['invertregressor']:
         invertfac = -1.0
     else:
         invertfac = 1.0
 
+    # detrend the regressor if necessary
     if optiondict['dodetrend']:
         reference_y = invertfac * tide.detrend(inputvec[0:numreference], demean=optiondict['dodemean'])
     else:
@@ -1866,7 +1863,7 @@ def main():
     # write out the reference regressor used
     tide.writenpvecs(tide.stdnormalize(reference_y), outputname + '_reference_origres.txt')
 
-    # filter the input data for antialiasing and to separate physiological components
+    # filter the input data for antialiasing
     if optiondict['antialias']:
         if optiondict['zpfilter']:
             print('applying zero phase antialiasing filter')
@@ -1893,12 +1890,6 @@ def main():
     if optiondict['fakerun']:
         sys.exit()
 
-    # prepare the temporal mask
-    if optiondict['usetmask']:
-        tmask_y = maketmask(optiondict['tmaskname'], reference_x, rt_floatset(reference_y))
-        tmaskos_y = tide.doresample(reference_x, tmask_y, os_fmri_x, method=optiondict['interptype'])
-        tide.writenpvecs(tmask_y, outputname + '_temporalmask.txt')
-
     # write out the resampled reference regressors
     if optiondict['dodetrend']:
         resampnonosref_y = tide.detrend(
@@ -1911,12 +1902,11 @@ def main():
         resampnonosref_y = tide.doresample(reference_x, reference_y, initial_fmri_x, method=optiondict['interptype'])
         resampref_y = tide.doresample(reference_x, reference_y, os_fmri_x, method=optiondict['interptype'])
 
-    if optiondict['refinepasses'] > 1:
-        nonosrefname = '_reference_fmrires_pass1.txt'
-        osrefname = '_reference_resampres_pass1.txt'
-    else:
-        nonosrefname = '_reference_fmrires.txt'
-        osrefname = '_reference_resampres.txt'
+    # prepare the temporal mask
+    if optiondict['usetmask']:
+        tmask_y = maketmask(optiondict['tmaskname'], reference_x, rt_floatset(reference_y))
+        tmaskos_y = tide.doresample(reference_x, tmask_y, os_fmri_x, method=optiondict['interptype'])
+        tide.writenpvecs(tmask_y, outputname + '_temporalmask.txt')
 
     if optiondict['usetmask']:
         resampnonosref_y *= tmask_y
@@ -1925,6 +1915,13 @@ def main():
         resampref_y *= tmaskos_y
         thefit, R = tide.mlregress(tmaskos_y, resampref_y)
         resampref_y -= thefit[0, 1] * tmaskos_y
+
+    if optiondict['refinepasses'] > 1:
+        nonosrefname = '_reference_fmrires_pass1.txt'
+        osrefname = '_reference_resampres_pass1.txt'
+    else:
+        nonosrefname = '_reference_fmrires.txt'
+        osrefname = '_reference_resampres.txt'
 
     tide.writenpvecs(tide.stdnormalize(resampnonosref_y), outputname + nonosrefname)
     tide.writenpvecs(tide.stdnormalize(resampref_y), outputname + osrefname)
@@ -1935,16 +1932,6 @@ def main():
         print('corrtr=', corrtr)
 
     numccorrlags = 2 * optiondict['oversampfactor'] * (timepoints - optiondict['addedskip']) - 1
-    #if optiondict['corrweighting'] != 'none':
-    #    numccorrlags = optiondict['oversampfactor'] * (timepoints - optiondict['addedskip'])
-    #else:
-    #    numccorrlags = 2 * optiondict['oversampfactor'] * (timepoints - optiondict['addedskip']) - 1
-    # Offset by -tr/2 11/5/15 to remove a systematic bias in the lag times
-    # Realized 12/11/15 from simulation that this is actually a mistake. The real expression is more complicated.
-    # Fixed and tested.  Lagtime is now estimated without bias at all oversample factors (and oversampling doesn't actually
-    #     seem to contribute any increase in accuracy
-    # corrscale = np.r_[0.0:numccorrlags] * corrtr - (numccorrlags * corrtr) / 2.0 + (optiondict[
-    #                                                                                    'oversampfactor'] - 0.5) * corrtr
     corrscale = np.arange(0.0, numccorrlags) * corrtr - (numccorrlags * corrtr) / 2.0 + (optiondict[
                                                                                              'oversampfactor'] - 0.5) * corrtr
     corrorigin = numccorrlags // 2 + 1
