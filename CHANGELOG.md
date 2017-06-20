@@ -1,5 +1,20 @@
 # History of changes
 
+## Version 1.2.0 (6/20/17)
+* New release to trigger a Zenodo DOI.
+* Fully tested for python 3.6 compatibility.
+* Added linfit to the distribution.
+* Set a limit of 25 dispersion regressors.
+* Reformatted the documentation somewhat.
+* Added some recipes to the documentation for common use cases.
+* Cleaned up and fixed the resampling code.
+* Minor quality and speed improvement to timeshift.
+* No longer output "datatoremove" to save space.
+* Removed some redundant screen refreshes from tidepool.
+* Reorganized and removed dead code.
+* Changed default mode for calculating refined regressors to "unweighted_average".
+* Synced changes in rapidtide2x to rapidtide2
+
 ## Version 1.1.0 (4/3/17)
 * I have now synced all of the changes in rapidtide2x back to rapidtide2.
 * rapidtide now has multiprocessing support using the --multiproc flag.  This can cause a dramatic increase in processing speed on multicore/processor machines.
