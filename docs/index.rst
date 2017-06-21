@@ -47,7 +47,7 @@ This code has been extensively tested in python 2.7.  I dragged my feet somewhat
 How do I cite this?
 -------------------
 Good question!  I think the following will work, although I should probably get a DOI for this.
-	Frederick, B, rapidtide [Computer Software] (2016).  Retrieved from https://github.com/bbfrederick/rapidtide.
+	Frederick, B, rapidtide [Computer Software] (2016).  Available from https://github.com/bbfrederick/rapidtide.  doi:10.5281/zenodo.814991 
 
 What’s included in this package?
 ================================
