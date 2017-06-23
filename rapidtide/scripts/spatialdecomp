@@ -84,7 +84,6 @@ for o, a in opts:
         else:
             pcacomponents = int(a)
             icacomponents = pcacomponents
-        print('returning', pcacomponents, 'components')
     elif o == "--smooth":
         sigma = float(a)
         print('will smooth data with a', sigma, 'mm kernel')
@@ -98,6 +97,10 @@ for o, a in opts:
         sys.exit()
     else:
         assert False, "unhandled option"
+
+
+print('Will perform', decomptype, 'analysis')
+    
 
 # read in data
 print("reading in data arrays")
@@ -157,18 +160,29 @@ maskeddata = rs_datafile * bin_datamask
 
 # now perform the decomposition
 if decomptype == 'ica':
-    print('performing ica deomposition')
-    thefit = FastICA(n_components=icacomponents).fit(np.transpose(maskeddata))  # Reconstruct signals
-    print('Using first', icacomponents, 'of ', len(thefit.components_), ' components')
-    decompdata = np.transpose(thefit.components_[0:icacomponents])
-else:
-    print('performing pca deomposition')
-    thefit = PCA(n_components=pcacomponents).fit(np.transpose(maskeddata))
-    if pcacomponents == 'mle':
-        print('Using all', len(thefit.components_), ' components')
-        decompdata = np.transpose(thefit.components_[:])
+    print('performing ica decomposition')
+    if icacomponents is None:
+        print('will return all significant components')
     else:
-        print('Using first', pcacomponents, 'of ', len(thefit.components_), ' components')
+        print('will return', icacomponents, 'components')
+    thefit = FastICA(n_components=icacomponents).fit(np.transpose(maskeddata))  # Reconstruct signals
+    if icacomponents is None:
+        decompdata = np.transpose(thefit.components_[:])
+        print(decompdata.shape[1], 'components found')
+    else:
+        decompdata = np.transpose(thefit.components_[0:icacomponents])
+        print('returning first', decompdata.shape[1], 'components found')
+else:
+    print('performing pca decomposition')
+    if pcacomponents < 1.0:
+        print('will return the components accounting for', pcacomponents * 100.0, '% of the variance')
+    else:
+        print('will return', pcacomponents, 'components')
+    thefit = PCA(n_components=pcacomponents).fit(np.transpose(maskeddata))
+    if pcacomponents < 1.0:
+        decompdata = np.transpose(thefit.components_[:])
+        print('returning', decompdata.shape[1], 'components')
+    else:
         decompdata = np.transpose(thefit.components_[0:pcacomponents])
 
 numcomponents = decompdata.shape[1]
