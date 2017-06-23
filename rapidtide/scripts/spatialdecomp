@@ -164,6 +164,7 @@ if decomptype == 'ica':
     else:
         decompdata = np.transpose(thefit.components_[0:icacomponents])
         print('returning first', decompdata.shape[1], 'components found')
+    tide.writenpvecs(100.0 * thefit.explained_variance_ratio_, outputrootname + '_explained_variance_pct.txt')
 else:
     print('performing pca decomposition')
     if pcacomponents < 1.0:
@@ -177,6 +178,7 @@ else:
     else:
         decompdata = np.transpose(thefit.components_[0:pcacomponents])
     print('variance explained by component:', 100.0 * thefit.explained_variance_ratio_)
+    tide.writenpvecs(100.0 * thefit.explained_variance_ratio_, outputrootname + '_explained_variance_pct.txt')
 
 numcomponents = decompdata.shape[1]
 theheader = datafile_hdr
@@ -184,4 +186,4 @@ theheader['dim'][4] = numcomponents
 
 # write out the data files
 print("writing nifti series")
-tide.savetonifti(decompdata.reshape((xsize, ysize, numslices, numcomponents)), datafile_hdr, datafilesizes, outputrootname + '_fit')
+tide.savetonifti(decompdata.reshape((xsize, ysize, numslices, numcomponents)), datafile_hdr, datafilesizes, outputrootname + '_components')
