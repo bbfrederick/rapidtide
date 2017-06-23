@@ -144,12 +144,12 @@ maskeddata = rs_datafile * bin_datamask
 # now perform the decomposition
 if decomptype == 'ica':
     print('performing ica deomposition')
-    thefit = FastICA(n_components=icacomponents).fit(refinevoxels)  # Reconstruct signals
+    thefit = FastICA(n_components=icacomponents).fit(maskeddata)  # Reconstruct signals
     print('Using first', icacomponents, 'of ', len(thefit.components_), ' components')
     decompdata = thefit.components_[0:icacomponents]
 else:
     print('performing pca deomposition')
-    thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
+    thefit = PCA(n_components=pcacomponents).fit(maskeddata)
     if pcacomponents == 'mle':
         print('Using all', len(thefit.components_), ' components')
         decompdata = thefit.components_[:]
