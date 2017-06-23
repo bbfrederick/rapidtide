@@ -129,6 +129,7 @@ if usedmask:
 
 # smooth the data
 if sigma > 0.0:
+    print('smoothing data')
     for i in range(timepoints):
         datafile_data[:, :, :, i] = tide.ssmooth(xsize, ysize, slicethickness, sigma, datafile_data[:, :, :, i])
 
