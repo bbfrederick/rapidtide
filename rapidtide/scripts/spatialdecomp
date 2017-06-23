@@ -144,18 +144,18 @@ maskeddata = rs_datafile * bin_datamask
 # now perform the decomposition
 if decomptype == 'ica':
     print('performing ica deomposition')
-    thefit = FastICA(n_components=icacomponents).fit(maskeddata)  # Reconstruct signals
+    thefit = FastICA(n_components=icacomponents).fit(np.transpose(maskeddata))  # Reconstruct signals
     print('Using first', icacomponents, 'of ', len(thefit.components_), ' components')
-    decompdata = thefit.components_[0:icacomponents]
+    decompdata = np.transpose(thefit.components_[0:icacomponents])
 else:
     print('performing pca deomposition')
-    thefit = PCA(n_components=pcacomponents).fit(maskeddata)
+    thefit = PCA(n_components=pcacomponents).fit(np.transpose(maskeddata))
     if pcacomponents == 'mle':
         print('Using all', len(thefit.components_), ' components')
-        decompdata = thefit.components_[:]
+        decompdata = np.transpose(thefit.components_[:])
     else:
         print('Using first', pcacomponents, 'of ', len(thefit.components_), ' components')
-        decompdata = thefit.components_[0:pcacomponents]
+        decompdata = np.transpose(thefit.components_[0:pcacomponents])
 
 numcomponents = decompdata.shape[1]
 theheader = datafile_hdr
