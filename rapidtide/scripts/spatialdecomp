@@ -77,8 +77,6 @@ for o, a in opts:
     elif o == "--ncomp":
         pcacomponents = int(a)
         icacomponents = pcacomponents
-        usetmask = True
-        templatemaskname = a
         print('returning', pcacomponents, 'components')
     elif o == "--type":
         decomptype = a
@@ -106,47 +104,19 @@ if usedmask:
     datamaskdims = datamask_hdr['dim']
     datamasksizes = datamask_hdr['pixdim']
 
-templatefile_img = nib.load(templatefilename)
-templatefile_data = templatefile_img.get_data()
-templatefile_hdr = templatefile_img.get_header()
-templatefiledims = templatefile_hdr['dim']
-templatefilesizes = templatefile_hdr['pixdim']
-
-if usetmask:
-    templatemask_img = nib.load(templatemaskname)
-    templatemask_data = templatemask_img.get_data()
-    templatemask_hdr = templatemask_img.get_header()
-    templatemaskdims = templatemask_hdr['dim']
-    templatemasksizes = templatemask_hdr['pixdim']
-
 xsize=datafiledims[1]
 ysize=datafiledims[2]
 numslices=datafiledims[3]
 timepoints=datafiledims[4]
     
 # check dimensions
-print("checking dimensions")
-if not tide.checkspacematch(datafiledims, templatefiledims):
-    print(thedims, 'template file spatial dimensions do not match image')
-    exit()
-if not templatefiledims[4] == 1:
-    print('template file time dimension is not equal to 1')
-    exit()
-
 if usedmask:
+    print("checking mask dimensions")
     if not tide.checkspacematch(datafiledims, datamaskdims):
         print('input mask spatial dimensions do not match image')
         exit()
     if not tide.checktimematch(datafiledims, datamaskdims, 0, 0):
         print('input mask time dimension does not match image')
-        exit()
-
-if usetmask:
-    if not tide.checkspacematch(datafiledims, templatemaskdims):
-        print('template mask spatial dimensions do not match image')
-        exit()
-    if not templatemaskdims[4] == 1:
-        print('template mask time dimension is not equal to 1')
         exit()
 
 # allocating arrays
@@ -159,27 +129,17 @@ else:
     rs_datamask = np.ones((numspatiallocs, timepoints), dtype='float')
 bin_datamask = where(rs_datamask > 0.9, 1.0, 0.0)
 
-rs_templatefile = templatefile_data.reshape((numspatiallocs))
-if usetmask:
-    rs_templatemask = templatemask_data.reshape((numspatiallocs))
-else:
-    rs_templatemask = np.ones((numspatiallocs, timepoints), dtype='float')
-
-bin_templatemask = where(rs_templatemask > 0.1, 1.0, 0.0)
-
 fitdata = zeros((numspatiallocs, timepoints),dtype='float')
 residuals = zeros((numspatiallocs, timepoints),dtype='float')
 normalized = zeros((numspatiallocs, timepoints),dtype='float')
-newtemplate = zeros((numspatiallocs),dtype='float')
 newmask = zeros((numspatiallocs),dtype='float')
 lincoffs = zeros((timepoints),dtype='float')
 offsets = zeros((timepoints),dtype='float')
 rvals = zeros((timepoints),dtype='float')
 
 # mask everything
-print('masking data and template')
+print('masking data')
 maskeddata = rs_datafile * bin_datamask
-maskedtemplate = rs_templatefile * bin_templatemask
 
 # now perform the decomposition
 if decomptype == 'ica':
