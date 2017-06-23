@@ -137,7 +137,7 @@ if sigma > 0.0:
         datafile_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i])
 
 # allocating arrays
-print("allocating arrays")
+print("reshaping and masking arrays")
 numspatiallocs = int(xsize) * int(ysize) * int(numslices)
 rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
 if usedmask:
@@ -145,14 +145,6 @@ if usedmask:
 else:
     rs_datamask = np.ones((numspatiallocs, timepoints), dtype='float')
 bin_datamask = where(rs_datamask > 0.9, 1.0, 0.0)
-
-fitdata = zeros((numspatiallocs, timepoints),dtype='float')
-residuals = zeros((numspatiallocs, timepoints),dtype='float')
-normalized = zeros((numspatiallocs, timepoints),dtype='float')
-newmask = zeros((numspatiallocs),dtype='float')
-lincoffs = zeros((timepoints),dtype='float')
-offsets = zeros((timepoints),dtype='float')
-rvals = zeros((timepoints),dtype='float')
 
 # mask everything
 print('masking data')
