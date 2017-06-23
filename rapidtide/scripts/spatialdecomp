@@ -78,7 +78,7 @@ for o, a in opts:
         print('using', datamaskname, 'as data mask')
     elif o == "--ncomp":
         inputnum = float(a)
-        if a < 1.0:
+        if inputnum < 1.0:
             pcacomponents = a
             icacomponenets = None
         else:
