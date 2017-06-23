@@ -131,7 +131,7 @@ if usedmask:
 if sigma > 0.0:
     print('smoothing data')
     for i in range(timepoints):
-        datafile_data[:, :, :, i] = tide.ssmooth(xsize, ysize, slicethickness, sigma, datafile_data[:, :, :, i])
+        datafile_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i])
 
 # allocating arrays
 print("allocating arrays")
