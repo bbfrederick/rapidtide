@@ -79,7 +79,7 @@ for o, a in opts:
     elif o == "--ncomp":
         inputnum = float(a)
         if inputnum < 1.0:
-            pcacomponents = a
+            pcacomponents = inputnum
             icacomponenets = None
         else:
             pcacomponents = int(a)
@@ -137,26 +137,18 @@ if sigma > 0.0:
         datafile_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i])
 
 # allocating arrays
-print("allocating arrays")
+print("reshaping and masking arrays")
 numspatiallocs = int(xsize) * int(ysize) * int(numslices)
 rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
 if usedmask:
-    rs_datamask = datamask_data.reshape((numspatiallocs, timepoints))
+    bin_datamask = where(datamask_data.reshape((numspatiallocs, timepoints)) > 0.9, 1.0, 0.0)
 else:
-    rs_datamask = np.ones((numspatiallocs, timepoints), dtype='float')
-bin_datamask = where(rs_datamask > 0.9, 1.0, 0.0)
-
-fitdata = zeros((numspatiallocs, timepoints),dtype='float')
-residuals = zeros((numspatiallocs, timepoints),dtype='float')
-normalized = zeros((numspatiallocs, timepoints),dtype='float')
-newmask = zeros((numspatiallocs),dtype='float')
-lincoffs = zeros((timepoints),dtype='float')
-offsets = zeros((timepoints),dtype='float')
-rvals = zeros((timepoints),dtype='float')
+    bin_datamask = np.ones((numspatiallocs, timepoints), dtype='float')
+#bin_datamask = where(rs_datamask > 0.9, 1.0, 0.0)
 
 # mask everything
 print('masking data')
-maskeddata = rs_datafile * bin_datamask
+rs_datafile *= bin_datamask
 
 # now perform the decomposition
 if decomptype == 'ica':
@@ -165,7 +157,7 @@ if decomptype == 'ica':
         print('will return all significant components')
     else:
         print('will return', icacomponents, 'components')
-    thefit = FastICA(n_components=icacomponents).fit(np.transpose(maskeddata))  # Reconstruct signals
+    thefit = FastICA(n_components=icacomponents).fit(np.transpose(rs_datafile))  # Reconstruct signals
     if icacomponents is None:
         decompdata = np.transpose(thefit.components_[:])
         print(decompdata.shape[1], 'components found')
@@ -178,7 +170,7 @@ else:
         print('will return the components accounting for', pcacomponents * 100.0, '% of the variance')
     else:
         print('will return', pcacomponents, 'components')
-    thefit = PCA(n_components=pcacomponents).fit(np.transpose(maskeddata))
+    thefit = PCA(n_components=pcacomponents).fit(np.transpose(rs_datafile))
     if pcacomponents < 1.0:
         decompdata = np.transpose(thefit.components_[:])
         print('returning', decompdata.shape[1], 'components')
