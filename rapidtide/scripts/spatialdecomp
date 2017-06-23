@@ -32,7 +32,7 @@ import nibabel as nib
 from sklearn.decomposition import FastICA, PCA
 
 def usage():
-    print("usage: spatialdecomp datafile outputroot [--dmask=DATAMASK] [--ncomp=NCOMPS] [--type=TYPE]")
+    print("usage: spatialdecomp datafile outputroot [--dmask=DATAMASK] [--ncomp=NCOMPS] [--smooth=SIGMA] [--type=TYPE]")
     print("")
     print("required arguments:")
     print("	datafile	- the name of the 3 or 4 dimensional nifti file to fit")
@@ -41,6 +41,7 @@ def usage():
     print("optional arguments:")
     print("	--dmask=DATAMASK   - use DATAMASK to specify which voxels in the data to use")
     print("	--ncomp=NCOMPS     - the number of PCA/ICA components to return (default is to estimate the number")
+    print("	--smooth=SIGMA     - spatially smooth the input data with a SIGMA mm kernel")
     print("	--type=TYPE        - type of decomposition to perform, 'pca' or 'ica' - default is 'pca'")
     print("")
     return()
@@ -48,12 +49,13 @@ def usage():
 # set default variable values
 usedmask = False
 decomptype = 'pca'
-pcacomponents = 'mle'
+pcacomponents = 0.5
 icacomponents = 1
+sigma = 0.0
 
 # parse command line arguments
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "ncomp=", "type="])
+    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "smooth=", "ncomp=", "type="])
 except getopt.GetoptError as err:
     # print(help information and exit:
     print(str(err)) # will print something like "option -a not recognized"
@@ -75,9 +77,17 @@ for o, a in opts:
         datamaskname = a
         print('using', datamaskname, 'as data mask')
     elif o == "--ncomp":
-        pcacomponents = int(a)
-        icacomponents = pcacomponents
+        inputnum = float(a)
+        if a < 1.0:
+            pcacomponents = a
+            icacomponenets = None
+        else:
+            pcacomponents = int(a)
+            icacomponents = pcacomponents
         print('returning', pcacomponents, 'components')
+    elif o == "--smooth":
+        sigma = float(a)
+        print('will smooth data with a', sigma, 'mm kernel')
     elif o == "--type":
         decomptype = a
         if decomptype != 'pca' and decomptype != 'ica':
@@ -118,6 +128,11 @@ if usedmask:
     if not tide.checktimematch(datafiledims, datamaskdims, 0, 0):
         print('input mask time dimension does not match image')
         exit()
+
+# smooth the data
+if sigma > 0.0:
+    for i in range(timepoints):
+        datafile_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i])
 
 # allocating arrays
 print("allocating arrays")
