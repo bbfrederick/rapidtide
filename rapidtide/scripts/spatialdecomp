@@ -114,10 +114,8 @@ if usedmask:
     datamaskdims = datamask_hdr['dim']
     datamasksizes = datamask_hdr['pixdim']
 
-xdim=datafiledims[1]
-ydim=datafiledims[2]
-numslices=datafiledims[3]
-timepoints=datafiledims[4]
+xsize, ysize, numslices, timepoints = tide.parseniftidims(datafiledims)
+xdim, ydim, slicethickness, tr = tide.parseniftisizes(datafilesizes)
     
 # check dimensions
 if usedmask:
@@ -131,12 +129,13 @@ if usedmask:
 
 # smooth the data
 if sigma > 0.0:
+    print('smoothing data')
     for i in range(timepoints):
-        datafile_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i])
+        datafile_data[:, :, :, i] = tide.ssmooth(xsize, ysize, slicethickness, sigma, datafile_data[:, :, :, i])
 
 # allocating arrays
 print("allocating arrays")
-numspatiallocs = int(xdim) * int(ydim) * int(numslices)
+numspatiallocs = int(xsize) * int(ysize) * int(numslices)
 rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
 if usedmask:
     rs_datamask = datamask_data.reshape((numspatiallocs, timepoints))
@@ -178,4 +177,4 @@ theheader['dim'][4] = numcomponents
 
 # write out the data files
 print("writing nifti series")
-tide.savetonifti(decompdata.reshape((xdim, ydim, numslices, numcomponents)), datafile_hdr, datafilesizes, outputrootname + '_fit')
+tide.savetonifti(decompdata.reshape((xsize, ysize, numslices, numcomponents)), datafile_hdr, datafilesizes, outputrootname + '_fit')
