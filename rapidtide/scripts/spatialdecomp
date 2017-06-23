@@ -1,0 +1,206 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+#       $Author: frederic $
+#       $Date: 2016/06/14 12:04:50 $
+#       $Id: linfit,v 1.4 2016/06/14 12:04:50 frederic Exp $
+#
+from __future__ import print_function, division
+import sys
+import getopt
+import string
+import platform
+import rapidtide.tide_funcs as tide
+
+from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
+from pylab import *
+import nibabel as nib
+from sklearn.decomposition import FastICA, PCA
+
+def usage():
+    print("usage: spatialdecomp datafile outputroot [--dmask=DATAMASK] [--ncomp=NCOMPS] [--type=TYPE]")
+    print("")
+    print("required arguments:")
+    print("	datafile	- the name of the 3 or 4 dimensional nifti file to fit")
+    print("	outputroot	- the root name of the output nifti files")
+    print("")
+    print("optional arguments:")
+    print("	--dmask=DATAMASK   - use DATAMASK to specify which voxels in the data to use")
+    print("	--ncomp=NCOMPS     - the number of PCA/ICA components to return (default is to estimate the number")
+    print("	--type=TYPE        - type of decomposition to perform, 'pca' or 'ica' - default is 'pca'")
+    print("")
+    return()
+
+# set default variable values
+usedmask = False
+decomptype = 'pca'
+pcacomponents = 'mle'
+icacomponents = 1
+
+# parse command line arguments
+try:
+    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "ncomp=", "type="])
+except getopt.GetoptError as err:
+    # print(help information and exit:
+    print(str(err)) # will print something like "option -a not recognized"
+    usage()
+    sys.exit(2)
+
+# handle required args first
+if len(args) != 3:
+    print('spatial fit has 2 required arguments - ', len(args) - 1, 'found')
+    usage()
+    sys.exit()
+
+datafilename=args[1]
+outputrootname=args[2]
+
+for o, a in opts:
+    if o == "--dmask":
+        usedmask = True
+        datamaskname = a
+        print('using', datamaskname, 'as data mask')
+    elif o == "--ncomp":
+        pcacomponents = int(a)
+        icacomponents = pcacomponents
+        usetmask = True
+        templatemaskname = a
+        print('returning', pcacomponents, 'components')
+    elif o == "--type":
+        decomptype = a
+        if decomptype != 'pca' and decomptype != 'ica':
+            print('illegal decomposition mode - must be pca or ica')
+            sys.exit()
+    elif o in ("-h", "--help"):
+        usage()
+        sys.exit()
+    else:
+        assert False, "unhandled option"
+
+# read in data
+print("reading in data arrays")
+datafile_img = nib.load(datafilename)
+datafile_data = datafile_img.get_data()
+datafile_hdr = datafile_img.get_header()
+datafiledims = datafile_hdr['dim']
+datafilesizes = datafile_hdr['pixdim']
+
+if usedmask:
+    datamask_img = nib.load(datamaskname)
+    datamask_data = datamask_img.get_data()
+    datamask_hdr = datamask_img.get_header()
+    datamaskdims = datamask_hdr['dim']
+    datamasksizes = datamask_hdr['pixdim']
+
+templatefile_img = nib.load(templatefilename)
+templatefile_data = templatefile_img.get_data()
+templatefile_hdr = templatefile_img.get_header()
+templatefiledims = templatefile_hdr['dim']
+templatefilesizes = templatefile_hdr['pixdim']
+
+if usetmask:
+    templatemask_img = nib.load(templatemaskname)
+    templatemask_data = templatemask_img.get_data()
+    templatemask_hdr = templatemask_img.get_header()
+    templatemaskdims = templatemask_hdr['dim']
+    templatemasksizes = templatemask_hdr['pixdim']
+
+xsize=datafiledims[1]
+ysize=datafiledims[2]
+numslices=datafiledims[3]
+timepoints=datafiledims[4]
+    
+# check dimensions
+print("checking dimensions")
+if not tide.checkspacematch(datafiledims, templatefiledims):
+    print(thedims, 'template file spatial dimensions do not match image')
+    exit()
+if not templatefiledims[4] == 1:
+    print('template file time dimension is not equal to 1')
+    exit()
+
+if usedmask:
+    if not tide.checkspacematch(datafiledims, datamaskdims):
+        print('input mask spatial dimensions do not match image')
+        exit()
+    if not tide.checktimematch(datafiledims, datamaskdims, 0, 0):
+        print('input mask time dimension does not match image')
+        exit()
+
+if usetmask:
+    if not tide.checkspacematch(datafiledims, templatemaskdims):
+        print('template mask spatial dimensions do not match image')
+        exit()
+    if not templatemaskdims[4] == 1:
+        print('template mask time dimension is not equal to 1')
+        exit()
+
+# allocating arrays
+print("allocating arrays")
+numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
+if usedmask:
+    rs_datamask = datamask_data.reshape((numspatiallocs, timepoints))
+else:
+    rs_datamask = np.ones((numspatiallocs, timepoints), dtype='float')
+bin_datamask = where(rs_datamask > 0.9, 1.0, 0.0)
+
+rs_templatefile = templatefile_data.reshape((numspatiallocs))
+if usetmask:
+    rs_templatemask = templatemask_data.reshape((numspatiallocs))
+else:
+    rs_templatemask = np.ones((numspatiallocs, timepoints), dtype='float')
+
+bin_templatemask = where(rs_templatemask > 0.1, 1.0, 0.0)
+
+fitdata = zeros((numspatiallocs, timepoints),dtype='float')
+residuals = zeros((numspatiallocs, timepoints),dtype='float')
+normalized = zeros((numspatiallocs, timepoints),dtype='float')
+newtemplate = zeros((numspatiallocs),dtype='float')
+newmask = zeros((numspatiallocs),dtype='float')
+lincoffs = zeros((timepoints),dtype='float')
+offsets = zeros((timepoints),dtype='float')
+rvals = zeros((timepoints),dtype='float')
+
+# mask everything
+print('masking data and template')
+maskeddata = rs_datafile * bin_datamask
+maskedtemplate = rs_templatefile * bin_templatemask
+
+# now perform the decomposition
+if decomptype == 'ica':
+    print('performing ica deomposition')
+    thefit = FastICA(n_components=icacomponents).fit(refinevoxels)  # Reconstruct signals
+    print('Using first', icacomponents, 'of ', len(thefit.components_), ' components')
+    decompdata = thefit.components_[0:icacomponents]
+else:
+    print('performing pca deomposition')
+    thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
+    if pcacomponents == 'mle':
+        print('Using all', len(thefit.components_), ' components')
+        decompdata = thefit.components_[:]
+    else:
+        print('Using first', pcacomponents, 'of ', len(thefit.components_), ' components')
+        decompdata = thefit.components_[0:pcacomponents]
+
+numcomponents = decompdata.shape[1]
+theheader = datafile_hdr
+theheader['dim'][4] = numcomponents
+
+# write out the data files
+print("writing nifti series")
+tide.savetonifti(decompdata.reshape((xsize, ysize, numslices, numcomponents)), datafile_hdr, datafilesizes, outputrootname + '_fit')
