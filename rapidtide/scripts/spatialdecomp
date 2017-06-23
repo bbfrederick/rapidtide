@@ -114,8 +114,8 @@ if usedmask:
     datamaskdims = datamask_hdr['dim']
     datamasksizes = datamask_hdr['pixdim']
 
-xsize=datafiledims[1]
-ysize=datafiledims[2]
+xdim=datafiledims[1]
+ydim=datafiledims[2]
 numslices=datafiledims[3]
 timepoints=datafiledims[4]
     
@@ -136,7 +136,7 @@ if sigma > 0.0:
 
 # allocating arrays
 print("allocating arrays")
-numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+numspatiallocs = int(xdim) * int(ydim) * int(numslices)
 rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
 if usedmask:
     rs_datamask = datamask_data.reshape((numspatiallocs, timepoints))
@@ -178,4 +178,4 @@ theheader['dim'][4] = numcomponents
 
 # write out the data files
 print("writing nifti series")
-tide.savetonifti(decompdata.reshape((xsize, ysize, numslices, numcomponents)), datafile_hdr, datafilesizes, outputrootname + '_fit')
+tide.savetonifti(decompdata.reshape((xdim, ydim, numslices, numcomponents)), datafile_hdr, datafilesizes, outputrootname + '_fit')
