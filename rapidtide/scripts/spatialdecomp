@@ -164,7 +164,7 @@ if decomptype == 'ica':
     else:
         decompdata = np.transpose(thefit.components_[0:icacomponents])
         print('returning first', decompdata.shape[1], 'components found')
-    tide.writenpvecs(100.0 * thefit.explained_variance_ratio_, outputrootname + '_explained_variance_pct.txt')
+    #tide.writenpvecs(100.0 * thefit.explained_variance_ratio_, outputrootname + '_explained_variance_pct.txt')
 else:
     print('performing pca decomposition')
     if pcacomponents < 1.0:
