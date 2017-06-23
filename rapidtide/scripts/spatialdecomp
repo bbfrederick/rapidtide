@@ -50,7 +50,7 @@ def usage():
 usedmask = False
 decomptype = 'pca'
 pcacomponents = 0.5
-icacomponents = 1
+icacomponents = None
 sigma = 0.0
 
 # parse command line arguments
@@ -184,6 +184,7 @@ else:
         print('returning', decompdata.shape[1], 'components')
     else:
         decompdata = np.transpose(thefit.components_[0:pcacomponents])
+    print('variance explained by component:', 100.0 * thefit.explained_variance_ratio_)
 
 numcomponents = decompdata.shape[1]
 theheader = datafile_hdr
