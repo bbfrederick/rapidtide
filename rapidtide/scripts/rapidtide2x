@@ -266,14 +266,13 @@ def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
     return data_out
 
 
-def correlationpass(fmridata, referencetc,
+def correlationpass(fmridata, fmrifftdata, referencetc,
                     fmri_x, os_fmri_x,
                     tr,
                     corrorigin, lagmininpts, lagmaxinpts,
                     corrmask, corrout, meanval,
                     ncprefilter,
                     optiondict):
-    corrmask[:] = tide.makemask(np.mean(fmridata, axis=1), threshpct=optiondict['corrmaskthresh'])
     oversampfreq = optiondict['oversampfactor'] / tr
     inputshape = np.shape(fmridata)
     volumetotal = 0
@@ -938,7 +937,7 @@ def prewhiten(indata, arcoffs):
 
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     # mask to interesting voxels
-    themask = tide.makemask(np.mean(indata, axis=1), optiondict['corrmaskthresh'])
+    themask = tide.makemask(np.mean(indata, axis=1), optiondict['corrmaskthreshpct'])
     if includemask is not None:
         themask = themask * includemask
     if excludemask is not None:
@@ -1138,7 +1137,7 @@ def main():
     optiondict['corrweighting'] = 'none'  # use a standard unweighted crosscorrelation for calculate time delays
     optiondict['usetmask'] = False  # premultiply the regressor with the tmask timecourse
     optiondict['tmaskname'] = None  # file name for tmask regressor
-    optiondict['corrmaskthresh'] = 1.0  # percentage of robust maximum of mean to mask correlations
+    optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict[
         'check_autocorrelation'] = False  # check for periodic components that corrupt the autocorrelation
     optiondict[
@@ -1357,9 +1356,9 @@ def main():
             linkchar = '='
             print('Will regress delayed regressors out of', optiondict['glmsourcefile'])
         elif o == '--corrmaskthresh':
-            optiondict['corrmaskthresh'] = float(a)
+            optiondict['corrmaskthreshpct'] = float(a)
             linkchar = '='
-            print('Will perform correlations in voxels where mean exceeds', optiondict['corrmaskthresh'],
+            print('Will perform correlations in voxels where mean exceeds', optiondict['corrmaskthreshpct'],
                   '% of robust maximum')
         elif o == '-I':
             optiondict['invertregressor'] = True
@@ -1770,6 +1769,16 @@ def main():
             sys.exit()
         internalexcludemask = theexcludemask.reshape(numspatiallocs)
 
+    # find the threshold value for the image data
+    threshval = tide.getfracval(fmri_data[:, optiondict['addedskip']], 0.98) / 25.0
+    if optiondict['verbose']:
+        print('image threshval =', threshval)
+    corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1), threshpct=optiondict['corrmaskthreshpct']))
+    validvoxels = np.where(corrmask > 0)[0]
+    print('validvoxels shape =', np.shape(validvoxels))
+    fmri_data_valid = fmri_data[validvoxels, :]
+    print('original size =',np.shape(fmri_data[:, :]), ', trimmed size =', np.shape(fmri_data_valid))
+
     # read in the timecourse to resample
     timings.append(['Start of reference prep', time.time(), None, None])
     if filename is None:
@@ -1959,7 +1968,7 @@ def main():
     lagstrengths = np.zeros(internalspaceshape, dtype=rt_floattype)
     lagsigma = np.zeros(internalspaceshape, dtype=rt_floattype)
     lagmask = np.zeros(internalspaceshape, dtype='uint16')
-    corrmask = np.zeros(internalspaceshape, dtype='uint16')
+    #corrmask = np.zeros(internalspaceshape, dtype='uint16')
     R2 = np.zeros(internalspaceshape, dtype=rt_floattype)
 
     corroutlen = np.shape(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])[0]
@@ -1990,11 +1999,6 @@ def main():
     padvalue = fmritr * numpadtrs
     genlagtc = tide.fastresampler(reference_x, reference_y, padvalue=padvalue)
 
-    # find the threshold value for the image data
-    threshval = tide.getfracval(fmri_data[:, optiondict['addedskip']], 0.98) / 25.0
-    if optiondict['verbose']:
-        print('image threshval =', threshval)
-
     # cycle over all voxels
     refine = True
     if optiondict['verbose']:
@@ -2003,6 +2007,7 @@ def main():
     if optiondict['verbose']:
         print('edgebufferfrac set to ', optiondict['edgebufferfrac'])
 
+    fft_fmri_data = None
     for thepass in range(1, optiondict['refinepasses'] + 1):
         # initialize the pass
         if optiondict['dorefineregressor']:
@@ -2117,7 +2122,7 @@ def main():
             correlationpass_func = profile(correlationpass, precision=2)
         else:
             correlationpass_func = correlationpass
-        voxelsprocessed_cp = correlationpass_func(fmri_data[:, optiondict['addedskip']:], cleaned_referencetc,
+        voxelsprocessed_cp = correlationpass_func(fmri_data[:, optiondict['addedskip']:], fft_fmri_data, cleaned_referencetc,
                                                   initial_fmri_x, os_fmri_x,
                                                   fmritr,
                                                   corrorigin, lagmininpts, lagmaxinpts,
@@ -2273,7 +2278,7 @@ def main():
     if optiondict['doprewhiten']:
         print('Step 3 - reprocessing prewhitened data')
         timings.append(['Step 3 start', time.time(), None, None])
-        correlationpass(prewhiteneddata, referencetc_pw,
+        correlationpass(prewhiteneddata, fft_fmri_data, referencetc_pw,
                         initial_fmri_x, os_fmri_x,
                         fmritr,
                         corrorigin, lagmininpts, lagmaxinpts,
