@@ -38,6 +38,7 @@ from scipy.stats import johnsonsb
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
+donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
 try:
@@ -101,6 +102,20 @@ def checkimports(optiondict):
         print('nibabel does not exist')
     optiondict['nibabelexists'] = nibabelexists
 
+    if donotbeaggressive:
+        print('no aggressive optimization')
+    else:
+        print('aggressive optimization')
+    optiondict['donotbeaggressive'] = donotbeaggressive
+
+    global donotusenumba
+    if donotusenumba:
+        print('will not use numba even if present')
+    else:
+        print('using numba if present')
+    optiondict['donotusenumba'] = donotusenumba
+
+
 def conditionaljit():
     def resdec(f):
         if (not numbaexists) or donotusenumba:
@@ -110,7 +125,6 @@ def conditionaljit():
     return resdec
 
 
-donotbeaggressive = True
 def conditionaljit2():
     def resdec(f):
         if (not numbaexists) or donotusenumba or donotbeaggressive:
