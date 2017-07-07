@@ -309,8 +309,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
         # pack the data and send to workers
         data_in = []
         for d in range(inputshape[0]):
-            if corrmask[d] > 0:
-                data_in.append(d)
+            data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
         data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
     
@@ -323,7 +322,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
         # unpack the data
         volumetotal = 0
         for voxel in data_out:
-            corrmask[voxel[0]] = 1
+            #corrmask[voxel[0]] = 1
             meanval[voxel[0]] = voxel[1]
             corrout[voxel[0], :] = voxel[2]
             volumetotal += 1
@@ -332,10 +331,9 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
         for vox in range(0, inputshape[0]):
             if vox % reportstep == 0 or vox == inputshape[0] - 1:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            if corrmask[vox] > 0.0:
-                dummy, meanval[vox], corrout[vox, :] = procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmridata[vox, :], os_fmri_x, oversampfreq,
-                        corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc)
-                volumetotal += 1
+            dummy, meanval[vox], corrout[vox, :] = procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmridata[vox, :], os_fmri_x, oversampfreq,
+                corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc)
+            volumetotal += 1
     print('\nCorrelation performed on ' + str(volumetotal) + ' voxels')
 
     # garbage collect
@@ -477,8 +475,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
         # pack the data and send to workers
         data_in = []
         for d in range(inputshape[0]):
-            if corrmask[d] > 0:
-                data_in.append(d)
+            data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
         data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
     
@@ -504,10 +501,9 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
         for vox in range(0, inputshape[0]):
             if vox % reportstep == 0 or vox == inputshape[0] - 1:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            if corrmask[vox] > 0.0:
-                dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[vox], lagmask[vox], failreason = \
-                    procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots)
-                volumetotal += volumetotalinc
+            dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[vox], lagmask[vox], failreason = \
+                procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots)
+            volumetotal += volumetotalinc
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
     print('\tampfails=', ampfails, ' lagfails=', lagfails, ' widthfail=', widthfails, ' edgefail=', edgefails,
           ' fitfail=', fitfails)
@@ -1237,6 +1233,9 @@ def main():
     optiondict['multiproc'] = False
     optiondict['mp_chunksize'] = 50000
 
+    # package options
+    optiondict['memprofilerexists'] = memprofilerexists
+
     realtr = 0.0
     theprefilter = tide.noncausalfilter()
     theprefilter.setbutter(optiondict['usebutterworthfilter'], optiondict['filtorder'])
@@ -1775,7 +1774,8 @@ def main():
         print('image threshval =', threshval)
     corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1), threshpct=optiondict['corrmaskthreshpct']))
     validvoxels = np.where(corrmask > 0)[0]
-    print('validvoxels shape =', np.shape(validvoxels))
+    numvalidspatiallocs = np.shape(validvoxels)[0]
+    print('validvoxels shape =', numvalidspatiallocs)
     fmri_data_valid = fmri_data[validvoxels, :]
     print('original size =',np.shape(fmri_data[:, :]), ', trimmed size =', np.shape(fmri_data_valid))
 
@@ -1963,13 +1963,16 @@ def main():
         nativearmodelshape = (xsize, ysize, numslices, optiondict['armodelorder'])
     internalspaceshape = numspatiallocs
     internalarmodelshape = (numspatiallocs, optiondict['armodelorder'])
-    meanval = np.zeros(internalspaceshape, dtype=rt_floattype)
-    lagtimes = np.zeros(internalspaceshape, dtype=rt_floattype)
-    lagstrengths = np.zeros(internalspaceshape, dtype=rt_floattype)
-    lagsigma = np.zeros(internalspaceshape, dtype=rt_floattype)
-    lagmask = np.zeros(internalspaceshape, dtype='uint16')
-    #corrmask = np.zeros(internalspaceshape, dtype='uint16')
-    R2 = np.zeros(internalspaceshape, dtype=rt_floattype)
+    internalvalidspaceshape = numvalidspatiallocs
+    internalvalidarmodelshape = (numvalidspatiallocs, optiondict['armodelorder'])
+    meanval = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
+    lagtimes = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
+    lagstrengths = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
+    lagsigma = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
+    lagmask = np.zeros(internalvalidspaceshape, dtype='uint16')
+    R2 = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
+    outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
+    outarmodelarray = np.zeros(internalarmodelshape, dtype=rt_floattype)
 
     corroutlen = np.shape(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])[0]
     if fileiscifti:
@@ -1977,20 +1980,24 @@ def main():
     else:
         nativecorrshape = (xsize, ysize, numslices, corroutlen)
     internalcorrshape = (numspatiallocs, corroutlen)
-    corrout = np.zeros(internalcorrshape, dtype=rt_floattype)
-    gaussout = np.zeros(internalcorrshape, dtype=rt_floattype)
+    internalvalidcorrshape = (numvalidspatiallocs, corroutlen)
+    corrout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
+    gaussout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
+    outcorrarray = np.zeros(internalcorrshape, dtype=rt_floattype)
 
     if fileiscifti:
         nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
     else:
         nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
     internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
-    lagtc = np.zeros(internalfmrishape, dtype=rt_floattype)
+    internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
+    lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
 
     if optiondict['dorefineregressor']:
-        shiftedtcs = np.zeros(internalfmrishape, dtype=rt_floattype)
-        weights = np.zeros(internalfmrishape, dtype=rt_floattype)
-        refinemask = np.zeros(internalspaceshape, dtype='uint16')
+        shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
+        weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
+        refinemask = np.zeros(internalvalidspaceshape, dtype='uint16')
+    outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
 
     # prepare for fast resampling
     padvalue = max((-optiondict['lagmin'], optiondict['lagmax'])) + 30.0
@@ -2122,7 +2129,7 @@ def main():
             correlationpass_func = profile(correlationpass, precision=2)
         else:
             correlationpass_func = correlationpass
-        voxelsprocessed_cp = correlationpass_func(fmri_data[:, optiondict['addedskip']:], fft_fmri_data, cleaned_referencetc,
+        voxelsprocessed_cp = correlationpass_func(fmri_data_valid[:, optiondict['addedskip']:], fft_fmri_data, cleaned_referencetc,
                                                   initial_fmri_x, os_fmri_x,
                                                   fmritr,
                                                   corrorigin, lagmininpts, lagmaxinpts,
@@ -2164,7 +2171,7 @@ def main():
             else:
                 refineregressor_func = refineregressor
             voxelsprocessed_rr, outputdata = refineregressor_func(
-                cleaned_nonosreferencetc, fmri_data[:, :], fmritr, shiftedtcs, weights, refinemask, thepass,
+                cleaned_nonosreferencetc, fmri_data_valid[:, :], fmritr, shiftedtcs, weights, refinemask, thepass,
                 lagstrengths, lagtimes, lagsigma, R2, theprefilter, optiondict,
                 padtrs=numpadtrs, includemask=internalincludemask, excludemask=internalexcludemask)
             normoutputdata = tide.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
@@ -2206,10 +2213,10 @@ def main():
         reportstep = 1000
 
         # now allocate the arrays needed for Wiener deconvolution
-        wienerdeconv = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        wpeak = np.zeros(internalspaceshape, dtype=rt_outfloattype)
+        wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+        wpeak = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
 
-        voxelsprocessed_wiener = wienerpass(numspatiallocs, reportstep, fmri_data, threshval, 
+        voxelsprocessed_wiener = wienerpass(numspatiallocs, reportstep, fmri_data_valid, threshval, 
                                         optiondict, wienerdeconv, wpeak, resampref_y)
         timings.append(['Wiener deconvolution end', time.time(), voxelsprocessed_wiener, 'voxels'])
 
@@ -2231,22 +2238,22 @@ def main():
             fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
 
         # now allocate the arrays needed for GLM filtering
-        meanvalue = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        rvalue = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        r2value = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        fitNorm = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        fitcoff = np.zeros(internalspaceshape, dtype=rt_outfloattype)
-        datatoremove = np.zeros(internalfmrishape, dtype=rt_outfloattype)
-        filtereddata = np.zeros(internalfmrishape, dtype=rt_outfloattype)
+        meanvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+        rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+        r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+        fitNorm = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+        fitcoff = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+        datatoremove = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+        filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
         if optiondict['doprewhiten']:
-            prewhiteneddata = np.zeros(internalfmrishape, dtype=rt_outfloattype)
-            arcoffs = np.zeros(internalarmodelshape, dtype=rt_outfloattype)
+            prewhiteneddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+            arcoffs = np.zeros(internalvalidarmodelshape, dtype=rt_outfloattype)
 
         #inittc = np.zeros(np.shape(fmri_data)[1] - optiondict['addedskip'], dtype=rt_floattype)
         if optiondict['memprofile']:
             memcheckpoint('about to start glm noise removal...')
 
-        voxelsprocessed_glm = glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc,
+        voxelsprocessed_glm = glmpass(numvalidspatiallocs, reportstep, fmri_data_valid, threshval, lagtc,
                                         optiondict, meanvalue, rvalue, r2value, fitcoff, fitNorm,
                                         datatoremove, filtereddata)
         fmri_data = None
@@ -2320,37 +2327,23 @@ def main():
     else:
         theheader['dim'][0] = 3
         theheader['dim'][4] = 1
-    if optiondict['memprofile']:
-        memcheckpoint('about to write lagtimes')
-    tide.savetonifti(lagtimes.reshape(nativespaceshape), theheader, thesizes, outputname + '_lagtimes' + outsuffix3d)
-    if optiondict['memprofile']:
-        memcheckpoint('about to write lagstrengths')
-    tide.savetonifti(lagstrengths.reshape(nativespaceshape), theheader, thesizes,
-                     outputname + '_lagstrengths' + outsuffix3d)
-    if optiondict['memprofile']:
-        memcheckpoint('about to write R2')
-    tide.savetonifti(R2.reshape(nativespaceshape), theheader, thesizes, outputname + '_R2' + outsuffix3d)
-    if optiondict['memprofile']:
-        memcheckpoint('about to write lagsigma')
-    tide.savetonifti(lagsigma.reshape(nativespaceshape), theheader, thesizes, outputname + '_lagsigma' + outsuffix3d)
-    if optiondict['memprofile']:
-        memcheckpoint('about to write lagmask')
-    tide.savetonifti(lagmask.reshape(nativespaceshape), theheader, thesizes, outputname + '_lagmask' + outsuffix3d)
+    for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask']:
+        if optiondict['memprofile']:
+            memcheckpoint('about to write ' + mapname)
+        outmaparray[validvoxels] = eval(mapname)[:]
+        tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes, outputname + '_' + mapname + outsuffix3d)
+
     if optiondict['doglmfilt']:
-        if optiondict['memprofile']:
-            memcheckpoint('about to write rvalue, r2value, meanvalue, fitcoff, and fitNorm...')
-        tide.savetonifti(rvalue.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitR' + outsuffix3d)
+        for mapname, mapsuffix in [('rvalue', 'fitR'), ('r2value', 'fitR2'), ('meanvalue', 'mean'), ('fitcoff', 'fitcoff'), ('fitNorm', 'fitNorm')]:
+            if optiondict['memprofile']:
+                memcheckpoint('about to write ' + mapname)
+            outmaparray[validvoxels] = eval(mapname)[:]
+            tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes, outputname + '_' + mapsuffix + outsuffix3d)
         rvalue = None
-        tide.savetonifti(r2value.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitR2' + outsuffix3d)
         r2value = None
-        tide.savetonifti(meanvalue.reshape(nativespaceshape), theheader, thesizes, outputname + '_mean' + outsuffix3d)
         meanvalue = None
-        tide.savetonifti(fitcoff.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitcoff' + outsuffix3d)
         fitcoff = None
-        tide.savetonifti(fitNorm.reshape(nativespaceshape), theheader, thesizes, outputname + '_fitNorm' + outsuffix3d)
         fitNorm = None
-        if optiondict['memprofile']:
-            memcheckpoint('...done')
 
     if optiondict['estimate_significance']:
         for i in range(0, len(thepercentiles)):
@@ -2358,7 +2351,8 @@ def main():
             if optiondict['dosighistfit']:
                 tide.writenpvecs(sigfit, outputname + '_sigfit' + '.txt')
             tide.writenpvecs(np.array([pcts[i]]), outputname + '_p_lt_' + thepvalnames[i] + '_thresh.txt')
-            tide.savetonifti(pmask.reshape(nativespaceshape), theheader, thesizes,
+            outmaparray[validvoxels] = pmask[:]
+            tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
                              outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d)
 
     # clean up arrays that will no longer be needed
@@ -2376,9 +2370,11 @@ def main():
         theheader['dim'][4] = np.shape(corrscale)[0]
     theheader['toffset'] = corrscale[corrorigin - lagmininpts]
     theheader['pixdim'][4] = corrtr
-    tide.savetonifti(gaussout.reshape(nativecorrshape), theheader, thesizes, outputname + '_gaussout' + outsuffix4d)
+    outcorrarray[validvoxels, :] = gaussout[:, :]
+    tide.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes, outputname + '_gaussout' + outsuffix4d)
     gaussout = None
-    tide.savetonifti(corrout.reshape(nativecorrshape), theheader, thesizes, outputname + '_corrout' + outsuffix4d)
+    outcorrarray[validvoxels, :] = corrout[:, :]
+    tide.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes, outputname + '_corrout' + outsuffix4d)
     corrout = None
     theheader['toffset'] = 0.0
     if optiondict['saveprewhiten']:
@@ -2387,7 +2383,8 @@ def main():
             theheader['intent_code'] = 3002
         else:
             theheader['dim'][4] = optiondict['armodelorder']
-        tide.savetonifti(arcoffs.reshape(nativearmodelshape), theheader, thesizes, outputname + '_arN' + outsuffix4d)
+        outarmodelarray[validvoxels, :] = arcoffs[:, :]
+        tide.savetonifti(outarmodelarray.reshape(nativearmodelshape), theheader, thesizes, outputname + '_arN' + outsuffix4d)
         arcoffs = None
 
     theheader = nim_hdr
@@ -2397,28 +2394,39 @@ def main():
         theheader['intent_code'] = 3002
     else:
         theheader['dim'][4] = np.shape(initial_fmri_x)[0]
+
     if optiondict['savelagregressors']:
-        tide.savetonifti(lagtc.reshape(nativefmrishape), theheader, thesizes,
+        outfmriarray[validvoxels, :] = lagtc[:, :]
+        tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_lagregressor' + outsuffix4d)
         lagtc = None
+
     if optiondict['dorefineregressor']:
-        tide.savetonifti(shiftedtcs.reshape(nativefmrishape), theheader, thesizes,
+        outfmriarray[validvoxels, :] = shiftedtcs[:, :]
+        tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_shiftedtcs' + outsuffix4d)
         shiftedtcs = None
-        tide.savetonifti(refinemask.reshape(nativespaceshape), theheader, thesizes,
+        outmaparray[validvoxels] = refinemask[:]
+        tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
                          outputname + '_refinemask' + outsuffix3d)
         refinemask = None
+
     if optiondict['doglmfilt'] and optiondict['saveglmfiltered']:
-        #tide.savetonifti(datatoremove.reshape(nativefmrishape), theheader, thesizes,
+        #outfmriarray[validvoxels, :] = datatoremove[:, :]
+        #tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
         #                 outputname + '_datatoremove' + outsuffix4d)
         datatoremove = None
-        tide.savetonifti(filtereddata.reshape(nativefmrishape), theheader, thesizes,
+        outfmriarray[validvoxels, :] = filtereddata[:, :]
+        tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_filtereddata' + outsuffix4d)
         filtereddata = None
+
     if optiondict['saveprewhiten']:
-        tide.savetonifti(prewhiteneddata.reshape(nativefmrishape), theheader, thesizes,
+        outfmriarray[validvoxels, :] = prewhiteneddata[:, :]
+        tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
                          outputname + '_prewhiteneddata' + outsuffix4d)
         prewhiteneddata = None
+
     timings.append(['Finished saving maps', time.time(), None, None])
     print('done')
 
