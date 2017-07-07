@@ -32,7 +32,7 @@ import nibabel as nib
 from sklearn.decomposition import FastICA, PCA
 
 def usage():
-    print("usage: spatialdecomp datafile outputroot [--dmask=DATAMASK] [--ncomp=NCOMPS] [--smooth=SIGMA] [--type=TYPE]")
+    print("usage: spatialdecomp datafile outputroot")
     print("")
     print("required arguments:")
     print("	datafile	- the name of the 3 or 4 dimensional nifti file to fit")
