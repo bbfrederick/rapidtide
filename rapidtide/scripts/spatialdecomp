@@ -29,7 +29,7 @@ import rapidtide.tide_funcs as tide
 from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
 from pylab import *
 import nibabel as nib
-from sklearn.decomposition import FastICA, PCA
+from sklearn.decomposition import FastICA, PCA, SparsePCA
 
 def usage():
     print("usage: spatialdecomp datafile outputroot")
@@ -42,7 +42,7 @@ def usage():
     print("	--dmask=DATAMASK   - use DATAMASK to specify which voxels in the data to use")
     print("	--ncomp=NCOMPS     - the number of PCA/ICA components to return (default is to estimate the number")
     print("	--smooth=SIGMA     - spatially smooth the input data with a SIGMA mm kernel")
-    print("	--type=TYPE        - type of decomposition to perform, 'pca' or 'ica' - default is 'pca'")
+    print("	--type=TYPE        - type of decomposition to perform, 'pca', 'sparse' or 'ica' - default is 'pca'")
     print("")
     return()
 
@@ -89,7 +89,7 @@ for o, a in opts:
         print('will smooth data with a', sigma, 'mm kernel')
     elif o == "--type":
         decomptype = a
-        if decomptype != 'pca' and decomptype != 'ica':
+        if decomptype != 'pca' and decomptype != 'ica' and decomptype != 'sparse':
             print('illegal decomposition mode - must be pca or ica')
             sys.exit()
     elif o in ("-h", "--help"):
@@ -101,7 +101,6 @@ for o, a in opts:
 
 print('Will perform', decomptype, 'analysis')
     
-
 # read in data
 print("reading in data arrays")
 datafile_img = nib.load(datafilename)
@@ -129,6 +128,9 @@ if usedmask:
     if not tide.checktimematch(datafiledims, datamaskdims, 0, 0):
         print('input mask time dimension does not match image')
         exit()
+
+# save the command line
+tide.writevec([' '.join(sys.argv)], outputrootname + '_commandline.txt')
 
 # smooth the data
 if sigma > 0.0:
@@ -171,19 +173,37 @@ else:
         print('will return the components accounting for', pcacomponents * 100.0, '% of the variance')
     else:
         print('will return', pcacomponents, 'components')
-    thefit = PCA(n_components=pcacomponents).fit(np.transpose(rs_datafile))
-    if pcacomponents < 1.0:
-        decompdata = np.transpose(thefit.components_[:])
-        print('returning', decompdata.shape[1], 'components')
+    if decomptype == 'pca':
+        thepca = PCA(n_components=pcacomponents)
     else:
-        decompdata = np.transpose(thefit.components_[0:pcacomponents])
+        thepca = SparsePCA(n_components=pcacomponents)
+    thefit = thepca.fit(np.transpose(rs_datafile))
+    thetransform = thepca.transform(np.transpose(rs_datafile))
+    theinvtrans = thepca.inverse_transform(thetransform)
+    if pcacomponents < 1.0:
+        thecomponents = np.transpose(thefit.components_[:])
+        print('returning', thecomponents.shape[1], 'components')
+    else:
+        thecomponents = np.transpose(thefit.components_[0:pcacomponents])
+
+    # save the eigenvalues
     print('variance explained by component:', 100.0 * thefit.explained_variance_ratio_)
     tide.writenpvecs(100.0 * thefit.explained_variance_ratio_, outputrootname + '_explained_variance_pct.txt')
 
-numcomponents = decompdata.shape[1]
-theheader = datafile_hdr
-theheader['dim'][4] = numcomponents
+    # save the component images
+    print("writing component images")
+    theheader = datafile_hdr
+    theheader['dim'][4] = thecomponents.shape[1]
+    tide.savetonifti(thecomponents.reshape((xsize, ysize, numslices, thecomponents.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_components')
 
-# write out the data files
-print("writing nifti series")
-tide.savetonifti(decompdata.reshape((xsize, ysize, numslices, numcomponents)), datafile_hdr, datafilesizes, outputrootname + '_components')
+    # save the coefficients
+    print("writing out the coefficients")
+    coefficients = np.transpose(thetransform)
+    tide.writenpvecs(coefficients, outputrootname + '_coefficients.txt')
+
+    # save the dimensionaality reduced data
+    invtransformeddata = np.transpose(theinvtrans)
+    print("writing fit data")
+    theheader = datafile_hdr
+    theheader['dim'][4] = invtransformeddata.shape[1]
+    tide.savetonifti(invtransformeddata.reshape((xsize, ysize, numslices, invtransformeddata.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_fit')
