@@ -71,8 +71,8 @@ xcorr_x=r_[0.0:tclen]*sampletime-(tclen*sampletime)/2.0
 laglimit=15.0
 widthlimit=15.0
 halfwindow=int(laglimit*Fs)
-searchstart=int(tclen)/2-halfwindow
-searchend=int(tclen)/2+halfwindow
+searchstart = int(tclen // 2) - halfwindow
+searchend = int(tclen // 2) + halfwindow
 xcorr_x_trim=xcorr_x[searchstart:searchend]
 
 outputdata=zeros((numcomponents,numcomponents,1,tclen),dtype='float')
@@ -91,7 +91,11 @@ for component1 in range(0,numcomponents):
         #plot(xcorr_x,outputdata[component1,component2,0,:])
         #maxdelay=xcorr_x[argmax(thexcorr)]
         #maxval=thexcorr[argmax(thexcorr)]
-        maxindex,maxlag,maxval,maxsigma,maskval,failreason=tide.findmaxlag(xcorr_x[searchstart:searchend],thexcorr[searchstart:searchend],-laglimit,laglimit,widthlimit,refine=True)
+        maxindex,maxlag,maxval,maxsigma,maskval,failreason=tide.findmaxlag_gauss(xcorr_x[searchstart:searchend],thexcorr[searchstart:searchend],
+            -laglimit,laglimit,widthlimit,refine=True,
+            useguess=False,
+            fastgauss=False,
+            displayplots=False)
         outputcorrmax[component1,component2,0,0]=maxval
         outputcorrlag[component1,component2,0,0]=maxlag
         outputcorrwidth[component1,component2,0,0]=maxsigma
