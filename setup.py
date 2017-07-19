@@ -39,6 +39,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/rapidtide2std',
                'rapidtide/scripts/showxcorr',
                'rapidtide/scripts/showxcorrx',
+               'rapidtide/scripts/ccorrica',
                'rapidtide/scripts/showstxcorr',
                'rapidtide/scripts/resamp1tc',
                'rapidtide/scripts/resamplenifti',
@@ -49,6 +50,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/showxy',
                'rapidtide/scripts/spatialfit',
                'rapidtide/scripts/histnifti',
+               'rapidtide/scripts/atlastool',
                'rapidtide/scripts/showhist']
 if addtidepool:
     script_list.append('rapidtide/scripts/tidepool')
@@ -170,7 +172,10 @@ setup(
     include_package_data = True,
     zip_safe=False,
     package_data={
-        'reference': ['reference/*.nii.gz'],
+        'reference': [
+                        'reference/*.txt',
+                        'reference/*.nii.gz',
+                        ],
     },
 
     # To provide executable scripts, use entry points in preference to the

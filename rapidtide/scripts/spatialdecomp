@@ -43,6 +43,7 @@ def usage():
     print("	--ncomp=NCOMPS     - the number of PCA/ICA components to return (default is to estimate the number")
     print("	--smooth=SIGMA     - spatially smooth the input data with a SIGMA mm kernel")
     print("	--type=TYPE        - type of decomposition to perform, 'pca', 'sparse' or 'ica' - default is 'pca'")
+    print("	--nodemean         - do not demean data prior to decomposition")
     print("")
     return()
 
@@ -51,11 +52,12 @@ usedmask = False
 decomptype = 'pca'
 pcacomponents = 0.5
 icacomponents = None
+demean = True
 sigma = 0.0
 
 # parse command line arguments
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "smooth=", "ncomp=", "type="])
+    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "nodemean", "dmask=", "smooth=", "ncomp=", "type="])
 except getopt.GetoptError as err:
     # print(help information and exit:
     print(str(err)) # will print something like "option -a not recognized"
@@ -84,6 +86,9 @@ for o, a in opts:
         else:
             pcacomponents = int(a)
             icacomponents = pcacomponents
+    elif o == "--nodemean":
+        demean = False
+        print('will not demean data prior to decomposition')
     elif o == "--smooth":
         sigma = float(a)
         print('will smooth data with a', sigma, 'mm kernel')
@@ -142,6 +147,11 @@ if sigma > 0.0:
 print("reshaping and masking arrays")
 numspatiallocs = int(xsize) * int(ysize) * int(numslices)
 rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
+if demean:
+    themean = np.mean(rs_datafile, axis=1)
+    for i in range(timepoints):
+        rs_datafile[:, i] -= themean
+
 if usedmask:
     bin_datamask = where(datamask_data.reshape((numspatiallocs, timepoints)) > 0.9, 1.0, 0.0)
 else:
