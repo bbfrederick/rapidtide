@@ -157,7 +157,16 @@ def version():
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 if nibabelexists:
     def readfromnifti(inputfile):
-        nim = nib.load(inputfile)
+        if os.path.isfile(inputfile):
+            inputfilename = inputfile 
+        elif os.path.isfile(inputfile + '.nii.gz'):
+            inputfilename = inputfile  + '.nii.gz'
+        elif os.path.isfile(inputfile + '.nii'):
+            inputfilename = inputfile + '.nii'
+        else:
+            print('nifti file', inputfile, 'does not exist')
+            sys.exit()
+        nim = nib.load(inputfilename)
         nim_data = nim.get_data()
         nim_hdr = nim.get_header()
         thedims = nim_hdr['dim'].copy()
@@ -194,6 +203,15 @@ if nibabelexists:
             return True
         else:
             return False
+
+
+    def getniftiroot(filename):
+        if filename.endswith(".nii"):
+            return filename[:-4]
+        elif filename.endswith(".nii.gz"):
+            return filename[:-7]
+        else:
+            return filename
 
 
     def fmritimeinfo(niftifilename):
@@ -504,6 +522,15 @@ def readvec(inputfilename):
             numvals += 1
             inputvec[numvals - 1] = np.float64(line)
     return 1.0 * inputvec[0:numvals]
+
+
+def readlabels(inputfilename):
+    inputvec = []
+    with open(inputfilename, 'r') as thefile:
+        lines = thefile.readlines()
+        for line in lines:
+            inputvec.append(line.rstrip())
+    return inputvec
 
 
 def writedict(thedict, outputfile, lineend=''):
