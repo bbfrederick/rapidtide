@@ -1,9 +1,0 @@
-proximal_ACA
-middle_ACA
-distal_ACA
-proximal_MCA
-middle_MCA
-distal_MCA
-proximal_PCA
-middle_PCA
-distal_PCA

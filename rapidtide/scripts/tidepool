@@ -54,9 +54,6 @@ from statsmodels.robust.scale import mad
 
 from nibabel.affines import apply_affine
 
-# list of the names of the ASPECTS vascular territories
-aspects = ['None', 'L_A', 'L_C', 'L_I', 'L_IC', 'L_L', 'L_M1', 'L_M2', 'L_M3', 'L_M4', 'L_M5', 'L_M6', 'L_P', 'R_A',
-           'R_C', 'R_I', 'R_IC', 'R_L', 'R_M1', 'R_M2', 'R_M3', 'R_M4', 'R_M5', 'R_M6', 'R_P']
 
 # some predefined colortables
 g2y2r_state = {'ticks': [(0.5, (255, 255, 0, 255)), (1.0, (255, 0, 0, 255)), (0.0, (0, 255, 0, 255))], 'mode': 'rgb'}
@@ -717,54 +714,56 @@ def updateHistogram():
     updateDispLimits()
 
 
-def calcAspectsStats():
-    global overlays, datafileroot, aspectsstats, activestat
-    print('calculate aspects stats')
-    if 'aspects' in overlays:
-        aspectsavgmaps = []
-        aspectsstats = {}
-        print('performing ASPECTS averaging')
+def calcAtlasStats():
+    global overlays, datafileroot, atlasname, atlaslabels, atlasstats, activestat
+    print('calculate atlas stats')
+    if 'atlas' in overlays:
+        atlasavgmaps = []
+        atlasstats = {}
+        print('performing atlas averaging')
         for idx, themap in enumerate(loadedfuncmaps):
-            aspstatmap = overlays[themap].duplicate(themap + '_aspstat', overlays[themap].label)
-            aspstatmap.data *= 0.0
-            aspectsstats[themap] = {}
-            for regnum, region in enumerate(aspects[1:]):
-                aspectsstats[themap][region] = {}
-                aspectsstats[themap][region]['mean'] = np.mean(overlays[themap].data[np.where(overlays['aspects'].data == regnum)])
-                aspectsstats[themap][region]['std'] = np.std(overlays[themap].data[np.where(overlays['aspects'].data == regnum)])
-                aspectsstats[themap][region]['robustmean'] = mad(overlays[themap].data[np.where(overlays['aspects'].data == regnum)])
-                aspectsstats[themap][region]['median'] = np.median(overlays[themap].data[np.where(overlays['aspects'].data == regnum)])
-                aspstatmap.data[np.where(overlays['aspects'].data == regnum)] = aspectsstats[themap][region][activestat]
-            aspstatmap.maskData()
-            aspstatmap.updateStats()
-            overlays[themap + '_aspstat'] = aspstatmap
-        print('done performing ASPECTS averaging')
+            atlasstatmap = overlays[themap].duplicate(themap + '_atlasstat', overlays[themap].label)
+            atlasstatmap.data *= 0.0
+            atlasstats[themap] = {}
+            for regnum, region in enumerate(atlaslabels[1:]):
+                atlasstats[themap][region] = {}
+                atlasstats[themap][region]['mean'] = np.mean(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
+                atlasstats[themap][region]['std'] = np.std(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
+                atlasstats[themap][region]['robustmean'] = mad(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
+                atlasstats[themap][region]['median'] = np.median(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
+                atlasstatmap.data[np.where(overlays['atlas'].data == regnum)] = atlasstats[themap][region][activestat]
+            atlasstatmap.maskData()
+            atlasstatmap.updateStats()
+            overlays[themap + '_atlasstat'] = atlasstatmap
+        print('done performing atlas averaging')
         for thestat in ['mean', 'std', 'robustmean', 'median']:
             d = {}
             cols = []
-            d['Region'] = np.asarray(aspects[1:])
+            d['Region'] = np.asarray(atlaslabels[1:])
             cols.append('Region')
             for idx, themap in enumerate(loadedfuncmaps):
                 templist = []
-                for regnum, region in enumerate(aspects[1:]):
-                    templist.append(aspectsstats[themap][aspects[1:][regnum]][thestat])
+                for regnum, region in enumerate(atlaslabels[1:]):
+                    templist.append(atlasstats[themap][atlaslabels[1:][regnum]][thestat])
                 d[themap] = np.asarray(templist)
                 cols.append(themap)
             df = pd.DataFrame(data=d)
             df = df[cols]
-            df.to_csv(datafileroot + 'aspects_' + thestat + '.txt', sep='\t', index=False)
+            df.to_csv(datafileroot + atlasname + '_' + thestat + '.txt', sep='\t', index=False)
     else:
-        print('cannot perform average - no ASPECTS map found')
+        print('cannot perform average - no atlas map found')
+    updateOrthoImages()
 
 
 def toggleAveraging(state):
-    global doaspectsaverage
+    global doatlasaverage
     if state == QtCore.Qt.Checked:
-        doaspectsaverage = True
-        print('aspects averaging is turned on')
+        doatlasaverage = True
+        print('atlas averaging is turned on')
     else:
-        doaspectsaverage = False
-        print('aspects averaging is turned off')
+        doatlasaverage = False
+        print('atlas averaging is turned off')
+    updateOrthoImages()
 
 def mean_radioButton_clicked(enabled):
     global activestat
@@ -946,13 +945,13 @@ def overlay_radioButton_08_clicked(enabled):
 
 def overlay_radioButton_clicked(which, enabled):
     global imageadj, overlays, focusmap, panetomap, ui, overlaybuttons
-    global currentloc, doaspectsaverage
+    global currentloc, doatlasaverage
     if enabled:
         overlaybuttons[which].setChecked(True)
         #print('selected ', which)
         if panetomap[which] != '':
-            if doaspectsaverage:
-                focusmap = panetomap[which] + '_aspstat'
+            if doatlasaverage:
+                focusmap = panetomap[which] + '_atlasstat'
             else:
                 focusmap = panetomap[which]
             print('focusmap set to ', focusmap)
@@ -1073,7 +1072,7 @@ def updateOrthoImages():
 
 
 def printfocusvals():
-    global ui, overlays, overlays
+    global ui, overlays, overlays, atlasname, atlaslabels
     global currentloc
     logstatus(ui.logOutput, 'Print focus vals\n\n')
     for key in overlays:
@@ -1086,11 +1085,11 @@ def printfocusvals():
                 overlays[key].setTpos(currentloc.tpos)
                 focusval = overlays[key].getFocusVal()
                 #print('focusval =', focusval)
-                if key != 'aspects':
+                if key != 'atlas':
                     outstring = str(overlays[key].label.ljust(28)) + str(':') + str(focusval)
                     logstatus(ui.logOutput, outstring)
                 else:
-                    outstring = str(overlays[key].label.ljust(28)) + str(':') + str(aspects[int(focusval)])
+                    outstring = str(overlays[key].label.ljust(28)) + str(':') + str(atlaslabels[int(focusval)])
                     logstatus(ui.logOutput, outstring)
 
 
@@ -1244,7 +1243,7 @@ def main():
     global focusmap, bgmap
     global maps
     global roi
-    global overlays, loadedfuncmaps, aspectsavgmaps, aspectsstats, activestat
+    global overlays, loadedfuncmaps, atlasavgmaps, atlasstats, activestat
     global mainwin, orthoimages, overlaybuttons, panetomap
     global img_colorbar
     global lg_imgsize, scalefacx, scalefacy, scalefacz
@@ -1255,11 +1254,11 @@ def main():
     global imageadj
     global harvestcolormaps
     global datafileroot
-    global doaspectsaverage
+    global doatlasaverage
 
     # initialize default values
     activestat = 'mean'
-    doaspectsaverage = False
+    doatlasaverage = False
     forcetr = False
     forceoffset = False
     usecorrout = False
@@ -1390,9 +1389,9 @@ def main():
         timecourse_ax.setTitle('Timecourse')
         timecourse_ax.enableAutoRange()
 
-    # wire up the aspects averaging checkbox
-    ui.aspects_checkBox.stateChanged.connect(toggleAveraging)
-    ui.report_pushButton.clicked.connect(calcAspectsStats)
+    # wire up the atlas averaging checkbox
+    ui.atlas_checkBox.stateChanged.connect(toggleAveraging)
+    ui.report_pushButton.clicked.connect(calcAtlasStats)
 
     # wire up the radio buttons
     ui.gray_radioButton.toggled.connect(gray_radioButton_clicked)
@@ -1516,27 +1515,32 @@ def main():
         allloadedmaps.append('geommask')
 
     if MNIcoords:
+        global atlasname, atlaslabels
+        #atlasname = 'ASPECTS'
+        atlasname = 'ATTbasedFlowTerritories_split'
         referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data', 'reference')
+        atlaslabels = tide.readlabels(os.path.join(referencedir, atlasname + '_regions.txt'))
+        print(atlaslabels)
         if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
-            aspectsname = os.path.join(referencedir, 'ASPECTS_2mm.nii.gz')
+            atlasniftiname = os.path.join(referencedir, atlasname + '_2mm.nii.gz')
         if xsize == 3.0 and ysize == 3.0 and zsize == 3.0:
-            aspectsname = os.path.join(referencedir, 'ASPECTS_3mm.nii.gz')
-        if aspectsname is not None:
-            if os.path.isfile(aspectsname):
-                overlays['aspects'] = overlay('aspects', aspectsname, 'ASPECTS', report=True)
-                allloadedmaps.append('aspects')
-                dispmaps.append('aspects')
+            atlasniftiname = os.path.join(referencedir, atlasname + '_3mm.nii.gz')
+        if atlasniftiname is not None:
+            if os.path.isfile(atlasniftiname):
+                overlays['atlas'] = overlay('atlas', atlasniftiname, atlasname, report=True)
+                allloadedmaps.append('atlas')
+                dispmaps.append('atlas')
             else:
-                print('ASPECTS template: ', aspectsname, ' does not exist!')
+                print(atlasname + ' template: ', atlasniftiname, ' does not exist!')
     try:
-        test = overlays['aspects']
-        ui.aspects_checkBox.show()
-        ui.aspects_checkBox.setDisabled(False)
+        test = overlays['atlas']
+        ui.atlas_checkBox.show()
+        ui.atlas_checkBox.setDisabled(False)
         ui.report_pushButton.show()
         ui.report_pushButton.setDisabled(False)
     except KeyError:
-        ui.aspects_checkBox.hide()
-        ui.aspects_checkBox.setDisabled(True)
+        ui.atlas_checkBox.hide()
+        ui.atlas_checkBox.setDisabled(True)
         ui.report_pushButton.hide()
         ui.report_pushButton.setDisabled(True)
     print('done')
@@ -1673,10 +1677,10 @@ def main():
                 'colormap': gray_state,
                 'label': 'Anatomic image',
                 'funcmask': None},
-        'aspects':
+        'atlas':
             {
                 'colormap': spectrum_state,
-                'label': 'ASPECTS territories',
+                'label': 'Atlas territories',
                 'funcmask': None},
         'fitcoff':
             {
@@ -1718,12 +1722,12 @@ def main():
         overlays['anatomic'].setFuncMask(None)
         overlays['anatomic'].setGeomMask(None)
 
-    if 'aspects' in overlays:
-        aspectmask = overlays['aspects'].data.copy()
-        aspectmask[np.where(aspectmask > 0.5)] = 1
-        aspectmask[np.where(aspectmask < 1)] = 0
-        overlays['aspects'].setGeomMask(aspectmask)
-        overlays['aspects'].setFuncMask(None)
+    if 'atlas' in overlays:
+        atlasmask = overlays['atlas'].data.copy()
+        atlasmask[np.where(atlasmask > 0.5)] = 1
+        atlasmask[np.where(atlasmask < 1)] = 0
+        overlays['atlas'].setGeomMask(atlasmask)
+        overlays['atlas'].setFuncMask(None)
 
     verbose = False
     if verbose:

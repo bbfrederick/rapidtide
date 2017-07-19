@@ -124,7 +124,7 @@
        <x>10</x>
        <y>20</y>
        <width>1091</width>
-       <height>276</height>
+       <height>287</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="largeimage_horizontalLayout">
@@ -376,7 +376,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="aspects_checkBox">
+           <widget class="QCheckBox" name="atlas_checkBox">
             <property name="text">
              <string>Show stat image</string>
             </property>
@@ -1292,7 +1292,7 @@
   </property>
  </designerdata>
  <buttongroups>
-  <buttongroup name="colormap_buttonGroup"/>
   <buttongroup name="stats_buttonGroup"/>
+  <buttongroup name="colormap_buttonGroup"/>
  </buttongroups>
 </ui>
