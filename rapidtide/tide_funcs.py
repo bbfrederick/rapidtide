@@ -205,6 +205,13 @@ if nibabelexists:
             return False
 
 
+    def checkiftext(filename):
+        if filename.endswith(".txt"):
+            return True
+        else:
+            return False
+
+
     def getniftiroot(filename):
         if filename.endswith(".nii"):
             return filename[:-4]
