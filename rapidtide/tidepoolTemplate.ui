@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1118</width>
-    <height>711</height>
+    <height>728</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -32,7 +32,7 @@
       <x>440</x>
       <y>505</y>
       <width>671</width>
-      <height>161</height>
+      <height>171</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -78,7 +78,7 @@
       <x>10</x>
       <y>0</y>
       <width>1100</width>
-      <height>296</height>
+      <height>312</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -96,7 +96,7 @@
     <property name="maximumSize">
      <size>
       <width>1100</width>
-      <height>296</height>
+      <height>312</height>
      </size>
     </property>
     <property name="title">
@@ -124,7 +124,7 @@
        <x>10</x>
        <y>20</y>
        <width>1091</width>
-       <height>287</height>
+       <height>291</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="largeimage_horizontalLayout">
@@ -198,6 +198,9 @@
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMaximumSize</enum>
+        </property>
         <item>
          <widget class="QDoubleSpinBox" name="dispmax_doubleSpinBox">
           <property name="alignment">
@@ -280,6 +283,12 @@
          <layout class="QVBoxLayout" name="colormap_verticalLayout">
           <item>
            <widget class="QLabel" name="label_2">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>14</height>
+             </size>
+            </property>
             <property name="text">
              <string>Colormap</string>
             </property>
@@ -345,105 +354,103 @@
             </attribute>
            </widget>
           </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="aspects_verticalLayout">
           <item>
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>ASPECTS</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="report_pushButton">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>24</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Calculate</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="atlas_checkBox">
-            <property name="text">
-             <string>Show stat image</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="mean_radioButton">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Mean</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-            <attribute name="buttonGroup">
-             <string notr="true">stats_buttonGroup</string>
-            </attribute>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="std_radioButton">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Std dev</string>
-            </property>
-            <attribute name="buttonGroup">
-             <string notr="true">stats_buttonGroup</string>
-            </attribute>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="robustmean_radioButton">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Robust mean</string>
-            </property>
-            <attribute name="buttonGroup">
-             <string notr="true">stats_buttonGroup</string>
-            </attribute>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="median_radioButton">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Median</string>
-            </property>
-            <attribute name="buttonGroup">
-             <string notr="true">stats_buttonGroup</string>
-            </attribute>
-           </widget>
+           <layout class="QVBoxLayout" name="aspects_verticalLayout">
+            <item>
+             <widget class="QLabel" name="label_5">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Region summaries</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="raw_radioButton">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Raw data</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">stats_buttonGroup</string>
+              </attribute>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="mean_radioButton">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Mean</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">stats_buttonGroup</string>
+              </attribute>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="std_radioButton">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Std dev</string>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">stats_buttonGroup</string>
+              </attribute>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="robustmean_radioButton">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Robust mean</string>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">stats_buttonGroup</string>
+              </attribute>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="median_radioButton">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Median</string>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">stats_buttonGroup</string>
+              </attribute>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>
@@ -456,7 +463,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>300</y>
+      <y>310</y>
       <width>421</width>
       <height>366</height>
      </rect>
@@ -896,7 +903,7 @@
     <property name="geometry">
      <rect>
       <x>440</x>
-      <y>300</y>
+      <y>310</y>
       <width>381</width>
       <height>201</height>
      </rect>
@@ -955,7 +962,7 @@
     <property name="geometry">
      <rect>
       <x>830</x>
-      <y>300</y>
+      <y>310</y>
       <width>281</width>
       <height>201</height>
      </rect>
