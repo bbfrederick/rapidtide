@@ -16,8 +16,7 @@
 #
 #
 #       $Author: frederic $
-#       $Date: 2016/06/14 12:04:50 $
-#       $Id: linfit,v 1.4 2016/06/14 12:04:50 frederic Exp $
+#       $Date: 2016/06/14 12:04:50 $ #       $Id: linfit,v 1.4 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function, division
 import sys
@@ -26,16 +25,17 @@ import string
 import platform
 import rapidtide.tide_funcs as tide
 
-from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
+
+import numpy as np
 from pylab import *
 import nibabel as nib
 from sklearn.decomposition import FastICA, PCA, SparsePCA
 
 def usage():
-    print("usage: spatialdecomp datafile outputroot")
+    print("usage: temporalcluster datafile outputroot")
     print("")
     print("required arguments:")
-    print("	datafile	- the name of the 3 or 4 dimensional nifti file to fit")
+    print("	datafile	- the name of the 4 dimensional nifti file to fit")
     print("	outputroot	- the root name of the output nifti files")
     print("")
     print("optional arguments:")
@@ -43,21 +43,20 @@ def usage():
     print("	--ncomp=NCOMPS     - the number of PCA/ICA components to return (default is to estimate the number")
     print("	--smooth=SIGMA     - spatially smooth the input data with a SIGMA mm kernel")
     print("	--type=TYPE        - type of decomposition to perform, 'pca', 'sparse' or 'ica' - default is 'pca'")
-    print("	--nodemean         - do not demean data prior to decomposition")
     print("")
     return()
 
 # set default variable values
 usedmask = False
 decomptype = 'pca'
-pcacomponents = 0.5
+pcacomponents = 0
 icacomponents = None
-demean = True
+normalize = True
 sigma = 0.0
 
 # parse command line arguments
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "nodemean", "dmask=", "smooth=", "ncomp=", "type="])
+    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "smooth=", "ncomp=", "type="])
 except getopt.GetoptError as err:
     # print(help information and exit:
     print(str(err)) # will print something like "option -a not recognized"
@@ -86,9 +85,6 @@ for o, a in opts:
         else:
             pcacomponents = int(a)
             icacomponents = pcacomponents
-    elif o == "--nodemean":
-        demean = False
-        print('will not demean data prior to decomposition')
     elif o == "--smooth":
         sigma = float(a)
         print('will smooth data with a', sigma, 'mm kernel')
@@ -144,20 +140,14 @@ if sigma > 0.0:
         datafile_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i])
 
 # allocating arrays
-print("reshaping and masking arrays")
+print("reshaping arrays")
 numspatiallocs = int(xsize) * int(ysize) * int(numslices)
 rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
 
 print("masking arrays")
 if usedmask:
-    if datamaskdims[4] == 1:
-        proclocs = np.where(datamask_data.reshape((numspatiallocs)) > 0.9)
-    else:
-        proclocs = np.where(np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1) > 0.9)
-        rs_mask = datamask_data.reshape((numspatiallocs, timepoints))[proclocs, :]
-        rs_mask = np.where(rs_mask > 0.9, 1.0, 0.0)[0]
+    proclocs = np.where(datamask_data.reshape((numspatiallocs)) > 0.9)
 else:
-    datamaskdims = [1, xsize, ysize, numslices, 1]
     themaxes = np.max(rs_datafile, axis=1)
     themins = np.min(rs_datafile, axis=1)
     thediffs = (themaxes - themins).reshape((numspatiallocs))
@@ -165,24 +155,15 @@ else:
 procdata = rs_datafile[proclocs, :][0]
 print(rs_datafile.shape, procdata.shape)
 
-if demean:
-    print("demeaning array")
+if normalize:
+    print("normalizing arrays")
     themean = np.mean(procdata, axis=1)
+    thevar = np.var(procdata, axis=1)
     for i in range(timepoints):
         procdata[:, i] -= themean
-    if datamaskdims[4] > 1:
-        procdata *= rs_mask
+        procdata[:, i] /= thevar
 
 print('will process', procdata.shape[0], 'vectors of length', procdata.shape[1])
-#if usedmask:
-#    proclocs = where(datamask_data.reshape((numspatiallocs, timepoints)) > 0.9, 1.0, 0.0)
-#else:
-#    proclocs = np.ones((numspatiallocs, timepoints), dtype='float')
-#proclocs = where(rs_datamask > 0.9, 1.0, 0.0)
-
-# mask everything
-#print('masking data')
-#rs_datafile *= proclocs
 
 # now perform the decomposition
 if decomptype == 'ica':

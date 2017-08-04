@@ -755,13 +755,13 @@ def calcAtlasStats():
     updateOrthoImages()
 
 
-def toggleAveraging(state):
-    global doatlasaverage
+def doAtlasAveraging(state):
+    global atlasaveragingdone
     if state == QtCore.Qt.Checked:
-        doatlasaverage = True
+        atlasaveragingdone = True
         print('atlas averaging is turned on')
     else:
-        doatlasaverage = False
+        atlasaveragingdone = False
         print('atlas averaging is turned off')
     updateOrthoImages()
 
@@ -945,12 +945,12 @@ def overlay_radioButton_08_clicked(enabled):
 
 def overlay_radioButton_clicked(which, enabled):
     global imageadj, overlays, focusmap, panetomap, ui, overlaybuttons
-    global currentloc, doatlasaverage
+    global currentloc, atlasaveragingdone
     if enabled:
         overlaybuttons[which].setChecked(True)
         #print('selected ', which)
         if panetomap[which] != '':
-            if doatlasaverage:
+            if atlasaveragingdone:
                 focusmap = panetomap[which] + '_atlasstat'
             else:
                 focusmap = panetomap[which]
@@ -1254,11 +1254,11 @@ def main():
     global imageadj
     global harvestcolormaps
     global datafileroot
-    global doatlasaverage
+    global atlasaveragingdone
 
     # initialize default values
     activestat = 'mean'
-    doatlasaverage = False
+    atlasaveragingdone = False
     forcetr = False
     forceoffset = False
     usecorrout = False
@@ -1390,7 +1390,7 @@ def main():
         timecourse_ax.enableAutoRange()
 
     # wire up the atlas averaging checkbox
-    ui.atlas_checkBox.stateChanged.connect(toggleAveraging)
+    ui.atlas_checkBox.stateChanged.connect(doAtlasAveraging)
     ui.report_pushButton.clicked.connect(calcAtlasStats)
 
     # wire up the radio buttons

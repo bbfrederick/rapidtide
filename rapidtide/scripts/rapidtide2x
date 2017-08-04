@@ -517,6 +517,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
 
 def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, padtrs, fmritr, theprefilter):
     themean = np.mean(fmritc)
+    # BBF is this right?
     if themean != 0.0:
         normfac = 1.0 / themean
     else:
@@ -933,7 +934,13 @@ def prewhiten(indata, arcoffs):
 
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     # mask to interesting voxels
-    themask = tide.makemask(np.mean(indata, axis=1), optiondict['corrmaskthreshpct'])
+    if optiondict['globalmaskmethod'] == 'mean':
+        themask = tide.makemask(np.mean(indata, axis=1), optiondict['corrmaskthreshpct'])
+    elif optiondict['globalmaskmethod'] == 'variance':
+        themask = tide.makemask(np.var(indata, axis=1), optiondict['corrmaskthreshpct'])
+    if optiondict['nothresh']:
+        themask *= 0
+        themask += 1
     if includemask is not None:
         themask = themask * includemask
     if excludemask is not None:
@@ -1004,6 +1011,8 @@ def usage():
     print("    --slicetimes=FILE        - Apply offset times from FILE to each slice in the dataset")
     print("    --numskip=SKIP           - SKIP tr's were previously deleted during preprocessing")
     print("                               (default is 0)")
+    print("    --nothresh               - Disable voxel intensity threshold (especially useful")
+    print("                               for NIRS data)")
     print("")
     print("Correlation options:")
     print("    -O OVERSAMPFAC           - Oversample the fMRI data by the following integral ")
@@ -1113,8 +1122,9 @@ def main():
     # set default variable values
     optiondict = {}
 
-    # input file options
+    # file i/o file options
     optiondict['isgrayordinate'] = False
+    optiondict['textio'] = False
 
     # preprocessing options
     optiondict['dogaussianfilter'] = False  # apply a spatial filter to the fmri data prior to analysis
@@ -1125,6 +1135,8 @@ def main():
     optiondict['startpoint'] = -1  # by default, analyze the entire length of the dataset
     optiondict['endpoint'] = 10000000  # by default, analyze the entire length of the dataset
     optiondict['preprocskip'] = 0  # number of trs skipped in preprocessing
+    optiondict['meanscaleglobal'] = False
+    optiondict['globalmaskmethod'] = 'mean'
 
     # correlation options
     optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
@@ -1138,6 +1150,7 @@ def main():
         'check_autocorrelation'] = False  # check for periodic components that corrupt the autocorrelation
     optiondict[
         'fix_autocorrelation'] = False  # remove periodic components that corrupt the autocorrelation
+    optiondict['nothresh'] = False   # disable voxel intensity threshholding
 
     # correlation fitting options
     optiondict['bipolar'] = False  # find peak with highest magnitude, regardless of sign
@@ -1197,7 +1210,6 @@ def main():
     optiondict['addedskip'] = 0
 
     # refinement options
-    optiondict['meanscaleglobal'] = False
     optiondict['lagmaskside'] = 'both'
     optiondict['refineweighting'] = 'R2'
     optiondict['sigmathresh'] = 100.0
@@ -1288,7 +1300,9 @@ def main():
                                                                                                            'nodetrend',
                                                                                                            'slicetimes=',
                                                                                                            'glmsourcefile=',
+                                                                                                           'globalmaskmethod=',
                                                                                                            'numskip=',
+                                                                                                           'nothresh',
                                                                                                            'limitoutput',
                                                                                                            'regressor=',
                                                                                                            'regressorfreq=',
@@ -1374,6 +1388,15 @@ def main():
         elif o == '-M':
             optiondict['useglobalref'] = True
             print('using global mean timecourse as the reference regressor')
+        elif o == '--globalmaskmethod':
+            optiondict['globalmaskmethod'] = a
+            if optiondict['globalmaskmethod'] == 'mean':
+                print('will use mean value to mask voxels prior to generating global mean')
+            elif optiondict['globalmaskmethod'] == 'variance':
+                print('will use timecourse variance to mask voxels prior to generating global mean')
+            else:
+                print(optiondict['globalmaskmethod'], 'is not a valid masking method.  Valid methods are \'mean\' and \'variance\'')
+                sys.exit()
         elif o == '-m':
             optiondict['meanscaleglobal'] = True
             print('mean scale voxels prior to generating global mean')
@@ -1548,6 +1571,10 @@ def main():
             optiondict['preprocskip'] = int(a)
             linkchar = '='
             print('Setting preprocessing trs skipped to ', optiondict['preprocskip'])
+        elif o == '--nothresh':
+            optiondict['nothresh'] = True
+            optiondict['corrmaskthreshpct'] = 0.0
+            print('Disabling voxel threshhold')
         elif o == '--regressor':
             filename = a
             optiondict['useglobalref'] = False
@@ -1694,36 +1721,60 @@ def main():
     optiondict['regressorfile'] = filename
 
     # open the fmri datafile
-    nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
-    if nim_hdr['intent_code'] == 3002:
-        print('input file is CIFTI')
-        optiondict['isgrayordinate'] = True
-        fileiscifti = True
-        timepoints = nim_data.shape[4]
-        numspatiallocs = nim_data.shape[5]
+    if tide.checkiftext(fmrifilename):
+        print('input file is text - all I/O will be to text files')
+        optiondict['textio'] = True
+        if optiondict['dogaussianfilter']:
+            optiondict['dogaussianfilter'] = False
+            print('gaussian spatial filter disabled for text input files')
+
+    if optiondict['textio']:
+        nim_data = tide.readvecs(fmrifilename)
+        theshape = np.shape(nim_data)
+        xsize = theshape[0]
+        ysize = 1
+        numslices = 1
+        fileiscifti = False
+        timepoints = theshape[1]
+        thesizes = [0, int(xsize), 1, 1, int(timepoints)]
+        numspatiallocs = int(xsize)
         slicesize = numspatiallocs
     else:
-        print('input file is NIFTI')
-        fileiscifti = False
-        xsize, ysize, numslices, timepoints = tide.parseniftidims(thedims)
-        numspatiallocs = int(xsize) * int(ysize) * int(numslices)
-        slicesize = numspatiallocs / int(numslices)
+        nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
+        if nim_hdr['intent_code'] == 3002:
+            print('input file is CIFTI')
+            optiondict['isgrayordinate'] = True
+            fileiscifti = True
+            timepoints = nim_data.shape[4]
+            numspatiallocs = nim_data.shape[5]
+            slicesize = numspatiallocs
+        else:
+            print('input file is NIFTI')
+            fileiscifti = False
+            xsize, ysize, numslices, timepoints = tide.parseniftidims(thedims)
+            numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+            slicesize = numspatiallocs / int(numslices)
+        xdim, ydim, slicethickness, tr = tide.parseniftisizes(thesizes)
 
     # correct some fields if necessary
     if optiondict['isgrayordinate']:
         fmritr = 0.72  # this is wrong and is a hack until I can parse CIFTI XML
     else:
-        if nim_hdr.get_xyzt_units()[1] == 'msec':
-            fmritr = thesizes[4] / 1000.0
+        if optiondict['textio']:
+            if realtr <= 0.0:
+                print('for text file input, you must use the -t option to set TR')
+                sys.exit()
         else:
-            fmritr = thesizes[4]
+            if nim_hdr.get_xyzt_units()[1] == 'msec':
+                fmritr = thesizes[4] / 1000.0
+            else:
+                fmritr = thesizes[4]
     if realtr > 0.0:
         fmritr = realtr
     oversamptr = fmritr / optiondict['oversampfactor']
     if optiondict['verbose']:
         print('fmri data: ', timepoints, ' timepoints, tr = ', fmritr, ', oversamptr =', oversamptr)
     print(numspatiallocs, ' spatial locations, ', timepoints, ' timepoints')
-    xdim, ydim, slicethickness, tr = tide.parseniftisizes(thesizes)
     timings.append(['Finish reading fmrifile', time.time(), None, None])
 
     # if the user has specified start and stop points, limit check, then use these numbers
@@ -1753,26 +1804,47 @@ def main():
     internalincludemask = None
     internalexcludemask = None
     if optiondict['includemaskname'] is not None:
-        nimincludemask, theincludemask, nimincludemask_hdr, theincludemaskdims, theincludmasksizes = tide.readfromnifti(
-            optiondict['includemaskname'])
-        if not tide.checkspacematch(theincludemaskdims, thedims):
-            print('Dimensions of include mask do not match the fmri data - exiting')
-            sys.exit()
+        if optiondict['textio']:
+            theincludemask = tide.readvecs(optiondict['includemaskname']).astype('int16')
+            theshape = np.shape(nim_data)
+            theincludexsize = theshape[0]
+            if not theincludexsize == xsize:
+                print('Dimensions of include mask do not match the fmri data - exiting')
+                sys.exit()
+        else:
+            nimincludemask, theincludemask, nimincludemask_hdr, theincludemaskdims, theincludmasksizes = tide.readfromnifti(
+                optiondict['includemaskname'])
+            if not tide.checkspacematch(theincludemaskdims, thedims):
+                print('Dimensions of include mask do not match the fmri data - exiting')
+                sys.exit()
         internalincludemask = theincludemask.reshape(numspatiallocs)
     if optiondict['excludemaskname'] is not None:
-        nimexcludemask, theexcludemask, nimexcludemask_hdr, theexcludemaskdims, theexcludmasksizes = tide.readfromnifti(
-            optiondict['excludemaskname'])
-        theexcludemask = 1.0 - theexcludemask
-        if not tide.checkspacematch(theexcludemaskdims, thedims):
-            print('Dimensions of exclude mask do not match the fmri data - exiting')
-            sys.exit()
+        if optiondict['textio']:
+            theexcludemask = tide.readvecs(optiondict['excludemaskname']).astype('int16')
+            theexcludemask = 1.0 - theexcludemask
+            theshape = np.shape(nim_data)
+            theexcludexsize = theshape[0]
+            if not theexcludexsize == xsize:
+                print('Dimensions of exclude mask do not match the fmri data - exiting')
+                sys.exit()
+        else:
+            nimexcludemask, theexcludemask, nimexcludemask_hdr, theexcludemaskdims, theexcludmasksizes = tide.readfromnifti(
+                optiondict['excludemaskname'])
+            theexcludemask = 1.0 - theexcludemask
+            if not tide.checkspacematch(theexcludemaskdims, thedims):
+                print('Dimensions of exclude mask do not match the fmri data - exiting')
+                sys.exit()
         internalexcludemask = theexcludemask.reshape(numspatiallocs)
 
     # find the threshold value for the image data
     threshval = tide.getfracval(fmri_data[:, optiondict['addedskip']], 0.98) / 25.0
+    corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1), threshpct=optiondict['corrmaskthreshpct']))
+    if optiondict['nothresh']:
+        corrmask *= 0
+        corrmask += 1
+        threshval = 0.0
     if optiondict['verbose']:
         print('image threshval =', threshval)
-    corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1), threshpct=optiondict['corrmaskthreshpct']))
     validvoxels = np.where(corrmask > 0)[0]
     numvalidspatiallocs = np.shape(validvoxels)[0]
     print('validvoxels shape =', numvalidspatiallocs)
@@ -1955,12 +2027,16 @@ def main():
         tide.writenpvecs(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts], outputname + '_corrtimes.txt')
 
     # allocate all of the data arrays
-    if fileiscifti:
-        nativespaceshape = (1, 1, 1, 1, numspatiallocs)
-        nativearmodelshape = (1, 1, 1, optiondict['armodelorder'], numspatiallocs)
+    if optiondict['textio']:
+        nativespaceshape = (xsize)
+        nativearmodelshape = (xsize, optiondict['armodelorder'])
     else:
-        nativespaceshape = (xsize, ysize, numslices)
-        nativearmodelshape = (xsize, ysize, numslices, optiondict['armodelorder'])
+        if fileiscifti:
+            nativespaceshape = (1, 1, 1, 1, numspatiallocs)
+            nativearmodelshape = (1, 1, 1, optiondict['armodelorder'], numspatiallocs)
+        else:
+            nativespaceshape = (xsize, ysize, numslices)
+            nativearmodelshape = (xsize, ysize, numslices, optiondict['armodelorder'])
     internalspaceshape = numspatiallocs
     internalarmodelshape = (numspatiallocs, optiondict['armodelorder'])
     internalvalidspaceshape = numvalidspatiallocs
@@ -1975,20 +2051,26 @@ def main():
     outarmodelarray = np.zeros(internalarmodelshape, dtype=rt_floattype)
 
     corroutlen = np.shape(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])[0]
-    if fileiscifti:
-        nativecorrshape = (1, 1, 1, corroutlen, numspatiallocs)
+    if optiondict['textio']:
+        nativecorrshape = (xsize, corroutlen)
     else:
-        nativecorrshape = (xsize, ysize, numslices, corroutlen)
+        if fileiscifti:
+            nativecorrshape = (1, 1, 1, corroutlen, numspatiallocs)
+        else:
+            nativecorrshape = (xsize, ysize, numslices, corroutlen)
     internalcorrshape = (numspatiallocs, corroutlen)
     internalvalidcorrshape = (numvalidspatiallocs, corroutlen)
     corrout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
     gaussout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
     outcorrarray = np.zeros(internalcorrshape, dtype=rt_floattype)
 
-    if fileiscifti:
-        nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
+    if optiondict['textio']:
+        nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
     else:
-        nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
+        if fileiscifti:
+            nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
+        else:
+            nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
     internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
     lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
@@ -2231,10 +2313,16 @@ def main():
         if optiondict['dogaussianfilter'] or (optiondict['glmsourcefile'] is not None):
             if optiondict['glmsourcefile'] is not None:
                 print('reading in ', optiondict['glmsourcefile'], 'for GLM filter, please wait')
-                nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(optiondict['glmsourcefile'])
+                if optiondict['textio']:
+                    nim_data = tide.readvecs(optiondict['glmsourcefile'])
+                else:
+                    nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(optiondict['glmsourcefile'])
             else:
                 print('rereading', fmrifilename, ' for GLM filter, please wait')
-                nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
+                if optiondict['textio']:
+                    nim_data = tide.readvecs(fmrifilename)
+                else:
+                    nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
             fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
 
         # now allocate the arrays needed for GLM filtering
@@ -2321,24 +2409,31 @@ def main():
 
     # do ones with one time point first
     timings.append(['Start saving maps', time.time(), None, None])
-    theheader = nim_hdr
-    if fileiscifti:
-        theheader['intent_code'] = 3006
-    else:
-        theheader['dim'][0] = 3
-        theheader['dim'][4] = 1
+    if not optiondict['textio']:
+        theheader = nim_hdr
+        if fileiscifti:
+            theheader['intent_code'] = 3006
+        else:
+            theheader['dim'][0] = 3
+            theheader['dim'][4] = 1
     for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask']:
         if optiondict['memprofile']:
             memcheckpoint('about to write ' + mapname)
         outmaparray[validvoxels] = eval(mapname)[:]
-        tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes, outputname + '_' + mapname + outsuffix3d)
+        if optiondict['textio']:
+            tide.writenpvecs(outmaparray.reshape(nativespaceshape, 1), outputname + '_' + mapname + outsuffix3d + '.txt')
+        else:
+            tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes, outputname + '_' + mapname + outsuffix3d)
 
     if optiondict['doglmfilt']:
         for mapname, mapsuffix in [('rvalue', 'fitR'), ('r2value', 'fitR2'), ('meanvalue', 'mean'), ('fitcoff', 'fitcoff'), ('fitNorm', 'fitNorm')]:
             if optiondict['memprofile']:
                 memcheckpoint('about to write ' + mapname)
             outmaparray[validvoxels] = eval(mapname)[:]
-            tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes, outputname + '_' + mapsuffix + outsuffix3d)
+            if optiondict['textio']:
+                tide.writenpvecs(outmaparray.reshape(nativespaceshape), outputname + '_' + mapsuffix + outsuffix3d + '.txt')
+            else:
+                tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes, outputname + '_' + mapsuffix + outsuffix3d)
         rvalue = None
         r2value = None
         meanvalue = None
@@ -2352,7 +2447,11 @@ def main():
                 tide.writenpvecs(sigfit, outputname + '_sigfit' + '.txt')
             tide.writenpvecs(np.array([pcts[i]]), outputname + '_p_lt_' + thepvalnames[i] + '_thresh.txt')
             outmaparray[validvoxels] = pmask[:]
-            tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
+            if optiondict['textio']:
+                tide.writenpvecs(outmaparray.reshape(nativespaceshape),
+                             outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d + '.txt')
+            else:
+                tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
                              outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d)
 
     # clean up arrays that will no longer be needed
@@ -2363,68 +2462,100 @@ def main():
     lagmask = None
 
     # now do the ones with other numbers of time points
-    theheader = nim_hdr
-    if fileiscifti:
-        theheader['intent_code'] = 3002
-    else:
-        theheader['dim'][4] = np.shape(corrscale)[0]
-    theheader['toffset'] = corrscale[corrorigin - lagmininpts]
-    theheader['pixdim'][4] = corrtr
-    outcorrarray[validvoxels, :] = gaussout[:, :]
-    tide.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes, outputname + '_gaussout' + outsuffix4d)
-    gaussout = None
-    outcorrarray[validvoxels, :] = corrout[:, :]
-    tide.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes, outputname + '_corrout' + outsuffix4d)
-    corrout = None
-    theheader['toffset'] = 0.0
-    if optiondict['saveprewhiten']:
-        theheader = nim.header
+    if not optiondict['textio']:
+        theheader = nim_hdr
         if fileiscifti:
             theheader['intent_code'] = 3002
         else:
-            theheader['dim'][4] = optiondict['armodelorder']
+            theheader['dim'][4] = np.shape(corrscale)[0]
+        theheader['toffset'] = corrscale[corrorigin - lagmininpts]
+        theheader['pixdim'][4] = corrtr
+    outcorrarray[validvoxels, :] = gaussout[:, :]
+    if optiondict['textio']:
+        tide.writenpvecs(outcorrarray.reshape(nativecorrshape),
+                     outputname + '_gaussout' + outsuffix4d + '.txt')
+    else:
+        tide.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes, outputname + '_gaussout' + outsuffix4d)
+    gaussout = None
+    outcorrarray[validvoxels, :] = corrout[:, :]
+    if optiondict['textio']:
+        tide.writenpvecs(outcorrarray.reshape(nativecorrshape),
+                     outputname + '_corrout' + outsuffix4d + '.txt')
+    else:
+        tide.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes, outputname + '_corrout' + outsuffix4d)
+    corrout = None
+    if optiondict['saveprewhiten']:
+        if not optiondict['textio']:
+            theheader = nim.header
+            theheader['toffset'] = 0.0
+            if fileiscifti:
+                theheader['intent_code'] = 3002
+            else:
+                theheader['dim'][4] = optiondict['armodelorder']
         outarmodelarray[validvoxels, :] = arcoffs[:, :]
-        tide.savetonifti(outarmodelarray.reshape(nativearmodelshape), theheader, thesizes, outputname + '_arN' + outsuffix4d)
+        if optiondict['textio']:
+            tide.writenpvecs(outarmodelarray.reshape(nativearmodelshape),
+                outputname + '_arN' + outsuffix4d + '.txt')
+        else:
+            tide.savetonifti(outarmodelarray.reshape(nativearmodelshape), theheader, thesizes, outputname + '_arN' + outsuffix4d)
         arcoffs = None
 
-    theheader = nim_hdr
-    theheader['pixdim'][4] = fmritr
-    theheader['toffset'] = 0.0
-    if fileiscifti:
-        theheader['intent_code'] = 3002
-    else:
-        theheader['dim'][4] = np.shape(initial_fmri_x)[0]
+    if not optiondict['textio']:
+        theheader = nim_hdr
+        theheader['pixdim'][4] = fmritr
+        theheader['toffset'] = 0.0
+        if fileiscifti:
+            theheader['intent_code'] = 3002
+        else:
+            theheader['dim'][4] = np.shape(initial_fmri_x)[0]
 
     if optiondict['savelagregressors']:
         outfmriarray[validvoxels, :] = lagtc[:, :]
-        tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
-                         outputname + '_lagregressor' + outsuffix4d)
+        if optiondict['textio']:
+            tide.writenpvecs(outfmriarray.reshape(nativefmrishape),
+                     outputname + '_lagregressor' + outsuffix4d + '.txt')
+        else:
+            tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+                     outputname + '_lagregressor' + outsuffix4d)
         lagtc = None
 
     if optiondict['dorefineregressor']:
         outfmriarray[validvoxels, :] = shiftedtcs[:, :]
-        tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
-                         outputname + '_shiftedtcs' + outsuffix4d)
+        if optiondict['textio']:
+            tide.writenpvecs(outfmriarray.reshape(nativefmrishape),
+                     outputname + '_shiftedtcs' + outsuffix4d + '.txt')
+        else:
+            tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+                     outputname + '_shiftedtcs' + outsuffix4d)
         shiftedtcs = None
         outmaparray[validvoxels] = refinemask[:]
-        tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
-                         outputname + '_refinemask' + outsuffix3d)
+        if optiondict['textio']:
+            tide.writenpvecs(outfmriarray.reshape(nativefmrishape),
+                     outputname + '_lagregressor' + outsuffix4d + '.txt')
+        else:
+            tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
+                     outputname + '_refinemask' + outsuffix3d)
         refinemask = None
 
     if optiondict['doglmfilt'] and optiondict['saveglmfiltered']:
-        #outfmriarray[validvoxels, :] = datatoremove[:, :]
-        #tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
-        #                 outputname + '_datatoremove' + outsuffix4d)
         datatoremove = None
         outfmriarray[validvoxels, :] = filtereddata[:, :]
-        tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
-                         outputname + '_filtereddata' + outsuffix4d)
+        if optiondict['textio']:
+            tide.writenpvecs(outfmriarray.reshape(nativefmrishape),
+                     outputname + '_filtereddata' + outsuffix4d + '.txt')
+        else:
+            tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+                     outputname + '_filtereddata' + outsuffix4d)
         filtereddata = None
 
     if optiondict['saveprewhiten']:
         outfmriarray[validvoxels, :] = prewhiteneddata[:, :]
-        tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
-                         outputname + '_prewhiteneddata' + outsuffix4d)
+        if optiondict['textio']:
+            tide.writenpvecs(outfmriarray.reshape(nativefmrishape),
+                     outputname + '_prewhiteneddata' + outsuffix4d + '.txt')
+        else:
+            tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+                     outputname + '_prewhiteneddata' + outsuffix4d)
         prewhiteneddata = None
 
     timings.append(['Finished saving maps', time.time(), None, None])

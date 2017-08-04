@@ -13,10 +13,27 @@ The processing programs in rapidtide require the following to be installed first
 
 The following optional dependencies will be used if present
 * numba for faster performance
+* pyfftw, also for faster performance
 
 If you want to use tidepool for image display, you will also need to install the following:
 * pyqt4
 * pyqtgraph
+
+The simplest way BY FAR to get this all done is to use Anaconda python from Continuum Analytics.  It's a free, curated scientific Python distribution that is easy to maintain and takes a lot of headaches out of maintaining a distribution.  You can get it here: https://www.continuum.io.  Rapidtide works with Python 2 or 3.  If you are new to Python, you should probably just start at 3.
+
+After installing Anaconda python, you just do the following:
+Add the condaforge channel (this is an externally maintained channel that is somewhat ahead of Continuum's distribution and has a number of packages that Continuum does not include):
+```bash
+conda config --add channels conda-forge
+```
+
+Then install the dependencies (including some good optional ones:
+```bash
+conda install scikit-learn nibabel pyqtgraph pyfftw statsmodels
+```
+
+Done.
+
 
 Installation
 ------------
