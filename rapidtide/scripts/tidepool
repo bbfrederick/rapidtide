@@ -1390,8 +1390,8 @@ def main():
         timecourse_ax.enableAutoRange()
 
     # wire up the atlas averaging checkbox
-    ui.atlas_checkBox.stateChanged.connect(doAtlasAveraging)
-    ui.report_pushButton.clicked.connect(calcAtlasStats)
+    #ui.atlas_checkBox.stateChanged.connect(doAtlasAveraging)
+    #ui.report_pushButton.clicked.connect(calcAtlasStats)
 
     # wire up the radio buttons
     ui.gray_radioButton.toggled.connect(gray_radioButton_clicked)
@@ -1534,15 +1534,17 @@ def main():
                 print(atlasname + ' template: ', atlasniftiname, ' does not exist!')
     try:
         test = overlays['atlas']
-        ui.atlas_checkBox.show()
-        ui.atlas_checkBox.setDisabled(False)
-        ui.report_pushButton.show()
-        ui.report_pushButton.setDisabled(False)
+        #ui.atlas_checkBox.show()
+        #ui.atlas_checkBox.setDisabled(False)
+        #ui.report_pushButton.show()
+        #ui.report_pushButton.setDisabled(False)
+        pass
     except KeyError:
-        ui.atlas_checkBox.hide()
-        ui.atlas_checkBox.setDisabled(True)
-        ui.report_pushButton.hide()
-        ui.report_pushButton.setDisabled(True)
+        #ui.atlas_checkBox.hide()
+        #ui.atlas_checkBox.setDisabled(True)
+        #ui.report_pushButton.hide()
+        #ui.report_pushButton.setDisabled(True)
+        pass
     print('done')
 
     win.setWindowTitle('TiDePool - ' + datafileroot)
