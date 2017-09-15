@@ -62,7 +62,7 @@
        <x>10</x>
        <y>30</y>
        <width>651</width>
-       <height>121</height>
+       <height>131</height>
       </rect>
      </property>
      <property name="font">
@@ -296,6 +296,11 @@
           </item>
           <item>
            <widget class="QRadioButton" name="gray_radioButton">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Gray</string>
             </property>
@@ -306,6 +311,11 @@
           </item>
           <item>
            <widget class="QRadioButton" name="thermal_radioButton">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Thermal</string>
             </property>
@@ -316,6 +326,11 @@
           </item>
           <item>
            <widget class="QRadioButton" name="GYR_radioButton">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>GYR</string>
             </property>
@@ -326,6 +341,11 @@
           </item>
           <item>
            <widget class="QRadioButton" name="rainbow_radioButton">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Rainbow</string>
             </property>
@@ -336,6 +356,11 @@
           </item>
           <item>
            <widget class="QRadioButton" name="viridis_radioButton">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Viridis</string>
             </property>
@@ -346,6 +371,11 @@
           </item>
           <item>
            <widget class="QRadioButton" name="jet_radioButton">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Jet</string>
             </property>
@@ -357,7 +387,7 @@
           <item>
            <layout class="QVBoxLayout" name="aspects_verticalLayout">
             <item>
-             <widget class="QLabel" name="label_5">
+             <widget class="QLabel" name="summary_Label">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -406,14 +436,14 @@
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="std_radioButton">
+             <widget class="QRadioButton" name="median_radioButton">
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
               </property>
               <property name="text">
-               <string>Std dev</string>
+               <string>Median</string>
               </property>
               <attribute name="buttonGroup">
                <string notr="true">stats_buttonGroup</string>
@@ -436,14 +466,29 @@
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="median_radioButton">
+             <widget class="QRadioButton" name="std_radioButton">
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
               </property>
               <property name="text">
-               <string>Median</string>
+               <string>Std dev</string>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">stats_buttonGroup</string>
+              </attribute>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="MAD_radioButton">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>MAD</string>
               </property>
               <attribute name="buttonGroup">
                <string notr="true">stats_buttonGroup</string>

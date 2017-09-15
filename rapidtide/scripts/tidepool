@@ -177,6 +177,8 @@ viridis_state = {'ticks': [(0.000, (68, 1, 84)), (0.004, (68, 2, 86)), (0.008, (
                            (0.988, (246, 230, 32)), (0.992, (248, 230, 33)), (0.996, (251, 231, 35)),
                            (1.000, (253, 231, 37))], 'mode': 'rgb'}
 
+atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
+            'ATT': {'atlasname': 'ATTFlowBasedTerritories_split'}}
 
 def selectFile():
     global datafileroot
@@ -728,9 +730,10 @@ def calcAtlasStats():
             for regnum, region in enumerate(atlaslabels[1:]):
                 atlasstats[themap][region] = {}
                 atlasstats[themap][region]['mean'] = np.mean(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
-                atlasstats[themap][region]['std'] = np.std(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
-                atlasstats[themap][region]['robustmean'] = mad(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
                 atlasstats[themap][region]['median'] = np.median(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
+                atlasstats[themap][region]['robustmean'] = mad(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
+                atlasstats[themap][region]['std'] = np.std(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
+                atlasstats[themap][region]['MAD'] = mad(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
                 atlasstatmap.data[np.where(overlays['atlas'].data == regnum)] = atlasstats[themap][region][activestat]
             atlasstatmap.maskData()
             atlasstatmap.updateStats()
@@ -784,6 +787,49 @@ def median_radioButton_clicked(enabled):
     global activestat
     if enabled:
         activestat = 'median'
+
+
+def updateAveragingMode():
+    global averagingmode
+    print('averaging mode set to ', averagingmode)
+    updateOrthoImages()
+
+
+def raw_radioButton_clicked(enabled):
+    global averagingmode
+    averagingmode = 'raw'
+    updateAveragingMode()
+
+
+def mean_radioButton_clicked(enabled):
+    global averagingmode
+    averagingmode = 'mean'
+    updateAveragingMode()
+
+
+def median_radioButton_clicked(enabled):
+    global averagingmode
+    averagingmode = 'median'
+    updateAveragingMode()
+
+
+def robustmean_radioButton_clicked(enabled):
+    global averagingmode
+    averagingmode = 'robustmean'
+    updateAveragingMode()
+
+
+def std_radioButton_clicked(enabled):
+    global averagingmode
+    averagingmode = 'std'
+    updateAveragingMode()
+
+
+def MAD_radioButton_clicked(enabled):
+    global averagingmode
+    averagingmode = 'MAD'
+    updateAveragingMode()
+
 
 def gray_radioButton_clicked(enabled):
     global imageadj, overlays, focusmap
@@ -1390,8 +1436,13 @@ def main():
         timecourse_ax.enableAutoRange()
 
     # wire up the atlas averaging checkbox
-    ui.atlas_checkBox.stateChanged.connect(doAtlasAveraging)
-    ui.report_pushButton.clicked.connect(calcAtlasStats)
+    #ui.report_pushButton.clicked.connect(calcAtlasStats)
+    ui.raw_radioButton.toggled.connect(raw_radioButton_clicked)
+    ui.mean_radioButton.toggled.connect(mean_radioButton_clicked)
+    ui.median_radioButton.toggled.connect(median_radioButton_clicked)
+    ui.robustmean_radioButton.toggled.connect(robustmean_radioButton_clicked)
+    ui.std_radioButton.toggled.connect(std_radioButton_clicked)
+    ui.MAD_radioButton.toggled.connect(MAD_radioButton_clicked)
 
     # wire up the radio buttons
     ui.gray_radioButton.toggled.connect(gray_radioButton_clicked)
@@ -1517,7 +1568,8 @@ def main():
     if MNIcoords:
         global atlasname, atlaslabels
         #atlasname = 'ASPECTS'
-        atlasname = 'ATTbasedFlowTerritories_split'
+        atlasshortname = 'ATT'
+        atlasname = atlases[atlasshortname]['atlasname']
         referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data', 'reference')
         atlaslabels = tide.readlabels(os.path.join(referencedir, atlasname + '_regions.txt'))
         print(atlaslabels)
@@ -1534,15 +1586,13 @@ def main():
                 print(atlasname + ' template: ', atlasniftiname, ' does not exist!')
     try:
         test = overlays['atlas']
-        ui.atlas_checkBox.show()
-        ui.atlas_checkBox.setDisabled(False)
-        ui.report_pushButton.show()
-        ui.report_pushButton.setDisabled(False)
+        #ui.report_pushButton.show()
+        #ui.report_pushButton.setDisabled(False)
+        pass
     except KeyError:
-        ui.atlas_checkBox.hide()
-        ui.atlas_checkBox.setDisabled(True)
-        ui.report_pushButton.hide()
-        ui.report_pushButton.setDisabled(True)
+        #ui.report_pushButton.hide()
+        #ui.report_pushButton.setDisabled(True)
+        pass
     print('done')
 
     win.setWindowTitle('TiDePool - ' + datafileroot)
