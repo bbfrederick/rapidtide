@@ -53,6 +53,7 @@ def usage():
     print("    --phase                  - show the power spectra phases of the input data instead of the timecourses")
     print("    --transpose              - swap rows and columns in the input files")
     print("    --waterfall              - plot multiple timecourses as a waterfall")
+    print("    --voffset=VOFFSET        - plot multiple timecourses as with VOFFSET between them")
     print("    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)")
     print("    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)")
     return ()
@@ -66,10 +67,12 @@ detrend = True
 useHamming = True
 domag = True
 samplerate = 1.0
+voffset = 0.0
 
 # get the command line parameters
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "samplerate=", "sampletime="])
+    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "voffset=",
+                                                   "samplerate=", "sampletime="])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like 'option -a not recognized'
@@ -106,6 +109,10 @@ for o, a in opts:
         samplerate = float(a)
         linkchar = '='
         print('Samplerate set to ', samplerate)
+    elif o == '--voffset':
+        voffset = float(a)
+        linkchar = '='
+        print('Vertical offset set to ', voffset)
     elif o == '--sampletime':
         samplerate = 1.0 / float(a)
         linkchar = '='
@@ -156,13 +163,13 @@ for i in range(0, numfiles):
             else:
                 pspec = fftpack.fft(invec)[0:len(invec) // 2]
             if domag:
-                yvecs.append(abs(pspec))
+                yvecs.append(abs(pspec) + j * voffset)
             else:
-                yvecs.append(phase(pspec))
+                yvecs.append(phase(pspec) + j * voffset)
             maxfreq = samplerate / 2.0
             xvecs.append(arange(0.0, maxfreq, maxfreq / (len(yvecs[i]))))
         else:
-            yvecs.append(invecs[j])
+            yvecs.append(invecs[j] + j * voffset)
             xvecs.append(arange(0.0, len(yvecs[numvecs]), 1.0) / samplerate)
         if invecs.shape[0] > 1:
             linelabels.append(textfilename[i] + '_column' + str(j).zfill(2))
