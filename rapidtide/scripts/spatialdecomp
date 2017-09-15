@@ -44,6 +44,7 @@ def usage():
     print("	--smooth=SIGMA     - spatially smooth the input data with a SIGMA mm kernel")
     print("	--type=TYPE        - type of decomposition to perform, 'pca', 'sparse' or 'ica' - default is 'pca'")
     print("	--nodemean         - do not demean data prior to decomposition")
+    print("	--novarnorm        - do not variance normalize data prior to decomposition")
     print("")
     return()
 
@@ -52,12 +53,13 @@ usedmask = False
 decomptype = 'pca'
 pcacomponents = 0.5
 icacomponents = None
+varnorm = True
 demean = True
 sigma = 0.0
 
 # parse command line arguments
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "nodemean", "dmask=", "smooth=", "ncomp=", "type="])
+    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "nodemean", "novarnorm", "dmask=", "smooth=", "ncomp=", "type="])
 except getopt.GetoptError as err:
     # print(help information and exit:
     print(str(err)) # will print something like "option -a not recognized"
@@ -89,6 +91,9 @@ for o, a in opts:
     elif o == "--nodemean":
         demean = False
         print('will not demean data prior to decomposition')
+    elif o == "--novarnorm":
+        varnorm = False
+        print('will not variance normalize data prior to decomposition')
     elif o == "--smooth":
         sigma = float(a)
         print('will smooth data with a', sigma, 'mm kernel')
@@ -108,18 +113,20 @@ print('Will perform', decomptype, 'analysis')
     
 # read in data
 print("reading in data arrays")
-datafile_img = nib.load(datafilename)
-datafile_data = datafile_img.get_data()
-datafile_hdr = datafile_img.get_header()
-datafiledims = datafile_hdr['dim']
-datafilesizes = datafile_hdr['pixdim']
+datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide.readfromnifti(datafilename)
+#datafile_img = nib.load(datafilename)
+#datafile_data = datafile_img.get_data()
+#datafile_hdr = datafile_img.get_header()
+#datafiledims = datafile_hdr['dim']
+#datafilesizes = datafile_hdr['pixdim']
 
 if usedmask:
-    datamask_img = nib.load(datamaskname)
-    datamask_data = datamask_img.get_data()
-    datamask_hdr = datamask_img.get_header()
-    datamaskdims = datamask_hdr['dim']
-    datamasksizes = datamask_hdr['pixdim']
+    datamask_img, datamask_data, datamask_hdr, datamaskdims, datamasksizes = tide.readfromnifti(datamaskname)
+    #datamask_img = nib.load(datamaskname)
+    #datamask_data = datamask_img.get_data()
+    #datamask_hdr = datamask_img.get_header()
+    #datamaskdims = datamask_hdr['dim']
+    #datamasksizes = datamask_hdr['pixdim']
 
 xsize, ysize, numslices, timepoints = tide.parseniftidims(datafiledims)
 xdim, ydim, slicethickness, tr = tide.parseniftisizes(datafilesizes)
@@ -144,7 +151,7 @@ if sigma > 0.0:
         datafile_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i])
 
 # allocating arrays
-print("reshaping and masking arrays")
+print("reshaping arrays")
 numspatiallocs = int(xsize) * int(ysize) * int(numslices)
 rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
 
@@ -165,24 +172,22 @@ else:
 procdata = rs_datafile[proclocs, :][0]
 print(rs_datafile.shape, procdata.shape)
 
+# normalize the individual images
 if demean:
     print("demeaning array")
-    themean = np.mean(procdata, axis=1)
+    themean = np.mean(procdata, axis=0)
     for i in range(timepoints):
-        procdata[:, i] -= themean
-    if datamaskdims[4] > 1:
-        procdata *= rs_mask
+        procdata[:, i] -= themean[i]
 
-print('will process', procdata.shape[0], 'vectors of length', procdata.shape[1])
-#if usedmask:
-#    proclocs = where(datamask_data.reshape((numspatiallocs, timepoints)) > 0.9, 1.0, 0.0)
-#else:
-#    proclocs = np.ones((numspatiallocs, timepoints), dtype='float')
-#proclocs = where(rs_datamask > 0.9, 1.0, 0.0)
+if varnorm:
+    print("variance normalizing array")
+    thevar = np.var(procdata, axis=0)
+    for i in range(timepoints):
+        procdata[:, i] /= thevar[i]
+    procdata = np.nan_to_num(procdata)
 
-# mask everything
-#print('masking data')
-#rs_datafile *= proclocs
+if datamaskdims[4] > 1:
+    procdata *= rs_mask
 
 # now perform the decomposition
 if decomptype == 'ica':
@@ -193,12 +198,11 @@ if decomptype == 'ica':
         print('will return', icacomponents, 'components')
     thefit = FastICA(n_components=icacomponents).fit(np.transpose(procdata))  # Reconstruct signals
     if icacomponents is None:
-        decompdata = np.transpose(thefit.components_[:])
-        print(decompdata.shape[1], 'components found')
+        thecomponents = np.transpose(thefit.components_[:])
+        print(thecomponents.shape[1], 'components found')
     else:
-        decompdata = np.transpose(thefit.components_[0:icacomponents])
-        print('returning first', decompdata.shape[1], 'components found')
-    #tide.writenpvecs(100.0 * thefit.explained_variance_ratio_, outputrootname + '_explained_variance_pct.txt')
+        thecomponents = np.transpose(thefit.components_[0:icacomponents])
+        print('returning first', thecomponents.shape[1], 'components found')
 else:
     print('performing pca decomposition')
     if pcacomponents < 1.0:
