@@ -163,13 +163,13 @@ for i in range(0, numfiles):
             else:
                 pspec = fftpack.fft(invec)[0:len(invec) // 2]
             if domag:
-                yvecs.append(abs(pspec) + j * voffset)
+                yvecs.append(abs(pspec) + numvecs * voffset)
             else:
-                yvecs.append(phase(pspec) + j * voffset)
+                yvecs.append(phase(pspec) + numvecs * voffset)
             maxfreq = samplerate / 2.0
             xvecs.append(arange(0.0, maxfreq, maxfreq / (len(yvecs[i]))))
         else:
-            yvecs.append(invecs[j] + j * voffset)
+            yvecs.append(invecs[j] + numvecs * voffset)
             xvecs.append(arange(0.0, len(yvecs[numvecs]), 1.0) / samplerate)
         if invecs.shape[0] > 1:
             linelabels.append(textfilename[i] + '_column' + str(j).zfill(2))
