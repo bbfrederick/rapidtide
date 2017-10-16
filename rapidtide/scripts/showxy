@@ -46,12 +46,6 @@ def usage():
     return()
     return()
 
-# get the command line parameters
-nargs = len(sys.argv)
-if (nargs<2):
-    usage()
-    exit()
-
 
 # now check options
 try:
@@ -61,10 +55,14 @@ except getopt.GetoptError as err:
     print(str(err)) # will print something like "option -a not recognized"
     usage()
     sys.exit(2)
+
+print('opts:', opts)
+print('args:', args)
    
 # make sure there is at least one filename argument
 nargs = len(args)
-if nargs < 2:
+if nargs < 1:
+    print('not enough arguments in', args)
     usage()
     sys.exit(1)
 
@@ -79,10 +77,16 @@ argvec = sys.argv[1].split(',')
 
 numfiles = 0
 textfilename = []
-for i in range(nargs):
+thelegend = []
+for i in range(len(args)):
     numfiles += 1
-    textfilename.append(args[i])
-    print('will plot', textfilename[-1])
+    thesplit = args[i].split(',')
+    textfilename.append(thesplit[0])
+    if len(thesplit) > 1:
+        thelegend.append(thesplit[1])
+    else:
+        thelegend.append(thesplit[0])
+    print('input file number ',numfiles,' is ', textfilename[-1],', label is', thelegend[-1])
 
 usebarplot=False
 usexlabel=False
@@ -115,7 +119,7 @@ for o, a in opts:
         else:
             thelegend.append(argvec[0])
         numfiles += 1
-        print('input file number ',numfiles,' is ',thelegend[-1],', label is',thelegend[-1])
+        print('input file number ',numfiles,' is ', textfilename[-1],', label is', thelegend[-1])
     elif o == '-p':
         usepoints = True
     elif o == '-b':
@@ -127,9 +131,10 @@ for o, a in opts:
 xvecs = []
 yvecs = []
 for i in range(0, numfiles):
+    print('reading data from', textfilename[i])
     indata=tide.readvecs(textfilename[i])
-    xvecs.append(indata[0,:])
-    yvecs.append(indata[1,:])
+    xvecs.append(1.0 * indata[0,:])
+    yvecs.append(1.0 * indata[1,:])
 
 numvecs = len(xvecs)
 colorlist = [cm.spectral(float(i) / numvecs) for i in range(numvecs)]

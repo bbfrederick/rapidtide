@@ -33,13 +33,16 @@ try:
     from PyQt5.QtWidgets import *
     qtbinding = 'pyqt5'
 except:
-    qtbindign = 'pyqt4'
+    from PyQt4 import *
+    qtbinding = 'pyqt4'
 
 import pyqtgraph as pg
 import numpy as np
 if qtbinding == 'pyqt4':
+    print('using qt4 bindings')
     import rapidtide.tidepoolTemplate_qt4 as uiTemplate
 else:
+    print('using qt5 bindings')
     import rapidtide.tidepoolTemplate_qt5 as uiTemplate
 import rapidtide.tide_funcs as tide
 import sys
@@ -178,7 +181,7 @@ viridis_state = {'ticks': [(0.000, (68, 1, 84)), (0.004, (68, 2, 86)), (0.008, (
                            (1.000, (253, 231, 37))], 'mode': 'rgb'}
 
 atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
-            'ATT': {'atlasname': 'ATTFlowBasedTerritories_split'}}
+            'ATT': {'atlasname': 'ATTbasedFlowTerritories_split'}}
 
 def selectFile():
     global datafileroot
@@ -718,44 +721,48 @@ def updateHistogram():
 
 def calcAtlasStats():
     global overlays, datafileroot, atlasname, atlaslabels, atlasstats, activestat
+    global atlasaveragingdone
     print('calculate atlas stats')
     if 'atlas' in overlays:
         atlasavgmaps = []
         atlasstats = {}
         print('performing atlas averaging')
         for idx, themap in enumerate(loadedfuncmaps):
-            atlasstatmap = overlays[themap].duplicate(themap + '_atlasstat', overlays[themap].label)
-            atlasstatmap.data *= 0.0
             atlasstats[themap] = {}
-            for regnum, region in enumerate(atlaslabels[1:]):
+            for regnum, region in enumerate(atlaslabels):
+                print('calculating stats for region', regnum + 1, '(', region, ')')
                 atlasstats[themap][region] = {}
-                atlasstats[themap][region]['mean'] = np.mean(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
-                atlasstats[themap][region]['median'] = np.median(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
-                atlasstats[themap][region]['robustmean'] = mad(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
-                atlasstats[themap][region]['std'] = np.std(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
-                atlasstats[themap][region]['MAD'] = mad(overlays[themap].data[np.where(overlays['atlas'].data == regnum)])
-                atlasstatmap.data[np.where(overlays['atlas'].data == regnum)] = atlasstats[themap][region][activestat]
+                atlasstats[themap][region]['mean'] = np.mean(overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+                atlasstats[themap][region]['median'] = np.median(overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+                atlasstats[themap][region]['robustmean'] = mad(overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+                atlasstats[themap][region]['std'] = np.std(overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+                atlasstats[themap][region]['MAD'] = mad(overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+            atlasstatmap = overlays[themap].duplicate(themap + '_atlasstat', overlays[themap].label)
+            atlasstatmap.funcmask = overlays['atlasmask'].data
+            atlasstatmap.data *= 0.0
             atlasstatmap.maskData()
             atlasstatmap.updateStats()
+            for regnum, region in enumerate(atlaslabels):
+                atlasstatmap.data[np.where(overlays['atlas'].data == (regnum + 1))] = atlasstats[themap][region][activestat]
             overlays[themap + '_atlasstat'] = atlasstatmap
         print('done performing atlas averaging')
-        for thestat in ['mean', 'std', 'robustmean', 'median']:
+        for thestat in ['mean', 'std', 'robustmean', 'median', 'MAD']:
             d = {}
             cols = []
-            d['Region'] = np.asarray(atlaslabels[1:])
+            d['Region'] = np.asarray(atlaslabels)
             cols.append('Region')
             for idx, themap in enumerate(loadedfuncmaps):
                 templist = []
-                for regnum, region in enumerate(atlaslabels[1:]):
-                    templist.append(atlasstats[themap][atlaslabels[1:][regnum]][thestat])
+                for regnum, region in enumerate(atlaslabels):
+                    templist.append(atlasstats[themap][atlaslabels[regnum]][thestat])
                 d[themap] = np.asarray(templist)
                 cols.append(themap)
             df = pd.DataFrame(data=d)
             df = df[cols]
             df.to_csv(datafileroot + atlasname + '_' + thestat + '.txt', sep='\t', index=False)
+        atlasaveragingdone = True
     else:
         print('cannot perform average - no atlas map found')
-    updateOrthoImages()
 
 
 def doAtlasAveraging(state):
@@ -791,8 +798,12 @@ def median_radioButton_clicked(enabled):
 
 def updateAveragingMode():
     global averagingmode
+    global atlasaveragingdone
+    if not atlasaveragingdone:
+        calcAtlasStats()
+    set_atlasmask()
     print('averaging mode set to ', averagingmode)
-    updateOrthoImages()
+    updateLUT()
 
 
 def raw_radioButton_clicked(enabled):
@@ -883,6 +894,16 @@ def rainbow_radioButton_clicked(enabled):
         overlays[focusmap].gradient.restoreState(overlays[focusmap].lut_state)
         imageadj.restoreState(overlays[focusmap].lut_state)
         updateLUT()
+
+
+def set_atlasmask():
+    global overlays, loadedfuncmaps, ui
+    print('Using all defined atlas regions as functional mask')
+    ui.setMask_Button.setText('Valid mask')
+    for themap in loadedfuncmaps:
+        overlays[themap].setFuncMask(overlays['atlasmask'].data)
+    updateOrthoImages()
+    updateHistogram()
 
 
 def set_lagmask():
@@ -1135,7 +1156,7 @@ def printfocusvals():
                     outstring = str(overlays[key].label.ljust(28)) + str(':') + str(focusval)
                     logstatus(ui.logOutput, outstring)
                 else:
-                    outstring = str(overlays[key].label.ljust(28)) + str(':') + str(atlaslabels[int(focusval)])
+                    outstring = str(overlays[key].label.ljust(28)) + str(':') + str(atlaslabels[int(focusval) - 1])
                     logstatus(ui.logOutput, outstring)
 
 
@@ -1575,24 +1596,27 @@ def main():
         print(atlaslabels)
         if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
             atlasniftiname = os.path.join(referencedir, atlasname + '_2mm.nii.gz')
+            atlasmaskniftiname = os.path.join(referencedir, atlasname + '_2mm_mask.nii.gz')
         if xsize == 3.0 and ysize == 3.0 and zsize == 3.0:
             atlasniftiname = os.path.join(referencedir, atlasname + '_3mm.nii.gz')
+            atlasmaskniftiname = os.path.join(referencedir, atlasname + '_3mm_mask.nii.gz')
         if atlasniftiname is not None:
             if os.path.isfile(atlasniftiname):
                 overlays['atlas'] = overlay('atlas', atlasniftiname, atlasname, report=True)
+                overlays['atlasmask'] = overlay('atlasmask', atlasmaskniftiname, atlasname, report=True)
                 allloadedmaps.append('atlas')
                 dispmaps.append('atlas')
             else:
                 print(atlasname + ' template: ', atlasniftiname, ' does not exist!')
     try:
         test = overlays['atlas']
+        print('there is an atlas')
         #ui.report_pushButton.show()
         #ui.report_pushButton.setDisabled(False)
-        pass
     except KeyError:
+        print('there is not an atlas')
         #ui.report_pushButton.hide()
         #ui.report_pushButton.setDisabled(True)
-        pass
     print('done')
 
     win.setWindowTitle('TiDePool - ' + datafileroot)
@@ -1773,11 +1797,11 @@ def main():
         overlays['anatomic'].setGeomMask(None)
 
     if 'atlas' in overlays:
-        atlasmask = overlays['atlas'].data.copy()
-        atlasmask[np.where(atlasmask > 0.5)] = 1
-        atlasmask[np.where(atlasmask < 1)] = 0
-        overlays['atlas'].setGeomMask(atlasmask)
-        overlays['atlas'].setFuncMask(None)
+        #atlasmask = overlays['atlas'].data.copy()
+        #atlasmask[np.where(atlasmask > 0.5)] = 1
+        #atlasmask[np.where(atlasmask < 1)] = 0
+        overlays['atlas'].setGeomMask(thegeommask)
+        overlays['atlas'].setFuncMask(overlays['atlasmask'].data)
 
     verbose = False
     if verbose:
