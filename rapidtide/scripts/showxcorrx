@@ -96,6 +96,7 @@ def usage():
     print("optional arguments:")
     print("    --nodetrend   - do not detrend the data before correlation")
     print("    --nowindow    - do not prewindow data before corrlation")
+    print("    --cepstral    - check time delay using Choudhary's cepstral technique ")
     print("    --phat        - perform phase alignment transform (PHAT) rather than ")
     print("                    standard crosscorrelation")
     print("    --liang       - perform phase alignment transform with Liang weighting function rather than ")
@@ -149,6 +150,8 @@ labelline = False
 estimate_significance = False
 writecorrlists = False
 flipregressor = False
+savecorrelation = False
+calccepstraldelay = False
 
 debug = False
 if debug:
@@ -174,7 +177,7 @@ numpoints = len(inputdata1)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w", ["phat", "liang", "eckart", "nodetrend", "nowindow", "help"])
+    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w", ["phat", "liang", "eckart", "nodetrend", "nowindow", "cepstral", "savecorr=", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -190,6 +193,10 @@ for o, a in opts:
         trimdata = True
         if verbose:
             print('trimming data to match')
+    elif o == "--cepstral":
+        calccepstraldelay = True
+        if verbose:
+            print('doing cepstral delay time check')
     elif o == "--liang":
         corrweighting = 'Liang'
         if verbose:
@@ -218,6 +225,11 @@ for o, a in opts:
             print('disabling detrending')
     elif o == "-w":
         print("DEPRECATION WARNING: windowing is now on by default.  Use --nowindow to disable it")
+    elif o == "--savecorr":
+        savecorrelation = True
+        corroutputfile = a
+        if verbose:
+            print('saving correlation function to', corroutputfile)
     elif o == "--nowindow":
         prewindow = False
         if verbose:
@@ -328,6 +340,9 @@ if dopartial:
         thefit, filtereddata2 = tide.mlregress(regressorvec, filtereddata2)
 
 thexcorr = tide.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr, weighting=corrweighting, displayplots=debug)
+if calccepstraldelay:
+    cepdelay = tide.cepstraldelay(filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display)
+    print('cepstral delay time is', cepdelay)
 thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
 # calculate the coherence
@@ -459,3 +474,6 @@ if display:
         plot(f, np.sqrt(np.abs(Pxy))/np.max(np.sqrt(np.abs(Pxy))))
         plot(f, np.angle(Pxy)/(2.0 * pi * f))
     show()
+
+if savecorrelation:
+    tide.writevec(thexcorr, corroutputfile)
