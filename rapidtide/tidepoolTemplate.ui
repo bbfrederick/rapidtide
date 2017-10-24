@@ -30,7 +30,7 @@
     <property name="geometry">
      <rect>
       <x>440</x>
-      <y>505</y>
+      <y>520</y>
       <width>671</width>
       <height>171</height>
      </rect>
@@ -198,8 +198,17 @@
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="spacing">
+         <number>0</number>
+        </property>
         <property name="sizeConstraint">
          <enum>QLayout::SetMaximumSize</enum>
+        </property>
+        <property name="topMargin">
+         <number>5</number>
+        </property>
+        <property name="bottomMargin">
+         <number>5</number>
         </property>
         <item>
          <widget class="QDoubleSpinBox" name="dispmax_doubleSpinBox">
@@ -279,8 +288,14 @@
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
+        <property name="spacing">
+         <number>0</number>
+        </property>
         <item>
          <layout class="QVBoxLayout" name="colormap_verticalLayout">
+          <property name="spacing">
+           <number>-1</number>
+          </property>
           <item>
            <widget class="QLabel" name="label_2">
             <property name="maximumSize">
@@ -386,6 +401,9 @@
           </item>
           <item>
            <layout class="QVBoxLayout" name="aspects_verticalLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
             <item>
              <widget class="QLabel" name="summary_Label">
               <property name="maximumSize">
@@ -508,9 +526,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>310</y>
+      <y>315</y>
       <width>421</width>
-      <height>366</height>
+      <height>376</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -542,6 +560,11 @@
        <width>151</width>
        <height>20</height>
       </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
      </property>
      <property name="text">
       <string>Mask</string>
@@ -590,6 +613,11 @@
        <height>20</height>
       </rect>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <property name="text">
       <string>Lag times</string>
      </property>
@@ -602,6 +630,11 @@
        <width>151</width>
        <height>20</height>
       </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
      </property>
      <property name="text">
       <string>Correlation strength</string>
@@ -616,6 +649,11 @@
        <height>20</height>
       </rect>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <property name="text">
       <string>MTT</string>
      </property>
@@ -628,6 +666,11 @@
        <width>151</width>
        <height>20</height>
       </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
      </property>
      <property name="text">
       <string>R2</string>
@@ -658,6 +701,11 @@
        <height>20</height>
       </rect>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <property name="text">
       <string>Mask</string>
      </property>
@@ -671,6 +719,11 @@
        <height>20</height>
       </rect>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <property name="text">
       <string>Mask</string>
      </property>
@@ -683,6 +736,11 @@
        <width>151</width>
        <height>20</height>
       </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
      </property>
      <property name="text">
       <string>Mask</string>
@@ -948,7 +1006,7 @@
     <property name="geometry">
      <rect>
       <x>440</x>
-      <y>310</y>
+      <y>315</y>
       <width>381</width>
       <height>201</height>
      </rect>
@@ -1007,7 +1065,7 @@
     <property name="geometry">
      <rect>
       <x>830</x>
-      <y>310</y>
+      <y>315</y>
       <width>281</width>
       <height>201</height>
      </rect>
@@ -1344,7 +1402,7 @@
   </property>
  </designerdata>
  <buttongroups>
-  <buttongroup name="stats_buttonGroup"/>
   <buttongroup name="colormap_buttonGroup"/>
+  <buttongroup name="stats_buttonGroup"/>
  </buttongroups>
 </ui>
