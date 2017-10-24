@@ -862,6 +862,31 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
         np.asarray(valid, dtype='float64')
 
 
+def cepstraldelay(data1, data2, timestep, displayplots=True):
+    # Choudhary, H., Bahl, R. & Kumar, A. 
+    # Inter-sensor Time Delay Estimation using cepstrum of sum and difference signals in 
+    #     underwater multipath environment. in 1–7 (IEEE, 2015). doi:10.1109/UT.2015.7108308
+    additive_cepstrum, _ = complex_cepstrum(data1 + data2)
+    difference_cepstrum, _ = complex_cepstrum(data1 - data2)
+    residual_cepstrum = additive_cepstrum - difference_cepstrum
+    if displayplots:
+        tvec = timestep * np.arange(0.0, len(data1))
+        fig = pl.figure()
+        ax1 = fig.add_subplot(311)
+        ax1.set_title('additive_cepstrum')
+        ax1.set_xlabel('quefrency in seconds')
+        pl.plot(tvec, additive_cepstrum)
+        ax2 = fig.add_subplot(312)
+        ax2.set_title('difference_cepstrum')
+        ax2.set_xlabel('quefrency in seconds')
+        pl.plot(tvec, difference_cepstrum)
+        ax3 = fig.add_subplot(313)
+        ax3.set_title('residual_cepstrum')
+        ax3.set_xlabel('quefrency in seconds')
+        pl.plot(tvec, residual_cepstrum)
+        pl.show()
+    return timestep * np.argmax(residual_cepstrum)
+
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
 def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=False):
     if usefft:
@@ -2594,6 +2619,31 @@ def polarfft(invec, samplerate):
     maxfreq = samplerate / 2.0
     freqs = np.arange(0.0, maxfreq, maxfreq / (np.shape(spec)[0]))
     return freqs, magspec, phspec
+
+
+def complex_cepstrum(x):
+    # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
+    def _unwrap(phase):
+        samples = phase.shape[-1]
+        unwrapped = np.unwrap(phase)
+        center = (samples + 1) // 2
+        if samples == 1: 
+            center = 0  
+        ndelay = np.array(np.round(unwrapped[...,center]/np.pi))
+        unwrapped -= np.pi * ndelay[...,None] * np.arange(samples) / center
+        return unwrapped, ndelay
+        
+    spectrum = fftpack.fft(x)
+    unwrapped_phase, ndelay = _unwrap(np.angle(spectrum))
+    log_spectrum = np.log(np.abs(spectrum)) + 1j * unwrapped_phase
+    ceps = fftpack.ifft(log_spectrum).real
+    
+    return ceps, ndelay
+
+
+def real_cepstrum(x):
+    # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
+    return fftpack.ifft(np.log(np.abs(fftpack.fft(x)))).real
 
 
 # --------------------------- Utility functions -------------------------------------------------
