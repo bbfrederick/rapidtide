@@ -1,0 +1,195 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+# $Author: frederic $
+#       $Date: 2016/06/14 12:04:50 $
+#       $Id: glmfilt,v 1.25 2016/06/14 12:04:50 frederic Exp $
+#
+from __future__ import print_function, division
+import sys
+import numpy as np
+import rapidtide.tide_funcs as tide
+
+
+def main():
+    #
+    #       Initial setup
+    #
+    # read in the datafile
+    nargs = len(sys.argv)
+    if (nargs < 5):
+        print("usage: glmfilt datafile numskip outputroot evfile [evfile_2...evfile_n]")
+        print("    Fits and removes the effect of voxel specific and/or global regressors")
+        exit()
+
+    #initialize some variables
+    evdata = []
+    evisnifti = []
+    thedims_in = []
+    thedims_ev = []
+    thesizes_ev = []
+    evfilename = []
+
+    # read in the parameters
+    inputfile = sys.argv[1]
+    numskip = int(sys.argv[2])
+    outputroot = sys.argv[3]
+    evfilename.append(sys.argv[4])
+    numfiles = 1
+    print(evfilename[0])
+    if (nargs > 5):
+        for i in range(5, nargs):
+            numfiles += 1
+            evfilename.append(sys.argv[i])
+            print(evfilename[numfiles - 1])
+
+    # read the datafile and the evfiles
+    nim_input, nim_data, nim_header, thedims_in, thesizes_in = tide.readfromnifti(inputfile)
+    xdim, ydim, slicedim, tr = tide.parseniftisizes(thesizes_in)
+    print(xdim, ydim, slicedim, tr)
+    xsize, ysize, numslices, timepoints = tide.parseniftidims(thedims_in)
+    print(xsize, ysize, numslices, timepoints)
+
+    numregressors = 0
+    for i in range(0, numfiles):
+        print("file ", i, " has name ", evfilename[i])
+        # check to see if file is nifti or text
+        fileisnifti = tide.checkifnifti(evfilename[i])
+        fileisparfile = tide.checkifparfile(evfilename[i])
+        if fileisnifti:
+            # if file is nifti
+            print("reading voxel specific regressor from ", evfilename[i])
+            nim_evinput, ev_data, ev_header, thedims_evinput, thesizes_evinput = tide.readfromnifti(evfilename[i])
+            evisnifti.append(True)
+            evdata.append(1.0 * ev_data)
+            thedims_ev.append(thedims_evinput)
+            thesizes_ev.append(thesizes_evinput)
+            numregressors += 1
+        elif fileisparfile:
+            # check to see if file a par file
+            print("reading 6 global regressors from an FSL parfile")
+            evtimeseries = tide.readvecs(evfilename[i])
+            print("timeseries length = ", len(evtimeseries[0, :]))
+            for j in range(0, 6):
+                evisnifti.append(False)
+                evdata.append(1.0 * evtimeseries[j, :])
+                thedims_evinput = 1.0 * thedims_in
+                thesizes_evinput = 1.0 * thesizes_in
+                thedims_ev.append(thedims_evinput)
+                thesizes_ev.append(thesizes_evinput)
+                numregressors += 1
+        else:
+            # if file is text
+            print("reading global regressor from ", evfilename[i])
+            evtimeseries = tide.readvec(evfilename[i])
+            print("timeseries length = ", len(evtimeseries))
+            evisnifti.append(False)
+            evdata.append(1.0 * evtimeseries)
+            thedims_evinput = 1.0 * thedims_in
+            thesizes_evinput = 1.0 * thesizes_in
+            thedims_ev.append(thedims_evinput)
+            thesizes_ev.append(thesizes_evinput)
+            numregressors += 1
+
+    for j in range(0, numregressors):
+        for i in range(0, 4):
+            if (thedims_in[i] != thedims_ev[j][i]):
+                print("Input file and ev file ", j, " dimensions do not match")
+                print("dimension ", i, ":", thedims_in[i], " != ", thedims_ev[j][i])
+                exit()
+        if (timepoints - numskip != thedims_ev[j][4]):
+            print("Input file and ev file ", j, " dimensions do not match")
+            print("dimension ", 4, ":", timepoints, "!= ", thedims_ev[j][4], "+", numskip)
+            exit()
+
+    print("will perform GLM with ", numregressors, " regressors")
+    meandata = np.zeros((xsize, ysize, numslices), dtype='float')
+    fitdata = np.zeros((xsize, ysize, numslices, numregressors), dtype='float')
+    Rdata = np.zeros((xsize, ysize, numslices), dtype='float')
+    trimmeddata = 1.0 * nim_data[:, :, :, numskip:]
+
+    for z in range(0, numslices):
+        print("processing slice ", z)
+        for y in range(0, ysize):
+            for x in range(0, xsize):
+                regressorvec = []
+                for j in range(0, numregressors):
+                    if evisnifti[j]:
+                        regressorvec.append(evdata[j][x, y, z, :])
+                    else:
+                        regressorvec.append(evdata[j])
+                if np.max(trimmeddata[x, y, z, :]) - np.min(trimmeddata[x, y, z, :]) > 0.0:
+                    thefit, R = tide.mlregress(regressorvec, trimmeddata[x, y, z, :])
+                    meandata[x, y, z] = thefit[0, 0]
+                    Rdata[x, y, z] = R
+                    for j in range(0, numregressors):
+                        fitdata[x, y, z, j] = thefit[0, j + 1]
+                        #datatoremove[x, y, z, :, j] = thefit[0, j + 1] * regressorvec[j]
+                else:
+                    meandata[x, y, z] = 0.0
+                    Rdata[x, y, z] = 0.0
+                    for j in range(0, numregressors):
+                        fitdata[x, y, z, j] = 0.0
+                        #datatoremove[x, y, z, :, j] = 0.0 * regressorvec[j]
+                #totaltoremove[x, y, z, :] = np.sum(datatoremove[x, y, z, :, :], axis=1)
+                #filtereddata[x, y, z, :] = trimmeddata[x, y, z, :] - totaltoremove[x, y, z, :]
+
+
+    # first save the things with a small numbers of timepoints
+    print("processing complete: about to save the fit data")
+    theheader = nim_header
+    theheader['dim'][4] = 1
+    tide.savetonifti(meandata, theheader, thesizes_in, outputroot + "_mean")
+    for j in range(0, numregressors):
+        tide.savetonifti(fitdata[:, :, :, j], theheader, thesizes_in, outputroot + "_fit" + str(j))
+    tide.savetonifti(Rdata, theheader, thesizes_in, outputroot + "_R")
+    Rdata = None
+
+    datatoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip, numregressors), dtype='float')
+    #totaltoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip), dtype='float')
+    #filtereddata = 1.0 * totaltoremove
+    for z in range(0, numslices):
+        print("processing slice ", z)
+        for y in range(0, ysize):
+            for x in range(0, xsize):
+                if np.max(trimmeddata[x, y, z, :]) - np.min(trimmeddata[x, y, z, :]) > 0.0:
+                    for j in range(0, numregressors):
+                        datatoremove[x, y, z, :, j] = fitdata[x, y, z, j] * regressorvec[j]
+                else:
+                    datatoremove[x, y, z, :, :] = 0.0
+
+    # now save the things with full timecourses
+    theheader = nim_header
+    theheader['dim'][4] = timepoints - numskip
+    for j in range(0, numregressors):
+        tide.savetonifti(datatoremove[:, :, :, :, j], theheader, thesizes_in,
+                         outputroot + "_toremove" + str(j))
+    datatoremove = None
+    totaltoremove = np.sum(datatoremove, axis=4)
+    tide.savetonifti(totaltoremove, theheader, thesizes_in, outputroot + "_totaltoremove")
+    filtereddata = trimmeddata - totaltoremove
+    totaltoremove = None
+    tide.savetonifti(trimmeddata, theheader, thesizes_in, outputroot + "_trimmed")
+    trimmeddata = None
+    tide.savetonifti(filtereddata, theheader, thesizes_in, outputroot + "_filtered")
+
+
+if __name__ == "__main__":
+    #import cProfile as profile
+    #profile.run('main()', 'rapidtide_profile')
+    main()
+
