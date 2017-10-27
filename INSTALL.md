@@ -16,7 +16,7 @@ The following optional dependencies will be used if present
 * pyfftw, also for faster performance
 
 If you want to use tidepool for image display, you will also need to install the following:
-* pyqt4
+* pyqt4 or pyqt5
 * pyqtgraph
 
 The simplest way BY FAR to get this all done is to use Anaconda python from Continuum Analytics.  It's a free, curated scientific Python distribution that is easy to maintain and takes a lot of headaches out of maintaining a distribution.  You can get it here: https://www.continuum.io.  Rapidtide works with Python 2 or 3.  If you are new to Python, you should probably just start at 3.
@@ -29,7 +29,7 @@ conda config --add channels conda-forge
 
 Then install the dependencies (including some good optional ones:
 ```bash
-conda install scikit-learn nibabel pyqtgraph pyfftw statsmodels
+conda install nibabel pyqtgraph pyfftw
 ```
 
 Done.
@@ -63,19 +63,19 @@ Execute any of the commands to run rapidtide on the sample data:
 
 ```bash
 # run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
-rapidtide2 examples/src/fmri.nii.gz examples/dst/dgsr -L -r -15,15 --refinepasses=3
+rapidtide2 rapidtide/data/examples/examples/src/fmri.nii.gz rapidtide/data/examples/examples/dst/dgsr -L -r -15,15 --refinepasses=3
 
 # run rapidtide2 to perform static global signal regression (sGSR) on an fMRI file[1] 
 # (this is just global mean regression):
-rapidtide2 fmri.nii.gz sgsr -L -Z 0.0
+rapidtide2 rapidtide/data/examples/srd/fmri.nii.gz rapidtide/data/examples/dst/sgsr -L -Z 0.0
 
 # b) run tidepool to look at the results from a):
 tidepool
-(then select the file examples/dst/dgsr_lagtimes.nii.gz to load the maps)
+(then select the file rapidtide/data/examples/dst/dgsr_lagtimes.nii.gz to load the maps)
 
 # c) look at the refined regressors produced during dGSR:
 # (the "dgsr_pass1" regressor is the initial global mean before refinement)
-showtc examples/dst/dgsr_reference_fmrires_pass[123].txt
+showtc rapidtide/data/examples/dst/dgsr_reference_fmrires_pass[123].txt
 ```
 
 References
