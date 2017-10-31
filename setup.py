@@ -50,6 +50,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/showtc',
                'rapidtide/scripts/showxy',
                'rapidtide/scripts/spatialfit',
+               'rapidtide/scripts/glmfilt',
                'rapidtide/scripts/histnifti',
                'rapidtide/scripts/atlastool',
                'rapidtide/scripts/showhist']
