@@ -91,7 +91,7 @@ def usage():
 
 # option control
 do4Dmaps = False
-dohires = False
+aligntohires = False
 forcelinear = False
 
 # get the command line parameters
@@ -119,7 +119,7 @@ for o, a in opts:
         forcelinear = True
         print('forcing linear transformation')
     elif o == '--hires':
-        dohires = True
+        aligntohires = True
         print('transforming to hires anatomic instead of MNI152')
     elif o in ('-h', '--help'):
         usage()
@@ -146,7 +146,7 @@ theprevpath,theprevbase = os.path.split(thepath)
 subjroot = thebase[:-15]
 
 # make sure the appropriate transformation matrix and targets exist
-if dohires:
+if aligntohires:
     reftarget = os.path.abspath(os.path.join(featdir,
         'reg','highres.nii.gz'))
     warpfuncfile=''
@@ -195,7 +195,7 @@ for themap in theanatmaps:
     inputname = os.path.abspath(glob.glob(os.path.join(featdir,
         'reg',themap + '.nii.gz'))[0])
     outputname = os.path.abspath(os.path.join(theoutputdir,subjroot + outputtag + themap.replace('standard','anat') + '.nii.gz'))
-    if dohires:
+    if aligntohires:
         thecommand = ['cp', inputname, outputname]
     else:
         xform = os.path.abspath(glob.glob(os.path.join(featdir,
