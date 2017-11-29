@@ -150,7 +150,7 @@ def main():
 
 
     # first save the things with a small numbers of timepoints
-    print("processing complete: about to save the fit data")
+    print("fitting complete: about to save the fit data")
     theheader = nim_header
     theheader['dim'][4] = 1
     tide.savetonifti(meandata, theheader, thesizes_in, outputroot + "_mean")
@@ -159,8 +159,10 @@ def main():
     tide.savetonifti(Rdata, theheader, thesizes_in, outputroot + "_R")
     Rdata = None
 
-    datatoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip, numregressors), dtype='float')
-    #totaltoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip), dtype='float')
+    print()
+    print("Now constructing the array of data to remove")
+    #datatoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip, numregressors), dtype='float')
+    totaltoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip), dtype='float')
     #filtereddata = 1.0 * totaltoremove
     for z in range(0, numslices):
         print("processing slice ", z)
@@ -168,18 +170,18 @@ def main():
             for x in range(0, xsize):
                 if np.max(trimmeddata[x, y, z, :]) - np.min(trimmeddata[x, y, z, :]) > 0.0:
                     for j in range(0, numregressors):
-                        datatoremove[x, y, z, :, j] = fitdata[x, y, z, j] * regressorvec[j]
+                        totaltoremove[x, y, z, :] += fitdata[x, y, z, j] * regressorvec[j]
                 else:
-                    datatoremove[x, y, z, :, :] = 0.0
+                    totaltoremove[x, y, z, :] = 0.0
+    print("Array construction done.  Saving files")
 
     # now save the things with full timecourses
     theheader = nim_header
     theheader['dim'][4] = timepoints - numskip
-    for j in range(0, numregressors):
-        tide.savetonifti(datatoremove[:, :, :, :, j], theheader, thesizes_in,
-                         outputroot + "_toremove" + str(j))
-    datatoremove = None
-    totaltoremove = np.sum(datatoremove, axis=4)
+    #for j in range(0, numregressors):
+        #tide.savetonifti(datatoremove[:, :, :, :, j], theheader, thesizes_in,
+                         #outputroot + "_toremove" + str(j))
+    #datatoremove = None
     tide.savetonifti(totaltoremove, theheader, thesizes_in, outputroot + "_totaltoremove")
     filtereddata = trimmeddata - totaltoremove
     totaltoremove = None
