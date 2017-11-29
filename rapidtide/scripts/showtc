@@ -32,7 +32,7 @@ import rapidtide.tide_funcs as tide
 import numpy as np
 from scipy import arange, fftpack
 
-from pylab import figure, plot, legend, show, xlabel, ylabel, savefig, title, subplot, tight_layout, suptitle, xlim, ylim
+from pylab import figure, plot, legend, show, xlabel, ylabel, savefig, title, subplot, tight_layout, suptitle, xlim, ylim, box
 
 
 def phase(mcv): 
@@ -62,6 +62,8 @@ def usage():
     print("    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen")
     print("    --title=TITLE            - use TITLE as the overall title of the graph")
     print("    --separate               - use a separate subplot for each timecourse")
+    print("    --noxax                  - don't show x axis")
+    print("    --noyax                  - don't show y axis")
     return ()
 
 # set default variable values
@@ -77,13 +79,16 @@ voffset = 0.0
 colornames = []
 outputfile = None
 thetitle = None
+legendset = False
 legendlist = []
 separate = False
 thelinewidth = 1.0
+showxax = True
+showyax = True
 
 # get the command line parameters
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "voffset=",
+    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "voffset=", "noxax", "noyax",
                                                    "samplerate=", "colorlist=", "linewidth=", "legendlist=", "title=", "separate", "sampletime=", "tofile="])
 except getopt.GetoptError as err:
     # print help information and exit:
@@ -114,6 +119,7 @@ for o, a in opts:
         outputfile = a
         print('Writing output to file', outputfile)
     elif o == '--legendlist':
+        legendset = True
         for thislegend in a.split(','):
             legendlist.append(thislegend)
         print('Colors used:', colornames)
@@ -128,6 +134,12 @@ for o, a in opts:
         dopspec = True
         domag = False
         print('showing power spectra phase')
+    elif o == '--noyax':
+        showyax = False
+        print('will not show y axis')
+    elif o == '--noxax':
+        showxax = False
+        print('will not show x axis')
     elif o == '--waterfall':
         dowaterfall = True
         print('making a waterfall plot')
@@ -196,18 +208,15 @@ for i in range(0, numfiles):
             else:
                 pspec = fftpack.fft(invec)[0:len(invec) // 2]
             if domag:
-                #yvecs.append(abs(pspec) + numvecs * voffset)
                 yvecs.append(abs(pspec) * 1.0)
             else:
-                #yvecs.append(phase(pspec) + numvecs * voffset)
                 yvecs.append(phase(pspec) * 1.0)
             maxfreq = samplerate / 2.0
             xvecs.append(arange(0.0, maxfreq, maxfreq / (len(yvecs[i]))))
         else:
-            #yvecs.append(invecs[j] + numvecs * voffset)
             yvecs.append(invecs[j] * 1.0)
             xvecs.append(arange(0.0, len(yvecs[numvecs]), 1.0) / samplerate)
-        if len(legendlist) == 0:
+        if not legendset:
             if invecs.shape[0] > 1:
                 linelabels.append(textfilename[i] + '_column' + str(j).zfill(2))
             else:
@@ -223,17 +232,17 @@ xrange = (np.min(np.asarray(xvecs, dtype='float')), np.max(np.asarray(xvecs, dty
 yrange = (np.min(np.asarray(yvecs, dtype='float')), np.max(np.asarray(yvecs, dtype='float')))
 if voffset < 0.0:
     voffset = yrange[1] - yrange[0]
-for i in range(0, numvecs):
-    yvecs[i] += (numvecs - i - 1) * voffset
-yrange = (np.min(np.asarray(yvecs, dtype='float')), np.max(np.asarray(yvecs, dtype='float')))
+if not separate:
+    for i in range(0, numvecs):
+        yvecs[i] += (numvecs - i - 1) * voffset
+    yrange = (np.min(np.asarray(yvecs, dtype='float')), np.max(np.asarray(yvecs, dtype='float')))
 
-if dowaterfall:
-    xstep = (xrange[1] - xrange[0])/numvecs
-    ystep = yrange[1] - yrange[0]
-    for i in range(numvecs):
-        xvecs[i] = xvecs[i] + i * xstep
-        yvecs[i] = 10.0 * yvecs[i]/ystep + i * ystep
-
+    if dowaterfall:
+        xstep = (xrange[1] - xrange[0])/numvecs
+        ystep = yrange[1] - yrange[0]
+        for i in range(numvecs):
+            xvecs[i] = xvecs[i] + i * xstep
+            yvecs[i] = 10.0 * yvecs[i]/ystep + i * ystep
 
 # now plot it out
 if separate:
@@ -260,36 +269,48 @@ else:
 
 fig = figure()
 if separate:
-    fig.suptitle(thetitle, fontsize=thesuptitlefontsize)
+    if thetitle is not None:
+        fig.suptitle(thetitle, fontsize=thesuptitlefontsize)
 else:
     ax = fig.add_subplot(1, 1, 1)
-    ax.set_title(thetitle, fontsize=thetitlefontsize)
+    if thetitle is not None:
+        ax.set_title(thetitle, fontsize=thetitlefontsize)
 for i in range(0, numvecs):
     if separate:
         ax = fig.add_subplot(numvecs, 1, i + 1)
     ax.plot(xvecs[i], yvecs[i], color=colorlist[i], label=linelabels[i], linewidth=thelinewidth)
     ax.set_ylim(yrange)
-    ax.tick_params(axis='x', labelsize=thexlabelfontsize, which='both')
-    ax.tick_params(axis='y', labelsize=theylabelfontsize, which='both')
+    if showxax:
+        ax.tick_params(axis='x', labelsize=thexlabelfontsize, which='both')
+    if showyax:
+        ax.tick_params(axis='y', labelsize=theylabelfontsize, which='both')
     if separate and (thetitle is not None):
-        ax.set_title(legendlist[i], loc='right', fontsize=thetitlefontsize)
+        ax.set_title(linelabels[i], loc='right', fontsize=thetitlefontsize)
+    box(on=None)
+    ax.xaxis.set_visible(showxax)
+    ax.yaxis.set_visible(showyax)
 if not separate:
     if dolegend:
         ax.legend(fontsize=thelegendfontsize)
 
 if dopspec:
-    ax.set_xlabel('Frequency (Hz)', fontsize=thexlabelfontsize, fontweight='bold')
+    if showxax:
+        ax.set_xlabel('Frequency (Hz)', fontsize=thexlabelfontsize, fontweight='bold')
     if domag:
-        ax.set_ylabel('Signal power', fontsize=theylabelfontsize, fontweight='bold')
+        if showyax:
+            ax.set_ylabel('Signal power', fontsize=theylabelfontsize, fontweight='bold')
     else:
-        ax.set_ylabel('Signal phase', fontsize=theylabelfontsize, fontweight='bold')
+        if showyax:
+            ax.set_ylabel('Signal phase', fontsize=theylabelfontsize, fontweight='bold')
 else:
-    ax.set_xlabel('Time (s)', fontsize=thexlabelfontsize, fontweight='bold')
+    if showxax:
+        ax.set_xlabel('Time (s)', fontsize=thexlabelfontsize, fontweight='bold')
+
 
 
 fig.tight_layout()
 
 if outputfile is None:
-    fig.show()
+    show()
 else:
     savefig(outputfile, bbox_inches='tight')
