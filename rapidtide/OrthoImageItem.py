@@ -124,6 +124,7 @@ class OrthoImageItem(QtGui.QWidget):
         self.xfov = self.xdim * self.xsize
         self.yfov = self.ydim * self.ysize
         self.zfov = self.zdim * self.zsize
+        print('fovs:', self.xfov, self.yfov, self.zfov)
         self.xpos = int(self.xdim // 2)
         self.ypos = int(self.ydim // 2)
         self.zpos = int(self.zdim // 2)
