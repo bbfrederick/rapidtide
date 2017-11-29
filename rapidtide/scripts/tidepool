@@ -1425,6 +1425,9 @@ def main():
     # get inputfile root name if necessary
     if datafileroot == '':
         selectFile()
+    if datafileroot == '':
+        print('No input file specified - exiting.')
+        sys.exit()
 
     # movie control
     usetime = False
