@@ -47,7 +47,7 @@ except ImportError:
     PILexists = False
 
 
-def newColorbar(view, left, top, scalefacx, scalefacy, imgsize):
+def newColorbar(view, left, top, impixpervoxx, impixpervoxy, imgsize):
     cb_xdim = imgsize // 10
     cb_ydim = imgsize
     theviewbox = pg.ViewBox(enableMouse=False)
@@ -59,7 +59,7 @@ def newColorbar(view, left, top, scalefacx, scalefacy, imgsize):
     thecolorbarwin = pg.ImageItem()
     theviewbox.addItem(thecolorbarwin)
     thecolorbarwin.translate(left, top)
-    thecolorbarwin.scale(scalefacx, scalefacy)
+    thecolorbarwin.scale(impixpervoxx, impixpervoxy)
 
     colorbarvals = np.zeros((cb_xdim, cb_ydim), dtype=np.float64)
     for i in range(0, cb_ydim):
@@ -68,29 +68,23 @@ def newColorbar(view, left, top, scalefacx, scalefacy, imgsize):
     return thecolorbarwin, theviewbox
 
 
-def newViewWindow(view, xdim, ydim, left, top, scalefacx, scalefacy, imgsize, enableMouse=False):
-    # print(left, top, scalefacx, scalefacy, imgsize)
+def newViewWindow(view, xdim, ydim, left, top, impixpervoxx, impixpervoxy, imgsize, enableMouse=False):
     theviewbox = view.addViewBox(enableMouse=enableMouse, enableMenu=False, lockAspect=1.0)
     theviewbox.setAspectLocked()
-    # theviewbox.enableAutoRange(enable=False)
-    theviewbox.setBackgroundColor([0, 0, 0])
-    # theviewbox.setRange(
-    #    QtCore.QRectF(0, 0, xdim, ydim), 
-    #    xRange=(0, int(xdim - 1)), yRange=(0, int(ydim - 1)),
-    #    padding=0.0, disableAutoRange=True)
-    # theviewbox.setRange(padding=0.0, disableAutoRange=True)
+    theviewbox.setRange(QtCore.QRectF(0, 0, imgsize, imgsize), padding=0., disableAutoRange=True)
+    theviewbox.setBackgroundColor([50, 50, 50])
 
     theviewfgwin = pg.ImageItem()
     theviewbox.addItem(theviewfgwin)
     theviewfgwin.setZValue(10)
     theviewfgwin.translate(left, top)
-    theviewfgwin.scale(scalefacx, scalefacy)
+    theviewfgwin.scale(impixpervoxx, impixpervoxy)
 
     theviewbgwin = pg.ImageItem()
     theviewbox.addItem(theviewbgwin)
     theviewbgwin.setZValue(0)
     theviewbgwin.translate(left, top)
-    theviewbgwin.scale(scalefacx, scalefacy)
+    theviewbgwin.scale(impixpervoxx, impixpervoxy)
 
     theviewvLine = pg.InfiniteLine(angle=90, movable=False, pen='g')
     theviewvLine.setZValue(20)
@@ -113,40 +107,36 @@ class OrthoImageItem(QtGui.QWidget):
         self.button = button
         self.verbose = verbose
         self.enableMouse = enableMouse
-        self.xdim = self.map.xdim
-        self.ydim = self.map.ydim
-        self.zdim = self.map.zdim
-        self.tdim = self.map.tdim
-        self.xsize = self.map.xsize
-        self.ysize = self.map.ysize
-        self.zsize = self.map.zsize
+        self.xdim = self.map.xdim     # this is the number of voxels along this axis
+        self.ydim = self.map.ydim     # this is the number of voxels along this axis
+        self.zdim = self.map.zdim     # this is the number of voxels along this axis
+        self.tdim = self.map.tdim     # this is the number of voxels along this axis
+        self.xsize = self.map.xsize   # this is the mapping between voxel and physical space
+        self.ysize = self.map.ysize   # this is the mapping between voxel and physical space
+        self.zsize = self.map.zsize   # this is the mapping between voxel and physical space
         self.imgsize = imgsize
         self.xfov = self.xdim * self.xsize
         self.yfov = self.ydim * self.ysize
         self.zfov = self.zdim * self.zsize
-        print('fovs:', self.xfov, self.yfov, self.zfov)
         self.xpos = int(self.xdim // 2)
         self.ypos = int(self.ydim // 2)
         self.zpos = int(self.zdim // 2)
         self.tpos = int(0)
         self.maxfov = np.max([self.xfov, self.yfov, self.zfov])
-        self.scalefacx = self.imgsize * (self.xfov / self.maxfov) / self.xdim
-        self.scalefacy = self.imgsize * (self.yfov / self.maxfov) / self.ydim
-        self.scalefacz = self.imgsize * (self.zfov / self.maxfov) / self.zdim
-        self.revscalefacx = self.imgsize / (self.maxfov * self.scalefacx)
-        self.revscalefacy = self.imgsize / (self.maxfov * self.scalefacy)
-        self.revscalefacz = self.imgsize / (self.maxfov * self.scalefacz)
+        self.impixpervoxx = self.imgsize * (self.xfov / self.maxfov) / self.xdim
+        self.impixpervoxy = self.imgsize * (self.yfov / self.maxfov) / self.ydim
+        self.impixpervoxz = self.imgsize * (self.zfov / self.maxfov) / self.zdim
         self.offsetx = self.imgsize * (0.5 - self.xfov / (2.0 * self.maxfov))
         self.offsety = self.imgsize * (0.5 - self.yfov / (2.0 * self.maxfov))
         self.offsetz = self.imgsize * (0.5 - self.zfov / (2.0 * self.maxfov))
+
         if self.verbose:
             print('OrthoImageItem intialization:')
             print('    Dimensions:', self.xdim, self.ydim, self.zdim)
             print('    Voxel sizes:', self.xsize, self.ysize, self.zsize)
             print('    FOVs:', self.xfov, self.yfov, self.zfov)
             print('    Maxfov, imgsize:', self.maxfov, self.imgsize)
-            print('    Scale factors:', self.scalefacx, self.scalefacy, self.scalefacz)
-            print('    Reverse scale factors:', self.revscalefacx, self.revscalefacy, self.revscalefacz)
+            print('    Scale factors:', self.impixpervoxx, self.impixpervoxy, self.impixpervoxz)
             print('    Offsets:', self.offsetx, self.offsety, self.offsetz)
         self.buttonisdown = False
 
@@ -159,19 +149,19 @@ class OrthoImageItem(QtGui.QWidget):
             newViewWindow(self.view,
                           self.xdim, self.ydim,
                           self.offsetx, self.offsety,
-                          self.scalefacx, self.scalefacy,
+                          self.impixpervoxx, self.impixpervoxy,
                           self.imgsize, enableMouse=self.enableMouse)
         self.corviewwin, self.corviewbgwin, self.corviewvLine, self.corviewhLine, self.corviewbox = \
             newViewWindow(self.view,
                           self.xdim, self.zdim,
                           self.offsetx, self.offsetz,
-                          self.scalefacx, self.scalefacz,
+                          self.impixpervoxx, self.impixpervoxz,
                           self.imgsize, enableMouse=self.enableMouse)
         self.sagviewwin, self.sagviewbgwin, self.sagviewvLine, self.sagviewhLine, self.sagviewbox = \
             newViewWindow(self.view,
                           self.ydim, self.zdim,
                           self.offsety, self.offsetz,
-                          self.scalefacy, self.scalefacz,
+                          self.impixpervoxy, self.impixpervoxz,
                           self.imgsize, enableMouse=self.enableMouse)
         if self.enableMouse:
             self.axviewbox.keyPressEvent = self.handleaxkey
@@ -188,44 +178,45 @@ class OrthoImageItem(QtGui.QWidget):
         self.enableView()
         self.updateAllViews()
 
-    def xpos2pix(self, xpos):
-        #print('xpos2pix: (offset, scalefac, pos, pix):', self.offsetx, self.scalefacx, xpos, int(np.round(self.offsetx + self.scalefacx * xpos)))
-        return int(np.round(self.offsetx + self.scalefacx * xpos))
 
-    def ypos2pix(self, ypos):
-        #print('ypos2pix: (offset, scalefac, pos, pix):', self.offsety, self.scalefacy, ypos, int(np.round(self.offsety + self.scalefacy * ypos)))
-        return int(np.round(self.offsety + self.scalefacy * ypos))
+    def xvox2pix(self, xpos):
+        return int(np.round(self.offsetx + self.impixpervoxx * xpos))
 
-    def zpos2pix(self, zpos):
-        #print('zpos2pix: (offset, scalefac, pos, pix):', self.offsetz, self.scalefacz, zpos, int(np.round(self.offsetz + self.scalefacz * zpos)))
-        return int(np.round(self.offsetz + self.scalefacz * zpos))
 
-    def xpix2pos(self, xpix):
-        thepos = self.xdim / 2.0 + (xpix - self.imgsize / 2) * self.revscalefacx
-        #print('xpix2pos: (dim, imgsize, revscalefac, pix, pos):', self.xdim, self.imgsize, self.revscalefacx, xpix, int(np.round(thepos)))
+    def yvox2pix(self, ypos):
+        return int(np.round(self.offsety + self.impixpervoxy * ypos))
+
+
+    def zvox2pix(self, zpos):
+        return int(np.round(self.offsetz + self.impixpervoxz * zpos))
+
+
+    def xpix2vox(self, xpix):
+        thepos = (xpix - self.offsetx) / self.impixpervoxx
         if thepos > self.xdim - 1:
             thepos = self.xdim - 1
         if thepos < 0:
             thepos = 0
         return int(np.round(thepos))
 
-    def ypix2pos(self, ypix):
-        thepos = self.ydim / 2.0 + (ypix - self.imgsize / 2) * self.revscalefacy
-        #print('ypix2pos: (dim, imgsize, revscalefac, pix, pos):', self.ydim, self.imgsize, self.revscalefacy, ypix, int(np.round(thepos)))
+
+    def ypix2vox(self, ypix):
+        thepos = (ypix - self.offsety) / self.impixpervoxy
         if thepos > self.ydim - 1:
             thepos = self.ydim - 1
         if thepos < 0:
             thepos = 0
         return int(np.round(thepos))
 
-    def zpix2pos(self, zpix):
-        thepos = self.zdim / 2.0 + (zpix - self.imgsize / 2) * self.revscalefacz
-        #print('zpix2pos: (dim, imgsize, revscalefac, pix, pos):', self.zdim, self.imgsize, self.revscalefacz, zpix, int(np.round(thepos)))
+
+    def zpix2vox(self, zpix):
+        thepos = (zpix - self.offsetz) / self.impixpervoxz
         if thepos > self.zdim - 1:
             thepos = self.zdim - 1
         if thepos < 0:
             thepos = 0
         return int(np.round(thepos))
+
 
     def updateAllViews(self):
         if self.tdim == 1:
@@ -241,8 +232,8 @@ class OrthoImageItem(QtGui.QWidget):
         else:
             axbg = self.bgmap.data[:, :, self.zpos]
         self.updateOneView(axdata, axmask, axbg, self.map.theLUT, self.axviewwin, self.axviewbgwin)
-        self.axviewvLine.setValue(self.xpos2pix(self.xpos))
-        self.axviewhLine.setValue(self.ypos2pix(self.ypos))
+        self.axviewvLine.setValue(self.xvox2pix(self.xpos))
+        self.axviewhLine.setValue(self.yvox2pix(self.ypos))
 
         if self.tdim == 1:
             cordata = self.map.maskeddata[:, self.ypos, :]
@@ -257,8 +248,8 @@ class OrthoImageItem(QtGui.QWidget):
         else:
             corbg = self.bgmap.data[:, self.ypos, :]
         self.updateOneView(cordata, cormask, corbg, self.map.theLUT, self.corviewwin, self.corviewbgwin)
-        self.corviewvLine.setValue(self.xpos2pix(self.xpos))
-        self.corviewhLine.setValue(self.zpos2pix(self.zpos))
+        self.corviewvLine.setValue(self.xvox2pix(self.xpos))
+        self.corviewhLine.setValue(self.zvox2pix(self.zpos))
 
         if self.tdim == 1:
             sagdata = self.map.maskeddata[self.xpos, :, :]
@@ -273,21 +264,21 @@ class OrthoImageItem(QtGui.QWidget):
         else:
             sagbg = self.bgmap.data[self.xpos, :, :]
         self.updateOneView(sagdata, sagmask, sagbg, self.map.theLUT, self.sagviewwin, self.sagviewbgwin)
-        self.sagviewvLine.setValue(self.ypos2pix(self.ypos))
-        self.sagviewhLine.setValue(self.zpos2pix(self.zpos))
+        self.sagviewvLine.setValue(self.yvox2pix(self.ypos))
+        self.sagviewhLine.setValue(self.zvox2pix(self.zpos))
 
-        # print(self.xpos, self.ypos, self.zpos, ' -> ', self.xpos2pix(self.xpos), self.ypos2pix(self.ypos), self.zpos2pix(self.zpos))
 
     def updateOneView(self, data, mask, background, theLUT, thefgwin, thebgwin):
         im = self.applyLUT(data, mask, theLUT, self.map.dispmin, self.map.dispmax)
-        #thefgwin.setImage(im.astype('float'), autoLevels=False)
         thefgwin.setImage(im.astype('float'))
         if background is not None:
             thebgwin.setImage(background.astype('float'), autoLevels=True)
 
+
     def setMap(self, themap):
         self.map = themap
         self.tdim = self.map.tdim
+
 
     def enableView(self):
         if self.button is not None:
@@ -295,6 +286,7 @@ class OrthoImageItem(QtGui.QWidget):
             self.button.setDisabled(False)
             self.button.show()
         self.view.show()
+
 
     def applyLUT(self, theimage, mask, theLUT, dispmin, dispmax):
         offset = dispmin
@@ -309,11 +301,11 @@ class OrthoImageItem(QtGui.QWidget):
         mappeddata[:, :, 3][np.where(mask < 1)] = 0
         return mappeddata
 
+
     def updateCursors(self):
-        xpix = self.xpos2pix(self.xpos)
-        ypix = self.ypos2pix(self.ypos)
-        zpix = self.zpos2pix(self.zpos)
-        # print('xpix, ypix, zpix = ', xpix, ypix, zpix)
+        xpix = self.xvox2pix(self.xpos)
+        ypix = self.yvox2pix(self.ypos)
+        zpix = self.zvox2pix(self.zpos)
         self.axviewvLine.setValue(xpix)
         self.axviewhLine.setValue(ypix)
         self.corviewvLine.setValue(xpix)
@@ -321,82 +313,74 @@ class OrthoImageItem(QtGui.QWidget):
         self.sagviewvLine.setValue(ypix)
         self.sagviewhLine.setValue(zpix)
 
+
     def handlemouseup(self, event):
         self.buttonisdown = False
         self.updateCursors()
         self.updateAllViews()
 
+
     def handleaxmousemove(self, event):
         if self.buttonisdown:
-            self.xpos = self.xpix2pos(event.pos().x())
-            self.ypos = self.ypix2pos(self.imgsize - event.pos().y())
-            #print('ax move:', self.xpos, self.ypos)
-            #self.updateCursors()
+            self.xpos = self.xpix2vox(event.pos().x() - 1)
+            self.ypos = self.ypix2vox(self.imgsize - event.pos().y() + 1)
             self.updateAllViews()
             self.updated.emit()
+
 
     def handlecormousemove(self, event):
         if self.buttonisdown:
-            self.xpos = self.xpix2pos(event.pos().x())
-            self.zpos = self.zpix2pos(self.imgsize - event.pos().y())
-            # print('cor move:', self.xpos, self.zpos)
-            #self.updateCursors()
+            self.xpos = self.xpix2vox(event.pos().x() - 1)
+            self.zpos = self.zpix2vox(self.imgsize - event.pos().y() + 1)
             self.updateAllViews()
             self.updated.emit()
+
 
     def handlesagmousemove(self, event):
         if self.buttonisdown:
-            self.ypos = self.ypix2pos(event.pos().x())
-            self.zpos = self.zpix2pos(self.imgsize - event.pos().y())
-            # print('sag move:', self.ypos, self.zpos)
-            #self.updateCursors()
+            self.ypos = self.ypix2vox(event.pos().x() - 1)
+            self.zpos = self.zpix2vox(self.imgsize - event.pos().y() + 1)
             self.updateAllViews()
             self.updated.emit()
 
+
     def handleaxkey(self, event):
         print(event)
-        # self.xpos = self.xpix2pos(event.pos().x())
-        # self.ypos = self.ypix2pos(self.imgsize - event.pos().y())
-        # self.buttonisdown = True
         self.updateAllViews()
-        #self.updateCursors()
         self.updated.emit()
+
 
     def handleaxclick(self, event):
-        self.xpos = self.xpix2pos(event.pos().x())
-        self.ypos = self.ypix2pos(self.imgsize - event.pos().y())
-        print('evx, xpos, evy, ypos, imgsize', event.pos().x(), self.xpos, event.pos().y(), self.ypos, self.imgsize)
+        self.xpos = self.xpix2vox(event.pos().x() - 1)
+        self.ypos = self.ypix2vox(self.imgsize - event.pos().y() + 1)
         self.buttonisdown = True
         self.updateAllViews()
-        #self.updateCursors()
         self.updated.emit()
 
+
     def handlecorclick(self, event):
-        self.xpos = self.xpix2pos(event.pos().x())
-        self.zpos = self.zpix2pos(self.imgsize - event.pos().y())
-        print('evx, xpos, evy, zpos, imgsize', event.pos().x(), self.xpos, event.pos().y(), self.zpos, self.imgsize)
+        self.xpos = self.xpix2vox(event.pos().x() - 1)
+        self.zpos = self.zpix2vox(self.imgsize - event.pos().y() + 1)
         self.buttonisdown = True
         self.updateAllViews()
-        #self.updateCursors()
         self.updated.emit()
 
     def handlesagclick(self, event):
-        self.ypos = self.ypix2pos(event.pos().x())
-        self.zpos = self.zpix2pos(self.imgsize - event.pos().y())
-        print('evx, ypos, evy, zpos, imgsize', event.pos().x(), self.ypos, event.pos().y(), self.zpos, self.imgsize)
+        self.ypos = self.ypix2vox(event.pos().x() - 1)
+        self.zpos = self.zpix2vox(self.imgsize - event.pos().y() + 1)
         self.buttonisdown = True
         self.updateAllViews()
-        #self.updateCursors()
         self.updated.emit()
+
 
     def setXYZpos(self, xpos, ypos, zpos, emitsignal=True):
         self.xpos = int(xpos)
         self.ypos = int(ypos)
         self.zpos = int(zpos)
         self.updateAllViews()
-        #self.updateCursors()
         if emitsignal:
             self.updated.emit()
+
 
     def setTpos(self, tpos, emitsignal=True):
         if tpos > self.tdim - 1:
@@ -404,15 +388,16 @@ class OrthoImageItem(QtGui.QWidget):
         else:
             self.tpos = tpos
         self.updateAllViews()
-        #self.updateCursors()
         if emitsignal:
             self.updated.emit()
+
 
     def getFocusVal(self):
         if self.tdim > 1:
             return self.map.maskeddata[self.xpos, self.ypos, self.zpos, self.tpos]
         else:
             return self.map.maskeddata[self.xpos, self.ypos, self.zpos]
+
 
     def saveandcomposite(self, fg_img, bg_img, name, savedir, scalefach, scalefacv):
         if PILexists:
@@ -443,6 +428,7 @@ class OrthoImageItem(QtGui.QWidget):
             fg_img.save(os.path.join(savedir, name + '_fg.png'))
             bg_img.save(os.path.join(savedir, name + '_bg.png'))
 
+
     def saveDisp(self):
         print('saving main window')
         mydialog = QtGui.QFileDialog()
@@ -450,11 +436,11 @@ class OrthoImageItem(QtGui.QWidget):
         thedir = str(mydialog.getExistingDirectory(options=options, caption="Image output directory"))
         print('thedir=', thedir)
         thename = self.map.namebase + self.map.name
-        self.saveandcomposite(self.axviewwin, self.axviewbgwin, thename + '_ax', thedir, self.scalefacx, self.scalefacy)
-        self.saveandcomposite(self.corviewwin, self.corviewbgwin, thename + '_cor', thedir, self.scalefacx,
-                              self.scalefacz)
-        self.saveandcomposite(self.sagviewwin, self.sagviewbgwin, thename + '_sag', thedir, self.scalefacy,
-                              self.scalefacz)
+        self.saveandcomposite(self.axviewwin, self.axviewbgwin, thename + '_ax', thedir, self.impixpervoxx, self.impixpervoxy)
+        self.saveandcomposite(self.corviewwin, self.corviewbgwin, thename + '_cor', thedir, self.impixpervoxx,
+                              self.impixpervoxz)
+        self.saveandcomposite(self.sagviewwin, self.sagviewbgwin, thename + '_sag', thedir, self.impixpervoxy,
+                              self.impixpervoxz)
         with open(os.path.join(thedir, thename + '_lims.txt'), 'w') as FILE:
             FILE.writelines(str(self.map.dispmin) + '\t' + str(self.map.dispmax))
             # img_colorbar.save(thedir + self.map.name + '_colorbar.png')
