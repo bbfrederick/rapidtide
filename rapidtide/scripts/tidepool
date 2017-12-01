@@ -268,17 +268,20 @@ class xyztlocation(QtGui.QWidget):
         self.setupTimeSlider(self.TimeSlider, self.readTimeSlider, 0, self.tdim - 1, self.tpos)
         self.setupRunMovieButton(self.runMovieButton, self.runMovieToggle)
 
+
     def setupRunMovieButton(self, thebutton, thehandler):
         if thebutton is not None:
             print('initializing movie button')
             thebutton.setText('Start Movie')
             thebutton.clicked.connect(thehandler)
-            
+
+
     def setupTimeSlider(self, theslider, thehandler, minval, maxval, currentval):
         if theslider is not None:
             theslider.setRange(minval, maxval)
             theslider.setSingleStep(1)
             theslider.valueChanged.connect(thehandler)
+
 
     def setupSpinBox(self, thespinbox, thehandler, minval, maxval, stepsize, currentval):
         if thespinbox is not None:
@@ -288,6 +291,7 @@ class xyztlocation(QtGui.QWidget):
             thespinbox.setWrapping(True)
             thespinbox.setKeyboardTracking(False)
             thespinbox.valueChanged.connect(thehandler)
+
 
     def updateXYZValues(self):
         #print('resetting XYZ spinbox values')
@@ -305,7 +309,8 @@ class xyztlocation(QtGui.QWidget):
             self.ZCoordSpinBox.setValue(self.zcoord)
         #print('done resetting XYZ spinbox values')
         self.updatedXYZ.emit()
-        
+
+
     def updateTValues(self):
         #print('resetting T spinbox values')
         if self.TPosSpinBox is not None:
@@ -314,19 +319,24 @@ class xyztlocation(QtGui.QWidget):
             self.TCoordSpinBox.setValue(self.tcoord)
         #print('done resetting T spinbox values')
         self.updatedT.emit()
-        
+
+
     def real2tr(self, time):
         return(np.round((time - self.toffset)/self.tr, 0))
 
+
     def tr2real(self, tpos):
         return(self.toffset + self.tr * tpos)
+
 
     def real2vox(self, xcoord, ycoord, zcoord):
         x, y, z = apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
         return(int(np.round(x,0)), int(np.round(y,0)), int(np.round(z,0)))
 
+
     def vox2real(self, xpos, ypos, zpos):
         return(apply_affine(self.affine, [xpos, ypos, zpos]))
+
 
     def setXYZpos(self, xpos, ypos, zpos):
         self.xpos = xpos
@@ -335,6 +345,7 @@ class xyztlocation(QtGui.QWidget):
         self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
         self.updateXYZValues()
 
+
     def setXYZcoord(self, xcoord, ycoord, zcoord):
         self.xcoord = xcoord
         self.ycoord = ycoord
@@ -342,17 +353,20 @@ class xyztlocation(QtGui.QWidget):
         self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
         self.updateXYZValues()
 
+
     def setTpos(self, tpos):
         if self.tpos != tpos:
             self.tpos = tpos
             self.tcoord = self.tr2real(self.tpos)
             self.updateTValues()
 
+
     def setTcoord(self, tcoord):
         if self.tcoord != tcoord:
             self.tcoord = tcoord
             self.tpos = self.real2tr(self.tcoord)
             self.updateTValues()
+
 
     def getXpos(self, event):
         #print('entering getXpos')
@@ -362,6 +376,7 @@ class xyztlocation(QtGui.QWidget):
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
             self.updateXYZValues()
 
+
     def getYpos(self, event):
         #print('entering getYpos')
         newy = int(self.YPosSpinBox.value())
@@ -370,6 +385,7 @@ class xyztlocation(QtGui.QWidget):
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
             self.updateXYZValues()
 
+
     def getZpos(self, event):
         #print('entering getZpos')
         newz = int(self.ZPosSpinBox.value())
@@ -377,6 +393,7 @@ class xyztlocation(QtGui.QWidget):
             self.zpos = newz
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
             self.updateXYZValues()
+
 
     def getTpos(self, event):
         #print('entering getTpos')
@@ -389,43 +406,50 @@ class xyztlocation(QtGui.QWidget):
                 self.movieTimer.start(int(self.tpos))
             self.updateTValues()
 
+
     def getXcoord(self, event):
         newxcoord = self.XCoordSpinBox.value()
         if self.xcoord != newxcoord:
             self.xcoord = newxcoord
             self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
             self.updateXYZValues()
-    
+
+
     def getYcoord(self, event):
         newycoord = self.YCoordSpinBox.value()
         if self.ycoord != newycoord:
             self.ycoord = newycoord
             self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
             self.updateXYZValues()
-    
+
+
     def getZcoord(self, event):
         newzcoord = self.ZCoordSpinBox.value()
         if self.zcoord != newzcoord:
             self.zcoord = newzcoord
             self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
             self.updateXYZValues()
-    
+
+
     def getTcoord(self, event):
         newtcoord = self.TCoordSpinBox.value()
         if self.tcoord != newtcoord:
             self.tcoord = newtcoord
             self.tpos = self.real2tr(self.tcoord)
             self.updateTValues()
-    
+
+
     def readTimeSlider(self):
         self.tpos = self.TimeSlider.value()
         self.tcoord = self.tr2real(self.tpos)
         self.updateTValues()
 
+
     def updateMovie(self):
         print('entering updateMovie')
         self.tpos = (self.tpos + 1) % self.tdim
         self.updateTValues()
+
 
     def runMovieToggle(self, event):
         print('entering runMovieToggle')
@@ -443,19 +467,23 @@ class xyztlocation(QtGui.QWidget):
             self.movieTimer.start(int(self.frametime))
         print('leaving runMovieToggle')
 
+
     def setFrametime(self, frametime):
         if self.movierunning:
             self.movieTimer.stop()
         self.frametime = frametime
         if self.movierunning:
             self.movieTimer.start(int(self.frametime))
-        
+
+
 class overlay:
     "Store a data overlay and some information about it"
 
     def __init__(self, name, filename, namebase, funcmask=None, geommask=None, label=None, report=False,
-                 lut_state=gray_state, isaMask=False):
-        print('reading map ',name,' from ',filename,'...')
+                 lut_state=gray_state, isaMask=False, verbose=False):
+        self.verbose = verbose
+        if self.verbose:
+            print('reading map ',name,' from ',filename,'...')
         self.name = name
         if label is None:
             self.label = name
@@ -468,24 +496,27 @@ class overlay:
         if isaMask:
             self.data[np.where(self.data < 0.5)] = 0.0
             self.data[np.where(self.data > 0.5)] = 1.0
-        print('overlay data range:', np.min(self.data), np.max(self.data))
+        if self.verbose:
+            print('overlay data range:', np.min(self.data), np.max(self.data))
         self.xdim, self.ydim, self.zdim, self.tdim = \
-            tide.parseniftisizes(self.dims)
+            tide.parseniftidims(self.dims)
         self.xsize, self.ysize, self.zsize, self.tr = \
-            tide.parseniftidims(self.sizes)
+            tide.parseniftisizes(self.sizes)
         self.toffset = self.header['toffset']
         self.mask = None
         self.maskeddata = None
         if geommask is None:
-            print('no geometric mask specified - filling with ones')
-            print('tdim is ',self.tdim)
-            print('data shape is ',np.shape(self.data))
+            if self.verbose:
+                print('no geometric mask specified - filling with ones')
+                print('tdim is ',self.tdim)
+                print('data shape is ',np.shape(self.data))
             if self.tdim == 1:
                 self.geommask = 1.0 + 0.0 * self.data
             else:
                 self.geommask = 1.0 + 0.0 * self.data[:, :, :, 0]
         else:
-            print('using geometric mask')
+            if self.verbose:
+                print('using geometric mask')
             self.geommask = geommask
         if funcmask is None:
             if self.tdim == 1:
@@ -528,7 +559,8 @@ class overlay:
         self.zcoord = 0.0
         self.tcoord = 0.0
 
-        print('overlay initialized:', self.name, self.filename, self.minval, self.dispmin, self.dispmax, self.maxval)
+        if self.verbose:
+            print('overlay initialized:', self.name, self.filename, self.minval, self.dispmin, self.dispmax, self.maxval)
         #self.summarize()
 
 
@@ -555,6 +587,7 @@ class overlay:
     def real2tr(self, time):
         return(np.round((time - self.toffset)/self.tr, 0))
 
+
     def tr2real(self, tpos):
         return(self.toffset + self.tr * tpos)
 
@@ -562,7 +595,6 @@ class overlay:
     def real2vox(self, xcoord, ycoord, zcoord, time):
         x, y, z = apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
         t = self.real2tr(time)
-        #return(np.concatenate((apply_affine(self.invaffine, [xcoord, ycoord, zcoord]), [self.real2tr(time)]),axis=0))
         return(int(np.round(x,0)), int(np.round(y,0)), int(np.round(z,0)), int(np.round(t,0)))
 
 
@@ -575,17 +607,20 @@ class overlay:
         self.ypos = int(ypos)
         self.zpos = int(zpos)
 
+
     def setTpos(self, tpos):
         if tpos > self.tdim - 1:
             self.tpos = self.tdim - 1
         else:
             self.tpos = int(tpos)
 
+
     def getFocusVal(self):
         if self.tdim > 1:
             return self.maskeddata[self.xpos, self.ypos, self.zpos, self.tpos]
         else:
             return self.maskeddata[self.xpos, self.ypos, self.zpos]
+
 
     def setFuncMask(self, funcmask):
         self.funcmask = funcmask
@@ -596,6 +631,7 @@ class overlay:
                 self.funcmask = 1.0 + 0.0 * self.data[:, :, :, 0]
         self.maskData()
 
+
     def setGeomMask(self, geommask):
         self.geommask = geommask
         if self.geommask is None:
@@ -605,25 +641,31 @@ class overlay:
                 self.geommask = 1.0 + 0.0 * self.data[:, :, :, 0]
         self.maskData()
 
+
     def maskData(self):
         self.mask = self.geommask * self.funcmask
         self.maskeddata = self.data.copy()
         self.maskeddata[np.where(self.mask < 0.5)] = 0.0
         self.updateStats()
 
+
     def setReport(self, report):
         self.report = report
+
 
     def setTR(self, trval):
         self.tr = trval
 
+
     def settoffset(self, toffset):
         self.toffset = toffset
+
 
     def setLUT(self, lut_state):
         self.lut_state = lut_state
         self.gradient.restoreState(lut_state)
         self.theLUT = self.gradient.getLookupTable(512, alpha=True)
+
 
     def summarize(self):
         print()
@@ -682,10 +724,12 @@ def getMinDispLimit():
     overlays[focusmap].dispmin = ui.dispmin_doubleSpinBox.value()
     updateDispLimits()
 
+
 def getMaxDispLimit():
     global ui, overlays, focusmap
     overlays[focusmap].dispmax = ui.dispmax_doubleSpinBox.value()
     updateDispLimits()
+
 
 def updateDispLimits():
     global ui, overlays, focusmap
@@ -1015,7 +1059,6 @@ def overlay_radioButton_clicked(which, enabled):
     global currentloc, atlasaveragingdone
     if enabled:
         overlaybuttons[which].setChecked(True)
-        #print('selected ', which)
         if panetomap[which] != '':
             if atlasaveragingdone:
                 focusmap = panetomap[which] + '_atlasstat'
@@ -1023,22 +1066,16 @@ def overlay_radioButton_clicked(which, enabled):
                 focusmap = panetomap[which]
             print('focusmap set to ', focusmap)
             if overlays[focusmap].lut_state == gray_state:
-                #print('checking gray')
                 ui.gray_radioButton.setChecked(True)
             elif overlays[focusmap].lut_state == thermal_state:
-                #print('checking thermal')
                 ui.thermal_radioButton.setChecked(True)
             elif overlays[focusmap].lut_state == g2y2r_state:
-                #print('checking GYR')
                 ui.GYR_radioButton.setChecked(True)
             elif overlays[focusmap].lut_state == viridis_state:
-                #print('checking viridis')
                 ui.viridis_radioButton.setChecked(True)
             elif overlays[focusmap].lut_state == cyclic_state:
-                #print('checking jet')
                 ui.jet_radioButton.setChecked(True)
             else:
-                #print('checking rainbow')
                 ui.rainbow_radioButton.setChecked(True)
 
             print('setting t position limits to ',0, overlays[focusmap].tdim - 1)
@@ -1056,10 +1093,8 @@ def updateTimepoint(event):
     if overlays[focusmap].tdim > 1:
         mousePoint = timecourse_ax.vb.mapToView(pos)
         tval = mousePoint.x()
-        #print('tval=', tval)
         if timeaxis[0] <= tval <= timeaxis[-1]:
             tpos = int((tval - overlays[focusmap].toffset) / overlays[focusmap].tr)
-            #print('setting vLine position to ', tval, '(', tpos, ')')
             vLine.setValue(mousePoint.x())
             updateOrthoImages()
 
