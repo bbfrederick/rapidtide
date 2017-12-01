@@ -174,10 +174,12 @@ if nibabelexists:
         return nim, nim_data, nim_hdr, thedims, thesizes
 
 
+    # dims are the array dimensions along each axis
     def parseniftidims(thedims):
         return thedims[1], thedims[2], thedims[3], thedims[4]
 
 
+    # sizes are the mapping between voxels and physical coordinates
     def parseniftisizes(thesizes):
         return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
