@@ -1,4 +1,40 @@
 #!/bin/csh -f
+rapidtide2x \
+	fmri.nii.gz \
+	../dst/dgsr_2x_mp \
+	--refinepasses=3 --refineoffset \
+	--accheck \
+	--nofitfilt \
+        --ampthresh=0.2854 \
+        -F 0.0,0.2 \
+	-r -15,15 \
+	-f 2 -N 10000 --multiproc
+
+rapidtide2x \
+	fmri.nii.gz \
+	../dst/dgsr_2x_mp_bipolar \
+	--refinepasses=3 --refineoffset \
+	--accheck \
+	--nofitfilt \
+        --ampthresh=0.2854 \
+        -F 0.0,0.2 \
+	-r -15,15 \
+        -B \
+	-f 2 -N 10000 --multiproc
+
+rapidtide2x \
+        /Users/frederic/code/cbvtools/data/hcp_fmri.nii.gz  \
+        ../dst/hcp_2x_mp \
+        --refinepasses=3 --refineoffset \
+        --accheck \
+        --nofitfilt \
+        --noglm \
+        --lagminthresh=0.5 \
+        --lagmaxthresh=3.0 \
+        -L  \
+        -r -10.0,10.0 \
+        -f 1.0 -N 10000 --multiproc
+
 rapidtide2 \
 	fmri.nii.gz \
 	../dst/dgsr \
@@ -21,26 +57,3 @@ rapidtide2x \
 	-r -15,15 \
 	-f 2 -N 10000
 
-rapidtide2x \
-	fmri.nii.gz \
-	../dst/dgsr_2x_mp \
-	--refinepasses=3 --refineoffset \
-	--accheck \
-	--nofitfilt \
-        --ampthresh=0.2854 \
-        -F 0.0,0.2 \
-	-r -15,15 \
-	-f 2 -N 10000 --multiproc
-
-rapidtide2x \
-        /Users/frederic/code/cbvtools/data/hcp_fmri.nii.gz  \
-        ../dst/hcp_2x_mp \
-        --refinepasses=3 --refineoffset \
-        --accheck \
-        --nofitfilt \
-        --noglm \
-        --lagminthresh=0.5 \
-        --lagmaxthresh=3.0 \
-        -L  \
-        -r -10.0,10.0 \
-        -f 1.0 -N 10000 --multiproc
