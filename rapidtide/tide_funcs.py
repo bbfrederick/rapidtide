@@ -363,7 +363,7 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
 
     # fit the johnsonSB function
     params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
-    # print('Johnson SB fit parameters for pdf:', params)
+    #print('Johnson SB fit parameters for pdf:', params)
 
     # restore the zero term if needed
     # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
@@ -388,6 +388,11 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
         pl.legend(['histogram', 'fit to johnsonsb'])
         pl.show()
     return np.append(params, np.array([zeroterm]))
+
+
+def getjohnsonppf(percentile, params, zeroterm):
+    johnsonfunc = johnsonsb(params[0], params[1], params[2], params[3])
+    corrfac = 1.0 - zeroterm
 
 
 def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False,
@@ -1799,7 +1804,7 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
         return None
 
 
-def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate'):
+def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate', debug=False):
     if intermed_freq <= final_freq:
         print('intermediate frequency must be higher than final frequency')
         sys.exit()
@@ -1812,7 +1817,7 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
 
     # antialias
-    aafilter = noncausalfilter(filtertype='arb', usebutterworth=True)
+    aafilter = noncausalfilter(filtertype='arb', usebutterworth=True, debug=debug)
     aafilter.setarb(0.0, 0.0, 0.95 * final_freq, final_freq)
     antialias_y = aafilter.apply(intermed_freq, intermed_y)
     # antialias_y = dolptrapfftfilt(intermed_freq,0.9*final_freq,final_freq,intermed_y)
@@ -1968,65 +1973,6 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 
     return ([shifted_y[padtrs:padtrs + thelen], shifted_weights[padtrs:padtrs + thelen], shifted_y,
              shifted_weights])
-
-
-# timeshift using direct resampling
-#def timeshift2(inputtc, shifttrs, padtrs, doplot=False, dopostfilter=False):
-#    # set up useful parameters
-#    thelen = np.shape(inputtc)[0]
-#    thepaddedlen = thelen + 2 * padtrs
-#    offset = padtrs
-#
-#    # initialize the postfilter
-#    theringfilter = noncausalfilter(filtertype='ringstop')
-#
-#    # initialize variables
-#    preshifted_y = np.zeros(thepaddedlen, dtype='float')  # initialize the working buffer (with pad)
-#    weights = np.zeros(thepaddedlen, dtype='float')  # initialize the weight buffer (with pad)
-#
-#    # now do the math
-#    preshifted_x = np.arange(0.0, np.shape(preshifted_y)[0], 1.0)
-#    shifted_x = preshifted_x - shifttrs
-#    preshifted_y[offset:offset + thelen] = inputtc[:]  # copy initial data into shift buffer
-#    revtc = inputtc[::-1]
-#    preshifted_y[0:offset] = revtc[-offset:]
-#    preshifted_y[offset + thelen:] = revtc[0:offset]
-#    weights[offset:offset + thelen] = 1.0  # put in the weight vector
-#    shifted_y = doresample(preshifted_x, preshifted_y, shifted_x, method='univariate')  # do the actual shifting
-#    shifted_weights = doresample(preshifted_x, weights, shifted_x, method='univariate')  # do the actual shifting
-#    if dopostfilter:
-#        shifted_y = theringfilter.apply(1.0, shifted_y)
-#        shifted_weights = theringfilter.apply(1.0, shifted_weights)
-#
-#    if doplot:
-#        print("shifttrs:", shifttrs)
-#        print("offset:", offset)
-#        print("thelen:", thelen)
-#        print("thepaddedlen:", thepaddedlen)
-#
-#        fig = pl.figure()
-#        ax = fig.add_subplot(111)
-#        ax.set_title('Initial vector')
-#        pl.plot(preshifted_x, preshifted_y)
-#
-#        fig = pl.figure()
-#        ax = fig.add_subplot(111)
-#        ax.set_title('Shifted vector')
-#        pl.plot(shifted_x, shifted_y)
-#
-#        fig = pl.figure()
-#        ax = fig.add_subplot(111)
-#        ax.set_title('Initial and shifted vector')
-#        pl.plot(preshifted_x, preshifted_y, shifted_x, shifted_y)
-#
-#        fig = pl.figure()
-#        ax = fig.add_subplot(111)
-#        ax.set_title('Initial and shifted weight vector')
-#        pl.plot(preshifted_x, weights, shifted_x, shifted_weights)
-#
-#        pl.show()
-#
-#    return [shifted_y[offset:offset + thelen], shifted_weights[offset:offset + thelen], shifted_y, shifted_weights]
 
 
 # --------------------------- Window functions -------------------------------------------------
@@ -2257,8 +2203,8 @@ def getlptrapfftfunc(samplefreq, passfreq, stopfreq, indata, debug=False):
     cutoffbin = int((stopfreq / samplefreq) * np.shape(filterfunc)[0])
     translength = cutoffbin - passbin
     if debug:
-        print('getlptrapfftfunc - passfreq, stopfreq:', passfreq, stopfreq)
-        print('getlptrapfftfunc - cutoffbin, passbin, translength, len(indata):', cutoffbin, passbin, translength,
+        print('getlptrapfftfunc - samplefreq, passfreq, stopfreq:', samplefreq, passfreq, stopfreq)
+        print('getlptrapfftfunc - passbin, translength, cutoffbin, len(indata):', passbin, translength, cutoffbin,
               len(indata))
     if translength > 0:
         transvector = np.arange(1.0 * translength) / translength
@@ -2391,8 +2337,8 @@ def arb_pass(samplerate, inputdata, arb_lowerstop, arb_lowerpass, arb_upperpass,
         # set up for bandpass
         if usebutterworth:
             return (dohpfiltfilt(samplerate, arb_lowerpass,
-                                 dolpfiltfilt(samplerate, arb_upperpass, inputdata, butterorder, padlen=padlen),
-                                 butterorder, padlen=padlen, debug=debug))
+                                 dolpfiltfilt(samplerate, arb_upperpass, inputdata, butterorder, padlen=padlen, debug=debug),
+                                     butterorder, padlen=padlen, debug=debug))
         else:
             if usetrapfftfilt:
                 return (
@@ -2481,6 +2427,9 @@ class noncausalfilter:
 
     def setpadtime(self, padtime):
         self.padtime = padtime
+
+    def setdebug(self, debug):
+        self.debug = debug
 
     def getpadtime(self):
         return self.padtime
