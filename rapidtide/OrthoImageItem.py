@@ -384,9 +384,10 @@ class OrthoImageItem(QtGui.QWidget):
 
     def setTpos(self, tpos, emitsignal=True):
         if tpos > self.tdim - 1:
-            self.tpos = self.tdim - 1
+            self.tpos = int(self.tdim - 1)
         else:
-            self.tpos = tpos
+            self.tpos = int(tpos)
+        
         self.updateAllViews()
         if emitsignal:
             self.updated.emit()
