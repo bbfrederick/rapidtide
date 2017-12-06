@@ -1128,6 +1128,7 @@ def usage():
     print("    --multiproc              - Enable multiprocessing versions of key subroutines.  This")
     print("                               speeds things up dramatically.  Almost certainly will NOT")
     print("                               work on Windows (due to different forking behavior).")
+    print("    --debug                  - Enable additional information output")
     print("")
     print("Experimental options (not fully tested, may not work):")
     print("    --dispersioncalc         - Generate extra data during refinement to allow calculation of dispersion")
@@ -1198,10 +1199,10 @@ def main():
     optiondict['dodeconv'] = False  # do Wiener deconvolution to find voxel transfer function
 
     # filter options
-    optiondict['zpfilter'] = True
+    optiondict['zpfilter'] = False
     optiondict['trapezoidalfftfilter'] = True
     optiondict['usebutterworthfilter'] = False
-    optiondict['filtorder'] = 3
+    optiondict['filtorder'] = 6
     optiondict['padseconds'] = 30.0  # the number of seconds of padding to add to each end of a filtered timecourse
     optiondict['filtertype'] = None
 
@@ -1319,6 +1320,7 @@ def main():
                                                                                                           'dispersioncalc',
                                                                                                           'noglm',
                                                                                                           'multiproc',
+                                                                                                          'debug',
                                                                                                           'nonumba',
                                                                                                           'tmask=',
                                                                                                           'nodetrend',
@@ -1429,6 +1431,10 @@ def main():
             optiondict['savelagregressors'] = False
             optiondict['saveglmfiltered'] = False
             print('disabling output of lagregressors and glm filtered timecourses')
+        elif o == '--debug':
+            optiondict['debug'] = True
+            theprefilter.setdebug(optiondict['debug'])
+            print('enabling additional data output for debugging')
         elif o == '--multiproc':
             optiondict['multiproc'] = True
             print('enabling multiprocessing')
@@ -1980,16 +1986,16 @@ def main():
                 print('    npoints:', np.shape(reference_y)[0])
                 print('    filtorder:', optiondict['filtorder'])
             reference_y_filt = tide.dolpfiltfilt(inputfreq, 0.5 * fmrifreq, reference_y, optiondict['filtorder'],
-                                                 padlen=int(inputfreq * optiondict['padseconds']))
+                                                 padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
         else:
             if optiondict['trapezoidalfftfilter']:
                 print('applying trapezoidal antialiasing filter')
                 reference_y_filt = tide.dolptrapfftfilt(inputfreq, 0.25 * fmrifreq, 0.5 * fmrifreq, reference_y,
-                                                        padlen=int(inputfreq * optiondict['padseconds']))
+                                                        padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
             else:
                 print('applying brickwall antialiasing filter')
                 reference_y_filt = tide.dolpfftfilt(inputfreq, 0.5 * fmrifreq, reference_y,
-                                                    padlen=int(inputfreq * optiondict['padseconds']))
+                                                    padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
         reference_y = rt_floatset(reference_y_filt.real)
 
     warnings.filterwarnings('ignore', 'Casting*')
@@ -2170,7 +2176,7 @@ def main():
                     if doreferencenotch:
                         print('removing spectral component at sidelobe frequency')
                         acstopfreq = 1.0 / sidelobetime
-                        acfixfilter = tide.noncausalfilter()
+                        acfixfilter = tide.noncausalfilter(debug=optiondict['debug'])
                         acfixfilter.settype('arb_stop')
                         acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
                         cleaned_referencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
