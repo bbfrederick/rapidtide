@@ -735,7 +735,7 @@ def updateHistogram():
 
 
 def calcAtlasStats():
-    global overlays, datafileroot, atlasname, atlaslabels, atlasstats, activestat
+    global overlays, datafileroot, atlasname, atlaslabels, atlasstats, averagingmode
     global atlasaveragingdone
     print('in calcAtlasStats')
     if 'atlas' in overlays:
@@ -756,8 +756,6 @@ def calcAtlasStats():
             atlasstatmap.data *= 0.0
             atlasstatmap.maskData()
             atlasstatmap.updateStats()
-            for regnum, region in enumerate(atlaslabels):
-                atlasstatmap.data[np.where(overlays['atlas'].data == (regnum + 1))] = atlasstats[themap][region][activestat]
             overlays[themap + '_atlasstat'] = atlasstatmap
         print('done performing atlas averaging')
         for thestat in ['mean', 'std', 'robustmean', 'median', 'MAD']:
@@ -780,14 +778,16 @@ def calcAtlasStats():
 
 
 def updateAtlasStats():
-    global overlays, datafileroot, atlasname, atlaslabels, atlasstats, activestat
+    global overlays, datafileroot, atlasname, atlaslabels, atlasstats, averagingmode
     print('in updateAtlasStats')
-    if 'atlas' in overlays:
+    if 'atlas' in overlays and (averagingmode is not None):
         for idx, themap in enumerate(loadedfuncmaps):
+            print('loading', averagingmode, 'into', themap + '_atlasstat')
             for regnum, region in enumerate(atlaslabels):
                 if themap is not 'atlas':
-                    overlays[themap + '_atlasstat'].data[np.where(overlays['atlas'].data == (regnum + 1))] = atlasstats[themap][region][activestat]
+                    overlays[themap + '_atlasstat'].data[np.where(overlays['atlas'].data == (regnum + 1))] = atlasstats[themap][region][averagingmode]
                 overlays[themap + '_atlasstat'].maskData()
+                overlays[themap + '_atlasstat'].updateStats()
 
 
 def doAtlasAveraging(state):
@@ -810,7 +810,10 @@ def updateAveragingMode():
         calcAtlasStats()
         set_atlasmask()
     updateAtlasStats()
-    focusmap = focusmap.replace('_atlasstat', '') + '_atlasstat'
+    if averagingmode is not None:
+        focusmap = focusmap.replace('_atlasstat', '') + '_atlasstat'
+    else:
+        focusmap = focusmap.replace('_atlasstat', '')
     resetDispLimits()
     resetDispSmart()
     print('averaging mode set to ', averagingmode)
@@ -822,7 +825,7 @@ def updateAveragingMode():
 def raw_radioButton_clicked(enabled):
     global averagingmode
     print('in raw_radioButton_clicked')
-    averagingmode = 'raw'
+    averagingmode = None
     updateAveragingMode()
 
 
@@ -1036,7 +1039,7 @@ def overlay_radioButton_clicked(which, enabled):
     if enabled:
         overlaybuttons[which].setChecked(True)
         if panetomap[which] != '':
-            if atlasaveragingdone:
+            if atlasaveragingdone and (panetomap[which] != 'atlas'):
                 focusmap = panetomap[which] + '_atlasstat'
             else:
                 focusmap = panetomap[which]
@@ -1325,7 +1328,7 @@ def main():
     global focusmap, bgmap
     global maps
     global roi
-    global overlays, loadedfuncmaps, atlasavgmaps, atlasstats, activestat
+    global overlays, loadedfuncmaps, atlasavgmaps, atlasstats, averagingmode
     global mainwin, orthoimages, overlaybuttons, panetomap
     global img_colorbar
     global lg_imgsize, scalefacx, scalefacy, scalefacz
@@ -1339,7 +1342,7 @@ def main():
     global atlasaveragingdone
 
     # initialize default values
-    activestat = 'mean'
+    averagingmode = None
     atlasaveragingdone = False
     forcetr = False
     forceoffset = False
