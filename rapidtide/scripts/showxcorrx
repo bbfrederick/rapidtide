@@ -342,7 +342,8 @@ if dopartial:
 thexcorr = tide.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr, weighting=corrweighting, displayplots=debug)
 if calccepstraldelay:
     cepdelay = tide.cepstraldelay(filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display)
-    print('cepstral delay time is', cepdelay)
+    cepcoff = tide.delayedcorr(filtereddata1, filtereddata2, cepdelay, 1.0 / Fs)
+    print('cepstral delay time is', cepdelay,', correlation is', cepcoff)
 thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
 # calculate the coherence

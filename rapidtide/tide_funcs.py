@@ -869,20 +869,36 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
         np.asarray(valid, dtype='float64')
 
 
+def delayedcorr(data1, data2, delayval, timestep):
+    return sp.stats.stats.pearsonr(data1, timeshift(data2, delayval/timestep, 30)[0])
+
 def cepstraldelay(data1, data2, timestep, displayplots=True):
     # Choudhary, H., Bahl, R. & Kumar, A. 
     # Inter-sensor Time Delay Estimation using cepstrum of sum and difference signals in 
     #     underwater multipath environment. in 1–7 (IEEE, 2015). doi:10.1109/UT.2015.7108308
+    ceps1, _ = complex_cepstrum(data1)
+    ceps2, _ = complex_cepstrum(data2)
     additive_cepstrum, _ = complex_cepstrum(data1 + data2)
     difference_cepstrum, _ = complex_cepstrum(data1 - data2)
     residual_cepstrum = additive_cepstrum - difference_cepstrum
     if displayplots:
         tvec = timestep * np.arange(0.0, len(data1))
         fig = pl.figure()
+        ax1 = fig.add_subplot(211)
+        ax1.set_title('cepstrum 1')
+        ax1.set_xlabel('quefrency in seconds')
+        pl.plot(tvec, ceps1.real, tvec, ceps1.imag)
+        ax2 = fig.add_subplot(212)
+        ax2.set_title('cepstrum 2')
+        ax2.set_xlabel('quefrency in seconds')
+        pl.plot(tvec, ceps2.real, tvec, ceps2.imag)
+        pl.show()
+
+        fig = pl.figure()
         ax1 = fig.add_subplot(311)
         ax1.set_title('additive_cepstrum')
         ax1.set_xlabel('quefrency in seconds')
-        pl.plot(tvec, additive_cepstrum)
+        pl.plot(tvec, additive_cepstrum.real)
         ax2 = fig.add_subplot(312)
         ax2.set_title('difference_cepstrum')
         ax2.set_xlabel('quefrency in seconds')
@@ -890,9 +906,9 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
         ax3 = fig.add_subplot(313)
         ax3.set_title('residual_cepstrum')
         ax3.set_xlabel('quefrency in seconds')
-        pl.plot(tvec, residual_cepstrum)
+        pl.plot(tvec, residual_cepstrum.real)
         pl.show()
-    return timestep * np.argmax(residual_cepstrum)
+    return timestep * np.argmax(residual_cepstrum.real[0:len(residual_cepstrum) // 2])
 
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
 def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=False):
