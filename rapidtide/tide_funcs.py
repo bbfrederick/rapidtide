@@ -174,10 +174,12 @@ if nibabelexists:
         return nim, nim_data, nim_hdr, thedims, thesizes
 
 
+    # dims are the array dimensions along each axis
     def parseniftidims(thedims):
         return thedims[1], thedims[2], thedims[3], thedims[4]
 
 
+    # sizes are the mapping between voxels and physical coordinates
     def parseniftisizes(thesizes):
         return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
@@ -361,7 +363,7 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
 
     # fit the johnsonSB function
     params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
-    # print('Johnson SB fit parameters for pdf:', params)
+    #print('Johnson SB fit parameters for pdf:', params)
 
     # restore the zero term if needed
     # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
@@ -386,6 +388,11 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
         pl.legend(['histogram', 'fit to johnsonsb'])
         pl.show()
     return np.append(params, np.array([zeroterm]))
+
+
+def getjohnsonppf(percentile, params, zeroterm):
+    johnsonfunc = johnsonsb(params[0], params[1], params[2], params[3])
+    corrfac = 1.0 - zeroterm
 
 
 def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False,
@@ -862,20 +869,36 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
         np.asarray(valid, dtype='float64')
 
 
+def delayedcorr(data1, data2, delayval, timestep):
+    return sp.stats.stats.pearsonr(data1, timeshift(data2, delayval/timestep, 30)[0])
+
 def cepstraldelay(data1, data2, timestep, displayplots=True):
     # Choudhary, H., Bahl, R. & Kumar, A. 
     # Inter-sensor Time Delay Estimation using cepstrum of sum and difference signals in 
     #     underwater multipath environment. in 1–7 (IEEE, 2015). doi:10.1109/UT.2015.7108308
+    ceps1, _ = complex_cepstrum(data1)
+    ceps2, _ = complex_cepstrum(data2)
     additive_cepstrum, _ = complex_cepstrum(data1 + data2)
     difference_cepstrum, _ = complex_cepstrum(data1 - data2)
     residual_cepstrum = additive_cepstrum - difference_cepstrum
     if displayplots:
         tvec = timestep * np.arange(0.0, len(data1))
         fig = pl.figure()
+        ax1 = fig.add_subplot(211)
+        ax1.set_title('cepstrum 1')
+        ax1.set_xlabel('quefrency in seconds')
+        pl.plot(tvec, ceps1.real, tvec, ceps1.imag)
+        ax2 = fig.add_subplot(212)
+        ax2.set_title('cepstrum 2')
+        ax2.set_xlabel('quefrency in seconds')
+        pl.plot(tvec, ceps2.real, tvec, ceps2.imag)
+        pl.show()
+
+        fig = pl.figure()
         ax1 = fig.add_subplot(311)
         ax1.set_title('additive_cepstrum')
         ax1.set_xlabel('quefrency in seconds')
-        pl.plot(tvec, additive_cepstrum)
+        pl.plot(tvec, additive_cepstrum.real)
         ax2 = fig.add_subplot(312)
         ax2.set_title('difference_cepstrum')
         ax2.set_xlabel('quefrency in seconds')
@@ -883,9 +906,9 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
         ax3 = fig.add_subplot(313)
         ax3.set_title('residual_cepstrum')
         ax3.set_xlabel('quefrency in seconds')
-        pl.plot(tvec, residual_cepstrum)
+        pl.plot(tvec, residual_cepstrum.real)
         pl.show()
-    return timestep * np.argmax(residual_cepstrum)
+    return timestep * np.argmax(residual_cepstrum.real[0:len(residual_cepstrum) // 2])
 
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
 def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=False):
@@ -1446,15 +1469,15 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # make an initial guess at the fit parameters for the gaussian
     # start with finding the maximum value
     if useguess:
-        nlowerlim = int(maxguess - widthlimit / 2.0)
-        nupperlim = int(maxguess + widthlimit / 2.0)
+        maxindex = valtoindex(thexcorr_x, maxguess)
+        nlowerlim = int(maxindex - widthlimit / 2.0)
+        nupperlim = int(maxindex + widthlimit / 2.0)
         if nlowerlim < lowerlim:
             nlowerlim = lowerlim
             nupperlim = lowerlim + int(widthlimit)
         if nupperlim > upperlim:
             nupperlim = upperlim
             nlowerlim = upperlim - int(widthlimit)
-        maxindex = (np.argmax(thexcorr_y[nlowerlim:nupperlim]) + nlowerlim).astype('int16')
         maxval_init = thexcorr_y[maxindex].astype('float64')
     else:
         maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int16')
@@ -1797,7 +1820,7 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
         return None
 
 
-def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate'):
+def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate', debug=False):
     if intermed_freq <= final_freq:
         print('intermediate frequency must be higher than final frequency')
         sys.exit()
@@ -1810,7 +1833,7 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
 
     # antialias
-    aafilter = noncausalfilter(filtertype='arb', usebutterworth=True)
+    aafilter = noncausalfilter(filtertype='arb', usebutterworth=True, debug=debug)
     aafilter.setarb(0.0, 0.0, 0.95 * final_freq, final_freq)
     antialias_y = aafilter.apply(intermed_freq, intermed_y)
     # antialias_y = dolptrapfftfilt(intermed_freq,0.9*final_freq,final_freq,intermed_y)
@@ -1966,65 +1989,6 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 
     return ([shifted_y[padtrs:padtrs + thelen], shifted_weights[padtrs:padtrs + thelen], shifted_y,
              shifted_weights])
-
-
-# timeshift using direct resampling
-#def timeshift2(inputtc, shifttrs, padtrs, doplot=False, dopostfilter=False):
-#    # set up useful parameters
-#    thelen = np.shape(inputtc)[0]
-#    thepaddedlen = thelen + 2 * padtrs
-#    offset = padtrs
-#
-#    # initialize the postfilter
-#    theringfilter = noncausalfilter(filtertype='ringstop')
-#
-#    # initialize variables
-#    preshifted_y = np.zeros(thepaddedlen, dtype='float')  # initialize the working buffer (with pad)
-#    weights = np.zeros(thepaddedlen, dtype='float')  # initialize the weight buffer (with pad)
-#
-#    # now do the math
-#    preshifted_x = np.arange(0.0, np.shape(preshifted_y)[0], 1.0)
-#    shifted_x = preshifted_x - shifttrs
-#    preshifted_y[offset:offset + thelen] = inputtc[:]  # copy initial data into shift buffer
-#    revtc = inputtc[::-1]
-#    preshifted_y[0:offset] = revtc[-offset:]
-#    preshifted_y[offset + thelen:] = revtc[0:offset]
-#    weights[offset:offset + thelen] = 1.0  # put in the weight vector
-#    shifted_y = doresample(preshifted_x, preshifted_y, shifted_x, method='univariate')  # do the actual shifting
-#    shifted_weights = doresample(preshifted_x, weights, shifted_x, method='univariate')  # do the actual shifting
-#    if dopostfilter:
-#        shifted_y = theringfilter.apply(1.0, shifted_y)
-#        shifted_weights = theringfilter.apply(1.0, shifted_weights)
-#
-#    if doplot:
-#        print("shifttrs:", shifttrs)
-#        print("offset:", offset)
-#        print("thelen:", thelen)
-#        print("thepaddedlen:", thepaddedlen)
-#
-#        fig = pl.figure()
-#        ax = fig.add_subplot(111)
-#        ax.set_title('Initial vector')
-#        pl.plot(preshifted_x, preshifted_y)
-#
-#        fig = pl.figure()
-#        ax = fig.add_subplot(111)
-#        ax.set_title('Shifted vector')
-#        pl.plot(shifted_x, shifted_y)
-#
-#        fig = pl.figure()
-#        ax = fig.add_subplot(111)
-#        ax.set_title('Initial and shifted vector')
-#        pl.plot(preshifted_x, preshifted_y, shifted_x, shifted_y)
-#
-#        fig = pl.figure()
-#        ax = fig.add_subplot(111)
-#        ax.set_title('Initial and shifted weight vector')
-#        pl.plot(preshifted_x, weights, shifted_x, shifted_weights)
-#
-#        pl.show()
-#
-#    return [shifted_y[offset:offset + thelen], shifted_weights[offset:offset + thelen], shifted_y, shifted_weights]
 
 
 # --------------------------- Window functions -------------------------------------------------
@@ -2255,8 +2219,8 @@ def getlptrapfftfunc(samplefreq, passfreq, stopfreq, indata, debug=False):
     cutoffbin = int((stopfreq / samplefreq) * np.shape(filterfunc)[0])
     translength = cutoffbin - passbin
     if debug:
-        print('getlptrapfftfunc - passfreq, stopfreq:', passfreq, stopfreq)
-        print('getlptrapfftfunc - cutoffbin, passbin, translength, len(indata):', cutoffbin, passbin, translength,
+        print('getlptrapfftfunc - samplefreq, passfreq, stopfreq:', samplefreq, passfreq, stopfreq)
+        print('getlptrapfftfunc - passbin, translength, cutoffbin, len(indata):', passbin, translength, cutoffbin,
               len(indata))
     if translength > 0:
         transvector = np.arange(1.0 * translength) / translength
@@ -2389,8 +2353,8 @@ def arb_pass(samplerate, inputdata, arb_lowerstop, arb_lowerpass, arb_upperpass,
         # set up for bandpass
         if usebutterworth:
             return (dohpfiltfilt(samplerate, arb_lowerpass,
-                                 dolpfiltfilt(samplerate, arb_upperpass, inputdata, butterorder, padlen=padlen),
-                                 butterorder, padlen=padlen, debug=debug))
+                                 dolpfiltfilt(samplerate, arb_upperpass, inputdata, butterorder, padlen=padlen, debug=debug),
+                                     butterorder, padlen=padlen, debug=debug))
         else:
             if usetrapfftfilt:
                 return (
@@ -2479,6 +2443,9 @@ class noncausalfilter:
 
     def setpadtime(self, padtime):
         self.padtime = padtime
+
+    def setdebug(self, debug):
+        self.debug = debug
 
     def getpadtime(self):
         return self.padtime
