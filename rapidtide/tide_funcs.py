@@ -1469,15 +1469,17 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # make an initial guess at the fit parameters for the gaussian
     # start with finding the maximum value
     if useguess:
-        nlowerlim = int(maxguess - widthlimit / 2.0)
-        nupperlim = int(maxguess + widthlimit / 2.0)
+        maxindex = valtoindex(thexcorr_x, maxguess)
+        nlowerlim = int(maxindex - widthlimit / 2.0)
+        nupperlim = int(maxindex + widthlimit / 2.0)
+        print('maxguess, maxindex, nlowerlim, nupperlim', maxguess, maxindex, nlowerlim, nupperlim)
         if nlowerlim < lowerlim:
             nlowerlim = lowerlim
             nupperlim = lowerlim + int(widthlimit)
         if nupperlim > upperlim:
             nupperlim = upperlim
             nlowerlim = upperlim - int(widthlimit)
-        maxindex = (np.argmax(thexcorr_y[nlowerlim:nupperlim]) + nlowerlim).astype('int16')
+        #maxindex = (np.argmax(thexcorr_y[nlowerlim:nupperlim]) + nlowerlim).astype('int16')
         maxval_init = thexcorr_y[maxindex].astype('float64')
     else:
         maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int16')
