@@ -1203,7 +1203,8 @@ def main():
     optiondict[
         'fix_autocorrelation'] = False  # remove periodic components that corrupt the autocorrelation
     optiondict['despeckle'] = False  # despeckle the correlation function to deal with periodic autocorrelation
-    optiondict['despeckle_thresh'] = 5.0  # despeckle the correlation function to deal with periodic autocorrelation
+    optiondict['despeckle_thresh'] = 5.0  # threshold value - despeckle if median discontinuity magnitude exceeds despeckle_thresh
+    optiondict['despeckle_passes'] = 1  # despeckling passes to perform
     optiondict['nothresh'] = False  # disable voxel intensity threshholding
 
     # correlation fitting options
@@ -1335,6 +1336,8 @@ def main():
                                                                                                           'refineweighting=',
                                                                                                           'corrmaskthresh=',
                                                                                                           'despeckle',
+                                                                                                          'despecklepasses=',
+                                                                                                          'despecklethresh=',
                                                                                                           'accheck',
                                                                                                           'acfix',
                                                                                                           'refinepasses=',
@@ -1541,6 +1544,16 @@ def main():
         elif o == '--accheck':
             optiondict['check_autocorrelation'] = True
             print('Will check for periodic components in the autocorrelation function')
+        elif o == '--despecklethresh':
+            optiondict['despeckle'] = True
+            optiondict['despeckle_thresh'] = int(a)
+            linkchar = '='
+            print('Forcing despeckle threshhold to ', optiondict['despeckle_thresh'])
+        elif o == '--despecklepasses':
+            optiondict['despeckle'] = True
+            optiondict['despecklepasses'] = int(a)
+            linkchar = '='
+            print('Will do ', optiondict['despecklepasses'], ' despeckling passes')
         elif o == '--despeckle':
             optiondict['despeckle'] = True
             optiondict['check_autocorrelation'] = True
@@ -2225,7 +2238,6 @@ def main():
                 print('no sidelobes found in range')
                 cleaned_referencetc = 1.0 * referencetc
                 cleaned_nonosreferencetc = 1.0 * nonosreferencetc
-                #optiondict['despeckle'] = False
         else:
             cleaned_referencetc = 1.0 * referencetc
             cleaned_nonosreferencetc = 1.0 * nonosreferencetc
@@ -2311,17 +2323,22 @@ def main():
             timings.append(['Correlation despeckle start, pass ' + str(thepass), time.time(), None, None])
 
             # find lags that are very different from their neighbors, and refit starting at the median lag for the point
-            outmaparray[validvoxels] = eval('lagtimes')[:]
-            medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape((numspatiallocs))
-            initlags = np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)[validvoxels]
-            voxelsprocessed_fc = fitcorr_func(genlagtc, initial_fmri_x,
+            voxelsprocessed_fc_ds = 0
+            for despecklepass in range(optiondict['despecklepasses']):
+                print('\n\nCorrelation despeckling subpass ' + str(despecklepass + 1))
+                outmaparray[validvoxels] = eval('lagtimes')[:]
+                medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape((numspatiallocs))
+                initlags = np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)[validvoxels]
+                voxelsprocessed_fc_ds += fitcorr_func(genlagtc, initial_fmri_x,
                                           lagtc, slicesize,
                                           corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
                                           lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval,
                                           gaussout,
                                           R2, optiondict,
                                           initiallags=initlags)
+            
 
+            """
             theheader = nim_hdr
             if fileiscifti:
                 theheader['intent_code'] = 3006
@@ -2330,7 +2347,9 @@ def main():
                 theheader['dim'][4] = 1
             tide.savetonifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)).reshape(nativespaceshape), theheader, thesizes,
                              outputname + '_despecklemask_pass' + str(thepass))
-            timings.append(['Correlation despeckle end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
+            """
+            print('\n\n', voxelsprocessed_fc_ds, 'voxels despeckled in', optiondict['despecklepasses'], 'passes')
+            timings.append(['Correlation despeckle end, pass ' + str(thepass), time.time(), voxelsprocessed_fc_ds, 'voxels'])
 
         # Step 3 - regressor refinement for next pass
         if optiondict['dorefineregressor'] and thepass < optiondict['refinepasses']:
