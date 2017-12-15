@@ -42,6 +42,7 @@ import numpy as np
 from statsmodels.tsa.stattools import pacf_yw
 from scipy.stats.stats import pearsonr
 from scipy.signal import welch
+from scipy import ndimage
 
 try:
     from memory_profiler import profile
@@ -350,8 +351,16 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
     return volumetotal
 
 
-def onecorrfit(thetc, corrscale,
-               optiondict, displayplots=False):
+def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None):
+    if initiallag is not None:
+        maxguess = initiallag
+        useguess = True
+        widthlimit = optiondict['despeckle_thresh']
+    else:
+        maxguess = 0.0
+        useguess = False
+        widthlimit = optiondict['widthlimit']
+
     if optiondict['bipolar']:
         if max(thetc) < -1.0 * min(thetc):
             flipfac = rt_floatset(-1.0)
@@ -364,13 +373,14 @@ def onecorrfit(thetc, corrscale,
             maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag_gauss(
                 corrscale,
                 flipfac * thetc,
-                optiondict['lagmin'], optiondict['lagmax'], optiondict['widthlimit'],
+                optiondict['lagmin'], optiondict['lagmax'], widthlimit,
                 edgebufferfrac=optiondict['edgebufferfrac'],
                 threshval=optiondict['lthreshval'],
                 uthreshval=optiondict['uthreshval'],
                 debug=optiondict['debug'],
                 refine=optiondict['gaussrefine'],
-                maxguess=0.0,
+                maxguess=maxguess,
+                useguess=useguess,
                 fastgauss=optiondict['fastgauss'],
                 enforcethresh=optiondict['enforcethresh'],
                 zerooutbadfit=optiondict['zerooutbadfit'],
@@ -380,13 +390,14 @@ def onecorrfit(thetc, corrscale,
             maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag_quad(
                 corrscale,
                 flipfac * thetc,
-                optiondict['lagmin'], optiondict['lagmax'], optiondict['widthlimit'],
+                optiondict['lagmin'], optiondict['lagmax'], widthlimit,
                 edgebufferfrac=optiondict['edgebufferfrac'],
                 threshval=optiondict['lthreshval'],
                 uthreshval=optiondict['uthreshval'],
                 debug=optiondict['debug'],
                 refine=optiondict['gaussrefine'],
-                maxguess=0.0,
+                maxguess=maxguess,
+                useguess=useguess,
                 fastgauss=optiondict['fastgauss'],
                 enforcethresh=optiondict['enforcethresh'],
                 zerooutbadfit=optiondict['zerooutbadfit'],
@@ -405,13 +416,14 @@ def onecorrfit(thetc, corrscale,
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason
 
 
-def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, optiondict, displayplots):
+def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, optiondict, displayplots, initiallag=None):
     if optiondict['slicetimes'] is not None:
         sliceoffsettime = optiondict['slicetimes'][vox % slicesize]
     else:
         sliceoffsettime = 0.0
     maxindex, maxlag, maxval, maxsigma, maskval, failreason = onecorrfit(corrtc, corrscale,
-                                                                         optiondict, displayplots=displayplots)
+                                                                         optiondict, displayplots=displayplots,
+                                                                         initiallag=initiallag)
 
     if maxval > 0.3:
         displayplots = False
@@ -443,8 +455,8 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
 
 
 def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
-            corrscale, corrmask, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
-            R2, optiondict):
+            corrscale, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
+            R2, optiondict, initiallags=None):
     FML_BADAMP, FML_BADLAG, FML_BADWIDTH, FML_HITEDGE, FML_FITFAIL = 0x01, 0x02, 0x04, 0x08, 0x0f
     displayplots = False
     inputshape = np.shape(corrout)
@@ -466,8 +478,12 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                         break
 
                     # process and send the data
-                    outQ.put(procOneVoxelFitcorr(val, corrout[val, :], corrscale, genlagtc, initial_fmri_x, optiondict,
+                    if initiallags is None:
+                        outQ.put(procOneVoxelFitcorr(val, corrout[val, :], corrscale, genlagtc, initial_fmri_x, optiondict,
                                                  displayplots))
+                    else:
+                        outQ.put(procOneVoxelFitcorr(val, corrout[val, :], corrscale, genlagtc, initial_fmri_x, optiondict,
+                                                 displayplots, initiallag=initiallags[val]))
 
                 except Exception as e:
                     print("error!", e)
@@ -484,7 +500,11 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
         # pack the data and send to workers
         data_in = []
         for d in range(inputshape[0]):
-            data_in.append(d)
+            if initiallags is None:
+                data_in.append(d)
+            else:
+                if initiallags[d] != 0.0:
+                    data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
         data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
 
@@ -510,10 +530,17 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
         for vox in range(0, inputshape[0]):
             if vox % reportstep == 0 or vox == inputshape[0] - 1:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[
-                vox], lagmask[vox], failreason = \
-                procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots)
-            volumetotal += volumetotalinc
+            if initiallags is None:
+                dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[
+                    vox], lagmask[vox], failreason = \
+                    procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots)
+                volumetotal += volumetotalinc
+            else:
+                if initiallags[vox] != 0.0:
+                    dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[
+                        vox], lagmask[vox], failreason = \
+                        procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots, initiallags[vox])
+                    volumetotal += volumetotalinc
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
     print('\tampfails=', ampfails, ' lagfails=', lagfails, ' widthfail=', widthfails, ' edgefail=', edgefails,
           ' fitfail=', fitfails)
@@ -1128,6 +1155,7 @@ def usage():
     print("    --multiproc              - Enable multiprocessing versions of key subroutines.  This")
     print("                               speeds things up dramatically.  Almost certainly will NOT")
     print("                               work on Windows (due to different forking behavior).")
+    print("    --debug                  - Enable additional information output")
     print("")
     print("Experimental options (not fully tested, may not work):")
     print("    --dispersioncalc         - Generate extra data during refinement to allow calculation of dispersion")
@@ -1174,6 +1202,8 @@ def main():
         'check_autocorrelation'] = False  # check for periodic components that corrupt the autocorrelation
     optiondict[
         'fix_autocorrelation'] = False  # remove periodic components that corrupt the autocorrelation
+    optiondict['despeckle'] = False  # despeckle the correlation function to deal with periodic autocorrelation
+    optiondict['despeckle_thresh'] = 5.0  # despeckle the correlation function to deal with periodic autocorrelation
     optiondict['nothresh'] = False  # disable voxel intensity threshholding
 
     # correlation fitting options
@@ -1198,10 +1228,10 @@ def main():
     optiondict['dodeconv'] = False  # do Wiener deconvolution to find voxel transfer function
 
     # filter options
-    optiondict['zpfilter'] = True
+    optiondict['zpfilter'] = False
     optiondict['trapezoidalfftfilter'] = True
     optiondict['usebutterworthfilter'] = False
-    optiondict['filtorder'] = 3
+    optiondict['filtorder'] = 6
     optiondict['padseconds'] = 30.0  # the number of seconds of padding to add to each end of a filtered timecourse
     optiondict['filtertype'] = None
 
@@ -1304,6 +1334,7 @@ def main():
                                                                                                           'sigmathresh=',
                                                                                                           'refineweighting=',
                                                                                                           'corrmaskthresh=',
+                                                                                                          'despeckle',
                                                                                                           'accheck',
                                                                                                           'acfix',
                                                                                                           'refinepasses=',
@@ -1319,6 +1350,7 @@ def main():
                                                                                                           'dispersioncalc',
                                                                                                           'noglm',
                                                                                                           'multiproc',
+                                                                                                          'debug',
                                                                                                           'nonumba',
                                                                                                           'tmask=',
                                                                                                           'nodetrend',
@@ -1429,6 +1461,10 @@ def main():
             optiondict['savelagregressors'] = False
             optiondict['saveglmfiltered'] = False
             print('disabling output of lagregressors and glm filtered timecourses')
+        elif o == '--debug':
+            optiondict['debug'] = True
+            theprefilter.setdebug(optiondict['debug'])
+            print('enabling additional data output for debugging')
         elif o == '--multiproc':
             optiondict['multiproc'] = True
             print('enabling multiprocessing')
@@ -1505,6 +1541,10 @@ def main():
         elif o == '--accheck':
             optiondict['check_autocorrelation'] = True
             print('Will check for periodic components in the autocorrelation function')
+        elif o == '--despeckle':
+            optiondict['despeckle'] = True
+            optiondict['check_autocorrelation'] = True
+            print('Will despeckle correlation function to pick the right correlation peak (experimental)')
         elif o == '--acfix':
             optiondict['fix_autocorrelation'] = True
             optiondict['check_autocorrelation'] = True
@@ -1980,16 +2020,16 @@ def main():
                 print('    npoints:', np.shape(reference_y)[0])
                 print('    filtorder:', optiondict['filtorder'])
             reference_y_filt = tide.dolpfiltfilt(inputfreq, 0.5 * fmrifreq, reference_y, optiondict['filtorder'],
-                                                 padlen=int(inputfreq * optiondict['padseconds']))
+                                                 padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
         else:
             if optiondict['trapezoidalfftfilter']:
                 print('applying trapezoidal antialiasing filter')
                 reference_y_filt = tide.dolptrapfftfilt(inputfreq, 0.25 * fmrifreq, 0.5 * fmrifreq, reference_y,
-                                                        padlen=int(inputfreq * optiondict['padseconds']))
+                                                        padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
             else:
                 print('applying brickwall antialiasing filter')
                 reference_y_filt = tide.dolpfftfilt(inputfreq, 0.5 * fmrifreq, reference_y,
-                                                    padlen=int(inputfreq * optiondict['padseconds']))
+                                                    padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
         reference_y = rt_floatset(reference_y_filt.real)
 
     warnings.filterwarnings('ignore', 'Casting*')
@@ -2158,6 +2198,7 @@ def main():
             if sidelobetime is not None:
                 passsuffix = '_pass' + str(thepass + 1)
                 optiondict['acsidelobelag' + passsuffix] = sidelobetime
+                optiondict['despeckle_thresh'] = sidelobetime/2.0
                 optiondict['acsidelobeamp' + passsuffix] = sidelobeamp
                 print('\n\nWARNING: autocorrcheck found bad sidelobe at', sidelobetime, 'seconds (', 1.0 / sidelobetime,
                       'Hz)...')
@@ -2170,7 +2211,7 @@ def main():
                     if doreferencenotch:
                         print('removing spectral component at sidelobe frequency')
                         acstopfreq = 1.0 / sidelobetime
-                        acfixfilter = tide.noncausalfilter()
+                        acfixfilter = tide.noncausalfilter(debug=optiondict['debug'])
                         acfixfilter.settype('arb_stop')
                         acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
                         cleaned_referencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
@@ -2184,6 +2225,7 @@ def main():
                 print('no sidelobes found in range')
                 cleaned_referencetc = 1.0 * referencetc
                 cleaned_nonosreferencetc = 1.0 * nonosreferencetc
+                #optiondict['despeckle'] = False
         else:
             cleaned_referencetc = 1.0 * referencetc
             cleaned_nonosreferencetc = 1.0 * nonosreferencetc
@@ -2258,10 +2300,37 @@ def main():
         voxelsprocessed_fc = fitcorr_func(genlagtc, initial_fmri_x,
                                           lagtc, slicesize,
                                           corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
-                                          corrmask, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval,
+                                          lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval,
                                           gaussout,
                                           R2, optiondict)
         timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
+
+        # Step 2b - Correlation time despeckle
+        if optiondict['despeckle']:
+            print('\n\nCorrelation despeckling pass ' + str(thepass))
+            timings.append(['Correlation despeckle start, pass ' + str(thepass), time.time(), None, None])
+
+            # find lags that are very different from their neighbors, and refit starting at the median lag for the point
+            outmaparray[validvoxels] = eval('lagtimes')[:]
+            medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape((numspatiallocs))
+            initlags = np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)[validvoxels]
+            voxelsprocessed_fc = fitcorr_func(genlagtc, initial_fmri_x,
+                                          lagtc, slicesize,
+                                          corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
+                                          lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval,
+                                          gaussout,
+                                          R2, optiondict,
+                                          initiallags=initlags)
+
+            theheader = nim_hdr
+            if fileiscifti:
+                theheader['intent_code'] = 3006
+            else:
+                theheader['dim'][0] = 3
+                theheader['dim'][4] = 1
+            tide.savetonifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)).reshape(nativespaceshape), theheader, thesizes,
+                             outputname + '_despecklemask_pass' + str(thepass))
+            timings.append(['Correlation despeckle end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
 
         # Step 3 - regressor refinement for next pass
         if optiondict['dorefineregressor'] and thepass < optiondict['refinepasses']:
