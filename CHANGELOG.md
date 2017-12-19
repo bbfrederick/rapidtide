@@ -1,5 +1,23 @@
 # History of changes
 
+## Version 1.3.0 (12/15/17)
+* (rapidtide2, 2x) Added new option, '--despeckle', which uses a spatial median filter to find and correct points where the correlation fit picked the wrong autocorrelation lobe.  This dramatically improves the quality of the output maps.  This will probably be turned on by default in the next release.
+* (tidepool) FINALLY fixed the click positioning bug.  Worth the update just for this.  That was driving me crazy.
+* (tidepool) Formatting improvements.
+* (tidepool) Preliminary support for multiple territory atlases and averaging modes in tidepool.
+* (tidepool) Atlas averaging is now (mostly) working.
+* (rapidtide2, 2x) Now support text format NIRS datasets (2D text files) in addition to NIFTI fMRI files.
+* (rapidtide2, 2x) Substantial internal changes to reduce memory footprint, improve speed.
+* (rapidtide2x, showxcorrx) Initial support added for Choudry's cepstral analysis method for delay calculation.
+* (showtc) Substantial improvements (improved formatting, ability to specify separate subplots, transpose input, line colors, waterfall plots, offsets between lines, titles, etc).
+* (rapidtide2std) Internal code cleanup.
+* (showxy) Now supports multiple input files.
+* Added glmfilt to package to filter 1D or 4D data out of 4D datasets.
+* Added spatialdecomp to do spatial PCA decomposition of 4D NIFTI files.
+* Added temporaldecomp to do temporal PCA decomposition of 4D NIFTI files.
+* Added ccorrica to the distribution to provide cross correlation matrices between all timeseries in a 2D text files.
+* Added atlastool to aid in preparation of atlas files for tidepool.
+
 ## Version 1.2.0 (6/20/17)
 * New release to trigger a Zenodo DOI.
 * Fully tested for python 3.6 compatibility.

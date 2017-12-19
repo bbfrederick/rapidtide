@@ -1023,6 +1023,7 @@ def usage():
         "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
         "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
         "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--weightedavg] [--avg] [--psdfilter] "
+        "[--despeckle] [--despecklethresh=VAL] [--despecklepasses=PASSES] "
         "[--dispersioncalc] [--refineupperlag] [--refinelowerlag]"
         "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
         "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
