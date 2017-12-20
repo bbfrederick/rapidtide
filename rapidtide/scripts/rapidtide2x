@@ -1466,7 +1466,6 @@ def main():
             print('mean scale voxels prior to generating global mean')
         elif o == '--limitoutput':
             optiondict['savelagregressors'] = False
-            #optiondict['saveglmfiltered'] = False
             print('disabling output of lagregressors and glm filtered timecourses')
         elif o == '--debug':
             optiondict['debug'] = True
@@ -2668,12 +2667,13 @@ def main():
         lagtc = None
 
     if optiondict['dorefineregressor']:
-        outfmriarray[validvoxels, :] = shiftedtcs[:, :]
-        if optiondict['textio']:
-            tide.writenpvecs(outfmriarray.reshape(nativefmrishape),
+        if optiondict['savelagregressors']: 
+            outfmriarray[validvoxels, :] = shiftedtcs[:, :]
+            if optiondict['textio']:
+                tide.writenpvecs(outfmriarray.reshape(nativefmrishape),
                              outputname + '_shiftedtcs' + outsuffix4d + '.txt')
-        else:
-            tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+            else:
+                tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
                              outputname + '_shiftedtcs' + outsuffix4d)
         shiftedtcs = None
         outmaparray[validvoxels] = refinemask[:]
