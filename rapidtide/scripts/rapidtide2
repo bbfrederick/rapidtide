@@ -1872,7 +1872,7 @@ def main():
         reportstep = 10
         for i in range(validstart, validend + 1):
             if i % reportstep == 0 or i == validend:
-                tide.progressbar(i - validstart + 1, timepoints - 1, label='Percent complete')
+                tide.progressbar(i - validstart + 1, timepoints, label='Percent complete')
             nim_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, optiondict['gausssigma'],
                                                 nim_data[:, :, :, i])
         timings.append(['End 3D smoothing', time.time(), None, None])
