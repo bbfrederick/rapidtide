@@ -1495,14 +1495,17 @@ def main():
         elif o == '-L':
             theprefilter.settype('lfo')
             optiondict['filtertype'] = 'lfo'
+            optiondict['despeckle_thresh'] = np.max([optiondict['despeckle_thresh'], 0.5/(theprefilter.getfreqlimits()[2])])
             print('prefiltering to lfo band')
         elif o == '-R':
             theprefilter.settype('resp')
             optiondict['filtertype'] = 'resp'
+            optiondict['despeckle_thresh'] = np.max([optiondict['despeckle_thresh'], 0.5/(theprefilter.getfreqlimits()[2])])
             print('prefiltering to respiratory band')
         elif o == '-C':
             theprefilter.settype('cardiac')
             optiondict['filtertype'] = 'cardiac'
+            optiondict['despeckle_thresh'] = np.max([optiondict['despeckle_thresh'], 0.5/(theprefilter.getfreqlimits()[2])])
             print('prefiltering to cardiac band')
         elif o == '-F':
             arbvec = a.split(',')
@@ -1523,6 +1526,7 @@ def main():
             optiondict['filtertype'] = 'arb'
             theprefilter.setarb(optiondict['arb_lowerstop'], optiondict['arb_lower'],
                                 optiondict['arb_upper'], optiondict['arb_upperstop'])
+            optiondict['despeckle_thresh'] = np.max([optiondict['despeckle_thresh'], 0.5/(theprefilter.getfreqlimits()[2])])
             print('prefiltering to ', optiondict['arb_lower'], optiondict['arb_upper'],
                   '(stops at ', optiondict['arb_lowerstop'], optiondict['arb_upperstop'], ')')
         elif o == '-p':
@@ -2214,7 +2218,7 @@ def main():
             if sidelobetime is not None:
                 passsuffix = '_pass' + str(thepass + 1)
                 optiondict['acsidelobelag' + passsuffix] = sidelobetime
-                optiondict['despeckle_thresh'] = sidelobetime/2.0
+                optiondict['despeckle_thresh'] = np.max([optiondict['despeckle_thresh'], sidelobetime/2.0])
                 optiondict['acsidelobeamp' + passsuffix] = sidelobeamp
                 print('\n\nWARNING: autocorrcheck found bad sidelobe at', sidelobetime, 'seconds (', 1.0 / sidelobetime,
                       'Hz)...')
