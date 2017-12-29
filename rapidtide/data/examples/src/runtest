@@ -13,7 +13,6 @@ rapidtide2x \
 rapidtide2x \
 	fmri.nii.gz \
 	../dst/dgsr_2x_mp_despeckle \
-	--refinepasses=3 --refineoffset \
         --limitoutput \
 	--accheck \
         --despeckle \
