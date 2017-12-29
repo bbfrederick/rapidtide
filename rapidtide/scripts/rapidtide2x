@@ -1305,6 +1305,7 @@ def main():
     optiondict['release_version'], optiondict['git_tag'] = tide.version()
     optiondict['python_version'] = str(sys.version_info)
     optiondict['multiproc'] = False
+    optiondict['nprocs'] = -1
     optiondict['mp_chunksize'] = 50000
 
     # package options
