@@ -146,7 +146,7 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
                     break
 
         # initialize the workers and the queues
-        n_workers = mp.cpu_count() - 1
+        n_workers = optiondict['nprocs']
         inQ = mp.Queue()
         outQ = mp.Queue()
         workers = [mp.Process(target=nullCorrelation_consumer, args=(inQ, outQ)) for i in range(n_workers)]
@@ -305,7 +305,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
                     break
 
         # initialize the workers and the queues
-        n_workers = mp.cpu_count() - 1
+        n_workers = optiondict['nprocs']
         inQ = mp.Queue()
         outQ = mp.Queue()
         workers = [mp.Process(target=correlation_consumer, args=(inQ, outQ)) for i in range(n_workers)]
@@ -490,7 +490,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                     break
 
         # initialize the workers and the queues
-        n_workers = mp.cpu_count() - 1
+        n_workers = optiondict['nprocs']
         inQ = mp.Queue()
         outQ = mp.Queue()
         workers = [mp.Process(target=fitcorr_consumer, args=(inQ, outQ)) for i in range(n_workers)]
@@ -644,7 +644,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, maskarray,
                     break
 
         # initialize the workers and the queues
-        n_workers = mp.cpu_count() - 1
+        n_workers = optiondict['nprocs']
         inQ = mp.Queue()
         outQ = mp.Queue()
         workers = [mp.Process(target=timeshift_consumer, args=(inQ, outQ)) for i in range(n_workers)]
@@ -828,7 +828,7 @@ def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondi
                     break
 
         # initialize the workers and the queues
-        n_workers = mp.cpu_count() - 1
+        n_workers = optiondict['nprocs']
         inQ = mp.Queue()
         outQ = mp.Queue()
         workers = [mp.Process(target=Wiener_consumer, args=(inQ, outQ)) for i in range(n_workers)]
@@ -905,7 +905,7 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
                     break
 
         # initialize the workers and the queues
-        n_workers = mp.cpu_count() - 1
+        n_workers = optiondict['nprocs']
         inQ = mp.Queue()
         outQ = mp.Queue()
         workers = [mp.Process(target=GLM_consumer, args=(inQ, outQ)) for i in range(n_workers)]
@@ -1027,7 +1027,7 @@ def usage():
         "[--dispersioncalc] [--refineupperlag] [--refinelowerlag]"
         "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
         "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
-        "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc]")
+        "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc] [--nprocs=NPROCS]")
     print("")
     print("Required arguments:")
     print("    fmrifilename               - The BOLD fmri file")
@@ -1159,6 +1159,9 @@ def usage():
     print("    --multiproc                - Enable multiprocessing versions of key subroutines.  This")
     print("                                 speeds things up dramatically.  Almost certainly will NOT")
     print("                                 work on Windows (due to different forking behavior).")
+    print("    --nprocs=NPROCS            - Use NPROCS worker processes for multiprocessing.  Setting NPROCS")
+    print("                                 less than 1 sets the number of worker processes to")
+    print("                                 n_cpus - 1 (default).  Setting NPROCS enables --multiproc.")
     print("    --debug                    - Enable additional information output")
     print("")
     print("Experimental options (not fully tested, may not work):")
@@ -1357,6 +1360,7 @@ def main():
                                                                                                           'dispersioncalc',
                                                                                                           'noglm',
                                                                                                           'multiproc',
+                                                                                                          'nprocs=',
                                                                                                           'debug',
                                                                                                           'nonumba',
                                                                                                           'tmask=',
@@ -1473,7 +1477,13 @@ def main():
             print('enabling additional data output for debugging')
         elif o == '--multiproc':
             optiondict['multiproc'] = True
+            optiondict['nprocs'] = -1
             print('enabling multiprocessing')
+        elif o == '--nprocs':
+            optiondict['multiproc'] = True
+            optiondict['nprocs'] = int(a)
+            linkchar = '='
+            print('will use', optiondict['nprocs'], 'processes for calculation')
         elif o == '--nonumba':
             optiondict['nonumba'] = True
             print('disabling numba if present')
@@ -1795,6 +1805,10 @@ def main():
         print('setting output precision to single')
         rt_outfloattype = 'float32'
         rt_outfloatset = np.float32
+
+    # set set the number of worker processes if multiprocessing
+    if optiondict['nprocs'] < 1:
+        optiondict['nprocs'] = mp.cpu_count() - 1
 
     # write out the command used
     tide.writevec(formattedcmdline, outputname + '_formattedcommandline.txt')
