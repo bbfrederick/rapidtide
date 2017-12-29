@@ -2327,6 +2327,7 @@ def main():
         # Step 2b - Correlation time despeckle
         if optiondict['despeckle']:
             print('\n\nCorrelation despeckling pass ' + str(thepass))
+            print('\tUsing despeckle_thresh =' + str(optiondict['despeckle_thresh']))
             timings.append(['Correlation despeckle start, pass ' + str(thepass), time.time(), None, None])
 
             # find lags that are very different from their neighbors, and refit starting at the median lag for the point
