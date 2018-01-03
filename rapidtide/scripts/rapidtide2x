@@ -1912,13 +1912,6 @@ def main():
         timings.append(['End 3D smoothing', time.time(), None, None])
         print()
 
-    # move nim_data into shared memory
-    if optiondict['sharedmem']:
-        print('moving fmri data to shared memory')
-        timings.append(['Start moving nim_data to shared memory', time.time(), None, None])
-        nim_data, nim_data_shared, nim_data_shared_shape = numpy2shared(nim_data, rt_floatset)
-        timings.append(['End moving nim_data to shared memory', time.time(), None, None])
-
     # reshape the data and trim to a time range, if specified
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
     timepoints = validend - validstart + 1
@@ -1972,8 +1965,28 @@ def main():
     validvoxels = np.where(corrmask > 0)[0]
     numvalidspatiallocs = np.shape(validvoxels)[0]
     print('validvoxels shape =', numvalidspatiallocs)
-    fmri_data_valid = fmri_data[validvoxels, :]
-    print('original size =', np.shape(fmri_data[:, :]), ', trimmed size =', np.shape(fmri_data_valid))
+    fmri_data_valid = fmri_data[validvoxels, :] + 0.0
+    print('original size =', np.shape(fmri_data), ', trimmed size =', np.shape(fmri_data_valid))
+    #print('original size =', np.shape(fmri_data[:, :]), ', trimmed size =', np.shape(fmri_data_valid))
+    if internalincludemask is not None:
+        internalincludemask_valid = 1.0 * internalincludemask[validvoxels]
+        internalincludemask = None
+    else:
+        internalincludemask_valid = None
+    if internalexcludemask is not None:
+        internalexcludemask_valid = 1.0 * internalexcludemask[validvoxels]
+        internalexcludemask = None
+    else:
+        internalexcludemask_valid = None
+
+    # move fmri_data_valid into shared memory
+    if optiondict['sharedmem']:
+        print('moving fmri data to shared memory')
+        timings.append(['Start moving fmri_data to shared memory', time.time(), None, None])
+        fmri_data_valid, fmri_data_valid_shared, fmri_data_valid_shared_shape = numpy2shared(fmri_data_valid, rt_floatset)
+        timings.append(['End moving fmri_data to shared memory', time.time(), None, None])
+    fmri_data = None
+    nim_data = None
 
     # read in the timecourse to resample
     timings.append(['Start of reference prep', time.time(), None, None])
@@ -1985,8 +1998,8 @@ def main():
         inputfreq = 1.0 / fmritr
         inputperiod = 1.0 * fmritr
         inputstarttime = 0.0
-        inputvec = getglobalsignal(fmri_data, optiondict, includemask=internalincludemask,
-                                   excludemask=internalexcludemask)
+        inputvec = getglobalsignal(fmri_data_valid, optiondict, includemask=internalincludemask_valid,
+                                   excludemask=internalexcludemask_valid)
         optiondict['preprocskip'] = 0
     else:
         if inputfreq is None:
@@ -2416,7 +2429,7 @@ def main():
             voxelsprocessed_rr, outputdata = refineregressor_func(
                 cleaned_nonosreferencetc, fmri_data_valid[:, :], fmritr, shiftedtcs, weights, refinemask, thepass,
                 lagstrengths, lagtimes, lagsigma, R2, theprefilter, optiondict,
-                padtrs=numpadtrs, includemask=internalincludemask, excludemask=internalexcludemask)
+                padtrs=numpadtrs, includemask=internalincludemask_valid, excludemask=internalexcludemask_valid)
             normoutputdata = tide.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
             tide.writenpvecs(normoutputdata, outputname + '_refinedregressor_pass' + str(thepass) + '.txt')
 
