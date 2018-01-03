@@ -982,6 +982,15 @@ def prewhiten(indata, arcoffs):
     return pwdata
 
 
+def numpy2shared(inarray, thetype):
+    thesize = inarray.size
+    theshape = inarray.shape
+    inarray_shared = mp.RawArray('d', inarray.reshape((thesize)))
+    inarray = np.frombuffer(inarray_shared, dtype=thetype, count=thesize)
+    inarray.shape = theshape
+    return inarray, inarray_shared, theshape
+
+
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     # mask to interesting voxels
     if optiondict['globalmaskmethod'] == 'mean':
@@ -1024,7 +1033,7 @@ def usage():
         "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
         "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--weightedavg] [--avg] [--psdfilter] "
         "[--despeckle] [--despecklethresh=VAL] [--despecklepasses=PASSES] "
-        "[--dispersioncalc] [--refineupperlag] [--refinelowerlag]"
+        "[--dispersioncalc] [--refineupperlag] [--refinelowerlag] [--nosharedmem]"
         "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
         "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
         "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc] [--nprocs=NPROCS]")
@@ -1154,6 +1163,7 @@ def usage():
     print("    -S                         - Simulate a run - just report command line options")
     print("    -d                         - Display plots of interesting timecourses")
     print("    --nonumba                  - Disable jit compilation with numba")
+    print("    --nosharedmem              - Disable use of shared memory for large array storage")
     print("    --memprofile               - Enable memory profiling for debugging - warning:")
     print("                                 this slows things down a lot.")
     print("    --multiproc                - Enable multiprocessing versions of key subroutines.  This")
@@ -1298,6 +1308,7 @@ def main():
     optiondict['outputprecision'] = 'single'
     optiondict['nonumba'] = False
     optiondict['memprofile'] = False
+    optiondict['sharedmem'] = True
     optiondict['fakerun'] = False
     optiondict['displayplots'] = False
     optiondict['debug'] = False
@@ -1360,6 +1371,7 @@ def main():
                                                                                                           'psdfilter',
                                                                                                           'dispersioncalc',
                                                                                                           'noglm',
+                                                                                                          'nosharedmem',
                                                                                                           'multiproc',
                                                                                                           'nprocs=',
                                                                                                           'debug',
@@ -1480,6 +1492,10 @@ def main():
             optiondict['multiproc'] = True
             optiondict['nprocs'] = -1
             print('enabling multiprocessing')
+        elif o == '--nosharedmem':
+            optiondict['sharedmem'] = False
+            linkchar = '='
+            print('will not use shared memory for large array storage')
         elif o == '--nprocs':
             optiondict['multiproc'] = True
             optiondict['nprocs'] = int(a)
@@ -1895,6 +1911,13 @@ def main():
                                                 nim_data[:, :, :, i])
         timings.append(['End 3D smoothing', time.time(), None, None])
         print()
+
+    # move nim_data into shared memory
+    if optiondict['sharedmem']:
+        print('moving fmri data to shared memory')
+        timings.append(['Start moving nim_data to shared memory', time.time(), None, None])
+        nim_data, nim_data_shared, nim_data_shared_shape = numpy2shared(nim_data, rt_floatset)
+        timings.append(['End moving nim_data to shared memory', time.time(), None, None])
 
     # reshape the data and trim to a time range, if specified
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
