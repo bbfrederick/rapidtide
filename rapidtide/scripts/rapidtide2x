@@ -2272,6 +2272,7 @@ def main():
             nativecorrshape = (xsize, ysize, numslices, corroutlen)
     internalcorrshape = (numspatiallocs, corroutlen)
     internalvalidcorrshape = (numvalidspatiallocs, corroutlen)
+    print('allocating memory for correlation arrays', internalcorrshape, internalvalidcorrshape)
     if optiondict['sharedmem']:
         corrout, dummy, dummy = allocshared(internalvalidcorrshape, rt_floatset)
         gaussout, dummy, dummy = allocshared(internalvalidcorrshape, rt_floatset)
