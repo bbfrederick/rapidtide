@@ -113,7 +113,7 @@ def procOneNullCorrelation(iteration, indata, ncprefilter, oversampfreq, corrsca
     shuffleddata = np.random.permutation(indata)
 
     # crosscorrelate with original
-    thexcorr = onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter, indata,
+    thexcorr, dummy = onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter, indata,
                               optiondict)
 
     # fit the correlation
@@ -179,7 +179,7 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
             shuffleddata = np.random.permutation(indata)
 
             # crosscorrelate with original
-            thexcorr = onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
+            thexcorr, dummy = onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
                                       indata,
                                       optiondict)
 
@@ -210,7 +210,11 @@ def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, nc
 
     # now actually do the correlation
     thexcorr = tide.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=optiondict['corrweighting'])
-    return thexcorr[corrorigin - lagmininpts:corrorigin + lagmaxinpts]
+
+    # find the global maximum value
+    theglobalmax = np.argmax(thexcorr)
+
+    return thexcorr[corrorigin - lagmininpts:corrorigin + lagmaxinpts], theglobalmax
 
 
 def procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, oversampfreq,
@@ -220,8 +224,9 @@ def procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, o
         thetc[:] = tide.doresample(fmri_x, fmritc, os_fmri_x, method=optiondict['interptype'])
     else:
         thetc[:] = fmritc
-    return vox, np.mean(thetc), onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
+    thexcorr, theglobalmax = onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
                                                referencetc, optiondict)
+    return vox, np.mean(thetc), thexcorr, theglobalmax
 
 
 def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
@@ -285,6 +290,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
     volumetotal = 0
     reportstep = 1000
     thetc = np.zeros(np.shape(os_fmri_x), dtype=rt_floattype)
+    theglobalmaxlist = []
     if optiondict['multiproc']:
         # define the consumer function here so it inherits most of the arguments
         def correlation_consumer(inQ, outQ):
@@ -334,16 +340,18 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
             # corrmask[voxel[0]] = 1
             meanval[voxel[0]] = voxel[1]
             corrout[voxel[0], :] = voxel[2]
+            theglobalmaxlist.append(voxel[3] + 0)
             volumetotal += 1
         data_out = []
     else:
         for vox in range(0, inputshape[0]):
             if vox % reportstep == 0 or vox == inputshape[0] - 1:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            dummy, meanval[vox], corrout[vox, :] = procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x,
+            dummy, meanval[vox], corrout[vox, :], theglobalmax = procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x,
                                                                            fmridata[vox, :], os_fmri_x, oversampfreq,
                                                                            corrorigin, lagmininpts, lagmaxinpts,
                                                                            ncprefilter, referencetc)
+            theglobalmaxlist.append(theglobalmax + 0)
             volumetotal += 1
     print('\nCorrelation performed on ' + str(volumetotal) + ' voxels')
 
@@ -351,7 +359,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
     collected = gc.collect()
     print("Garbage collector: collected %d objects." % collected)
 
-    return volumetotal
+    return volumetotal, theglobalmaxlist
 
 
 def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None):
@@ -2341,7 +2349,7 @@ def main():
             lagindpad = corrorigin - 2 * np.max((lagmininpts, lagmaxinpts))
             acmininpts = lagmininpts + lagindpad
             acmaxinpts = lagmaxinpts + lagindpad
-            thexcorr = onecorrelation(referencetc, oversampfreq, corrorigin, acmininpts, acmaxinpts, theprefilter,
+            thexcorr, dummy = onecorrelation(referencetc, oversampfreq, corrorigin, acmininpts, acmaxinpts, theprefilter,
                                       referencetc,
                                       optiondict)
             outputarray = np.asarray([corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts], thexcorr])
@@ -2439,7 +2447,7 @@ def main():
         else:
             logmem('before correlationpass', file=memfile)
             correlationpass_func = correlationpass
-        voxelsprocessed_cp = correlationpass_func(fmri_data_valid[:, optiondict['addedskip']:], fft_fmri_data,
+        voxelsprocessed_cp, theglobalmaxlist = correlationpass_func(fmri_data_valid[:, optiondict['addedskip']:], fft_fmri_data,
                                                   cleaned_referencetc,
                                                   initial_fmri_x, os_fmri_x,
                                                   fmritr,
@@ -2447,6 +2455,11 @@ def main():
                                                   corrmask, corrout, meanval,
                                                   theprefilter,
                                                   optiondict)
+        for i in range(len(theglobalmaxlist)):
+            theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
+        tide.makeandsavehistogram(np.asarray(theglobalmaxlist), optiondict['histlen'], 0,
+                              outputname + '_globallaghist_pass' + str(thepass),
+                              displaytitle='lagtime histogram', displayplots=optiondict['displayplots'], refine=False)
         timings.append(['Correlation calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
         # Step 2 - correlation fitting and time lag estimation
@@ -2669,7 +2682,7 @@ def main():
     if optiondict['doprewhiten']:
         print('Step 3 - reprocessing prewhitened data')
         timings.append(['Step 3 start', time.time(), None, None])
-        correlationpass(prewhiteneddata, fft_fmri_data, referencetc_pw,
+        dummy, dummy = correlationpass(prewhiteneddata, fft_fmri_data, referencetc_pw,
                         initial_fmri_x, os_fmri_x,
                         fmritr,
                         corrorigin, lagmininpts, lagmaxinpts,
