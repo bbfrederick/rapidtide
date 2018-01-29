@@ -2049,11 +2049,13 @@ def main():
     if internalincludemask is not None:
         internalincludemask_valid = 1.0 * internalincludemask[validvoxels]
         internalincludemask = None
+        print('internalincludemask_valid has size:', internalincludemask_valid.size
     else:
         internalincludemask_valid = None
     if internalexcludemask is not None:
         internalexcludemask_valid = 1.0 * internalexcludemask[validvoxels]
         internalexcludemask = None
+        print('internalexcludemask_valid has size:', internalexcludemask_valid.size
     else:
         internalexcludemask_valid = None
 
@@ -2369,7 +2371,7 @@ def main():
                 optiondict['acsidelobeamp' + passsuffix] = sidelobeamp
                 print('\n\nWARNING: autocorrcheck found bad sidelobe at', sidelobetime, 'seconds (', 1.0 / sidelobetime,
                       'Hz)...')
-                tide.writenpvecs(np.array([sidelobetime]), outputname + '_autocorr_sidelobetime.txt')
+                tide.writenpvecs(np.array([sidelobetime]), outputname + '_autocorr_sidelobetime' + passsuffix + '.txt')
                 if optiondict['fix_autocorrelation']:
                     print('Removing sidelobe')
                     if dolagmod:
