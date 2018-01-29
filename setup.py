@@ -53,6 +53,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/glmfilt',
                'rapidtide/scripts/histnifti',
                'rapidtide/scripts/atlastool',
+               'rapidtide/scripts/tcfrom3col',
                'rapidtide/scripts/showhist']
 if addtidepool:
     script_list.append('rapidtide/scripts/tidepool')
