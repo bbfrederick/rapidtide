@@ -2049,13 +2049,13 @@ def main():
     if internalincludemask is not None:
         internalincludemask_valid = 1.0 * internalincludemask[validvoxels]
         internalincludemask = None
-        print('internalincludemask_valid has size:', internalincludemask_valid.size
+        print('internalincludemask_valid has size:', internalincludemask_valid.size)
     else:
         internalincludemask_valid = None
     if internalexcludemask is not None:
         internalexcludemask_valid = 1.0 * internalexcludemask[validvoxels]
         internalexcludemask = None
-        print('internalexcludemask_valid has size:', internalexcludemask_valid.size
+        print('internalexcludemask_valid has size:', internalexcludemask_valid.size)
     else:
         internalexcludemask_valid = None
 
