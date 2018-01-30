@@ -28,11 +28,12 @@ from cycler import cycler
 import matplotlib
 import matplotlib.cm as cm
 
+import bisect
 import rapidtide.tide_funcs as tide
 import numpy as np
 from scipy import arange, fftpack
 
-from pylab import figure, plot, legend, show, xlabel, ylabel, savefig, title, subplot, tight_layout, suptitle, xlim, ylim, box
+from pylab import figure, plot, legend, show, xlabel, ylabel, savefig, title, subplot, tight_layout, suptitle, xlim, ylim, box, setp
 
 
 def phase(mcv): 
@@ -64,6 +65,8 @@ def usage():
     print("    --separate               - use a separate subplot for each timecourse")
     print("    --noxax                  - don't show x axis")
     print("    --noyax                  - don't show y axis")
+    print("    --starttime=START        - start plot at START seconds")
+    print("    --endtime=END            - end plot at END seconds")
     return ()
 
 # set default variable values
@@ -85,10 +88,15 @@ separate = False
 thelinewidth = 1.0
 showxax = True
 showyax = True
+thestartpoint = 0
+theendpoint = 100000000
+thestarttime = -1000000.0
+theendtime = 1000000.0
 
 # get the command line parameters
 try:
     opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "voffset=", "noxax", "noyax",
+                                                   "starttime=", "endtime=",
                                                    "samplerate=", "colorlist=", "linewidth=", "legendlist=", "title=", "separate", "sampletime=", "tofile="])
 except getopt.GetoptError as err:
     # print help information and exit:
@@ -123,6 +131,12 @@ for o, a in opts:
         for thislegend in a.split(','):
             legendlist.append(thislegend)
         print('Colors used:', colornames)
+    elif o == '--starttime':
+        thestarttime = float(a)
+        print('Start time set to:', thestarttime)
+    elif o == '--endtime':
+        theendtime = float(a)
+        print('End time set to:', theendtime)
     elif o == '--linewidth':
         thelinewidth = float(a)
         print('Linewidth set to:', thelinewidth)
@@ -170,6 +184,11 @@ for o, a in opts:
     else:
         assert False, 'unhandled option'
 
+# check range
+if thestarttime >= theendtime:
+    print('endtime must be greater then starttime;')
+    sys.exit()
+
 # handle required args first
 textfilename = []
 xvecs = []
@@ -184,6 +203,7 @@ if nargs > 2:
         numfiles += 1
         textfilename.append(args[i])
 
+minlen = 100000000
 # read in all the data
 for i in range(0, numfiles):
     print('filename ', i, textfilename[i])
@@ -216,6 +236,8 @@ for i in range(0, numfiles):
         else:
             yvecs.append(invecs[j] * 1.0)
             xvecs.append(arange(0.0, len(yvecs[numvecs]), 1.0) / samplerate)
+        if len(yvecs[-1]) < minlen:
+            minlen = len(yvecs[-1])
         if not legendset:
             if invecs.shape[0] > 1:
                 linelabels.append(textfilename[i] + '_column' + str(j).zfill(2))
@@ -228,8 +250,20 @@ for i in range(0, numfiles):
                 linelabels.append(legendlist[i % len(legendlist)])
         numvecs += 1
 
-xrange = (np.min(np.asarray(xvecs, dtype='float')), np.max(np.asarray(xvecs, dtype='float')))
-yrange = (np.min(np.asarray(yvecs, dtype='float')), np.max(np.asarray(yvecs, dtype='float')))
+thestartpoint = np.max([0, bisect.bisect_right(xvecs[0], thestarttime)])
+theendpoint = np.min([minlen - 1, bisect.bisect_left(xvecs[0], theendtime)])
+thestarttime = xvecs[0][thestartpoint]
+theendtime = xvecs[0][theendpoint]
+#print('full range (pts):',thestartpoint, theendpoint)
+#print('full range (time):',thestarttime, theendtime)
+xrange = (np.max([np.min(np.asarray(xvecs, dtype='float')), thestarttime]), np.min([np.max(np.asarray(xvecs, dtype='float')), theendtime]))
+ymins = [] 
+ymaxs = []
+for thevec in yvecs:
+    ymins.append(np.min(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
+    ymaxs.append(np.max(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
+#yrange = (np.min(np.asarray(yvecs[:][thestartpoint:theendpoint], dtype='float')), np.max(np.asarray(yvecs[:][thestartpoint:theendpoint], dtype='float')))
+yrange = (np.min(np.asarray(ymins, dtype='float')), np.max(np.asarray(ymaxs, dtype='float')))
 if voffset < 0.0:
     voffset = yrange[1] - yrange[0]
 if not separate:
@@ -271,44 +305,49 @@ fig = figure()
 if separate:
     if thetitle is not None:
         fig.suptitle(thetitle, fontsize=thesuptitlefontsize)
+    axlist = fig.subplots(numvecs, sharex=True, sharey=True)[:]
 else:
     ax = fig.add_subplot(1, 1, 1)
     if thetitle is not None:
         ax.set_title(thetitle, fontsize=thetitlefontsize)
+
 for i in range(0, numvecs):
     if separate:
-        ax = fig.add_subplot(numvecs, 1, i + 1)
+        #ax = fig.add_subplot(numvecs, 1, i + 1)
+        ax = axlist[i]
     ax.plot(xvecs[i], yvecs[i], color=colorlist[i], label=linelabels[i], linewidth=thelinewidth)
+    if separate and dolegend:
+        ax.legend(fontsize=thelegendfontsize, loc=2)
+    ax.set_xlim(xrange)
     ax.set_ylim(yrange)
     if showxax:
         ax.tick_params(axis='x', labelsize=thexlabelfontsize, which='both')
     if showyax:
         ax.tick_params(axis='y', labelsize=theylabelfontsize, which='both')
-    if separate and (thetitle is not None):
-        ax.set_title(linelabels[i], loc='right', fontsize=thetitlefontsize)
-    box(on=None)
-    ax.xaxis.set_visible(showxax)
-    ax.yaxis.set_visible(showyax)
-if not separate:
-    if dolegend:
-        ax.legend(fontsize=thelegendfontsize)
+    #box(on=None)
+    #ax.xaxis.set_visible(showxax)
+    #ax.yaxis.set_visible(showyax)
 
-if dopspec:
-    if showxax:
-        ax.set_xlabel('Frequency (Hz)', fontsize=thexlabelfontsize, fontweight='bold')
-    if domag:
-        if showyax:
-            ax.set_ylabel('Signal power', fontsize=theylabelfontsize, fontweight='bold')
+    if separate:
+        fig.subplots_adjust(hspace=0)
+        setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
+
+    if dopspec:
+        if showxax:
+            ax.set_xlabel('Frequency (Hz)', fontsize=thexlabelfontsize, fontweight='bold')
+        if domag:
+            if showyax:
+                ax.set_ylabel('Signal power', fontsize=theylabelfontsize, fontweight='bold')
+        else:
+            if showyax:
+                ax.set_ylabel('Signal phase', fontsize=theylabelfontsize, fontweight='bold')
     else:
-        if showyax:
-            ax.set_ylabel('Signal phase', fontsize=theylabelfontsize, fontweight='bold')
-else:
-    if showxax:
-        ax.set_xlabel('Time (s)', fontsize=thexlabelfontsize, fontweight='bold')
+        if showxax:
+            ax.set_xlabel('Time (s)', fontsize=thexlabelfontsize, fontweight='bold')
 
 
 
-fig.tight_layout()
+#fig.tight_layout()
 
 if outputfile is None:
     show()

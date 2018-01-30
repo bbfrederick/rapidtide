@@ -3,6 +3,8 @@ rapidtide2x \
 	fmri.nii.gz \
 	../dst/dgsr \
         --limitoutput \
+        --refinepasses=3 \
+        --refineoffset \
 	--accheck \
         --despeckle \
         --despecklepasses=4 \
