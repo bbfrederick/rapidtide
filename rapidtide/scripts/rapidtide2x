@@ -929,7 +929,7 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
         # pack the data and send to workers
         data_in = []
         for d in range(numspatiallocs):
-            if np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval:
+            if (np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval) or optiondict['nothresh']:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
         data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
@@ -1256,6 +1256,7 @@ def usage():
     print("                                 MASKFILE (NB: each line of MASKFILE contains the ")
     print("                                 time and duration of an epoch to include")
     print("    -p                         - Prewhiten and refit data")
+    print("    --preservefiltering        - don't reread data prior to GLM")
     print("    -P                         - Save prewhitened data (turns prewhitening on)")
     print("    -A, --AR                   - Set AR model order to ORDER (default is 1)")
     return ()
@@ -1313,6 +1314,7 @@ def main():
 
     # postprocessing options
     optiondict['doglmfilt'] = True  # use a glm filter to remove the delayed regressor from the data in each voxel
+    optiondict['preservefiltering'] = False
     optiondict[
         'glmsourcefile'] = None  # name of the file from which to regress delayed regressors (if not the original data)
     optiondict['doprewhiten'] = False  # prewhiten the data (I have no idea if this works)
@@ -1454,6 +1456,7 @@ def main():
                                                                                                           'nodetrend',
                                                                                                           'slicetimes=',
                                                                                                           'glmsourcefile=',
+                                                                                                          'preservefiltering',
                                                                                                           'globalmaskmethod=',
                                                                                                           'numskip=',
                                                                                                           'nothresh',
@@ -1518,6 +1521,9 @@ def main():
         elif o == '--usesp':
             optiondict['internalprecision'] = 'single'
             print('Will use single precision for internal calculations')
+        elif o == '--preservefiltering':
+            optiondict['preservefiltering'] = True
+            print('Will not reread input file prior to GLM')
         elif o == '--glmsourcefile':
             optiondict['glmsourcefile'] = a
             linkchar = '='
@@ -2641,6 +2647,9 @@ def main():
         else:
             logmem('before glm', file=memfile)
 
+        if optiondict['preservefiltering']:
+            for i in range(len(validvoxels)):
+                fmri_data_valid[i] = theprefilter.apply(optiondict['fmrifreq'], fmri_data_valid[i])
         voxelsprocessed_glm = glmpass(numvalidspatiallocs, reportstep, fmri_data_valid, threshval, lagtc,
                                       optiondict, meanvalue, rvalue, r2value, fitcoff, fitNorm,
                                       datatoremove, filtereddata)
