@@ -565,11 +565,14 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
 
 
 def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, padtrs, fmritr, theprefilter):
-    # BBF is this right?
-    if optiondict['refineweighting'] == 'NIRS':
-        thedivisor = np.var(fmritc) 
-    else:
+    if optiondict['refineprenorm'] == 'mean':
         thedivisor = np.mean(fmritc)
+    elif optiondict['refineprenorm'] == 'var':
+        thedivisor = np.var(fmritc) 
+    elif optiondict['refineprenorm'] == 'std':
+        thedivisor = np.std(fmritc) 
+    else:
+        thedivisor = 1.0
     if thedivisor != 0.0:
         normfac = 1.0 / thedivisor
     else:
@@ -577,7 +580,7 @@ def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, 
 
     if optiondict['refineweighting'] == 'R':
         thisweight = normfac * lagstrength
-    elif (optiondict['refineweighting'] == 'R2') or (optiondict['refineweighting'] == 'NIRS'):
+    elif optiondict['refineweighting'] == 'R2':
         thisweight = normfac * R2val
     else:
         thisweight = normfac
@@ -1107,7 +1110,7 @@ def usage():
         "[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [--phat] [--liang] [--eckart] [-f GAUSSSIGMA] [-O oversampfac] [-t TIMESTEP] "
         "[-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME]"
         " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP"
-        "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
+        "[--refineweighting=TYPE] [--refineprenorm=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
         "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
         "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--weightedavg] [--avg] [--psdfilter] "
         "[--despeckle] [--despecklethresh=VAL] [--despecklepasses=PASSES] "
@@ -1192,9 +1195,12 @@ def usage():
     print("    --despecklepasses=PASSES   - perform PASSES despeckling passes")
     print("")
     print("Regressor refinement options:")
+    print("    --refineprenorm=TYPE       - Apply TYPE prenormalization to each timecourse prior ")
+    print("                                 to refinement (valid weightings are 'None', ")
+    print("                                 'mean' (default), 'var', and 'std'")
     print("    --refineweighting=TYPE     - Apply TYPE weighting to each timecourse prior ")
     print("                                 to refinement (valid weightings are 'None', ")
-    print("                                 'R', 'R2' (default), and NIRS")
+    print("                                 'R', 'R2' (default)")
     print("    --refinepasses=PASSES      - Set the number of refinement passes to PASSES ")
     print("                                 (default is 1)")
     print("    --includemask=MASK         - Only use voxels in NAME for global regressor ")
@@ -1256,8 +1262,8 @@ def usage():
     print("    --debug                    - Enable additional information output")
     print("")
     print("Experimental options (not fully tested, may not work):")
-    print("    --nirs                     - This is a NIRS analysis - this is a macro that sets --nothresh, --preservefiltering")
-    print("                                 and --refineweighting=NIRS")
+    print("    --nirs                     - This is a NIRS analysis - this is a macro that sets --nothresh, --preservefiltering,")
+    print("                                 --refinenorm=var, --ampthresh=0.7, and --lagminthresh=0.1")
     print("    --dispersioncalc           - Generate extra data during refinement to allow calculation of dispersion")
     print("    --acfix                    - Perform a secondary correlation to disambiguate peak location")
     print("                                 (enables --accheck).  Experimental.")
@@ -1369,6 +1375,7 @@ def main():
     # refinement options
     optiondict['lagmaskside'] = 'both'
     optiondict['refineweighting'] = 'R2'
+    optiondict['refineprenorm'] = 'mean'
     optiondict['sigmathresh'] = 100.0
     optiondict['lagminthresh'] = 0.5
     optiondict['lagmaxthresh'] = 5.0
@@ -1438,6 +1445,7 @@ def main():
                                                                                                           'dosighistfit',
                                                                                                           'sigmathresh=',
                                                                                                           'refineweighting=',
+                                                                                                          'refineprenorm=',
                                                                                                           'corrmaskthresh=',
                                                                                                           'despeckle',
                                                                                                           'despecklepasses=',
@@ -1777,7 +1785,9 @@ def main():
             optiondict['nothresh'] = True
             optiondict['corrmaskthreshpct'] = 0.0
             optiondict['preservefiltering'] = True
-            optiondict['refineweighting'] = 'NIRS'
+            optiondict['refineprenorm'] = 'var'
+            optiondict['ampthresh'] = 0.7 
+            optiondict['lagminthresh'] = 0.1
             print('Setting NIRS mode')
         elif o == '--nothresh':
             optiondict['nothresh'] = True
@@ -1856,6 +1866,16 @@ def main():
             optiondict['includemaskname'] = a
             linkchar = '='
             print('Only voxels in ', optiondict['includemaskname'], ' will be used to define or refine regressors')
+        elif o == '--refineprenorm':
+            optiondict['refineprenorm'] = a
+            if (
+                        optiondict['refineprenorm'] != 'None') and (
+                        optiondict['refineprenorm'] != 'mean') and (
+                        optiondict['refineprenorm'] != 'var') and (
+                        optiondict['refineprenorm'] != 'std'):
+                print('unsupported refinement prenormalization mode!')
+                sys.exit()
+            linkchar = '='
         elif o == '--refineweighting':
             optiondict['refineweighting'] = a
             if (
