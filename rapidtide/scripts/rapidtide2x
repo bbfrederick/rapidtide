@@ -565,15 +565,19 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
 
 
 def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, padtrs, fmritr, theprefilter):
-    themean = np.mean(fmritc)
     # BBF is this right?
-    if themean != 0.0:
-        normfac = 1.0 / themean
+    if optiondict['refineweighting'] == 'NIRS':
+        thedivisor = np.var(fmritc) 
+    else:
+        thedivisor = np.mean(fmritc)
+    if thedivisor != 0.0:
+        normfac = 1.0 / thedivisor
     else:
         normfac = 0.0
+
     if optiondict['refineweighting'] == 'R':
         thisweight = normfac * lagstrength
-    elif optiondict['refineweighting'] == 'R2':
+    elif (optiondict['refineweighting'] == 'R2') or (optiondict['refineweighting'] == 'NIRS'):
         thisweight = normfac * R2val
     else:
         thisweight = normfac
@@ -1100,7 +1104,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
 def usage():
     print("usage: rapidtide2 fmrifilename outputname ")
     print(
-        "[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [--phat] [--liang] [--eckart] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] "
+        "[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [--phat] [--liang] [--eckart] [-f GAUSSSIGMA] [-O oversampfac] [-t TIMESTEP] "
         "[-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME]"
         " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP"
         "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
@@ -1110,15 +1114,18 @@ def usage():
         "[--dispersioncalc] [--refineupperlag] [--refinelowerlag] [--nosharedmem]"
         "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
         "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
-        "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc] [--nprocs=NPROCS]")
+        "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc] [--nprocs=NPROCS]"
+        "[--nirs]")
     print("")
     print("Required arguments:")
     print("    fmrifilename               - The BOLD fmri file")
     print("    outputname                 - The root name for the output files")
     print("")
     print("Preprocessing options:")
-    print("    -t TRvalue                 - Override the TR in the fMRI file with the value ")
-    print("                                 TRvalue")
+    print("    -t TIMESTEP                - Set the timestep of the data file to TIMESTEP (this will")
+    print("                                 override the TR in the fMRI file).")
+    print("                                 NOTE: if using data from a text file,")
+    print("                                 for example with NIRS data, this is mandatory.")
     print("    -a                         - Disable antialiasing filter")
     print("    --nodetrend                - Disable linear trend removal")
     print("    -I                         - Invert the sign of the regressor before processing")
@@ -1187,7 +1194,7 @@ def usage():
     print("Regressor refinement options:")
     print("    --refineweighting=TYPE     - Apply TYPE weighting to each timecourse prior ")
     print("                                 to refinement (valid weightings are 'None', ")
-    print("                                 'R', 'R2' (default)")
+    print("                                 'R', 'R2' (default), and NIRS")
     print("    --refinepasses=PASSES      - Set the number of refinement passes to PASSES ")
     print("                                 (default is 1)")
     print("    --includemask=MASK         - Only use voxels in NAME for global regressor ")
@@ -1249,6 +1256,8 @@ def usage():
     print("    --debug                    - Enable additional information output")
     print("")
     print("Experimental options (not fully tested, may not work):")
+    print("    --nirs                     - This is a NIRS analysis - this is a macro that sets --nothresh, --preservefiltering")
+    print("                                 and --refineweighting=NIRS")
     print("    --dispersioncalc           - Generate extra data during refinement to allow calculation of dispersion")
     print("    --acfix                    - Perform a secondary correlation to disambiguate peak location")
     print("                                 (enables --accheck).  Experimental.")
@@ -1459,6 +1468,7 @@ def main():
                                                                                                           'preservefiltering',
                                                                                                           'globalmaskmethod=',
                                                                                                           'numskip=',
+                                                                                                          'nirs',
                                                                                                           'nothresh',
                                                                                                           'limitoutput',
                                                                                                           'regressor=',
@@ -1763,6 +1773,12 @@ def main():
             optiondict['preprocskip'] = int(a)
             linkchar = '='
             print('Setting preprocessing trs skipped to ', optiondict['preprocskip'])
+        elif o == '--nirs':
+            optiondict['nothresh'] = True
+            optiondict['corrmaskthreshpct'] = 0.0
+            optiondict['preservefiltering'] = True
+            optiondict['refineweighting'] = 'NIRS'
+            print('Setting NIRS mode')
         elif o == '--nothresh':
             optiondict['nothresh'] = True
             optiondict['corrmaskthreshpct'] = 0.0
@@ -1843,7 +1859,8 @@ def main():
         elif o == '--refineweighting':
             optiondict['refineweighting'] = a
             if (
-                        optiondict['refineweighting'] != 'none') and (
+                        optiondict['refineweighting'] != 'None') and (
+                        optiondict['refineweighting'] != 'NIRS') and (
                         optiondict['refineweighting'] != 'R') and (
                         optiondict['refineweighting'] != 'R2'):
                 print('unsupported refinement weighting!')
@@ -1962,7 +1979,7 @@ def main():
     else:
         if optiondict['textio']:
             if realtr <= 0.0:
-                print('for text file input, you must use the -t option to set TR')
+                print('for text file data input, you must use the -t option to set the timestep')
                 sys.exit()
         else:
             if nim_hdr.get_xyzt_units()[1] == 'msec':
