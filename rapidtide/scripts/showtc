@@ -316,7 +316,7 @@ for i in range(0, numvecs):
         #ax = fig.add_subplot(numvecs, 1, i + 1)
         ax = axlist[i]
     ax.plot(xvecs[i], yvecs[i], color=colorlist[i], label=linelabels[i], linewidth=thelinewidth)
-    if separate and dolegend:
+    if dolegend:
         ax.legend(fontsize=thelegendfontsize, loc=2)
     ax.set_xlim(xrange)
     ax.set_ylim(yrange)
