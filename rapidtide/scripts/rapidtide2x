@@ -29,6 +29,7 @@ import getopt
 import platform
 import bisect
 import warnings
+import os
 import sys
 import gc
 import multiprocessing as mp
@@ -565,22 +566,34 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
 
 
 def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, padtrs, fmritr, theprefilter):
-    themean = np.mean(fmritc)
-    # BBF is this right?
-    if themean != 0.0:
-        normfac = 1.0 / themean
+    if optiondict['refineprenorm'] == 'mean':
+        thedivisor = np.mean(fmritc)
+    elif optiondict['refineprenorm'] == 'var':
+        thedivisor = np.var(fmritc) 
+    elif optiondict['refineprenorm'] == 'std':
+        thedivisor = np.std(fmritc) 
+    elif optiondict['refineprenorm'] == 'invlag':
+        if lagtime < optiondict['lagmaxthresh']:
+            thedivisor = optiondict['lagmaxthresh'] - lagtime
+        else:
+            thedivisor = 0.0
+    else:
+        thedivisor = 1.0
+    if thedivisor != 0.0:
+        normfac = 1.0 / thedivisor
     else:
         normfac = 0.0
+
     if optiondict['refineweighting'] == 'R':
-        thisweight = normfac * lagstrength
+        thisweight = lagstrength
     elif optiondict['refineweighting'] == 'R2':
-        thisweight = normfac * R2val
+        thisweight = R2val
     else:
-        thisweight = normfac
+        thisweight = 1.0
     if optiondict['dodetrend']:
-        normtc = tide.detrend(fmritc * thisweight, demean=True)
+        normtc = tide.detrend(fmritc * normfac * thisweight, demean=True)
     else:
-        normtc = fmritc * thisweight
+        normtc = fmritc * normfac * thisweight
     shifttr = -(-optiondict['offsettime'] + lagtime) / fmritr  # lagtime is in seconds
     [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide.timeshift(normtc, shifttr, padtrs)
     if optiondict['filterbeforePCA']:
@@ -597,7 +610,7 @@ def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, 
         return vox, outtc, outweights, None
 
 
-def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, maskarray, passnum, lagstrengths, lagtimes,
+def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, lagstrengths, lagtimes,
                     lagsigma, R2,
                     theprefilter, optiondict, padtrs=60, includemask=None, excludemask=None):
     print('entering refineregressor with padtrs=', padtrs)
@@ -666,7 +679,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, maskarray,
         # pack the data and send to workers
         data_in = []
         for d in range(inputshape[0]):
-            if maskarray[d] > 0:
+            if (maskarray[d] > 0) or optiondict['shiftall']:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
         data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
@@ -691,7 +704,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, maskarray,
         for vox in range(0, inputshape[0]):
             if vox % reportstep == 0 or vox == inputshape[0] - 1:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete (timeshifting)')
-            if maskarray[vox]:
+            if (maskarray[vox] > 0) or optiondict['shiftall']:
                 retvals = procOneVoxelTimeShift(vox, fmridata[vox, :], optiondict, lagstrengths[vox], R2[vox],
                                                 lagtimes[vox], padtrs, fmritr, theprefilter)
                 shiftedtcs[retvals[0], :] = retvals[1]
@@ -718,12 +731,19 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, maskarray,
         # ax.set_title('SNR')
         # plot(snr)
         # show()
+
     # now generate the refined timecourse(s)
     validlist = np.where(maskarray > 0)[0]
     refinevoxels = shiftedtcs[validlist]
     refineweights = weights[validlist]
     weightsum = np.sum(refineweights, axis=0) / volumetotal
     averagedata = np.sum(refinevoxels, axis=0) / volumetotal
+    if optiondict['shiftall']:
+        invalidlist = np.where((1 - ampmask) > 0)[0]
+        discardvoxels = shiftedtcs[invalidlist]
+        discardweights = weights[invalidlist]
+        discardweightsum = np.sum(discardweights, axis=0) / volumetotal
+        averagediscard = np.sum(discardvoxels, axis=0) / volumetotal
     if optiondict['dodispersioncalc']:
         print('splitting regressors by time lag for phase delay estimation')
         laglist = np.arange(optiondict['dispersioncalc_lower'], optiondict['dispersioncalc_upper'],
@@ -793,6 +813,11 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, maskarray,
         print('performing unweighted averaging refinement')
         outputdata = averagedata
 
+    if optiondict['cleanrefined']:
+        thefit, R = tide.mlregress(averagediscard, averagedata)
+        fitcoff = rt_floatset(thefit[0, 1])
+        datatoremove = rt_floatset(fitcoff * averagediscard)
+        outputdata -= datatoremove 
     print()
     print(str(
         volumetotal) + ' voxels used for refinement:',
@@ -808,7 +833,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, maskarray,
     collected = gc.collect()
     print("Garbage collector: collected %d objects." % collected)
 
-    return volumetotal, outputdata
+    return volumetotal, outputdata, maskarray
 
 
 def procOneVoxelWiener(vox, lagtc, inittc):
@@ -929,7 +954,7 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
         # pack the data and send to workers
         data_in = []
         for d in range(numspatiallocs):
-            if np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval:
+            if (np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval) or optiondict['nothresh']:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
         data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
@@ -1098,27 +1123,80 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
 
 
 def usage():
-    print("usage: rapidtide2 fmrifilename outputname ")
-    print(
-        "[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [--phat] [--liang] [--eckart] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] "
-        "[-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME]"
-        " [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP"
-        "[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] "
-        "[--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT]"
-        "[--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--weightedavg] [--avg] [--psdfilter] "
-        "[--despeckle] [--despecklethresh=VAL] [--despecklepasses=PASSES] "
-        "[--dispersioncalc] [--refineupperlag] [--refinelowerlag] [--nosharedmem]"
-        "[--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix]"
-        "[--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP]"
-        "[--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc] [--nprocs=NPROCS]")
+    print("usage: ", os.path.basename(sys.argv[0]), " datafilename outputname ")
+    print(' '.join([
+        "[-r LAGMIN,LAGMAX]",
+        "[-s SIGMALIMIT]",
+        "[-a]",
+        "[--nowindow]",
+        "[--phat]", "[--liang]", "[--eckart]",
+        "[-f GAUSSSIGMA]",
+        "[-O oversampfac]",
+        "[-t TSTEP]", "[--datatstep=TSTEP]", "[--datafreq=FREQ]",
+        "[-d]",
+        "[-b]",
+        "[-V]", "[-L]", "[-R]", "[-C]", "[-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]]",
+        "[-o OFFSETTIME]",
+        "[-T]",
+        "[-p]",
+        "[-P]",
+        "[-A ORDER]",
+        "[-B]",
+        "[-h HISTLEN]",
+        "[-i INTERPTYPE]",
+        "[-I]",
+        "[-Z DELAYTIME]",
+        "[-N NREPS]",
+        "[--numskip=SKIP]",
+        "[--refineweighting=TYPE]",
+        "[--refineprenorm=TYPE]",
+        "[--passes=PASSES]",
+        "[--refinepasses=PASSES]",
+        "[--excludemask=MASK]", "[--includemask=MASK]",
+        "[--lagminthresh=MIN]", "[--lagmaxthresh=MAX]", "[--ampthresh=AMP]", "[--sigmathresh=SIGMA]",
+        "[--corrmaskthresh=PCT]",
+        "[--refineoffset]",
+        "[--pca]", "[--ica]", "[--weightedavg]", "[--avg]",
+        "[--psdfilter]",
+        "[--despecklethresh=VAL]", "[--despecklepasses=PASSES]",
+        "[--dispersioncalc]",
+        "[--refineupperlag]", "[--refinelowerlag]",
+        "[--nosharedmem]",
+        "[--tmask=MASKFILE]",
+        "[--limitoutput]",
+        "[--timerange=START,END]",
+        "[--skipsighistfit]",
+        "[--accheck]", "[--acfix]"
+        "[--numskip=SKIP]",
+        "[--slicetimes=FILE]",
+        "[--glmsourcefile=FILE]",
+        "[--regressorfreq=FREQ]", "[--regressortstep=TSTEP]" "[--regressor=FILENAME]", "[--regressorstart=STARTTIME]",
+        "[--usesp]",
+        "[--maxfittype=FITTYPE]",
+        "[--multiproc]",
+        "[--nprocs=NPROCS]",
+        "[--nirs]",
+        "[--venousrefine]"]))
     print("")
     print("Required arguments:")
-    print("    fmrifilename               - The BOLD fmri file")
+    print("    datafilename               - The input data file (BOLD fmri file or NIRS)")
     print("    outputname                 - The root name for the output files")
     print("")
+    print("Optional arguments:")
+    print("    Arguments are processed in order of appearance.  Later options can override ones earlier on the command line")
+    print("")
+    print("Macros:")
+    print("    --venousrefine             - This is a macro that sets --lagminthresh=2.5, --lagmaxthresh=6.0,")
+    print("                                 --ampthresh=0.5, and --refineupperlag to bias refinement towards voxels")
+    print("                                 in the draining vasculature for an fMRI scan.")
+    print("    --nirs                     - This is a NIRS analysis - this is a macro that sets --nothresh, --preservefiltering,")
+    print("                                 --refinenorm=var, --ampthresh=0.7, and --lagminthresh=0.1.")
+    print("")
     print("Preprocessing options:")
-    print("    -t TRvalue                 - Override the TR in the fMRI file with the value ")
-    print("                                 TRvalue")
+    print("    -t TSTEP,                  - Set the timestep of the data file to TSTEP (or 1/FREQ)")
+    print("      --datatstep=TSTEP,         This will override the TR in an fMRI file.")
+    print("      --datafreq=FREQ            NOTE: if using data from a text file, for example with")
+    print("                                 NIRS data, using one of these options is mandatory.")
     print("    -a                         - Disable antialiasing filter")
     print("    --nodetrend                - Disable linear trend removal")
     print("    -I                         - Invert the sign of the regressor before processing")
@@ -1180,16 +1258,20 @@ def usage():
     print("    --nofitfilt                - Do not zero out peak fit values if fit fails")
     print("    --maxfittype=FITTYPE       - Method for fitting the correlation peak (default is 'gauss'). ")
     print("                                 'quad' uses a quadratic fit.  Faster but not as well tested")
-    print("    --despeckle                - detect and refit suspect correlations to disambiguate peak locations")
+    print("    --despecklepasses=PASSES   - detect and refit suspect correlations to disambiguate peak locations in PASSES passes")
     print("    --despecklethresh=VAL      - refit correlation if median discontinuity magnitude exceeds VAL (default is 5s)")
-    print("    --despecklepasses=PASSES   - perform PASSES despeckling passes")
     print("")
     print("Regressor refinement options:")
+    print("    --refineprenorm=TYPE       - Apply TYPE prenormalization to each timecourse prior ")
+    print("                                 to refinement (valid weightings are 'None', ")
+    print("                                 'mean' (default), 'var', and 'std'")
     print("    --refineweighting=TYPE     - Apply TYPE weighting to each timecourse prior ")
     print("                                 to refinement (valid weightings are 'None', ")
     print("                                 'R', 'R2' (default)")
-    print("    --refinepasses=PASSES      - Set the number of refinement passes to PASSES ")
-    print("                                 (default is 1)")
+    print("    --passes=PASSES,           - Set the number of processing passes to PASSES ")
+    print("     --refinepasses=PASSES       (default is 1 pass - no refinement).")
+    print("                                 NB: refinepasses is the wrong name for this option -")
+    print("                                 --refinepasses is deprecated, use --passes from now on.")
     print("    --includemask=MASK         - Only use voxels in NAME for global regressor ")
     print("                                 generation and regressor refinement")
     print("    --excludemask=MASK         - Do not use voxels in NAME for global regressor ")
@@ -1228,6 +1310,7 @@ def usage():
     print("                                 initial fmri file used to estimate delays")
     print("    --noglm                    - Turn off GLM filtering to remove delayed regressor ")
     print("                                 from each voxel (disables output of fitNorm)")
+    print("    --preservefiltering        - don't reread data prior to GLM")
     print("")
     print("Miscellaneous options:")
     print("    --wiener                   - Perform Wiener deconvolution to get voxel transfer functions")
@@ -1249,7 +1332,8 @@ def usage():
     print("    --debug                    - Enable additional information output")
     print("")
     print("Experimental options (not fully tested, may not work):")
-    print("    --dispersioncalc           - Generate extra data during refinement to allow calculation of dispersion")
+    print("    --cleanrefined             - perform additional processing on refined regressor to remove spurious components.")
+    print("    --dispersioncalc           - Generate extra data during refinement to allow calculation of dispersion.")
     print("    --acfix                    - Perform a secondary correlation to disambiguate peak location")
     print("                                 (enables --accheck).  Experimental.")
     print("    --tmask=MASKFILE           - Only correlate during epochs specified in ")
@@ -1293,9 +1377,8 @@ def main():
         'check_autocorrelation'] = False  # check for periodic components that corrupt the autocorrelation
     optiondict[
         'fix_autocorrelation'] = False  # remove periodic components that corrupt the autocorrelation
-    optiondict['despeckle'] = False  # despeckle the correlation function to deal with periodic autocorrelation
     optiondict['despeckle_thresh'] = 5.0  # threshold value - despeckle if median discontinuity magnitude exceeds despeckle_thresh
-    optiondict['despeckle_passes'] = 1  # despeckling passes to perform
+    optiondict['despeckle_passes'] = 0  # despeckling passes to perform
     optiondict['nothresh'] = False  # disable voxel intensity threshholding
 
     # correlation fitting options
@@ -1313,6 +1396,7 @@ def main():
 
     # postprocessing options
     optiondict['doglmfilt'] = True  # use a glm filter to remove the delayed regressor from the data in each voxel
+    optiondict['preservefiltering'] = False
     optiondict[
         'glmsourcefile'] = None  # name of the file from which to regress delayed regressors (if not the original data)
     optiondict['doprewhiten'] = False  # prewhiten the data (I have no idea if this works)
@@ -1356,14 +1440,16 @@ def main():
     optiondict['addedskip'] = 0
 
     # refinement options
+    optiondict['shiftall'] = True
+    optiondict['cleanrefined'] = False
     optiondict['lagmaskside'] = 'both'
     optiondict['refineweighting'] = 'R2'
+    optiondict['refineprenorm'] = 'mean'
     optiondict['sigmathresh'] = 100.0
     optiondict['lagminthresh'] = 0.5
     optiondict['lagmaxthresh'] = 5.0
     optiondict['ampthresh'] = 0.3
-    optiondict['dorefineregressor'] = False
-    optiondict['refinepasses'] = 1
+    optiondict['passes'] = 1
     optiondict['refineoffset'] = False
     optiondict['excludemaskname'] = None
     optiondict['includemaskname'] = None
@@ -1421,23 +1507,27 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[optparsestart:], 'abcdf:gh:i:mo:ps:r:t:vBCF:ILMN:O:PRSTVZ:', ['help',
                                                                                                           'nowindow',
+                                                                                                          'datatstep=',
+                                                                                                          'datafreq=',
                                                                                                           'lagminthresh=',
                                                                                                           'lagmaxthresh=',
                                                                                                           'ampthresh=',
                                                                                                           'dosighistfit',
                                                                                                           'sigmathresh=',
                                                                                                           'refineweighting=',
+                                                                                                          'refineprenorm=',
                                                                                                           'corrmaskthresh=',
-                                                                                                          'despeckle',
                                                                                                           'despecklepasses=',
                                                                                                           'despecklethresh=',
                                                                                                           'accheck',
                                                                                                           'acfix',
                                                                                                           'refinepasses=',
+                                                                                                          'passes=',
                                                                                                           'includemask=',
                                                                                                           'excludemask=',
                                                                                                           'refineoffset',
                                                                                                           'nofitfilt',
+                                                                                                          'cleanrefined',
                                                                                                           'pca',
                                                                                                           'ica',
                                                                                                           'weightedavg',
@@ -1454,8 +1544,11 @@ def main():
                                                                                                           'nodetrend',
                                                                                                           'slicetimes=',
                                                                                                           'glmsourcefile=',
+                                                                                                          'preservefiltering',
                                                                                                           'globalmaskmethod=',
                                                                                                           'numskip=',
+                                                                                                          'nirs',
+                                                                                                          'venousrefine',
                                                                                                           'nothresh',
                                                                                                           'limitoutput',
                                                                                                           'regressor=',
@@ -1512,12 +1605,19 @@ def main():
             print('probably indicates that his family came from Vienna.')
             print('Spell it right and try again.')
             sys.exit()
+        elif o == '--cleanrefined':
+            optiondict['cleanrefined'] = True
+            optiondict['shiftall'] = True
+            print('Will attempt to clean refined regressor')
         elif o == '--wiener':
             optiondict['dodeconv'] = True
             print('Will perform Wiener deconvolution')
         elif o == '--usesp':
             optiondict['internalprecision'] = 'single'
             print('Will use single precision for internal calculations')
+        elif o == '--preservefiltering':
+            optiondict['preservefiltering'] = True
+            print('Will not reread input file prior to GLM')
         elif o == '--glmsourcefile':
             optiondict['glmsourcefile'] = a
             linkchar = '='
@@ -1653,19 +1753,20 @@ def main():
             optiondict['check_autocorrelation'] = True
             print('Will check for periodic components in the autocorrelation function')
         elif o == '--despecklethresh':
-            optiondict['despeckle'] = True
+            if optiondict['despeckle_passes'] == 0:
+                optiondict['despeckle_passes'] = 1
+            optiondict['check_autocorrelation'] = True
             optiondict['despeckle_thresh'] = float(a)
             linkchar = '='
             print('Forcing despeckle threshhold to ', optiondict['despeckle_thresh'])
         elif o == '--despecklepasses':
-            optiondict['despeckle'] = True
+            optiondict['check_autocorrelation'] = True
             optiondict['despeckle_passes'] = int(a)
+            if optiondict['despeckle_passes'] < 1:
+                print("minimum number of despeckle passes is 1")
+                sys.exit()
             linkchar = '='
             print('Will do ', optiondict['despeckle_passes'], ' despeckling passes')
-        elif o == '--despeckle':
-            optiondict['despeckle'] = True
-            optiondict['check_autocorrelation'] = True
-            print('Will despeckle correlation function to pick the right correlation peak (experimental)')
         elif o == '--acfix':
             optiondict['fix_autocorrelation'] = True
             optiondict['check_autocorrelation'] = True
@@ -1712,9 +1813,17 @@ def main():
             optiondict['offsettime'] = float(a)
             optiondict['offsettime_total'] = -float(a)
             print('Applying a timeshift of ', optiondict['offsettime'], ' to regressor')
+        elif o == '--datafreq':
+            realtr = 1.0/float(a)
+            linkchar = '='
+            print('Data time step forced to ', realtr)
+        elif o == '--datatstep':
+            realtr = float(a)
+            linkchar = '='
+            print('Data time step forced to ', realtr)
         elif o == '-t':
             realtr = float(a)
-            print('TR value forced to ', realtr)
+            print('Data time step forced to ', realtr)
         elif o == '-c':
             optiondict['isgrayordinate'] = True
             print('Input fMRI file is a converted CIFTI file')
@@ -1757,6 +1866,20 @@ def main():
             optiondict['preprocskip'] = int(a)
             linkchar = '='
             print('Setting preprocessing trs skipped to ', optiondict['preprocskip'])
+        elif o == '--venousrefine':
+            optiondict['lagmaskside'] = 'upper'
+            optiondict['lagminthresh'] = 2.5
+            optiondict['lagmaxthresh'] = 6.0
+            optiondict['ampthresh'] = 0.5
+            print('Biasing refinement to voxels in draining vasculature')
+        elif o == '--nirs':
+            optiondict['nothresh'] = True
+            optiondict['corrmaskthreshpct'] = 0.0
+            optiondict['preservefiltering'] = True
+            optiondict['refineprenorm'] = 'var'
+            optiondict['ampthresh'] = 0.7 
+            optiondict['lagminthresh'] = 0.1
+            print('Setting NIRS mode')
         elif o == '--nothresh':
             optiondict['nothresh'] = True
             optiondict['corrmaskthreshpct'] = 0.0
@@ -1801,15 +1924,19 @@ def main():
             print('Will use alternative fast gauss refinement (does not work well)')
         elif o == '--refineoffset':
             optiondict['refineoffset'] = True
+            if optiondict['passes'] == 1:
+                optiondict['passes'] = 2
             print('Will refine offset time during subsequent passes')
         elif o == '--lagminthresh':
             optiondict['lagminthresh'] = float(a)
-            optiondict['dorefineregressor'] = True
+            if optiondict['passes'] == 1:
+                optiondict['passes'] = 2
             linkchar = '='
             print('Using lagminthresh of ', optiondict['lagminthresh'])
         elif o == '--lagmaxthresh':
             optiondict['lagmaxthresh'] = float(a)
-            optiondict['dorefineregressor'] = True
+            if optiondict['passes'] == 1:
+                optiondict['passes'] = 2
             linkchar = '='
             print('Using lagmaxthresh of ', optiondict['lagmaxthresh'])
         elif o == '--skipsighistfit':
@@ -1818,12 +1945,14 @@ def main():
         elif o == '--ampthresh':
             optiondict['ampthresh'] = float(a)
             optiondict['ampthreshfromsig'] = False
-            optiondict['dorefineregressor'] = True
+            if optiondict['passes'] == 1:
+                optiondict['passes'] = 2
             linkchar = '='
             print('Using ampthresh of ', optiondict['ampthresh'])
         elif o == '--sigmathresh':
             optiondict['sigmathresh'] = float(a)
-            optiondict['dorefineregressor'] = True
+            if optiondict['passes'] == 1:
+                optiondict['passes'] = 2
             linkchar = '='
             print('Using widththresh of ', optiondict['sigmathresh'])
         elif o == '--excludemask':
@@ -1834,10 +1963,22 @@ def main():
             optiondict['includemaskname'] = a
             linkchar = '='
             print('Only voxels in ', optiondict['includemaskname'], ' will be used to define or refine regressors')
+        elif o == '--refineprenorm':
+            optiondict['refineprenorm'] = a
+            if (
+                        optiondict['refineprenorm'] != 'None') and (
+                        optiondict['refineprenorm'] != 'mean') and (
+                        optiondict['refineprenorm'] != 'var') and (
+                        optiondict['refineprenorm'] != 'std') and (
+                        optiondict['refineprenorm'] != 'invlag'):
+                print('unsupported refinement prenormalization mode!')
+                sys.exit()
+            linkchar = '='
         elif o == '--refineweighting':
             optiondict['refineweighting'] = a
             if (
-                        optiondict['refineweighting'] != 'none') and (
+                        optiondict['refineweighting'] != 'None') and (
+                        optiondict['refineweighting'] != 'NIRS') and (
                         optiondict['refineweighting'] != 'R') and (
                         optiondict['refineweighting'] != 'R2'):
                 print('unsupported refinement weighting!')
@@ -1848,11 +1989,12 @@ def main():
             optiondict['tmaskname'] = a
             linkchar = '='
             print('Will multiply regressor by timecourse in ', optiondict['tmaskname'])
-        elif o == '--refinepasses':
-            optiondict['dorefineregressor'] = True
-            optiondict['refinepasses'] = int(a)
+        elif o == '--refinepasses' or o == '--passes':
+            if o == '--refinepasses':
+                print('WARNING - refinepasses is depracated - use passes instead')
+            optiondict['passes'] = int(a)
             linkchar = '='
-            print('Will do ', optiondict['refinepasses'], ' refinement passes')
+            print('Will do ', optiondict['passes'], ' processing passes')
         elif o == '--maxfittype':
             optiondict['findmaxtype'] = a
             linkchar = '='
@@ -1956,7 +2098,7 @@ def main():
     else:
         if optiondict['textio']:
             if realtr <= 0.0:
-                print('for text file input, you must use the -t option to set TR')
+                print('for text file data input, you must use the -t option to set the timestep')
                 sys.exit()
         else:
             if nim_hdr.get_xyzt_units()[1] == 'msec':
@@ -2219,7 +2361,7 @@ def main():
         thefit, R = tide.mlregress(tmaskos_y, resampref_y)
         resampref_y -= thefit[0, 1] * tmaskos_y
 
-    if optiondict['refinepasses'] > 1:
+    if optiondict['passes'] > 1:
         nonosrefname = '_reference_fmrires_pass1.txt'
         osrefname = '_reference_resampres_pass1.txt'
     else:
@@ -2303,14 +2445,14 @@ def main():
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
     lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
 
-    if optiondict['dorefineregressor']:
+    if optiondict['passes'] > 1:
         if optiondict['sharedmem']:
             shiftedtcs, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
             weights, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
         else:
             shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-        refinemask = np.zeros(internalvalidspaceshape, dtype='uint16')
+        #refinemask = np.zeros(internalvalidspaceshape, dtype='uint16')
     if optiondict['sharedmem']:
         outfmriarray, dummy, dummy = allocshared(internalfmrishape, rt_floatset)
     else:
@@ -2332,9 +2474,9 @@ def main():
         print('edgebufferfrac set to ', optiondict['edgebufferfrac'])
 
     fft_fmri_data = None
-    for thepass in range(1, optiondict['refinepasses'] + 1):
+    for thepass in range(1, optiondict['passes'] + 1):
         # initialize the pass
-        if optiondict['dorefineregressor']:
+        if optiondict['passes'] > 1:
             print('\n\n*********************')
             print('Pass number ', thepass)
 
@@ -2482,7 +2624,7 @@ def main():
         timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
 
         # Step 2b - Correlation time despeckle
-        if optiondict['despeckle']:
+        if optiondict['despeckle_passes'] > 0:
             print('\n\nCorrelation despeckling pass ' + str(thepass))
             print('\tUsing despeckle_thresh =' + str(optiondict['despeckle_thresh']))
             timings.append(['Correlation despeckle start, pass ' + str(thepass), time.time(), None, None])
@@ -2517,7 +2659,7 @@ def main():
             timings.append(['Correlation despeckle end, pass ' + str(thepass), time.time(), voxelsprocessed_fc_ds, 'voxels'])
 
         # Step 3 - regressor refinement for next pass
-        if optiondict['dorefineregressor'] and thepass < optiondict['refinepasses']:
+        if thepass < optiondict['passes']:
             print('\n\nRegressor refinement, pass' + str(thepass))
             timings.append(['Regressor refinement start, pass ' + str(thepass), time.time(), None, None])
             if optiondict['refineoffset']:
@@ -2533,8 +2675,8 @@ def main():
             else:
                 logmem('before refineregressor', file=memfile)
                 refineregressor_func = refineregressor
-            voxelsprocessed_rr, outputdata = refineregressor_func(
-                cleaned_nonosreferencetc, fmri_data_valid[:, :], fmritr, shiftedtcs, weights, refinemask, thepass,
+            voxelsprocessed_rr, outputdata, refinemask = refineregressor_func(
+                cleaned_nonosreferencetc, fmri_data_valid[:, :], fmritr, shiftedtcs, weights, thepass,
                 lagstrengths, lagtimes, lagsigma, R2, theprefilter, optiondict,
                 padtrs=numpadtrs, includemask=internalincludemask_valid, excludemask=internalexcludemask_valid)
             normoutputdata = tide.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
@@ -2641,6 +2783,9 @@ def main():
         else:
             logmem('before glm', file=memfile)
 
+        if optiondict['preservefiltering']:
+            for i in range(len(validvoxels)):
+                fmri_data_valid[i] = theprefilter.apply(optiondict['fmrifreq'], fmri_data_valid[i])
         voxelsprocessed_glm = glmpass(numvalidspatiallocs, reportstep, fmri_data_valid, threshval, lagtc,
                                       optiondict, meanvalue, rvalue, r2value, fitcoff, fitNorm,
                                       datatoremove, filtereddata)
@@ -2788,6 +2933,16 @@ def main():
                 tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
                                  outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d)
 
+    if optiondict['passes'] > 1:
+        outmaparray[validvoxels] = refinemask[:]
+        if optiondict['textio']:
+            tide.writenpvecs(outfmriarray.reshape(nativefmrishape),
+                             outputname + '_lagregressor' + outsuffix4d + '.txt')
+        else:
+            tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
+                             outputname + '_refinemask' + outsuffix3d)
+        refinemask = None
+
     # clean up arrays that will no longer be needed
     lagtimes = None
     lagstrengths = None
@@ -2856,7 +3011,7 @@ def main():
                              outputname + '_lagregressor' + outsuffix4d)
         lagtc = None
 
-    if optiondict['dorefineregressor']:
+    if optiondict['passes'] > 1:
         if optiondict['savelagregressors']: 
             outfmriarray[validvoxels, :] = shiftedtcs[:, :]
             if optiondict['textio']:
@@ -2866,14 +3021,6 @@ def main():
                 tide.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
                              outputname + '_shiftedtcs' + outsuffix4d)
         shiftedtcs = None
-        outmaparray[validvoxels] = refinemask[:]
-        if optiondict['textio']:
-            tide.writenpvecs(outfmriarray.reshape(nativefmrishape),
-                             outputname + '_lagregressor' + outsuffix4d + '.txt')
-        else:
-            tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
-                             outputname + '_refinemask' + outsuffix3d)
-        refinemask = None
 
     if optiondict['doglmfilt'] and optiondict['saveglmfiltered']:
         datatoremove = None

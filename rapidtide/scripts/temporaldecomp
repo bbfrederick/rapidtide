@@ -118,19 +118,8 @@ print('Will perform', decomptype, 'analysis')
 # read in data
 print("reading in data arrays")
 datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide.readfromnifti(datafilename)
-#datafile_img = nib.load(datafilename)
-#datafile_data = datafile_img.get_data()
-#datafile_hdr = datafile_img.get_header()
-#datafiledims = datafile_hdr['dim']
-#datafilesizes = datafile_hdr['pixdim']
-
 if usedmask:
     datamask_img, datamask_data, datamask_hdr, datamaskdims, datamasksizes = tide.readfromnifti(datamaskname)
-    #datamask_img = nib.load(datamaskname)
-    #datamask_data = datamask_img.get_data()
-    #datamask_hdr = datamask_img.get_header()
-    #datamaskdims = datamask_hdr['dim']
-    #datamasksizes = datamask_hdr['pixdim']
 
 xsize, ysize, numslices, timepoints = tide.parseniftidims(datafiledims)
 xdim, ydim, slicethickness, tr = tide.parseniftisizes(datafilesizes)
