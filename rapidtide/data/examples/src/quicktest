@@ -1,5 +1,0 @@
-rapidtide2 \
-	fmri.nii.gz \
-	../dst/dgsr_zero \
-	-r -15,15 \
-	--noglm  
