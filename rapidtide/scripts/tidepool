@@ -463,8 +463,6 @@ class overlay:
     def __init__(self, name, filename, namebase, funcmask=None, geommask=None, label=None, report=False,
                  lut_state=gray_state, isaMask=False, verbose=False):
         self.verbose = verbose
-        if self.verbose:
-            print('reading map ',name,' from ',filename,'...')
         self.name = name
         if label is None:
             self.label = name
@@ -473,6 +471,8 @@ class overlay:
         self.report = report
         self.filename = filename
         self.namebase = namebase
+        if self.verbose:
+            print('reading map ', self.name, ' from ', self.filename, '...')
         self.readData(self.filename, isaMask=isaMask)
         self.mask = None
         self.maskeddata = None
@@ -538,11 +538,16 @@ class overlay:
             self.data[np.where(self.data > 0.5)] = 1.0
         if self.verbose:
             print('overlay data range:', np.min(self.data), np.max(self.data))
+            print('header', self.header)
         self.xdim, self.ydim, self.zdim, self.tdim = \
             tide.parseniftidims(self.dims)
         self.xsize, self.ysize, self.zsize, self.tr = \
             tide.parseniftisizes(self.sizes)
         self.toffset = self.header['toffset']
+        if self.verbose:
+            print('overlay dims:', self.xdim, self.ydim, self.zdim, self.tdim)
+            print('overlay sizes:', self.xsize, self.ysize, self.zsize, self.tr)
+            print('overlay toffset:', self.toffset)
 
 
     def setLabel(self, label):
@@ -589,7 +594,8 @@ class overlay:
 
     def setFuncMask(self, funcmask, maskdata=True):
         self.funcmask = funcmask
-        if funcmask is None:
+        print("setFuncMask:", self.funcmask, self.tdim)
+        if self.funcmask is None:
             if self.tdim == 1:
                 self.funcmask = 1.0 + 0.0 * self.data
             else:
@@ -1597,7 +1603,7 @@ def main():
         allloadedmaps.append('anatomic')
 
     # then the functional masks
-    funcmasks = ['lagmask', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
+    funcmasks = ['lagmask', 'refinemask', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
     loadedfuncmasks = loadfuncmasks(datafileroot, overlays, funcmasks)
 
     # then the geometric masks
@@ -1802,7 +1808,7 @@ def main():
 
     print('setting functional masks')
     for theoverlay in loadedfuncmaps:
-        if 'p_lt_0p050_mask' in overlays:
+        if 'p_lt_0p050_mask' in overlays and False:   # disable this BBF 2/8/18
             overlays[theoverlay].setFuncMask(overlays['p_lt_0p050_mask'].data)
             ui.setMask_Button.setText('p<0.05')
         else:
