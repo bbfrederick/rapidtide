@@ -1150,6 +1150,7 @@ def usage():
         "[--numskip=SKIP]",
         "[--refineweighting=TYPE]",
         "[--refineprenorm=TYPE]",
+        "[--passes=PASSES]",
         "[--refinepasses=PASSES]",
         "[--excludemask=MASK]", "[--includemask=MASK]",
         "[--lagminthresh=MIN]", "[--lagmaxthresh=MAX]", "[--ampthresh=AMP]", "[--sigmathresh=SIGMA]",
@@ -1186,7 +1187,8 @@ def usage():
     print("")
     print("Macros:")
     print("    --venousrefine             - This is a macro that sets --lagminthresh=2.5, --lagmaxthresh=6.0,")
-    print("                                 and --refineupperlag to bias refinement towards voxels in the draining vasculature for an fMRI scan.")
+    print("                                 --ampthresh=0.5, and --refineupperlag to bias refinement towards voxels")
+    print("                                 in the draining vasculature for an fMRI scan.")
     print("    --nirs                     - This is a NIRS analysis - this is a macro that sets --nothresh, --preservefiltering,")
     print("                                 --refinenorm=var, --ampthresh=0.7, and --lagminthresh=0.1.")
     print("")
@@ -1266,8 +1268,10 @@ def usage():
     print("    --refineweighting=TYPE     - Apply TYPE weighting to each timecourse prior ")
     print("                                 to refinement (valid weightings are 'None', ")
     print("                                 'R', 'R2' (default)")
-    print("    --refinepasses=PASSES      - Set the number of refinement passes to PASSES ")
-    print("                                 (default is 1)")
+    print("    --passes=PASSES,           - Set the number of processing passes to PASSES ")
+    print("     --refinepasses=PASSES       (default is 1 pass - no refinement).")
+    print("                                 NB: refinepasses is the wrong name for this option -")
+    print("                                 --refinepasses is deprecated, use --passes from now on.")
     print("    --includemask=MASK         - Only use voxels in NAME for global regressor ")
     print("                                 generation and regressor refinement")
     print("    --excludemask=MASK         - Do not use voxels in NAME for global regressor ")
@@ -1445,8 +1449,7 @@ def main():
     optiondict['lagminthresh'] = 0.5
     optiondict['lagmaxthresh'] = 5.0
     optiondict['ampthresh'] = 0.3
-    optiondict['dorefineregressor'] = False
-    optiondict['refinepasses'] = 1
+    optiondict['passes'] = 1
     optiondict['refineoffset'] = False
     optiondict['excludemaskname'] = None
     optiondict['includemaskname'] = None
@@ -1519,6 +1522,7 @@ def main():
                                                                                                           'accheck',
                                                                                                           'acfix',
                                                                                                           'refinepasses=',
+                                                                                                          'passes=',
                                                                                                           'includemask=',
                                                                                                           'excludemask=',
                                                                                                           'refineoffset',
@@ -1866,6 +1870,7 @@ def main():
             optiondict['lagmaskside'] = 'upper'
             optiondict['lagminthresh'] = 2.5
             optiondict['lagmaxthresh'] = 6.0
+            optiondict['ampthresh'] = 0.5
             print('Biasing refinement to voxels in draining vasculature')
         elif o == '--nirs':
             optiondict['nothresh'] = True
@@ -1919,15 +1924,19 @@ def main():
             print('Will use alternative fast gauss refinement (does not work well)')
         elif o == '--refineoffset':
             optiondict['refineoffset'] = True
+            if optiondict['passes'] == 1:
+                optiondict['passes'] = 2
             print('Will refine offset time during subsequent passes')
         elif o == '--lagminthresh':
             optiondict['lagminthresh'] = float(a)
-            optiondict['dorefineregressor'] = True
+            if optiondict['passes'] == 1:
+                optiondict['passes'] = 2
             linkchar = '='
             print('Using lagminthresh of ', optiondict['lagminthresh'])
         elif o == '--lagmaxthresh':
             optiondict['lagmaxthresh'] = float(a)
-            optiondict['dorefineregressor'] = True
+            if optiondict['passes'] == 1:
+                optiondict['passes'] = 2
             linkchar = '='
             print('Using lagmaxthresh of ', optiondict['lagmaxthresh'])
         elif o == '--skipsighistfit':
@@ -1936,12 +1945,14 @@ def main():
         elif o == '--ampthresh':
             optiondict['ampthresh'] = float(a)
             optiondict['ampthreshfromsig'] = False
-            optiondict['dorefineregressor'] = True
+            if optiondict['passes'] == 1:
+                optiondict['passes'] = 2
             linkchar = '='
             print('Using ampthresh of ', optiondict['ampthresh'])
         elif o == '--sigmathresh':
             optiondict['sigmathresh'] = float(a)
-            optiondict['dorefineregressor'] = True
+            if optiondict['passes'] == 1:
+                optiondict['passes'] = 2
             linkchar = '='
             print('Using widththresh of ', optiondict['sigmathresh'])
         elif o == '--excludemask':
@@ -1978,11 +1989,12 @@ def main():
             optiondict['tmaskname'] = a
             linkchar = '='
             print('Will multiply regressor by timecourse in ', optiondict['tmaskname'])
-        elif o == '--refinepasses':
-            optiondict['dorefineregressor'] = True
-            optiondict['refinepasses'] = int(a)
+        elif o == '--refinepasses' or o == '--passes':
+            if o == '--refinepasses':
+                print('WARNING - refinepasses is depracated - use passes instead')
+            optiondict['passes'] = int(a)
             linkchar = '='
-            print('Will do ', optiondict['refinepasses'], ' refinement passes')
+            print('Will do ', optiondict['passes'], ' processing passes')
         elif o == '--maxfittype':
             optiondict['findmaxtype'] = a
             linkchar = '='
@@ -2349,7 +2361,7 @@ def main():
         thefit, R = tide.mlregress(tmaskos_y, resampref_y)
         resampref_y -= thefit[0, 1] * tmaskos_y
 
-    if optiondict['refinepasses'] > 1:
+    if optiondict['passes'] > 1:
         nonosrefname = '_reference_fmrires_pass1.txt'
         osrefname = '_reference_resampres_pass1.txt'
     else:
@@ -2433,7 +2445,7 @@ def main():
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
     lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
 
-    if optiondict['dorefineregressor']:
+    if optiondict['passes'] > 1:
         if optiondict['sharedmem']:
             shiftedtcs, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
             weights, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
@@ -2462,9 +2474,9 @@ def main():
         print('edgebufferfrac set to ', optiondict['edgebufferfrac'])
 
     fft_fmri_data = None
-    for thepass in range(1, optiondict['refinepasses'] + 1):
+    for thepass in range(1, optiondict['passes'] + 1):
         # initialize the pass
-        if optiondict['dorefineregressor']:
+        if optiondict['passes'] > 1:
             print('\n\n*********************')
             print('Pass number ', thepass)
 
@@ -2647,7 +2659,7 @@ def main():
             timings.append(['Correlation despeckle end, pass ' + str(thepass), time.time(), voxelsprocessed_fc_ds, 'voxels'])
 
         # Step 3 - regressor refinement for next pass
-        if optiondict['dorefineregressor'] and thepass < optiondict['refinepasses']:
+        if thepass < optiondict['passes']:
             print('\n\nRegressor refinement, pass' + str(thepass))
             timings.append(['Regressor refinement start, pass ' + str(thepass), time.time(), None, None])
             if optiondict['refineoffset']:
@@ -2921,7 +2933,7 @@ def main():
                 tide.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
                                  outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d)
 
-    if optiondict['dorefineregressor']:
+    if optiondict['passes'] > 1:
         outmaparray[validvoxels] = refinemask[:]
         if optiondict['textio']:
             tide.writenpvecs(outfmriarray.reshape(nativefmrishape),
@@ -2999,7 +3011,7 @@ def main():
                              outputname + '_lagregressor' + outsuffix4d)
         lagtc = None
 
-    if optiondict['dorefineregressor']:
+    if optiondict['passes'] > 1:
         if optiondict['savelagregressors']: 
             outfmriarray[validvoxels, :] = shiftedtcs[:, :]
             if optiondict['textio']:
