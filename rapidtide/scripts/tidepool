@@ -594,7 +594,6 @@ class overlay:
 
     def setFuncMask(self, funcmask, maskdata=True):
         self.funcmask = funcmask
-        print("setFuncMask:", self.funcmask, self.tdim)
         if self.funcmask is None:
             if self.tdim == 1:
                 self.funcmask = 1.0 + 0.0 * self.data
