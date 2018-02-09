@@ -1193,7 +1193,7 @@ def usage():
     print("Preprocessing options:")
     print("    -t TSTEP,                  - Set the timestep of the data file to TSTEP (or 1/FREQ)")
     print("      --datatstep=TSTEP,         This will override the TR in an fMRI file.")
-    print("      --datafreq=FREQ            NOTE: if using data from a text file, for example with ")
+    print("      --datafreq=FREQ            NOTE: if using data from a text file, for example with")
     print("                                 NIRS data, using one of these options is mandatory.")
     print("    -a                         - Disable antialiasing filter")
     print("    --nodetrend                - Disable linear trend removal")
