@@ -1560,7 +1560,7 @@ def main():
 
 
     # read in all the datasets
-    thesubject = RapidtideDataset('main', datafileroot, verbose=True)
+    thesubject = RapidtideDataset('main', datafileroot)
 
     overlays = {}
     print('loading datasets...')
