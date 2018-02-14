@@ -2026,6 +2026,11 @@ def main():
         [(optiondict['dispersioncalc_upper'] - optiondict['dispersioncalc_lower']) / 25,
          optiondict['dispersioncalc_step']])
     timings.append(['Argument parsing done', time.time(), None, None])
+ 
+    # don't use shared memory if there is only one process
+    if not optiondict['multiproc']:
+        optiondict['sharedmem'] = False
+        print('running single process - disabled shared memory use')
 
     # disable numba now if we're going to do it (before any jits)
     if optiondict['nonumba']:
