@@ -47,19 +47,19 @@ import nibabel as nib
 from pylab import plot, legend, show, figure
 
 
-def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend, corrweighting='none', numreps=1000):
+def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend, windowfunc='hamming', corrweighting='none', numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
     corrlist = zeros((numreps), dtype='float')
     corrlist_pear = zeros((numreps), dtype='float')
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
 
-    filteredindata = tide.corrnormalize(thefilter.apply(Fs, indata), prewindow, dodetrend)
+    filteredindata = tide.corrnormalize(thefilter.apply(Fs, indata), prewindow, dodetrend, windowfunc=windowfunc)
     for i in range(0, numreps):
         # make a shuffled copy of the regressors
         shuffleddata = permutation(indata)
 
         # filter it
-        filteredshuffleddata = np.nan_to_num(tide.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend))
+        filteredshuffleddata = np.nan_to_num(tide.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend, windowfunc=windowfunc))
 
         # crosscorrelate with original
         theshuffledxcorr = tide.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr, weighting=corrweighting)
@@ -94,37 +94,38 @@ def usage():
     print("    samplerate:     the sample rate of the timecourses, in Hz")
     print("")
     print("optional arguments:")
-    print("    --nodetrend   - do not detrend the data before correlation")
-    print("    --nowindow    - do not prewindow data before corrlation")
-    print("    --cepstral    - check time delay using Choudhary's cepstral technique ")
-    print("    --phat        - perform phase alignment transform (PHAT) rather than ")
-    print("                    standard crosscorrelation")
-    print("    --liang       - perform phase alignment transform with Liang weighting function rather than ")
-    print("                    standard crosscorrelation")
-    print("    --eckart      - perform phase alignment transform with Eckart weighting function rather than ")
-    print("                    standard crosscorrelation")
-    print("    -l LABEL      - label for the delay value")
-    print("    -s STARTTIME  - time of first datapoint to use in seconds in the first file")
-    print("    -D DURATION   - amount of data to use in seconds")
-    print("    -r RANGE      - restrict peak search range to +/- RANGE seconds (default is ")
-    print("                    +/-15)")
-    print("    -d            - turns off display of graph")
-    print("    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.")
-    print("                    LOWERSTOP and UPPERSTOP can be specified, or will be ")
-    print("                    calculated automatically")
-    print("    -V            - filter data and regressors to VLF band")
-    print("    -L            - filter data and regressors to LFO band")
-    print("    -R            - filter data and regressors to respiratory band")
-    print("    -C            - filter data and regressors to cardiac band")
-    print("    -T            - trim data to match")
-    print("    -A            - print data on a single summary line")
-    print("    -a            - if summary mode is on, add a header line showing what values ")
-    print("                    mean")
-    print("    -f            - negate (flip) second regressor")
-    print("    -z FILENAME   - use the columns of FILENAME as controlling variables and ")
-    print("                    return the partial correlation")
-    print("    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS ")
-    print("                    repetition")
+    print("    --nodetrend        - do not detrend the data before correlation")
+    print("    --nowindow         - do not prewindow data before corrlation")
+    print("    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)")
+    print("    --cepstral         - check time delay using Choudhary's cepstral technique ")
+    print("    --phat             - perform phase alignment transform (PHAT) rather than ")
+    print("                         standard crosscorrelation")
+    print("    --liang            - perform phase alignment transform with Liang weighting function rather than ")
+    print("                         standard crosscorrelation")
+    print("    --eckart           - perform phase alignment transform with Eckart weighting function rather than ")
+    print("                         standard crosscorrelation")
+    print("    -l LABEL           - label for the delay value")
+    print("    -s STARTTIME       - time of first datapoint to use in seconds in the first file")
+    print("    -D DURATION        - amount of data to use in seconds")
+    print("    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is ")
+    print("                         +/-15)")
+    print("    -d                 - turns off display of graph")
+    print("    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ.")
+    print("                         LOWERSTOP and UPPERSTOP can be specified, or will be ")
+    print("                         calculated automatically")
+    print("    -V                 - filter data and regressors to VLF band")
+    print("    -L                 - filter data and regressors to LFO band")
+    print("    -R                 - filter data and regressors to respiratory band")
+    print("    -C                 - filter data and regressors to cardiac band")
+    print("    -T                 - trim data to match")
+    print("    -A                 - print data on a single summary line")
+    print("    -a                 - if summary mode is on, add a header line showing what values ")
+    print("                         mean")
+    print("    -f                 - negate (flip) second regressor")
+    print("    -z FILENAME        - use the columns of FILENAME as controlling variables and ")
+    print("                         return the partial correlation")
+    print("    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS ")
+    print("                         repetition")
     print("")
     return ()
 
@@ -134,6 +135,7 @@ uselabel = False
 display = True
 corrweighting = 'none'
 prewindow = True
+windowfunc = 'hamming'
 dodetrend = True
 dopartial = False
 duration = 1000000.0
@@ -177,7 +179,7 @@ numpoints = len(inputdata1)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w", ["phat", "liang", "eckart", "nodetrend", "nowindow", "cepstral", "savecorr=", "help"])
+    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w", ["phat", "liang", "eckart", "nodetrend", "nowindow", "windowfunc=", "cepstral", "savecorr=", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -234,6 +236,13 @@ for o, a in opts:
         prewindow = False
         if verbose:
             print('disabling prewindowing')
+    elif o == "--windowfunc":
+        windowfunc = a
+        if (windowfunc != 'hamming') and (windowfunc != 'blackmanharris') and (windowfunc != 'hann') and (windowfunc != 'None'):
+            print('illegal window function')
+            sys.exit()
+        if verbose:
+            print('using window function:', windowfunc)
     elif o == "-z":
         controlvariablefile = a
         dopartial = True
@@ -321,8 +330,9 @@ if trimdata:
 if theprefilter.gettype() != 'none':
     if verbose:
         print("filtering to ", theprefilter.gettype(), " band")
-filtereddata1 = tide.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend)
-filtereddata2 = tide.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend)
+print(windowfunc)
+filtereddata1 = tide.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend, windowfunc=windowfunc)
+filtereddata2 = tide.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend, windowfunc=windowfunc)
 if flipregressor:
     filtereddata2 *= -1.0
 if dumpfiltered:
@@ -333,7 +343,7 @@ if dopartial:
     controlvars = tide.readnpvecs(controlvariablefile)
     regressorvec = []
     for j in range(0, numregressors):
-        regressorvec.append(tide.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]), prewindow, dodetrend))
+        regressorvec.append(tide.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]), prewindow, dodetrend, windowfunc=windowfunc))
     if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
         thefit, filtereddata1 = tide.mlregress(regressorvec, filtereddata1)
     if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
@@ -347,13 +357,13 @@ if calccepstraldelay:
 thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
 # calculate the coherence
-f, Cxy = sp.signal.coherence(tide.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend),
-                            tide.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend),
+f, Cxy = sp.signal.coherence(tide.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend, windowfunc=windowfunc),
+                            tide.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend, windowfunc=windowfunc),
                             Fs)
 
 # calculate the cross spectral density
-f, Pxy = sp.signal.csd(tide.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend),
-                            tide.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend),
+f, Pxy = sp.signal.csd(tide.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend, windowfunc=windowfunc),
+                            tide.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend, windowfunc=windowfunc),
                             Fs)
 
 
@@ -394,7 +404,8 @@ if estimate_significance:
     # generate a list of correlations from shuffled data
     corrlist, corrlist_pear = getNullDistributionData(trimdata1, xcorr_x, theprefilter,
                                                       prewindow, dodetrend, searchstart, searchend,
-                                                      corrweighting=corrweighting, numreps=numreps)
+                                                      corrweighting=corrweighting, numreps=numreps,
+                                                      windowfunc=windowfunc)
 
     # calculate percentiles for the crosscorrelation from the distribution data
     histlen = 100
