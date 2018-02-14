@@ -804,20 +804,20 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
     return None, None
 
 
-def quickcorr(data1, data2):
-    thepcorr = sp.stats.stats.pearsonr(corrnormalize(data1, True, True), corrnormalize(data2, True, True))
+def quickcorr(data1, data2, windowfunc='hamming'):
+    thepcorr = sp.stats.stats.pearsonr(corrnormalize(data1, True, True, windowfunc=windowfunc), corrnormalize(data2, True, True, windowfunc=windowfunc))
     return thepcorr
 
 
-def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewindow=False, dodetrend=False):
+def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewindow=False, dodetrend=False, windowfunc='hamming'):
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
     times = []
     corrpertime = []
     ppertime = []
     for i in range(halfwindow, np.shape(data1)[0] - halfwindow, samplestep):
-        dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
-        dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend)
+        dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
+        dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
         thepcorr = sp.stats.stats.pearsonr(dataseg1, dataseg2)
         times.append(i * sampletime)
         corrpertime.append(thepcorr[0])
@@ -825,15 +825,15 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewind
     return np.asarray(times, dtype='float64'), np.asarray(corrpertime, dtype='float64'), np.asarray(ppertime, dtype='float64')
 
 
-def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimit=None, weighting='none', prewindow=False, dodetrend=False, display=False):
+def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimit=None, weighting='none', prewindow=False, windowfunc='hamming', dodetrend=False, display=False):
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
 
     if laglimit is None:
         laglimit = windowtime / 2.0
 
-    dataseg1 = corrnormalize(data1[0:2 * halfwindow], prewindow, dodetrend)
-    dataseg2 = corrnormalize(data2[0:2 * halfwindow], prewindow, dodetrend)
+    dataseg1 = corrnormalize(data1[0:2 * halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
+    dataseg2 = corrnormalize(data2[0:2 * halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
     thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
     xcorrlen = np.shape(thexcorr)[0]
     xcorr_x = np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
@@ -844,8 +844,8 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     delayvals = []
     valid = []
     for i in range(halfwindow,np.shape(data1)[0] - halfwindow, samplestep):
-        dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend)
-        dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend)
+        dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
+        dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
         times.append(i * sampletime)
         xcorrpertime.append(fastcorrelate(dataseg1, dataseg2, weighting=weighting))
         maxindex, thedelayval, theRval, maxsigma, maskval, failreason = findmaxlag_gauss(
@@ -1992,17 +1992,30 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 
 
 # --------------------------- Window functions -------------------------------------------------
+BHwindows = {}
 def blackmanharris(length):
-    argvec = np.arange(0.0, 2.0 * np.pi, 2.0 * np.pi / float(length))
-    a0 = 0.35875
-    a1 = 0.48829
-    a2 = 0.14128
-    a3 = 0.01168
-    return a0 - a1 * np.cos(argvec) + a2 * np.cos(2.0 * argvec) - a3 * np.cos(3.0 * argvec)
+    #return a0 - a1 * np.cos(argvec) + a2 * np.cos(2.0 * argvec) - a3 * np.cos(3.0 * argvec)
+    try:
+        return BHwindows[str(length)]
+    except:
+        argvec = np.arange(0.0, 2.0 * np.pi, 2.0 * np.pi / float(length))
+        a0 = 0.35875
+        a1 = 0.48829
+        a2 = 0.14128
+        a3 = 0.01168
+        BHwindows[str(length)] = a0 - a1 * np.cos(argvec) + a2 * np.cos(2.0 * argvec) - a3 * np.cos(3.0 * argvec)
+        print('initialized Blackman-Harris window for length', length)
+        return BHwindows[str(length)]
 
-
+hannwindows = {}
 def hann(length):
-    return 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
+    #return 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
+    try:
+        return hannwindows[str(length)]
+    except: 
+        hannwindows[str(length)] = 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
+        print('initialized hann window for length', length)
+        return hannwindows[str(length)]
 
 
 hammingwindows = {}
@@ -2014,6 +2027,19 @@ def hamming(length):
         hammingwindows[str(length)] = 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
         print('initialized hamming window for length', length)
         return hammingwindows[str(length)]
+
+def windowfunction(length, type='hamming'):
+    if type == 'hamming':
+        return hamming(length)
+    elif type == 'hann':
+        return hann(length)
+    elif type == 'blackmanharris':
+        return blackmanharris(length)
+    elif type == 'None':
+        return np.ones(length)
+    else:
+        print('illegal window function')
+        sys.exit()
 
 
 def envdetect(vector, filtwidth=3.0):
@@ -2063,7 +2089,7 @@ def ppnormalize(vector):
         return demeaned
 
 @conditionaljit()
-def corrnormalize(thedata, prewindow, dodetrend):
+def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
     # detrend first
     if dodetrend:
         intervec = stdnormalize(detrend(thedata, demean=True))
@@ -2072,28 +2098,9 @@ def corrnormalize(thedata, prewindow, dodetrend):
 
     # then window
     if prewindow:
-        return stdnormalize(hamming(np.shape(thedata)[0]) * intervec) / np.sqrt(np.shape(thedata)[0])
+        return stdnormalize(windowfunction(np.shape(thedata)[0], type=windowfunc) * intervec) / np.sqrt(np.shape(thedata)[0])
     else:
         return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
-
-
-@conditionaljit()
-def corrnormalize_new(thedata, prewindow, dodetrend):
-    # detrend first
-    if dodetrend:
-        intervec = signal.detrend(thedata)
-    else:
-        intervec = thedata
-
-    sigstd = np.std(intervec)
-    if sigstd > 0.0:
-        intervec /= sigstd
-
-    # then window
-    if prewindow:
-        return stdnormalize(hamming(np.shape(thedata)[0]) * intervec) / np.sqrt(np.shape(thedata)[0])
-    else:
-        return intervec / np.sqrt(np.shape(thedata)[0])
 
 
 # --------------------------- Filtering functions -------------------------------------------------

@@ -206,8 +206,8 @@ def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, nc
     thetc_classfilter = ncprefilter.apply(oversampfreq, thetc)
     thetc = thetc_classfilter
 
-    # prepare timecourse by normalizing, detrending, and applying a hamming window
-    preppedtc = tide.corrnormalize(thetc, optiondict['usewindowfunc'], optiondict['dodetrend'])
+    # prepare timecourse by normalizing, detrending, and applying a window function 
+    preppedtc = tide.corrnormalize(thetc, optiondict['usewindowfunc'], optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
 
     # now actually do the correlation
     thexcorr = tide.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=optiondict['corrweighting'])
@@ -761,7 +761,8 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
                 * np.where(lagtimes < upper, np.int16(1), np.int16(0)))[0]
             print('    summing', np.shape(inlagrange)[0], 'regressors with lags from', lower, 'to', upper)
             if np.shape(inlagrange)[0] > 0:
-                dispersioncalcout[lagnum, :] = tide.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0), False, True)
+                dispersioncalcout[lagnum, :] = tide.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0), False, True,
+                    windowfunc=optiondict['windowfunc'])
                 freqs, dispersioncalcspecmag[lagnum, :], dispersioncalcspecphase[lagnum, :] = tide.polarfft(
                     dispersioncalcout[lagnum, :],
                     1.0 / fmritr)
@@ -1215,6 +1216,8 @@ def usage():
     print("    -N                         - Estimate significance threshold by running NREPS null ")
     print("                                 correlations (default is 10000, set to 0 to disable)")
     print("    --skipsighistfit           - Do not fit significance histogram with a Johnson SB function")
+    print("    --windowfunc=FUNC          - Use FUNC window funcion prior to correlation.  Options are")
+    print("                                 hamming (default), hann, blackmanharris, and None")
     print("    --nowindow                 - Disable precorrelation windowing")
     print("    -f GAUSSSIGMA              - Spatially filter fMRI data prior to analysis using ")
     print("                                 GAUSSSIGMA in mm")
@@ -1368,7 +1371,8 @@ def main():
     # correlation options
     optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
     optiondict['dodetrend'] = True  # remove linear trends prior to correlation
-    optiondict['usewindowfunc'] = True  # apply a hamming window prior to correlation
+    optiondict['usewindowfunc'] = True  # apply a window prior to correlation
+    optiondict['windowfunc'] = 'hamming'  # the particular window function to use for correlation
     optiondict['corrweighting'] = 'none'  # use a standard unweighted crosscorrelation for calculate time delays
     optiondict['usetmask'] = False  # premultiply the regressor with the tmask timecourse
     optiondict['tmaskname'] = None  # file name for tmask regressor
@@ -1507,6 +1511,7 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[optparsestart:], 'abcdf:gh:i:mo:ps:r:t:vBCF:ILMN:O:PRSTVZ:', ['help',
                                                                                                           'nowindow',
+                                                                                                          'windowfunc=',
                                                                                                           'datatstep=',
                                                                                                           'datafreq=',
                                                                                                           'lagminthresh=',
@@ -1584,6 +1589,14 @@ def main():
         if o == '--nowindow':
             optiondict['usewindowfunc'] = False
             print('disable precorrelation windowing')
+        elif o == '--windowfunc':
+            thewindow = a
+            if (thewindow != 'hamming') and (thewindow != 'hann') and (thewindow != 'blackmanharris') and (thewindow != 'None'):
+                print('illegal window function', thewindow)
+                sys.exit()
+            optiondict['windowfunc'] = thewindow
+            linkchar = '='
+            print('Will use', optiondict['windowfunc'], 'as the window function for correlation')
         elif o == '-v':
             optiondict['verbose'] = True
             print('Turned on verbose mode')
@@ -2480,8 +2493,8 @@ def main():
             print('\n\n*********************')
             print('Pass number ', thepass)
 
-        referencetc = tide.corrnormalize(resampref_y, optiondict['usewindowfunc'], optiondict['dodetrend'])
-        nonosreferencetc = tide.corrnormalize(resampnonosref_y, optiondict['usewindowfunc'], optiondict['dodetrend'])
+        referencetc = tide.corrnormalize(resampref_y, optiondict['usewindowfunc'], optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
+        nonosreferencetc = tide.corrnormalize(resampnonosref_y, optiondict['usewindowfunc'], optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
         oversampfreq = optiondict['oversampfactor'] / fmritr
 
         # Step -1 - check the regressor for periodic components in the passband
@@ -2804,7 +2817,7 @@ def main():
             resampref_y_pw = rt_floatset(resampref_y)
         if optiondict['usewindowfunc']:
             referencetc_pw = tide.stdnormalize(
-                tide.hamming(np.shape(resampref_y_pw)[0]) * tide.detrend(tide.stdnormalize(resampref_y_pw))) / \
+                tide.windowfunction(np.shape(resampref_y_pw)[0], type=optiondict['windowfunc']) * tide.detrend(tide.stdnormalize(resampref_y_pw))) / \
                              np.shape(resampref_y_pw)[0]
         else:
             referencetc_pw = tide.stdnormalize(tide.detrend(tide.stdnormalize(resampref_y_pw))) / np.shape(
