@@ -1,15 +1,21 @@
 #!/bin/csh -f
+#rapidtide2x \
+	#fmri.nii.gz \
+	#../dst/dgsr_0pass \
+        #--limitoutput \
+        #--despecklepasses=4 \
+	#--nofitfilt \
+        #-F 0.005,0.08 \
+	#-r -15,15 \
+	#-f 2 -N 10000 --multiproc
 rapidtide2x \
 	fmri.nii.gz \
 	../dst/dgsr \
         --limitoutput \
         --refinepasses=3 \
-        --refineoffset \
-	--accheck \
-        --despeckle \
+        --venousrefine \
         --despecklepasses=4 \
 	--nofitfilt \
-        --ampthresh=0.2854 \
         -F 0.005,0.08 \
 	-r -15,15 \
 	-f 2 -N 10000 --multiproc
