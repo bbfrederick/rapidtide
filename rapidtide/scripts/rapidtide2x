@@ -2619,9 +2619,10 @@ def main():
                                                   optiondict)
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
-        tide.makeandsavehistogram(np.asarray(theglobalmaxlist), optiondict['histlen'], 0,
+        tide.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
                               outputname + '_globallaghist_pass' + str(thepass),
-                              displaytitle='lagtime histogram', displayplots=optiondict['displayplots'], refine=False)
+                              displaytitle='lagtime histogram', displayplots=optiondict['displayplots'],
+                              therange=(corrscale[0], corrscale[-1]), refine=False)
         timings.append(['Correlation calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
         # Step 2 - correlation fitting and time lag estimation
