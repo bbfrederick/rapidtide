@@ -1,0 +1,168 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+# $Author: frederic $
+#       $Date: 2016/07/11 14:50:43 $
+#       $Id: showtc,v 1.16 2016/07/11 14:50:43 frederic Exp $
+#
+from __future__ import print_function
+import sys
+import platform
+import getopt
+from cycler import cycler
+
+import matplotlib
+import matplotlib.cm as cm
+
+import bisect
+import rapidtide.tide_funcs as tide
+import numpy as np
+from scipy import arange, fftpack
+
+from pylab import figure, plot, legend, show, xlabel, ylabel, savefig, title, subplot, tight_layout, suptitle, xlim, ylim, box, setp
+
+
+def phase(mcv): 
+    return np.arctan2(mcv.imag, mcv.real) 
+
+
+def usage():
+    print("endtidalproc - process a gas trace to generate the endtidal waveform")
+    print("")
+    print("usage: endtidalproc infilename outfilename [--samplerate=Fs] [--sampletime=Ts] [--starttime=START] [--endtime=END] [--isoxygen]")
+    print("")
+    print("required arguments:")
+    print("    infilename	- a text file containing a single gas trace, one timepoint per line")
+    print("    outfilename	- a text file for the interpolated data")
+    print("")
+    print("optional arguments:")
+    print("    --isoxygen               - assumes the trace is oxygen, fits the bottom of the waveform, not the top")
+    print("    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)")
+    print("    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)")
+    print("    --starttime=START        - start plot at START seconds")
+    print("    --endtime=END            - end plot at END seconds")
+    print("    --thresh=THRESH          - amount of fall (or rise) needed, in percent, to recognize a peak (or trough)")
+    return ()
+
+# set default variable values
+detrend = True
+isoxygen = False
+samplerate = 1.0
+thestartpoint = 0
+thethresh = 1.0
+theendpoint = 100000000
+thestarttime = -1000000.0
+theendtime = 1000000.0
+
+# get the command line parameters
+try:
+    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help",
+                                                   "isoxygen",
+                                                   "thresh=",
+                                                   "starttime=", "endtime=",
+                                                   "samplerate=", "sampletime="])
+except getopt.GetoptError as err:
+    # print help information and exit:
+    print(str(err))  # will print something like 'option -a not recognized'
+    usage()
+    sys.exit(2)
+
+# check for filename arguments
+nargs = len(args)
+if nargs < 3:
+    usage()
+    sys.exit(1)
+
+# now parse options
+for o, a in opts:
+    linkchar = ' '
+    if o == '--starttime':
+        thestarttime = float(a)
+        print('Start time set to:', thestarttime)
+    elif o == '--endtime':
+        theendtime = float(a)
+        print('End time set to:', theendtime)
+    elif o == '--thresh':
+        thethresh = float(a)
+        print('Change threshhold set to', thethresh)
+    elif o == '--isoxygen':
+        isoxygen = True
+    elif o == '--samplerate':
+        samplerate = float(a)
+        linkchar = '='
+        print('Samplerate set to ', samplerate)
+    elif o == '--sampletime':
+        samplerate = 1.0 / float(a)
+        linkchar = '='
+        print('Samplerate set to ', samplerate)
+    elif o == '-F':
+        print('got the -F option')
+    elif o in ('-h', '--help'):
+        usage()
+        sys.exit()
+    else:
+        assert False, 'unhandled option'
+
+if isoxygen:
+    print('Fitting trace as oxygen')
+else:
+    print('Fitting trace as CO2')
+
+# check range
+if thestarttime >= theendtime:
+    print('endtime must be greater then starttime;')
+    sys.exit()
+
+# handle required args first
+textfilename = []
+infilename = args[1]
+outfilename = args[2]
+
+# read in the data
+yvec = tide.readvec(infilename)
+xvec = arange(0.0, len(yvec), 1.0) / samplerate
+
+thestartpoint = np.max([0, bisect.bisect_right(xvec, thestarttime)])
+theendpoint = np.min([len(xvec) - 1, bisect.bisect_left(xvec, theendtime)])
+thestarttime = xvec[thestartpoint]
+theendtime = xvec[theendpoint]
+
+# set parameters - maxtime is the longest to look ahead for a peak (or trough) in seconds
+# lookahead should be '(samples / period) / f' where '4 >= f >= 1.25' might be a good value
+maxtime = 1.0
+f = 2.0
+lookaheadval = int((samplerate * maxtime) / f)
+maxpeaks, minpeaks = tide.peakdetect(yvec, lookahead=lookaheadval, delta=thethresh)
+
+if isoxygen:
+    peaklist = minpeaks
+else:
+    peaklist = maxpeaks
+
+peakinterp = 0.0 * yvec
+curpos = 0
+curval = peaklist[0][1]
+for thepeak in peaklist:
+    slope = (thepeak[1] - curval) / (thepeak[0] - curpos)
+    for theindex in range(curpos, thepeak[0]):
+        peakinterp[theindex] = curval + slope * (theindex - curpos)
+    curpos = thepeak[0] + 0
+    curval = thepeak[1] + 0.0
+if curpos < len(peakinterp):
+    peakinterp[curpos:] = curval
+        
+tide.writevec(peakinterp, outfilename)

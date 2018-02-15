@@ -1,0 +1,52 @@
+/Users/frederic/anaconda/bin/rapidtide2x \
+	S101_LiaNIRX.txt \
+	../dst/nirs_norefine \
+	--excludemask=excludemask.txt \
+	-F 0.015,0.19  \
+        --datafreq=3.9062 \
+	-r -5,5 \
+	-N 0 \
+        --nofitfilt \
+        --nirs \
+	--multiproc 
+
+/Users/frederic/anaconda/bin/rapidtide2x \
+	S101_LiaNIRX.txt \
+	../dst/nirs_refine \
+	--excludemask=excludemask.txt \
+	-F 0.015,0.19  \
+        -t 0.256003276841944 \
+	-r -5,5 \
+	-N 0 \
+        --nofitfilt \
+        --nirs \
+	--multiproc  \
+	--refinepasses=3 \
+	--refineoffset
+
+/Users/frederic/anaconda/bin/rapidtide2x \
+	S101_LiaNIRX.txt \
+	../dst/nirs_refine_cleaned \
+	--excludemask=excludemask.txt \
+	-F 0.015,0.19  \
+        -t 0.256003276841944 \
+	-r -5,5 \
+	-N 0 \
+        --nofitfilt \
+        --cleanrefined \
+        --nirs \
+	--multiproc  \
+	--refinepasses=3 \
+	--refineoffset
+
+cat ../dst/nirs_norefine_filtereddata.txt           | awk '{print $12}' > ../dst/norefine.txt
+cat ../dst/nirs_refine_filtereddata.txt             | awk '{print $12}' > ../dst/refine.txt
+cat ../dst/nirs_refine_cleaned_filtereddata.txt     | awk '{print $12}' > ../dst/refine_cleaned.txt
+
+showtc \
+    protocol.txt \
+    ../dst/norefine.txt \
+    ../dst/refine.txt \
+    ../dst/refine_cleaned.txt \
+    --separate
+    --sampletime=0.256003276841944

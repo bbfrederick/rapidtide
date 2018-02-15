@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+
+import rapidtide.tide_funcs as tide
+import numpy as np
+import pylab as plt
+
+thelen = 100
+x = np.random.rand(thelen)
+y = tide.windowfunction(thelen, type='hann')
+
+z = x * y
+plt.plot(z)
+plt.show()
+
+y = tide.corrnormalize(x, True, True)
+plt.plot(y)
+plt.show()
