@@ -10,7 +10,7 @@
 	#-f 2 -N 10000 --multiproc
 rapidtide2x \
 	fmri.nii.gz \
-	../dst/dgsr \
+	../dst/dgsr_modreshape \
         --limitoutput \
         --refinepasses=3 \
         --venousrefine \
