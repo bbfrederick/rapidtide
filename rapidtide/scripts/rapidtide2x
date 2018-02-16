@@ -1670,7 +1670,7 @@ def main():
             print('mean scale voxels prior to generating global mean')
         elif o == '--limitoutput':
             optiondict['savelagregressors'] = False
-            print('disabling output of lagregressors and glm filtered timecourses')
+            print('disabling output of lagregressors and some ancillary GLM timecourses')
         elif o == '--debug':
             optiondict['debug'] = True
             theprefilter.setdebug(optiondict['debug'])
@@ -2153,9 +2153,12 @@ def main():
         timings.append(['End 3D smoothing', time.time(), None, None])
         print()
 
-    # reshape the data and trim to a time range, if specified
-    fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
-    timepoints = validend - validstart + 1
+    # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
+    if (validstart == 0) and (validend == timepoints):
+        fmri_data = nim_data.reshape((numspatiallocs, timepoints))
+    else:
+        fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
+        timepoints = validend - validstart + 1
 
     # read in the optional masks
     logmem('before setting masks', file=memfile)
