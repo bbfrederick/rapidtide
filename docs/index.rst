@@ -106,16 +106,28 @@ Usage:
 
 
 
-		usage: rapidtide2 fmrifilename outputname 
-		[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [--phat] [--liang] [--eckart] [-f GAUSSSIGMA] [-O oversampfac] [-t TRvalue] [-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME] [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] --numskip=SKIP[--refineweighting=TYPE] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] [--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--corrmaskthresh=PCT][--sigmathresh=SIGMA] [--refineoffset] [--pca] [--ica] [--weightedavg] [--avg] [--psdfilter] [--despeckle] [--despecklethresh=VAL] [--despecklepasses=PASSES] [--dispersioncalc] [--refineupperlag] [--refinelowerlag][--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix][--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP][--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc]
+		usage:  rapidtide2  datafilename outputname 
+		[-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [--phat] [--liang] [--eckart] [-f GAUSSSIGMA] [-O oversampfac] [-t TSTEP] [--datatstep=TSTEP] [--datafreq=FREQ] [-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME] [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] [--numskip=SKIP] [--refineweighting=TYPE] [--refineprenorm=TYPE] [--passes=PASSES] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] [--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--sigmathresh=SIGMA] [--corrmaskthresh=PCT] [--refineoffset] [--pca] [--ica] [--weightedavg] [--avg] [--psdfilter] [--despecklethresh=VAL] [--despecklepasses=PASSES] [--dispersioncalc] [--refineupperlag] [--refinelowerlag] [--nosharedmem] [--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix][--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP][--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc] [--nprocs=NPROCS] [--nirs] [--venousrefine]
 
 		Required arguments:
-		    fmrifilename               - The BOLD fmri file
+		    datafilename               - The input data file (BOLD fmri file or NIRS)
 		    outputname                 - The root name for the output files
 
+		Optional arguments:
+		    Arguments are processed in order of appearance.  Later options can override ones earlier on the command line
+
+		Macros:
+		    --venousrefine             - This is a macro that sets --lagminthresh=2.5, --lagmaxthresh=6.0,
+						 --ampthresh=0.5, and --refineupperlag to bias refinement towards voxels
+						 in the draining vasculature for an fMRI scan.
+		    --nirs                     - This is a NIRS analysis - this is a macro that sets --nothresh, --preservefiltering,
+						 --refinenorm=var, --ampthresh=0.7, and --lagminthresh=0.1.
+
 		Preprocessing options:
-		    -t TRvalue                 - Override the TR in the fMRI file with the value 
-						 TRvalue
+		    -t TSTEP,                  - Set the timestep of the data file to TSTEP (or 1/FREQ)
+		      --datatstep=TSTEP,         This will override the TR in an fMRI file.
+		      --datafreq=FREQ            NOTE: if using data from a text file, for example with
+						 NIRS data, using one of these options is mandatory.
 		    -a                         - Disable antialiasing filter
 		    --nodetrend                - Disable linear trend removal
 		    -I                         - Invert the sign of the regressor before processing
@@ -134,6 +146,8 @@ Usage:
 		    -N                         - Estimate significance threshold by running NREPS null 
 						 correlations (default is 10000, set to 0 to disable)
 		    --skipsighistfit           - Do not fit significance histogram with a Johnson SB function
+		    --windowfunc=FUNC          - Use FUNC window funcion prior to correlation.  Options are
+						 hamming (default), hann, blackmanharris, and None
 		    --nowindow                 - Disable precorrelation windowing
 		    -f GAUSSSIGMA              - Spatially filter fMRI data prior to analysis using 
 						 GAUSSSIGMA in mm
@@ -177,16 +191,20 @@ Usage:
 		    --nofitfilt                - Do not zero out peak fit values if fit fails
 		    --maxfittype=FITTYPE       - Method for fitting the correlation peak (default is 'gauss'). 
 						 'quad' uses a quadratic fit.  Faster but not as well tested
-		    --despeckle                - detect and refit suspect correlations to disambiguate peak locations
+		    --despecklepasses=PASSES   - detect and refit suspect correlations to disambiguate peak locations in PASSES passes
 		    --despecklethresh=VAL      - refit correlation if median discontinuity magnitude exceeds VAL (default is 5s)
-		    --despecklepasses=PASSES   - perform PASSES despeckling passes
 
 		Regressor refinement options:
+		    --refineprenorm=TYPE       - Apply TYPE prenormalization to each timecourse prior 
+						 to refinement (valid weightings are 'None', 
+						 'mean' (default), 'var', and 'std'
 		    --refineweighting=TYPE     - Apply TYPE weighting to each timecourse prior 
 						 to refinement (valid weightings are 'None', 
 						 'R', 'R2' (default)
-		    --refinepasses=PASSES      - Set the number of refinement passes to PASSES 
-						 (default is 1)
+		    --passes=PASSES,           - Set the number of processing passes to PASSES 
+		     --refinepasses=PASSES       (default is 1 pass - no refinement).
+						 NB: refinepasses is the wrong name for this option -
+						 --refinepasses is deprecated, use --passes from now on.
 		    --includemask=MASK         - Only use voxels in NAME for global regressor 
 						 generation and regressor refinement
 		    --excludemask=MASK         - Do not use voxels in NAME for global regressor 
@@ -225,6 +243,7 @@ Usage:
 						 initial fmri file used to estimate delays
 		    --noglm                    - Turn off GLM filtering to remove delayed regressor 
 						 from each voxel (disables output of fitNorm)
+		    --preservefiltering        - don't reread data prior to GLM
 
 		Miscellaneous options:
 		    --wiener                   - Perform Wiener deconvolution to get voxel transfer functions
@@ -234,15 +253,20 @@ Usage:
 		    -S                         - Simulate a run - just report command line options
 		    -d                         - Display plots of interesting timecourses
 		    --nonumba                  - Disable jit compilation with numba
+		    --nosharedmem              - Disable use of shared memory for large array storage
 		    --memprofile               - Enable memory profiling for debugging - warning:
 						 this slows things down a lot.
 		    --multiproc                - Enable multiprocessing versions of key subroutines.  This
 						 speeds things up dramatically.  Almost certainly will NOT
 						 work on Windows (due to different forking behavior).
+		    --nprocs=NPROCS            - Use NPROCS worker processes for multiprocessing.  Setting NPROCS
+						 less than 1 sets the number of worker processes to
+						 n_cpus - 1 (default).  Setting NPROCS enables --multiproc.
 		    --debug                    - Enable additional information output
 
 		Experimental options (not fully tested, may not work):
-		    --dispersioncalc           - Generate extra data during refinement to allow calculation of dispersion
+		    --cleanrefined             - perform additional processing on refined regressor to remove spurious components.
+		    --dispersioncalc           - Generate extra data during refinement to allow calculation of dispersion.
 		    --acfix                    - Perform a secondary correlation to disambiguate peak location
 						 (enables --accheck).  Experimental.
 		    --tmask=MASKFILE           - Only correlate during epochs specified in 
@@ -268,7 +292,7 @@ The base command you'd use would be:
 
 	::
 
-		rapidtide2 inputfmrifile outputname -L --refinepasses=3 --refineoffset
+		rapidtide2 inputfmrifile outputname -L --passes=3 --refineoffset
 
 This will do a fairly simple analysis.  First, the -L option means that rapidtide2 will prefilter the data to the LFO band (0.009-0.15Hz). It will then construct a regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor is specified), and then use crosscorrelation to determine the time delay in each voxel.  The --refinepasses=3 option directs rapidtide to to perform the delay analysis 3 times, each time generating a new estimate of the global noise signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.  After the three passes are complete, it will then use a GLM filter to remove a lagged copy of the final mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also a number of maps output with the prefix "outputname_" of delay, correlation strength and so on.
 
@@ -328,14 +352,14 @@ Usage:
 		usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]
 
 		required arguments:
-			INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
-			OUTPUTDIR          - The location for the output files
-			FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
+		    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
+		    OUTPUTDIR          - The location for the output files
+		    FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
 
 		optional arguments:
-			--all              - also transform the corrout file (warning - file may be huge)
-			--hires            - transform to match the high resolution anatomic image rather than the standard
-			--linear           - only do linear transformation, even if warpfile exists
+		    --all              - also transform the corrout file (warning - file may be huge)
+		    --hires            - transform to match the high resolution anatomic image rather than the standard
+		    --linear           - only do linear transformation, even if warpfile exists
 
 
 showxcorr
@@ -362,43 +386,103 @@ Usage:
 
 	::
 
-		showxcorr - calculate and display crosscorrelation between two timeseries
+		usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-z FILENAME] [-N TRIALS]
 
-		usage: showxcorr timecourse1 timecourse2 samplerate 
-			[-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [-t] [-w] [-f] [-g] [-z FILENAME] [-N TRIALS]
-	
 		required arguments:
-			timecoursefile1     - text file containing a timeseries
-			timecoursefile2     - text file containing a timeseries
-			samplerate          - the sample rate of the timecourses, in Hz
+			timcoursefile1:	text file containing a timeseries
+			timcoursefile2:	text file containing a timeseries
+			samplerate:	the sample rate of the timecourses, in Hz
 
 		optional arguments:
-			-t 	     - detrend the data
-			-w 	     - prewindow the data
-			-g 	     - perform phase alignment transform (phat) rather than 
-							standard crosscorrelation
-			-l LABEL	     - label for the delay value
-			-s STARTTIME  - time of first datapoint to use in seconds in the first file
-			-D DURATION   - amount of data to use in seconds
-			-r RANGE      - restrict peak search range to +/- RANGE seconds (default is 
-							+/-15)
-			-d            - turns off display of graph
-			-F            - filter data and regressors from LOWERFREQ to UPPERFREQ.
-							LOWERSTOP and UPPERSTOP can be specified, or will be 
-							calculated automatically
-			-V            - filter data and regressors to VLF band
-			-L            - filter data and regressors to LFO band
-			-R            - filter data and regressors to respiratory band
-			-C            - filter data and regressors to cardiac band
-			-T            - trim data to match
-			-A            - print data on a single summary line
-			-a            - if summary mode is on, add a header line showing what values 
-							mean
-			-f            - negate (flip) second regressor
-			-z FILENAME   - use the columns of FILENAME as controlling variables and 
-							return the partial correlation
-			-N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS 
-							repetition
+		    -t            - detrend the data
+		    -w            - prewindow the data
+		    -l LABEL      - label for the delay value
+		    -s STARTTIME  - time of first datapoint to use in seconds in the first file
+		    -D DURATION   - amount of data to use in seconds
+		    -r RANGE      - restrict peak search range to +/- RANGE seconds (default is 
+				    +/-15)
+		    -d            - turns off display of graph
+		    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.
+				    LOWERSTOP and UPPERSTOP can be specified, or will be 
+				    calculated automatically
+		    -V            - filter data and regressors to VLF band
+		    -L            - filter data and regressors to LFO band
+		    -R            - filter data and regressors to respiratory band
+		    -C            - filter data and regressors to cardiac band
+		    -T            - trim data to match
+		    -A            - print data on a single summary line
+		    -a            - if summary mode is on, add a header line showing what values 
+				    mean
+		    -f            - negate (flip) second regressor
+		    -z FILENAME   - use the columns of FILENAME as controlling variables and 
+				    return the partial correlation
+		    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS 
+				    repetition
+
+
+showxcorrx
+---------
+
+Description:
+^^^^^^^^^^^^
+
+	This is the newest, most avant-garde version of showxcorr.  Because it's an x file, it's more fluid and I don't guarantee that it will keep a stable interface (or even work at any given time).  But every time I add something new, it goes here.  The goal is eventually to make this the "real" version.  Unlike rapidtide2, however, I've let it drift quite a bit without syncing it because some people here actually use showxcorr and I don't want to disrupt workflows...
+
+Inputs:
+^^^^^^^
+	showxcorrx requires two text files containing timecourses with the same sample rate, one timepoint per line, which are to be correlated, and the sample rate.
+
+Outputs:
+^^^^^^^^
+	showxcorrx  outputs everything to standard out, including the Pearson correlation, the maximum cross correlation, the time of maximum cross correlation, and estimates of the significance levels (if specified).  There are no output files.
+
+Usage:
+^^^^^^
+
+	::
+
+showxcorrx - calculate and display crosscorrelation between two timeseries
+
+usage: showxcorrx timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [--nowindow] [-f] [--phat] [--liang] [--eckart] [-z FILENAME] [-N TRIALS]
+
+required arguments:
+    timcoursefile1: text file containing a timeseries
+    timcoursefile2: text file containing a timeseries
+    samplerate:     the sample rate of the timecourses, in Hz
+
+optional arguments:
+    --nodetrend        - do not detrend the data before correlation
+    --nowindow         - do not prewindow data before corrlation
+    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)
+    --cepstral         - check time delay using Choudhary's cepstral technique 
+    --phat             - perform phase alignment transform (PHAT) rather than 
+                         standard crosscorrelation
+    --liang            - perform phase alignment transform with Liang weighting function rather than 
+                         standard crosscorrelation
+    --eckart           - perform phase alignment transform with Eckart weighting function rather than 
+                         standard crosscorrelation
+    -l LABEL           - label for the delay value
+    -s STARTTIME       - time of first datapoint to use in seconds in the first file
+    -D DURATION        - amount of data to use in seconds
+    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is 
+                         +/-15)
+    -d                 - turns off display of graph
+    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ.
+                         LOWERSTOP and UPPERSTOP can be specified, or will be 
+                         calculated automatically
+    -V                 - filter data and regressors to VLF band
+    -L                 - filter data and regressors to LFO band
+    -R                 - filter data and regressors to respiratory band
+    -C                 - filter data and regressors to cardiac band
+    -T                 - trim data to match
+    -A                 - print data on a single summary line
+    -a                 - if summary mode is on, add a header line showing what values 
+                         mean
+    -f                 - negate (flip) second regressor
+    -z FILENAME        - use the columns of FILENAME as controlling variables and 
+                         return the partial correlation
+    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS 
+                         repetition
 
 
 showtc
@@ -424,6 +508,8 @@ Usage:
 
 	::
 
+		showtc - plots the data in text files
+
 		usage: showtc texfilename [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate=Fs] [--sampletime=Ts]
 
 		required arguments:
@@ -446,6 +532,8 @@ Usage:
 		    --separate               - use a separate subplot for each timecourse
 		    --noxax                  - don't show x axis
 		    --noyax                  - don't show y axis
+		    --starttime=START        - start plot at START seconds
+		    --endtime=END            - end plot at END seconds
 
 
 histnifti
@@ -570,6 +658,37 @@ Usage:
 			-a		- disable antialiasing filter (only relevant if you are downsampling in time)
 
 
+tcfrom3col
+------
+
+Description:
+^^^^^^^^^^^^
+	A  simple command line that takes an FSL style 3 column regressor file and generates a time course (waveform) file.  FSL 3 column files are text files containing one row per "event".  Each row has three columns: start time in seconds, duration in seconds, and waveform value.  The output waveform is zero everywhere that is not covered by an "event" in the file.
+
+Inputs:
+^^^^^^^
+	A three column text file
+
+Outputs:
+^^^^^^^^
+	A single column text file containing the waveform
+
+Usage:
+^^^^^^
+
+	::
+
+		tcfrom3col - convert a 3 column fsl style regressor into a one column timecourse
+
+		usage: tcfrom3col infile timestep numpoints outfile
+
+		required arguments:
+			infile:      a text file containing triplets of start time, duration, and value
+			timestep:    the time step of the output time coures in seconds
+			numpoints:   the number of output time points
+			outfile:     the name of the output time course file
+
+
 glmfilt
 ---------
 
@@ -591,6 +710,94 @@ Usage:
 
 		usage: glmfilt datafile numskip outputroot evfile [evfile_2...evfile_n]
 		    Fits and removes the effect of voxel specific and/or global regressors
+
+ccorrica
+---------
+
+Description:
+^^^^^^^^^^^^
+	Find temporal crosscorrelations between all the columns in a text file (for example the timecourse files output by MELODIC.)
+
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+	::
+
+		ccorrica - find temporal crosscorrelations between ICA components
+
+			usage: ccorrica timecoursefile TR
+				timcoursefile:	text file containing multiple timeseries, one per column, whitespace separated
+				TR:		the sample period of the timecourse, in seconds
+
+
+
+showstxcorr
+---------
+
+Description:
+^^^^^^^^^^^^
+	Calculate and display the short term crosscorrelation between two timeseries (useful for dynamic correlation).
+
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^^
+
+Usage:
+^^^^^^
+
+	::
+
+		showstxcorr - calculate and display the short term crosscorrelation between two timeseries
+
+		usage: showstxcorr -i timecoursefile1 [-i timecoursefile2] --samplefreq=FREQ -o outputfile [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [-nowindow] [-f] [--phat] [--liang] [--eckart] [-z FILENAME]
+
+		required arguments:
+		    -i, --infile= timcoursefile1     - text file containing one or more timeseries
+		    [-i, --infile= timcoursefile2]   - text file containing a timeseries
+						       NB: if one timecourse file is specified, each column
+						       is considered a timecourse, and there must be at least
+						       2 columns in the file.  If two filenames are given, each
+						       file must have only one column of data.
+
+		    -o, --outfile=OUTNAME:           - the root name of the output files
+
+		    --samplefreq=FREQ                - sample frequency of all timecourses is FREQ 
+			   or
+		    --sampletime=TSTEP               - time step of all timecourses is TSTEP 
+						       NB: --samplefreq and --sampletime are two ways to specify
+						       the same thing.
+
+		optional arguments:
+		    --nodetrend   - do not detrend the data before correlation
+		    --nowindow    - do not prewindow data before corrlation
+		    --phat        - perform phase alignment transform (PHAT) rather than 
+				    standard crosscorrelation
+		    --liang       - perform phase alignment transform with Liang weighting function rather than 
+				    standard crosscorrelation
+		    --eckart      - perform phase alignment transform with Eckart weighting function rather than 
+				    standard crosscorrelation
+		    -s STARTTIME  - time of first datapoint to use in seconds in the first file
+		    -D DURATION   - amount of data to use in seconds
+		    -d            - turns off display of graph
+		    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.
+				    LOWERSTOP and UPPERSTOP can be specified, or will be calculated automatically
+		    -V            - filter data and regressors to VLF band
+		    -L            - filter data and regressors to LFO band
+		    -R            - filter data and regressors to respiratory band
+		    -C            - filter data and regressors to cardiac band
+		    -W WINDOWLEN  - use a window length of WINDOWLEN seconds (default is 50.0s)
+		    -S STEPSIZE   - timestep between subsequent measurements (default is 25.0s).  Will be rounded to the nearest sample time
+		    -f            - negate second regressor
 
 
 tidepool
