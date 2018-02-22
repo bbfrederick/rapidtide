@@ -441,48 +441,48 @@ Usage:
 
 	::
 
-showxcorrx - calculate and display crosscorrelation between two timeseries
+		showxcorrx - calculate and display crosscorrelation between two timeseries
 
-usage: showxcorrx timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [--nowindow] [-f] [--phat] [--liang] [--eckart] [-z FILENAME] [-N TRIALS]
+		usage: showxcorrx timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [--nowindow] [-f] [--phat] [--liang] [--eckart] [-z FILENAME] [-N TRIALS]
 
-required arguments:
-    timcoursefile1: text file containing a timeseries
-    timcoursefile2: text file containing a timeseries
-    samplerate:     the sample rate of the timecourses, in Hz
+		required arguments:
+		    timcoursefile1: text file containing a timeseries
+		    timcoursefile2: text file containing a timeseries
+		    samplerate:     the sample rate of the timecourses, in Hz
 
-optional arguments:
-    --nodetrend        - do not detrend the data before correlation
-    --nowindow         - do not prewindow data before corrlation
-    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)
-    --cepstral         - check time delay using Choudhary's cepstral technique 
-    --phat             - perform phase alignment transform (PHAT) rather than 
-                         standard crosscorrelation
-    --liang            - perform phase alignment transform with Liang weighting function rather than 
-                         standard crosscorrelation
-    --eckart           - perform phase alignment transform with Eckart weighting function rather than 
-                         standard crosscorrelation
-    -l LABEL           - label for the delay value
-    -s STARTTIME       - time of first datapoint to use in seconds in the first file
-    -D DURATION        - amount of data to use in seconds
-    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is 
-                         +/-15)
-    -d                 - turns off display of graph
-    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ.
-                         LOWERSTOP and UPPERSTOP can be specified, or will be 
-                         calculated automatically
-    -V                 - filter data and regressors to VLF band
-    -L                 - filter data and regressors to LFO band
-    -R                 - filter data and regressors to respiratory band
-    -C                 - filter data and regressors to cardiac band
-    -T                 - trim data to match
-    -A                 - print data on a single summary line
-    -a                 - if summary mode is on, add a header line showing what values 
-                         mean
-    -f                 - negate (flip) second regressor
-    -z FILENAME        - use the columns of FILENAME as controlling variables and 
-                         return the partial correlation
-    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS 
-                         repetition
+		optional arguments:
+		    --nodetrend        - do not detrend the data before correlation
+		    --nowindow         - do not prewindow data before corrlation
+		    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)
+		    --cepstral         - check time delay using Choudhary's cepstral technique 
+		    --phat             - perform phase alignment transform (PHAT) rather than 
+					 standard crosscorrelation
+		    --liang            - perform phase alignment transform with Liang weighting function rather than 
+					 standard crosscorrelation
+		    --eckart           - perform phase alignment transform with Eckart weighting function rather than 
+					 standard crosscorrelation
+		    -l LABEL           - label for the delay value
+		    -s STARTTIME       - time of first datapoint to use in seconds in the first file
+		    -D DURATION        - amount of data to use in seconds
+		    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is 
+					 +/-15)
+		    -d                 - turns off display of graph
+		    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ.
+					 LOWERSTOP and UPPERSTOP can be specified, or will be 
+					 calculated automatically
+		    -V                 - filter data and regressors to VLF band
+		    -L                 - filter data and regressors to LFO band
+		    -R                 - filter data and regressors to respiratory band
+		    -C                 - filter data and regressors to cardiac band
+		    -T                 - trim data to match
+		    -A                 - print data on a single summary line
+		    -a                 - if summary mode is on, add a header line showing what values 
+					 mean
+		    -f                 - negate (flip) second regressor
+		    -z FILENAME        - use the columns of FILENAME as controlling variables and 
+					 return the partial correlation
+		    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS 
+					 repetition
 
 
 showtc
