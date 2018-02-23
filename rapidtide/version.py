@@ -2,8 +2,8 @@ from os.path import join as pjoin
 
 # Format expected by setup.py and doc/source/conf.py: string of form "X.Y.Z"
 _version_major = 1
-_version_minor = 3
-_version_micro = 0  # use '' for first of series, number for 1 and above
+_version_minor = 4
+_version_micro = 2  # use '' for first of series, number for 1 and above
 _version_extra = ''
 # _version_extra = ''  # Uncomment this for full releases
 
@@ -42,7 +42,7 @@ License
 "LICENSE" for information on the history of this software, terms & conditions
 for usage, and a DISCLAIMER OF ALL WARRANTIES.
 All trademarks referenced herein are property of their respective holders.
-Copyright (c) 2016--, Blaise Frederick, McLean Hospital Brain Imaging Center
+Copyright (c) 2016-2018, Blaise Frederick, McLean Hospital Brain Imaging Center
 """
 
 NAME = "rapidtide"
