@@ -23,6 +23,7 @@ from __future__ import print_function, division
 
 import warnings
 import sys
+import os
 import platform
 
 import matplotlib
@@ -83,10 +84,27 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
 
 
 def usage():
-    print("showxcorr - calculate and display crosscorrelation between two timeseries")
+    print(os.path.basename(sys.argv[0]), "- calculate and display crosscorrelation between two timeseries")
     print("")
-    print(
-        "usage: showxcorr timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [--nowindow] [-f] [--phat] [--liang] [--eckart] [-z FILENAME] [-N TRIALS]")
+    print("usage: ", os.path.basename(sys.argv[0]), " timecourse1 timecourse2 samplerate")
+    print(' '.join([
+        "[-l LABEL]",
+        "[-s STARTTIME]",
+        "[-D DURATION]",
+        "[-d]",
+        "[-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]]",
+        "[-V]",
+        "[-L]",
+        "[-R]",
+        "[-C]",
+        "[--nodetrend]",
+        "[--nowindow]",
+        "[-f]",
+        "[--phat]",
+        "[--liang]",
+        "[--eckart]",
+        "[-z FILENAME]",
+        "[-N TRIALS]"]))
     print("")
     print("required arguments:")
     print("    timcoursefile1: text file containing a timeseries")
