@@ -15,6 +15,8 @@ NOTE
 ====
 This is an evolving code base.  I'm constantly tinkering with it.  That said, now that I'm releasing this to the world, I'm being somewhat more responsible about locking down stable release points.  In between releases, however, I'll be messing with things. **It's very possible I could break something while doing this, so check back for status updates if you download the code in between releases**.  I've finally become a little more modern and started adding automated testing, so as time goes by hopefully the "in between" releases will be somewhat more reliable.  Check back often for exciting new features and bug fixes!
 
+NB:  I have now started making "x" versions of programs, meaning experimental, to let me test things out between releases.  If I make functional changes to rapidtide2, they will be found in rapidtide2x.  When I'm happy enough with the changes to inflict them on the world, I'll replace rapidtide2 with rapidtide2x and do a new release.  That way I can still monkey with the code to my heart's content without continually breaking the version that people use.  Unless I specifically tell you to use rapidtide2x to try out a new function, you should probably stick with rapidtide2.
+
 Introduction
 ============
 Why do I want to know about time lagged correlations?
@@ -42,7 +44,7 @@ This code has been in active development since June of 2012.  This has two impli
 
 Python version compatibility: 
 -----------------------------
-This code has been extensively tested in python 2.7.  I dragged my feet somewhat making it python 3 compatible, since a number of the libraries I needed took a long time to get ported to python 3, and I honestly saw no advantage to doing it.  I have since decided that I’m going to have to do it eventually, so why not now?  As far as I know, the code all works fine in python 3.5 now - I’ve switched over to that on my development machine, and have not hit any version related issues in a while now, and according to PyCharm’s code inspection, there are no incompatible constructions.  However that’s no guarantee that there isn’t a problem in some option I haven’t bothered to test yet, so be vigilant, and please let me know if there is some issue with python 3 that I haven’t caught (or any bugs, really).
+I've now switched over to using python 3 as my daily driver, so I know that everything works there.  However, I know that a lot of people can't or won't switch from python 2x, so I make every effort to write code that works in both, and I test in both.  I don't expect to switch over to any python 3 only constructions anytime soon.  As of the latest version, rapidtide2 does finally seem to run a little faster in python 3 than 2 if that matters to you.
       
 How do I cite this?
 -------------------
@@ -89,7 +91,7 @@ Description:
      
 Inputs:
 ^^^^^^^
-	At a minimum, rapidtide2 needs a Nifti file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2; I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti in workbench, run rapidtide2, then convert back. As soon as nibabel finishes their Cifti support, I'll add that.
+	At a minimum, rapidtide2 needs a data file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2 (for fMRI data, in which case it is time by up to 3 spatial dimensions) or a whitespace separated text file (for NIRS data, each column is a time course, each row a separate channel); I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti2 in workbench, run rapidtide2, then convert back. As soon as nibabel finishes their Cifti support (EDIT: and I get around to figuring it out), I'll add that.
 
 	The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a time by voxel array for simplicity.
 
@@ -97,7 +99,77 @@ Inputs:
      
 Outputs:
 ^^^^^^^^
-	Outputs are space or space by time Nifti files (depending on the file), and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
+	Outputs are space or space by time Nifti or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
+	
+The following files are produced, assuming XXX is the outputname:
+
+		Informational/diagnostic files
+		XXX_commandline.txt                                   - The command line used to run rapidtide
+		XXX_formattedcommandline.txt                          - The command line, but formatted nicely
+		XXX_memusage.txt                                      - Memory statistics for the program at various timepoints during the run
+		XXX_options.txt                                       - A dump of the internal structure with all of the options used during the run.
+		XXX_runtimings.txt                                    - The final output showing how long each processing step took
+
+		Pass specific outputs
+		XXX_corrdistdata_passN.txt                            - These are all the null correlations produced during the significance estimation 
+									step.  These are used to create the significance distribution.
+		XXX_nullcorrelationhist_passN_peak.txt                - The location of the peak of the significance distribution histogram.
+		XXX_nullcorrelationhist_passN.txt                     - The significance distribution histogram (use showhist to view).
+		XXX_referenceautocorr_passN.txt                       - The autocorrelation function of the reference regressor 
+									(used for finding sidelobes).
+		XXX_reference_fmrires_passN.txt                       - The reference regressor, resampled to the timepoints of the data file.
+		XXX_reference_resampres_passN.txt                     - The reference regressor, resampled to the timepoints of the data
+									file, with oversampling.
+		XXX_refinedregressor_passN.txt                        - The output of the refinement process (to be passed to the next stage).
+
+		Final output maps
+		XXX_corrout.nii.gz                                    - The oversampled correlation function over the lag range for each spatial location.
+		XXX_gaussout.nii.gz                                   - A fit to the oversampled correlation function over the lag range 
+									for each spatial location.
+		XXX_lagmask.nii.gz                                    - The mask showing all voxels where correlation values were returned.
+		XXX_lagsigma.nii.gz                                   - The width of the largest crosscorrelation peak within the lag range (NB:
+									This partially indicates MTT, but in practice it is dominated by the width of 
+									the autocorrelation function of the reference regressor, so is less useful than
+									it might otherwise be.)
+		XXX_lagstrengths.nii.gz                               - The maximum crosscorrelation strength over the lag range (R).
+		XXX_lagtimes.nii.gz                                   - The correlation delay with maximum R over the lag range.
+		XXX_mean.nii.gz                                       - The mean of the datafile over time for all voxels.
+		XXX_p_lt_0pPPP_mask.nii.gz                            - The mask showing all voxels with R meeting the p<PPP significance threshold.
+		XXX_R2.nii.gz                                         - The squared maximum correlation coefficient at every voxel.
+		XXX_refinemask.nii.gz                                 - The voxels used for refinement in the last refinement pass (only 
+									present if refinement is performed).
+		XXX_laghist_peak.txt
+		XXX_laghist.txt
+
+		GLM filter results
+		XXX_filtereddata.nii.gz                               - The input data with the voxel specific delayed LFO waveform regressed out.
+		XXX_fitcoff.nii.gz                                    - Map of the fit amplitude for the delayed LFO waveform.
+		XXX_fitNorm.nii.gz                                    - I have no idea.
+		XXX_fitR2.nii.gz                                      - Map of the squared R value for the fit (multiply by 100 to get the percent of the        
+									variance explained by the LFO regressor).
+		XXX_fitR.nii.gz                                       - Map of the R value for the fit.
+
+		Final output
+		XXX_p_lt_0pPPP_thresh.txt
+		XXX_sigfit.txt
+
+		XXX_reference_origres_prefilt.txt
+		XXX_reference_origres.txt
+		XXX_Rhist_peak.txt
+		XXX_Rhist.txt
+		XXX_strengthhist_peak.txt
+		XXX_strengthhist.txt
+		XXX_widthhist_peak.txt
+		XXX_widthhist.txt
+
+		Other
+		XXX_dispersioncalcfreqs_passN.txt                     - These files are produced for me for secret reasons. Well, not secret, but
+		XXX_dispersioncalcspecmag_passN.txt                     only partially thought out reasons.  If they come to anything, I'll say
+		XXX_dispersioncalcspecphase_passN.txt                   what they are supposed to mean.
+		XXX_dispersioncalcvecs_passN.txt
+		XXX_globallaghist_passN_peak.txt
+		XXX_globallaghist_passN.txt
+
     
 Usage:
 ^^^^^^
