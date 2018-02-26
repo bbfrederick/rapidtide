@@ -103,6 +103,8 @@ Outputs:
 	
 The following files are produced, assuming XXX is the outputname:
 
+    ::
+
 		Informational/diagnostic files
 		XXX_commandline.txt                                   - The command line used to run rapidtide
 		XXX_formattedcommandline.txt                          - The command line, but formatted nicely
