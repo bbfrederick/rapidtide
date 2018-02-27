@@ -106,69 +106,85 @@ The following files are produced, assuming XXX is the outputname:
     ::
 
 		Informational/diagnostic files
-		XXX_commandline.txt                                   - The command line used to run rapidtide
-		XXX_formattedcommandline.txt                          - The command line, but formatted nicely
-		XXX_memusage.txt                                      - Memory statistics for the program at various timepoints during the run
-		XXX_options.txt                                       - A dump of the internal structure with all of the options used during the run.
-		XXX_runtimings.txt                                    - The final output showing how long each processing step took
+		XXX_commandline.txt                           - The command line used to run rapidtide
+		XXX_formattedcommandline.txt                  - The command line, but formatted nicely
+		XXX_memusage.txt                              - Memory statistics for the program at various
+                                                                timepoints during the run
+		XXX_options.txt                               - A dump of the internal structure with all of the
+                                                                options used during the run.
+		XXX_runtimings.txt                            - The final output showing how long each processing
+                                                                step took.
 
 		Pass specific outputs
-		XXX_corrdistdata_passN.txt                            - These are all the null correlations produced during the significance estimation 
-									step.  These are used to create the significance distribution.
-		XXX_nullcorrelationhist_passN_peak.txt                - The location of the peak of the significance distribution histogram.
-		XXX_nullcorrelationhist_passN.txt                     - The significance distribution histogram (use showhist to view).
-		XXX_referenceautocorr_passN.txt                       - The autocorrelation function of the reference regressor 
-									(used for finding sidelobes).
-		XXX_reference_fmrires_passN.txt                       - The reference regressor, resampled to the timepoints of the data file.
-		XXX_reference_resampres_passN.txt                     - The reference regressor, resampled to the timepoints of the data
-									file, with oversampling.
-		XXX_refinedregressor_passN.txt                        - The output of the refinement process (to be passed to the next stage).
+		XXX_corrdistdata_passN.txt                    - These are all the null correlations produced during
+                                                                the significance estimation step.  These are used
+                                                                to create the significance distribution.
+		XXX_nullcorrelationhist_passN.txt             - The significance distribution histogram (use showhist
+                                                                to view).
+		XXX_nullcorrelationhist_passN_peak.txt        - The location of the peak of the significance
+                                                                distribution histogram.
+		XXX_referenceautocorr_passN.txt               - The autocorrelation function of the reference regressor 
+		                                                (used for finding sidelobes).
+		XXX_reference_fmrires_passN.txt               - The reference regressor, resampled to the timepoints of
+                                                                the data file.
+		XXX_reference_resampres_passN.txt             - The reference regressor, resampled to the timepoints of
+                                                                the data file, with oversampling.
+		XXX_refinedregressor_passN.txt                - The output of the refinement process (to be passed to
+                                                                the next stage).
 
 		Final output maps
-		XXX_corrout.nii.gz                                    - The oversampled correlation function over the lag range for each spatial location.
-		XXX_gaussout.nii.gz                                   - A fit to the oversampled correlation function over the lag range 
-									for each spatial location.
-		XXX_lagmask.nii.gz                                    - The mask showing all voxels where correlation values were returned.
-		XXX_lagsigma.nii.gz                                   - The width of the largest crosscorrelation peak within the lag range (NB:
-									This partially indicates MTT, but in practice it is dominated by the width of 
-									the autocorrelation function of the reference regressor, so is less useful than
-									it might otherwise be.)
-		XXX_lagstrengths.nii.gz                               - The maximum crosscorrelation strength over the lag range (R).
-		XXX_lagtimes.nii.gz                                   - The correlation delay with maximum R over the lag range.
-		XXX_mean.nii.gz                                       - The mean of the datafile over time for all voxels.
-		XXX_p_lt_0pPPP_mask.nii.gz                            - The mask showing all voxels with R meeting the p<PPP significance threshold.
-		XXX_R2.nii.gz                                         - The squared maximum correlation coefficient at every voxel.
-		XXX_refinemask.nii.gz                                 - The voxels used for refinement in the last refinement pass (only 
-									present if refinement is performed).
-		XXX_laghist_peak.txt
-		XXX_laghist.txt
+		XXX_corrout.nii.gz                            - The oversampled correlation function over the lag range
+                                                                for each spatial location.
+		XXX_gaussout.nii.gz                           - A fit to the oversampled correlation function over
+                                                                the lag range for each spatial location.
+		XXX_lagmask.nii.gz                            - The mask showing all voxels where correlation values
+                                                                were returned.
+		XXX_lagsigma.nii.gz                           - The width of the largest crosscorrelation peak within
+                                                                the lag range (NB: This partially indicates MTT, but
+                                                                in practice it is dominated by the width of the
+                                                                autocorrelation function of the reference regressor,
+                                                                so is less useful than it might otherwise be.)
+		XXX_lagstrengths.nii.gz                       - The maximum crosscorrelation strength over the
+                                                                lag range (R).
+		XXX_lagtimes.nii.gz                           - The correlation delay with maximum R over the lag range.
+		XXX_mean.nii.gz                               - The mean of the datafile over time for all voxels.
+		XXX_p_lt_0pPPP_mask.nii.gz                    - The mask showing all voxels with R meeting the
+                                                                p<PPP significance threshold.
+		XXX_R2.nii.gz                                 - The squared maximum correlation coefficient at
+                                                                every voxel.
+		XXX_refinemask.nii.gz                         - The voxels used for refinement in the last refinement
+                                                                pass (only present if refinement is performed).
 
 		GLM filter results
-		XXX_filtereddata.nii.gz                               - The input data with the voxel specific delayed LFO waveform regressed out.
-		XXX_fitcoff.nii.gz                                    - Map of the fit amplitude for the delayed LFO waveform.
-		XXX_fitNorm.nii.gz                                    - I have no idea.
-		XXX_fitR2.nii.gz                                      - Map of the squared R value for the fit (multiply by 100 to get the percent of the        
-									variance explained by the LFO regressor).
-		XXX_fitR.nii.gz                                       - Map of the R value for the fit.
+		XXX_filtereddata.nii.gz                       - The input data with the voxel specific delayed LFO
+                                                                waveform regressed out.
+		XXX_fitcoff.nii.gz                            - Map of the fit amplitude for the delayed LFO waveform.
+		XXX_fitNorm.nii.gz                            - I have no idea.
+		XXX_fitR2.nii.gz                              - Map of the squared R value for the fit (multiply by
+                                                                100 to get the percent of the variance explained by
+                                                                the LFO regressor).
+		XXX_fitR.nii.gz                               - Map of the R value for the fit.
 
 		Final output
-		XXX_p_lt_0pPPP_thresh.txt
-		XXX_sigfit.txt
+		XXX_p_lt_0pPPP_thresh.txt                     - The p<PPP correlation threshold.
+		XXX_sigfit.txt                                - The parameters of the fit to the significance distribution
 
 		XXX_reference_origres_prefilt.txt
 		XXX_reference_origres.txt
+		XXX_laghist.txt                               - Histogram of maximum crosscorrelation lags over all fit voxels
+		XXX_laghist_peak.txt
+		XXX_Rhist.txt                                 - Histogram of maximum crosscorrelation values over all fit voxels
 		XXX_Rhist_peak.txt
-		XXX_Rhist.txt
+		XXX_strengthhist.txt                          - Histogram of maximum crosscorrelation values over all fit voxels
 		XXX_strengthhist_peak.txt
-		XXX_strengthhist.txt
+		XXX_widthhist.txt                             - Histogram of crosscorrelation peak width over all fit voxels
 		XXX_widthhist_peak.txt
-		XXX_widthhist.txt
 
 		Other
-		XXX_dispersioncalcfreqs_passN.txt                     - These files are produced for me for secret reasons. Well, not secret, but
-		XXX_dispersioncalcspecmag_passN.txt                     only partially thought out reasons.  If they come to anything, I'll say
-		XXX_dispersioncalcspecphase_passN.txt                   what they are supposed to mean.
-		XXX_dispersioncalcvecs_passN.txt
+		XXX_dispersioncalcfreqs_passN.txt             - These files are produced for me for secret reasons.
+		XXX_dispersioncalcspecmag_passN.txt             Well, not secret, but only partially thought out reasons.  
+		XXX_dispersioncalcspecphase_passN.txt           If they come to anything, I'll say what they are
+		XXX_dispersioncalcvecs_passN.txt                supposed to mean.
 		XXX_globallaghist_passN_peak.txt
 		XXX_globallaghist_passN.txt
 
