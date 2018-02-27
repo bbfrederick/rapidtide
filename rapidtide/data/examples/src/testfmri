@@ -14,7 +14,7 @@ rapidtide2x \
         --limitoutput \
         --refinepasses=3 \
         --venousrefine \
-        --despecklepasses=4 \
+        -s 100.0 --despecklepasses=4 \
 	--nofitfilt \
         -F 0.005,0.08 \
 	-r -15,15 \
