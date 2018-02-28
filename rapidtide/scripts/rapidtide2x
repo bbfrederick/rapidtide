@@ -416,7 +416,6 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
                 lagmod=optiondict['lagmod'],
                 displayplots=displayplots)
         maxval *= flipfac
-        maxsigma -= optiondict['acwidth'] / 2.0
     else:
         # do something different
         failreason = np.int16(0)
@@ -2914,7 +2913,12 @@ def main():
         else:
             theheader['dim'][0] = 3
             theheader['dim'][4] = 1
-    for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask']:
+
+    # first generate the MTT map
+    MTT = np.square(lagsigma) - (optiondict['acwidth'] * optiondict['acwidth'])
+    MTT = np.where(MTT > 0.0, np.sqrt(MTT), 0.0)
+    
+    for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask', 'MTT']:
         if optiondict['memprofile']:
             memcheckpoint('about to write ' + mapname)
         else:
