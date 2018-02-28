@@ -1565,9 +1565,9 @@ def main():
     print('loading datasets...')
 
     # first the functional maps
-    funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'R2', 'fitNorm', 'fitcoff']
+    funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'R2', 'fitNorm', 'fitcoff']
     if userise:
-        funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'R2', 'risetime_epoch_0', 'starttime_epoch_0', 'maxamp_epoch_0']
+        funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'R2', 'risetime_epoch_0', 'starttime_epoch_0', 'maxamp_epoch_0']
     if usecorrout:
         funcmaps += ['corrout']
     loadedfuncmaps = loadfuncmaps(datafileroot, overlays, funcmaps)
@@ -1750,6 +1750,11 @@ def main():
                 'label': 'Correlation coefficient',
                 'funcmask': 'p_lt_0p050_mask'},
         'lagsigma':
+            {
+                'colormap': spectrum_state,
+                'label': 'Correlation width',
+                'funcmask': 'p_lt_0p050_mask'},
+        'MTT':
             {
                 'colormap': spectrum_state,
                 'label': 'MTT',
