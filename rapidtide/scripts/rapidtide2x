@@ -1378,7 +1378,7 @@ def main():
     optiondict['tmaskname'] = None  # file name for tmask regressor
     optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict[
-        'check_autocorrelation'] = False  # check for periodic components that corrupt the autocorrelation
+        'check_autocorrelation'] = True  # check for periodic components that corrupt the autocorrelation
     optiondict[
         'fix_autocorrelation'] = False  # remove periodic components that corrupt the autocorrelation
     optiondict['despeckle_thresh'] = 5.0  # threshold value - despeckle if median discontinuity magnitude exceeds despeckle_thresh
@@ -1396,6 +1396,7 @@ def main():
     optiondict['zerooutbadfit'] = True  # if true zero out all fit parameters if the fit fails
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
     optiondict['findmaxtype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
+    optiondict['acwidth'] = 0.0 # width of the reference autocorrelation function
     #     move delay peaks back to the correct position if they hit a sidelobe
 
     # postprocessing options
@@ -2532,6 +2533,8 @@ def main():
             thexcorr, dummy = onecorrelation(referencetc, oversampfreq, corrorigin, acmininpts, acmaxinpts, theprefilter,
                                       referencetc,
                                       optiondict)
+            maxindex, maxlag, maxval, acwidth, maskval, failreason = \
+                onecorrfit(thexcorr, corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts], optiondict)
             outputarray = np.asarray([corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts], thexcorr])
             tide.writenpvecs(outputarray, outputname + '_referenceautocorr_pass' + str(thepass) + '.txt')
             thelagthresh = np.max((abs(optiondict['lagmin']), abs(optiondict['lagmax'])))
@@ -2542,6 +2545,7 @@ def main():
                                                            aclagthresh=thelagthresh,
                                                            prewindow=optiondict['usewindowfunc'],
                                                            dodetrend=optiondict['dodetrend'])
+            optiondict['acwidth'] = acwidth + 0.0
             if sidelobetime is not None:
                 passsuffix = '_pass' + str(thepass + 1)
                 optiondict['acsidelobelag' + passsuffix] = sidelobetime
@@ -2909,7 +2913,12 @@ def main():
         else:
             theheader['dim'][0] = 3
             theheader['dim'][4] = 1
-    for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask']:
+
+    # first generate the MTT map
+    MTT = np.square(lagsigma) - (optiondict['acwidth'] * optiondict['acwidth'])
+    MTT = np.where(MTT > 0.0, np.sqrt(MTT), 0.0)
+    
+    for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask', 'MTT']:
         if optiondict['memprofile']:
             memcheckpoint('about to write ' + mapname)
         else:
