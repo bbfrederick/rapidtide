@@ -10,11 +10,12 @@
 	#-f 2 -N 10000 --multiproc
 rapidtide2x \
 	fmri.nii.gz \
-	../dst/dgsr_modreshape \
+	../dst/dgsr_phat \
         --limitoutput \
         --refinepasses=3 \
+        --phat \
         --venousrefine \
-        --despecklepasses=4 \
+        -s 100.0 --despecklepasses=4 \
 	--nofitfilt \
         -F 0.005,0.08 \
 	-r -15,15 \
