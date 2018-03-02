@@ -1437,7 +1437,7 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
 def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
-               fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
+               searchfrac=0.5, fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
     # set initial parameters 
     # widthlimit is in seconds
     # maxsigma is in Hz
@@ -1491,7 +1491,6 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     lowerlimit = 0
     i = 0
     j = 0
-    searchfrac = 0.5
     while (maxindex + i <= upperlimit) and (thexcorr_y[maxindex + i] > searchfrac * maxval_init) and (i < searchbins):
         i += 1
     i -= 1

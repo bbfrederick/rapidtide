@@ -393,6 +393,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
                 refine=optiondict['gaussrefine'],
                 maxguess=maxguess,
                 useguess=useguess,
+                searchfrac=optiondict['searchfrac'],
                 fastgauss=optiondict['fastgauss'],
                 enforcethresh=optiondict['enforcethresh'],
                 zerooutbadfit=optiondict['zerooutbadfit'],
@@ -1147,6 +1148,8 @@ def usage():
         "[-i INTERPTYPE]",
         "[-I]",
         "[-Z DELAYTIME]",
+        "[--nofitfilt]",
+        "[--searchfrac=]",
         "[-N NREPS]",
         "[--numskip=SKIP]",
         "[--refineweighting=TYPE]",
@@ -1259,6 +1262,8 @@ def usage():
     print("    -s SIGMALIMIT              - Reject lag fits with linewidth wider than SIGMALIMIT")
     print("    -B                         - Bipolar mode - match peak correlation ignoring sign")
     print("    --nofitfilt                - Do not zero out peak fit values if fit fails")
+    print("    --searchfrac=FRAC          - When peak fitting, include points with amplitude > FRAC * the maximum amplitude.")
+    print("                                 (default value is 0.5)")
     print("    --maxfittype=FITTYPE       - Method for fitting the correlation peak (default is 'gauss'). ")
     print("                                 'quad' uses a quadratic fit.  Faster but not as well tested")
     print("    --despecklepasses=PASSES   - detect and refit suspect correlations to disambiguate peak locations in PASSES passes")
@@ -1394,6 +1399,7 @@ def main():
     optiondict['edgebufferfrac'] = 0.0  # what fraction of the correlation window to avoid on either end when fitting
     optiondict['enforcethresh'] = True  # only do fits in voxels that exceed threshhold
     optiondict['zerooutbadfit'] = True  # if true zero out all fit parameters if the fit fails
+    optiondict['searchfrac'] = 0.5  # The fraction of the main peak over which points are included in the peak
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
     optiondict['findmaxtype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
     optiondict['acwidth'] = 0.0 # width of the reference autocorrelation function
@@ -1556,6 +1562,7 @@ def main():
                                                                                                           'nirs',
                                                                                                           'venousrefine',
                                                                                                           'nothresh',
+                                                                                                          'searchfrac=',
                                                                                                           'limitoutput',
                                                                                                           'regressor=',
                                                                                                           'regressorfreq=',
@@ -1956,6 +1963,10 @@ def main():
         elif o == '--skipsighistfit':
             optiondict['dosighistfit'] = False
             print('will not fit significance histogram with a Johnson SB function')
+        elif o == '--searchfrac':
+            optiondict['searchfrac'] = float(a)
+            linkchar = '='
+            print('Points greater than', optiondict['ampthresh'], '* the peak height will be used to fit peak parameters')
         elif o == '--ampthresh':
             optiondict['ampthresh'] = float(a)
             optiondict['ampthreshfromsig'] = False
