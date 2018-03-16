@@ -848,7 +848,7 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
         dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
         times.append(i * sampletime)
         xcorrpertime.append(fastcorrelate(dataseg1, dataseg2, weighting=weighting))
-        maxindex, thedelayval, theRval, maxsigma, maskval, failreason = findmaxlag_gauss(
+        maxindex, thedelayval, theRval, maxsigma, maskval, failreason, peakstart, peakend = findmaxlag_gauss(
             xcorr_x, xcorrpertime[-1], -laglimit, laglimit, 1000.0,
             refine=True,
             useguess=False,
@@ -1130,7 +1130,7 @@ def gaussskresiduals(p, y, x):
 
 @conditionaljit()
 def gaussresiduals(p, y, x):
-    return y - p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
+    return y - p[0] * np.exp(-(x - p[1]) ** 2 / (2.0 * p[2] * p[2]))
 
 
 def trapezoidresiduals(p, y, x, toplength):
@@ -1157,7 +1157,7 @@ def gausssk_eval(x, p):
 
 @conditionaljit()
 def gauss_eval(x, p):
-    return p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
+    return p[0] * np.exp(-(x - p[1]) ** 2 / (2.0 * p[2] * p[2]))
 
 
 def trapezoid_eval_loop(x, toplength, p):
@@ -1432,13 +1432,12 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
         return 0.0, 0.0, 0.0, 0
 
 
-# disabled conditionaljit on 11/8/16.  This causes crashes on some machines (but not mine, strangely enough)
 @conditionaljit2()
 def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
                searchfrac=0.5, fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
-    # set initial parameters 
+    # set initial parameters
     # widthlimit is in seconds
     # maxsigma is in Hz
     # maxlag is in seconds
@@ -1480,7 +1479,7 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             nlowerlim = upperlim - int(widthlimit)
         maxval_init = thexcorr_y[maxindex].astype('float64')
     else:
-        maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int16')
+        maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int32')
         maxval_init = thexcorr_y[maxindex].astype('float64')
 
     # now get a location for that value
@@ -1497,7 +1496,8 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     while (maxindex - j >= lowerlimit) and (thexcorr_y[maxindex - j] > searchfrac * maxval_init) and (j < searchbins):
         j += 1
     j -= 1
-    maxsigma_init = np.float64((2.0 * searchfrac) * 2.0 * (i + j + 1) * binwidth / 2.355)
+    #maxsigma_init = np.float64((2.0 * searchfrac) * 2.0 * (i + j + 1) * binwidth / 2.355)
+    maxsigma_init = np.float64((i + j + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac))))
 
     # now check the values for errors and refine if necessary
     if not ((lagmin + binwidth) <= maxlag_init <= (lagmax - binwidth)):
@@ -1527,7 +1527,7 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                 maxval = np.float64(data.max())
             else:
                 # do a least squares fit over the top of the peak
-                p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
+                p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype='float64')
 
                 if fitend - fitstart >= 3:
                     plsq, dummy = sp.optimize.leastsq(gaussresiduals, p0,
@@ -1571,7 +1571,173 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
         pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
         pl.show()
-    return maxindex, maxlag, maxval, maxsigma, maskval, failreason
+    return maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend
+
+
+
+# disabled conditionaljit on 11/8/16.  This causes crashes on some machines (but not mine, strangely enough)
+@conditionaljit2()
+def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
+               absmaxsigma=1000.0,
+               hardlimit=True,
+               edgebufferfrac=0.0, threshval=0.0, uthreshval=1.0,
+               debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
+               searchfrac=0.5, fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
+    # set initial parameters 
+    # widthlimit is in seconds
+    # maxsigma is in Hz
+    # maxlag is in seconds
+    warnings.filterwarnings("ignore", "Number*")
+    maxlag = np.float64(0.0)
+    maxval = np.float64(0.0)
+    maxsigma = np.float64(0.0)
+    maskval = np.uint16(1)        # start out assuming the fit will succeed
+    numlagbins = len(thexcorr_y)
+    binwidth = thexcorr_x[1] - thexcorr_x[0]
+
+    # define error values
+    failreason = np.uint16(0)
+    FML_BADAMP = np.uint16(0x01)
+    FML_BADLAG = np.uint16(0x02)
+    FML_BADWIDTH = np.uint16(0x04)
+    FML_HITEDGE = np.uint16(0x08)
+    FML_FITFAIL = np.uint16(0x0f)
+    FML_INITFAIL = np.uint16(0x10)
+
+    # set the search range
+    #lowerlim = 0
+    #upperlim = len(thexcorr_x) - 1
+    lowerlim = np.max([valtoindex(thexcorr_x, lagmin, toleft=True), 0])
+    upperlim = np.min([valtoindex(thexcorr_x, lagmax, toleft=False), len(thexcorr_x) - 1])
+    if debug:
+        print('initial search indices are', lowerlim, 'to', upperlim, '(', thexcorr_x[lowerlim], thexcorr_x[upperlim], ')')
+
+    # make an initial guess at the fit parameters for the gaussian
+    # start with finding the maximum value and its location
+    if useguess:
+        maxindex = valtoindex(thexcorr_x, maxguess)
+    else:
+        maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int32')
+    maxlag_init = (1.0 * thexcorr_x[maxindex]).astype('float64')
+    maxval_init = thexcorr_y[maxindex].astype('float64')
+    if debug:
+            print('maxindex, maxlag_init, maxval_init:', maxindex, maxlag_init, maxval_init)
+
+    # then calculate the width of the peak
+    thegrad = np.gradient(thexcorr_y).astype('float64')                   # the gradient of the correlation function
+    peakpoints = np.where(thexcorr_y > searchfrac * maxval_init, 1, 0)    # mask for places where correlaion exceeds serchfrac*maxval_init
+    peakpoints[0] = 0
+    peakpoints[-1] = 0
+    peakstart = maxindex + 0
+    peakend = maxindex + 0
+    while thegrad[peakend + 1] < 0.0 and peakpoints[peakend + 1] == 1:
+        peakend += 1
+    while thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
+        peakstart -= 1
+    #maxsigma_init = np.float64((2.0 / searchfrac) * 2.0 * (peakend - peakstart + 1) * binwidth / 2.355)
+    maxsigma_init = np.float64((peakend - peakstart + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac))))
+    if debug:
+            print('maxsigma_init:', maxsigma_init)
+
+    # now check the values for errors
+    if hardlimit:
+        limitfac = 1.0
+    else:
+        limitfac = 1.5
+    if not ((limitfac * lagmin - binwidth) <= maxlag_init <= (limitfac * lagmax + binwidth)):
+        failreason |= (FML_INITFAIL | FML_BADLAG )
+        if debug:
+            print('bad initial')
+    if (maxsigma_init > widthlimit) or (peakend - peakstart) < 3:
+        failreason |= (FML_INITFAIL | FML_BADWIDTH)
+        if debug:
+            print('bad initial width')
+    if (not (threshval <= maxval_init <= uthreshval) and enforcethresh) or (maxval_init < 0.0):
+        failreason |= (FML_INITFAIL | FML_BADAMP)
+        if debug:
+            print('bad initial amp:', maxval_init, 'is less than', threshval)
+    if failreason > 0 and zerooutbadfit:
+        maxval = np.float64(0.0)
+        maxlag = np.float64(0.0)
+        maxsigma = np.float64(0.0)
+    else:
+        maxval = np.float64(maxval_init)
+        maxlag = np.float64(maxlag_init)
+        maxsigma = np.float64(maxsigma_init)
+
+    # refine if necessary
+    if refine:
+        data = thexcorr_y[peakstart:peakend]
+        X = thexcorr_x[peakstart:peakend]
+        if fastgauss:
+            # do a non-iterative fit over the top of the peak
+            # 6/12/2015  This is just broken.  Gives quantized maxima
+            maxlag = np.float64(1.0 * sum(X * data) / sum(data))
+            maxsigma = np.float64(np.sqrt(np.abs(np.sum((X - maxlag) ** 2 * data) / np.sum(data))))
+            maxval = np.float64(data.max())
+        else:
+            # do a least squares fit over the top of the peak
+            #p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
+            p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype='float64')
+            if debug:
+                print('fit input array:', p0)
+            try:
+                plsq, dummy = sp.optimize.leastsq(gaussresiduals, p0, args=(data, X), maxfev=5000)
+                maxval = plsq[0]
+                maxlag = np.fmod((1.0 * plsq[1]), lagmod)
+                maxsigma = plsq[2]
+            except:
+                maxval = np.float64(0.0)
+                maxlag = np.float64(0.0)
+                maxsigma = np.float64(0.0)
+            if debug:
+                print('fit output array:', [maxval, maxlag, maxsigma])
+
+        # check for errors in fit
+        fitfail = False
+        failreason = np.uint16(0)
+        if not (0.0 <= np.fabs(maxval) <= 1.0):
+            failreason |= (FML_FITFAIL + FML_BADAMP)
+            if debug:
+                print('bad amp after refinement')
+            fitfail = True
+        if (lagmin > maxlag) or (maxlag > lagmax):
+            failreason |= (FML_FITFAIL + FML_BADLAG)
+            if debug:
+                print('bad lag after refinement')
+            fitfail = True
+        if not (0.0 < maxsigma <= absmaxsigma):
+            failreason |= (FML_FITFAIL + FML_BADWIDTH)
+            if debug:
+                print('bad width after refinement')
+            fitfail = True
+        if fitfail:
+            if debug:
+                print('fit fail')
+            if zerooutbadfit:
+                maxval = np.float64(0.0)
+                maxlag = np.float64(0.0)
+                maxsigma = np.float64(0.0)
+            maskval = np.int16(0)
+        #print(maxlag_init, maxlag, maxval_init, maxval, maxsigma_init, maxsigma, maskval, failreason, fitfail)
+    else:
+        maxval = np.float64(maxval_init)
+        maxlag = np.float64(np.fmod(maxlag_init, lagmod))
+        maxsigma = np.float64(maxsigma_init)
+        if failreason > 0:
+            maskval = np.uint16(0)
+
+    if debug or displayplots:
+        print("init to final: maxval", maxval_init, maxval, ", maxlag:", maxlag_init, maxlag, ", width:", maxsigma_init,
+              maxsigma)
+    if displayplots and refine and (maskval != 0.0):
+        fig = pl.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('Data and fit')
+        hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
+        pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
+        pl.show()
+    return maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend
 
 
 @conditionaljit2()
@@ -1603,6 +1769,7 @@ def findmaxlag_quad(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     FML_BADWIDTH = np.uint16(0x04)
     FML_HITEDGE = np.uint16(0x08)
     FML_FITFAIL = np.uint16(0x0f)
+    FML_INITFAIL = np.uint16(0x10)
 
     # make an initial guess at the fit parameters for the gaussian
     # start with finding the maximum value
@@ -1677,7 +1844,7 @@ def findmaxlag_quad(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
         pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
         pl.show()
-    return maxindex, maxlag, maxval, maxsigma, maskval, failreason
+    return maxindex, maxlag, maxval, maxsigma, maskval, failreason, 0, 0
 
 
 def gaussfitsk(height, loc, width, skewness, xvals, yvals):
