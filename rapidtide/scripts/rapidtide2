@@ -382,7 +382,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
         flipfac = rt_floatset(1.0)
     if not optiondict['fixdelay']:
         if optiondict['findmaxtype'] == 'gauss':
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag_gauss(
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss(
                 corrscale,
                 flipfac * thetc,
                 optiondict['lagmin'], optiondict['lagmax'], widthlimit,
@@ -399,7 +399,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
                 lagmod=optiondict['lagmod'],
                 displayplots=displayplots)
         else:
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag_quad(
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_quad(
                 corrscale,
                 flipfac * thetc,
                 optiondict['lagmin'], optiondict['lagmax'], widthlimit,
@@ -985,7 +985,8 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
             if vox % reportstep == 0 or vox == numspatiallocs - 1:
                 tide.progressbar(vox + 1, numspatiallocs, label='Percent complete')
             inittc = fmri_data[vox, optiondict['addedskip']:].copy()
-            if np.mean(inittc) >= threshval:
+            meanval = np.mean(inittc)
+            if meanval >= threshval:
                 dummy, meanvalue[vox], rvalue[vox], r2value[vox], fitcoff[vox], fitNorm[vox], datatoremove[vox], \
                 filtereddata[vox] = \
                     procOneVoxelGLM(vox, lagtc[vox, :], inittc)
@@ -2206,7 +2207,7 @@ def main():
     if optiondict['nothresh']:
         corrmask *= 0
         corrmask += 1
-        threshval = 0.0
+        threshval = -10000000.0
     if optiondict['verbose']:
         print('image threshval =', threshval)
     validvoxels = np.where(corrmask > 0)[0]
