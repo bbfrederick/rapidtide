@@ -103,6 +103,7 @@ def usage():
         "[--phat]",
         "[--liang]",
         "[--eckart]",
+        "[--savecorr=FILE]",
         "[-z FILENAME]",
         "[-N TRIALS]"]))
     print("")
@@ -140,6 +141,7 @@ def usage():
     print("    -a                 - if summary mode is on, add a header line showing what values ")
     print("                         mean")
     print("    -f                 - negate (flip) second regressor")
+    print("    -savecorr=FILE     - Save the correlation function to the file FILE in xy format")
     print("    -z FILENAME        - use the columns of FILENAME as controlling variables and ")
     print("                         return the partial correlation")
     print("    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS ")
@@ -402,7 +404,7 @@ if debug:
 dofindmaxlag=True
 if dofindmaxlag:
     print('executing findmaxlag')
-    maxindex, maxdelay, maxval, maxsigma, maskval, failreason = tide.findmaxlag_gauss(
+    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss(
             xcorr_x_trim, thexcorr_trim, -searchrange,searchrange,1000.0,
             refine=True,
             useguess=False,
@@ -506,4 +508,4 @@ if display:
     show()
 
 if savecorrelation:
-    tide.writevec(thexcorr, corroutputfile)
+    tide.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), corroutputfile)
