@@ -23,7 +23,8 @@ from __future__ import print_function
 import sys
 import matplotlib
 import platform
-if platform.system()=='Darwin':
+
+if platform.system() == 'Darwin':
     matplotlib.use('MacOSX')
 else:
     matplotlib.use('TkAgg')
@@ -36,6 +37,7 @@ import nibabel as nib
 
 from pylab import plot, legend, show, hold
 
+
 def usage():
     print("ccorrica - find temporal crosscorrelations between ICA components")
     print("")
@@ -43,100 +45,103 @@ def usage():
     print("		timcoursefile:	text file containing multiple timeseries, one per column, whitespace separated")
     print("		TR:		the sample period of the timecourse, in seconds")
     print("")
-    return()
+    return ()
 
-Fc=0.15
+
+Fc = 0.15
 
 # get the command line parameters
 nargs = len(sys.argv)
-if (nargs!=3):
+if nargs != 3:
     usage()
     exit()
-datafilename=sys.argv[1]
-sampletime=float(sys.argv[2])
-Fs=1.0/sampletime
+datafilename = sys.argv[1]
+sampletime = float(sys.argv[2])
+Fs = 1.0 / sampletime
 
-tcdata=tide.readvecs(datafilename)
-thedims=tcdata.shape
-tclen=thedims[1]
-numcomponents=thedims[0]
-reformdata=reshape(tcdata,(numcomponents,tclen))
-print("data array shape is ",reformdata.shape)
+tcdata = tide.readvecs(datafilename)
+thedims = tcdata.shape
+tclen = thedims[1]
+numcomponents = thedims[0]
+reformdata = reshape(tcdata, (numcomponents, tclen))
+print("data array shape is ", reformdata.shape)
 
-for component in range(0,numcomponents):
-    filtereddata=tide.dolpfiltfilt(Fs,Fc,reformdata[component,:],3)
-    reformdata[component,:]=tide.stdnormalize(tide.hamming(len(filtereddata))*tide.detrend(tide.stdnormalize(filtereddata)))
+for component in range(0, numcomponents):
+    filtereddata = tide.dolpfiltfilt(Fs, Fc, reformdata[component, :], 3)
+    reformdata[component, :] = tide.stdnormalize(
+        tide.hamming(len(filtereddata)) * tide.detrend(tide.stdnormalize(filtereddata)))
 
-xcorr_x=r_[0.0:tclen]*sampletime-(tclen*sampletime)/2.0
-laglimit=15.0
-widthlimit=15.0
-halfwindow=int(laglimit*Fs)
+xcorr_x = r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
+laglimit = 15.0
+widthlimit = 15.0
+halfwindow = int(laglimit * Fs)
 searchstart = int(tclen // 2) - halfwindow
 searchend = int(tclen // 2) + halfwindow
-xcorr_x_trim=xcorr_x[searchstart:searchend]
+xcorr_x_trim = xcorr_x[searchstart:searchend]
 
-outputdata=zeros((numcomponents,numcomponents,1,tclen),dtype='float')
-outputpdata=zeros((numcomponents,numcomponents,1,tclen),dtype='float')
-outputcorrmax=zeros((numcomponents,numcomponents,1,1),dtype='float')
-outputcorrlag=zeros((numcomponents,numcomponents,1,1),dtype='float')
-outputcorrwidth=zeros((numcomponents,numcomponents,1,1),dtype='float')
-outputcorrmask=zeros((numcomponents,numcomponents,1,1),dtype='float')
-for component1 in range(0,numcomponents):
+outputdata = zeros((numcomponents, numcomponents, 1, tclen), dtype='float')
+outputpdata = zeros((numcomponents, numcomponents, 1, tclen), dtype='float')
+outputcorrmax = zeros((numcomponents, numcomponents, 1, 1), dtype='float')
+outputcorrlag = zeros((numcomponents, numcomponents, 1, 1), dtype='float')
+outputcorrwidth = zeros((numcomponents, numcomponents, 1, 1), dtype='float')
+outputcorrmask = zeros((numcomponents, numcomponents, 1, 1), dtype='float')
+for component1 in range(0, numcomponents):
     print('correlating with component', component1)
-    for component2 in range(0,numcomponents):
-        thexcorr=correlate(reformdata[component1,:]/tclen,reformdata[component2,:],mode='same')
-        thepxcorr=pearsonr(reformdata[component1,:]/tclen,reformdata[component2,:])
-        outputdata[component1,component2,0,:]=thexcorr
-        outputpdata[component1,component2,0,:]=thepxcorr[0]
-        #plot(xcorr_x,outputdata[component1,component2,0,:])
-        #maxdelay=xcorr_x[argmax(thexcorr)]
-        #maxval=thexcorr[argmax(thexcorr)]
-        maxindex,maxlag,maxval,maxsigma,maskval,failreason=tide.findmaxlag_gauss(xcorr_x[searchstart:searchend],thexcorr[searchstart:searchend],
-            -laglimit,laglimit,widthlimit,refine=True,
+    for component2 in range(0, numcomponents):
+        thexcorr = correlate(reformdata[component1, :] / tclen, reformdata[component2, :], mode='same')
+        thepxcorr = pearsonr(reformdata[component1, :] / tclen, reformdata[component2, :])
+        outputdata[component1, component2, 0, :] = thexcorr
+        outputpdata[component1, component2, 0, :] = thepxcorr[0]
+        # plot(xcorr_x,outputdata[component1,component2,0,:])
+        # maxdelay=xcorr_x[argmax(thexcorr)]
+        # maxval=thexcorr[argmax(thexcorr)]
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss(
+            xcorr_x[searchstart:searchend], thexcorr[searchstart:searchend],
+            -laglimit, laglimit, widthlimit, refine=True,
             useguess=False,
             fastgauss=False,
             displayplots=False)
-        outputcorrmax[component1,component2,0,0]=maxval
-        outputcorrlag[component1,component2,0,0]=maxlag
-        outputcorrwidth[component1,component2,0,0]=maxsigma
-        outputcorrmask[component1,component2,0,0]=maskval
+        outputcorrmax[component1, component2, 0, 0] = maxval
+        outputcorrlag[component1, component2, 0, 0] = maxlag
+        outputcorrwidth[component1, component2, 0, 0] = maxsigma
+        outputcorrmask[component1, component2, 0, 0] = maskval
 
 # symmetrize the matrices
-outputcorrmax[:,:,0,0]=tide.symmetrize(outputcorrmax[:,:,0,0],zerodiagonal=True)
-outputcorrlag[:,:,0,0]=tide.symmetrize(outputcorrlag[:,:,0,0],antisymmetric=True)
-outputcorrwidth[:,:,0,0]=tide.symmetrize(outputcorrwidth[:,:,0,0])
-outputcorrmask[:,:,0,0]=tide.symmetrize(outputcorrmask[:,:,0,0],zerodiagonal=True)
+outputcorrmax[:, :, 0, 0] = tide.symmetrize(outputcorrmax[:, :, 0, 0], zerodiagonal=True)
+outputcorrlag[:, :, 0, 0] = tide.symmetrize(outputcorrlag[:, :, 0, 0], antisymmetric=True)
+outputcorrwidth[:, :, 0, 0] = tide.symmetrize(outputcorrwidth[:, :, 0, 0])
+outputcorrmask[:, :, 0, 0] = tide.symmetrize(outputcorrmask[:, :, 0, 0], zerodiagonal=True)
 
-#show()
+# show()
 outputaffine = eye(4)
-output_img=nib.Nifti1Image(outputdata, outputaffine)
-output_hdr=output_img.get_header()
-output_hdr['pixdim'][4]=float(sys.argv[2])
-output_img.to_filename(datafilename+'_xcorr.nii.gz')
+output_img = nib.Nifti1Image(outputdata, outputaffine)
+output_hdr = output_img.get_header()
+output_hdr['pixdim'][4] = float(sys.argv[2])
+output_img.to_filename(datafilename + '_xcorr.nii.gz')
 
-output_pimg=nib.Nifti1Image(outputpdata, outputaffine)
-output_phdr=output_pimg.get_header()
-output_phdr['pixdim'][4]=float(sys.argv[2])
-output_pimg.to_filename(datafilename+'_pxcorr.nii.gz')
+output_pimg = nib.Nifti1Image(outputpdata, outputaffine)
+output_phdr = output_pimg.get_header()
+output_phdr['pixdim'][4] = float(sys.argv[2])
+output_pimg.to_filename(datafilename + '_pxcorr.nii.gz')
 
-outputcorrmax_img=nib.Nifti1Image(outputcorrmax, outputaffine)
-outputcorrmax_hdr=outputcorrmax_img.get_header()
-outputcorrmax_hdr['pixdim'][4]=float(sys.argv[2])
-outputcorrmax_img.to_filename(datafilename+'_corrmax.nii.gz')
+outputcorrmax_img = nib.Nifti1Image(outputcorrmax, outputaffine)
+outputcorrmax_hdr = outputcorrmax_img.get_header()
+outputcorrmax_hdr['pixdim'][4] = float(sys.argv[2])
+outputcorrmax_img.to_filename(datafilename + '_corrmax.nii.gz')
 
-outputcorrlag_img=nib.Nifti1Image(outputcorrlag, outputaffine)
-outputcorrlag_hdr=outputcorrlag_img.get_header()
-outputcorrlag_hdr['pixdim'][4]=float(sys.argv[2])
-outputcorrlag_img.to_filename(datafilename+'_corrlag.nii.gz')
+outputcorrlag_img = nib.Nifti1Image(outputcorrlag, outputaffine)
+outputcorrlag_hdr = outputcorrlag_img.get_header()
+outputcorrlag_hdr['pixdim'][4] = float(sys.argv[2])
+outputcorrlag_img.to_filename(datafilename + '_corrlag.nii.gz')
 
-outputcorrwidth_img=nib.Nifti1Image(outputcorrwidth, outputaffine)
-outputcorrwidth_hdr=outputcorrwidth_img.get_header()
-outputcorrwidth_hdr['pixdim'][4]=float(sys.argv[2])
-outputcorrwidth_img.to_filename(datafilename+'_corrwidth.nii.gz')
+outputcorrwidth_img = nib.Nifti1Image(outputcorrwidth, outputaffine)
+outputcorrwidth_hdr = outputcorrwidth_img.get_header()
+outputcorrwidth_hdr['pixdim'][4] = float(sys.argv[2])
+outputcorrwidth_img.to_filename(datafilename + '_corrwidth.nii.gz')
 
-outputcorrmask_img=nib.Nifti1Image(outputcorrmask, outputaffine)
-outputcorrmask_hdr=outputcorrmask_img.get_header()
-outputcorrmask_hdr['pixdim'][4]=float(sys.argv[2])
-outputcorrmask_img.to_filename(datafilename+'_corrmask.nii.gz')
+outputcorrmask_img = nib.Nifti1Image(outputcorrmask, outputaffine)
+outputcorrmask_hdr = outputcorrmask_img.get_header()
+outputcorrmask_hdr['pixdim'][4] = float(sys.argv[2])
+outputcorrmask_img.to_filename(datafilename + '_corrmask.nii.gz')
 
-tide.writenpvecs(reformdata,datafilename+'_reformdata.txt')
+tide.writenpvecs(reformdata, datafilename + '_reformdata.txt')
