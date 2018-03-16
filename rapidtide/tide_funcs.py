@@ -1130,7 +1130,7 @@ def gaussskresiduals(p, y, x):
 
 @conditionaljit()
 def gaussresiduals(p, y, x):
-    return y - p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
+    return y - p[0] * np.exp(-(x - p[1]) ** 2 / (2.0 * p[2] * p[2]))
 
 
 def trapezoidresiduals(p, y, x, toplength):
@@ -1157,7 +1157,7 @@ def gausssk_eval(x, p):
 
 @conditionaljit()
 def gauss_eval(x, p):
-    return p[0] * np.exp(-(x - p[1]) ** 2 / (2 * p[2] ** 2))
+    return p[0] * np.exp(-(x - p[1]) ** 2 / (2.0 * p[2] * p[2]))
 
 
 def trapezoid_eval_loop(x, toplength, p):
@@ -1479,7 +1479,7 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             nlowerlim = upperlim - int(widthlimit)
         maxval_init = thexcorr_y[maxindex].astype('float64')
     else:
-        maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int16')
+        maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int32')
         maxval_init = thexcorr_y[maxindex].astype('float64')
 
     # now get a location for that value
@@ -1496,7 +1496,8 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     while (maxindex - j >= lowerlimit) and (thexcorr_y[maxindex - j] > searchfrac * maxval_init) and (j < searchbins):
         j += 1
     j -= 1
-    maxsigma_init = np.float64((2.0 * searchfrac) * 2.0 * (i + j + 1) * binwidth / 2.355)
+    #maxsigma_init = np.float64((2.0 * searchfrac) * 2.0 * (i + j + 1) * binwidth / 2.355)
+    maxsigma_init = np.float64((i + j + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac))))
 
     # now check the values for errors and refine if necessary
     if not ((lagmin + binwidth) <= maxlag_init <= (lagmax - binwidth)):
@@ -1526,7 +1527,7 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                 maxval = np.float64(data.max())
             else:
                 # do a least squares fit over the top of the peak
-                p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
+                p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype='float64')
 
                 if fitend - fitstart >= 3:
                     plsq, dummy = sp.optimize.leastsq(gaussresiduals, p0,
@@ -1570,7 +1571,7 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
         pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
         pl.show()
-    return maxindex, maxlag, maxval, maxsigma, maskval, failreason, 0, 0
+    return maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend
 
 
 
@@ -1604,10 +1605,10 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     FML_INITFAIL = np.uint16(0x10)
 
     # set the search range
-    lowerlim = 0
-    upperlim = len(thexcorr_x) - 1
-    #lowerlim = np.max([valtoindex(lagmin, toleft=True), 0])
-    #upperlim = np.min([valtoindex(lagmax, toleft=False), len(thexcorr_x) - 1])
+    #lowerlim = 0
+    #upperlim = len(thexcorr_x) - 1
+    lowerlim = np.max([valtoindex(thexcorr_x, lagmin, toleft=True), 0])
+    upperlim = np.min([valtoindex(thexcorr_x, lagmax, toleft=False), len(thexcorr_x) - 1])
     if debug:
         print('initial search indices are', lowerlim, 'to', upperlim, '(', thexcorr_x[lowerlim], thexcorr_x[upperlim], ')')
 
@@ -1620,7 +1621,7 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     maxlag_init = (1.0 * thexcorr_x[maxindex]).astype('float64')
     maxval_init = thexcorr_y[maxindex].astype('float64')
     if debug:
-            print('maxindex, maxval_init:', maxindex, maxval_init)
+            print('maxindex, maxlag_init, maxval_init:', maxindex, maxlag_init, maxval_init)
 
     # then calculate the width of the peak
     thegrad = np.gradient(thexcorr_y).astype('float64')                   # the gradient of the correlation function
@@ -1633,7 +1634,10 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         peakend += 1
     while thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
         peakstart -= 1
-    maxsigma_init = np.float64((2.0 / searchfrac) * 2.0 * (peakend - peakstart + 1) * binwidth / 2.355)
+    #maxsigma_init = np.float64((2.0 / searchfrac) * 2.0 * (peakend - peakstart + 1) * binwidth / 2.355)
+    maxsigma_init = np.float64((peakend - peakstart + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac))))
+    if debug:
+            print('maxsigma_init:', maxsigma_init)
 
     # now check the values for errors
     if hardlimit:
@@ -1673,7 +1677,8 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             maxval = np.float64(data.max())
         else:
             # do a least squares fit over the top of the peak
-            p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
+            #p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
+            p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype='float64')
             if debug:
                 print('fit input array:', p0)
             try:
@@ -1714,6 +1719,7 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                 maxlag = np.float64(0.0)
                 maxsigma = np.float64(0.0)
             maskval = np.int16(0)
+        #print(maxlag_init, maxlag, maxval_init, maxval, maxsigma_init, maxsigma, maskval, failreason, fitfail)
     else:
         maxval = np.float64(maxval_init)
         maxlag = np.float64(np.fmod(maxlag_init, lagmod))
