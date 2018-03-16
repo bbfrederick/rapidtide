@@ -382,10 +382,11 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
         flipfac = rt_floatset(1.0)
     if not optiondict['fixdelay']:
         if optiondict['findmaxtype'] == 'gauss':
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag_gauss(
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss_rev(
                 corrscale,
                 flipfac * thetc,
                 optiondict['lagmin'], optiondict['lagmax'], widthlimit,
+                absmaxsigma=optiondict['absmaxsigma'],
                 edgebufferfrac=optiondict['edgebufferfrac'],
                 threshval=optiondict['lthreshval'],
                 uthreshval=optiondict['uthreshval'],
@@ -398,9 +399,10 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
                 enforcethresh=optiondict['enforcethresh'],
                 zerooutbadfit=optiondict['zerooutbadfit'],
                 lagmod=optiondict['lagmod'],
+                hardlimit=optiondict['hardlimit'],
                 displayplots=displayplots)
         else:
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide.findmaxlag_quad(
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_quad(
                 corrscale,
                 flipfac * thetc,
                 optiondict['lagmin'], optiondict['lagmax'], widthlimit,
@@ -468,9 +470,9 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
 
 
 def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
-            corrscale, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
+            corrscale, lagmask, failimage, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
             R2, optiondict, initiallags=None):
-    FML_BADAMP, FML_BADLAG, FML_BADWIDTH, FML_HITEDGE, FML_FITFAIL = 0x01, 0x02, 0x04, 0x08, 0x0f
+    FML_BADAMP, FML_BADLAG, FML_BADWIDTH, FML_HITEDGE, FML_FITFAIL, FML_INITFAIL = 0x01, 0x02, 0x04, 0x08, 0x0f, 0x10
     displayplots = False
     inputshape = np.shape(corrout)
     volumetotal, ampfails, lagfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0
@@ -539,6 +541,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             gaussout[voxel[0], :] = voxel[6]
             R2[voxel[0]] = voxel[7]
             lagmask[voxel[0]] = voxel[8]
+            failimage[voxel[0]] = voxel[9]
         data_out = []
     else:
         for vox in range(0, inputshape[0]):
@@ -614,7 +617,7 @@ def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, 
 def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, lagstrengths, lagtimes,
                     lagsigma, R2,
                     theprefilter, optiondict, padtrs=60, includemask=None, excludemask=None):
-    print('entering refineregressor with padtrs=', padtrs)
+    #print('entering refineregressor with padtrs=', padtrs)
     inputshape = np.shape(fmridata)
     ampmask = np.where(lagstrengths >= optiondict['ampthresh'], np.int16(1), np.int16(0))
     if optiondict['lagmaskside'] == 'upper':
@@ -1158,6 +1161,7 @@ def usage():
         "[--refinepasses=PASSES]",
         "[--excludemask=MASK]", "[--includemask=MASK]",
         "[--lagminthresh=MIN]", "[--lagmaxthresh=MAX]", "[--ampthresh=AMP]", "[--sigmathresh=SIGMA]",
+        "[--corrmask=MASK]",
         "[--corrmaskthresh=PCT]",
         "[--refineoffset]",
         "[--pca]", "[--ica]", "[--weightedavg]", "[--avg]",
@@ -1168,6 +1172,8 @@ def usage():
         "[--nosharedmem]",
         "[--tmask=MASKFILE]",
         "[--limitoutput]",
+        "[--nogaussrefine]",
+        "[--softlimit]",
         "[--timerange=START,END]",
         "[--skipsighistfit]",
         "[--accheck]", "[--acfix]"
@@ -1253,6 +1259,7 @@ def usage():
     print("    --eckart                   - Use generalized cross-correlation with Eckart weighting function")
     print("    --corrmaskthresh=PCT       - Do correlations in voxels where the mean exceeeds this ")
     print("                                 percentage of the robust max (default is 1.0)")
+    print("    --corrmask=MASK            - Only do correlations in voxels in MASK (if set, corrmaskthresh is ignored).")
     print("    --accheck                  - Check for periodic components that corrupt the autocorrelation")
     print("")
     print("Correlation fitting options:")
@@ -1268,6 +1275,8 @@ def usage():
     print("                                 'quad' uses a quadratic fit.  Faster but not as well tested")
     print("    --despecklepasses=PASSES   - detect and refit suspect correlations to disambiguate peak locations in PASSES passes")
     print("    --despecklethresh=VAL      - refit correlation if median discontinuity magnitude exceeds VAL (default is 5s)")
+    print("    --softlimit                - Allow peaks outside of range if the maximum correlation is at an edge of the range.")
+    print("    --nogaussrefine            - Use initial guess at peak parameters - do not perform fit to Gaussian.")
     print("")
     print("Regressor refinement options:")
     print("    --refineprenorm=TYPE       - Apply TYPE prenormalization to each timecourse prior ")
@@ -1382,6 +1391,7 @@ def main():
     optiondict['usetmask'] = False  # premultiply the regressor with the tmask timecourse
     optiondict['tmaskname'] = None  # file name for tmask regressor
     optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
+    optiondict['corrmaskname'] = None   # name of correlation mask
     optiondict[
         'check_autocorrelation'] = True  # check for periodic components that corrupt the autocorrelation
     optiondict[
@@ -1391,6 +1401,8 @@ def main():
     optiondict['nothresh'] = False  # disable voxel intensity threshholding
 
     # correlation fitting options
+    optiondict['hardlimit'] = True  # Peak value must be within specified range.  If false, allow max outside if maximum
+                                    # correlation value is that one end of the range.
     optiondict['bipolar'] = False  # find peak with highest magnitude, regardless of sign
     optiondict['gaussrefine'] = True  # fit gaussian after initial guess at parameters
     optiondict['fastgauss'] = False  # use a non-iterative gaussian peak fit (DOES NOT WORK)
@@ -1403,6 +1415,7 @@ def main():
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
     optiondict['findmaxtype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
     optiondict['acwidth'] = 0.0 # width of the reference autocorrelation function
+    optiondict['absmaxsigma'] = 100.0 # width of the reference autocorrelation function
     #     move delay peaks back to the correct position if they hit a sidelobe
 
     # postprocessing options
@@ -1524,7 +1537,7 @@ def main():
                                                                                                           'lagminthresh=',
                                                                                                           'lagmaxthresh=',
                                                                                                           'ampthresh=',
-                                                                                                          'dosighistfit',
+                                                                                                          'skipsighistfit',
                                                                                                           'sigmathresh=',
                                                                                                           'refineweighting=',
                                                                                                           'refineprenorm=',
@@ -1535,6 +1548,7 @@ def main():
                                                                                                           'acfix',
                                                                                                           'refinepasses=',
                                                                                                           'passes=',
+                                                                                                          'corrmask=',
                                                                                                           'includemask=',
                                                                                                           'excludemask=',
                                                                                                           'refineoffset',
@@ -1564,6 +1578,7 @@ def main():
                                                                                                           'nothresh',
                                                                                                           'searchfrac=',
                                                                                                           'limitoutput',
+                                                                                                          'softlimit',
                                                                                                           'regressor=',
                                                                                                           'regressorfreq=',
                                                                                                           'regressortstep=',
@@ -1687,6 +1702,10 @@ def main():
             optiondict['multiproc'] = True
             optiondict['nprocs'] = -1
             print('enabling multiprocessing')
+        elif o == '--softlimit':
+            optiondict['hardlimit'] = False
+            linkchar = '='
+            print('will relax peak lag constraint for maximum correlations at edge of range')
         elif o == '--nosharedmem':
             optiondict['sharedmem'] = False
             linkchar = '='
@@ -1984,6 +2003,10 @@ def main():
             optiondict['excludemaskname'] = a
             linkchar = '='
             print('Voxels in ', optiondict['excludemaskname'], ' will not be used to define or refine regressors')
+        elif o == '--corrmask':
+            optiondict['corrmaskname'] = a
+            linkchar = '='
+            print('Using ', optiondict['corrmaskname'], ' as mask file - corrmaskthresh will be ignored')
         elif o == '--includemask':
             optiondict['includemaskname'] = a
             linkchar = '='
@@ -2213,12 +2236,29 @@ def main():
     # find the threshold value for the image data
     logmem('before selecting valid voxels', file=memfile)
     threshval = tide.getfracval(fmri_data[:, optiondict['addedskip']], 0.98) / 25.0
-    corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
+    if optiondict['corrmaskname'] is not None:
+        if optiondict['textio']:
+            corrmask = tide.readvecs(optiondict['corrmaskname']).astype('int16')
+            theshape = np.shape(nim_data)
+            corrxsize = theshape[0]
+            if not corrxsize == xsize:
+                print('Dimensions of correlation mask do not match the fmri data - exiting')
+                sys.exit()
+        else:
+            nimcorrmask, nimcorrmask, nimcorrmask_hdr, corrmaskdims, theincludmasksizes = tide.readfromnifti(
+                optiondict['corrmaskname'])
+            if not tide.checkspacematch(corrmaskdims, thedims):
+                print('Dimensions of correlation mask do not match the fmri data - exiting')
+                sys.exit()
+            corrmask = np.uint16(nimcorrmask.reshape((numspatiallocs)))
+    else:
+        corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
                                        threshpct=optiondict['corrmaskthreshpct']))
+       
     if optiondict['nothresh']:
         corrmask *= 0
         corrmask += 1
-        threshval = 0.0
+        threshval = -10000000.0
     if optiondict['verbose']:
         print('image threshval =', threshval)
     validvoxels = np.where(corrmask > 0)[0]
@@ -2454,6 +2494,7 @@ def main():
     lagstrengths = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     lagsigma = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     lagmask = np.zeros(internalvalidspaceshape, dtype='uint16')
+    failimage = np.zeros(internalvalidspaceshape, dtype='uint16')
     R2 = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
     outarmodelarray = np.zeros(internalarmodelshape, dtype=rt_floattype)
@@ -2557,6 +2598,7 @@ def main():
                                                            prewindow=optiondict['usewindowfunc'],
                                                            dodetrend=optiondict['dodetrend'])
             optiondict['acwidth'] = acwidth + 0.0
+            optiondict['absmaxsigma'] = acwidth * 10.0
             if sidelobetime is not None:
                 passsuffix = '_pass' + str(thepass + 1)
                 optiondict['acsidelobelag' + passsuffix] = sidelobetime
@@ -2670,7 +2712,7 @@ def main():
         voxelsprocessed_fc = fitcorr_func(genlagtc, initial_fmri_x,
                                           lagtc, slicesize,
                                           corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
-                                          lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval,
+                                          lagmask, failimage, lagtimes, lagstrengths, lagsigma, corrout, meanval,
                                           gaussout,
                                           R2, optiondict)
         timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
@@ -2688,13 +2730,17 @@ def main():
                 outmaparray[validvoxels] = eval('lagtimes')[:]
                 medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape((numspatiallocs))
                 initlags = np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)[validvoxels]
-                voxelsprocessed_fc_ds += fitcorr_func(genlagtc, initial_fmri_x,
+                if len(initlags) > 0:
+                    voxelsprocessed_fc_ds += fitcorr_func(genlagtc, initial_fmri_x,
                                           lagtc, slicesize,
                                           corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
-                                          lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval,
+                                          lagmask, failimage, lagtimes, lagstrengths, lagsigma, corrout, meanval,
                                           gaussout,
                                           R2, optiondict,
                                           initiallags=initlags)
+                else:
+                    print('Nothing left to do! Terminating despeckling')
+                    break
             
 
             """
@@ -2929,7 +2975,7 @@ def main():
     MTT = np.square(lagsigma) - (optiondict['acwidth'] * optiondict['acwidth'])
     MTT = np.where(MTT > 0.0, np.sqrt(MTT), 0.0)
     
-    for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask', 'MTT']:
+    for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask', 'failimage', 'MTT']:
         if optiondict['memprofile']:
             memcheckpoint('about to write ' + mapname)
         else:
