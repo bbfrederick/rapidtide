@@ -94,6 +94,7 @@ def startendcheck(timepoints, startpoint, endpoint):
 
 
 # found the idea for this on stackoverflow
+'''
 class PoolProgress:
     def __init__(self, pool, total, update_interval=1):
         self.pool = pool
@@ -106,7 +107,7 @@ class PoolProgress:
             tide.progressbar(self.total - (task._number_left * task._chunksize), self.total, label='Percent complete')
             time.sleep(self.update_interval)
         tide.progressbar(self.total, self.total, label='Percent complete')
-
+'''
 
 def procOneNullCorrelation(iteration, indata, ncprefilter, oversampfreq, corrscale, corrorigin, lagmininpts,
                            lagmaxinpts, optiondict):
@@ -160,7 +161,8 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
         for d in range(optiondict['numestreps']):
             data_in.append(d)
         print('processing', len(data_in), 'correlations with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -193,7 +195,8 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
             corrlist[i] = maxval
 
             # progress
-            tide.progressbar(i + 1, optiondict['numestreps'], label='Percent complete')
+            if optiondict['showprogressbar']:
+                tide.progressbar(i + 1, optiondict['numestreps'], label='Percent complete')
 
         # jump to line after progress bar
         print()
@@ -230,13 +233,14 @@ def procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, o
     return vox, np.mean(thetc), thexcorr, theglobalmax
 
 
-def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
+def process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chunksize=10000):
     # send pos/data to workers
     data_out = []
     totalnum = len(data_in)
     numchunks = int(totalnum // chunksize)
     remainder = totalnum - numchunks * chunksize
-    tide.progressbar(0, totalnum, label="Percent complete")
+    if showprogressbar:
+        tide.progressbar(0, totalnum, label="Percent complete")
 
     # process all of the complete chunks
     for thechunk in range(numchunks):
@@ -252,7 +256,7 @@ def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
             if ret is not None:
                 data_out.append(ret)
             numreturned += 1
-            if ((numreturned + offset + 1) % reportstep) == 0:
+            if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
                 tide.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
             if numreturned > chunksize - 1:
                 break
@@ -269,11 +273,12 @@ def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
         if ret is not None:
             data_out.append(ret)
         numreturned += 1
-        if ((numreturned + offset + 1) % reportstep) == 0:
+        if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
             tide.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
         if numreturned > remainder - 1:
             break
-    tide.progressbar(totalnum, totalnum, label="Percent complete")
+    if showprogressbar:
+        tide.progressbar(totalnum, totalnum, label="Percent complete")
     print()
 
     return data_out
@@ -326,7 +331,8 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
         for d in range(inputshape[0]):
             data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -346,7 +352,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
         data_out = []
     else:
         for vox in range(0, inputshape[0]):
-            if vox % reportstep == 0 or vox == inputshape[0] - 1:
+            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
             dummy, meanval[vox], corrout[vox, :], theglobalmax = procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x,
                                                                            fmridata[vox, :], os_fmri_x, oversampfreq,
@@ -521,7 +527,8 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                 if initiallags[d] != 0.0:
                     data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -545,7 +552,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
         data_out = []
     else:
         for vox in range(0, inputshape[0]):
-            if vox % reportstep == 0 or vox == inputshape[0] - 1:
+            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
             if initiallags is None:
                 dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[
@@ -686,7 +693,8 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
             if (maskarray[d] > 0) or optiondict['shiftall']:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -706,7 +714,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
     else:
         psdlist = []
         for vox in range(0, inputshape[0]):
-            if vox % reportstep == 0 or vox == inputshape[0] - 1:
+            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete (timeshifting)')
             if (maskarray[vox] > 0) or optiondict['shiftall']:
                 retvals = procOneVoxelTimeShift(vox, fmridata[vox, :], optiondict, lagstrengths[vox], R2[vox],
@@ -884,7 +892,8 @@ def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondi
             if np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -908,7 +917,7 @@ def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondi
     else:
         volumetotal = 0
         for vox in range(0, numspatiallocs):
-            if vox % reportstep == 0 or vox == numspatiallocs - 1:
+            if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, numspatiallocs, label='Percent complete')
             inittc = fmri_data[vox, optiondict['addedskip']:].copy()
             if np.mean(inittc) >= threshval:
@@ -962,7 +971,8 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
             if (np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval) or optiondict['nothresh']:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -986,7 +996,7 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
     else:
         volumetotal = 0
         for vox in range(0, numspatiallocs):
-            if vox % reportstep == 0 or vox == numspatiallocs - 1:
+            if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, numspatiallocs, label='Percent complete')
             inittc = fmri_data[vox, optiondict['addedskip']:].copy()
             if np.mean(inittc) >= threshval:
@@ -1502,6 +1512,7 @@ def main():
     optiondict['multiproc'] = False
     optiondict['nprocs'] = -1
     optiondict['mp_chunksize'] = 50000
+    optiondict['showprogressbar'] = True
 
     # package options
     optiondict['memprofilerexists'] = memprofilerexists
@@ -2181,7 +2192,7 @@ def main():
         print('applying gaussian spatial filter to timepoints ', validstart, ' to ', validend)
         reportstep = 10
         for i in range(validstart, validend + 1):
-            if i % reportstep == 0 or i == validend:
+            if (i % reportstep == 0 or i == validend) and optiondict['showprogressbar']:
                 tide.progressbar(i - validstart + 1, timepoints, label='Percent complete')
             nim_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, optiondict['gausssigma'],
                                                 nim_data[:, :, :, i])
