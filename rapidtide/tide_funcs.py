@@ -1498,6 +1498,8 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     j -= 1
     #maxsigma_init = np.float64((2.0 * searchfrac) * 2.0 * (i + j + 1) * binwidth / 2.355)
     maxsigma_init = np.float64((i + j + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac))))
+    fitstart = lowerlimit
+    fitend = upperlimit
 
     # now check the values for errors and refine if necessary
     if not ((lagmin + binwidth) <= maxlag_init <= (lagmax - binwidth)):
