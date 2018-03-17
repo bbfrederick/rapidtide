@@ -1459,11 +1459,14 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             lowerlim += 1
         while (thexcorr_y[upperlim - 1] < thexcorr_y[upperlim]) and (upperlim - 1) > lowerlim:
             upperlim -= 1
-    FML_BADAMP = np.uint16(0x01)
-    FML_BADLAG = np.uint16(0x02)
-    FML_BADWIDTH = np.uint16(0x04)
-    FML_HITEDGE = np.uint16(0x08)
-    FML_FITFAIL = np.uint16(0x0f)
+    FML_BADAMPLOW = np.uint16(0x01)
+    FML_BADAMPNEG = np.uint16(0x02)
+    FML_BADSEARCHWINDOW = np.uint16(0x04)
+    FML_BADWIDTH = np.uint16(0x08)
+    FML_BADLAG = np.uint16(0x10)
+    FML_HITEDGE = np.uint16(0x20)
+    FML_FITFAIL = np.uint16(0x40)
+    FML_INITFAIL = np.uint16(0x80)
 
     # make an initial guess at the fit parameters for the gaussian
     # start with finding the maximum value
@@ -1505,10 +1508,14 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # now check the values for errors and refine if necessary
     if not ((lagmin + binwidth) <= maxlag_init <= (lagmax - binwidth)):
         failreason += FML_HITEDGE
-    if (i + j + 1 < 3) or (maxsigma_init > widthlimit):
+    if i + j + 1 < 3:
+        failreason += FML_BADSEARCHWINDOW
+    if maxsigma_init > widthlimit:
         failreason += FML_BADWIDTH
     if (maxval_init < threshval) and enforcethresh:
-        failreason += FML_BADAMP
+        failreason += FML_BADAMPLOW
+    if (maxval_init < 0.0) and enforcethresh:
+        failreason += FML_BADAMPNEG
     if failreason > 0:
         maskval = np.uint16(0)
     if failreason > 0 and zerooutbadfit:
@@ -1600,12 +1607,14 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
 
     # define error values
     failreason = np.uint16(0)
-    FML_BADAMP = np.uint16(0x01)
-    FML_BADLAG = np.uint16(0x02)
-    FML_BADWIDTH = np.uint16(0x04)
-    FML_HITEDGE = np.uint16(0x08)
-    FML_FITFAIL = np.uint16(0x0f)
-    FML_INITFAIL = np.uint16(0x10)
+    FML_BADAMPLOW = np.uint16(0x01)
+    FML_BADAMPNEG = np.uint16(0x02)
+    FML_BADSEARCHWINDOW = np.uint16(0x04)
+    FML_BADWIDTH = np.uint16(0x08)
+    FML_BADLAG = np.uint16(0x10)
+    FML_HITEDGE = np.uint16(0x20)
+    FML_FITFAIL = np.uint16(0x40)
+    FML_INITFAIL = np.uint16(0x80)
 
     # set the search range
     #lowerlim = 0
@@ -1652,12 +1661,20 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         failreason |= (FML_INITFAIL | FML_BADLAG )
         if debug:
             print('bad initial')
-    if (maxsigma_init > widthlimit) or (peakend - peakstart) < 2:
-        failreason |= (FML_INITFAIL | FML_BADWIDTH)
+    if maxsigma_init > widthlimit:
+        failreason |= (FML_INITFAIL | FML_BADWIDTH )
         if debug:
-            print('bad initial width')
-    if (not (threshval <= maxval_init <= uthreshval) and enforcethresh) or (maxval_init < 0.0):
-        failreason |= (FML_INITFAIL | FML_BADAMP)
+            print('bad initial width - too high')
+    if peakend - peakstart < 2:
+        failreason |= (FML_INITFAIL | FML_BADSEARCHWINDOW )
+        if debug:
+            print('bad initial width - too low')
+    if not (threshval <= maxval_init <= uthreshval) and enforcethresh:
+        failreason |= (FML_INITFAIL | FML_BADAMPLOW )
+        if debug:
+            print('bad initial amp:', maxval_init, 'is less than', threshval)
+    if (maxval_init < 0.0):
+        failreason |= (FML_INITFAIL | FML_BADAMPNEG )
         if debug:
             print('bad initial amp:', maxval_init, 'is less than', threshval)
     if failreason > 0 and zerooutbadfit:
@@ -1701,7 +1718,7 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         fitfail = False
         failreason = np.uint16(0)
         if not (0.0 <= np.fabs(maxval) <= 1.0):
-            failreason |= (FML_FITFAIL + FML_BADAMP)
+            failreason |= (FML_FITFAIL + FML_BADAMPLOW)
             if debug:
                 print('bad amp after refinement')
             fitfail = True
@@ -1710,8 +1727,13 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             if debug:
                 print('bad lag after refinement')
             fitfail = True
-        if not (0.0 < maxsigma <= absmaxsigma):
+        if maxsigma > absmaxsigma:
             failreason |= (FML_FITFAIL + FML_BADWIDTH)
+            if debug:
+                print('bad width after refinement')
+            fitfail = True
+        if not (0.0 < maxsigma):
+            failreason |= (FML_FITFAIL + FML_BADSEARCHWINDOW)
             if debug:
                 print('bad width after refinement')
             fitfail = True
@@ -1768,12 +1790,14 @@ def findmaxlag_quad(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             lowerlim += 1
         while (thexcorr_y[upperlim - 1] < thexcorr_y[upperlim]) and (upperlim - 1) > lowerlim:
             upperlim -= 1
-    FML_BADAMP = np.uint16(0x01)
-    FML_BADLAG = np.uint16(0x02)
-    FML_BADWIDTH = np.uint16(0x04)
-    FML_HITEDGE = np.uint16(0x08)
-    FML_FITFAIL = np.uint16(0x0f)
-    FML_INITFAIL = np.uint16(0x10)
+    FML_BADAMPLOW = np.uint16(0x01)
+    FML_BADAMPNEG = np.uint16(0x02)
+    FML_BADSEARCHWINDOW = np.uint16(0x04)
+    FML_BADWIDTH = np.uint16(0x08)
+    FML_BADLAG = np.uint16(0x10)
+    FML_HITEDGE = np.uint16(0x20)
+    FML_FITFAIL = np.uint16(0x40)
+    FML_INITFAIL = np.uint16(0x80)
 
     # make an initial guess at the fit parameters for the gaussian
     # start with finding the maximum value
