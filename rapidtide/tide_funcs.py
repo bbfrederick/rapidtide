@@ -1617,10 +1617,10 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     FML_INITFAIL = np.uint16(0x80)
 
     # set the search range
-    #lowerlim = 0
-    #upperlim = len(thexcorr_x) - 1
-    lowerlim = np.max([valtoindex(thexcorr_x, lagmin, toleft=True), 0])
-    upperlim = np.min([valtoindex(thexcorr_x, lagmax, toleft=False), len(thexcorr_x) - 1])
+    lowerlim = 0
+    upperlim = len(thexcorr_x) - 1
+    #lowerlim = np.max([valtoindex(thexcorr_x, lagmin, toleft=True), 0])
+    #upperlim = np.min([valtoindex(thexcorr_x, lagmax, toleft=False), len(thexcorr_x) - 1])
     if debug:
         print('initial search indices are', lowerlim, 'to', upperlim, '(', thexcorr_x[lowerlim], thexcorr_x[upperlim], ')')
 
