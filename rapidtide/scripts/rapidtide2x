@@ -119,7 +119,7 @@ def procOneNullCorrelation(iteration, indata, ncprefilter, oversampfreq, corrsca
                               optiondict)
 
     # fit the correlation
-    maxindex, maxlag, maxval, maxsigma, maskval, failreason = \
+    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = \
         onecorrfit(thexcorr, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
                    optiondict)
 
@@ -187,7 +187,7 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
                                       optiondict)
 
             # fit the correlation
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason = \
+            maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = \
                 onecorrfit(thexcorr, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
                            optiondict)
 
@@ -434,7 +434,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
         maxsigma = rt_floatset(1.0)
         maskval = np.uint16(1)
 
-    return maxindex, maxlag, maxval, maxsigma, maskval, failreason
+    return maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason
 
 
 def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, optiondict, displayplots, initiallag=None):
@@ -442,7 +442,7 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
         sliceoffsettime = optiondict['slicetimes'][vox % slicesize]
     else:
         sliceoffsettime = 0.0
-    maxindex, maxlag, maxval, maxsigma, maskval, failreason = onecorrfit(corrtc, corrscale,
+    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = onecorrfit(corrtc, corrscale,
                                                                          optiondict, displayplots=displayplots,
                                                                          initiallag=initiallag)
 
@@ -466,8 +466,10 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
         thetime = rt_floatset(np.fmod(maxlag, optiondict['lagmod']))
         thestrength = rt_floatset(maxval)
         thesigma = rt_floatset(maxsigma)
+        thegaussout = rt_floatset(0.0 * corrtc)
         if (not optiondict['fixdelay']) and (maxsigma != 0.0):
-            thegaussout = rt_floatset(tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
+            #thegaussout = rt_floatset(tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
+            thegaussout[peakstart:peakend + 1] = 1.0
         else:
             thegaussout = rt_floatset(0.0)
         theR2 = rt_floatset(thestrength * thestrength)
@@ -2641,7 +2643,7 @@ def main():
             thexcorr, dummy = onecorrelation(referencetc, oversampfreq, corrorigin, acmininpts, acmaxinpts, theprefilter,
                                       referencetc,
                                       optiondict)
-            maxindex, maxlag, maxval, acwidth, maskval, failreason = \
+            maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
                 onecorrfit(thexcorr, corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts], optiondict)
             outputarray = np.asarray([corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts], thexcorr])
             tide.writenpvecs(outputarray, outputname + '_referenceautocorr_pass' + str(thepass) + '.txt')
