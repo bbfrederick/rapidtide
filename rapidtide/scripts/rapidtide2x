@@ -478,10 +478,17 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
 def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             corrscale, lagmask, failimage, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
             R2, optiondict, initiallags=None):
-    FML_BADAMP, FML_BADLAG, FML_BADWIDTH, FML_HITEDGE, FML_FITFAIL, FML_INITFAIL = 0x01, 0x02, 0x04, 0x08, 0x0f, 0x10
     displayplots = False
     inputshape = np.shape(corrout)
-    volumetotal, ampfails, lagfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0
+    volumetotal, ampfails, lagfails, windowfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0, 0
+    FML_BADAMPLOW = np.uint16(0x01)
+    FML_BADAMPNEG = np.uint16(0x02)
+    FML_BADSEARCHWINDOW = np.uint16(0x04)
+    FML_BADWIDTH = np.uint16(0x08)
+    FML_BADLAG = np.uint16(0x10)
+    FML_HITEDGE = np.uint16(0x20)
+    FML_FITFAIL = np.uint16(0x40)
+    FML_INITFAIL = np.uint16(0x80)
     reportstep = 1000
     zerolagtc = rt_floatset(genlagtc.yfromx(initial_fmri_x))
     sliceoffsettime = 0.0
@@ -548,7 +555,19 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             gaussout[voxel[0], :] = voxel[6]
             R2[voxel[0]] = voxel[7]
             lagmask[voxel[0]] = voxel[8]
-            failimage[voxel[0]] = voxel[9]
+            failimage[voxel[0]] = voxel[9] & 0x3f
+        if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[9]:
+            ampfails += 1
+        if FML_BADSEARCHWINDOW & voxel[9]:
+            windowfails += 1
+        if FML_BADWIDTH & voxel[9]:
+            widthfails += 1
+        if FML_BADLAG & voxel[9]:
+            lagfails += 1
+        if FML_HITEDGE & voxel[9]:
+            edgefails += 1
+        if ( FML_FITFAIL | FML_INITFAIL ) & voxel[9]:
+            fitfails += 1
         data_out = []
     else:
         for vox in range(0, inputshape[0]):
@@ -559,14 +578,40 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                     vox], lagmask[vox], failreason = \
                     procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots)
                 volumetotal += volumetotalinc
+                if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[9]:
+                    ampfails += 1
+                if FML_BADSEARCHWINDOW & voxel[9]:
+                    windowfails += 1
+                if FML_BADWIDTH & voxel[9]:
+                    widthfails += 1
+                if FML_BADLAG & voxel[9]:
+                    lagfails += 1
+                if FML_HITEDGE & voxel[9]:
+                    edgefails += 1
+                if ( FML_FITFAIL | FML_INITFAIL ) & voxel[9]:
+                    fitfails += 1
             else:
                 if initiallags[vox] != 0.0:
                     dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[
                         vox], lagmask[vox], failreason = \
                         procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots, initiallags[vox])
                     volumetotal += volumetotalinc
+                    if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[9]:
+                        ampfails += 1
+                    if FML_BADSEARCHWINDOW & voxel[9]:
+                        windowfails += 1
+                    if FML_BADWIDTH & voxel[9]:
+                        widthfails += 1
+                    if FML_BADLAG & voxel[9]:
+                        lagfails += 1
+                    if FML_HITEDGE & voxel[9]:
+                        edgefails += 1
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
-    print('\tampfails=', ampfails, ' lagfails=', lagfails, ' widthfail=', widthfails, ' edgefail=', edgefails,
+    print('\tampfails=', ampfails,
+          ' lagfails=', lagfails, 
+          ' windowfails=', windowfails,
+          ' widthfail=', widthfails,
+          ' edgefail=', edgefails,
           ' fitfail=', fitfails)
 
     # garbage collect
