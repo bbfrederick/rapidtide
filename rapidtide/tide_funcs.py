@@ -1496,15 +1496,16 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     while (maxindex - j >= lowerlimit) and (thexcorr_y[maxindex - j] > searchfrac * maxval_init) and (j < searchbins):
         j += 1
     j -= 1
-    #maxsigma_init = np.float64((2.0 * searchfrac) * 2.0 * (i + j + 1) * binwidth / 2.355)
-    maxsigma_init = np.float64((i + j + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac))))
+    # This is calculated from first principles, but it's always big by a factor or ~1.4. 
+    #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
+    maxsigma_init = np.float64(((i + j + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac)))) / np.sqrt(2.0))
     fitstart = lowerlimit
     fitend = upperlimit
 
     # now check the values for errors and refine if necessary
     if not ((lagmin + binwidth) <= maxlag_init <= (lagmax - binwidth)):
         failreason += FML_HITEDGE
-    if not (binwidth / 2.355 < maxsigma_init < widthlimit):
+    if (i + j + 1 < 3) or (maxsigma_init > widthlimit):
         failreason += FML_BADWIDTH
     if (maxval_init < threshval) and enforcethresh:
         failreason += FML_BADAMP
@@ -1636,8 +1637,9 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         peakend += 1
     while thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
         peakstart -= 1
-    #maxsigma_init = np.float64((2.0 / searchfrac) * 2.0 * (peakend - peakstart + 1) * binwidth / 2.355)
-    maxsigma_init = np.float64((peakend - peakstart + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac))))
+    # This is calculated from first principles, but it's always big by a factor or ~1.4. 
+    #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
+    maxsigma_init = np.float64(((peakend - peakstart + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac)))) / np.sqrt(2.0))
     if debug:
             print('maxsigma_init:', maxsigma_init)
 
@@ -1650,7 +1652,7 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         failreason |= (FML_INITFAIL | FML_BADLAG )
         if debug:
             print('bad initial')
-    if (maxsigma_init > widthlimit) or (peakend - peakstart) < 3:
+    if (maxsigma_init > widthlimit) or (peakend - peakstart) < 2:
         failreason |= (FML_INITFAIL | FML_BADWIDTH)
         if debug:
             print('bad initial width')
