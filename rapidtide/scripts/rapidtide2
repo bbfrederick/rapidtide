@@ -469,7 +469,6 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
 def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             corrscale, lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
             R2, optiondict, initiallags=None):
-    FML_BADAMP, FML_BADLAG, FML_BADWIDTH, FML_HITEDGE, FML_FITFAIL = 0x01, 0x02, 0x04, 0x08, 0x0f
     displayplots = False
     inputshape = np.shape(corrout)
     volumetotal, ampfails, lagfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0
