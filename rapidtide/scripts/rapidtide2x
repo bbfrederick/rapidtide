@@ -585,17 +585,17 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                     R2[vox], lagmask[vox], failreason = \
                     procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots)
                 volumetotal += volumetotalinc
-                if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[10]:
+                if ( FML_BADAMPLOW | FML_BADAMPNEG ) & failreason:
                     ampfails += 1
-                if FML_BADSEARCHWINDOW & voxel[10]:
+                if FML_BADSEARCHWINDOW & failreason:
                     windowfails += 1
-                if FML_BADWIDTH & voxel[10]:
+                if FML_BADWIDTH & failreason:
                     widthfails += 1
-                if FML_BADLAG & voxel[10]:
+                if FML_BADLAG & failreason:
                     lagfails += 1
-                if FML_HITEDGE & voxel[10]:
+                if FML_HITEDGE & failreason:
                     edgefails += 1
-                if ( FML_FITFAIL | FML_INITFAIL ) & voxel[10]:
+                if ( FML_FITFAIL | FML_INITFAIL ) & failreason:
                     fitfails += 1
             else:
                 if initiallags[vox] != 0.0:
@@ -604,15 +604,15 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                     R2[vox], lagmask[vox], failreason = \
                         procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots, initiallags[vox])
                     volumetotal += volumetotalinc
-                    if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[10]:
+                    if ( FML_BADAMPLOW | FML_BADAMPNEG ) & failreason:
                         ampfails += 1
-                    if FML_BADSEARCHWINDOW & voxel[10]:
+                    if FML_BADSEARCHWINDOW & failreason:
                         windowfails += 1
-                    if FML_BADWIDTH & voxel[10]:
+                    if FML_BADWIDTH & failreason:
                         widthfails += 1
-                    if FML_BADLAG & voxel[10]:
+                    if FML_BADLAG & failreason:
                         lagfails += 1
-                    if FML_HITEDGE & voxel[10]:
+                    if FML_HITEDGE & failreason:
                         edgefails += 1
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
     print('\tampfails=', ampfails,
