@@ -1584,6 +1584,24 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend
 
 
+@conditionaljit2()
+def maxindex_noedge(thexcorr_x, thexcorr_y):
+    lowerlim = 0
+    upperlim = len(thexcorr_x) - 1
+    done = False
+    while not done:
+        done = True
+        maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int32')
+        if upperlim == lowerlim:
+            done = True
+        if maxindex == 0:
+            lowerlim += 1
+            done = False
+        if maxindex == upperlim:
+            upperlim -= 1
+            done = False
+    return maxindex
+    
 
 # disabled conditionaljit on 11/8/16.  This causes crashes on some machines (but not mine, strangely enough)
 @conditionaljit2()
@@ -1629,7 +1647,8 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     if useguess:
         maxindex = valtoindex(thexcorr_x, maxguess)
     else:
-        maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int32')
+        #maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int32')
+        maxindex = maxindex_noedge(thexcorr_x, thexcorr_y)
     maxlag_init = (1.0 * thexcorr_x[maxindex]).astype('float64')
     maxval_init = thexcorr_y[maxindex].astype('float64')
     if debug:
@@ -1642,8 +1661,10 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     peakpoints[-1] = 0
     peakstart = maxindex + 0
     peakend = maxindex + 0
+    #while (thegrad[peakend + 1] < 0.0) and (peakend + 1 < len(peakpoints) - 1):
     while thegrad[peakend + 1] < 0.0 and peakpoints[peakend + 1] == 1:
         peakend += 1
+    #while thegrad[peakstart - 1] > 0.0 and peakstart - 1 > -1:
     while thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
         peakstart -= 1
     # This is calculated from first principles, but it's always big by a factor or ~1.4. 
@@ -1661,7 +1682,7 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         failreason |= (FML_INITFAIL | FML_BADLAG )
         if debug:
             print('bad initial')
-    if maxsigma_init > widthlimit:
+    if maxsigma_init > absmaxsigma:
         failreason |= (FML_INITFAIL | FML_BADWIDTH )
         if debug:
             print('bad initial width - too high')
