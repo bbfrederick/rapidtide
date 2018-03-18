@@ -460,6 +460,7 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
         thestrength = rt_floatset(0.0)
         thesigma = rt_floatset(0.0)
         thegaussout = 0.0 * corrtc
+        thewindowout = 0.0 * corrtc
         theR2 = rt_floatset(0.0)
     else:
         volumetotalinc = 1
@@ -467,19 +468,21 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
         thestrength = rt_floatset(maxval)
         thesigma = rt_floatset(maxsigma)
         thegaussout = rt_floatset(0.0 * corrtc)
+        thewindowout = rt_floatset(0.0 * corrtc)
         if (not optiondict['fixdelay']) and (maxsigma != 0.0):
-            #thegaussout = rt_floatset(tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
-            thegaussout[peakstart:peakend + 1] = 1.0
+            thegaussout = rt_floatset(tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
+            thewindowout[peakstart:peakend + 1] = 1.0
         else:
             thegaussout = rt_floatset(0.0)
+            thewindowout = rt_floatset(0.0)
         theR2 = rt_floatset(thestrength * thestrength)
 
-    return vox, volumetotalinc, thelagtc, thetime, thestrength, thesigma, thegaussout, theR2, maskval, failreason
+    return vox, volumetotalinc, thelagtc, thetime, thestrength, thesigma, thegaussout, thewindowout, theR2, maskval, failreason
 
 
 def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
-            corrscale, lagmask, failimage, lagtimes, lagstrengths, lagsigma, corrout, meanval, gaussout,
-            R2, optiondict, initiallags=None):
+            corrscale, lagmask, failimage, lagtimes, lagstrengths, lagsigma, corrout, meanval,
+            gaussout, windowout, R2, optiondict, initiallags=None):
     displayplots = False
     inputshape = np.shape(corrout)
     volumetotal, ampfails, lagfails, windowfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0, 0
@@ -555,20 +558,21 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             lagstrengths[voxel[0]] = voxel[4]
             lagsigma[voxel[0]] = voxel[5]
             gaussout[voxel[0], :] = voxel[6]
-            R2[voxel[0]] = voxel[7]
-            lagmask[voxel[0]] = voxel[8]
-            failimage[voxel[0]] = voxel[9] & 0x3f
-        if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[9]:
+            windowout[voxel[0], :] = voxel[7]
+            R2[voxel[0]] = voxel[8]
+            lagmask[voxel[0]] = voxel[9]
+            failimage[voxel[0]] = voxel[10] & 0x3f
+        if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[10]:
             ampfails += 1
-        if FML_BADSEARCHWINDOW & voxel[9]:
+        if FML_BADSEARCHWINDOW & voxel[10]:
             windowfails += 1
-        if FML_BADWIDTH & voxel[9]:
+        if FML_BADWIDTH & voxel[10]:
             widthfails += 1
-        if FML_BADLAG & voxel[9]:
+        if FML_BADLAG & voxel[10]:
             lagfails += 1
-        if FML_HITEDGE & voxel[9]:
+        if FML_HITEDGE & voxel[10]:
             edgefails += 1
-        if ( FML_FITFAIL | FML_INITFAIL ) & voxel[9]:
+        if ( FML_FITFAIL | FML_INITFAIL ) & voxel[10]:
             fitfails += 1
         data_out = []
     else:
@@ -576,37 +580,39 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
             if initiallags is None:
-                dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[
-                    vox], lagmask[vox], failreason = \
+                dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], \
+                    gaussout[vox, :], windowout[vox, :], \
+                    R2[vox], lagmask[vox], failreason = \
                     procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots)
                 volumetotal += volumetotalinc
-                if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[9]:
+                if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[10]:
                     ampfails += 1
-                if FML_BADSEARCHWINDOW & voxel[9]:
+                if FML_BADSEARCHWINDOW & voxel[10]:
                     windowfails += 1
-                if FML_BADWIDTH & voxel[9]:
+                if FML_BADWIDTH & voxel[10]:
                     widthfails += 1
-                if FML_BADLAG & voxel[9]:
+                if FML_BADLAG & voxel[10]:
                     lagfails += 1
-                if FML_HITEDGE & voxel[9]:
+                if FML_HITEDGE & voxel[10]:
                     edgefails += 1
-                if ( FML_FITFAIL | FML_INITFAIL ) & voxel[9]:
+                if ( FML_FITFAIL | FML_INITFAIL ) & voxel[10]:
                     fitfails += 1
             else:
                 if initiallags[vox] != 0.0:
-                    dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[
-                        vox], lagmask[vox], failreason = \
+                    dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox],
+                    gaussout[vox, :], windowout[vox, :],
+                    R2[vox], lagmask[vox], failreason = \
                         procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots, initiallags[vox])
                     volumetotal += volumetotalinc
-                    if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[9]:
+                    if ( FML_BADAMPLOW | FML_BADAMPNEG ) & voxel[10]:
                         ampfails += 1
-                    if FML_BADSEARCHWINDOW & voxel[9]:
+                    if FML_BADSEARCHWINDOW & voxel[10]:
                         windowfails += 1
-                    if FML_BADWIDTH & voxel[9]:
+                    if FML_BADWIDTH & voxel[10]:
                         widthfails += 1
-                    if FML_BADLAG & voxel[9]:
+                    if FML_BADLAG & voxel[10]:
                         lagfails += 1
-                    if FML_HITEDGE & voxel[9]:
+                    if FML_HITEDGE & voxel[10]:
                         edgefails += 1
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
     print('\tampfails=', ampfails,
@@ -2572,10 +2578,12 @@ def main():
     if optiondict['sharedmem']:
         corrout, dummy, dummy = allocshared(internalvalidcorrshape, rt_floatset)
         gaussout, dummy, dummy = allocshared(internalvalidcorrshape, rt_floatset)
+        windowout, dummy, dummy = allocshared(internalvalidcorrshape, rt_floatset)
         outcorrarray, dummy, dummy = allocshared(internalcorrshape, rt_floatset)
     else:
         corrout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
         gaussout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
+        windowout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
         outcorrarray = np.zeros(internalcorrshape, dtype=rt_floattype)
     logmem('after correlation array allocation', file=memfile)
 
@@ -2771,7 +2779,7 @@ def main():
                                           lagtc, slicesize,
                                           corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
                                           lagmask, failimage, lagtimes, lagstrengths, lagsigma, corrout, meanval,
-                                          gaussout,
+                                          gaussout, windowout, 
                                           R2, optiondict)
         timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
 
@@ -2793,7 +2801,7 @@ def main():
                                           lagtc, slicesize,
                                           corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
                                           lagmask, failimage, lagtimes, lagstrengths, lagsigma, corrout, meanval,
-                                          gaussout,
+                                          gaussout, windowout, 
                                           R2, optiondict,
                                           initiallags=initlags)
                 else:
@@ -3128,6 +3136,14 @@ def main():
         tide.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes,
                          outputname + '_gaussout' + outsuffix4d)
     gaussout = None
+    outcorrarray[validvoxels, :] = windowout[:, :]
+    if optiondict['textio']:
+        tide.writenpvecs(outcorrarray.reshape(nativecorrshape),
+                         outputname + '_windowout' + outsuffix4d + '.txt')
+    else:
+        tide.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes,
+                         outputname + '_windowout' + outsuffix4d)
+    windowout = None
     outcorrarray[validvoxels, :] = corrout[:, :]
     if optiondict['textio']:
         tide.writenpvecs(outcorrarray.reshape(nativecorrshape),
