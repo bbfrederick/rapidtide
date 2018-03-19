@@ -43,7 +43,7 @@ def usage():
     print("	--ncomp=NCOMPS         - the number of PCA/ICA components to return (default is to estimate the number")
     print("	--smooth=SIGMA         - spatially smooth the input data with a SIGMA mm kernel")
     print("	--type=TYPE            - type of decomposition to perform, 'pca', 'sparse' or 'ica' - default is 'pca'")
-    print("	--demean               - demean data when reconstructing")
+    print("	--demean             - demean data when reconstructing")
     #print("	--novarnorm            - do not variance normalize data prior to decomposition")
     print("")
     return()
