@@ -43,7 +43,7 @@ def usage():
     print("	--ncomp=NCOMPS         - the number of PCA/ICA components to return (default is to estimate the number")
     print("	--smooth=SIGMA         - spatially smooth the input data with a SIGMA mm kernel")
     print("	--type=TYPE            - type of decomposition to perform, 'pca', 'sparse' or 'ica' - default is 'pca'")
-    print("	--novarnorm            - do not variance normalize data prior to decomposition")
+    #print("	--novarnorm            - do not variance normalize data prior to decomposition")
     print("")
     return()
 
@@ -52,7 +52,7 @@ usedmask = False
 decomptype = 'pca'
 pcacomponents = 0.5
 icacomponents = None
-varnorm = True
+#varnorm = True
 sigma = 0.0
 max_iter = 250
 n_init = 100
@@ -61,7 +61,7 @@ minibatch = True
 
 # parse command line arguments
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "novarnorm", "dmask=", "smooth=", "ncomp=", "type="])
+    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "smooth=", "ncomp=", "type="])
 except getopt.GetoptError as err:
     # print(help information and exit:
     print(str(err)) # will print something like "option -a not recognized"
@@ -90,9 +90,6 @@ for o, a in opts:
         else:
             pcacomponents = int(a)
             icacomponents = pcacomponents
-    elif o == "--novarnorm":
-        varnorm = False
-        print('will not variance normalize data prior to decomposition')
     elif o == "--smooth":
         sigma = float(a)
         print('will smooth data with a', sigma, 'mm kernel')
@@ -164,13 +161,13 @@ print(rs_datafile.shape, procdata.shape)
 print("finding mean of array")
 themean = np.mean(procdata, axis=1)
 
-if varnorm:
-    print("variance normalizing array")
-    thevar = np.var(procdata, axis=1)
-    print('shape of mean', themean.shape)
-    for i in range(procdata.shape[0]):
-        procdata[i, :] /= thevar[i]
-    procdata = np.nan_to_num(procdata)
+#if varnorm:
+#    print("variance normalizing array")
+#    thevar = np.var(procdata, axis=1)
+#    print('shape of mean', themean.shape)
+#    for i in range(procdata.shape[0]):
+#        procdata[i, :] /= thevar[i]
+#    procdata = np.nan_to_num(procdata)
 
 # applying mask
 if datamaskdims[4] > 1:
