@@ -2744,7 +2744,10 @@ class noncausalfilter:
                       lowestfreq)
                 sys.exit()
 
-        padlen = int(self.padtime * samplerate)
+        if self.padtime < 0.0:
+            padlen = int(len(data) // 2)
+        else:
+            padlen = int(self.padtime * samplerate)
         if self.debug:
             print('samplerate=', samplerate)
             print('lowerstop=', self.lowerstop)
