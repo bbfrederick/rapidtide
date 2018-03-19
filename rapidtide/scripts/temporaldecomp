@@ -130,7 +130,7 @@ if usedmask:
     if not tide.checkspacematch(datafiledims, datamaskdims):
         print('input mask spatial dimensions do not match image')
         exit()
-    if not tide.checktimematch(datafiledims, datamaskdims, 0, 0):
+    if not (tide.checktimematch(datafiledims, datamaskdims, 0, 0) or datamaskdims[4] == 1):
         print('input mask time dimension does not match image')
         exit()
 
