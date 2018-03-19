@@ -43,7 +43,6 @@ def usage():
     print("	--ncomp=NCOMPS         - the number of PCA/ICA components to return (default is to estimate the number")
     print("	--smooth=SIGMA         - spatially smooth the input data with a SIGMA mm kernel")
     print("	--type=TYPE            - type of decomposition to perform, 'pca', 'sparse' or 'ica' - default is 'pca'")
-    print("	--nodemean             - do not demean data prior to decomposition")
     print("	--novarnorm            - do not variance normalize data prior to decomposition")
     print("")
     return()
@@ -54,7 +53,6 @@ decomptype = 'pca'
 pcacomponents = 0.5
 icacomponents = None
 varnorm = True
-demean = True
 sigma = 0.0
 max_iter = 250
 n_init = 100
@@ -63,7 +61,7 @@ minibatch = True
 
 # parse command line arguments
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "nodemean", "novarnorm", "dmask=", "smooth=", "ncomp=", "type="])
+    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "novarnorm", "dmask=", "smooth=", "ncomp=", "type="])
 except getopt.GetoptError as err:
     # print(help information and exit:
     print(str(err)) # will print something like "option -a not recognized"
@@ -92,9 +90,6 @@ for o, a in opts:
         else:
             pcacomponents = int(a)
             icacomponents = pcacomponents
-    elif o == "--nodemean":
-        demean = False
-        print('will not demean data prior to decomposition')
     elif o == "--novarnorm":
         varnorm = False
         print('will not variance normalize data prior to decomposition')
@@ -166,12 +161,8 @@ procdata = rs_datafile[proclocs, :][0]
 print(rs_datafile.shape, procdata.shape)
 
 # normalize the individual images
-if demean:
-    print("demeaning array")
-    themean = np.mean(procdata, axis=1)
-    print('shape of mean', themean.shape)
-    for i in range(procdata.shape[0]):
-        procdata[i, :] -= themean[i]
+print("finding mean of array")
+themean = np.mean(procdata, axis=1)
 
 if varnorm:
     print("variance normalizing array")
@@ -237,10 +228,9 @@ else:
     tide.savetonifti(tempout.reshape((xsize, ysize, numslices, coefficients.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_coefficients')
 
     # save the dimensionality reduced data
-    invtransformeddata = theinvtrans
     print("writing fit data")
     theheader = datafile_hdr
-    theheader['dim'][4] = invtransformeddata.shape[1]
-    tempout = np.zeros((numspatiallocs, invtransformeddata.shape[1]), dtype='float')
-    tempout[proclocs, :] = invtransformeddata[:, :]
-    tide.savetonifti(tempout.reshape((xsize, ysize, numslices, invtransformeddata.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_fit')
+    theheader['dim'][4] = theinvtrans.shape[1]
+    tempout = np.zeros((numspatiallocs, theinvtrans.shape[1]), dtype='float')
+    tempout[proclocs, :] = theinvtrans[:, :]
+    tide.savetonifti(tempout.reshape((xsize, ysize, numslices, theinvtrans.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_fit')
