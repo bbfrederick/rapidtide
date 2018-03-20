@@ -166,7 +166,7 @@ else:
     #for theregion in range(1, numregions + 1):
         #outputvoxels[np.where(templatevoxels[:, theregion - 1] == 1)] = theregion
     for i in range(numvoxels):
-        if np.max(templatevoxels[i, :]) > 0:
+        if np.max(templatevoxels[i, :]) > 0.5:
             outputvoxels[i] = np.argmax(templatevoxels[i, :])
     template_hdr['dim'][4] = 1
     tide.savetonifti(outputvoxels.reshape((xsize, ysize, numslices)), template_hdr, templatesizes, outputtemplatename)
