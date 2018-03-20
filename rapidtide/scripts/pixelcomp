@@ -137,10 +137,11 @@ thearray=np.asarray(pairlist)
 print(thearray[:,0])
 
 # construct a 2d histogram
-numbins = 100
-H, xedges, yedges = np.histogram2d(thearray[:,0],thearray[:,1], bins=numbins, normed=True)
-extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
-cset = plt.contour(H,extent=extent)
+#numbins = 100
+#H, xedges, yedges = np.histogram2d(thearray[:,0],thearray[:,1], bins=numbins, normed=True)
+#extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
+#cset = plt.contour(H,extent=extent)
+plt.plot(thearray[:,0], thearray[:,1])
 show()
 
 # now fit the line
