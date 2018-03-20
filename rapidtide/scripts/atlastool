@@ -73,10 +73,10 @@ targetfile = None
 for o, a in opts:
     if o == "--3d":
         volumeperregion = False
-        print('will put 3d file')
+        print('will put out a 3d file')
     elif o == "--4d":
         volumeperregion = True
-        print('will put 4d file')
+        print('will put out a 4d file')
     elif o == "--split":
         dosplit = True
         print('will split regions into left and right subregions')
@@ -106,6 +106,7 @@ if numtimepoints > 1:
     templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints)).astype(int)
 else:
     # file is 3d, construct a 4d array
+    print('going from 3d to 4d')
     numregions = np.max(template_data).astype(int)
     rs_template = np.reshape(template_data, (numvoxels)).astype(int)
     templatevoxels = np.zeros((numvoxels, numregions), dtype(int))
@@ -114,6 +115,7 @@ else:
 
 # now we have a 4d file, regardless of what we started with
 if dosplit:
+    print('splitting left right')
     tempvoxels = np.reshape(templatevoxels, (xsize, ysize, numslices, numregions)).astype(int)
     tempvoxels[int(xsize // 2) + 1:, :, :, :] *= 2
     templatevoxels = np.reshape(tempvoxels, (numvoxels, numregions))
@@ -127,6 +129,7 @@ if dosplit:
 
 if targetfile is not None:
     # do the resampling here
+    print('resampling to new resolution')
     fsldir = os.environ.get('FSLDIR')
     if fsldir is not None:
         # first write out a temp file with the data
@@ -162,9 +165,8 @@ if volumeperregion:
     template_hdr['dim'][4] = numregions
     tide.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, templatesizes, outputtemplatename)
 else:
+    print('collapsing back to 3d')
     outputvoxels = templatevoxels[:, 0] * 0
-    #for theregion in range(1, numregions + 1):
-        #outputvoxels[np.where(templatevoxels[:, theregion - 1] == 1)] = theregion
     for i in range(numvoxels):
         if np.max(templatevoxels[i, :]) > 0.5:
             outputvoxels[i] = np.argmax(templatevoxels[i, :])
