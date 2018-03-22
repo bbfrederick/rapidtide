@@ -121,7 +121,7 @@ def procOneNullCorrelation(iteration, indata, ncprefilter, oversampfreq, corrsca
     # fit the correlation
     maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = \
         onecorrfit(thexcorr, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
-                   optiondict)
+                   optiondict, disablethresholds=True)
 
     return maxval
 
@@ -181,6 +181,12 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
             # make a shuffled copy of the regressors
             shuffleddata = np.random.permutation(indata)
 
+            # crosscorrelate with original, fit, and return the maximum value, and add it to the list
+            thexcorr = procOneNullCorrelation(i, indata, ncprefilter, oversampfreq, corrscale, corrorigin,
+                                                    lagmininpts, lagmaxinpts, optiondict)
+            corrlist[i] = thexcorr
+
+            '''
             # crosscorrelate with original
             thexcorr, dummy = onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
                                       indata,
@@ -193,6 +199,7 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
 
             # find and tabulate correlation coefficient at optimal lag
             corrlist[i] = maxval
+            '''
 
             # progress
             if optiondict['showprogressbar']:
@@ -369,7 +376,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
     return volumetotal, theglobalmaxlist
 
 
-def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None):
+def onecorrfit(thetc, corrscale, optiondict, disablethresholds=False, displayplots=False, initiallag=None):
     if initiallag is not None:
         maxguess = initiallag
         useguess = True
@@ -379,6 +386,11 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
         useguess = False
         widthlimit = optiondict['widthlimit']
 
+    if disablethresholds:
+        thethreshval=0.0
+    else:
+        thethreshval=optiondict['lthreshval']
+
     if optiondict['bipolar']:
         if max(thetc) < -1.0 * min(thetc):
             flipfac = rt_floatset(-1.0)
@@ -386,6 +398,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
             flipfac = rt_floatset(1.0)
     else:
         flipfac = rt_floatset(1.0)
+
     if not optiondict['fixdelay']:
         if optiondict['findmaxtype'] == 'gauss':
             maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss_rev(
@@ -394,7 +407,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
                 optiondict['lagmin'], optiondict['lagmax'], widthlimit,
                 absmaxsigma=optiondict['absmaxsigma'],
                 edgebufferfrac=optiondict['edgebufferfrac'],
-                threshval=optiondict['lthreshval'],
+                threshval=thethreshval,
                 uthreshval=optiondict['uthreshval'],
                 debug=optiondict['debug'],
                 refine=optiondict['gaussrefine'],
@@ -1510,7 +1523,6 @@ def main():
     optiondict['fixeddelayvalue'] = 0.0
 
     # significance estimation options
-    optiondict['estimate_significance'] = True  # if True, estimate null correlation distribution prior to each pass
     optiondict['numestreps'] = 10000  # the number of sham correlations to perform to estimate significance
     optiondict['nohistzero'] = False  # if False, there is a spike at R=0 in the significance histogra
     optiondict['ampthreshfromsig'] = True
@@ -1847,7 +1859,6 @@ def main():
         elif o == '-N':
             optiondict['numestreps'] = int(a)
             if optiondict['numestreps'] == 0:
-                optiondict['estimate_significance'] = False
                 optiondict['ampthreshfromsig'] = False
                 print('Will not estimate significance thresholds from null correlations')
             else:
@@ -2421,9 +2432,6 @@ def main():
         print('clip indices=', clipstart, clipend, reference_x[clipstart], reference_x[clipend], os_fmri_x[0],
               os_fmri_x[-1])
 
-    # now correct for the offset into the fMRI timecourse caused by skipping initial points.  NOT TESTED - 11/18/13
-    # reference_x=reference_x-skiptime
-
     # generate the comparison regressor from the input timecourse
     # correct the output time points
     # check for extrapolation
@@ -2700,7 +2708,7 @@ def main():
             cleaned_nonosreferencetc = 1.0 * nonosreferencetc
 
         # Step 0 - estimate significance
-        if optiondict['estimate_significance']:
+        if optiondict['numestreps'] > 0:
             timings.append(['Significance estimation start, pass ' + str(thepass), time.time(), None, None])
             print('\n\nSignificance estimation, pass ' + str(thepass))
             if optiondict['verbose']:
@@ -3088,7 +3096,7 @@ def main():
                                  outputname + '_' + mapsuffix + outsuffix3d)
         meanvalue = None
 
-    if optiondict['estimate_significance']:
+    if optiondict['numestreps'] > 0:
         for i in range(0, len(thepercentiles)):
             pmask = np.where(np.abs(lagstrengths) > pcts[i], lagmask, 0 * lagmask)
             if optiondict['dosighistfit']:
