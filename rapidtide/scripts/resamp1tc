@@ -24,22 +24,19 @@ from __future__ import print_function, division
 
 import sys
 import platform
+import getopt
 
 import matplotlib
 import rapidtide.tide_funcs as tide
 from scipy import arange
 from numpy import max, floor
-from pylab import plot, legend, show
+import pylab as plt
 
-#if platform.system() == 'Darwin':
-#    matplotlib.use('MacOSX')
-#else:
-#    matplotlib.use('TkAgg')
 
 def usage():
     print("resamp1tc - resample a timeseries file")
     print("")
-    print("usage: resamp1tc infilename insamplerate outputfile outsamplerate [-s]")
+    print("usage: resamp1tc infilename insamplerate outputfile outsamplerate [-s] [--nodisplay]")
     print("")
     print("required arguments:")
     print("	inputfile	- the name of the input text file")
@@ -48,13 +45,17 @@ def usage():
     print("	outsamplerate	- the sample rate of the output file in Hz")
     print("")
     print(" options:")
-    print("     -s    split output data into physiological bands (LFO, respiratory, cardiac)")
+    print("     -s              - split output data into physiological bands (LFO, respiratory, cardiac)")
+    print("     --nodisplay     - do not plot the data (for noninteractive use)")
+    print("")
     return ()
 
 
 def main():
     usebutterworthfilter = False
+    display = True
     splittcs = False
+
     # get the command line parameters
     nargs = len(sys.argv)
     if nargs < 5:
@@ -64,9 +65,24 @@ def main():
     insamplerate = float(sys.argv[2])
     outputfile = sys.argv[3]
     outsamplerate = float(sys.argv[4])
-    if nargs == 6:
-        if sys.argv[5] == '-s':
+
+    # now scan for optional arguments
+    try:
+        opts, args = getopt.getopt(sys.argv[5:], "s", ["nodisplay", "help"])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(str(err))  # will print something like "option -x not recognized"
+        usage()
+        sys.exit(2)
+    
+    for o, a in opts:
+        if o == "--nodisplay":
+            display = False
+            print('turning display off')
+        elif o == "-s":
             splittcs = True
+        else:
+            assert False, "unhandled option"
 
     print('splittcs=', splittcs)
 
@@ -86,29 +102,33 @@ def main():
         if len(out_t) < len(outputdata2):
             outputdata2 = outputdata2[0:len(out_t)]
 
-    plot(in_t, inputdata + 0.4, 'k')
+    if display:
+        plt.plot(in_t, inputdata + 0.4, 'k')
 
     if splittcs:
         outputdata_lf = tide.lfo_pass(outsamplerate, outputdata, usebutterworthfilter)
         outputdata_resp = tide.resp_pass(outsamplerate, outputdata, usebutterworthfilter)
         outputdata_card = tide.card_pass(outsamplerate, outputdata, usebutterworthfilter)
-        plot(out_t, outputdata_lf - 0.4, 'b')
-        plot(out_t, outputdata_resp - 0.4, 'g')
-        plot(out_t, outputdata_card - 0.4, 'r')
+        if display:
+            plt.plot(out_t, outputdata_lf - 0.4, 'b')
+            plt.plot(out_t, outputdata_resp - 0.4, 'g')
+            plt.plot(out_t, outputdata_card - 0.4, 'r')
         tide.writevec(outputdata_lf, outputfile + '_lf')
         tide.writevec(outputdata_resp, outputfile + '_resp')
         tide.writevec(outputdata_card, outputfile + '_card')
     else:
-        plot(out_t, outputdata - 0.4, 'r')
         tide.writevec(outputdata, outputfile)
         tide.writevec(outputdata, outputfile + '_dual')
-        if outsamplerate < insamplerate:
-            plot(out_t, outputdata2 - 0.8, 'g')
-            legend(('original signal', 'resampled', 'dualresampled'))
-        else:
-            legend(('original signal', 'resampled'))
+        if display:
+            plt.plot(out_t, outputdata - 0.4, 'r')
+            if outsamplerate < insamplerate:
+                plt.plot(out_t, outputdata2 - 0.8, 'g')
+                plt.legend(('original signal', 'resampled', 'dualresampled'))
+            else:
+                plt.legend(('original signal', 'resampled'))
 
-    show()
+    if display:
+        plt.show()
 
 if __name__ == '__main__':
     main()
