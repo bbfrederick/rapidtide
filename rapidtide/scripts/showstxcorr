@@ -22,6 +22,7 @@
 from __future__ import print_function, division
 import sys
 import matplotlib.pyplot as plt
+import pandas as pd
 import getopt
 import rapidtide.tide_funcs as tide
 from scipy.signal import correlate
@@ -445,6 +446,28 @@ if matrixoutput:
     tide.savetonifti(Rvals, init_hdr, init_sizes, outfilename + '_maxxcorr')
     tide.savetonifti(delayvals, init_hdr, init_sizes, outfilename + '_delayvals')
     tide.savetonifti(valid, init_hdr, init_sizes, outfilename + '_valid')
+    rows = []
+    cols = []
+    for i in range(n_clusters):
+        rows.append('region ' + str(i + 1))
+        cols.append('region ' + str(i + 1))
+    for segment in range(plength):
+        df = pd.DataFrame(data=corrpertime, columns=cols)
+        df.insert(0, 'sources', pd.Series(rows))
+        df.to_csv(outfilename + '_seg_' + str(segment).zfill(4) + '_pearsonR.csv', index=False)
+        df = pd.DataFrame(data=ppertime, columns=cols)
+        df.insert(0, 'sources', pd.Series(rows))
+        df.to_csv(outfilename + '_seg_' + str(segment).zfill(4) + '_corrp.csv', index=False)
+    for segment in range(xlength):
+        df = pd.DataFrame(data=Rvals, columns=cols)
+        df.insert(0, 'sources', pd.Series(rows))
+        df.to_csv(outfilename + '_seg_' + str(segment).zfill(4) + '_maxxcorr.csv', index=False)
+        df = pd.DataFrame(data=delayvals, columns=cols)
+        df.insert(0, 'sources', pd.Series(rows))
+        df.to_csv(outfilename + '_seg_' + str(segment).zfill(4) + '_delayvals.csv', index=False)
+        df = pd.DataFrame(data=valid, columns=cols)
+        df.insert(0, 'sources', pd.Series(rows))
+        df.to_csv(outfilename + '_seg_' + str(segment).zfill(4) + '_valid.csv', index=False)
 
 else:
     times, corrpertime, ppertime = tide.shorttermcorr_1D(reformdata[0, :], flipfac * reformdata[1, :], sampletime,
