@@ -1585,13 +1585,21 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
 
 
 @conditionaljit2()
-def maxindex_noedge(thexcorr_x, thexcorr_y):
+def maxindex_noedge(thexcorr_x, thexcorr_y, bipolar=False):
     lowerlim = 0
     upperlim = len(thexcorr_x) - 1
     done = False
     while not done:
+        flipfac = 1.0
         done = True
         maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int32')
+        if bipolar:
+            minindex = (np.argmax(np.fabs(thexcorr_y[lowerlim:upperlim])) + lowerlim).astype('int32')
+            if np.fabs(thexcorr_y[minindex]) > np.fabs(thexcorr_y[maxindex]):
+                maxindex = minindex
+                flipfac = -1.0
+        else:
+            maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int32')
         if upperlim == lowerlim:
             done = True
         if maxindex == 0:
@@ -1600,7 +1608,7 @@ def maxindex_noedge(thexcorr_x, thexcorr_y):
         if maxindex == upperlim:
             upperlim -= 1
             done = False
-    return maxindex
+    return maxindex, flipfac
     
 
 # disabled conditionaljit on 11/8/16.  This causes crashes on some machines (but not mine, strangely enough)
@@ -1608,6 +1616,7 @@ def maxindex_noedge(thexcorr_x, thexcorr_y):
 def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                absmaxsigma=1000.0,
                hardlimit=True,
+               bipolar=False,
                edgebufferfrac=0.0, threshval=0.0, uthreshval=1.0,
                debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
                searchfrac=0.5, fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
@@ -1644,11 +1653,12 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
 
     # make an initial guess at the fit parameters for the gaussian
     # start with finding the maximum value and its location
+    flipfac = 1.0
     if useguess:
         maxindex = valtoindex(thexcorr_x, maxguess)
     else:
-        #maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype('int32')
-        maxindex = maxindex_noedge(thexcorr_x, thexcorr_y)
+        maxindex, flipfac = maxindex_noedge(thexcorr_x, thexcorr_y, bipolar=bipolar)
+        thexcorr_y *= flipfac
     maxlag_init = (1.0 * thexcorr_x[maxindex]).astype('float64')
     maxval_init = thexcorr_y[maxindex].astype('float64')
     if debug:
@@ -1661,10 +1671,8 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     peakpoints[-1] = 0
     peakstart = maxindex + 0
     peakend = maxindex + 0
-    #while (thegrad[peakend + 1] < 0.0) and (peakend + 1 < len(peakpoints) - 1):
     while thegrad[peakend + 1] < 0.0 and peakpoints[peakend + 1] == 1:
         peakend += 1
-    #while thegrad[peakstart - 1] > 0.0 and peakstart - 1 > -1:
     while thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
         peakstart -= 1
     # This is calculated from first principles, but it's always big by a factor or ~1.4. 
@@ -1675,10 +1683,10 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
 
     # now check the values for errors
     if hardlimit:
-        limitfac = 1.0
+        rangeextension = 0.0
     else:
-        limitfac = 1.5
-    if not ((limitfac * lagmin - binwidth) <= maxlag_init <= (limitfac * lagmax + binwidth)):
+        rangeextension = (lagmax - lagmin) * 0.75
+    if not ((lagmin - rangeextension - binwidth) <= maxlag_init <= (lagmax + rangeextension + binwidth)):
         failreason |= (FML_INITFAIL | FML_BADLAG )
         if debug:
             print('bad initial')
@@ -1784,7 +1792,7 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
         pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
         pl.show()
-    return maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend
+    return maxindex, maxlag, flipfac * maxval, maxsigma, maskval, failreason, peakstart, peakend
 
 
 @conditionaljit2()

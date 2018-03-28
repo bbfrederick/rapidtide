@@ -391,19 +391,11 @@ def onecorrfit(thetc, corrscale, optiondict, disablethresholds=False, displayplo
     else:
         thethreshval=optiondict['lthreshval']
 
-    if optiondict['bipolar']:
-        if max(thetc) < -1.0 * min(thetc):
-            flipfac = rt_floatset(-1.0)
-        else:
-            flipfac = rt_floatset(1.0)
-    else:
-        flipfac = rt_floatset(1.0)
-
     if not optiondict['fixdelay']:
         if optiondict['findmaxtype'] == 'gauss':
             maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss_rev(
                 corrscale,
-                flipfac * thetc,
+                thetc,
                 optiondict['lagmin'], optiondict['lagmax'], widthlimit,
                 absmaxsigma=optiondict['absmaxsigma'],
                 edgebufferfrac=optiondict['edgebufferfrac'],
@@ -411,6 +403,7 @@ def onecorrfit(thetc, corrscale, optiondict, disablethresholds=False, displayplo
                 uthreshval=optiondict['uthreshval'],
                 debug=optiondict['debug'],
                 refine=optiondict['gaussrefine'],
+                bipolar=optiondict['bipolar'],
                 maxguess=maxguess,
                 useguess=useguess,
                 searchfrac=optiondict['searchfrac'],
@@ -421,6 +414,14 @@ def onecorrfit(thetc, corrscale, optiondict, disablethresholds=False, displayplo
                 hardlimit=optiondict['hardlimit'],
                 displayplots=displayplots)
         else:
+            if optiondict['bipolar']:
+                if max(thetc) < -1.0 * min(thetc):
+                    flipfac = rt_floatset(-1.0)
+                else:
+                    flipfac = rt_floatset(1.0)
+            else:
+                flipfac = rt_floatset(1.0)
+
             maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_quad(
                 corrscale,
                 flipfac * thetc,
@@ -437,7 +438,7 @@ def onecorrfit(thetc, corrscale, optiondict, disablethresholds=False, displayplo
                 zerooutbadfit=optiondict['zerooutbadfit'],
                 lagmod=optiondict['lagmod'],
                 displayplots=displayplots)
-        maxval *= flipfac
+            maxval *= flipfac
     else:
         # do something different
         failreason = np.int16(0)

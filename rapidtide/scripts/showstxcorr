@@ -383,6 +383,7 @@ widthlimit=15.0
 halfwindow=int(laglimit*Fs)
 searchstart=int(tclen)/2-halfwindow
 searchend=int(tclen)/2+halfwindow
+print(tclen, halflen, searchstart, searchend)
 xcorr_x_trim=xcorr_x[searchstart:searchend]
 if flipregressor:
     flipfac = -1.0
