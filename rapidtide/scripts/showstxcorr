@@ -33,7 +33,8 @@ import nibabel as nib
 from pylab import plot, legend, show, figure
 
 
-def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend, corrweighting='none', numreps=1000):
+def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend,
+                            corrweighting='none', numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
     corrlist = zeros((numreps), dtype='float')
     corrlist_pear = zeros((numreps), dtype='float')
@@ -48,7 +49,8 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
         filteredshuffleddata = tide.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend)
 
         # crosscorrelate with original
-        theshuffledxcorr = tide.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr, weighting=corrweighting)
+        theshuffledxcorr = tide.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr,
+                                              weighting=corrweighting)
 
         # find and tabulate correlation coefficient at optimal lag
         theshuffledxcorr_trim = theshuffledxcorr[searchstart:searchend + 1]
@@ -78,7 +80,8 @@ def usage():
     print("")
     print("showstxcorr - calculate and display the short term crosscorrelation between two timeseries")
     print("")
-    print("usage: showstxcorr -i timecoursefile1 [-i timecoursefile2] --samplefreq=FREQ -o outputfile [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [-nowindow] [-f] [--phat] [--liang] [--eckart] [-z FILENAME]")
+    print(
+        "usage: showstxcorr -i timecoursefile1 [-i timecoursefile2] --samplefreq=FREQ -o outputfile [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [-nowindow] [-f] [--phat] [--liang] [--eckart] [-z FILENAME]")
     print("")
     print("required arguments:")
     print("    -i, --infile= timcoursefile1     - text file containing one or more timeseries")
@@ -105,7 +108,7 @@ def usage():
     print("                    standard crosscorrelation")
     print("    --eckart      - perform phase alignment transform with Eckart weighting function rather than ")
     print("                    standard crosscorrelation")
-    #print("    -l LABEL      - label for the delay value")
+    # print("    -l LABEL      - label for the delay value")
     print("    -s STARTTIME  - time of first datapoint to use in seconds in the first file")
     print("    -D DURATION   - amount of data to use in seconds")
     print("    -d            - turns off display of graph")
@@ -115,14 +118,15 @@ def usage():
     print("    -L            - filter data and regressors to LFO band")
     print("    -R            - filter data and regressors to respiratory band")
     print("    -C            - filter data and regressors to cardiac band")
-    #print("    -A            - print data on a single summary line")
-    #print("    -a            - if summary mode is on, add a header line showing what values mean")
-    #print("    -z FILENAME   - use the columns of FILENAME as controlling variables and return the partial correlation")
+    # print("    -A            - print data on a single summary line")
+    # print("    -a            - if summary mode is on, add a header line showing what values mean")
+    # print("    -z FILENAME   - use the columns of FILENAME as controlling variables and return the partial correlation")
     print("    -W WINDOWLEN  - use a window length of WINDOWLEN seconds (default is 50.0s)")
-    print("    -S STEPSIZE   - timestep between subsequent measurements (default is 25.0s).  Will be rounded to the nearest sample time")
-    #print("    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS repetition")
+    print(
+        "    -S STEPSIZE   - timestep between subsequent measurements (default is 25.0s).  Will be rounded to the nearest sample time")
+    # print("    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS repetition")
     print("    -f            - negate second regressor")
-    #print("    -i            - output intermediate steps in crosscorrelation calculation")
+    # print("    -i            - output intermediate steps in crosscorrelation calculation")
     print("")
     return ()
 
@@ -145,7 +149,7 @@ verbose = True
 summarymode = False
 labelline = False
 windowtime = 50.0
-window_lowestfreq = 1.0/windowtime
+window_lowestfreq = 1.0 / windowtime
 window_upperfreq = 0.15
 stepsize = 25.0
 estimate_significance = False
@@ -156,9 +160,10 @@ matrixoutput = False
 # scan the command line arguments
 try:
     opts, args = getopt.gnu_getopt(sys.argv[1:], "i:IfN:W:S:z:aATtVLRCF:dl:s:D:wgo:", ["infile=", "outfile=",
-                                                                                    "phat", "liang", "eckart",
-                                                                                    "nodetrend", "nowindow",
-                                                                                    "samplefreq=", "sampletime=", "help"])
+                                                                                       "phat", "liang", "eckart",
+                                                                                       "nodetrend", "nowindow",
+                                                                                       "samplefreq=", "sampletime=",
+                                                                                       "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -176,14 +181,13 @@ sampletime = None
 Fs = None
 outfilename = None
 
-
 theprefilter = tide.noncausalfilter()
 theprefilter.setbutter(usebutterworthfilter, filtorder)
 
 # set the default characteristics
 print('setting default filter to pass', window_lowestfreq, 'to', window_upperfreq)
 theprefilter.settype('arb')
-theprefilter.setarb(window_lowestfreq, window_lowestfreq * 1.05, window_upperfreq / 1.05, window_upperfreq )
+theprefilter.setarb(window_lowestfreq, window_lowestfreq * 1.05, window_upperfreq / 1.05, window_upperfreq)
 
 for o, a in opts:
     if o == "-d":
@@ -268,7 +272,7 @@ for o, a in opts:
         windowtime = float(a)
         window_lowestfreq = 1.0 / windowtime
         theprefilter.settype('arb')
-        theprefilter.setarb(window_lowestfreq, window_lowestfreq * 1.05, window_upperfreq / 1.05, window_upperfreq )
+        theprefilter.setarb(window_lowestfreq, window_lowestfreq * 1.05, window_upperfreq / 1.05, window_upperfreq)
         if verbose:
             print('windowtime set to', windowtime)
             print('setting default filter to pass', window_lowestfreq, 'to', window_upperfreq)
@@ -361,77 +365,79 @@ else:
     print('showstxcorr requires 1 multicolumn timecourse file or two single column timecourse files as input')
     usage()
     sys.exit()
-    
+
 # band limit the regressors if that is needed
 if theprefilter.gettype() != 'none':
     if verbose:
         print("filtering to ", theprefilter.gettype(), " band")
 
-thedims=trimmeddata.shape
-tclen=thedims[1]
-numcomponents=thedims[0]
-reformdata=reshape(trimmeddata,(numcomponents,tclen))
- 
+thedims = trimmeddata.shape
+tclen = thedims[1]
+numcomponents = thedims[0]
+reformdata = reshape(trimmeddata, (numcomponents, tclen))
+
 print('preprocessing all timecourses')
-for component in range(0,numcomponents):
-    filtereddata=tide.corrnormalize(theprefilter.apply(Fs, reformdata[component,:]), False, dodetrend)
-    reformdata[component,:]=tide.stdnormalize(tide.hamming(len(filtereddata))*tide.detrend(tide.stdnormalize(filtereddata)))
-   
-xcorr_x=r_[0.0:tclen]*sampletime-(tclen*sampletime)/2.0
+for component in range(0, numcomponents):
+    filtereddata = tide.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]), False, dodetrend)
+    reformdata[component, :] = tide.stdnormalize(tide.detrend(tide.stdnormalize(filtereddata)))
+
+xcorr_x = r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
 laglimit = 15.0
 widthlimit = 15.0
-halfwindow = int(laglimit*Fs)
+halfwindow = int(laglimit * Fs)
 searchstart = int(int(tclen) // 2 - halfwindow)
 searchend = int(int(tclen) // 2 + halfwindow)
-print(tclen, halfwindow, searchstart, searchend)
 xcorr_x_trim = xcorr_x[searchstart:searchend]
 if flipregressor:
     flipfac = -1.0
 else:
     flipfac = 1.0
 
-
 if matrixoutput:
     # find the lengths of the outputfiles
     print('finding timecourse lengths')
     times, corrpertime, ppertime = tide.shorttermcorr_1D(reformdata[0, :], reformdata[0, :], sampletime, windowtime, \
-                                          samplestep=int(stepsize // sampletime), prewindow=prewindow, dodetrend=False)
+                                                         samplestep=int(stepsize // sampletime), prewindow=prewindow,
+                                                         dodetrend=False)
     plength = len(times)
-    times, xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(reformdata[0, :], reformdata[0, :], sampletime, windowtime, \
-                                              samplestep=int(stepsize // sampletime), weighting=corrweighting, \
-                                              prewindow=prewindow, dodetrend=False, display=False)
+    times, xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(reformdata[0, :], reformdata[0, :], sampletime,
+                                                                         windowtime, \
+                                                                         samplestep=int(stepsize // sampletime),
+                                                                         weighting=corrweighting, \
+                                                                         prewindow=prewindow, dodetrend=False,
+                                                                         display=False)
     xlength = len(times)
-    
+
     # now allocate the output arrays
     print('allocating data arrays')
-    Rvals=zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
-    delayvals=zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
-    valid=zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
-    corrpertime=zeros((numcomponents, numcomponents, 1, plength), dtype='float')
-    ppertime=zeros((numcomponents, numcomponents, 1, plength), dtype='float')
-    
+    Rvals = zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
+    delayvals = zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
+    valid = zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
+    corrpertime = zeros((numcomponents, numcomponents, 1, plength), dtype='float')
+    ppertime = zeros((numcomponents, numcomponents, 1, plength), dtype='float')
+
     # do the correlations
-    for component1 in range(0,numcomponents):
+    for component1 in range(0, numcomponents):
         print('correlating with component', component1)
-        for component2 in range(0,numcomponents):
+        for component2 in range(0, numcomponents):
             times, \
-                corrpertime[component1, component2, 0, :], \
-                ppertime[component1, component2, 0, :] = tide.shorttermcorr_1D( \
-                    reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
-                    samplestep=int(stepsize // sampletime), prewindow=prewindow, dodetrend=False)
+            corrpertime[component1, component2, 0, :], \
+            ppertime[component1, component2, 0, :] = tide.shorttermcorr_1D( \
+                reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
+                samplestep=int(stepsize // sampletime), prewindow=prewindow, dodetrend=False)
             times, \
-                xcorrpertime, \
-                Rvals[component1, component2, 0, :], \
-                delayvals[component1, component2, 0, :], \
-                valid[component1, component2, 0, :] = tide.shorttermcorr_2D( \
-                    reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
-                    samplestep=int(stepsize // sampletime), weighting=corrweighting, \
-                    prewindow=prewindow, dodetrend=False, display=False)
-    
+            xcorrpertime, \
+            Rvals[component1, component2, 0, :], \
+            delayvals[component1, component2, 0, :], \
+            valid[component1, component2, 0, :] = tide.shorttermcorr_2D( \
+                reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
+                samplestep=int(stepsize // sampletime), weighting=corrweighting, \
+                prewindow=prewindow, dodetrend=False, display=False)
+
     outputaffine = eye(4)
-    init_img=nib.Nifti1Image(corrpertime, outputaffine)
-    init_hdr=init_img.get_header()
-    init_sizes=init_hdr['pixdim']
+    init_img = nib.Nifti1Image(corrpertime, outputaffine)
+    init_hdr = init_img.get_header()
+    init_sizes = init_hdr['pixdim']
     init_sizes[4] = sampletime
     init_hdr['toffset'] = times[0]
     tide.savetonifti(corrpertime, init_hdr, init_sizes, outfilename + '_pearsonR')
@@ -441,11 +447,16 @@ if matrixoutput:
     tide.savetonifti(valid, init_hdr, init_sizes, outfilename + '_valid')
 
 else:
-    times, corrpertime, ppertime = tide.shorttermcorr_1D(reformdata[0, :], flipfac * reformdata[1, :], sampletime, windowtime, \
-                                                  samplestep=int(stepsize // sampletime), prewindow=prewindow, dodetrend=False)
-    times, xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(reformdata[0, :], flipfac * reformdata[1, :], sampletime, windowtime, \
-                                                                  samplestep=int(stepsize // sampletime), weighting=corrweighting, \
-                                                                  prewindow=prewindow, dodetrend=False, display=False)
+    times, corrpertime, ppertime = tide.shorttermcorr_1D(reformdata[0, :], flipfac * reformdata[1, :], sampletime,
+                                                         windowtime, \
+                                                         samplestep=int(stepsize // sampletime), prewindow=prewindow,
+                                                         dodetrend=False)
+    times, xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(reformdata[0, :], flipfac * reformdata[1, :],
+                                                                         sampletime, windowtime, \
+                                                                         samplestep=int(stepsize // sampletime),
+                                                                         weighting=corrweighting, \
+                                                                         prewindow=prewindow, dodetrend=False,
+                                                                         display=False)
     tide.writenpvecs(corrpertime, outfilename + "_pearson.txt")
     tide.writenpvecs(ppertime, outfilename + "_pvalue.txt")
     tide.writenpvecs(Rvals, outfilename + "_Rvalue.txt")
