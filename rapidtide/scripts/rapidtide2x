@@ -613,9 +613,9 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                     fitfails += 1
             else:
                 if initiallags[vox] != 0.0:
-                    dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox],
-                    gaussout[vox, :], windowout[vox, :],
-                    R2[vox], lagmask[vox], failreason = \
+                    dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], \
+                        gaussout[vox, :], windowout[vox, :], \
+                        R2[vox], lagmask[vox], failreason = \
                         procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots, initiallags[vox])
                     volumetotal += volumetotalinc
                     if ( FML_BADAMPLOW | FML_BADAMPNEG ) & failreason:
