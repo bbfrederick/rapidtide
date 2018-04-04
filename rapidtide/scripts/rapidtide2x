@@ -550,7 +550,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             if initiallags is None:
                 data_in.append(d)
             else:
-                if initiallags[d] != 0.0:
+                if initiallags[d] > -1000000.0:
                     data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
         data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
@@ -616,7 +616,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                     dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], \
                         gaussout[vox, :], windowout[vox, :], \
                         R2[vox], lagmask[vox], failreason = \
-                        procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots, initiallags[vox])
+                        procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict, displayplots, initiallag=initiallags[vox])
                     volumetotal += volumetotalinc
                     if ( FML_BADAMPLOW | FML_BADAMPNEG ) & failreason:
                         ampfails += 1
@@ -2804,7 +2804,7 @@ def main():
                 print('\n\nCorrelation despeckling subpass ' + str(despecklepass + 1))
                 outmaparray[validvoxels] = eval('lagtimes')[:]
                 medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape((numspatiallocs))
-                initlags = np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)[validvoxels]
+                initlags = np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, -1000000.0)[validvoxels]
                 if len(initlags) > 0:
                     voxelsprocessed_fc_ds += fitcorr_func(genlagtc, initial_fmri_x,
                                           lagtc, slicesize,
