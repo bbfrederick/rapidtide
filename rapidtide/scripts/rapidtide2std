@@ -134,7 +134,7 @@ featdir = args[3]
 theoutputdir = os.path.join(os.path.abspath('.'), outputdir)
 thefileroot = glob.glob(os.path.join(fileroot + '*corrout.nii.gz'))[0]
 
-thefmrimaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'lagmask', 'refinemask', 'R2', 'fitNorm', 'fitcoff', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
+thefmrimaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'lagmask', 'refinemask', 'R2', 'fitNorm', 'fitcoff', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
 
 if do4Dmaps:
     thefmrimaps.append('corrout')
