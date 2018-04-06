@@ -127,7 +127,7 @@ print("checking dimensions")
 if not tide.checkspacematch(datafiledims, datamaskdims):
     print('input mask spatial dimensions do not match image')
     exit()
-if datamaskdim[4] == 1:
+if datamaskdims[4] == 1:
    print("using 3d data mask")
    datamask3d = True
 else:
