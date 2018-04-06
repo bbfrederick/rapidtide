@@ -168,7 +168,7 @@ rs_templatemask = templatemask_data.reshape((numspatiallocs))
 bin_templatemask = where(rs_templatemask > 0.1, 1.0, 0.0)
 if regionatlasname is not None:
     rs_regionatlas = regionatlas_data.reshape((numspatiallocs))
-    numregions = np.max(rs_regionatlas)
+    numregions = int(np.max(rs_regionatlas))
 
 fitdata = zeros((numspatiallocs, timepoints), dtype='float')
 residuals = zeros((numspatiallocs, timepoints), dtype='float')
