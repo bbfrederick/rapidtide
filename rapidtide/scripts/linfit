@@ -30,21 +30,26 @@ from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
 from pylab import *
 import nibabel as nib
 
+
 def usage():
-    print("usage: linfit datafile datamask templatefile templatmask outputroot")
+    print("usage: linfit datafile datamask templatefile templatmask outputroot [--regionatlas=ATLASFILE]")
     print("")
     print("required arguments:")
-    print("	datafile	- the name of the 3D or 4D nifti file to fit")
-    print("	datamask	- the name of the 3D or 4D nifti file valid voxel mask (must match datafile)")
-    print("	templatefile	- the name of the 3D nifti template file")
-    print("	templatemask	- the name of the 3D nifti template mask")
-    print("	outputroot	- the root name of the output nifti files")
+    print("	datafile                  - the name of the 3D or 4D nifti file to fit")
+    print("	datamask                  - the name of the 3D or 4D nifti file valid voxel mask (must match datafile)")
+    print("	templatefile              - the name of the 3D nifti template file")
+    print("	templatemask              - the name of the 3D nifti template mask")
+    print("	outputroot                - the root name of the output nifti files")
     print("")
-    return()
+    print("optional arguments:")
+    print("	--regionatlas=ATLASFILE   - do individual fits to every region in ATLASFILE")
+    print("")
+    return ()
+
 
 # set default variable values
-usemask=True
-extmask=False
+regionatlasname = None
+multiregionfit = False
 
 # get the command line parameters
 if len(sys.argv) < 6:
@@ -52,31 +57,26 @@ if len(sys.argv) < 6:
     exit()
 
 # handle required args first
-datafilename=sys.argv[1]
-datamaskname=sys.argv[2]
-templatefilename=sys.argv[3]
-templatemaskname=sys.argv[4]
-outputrootname=sys.argv[5]
+datafilename = sys.argv[1]
+datamaskname = sys.argv[2]
+templatefilename = sys.argv[3]
+templatemaskname = sys.argv[4]
+outputrootname = sys.argv[5]
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[6:], "", ["help"])
+    opts, args = getopt.getopt(sys.argv[6:], "", ["regionatlas=", "help"])
 except getopt.GetoptError as err:
     # print(help information and exit:
-    print(str(err)) # will print something like "option -a not recognized"
+    print(str(err))  # will print something like "option -a not recognized"
     usage()
     sys.exit(2)
 
 for o, a in opts:
-    if o == "-m":
-        usemask = False
-        extmask = False
-        print('not masking data')
-    elif o == "-M":
-        usemask = True
-        extmask = True
-        maskname=a
-        print('using external mask ',maskname)
+    if o == "--regionatlas":
+        regionatlasname = a
+        multiregionfit = True
+        print('will fit every region in', regionatlasname)
     elif o in ("-h", "--help"):
         usage()
         sys.exit()
@@ -109,11 +109,18 @@ templatemask_hdr = templatemask_img.get_header()
 templatemaskdims = templatemask_hdr['dim']
 templatemasksizes = templatemask_hdr['pixdim']
 
-xsize=datafiledims[1]
-ysize=datafiledims[2]
-numslices=datafiledims[3]
-timepoints=datafiledims[4]
-    
+if multiregionfit is not None:
+    regionatlas_img = nib.load(regionatlasname)
+    regionatlas_data = regionatlas_img.get_data()
+    regionatlas_hdr = regionatlas_img.get_header()
+    regionatlasdims = regionatlas_hdr['dim']
+    regionatlassizes = regionatlas_hdr['pixdim']
+
+xsize = datafiledims[1]
+ysize = datafiledims[2]
+numslices = datafiledims[3]
+timepoints = datafiledims[4]
+
 # check dimensions
 print("checking dimensions")
 if not tide.checkspacematch(datafiledims, datamaskdims):
@@ -134,6 +141,13 @@ if not tide.checkspacematch(datafiledims, templatemaskdims):
 if not templatemaskdims[4] == 1:
     print('template mask time dimension is not equal to 1')
     exit()
+if regionatlasname is not None:
+    if not tide.checkspacematch(datafiledims, regionatlasdims):
+        print('template mask spatial dimensions do not match image')
+        exit()
+    if not regionatlasdims[4] == 1:
+        print('regionatlas time dimension is not equal to 1')
+        exit()
 
 # allocating arrays
 print("allocating arrays")
@@ -144,14 +158,22 @@ bin_datamask = where(rs_datamask > 0.9, 1.0, 0.0)
 rs_templatefile = templatefile_data.reshape((numspatiallocs))
 rs_templatemask = templatemask_data.reshape((numspatiallocs))
 bin_templatemask = where(rs_templatemask > 0.1, 1.0, 0.0)
+if regionatlasname is not None:
+    rs_regionatlas = regionatlas_data.reshape((numspatiallocs))
+    numregions = np.max(rs_regionatlas)
 
-fitdata = zeros((numspatiallocs, timepoints),dtype='float')
-residuals = zeros((numspatiallocs, timepoints),dtype='float')
-newtemplate = zeros((numspatiallocs),dtype='float')
-newmask = zeros((numspatiallocs),dtype='float')
-lincoffs = zeros((timepoints),dtype='float')
-offsets = zeros((timepoints),dtype='float')
-rvals = zeros((timepoints),dtype='float')
+fitdata = zeros((numspatiallocs, timepoints), dtype='float')
+residuals = zeros((numspatiallocs, timepoints), dtype='float')
+newtemplate = zeros((numspatiallocs), dtype='float')
+newmask = zeros((numspatiallocs), dtype='float')
+if multiregionfit:
+    lincoffs = zeros((timepoints, numregions), dtype='float')
+    offsets = zeros((timepoints, numregions), dtype='float')
+    rvals = zeros((timepoints, numregions), dtype='float')
+else:
+    lincoffs = zeros((timepoints), dtype='float')
+    offsets = zeros((timepoints), dtype='float')
+    rvals = zeros((timepoints), dtype='float')
 
 # mask everything
 print('masking data and template')
@@ -160,16 +182,27 @@ maskedtemplate = rs_templatefile * bin_templatemask
 
 # cycle over all images
 print("now cycling over all images")
-for thetime in range(0,timepoints):
-    thefit, R = tide.mlregress(maskedtemplate, maskeddata[:, thetime])
-    lincoffs[thetime] = thefit[0, 1]
-    offsets[thetime] = thefit[0, 0]
-    rvals[thetime] = R
-    fitdata[:, thetime] = lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
-    newtemplate += nan_to_num(maskeddata[:, thetime]/ lincoffs[thetime]) * rs_datamask[:, thetime]
-    newmask += rs_datamask[:, thetime] * bin_templatemask
+for thetime in range(0, timepoints):
+    if multiregionfit:
+        for region in range(0, numregions):
+            regiontemplate = maskedtemplate * np.where(rs_regionatlas == (region + 1), 1.0, 0.0)
+            thefit, R = tide.mlregress(regiontemplate, maskeddata[:, thetime])
+            lincoffs[thetime, region] = thefit[0, 1]
+            offsets[thetime, region] = thefit[0, 0]
+            rvals[thetime, region] = R
+            fitdata[:, thetime] += lincoffs[thetime, region] * regiontemplate * bin_datamask[:, thetime]
+            newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime, region]) * rs_datamask[:, thetime]
+        newmask += rs_datamask[:, thetime] * bin_templatemask
+    else:
+        thefit, R = tide.mlregress(maskedtemplate, maskeddata[:, thetime])
+        lincoffs[thetime] = thefit[0, 1]
+        offsets[thetime] = thefit[0, 0]
+        rvals[thetime] = R
+        fitdata[:, thetime] = lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
+        newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask[:, thetime]
+        newmask += rs_datamask[:, thetime] * bin_templatemask
 residuals = rs_datafile - fitdata
-    
+
 # write out the data files
 print("writing time series")
 tide.writenpvecs(lincoffs, outputrootname + '_lincoffs.txt')
@@ -179,7 +212,10 @@ print("slope mean, std:", mean(lincoffs), std(lincoffs))
 print("offset mean, std:", mean(offsets), std(offsets))
 
 print("writing nifti series")
-tide.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes, outputrootname + '_fit')
-tide.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes, outputrootname + '_residuals')
+tide.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+                 outputrootname + '_fit')
+tide.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+                 outputrootname + '_residuals')
 newtemplate = where(newmask > 0, newtemplate / newmask, 0.0)
-tide.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr, templatefilesizes, outputrootname + '_newtemplate')
+tide.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr, templatefilesizes,
+                 outputrootname + '_newtemplate')
