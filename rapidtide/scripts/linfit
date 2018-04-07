@@ -207,10 +207,11 @@ for thetime in range(0, timepoints):
             if datamask3d:
                 fitdata[:, thetime] += lincoffs[thetime, region] * regiontemplate * bin_datamask
                 newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime, region]) * rs_datamask
+                newmask += rs_datamask * bin_templatemask
             else:
                 fitdata[:, thetime] += lincoffs[thetime, region] * regiontemplate * bin_datamask[:, thetime]
                 newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime, region]) * rs_datamask[:, thetime]
-        newmask += rs_datamask[:, thetime] * bin_templatemask
+                newmask += rs_datamask[:, thetime] * bin_templatemask
     else:
         thefit, R = tide.mlregress(maskedtemplate, maskeddata[:, thetime])
         lincoffs[thetime] = thefit[0, 1]
