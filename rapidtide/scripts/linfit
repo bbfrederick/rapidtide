@@ -188,7 +188,7 @@ print('masking data and template')
 if datamask3d:
     maskeddata = rs_datafile * 0.0
     for i in range(timepoints):
-        maskdata[:, i] = rs_datafile[:, i] * bin_datamask
+        maskeddata[:, i] = rs_datafile[:, i] * bin_datamask
 else:
     maskeddata = rs_datafile * bin_datamask
 maskedtemplate = rs_templatefile * bin_templatemask
