@@ -204,10 +204,11 @@ for thetime in range(0, timepoints):
             lincoffs[thetime, region] = thefit[0, 1]
             offsets[thetime, region] = thefit[0, 0]
             rvals[thetime, region] = R
-            fitdata[:, thetime] += lincoffs[thetime, region] * regiontemplate * bin_datamask[:, thetime]
             if datamask3d:
+                fitdata[:, thetime] += lincoffs[thetime, region] * regiontemplate * bin_datamask
                 newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime, region]) * rs_datamask
             else:
+                fitdata[:, thetime] += lincoffs[thetime, region] * regiontemplate * bin_datamask[:, thetime]
                 newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime, region]) * rs_datamask[:, thetime]
         newmask += rs_datamask[:, thetime] * bin_templatemask
     else:
