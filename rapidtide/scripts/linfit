@@ -43,6 +43,7 @@ def usage():
     print("")
     print("optional arguments:")
     print("	--regionatlas=ATLASFILE   - do individual fits to every region in ATLASFILE")
+    print("	--order=ORDER             - perform fit to ORDERth order (default (and minimum) is 1)")
     print("")
     return ()
 
@@ -51,6 +52,7 @@ def usage():
 regionatlasname = None
 multiregionfit = False
 datamask3d = False
+order = 1
 
 # get the command line parameters
 if len(sys.argv) < 6:
@@ -66,7 +68,7 @@ outputrootname = sys.argv[5]
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[6:], "", ["regionatlas=", "help"])
+    opts, args = getopt.getopt(sys.argv[6:], "", ["order=", "regionatlas=", "help"])
 except getopt.GetoptError as err:
     # print(help information and exit:
     print(str(err))  # will print something like "option -a not recognized"
@@ -78,6 +80,12 @@ for o, a in opts:
         regionatlasname = a
         multiregionfit = True
         print('will fit every region in', regionatlasname)
+    elif o == "--order":
+        order = int(a)
+        if order < 1:
+            print('minimum order is 1')
+            sys.exit()
+        print('will fit to order:', order)
     elif o in ("-h", "--help"):
         usage()
         sys.exit()
@@ -110,7 +118,7 @@ templatemask_hdr = templatemask_img.get_header()
 templatemaskdims = templatemask_hdr['dim']
 templatemasksizes = templatemask_hdr['pixdim']
 
-if multiregionfit is not None:
+if multiregionfit:
     regionatlas_img = nib.load(regionatlasname)
     regionatlas_data = regionatlas_img.get_data()
     regionatlas_hdr = regionatlas_img.get_header()
@@ -175,11 +183,13 @@ fitdata = zeros((numspatiallocs, timepoints), dtype='float')
 #newtemplate = zeros((numspatiallocs), dtype='float')
 #newmask = zeros((numspatiallocs), dtype='float')
 if multiregionfit:
-    lincoffs = zeros((timepoints, numregions), dtype='float')
-    offsets = zeros((timepoints, numregions), dtype='float')
-    rvals = zeros((timepoints, numregions), dtype='float')
+    lincoffs = zeros((numregions, timepoints), dtype='float')
+    sqrcoffs = zeros((numregions, timepoints), dtype='float')
+    offsets = zeros((numregions, timepoints), dtype='float')
+    rvals = zeros((numregions, timepoints), dtype='float')
 else:
     lincoffs = zeros((timepoints), dtype='float')
+    sqrcoffs = zeros((timepoints), dtype='float')
     offsets = zeros((timepoints), dtype='float')
     rvals = zeros((timepoints), dtype='float')
 
@@ -187,7 +197,8 @@ if multiregionfit:
     print('making region masks')
     regionvoxels = zeros((numspatiallocs, numregions), dtype='float')
     for region in range(0, numregions):
-        regionvoxels[region] = np.where((rs_regionatlas * rs_templatemask_bin) == (region + 1), 1.0, 0.0)
+        thisregion = np.where((rs_regionatlas * rs_templatemask_bin) == (region + 1))
+        regionvoxels[thisregion, region] = 1.0
 
 # mask everything
 print('masking template')
@@ -206,23 +217,32 @@ for thetime in range(0, timepoints):
         thisdatamask = rs_datamask_bin[:, thetime]
     if multiregionfit:
         for region in range(0, numregions):
-            voxelstofit = np.where(regionvoxels[region] * thisdatamask > 0.5)
-            voxelstoreconstruct = np.where(regionvoxels[region] > 0.5)
-            thefit, R = tide.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime])
-            lincoffs[thetime, region] = thefit[0, 1]
-            offsets[thetime, region] = thefit[0, 0]
-            rvals[thetime, region] = R
-            fitdata[voxelstoreconstruct, thetime] = lincoffs[thetime, region] * rs_templatedata[voxelstoreconstruct] + offsets[thetime, region]
-            #newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime, region]) * rs_datamask
+            voxelstofit = np.where(regionvoxels[:, region] * thisdatamask > 0.5)
+            voxelstoreconstruct = np.where(regionvoxels[:, region] > 0.5)
+            if order == 2:
+                thefit, R = tide.mlregress([rs_templatefile[voxelstofit], np.square(rs_templatefile[voxelstofit])], rs_datafile[voxelstofit, thetime][0])
+            else:
+                thefit, R = tide.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0])
+            lincoffs[region, thetime] = thefit[0, 1]
+            offsets[region, thetime] = thefit[0, 0]
+            rvals[region, thetime] = R
+            if order == 2:
+                sqrcoffs[region, thetime] = thefit[0, 2]
+                fitdata[voxelstoreconstruct, thetime] += sqrcoffs[region, thetime] * np.square(rs_templatefile[voxelstoreconstruct]) + \
+                                                            lincoffs[region, thetime] * rs_templatefile[voxelstoreconstruct] + \
+                                                            offsets[region, thetime]
+            else:
+                fitdata[voxelstoreconstruct, thetime] += lincoffs[region, thetime] * rs_templatefile[voxelstoreconstruct] + offsets[region, thetime]
+            #newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[region, thetime]) * rs_datamask
             #newmask += rs_datamask * rs_templatemask_bin
     else:
         voxelstofit = np.where(thisdatamask > 0.5)
         voxelstoreconstruct = np.where(rs_templatemask > 0.5)
-        thefit, R = tide.mlregress(rs_templatedata[voxelstofit], rs_datafile[voxelstofit, thetime])
+        thefit, R = tide.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0])
         lincoffs[thetime] = thefit[0, 1]
         offsets[thetime] = thefit[0, 0]
         rvals[thetime] = R
-        fitdata[voxelstoreconstruct, thetime] = lincoffs[thetime] * rs_templatedata[voxelstoreconstruct] + offsets[thetime]
+        fitdata[voxelstoreconstruct, thetime] = lincoffs[thetime] * rs_templatefile[voxelstoreconstruct] + offsets[thetime]
         #if datamask3d:
         #    newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask
         #else:
@@ -232,6 +252,8 @@ residuals = rs_datafile - fitdata
 
 # write out the data files
 print("writing time series")
+if order == 2:
+    tide.writenpvecs(sqrcoffs, outputrootname + '_sqrcoffs.txt')
 tide.writenpvecs(lincoffs, outputrootname + '_lincoffs.txt')
 tide.writenpvecs(offsets, outputrootname + '_offsets.txt')
 tide.writenpvecs(rvals, outputrootname + '_rvals.txt')
