@@ -494,7 +494,7 @@ def mlregress(x, y, intercept=True):
         xc = x
         beta = np.ones(p)
 
-    solution = np.linalg.lstsq(np.mat(xc).T, np.mat(y).T, rcond=None)
+    solution = np.linalg.lstsq(np.mat(xc).T, np.mat(y).T, rcond=-1)
 
     # Computation of the coefficient of determination.
     Rx = np.atleast_2d(np.corrcoef(x, rowvar=1))
