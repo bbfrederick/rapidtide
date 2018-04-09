@@ -111,6 +111,9 @@ for o, a in opts:
 
 print('Will perform', decomptype, 'analysis')
     
+# save the command line
+tide.writevec([' '.join(sys.argv)], outputrootname + '_commandline.txt')
+
 # read in data
 print("reading in data arrays")
 datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide.readfromnifti(datafilename)
