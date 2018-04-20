@@ -93,21 +93,6 @@ def startendcheck(timepoints, startpoint, endpoint):
     return realstart, realend
 
 
-# found the idea for this on stackoverflow
-class PoolProgress:
-    def __init__(self, pool, total, update_interval=1):
-        self.pool = pool
-        self.total = total
-        self.update_interval = update_interval
-
-    def track(self, job):
-        task = self.pool._cache[job._job]
-        while task._number_left > 0:
-            tide.progressbar(self.total - (task._number_left * task._chunksize), self.total, label='Percent complete')
-            time.sleep(self.update_interval)
-        tide.progressbar(self.total, self.total, label='Percent complete')
-
-
 def procOneNullCorrelation(iteration, indata, ncprefilter, oversampfreq, corrscale, corrorigin, lagmininpts,
                            lagmaxinpts, optiondict):
     # make a shuffled copy of the regressors
@@ -160,7 +145,8 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
         for d in range(optiondict['numestreps']):
             data_in.append(d)
         print('processing', len(data_in), 'correlations with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -193,7 +179,8 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
             corrlist[i] = maxval
 
             # progress
-            tide.progressbar(i + 1, optiondict['numestreps'], label='Percent complete')
+            if optiondict['showprogressbar']:
+                tide.progressbar(i + 1, optiondict['numestreps'], label='Percent complete')
 
         # jump to line after progress bar
         print()
@@ -230,13 +217,14 @@ def procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, o
     return vox, np.mean(thetc), thexcorr, theglobalmax
 
 
-def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
+def process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chunksize=10000):
     # send pos/data to workers
     data_out = []
     totalnum = len(data_in)
     numchunks = int(totalnum // chunksize)
     remainder = totalnum - numchunks * chunksize
-    tide.progressbar(0, totalnum, label="Percent complete")
+    if showprogressbar:
+        tide.progressbar(0, totalnum, label="Percent complete")
 
     # process all of the complete chunks
     for thechunk in range(numchunks):
@@ -252,7 +240,7 @@ def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
             if ret is not None:
                 data_out.append(ret)
             numreturned += 1
-            if ((numreturned + offset + 1) % reportstep) == 0:
+            if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
                 tide.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
             if numreturned > chunksize - 1:
                 break
@@ -269,11 +257,12 @@ def process_data(data_in, inQ, outQ, reportstep=1000, chunksize=10000):
         if ret is not None:
             data_out.append(ret)
         numreturned += 1
-        if ((numreturned + offset + 1) % reportstep) == 0:
+        if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
             tide.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
         if numreturned > remainder - 1:
             break
-    tide.progressbar(totalnum, totalnum, label="Percent complete")
+    if showprogressbar:
+        tide.progressbar(totalnum, totalnum, label="Percent complete")
     print()
 
     return data_out
@@ -326,7 +315,8 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
         for d in range(inputshape[0]):
             data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -346,7 +336,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
         data_out = []
     else:
         for vox in range(0, inputshape[0]):
-            if vox % reportstep == 0 or vox == inputshape[0] - 1:
+            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
             dummy, meanval[vox], corrout[vox, :], theglobalmax = procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x,
                                                                            fmridata[vox, :], os_fmri_x, oversampfreq,
@@ -514,10 +504,11 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             if initiallags is None:
                 data_in.append(d)
             else:
-                if initiallags[d] != 0.0:
+                if initiallags[d] > -1000000.0:
                     data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -540,7 +531,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
         data_out = []
     else:
         for vox in range(0, inputshape[0]):
-            if vox % reportstep == 0 or vox == inputshape[0] - 1:
+            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
             if initiallags is None:
                 dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[
@@ -612,7 +603,7 @@ def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, 
 def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, lagstrengths, lagtimes,
                     lagsigma, R2,
                     theprefilter, optiondict, padtrs=60, includemask=None, excludemask=None):
-    print('entering refineregressor with padtrs=', padtrs)
+    #print('entering refineregressor with padtrs=', padtrs)
     inputshape = np.shape(fmridata)
     ampmask = np.where(lagstrengths >= optiondict['ampthresh'], np.int16(1), np.int16(0))
     if optiondict['lagmaskside'] == 'upper':
@@ -681,7 +672,8 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
             if (maskarray[d] > 0) or optiondict['shiftall']:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -701,7 +693,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
     else:
         psdlist = []
         for vox in range(0, inputshape[0]):
-            if vox % reportstep == 0 or vox == inputshape[0] - 1:
+            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, inputshape[0], label='Percent complete (timeshifting)')
             if (maskarray[vox] > 0) or optiondict['shiftall']:
                 retvals = procOneVoxelTimeShift(vox, fmridata[vox, :], optiondict, lagstrengths[vox], R2[vox],
@@ -879,7 +871,8 @@ def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondi
             if np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -903,7 +896,7 @@ def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondi
     else:
         volumetotal = 0
         for vox in range(0, numspatiallocs):
-            if vox % reportstep == 0 or vox == numspatiallocs - 1:
+            if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, numspatiallocs, label='Percent complete')
             inittc = fmri_data[vox, optiondict['addedskip']:].copy()
             if np.mean(inittc) >= threshval:
@@ -957,7 +950,8 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
             if (np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval) or optiondict['nothresh']:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, chunksize=optiondict['mp_chunksize'])
+        data_out = process_data(data_in, inQ, outQ,  showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
         for i in range(n_workers):
@@ -981,11 +975,10 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
     else:
         volumetotal = 0
         for vox in range(0, numspatiallocs):
-            if vox % reportstep == 0 or vox == numspatiallocs - 1:
+            if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict['showprogressbar']:
                 tide.progressbar(vox + 1, numspatiallocs, label='Percent complete')
             inittc = fmri_data[vox, optiondict['addedskip']:].copy()
-            meanval = np.mean(inittc)
-            if meanval >= threshval:
+            if np.mean(inittc) >= threshval:
                 dummy, meanvalue[vox], rvalue[vox], r2value[vox], fitcoff[vox], fitNorm[vox], datatoremove[vox], \
                 filtereddata[vox] = \
                     procOneVoxelGLM(vox, lagtc[vox, :], inittc)
@@ -1155,10 +1148,12 @@ def usage():
         "[--refinepasses=PASSES]",
         "[--excludemask=MASK]", "[--includemask=MASK]",
         "[--lagminthresh=MIN]", "[--lagmaxthresh=MAX]", "[--ampthresh=AMP]", "[--sigmathresh=SIGMA]",
+        "[--corrmask=MASK]",
         "[--corrmaskthresh=PCT]",
         "[--refineoffset]",
         "[--pca]", "[--ica]", "[--weightedavg]", "[--avg]",
         "[--psdfilter]",
+        "[--noprogressbar]",
         "[--despecklethresh=VAL]", "[--despecklepasses=PASSES]",
         "[--dispersioncalc]",
         "[--refineupperlag]", "[--refinelowerlag]",
@@ -1250,6 +1245,7 @@ def usage():
     print("    --eckart                   - Use generalized cross-correlation with Eckart weighting function")
     print("    --corrmaskthresh=PCT       - Do correlations in voxels where the mean exceeeds this ")
     print("                                 percentage of the robust max (default is 1.0)")
+    print("    --corrmask=MASK            - Only do correlations in voxels in MASK (if set, corrmaskthresh is ignored).")
     print("    --accheck                  - Check for periodic components that corrupt the autocorrelation")
     print("")
     print("Correlation fitting options:")
@@ -1316,6 +1312,7 @@ def usage():
     print("    --preservefiltering        - don't reread data prior to GLM")
     print("")
     print("Miscellaneous options:")
+    print("    --noprogressbar            - Disable progress bars - useful if saving output to files")
     print("    --wiener                   - Perform Wiener deconvolution to get voxel transfer functions")
     print("    --usesp                    - Use single precision for internal calculations (may")
     print("                                 be useful when RAM is limited)")
@@ -1377,8 +1374,9 @@ def main():
     optiondict['usetmask'] = False  # premultiply the regressor with the tmask timecourse
     optiondict['tmaskname'] = None  # file name for tmask regressor
     optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
+    optiondict['corrmaskname'] = None   # name of correlation mask
     optiondict[
-        'check_autocorrelation'] = False  # check for periodic components that corrupt the autocorrelation
+        'check_autocorrelation'] = True  # check for periodic components that corrupt the autocorrelation
     optiondict[
         'fix_autocorrelation'] = False  # remove periodic components that corrupt the autocorrelation
     optiondict['despeckle_thresh'] = 5.0  # threshold value - despeckle if median discontinuity magnitude exceeds despeckle_thresh
@@ -1396,6 +1394,8 @@ def main():
     optiondict['zerooutbadfit'] = True  # if true zero out all fit parameters if the fit fails
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
     optiondict['findmaxtype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
+    optiondict['acwidth'] = 0.0 # width of the reference autocorrelation function
+    optiondict['absmaxsigma'] = 100.0 # width of the reference autocorrelation function
     #     move delay peaks back to the correct position if they hit a sidelobe
 
     # postprocessing options
@@ -1427,7 +1427,6 @@ def main():
     optiondict['fixeddelayvalue'] = 0.0
 
     # significance estimation options
-    optiondict['estimate_significance'] = True  # if True, estimate null correlation distribution prior to each pass
     optiondict['numestreps'] = 10000  # the number of sham correlations to perform to estimate significance
     optiondict['nohistzero'] = False  # if False, there is a spike at R=0 in the significance histogra
     optiondict['ampthreshfromsig'] = True
@@ -1482,6 +1481,7 @@ def main():
     optiondict['multiproc'] = False
     optiondict['nprocs'] = -1
     optiondict['mp_chunksize'] = 50000
+    optiondict['showprogressbar'] = True
 
     # package options
     optiondict['memprofilerexists'] = memprofilerexists
@@ -1526,8 +1526,10 @@ def main():
                                                                                                           'despecklethresh=',
                                                                                                           'accheck',
                                                                                                           'acfix',
+                                                                                                          'noprogressbar',
                                                                                                           'refinepasses=',
                                                                                                           'passes=',
+                                                                                                          'corrmask=',
                                                                                                           'includemask=',
                                                                                                           'excludemask=',
                                                                                                           'refineoffset',
@@ -1756,7 +1758,6 @@ def main():
         elif o == '-N':
             optiondict['numestreps'] = int(a)
             if optiondict['numestreps'] == 0:
-                optiondict['estimate_significance'] = False
                 optiondict['ampthreshfromsig'] = False
                 print('Will not estimate significance thresholds from null correlations')
             else:
@@ -1784,6 +1785,9 @@ def main():
             optiondict['fix_autocorrelation'] = True
             optiondict['check_autocorrelation'] = True
             print('Will remove periodic components in the autocorrelation function (experimental)')
+        elif o == '--noprogressbar':
+            optiondict['showprogressbar'] = False
+            print('Will disable progress bars')
         elif o == '-s':
             optiondict['widthlimit'] = float(a)
             print('Setting gaussian fit width limit to ', optiondict['widthlimit'], 'Hz')
@@ -1972,6 +1976,10 @@ def main():
             optiondict['excludemaskname'] = a
             linkchar = '='
             print('Voxels in ', optiondict['excludemaskname'], ' will not be used to define or refine regressors')
+        elif o == '--corrmask':
+            optiondict['corrmaskname'] = a
+            linkchar = '='
+            print('Using ', optiondict['corrmaskname'], ' as mask file - corrmaskthresh will be ignored')
         elif o == '--includemask':
             optiondict['includemaskname'] = a
             linkchar = '='
@@ -2146,7 +2154,7 @@ def main():
         print('applying gaussian spatial filter to timepoints ', validstart, ' to ', validend)
         reportstep = 10
         for i in range(validstart, validend + 1):
-            if i % reportstep == 0 or i == validend:
+            if (i % reportstep == 0 or i == validend) and optiondict['showprogressbar']:
                 tide.progressbar(i - validstart + 1, timepoints, label='Percent complete')
             nim_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, optiondict['gausssigma'],
                                                 nim_data[:, :, :, i])
@@ -2201,8 +2209,25 @@ def main():
     # find the threshold value for the image data
     logmem('before selecting valid voxels', file=memfile)
     threshval = tide.getfracval(fmri_data[:, optiondict['addedskip']], 0.98) / 25.0
-    corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
+    if optiondict['corrmaskname'] is not None:
+        if optiondict['textio']:
+            corrmask = tide.readvecs(optiondict['corrmaskname']).astype('int16')
+            theshape = np.shape(nim_data)
+            corrxsize = theshape[0]
+            if not corrxsize == xsize:
+                print('Dimensions of correlation mask do not match the fmri data - exiting')
+                sys.exit()
+        else:
+            nimcorrmask, nimcorrmask, nimcorrmask_hdr, corrmaskdims, theincludmasksizes = tide.readfromnifti(
+                optiondict['corrmaskname'])
+            if not tide.checkspacematch(corrmaskdims, thedims):
+                print('Dimensions of correlation mask do not match the fmri data - exiting')
+                sys.exit()
+            corrmask = np.uint16(nimcorrmask.reshape((numspatiallocs)))
+    else:
+        corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
                                        threshpct=optiondict['corrmaskthreshpct']))
+       
     if optiondict['nothresh']:
         corrmask *= 0
         corrmask += 1
@@ -2304,9 +2329,6 @@ def main():
         clipend = bisect.bisect_left(reference_x, os_fmri_x[-1] + 2.0 * optiondict['lagmax'])
         print('clip indices=', clipstart, clipend, reference_x[clipstart], reference_x[clipend], os_fmri_x[0],
               os_fmri_x[-1])
-
-    # now correct for the offset into the fMRI timecourse caused by skipping initial points.  NOT TESTED - 11/18/13
-    # reference_x=reference_x-skiptime
 
     # generate the comparison regressor from the input timecourse
     # correct the output time points
@@ -2577,7 +2599,7 @@ def main():
             cleaned_nonosreferencetc = 1.0 * nonosreferencetc
 
         # Step 0 - estimate significance
-        if optiondict['estimate_significance']:
+        if optiondict['numestreps'] > 0:
             timings.append(['Significance estimation start, pass ' + str(thepass), time.time(), None, None])
             print('\n\nSignificance estimation, pass ' + str(thepass))
             if optiondict['verbose']:
@@ -2672,14 +2694,18 @@ def main():
                 print('\n\nCorrelation despeckling subpass ' + str(despecklepass + 1))
                 outmaparray[validvoxels] = eval('lagtimes')[:]
                 medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape((numspatiallocs))
-                initlags = np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)[validvoxels]
-                voxelsprocessed_fc_ds += fitcorr_func(genlagtc, initial_fmri_x,
+                initlags = np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, -1000000.0)[validvoxels]
+                if len(initlags) > 0:
+                    voxelsprocessed_fc_ds += fitcorr_func(genlagtc, initial_fmri_x,
                                           lagtc, slicesize,
                                           corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
                                           lagmask, lagtimes, lagstrengths, lagsigma, corrout, meanval,
                                           gaussout,
                                           R2, optiondict,
                                           initiallags=initlags)
+                else:
+                    print('Nothing left to do! Terminating despeckling')
+                    break
             
 
             """
@@ -2909,7 +2935,12 @@ def main():
         else:
             theheader['dim'][0] = 3
             theheader['dim'][4] = 1
-    for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask']:
+
+    # first generate the MTT map
+    MTT = np.square(lagsigma) - (optiondict['acwidth'] * optiondict['acwidth'])
+    MTT = np.where(MTT > 0.0, np.sqrt(MTT), 0.0)
+    
+    for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask', 'MTT']:
         if optiondict['memprofile']:
             memcheckpoint('about to write ' + mapname)
         else:
@@ -2956,7 +2987,7 @@ def main():
                                  outputname + '_' + mapsuffix + outsuffix3d)
         meanvalue = None
 
-    if optiondict['estimate_significance']:
+    if optiondict['numestreps'] > 0:
         for i in range(0, len(thepercentiles)):
             pmask = np.where(np.abs(lagstrengths) > pcts[i], lagmask, 0 * lagmask)
             if optiondict['dosighistfit']:
