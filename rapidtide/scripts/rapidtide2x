@@ -93,22 +93,6 @@ def startendcheck(timepoints, startpoint, endpoint):
     return realstart, realend
 
 
-# found the idea for this on stackoverflow
-'''
-class PoolProgress:
-    def __init__(self, pool, total, update_interval=1):
-        self.pool = pool
-        self.total = total
-        self.update_interval = update_interval
-
-    def track(self, job):
-        task = self.pool._cache[job._job]
-        while task._number_left > 0:
-            tide.progressbar(self.total - (task._number_left * task._chunksize), self.total, label='Percent complete')
-            time.sleep(self.update_interval)
-        tide.progressbar(self.total, self.total, label='Percent complete')
-'''
-
 def procOneNullCorrelation(iteration, indata, ncprefilter, oversampfreq, corrscale, corrorigin, lagmininpts,
                            lagmaxinpts, optiondict):
     # make a shuffled copy of the regressors
@@ -1243,6 +1227,7 @@ def usage():
         "[--refineoffset]",
         "[--pca]", "[--ica]", "[--weightedavg]", "[--avg]",
         "[--psdfilter]",
+        "[--noprogressbar]",
         "[--despecklethresh=VAL]", "[--despecklepasses=PASSES]",
         "[--dispersioncalc]",
         "[--refineupperlag]", "[--refinelowerlag]",
@@ -1407,6 +1392,7 @@ def usage():
     print("    --preservefiltering        - don't reread data prior to GLM")
     print("")
     print("Miscellaneous options:")
+    print("    --noprogressbar            - Disable progress bars - useful if saving output to files")
     print("    --wiener                   - Perform Wiener deconvolution to get voxel transfer functions")
     print("    --usesp                    - Use single precision for internal calculations (may")
     print("                                 be useful when RAM is limited)")
@@ -1623,6 +1609,7 @@ def main():
                                                                                                           'despecklethresh=',
                                                                                                           'accheck',
                                                                                                           'acfix',
+                                                                                                          'noprogressbar',
                                                                                                           'refinepasses=',
                                                                                                           'passes=',
                                                                                                           'corrmask=',
@@ -1887,6 +1874,9 @@ def main():
             optiondict['fix_autocorrelation'] = True
             optiondict['check_autocorrelation'] = True
             print('Will remove periodic components in the autocorrelation function (experimental)')
+        elif o == '--noprogressbar':
+            optiondict['showprogressbar'] = False
+            print('Will disable progress bars')
         elif o == '-s':
             optiondict['widthlimit'] = float(a)
             print('Setting gaussian fit width limit to ', optiondict['widthlimit'], 'Hz')
