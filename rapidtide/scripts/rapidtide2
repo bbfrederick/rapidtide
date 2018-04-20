@@ -2080,7 +2080,7 @@ def main():
 
     # open up the memory usage file
     if not optiondict['memprofile']:
-        memfile = open(outputname + '_memusage.txt', 'w')
+        memfile = open(outputname + '_memusage.csv', 'w')
         logmem(None, file=memfile)
 
     # open the fmri datafile
@@ -2944,7 +2944,7 @@ def main():
         if optiondict['memprofile']:
             memcheckpoint('about to write ' + mapname)
         else:
-            logmem('about to write' + mapname, file=memfile)
+            logmem('about to write ' + mapname, file=memfile)
         outmaparray[validvoxels] = eval(mapname)[:]
         if optiondict['textio']:
             tide.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
