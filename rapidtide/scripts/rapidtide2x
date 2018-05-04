@@ -33,7 +33,6 @@ import os
 import sys
 import gc
 import multiprocessing as mp
-from functools import partial
 import resource
 
 import rapidtide.tide_funcs as tide
@@ -453,12 +452,13 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
 
     # now tuck everything away in the appropriate output array
     volumetotalinc = 0
+    thewindowout = rt_floatset(0.0 * corrtc)
+    thewindowout[peakstart:peakend + 1] = 1.0
     if (maskval == 0) and optiondict['zerooutbadfit']:
         thetime = rt_floatset(0.0)
         thestrength = rt_floatset(0.0)
         thesigma = rt_floatset(0.0)
         thegaussout = 0.0 * corrtc
-        thewindowout = 0.0 * corrtc
         theR2 = rt_floatset(0.0)
     else:
         volumetotalinc = 1
@@ -469,7 +469,6 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
         thewindowout = rt_floatset(0.0 * corrtc)
         if (not optiondict['fixdelay']) and (maxsigma != 0.0):
             thegaussout = rt_floatset(tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
-            thewindowout[peakstart:peakend + 1] = 1.0
         else:
             thegaussout = rt_floatset(0.0)
             thewindowout = rt_floatset(0.0)
@@ -1114,10 +1113,14 @@ def allocshared(theshape, thetype):
 
 
 def logmem(msg, file=None):
+    global lastmaxrss_parent, lastmaxrss_child
     if msg is None:
+        lastmaxrss_parent = 0
+        lastmaxrss_child = 0
         logline = ','.join([ 
             '',
             'Self Max RSS',
+            'Self Diff RSS',
             'Self Shared Mem',
             'Self Unshared Mem',
             'Self Unshared Stack',
@@ -1125,6 +1128,7 @@ def logmem(msg, file=None):
             'Self IO Page Fault'
             'Self Swap Out',
             'Children Max RSS',
+            'Children Diff RSS',
             'Children Shared Mem',
             'Children Unshared Mem',
             'Children Unshared Stack',
@@ -1135,6 +1139,8 @@ def logmem(msg, file=None):
         rcusage = resource.getrusage(resource.RUSAGE_SELF)
         outvals = [msg]
         outvals.append(str(rcusage.ru_maxrss))
+        outvals.append(str(rcusage.ru_maxrss - lastmaxrss_parent))
+        lastmaxrss_parent = rcusage.ru_maxrss
         outvals.append(str(rcusage.ru_ixrss))
         outvals.append(str(rcusage.ru_idrss))
         outvals.append(str(rcusage.ru_isrss))
@@ -1143,6 +1149,8 @@ def logmem(msg, file=None):
         outvals.append(str(rcusage.ru_nswap))
         rcusage = resource.getrusage(resource.RUSAGE_CHILDREN)
         outvals.append(str(rcusage.ru_maxrss))
+        outvals.append(str(rcusage.ru_maxrss - lastmaxrss_child))
+        lastmaxrss_child = rcusage.ru_maxrss
         outvals.append(str(rcusage.ru_ixrss))
         outvals.append(str(rcusage.ru_idrss))
         outvals.append(str(rcusage.ru_isrss))
@@ -2173,7 +2181,7 @@ def main():
 
     # open up the memory usage file
     if not optiondict['memprofile']:
-        memfile = open(outputname + '_memusage.txt', 'w')
+        memfile = open(outputname + '_memusage.csv', 'w')
         logmem(None, file=memfile)
 
     # open the fmri datafile
@@ -3044,7 +3052,7 @@ def main():
         if optiondict['memprofile']:
             memcheckpoint('about to write ' + mapname)
         else:
-            logmem('about to write' + mapname, file=memfile)
+            logmem('about to write ' + mapname, file=memfile)
         outmaparray[validvoxels] = eval(mapname)[:]
         if optiondict['textio']:
             tide.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
