@@ -1506,6 +1506,8 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     fitend = upperlimit
 
     # now check the values for errors and refine if necessary
+    fitend = min(maxindex + i + 1, upperlimit)
+    fitstart = max(1, maxindex - j)
     if not ((lagmin + binwidth) <= maxlag_init <= (lagmax - binwidth)):
         failreason += FML_HITEDGE
     if i + j + 1 < 3:
@@ -1524,8 +1526,6 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         maxsigma = np.float64(0.0)
     else:
         if refine:
-            fitend = min(maxindex + i + 1, upperlimit)
-            fitstart = max(1, maxindex - j)
             data = thexcorr_y[fitstart:fitend]
             X = thexcorr_x[fitstart:fitend]
             if fastgauss:
