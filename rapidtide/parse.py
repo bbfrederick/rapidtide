@@ -52,6 +52,7 @@ def get_parser():
 
     # Preprocessing options
     preproc = parser.add_argument_group('Preprocessing options')
+    # NOTE: Are both of the following necessary?
     preproc.add_argument('-t',
                          dest='realtr',
                          action='store',
@@ -88,73 +89,78 @@ def get_parser():
                          action='store_false',
                          help='Disable antialiasing filter',
                          default=True)
-    preproc.add_argument('--nodetrend',
-                         dest='dodetrend',
-                         action='store_false',
-                         help='Disable linear trend removal',
-                         default=True)
     preproc.add_argument('-I',
                          dest='invertregressor',
                          action='store_true',
                          help=('Invert the sign of the regressor before '
                                'processing'),
                          default=False)
+    # TODO: THIS APPEARS UNUSED
     preproc.add_argument('-i',
-                         dest='',
+                         dest='interptype',
                          action='store',
                          type=str,
+                         metavar='INTERPTYPE',
                          choices=['univariate', 'cubic', 'quadratic'],
                          help=("Use specified interpolation type. Options "
                                "are 'cubic','quadratic', and 'univariate' "
                                "(default)."),
                          default='univariate')
+    # TODO: Set offsettime_total to negative offsettime
     preproc.add_argument('-o',
-                         dest='',
+                         dest='offsettime',
                          action='store',
                          type=float,
                          metavar='OFFSETTIME',
                          help='Apply offset OFFSETTIME to the lag regressors',
                          default=None)
     preproc.add_argument('-b',
-                         dest='',
+                         dest='usebutterworthfilter',
                          action='store_true',
                          help=('Use butterworth filter for band splitting '
                                'instead of trapezoidal FFT filter'),
                          default=False)
-    preproc.add_argument('-F',
-                         dest='',
-                         action='store',
-                         nargs=2,
-                         type=float,
-                         metavar='LOWERFREQ UPPERFREQ',
-                         help=('Filter data and regressors from LOWERFREQ to '
-                               'UPPERFREQ. LOWERFREQ and UPPERFREQ can be '
-                               'specified, or will be calculated '
-                               'automatically'),
-                         default=None)
-    preproc.add_argument('-V',
-                         dest='',
-                         action='store_true',
-                         help=('Filter data and regressors to VLF band'),
-                         default=False)
-    preproc.add_argument('-L',
-                         dest='',
-                         action='store_true',
-                         help=('Filter data and regressors to LFO band'),
-                         default=False)
-    preproc.add_argument('-R',
-                         dest='',
-                         action='store_true',
-                         help=('Filter data and regressors to respiratory '
-                               'band'),
-                         default=False)
-    preproc.add_argument('-C',
-                         dest='',
-                         action='store_true',
-                         help=('Filter data and regressors to cardiac band'),
-                         default=False)
+
+    filttype = preproc.add_mutually_exclusive_group()
+    filttype.add_argument('-F',
+                          dest='arbvec',
+                          action='store',
+                          nargs=2,  # TODO: Should allow 4 as well
+                          type=float,
+                          metavar='LOWERFREQ UPPERFREQ []',
+                          help=('Filter data and regressors from LOWERFREQ to '
+                                'UPPERFREQ. LOWERSTOP and UPPERSTOP can also '
+                                'be specified, or will be calculated '
+                                'automatically'),
+                          default=None)
+    filttype.add_argument('-V',
+                          dest='filtertype',
+                          action='store_const',
+                          const='vlf',
+                          help=('Filter data and regressors to VLF band'),
+                          default='arb')
+    filttype.add_argument('-L',
+                          dest='filtertype',
+                          action='store_const',
+                          const='lfo',
+                          help=('Filter data and regressors to LFO band'),
+                          default='arb')
+    filttype.add_argument('-R',
+                          dest='filtertype',
+                          action='store_const',
+                          const='resp',
+                          help=('Filter data and regressors to respiratory '
+                                'band'),
+                          default='arb')
+    filttype.add_argument('-C',
+                          dest='filtertype',
+                          action='store_const',
+                          const='cardiac',
+                          help=('Filter data and regressors to cardiac band'),
+                          default='arb')
+
     preproc.add_argument('-N',
-                         dest='',
+                         dest='numestreps',
                          action='store',
                          type=int,
                          metavar='NREPS',
@@ -163,28 +169,32 @@ def get_parser():
                                'set to 0 to disable)'),
                          default=10000)
     preproc.add_argument('--skipsighistfit',
-                         dest='',
+                         dest='dosighistfit',
                          action='store_false',
                          help=('Do not fit significance histogram with a '
                                'Johnson SB function'),
                          default=True)
-    parser.add_argument('--windowfunc',
-                        dest='windowfunc',
-                        action='store',
-                        type=str,
-                        metavar='FUNC',
-                        choices=['hamming', 'hann', 'blackmanharris', 'None'],
-                        help=('Window funcion to use prior to correlation. '
-                              'Options are hamming (default), hann, '
-                              'blackmanharris, and None'),
-                        default='hamming')
-    preproc.add_argument('--nowindow',
-                         dest='usewindowfunc',
-                         action='store_false',
-                         help='Disable precorrelation windowing',
-                         default=True)
+
+    wfunc = preproc.add_mutually_exclusive_group()
+    wfunc.add_argument('--windowfunc',
+                       dest='windowfunc',
+                       action='store',
+                       type=str,
+                       metavar='FUNC',
+                       choices=['hamming', 'hann', 'blackmanharris', 'None'],
+                       help=('Window funcion to use prior to correlation. '
+                             'Options are hamming (default), hann, '
+                             'blackmanharris, and None'),
+                       default='hamming')
+    wfunc.add_argument('--nowindow',
+                       dest='windowfunc',
+                       action='store_const',
+                       const='None',
+                       help='Disable precorrelation windowing',
+                       default='hamming')
+
     preproc.add_argument('-f',
-                         dest='',
+                         dest='gausssigma',
                          action='store',
                          type=float,
                          metavar='GAUSSSIGMA',
@@ -192,19 +202,19 @@ def get_parser():
                                'using GAUSSSIGMA in mm'),
                          default=0.)
     preproc.add_argument('-M',
-                         dest='',
+                         dest='useglobalref',
                          action='store_true',
                          help=('Generate a global mean regressor and use that '
                                'as the reference regressor'),
                          default=False)
     preproc.add_argument('-m',
-                         dest='',
+                         dest='meanscaleglobal',
                          action='store_true',
                          help=('Mean scale regressors during global mean '
                                'estimation'),
                          default=False)
     preproc.add_argument('--slicetimes',
-                         dest='',
+                         dest='slicetimes',
                          action='store',
                          type=lambda x: is_valid_file(parser, x),
                          metavar='FILE',
@@ -212,7 +222,7 @@ def get_parser():
                                'the dataset'),
                          default=None)
     preproc.add_argument('--numskip',
-                         dest='',
+                         dest='preprocskip',
                          action='store',
                          type=int,
                          metavar='SKIP',
@@ -220,7 +230,7 @@ def get_parser():
                                'preprocessing (default is 0)'),
                          default=0)
     preproc.add_argument('--nothresh',
-                         dest='',
+                         dest='nothresh',
                          action='store_false',
                          help=('Disable voxel intensity threshold (especially '
                                'useful for NIRS data)'),
@@ -229,7 +239,7 @@ def get_parser():
     # Correlation options
     corr = parser.add_argument_group('Correlation options')
     corr.add_argument('-O',
-                      dest='',
+                      dest='oversampfactor',
                       action='store',
                       type=int,
                       metavar='OVERSAMPFAC',
@@ -237,7 +247,7 @@ def get_parser():
                             'integral factor (default is 2)'),
                       default=2)
     corr.add_argument('--regressor',
-                      dest='',
+                      dest='regressorfile',
                       action='store',
                       type=lambda x: is_valid_file(parser, x),
                       metavar='FILENAME',
@@ -245,9 +255,10 @@ def get_parser():
                             'specified, generate and use global regressor)'),
                       default=None)
 
-    reg_group = parser.add_mutually_exclusive_group()
+    reg_group = corr.add_mutually_exclusive_group()
+    # TODO: Calculate default with TR
     reg_group.add_argument('--regressorfreq',
-                           dest='',
+                           dest='inputfreq',
                            action='store',
                            type=float,
                            metavar='FREQ',
@@ -256,8 +267,9 @@ def get_parser():
                                  'NB: --regressorfreq and --regressortstep) '
                                  'are two ways to specify the same thing'),
                            default=None)
+    # TODO: Frequency conversion
     reg_group.add_argument('--regressortstep',
-                           dest='',
+                           dest='inputstep',
                            action='store',
                            type=float,
                            metavar='TSTEP',
@@ -268,7 +280,7 @@ def get_parser():
                            default=None)
 
     corr.add_argument('--regressorstart',
-                      dest='',
+                      dest='inputstarttime',
                       action='store',
                       type=float,
                       metavar='START',
@@ -278,30 +290,38 @@ def get_parser():
                       default=0.)
 
     cc_group = corr.add_mutually_exclusive_group()
+    cc_group.add_argument('--nodetrend',
+                          dest='dodetrend',
+                          action='store_false',
+                          help='Disable linear trend removal',
+                          default=True)
     cc_group.add_argument('--phat',
-                          dest='',
-                          action='store_true',
+                          dest='corrweighting',
+                          action='store_const',
+                          const='phat',
                           help=('Use generalized cross-correlation with phase '
                                 'alignment transform (PHAT) instead of '
                                 'correlation'),
-                          default=False)
+                          default='eckart')
     cc_group.add_argument('--liang',
-                          dest='',
-                          action='store_true',
+                          dest='corrweighting',
+                          action='store_const',
+                          const='liang',
                           help=('Use generalized cross-correlation with Liang '
                                 'weighting function (Liang, et al., '
                                 'doi:10.1109/IMCCC.2015.283)'),
-                          default=False)
+                          default='none')
     cc_group.add_argument('--eckart',
-                          dest='',
-                          action='store_true',
+                          dest='corrweighting',
+                          action='store_const',
+                          const='eckart',
                           help=('Use generalized cross-correlation with '
                                 'Eckart weighting function'),
-                          default=False)
+                          default='none')
 
     mask_group = corr.add_mutually_exclusive_group()
     mask_group.add_argument('--corrmaskthresh',
-                            dest='',
+                            dest='corrmaskthreshpct',
                             action='store',
                             type=float,
                             metavar='PCT',
@@ -310,15 +330,16 @@ def get_parser():
                                   '(default is 1.0)'),
                             default=1.0)
     mask_group.add_argument('--corrmask',
-                            dest='',
+                            dest='corrmaskname',
                             action='store',
                             type=lambda x: is_valid_file(parser, x),
                             metavar='MASK',
                             help=('Only do correlations in voxels in MASK '
                                   '(if set, corrmaskthresh is ignored).'),
-                            default=0.)
+                            default=None)
+
     corr.add_argument('--accheck',
-                      dest='',
+                      dest='check_autocorrelation',
                       action='store_true',
                       help=('Check for periodic components that corrupt the '
                             'autocorrelation'),
@@ -326,45 +347,51 @@ def get_parser():
 
     # Correlation fitting options
     corr_fit = parser.add_argument_group('Correlation fitting options')
-    corr_fit.add_argument('-Z',
-                          dest='',
+
+    fixdelay = corr_fit.add_mutually_exclusive_group()
+    # TODO: Also adjust fixdelay, lagmin, and lagmax
+    fixdelay.add_argument('-Z',
+                          dest='fixeddelayvalue',
                           action='store',
                           type=float,
                           metavar='DELAYTIME',
                           help=("Don't fit the delay time - set it to "
                                 "DELAYTIME seconds for all voxels"),
                           default=None)
-    corr_fit.add_argument('-r',
-                          dest='',
+    # TODO: Split into lagmin and lagmax
+    fixdelay.add_argument('-r',
+                          dest='lag_extrema',
                           action='store',
                           nargs=2,
                           type=int,
                           metavar='LAGMIN LAGMAX',
                           help=('Limit fit to a range of lags from LAGMIN to '
                                 'LAGMAX'),
-                          default=None)
+                          default=(-30.0, 30.0))
+
     corr_fit.add_argument('-s',
-                          dest='',
+                          dest='widthlimit',
                           action='store',
                           type=float,
                           metavar='SIGMALIMIT',
                           help=('Reject lag fits with linewidth wider than '
-                                'SIGMALIMIT'),
-                          default=None)
+                                'SIGMALIMIT Hz'),
+                          default=100.0)
     corr_fit.add_argument('-B',
-                          dest='',
+                          dest='bipolar',
                           action='store_true',
                           help=('Bipolar mode - match peak correlation '
                                 'ignoring sign'),
                           default=False)
+    # TODO: Also set nohistzero to True (default is False)
     corr_fit.add_argument('--nofitfilt',
-                          dest='',
+                          dest='zerooutbadfit',
                           action='store_false',
                           help=('Do not zero out peak fit values if fit '
                                 'fails'),
                           default=True)
     corr_fit.add_argument('--maxfittype',
-                          dest='',
+                          dest='findmaxtype',
                           action='store',
                           type=str,
                           choices=['gauss', 'quad'],
@@ -373,8 +400,11 @@ def get_parser():
                                 "quadratic fit.  Faster but not as well "
                                 "tested"),
                           default='gauss')
+    # TODO: Also change check_autocorrelation to True
+    # NOTE: However, there's no way to set check_autocorrelation to False, and
+    # True is the default
     corr_fit.add_argument('--despecklepasses',
-                          dest='',
+                          dest='despeckle_passes',
                           action='store',
                           type=int,
                           metavar='PASSES',
@@ -382,8 +412,9 @@ def get_parser():
                                 'disambiguate peak locations in PASSES '
                                 'passes'),
                           default=0)
+    # TODO: Also set despeckle_passes to 1
     corr_fit.add_argument('--despecklethresh',
-                          dest='',
+                          dest='despeckle_thresh',
                           action='store',
                           type=int,
                           metavar='VAL',
@@ -393,23 +424,148 @@ def get_parser():
 
     # Regressor refinement options
     reg_ref = parser.add_argument_group('Regressor refinement options')
-    reg_ref.add_argument('--refineprenorm')
-    reg_ref.add_argument('--refineweighting')
-    reg_ref.add_argument('--passes')
-    reg_ref.add_argument('--includemask')
-    reg_ref.add_argument('--excludemask')
-    reg_ref.add_argument('--lagminthresh')
-    reg_ref.add_argument('--lagmaxthresh')
-    reg_ref.add_argument('--ampthresh')
-    reg_ref.add_argument('--sigmathresh')
-    reg_ref.add_argument('--refineoffset')
-    reg_ref.add_argument('--refineupperlag')
-    reg_ref.add_argument('--refinelowerlag')
-    reg_ref.add_argument('--pca')
-    reg_ref.add_argument('--ica')
-    reg_ref.add_argument('--weightedavg')
-    reg_ref.add_argument('--avg')
-    reg_ref.add_argument('--psdfilter')
+    reg_ref.add_argument('--refineprenorm',
+                         dest='refineprenorm',
+                         action='store',
+                         type=str,
+                         metavar='TYPE',
+                         choices=['None', 'mean', 'var', 'std', 'invlag'],
+                         help=("Apply TYPE prenormalization to each "
+                               "timecourse prior to refinement. Valid "
+                               "weightings are 'None', 'mean' (default), "
+                               "'var', and 'std'"),
+                         default='mean')
+    reg_ref.add_argument('--refineweighting',
+                         dest='refineweighting',
+                         action='store',
+                         type=str,
+                         metavar='TYPE',
+                         choices=['None', 'NIRS', 'R', 'R2'],
+                         help=("Apply TYPE weighting to each timecourse prior "
+                               "to refinement. Valid weightings are "
+                               "'None', 'NIRS', 'R', and 'R2' (default)"),
+                         default='R2')
+    reg_ref.add_argument('--passes',
+                         dest='passes',
+                         action='store',
+                         type=int,
+                         metavar='PASSES',
+                         help=('Set the number of processing passes to '
+                               'PASSES'),
+                         default=1)
+    reg_ref.add_argument('--includemask',
+                         dest='includemaskname',
+                         action='store',
+                         type=lambda x: is_valid_file(parser, x),
+                         metavar='FILE',
+                         help=('Only use voxels in NAME for global regressor '
+                               'generation and regressor refinement'),
+                         default=None)
+    reg_ref.add_argument('--excludemask',
+                         dest='excludemaskname',
+                         action='store',
+                         type=lambda x: is_valid_file(parser, x),
+                         metavar='FILE',
+                         help=('Do not use voxels in NAME for global '
+                               'regressor generation and regressor '
+                               'refinement'),
+                         default=None)
+    # TODO: Also set passes to 2
+    reg_ref.add_argument('--lagminthresh',
+                         dest='lagminthresh',
+                         action='store',
+                         metavar='MIN',
+                         type=float,
+                         help=('For refinement, exclude voxels with delays '
+                               'less than MIN (default is 0.5s)'),
+                         default=0.5)
+    # TODO: Also set passes to 2
+    reg_ref.add_argument('--lagmaxthresh',
+                         dest='lagmaxthresh',
+                         action='store',
+                         metavar='MAX',
+                         type=float,
+                         help=('For refinement, exclude voxels with delays '
+                               'greater than MAX (default is 5s)'),
+                         default=5.0)
+    # TODO: Also set passes to 2
+    # TODO: Also set ampthreshfromsig to False
+    reg_ref.add_argument('--ampthresh',
+                         dest='ampthresh',
+                         action='store',
+                         metavar='AMP',
+                         type=float,
+                         help=('or refinement, exclude voxels with '
+                               'correlation coefficients less than AMP '
+                               '(default is 0.3)'),
+                         default=0.3)
+    # TODO: Also set passes to 2
+    reg_ref.add_argument('--sigmathresh',
+                         dest='sigmathresh',
+                         action='store',
+                         metavar='SIGMA',
+                         type=float,
+                         help=('For refinement, exclude voxels with widths '
+                               'greater than SIGMA (default is 100s)'),
+                         default=100.0)
+    # TODO: Also set passes to 2
+    reg_ref.add_argument('--refineoffset',
+                         dest='refineoffset',
+                         action='store_true',
+                         help=('Bipolar mode - match peak correlation '
+                               'ignoring sign'),
+                         default=False)
+
+    refine = reg_ref.add_mutually_exclusive_group()
+    refine.add_argument('--refineupperlag',
+                        dest='lagmaskside',
+                        action='store_const',
+                        const='upper',
+                        help=('Only use positive lags for regressor '
+                              'refinement'),
+                        default='both')
+    refine.add_argument('--refinelowerlag',
+                        dest='lagmaskside',
+                        action='store_const',
+                        const='lower',
+                        help=('Only use negative lags for regressor '
+                              'refinement'),
+                        default='both')
+    rtype = reg_ref.add_mutually_exclusive_group()
+    rtype.add_argument('--pca',
+                       dest='refinetype',
+                       action='store_const',
+                       const='pca',
+                       help=('Use PCA to derive refined regressor '
+                             '(default is unweighted averaging)'),
+                       default='unweighted_average')
+    rtype.add_argument('--ica',
+                       dest='refinetype',
+                       action='store_const',
+                       const='ica',
+                       help=('Use ICA to derive refined regressor '
+                             '(default is unweighted averaging)'),
+                       default='unweighted_average')
+    rtype.add_argument('--weightedavg',
+                       dest='refinetype',
+                       action='store_const',
+                       const='weighted_average',
+                       help=('Use weighted average to derive refined '
+                             'regressor (default is unweighted averaging)'),
+                       default='unweighted_average')
+    rtype.add_argument('--avg',
+                       dest='refinetype',
+                       action='store_const',
+                       const='unweighted_average',
+                       help=('Use unweighted average to derive refined '
+                             'regressor (default)'),
+                       default='unweighted_average')
+    reg_ref.add_argument('--psdfilter',
+                         dest='psdfilter',
+                         action='store_true',
+                         help=('Apply a PSD weighted Wiener filter to '
+                               'shifted timecourses prior to refinement'),
+                         default=False)
 
     # Output options
     output = parser.add_argument_group('Output options')
