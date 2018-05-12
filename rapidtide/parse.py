@@ -1,13 +1,18 @@
 """
 Arguments to maybe drop:
 - --multiproc (redundant with nprocs)
-- --datatstep or -t (redundant with one another)
-- -i (appears unused)
-- check_autocorrelation (not an argument, just a variable)
+- check_autocorrelation (not an argument, just a variable) Always True
 - shiftall (not an argument, just a variable)
+
+
+- usetmask could just be True if tmaskname is not None
 """
 import os.path as op
 import argparse
+
+import nibabel as nib
+
+#from rapidtide import rapidtide
 
 
 def is_valid_file(parser, arg):
@@ -20,12 +25,15 @@ def is_valid_file(parser, arg):
     return arg
 
 
-def freq_to_step(parser, arg):
+def invert_float(parser, arg):
     """
     Check if argument is float or auto.
     """
-    if not isinstance(arg, float) and arg != 'auto':
-        parser.error('Value {0} is not a float or "auto"'.format(arg))
+    if arg != 'auto':
+        try:
+            arg = float(arg)
+        except parser.error:
+            parser.error('Value {0} is not a float or "auto"'.format(arg))
 
     if arg != 'auto':
         arg = 1. / arg
@@ -33,9 +41,14 @@ def freq_to_step(parser, arg):
 
 
 def is_two_or_four_floats(parser, arg):
-    if len(arg) not in (2, 4) or not all([isinstance(a, float) for a in arg]):
-        parser.error('Value {0} must be tuple of two or four '
-                     'integers'.format(arg))
+    print(len(arg))
+    #if len(arg) not in (2, 4) or not all([isinstance(a, float) for a in arg]):
+    #    parser.error('Value {0} must be tuple of two or four '
+    #                 'integers'.format(arg))
+
+    if len(arg) == 2:
+        arg.append(arg[0]*0.9)
+        arg.append(arg[1]*1.1)
     return arg
 
 
@@ -43,8 +56,11 @@ def is_float(parser, arg):
     """
     Check if argument is float or auto.
     """
-    if not isinstance(arg, float) and arg != 'auto':
-        parser.error('Value {0} is not a float or "auto"'.format(arg))
+    if arg != 'auto':
+        try:
+            arg = float(arg)
+        except parser.error:
+            parser.error('Value {0} is not a float or "auto"'.format(arg))
 
     return arg
 
@@ -67,44 +83,42 @@ def get_parser():
     """
     parser = argparse.ArgumentParser()
     # Required arguments
-    parser.add_argument('datafilename',
+    parser.add_argument('in_file',
                         type=lambda x: is_valid_file(parser, x),
                         help='The input data file (BOLD fmri file or NIRS)')
-    parser.add_argument('outputname',
+    parser.add_argument('prefix',
                         help='The root name for the output files')
 
     # Macros
-    # TODO: Do macros
-    macros = parser.add_argument_group('Macros')
+    macros = parser.add_argument_group('Macros').add_mutually_exclusive_group()
     macros.add_argument('--venousrefine',
                         dest='venousrefine',
-                        action='store_true')
+                        action='store_true',
+                        help=('This is a macro that sets --lagminthresh=2.5, '
+                              '--lagmaxthresh=6.0, --ampthresh=0.5, and '
+                              '--refineupperlag to bias refinement towards '
+                              'voxels in the draining vasculature for an '
+                              'fMRI scan.'),
+                        default=False)
     macros.add_argument('--nirs',
                         dest='nirs',
-                        action='store_true')
+                        action='store_true',
+                        help=('This is a NIRS analysis - this is a macro that '
+                              'sets --nothresh, --preservefiltering, '
+                              '--refineprenorm=var, --ampthresh=0.7, and '
+                              '--lagminthresh=0.1.'),
+                        default=False)
 
     # Preprocessing options
     preproc = parser.add_argument_group('Preprocessing options')
     realtr = preproc.add_mutually_exclusive_group()
-    # NOTE: Are both of the following necessary?
-    realtr.add_argument('-t',
-                        dest='realtr',
-                        action='store',
-                        metavar='TSTEP',
-                        type=lambda x: is_float(parser, x),
-                        help=('Set the timestep of the data file to TSTEP '
-                              '(or 1/FREQ). This will override the TR in an '
-                              'fMRI file. NOTE: if using data from a text '
-                              'file, for example with NIRS data, using one '
-                              'of these options is mandatory.'),
-                        default='auto')
     realtr.add_argument('--datatstep',
                         dest='realtr',
                         action='store',
                         metavar='TSTEP',
                         type=lambda x: is_float(parser, x),
-                        help=('Set the timestep of the data file to TSTEP '
-                              '(or 1/FREQ). This will override the TR in an '
+                        help=('Set the timestep of the data file to TSTEP. '
+                              'This will override the TR in an '
                               'fMRI file. NOTE: if using data from a text '
                               'file, for example with NIRS data, using one '
                               'of these options is mandatory.'),
@@ -113,9 +127,9 @@ def get_parser():
                         dest='realtr',
                         action='store',
                         metavar='FREQ',
-                        type=lambda x: freq_to_step(parser, x),
-                        help=('Set the timestep of the data file to TSTEP '
-                              '(or 1/FREQ). This will override the TR in an '
+                        type=lambda x: invert_float(parser, x),
+                        help=('Set the timestep of the data file to 1/FREQ. '
+                              'This will override the TR in an '
                               'fMRI file. NOTE: if using data from a text '
                               'file, for example with NIRS data, using one '
                               'of these options is mandatory.'),
@@ -125,14 +139,13 @@ def get_parser():
                          action='store_false',
                          help='Disable antialiasing filter',
                          default=True)
-    preproc.add_argument('-I',
+    preproc.add_argument('--invert',
                          dest='invertregressor',
                          action='store_true',
                          help=('Invert the sign of the regressor before '
                                'processing'),
                          default=False)
-    # TODO: THIS APPEARS UNUSED
-    preproc.add_argument('-i',
+    preproc.add_argument('--interptype',
                          dest='interptype',
                          action='store',
                          type=str,
@@ -141,26 +154,28 @@ def get_parser():
                                "are 'cubic','quadratic', and 'univariate' "
                                "(default)."),
                          default='univariate')
-    # TODO: Set offsettime_total to negative offsettime
-    preproc.add_argument('-o',
+    preproc.add_argument('--offsettime',
                          dest='offsettime',
                          action='store',
                          type=float,
                          metavar='OFFSETTIME',
                          help='Apply offset OFFSETTIME to the lag regressors',
                          default=None)
-    preproc.add_argument('-b',
-                         dest='usebutterworthfilter',
-                         action='store_true',
+    preproc.add_argument('--butterorder',
+                         dest='butterorder',
+                         action='store',
+                         type=int,
+                         metavar='ORDER',
                          help=('Use butterworth filter for band splitting '
-                               'instead of trapezoidal FFT filter'),
-                         default=False)
+                               'instead of trapezoidal FFT filter and set '
+                               'filter order to ORDER.'),
+                         default=None)
 
     filttype = preproc.add_mutually_exclusive_group()
     filttype.add_argument('-F',
                           dest='arbvec',
                           action='store',
-                          nargs='*',
+                          nargs='+',
                           type=lambda x: is_two_or_four_floats(parser, x),
                           metavar='LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP]',
                           help=('Filter data and regressors from LOWERFREQ to '
@@ -168,6 +183,13 @@ def get_parser():
                                 'be specified, or will be calculated '
                                 'automatically'),
                           default=None)
+    filttype.add_argument('--filtertype',
+                          dest='filtertype',
+                          action='store',
+                          type=str,
+                          choices=['arb', 'vlf', 'lfo', 'resp', 'cardiac'],
+                          help=('Filter data and regressors to specific band'),
+                          default='arb')
     filttype.add_argument('-V',
                           dest='filtertype',
                           action='store_const',
@@ -194,7 +216,7 @@ def get_parser():
                           help=('Filter data and regressors to cardiac band'),
                           default='arb')
 
-    preproc.add_argument('-N',
+    preproc.add_argument('-N', '--numnull',
                          dest='numestreps',
                          action='store',
                          type=int,
@@ -235,13 +257,13 @@ def get_parser():
                          help=('Spatially filter fMRI data prior to analysis '
                                'using GAUSSSIGMA in mm'),
                          default=0.)
-    preproc.add_argument('-M',
+    preproc.add_argument('-M', '--globalmean',
                          dest='useglobalref',
                          action='store_true',
                          help=('Generate a global mean regressor and use that '
                                'as the reference regressor'),
                          default=False)
-    preproc.add_argument('-m',
+    preproc.add_argument('--meanscale',
                          dest='meanscaleglobal',
                          action='store_true',
                          help=('Mean scale regressors during global mean '
@@ -272,7 +294,7 @@ def get_parser():
 
     # Correlation options
     corr = parser.add_argument_group('Correlation options')
-    corr.add_argument('-O',
+    corr.add_argument('--oversampfac',
                       dest='oversampfactor',
                       action='store',
                       type=int,
@@ -284,17 +306,16 @@ def get_parser():
                       dest='regressorfile',
                       action='store',
                       type=lambda x: is_valid_file(parser, x),
-                      metavar='FILENAME',
-                      help=('Read probe regressor from file FILENAME (if none '
+                      metavar='FILE',
+                      help=('Read probe regressor from file FILE (if none '
                             'specified, generate and use global regressor)'),
                       default=None)
 
     reg_group = corr.add_mutually_exclusive_group()
-    # TODO: Calculate default with TR
     reg_group.add_argument('--regressorfreq',
                            dest='inputfreq',
                            action='store',
-                           type=lambda x: freq_to_step(parser, x),
+                           type=lambda x: is_float(parser, x),
                            metavar='FREQ',
                            help=('Probe regressor in file has sample '
                                  'frequency FREQ (default is 1/tr) '
@@ -302,9 +323,9 @@ def get_parser():
                                  'are two ways to specify the same thing'),
                            default='auto')
     reg_group.add_argument('--regressortstep',
-                           dest='inputstep',
+                           dest='inputfreq',
                            action='store',
-                           type=lambda x: is_float(parser, x),
+                           type=lambda x: invert_float(parser, x),
                            metavar='TSTEP',
                            help=('Probe regressor in file has sample '
                                  'frequency FREQ (default is 1/tr) '
@@ -323,34 +344,19 @@ def get_parser():
                       default=0.)
 
     cc_group = corr.add_mutually_exclusive_group()
+    cc_group.add_argument('--corrweighting',
+                          dest='corrweighting',
+                          action='store',
+                          type=str,
+                          choices=['none', 'phat', 'liang', 'eckart'],
+                          help=('Method to use for cross-correlation '
+                                'weighting.'),
+                          default='none')
     cc_group.add_argument('--nodetrend',
                           dest='dodetrend',
                           action='store_false',
                           help='Disable linear trend removal',
                           default=True)
-    cc_group.add_argument('--phat',
-                          dest='corrweighting',
-                          action='store_const',
-                          const='phat',
-                          help=('Use generalized cross-correlation with phase '
-                                'alignment transform (PHAT) instead of '
-                                'correlation'),
-                          default='eckart')
-    cc_group.add_argument('--liang',
-                          dest='corrweighting',
-                          action='store_const',
-                          const='liang',
-                          help=('Use generalized cross-correlation with Liang '
-                                'weighting function (Liang, et al., '
-                                'doi:10.1109/IMCCC.2015.283)'),
-                          default='none')
-    cc_group.add_argument('--eckart',
-                          dest='corrweighting',
-                          action='store_const',
-                          const='eckart',
-                          help=('Use generalized cross-correlation with '
-                                'Eckart weighting function'),
-                          default='none')
 
     mask_group = corr.add_mutually_exclusive_group()
     mask_group.add_argument('--corrmaskthresh',
@@ -366,23 +372,15 @@ def get_parser():
                             dest='corrmaskname',
                             action='store',
                             type=lambda x: is_valid_file(parser, x),
-                            metavar='MASK',
-                            help=('Only do correlations in voxels in MASK '
+                            metavar='FILE',
+                            help=('Only do correlations in voxels in FILE '
                                   '(if set, corrmaskthresh is ignored).'),
                             default=None)
-
-    corr.add_argument('--accheck',
-                      dest='check_autocorrelation',
-                      action='store_true',
-                      help=('Check for periodic components that corrupt the '
-                            'autocorrelation'),
-                      default=False)
 
     # Correlation fitting options
     corr_fit = parser.add_argument_group('Correlation fitting options')
 
     fixdelay = corr_fit.add_mutually_exclusive_group()
-    # TODO: Also adjust fixdelay, lagmin, and lagmax
     fixdelay.add_argument('-Z',
                           dest='fixeddelayvalue',
                           action='store',
@@ -410,13 +408,12 @@ def get_parser():
                           help=('Reject lag fits with linewidth wider than '
                                 'SIGMALIMIT Hz'),
                           default=100.0)
-    corr_fit.add_argument('-B',
+    corr_fit.add_argument('--bipolar',
                           dest='bipolar',
                           action='store_true',
                           help=('Bipolar mode - match peak correlation '
                                 'ignoring sign'),
                           default=False)
-    # TODO: Also set nohistzero to True (default is False)
     corr_fit.add_argument('--nofitfilt',
                           dest='zerooutbadfit',
                           action='store_false',
@@ -433,9 +430,6 @@ def get_parser():
                                 "quadratic fit.  Faster but not as well "
                                 "tested"),
                           default='gauss')
-    # TODO: Also change check_autocorrelation to True
-    # NOTE: However, there's no way to set check_autocorrelation to False, and
-    # True is the default
     corr_fit.add_argument('--despecklepasses',
                           dest='despeckle_passes',
                           action='store',
@@ -445,7 +439,6 @@ def get_parser():
                                 'disambiguate peak locations in PASSES '
                                 'passes'),
                           default=0)
-    # TODO: Also set despeckle_passes to 1
     corr_fit.add_argument('--despecklethresh',
                           dest='despeckle_thresh',
                           action='store',
@@ -501,7 +494,6 @@ def get_parser():
                                'regressor generation and regressor '
                                'refinement'),
                          default=None)
-    # TODO: Also set passes to 2
     reg_ref.add_argument('--lagminthresh',
                          dest='lagminthresh',
                          action='store',
@@ -510,7 +502,6 @@ def get_parser():
                          help=('For refinement, exclude voxels with delays '
                                'less than MIN (default is 0.5s)'),
                          default=0.5)
-    # TODO: Also set passes to 2
     reg_ref.add_argument('--lagmaxthresh',
                          dest='lagmaxthresh',
                          action='store',
@@ -519,8 +510,6 @@ def get_parser():
                          help=('For refinement, exclude voxels with delays '
                                'greater than MAX (default is 5s)'),
                          default=5.0)
-    # TODO: Also set passes to 2
-    # TODO: Also set ampthreshfromsig to False
     reg_ref.add_argument('--ampthresh',
                          dest='ampthresh',
                          action='store',
@@ -530,7 +519,6 @@ def get_parser():
                                'correlation coefficients less than AMP '
                                '(default is 0.3)'),
                          default=0.3)
-    # TODO: Also set passes to 2
     reg_ref.add_argument('--sigmathresh',
                          dest='sigmathresh',
                          action='store',
@@ -539,7 +527,6 @@ def get_parser():
                          help=('For refinement, exclude voxels with widths '
                                'greater than SIGMA (default is 100s)'),
                          default=100.0)
-    # TODO: Also set passes to 2
     reg_ref.add_argument('--refineoffset',
                          dest='refineoffset',
                          action='store_true',
@@ -568,35 +555,14 @@ def get_parser():
                         help=('Only use negative lags for regressor '
                               'refinement'),
                         default='both')
-    rtype = reg_ref.add_mutually_exclusive_group()
-    rtype.add_argument('--pca',
-                       dest='refinetype',
-                       action='store_const',
-                       const='pca',
-                       help=('Use PCA to derive refined regressor '
-                             '(default is unweighted averaging)'),
-                       default='unweighted_average')
-    rtype.add_argument('--ica',
-                       dest='refinetype',
-                       action='store_const',
-                       const='ica',
-                       help=('Use ICA to derive refined regressor '
-                             '(default is unweighted averaging)'),
-                       default='unweighted_average')
-    rtype.add_argument('--weightedavg',
-                       dest='refinetype',
-                       action='store_const',
-                       const='weighted_average',
-                       help=('Use weighted average to derive refined '
-                             'regressor (default is unweighted averaging)'),
-                       default='unweighted_average')
-    rtype.add_argument('--avg',
-                       dest='refinetype',
-                       action='store_const',
-                       const='unweighted_average',
-                       help=('Use unweighted average to derive refined '
-                             'regressor (default)'),
-                       default='unweighted_average')
+    reg_ref.add_argument('--refinetype',
+                         dest='refinetype',
+                         action='store',
+                         type=str,
+                         choices=['avg', 'pca', 'ica', 'weightedavg'],
+                         help=('Method with which to derive refined '
+                               'regressor.'),
+                         default='avg')
 
     # Output options
     output = parser.add_argument_group('Output options')
@@ -606,7 +572,7 @@ def get_parser():
                         help=("Don't save some of the large and rarely used "
                               "files"),
                         default=True)
-    output.add_argument('-T',
+    output.add_argument('--savelags',
                         dest='savecorrtimes',
                         action='store_true',
                         help='Save a table of lagtimes used',
@@ -671,7 +637,7 @@ def get_parser():
                       help=('Use single precision for internal calculations '
                             '(may be useful when RAM is limited)'),
                       default='double')
-    misc.add_argument('-c',
+    misc.add_argument('--cifti',
                       dest='isgrayordinate',
                       action='store_true',
                       help='Data file is a converted CIFTI',
@@ -703,22 +669,13 @@ def get_parser():
                       help=('Enable memory profiling for debugging - '
                             'warning: this slows things down a lot.'),
                       default=False)
-    misc.add_argument('--multiproc',  # can probs be dropped if nprocs is used
-                      dest='nprocs',
-                      action='store_const',
-                      const=-1,
-                      help=('Enable multiprocessing versions of key '
-                            'subroutines. This speeds things up dramatically. '
-                            'Almost certainly will NOT work on Windows (due '
-                            'to different forking behavior).'),
-                      default=1)
     misc.add_argument('--nprocs',
                       dest='nprocs',
                       action='store',
                       type=int,
                       metavar='NPROCS',
                       help=('Use NPROCS worker processes for multiprocessing. '
-                            'Setting NPROCS less than 1 sets the number of '
+                            'Setting NPROCS to less than 1 sets the number of '
                             'worker processes to n_cpus - 1.'),
                       default=1)
     # TODO: Also set theprefilter.setdebug(True)
@@ -745,7 +702,6 @@ def get_parser():
                               help=('Generate extra data during refinement to '
                                     'allow calculation of dispersion.'),
                               default=False)
-    # TODO: Also set check_autocorrelation to True, although it's already True
     experimental.add_argument('--acfix',
                               dest='fix_autocorrelation',
                               action='store_true',
@@ -753,14 +709,13 @@ def get_parser():
                                     'disambiguate peak location (enables '
                                     '--accheck). Experimental.'),
                               default=False)
-    # TODO: Also set usetmask to True
     experimental.add_argument('--tmask',
                               dest='tmaskname',
                               action='store',
                               type=lambda x: is_valid_file(parser, x),
-                              metavar='MASKFILE',
+                              metavar='FILE',
                               help=('Only correlate during epochs specified '
-                                    'in MASKFILE (NB: each line of MASKFILE '
+                                    'in MASKFILE (NB: each line of FILE '
                                     'contains the time and duration of an '
                                     'epoch to include'),
                               default=None)
@@ -770,7 +725,6 @@ def get_parser():
                            action='store_true',
                            help='Prewhiten and refit data',
                            default=False)
-    # TODO: Also change doprewhiten to True
     exp_group.add_argument('-P',
                            dest='saveprewhiten',
                            action='store_true',
@@ -787,7 +741,82 @@ def get_parser():
 
 
 def main(argv=None):
-    args = get_parser().parse_args(argv)
+    args = vars(get_parser().parse_args(argv))
+
+    if args['offsettime'] is not None:
+        args['offsettime_total'] = -1 * args['offsettime']
+    else:
+        args['offsettime_total'] = None
+
+    if args['saveprewhiten'] is True:
+        args['doprewhiten'] = True
+
+    if args['tmaskname'] is not None:
+        args['usetmask'] = True
+
+    reg_ref_used = ((args['lagminthresh'] != 0.5) or
+                    (args['lagmaxthresh'] != 5.) or
+                    (args['ampthresh'] != 0.3) or
+                    (args['sigmathresh'] != 100.) or
+                    (args['refineoffset']))
+    if reg_ref_used and args['passes'] == 1:
+        args['passes'] = 2
+
+    if args['ampthresh'] != 100.:
+        args['ampthreshfromsig'] = False
+    else:
+        args['ampthreshfromsig'] = True
+
+    if args['despeckle_thresh'] != 5 and args['despeckle_passes'] == 0:
+        args['despeckle_passes'] = 1
+
+    if args['zerooutbadfit']:
+        args['nohistzero'] = False
+    else:
+        args['nohistzero'] = True
+
+    if args['fixeddelayvalue'] is not None:
+        args['fixdelay'] = True
+        args['lag_extrema'] = (args['fixeddelayvalue'] - 10.0,
+                               args['fixeddelayvalue'] + 10.0)
+    else:
+        args['fixdelay'] = False
+
+    if args['in_file'].endswith('txt') and args['realtr'] == 'auto':
+        raise ValueError('Either --datatstep or --datafreq must be provided '
+                         'if data file is a text file.')
+
+    if args['realtr'] != 'auto':
+        fmri_tr = args['realtr']
+    else:
+        fmri_tr = nib.load(args['in_file']).header.get_zooms()[3]
+
+    if args['inputfreq'] == 'auto':
+        args['inputfreq'] = 1. / fmri_tr
+
+    if args['butterorder']:
+        args['usebutterworthfilter'] = True
+    else:
+        args['usebutterworthfilter'] = False
+
+    if args['venousrefine']:
+        print('WARNING: Using "venousrefine" macro. Overriding any affected '
+              'arguments.')
+        args['lagminthresh'] = 2.5
+        args['lagmaxthresh'] = 6.
+        args['ampthresh'] = 0.5
+        args['lagmaskside'] = 'upper'
+
+    if args['nirs']:
+        print('WARNING: Using "nirs" macro. Overriding any affected '
+              'arguments.')
+        args['nothresh'] = False
+        args['preservefiltering'] = True
+        args['refineprenorm'] = 'var'
+        args['ampthresh'] = 0.7
+        args['lagmaskthresh'] = 0.1
+
+    #rapidtide.run(args)
     print(args)
 
 
