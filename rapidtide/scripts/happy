@@ -1,0 +1,234 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+# $Author: frederic $
+#       $Date: 2016/07/11 14:50:43 $
+#       $Id: showxcorr,v 1.41 2016/07/11 14:50:43 frederic Exp $
+#
+from __future__ import print_function, division
+
+import warnings
+import sys
+import os
+import platform
+
+import matplotlib
+import numpy as np
+import scipy as sp
+
+#if platform.system() == 'Darwin':
+#    matplotlib.use('MacOSX')
+#else:
+#    matplotlib.use('TkAgg')
+
+import getopt
+import rapidtide.tide_funcs as tide
+from scipy.signal import hilbert
+import nibabel as nib
+
+from pylab import plot, legend, show, figure
+
+
+def usage():
+    print(os.path.basename(sys.argv[0]), "- hyperspecral analytic phase projection")
+    print("")
+    print("usage: ", os.path.basename(sys.argv[0]), " fmrifile slicetimefile outputroot")
+    print("")
+    print("required arguments:")
+    print("    fmrifile:          nifti file containing BOLD fmri data")
+    print("    sampletimefile:    text file containing the offset time in seconds of each slice relative to the start of the TR")
+    print("    outputroot:        base name for all output files")
+    print("")
+    return ()
+
+# get the command line parameters
+duration = 1000000.0
+starttime = 0.0
+doplot = False
+debug = False
+maskthreshpct = 10.0
+upsamplefac = 100
+destpoints = 40
+
+nargs = len(sys.argv)
+if nargs < 4:
+    usage()
+    exit()
+fmrifilename = sys.argv[1]
+slicetimename = sys.argv[2]
+outputroot = sys.argv[3]
+
+theprefilter = tide.noncausalfilter()
+theprefilter.setbutter(False, 3)
+theprefilter.settype('arb')
+arb_lower = 0.6
+arb_upper = 3.0
+arb_lowerstop = 0.5
+arb_upperstop = 3.1
+theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+
+# now scan for optional arguments
+try:
+    opts, args = getopt.getopt(sys.argv[4:], "x", ["help"])
+except getopt.GetoptError as err:
+    # print help information and exit:
+    print(str(err))  # will print something like "option -x not recognized"
+    usage()
+    sys.exit(2)
+
+for o, a in opts:
+    if o == "-x":
+        print('got an x')
+    elif o == "--help":
+        usage()
+        sys.exit()
+    else:
+        assert False, "unhandled option"
+
+# read in the image data
+nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
+xsize, ysize, numslices, timepoints = tide.parseniftidims(thedims)
+xdim, ydim, slicethickness, tr = tide.parseniftisizes(thesizes)
+mrsamplerate = 1.0 / tr
+numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+
+# remap to space by time
+fmri_data = nim_data.reshape((numspatiallocs, timepoints))
+
+# make a mask
+mask = np.uint16(tide.makemask(np.mean(fmri_data[:, :], axis=1),
+                                       threshpct=maskthreshpct))
+mask3d = mask.reshape((xsize, ysize, numslices))
+
+# normalize every voxel over time
+#timeav = np.mean(fmri_data, axis=1)
+#timeav = np.where(mask > 0, timeav, 100000.0)
+#for timepoint in range(timepoints):
+#    normdata[:, timepoint] /= timeav
+#    normdata[:, timepoint] -= 1.0
+#    normdata[:, timepoint] *= mask
+normdata = fmri_data * 0.0
+for spatialloc in range(numspatiallocs):
+    if mask[spatialloc] > 0:
+        normdata[spatialloc, :] = tide.pcnormalize(fmri_data[spatialloc, :])
+normdata = normdata.reshape((xsize, ysize, numslices, timepoints))
+
+# get slice times
+slicetimes = tide.readvec(slicetimename)
+sortedtimes = np.sort(slicetimes)
+diffs = sortedtimes[1:] - sortedtimes[0:-1]
+minstep = np.max(diffs)
+numsteps = int(np.round(tr / minstep, 0))
+sliceoffsets = np.around(slicetimes / minstep).astype(np.int32) % numsteps
+print(len(slicetimes), 'slice times with', numsteps, 'unique values - diff is', minstep)
+
+# make slice means
+hirestc = np.zeros((timepoints * numsteps), dtype=np.float64)
+sliceavs = np.zeros((numslices, timepoints), dtype=np.float64)
+for theslice in range(numslices):
+    sliceavs[theslice, :] = np.mean(normdata[:, :, theslice, :], axis=(0, 1))
+    for t in range(timepoints):
+        hirestc[numsteps * t + sliceoffsets[theslice]] += sliceavs[theslice, t]
+slicesamplerate = 1.0 * numsteps / tr
+print('slice sample rate is ', slicesamplerate)
+filthirestc = tide.corrnormalize(theprefilter.apply(slicesamplerate, hirestc), False, False)
+tide.writevec(filthirestc, outputroot + '_rawcardiac.txt')
+
+# find the main component of the HR
+pspec = abs(sp.fftpack.fft(tide.hamming(len(filthirestc)) * filthirestc)[0:len(filthirestc) // 2])
+maxfreq = slicesamplerate / 2.0
+timeaxis = sp.arange(0.0, maxfreq, maxfreq / (len(pspec)))
+peakfreq = timeaxis[np.argmax(pspec)]
+print('peak frequency is', peakfreq, '(',60.0 * peakfreq, 'bpm)')
+print('effective sampling rate is', timepoints / (1.0 / peakfreq))
+
+# now tune the prefilter to hone in on the primary harmonic
+arb_lower = 0.6 * peakfreq
+arb_upper = 1.6 * peakfreq
+arb_lowerstop = 0.9 * arb_lower
+arb_upperstop = 1.1 * arb_upper
+theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+filthiresfund = tide.corrnormalize(theprefilter.apply(slicesamplerate, filthirestc), False, False)
+tide.writevec(filthiresfund, outputroot + '_cardiacfundamental.txt')
+
+# account for slice time offests
+offsets = nim_data[:, :, :, 0] * 0.0
+for i in range(numslices):
+    offsets[:, :, i] = slicetimes[i]
+
+# remap to space by time
+fmri_offsets = offsets.reshape((numspatiallocs))
+
+# now calculate the phase waveform
+analytic_signal = hilbert(filthiresfund)
+amplitude_envelope = np.abs(analytic_signal)
+instantaneous_phase = np.angle(analytic_signal)
+tide.writevec(amplitude_envelope, outputroot + '_ampenv.txt')
+tide.writevec(instantaneous_phase, outputroot + '_instphase.txt')
+instantaneous_phase = np.unwrap(instantaneous_phase)
+tide.writevec(instantaneous_phase, outputroot + '_instphase_unwrapped.txt')
+
+# interpolate the instantaneous phase
+initx = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
+finalx = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
+interpphase = np.fmod(np.pi + tide.doresample(initx, instantaneous_phase, finalx, method='cubic', padlen=0), 2.0 * np.pi) - np.pi
+tide.writevec(interpphase, outputroot + '_interpinstphase.txt')
+
+phasevals = np.zeros((numslices, timepoints), dtype=np.float64)
+for theslice in range(numslices):
+    thetimes = sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False) + slicetimes[theslice]
+    #tide.writevec(thetimes, outputroot + '_times_' + str(theslice).zfill(2) + '.txt')
+    theindices = np.around(thetimes * slicesamplerate * upsamplefac, 0).astype(np.int32)
+    #tide.writevec(theindices, outputroot + '_indices_' + str(theslice).zfill(2) + '.txt')
+    phasevals[theslice, :] = interpphase[theindices]
+    #tide.writevec(phasevals[theslice, :], outputroot + '_phasevals_' + str(theslice).zfill(2) + '.txt')
+
+# construct a destination array
+app = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
+#weights = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
+
+# now normalize the data prior to distributing
+
+# high pass filter to remove trends
+imagingtime = tr * timepoints
+phasefilter = tide.noncausalfilter()
+phasefilter.setbutter(False, 3)
+phasefilter.settype('arb')
+arb_lower = 4.0 / imagingtime
+arb_upper = 0.5 / tr
+arb_lowerstop = arb_lower
+arb_upperstop = arb_upper
+phasefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+
+outphases = sp.linspace(-np.pi, np.pi, num=destpoints, endpoint=False)
+phasestep = outphases[1] - outphases[0]
+for k in range(numslices):
+    # make the sorted index array for the slice
+    theindices = np.argsort(phasevals[theslice, :])
+    print('doing slice', k)
+    for i in range(xsize):
+        for j in range(ysize):
+            if mask3d[i, j, k] > 0:
+                filteredmr = theprefilter.apply(mrsamplerate, -normdata[i, j, k, :])
+                minval = np.min(filteredmr)
+                app[i, j, k, :] = tide.doresample(phasevals[k, theindices], filteredmr[theindices], outphases, method='cubic', padlen=0) - minval
+
+theheader = nim_hdr
+theheader['dim'][4] = destpoints
+theheader['toffset'] = -np.pi
+theheader['pixdim'][4] = 2.0 * np.pi / destpoints
+tide.savetonifti(app, theheader, thesizes, outputroot + '_app')
