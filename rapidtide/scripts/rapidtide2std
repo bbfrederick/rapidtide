@@ -30,6 +30,7 @@ import getopt
 import platform
 import os
 import subprocess
+import rapidtide.tide_funcs as tide
 
 fsldir = os.environ.get('FSLDIR')
 if fsldir is not None:
@@ -39,6 +40,9 @@ if fsldir is not None:
 else:
     print('FSL directory not found - aborting')
     sys.exit()
+
+c3dexists = tide.isexecutable("c3d_affine_tool")
+print('c3dexists =', c3dexists)
 
 def makethecmd(theinputfile, reftarget, xform, outputname, warpfile=None):
     thecommand = []
@@ -178,7 +182,7 @@ if os.path.isfile(xformfuncmat):
         print('no warp file found - will do linear transformation')
         warpfuncfile = None
 else:
-    print('cannot find transform matrix', xfomrmat, ' - exiting')
+    print('cannot find transform matrix', xformfuncmat, ' - exiting')
     sys.exit(1)
     
 for themap in thefmrimaps:
