@@ -30,6 +30,8 @@ import time
 import sys
 import bisect
 import os
+import pandas as pd
+import json
 
 #from scipy import signal
 from scipy.stats import johnsonsb
@@ -513,6 +515,34 @@ def checkifparfile(filename):
         return False
 
 
+def readbidstsv(inputfilename):
+    thefileroot, theext = os.path.splitext(inputfilename)
+    print(thefileroot, theext)
+    if os.path.exists(thefileroot + '.json') and os.path.exists(thefileroot + '.tsv.gz'):
+        with open(thefileroot + '.json', 'r') as json_data:
+            d = json.load(json_data)
+            try:
+                samplerate = float(d['SamplingFrequency'])
+            except:
+                print('no samplerate found in json')
+                return [None, None, None, None]
+            try:
+                starttime = float(d['StartTime'])
+            except:
+                print('no starttime found in json')
+                return [None, None, None, None]
+            try:
+                columns = d['Columns']
+            except:
+                print('no columns found in json')
+                return [None, None, None, None]
+        df = pd.read_csv(thefileroot + '.tsv.gz', compression='gzip', header=0, sep='\t', quotechar='"')
+        return samplerate, starttime, columns, np.transpose(df.as_matrix())
+    else:
+        print('file pair does not exist')
+        return [None, None, None, None]
+        
+    
 def readvecs(inputfilename):
     thefile = open(inputfilename, 'r')
     lines = thefile.readlines()
