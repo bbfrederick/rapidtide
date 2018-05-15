@@ -2877,6 +2877,22 @@ def real_cepstrum(x):
 
 
 # --------------------------- Utility functions -------------------------------------------------
+def isexecutable(command):
+    import shutil
+
+    theversion = sys.version_info
+    if (theversion[0] >= 3) and (theversion[1] >= 3):
+        if shutil.which(command) is not None:
+            return True
+        else:
+            return False
+    else:
+        return any(
+            os.access(os.path.join(path, cmd), os.X_OK) 
+            for path in os.environ["PATH"].split(os.pathsep)
+        )
+
+
 def valtoindex(thearray, thevalue, toleft=True):
     if toleft:
         return bisect.bisect_left(thearray, thevalue)
