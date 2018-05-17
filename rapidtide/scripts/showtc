@@ -297,7 +297,7 @@ currentxmin = 100000000.0
 for thevec in xvecs:
     currentxmax = np.max([np.max(thevec), currentxmax])
     currentxmin = np.min([np.min(thevec), currentxmin])
-xrange = (np.max([currentxmax, thestarttime]), np.min([currentxmin, theendtime]))
+xrange = (np.min([currentxmin, theendtime]), np.max([currentxmax, thestarttime]))
 ymins = [] 
 ymaxs = []
 for thevec in yvecs:
@@ -309,7 +309,6 @@ for thevec in xvecs:
     currentymax = np.max([np.max(thevec), currentymax])
     currentymin = np.min([np.min(thevec), currentymin])
 yrange = (currentymin,  currentymax)
-#yrange = (np.min(np.asarray(ymins, dtype='float')), np.max(np.asarray(ymaxs, dtype='float')))
 if voffset < 0.0:
     voffset = yrange[1] - yrange[0]
 if not separate:
@@ -317,11 +316,10 @@ if not separate:
         yvecs[i] += (numvecs - i - 1) * voffset
     currentymax = -100000000.0
     currentymin = 100000000.0    
-    for thevec in xvecs:
+    for thevec in yvecs:
         currentymax = np.max([np.max(thevec), currentymax])
         currentymin = np.min([np.min(thevec), currentymin])
     yrange = (currentymin,  currentymax)
-    #yrange = (np.min(np.asarray(yvecs, dtype='float')), np.max(np.asarray(yvecs, dtype='float')))
 
     if dowaterfall:
         xstep = (xrange[1] - xrange[0])/numvecs
@@ -374,12 +372,14 @@ for i in range(0, numvecs):
         ax.legend(fontsize=thelegendfontsize, loc=2)
     ax.set_xlim(xrange)
     if linky:
+        print(yrange)
         ax.set_ylim(yrange)
     else:
         themax = np.max(yvecs[i])
         themin = np.min(yvecs[i])
         thediff = themax - themin
-        ax.set_ylim(top=(themax + thediff / 20.0), bottom = themin - thediff / 20.0)
+        print(themin, themax, thediff)
+        ax.set_ylim(top=(themax + thediff / 20.0), bottom=(themin - thediff / 20.0))
     if showxax:
         ax.tick_params(axis='x', labelsize=thexlabelfontsize, which='both')
     if showyax:
