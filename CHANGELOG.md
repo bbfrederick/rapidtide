@@ -1,4 +1,39 @@
 # History of changes
+## Version 1.5 (5/14/18)
+* (documentation) Added description of rapidtide output files.
+* (rapidtide2, 2x) Added option to disable progress bars (good when saving output to a file).
+* (rapidtide2, 2x) Improved output to memusage file.
+* (rapidtide2, 2x) Report fit errors with better granularity.
+* (rapidtide2, 2x) Allow specification of external correlation mask.
+* (rapidtide2, 2x) Added "MTT" map to hopefully remove the effect of autocorrelation.
+* (rapidtide2x, tide_funcs) Major changes to peak fitting to try to improve stability using new findmaxlag_gauss_rev function.
+* (rapidtide2x) Fixed bug when running despeckling on a single processor.
+* (rapidtide2, 2x) Attempting to stabilize the lagsigma measurement with better initial parameter estimates.
+* (tide_funcs) Cast timecourse index as a long to avoid an overflow in NIRS timecourses.
+* (rapidtide2, 2x, tide_funcs) Added ability to set searchfrac in fits.
+* (rapidtide2, 2x) Disable threshold during significance estimation, simplify internal logic for turning on estimation.
+* (rapitdide2) fixed bug in mask generation
+* (showtc) added the ability to select columns to plot, and to read BIDS style json/tsv.gz physiological files
+* (tidepool) Support for MTT map.
+* (ccorrica, showstxcorr) PEP 8 reformatting.
+* (testing) Added test for findmaxlag versions.
+* (testing) Added test for stxcorr functions.
+* (temporaldecomp) Allow 3D masks.
+* (atlastool) Changed method for generating 3D files.
+* (atlastool) Various bug fixes in 3D atlas generation.
+* (resamp1tc) Modernized option selection, Added nodisplay option.
+* (showstxcorr) Explicit integer cast of indices.
+* (showstxcorr) Removed initial Hamming window.
+* (showstxcorr) Added csv output of matrices.
+* (linfit) Added to distribution.
+* (tide_funcs) Changed value of rcond in leastsq to be compatible over multiple versions of bumpy (least. comprehensible. note. ever.)
+* (spatialdecomp, temporaldecomp) Command line is now saved.
+
+
+## Version 1.4.2 (2/21/18)
+* (documentation) Fixed some formatting.
+* (showxcorrx) Cleaned up usage statement.
+
 
 ## Version 1.4.0 (2/21/18)
 * (rapidtide2, 2x) Added macros to support setting multiple options at once.
@@ -25,8 +60,6 @@
 * (tidepool) Default to displaying using the valid mask rather than the p<0.05 mask.
 * (tidepool) Enabled usage of the refine mask.
 
-
-# History of changes
 
 ## Version 1.3.0 (12/15/17)
 * (rapidtide2, 2x) Added new option, '--despeckle', which uses a spatial median filter to find and correct points where the correlation fit picked the wrong autocorrelation lobe.  This dramatically improves the quality of the output maps.  This will probably be turned on by default in the next release.
