@@ -126,6 +126,7 @@ for spatialloc in range(numspatiallocs):
     if mask[spatialloc] > 0:
         normdata[spatialloc, :] = tide.pcnormalize(fmri_data[spatialloc, :])
 normdata = normdata.reshape((xsize, ysize, numslices, timepoints))
+tide.savetonifti(normdata, nim_hdr, thesizes, outputroot + '_normdata')
 
 # get slice times
 slicetimes = tide.readvec(slicetimename)
