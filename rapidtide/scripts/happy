@@ -62,7 +62,7 @@ doplot = False
 debug = False
 maskthreshpct = 10.0
 upsamplefac = 100
-destpoints = 40
+destpoints = 100
 
 nargs = len(sys.argv)
 if nargs < 4:
