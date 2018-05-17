@@ -256,7 +256,7 @@ for i in range(0, numfiles):
                 yvecs.append(abs(pspec) * 1.0)
             else:
                 yvecs.append(phase(pspec) * 1.0)
-            maxfreq = samplerate / 2.0
+            maxfreq = thissamplerate / 2.0
             xvecs.append(arange(0.0, maxfreq, maxfreq / (len(yvecs[i]))))
         else:
             yvecs.append(invecs[j] * 1.0)
