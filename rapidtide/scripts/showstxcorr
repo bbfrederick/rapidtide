@@ -347,9 +347,10 @@ stepsize = sampletime * round(stepsize / sampletime)
 startpoint = max([int(starttime * Fs), 0])
 if len(infilename) == 1:
     # each column is a timecourse, each row is a timepoint
-    matrixoutput = True
     inputdata = tide.readvecs(infilename[0])
     print('input data shape is ', inputdata.shape)
+    if inputdata.shape[0] > 2:
+        matrixoutput = True
     numpoints = inputdata.shape[1]
     endpoint = min([startpoint + int(duration * Fs), numpoints])
     trimmeddata = inputdata[:, startpoint:endpoint]
@@ -393,6 +394,10 @@ if flipregressor:
     flipfac = -1.0
 else:
     flipfac = 1.0
+
+# now that we have all the information, we have a couple of places to go:
+# We are either doing short term correlations or full timecourse
+# We are either doing two time courses from different (or the same) files, or we are doing more than 2
 
 if matrixoutput:
     # find the lengths of the outputfiles
