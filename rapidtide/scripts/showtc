@@ -349,7 +349,7 @@ else:
 if len(colornames) > 0:
     colorlist = [colornames[i % len(colornames)] for i in range(numvecs)]
 else:
-    colorlist = [cm.spectral(float(i) / numvecs) for i in range(numvecs)]
+    colorlist = [cm.rainbow(float(i) / numvecs) for i in range(numvecs)]
 
 fig = figure()
 if separate:
