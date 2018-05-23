@@ -53,6 +53,11 @@ def usage():
     print("    sampletimefile:    text file containing the offset time in seconds of each slice relative to the start of the TR")
     print("    outputroot:        base name for all output files")
     print("")
+    print("optional arguments:")
+    print("    --debug            turn on debugging messages")
+    #print("    --lpf              filter data prior to gridding")
+    print("    --normalize        normalize fmri data")
+    print("    --gridbins=BINS    width of the gridding kernel in output phase bins (default is 1.5)")
     return ()
 
 
@@ -60,9 +65,14 @@ def phasemod(phase):
     return np.fmod(np.pi + phase, 2.0 * np.pi) - np.pi
 
 
+def rrifromphase(timeaxis, thephase):
+    return None
+
+
 # get the command line parameters
 debug = False
 dofilter = False
+fmrinorm = False
 duration = 1000000.0
 starttime = 0.0
 doplot = False
@@ -70,7 +80,7 @@ debug = False
 maskthreshpct = 10.0
 upsamplefac = 100
 destpoints = 32
-congridwidth = 1.5 * (2.0 * np.pi / destpoints)
+congridbins = 1.5
 
 nargs = len(sys.argv)
 if nargs < 4:
@@ -93,7 +103,7 @@ theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "x", ["help"])
+    opts, args = getopt.getopt(sys.argv[4:], "x", ["lpf", "debug", "normalize", "gridbins=", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -103,6 +113,18 @@ except getopt.GetoptError as err:
 for o, a in opts:
     if o == "-x":
         print('got an x')
+    if o == "--debug":
+        debug = True
+        print('extended debuggin messages')
+    if o == "--gridbins":
+        congridbins = float(a)
+        print('will set gridding kernel to', congridbins, 'bins')
+    if o == "--lpf":
+        dofilter = True
+        print('will lowpass filter prior to gridding')
+    if o == "--normalize":
+        fmrinorm = True
+        print('will normalize fmri before gridding')
     elif o == "--help":
         usage()
         sys.exit()
@@ -152,7 +174,7 @@ for theslice in range(numslices):
         hirestc[numsteps * t + sliceoffsets[theslice]] += sliceavs[theslice, t]
 slicesamplerate = 1.0 * numsteps / tr
 print('slice sample rate is ', slicesamplerate)
-filthirestc = tide.corrnormalize(theprefilter.apply(slicesamplerate, hirestc), False, False)
+filthirestc = -1.0 * tide.corrnormalize(theprefilter.apply(slicesamplerate, hirestc), False, False)
 tide.writevec(filthirestc, outputroot + '_rawcardiac.txt')
 
 # find the main component of the HR
@@ -160,7 +182,7 @@ pspec = abs(sp.fftpack.fft(tide.hamming(len(filthirestc)) * filthirestc)[0:len(f
 maxfreq = slicesamplerate / 2.0
 timeaxis = sp.arange(0.0, maxfreq, maxfreq / (len(pspec)))
 peakfreq = timeaxis[np.argmax(pspec)]
-print('effective sampling rate is', timepoints / (1.0 / peakfreq))
+print('cardiac fundamental frequency is', peakfreq * 60.0)
 
 # now tune the prefilter to hone in on the primary harmonic
 arb_lower = 0.4 * peakfreq
@@ -193,14 +215,18 @@ tide.writevec(instantaneous_phase, outputroot + '_instphase_unwrapped.txt')
 initx = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
 finalx = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
 #interpphase = np.fmod(np.pi + tide.doresample(initx, instantaneous_phase, finalx, method='cubic', padlen=0), 2.0 * np.pi) - np.pi
-interpphase = tide.doresample(initx, instantaneous_phase, finalx, method='cubic', padlen=0)
+interpphase = phasemod(tide.doresample(initx, instantaneous_phase, finalx, method='cubic', padlen=0))
 tide.writevec(interpphase, outputroot + '_interpinstphase.txt')
+
+# calculate RRI
+therri = rrifromphase(finalx, interpphase)
 
 # find the phase values for all timepoints in all slices
 phasevals = np.zeros((numslices, timepoints), dtype=np.float64)
 for theslice in range(numslices):
     thetimes = sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False) + slicetimes[theslice]
-    phasevals[theslice, :] = np.fmod(np.pi + tide.doresample(initx, instantaneous_phase, thetimes, method='cubic', padlen=0), 2.0 * np.pi) - np.pi
+    #phasevals[theslice, :] = np.fmod(np.pi + tide.doresample(initx, instantaneous_phase, thetimes, method='cubic', padlen=0), 2.0 * np.pi) - np.pi
+    phasevals[theslice, :] = phasemod(tide.doresample(initx, instantaneous_phase, thetimes, method='cubic', padlen=0))
     if debug:
         tide.writevec(thetimes, outputroot + '_times_' + str(theslice).zfill(2) + '.txt')
         tide.writevec(phasevals[theslice, :], outputroot + '_phasevals_' + str(theslice).zfill(2) + '.txt')
@@ -227,23 +253,24 @@ phasefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
 outphases = sp.linspace(-np.pi, np.pi - 0.000000000001, num=destpoints, endpoint=True)
 outphasestep = outphases[1] - outphases[0]
 phasestep = outphases[1] - outphases[0]
+congridwidth = congridbins * phasestep
 
 maskbyslice = mask3d.reshape((xsize * ysize, numslices))
-nim_data_byslice = nim_data.reshape((xsize * ysize, numslices, timepoints))
+if fmrinorm:
+    fmri_data_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
+else:
+    fmri_data_byslice = nim_data.reshape((xsize * ysize, numslices, timepoints))
 for theslice in range(numslices):
     print('doing slice', theslice)
     validlocs = np.where(maskbyslice[:, theslice] > 0)[0]
-    for locinslice in validlocs:
-        if dofilter:
-            filteredmr = phasefilter.apply(mrsamplerate, -nim_data_byslice[locinslice, theslice, :])
-        else:
-            filteredmr = -nim_data_byslice[locinslice, theslice, :]
-        minval = np.min(filteredmr)
-        for t in range(timepoints):
-            thevals, theweights, theindices = tide.congrid(outphases, phasevals[theslice, t], filteredmr[t], congridwidth)
-            weight_byslice[locinslice, theslice, theindices] += theweights[:]
-            app_byslice[locinslice, theslice, theindices] += thevals[:]
-        app_byslice[locinslice, theslice, :] = np.nan_to_num(app_byslice[locinslice, theslice, :] / weight_byslice[locinslice, theslice, :])
+    for t in range(timepoints):
+        thevals, theweights, theindices = tide.congrid(outphases, phasevals[theslice, t], 1.0, congridwidth)
+        filteredmr = -fmri_data_byslice[validlocs, theslice, t]
+        for i in range(len(theindices)):
+            weight_byslice[validlocs, theslice, theindices[i]] += theweights[i]
+            app_byslice[validlocs, theslice, theindices[i]] += theweights[i] * filteredmr
+    app_byslice[validlocs, theslice, :] = \
+        np.nan_to_num(app_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :])
     slicemin = np.min(app_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
     app_byslice[validlocs, theslice, :] -= slicemin
 
