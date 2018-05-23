@@ -44,7 +44,7 @@ from pylab import plot, legend, show, figure
 
 
 def usage():
-    print(os.path.basename(sys.argv[0]), "- hyperspecral analytic phase projection")
+    print(os.path.basename(sys.argv[0]), "- Hypersampling and Analytic Phase Projection - Yay")
     print("")
     print("usage: ", os.path.basename(sys.argv[0]), " fmrifile slicetimefile outputroot")
     print("")
@@ -57,6 +57,7 @@ def usage():
     print("    --debug            turn on debugging messages")
     #print("    --lpf              filter data prior to gridding")
     print("    --normalize        normalize fmri data")
+    print("    --outputbins=BINS  number of output phase bins (default is 32)")
     print("    --gridbins=BINS    width of the gridding kernel in output phase bins (default is 1.5)")
     return ()
 
@@ -67,6 +68,35 @@ def phasemod(phase):
 
 def rrifromphase(timeaxis, thephase):
     return None
+
+
+def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes):
+
+    # normalize every voxel over time
+    normdata = imbyvox * 0.0
+    validvoxels = np.where(maskbyvox > 0)[0]
+    for spatialloc in validvoxels:
+        normdata[spatialloc, :] = tide.pcnormalize(imbyvox[spatialloc, :])
+    normbyslice = normdata.reshape((xsize * ysize, numslices, timepoints))
+
+    sortedtimes = np.sort(slicetimes)
+    diffs = sortedtimes[1:] - sortedtimes[0:-1]
+    minstep = np.max(diffs)
+    numsteps = int(np.round(tr / minstep, 0))
+    sliceoffsets = np.around(slicetimes / minstep).astype(np.int32) % numsteps
+    print(len(slicetimes), 'slice times with', numsteps, 'unique values - diff is', minstep)
+    
+    # make slice means
+    hirestc = np.zeros((timepoints * numsteps), dtype=np.float64)
+    sliceavs = np.zeros((numslices, timepoints), dtype=np.float64)
+    for theslice in range(numslices):
+        sliceavs[theslice, :] = np.mean(normbyslice[:, theslice, :], axis=0)
+        for t in range(timepoints):
+            hirestc[numsteps * t + sliceoffsets[theslice]] += sliceavs[theslice, t]
+    slicesamplerate = 1.0 * numsteps / tr
+    print('slice sample rate is ', slicesamplerate)
+    filthirestc = -1.0 * tide.corrnormalize(theprefilter.apply(slicesamplerate, hirestc), False, False)
+    return filthirestc, slicesamplerate, numsteps
 
 
 # get the command line parameters
@@ -103,7 +133,7 @@ theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "x", ["lpf", "debug", "normalize", "gridbins=", "help"])
+    opts, args = getopt.getopt(sys.argv[4:], "x", ["debug", "normalize", "outputbins=", "gridbins=", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -113,23 +143,26 @@ except getopt.GetoptError as err:
 for o, a in opts:
     if o == "-x":
         print('got an x')
-    if o == "--debug":
+    elif o == "--debug":
         debug = True
         print('extended debuggin messages')
-    if o == "--gridbins":
+    elif o == "--outputbins":
+        destpoints = int(a)
+        print('will use', destpoints, 'output bins')
+    elif o == "--gridbins":
         congridbins = float(a)
         print('will set gridding kernel to', congridbins, 'bins')
-    if o == "--lpf":
+    elif o == "--lpf":
         dofilter = True
         print('will lowpass filter prior to gridding')
-    if o == "--normalize":
+    elif o == "--normalize":
         fmrinorm = True
         print('will normalize fmri before gridding')
     elif o == "--help":
         usage()
         sys.exit()
     else:
-        assert False, "unhandled option"
+        assert False, "unhandled option: " + o
 
 # read in the image data
 nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
@@ -149,32 +182,12 @@ theheader = nim_hdr
 theheader['dim'][4] = 1
 tide.savetonifti(mask3d, theheader, thesizes, outputroot + '_mask')
 
-# normalize every voxel over time
-normdata = fmri_data * 0.0
-for spatialloc in range(numspatiallocs):
-    if mask[spatialloc] > 0:
-        normdata[spatialloc, :] = tide.pcnormalize(fmri_data[spatialloc, :])
-normdata = normdata.reshape((xsize, ysize, numslices, timepoints))
 
 # get slice times
 slicetimes = tide.readvec(slicetimename)
-sortedtimes = np.sort(slicetimes)
-diffs = sortedtimes[1:] - sortedtimes[0:-1]
-minstep = np.max(diffs)
-numsteps = int(np.round(tr / minstep, 0))
-sliceoffsets = np.around(slicetimes / minstep).astype(np.int32) % numsteps
-print(len(slicetimes), 'slice times with', numsteps, 'unique values - diff is', minstep)
 
-# make slice means
-hirestc = np.zeros((timepoints * numsteps), dtype=np.float64)
-sliceavs = np.zeros((numslices, timepoints), dtype=np.float64)
-for theslice in range(numslices):
-    sliceavs[theslice, :] = np.mean(normdata[:, :, theslice, :], axis=(0, 1))
-    for t in range(timepoints):
-        hirestc[numsteps * t + sliceoffsets[theslice]] += sliceavs[theslice, t]
-slicesamplerate = 1.0 * numsteps / tr
-print('slice sample rate is ', slicesamplerate)
-filthirestc = -1.0 * tide.corrnormalize(theprefilter.apply(slicesamplerate, hirestc), False, False)
+# now get an estimate of the cardiac signal
+filthirestc, slicesamplerate, numsteps = cardiacfromimage(fmri_data, mask, xsize, ysize, numslices, timepoints, tr, slicetimes)
 tide.writevec(filthirestc, outputroot + '_rawcardiac.txt')
 
 # find the main component of the HR
@@ -236,8 +249,6 @@ app = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
 weights = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
 app_byslice = app.reshape((xsize * ysize, numslices, destpoints))
 weight_byslice = weights.reshape((xsize * ysize, numslices, destpoints))
-
-# now normalize the data prior to distributing
 
 # high pass filter to remove trends
 imagingtime = tr * timepoints
