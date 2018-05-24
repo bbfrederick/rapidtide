@@ -372,13 +372,13 @@ for i in range(0, numvecs):
         ax.legend(fontsize=thelegendfontsize, loc=2)
     ax.set_xlim(xrange)
     if linky:
-        print(yrange)
+        #print(yrange)
         ax.set_ylim(yrange)
     else:
         themax = np.max(yvecs[i])
         themin = np.min(yvecs[i])
         thediff = themax - themin
-        print(themin, themax, thediff)
+        #print(themin, themax, thediff)
         ax.set_ylim(top=(themax + thediff / 20.0), bottom=(themin - thediff / 20.0))
     if showxax:
         ax.tick_params(axis='x', labelsize=thexlabelfontsize, which='both')
