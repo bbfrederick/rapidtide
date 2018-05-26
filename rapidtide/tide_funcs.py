@@ -541,6 +541,28 @@ def readbidstsv(inputfilename):
     else:
         print('file pair does not exist')
         return [None, None, None, None]
+
+
+def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None):
+    samplerate, starttime, columns, data = readbidstsv(inputfilename)
+    if data is None:
+        print('no valid datafile found')
+        return None, None, None
+    else:
+        if columnname is not None:
+            # looking for a named column
+            try:
+                thecolnum = columns.index(columnname)
+                return samplerate, starttime, data[thecolnum, :]
+            except:
+                print('no column named', columnname, 'in', inputfilename)
+                return None, None, None
+        # we can only get here if columnname is undefined
+        if not (0 < columnum < len(columns)):
+            print('specified column number', columnnum, 'is out of range in', inputfilename)
+            return None, None, None
+        else:
+            return samplerate, starttime, data[thecolnum, :]
         
     
 def readvecs(inputfilename):
