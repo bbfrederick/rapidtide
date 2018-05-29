@@ -515,9 +515,19 @@ def checkifparfile(filename):
         return False
 
 
+def readbidssidecar(inputfilename):
+    thefileroot, theext = os.path.splitext(inputfilename)
+    if os.path.exists(thefileroot + '.json'):
+        with open(thefileroot + '.json', 'r') as json_data:
+            d = json.load(json_data)
+            return d
+    else:
+        print('sidecar file does not exist')
+        return {}
+
+
 def readbidstsv(inputfilename):
     thefileroot, theext = os.path.splitext(inputfilename)
-    print(thefileroot, theext)
     if os.path.exists(thefileroot + '.json') and os.path.exists(thefileroot + '.tsv.gz'):
         with open(thefileroot + '.json', 'r') as json_data:
             d = json.load(json_data)
