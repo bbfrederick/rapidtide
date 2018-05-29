@@ -221,7 +221,19 @@ tide.savetonifti(mask3d, theheader, thesizes, outputroot + '_mask')
 
 
 # get slice times
-slicetimes = tide.readvec(slicetimename)
+filebase, extension = os.path.splitext(slicetimename)
+if extension == '.json':
+    infodict = tide.readbidssidecar(slicetimename)
+    try:
+        slicetimelist = infodict['SliceTiming']
+        slicetimes = np.zeros((len(slicetimelist)), dtype=np.float64)
+        for idx, thetime in enumerate(slicetimelist):
+            slicetimes[idx] = float(thetime)
+    except:
+        print(slicetimename, 'is not a valid BIDS sidecar file')
+        sys.exit()
+else:
+    slicetimes = tide.readvec(slicetimename)
 
 # now get an estimate of the cardiac signal
 cardiacfromfmri, slicesamplerate, numsteps = cardiacfromimage(fmri_data, mask, xsize, ysize, numslices, timepoints, tr, slicetimes)
