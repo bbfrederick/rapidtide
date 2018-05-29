@@ -49,6 +49,7 @@ def usage():
     print("")
     print("optional arguments:")
     print("    --debug                    - turn on debugging messages")
+    print("    --glm                      - generate voxelwise aliased synthetic cardiac regressors and filter them out")
     #print("    --lpf                     - filter data prior to gridding")
     print("    --normalize                - normalize fmri data")
     print("    --outputbins=BINS          - number of output phase bins (default is 32)")
@@ -124,6 +125,7 @@ colname = None
 inputrate = 32.0
 inputstarttime = 0.0
 doplot = False
+doglm = False
 
 
 nargs = len(sys.argv)
@@ -147,7 +149,7 @@ theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "x", ["cardiacfile=", "cardiacrate=", "cardiactime=", "cardiacstart=", "debug", "normalize", "outputbins=", "gridbins=", "help"])
+    opts, args = getopt.getopt(sys.argv[4:], "x", ["cardiacfile=", "cardiacrate=", "cardiactime=", "cardiacstart=", "glm", "debug", "normalize", "outputbins=", "gridbins=", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -157,6 +159,9 @@ except getopt.GetoptError as err:
 for o, a in opts:
     if o == "-x":
         print('got an x')
+    elif o == "--glm":
+        doglm = True
+        print('will generate and remove aliased voxelwise cardiac regressors')
     elif o == "--debug":
         debug = True
         print('extended debuggin messages')
@@ -356,29 +361,31 @@ theheader['pixdim'][4] = 2.0 * np.pi / destpoints
 tide.savetonifti(app, theheader, thesizes, outputroot + '_app')
 tide.savetonifti(weights, theheader, thesizes, outputroot + '_weights')
 
-# now generate a cardiac file to regress out of the data
-print('generating cardiac regressors')
-cardiacnoise = fmri_data_byslice * 0.0
-for theslice in range(numslices):
-    print('doing slice', theslice)
-    validlocs = np.where(maskbyslice[:, theslice] > 0)[0]
-    for t in range(timepoints):
-        phaseindex = int(np.round((phasevals[theslice, t] - outphases[0]) / phasestep, 0))
-        cardiacnoise[validlocs, theslice, t] = app_byslice[validlocs, theslice, phaseindex] * amplitude_envelope[t]
-theheader = nim_hdr
-tide.savetonifti(cardiacnoise.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_cardiacnoise')
-
-# now remove the cardiac signal
-print('removing cardiac signal with GLM')
-filtereddata = 0.0 * fmri_data_byslice
-for theslice in range(numslices):
-    print('doing slice', theslice)
-    validlocs = np.where(maskbyslice[:, theslice] > 0)[0]
-    for theloc in validlocs:
-        lagtc = cardiacnoise[theloc, theslice, :]
-        thefit, R = tide.mlregress(lagtc, fmri_data_byslice[theloc, theslice, :])
-        fitcoff = thefit[0, 1]
-        datatoremove = fitcoff * lagtc
-        filtereddata[theloc, theslice, :] = fmri_data_byslice[theloc, theslice, :] - datatoremove
-theheader = nim_hdr
-tide.savetonifti(filtereddata.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_filtereddata')
+# now generate aliased cardiac signals and regress them out of the data
+if doglm:
+    # generate the signals
+    print('generating cardiac regressors')
+    cardiacnoise = fmri_data_byslice * 0.0
+    for theslice in range(numslices):
+        print('doing slice', theslice)
+        validlocs = np.where(maskbyslice[:, theslice] > 0)[0]
+        for t in range(timepoints):
+            phaseindex = int(np.round((phasevals[theslice, t] - outphases[0]) / phasestep, 0))
+            cardiacnoise[validlocs, theslice, t] = app_byslice[validlocs, theslice, phaseindex] * amplitude_envelope[t]
+    theheader = nim_hdr
+    tide.savetonifti(cardiacnoise.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_cardiacnoise')
+    
+    # now remove them
+    print('removing cardiac signal with GLM')
+    filtereddata = 0.0 * fmri_data_byslice
+    for theslice in range(numslices):
+        print('doing slice', theslice)
+        validlocs = np.where(maskbyslice[:, theslice] > 0)[0]
+        for theloc in validlocs:
+            lagtc = cardiacnoise[theloc, theslice, :]
+            thefit, R = tide.mlregress(lagtc, fmri_data_byslice[theloc, theslice, :])
+            fitcoff = thefit[0, 1]
+            datatoremove = fitcoff * lagtc
+            filtereddata[theloc, theslice, :] = fmri_data_byslice[theloc, theslice, :] - datatoremove
+    theheader = nim_hdr
+    tide.savetonifti(filtereddata.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_filtereddata')
