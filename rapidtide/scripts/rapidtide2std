@@ -83,6 +83,8 @@ def usage():
     print("    --all              - also transform the corrout file (warning - file may be huge)")
     print("    --hires            - transform to match the high resolution anatomic image rather than the standard")
     print("    --linear           - only do linear transformation, even if warpfile exists")
+    print("    --onefile=FILE     - align a single file, specified by name without extension (ignore INPUTFILEROOT)")
+    print("    --fake             - output, but do not execute, alignment commands")
 
 
 ##########################################################################################
@@ -97,10 +99,12 @@ def usage():
 do4Dmaps = False
 aligntohires = False
 forcelinear = False
+onefilename = None
+preponly = False
 
 # get the command line parameters
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "all", "hires", "linear"])
+    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "all", "fake", "onefile=", "hires", "linear"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like 'option -a not recognized'
@@ -119,6 +123,12 @@ for o, a in opts:
     if o == "--all":
         do4Dmaps = True
         print('will also transofrm corrout map')
+    elif o == '--onefile':
+        onefilename = a
+        print('will only align', onefilename)
+    elif o == '--fake':
+        preponly = True
+        print('will output, but not execute, commands')
     elif o == '--linear':
         forcelinear = True
         print('forcing linear transformation')
@@ -142,7 +152,6 @@ thefmrimaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'lagmask', 'refine
 
 if do4Dmaps:
     thefmrimaps.append('corrout')
-preponly = False
 
 absname = os.path.abspath(thefileroot)
 thepath, thebase = os.path.split(absname)
@@ -185,28 +194,42 @@ else:
     print('cannot find transform matrix', xformfuncmat, ' - exiting')
     sys.exit(1)
     
-for themap in thefmrimaps:
-    inputname = os.path.abspath(os.path.join(thepath, subjroot + '_' + themap + '.nii.gz'))
-    outputname = os.path.abspath(os.path.join(theoutputdir,subjroot + outputtag + themap + '.nii.gz'))
-    thecommand = makethecmd(inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile)
+if onefilename is not None:
+    inputname = os.path.abspath(onefilename + '.nii.gz')
+    thepath, thebase = os.path.split(inputname)
+    if os.path.isfile(inputname):
+        outputname = os.path.abspath(os.path.join(thepath + outputtag + thebase))
+        thecommand = makethecmd(inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile)
 
-    if preponly:
-        print(" ".join(thecommand))
-    else:
-        subprocess.call(thecommand)
+        if preponly:
+            print(" ".join(thecommand))
+        else:
+            subprocess.call(thecommand)
+else:
+    for themap in thefmrimaps:
+        inputname = os.path.abspath(os.path.join(thepath, subjroot + '_' + themap + '.nii.gz'))
+        if os.path.isfile(inputname):
+            outputname = os.path.abspath(os.path.join(theoutputdir,subjroot + outputtag + themap + '.nii.gz'))
+            thecommand = makethecmd(inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile)
+    
+            if preponly:
+                print(" ".join(thecommand))
+            else:
+                subprocess.call(thecommand)
+    
+    for themap in theanatmaps:
+        inputname = os.path.abspath(glob.glob(os.path.join(featdir,
+            'reg',themap + '.nii.gz'))[0])
+        if os.path.isfile(inputname):
+            outputname = os.path.abspath(os.path.join(theoutputdir,subjroot + outputtag + themap.replace('standard','anat') + '.nii.gz'))
+            if aligntohires:
+                thecommand = ['cp', inputname, outputname]
+            else:
+                xform = os.path.abspath(glob.glob(os.path.join(featdir,
+                    'reg','highres2standard.mat'))[0])
+                thecommand = makethecmd(inputname, reftarget, xform, outputname)
 
-for themap in theanatmaps:
-    inputname = os.path.abspath(glob.glob(os.path.join(featdir,
-        'reg',themap + '.nii.gz'))[0])
-    outputname = os.path.abspath(os.path.join(theoutputdir,subjroot + outputtag + themap.replace('standard','anat') + '.nii.gz'))
-    if aligntohires:
-        thecommand = ['cp', inputname, outputname]
-    else:
-        xform = os.path.abspath(glob.glob(os.path.join(featdir,
-            'reg','highres2standard.mat'))[0])
-        thecommand = makethecmd(inputname, reftarget, xform, outputname)
-
-    if preponly:
-        print(" ".join(thecommand))
-    else:
-        subprocess.call(thecommand)
+            if preponly:
+                print(" ".join(thecommand))
+            else:
+                subprocess.call(thecommand)
