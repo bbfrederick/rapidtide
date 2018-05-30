@@ -185,7 +185,7 @@ if onefilename is not None:
     inputname = os.path.abspath(onefilename + '.nii.gz')
     thepath, thebase = os.path.split(inputname)
     if os.path.isfile(inputname):
-        outputname = os.path.abspath(os.path.join(thepath + outputtag + thebase))
+        outputname = os.path.abspath(os.path.join(thepath, outputtag[1:] + thebase))
         thecommand = makethecmd(inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile)
 
         if preponly:
