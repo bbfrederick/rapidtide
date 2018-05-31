@@ -192,6 +192,8 @@ if onefilename is not None:
             print(" ".join(thecommand))
         else:
             subprocess.call(thecommand)
+    else:
+        print('file', inputname, 'does not exist - exiting')
     sys.exit(0)
 
 theoutputdir = os.path.join(os.path.abspath('.'), outputdir)
