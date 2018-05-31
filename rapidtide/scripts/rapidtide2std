@@ -185,13 +185,15 @@ if onefilename is not None:
     inputname = os.path.abspath(onefilename + '.nii.gz')
     thepath, thebase = os.path.split(inputname)
     if os.path.isfile(inputname):
-        outputname = os.path.abspath(os.path.join(thepath + outputtag + thebase))
+        outputname = os.path.abspath(os.path.join(thepath, outputtag[1:] + thebase))
         thecommand = makethecmd(inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile)
 
         if preponly:
             print(" ".join(thecommand))
         else:
             subprocess.call(thecommand)
+    else:
+        print('file', inputname, 'does not exist - exiting')
     sys.exit(0)
 
 theoutputdir = os.path.join(os.path.abspath('.'), outputdir)
