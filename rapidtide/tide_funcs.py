@@ -2972,6 +2972,19 @@ def real_cepstrum(x):
 
 
 # --------------------------- Utility functions -------------------------------------------------
+def findexecutable(command):
+    import shutil
+
+    theversion = sys.version_info
+    if (theversion[0] >= 3) and (theversion[1] >= 3):
+        return shutil.which(command)
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            if os.access(os.path.join(path, command), os.X_OK):
+                return os.path.join(path, command)
+        return None
+
+
 def isexecutable(command):
     import shutil
 
@@ -2983,7 +2996,7 @@ def isexecutable(command):
             return False
     else:
         return any(
-            os.access(os.path.join(path, cmd), os.X_OK) 
+            os.access(os.path.join(path, command), os.X_OK) 
             for path in os.environ["PATH"].split(os.pathsep)
         )
 
