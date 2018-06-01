@@ -55,6 +55,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/atlastool',
                'rapidtide/scripts/linfit',
                'rapidtide/scripts/happy',
+               'rapidtide/scripts/threeD',
                'rapidtide/scripts/tcfrom3col',
 #               'rapidtide/scripts/endtidalproc',
                'rapidtide/scripts/showhist']
