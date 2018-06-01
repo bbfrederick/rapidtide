@@ -124,7 +124,7 @@ cardiacfile = None
 colnum = 0
 colname = None
 inputrate = 32.0
-inputstarttime = 0.0
+inputstart = 0.0
 doplot = False
 doglm = False
 
@@ -194,8 +194,8 @@ for o, a in opts:
         inputfreq = 1.0 / float(a)
         print('Setting cardiac sample time step to ', float(a))
     elif o == '--cardiacstart':
-        inputstarttime = float(a)
-        print('Setting cardiac start time to ', inputstarttime)
+        inputstart = float(a)
+        print('Setting cardiac start time to ', inputstart)
     elif o == "--help":
         usage()
         sys.exit()
