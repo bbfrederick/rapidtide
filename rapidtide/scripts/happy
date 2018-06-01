@@ -285,7 +285,7 @@ pspec = abs(sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)
 maxfreq = slicesamplerate / 2.0
 timeaxis = sp.arange(0.0, maxfreq, maxfreq / (len(pspec)))
 peakfreq = timeaxis[np.argmax(pspec)]
-print('cardiac fundamental frequency is', peakfreq * 60.0)
+print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
 
 # now tune the prefilter to hone in on the primary harmonic
 arb_lower = 0.4 * peakfreq
