@@ -251,6 +251,11 @@ if cardiacfile is not None:
     else:
         inputwave = tide.readvecs(cardiacfile)
     inputtimeaxis = sp.arange(0.0, (1.0 / inputfreq) * len(inputwave), 1.0 / inputfreq) + inputstart
+    if debug:
+        print('inputwave: len=', len(inputwave), 'vals=', inputwave)
+        print('inputfreq =', inputfreq)
+        print('inputstart =', inputstart)
+        print('inputtimeaxis: len=', len(inputtimeaxis), 'vals=', inputtimeaxis)
     cardiacfromfile = tide.doresample(inputtimeaxis, inputwave, slicetimeaxis, method='cubic', padlen=0)
     cardiacfromfile = tide.corrnormalize(cardiacfromfile, False, False)
     tide.writevec(cardiacfromfile, outputroot + '_cardiacfromfile.txt')
