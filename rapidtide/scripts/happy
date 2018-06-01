@@ -150,7 +150,7 @@ theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "x", ["cardiacfile=", "cardiacrate=", "cardiactime=", "cardiacstart=", "glm", "debug", "normalize", "outputbins=", "gridbins=", "help"])
+    opts, args = getopt.getopt(sys.argv[4:], "x", ["cardiacfile=", "cardiacfreq=", "cardiactstep=", "cardiacstart=", "glm", "debug", "normalize", "outputbins=", "gridbins=", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"

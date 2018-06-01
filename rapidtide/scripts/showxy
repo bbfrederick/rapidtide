@@ -137,7 +137,7 @@ for i in range(0, numfiles):
     yvecs.append(1.0 * indata[1,:])
 
 numvecs = len(xvecs)
-colorlist = [cm.spectral(float(i) / numvecs) for i in range(numvecs)]
+colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
 for i in range(0, numfiles):
     if usebarplot:
         bar(xvecs[i],yvecs[i],width=1.5,color='lightgray',align='center',edgecolor=None)
