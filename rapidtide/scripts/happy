@@ -139,6 +139,10 @@ fmrifilename = sys.argv[1]
 slicetimename = sys.argv[2]
 outputroot = sys.argv[3]
 
+infodict['fmrifilename'] = fmrifilename
+infodict['slicetimename'] = slicetimename
+infodict['outputroot'] = outputroot
+
 tide.savecommandline(sys.argv, outputroot)
 
 # now scan for optional arguments
