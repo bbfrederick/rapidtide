@@ -79,7 +79,7 @@ def rrifromphase(timeaxis, thephase):
     return None
 
 
-def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes, initprefilter):
+def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes, initprefilter, dotrnotch=False, debug=False):
 
     # normalize every voxel over time
     normdata = imbyvox * 0.0
@@ -105,8 +105,16 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
     slicesamplerate = 1.0 * numsteps / tr
     print('slice sample rate is ', slicesamplerate)
     filthirestc = -1.0 * tide.corrnormalize(initprefilter.apply(slicesamplerate, hirestc), False, False)
-    return filthirestc, slicesamplerate, numsteps
 
+    # delete the TR frequency
+    if dotrnotch:
+        stopfreq = 2.0 / tr
+        trnotchfilter = tide.noncausalfilter(debug=debug)
+        trnotchfilter.settype('arb_stop')
+        trnotchfilter.setarb(stopfreq * 0.95, stopfreq * 0.975, stopfreq * 1.025, stopfreq * 1.05)
+        filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
+
+    return filthirestc, slicesamplerate, numsteps
 
 # get the command line parameters
 debug = False
@@ -126,6 +134,7 @@ inputrate = 32.0
 inputstart = 0.0
 doplot = False
 doglm = False
+dotrnotch = True
 arb_lower = 0.6
 arb_upper = 3.0
 infodict = {}
@@ -251,7 +260,9 @@ else:
     slicetimes = tide.readvec(slicetimename)
 
 # now get an estimate of the cardiac signal
-cardiacfromfmri, slicesamplerate, numsteps = cardiacfromimage(fmri_data, mask, xsize, ysize, numslices, timepoints, tr, slicetimes, theprefilter)
+cardiacfromfmri, slicesamplerate, numsteps = cardiacfromimage(fmri_data, mask, xsize, ysize, numslices, timepoints, tr, slicetimes, theprefilter, \
+    dotrnotch=dotrnotch,
+    debug=debug)
 slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
 tide.writevec(cardiacfromfmri, outputroot + '_cardiacfromfmri.txt')
 cardiacwaveform = cardiacfromfmri
@@ -305,7 +316,8 @@ maxfreq = slicesamplerate / 2.0
 freqaxis = sp.arange(0.0, maxfreq, maxfreq / (len(pspec)))
 if debug:
     figure()
-    plot(freqaxis, pspec, 'r')
+    #plot(freqaxis, pspec, 'r')
+    plot(pspec, 'r')
     show()
 peakfreq = freqaxis[np.argmax(pspec)]
 print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
