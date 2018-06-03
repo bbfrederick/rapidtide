@@ -124,7 +124,7 @@ cardiacfile = None
 colnum = 0
 colname = None
 inputrate = 32.0
-inputstarttime = 0.0
+inputstart = 0.0
 doplot = False
 doglm = False
 
@@ -194,8 +194,8 @@ for o, a in opts:
         inputfreq = 1.0 / float(a)
         print('Setting cardiac sample time step to ', float(a))
     elif o == '--cardiacstart':
-        inputstarttime = float(a)
-        print('Setting cardiac start time to ', inputstarttime)
+        inputstart = float(a)
+        print('Setting cardiac start time to ', inputstart)
     elif o == "--help":
         usage()
         sys.exit()
@@ -249,8 +249,13 @@ if cardiacfile is not None:
     if extension == '.json':
         inputfreq, inputstart, inputwave = tide.readcolfrombidstsv(cardiacfile, columnname=colname, columnnum=colnum)
     else:
-        inputwave = tide.readvecs(cardiacfile)
+        inputwave = tide.readvec(cardiacfile)
     inputtimeaxis = sp.arange(0.0, (1.0 / inputfreq) * len(inputwave), 1.0 / inputfreq) + inputstart
+    if debug:
+        print('inputwave: len=', len(inputwave), 'vals=', inputwave)
+        print('inputfreq =', inputfreq)
+        print('inputstart =', inputstart)
+        print('inputtimeaxis: len=', len(inputtimeaxis), 'vals=', inputtimeaxis)
     cardiacfromfile = tide.doresample(inputtimeaxis, inputwave, slicetimeaxis, method='cubic', padlen=0)
     cardiacfromfile = tide.corrnormalize(cardiacfromfile, False, False)
     tide.writevec(cardiacfromfile, outputroot + '_cardiacfromfile.txt')
@@ -280,7 +285,7 @@ pspec = abs(sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)
 maxfreq = slicesamplerate / 2.0
 timeaxis = sp.arange(0.0, maxfreq, maxfreq / (len(pspec)))
 peakfreq = timeaxis[np.argmax(pspec)]
-print('cardiac fundamental frequency is', peakfreq * 60.0)
+print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
 
 # now tune the prefilter to hone in on the primary harmonic
 arb_lower = 0.4 * peakfreq

@@ -30,6 +30,7 @@ import sys
 import os
 import numpy as np
 import rapidtide.tide_funcs as tide
+import time
 
 from vispy import app, scene, io
 from vispy.color import get_colormaps, BaseColormap
@@ -46,6 +47,14 @@ def usage():
     #print("optional arguments:")
     #print("    --debug                    - turn on debugging messages")
     #print("    --glm                      - generate voxelwise aliased synthetic cardiac regressors and filter them out")
+
+
+def incrementvolume(volumelist):
+    global activevol
+
+    volumelist[activevol].visible = False
+    activevol = (activevol + 1) % len(volumelist)
+    volumelist[activevol].visible = True
 
 
 ### control flow starts here
@@ -84,9 +93,13 @@ minsize = np.min([xdim, ydim, slicethickness])
 volumelist = []
 transfacs = (0, 0, 0)
 scalefacs = (xdim / minsize, ydim / minsize, slicethickness / minsize)
+datarobustmax = tide.getfracvals(nim_data, [0.98])[0]
+fracval = 0.2
+clims = (datarobustmax * fracval, 2.0 * datarobustmax)
+
 for thevol in vollist:
    volumelist.append(scene.visuals.Volume(thevol, parent=view.scene, threshold=0.2,
-                               emulate_texture=emulate_texture))
+                               emulate_texture=emulate_texture, clim=clims))
    volumelist[-1].transform = scene.STTransform(translate=transfacs)
    volumelist[-1].transform = scene.STTransform(scale=scalefacs)
    volumelist[-1].visible = False
@@ -166,10 +179,11 @@ def on_key_press(event):
             thevolume.method = method
             thevolume.cmap = cmap
     elif event.text == '3':
-        volumelist[activevol].visible = False
-        activevol = (activevol + 1) % len(volumelist)
-        print('activevol set to', activevol)
-        volumelist[activevol].visible = True
+        incrementvolume(volumelist)
+        #volumelist[activevol].visible = False
+        #activevol = (activevol + 1) % len(volumelist)
+        #print('activevol set to', activevol)
+        #volumelist[activevol].visible = True
     elif event.text == '4':
         if volumelist[activevol].method in ['mip', 'iso']:
             cmap = opaque_cmap = next(opaque_cmaps)
