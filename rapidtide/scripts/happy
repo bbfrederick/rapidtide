@@ -49,7 +49,7 @@ def usage():
     print("    outputroot:               base name for all output files")
     print("")
     print("optional arguments:")
-    print("    --debug                    - turn on debugging messages")
+    print("    --debug                    - turn on debugging information")
     print("    --glm                      - generate voxelwise aliased synthetic cardiac regressors and filter them out")
     print("    --lpf=FILT                 - lowpass filter cardiac data")
     print("    --normalize                - normalize fmri data")
@@ -115,7 +115,6 @@ fmrinorm = False
 duration = 1000000.0
 starttime = 0.0
 doplot = False
-debug = False
 maskthreshpct = 10.0
 upsamplefac = 100
 destpoints = 32
@@ -162,7 +161,7 @@ for o, a in opts:
         print('will generate and remove aliased voxelwise cardiac regressors')
     elif o == "--debug":
         debug = True
-        print('extended debuggin messages')
+        print('extended debugging messages')
     elif o == "--outputbins":
         destpoints = int(a)
         print('will use', destpoints, 'output bins')
@@ -303,8 +302,12 @@ else:
 # find the main component of the HR
 pspec = abs(sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)[0:len(cardiacwaveform) // 2])
 maxfreq = slicesamplerate / 2.0
-timeaxis = sp.arange(0.0, maxfreq, maxfreq / (len(pspec)))
-peakfreq = timeaxis[np.argmax(pspec)]
+freqaxis = sp.arange(0.0, maxfreq, maxfreq / (len(pspec)))
+if debug:
+    figure()
+    plot(freqaxis, pspec, 'r')
+    show()
+peakfreq = freqaxis[np.argmax(pspec)]
 print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
 infodict['cardiacpeakfreq'] = np.round(peakfreq * 60.0, 2)
 
