@@ -80,6 +80,14 @@ def rrifromphase(timeaxis, thephase):
     return None
 
 
+def setnotchfilter(thefilter, thefreq, thewidth=0.01):
+    thefilter.settype('arb_stop')
+    thefilter.setarb( \
+        stopfreq * (1.0 - notchwidth/2.0), \
+        stopfreq * (1.0 - notchwidth/2.0), \
+        stopfreq * (1.0 + notchwidth/2.0), \
+        stopfreq * (1.0 + notchwidth/2.0))
+
 def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes, initprefilter, dotrnotch=False, debug=False):
 
     # normalize every voxel over time
@@ -110,11 +118,11 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
     # delete the TR frequency and the first subharmonic
     if dotrnotch:
         stopfreq = 2.0 / tr
+        notchwidth = 0.01
         trnotchfilter = tide.noncausalfilter(debug=debug)
-        trnotchfilter.settype('arb_stop')
-        trnotchfilter.setarb(stopfreq * 0.95, stopfreq * 0.975, stopfreq * 1.025, stopfreq * 1.05)
+        setnotchfilter(trnotchfilter, stopfreq)
         filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
-        trnotchfilter.setarb(0.5 * stopfreq * 0.95, 0.5 * stopfreq * 0.975, 0.5 * stopfreq * 1.025, 0.5 * stopfreq * 1.05)
+        setnotchfilter(trnotchfilter, stopfreq / 2.0)
         filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
 
     return filthirestc, slicesamplerate, numsteps
