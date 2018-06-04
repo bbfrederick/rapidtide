@@ -52,6 +52,7 @@ def usage():
     print("    --glm                      - generate voxelwise aliased synthetic cardiac regressors and filter them out")
     print("    --minhr=MINHR              - highpass filter cardiac data to MINHR BPM (default is 180.0)")
     print("    --maxhr=MAXHR              - lowpass filter cardiac data to MAXHR BPM (default is 36.0)")
+    print("    --notchwidth=WIDTH         - Set the width of the notch filter, in percent of the notch frequency (default is 1.5)")
     print("    --disablenotch             - disable subharmonic notch filter")
     print("    --normalize                - normalize fmri data")
     print("    --outputbins=BINS          - number of output phase bins (default is 32)")
@@ -89,7 +90,7 @@ def setnotchfilter(thefilter, thefreq, notchwidth=0.01):
         thefreq * (1.0 + notchwidth/2.0), \
         thefreq * (1.0 + notchwidth/2.0))
 
-def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes, initprefilter, dotrnotch=False, debug=False):
+def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes, initprefilter, notchwidth=0.015, debug=False):
 
     # normalize every voxel over time
     normdata = imbyvox * 0.0
@@ -117,9 +118,8 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
     filthirestc = -1.0 * tide.corrnormalize(initprefilter.apply(slicesamplerate, hirestc), False, False)
 
     # delete the TR frequency and the first subharmonic
-    if dotrnotch:
+    if notchwidth > 0.0:
         stopfreq = 1.0 / tr
-        notchwidth = 0.015
         trnotchfilter = tide.noncausalfilter(debug=debug)
         for harmonic in [1.0, 2.0, 3.0]:
             setnotchfilter(trnotchfilter, harmonic * stopfreq, notchwidth=notchwidth)
@@ -145,7 +145,7 @@ inputrate = 32.0
 inputstart = 0.0
 doplot = False
 doglm = False
-dotrnotch = True
+notchwidth = 0.015
 arb_lower = 0.6
 arb_upper = 3.0
 infodict = {}
@@ -172,6 +172,7 @@ try:
                                                      "cardiacstart=",
                                                      "maxhr=",
                                                      "minhr=",
+                                                     "notchwidth=",
                                                      "disablenotch",
                                                      "glm",
                                                      "debug",
@@ -192,7 +193,7 @@ for o, a in opts:
         doglm = True
         print('will generate and remove aliased voxelwise cardiac regressors')
     elif o == "--disablenotch":
-        dotrnotch = False
+        notchwidth = -1.0
         print('Disabling subharmonic notch filter')
     elif o == "--debug":
         debug = True
@@ -208,6 +209,9 @@ for o, a in opts:
         if newval > arb_lower:
             print('will raise bottom of cardiac band to', newval, 'Hz from', arb_lower, 'Hz')
             arb_lower = newval
+    elif o == "--notchwidth":
+        notchwidth = float(a) / 100.0
+        print('setting notchwidth to', notchwidth * 100.0, '%')
     elif o == "--maxhr":
         newval = float(a) / 60.0
         if newval < arb_upper:
@@ -292,7 +296,7 @@ else:
 
 # now get an estimate of the cardiac signal
 cardiacfromfmri, slicesamplerate, numsteps = cardiacfromimage(fmri_data, mask, xsize, ysize, numslices, timepoints, tr, slicetimes, theprefilter, \
-    dotrnotch=dotrnotch,
+    notchwidth=notchwidth,
     debug=debug)
 slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
 tide.writevec(cardiacfromfmri, outputroot + '_cardiacfromfmri.txt')
