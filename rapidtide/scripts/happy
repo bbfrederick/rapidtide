@@ -51,7 +51,8 @@ def usage():
     print("optional arguments:")
     print("    --debug                    - turn on debugging information")
     print("    --glm                      - generate voxelwise aliased synthetic cardiac regressors and filter them out")
-    print("    --lpf=FILT                 - lowpass filter cardiac data")
+    print("    --minhr=MINHR              - highpass filter cardiac data to MINHR BPM")
+    print("    --maxhr=MAXHR              - lowpass filter cardiac data to MAXHR BPM")
     print("    --normalize                - normalize fmri data")
     print("    --outputbins=BINS          - number of output phase bins (default is 32)")
     print("    --gridbins=BINS            - width of the gridding kernel in output phase bins (default is 1.5)")
@@ -155,7 +156,7 @@ tide.savecommandline(sys.argv, outputroot)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "x", ["cardiacfile=", "cardiacfreq=", "cardiactstep=", "cardiacstart=", "lpf=", "glm", "debug", "normalize", "outputbins=", "gridbins=", "help"])
+    opts, args = getopt.getopt(sys.argv[4:], "x", ["cardiacfile=", "cardiacfreq=", "cardiactstep=", "cardiacstart=", "maxhr=", "minhr=", "glm", "debug", "normalize", "outputbins=", "gridbins=", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -177,11 +178,16 @@ for o, a in opts:
     elif o == "--gridbins":
         congridbins = float(a)
         print('will set gridding kernel to', congridbins, 'bins')
-    elif o == "--lpf":
-        newtop = float(a) / 60.0
-        if newtop < arb_upper:
-            print('will decrease top of cardiac band to', newtop, 'Hz from', arb_upper, 'Hz')
-            arb_upper = newtop
+    elif o == "--minhr":
+        newval = float(a) / 60.0
+        if newval > arb_lower:
+            print('will raise bottom of cardiac band to', newval, 'Hz from', arb_lower, 'Hz')
+            arb_lower = newval
+    elif o == "--maxhr":
+        newval = float(a) / 60.0
+        if newval < arb_upper:
+            print('will decrease top of cardiac band to', newval, 'Hz from', arb_upper, 'Hz')
+            arb_upper = newval
     elif o == "--normalize":
         fmrinorm = True
         print('will normalize fmri before gridding')
