@@ -119,10 +119,10 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
     # delete the TR frequency and the first subharmonic
     if dotrnotch:
         stopfreq = 1.0 / tr
-        notchwidth = 0.01
+        notchwidth = 0.015
         trnotchfilter = tide.noncausalfilter(debug=debug)
         for harmonic in [1.0, 2.0, 3.0]:
-            setnotchfilter(trnotchfilter, harmonic * stopfreq)
+            setnotchfilter(trnotchfilter, harmonic * stopfreq, notchwidth=notchwidth)
             filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
 
     return filthirestc, slicesamplerate, numsteps
