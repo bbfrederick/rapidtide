@@ -107,12 +107,14 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
     print('slice sample rate is ', slicesamplerate)
     filthirestc = -1.0 * tide.corrnormalize(initprefilter.apply(slicesamplerate, hirestc), False, False)
 
-    # delete the TR frequency
+    # delete the TR frequency and the first subharmonic
     if dotrnotch:
         stopfreq = 2.0 / tr
         trnotchfilter = tide.noncausalfilter(debug=debug)
         trnotchfilter.settype('arb_stop')
         trnotchfilter.setarb(stopfreq * 0.95, stopfreq * 0.975, stopfreq * 1.025, stopfreq * 1.05)
+        filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
+        trnotchfilter.setarb(0.5 * stopfreq * 0.95, 0.5 * stopfreq * 0.975, 0.5 * stopfreq * 1.025, 0.5 * stopfreq * 1.05)
         filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
 
     return filthirestc, slicesamplerate, numsteps
