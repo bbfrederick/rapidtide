@@ -49,10 +49,10 @@ def usage():
     print("    outputroot:               base name for all output files")
     print("")
     print("optional arguments:")
-    print("    --debug                    - turn on debugging information")
     print("    --glm                      - generate voxelwise aliased synthetic cardiac regressors and filter them out")
-    print("    --minhr=MINHR              - highpass filter cardiac data to MINHR BPM")
-    print("    --maxhr=MAXHR              - lowpass filter cardiac data to MAXHR BPM")
+    print("    --minhr=MINHR              - highpass filter cardiac data to MINHR BPM (default is 180.0)")
+    print("    --maxhr=MAXHR              - lowpass filter cardiac data to MAXHR BPM (default is 36.0)")
+    print("    --disablenotch             - disable subharmonic notch filter")
     print("    --normalize                - normalize fmri data")
     print("    --outputbins=BINS          - number of output phase bins (default is 32)")
     print("    --gridbins=BINS            - width of the gridding kernel in output phase bins (default is 1.5)")
@@ -68,6 +68,7 @@ def usage():
     print("                                 are two ways to specify the same thing")
     print("    --cardiacstart=START       - The time delay in seconds into the cardiac file, corresponding")
     print("                                 in the first TR of the fmri file (default is 0.0)")
+    print("    --debug                    - turn on debugging information")
 
     return ()
 
@@ -117,13 +118,12 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
 
     # delete the TR frequency and the first subharmonic
     if dotrnotch:
-        stopfreq = 2.0 / tr
+        stopfreq = 1.0 / tr
         notchwidth = 0.01
         trnotchfilter = tide.noncausalfilter(debug=debug)
-        setnotchfilter(trnotchfilter, stopfreq)
-        filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
-        setnotchfilter(trnotchfilter, stopfreq / 2.0)
-        filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
+        for harmonic in [1.0, 2.0, 3.0]:
+            setnotchfilter(trnotchfilter, harmonic * stopfreq)
+            filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
 
     return filthirestc, slicesamplerate, numsteps
 
@@ -166,7 +166,19 @@ tide.savecommandline(sys.argv, outputroot)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "x", ["cardiacfile=", "cardiacfreq=", "cardiactstep=", "cardiacstart=", "maxhr=", "minhr=", "glm", "debug", "normalize", "outputbins=", "gridbins=", "help"])
+    opts, args = getopt.getopt(sys.argv[4:], "x", ["cardiacfile=",
+                                                     "cardiacfreq=",
+                                                     "cardiactstep=",
+                                                     "cardiacstart=",
+                                                     "maxhr=",
+                                                     "minhr=",
+                                                     "disablenotch",
+                                                     "glm",
+                                                     "debug",
+                                                     "normalize",
+                                                     "outputbins=",
+                                                     "gridbins=",
+                                                     "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -179,6 +191,9 @@ for o, a in opts:
     elif o == "--glm":
         doglm = True
         print('will generate and remove aliased voxelwise cardiac regressors')
+    elif o == "--disablenotch":
+        dotrnotch = False
+        print('Disabling subharmonic notch filter')
     elif o == "--debug":
         debug = True
         print('extended debugging messages')
