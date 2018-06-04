@@ -80,13 +80,13 @@ def rrifromphase(timeaxis, thephase):
     return None
 
 
-def setnotchfilter(thefilter, thefreq, thewidth=0.01):
+def setnotchfilter(thefilter, thefreq, notchwidth=0.01):
     thefilter.settype('arb_stop')
     thefilter.setarb( \
-        stopfreq * (1.0 - notchwidth/2.0), \
-        stopfreq * (1.0 - notchwidth/2.0), \
-        stopfreq * (1.0 + notchwidth/2.0), \
-        stopfreq * (1.0 + notchwidth/2.0))
+        thefreq * (1.0 - notchwidth/2.0), \
+        thefreq * (1.0 - notchwidth/2.0), \
+        thefreq * (1.0 + notchwidth/2.0), \
+        thefreq * (1.0 + notchwidth/2.0))
 
 def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes, initprefilter, dotrnotch=False, debug=False):
 
