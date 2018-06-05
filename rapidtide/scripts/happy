@@ -314,6 +314,8 @@ if cardiacfile is not None:
         inputfreq, inputstart, inputwave = tide.readcolfrombidstsv(cardiacfile, columnname=colname, columnnum=colnum)
     else:
         inputwave = np.transpose(tide.readvecs(cardiacfile))
+        print(inputwave.shape)
+        sys.exit()
         if len(inputwave.shape) != 1:
             inputwave = inputwave[colnum, :]
     inputtimeaxis = sp.arange(0.0, (1.0 / inputfreq) * len(inputwave), 1.0 / inputfreq) + inputstart
