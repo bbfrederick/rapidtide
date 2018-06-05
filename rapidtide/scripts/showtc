@@ -226,7 +226,7 @@ for i in range(0, numfiles):
         invecs = tide.readvecs(textfilename[i][0])
         thissamplerate = samplerate
         thisstartoffset = 0.0
-        colnames = []
+        colnames = None
     if dotranspose:
         invecs = np.transpose(invecs)
     print('   ', invecs.shape[0], ' columns')
