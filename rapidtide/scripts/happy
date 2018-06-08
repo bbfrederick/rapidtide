@@ -131,8 +131,7 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
 debug = False
 dofilter = False
 fmrinorm = False
-duration = 1000000.0
-starttime = 0.0
+histlen = 100
 doplot = False
 maskthreshpct = 10.0
 upsamplefac = 100
@@ -271,7 +270,7 @@ infodict['mrsamplerate'] = mrsamplerate
 # remap to space by time
 fmri_data = nim_data.reshape((numspatiallocs, timepoints))
 
-# make a mask
+# make and save a mask of the voxels to process
 mask = np.uint16(tide.makemask(np.mean(fmri_data[:, :], axis=1),
                                        threshpct=maskthreshpct))
 mask3d = mask.reshape((xsize, ysize, numslices))
@@ -447,12 +446,41 @@ for theslice in range(numslices):
     slicemin = np.min(app_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
     app_byslice[validlocs, theslice, :] -= slicemin
 
+# save the analytic phase projection image
 theheader = nim_hdr
 theheader['dim'][4] = destpoints
 theheader['toffset'] = -np.pi
 theheader['pixdim'][4] = 2.0 * np.pi / destpoints
 tide.savetonifti(app, theheader, thesizes, outputroot + '_app')
-tide.savetonifti(weights, theheader, thesizes, outputroot + '_weights')
+#tide.savetonifti(weights, theheader, thesizes, outputroot + '_weights')
+
+# make and save a voxel intensity histogram
+app2d = app.reshape((numspatiallocs, destpoints))
+print('app2d shape', app2d.shape)
+validlocs = np.where(mask > 0)[0]
+print('validlocs shape', validlocs.shape)
+print('mask shape', mask.shape)
+histinput = app2d[validlocs, :].reshape((len(validlocs), destpoints))
+tide.makeandsavehistogram(histinput, histlen, 0, outputroot + '_histogram')
+
+# make and save a vessel mask
+vesselthresh = tide.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
+print('vessel threshhold set to', vesselthresh)
+vesselmask = np.where(np.max(app, axis=3) > vesselthresh, 1, 0)
+minphase = np.argmin(app, axis=3) * 2.0 * np.pi / destpoints - np.pi 
+maxphase = np.argmax(app, axis=3) * 2.0 * np.pi / destpoints - np.pi
+risediff = (maxphase - minphase) * vesselmask
+arteries = np.where(risediff < 0, 1, 0)
+veins = np.where(risediff > 0, 1, 0)
+theheader = nim_hdr
+theheader['dim'][4] = 1
+tide.savetonifti(vesselmask, theheader, thesizes, outputroot + '_vesselmask')
+tide.savetonifti(minphase, theheader, thesizes, outputroot + '_minphase')
+tide.savetonifti(maxphase, theheader, thesizes, outputroot + '_maxphase')
+tide.savetonifti(arteries, theheader, thesizes, outputroot + '_arteries')
+tide.savetonifti(veins, theheader, thesizes, outputroot + '_veins')
+
+# save the information file
 tide.writedict(infodict, outputroot + '_info.txt')
 
 # now generate aliased cardiac signals and regress them out of the data
