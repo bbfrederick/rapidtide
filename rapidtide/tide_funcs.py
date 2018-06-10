@@ -32,6 +32,7 @@ import bisect
 import os
 import pandas as pd
 import json
+import resource
 
 #from scipy import signal
 from scipy.stats import johnsonsb
@@ -582,10 +583,11 @@ def readvecs(inputfilename):
     inputvec = np.zeros((numvecs, MAXLINES), dtype='float64')
     numvals = 0
     for line in lines:
-        numvals += 1
-        thetokens = line.split()
-        for vecnum in range(0, numvecs):
-            inputvec[vecnum, numvals - 1] = np.float64(thetokens[vecnum])
+        if len(line) > 1:
+            numvals += 1
+            thetokens = line.split()
+            for vecnum in range(0, numvecs):
+                inputvec[vecnum, numvals - 1] = np.float64(thetokens[vecnum])
     return 1.0 * inputvec[:, 0:numvals]
 
 
@@ -595,8 +597,9 @@ def readvec(inputfilename):
     with open(inputfilename, 'r') as thefile:
         lines = thefile.readlines()
         for line in lines:
-            numvals += 1
-            inputvec[numvals - 1] = np.float64(line)
+            if len(line) > 1:
+                numvals += 1
+                inputvec[numvals - 1] = np.float64(line)
     return 1.0 * inputvec[0:numvals]
 
 
@@ -2972,6 +2975,58 @@ def real_cepstrum(x):
 
 
 # --------------------------- Utility functions -------------------------------------------------
+def logmem(msg, file=None):
+    global lastmaxrss_parent, lastmaxrss_child
+    if msg is None:
+        lastmaxrss_parent = 0
+        lastmaxrss_child = 0
+        logline = ','.join([ 
+            '',
+            'Self Max RSS',
+            'Self Diff RSS',
+            'Self Shared Mem',
+            'Self Unshared Mem',
+            'Self Unshared Stack',
+            'Self Non IO Page Fault'
+            'Self IO Page Fault'
+            'Self Swap Out',
+            'Children Max RSS',
+            'Children Diff RSS',
+            'Children Shared Mem',
+            'Children Unshared Mem',
+            'Children Unshared Stack',
+            'Children Non IO Page Fault'
+            'Children IO Page Fault'
+            'Children Swap Out'])
+    else:
+        rcusage = resource.getrusage(resource.RUSAGE_SELF)
+        outvals = [msg]
+        outvals.append(str(rcusage.ru_maxrss))
+        outvals.append(str(rcusage.ru_maxrss - lastmaxrss_parent))
+        lastmaxrss_parent = rcusage.ru_maxrss
+        outvals.append(str(rcusage.ru_ixrss))
+        outvals.append(str(rcusage.ru_idrss))
+        outvals.append(str(rcusage.ru_isrss))
+        outvals.append(str(rcusage.ru_minflt))
+        outvals.append(str(rcusage.ru_majflt))
+        outvals.append(str(rcusage.ru_nswap))
+        rcusage = resource.getrusage(resource.RUSAGE_CHILDREN)
+        outvals.append(str(rcusage.ru_maxrss))
+        outvals.append(str(rcusage.ru_maxrss - lastmaxrss_child))
+        lastmaxrss_child = rcusage.ru_maxrss
+        outvals.append(str(rcusage.ru_ixrss))
+        outvals.append(str(rcusage.ru_idrss))
+        outvals.append(str(rcusage.ru_isrss))
+        outvals.append(str(rcusage.ru_minflt))
+        outvals.append(str(rcusage.ru_majflt))
+        outvals.append(str(rcusage.ru_nswap))
+        logline = ','.join(outvals)
+    if file is None:
+        print(logline)
+    else:
+        file.writelines(logline + "\n")
+
+
 def findexecutable(command):
     import shutil
 
