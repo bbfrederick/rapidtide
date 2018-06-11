@@ -127,7 +127,7 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
     maxpass = np.min([slicesamplerate / 2.0, initprefilter.getfreqlimits()[2]])
     if notchwidth > 0.0:
         stopfreq = 1.0 / tr
-        maxharmonic = np.floor(maxpass / stopfreq)
+        maxharmonic = int(maxpass // stopfreq)
         print('highest harmonic is', maxharmonic, '(', maxharmonic * stopfreq, 'Hz)')
         trnotchfilter = tide.noncausalfilter(debug=debug)
         for harmonic in range(1, maxharmonic + 1):
