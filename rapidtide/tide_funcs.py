@@ -1430,7 +1430,7 @@ def trendgen(thexvals, thefitcoffs, demean):
 
 @conditionaljit()
 def detrend(inputdata, order=1, demean=False):
-    thetimepoints = np.arange(0.0, len(inputdata), 1.0)
+    thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     thecoffs = np.polyfit(thetimepoints, inputdata, order)
     thefittc = trendgen(thetimepoints, thecoffs, demean)
     return inputdata - thefittc
