@@ -38,7 +38,7 @@ from pylab import plot, legend, show, figure
 
 
 def usage():
-    print(os.path.basename(sys.argv[0]), "- Hypersampling by Analytic Phase Projection - Yay")
+    print(os.path.basename(sys.argv[0]), "- Hypersampling by Analytic Phase Projection - Yay!")
     print("")
     print("usage: ", os.path.basename(sys.argv[0]), " fmrifile slicetimefile outputroot")
     print("")
@@ -53,8 +53,6 @@ def usage():
     print("    --minhr=MINHR              - highpass filter cardiac data to MINHR BPM (default is 180.0)")
     print("    --maxhr=MAXHR              - lowpass filter cardiac data to MAXHR BPM (default is 36.0)")
     print("    --notchwidth=WIDTH         - Set the width of the notch filter, in percent of the notch frequency (default is 1.5)")
-    print("    --disablenotch             - disable subharmonic notch filter")
-    print("    --normalize                - normalize fmri data")
     print("    --outputbins=BINS          - number of output phase bins (default is 32)")
     print("    --gridbins=BINS            - width of the gridding kernel in output phase bins (default is 1.5)")
     print("    --cardiacfile=FILE[:COL]   - Read the cardiac waveform from file FILE.  If COL is an integer,")
@@ -69,7 +67,12 @@ def usage():
     print("                                 are two ways to specify the same thing")
     print("    --cardiacstart=START       - The time delay in seconds into the cardiac file, corresponding")
     print("                                 in the first TR of the fmri file (default is 0.0)")
+    print("")
+    print("debugging arguments (probably not of interest to users)")
     print("    --debug                    - turn on debugging information")
+    print("    --nodetrend                - disable data detrending")
+    print("    --normalize                - normalize fmri data")
+    print("    --disablenotch             - disable subharmonic notch filter")
 
     return ()
 
@@ -90,13 +93,16 @@ def setnotchfilter(thefilter, thefreq, notchwidth=0.01):
         thefreq * (1.0 + notchwidth/2.0), \
         thefreq * (1.0 + notchwidth/2.0))
 
-def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes, initprefilter, notchwidth=0.015, debug=False):
+def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes, initprefilter, notchwidth=0.015, detrend=True, debug=False):
 
     # normalize every voxel over time
     normdata = imbyvox * 0.0
     validvoxels = np.where(maskbyvox > 0)[0]
     for spatialloc in validvoxels:
-        normdata[spatialloc, :] = tide.pcnormalize(imbyvox[spatialloc, :])
+        if detrend:
+            normdata[spatialloc, :] = tide.pcnormalize(tide.detrend(imbyvox[spatialloc, :], demean=False))
+        else:
+            normdata[spatialloc, :] = tide.pcnormalize(imbyvox[spatialloc, :])
     normbyslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
     sortedtimes = np.sort(slicetimes)
@@ -144,6 +150,7 @@ inputrate = 32.0
 inputstart = 0.0
 doplot = False
 doglm = False
+detrend = True
 notchwidth = 0.015
 arb_lower = 0.6
 arb_upper = 3.0
@@ -174,6 +181,7 @@ try:
                                                      "minhr=",
                                                      "notchwidth=",
                                                      "disablenotch",
+                                                     "nodetrend",
                                                      "glm",
                                                      "debug",
                                                      "normalize",
@@ -195,6 +203,9 @@ for o, a in opts:
     elif o == "--disablenotch":
         notchwidth = -1.0
         print('Disabling subharmonic notch filter')
+    elif o == "--nodetrend":
+        detrend = False
+        print('will disable data detrending')
     elif o == "--debug":
         debug = True
         print('extended debugging messages')
@@ -304,6 +315,7 @@ else:
 tide.logmem('before cardiacfromimage', file=memfile)
 cardiacfromfmri, slicesamplerate, numsteps = cardiacfromimage(fmri_data, mask, xsize, ysize, numslices, timepoints, tr, slicetimes, theprefilter, \
     notchwidth=notchwidth,
+    detrend=detrend,
     debug=debug)
 slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
 tide.writevec(cardiacfromfmri, outputroot + '_cardiacfromfmri.txt')
@@ -447,7 +459,10 @@ for theslice in range(numslices):
     validlocs = np.where(maskbyslice[:, theslice] > 0)[0]
     for t in range(timepoints):
         thevals, theweights, theindices = tide.congrid(outphases, phasevals[theslice, t], 1.0, congridwidth)
-        filteredmr = -fmri_data_byslice[validlocs, theslice, t]
+        if detrend:
+            filteredmr = -tide.detrend(fmri_data_byslice[validlocs, theslice, t], demean=False)
+        else:
+            filteredmr = -fmri_data_byslice[validlocs, theslice, t]
         for i in range(len(theindices)):
             weight_byslice[validlocs, theslice, theindices[i]] += theweights[i]
             app_byslice[validlocs, theslice, theindices[i]] += theweights[i] * filteredmr
