@@ -2439,6 +2439,7 @@ def ppnormalize(vector):
     else:
         return demeaned
 
+
 @conditionaljit()
 def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
     # detrend first
@@ -2452,6 +2453,10 @@ def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
         return stdnormalize(windowfunction(np.shape(thedata)[0], type=windowfunc) * intervec) / np.sqrt(np.shape(thedata)[0])
     else:
         return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
+
+
+def rms(vector):
+    return np.sqrt(np.mean(np.square(vector)))
 
 
 # --------------------------- Filtering functions -------------------------------------------------
