@@ -221,17 +221,17 @@ for o, a in opts:
         print('will set gridding kernel to', congridbins, 'bins')
     elif o == "--minhr":
         newval = float(a) / 60.0
-        if newval > arb_lower:
-            print('will raise bottom of cardiac band to', newval * 60.0, 'BPM from', arb_lower * 60.0, 'BPM')
-            arb_lower = newval
+        #if newval > arb_lower:
+        print('will set bottom of cardiac band to', newval * 60.0, 'BPM from', arb_lower * 60.0, 'BPM')
+        arb_lower = newval
     elif o == "--notchwidth":
         notchwidth = float(a) / 100.0
         print('setting notchwidth to', notchwidth * 100.0, '%')
     elif o == "--maxhr":
         newval = float(a) / 60.0
-        if newval < arb_upper:
-            print('will decrease top of cardiac band to', newval * 60.0, 'BPM from', arb_upper * 60.0, 'BPM')
-            arb_upper = newval
+        #if newval < arb_upper:
+        print('will set top of cardiac band to', newval * 60.0, 'BPM from', arb_upper * 60.0, 'BPM')
+        arb_upper = newval
     elif o == "--normalize":
         fmrinorm = True
         print('will normalize fmri before gridding')
