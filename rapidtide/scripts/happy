@@ -383,7 +383,13 @@ if debug:
     show()
 peakfreq = freqaxis[np.argmax(pspec)]
 print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
+amp0 = pspec[np.argmax(pspec)]
+amp1 = pspec[2 * np.argmax(pspec)]
+amp2 = pspec[3 * np.argmax(pspec)]
 infodict['cardiacpeakfreq'] = np.round(peakfreq * 60.0, 2)
+infodict['amp0'] = amp0
+infodict['amp1'] = amp1
+infodict['amp2'] = amp2
 
 # now tune the prefilter to hone in on the primary harmonic
 arb_lower = 0.4 * peakfreq
