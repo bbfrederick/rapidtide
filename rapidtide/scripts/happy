@@ -137,6 +137,34 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
 
     return filthirestc, slicesamplerate, numsteps
 
+
+def getcardcoeffs(cardiacwaveform, slicesamplerate, debug=False):
+    spectrum = sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)[0:len(cardiacwaveform) // 2]
+    ampspec = np.abs(spectrum)
+    phasespec = np.angle(spectrum)
+    maxfreq = slicesamplerate / 2.0
+    freqaxis = sp.arange(0.0, maxfreq, maxfreq / (len(ampspec)))
+    if debug:
+        figure()
+        #plot(freqaxis, ampspec, 'r')
+        plot(ampspec, 'r')
+        show()
+    peakfreq = freqaxis[np.argmax(ampspec)]
+    print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
+    normfac = np.sqrt(2.0) * tide.rms(cardiacwaveform)
+    print('normfac:', normfac)
+    amps = []
+    amps.append(normfac)
+    amps.append(normfac * ampspec[2 * np.argmax(ampspec)] / ampspec[np.argmax(ampspec)])
+    amps.append(normfac * ampspec[3 * np.argmax(ampspec)] / ampspec[np.argmax(ampspec)])
+    phases = []
+    phases.append(phasespec[np.argmax(ampspec)])
+    phases.append(phasespec[2 * np.argmax(ampspec)])
+    phases.append(phasespec[3 * np.argmax(ampspec)])
+
+    return peakfreq, amps, phases
+
+
 # get the command line parameters
 debug = False
 dofilter = False
@@ -373,23 +401,36 @@ else:
     infodict['cardiacfromfmri'] = True
 
 # find the main component of the HR
-pspec = abs(sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)[0:len(cardiacwaveform) // 2])
+peakfreq, amps, phases = getcardcoeffs(cardiacwaveform, slicesamplerate, debug=debug)
+'''
+spectrum = sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)[0:len(cardiacwaveform) // 2]
+ampspec = np.abs(spectrum)
+phasespec = np.angle(spectrum)
 maxfreq = slicesamplerate / 2.0
-freqaxis = sp.arange(0.0, maxfreq, maxfreq / (len(pspec)))
+freqaxis = sp.arange(0.0, maxfreq, maxfreq / (len(ampspec)))
 if debug:
     figure()
-    #plot(freqaxis, pspec, 'r')
-    plot(pspec, 'r')
+    #plot(freqaxis, ampspec, 'r')
+    plot(ampspec, 'r')
     show()
-peakfreq = freqaxis[np.argmax(pspec)]
+peakfreq = freqaxis[np.argmax(ampspec)]
 print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
-amp0 = pspec[np.argmax(pspec)]
-amp1 = pspec[2 * np.argmax(pspec)]
-amp2 = pspec[3 * np.argmax(pspec)]
-infodict['cardiacpeakfreq'] = np.round(peakfreq * 60.0, 2)
-infodict['amp0'] = amp0
-infodict['amp1'] = amp1
-infodict['amp2'] = amp2
+normfac = np.sqrt(2.0) * tide.rms(cardiacwaveform)
+print('normfac:', normfac)
+amp0 = normfac
+amp1 = normfac * ampspec[2 * np.argmax(ampspec)] / ampspec[np.argmax(ampspec)]
+amp2 = normfac * ampspec[3 * np.argmax(ampspec)] / ampspec[np.argmax(ampspec)]
+ph0 = phasespec[np.argmax(ampspec)]
+ph1 = phasespec[2 * np.argmax(ampspec)] 
+ph2 = phasespec[3 * np.argmax(ampspec)]
+'''
+print('harmonic amplitudes:', amps[0], amps[1], amps[2])
+print('harmonic phasees:', phases[0], phases[1], phases[2])
+infodict['cardiacpeakbpm'] = np.round(peakfreq * 60.0, 2)
+infodict['kalminit_cardiacfreq'] = peakfreq
+for i in range(len(amps)):
+    infodict['kalminit_amp' + str(i)] = amps[i]
+    infodict['kalminit_ph' + str(i)] = phases[i]
 
 # now tune the prefilter to hone in on the primary harmonic
 arb_lower = 0.4 * peakfreq
@@ -418,6 +459,11 @@ tide.writevec(amplitude_envelope, outputroot + '_ampenv.txt')
 tide.writevec(instantaneous_phase, outputroot + '_instphase.txt')
 instantaneous_phase = np.unwrap(instantaneous_phase)
 tide.writevec(instantaneous_phase, outputroot + '_instphase_unwrapped.txt')
+initialphase = instantaneous_phase[0]
+infodict['kalminit_phi0'] = initialphase
+
+# save the information file
+tide.writedict(infodict, outputroot + '_info.txt')
 
 # interpolate the instantaneous phase
 upsampledslicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
@@ -522,9 +568,6 @@ tide.savetonifti(minphase, theheader, thesizes, outputroot + '_minphase')
 tide.savetonifti(maxphase, theheader, thesizes, outputroot + '_maxphase')
 tide.savetonifti(arteries, theheader, thesizes, outputroot + '_arteries')
 tide.savetonifti(veins, theheader, thesizes, outputroot + '_veins')
-
-# save the information file
-tide.writedict(infodict, outputroot + '_info.txt')
 
 # now generate aliased cardiac signals and regress them out of the data
 if doglm:
