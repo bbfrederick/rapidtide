@@ -1,0 +1,221 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+#       $Author: frederic $
+#       $Date: 2016/06/14 12:04:51 $
+#       $Id: spectrogram,v 1.5 2016/06/14 12:04:51 frederic Exp $
+#
+import sys
+import datetime
+
+import numpy as np
+import matplotlib as mpl
+
+mpl.use('MacOSX')
+import rapidtide.tide_funcs as tide
+import matplotlib.pyplot as plt
+from matplotlib import mlab
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy import arange
+
+
+def usage():
+    print("usage: spectrogram textfilename samplefreq")
+    print("	plots the data in a text file")
+    print("")
+    print("required arguments:")
+    print("	textfilename	- a text file containing one timepoint per line")
+    print("	samplefreq	- sample frequency in Hz")
+    return ()
+
+
+def main():
+    # get the command line parameters
+    nargs = len(sys.argv)
+    if nargs < 3:
+        usage()
+        exit()
+
+    # handle required args first
+    textfilename = []
+    xvecs = []
+    yvecs = []
+    timestep = []
+    numfiles = 1
+    textfilename.append(sys.argv[1])
+    timestep.append(1.0 / float(sys.argv[2]))
+    print("nargs=", nargs)
+    if nargs > 3:
+        if nargs % 2 == 1:
+            for i in range(1, (nargs - 1) / 2):
+                print(i, 2 * i + 1, 2 * i + 2)
+                numfiles = numfiles + 1
+                textfilename.append(sys.argv[2 * i + 1])
+                timestep.append(1.0 / float(sys.argv[2 * i + 2]))
+        else:
+            print("each textfile must have a matching sample rate")
+            exit(1)
+
+    for i in range(0, numfiles):
+        print('filename ', i, textfilename[i])
+        yvecs.append(tide.readvec(textfilename[i]))
+        xvecs.append(arange(0.0, len(yvecs[i]), 1.0) * timestep[i])
+
+    print("got to here")
+
+    # -- Make a series of dates
+    start = datetime.datetime(2010, 9, 15, 8, 0)
+    end = datetime.datetime(2010, 9, 15, 18, 0)
+    delta = datetime.timedelta(seconds=1)
+
+    # Note: "time" is now an array of floats, where 1.0 corresponds
+    # to one day, and 0.0 corresponds to 1900 (I think...)
+    # It's _not_ an array of datetime objects!
+    time = mpl.dates.drange(start, end, delta)
+
+    num = time.size
+
+    # -- Generate some data
+    x = yvecs[0]
+    y = yvecs[0]
+    z = yvecs[0]
+
+    thelabel = textfilename[0]
+    ndplot(x, y, z, xvecs[0], thelabel)
+    plt.show()
+
+
+def plot(x, y, z, time):
+    fig = plt.figure()
+
+    # -- Panel 1
+    ax1 = fig.add_subplot(311)
+    im, cbar = specgram(x, time, ax1, fig)
+    ax1.set_ylabel('X Freq. (Hz)')
+    ax1.set_title('Fake Analysis of Something')
+
+    # -- Panel 2
+    # ax2 = fig.add_subplot(312, sharex=ax1)
+    # im, cbar = specgram(y, time, ax2, fig)
+    # ax2.set_ylabel('Y Freq. (Hz)')
+
+    # -- Panel 3
+    ax3 = fig.add_subplot(312, sharex=ax1)
+    # Plot the 3 source datasets
+    xline = ax3.plot_date(time, x, 'r-')
+    yline = ax3.plot_date(time, y, 'b-')
+    zline = ax3.plot_date(time, z, 'g-')
+    ax3.set_ylabel(r'Units $(\mu \phi)$')
+
+    # Make an invisible spacer...
+    cax = make_legend_axes(ax3)
+    plt.setp(cax, visible=False)
+
+    # Make a legend
+    ax3.legend((xline, yline, zline), ('X', 'Y', 'Z'), loc='center left',
+               bbox_to_anchor=(1.0, 0.5), frameon=False)
+
+    # Set the labels to be rotated at 20 deg and aligned left to use less space
+    plt.setp(ax3.get_xticklabels(), rotation=-20, horizontalalignment='left')
+
+    # Remove space between subplots
+    plt.subplots_adjust(hspace=0.0)
+
+
+def ndplot(x, y, z, time, thelabel):
+    print("arrived in ndplot")
+    fig = plt.figure()
+
+    # -- Panel 1
+    ax1 = fig.add_subplot(211)
+    im, cbar = specgram(x, time, ax1, fig)
+    ax1.set_ylabel('X Freq. $(Hz)$')
+    ax1.set_title(thelabel)
+
+    # -- Panel 2
+    # ax2 = fig.add_subplot(312, sharex=ax1)
+    # im, cbar = specgram(y, time, ax2, fig)
+    # ax2.set_ylabel('Y Freq. (Hz)')
+
+    # -- Panel 3
+    ax3 = fig.add_subplot(212, sharex=ax1)
+    # Plot the 3 source datasets
+    # xline = ax3.plot(time, x, 'r-')
+    # yline = ax3.plot(time, y, 'b-')
+    zline = ax3.plot(time, z, 'g-')
+    ax3.set_ylabel(r'Units $(seconds)$')
+
+    # Make an invisible spacer...
+    cax = make_legend_axes(ax3)
+    plt.setp(cax, visible=False)
+
+    # Make a legend
+    # ax3.legend((xline, zline), ('X', 'Z'), loc='center left',
+    #        bbox_to_anchor=(1.0, 0.5), frameon=False)
+    # ax3.legend((zline), ('Z'), loc='center left',
+    #        bbox_to_anchor=(1.0, 0.5), frameon=False)
+
+    # Set the labels to be rotated at 20 deg and aligned left to use less space
+    plt.setp(ax3.get_xticklabels(), rotation=-20, horizontalalignment='left')
+
+    # Remove space between subplots
+    plt.subplots_adjust(hspace=0.0)
+
+
+def specgram(x, time, ax, fig):
+    """Make and plot a log-scaled spectrogram"""
+    dt = np.diff(time)[0]  # In days...
+    # fs = dt * (3600 * 24) # Samples per second
+    fs = 1.0 / dt
+
+    spec_img, freq, _ = mlab.specgram(x, Fs=fs, noverlap=200)
+    t = np.linspace(time.min(), time.max(), spec_img.shape[1])
+
+    # Log scaling for amplitude values
+    spec_img = np.log10(spec_img)
+
+    # set range
+    themax = np.max(spec_img)
+    themin = themax - 6.0
+
+    # Log scaling for frequency values (y-axis)
+    ax.set_yscale('log')
+
+    # Plot amplitudes
+    im = ax.pcolormesh(t, freq, spec_img, vmin=themin, vmax=themax)
+
+    # Add the colorbar in a seperate axis
+    cax = make_legend_axes(ax)
+    cbar = fig.colorbar(im, cax=cax, format=r'$10^{%0.1f}$')
+    cbar.set_label('Amplitude', rotation=-90)
+
+    ax.set_ylim([freq[1], freq.max()])
+
+    # Hide x-axis tick labels
+    plt.setp(ax.get_xticklabels(), visible=False)
+
+    return im, cbar
+
+
+def make_legend_axes(ax):
+    divider = make_axes_locatable(ax)
+    legend_ax = divider.append_axes('right', 0.4, pad=0.2)
+    return legend_ax
+
+
+if __name__ == '__main__':
+    main()
