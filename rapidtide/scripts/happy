@@ -31,7 +31,7 @@ import scipy as sp
 
 import getopt
 import rapidtide.tide_funcs as tide
-from scipy.signal import hilbert
+from scipy.signal import hilbert, welch
 import nibabel as nib
 
 from pylab import plot, legend, show, figure
@@ -93,6 +93,16 @@ def setnotchfilter(thefilter, thefreq, notchwidth=0.01):
         thefreq * (1.0 + notchwidth/2.0), \
         thefreq * (1.0 + notchwidth/2.0))
 
+
+def cardiacsig(thisphase, amps=[1.0, 0.0, 0.0], phases=None, overallphase=0.0):
+    total = 0.0
+    if phases is None:
+        phases = amps * 0.0
+    for i in range(len(amps)):
+        total += amps[i] * np.cos((i + 1) * thisphase + phases[i] + overallphase)
+    return total
+
+
 def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes, initprefilter, notchwidth=0.015, detrend=True, debug=False):
 
     # normalize every voxel over time
@@ -139,11 +149,16 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
 
 
 def getcardcoeffs(cardiacwaveform, slicesamplerate, debug=False):
+    if len(cardiacwaveform) > 1024:
+        thex, they = welch(cardiacwaveform, slicesamplerate, nperseg=1024)
+    else:
+        thex, they = welch(cardiacwaveform, slicesamplerate)
+    print('initpeakfreq:', np.round(thex[np.argmax(they)] * 60.0, 2), 'BPM')
     spectrum = sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)[0:len(cardiacwaveform) // 2]
     ampspec = np.abs(spectrum)
     phasespec = np.angle(spectrum)
     maxfreq = slicesamplerate / 2.0
-    freqaxis = sp.arange(0.0, maxfreq, maxfreq / (len(ampspec)))
+    freqaxis = sp.linspace(0.0, maxfreq, len(ampspec), endpoint=False)
     if debug:
         figure()
         #plot(freqaxis, ampspec, 'r')
@@ -158,9 +173,9 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, debug=False):
     amps.append(normfac * ampspec[2 * np.argmax(ampspec)] / ampspec[np.argmax(ampspec)])
     amps.append(normfac * ampspec[3 * np.argmax(ampspec)] / ampspec[np.argmax(ampspec)])
     phases = []
-    phases.append(phasespec[np.argmax(ampspec)])
-    phases.append(phasespec[2 * np.argmax(ampspec)])
-    phases.append(phasespec[3 * np.argmax(ampspec)])
+    phases.append(0.0)
+    phases.append(phasespec[2 * np.argmax(ampspec)] - phasespec[np.argmax(ampspec)])
+    phases.append(phasespec[3 * np.argmax(ampspec)] - phasespec[np.argmax(ampspec)])
 
     return peakfreq, amps, phases
 
@@ -355,6 +370,16 @@ cardiacwaveform = cardiacfromfmri
 infodict['slicesamplerate'] = slicesamplerate
 infodict['numsteps'] = numsteps
 
+# find key components of cardiac waveform
+peakfreq_bold, amps_bold, phases_bold = getcardcoeffs(cardiacwaveform, slicesamplerate, debug=debug)
+print('harmonic amplitudes:', amps_bold[0], amps_bold[1], amps_bold[2])
+print('harmonic phases:', phases_bold[0], phases_bold[1], phases_bold[2])
+infodict['cardiacpeakbpm_bold'] = np.round(peakfreq_bold * 60.0, 2)
+infodict['kalminit_bold_cardiacfreq'] = peakfreq_bold
+for i in range(len(amps_bold)):
+    infodict['kalminit_bold_amp' + str(i)] = amps_bold[i]
+    infodict['kalminit_bold_ph' + str(i)] = phases_bold[i]
+
 # get the cardiac signal from a file, if specified
 if cardiacfile is not None:
     tide.logmem('before cardiacfromfile', file=memfile)
@@ -376,6 +401,15 @@ if cardiacfile is not None:
         print('inputtimeaxis: len=', len(inputtimeaxis), 'vals=', inputtimeaxis)
     cardiacfromfile = tide.doresample(inputtimeaxis, inputwave, slicetimeaxis, method='cubic', padlen=0)
     cardiacfromfile = tide.corrnormalize(cardiacfromfile, False, False)
+
+    # find key components of cardiac waveform
+    peakfreq_file, amps_file, phases_file = getcardcoeffs(cardiacfromfile, slicesamplerate, debug=debug)
+    infodict['cardiacpeakbpm_file'] = np.round(peakfreq_file * 60.0, 2)
+    infodict['kalminit_file_cardiacfreq'] = peakfreq_file
+    for i in range(len(amps_file)):
+        infodict['kalminit_file_amp' + str(i)] = amps_file[i]
+        infodict['kalminit_file_ph' + str(i)] = phases_file[i]
+
     tide.writevec(cardiacfromfile, outputroot + '_cardiacfromfile.txt')
     thexcorr = tide.fastcorrelate(cardiacfromfile, cardiacfromfmri, usefft=True)
     xcorrlen = len(thexcorr)
@@ -397,40 +431,11 @@ if cardiacfile is not None:
         figure()
         plot(slicetimeaxis, cardiacfromfile, 'r', slicetimeaxis, cardiacfromfmri, 'b')
         show()
+    infodict['cardiacfromfile'] = True
+    peakfreq = peakfreq_file
 else:
-    infodict['cardiacfromfmri'] = True
-
-# find the main component of the HR
-peakfreq, amps, phases = getcardcoeffs(cardiacwaveform, slicesamplerate, debug=debug)
-'''
-spectrum = sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)[0:len(cardiacwaveform) // 2]
-ampspec = np.abs(spectrum)
-phasespec = np.angle(spectrum)
-maxfreq = slicesamplerate / 2.0
-freqaxis = sp.arange(0.0, maxfreq, maxfreq / (len(ampspec)))
-if debug:
-    figure()
-    #plot(freqaxis, ampspec, 'r')
-    plot(ampspec, 'r')
-    show()
-peakfreq = freqaxis[np.argmax(ampspec)]
-print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
-normfac = np.sqrt(2.0) * tide.rms(cardiacwaveform)
-print('normfac:', normfac)
-amp0 = normfac
-amp1 = normfac * ampspec[2 * np.argmax(ampspec)] / ampspec[np.argmax(ampspec)]
-amp2 = normfac * ampspec[3 * np.argmax(ampspec)] / ampspec[np.argmax(ampspec)]
-ph0 = phasespec[np.argmax(ampspec)]
-ph1 = phasespec[2 * np.argmax(ampspec)] 
-ph2 = phasespec[3 * np.argmax(ampspec)]
-'''
-print('harmonic amplitudes:', amps[0], amps[1], amps[2])
-print('harmonic phasees:', phases[0], phases[1], phases[2])
-infodict['cardiacpeakbpm'] = np.round(peakfreq * 60.0, 2)
-infodict['kalminit_cardiacfreq'] = peakfreq
-for i in range(len(amps)):
-    infodict['kalminit_amp' + str(i)] = amps[i]
-    infodict['kalminit_ph' + str(i)] = phases[i]
+    infodict['cardiacfromfile'] = False
+    peakfreq = peakfreq_bold
 
 # now tune the prefilter to hone in on the primary harmonic
 arb_lower = 0.4 * peakfreq
@@ -461,6 +466,14 @@ instantaneous_phase = np.unwrap(instantaneous_phase)
 tide.writevec(instantaneous_phase, outputroot + '_instphase_unwrapped.txt')
 initialphase = instantaneous_phase[0]
 infodict['kalminit_phi0'] = initialphase
+
+# Make synthetic cardiac files
+gencardiac = tide.corrnormalize(amplitude_envelope * cardiacsig(instantaneous_phase, amps=amps_bold, phases=phases_bold), False, False)
+tide.writevec(gencardiac, outputroot + '_synthcardiacfromfmri.txt')
+
+if infodict['cardiacfromfile']:
+    gencardiac = tide.corrnormalize(amplitude_envelope * cardiacsig(instantaneous_phase, amps=amps_file, phases=phases_file), False, False)
+    tide.writevec(gencardiac, outputroot + '_synthcardiacfromfile.txt')
 
 # save the information file
 tide.writedict(infodict, outputroot + '_info.txt')
