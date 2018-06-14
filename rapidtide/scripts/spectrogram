@@ -19,13 +19,13 @@
 #       $Date: 2016/06/14 12:04:51 $
 #       $Id: spectrogram,v 1.5 2016/06/14 12:04:51 frederic Exp $
 #
+from __future__ import print_function, division
 import sys
 import datetime
 
 import numpy as np
 import matplotlib as mpl
 
-mpl.use('MacOSX')
 import rapidtide.tide_funcs as tide
 import matplotlib.pyplot as plt
 from matplotlib import mlab
@@ -61,7 +61,7 @@ def main():
     print("nargs=", nargs)
     if nargs > 3:
         if nargs % 2 == 1:
-            for i in range(1, (nargs - 1) / 2):
+            for i in range(1, int((nargs - 1) // 2)):
                 print(i, 2 * i + 1, 2 * i + 2)
                 numfiles = numfiles + 1
                 textfilename.append(sys.argv[2 * i + 1])
