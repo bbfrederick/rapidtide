@@ -31,7 +31,7 @@ import scipy as sp
 
 import getopt
 import rapidtide.tide_funcs as tide
-from scipy.signal import hilbert, welch
+from scipy.signal import hilbert, welch, savgol_filter
 import nibabel as nib
 
 from pylab import plot, legend, show, figure
@@ -148,21 +148,28 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
     return filthirestc, slicesamplerate, numsteps
 
 
-def getcardcoeffs(cardiacwaveform, slicesamplerate, debug=False):
+def savgolsmooth(data, smoothlen=301, polyorder=3):
+    return savgol_filter(data, smoothlen, polyorder)
+
+
+def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
     if len(cardiacwaveform) > 1024:
         thex, they = welch(cardiacwaveform, slicesamplerate, nperseg=1024)
     else:
         thex, they = welch(cardiacwaveform, slicesamplerate)
     print('initpeakfreq:', np.round(thex[np.argmax(they)] * 60.0, 2), 'BPM')
     spectrum = sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)[0:len(cardiacwaveform) // 2]
-    ampspec = np.abs(spectrum)
-    phasespec = np.angle(spectrum)
+    smoothspectrum = savgolsmooth(spectrum.real, smoothlen=smoothlen) + savgolsmooth(spectrum.imag, smoothlen=smoothlen) * 1.0j
+    if debug:
+        tide.writevec(spectrum.real, 'spectrum.txt')
+        tide.writevec(smoothspectrum.real, 'smoothspectrum.txt')
+    ampspec = np.abs(smoothspectrum)
+    phasespec = np.angle(smoothspectrum)
     maxfreq = slicesamplerate / 2.0
     freqaxis = sp.linspace(0.0, maxfreq, len(ampspec), endpoint=False)
     if debug:
         figure()
-        #plot(freqaxis, ampspec, 'r')
-        plot(ampspec, 'r')
+        plot(freqaxis, ampspec, 'r')
         show()
     peakfreq = freqaxis[np.argmax(ampspec)]
     print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
@@ -186,6 +193,7 @@ dofilter = False
 fmrinorm = False
 histlen = 100
 doplot = False
+smoothlen = 301
 maskthreshpct = 10.0
 upsamplefac = 100
 destpoints = 32
@@ -195,7 +203,6 @@ colnum = 0
 colname = None
 inputrate = 32.0
 inputstart = 0.0
-doplot = False
 doglm = False
 detrend = True
 notchwidth = 0.015
@@ -234,6 +241,7 @@ try:
                                                      "normalize",
                                                      "outputbins=",
                                                      "gridbins=",
+                                                     "smoothlen=",
                                                      "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
@@ -259,6 +267,10 @@ for o, a in opts:
     elif o == "--outputbins":
         destpoints = int(a)
         print('will use', destpoints, 'output bins')
+    elif o == "--smoothlen":
+        smoothlen = int(a)
+        smoothlen = smoothlen + (1 - smoothlen % 2)
+        print('will set savitsky-golay window to', smoothlen)
     elif o == "--gridbins":
         congridbins = float(a)
         print('will set gridding kernel to', congridbins, 'bins')
@@ -359,6 +371,7 @@ else:
     slicetimes = tide.readvec(slicetimename)
 
 # now get an estimate of the cardiac signal
+print('generating cardiac signal from fmri data')
 tide.logmem('before cardiacfromimage', file=memfile)
 cardiacfromfmri, slicesamplerate, numsteps = cardiacfromimage(fmri_data, mask, xsize, ysize, numslices, timepoints, tr, slicetimes, theprefilter, \
     notchwidth=notchwidth,
@@ -371,7 +384,8 @@ infodict['slicesamplerate'] = slicesamplerate
 infodict['numsteps'] = numsteps
 
 # find key components of cardiac waveform
-peakfreq_bold, amps_bold, phases_bold = getcardcoeffs(cardiacwaveform, slicesamplerate, debug=debug)
+print('extracting harmonic components')
+peakfreq_bold, amps_bold, phases_bold = getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=smoothlen, debug=debug)
 print('harmonic amplitudes:', amps_bold[0], amps_bold[1], amps_bold[2])
 print('harmonic phases:', phases_bold[0], phases_bold[1], phases_bold[2])
 infodict['cardiacpeakbpm_bold'] = np.round(peakfreq_bold * 60.0, 2)
@@ -383,6 +397,7 @@ for i in range(len(amps_bold)):
 # get the cardiac signal from a file, if specified
 if cardiacfile is not None:
     tide.logmem('before cardiacfromfile', file=memfile)
+    print('reading cardiac signal from file')
     infodict['cardiacfromfmri'] = False
     # check file type
     filebase, extension = os.path.splitext(cardiacfile)
@@ -403,7 +418,7 @@ if cardiacfile is not None:
     cardiacfromfile = tide.corrnormalize(cardiacfromfile, False, False)
 
     # find key components of cardiac waveform
-    peakfreq_file, amps_file, phases_file = getcardcoeffs(cardiacfromfile, slicesamplerate, debug=debug)
+    peakfreq_file, amps_file, phases_file = getcardcoeffs(cardiacfromfile, slicesamplerate, smoothlen=smoothlen, debug=debug)
     infodict['cardiacpeakbpm_file'] = np.round(peakfreq_file * 60.0, 2)
     infodict['kalminit_file_cardiacfreq'] = peakfreq_file
     for i in range(len(amps_file)):
