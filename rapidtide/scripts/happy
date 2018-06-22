@@ -56,7 +56,7 @@ def usage():
     print("    --outputbins=BINS          - number of output phase bins (default is 32)")
     print("    --gridbins=BINS            - width of the gridding kernel in output phase bins (default is 1.5)")
     print("    --cardiacfile=FILE[:COL]   - Read the cardiac waveform from file FILE.  If COL is an integer,")
-    print("                                 use column number COL in FILE.  If COL is a name, and FILE is a BIDS")
+    
     print("                                 format json file, use column named COL (if no file is specified ")
     print("                                 is specified, estimate cardiac signal from data)")
     print("    --cardiacfreq=FREQ         - Cardiac waveform in cardiacfile has sample frequency FREQ ")
@@ -211,6 +211,18 @@ arb_upper = 3.0
 softvesselfrac = 0.4
 infodict = {}
 
+print("***********************************************************************************************************************************")
+print("NOTICE:  This program is NOT released yet - it's a work in progress and is nowhere near done.  That's why")
+print("there's no documentation or mention in the release notes.  If you want to play with it, be my guest, but be")
+print("aware of the following:")
+print("    1) Any given version of this prgram may or may not work, or may work in a way different than ")
+print("       a) previous versions, b) what I say it does, c) what I think it does, and d) what you want it to do.")
+print("    2) I am intending to write a paper on this, and if you take this code and scoop me, I'll be peeved. That's just rude.")
+print("    3) For all I know this program might burn down your house, leave your milk out of the refrigerator, or ")
+print("       poison your dog.  USE AT YOUR OWN RISK.")
+print("***********************************************************************************************************************************")
+print("")
+
 nargs = len(sys.argv)
 if nargs < 4:
     usage()
@@ -318,7 +330,6 @@ memfile = open(outputroot + '_memusage.csv', 'w')
 tide.logmem(None, file=memfile)
 
 theprefilter = tide.noncausalfilter()
-theprefilter.setbutter(False, 3)
 theprefilter.settype('arb')
 arb_lowerstop = arb_lower * 0.9
 arb_upperstop = arb_upper * 1.1
@@ -520,7 +531,6 @@ weight_byslice = weights.reshape((xsize * ysize, numslices, destpoints))
 # high pass filter to remove trends
 imagingtime = tr * timepoints
 phasefilter = tide.noncausalfilter()
-phasefilter.setbutter(False, 3)
 phasefilter.settype('arb')
 arb_lower = 4.0 / imagingtime
 arb_upper = 0.5 / tr
