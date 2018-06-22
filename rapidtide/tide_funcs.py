@@ -2181,7 +2181,7 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
 
     # antialias
-    aafilter = noncausalfilter(filtertype='arb', usebutterworth=True, debug=debug)
+    aafilter = noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
     aafilter.setarb(0.0, 0.0, 0.95 * final_freq, final_freq)
     antialias_y = aafilter.apply(intermed_freq, intermed_y)
     # antialias_y = dolptrapfftfilt(intermed_freq,0.9*final_freq,final_freq,intermed_y)
