@@ -143,8 +143,6 @@ dopartial = False
 duration = 1000000.0
 starttime = 0.0
 doplot = False
-usebutterworthfilter = False
-filtorder = 3
 thelabel = ""
 verbose = True
 summarymode = False
@@ -183,7 +181,6 @@ Fs = None
 outfilename = None
 
 theprefilter = tide.noncausalfilter()
-theprefilter.setbutter(usebutterworthfilter, filtorder)
 
 # set the default characteristics
 print('setting default filter to pass', window_lowestfreq, 'to', window_upperfreq)
