@@ -52,9 +52,7 @@ def usage():
 
 
 def main():
-    usebutterworthfilter = False
     display = True
-    splittcs = False
 
     # get the command line parameters
     nargs = len(sys.argv)
@@ -105,27 +103,15 @@ def main():
     if display:
         plt.plot(in_t, inputdata + 0.4, 'k')
 
-    if splittcs:
-        outputdata_lf = tide.lfo_pass(outsamplerate, outputdata, usebutterworthfilter)
-        outputdata_resp = tide.resp_pass(outsamplerate, outputdata, usebutterworthfilter)
-        outputdata_card = tide.card_pass(outsamplerate, outputdata, usebutterworthfilter)
-        if display:
-            plt.plot(out_t, outputdata_lf - 0.4, 'b')
-            plt.plot(out_t, outputdata_resp - 0.4, 'g')
-            plt.plot(out_t, outputdata_card - 0.4, 'r')
-        tide.writevec(outputdata_lf, outputfile + '_lf')
-        tide.writevec(outputdata_resp, outputfile + '_resp')
-        tide.writevec(outputdata_card, outputfile + '_card')
-    else:
-        tide.writevec(outputdata, outputfile)
-        tide.writevec(outputdata, outputfile + '_dual')
-        if display:
-            plt.plot(out_t, outputdata - 0.4, 'r')
-            if outsamplerate < insamplerate:
-                plt.plot(out_t, outputdata2 - 0.8, 'g')
-                plt.legend(('original signal', 'resampled', 'dualresampled'))
-            else:
-                plt.legend(('original signal', 'resampled'))
+    tide.writevec(outputdata, outputfile)
+    tide.writevec(outputdata, outputfile + '_dual')
+    if display:
+        plt.plot(out_t, outputdata - 0.4, 'r')
+        if outsamplerate < insamplerate:
+            plt.plot(out_t, outputdata2 - 0.8, 'g')
+            plt.legend(('original signal', 'resampled', 'dualresampled'))
+        else:
+            plt.legend(('original signal', 'resampled'))
 
     if display:
         plt.show()
