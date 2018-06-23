@@ -161,8 +161,6 @@ dopartial = False
 duration = 1000000.0
 starttime = 0.0
 doplot = False
-usebutterworthfilter = False
-filtorder = 3
 thelabel = ""
 trimdata = False
 verbose = True
@@ -191,7 +189,6 @@ infilename2 = sys.argv[2]
 Fs = float(sys.argv[3])
 
 theprefilter = tide.noncausalfilter()
-theprefilter.setbutter(usebutterworthfilter, filtorder)
 
 inputdata1 = tide.readvec(infilename1)
 inputdata2 = tide.readvec(infilename2)

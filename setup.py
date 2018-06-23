@@ -47,6 +47,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/pixelcomp',
                'rapidtide/scripts/spatialdecomp',
                'rapidtide/scripts/temporaldecomp',
+               'rapidtide/scripts/spectrogram',
                'rapidtide/scripts/showtc',
                'rapidtide/scripts/showxy',
                'rapidtide/scripts/spatialfit',
@@ -54,6 +55,8 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/histnifti',
                'rapidtide/scripts/atlastool',
                'rapidtide/scripts/linfit',
+               'rapidtide/scripts/happy',
+               'rapidtide/scripts/threeD',
                'rapidtide/scripts/tcfrom3col',
 #               'rapidtide/scripts/endtidalproc',
                'rapidtide/scripts/showhist']
@@ -99,7 +102,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.4.2',
+    version='1.5.0',
 
     description='Tools for performing correlation analysis on fMRI data.',
     long_description=long_description,
