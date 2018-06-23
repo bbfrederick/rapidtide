@@ -30,6 +30,9 @@ import time
 import sys
 import bisect
 import os
+import pandas as pd
+import json
+import resource
 
 #from scipy import signal
 from scipy.stats import johnsonsb
@@ -513,6 +516,66 @@ def checkifparfile(filename):
         return False
 
 
+def readbidssidecar(inputfilename):
+    thefileroot, theext = os.path.splitext(inputfilename)
+    if os.path.exists(thefileroot + '.json'):
+        with open(thefileroot + '.json', 'r') as json_data:
+            d = json.load(json_data)
+            return d
+    else:
+        print('sidecar file does not exist')
+        return {}
+
+
+def readbidstsv(inputfilename):
+    thefileroot, theext = os.path.splitext(inputfilename)
+    if os.path.exists(thefileroot + '.json') and os.path.exists(thefileroot + '.tsv.gz'):
+        with open(thefileroot + '.json', 'r') as json_data:
+            d = json.load(json_data)
+            try:
+                samplerate = float(d['SamplingFrequency'])
+            except:
+                print('no samplerate found in json')
+                return [None, None, None, None]
+            try:
+                starttime = float(d['StartTime'])
+            except:
+                print('no starttime found in json')
+                return [None, None, None, None]
+            try:
+                columns = d['Columns']
+            except:
+                print('no columns found in json')
+                return [None, None, None, None]
+        df = pd.read_csv(thefileroot + '.tsv.gz', compression='gzip', header=0, sep='\t', quotechar='"')
+        return samplerate, starttime, columns, np.transpose(df.as_matrix())
+    else:
+        print('file pair does not exist')
+        return [None, None, None, None]
+
+
+def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None):
+    samplerate, starttime, columns, data = readbidstsv(inputfilename)
+    if data is None:
+        print('no valid datafile found')
+        return None, None, None
+    else:
+        if columnname is not None:
+            # looking for a named column
+            try:
+                thecolnum = columns.index(columnname)
+                return samplerate, starttime, data[thecolnum, :]
+            except:
+                print('no column named', columnname, 'in', inputfilename)
+                return None, None, None
+        # we can only get here if columnname is undefined
+        if not (0 < columnum < len(columns)):
+            print('specified column number', columnnum, 'is out of range in', inputfilename)
+            return None, None, None
+        else:
+            return samplerate, starttime, data[thecolnum, :]
+        
+    
 def readvecs(inputfilename):
     thefile = open(inputfilename, 'r')
     lines = thefile.readlines()
@@ -520,10 +583,11 @@ def readvecs(inputfilename):
     inputvec = np.zeros((numvecs, MAXLINES), dtype='float64')
     numvals = 0
     for line in lines:
-        numvals += 1
-        thetokens = line.split()
-        for vecnum in range(0, numvecs):
-            inputvec[vecnum, numvals - 1] = np.float64(thetokens[vecnum])
+        if len(line) > 1:
+            numvals += 1
+            thetokens = line.split()
+            for vecnum in range(0, numvecs):
+                inputvec[vecnum, numvals - 1] = np.float64(thetokens[vecnum])
     return 1.0 * inputvec[:, 0:numvals]
 
 
@@ -533,8 +597,9 @@ def readvec(inputfilename):
     with open(inputfilename, 'r') as thefile:
         lines = thefile.readlines()
         for line in lines:
-            numvals += 1
-            inputvec[numvals - 1] = np.float64(line)
+            if len(line) > 1:
+                numvals += 1
+                inputvec[numvals - 1] = np.float64(line)
     return 1.0 * inputvec[0:numvals]
 
 
@@ -1365,7 +1430,7 @@ def trendgen(thexvals, thefitcoffs, demean):
 
 @conditionaljit()
 def detrend(inputdata, order=1, demean=False):
-    thetimepoints = np.arange(0.0, len(inputdata), 1.0)
+    thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     thecoffs = np.polyfit(thetimepoints, inputdata, order)
     thefittc = trendgen(thetimepoints, thecoffs, demean)
     return inputdata - thefittc
@@ -1916,6 +1981,67 @@ def gaussfit(height, loc, width, xvals, yvals):
 
 
 # --------------------------- Resampling and time shifting functions -------------------------------------------
+'''
+class congrid:
+    def __init__(self, timeaxis, width, method='gauss', circular=True, upsampleratio=100, doplot=False, debug=False):
+        self.upsampleratio = upsampleratio
+        self.initstep = timeaxis[1] - timeaxis[0]
+        self.initstart = timeaxis[0]
+        self.initend = timeaxis[-1]
+        self.hiresstep = self.initstep / np.float64(self.upsampleratio)
+        if method == 'gauss':
+            fullwidth = 2.355 * width
+        fullwidthpts = int(np.round(fullwidth / self.hiresstep, 0))
+        fullwidthpts += ((fullwidthpts % 2) - 1)
+        self.hires_x = np.linspace(-fullwidth / 2.0, fullwidth / 2.0, numpts = fullwidthpts, endpoint=True)
+        if method == 'gauss':
+            self.hires_y = gauss_eval(self.hires_x, np.array([1.0, 0.0, width])
+        if debug:
+            print(self.hires_x)
+        if doplot:
+            fig = pl.figure()
+            ax = fig.add_subplot(111)
+            ax.set_title('congrid convolution function')
+            pl.plot(self.hires_x, self.hires_y)
+            pl.legend(('input', 'hires'))
+            pl.show()
+
+    def gridded(xvals, yvals):
+        if len(xvals) != len(yvals):
+            print('x and y vectors do not match - aborting')
+            return None
+        for i in range(len(xvals)):
+        outindices = ((newtimeaxis - self.hiresstart) // self.hiresstep).astype(int)
+'''
+
+congridyvals = {}
+def congrid(xaxis, loc, val, width, debug=False):
+    xstep = xaxis[1] - xaxis[0]
+    #weights = xaxis * 0.0
+    widthinpts = int(np.round(width * 4.6 / xstep))
+    widthinpts -= widthinpts % 2 - 1
+    if loc < xaxis[0] or loc > xaxis[-1]:
+        print('loc', loc, 'not in range', xaxis[0], xaxis[-1])
+        
+    center = valtoindex(xaxis, loc)
+    offset = loc - xaxis[center]
+    offsetkey = str(np.round(offset, 3))
+    try:
+        yvals = congridyvals[offsetkey]
+    except:
+        if debug:
+            print('new key:', offsetkey)
+        xvals = np.linspace(-xstep * (widthinpts // 2), xstep * (widthinpts // 2), num = widthinpts, endpoint=True) + offset
+        congridyvals[offsetkey] = gauss_eval(xvals, np.array([1.0, 0.0, width]))
+        yvals = congridyvals[offsetkey]
+    startpt = int(center - widthinpts // 2)
+    indices = range(startpt, startpt + widthinpts)
+    indices = np.remainder(indices, len(xaxis))
+    #weights[indices] = yvals[:]
+    #return val * weights, weights, indices
+    return val * yvals, yvals, indices
+            
+
 class fastresampler:
     def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100, doplot=False, debug=False, method='univariate'):
         self.upsampleratio = upsampleratio
@@ -1924,7 +2050,6 @@ class fastresampler:
         self.initstart = timeaxis[0]
         self.initend = timeaxis[-1]
         self.hiresstep = self.initstep / np.float64(self.upsampleratio)
-        #self.hires_x = np.r_[timeaxis[0] - self.padvalue:self.initstep * len(timeaxis) + self.padvalue:self.hiresstep]
         self.hires_x = np.arange(timeaxis[0] - self.padvalue, self.initstep * len(timeaxis) + self.padvalue, self.hiresstep)
         self.hiresstart = self.hires_x[0]
         self.hiresend = self.hires_x[-1]
@@ -2056,7 +2181,7 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
 
     # antialias
-    aafilter = noncausalfilter(filtertype='arb', usebutterworth=True, debug=debug)
+    aafilter = noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
     aafilter.setarb(0.0, 0.0, 0.95 * final_freq, final_freq)
     antialias_y = aafilter.apply(intermed_freq, intermed_y)
     # antialias_y = dolptrapfftfilt(intermed_freq,0.9*final_freq,final_freq,intermed_y)
@@ -2216,7 +2341,7 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 
 # --------------------------- Window functions -------------------------------------------------
 BHwindows = {}
-def blackmanharris(length):
+def blackmanharris(length, debug=False):
     #return a0 - a1 * np.cos(argvec) + a2 * np.cos(2.0 * argvec) - a3 * np.cos(3.0 * argvec)
     try:
         return BHwindows[str(length)]
@@ -2227,28 +2352,31 @@ def blackmanharris(length):
         a2 = 0.14128
         a3 = 0.01168
         BHwindows[str(length)] = a0 - a1 * np.cos(argvec) + a2 * np.cos(2.0 * argvec) - a3 * np.cos(3.0 * argvec)
-        print('initialized Blackman-Harris window for length', length)
+        if debug:
+            print('initialized Blackman-Harris window for length', length)
         return BHwindows[str(length)]
 
 hannwindows = {}
-def hann(length):
+def hann(length, debug=False):
     #return 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
     try:
         return hannwindows[str(length)]
     except: 
         hannwindows[str(length)] = 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
-        print('initialized hann window for length', length)
+        if debug:
+            print('initialized hann window for length', length)
         return hannwindows[str(length)]
 
 
 hammingwindows = {}
-def hamming(length):
+def hamming(length, debug=False):
 #   return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
     try:
         return hammingwindows[str(length)]
     except:
         hammingwindows[str(length)] = 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
-        print('initialized hamming window for length', length)
+        if debug:
+            print('initialized hamming window for length', length)
         return hammingwindows[str(length)]
 
 def windowfunction(length, type='hamming'):
@@ -2311,6 +2439,7 @@ def ppnormalize(vector):
     else:
         return demeaned
 
+
 @conditionaljit()
 def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
     # detrend first
@@ -2324,6 +2453,10 @@ def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
         return stdnormalize(windowfunction(np.shape(thedata)[0], type=windowfunc) * intervec) / np.sqrt(np.shape(thedata)[0])
     else:
         return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
+
+
+def rms(vector):
+    return np.sqrt(np.mean(np.square(vector)))
 
 
 # --------------------------- Filtering functions -------------------------------------------------
@@ -2847,6 +2980,91 @@ def real_cepstrum(x):
 
 
 # --------------------------- Utility functions -------------------------------------------------
+def logmem(msg, file=None):
+    global lastmaxrss_parent, lastmaxrss_child
+    if msg is None:
+        lastmaxrss_parent = 0
+        lastmaxrss_child = 0
+        logline = ','.join([ 
+            '',
+            'Self Max RSS',
+            'Self Diff RSS',
+            'Self Shared Mem',
+            'Self Unshared Mem',
+            'Self Unshared Stack',
+            'Self Non IO Page Fault'
+            'Self IO Page Fault'
+            'Self Swap Out',
+            'Children Max RSS',
+            'Children Diff RSS',
+            'Children Shared Mem',
+            'Children Unshared Mem',
+            'Children Unshared Stack',
+            'Children Non IO Page Fault'
+            'Children IO Page Fault'
+            'Children Swap Out'])
+    else:
+        rcusage = resource.getrusage(resource.RUSAGE_SELF)
+        outvals = [msg]
+        outvals.append(str(rcusage.ru_maxrss))
+        outvals.append(str(rcusage.ru_maxrss - lastmaxrss_parent))
+        lastmaxrss_parent = rcusage.ru_maxrss
+        outvals.append(str(rcusage.ru_ixrss))
+        outvals.append(str(rcusage.ru_idrss))
+        outvals.append(str(rcusage.ru_isrss))
+        outvals.append(str(rcusage.ru_minflt))
+        outvals.append(str(rcusage.ru_majflt))
+        outvals.append(str(rcusage.ru_nswap))
+        rcusage = resource.getrusage(resource.RUSAGE_CHILDREN)
+        outvals.append(str(rcusage.ru_maxrss))
+        outvals.append(str(rcusage.ru_maxrss - lastmaxrss_child))
+        lastmaxrss_child = rcusage.ru_maxrss
+        outvals.append(str(rcusage.ru_ixrss))
+        outvals.append(str(rcusage.ru_idrss))
+        outvals.append(str(rcusage.ru_isrss))
+        outvals.append(str(rcusage.ru_minflt))
+        outvals.append(str(rcusage.ru_majflt))
+        outvals.append(str(rcusage.ru_nswap))
+        logline = ','.join(outvals)
+    if file is None:
+        print(logline)
+    else:
+        file.writelines(logline + "\n")
+
+
+def findexecutable(command):
+    import shutil
+
+    theversion = sys.version_info
+    if (theversion[0] >= 3) and (theversion[1] >= 3):
+        return shutil.which(command)
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            if os.access(os.path.join(path, command), os.X_OK):
+                return os.path.join(path, command)
+        return None
+
+
+def isexecutable(command):
+    import shutil
+
+    theversion = sys.version_info
+    if (theversion[0] >= 3) and (theversion[1] >= 3):
+        if shutil.which(command) is not None:
+            return True
+        else:
+            return False
+    else:
+        return any(
+            os.access(os.path.join(path, command), os.X_OK) 
+            for path in os.environ["PATH"].split(os.pathsep)
+        )
+
+
+def savecommandline(theargs, thename):
+    writevec([' '.join(theargs)], thename + '_commandline.txt')
+
+
 def valtoindex(thearray, thevalue, toleft=True):
     if toleft:
         return bisect.bisect_left(thearray, thevalue)

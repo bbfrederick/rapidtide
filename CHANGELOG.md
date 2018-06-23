@@ -1,4 +1,50 @@
 # History of changes
+## Version 1.5 (6/11/18)
+* (documentation) Added description of rapidtide output files.
+* (tide_funcs) Fixed a VERY old bug in detrend that added an offset to the detrended timecourse.  The effect of the bug on rapidtide2(x) is probably small, because we almost always use data that has already been detrended.  The effect in some very particular use cases, though, was large enough that I finally noticed it after 3 years.
+* (rapidtide2, 2x) Added option to disable progress bars (good when saving output to a file).
+* (rapidtide2, 2x) Improved output to memusage file.
+* (rapidtide2, 2x) Report fit errors with better granularity.
+* (rapidtide2, 2x) Allow specification of external correlation mask.
+* (rapidtide2, 2x) Added "MTT" map to hopefully remove the effect of autocorrelation.
+* (rapidtide2, 2x) Added some additional diagnostic information to significance estimation.
+* (rapidtide2x, tide_funcs) Major changes to peak fitting to try to improve stability using new findmaxlag_gauss_rev function.
+* (rapidtide2x, tide_funcs) Moved logmem function to tide_funcs so that it's available for other programs.
+* (rapidtide2x) Fixed bug when running despeckling on a single processor.
+* (rapidtide2, 2x) Attempting to stabilize the lagsigma measurement with better initial parameter estimates.
+* (tide_funcs) Cast timecourse index as a long to avoid an overflow in NIRS timecourses.
+* (rapidtide2, 2x, tide_funcs) Added ability to set searchfrac in fits.
+* (rapidtide2, 2x) Disable threshold during significance estimation, simplify internal logic for turning on estimation.
+* (rapitdide2) Fixed bug in mask generation
+* (showtc) Added the ability to select columns to plot, and to read BIDS style json/tsv.gz physiological files
+* (showtc, showxy) Updated colormap names for compatibility with matplotlib 2.2+
+* (rapidtide2std) Initial support for warping with ANTs (does not work yet)
+* (rapidtide2std) Added the ability to align a single file.
+* (tidepool) Support for MTT map.
+* (ccorrica, showstxcorr) PEP 8 reformatting.
+* (testing) Added test for findmaxlag versions.
+* (testing) Added test for stxcorr functions.
+* (temporaldecomp) Allow 3D masks.
+* (atlastool) Changed method for generating 3D files.
+* (atlastool) Various bug fixes in 3D atlas generation.
+* (resamp1tc) Modernized option selection, Added nodisplay option.
+* (showstxcorr) Explicit integer cast of indices.
+* (showstxcorr) Removed initial Hamming window.
+* (showstxcorr) Added csv output of matrices.
+* (linfit) Added to distribution.
+* (tide_funcs) Changed value of rcond in leastsq to be compatible over multiple versions of bumpy (least. comprehensible. note. ever.)
+* (tide_funcs) Added findexecutable and isexecutable functions
+* (tide_funcs) Added a convolution gridding function
+* (tide_funcs) Fixed readvec(s) so that is now works properly if a text file ends with an empty line.
+* (tide_funcs) Added function to read slice times from a BIDS sidecar file.
+* (spatialdecomp, temporaldecomp) Command line is now saved.
+* (threeD) Added
+
+
+## Version 1.4.2 (2/21/18)
+* (documentation) Fixed some formatting.
+* (showxcorrx) Cleaned up usage statement.
+
 
 ## Version 1.4.0 (2/21/18)
 * (rapidtide2, 2x) Added macros to support setting multiple options at once.
@@ -25,8 +71,6 @@
 * (tidepool) Default to displaying using the valid mask rather than the p<0.05 mask.
 * (tidepool) Enabled usage of the refine mask.
 
-
-# History of changes
 
 ## Version 1.3.0 (12/15/17)
 * (rapidtide2, 2x) Added new option, '--despeckle', which uses a spatial median filter to find and correct points where the correlation fit picked the wrong autocorrelation lobe.  This dramatically improves the quality of the output maps.  This will probably be turned on by default in the next release.

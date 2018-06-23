@@ -186,6 +186,8 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
         print()
 
     # return the distribution data
+    numnonzero = len(np.where(corrlist != 0.0)[0])
+    print(numnonzero, 'non-zero correlations out of', len(corrlist), '(', 100.0 * numnonzero / len(corrlist),'%)')
     return corrlist
 
 
@@ -1408,7 +1410,6 @@ def main():
     optiondict['dodeconv'] = False  # do Wiener deconvolution to find voxel transfer function
 
     # filter options
-    optiondict['zpfilter'] = False
     optiondict['trapezoidalfftfilter'] = True
     optiondict['usebutterworthfilter'] = False
     optiondict['filtorder'] = 6
@@ -1792,7 +1793,8 @@ def main():
             optiondict['widthlimit'] = float(a)
             print('Setting gaussian fit width limit to ', optiondict['widthlimit'], 'Hz')
         elif o == '-b':
-            theprefilter.setbutter(True, optiondict['filtorder'])
+            optiondict['usebutterworthfilter'] = True
+            theprefilter.setbutter(optiondict['usebutterworthfilter'], optiondict['filtorder'])
             print('Using butterworth bandlimit filter')
         elif o == '-Z':
             optiondict['fixeddelayvalue'] = float(a)
@@ -2208,7 +2210,7 @@ def main():
 
     # find the threshold value for the image data
     logmem('before selecting valid voxels', file=memfile)
-    threshval = tide.getfracval(fmri_data[:, optiondict['addedskip']], 0.98) / 25.0
+    threshval = tide.getfracval(fmri_data[:, optiondict['addedskip']:], 0.98) / 25.0
     if optiondict['corrmaskname'] is not None:
         if optiondict['textio']:
             corrmask = tide.readvecs(optiondict['corrmaskname']).astype('int16')
@@ -2363,24 +2365,14 @@ def main():
 
     # filter the input data for antialiasing
     if optiondict['antialias']:
-        if optiondict['zpfilter']:
-            print('applying zero phase antialiasing filter')
-            if optiondict['verbose']:
-                print('    input freq:', inputfreq)
-                print('    fmri freq:', fmrifreq)
-                print('    npoints:', np.shape(reference_y)[0])
-                print('    filtorder:', optiondict['filtorder'])
-            reference_y_filt = tide.dolpfiltfilt(inputfreq, 0.5 * fmrifreq, reference_y, optiondict['filtorder'],
-                                                 padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
-        else:
-            if optiondict['trapezoidalfftfilter']:
-                print('applying trapezoidal antialiasing filter')
-                reference_y_filt = tide.dolptrapfftfilt(inputfreq, 0.25 * fmrifreq, 0.5 * fmrifreq, reference_y,
-                                                        padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
-            else:
-                print('applying brickwall antialiasing filter')
-                reference_y_filt = tide.dolpfftfilt(inputfreq, 0.5 * fmrifreq, reference_y,
+        if optiondict['trapezoidalfftfilter']:
+            print('applying trapezoidal antialiasing filter')
+            reference_y_filt = tide.dolptrapfftfilt(inputfreq, 0.25 * fmrifreq, 0.5 * fmrifreq, reference_y,
                                                     padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
+        else:
+            print('applying brickwall antialiasing filter')
+            reference_y_filt = tide.dolpfftfilt(inputfreq, 0.5 * fmrifreq, reference_y,
+                                                padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
         reference_y = rt_floatset(reference_y_filt.real)
 
     warnings.filterwarnings('ignore', 'Casting*')
