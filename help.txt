@@ -2,9 +2,10 @@ usage: parse.py [-h] [--venousrefine | --nirs]
                 [--datatstep TSTEP | --datafreq FREQ] [-a] [--invert]
                 [--interptype {univariate,cubic,quadratic}]
                 [--offsettime OFFSETTIME] [--butterorder ORDER]
-                [-F LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP] ...] |
-                --filtertype {arb,vlf,lfo,resp,cardiac} | -V | -L | -R | -C]
-                [-N NREPS] [--skipsighistfit]
+                [-F LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP]
+                [LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP] ...] | --filtertype
+                {arb,vlf,lfo,resp,cardiac} | -V | -L | -R | -C] [-N NREPS]
+                [--skipsighistfit]
                 [--windowfunc {hamming,hann,blackmanharris,None} | --nowindow]
                 [-f GAUSSSIGMA] [-M] [--meanscale] [--slicetimes FILE]
                 [--numskip SKIP] [--nothresh] [--oversampfac OVERSAMPFAC]
@@ -65,7 +66,7 @@ Preprocessing options:
                         Apply offset OFFSETTIME to the lag regressors
   --butterorder ORDER   Use butterworth filter for band splitting instead of
                         trapezoidal FFT filter and set filter order to ORDER.
-  -F LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP] ...]
+  -F LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP] [LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP] ...]
                         Filter data and regressors from LOWERFREQ to
                         UPPERFREQ. LOWERSTOP and UPPERSTOP can also be
                         specified, or will be calculated automatically
