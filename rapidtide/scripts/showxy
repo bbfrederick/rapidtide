@@ -25,6 +25,7 @@ import getopt
 import matplotlib
 import platform
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 import matplotlib.cm as cm
 from scipy import arange
 
@@ -132,7 +133,7 @@ xvecs = []
 yvecs = []
 for i in range(0, numfiles):
     print('reading data from', textfilename[i])
-    indata=tide.readvecs(textfilename[i])
+    indata=tide_io.readvecs(textfilename[i])
     xvecs.append(1.0 * indata[0,:])
     yvecs.append(1.0 * indata[1,:])
 

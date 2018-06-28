@@ -25,6 +25,7 @@ import getopt
 import matplotlib
 import platform
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 from pylab import plot, xlabel, ylabel, title, legend, show
 
 #if platform.system() == 'Darwin':
@@ -92,7 +93,7 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
-indata = tide.readvecs(textfilename)
+indata = tide_io.readvecs(textfilename)
 xvecs = indata[0, :]
 yvecs = indata[1, :]
 plot(xvecs, yvecs, 'r')

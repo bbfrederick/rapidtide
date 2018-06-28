@@ -37,6 +37,7 @@ import scipy as sp
 
 import getopt
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy.stats import skew
@@ -190,8 +191,8 @@ Fs = float(sys.argv[3])
 
 theprefilter = tide.noncausalfilter()
 
-inputdata1 = tide.readvec(infilename1)
-inputdata2 = tide.readvec(infilename2)
+inputdata1 = tide_io.readvec(infilename1)
+inputdata2 = tide_io.readvec(infilename2)
 numpoints = len(inputdata1)
 
 # now scan for optional arguments
@@ -353,8 +354,8 @@ filtereddata2 = tide.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow,
 if flipregressor:
     filtereddata2 *= -1.0
 if dumpfiltered:
-    tide.writenpvecs(filtereddata1, "filtereddata1.txt")
-    tide.writenpvecs(filtereddata2, "filtereddata2.txt")
+    tide_io.writenpvecs(filtereddata1, "filtereddata1.txt")
+    tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
 
 if dopartial:
     controlvars = tide.readnpvecs(controlvariablefile)
@@ -440,8 +441,8 @@ if estimate_significance:
         tide.printthresholds(pearpcts_fit, thepercentiles, 'Pearson correlation significance thresholds from fit:')
 
     if writecorrlists:
-        tide.writenpvecs(corrlist, "corrlist.txt")
-        tide.writenpvecs(corrlist_pear, "corrlist_pear.txt")
+        tide_io.writenpvecs(corrlist, "corrlist.txt")
+        tide_io.writenpvecs(corrlist_pear, "corrlist_pear.txt")
 
 def printthresholds(pcts, thepercentiles, labeltext):
     print(labeltext)
@@ -505,4 +506,4 @@ if display:
     show()
 
 if savecorrelation:
-    tide.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), corroutputfile)
+    tide_io.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), corroutputfile)

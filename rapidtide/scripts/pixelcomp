@@ -24,6 +24,7 @@ import sys
 import getopt
 import string
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -102,7 +103,7 @@ mask1_data = mask1_img.get_data()
 mask1_hdr = mask1_img.get_header()
 themaskdims1=mask1_hdr['dim']
 
-if not tide.checkspacematch(thedims1,themaskdims1):
+if not tide_io.checkspacematch(thedims1,themaskdims1):
     print('input image 1 dimensions do not match mask')
     exit()
 
@@ -116,11 +117,11 @@ mask2_data = mask2_img.get_data()
 mask2_hdr = mask2_img.get_header()
 themaskdims2=mask2_hdr['dim']
 
-if not tide.checkspacematch(thedims2,themaskdims2):
+if not tide_io.checkspacematch(thedims2,themaskdims2):
     print('input image 2 dimensions do not match mask')
     exit()
 
-if not tide.checkspacematch(thedims1,thedims2):
+if not tide_io.checkspacematch(thedims1,thedims2):
     print('input images 1 and 2 dimensions do not match')
     exit()
 
