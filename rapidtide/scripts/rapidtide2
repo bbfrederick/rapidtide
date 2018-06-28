@@ -38,6 +38,7 @@ import resource
 
 import rapidtide.tide_funcs as tide
 import rapidtide.io_funcs as tide_io
+import rapidtide.filter_funcs as tide_filt
 
 from sklearn.decomposition import FastICA, PCA
 from pylab import figure, plot, show
@@ -822,7 +823,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
           '\n	', sigmafails, ' sigmafails')
 
     if optiondict['psdfilter']:
-        outputdata = tide.xfuncfilt(outputdata, snr)
+        outputdata = tide_filt.xfuncfilt(outputdata, snr)
 
     # garbage collect
     collected = gc.collect()
@@ -1489,7 +1490,7 @@ def main():
     optiondict['memprofilerexists'] = memprofilerexists
 
     realtr = 0.0
-    theprefilter = tide.noncausalfilter()
+    theprefilter = tide_filt.noncausalfilter()
     theprefilter.setbutter(optiondict['usebutterworthfilter'], optiondict['filtorder'])
 
     # start the clock!
@@ -2159,7 +2160,7 @@ def main():
         for i in range(validstart, validend + 1):
             if (i % reportstep == 0 or i == validend) and optiondict['showprogressbar']:
                 tide.progressbar(i - validstart + 1, timepoints, label='Percent complete')
-            nim_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, optiondict['gausssigma'],
+            nim_data[:, :, :, i] = tide_filt.ssmooth(xdim, ydim, slicethickness, optiondict['gausssigma'],
                                                 nim_data[:, :, :, i])
         timings.append(['End 3D smoothing', time.time(), None, None])
         print()
@@ -2368,11 +2369,11 @@ def main():
     if optiondict['antialias']:
         if optiondict['trapezoidalfftfilter']:
             print('applying trapezoidal antialiasing filter')
-            reference_y_filt = tide.dolptrapfftfilt(inputfreq, 0.25 * fmrifreq, 0.5 * fmrifreq, reference_y,
+            reference_y_filt = tide_filt.dolptrapfftfilt(inputfreq, 0.25 * fmrifreq, 0.5 * fmrifreq, reference_y,
                                                     padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
         else:
             print('applying brickwall antialiasing filter')
-            reference_y_filt = tide.dolpfftfilt(inputfreq, 0.5 * fmrifreq, reference_y,
+            reference_y_filt = tide_filt.dolpfftfilt(inputfreq, 0.5 * fmrifreq, reference_y,
                                                 padlen=int(inputfreq * optiondict['padseconds']), debug=optiondict['debug'])
         reference_y = rt_floatset(reference_y_filt.real)
 
@@ -2573,7 +2574,7 @@ def main():
                     if doreferencenotch:
                         print('removing spectral component at sidelobe frequency')
                         acstopfreq = 1.0 / sidelobetime
-                        acfixfilter = tide.noncausalfilter(debug=optiondict['debug'])
+                        acfixfilter = tide_filt.noncausalfilter(debug=optiondict['debug'])
                         acfixfilter.settype('arb_stop')
                         acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
                         cleaned_referencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
@@ -2860,7 +2861,7 @@ def main():
             resampref_y_pw = rt_floatset(resampref_y)
         if optiondict['usewindowfunc']:
             referencetc_pw = tide.stdnormalize(
-                tide.windowfunction(np.shape(resampref_y_pw)[0], type=optiondict['windowfunc']) * tide.detrend(tide.stdnormalize(resampref_y_pw))) / \
+                tide_filt.windowfunction(np.shape(resampref_y_pw)[0], type=optiondict['windowfunc']) * tide.detrend(tide.stdnormalize(resampref_y_pw))) / \
                              np.shape(resampref_y_pw)[0]
         else:
             referencetc_pw = tide.stdnormalize(tide.detrend(tide.stdnormalize(resampref_y_pw))) / np.shape(
