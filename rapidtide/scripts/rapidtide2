@@ -763,7 +763,6 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
             inlagrange = None
         tide_io.writenpvecs(dispersioncalcout,
                          optiondict['outputname'] + '_dispersioncalcvecs_pass' + str(passnum) + '.txt')
-        tide.writenpvecs(dispersioncalcspecmag,
         tide_io.writenpvecs(dispersioncalcspecmag,
                          optiondict['outputname'] + '_dispersioncalcspecmag_pass' + str(passnum) + '.txt')
         tide_io.writenpvecs(dispersioncalcspecphase,
