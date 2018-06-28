@@ -2,10 +2,9 @@ usage: parse.py [-h] [--venousrefine | --nirs]
                 [--datatstep TSTEP | --datafreq FREQ] [-a] [--invert]
                 [--interptype {univariate,cubic,quadratic}]
                 [--offsettime OFFSETTIME] [--butterorder ORDER]
-                [-F LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP]
-                [LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP] ...] | --filtertype
-                {arb,vlf,lfo,resp,cardiac} | -V | -L | -R | -C] [-N NREPS]
-                [--skipsighistfit]
+                [-F LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP ...] |
+                --filtertype {arb,vlf,lfo,resp,cardiac} | -V | -L | -R | -C]
+                [-N NREPS] [--skipsighistfit]
                 [--windowfunc {hamming,hann,blackmanharris,None} | --nowindow]
                 [-f GAUSSSIGMA] [-M] [--meanscale] [--slicetimes FILE]
                 [--numskip SKIP] [--nothresh] [--oversampfac OVERSAMPFAC]
@@ -14,8 +13,8 @@ usage: parse.py [-h] [--venousrefine | --nirs]
                 [--regressorstart START]
                 [--corrweighting {none,phat,liang,eckart} | --nodetrend]
                 [--corrmaskthresh PCT | --corrmask FILE]
-                [-Z DELAYTIME | -r LAGMIN LAGMAX] [-s SIGMALIMIT] [--bipolar]
-                [--nofitfilt] [--maxfittype {gauss,quad}]
+                [-Z DELAYTIME | -r LAGMIN LAGMAX] [--sigmalimit SIGMALIMIT]
+                [--bipolar] [--nofitfilt] [--maxfittype {gauss,quad}]
                 [--despecklepasses PASSES] [--despecklethresh VAL]
                 [--refineprenorm {None,mean,var,std,invlag}]
                 [--refineweighting {None,NIRS,R,R2}] [--passes PASSES]
@@ -26,10 +25,11 @@ usage: parse.py [-h] [--venousrefine | --nirs]
                 [--refinetype {avg,pca,ica,weightedavg}] [--limitoutput]
                 [--savelags] [--histlen HISTLEN] [--timerange START END]
                 [--glmsourcefile FILE] [--noglm] [--preservefiltering]
-                [--noprogressbar] [--wiener] [--usesp] [--cifti] [-S] [-d]
-                [--nonumba] [--nosharedmem] [--memprofile] [--nprocs NPROCS]
-                [--debug] [--cleanrefined] [--dispersioncalc] [--acfix]
-                [--tmask FILE] [-p | -P] [-A ARMODELORDER]
+                [--noprogressbar] [--wiener] [--usesp] [--cifti] [--simulate]
+                [-d] [--nonumba] [--nosharedmem] [--memprofile]
+                [--nprocs NPROCS] [--debug] [--cleanrefined]
+                [--dispersioncalc] [--acfix] [--tmask FILE]
+                [--prewhiten | --saveprewhiten] [--AR ARMODELORDER]
                 in_file prefix
 
 positional arguments:
@@ -66,16 +66,16 @@ Preprocessing options:
                         Apply offset OFFSETTIME to the lag regressors
   --butterorder ORDER   Use butterworth filter for band splitting instead of
                         trapezoidal FFT filter and set filter order to ORDER.
-  -F LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP] [LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP] ...]
+  -F LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP ...], --arb LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP ...]
                         Filter data and regressors from LOWERFREQ to
                         UPPERFREQ. LOWERSTOP and UPPERSTOP can also be
                         specified, or will be calculated automatically
   --filtertype {arb,vlf,lfo,resp,cardiac}
                         Filter data and regressors to specific band
-  -V                    Filter data and regressors to VLF band
-  -L                    Filter data and regressors to LFO band
-  -R                    Filter data and regressors to respiratory band
-  -C                    Filter data and regressors to cardiac band
+  -V, --vlf             Filter data and regressors to VLF band
+  -L, --lfo             Filter data and regressors to LFO band
+  -R, --resp            Filter data and regressors to respiratory band
+  -C, --cardiac         Filter data and regressors to cardiac band
   -N NREPS, --numnull NREPS
                         Estimate significance threshold by running NREPS null
                         correlations (default is 10000, set to 0 to disable)
@@ -85,7 +85,8 @@ Preprocessing options:
                         Window funcion to use prior to correlation. Options
                         are hamming (default), hann, blackmanharris, and None
   --nowindow            Disable precorrelation windowing
-  -f GAUSSSIGMA         Spatially filter fMRI data prior to analysis using
+  -f GAUSSSIGMA, --spatialfilt GAUSSSIGMA
+                        Spatially filter fMRI data prior to analysis using
                         GAUSSSIGMA in mm
   -M, --globalmean      Generate a global mean regressor and use that as the
                         reference regressor
@@ -128,7 +129,8 @@ Correlation fitting options:
   -Z DELAYTIME          Don't fit the delay time - set it to DELAYTIME seconds
                         for all voxels
   -r LAGMIN LAGMAX      Limit fit to a range of lags from LAGMIN to LAGMAX
-  -s SIGMALIMIT         Reject lag fits with linewidth wider than SIGMALIMIT
+  --sigmalimit SIGMALIMIT
+                        Reject lag fits with linewidth wider than SIGMALIMIT
                         Hz
   --bipolar             Bipolar mode - match peak correlation ignoring sign
   --nofitfilt           Do not zero out peak fit values if fit fails
@@ -194,7 +196,7 @@ Miscellaneous options:
   --usesp               Use single precision for internal calculations (may be
                         useful when RAM is limited)
   --cifti               Data file is a converted CIFTI
-  -S                    Simulate a run - just report command line options
+  --simulate            Simulate a run - just report command line options
   -d                    Display plots of interesting timecourses
   --nonumba             Disable jit compilation with numba
   --nosharedmem         Disable use of shared memory for large array storage
@@ -215,7 +217,6 @@ Experimental options (not fully tested, may not work):
   --tmask FILE          Only correlate during epochs specified in MASKFILE
                         (NB: each line of FILE contains the time and duration
                         of an epoch to include
-  -p                    Prewhiten and refit data
-  -P                    Save prewhitened data (turns prewhitening on)
-  -A ARMODELORDER, --AR ARMODELORDER
-                        Set AR model order (default is 1)
+  --prewhiten           Prewhiten and refit data
+  --saveprewhiten       Save prewhitened data (turns prewhitening on)
+  --AR ARMODELORDER     Set AR model order (default is 1)
