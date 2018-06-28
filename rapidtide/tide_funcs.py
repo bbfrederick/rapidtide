@@ -144,51 +144,6 @@ def disablenumba():
     donotusenumba = True
 
 
-# ------------------------------------------ Version function ----------------------------------
-def version():
-    thispath, thisfile = os.path.split(__file__)
-    print(thispath)
-    if os.path.isfile(os.path.join(thispath, '_gittag.py')):
-        with open(os.path.join(thispath, '_gittag.py')) as f:
-            for line in f:
-                if line.startswith('__gittag__'):
-                    fulltag = (line.split()[2]).split('-')
-                    break
-        return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
-    else:
-        return 'UNKNOWN', 'UNKNOWN'
-
-
-# --------------------------- timing functions -------------------------------------------------
-def timefmt(thenumber):
-    return "{:10.2f}".format(thenumber)
-
-
-def proctiminginfo(thetimings, outputfile='', extraheader=None):
-    theinfolist = []
-    start = thetimings[0]
-    starttime = float(start[1])
-    lasteventtime = starttime
-    if extraheader is not None:
-        print(extraheader)
-        theinfolist.append(extraheader)
-    headerstring = 'Clock time\tProgram time\tDuration\tDescription'
-    print(headerstring)
-    theinfolist.append(headerstring)
-    for theevent in thetimings:
-        theduration = float(theevent[1] - lasteventtime)
-        outstring = time.strftime("%Y%m%dT%H%M%S", time.localtime(theevent[1])) + \
-                    timefmt(float(theevent[1]) - starttime) + \
-                    '\t' + timefmt(theduration) + '\t' + theevent[0]
-        if theevent[2] is not None:
-            outstring += " ({0:.2f} {1}/second)".format(float(theevent[2]) / theduration, theevent[3])
-        print(outstring)
-        theinfolist.append(outstring)
-        lasteventtime = float(theevent[1])
-    if outputfile != '':
-        tide_io.writevec(theinfolist, outputfile)
-
-
 # --------------------------- histogram functions -------------------------------------------------
 def gethistprops(indata, histlen, refine=False, therange=None):
     thestore = np.zeros((2, histlen), dtype='float64')
@@ -406,8 +361,27 @@ def mlregress(x, y, intercept=True):
     return np.atleast_1d(solution[0].T), R
 
 
+# --------------------------- miscellaneous math functions -------------------------------------------------
+def primes(n):
+    # found on stackoverflow: https://stackoverflow.com/questions/16996217/prime-factorization-list
+    primfac = []
+    d = 2
+    while d*d <= n:
+        while (n % d) == 0:
+            primfac.append(d)  # supposing you want multiple factors repeated
+            n //= d
+        d += 1
+    if n > 1:
+       primfac.append(n)
+    return primfac
 
-# --------------------------- correlation functions -------------------------------------------------
+
+def largestfac(n):
+    return primes(n)[-1]
+
+
+
+# --------------------------- Peak detection functions ----------------------------------------------
 # The following three functions are taken from the peakdetect distribution by Sixten Bergman
 # They were distributed under the DWTFYWTPL, so I'm relicensing them under Apache 2.0
 # From his header:
@@ -568,6 +542,7 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0.0):
     return [max_peaks, min_peaks]
 
 
+# --------------------------- Correlation functions -------------------------------------------------
 def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=10.0, displayplots=False, prewindow=True,
                   dodetrend=True):
     lookahead = 2
@@ -670,6 +645,7 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
 def delayedcorr(data1, data2, delayval, timestep):
     return sp.stats.stats.pearsonr(data1, timeshift(data2, delayval/timestep, 30)[0])
 
+
 def cepstraldelay(data1, data2, timestep, displayplots=True):
     # Choudhary, H., Bahl, R. & Kumar, A. 
     # Inter-sensor Time Delay Estimation using cepstrum of sum and difference signals in 
@@ -707,6 +683,7 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
         pl.plot(tvec, residual_cepstrum.real)
         pl.show()
     return timestep * np.argmax(residual_cepstrum.real[0:len(residual_cepstrum) // 2])
+
 
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
 def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=False):
@@ -1782,30 +1759,6 @@ class fastresampler:
         return out_y
 
 
-#def prepforfastresample(orig_x, orig_y, numtrs, fmritr, padvalue, upsampleratio, doplot=False):
-#    hiresstep = fmritr / upsampleratio
-#    #hires_x_padded = np.r_[-padvalue:fmritr * numtrs + padvalue:hiresstep]
-#    hires_x_padded = np.arange(-padvalue, fmritr * numtrs + padvalue, hiresstep)
-#    hiresstart = hires_x_padded[0]
-#    hires_y = doresample(orig_x, orig_y, hires_x_padded, method='univariate')
-#    hires_y[:int(padvalue // hiresstep)] = hires_y[int(padvalue // hiresstep)]
-#    hires_y[-int(padvalue // hiresstep):] = hires_y[-int(padvalue // hiresstep)]
-#    if doplot:
-#        fig = pl.figure()
-#        ax = fig.add_subplot(111)
-#        ax.set_title('Initial resampled vector')
-#        pl.plot(hires_x_padded, hires_y)
-#        pl.show()
-#    return hires_x_padded, hires_y, hiresstep, hiresstart
-#
-#
-#def dofastresample(orig_x, orig_y, new_x, hrstep, hrstart, upsampleratio):
-#    starthrindex = int((new_x[0] - hrstart) / hrstep)
-#    stride = int(upsampleratio)
-#    endhrindex = starthrindex + stride * len(new_x) - 1
-#    return 1.0 * orig_y[starthrindex:endhrindex:stride]
-
-
 def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
     pad_y = tide_filt.padvec(orig_y, padlen=padlen)
     tstep = orig_x[1] - orig_x[0]
@@ -2217,19 +2170,48 @@ def progressbar(thisval, end_val, label='Percent', barsize=60):
     sys.stdout.flush()
 
 
-def primes(n):
-    # found on stackoverflow: https://stackoverflow.com/questions/16996217/prime-factorization-list
-    primfac = []
-    d = 2
-    while d*d <= n:
-        while (n % d) == 0:
-            primfac.append(d)  # supposing you want multiple factors repeated
-            n //= d
-        d += 1
-    if n > 1:
-       primfac.append(n)
-    return primfac
+# ------------------------------------------ Version function ----------------------------------
+def version():
+    thispath, thisfile = os.path.split(__file__)
+    print(thispath)
+    if os.path.isfile(os.path.join(thispath, '_gittag.py')):
+        with open(os.path.join(thispath, '_gittag.py')) as f:
+            for line in f:
+                if line.startswith('__gittag__'):
+                    fulltag = (line.split()[2]).split('-')
+                    break
+        return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
+    else:
+        return 'UNKNOWN', 'UNKNOWN'
 
 
-def largestfac(n):
-    return primes(n)[-1]
+# --------------------------- timing functions -------------------------------------------------
+def timefmt(thenumber):
+    return "{:10.2f}".format(thenumber)
+
+
+def proctiminginfo(thetimings, outputfile='', extraheader=None):
+    theinfolist = []
+    start = thetimings[0]
+    starttime = float(start[1])
+    lasteventtime = starttime
+    if extraheader is not None:
+        print(extraheader)
+        theinfolist.append(extraheader)
+    headerstring = 'Clock time\tProgram time\tDuration\tDescription'
+    print(headerstring)
+    theinfolist.append(headerstring)
+    for theevent in thetimings:
+        theduration = float(theevent[1] - lasteventtime)
+        outstring = time.strftime("%Y%m%dT%H%M%S", time.localtime(theevent[1])) + \
+                    timefmt(float(theevent[1]) - starttime) + \
+                    '\t' + timefmt(theduration) + '\t' + theevent[0]
+        if theevent[2] is not None:
+            outstring += " ({0:.2f} {1}/second)".format(float(theevent[2]) / theduration, theevent[3])
+        print(outstring)
+        theinfolist.append(outstring)
+        lasteventtime = float(theevent[1])
+    if outputfile != '':
+        tide_io.writevec(theinfolist, outputfile)
+
+
