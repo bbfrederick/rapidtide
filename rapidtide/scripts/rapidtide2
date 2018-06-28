@@ -997,13 +997,22 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
 def maketmask(filename, timeaxis, maskvector):
     inputdata = tide_io.readvecs(filename)
     theshape = np.shape(inputdata)
-    for idx in range(0, theshape[1]):
-        starttime = inputdata[0, idx]
-        endtime = starttime + inputdata[1, idx]
-        startindex = np.max((bisect.bisect_left(timeaxis, starttime), 0))
-        endindex = np.min((bisect.bisect_right(timeaxis, endtime), len(maskvector) - 1))
-        maskvector[startindex:endindex] = 1.0
-        print(starttime, startindex, endtime, endindex)
+    if theshape[0] == 1:
+        # this is simply a vector, one per TR.  If the value is nonzero, include the point, otherwise don't
+        if theshape[1] == len(timeaxis):
+            maskvector = np.where(inputdata[0, :] > 0.0, 1.0, 0.0)
+        else:
+            print('tmask length does not match fmri data')
+            sys.exit(1)
+    else:    
+        maskvector *= 0.0
+        for idx in range(0, theshape[1]):
+            starttime = inputdata[0, idx]
+            endtime = starttime + inputdata[1, idx]
+            startindex = np.max((bisect.bisect_left(timeaxis, starttime), 0))
+            endindex = np.min((bisect.bisect_right(timeaxis, endtime), len(maskvector) - 1))
+            maskvector[startindex:endindex] = 1.0
+            print(starttime, startindex, endtime, endindex)
     if False:
         fig = figure()
         ax = fig.add_subplot(111)
@@ -1341,8 +1350,10 @@ def usage():
     print("    --acfix                    - Perform a secondary correlation to disambiguate peak location")
     print("                                 (enables --accheck).  Experimental.")
     print("    --tmask=MASKFILE           - Only correlate during epochs specified in ")
-    print("                                 MASKFILE (NB: each line of MASKFILE contains the ")
-    print("                                 time and duration of an epoch to include")
+    print("                                 MASKFILE (NB: if file has one colum, the length needs to match the number of TRs used.")
+    print("                                 TRs with nonzero values will be used in analysis.  If there are 2 or more columns,")
+    print("                                 each line of MASKFILE contains the time (first column) and duration (second column)")
+    print("                                 of an epoch to include.)")
     print("    -p                         - Prewhiten and refit data")
     print("    -P                         - Save prewhitened data (turns prewhitening on)")
     print("    -A, --AR                   - Set AR model order to ORDER (default is 1)")
