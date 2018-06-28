@@ -172,7 +172,7 @@ def get_parser():
                          default=None)
 
     filttype = preproc.add_mutually_exclusive_group()
-    filttype.add_argument('-F',
+    filttype.add_argument('-F', '--arb',
                           dest='arbvec',
                           action='store',
                           nargs='+',
@@ -190,26 +190,26 @@ def get_parser():
                           choices=['arb', 'vlf', 'lfo', 'resp', 'cardiac'],
                           help=('Filter data and regressors to specific band'),
                           default='arb')
-    filttype.add_argument('-V',
+    filttype.add_argument('-V', '--vlf',
                           dest='filtertype',
                           action='store_const',
                           const='vlf',
                           help=('Filter data and regressors to VLF band'),
                           default='arb')
-    filttype.add_argument('-L',
+    filttype.add_argument('-L', '--lfo',
                           dest='filtertype',
                           action='store_const',
                           const='lfo',
                           help=('Filter data and regressors to LFO band'),
                           default='arb')
-    filttype.add_argument('-R',
+    filttype.add_argument('-R', '--resp',
                           dest='filtertype',
                           action='store_const',
                           const='resp',
                           help=('Filter data and regressors to respiratory '
                                 'band'),
                           default='arb')
-    filttype.add_argument('-C',
+    filttype.add_argument('-C', '--cardiac',
                           dest='filtertype',
                           action='store_const',
                           const='cardiac',
@@ -249,7 +249,7 @@ def get_parser():
                        help='Disable precorrelation windowing',
                        default='hamming')
 
-    preproc.add_argument('-f',
+    preproc.add_argument('-f','--spatialfilt',
                          dest='gausssigma',
                          action='store',
                          type=float,
@@ -400,7 +400,7 @@ def get_parser():
                                 'LAGMAX'),
                           default=(-30.0, 30.0))
 
-    corr_fit.add_argument('-s',
+    corr_fit.add_argument('--sigmalimit',
                           dest='widthlimit',
                           action='store',
                           type=float,
@@ -642,7 +642,7 @@ def get_parser():
                       action='store_true',
                       help='Data file is a converted CIFTI',
                       default=False)
-    misc.add_argument('-S',
+    misc.add_argument('--simulate',
                       dest='fakerun',
                       action='store_true',
                       help='Simulate a run - just report command line options',
@@ -720,18 +720,18 @@ def get_parser():
                                     'epoch to include'),
                               default=None)
     exp_group = experimental.add_mutually_exclusive_group()
-    exp_group.add_argument('-p',
+    exp_group.add_argument('--prewhiten',
                            dest='doprewhiten',
                            action='store_true',
                            help='Prewhiten and refit data',
                            default=False)
-    exp_group.add_argument('-P',
+    exp_group.add_argument('--saveprewhiten',
                            dest='saveprewhiten',
                            action='store_true',
                            help=('Save prewhitened data (turns prewhitening '
                                  'on)'),
                            default=False)
-    experimental.add_argument('-A', '--AR',
+    experimental.add_argument('--AR',
                               dest='armodelorder',
                               action='store',
                               type=int,
