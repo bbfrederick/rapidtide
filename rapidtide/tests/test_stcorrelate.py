@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
-from rapidtide.tide_funcs import timeshift, dolpfiltfilt, noncausalfilter, writenpvecs, shorttermcorr_1D, shorttermcorr_2D
+from rapidtide.tide_funcs import timeshift, shorttermcorr_1D, shorttermcorr_2D
+from rapidtide.filter_funcs import dolpfiltfilt, noncausalfilter
+from rapidtide.io_funcs writenpvecs
 import numpy as np
 import pylab as plt
 

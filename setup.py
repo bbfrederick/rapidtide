@@ -28,7 +28,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 addtidepool = True
 
-modules_list= ['rapidtide/tide_funcs']
+modules_list= ['rapidtide/tide_funcs', 'rapidtide/io_funcs', 'rapidtide/filter_funcs']
 if addtidepool:
     modules_list.append('rapidtide/tidepoolTemplate_qt4')
     modules_list.append('rapidtide/tidepoolTemplate_qt5')
@@ -47,6 +47,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/pixelcomp',
                'rapidtide/scripts/spatialdecomp',
                'rapidtide/scripts/temporaldecomp',
+               'rapidtide/scripts/spectrogram',
                'rapidtide/scripts/showtc',
                'rapidtide/scripts/showxy',
                'rapidtide/scripts/spatialfit',

@@ -31,8 +31,11 @@ import matplotlib.cm as cm
 
 import bisect
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
+import rapidtide.filter_funcs as tide_filt
 import numpy as np
-from scipy import arange, fftpack
+from scipy import arange, fftpack, linspace
+from scipy.signal import welch
 
 from pylab import figure, plot, legend, show, xlabel, ylabel, savefig, title, subplot, tight_layout, suptitle, xlim, ylim, box, setp
 
@@ -221,9 +224,9 @@ for i in range(0, numfiles):
     # check file type
     filebase, extension = os.path.splitext(textfilename[i][0])
     if extension == '.json':
-        thissamplerate, thisstartoffset, colnames, invecs = tide.readbidstsv(textfilename[i][0])
+        thissamplerate, thisstartoffset, colnames, invecs = tide_io.readbidstsv(textfilename[i][0])
     else:
-        invecs = tide.readvecs(textfilename[i][0])
+        invecs = tide_io.readvecs(textfilename[i][0])
         thissamplerate = samplerate
         thisstartoffset = 0.0
         colnames = None
@@ -248,8 +251,18 @@ for i in range(0, numfiles):
                 invec = tide.detrend(invec, order=1, demean=True)
             elif demean:
                 invec = invec = mean(invec)
+
+            if len(invec) >= 1024:
+                nperseg=1024
+            else:
+                nperseg=None
+            '''
+            thex, they = welch(invec, thissamplerate, nperseg=nperseg)
+            xvecs.append(thex)
+            yvecs.append(they)
+            '''
             if useHamming:
-                pspec = fftpack.fft(tide.hamming(len(invec)) * invec)[0:len(invec) // 2]
+                pspec = fftpack.fft(tide_filt.hamming(len(invec)) * invec)[0:len(invec) // 2]
             else:
                 pspec = fftpack.fft(invec)[0:len(invec) // 2]
             if domag:
@@ -257,7 +270,7 @@ for i in range(0, numfiles):
             else:
                 yvecs.append(phase(pspec) * 1.0)
             maxfreq = thissamplerate / 2.0
-            xvecs.append(arange(0.0, maxfreq, maxfreq / (len(yvecs[i]))))
+            xvecs.append(linspace(0.0, maxfreq, len(yvecs[i]), endpoint=False))
         else:
             yvecs.append(invecs[j] * 1.0)
             xvecs.append(thisstartoffset + arange(0.0, len(yvecs[numvecs]), 1.0) / thissamplerate)

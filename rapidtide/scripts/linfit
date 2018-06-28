@@ -25,6 +25,7 @@ import getopt
 import string
 import platform
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 
 from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
 from pylab import *
@@ -132,30 +133,30 @@ timepoints = datafiledims[4]
 
 # check dimensions
 print("checking dimensions")
-if not tide.checkspacematch(datafiledims, datamaskdims):
+if not tide_io.checkspacematch(datafiledims, datamaskdims):
     print('input mask spatial dimensions do not match image')
     exit()
 if datamaskdims[4] == 1:
    print("using 3d data mask")
    datamask3d = True
 else:
-    if not tide.checktimematch(datafiledims, datamaskdims, 0, 0):
+    if not tide_io.checktimematch(datafiledims, datamaskdims, 0, 0):
         print('input mask time dimension does not match image')
         exit()
-if not tide.checkspacematch(datafiledims, templatefiledims):
+if not tide_io.checkspacematch(datafiledims, templatefiledims):
     print(thedims, 'template file spatial dimensions do not match image')
     exit()
 if not templatefiledims[4] == 1:
     print('template file time dimension is not equal to 1')
     exit()
-if not tide.checkspacematch(datafiledims, templatemaskdims):
+if not tide_io.checkspacematch(datafiledims, templatemaskdims):
     print('template mask spatial dimensions do not match image')
     exit()
 if not templatemaskdims[4] == 1:
     print('template mask time dimension is not equal to 1')
     exit()
 if regionatlasname is not None:
-    if not tide.checkspacematch(datafiledims, regionatlasdims):
+    if not tide_io.checkspacematch(datafiledims, regionatlasdims):
         print('template mask spatial dimensions do not match image')
         exit()
     if not regionatlasdims[4] == 1:
@@ -253,10 +254,10 @@ residuals = rs_datafile - fitdata
 # write out the data files
 print("writing time series")
 if order == 2:
-    tide.writenpvecs(sqrcoffs, outputrootname + '_sqrcoffs.txt')
-tide.writenpvecs(lincoffs, outputrootname + '_lincoffs.txt')
-tide.writenpvecs(offsets, outputrootname + '_offsets.txt')
-tide.writenpvecs(rvals, outputrootname + '_rvals.txt')
+    tide_io.writenpvecs(sqrcoffs, outputrootname + '_sqrcoffs.txt')
+tide_io.writenpvecs(lincoffs, outputrootname + '_lincoffs.txt')
+tide_io.writenpvecs(offsets, outputrootname + '_offsets.txt')
+tide_io.writenpvecs(rvals, outputrootname + '_rvals.txt')
 if multiregionfit:
     for region in range(0, numregions):
         print("region", region + 1, "slope mean, std:", mean(lincoffs[:, region]), std(lincoffs[:, region]))
@@ -266,10 +267,10 @@ else:
     print("offset mean, std:", mean(offsets), std(offsets))
 
 print("writing nifti series")
-tide.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
                  outputrootname + '_fit')
-tide.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+tide_io.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
                  outputrootname + '_residuals')
 #newtemplate = where(newmask > 0, newtemplate / newmask, 0.0)
-#tide.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr, templatefilesizes,
+#tide_io.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr, templatefilesizes,
 #                 outputrootname + '_newtemplate')
