@@ -25,6 +25,8 @@ import getopt
 import string
 import platform
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
+import rapidtide.filter_funcs as tide_filt
 
 from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
 from pylab import *
@@ -116,35 +118,35 @@ for o, a in opts:
 print('Will perform', decomptype, 'analysis')
     
 # save the command line
-tide.writevec([' '.join(sys.argv)], outputrootname + '_commandline.txt')
+tide_io.writevec([' '.join(sys.argv)], outputrootname + '_commandline.txt')
 
 # read in data
 print("reading in data arrays")
-datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide.readfromnifti(datafilename)
+datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide_io.readfromnifti(datafilename)
 if usedmask:
-    datamask_img, datamask_data, datamask_hdr, datamaskdims, datamasksizes = tide.readfromnifti(datamaskname)
+    datamask_img, datamask_data, datamask_hdr, datamaskdims, datamasksizes = tide_io.readfromnifti(datamaskname)
 
-xsize, ysize, numslices, timepoints = tide.parseniftidims(datafiledims)
-xdim, ydim, slicethickness, tr = tide.parseniftisizes(datafilesizes)
+xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
+xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
     
 # check dimensions
 if usedmask:
     print("checking mask dimensions")
-    if not tide.checkspacematch(datafiledims, datamaskdims):
+    if not tide_io.checkspacematch(datafiledims, datamaskdims):
         print('input mask spatial dimensions do not match image')
         exit()
-    if not (tide.checktimematch(datafiledims, datamaskdims, 0, 0) or datamaskdims[4] == 1):
+    if not (tide_io.checktimematch(datafiledims, datamaskdims, 0, 0) or datamaskdims[4] == 1):
         print('input mask time dimension does not match image')
         exit()
 
 # save the command line
-tide.writevec([' '.join(sys.argv)], outputrootname + '_commandline.txt')
+tide_io.writevec([' '.join(sys.argv)], outputrootname + '_commandline.txt')
 
 # smooth the data
 if sigma > 0.0:
     print('smoothing data')
     for i in range(timepoints):
-        datafile_data[:, :, :, i] = tide.ssmooth(xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i])
+        datafile_data[:, :, :, i] = tide_filt.ssmooth(xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i])
 
 # allocating arrays
 print("reshaping arrays")
@@ -225,15 +227,15 @@ else:
 
     # save the eigenvalues
     print('variance explained by component:', 100.0 * thefit.explained_variance_ratio_)
-    tide.writenpvecs(100.0 * thefit.explained_variance_ratio_, outputrootname + '_explained_variance_pct.txt')
+    tide_io.writenpvecs(100.0 * thefit.explained_variance_ratio_, outputrootname + '_explained_variance_pct.txt')
 
     # save the components
     print("writing component timecourses")
-    tide.writenpvecs(thecomponents, outputrootname + '_components.txt')
+    tide_io.writenpvecs(thecomponents, outputrootname + '_components.txt')
 
     # save the singular values
     print("writing singular values")
-    tide.writenpvecs(np.transpose(thesingvals), outputrootname + '_singvals.txt')
+    tide_io.writenpvecs(np.transpose(thesingvals), outputrootname + '_singvals.txt')
 
     # save the coefficients
     # save the coefficients
@@ -244,7 +246,7 @@ else:
     theheader['dim'][4] = coefficients.shape[1]
     tempout = np.zeros((numspatiallocs, coefficients.shape[1]), dtype='float')
     tempout[proclocs, :] = coefficients[:, :]
-    tide.savetonifti(tempout.reshape((xsize, ysize, numslices, coefficients.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_coefficients')
+    tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, coefficients.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_coefficients')
 
     # save the dimensionality reduced data
     invtransformeddata = theinvtrans
@@ -253,4 +255,4 @@ else:
     theheader['dim'][4] = invtransformeddata.shape[1]
     tempout = np.zeros((numspatiallocs, invtransformeddata.shape[1]), dtype='float')
     tempout[proclocs, :] = invtransformeddata[:, :]
-    tide.savetonifti(tempout.reshape((xsize, ysize, numslices, invtransformeddata.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_fit')
+    tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, invtransformeddata.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_fit')

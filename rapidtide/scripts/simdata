@@ -24,6 +24,7 @@ import sys
 import getopt
 import string
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 
 from numpy import r_, zeros, ones, shape, random
 from scipy.signal import cspline1d, cspline1d_eval, butter, lfilter, correlate
@@ -96,12 +97,12 @@ print("inputstarttime", inputstarttime)
 print("outputname", outputname)
 print("noiselevel", noiselevel)
 
-fmritr, numtrs = tide.fmritimeinfo(fmrifilename)
-nim_fmri, fmridata, fmriheader, fmridims, fmrisizes = tide.readfromnifti(fmrifilename)
+fmritr, numtrs = tide_io.fmritimeinfo(fmrifilename)
+nim_fmri, fmridata, fmriheader, fmridims, fmrisizes = tide_io.readfromnifti(fmrifilename)
 print("fmri data: ", numtrs, " timepoints, tr = ", fmritr)
 
 # read in the timecourse to resample
-inputvec = tide.stdnormalize(tide.readvec(filename))
+inputvec = tide.stdnormalize(tide_io.readvec(filename))
 simregressorpts = len(inputvec)
 
 # prepare the input data for interpolation
@@ -119,16 +120,16 @@ print('fmri time runs from ', initial_fmri_x[0], ' to ', initial_fmri_x[-1])
 
 # read in the immean, boldpc and lag files
 print("reading in source files")
-nim_immean, immeandata, immeanheader, immeandims, immeansizes = tide.readfromnifti(immeanfilename)
-if not tide.checkspacematch(immeandims, fmridims):
+nim_immean, immeandata, immeanheader, immeandims, immeansizes = tide_io.readfromnifti(immeanfilename)
+if not tide_io.checkspacematch(immeandims, fmridims):
     print("immean file does not match")
     exit()
-nim_boldpc, boldpcdata, boldpcheader, boldpcdims, boldpcsizes = tide.readfromnifti(boldpcfilename)
-if not tide.checkspacematch(boldpcdims, fmridims):
+nim_boldpc, boldpcdata, boldpcheader, boldpcdims, boldpcsizes = tide_io.readfromnifti(boldpcfilename)
+if not tide_io.checkspacematch(boldpcdims, fmridims):
     print("boldpc file does not match")
     exit()
-nim_lag, lagdata, lagheader, lagdims, lagsizes = tide.readfromnifti(lagfilename)
-if not tide.checkspacematch(lagdims, fmridims):
+nim_lag, lagdata, lagheader, lagdims, lagsizes = tide_io.readfromnifti(lagfilename)
+if not tide_io.checkspacematch(lagdims, fmridims):
     print("lag file does not match")
     exit()
 
@@ -187,4 +188,4 @@ for k in range(0, numslices):
             thenoise = noiselevel * standard_normal(len(fmri_y))
             simdata[i, j, k, :] = immeandata[i, j, k] * (1.0 + (boldpcdata[i, j, k] / 100.0) * fmri_y) + thenoise
 
-tide.savetonifti(simdata, fmriheader, fmrisizes, outputname)
+tide_io.savetonifti(simdata, fmriheader, fmrisizes, outputname)

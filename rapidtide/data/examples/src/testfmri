@@ -10,38 +10,39 @@ rapidtide2 \
         -L \
 	-r -20,20 \
 	-f 2 \
-        --multiproc 
-rapidtide2x \
-	fmri.nii.gz \
-	../dst/dgsr_lfox \
-        --limitoutput \
-        --lagminthresh=0.25 \
-        --refinepasses=3 \
-        --despecklepasses=4 \
-        -s 100.0 \
-        -L \
-	-r -20,20 \
-	-f 2 \
-        --multiproc 
-rapidtide2 \
-	fmri.nii.gz \
-	../dst/dgsr_lfo_nods \
-        --limitoutput \
-        --lagminthresh=0.25 \
-        --refinepasses=3 \
-        -s 100.0 \
-        -L \
-	-r -20,20 \
-	-f 2 \
-        --multiproc 
-rapidtide2x \
-	fmri.nii.gz \
-	../dst/dgsr_lfox_nods \
-        --limitoutput \
-        --lagminthresh=0.25 \
-        --refinepasses=3 \
-        -s 100.0 \
-        -L \
-	-r -20,20 \
-	-f 2 \
-        --multiproc 
+        --multiproc \
+        --noglm
+#rapidtide2x \
+	#fmri.nii.gz \
+	#../dst/dgsr_lfox \
+        #--limitoutput \
+        #--lagminthresh=0.25 \
+        #--refinepasses=3 \
+        #--despecklepasses=4 \
+        #-s 100.0 \
+        #-L \
+	#-r -20,20 \
+	#-f 2 \
+        #--multiproc 
+#rapidtide2 \
+	#fmri.nii.gz \
+	#../dst/dgsr_lfo_nods \
+        #--limitoutput \
+        #--lagminthresh=0.25 \
+        #--refinepasses=3 \
+        #-s 100.0 \
+        #-L \
+	#-r -20,20 \
+	#-f 2 \
+        #--multiproc 
+#rapidtide2x \
+	#fmri.nii.gz \
+	#../dst/dgsr_lfox_nods \
+        #--limitoutput \
+        #--lagminthresh=0.25 \
+        #--refinepasses=3 \
+        #-s 100.0 \
+        #-L \
+	#-r -20,20 \
+	#-f 2 \
+        #--multiproc 

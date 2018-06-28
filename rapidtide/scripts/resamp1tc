@@ -28,6 +28,7 @@ import getopt
 
 import matplotlib
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 from scipy import arange
 from numpy import max, floor
 import pylab as plt
@@ -52,9 +53,7 @@ def usage():
 
 
 def main():
-    usebutterworthfilter = False
     display = True
-    splittcs = False
 
     # get the command line parameters
     nargs = len(sys.argv)
@@ -88,7 +87,7 @@ def main():
 
     intimestep = 1.0 / insamplerate
     outtimestep = 1.0 / outsamplerate
-    inputdata = tide.readvec(filename)
+    inputdata = tide_io.readvec(filename)
     totaltime = intimestep * len(inputdata)
     numoutpoints = floor(totaltime / outtimestep) + 1
 
@@ -105,27 +104,15 @@ def main():
     if display:
         plt.plot(in_t, inputdata + 0.4, 'k')
 
-    if splittcs:
-        outputdata_lf = tide.lfo_pass(outsamplerate, outputdata, usebutterworthfilter)
-        outputdata_resp = tide.resp_pass(outsamplerate, outputdata, usebutterworthfilter)
-        outputdata_card = tide.card_pass(outsamplerate, outputdata, usebutterworthfilter)
-        if display:
-            plt.plot(out_t, outputdata_lf - 0.4, 'b')
-            plt.plot(out_t, outputdata_resp - 0.4, 'g')
-            plt.plot(out_t, outputdata_card - 0.4, 'r')
-        tide.writevec(outputdata_lf, outputfile + '_lf')
-        tide.writevec(outputdata_resp, outputfile + '_resp')
-        tide.writevec(outputdata_card, outputfile + '_card')
-    else:
-        tide.writevec(outputdata, outputfile)
-        tide.writevec(outputdata, outputfile + '_dual')
-        if display:
-            plt.plot(out_t, outputdata - 0.4, 'r')
-            if outsamplerate < insamplerate:
-                plt.plot(out_t, outputdata2 - 0.8, 'g')
-                plt.legend(('original signal', 'resampled', 'dualresampled'))
-            else:
-                plt.legend(('original signal', 'resampled'))
+    tide_io.writevec(outputdata, outputfile)
+    tide_io.writevec(outputdata, outputfile + '_dual')
+    if display:
+        plt.plot(out_t, outputdata - 0.4, 'r')
+        if outsamplerate < insamplerate:
+            plt.plot(out_t, outputdata2 - 0.8, 'g')
+            plt.legend(('original signal', 'resampled', 'dualresampled'))
+        else:
+            plt.legend(('original signal', 'resampled'))
 
     if display:
         plt.show()

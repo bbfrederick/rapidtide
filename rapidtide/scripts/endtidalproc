@@ -30,6 +30,7 @@ import matplotlib.cm as cm
 
 import bisect
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 import numpy as np
 from scipy import arange, fftpack
 
@@ -133,7 +134,7 @@ infilename = args[1]
 outfilename = args[2]
 
 # read in the data
-yvec = tide.readvec(infilename)
+yvec = tide_io.readvec(infilename)
 xvec = arange(0.0, len(yvec), 1.0) / samplerate
 
 thestartpoint = np.max([0, bisect.bisect_right(xvec, thestarttime)])
@@ -165,4 +166,4 @@ for thepeak in peaklist:
 if curpos < len(peakinterp):
     peakinterp[curpos:] = curval
         
-tide.writevec(peakinterp, outfilename)
+tide_io.writevec(peakinterp, outfilename)

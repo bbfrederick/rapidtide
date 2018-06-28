@@ -29,6 +29,8 @@ if platform.system() == 'Darwin':
 else:
     matplotlib.use('TkAgg')
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
+import rapidtide.filter_funcs as tide_filt
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy import sin, arange, pi, randn
@@ -59,7 +61,7 @@ datafilename = sys.argv[1]
 sampletime = float(sys.argv[2])
 Fs = 1.0 / sampletime
 
-tcdata = tide.readvecs(datafilename)
+tcdata = tide_io.readvecs(datafilename)
 thedims = tcdata.shape
 tclen = thedims[1]
 numcomponents = thedims[0]
@@ -67,9 +69,9 @@ reformdata = reshape(tcdata, (numcomponents, tclen))
 print("data array shape is ", reformdata.shape)
 
 for component in range(0, numcomponents):
-    filtereddata = tide.dolpfiltfilt(Fs, Fc, reformdata[component, :], 3)
+    filtereddata = tide_filt.dolpfiltfilt(Fs, Fc, reformdata[component, :], 3)
     reformdata[component, :] = tide.stdnormalize(
-        tide.hamming(len(filtereddata)) * tide.detrend(tide.stdnormalize(filtereddata)))
+        tide_filt.hamming(len(filtereddata)) * tide.detrend(tide.stdnormalize(filtereddata)))
 
 xcorr_x = r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
 laglimit = 15.0
@@ -144,4 +146,4 @@ outputcorrmask_hdr = outputcorrmask_img.get_header()
 outputcorrmask_hdr['pixdim'][4] = float(sys.argv[2])
 outputcorrmask_img.to_filename(datafilename + '_corrmask.nii.gz')
 
-tide.writenpvecs(reformdata, datafilename + '_reformdata.txt')
+tide_io.writenpvecs(reformdata, datafilename + '_reformdata.txt')
