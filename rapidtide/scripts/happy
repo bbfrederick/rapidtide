@@ -31,6 +31,7 @@ import scipy as sp
 
 import getopt
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 from scipy.signal import hilbert, welch, savgol_filter
 import nibabel as nib
 
@@ -161,8 +162,8 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
     spectrum = sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)[0:len(cardiacwaveform) // 2]
     smoothspectrum = savgolsmooth(spectrum.real, smoothlen=smoothlen) + savgolsmooth(spectrum.imag, smoothlen=smoothlen) * 1.0j
     if debug:
-        tide.writevec(spectrum.real, 'spectrum.txt')
-        tide.writevec(smoothspectrum.real, 'smoothspectrum.txt')
+        tide_io.writevec(spectrum.real, 'spectrum.txt')
+        tide_io.writevec(smoothspectrum.real, 'smoothspectrum.txt')
     ampspec = np.abs(smoothspectrum)
     phasespec = np.angle(smoothspectrum)
     maxfreq = slicesamplerate / 2.0
@@ -341,9 +342,9 @@ infodict['notchwidthpct'] = notchwidth * 100.0
 
 # read in the image data
 tide.logmem('before reading in fmri data', file=memfile)
-nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(fmrifilename)
-xsize, ysize, numslices, timepoints = tide.parseniftidims(thedims)
-xdim, ydim, slicethickness, tr = tide.parseniftisizes(thesizes)
+nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
+xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
+xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
 spaceunit, timeunit = nim_hdr.get_xyzt_units()
 if timeunit == 'msec':
     tr /= 1000.0
@@ -363,13 +364,13 @@ mask = np.uint16(tide.makemask(np.mean(fmri_data[:, :], axis=1),
 mask3d = mask.reshape((xsize, ysize, numslices))
 theheader = nim_hdr
 theheader['dim'][4] = 1
-tide.savetonifti(mask3d, theheader, thesizes, outputroot + '_mask')
+tide_io.savetonifti(mask3d, theheader, thesizes, outputroot + '_mask')
 
 
 # get slice times
 filebase, extension = os.path.splitext(slicetimename)
 if extension == '.json':
-    jsoninfodict = tide.readbidssidecar(slicetimename)
+    jsoninfodict = tide_io.readbidssidecar(slicetimename)
     try:
         slicetimelist = jsoninfodict['SliceTiming']
         slicetimes = np.zeros((len(slicetimelist)), dtype=np.float64)
@@ -379,7 +380,7 @@ if extension == '.json':
         print(slicetimename, 'is not a valid BIDS sidecar file')
         sys.exit()
 else:
-    slicetimes = tide.readvec(slicetimename)
+    slicetimes = tide_io.readvec(slicetimename)
 
 # now get an estimate of the cardiac signal
 print('generating cardiac signal from fmri data')
@@ -389,7 +390,7 @@ cardiacfromfmri, slicesamplerate, numsteps = cardiacfromimage(fmri_data, mask, x
     detrend=detrend,
     debug=debug)
 slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
-tide.writevec(cardiacfromfmri, outputroot + '_cardiacfromfmri.txt')
+tide_io.writevec(cardiacfromfmri, outputroot + '_cardiacfromfmri.txt')
 cardiacwaveform = cardiacfromfmri
 infodict['slicesamplerate'] = slicesamplerate
 infodict['numsteps'] = numsteps
@@ -413,9 +414,9 @@ if cardiacfile is not None:
     # check file type
     filebase, extension = os.path.splitext(cardiacfile)
     if extension == '.json':
-        inputfreq, inputstart, inputwave = tide.readcolfrombidstsv(cardiacfile, columnname=colname, columnnum=colnum)
+        inputfreq, inputstart, inputwave = tide_io.readcolfrombidstsv(cardiacfile, columnname=colname, columnnum=colnum)
     else:
-        inputwave = np.transpose(tide.readvecs(cardiacfile))
+        inputwave = np.transpose(tide_io.readvecs(cardiacfile))
         print(inputwave.shape)
         if len(inputwave.shape) != 1:
             inputwave = inputwave[:, colnum]
@@ -436,7 +437,7 @@ if cardiacfile is not None:
         infodict['kalminit_file_amp' + str(i)] = amps_file[i]
         infodict['kalminit_file_ph' + str(i)] = phases_file[i]
 
-    tide.writevec(cardiacfromfile, outputroot + '_cardiacfromfile.txt')
+    tide_io.writevec(cardiacfromfile, outputroot + '_cardiacfromfile.txt')
     thexcorr = tide.fastcorrelate(cardiacfromfile, cardiacfromfmri, usefft=True)
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / slicesamplerate
@@ -470,7 +471,7 @@ arb_lowerstop = 0.9 * arb_lower
 arb_upperstop = 1.1 * arb_upper
 theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
 filthiresfund = tide.corrnormalize(theprefilter.apply(slicesamplerate, cardiacwaveform), False, False)
-tide.writevec(filthiresfund, outputroot + '_cardiacfundamental.txt')
+tide_io.writevec(filthiresfund, outputroot + '_cardiacfundamental.txt')
 
 # account for slice time offests
 offsets = nim_data[:, :, :, 0] * 0.0
@@ -485,29 +486,29 @@ tide.logmem('before analytic phase analysis', file=memfile)
 analytic_signal = hilbert(filthiresfund)
 amplitude_envelope = np.abs(analytic_signal)
 instantaneous_phase = np.angle(analytic_signal / amplitude_envelope)
-tide.writevec((analytic_signal / amplitude_envelope).real, outputroot + '_oscillatory.txt')
-tide.writevec(amplitude_envelope, outputroot + '_ampenv.txt')
-tide.writevec(instantaneous_phase, outputroot + '_instphase.txt')
+tide_io.writevec((analytic_signal / amplitude_envelope).real, outputroot + '_oscillatory.txt')
+tide_io.writevec(amplitude_envelope, outputroot + '_ampenv.txt')
+tide_io.writevec(instantaneous_phase, outputroot + '_instphase.txt')
 instantaneous_phase = np.unwrap(instantaneous_phase)
-tide.writevec(instantaneous_phase, outputroot + '_instphase_unwrapped.txt')
+tide_io.writevec(instantaneous_phase, outputroot + '_instphase_unwrapped.txt')
 initialphase = instantaneous_phase[0]
 infodict['kalminit_phi0'] = initialphase
 
 # Make synthetic cardiac files
 gencardiac = tide.corrnormalize(amplitude_envelope * cardiacsig(instantaneous_phase, amps=amps_bold, phases=phases_bold), False, False)
-tide.writevec(gencardiac, outputroot + '_synthcardiacfromfmri.txt')
+tide_io.writevec(gencardiac, outputroot + '_synthcardiacfromfmri.txt')
 
 if infodict['cardiacfromfile']:
     gencardiac = tide.corrnormalize(amplitude_envelope * cardiacsig(instantaneous_phase, amps=amps_file, phases=phases_file), False, False)
-    tide.writevec(gencardiac, outputroot + '_synthcardiacfromfile.txt')
+    tide_io.writevec(gencardiac, outputroot + '_synthcardiacfromfile.txt')
 
 # save the information file
-tide.writedict(infodict, outputroot + '_info.txt')
+tide_io.writedict(infodict, outputroot + '_info.txt')
 
 # interpolate the instantaneous phase
 upsampledslicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
 interpphase = phasemod(tide.doresample(slicetimeaxis, instantaneous_phase, upsampledslicetimeaxis, method='cubic', padlen=0))
-tide.writevec(interpphase, outputroot + '_interpinstphase.txt')
+tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 
 # calculate RRI
 therri = rrifromphase(upsampledslicetimeaxis, interpphase)
@@ -518,8 +519,8 @@ for theslice in range(numslices):
     thetimes = sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False) + slicetimes[theslice]
     phasevals[theslice, :] = phasemod(tide.doresample(slicetimeaxis, instantaneous_phase, thetimes, method='cubic', padlen=0))
     if debug:
-        tide.writevec(thetimes, outputroot + '_times_' + str(theslice).zfill(2) + '.txt')
-        tide.writevec(phasevals[theslice, :], outputroot + '_phasevals_' + str(theslice).zfill(2) + '.txt')
+        tide_io.writevec(thetimes, outputroot + '_times_' + str(theslice).zfill(2) + '.txt')
+        tide_io.writevec(phasevals[theslice, :], outputroot + '_phasevals_' + str(theslice).zfill(2) + '.txt')
 
 # construct a destination array
 tide.logmem('before making destination arrays', file=memfile)
@@ -570,8 +571,8 @@ theheader = nim_hdr
 theheader['dim'][4] = destpoints
 theheader['toffset'] = -np.pi
 theheader['pixdim'][4] = 2.0 * np.pi / destpoints
-tide.savetonifti(app, theheader, thesizes, outputroot + '_app')
-#tide.savetonifti(weights, theheader, thesizes, outputroot + '_weights')
+tide_io.savetonifti(app, theheader, thesizes, outputroot + '_app')
+#tide_io.savetonifti(weights, theheader, thesizes, outputroot + '_weights')
 
 # make and save a voxel intensity histogram
 app2d = app.reshape((numspatiallocs, destpoints))
@@ -589,7 +590,7 @@ print('hard, soft vessel threshholds set to', hardvesselthresh, softvesselthresh
 vesselmask = np.where(np.max(app, axis=3) > softvesselthresh, 1, 0)
 maskedapp2d = app2d + 0.0
 maskedapp2d[np.where(vesselmask.reshape((numspatiallocs)) == 0)[0], :] = 0.0
-tide.savetonifti(maskedapp2d.reshape((xsize, ysize, numslices, destpoints)), theheader, thesizes, outputroot + '_maskedapp')
+tide_io.savetonifti(maskedapp2d.reshape((xsize, ysize, numslices, destpoints)), theheader, thesizes, outputroot + '_maskedapp')
 maskedapp2d = None
 
 # save multiple versions of the hard vessel mask
@@ -601,11 +602,11 @@ arteries = np.where(risediff < 0, 1, 0)
 veins = np.where(risediff > 0, 1, 0)
 theheader = nim_hdr
 theheader['dim'][4] = 1
-tide.savetonifti(vesselmask, theheader, thesizes, outputroot + '_vesselmask')
-tide.savetonifti(minphase, theheader, thesizes, outputroot + '_minphase')
-tide.savetonifti(maxphase, theheader, thesizes, outputroot + '_maxphase')
-tide.savetonifti(arteries, theheader, thesizes, outputroot + '_arteries')
-tide.savetonifti(veins, theheader, thesizes, outputroot + '_veins')
+tide_io.savetonifti(vesselmask, theheader, thesizes, outputroot + '_vesselmask')
+tide_io.savetonifti(minphase, theheader, thesizes, outputroot + '_minphase')
+tide_io.savetonifti(maxphase, theheader, thesizes, outputroot + '_maxphase')
+tide_io.savetonifti(arteries, theheader, thesizes, outputroot + '_arteries')
+tide_io.savetonifti(veins, theheader, thesizes, outputroot + '_veins')
 
 # now generate aliased cardiac signals and regress them out of the data
 if doglm:
@@ -620,7 +621,7 @@ if doglm:
             phaseindex = int(np.round((phasevals[theslice, t] - outphases[0]) / phasestep, 0))
             cardiacnoise[validlocs, theslice, t] = app_byslice[validlocs, theslice, phaseindex] * amplitude_envelope[t]
     theheader = nim_hdr
-    tide.savetonifti(cardiacnoise.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_cardiacnoise')
+    tide_io.savetonifti(cardiacnoise.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_cardiacnoise')
     
     # now remove them
     tide.logmem('before cardiac removal', file=memfile)
@@ -636,6 +637,6 @@ if doglm:
             datatoremove = fitcoff * lagtc
             filtereddata[theloc, theslice, :] = fmri_data_byslice[theloc, theslice, :] - datatoremove
     theheader = nim_hdr
-    tide.savetonifti(filtereddata.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_filtereddata')
+    tide_io.savetonifti(filtereddata.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_filtereddata')
 
 tide.logmem('final', file=memfile)

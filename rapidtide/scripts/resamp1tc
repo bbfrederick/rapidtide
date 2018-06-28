@@ -28,6 +28,7 @@ import getopt
 
 import matplotlib
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 from scipy import arange
 from numpy import max, floor
 import pylab as plt
@@ -86,7 +87,7 @@ def main():
 
     intimestep = 1.0 / insamplerate
     outtimestep = 1.0 / outsamplerate
-    inputdata = tide.readvec(filename)
+    inputdata = tide_io.readvec(filename)
     totaltime = intimestep * len(inputdata)
     numoutpoints = floor(totaltime / outtimestep) + 1
 
@@ -103,8 +104,8 @@ def main():
     if display:
         plt.plot(in_t, inputdata + 0.4, 'k')
 
-    tide.writevec(outputdata, outputfile)
-    tide.writevec(outputdata, outputfile + '_dual')
+    tide_io.writevec(outputdata, outputfile)
+    tide_io.writevec(outputdata, outputfile + '_dual')
     if display:
         plt.plot(out_t, outputdata - 0.4, 'r')
         if outsamplerate < insamplerate:

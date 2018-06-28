@@ -45,6 +45,7 @@ else:
     print('using qt5 bindings')
     import rapidtide.tidepoolTemplate_qt5 as uiTemplate
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 import sys
 import getopt
 import argparse
@@ -532,7 +533,7 @@ class overlay:
         self.updateStats()
 
     def readData(self, data, isaMask=False):
-        self.nim, self.data, self.header, self.dims, self.sizes = tide.readfromnifti(self.filename)
+        self.nim, self.data, self.header, self.dims, self.sizes = tide_io.readfromnifti(self.filename)
         if isaMask:
             self.data[np.where(self.data < 0.5)] = 0.0
             self.data[np.where(self.data > 0.5)] = 1.0
@@ -540,9 +541,9 @@ class overlay:
             print('overlay data range:', np.min(self.data), np.max(self.data))
             print('header', self.header)
         self.xdim, self.ydim, self.zdim, self.tdim = \
-            tide.parseniftidims(self.dims)
+            tide_io.parseniftidims(self.dims)
         self.xsize, self.ysize, self.zsize, self.tr = \
-            tide.parseniftisizes(self.sizes)
+            tide_io.parseniftisizes(self.sizes)
         self.toffset = self.header['toffset']
         if self.verbose:
             print('overlay dims:', self.xdim, self.ydim, self.zdim, self.tdim)
@@ -1615,7 +1616,7 @@ def main():
         atlasshortname = 'ATT'
         atlasname = atlases[atlasshortname]['atlasname']
         referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data', 'reference')
-        atlaslabels = tide.readlabels(os.path.join(referencedir, atlasname + '_regions.txt'))
+        atlaslabels = tide_io.readlabels(os.path.join(referencedir, atlasname + '_regions.txt'))
         print(atlaslabels)
         if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
             atlasniftiname = os.path.join(referencedir, atlasname + '_2mm.nii.gz')
