@@ -26,6 +26,7 @@ import pandas as pd
 import getopt
 import rapidtide.tide_funcs as tide
 import rapidtide.io_funcs as tide_io
+import rapidtide.filter_funcs as tide_filt
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy import sin, arange, pi, randn
@@ -181,7 +182,7 @@ sampletime = None
 Fs = None
 outfilename = None
 
-theprefilter = tide.noncausalfilter()
+theprefilter = tide_filt.noncausalfilter()
 
 # set the default characteristics
 print('setting default filter to pass', window_lowestfreq, 'to', window_upperfreq)

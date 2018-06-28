@@ -32,6 +32,7 @@ import scipy as sp
 import getopt
 import rapidtide.tide_funcs as tide
 import rapidtide.io_funcs as tide_io
+import rapidtide.filter_funcs as tide_filt
 from scipy.signal import hilbert, welch, savgol_filter
 import nibabel as nib
 
@@ -140,7 +141,7 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
         stopfreq = 1.0 / tr
         maxharmonic = int(maxpass // stopfreq)
         print('highest harmonic is', maxharmonic, '(', maxharmonic * stopfreq, 'Hz)')
-        trnotchfilter = tide.noncausalfilter(debug=debug)
+        trnotchfilter = tide_filt.noncausalfilter(debug=debug)
         for harmonic in range(1, maxharmonic + 1):
             print('removing harmonic at', harmonic * stopfreq)
             setnotchfilter(trnotchfilter, harmonic * stopfreq, notchwidth=notchwidth)
@@ -159,7 +160,7 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
     else:
         thex, they = welch(cardiacwaveform, slicesamplerate)
     print('initpeakfreq:', np.round(thex[np.argmax(they)] * 60.0, 2), 'BPM')
-    spectrum = sp.fftpack.fft(tide.hamming(len(cardiacwaveform)) * cardiacwaveform)[0:len(cardiacwaveform) // 2]
+    spectrum = sp.fftpack.fft(tide_filt.hamming(len(cardiacwaveform)) * cardiacwaveform)[0:len(cardiacwaveform) // 2]
     smoothspectrum = savgolsmooth(spectrum.real, smoothlen=smoothlen) + savgolsmooth(spectrum.imag, smoothlen=smoothlen) * 1.0j
     if debug:
         tide_io.writevec(spectrum.real, 'spectrum.txt')
@@ -330,7 +331,7 @@ for o, a in opts:
 memfile = open(outputroot + '_memusage.csv', 'w')
 tide.logmem(None, file=memfile)
 
-theprefilter = tide.noncausalfilter()
+theprefilter = tide_filt.noncausalfilter()
 theprefilter.settype('arb')
 arb_lowerstop = arb_lower * 0.9
 arb_upperstop = arb_upper * 1.1
@@ -531,7 +532,7 @@ weight_byslice = weights.reshape((xsize * ysize, numslices, destpoints))
 
 # high pass filter to remove trends
 imagingtime = tr * timepoints
-phasefilter = tide.noncausalfilter()
+phasefilter = tide_filt.noncausalfilter()
 phasefilter.settype('arb')
 arb_lower = 4.0 / imagingtime
 arb_upper = 0.5 / tr

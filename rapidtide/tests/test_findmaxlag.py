@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 import numpy as np
 import pylab as plt
 
@@ -15,7 +16,7 @@ def testfindmaxlag(textfilename='../data/examples/src/lt_rt.txt', display=False,
     searchfrac=0.75
     limitfit=False
 
-    indata=tide.readvecs(textfilename)
+    indata=tide_io.readvecs(textfilename)
     xvecs=indata[0,:]
     yvecs=indata[1,:]
     testmaxval = 0.8
