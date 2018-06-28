@@ -32,6 +32,7 @@ import matplotlib.cm as cm
 import bisect
 import rapidtide.tide_funcs as tide
 import rapidtide.io_funcs as tide_io
+import rapidtide.filter_funcs as tide_filt
 import numpy as np
 from scipy import arange, fftpack, linspace
 from scipy.signal import welch
@@ -261,7 +262,7 @@ for i in range(0, numfiles):
             yvecs.append(they)
             '''
             if useHamming:
-                pspec = fftpack.fft(tide.hamming(len(invec)) * invec)[0:len(invec) // 2]
+                pspec = fftpack.fft(tide_filt.hamming(len(invec)) * invec)[0:len(invec) // 2]
             else:
                 pspec = fftpack.fft(invec)[0:len(invec) // 2]
             if domag:
