@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
-from rapidtide.tide_funcs import timeshift, dolpfiltfilt
+from rapidtide.tide_funcs import timeshift
+from rapidtide.filter_funcs import dolpfiltfilt
 import numpy as np
 import pylab as plt
 

@@ -35,6 +35,7 @@ import numpy as np
 import getopt
 import rapidtide.tide_funcs as tide
 import rapidtide.io_funcs as tide_io
+import rapidtide.filter_funcs as tide_filt
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy.stats import skew
@@ -160,7 +161,7 @@ infilename1 = sys.argv[1]
 infilename2 = sys.argv[2]
 Fs = float(sys.argv[3])
 
-theprefilter = tide.noncausalfilter()
+theprefilter = tide_filt.noncausalfilter()
 
 inputdata1 = tide_io.readvec(infilename1)
 inputdata2 = tide_io.readvec(infilename2)
