@@ -30,6 +30,7 @@ import sys
 import os
 import numpy as np
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 import time
 
 from vispy import app, scene, io
@@ -68,9 +69,9 @@ if nargs < 2:
 thefilename = sys.argv[1]
 
 # Read volume
-nim, nim_data, nim_hdr, thedims, thesizes = tide.readfromnifti(thefilename)
-xsize, ysize, numslices, timepoints = tide.parseniftidims(thedims)
-xdim, ydim, slicethickness, tr = tide.parseniftisizes(thesizes)
+nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(thefilename)
+xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
+xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
 vollist = []
 if timepoints > 1:
     for i in range(timepoints):

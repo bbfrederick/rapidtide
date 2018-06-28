@@ -24,6 +24,7 @@ import sys
 import getopt
 import string
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 
 from numpy import r_, zeros, ones, shape, where, sort
 from pylab import *
@@ -105,9 +106,9 @@ for spatialloc in range(0,numspatiallocs):
     
 # now do the ones with other numbers of time points
 theheader=input_hdr
-tide.savetonifti(sorteddata.reshape((xsize,ysize,numslices,numtrials)), theheader, thesizes, outputroot + '_sorted')
+tide_io.savetonifti(sorteddata.reshape((xsize,ysize,numslices,numtrials)), theheader, thesizes, outputroot + '_sorted')
 #theheader['dim'][4] = histlen
-#tide.savetonifti(outputhists.reshape((xsize,ysize,numslices,histlen)), theheader, thesizes, outputroot + '_hists')
+#tide_io.savetonifti(outputhists.reshape((xsize,ysize,numslices,histlen)), theheader, thesizes, outputroot + '_hists')
 #theheader['dim'][4] = 1
 #for i in range(0, len(thepercentiles)):
-#    tide.savetonifti(pcts_data[:,i].reshape((xsize,ysize,numslices)), theheader, thesizes, outputroot + '_p_lt_' + thepvalnames[i] + '_mask')
+#    tide_io.savetonifti(pcts_data[:,i].reshape((xsize,ysize,numslices)), theheader, thesizes, outputroot + '_p_lt_' + thepvalnames[i] + '_mask')

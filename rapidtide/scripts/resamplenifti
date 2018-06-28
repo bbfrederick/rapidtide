@@ -28,6 +28,7 @@ import getopt
 import string
 import matplotlib
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 from numpy import r_, zeros, ones, shape, where
 from pylab import *
 import nibabel as nib
@@ -80,7 +81,7 @@ def main():
         sys.exit(2)
 
     # get the input TR
-    inputtr_fromfile, numinputtrs = tide.fmritimeinfo(inputfilename)
+    inputtr_fromfile, numinputtrs = tide_io.fmritimeinfo(inputfilename)
     print("input data: ", numinputtrs, " timepoints, tr = ", inputtr_fromfile)
 
     # check to see if we are upsampling or downsampling
