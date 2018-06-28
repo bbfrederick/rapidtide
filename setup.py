@@ -10,7 +10,8 @@ from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
 from os import path
-import subprocess, re
+import subprocess
+import re
 import sys
 
 
@@ -28,7 +29,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 addtidepool = True
 
-modules_list= ['rapidtide/tide_funcs', 'rapidtide/io_funcs', 'rapidtide/filter_funcs']
+modules_list = ['rapidtide/tide_funcs', 'rapidtide/io_funcs',
+                'rapidtide/filter_funcs']
 if addtidepool:
     modules_list.append('rapidtide/tidepoolTemplate_qt4')
     modules_list.append('rapidtide/tidepoolTemplate_qt5')
@@ -58,7 +60,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/happy',
                'rapidtide/scripts/threeD',
                'rapidtide/scripts/tcfrom3col',
-#               'rapidtide/scripts/endtidalproc',
+               # 'rapidtide/scripts/endtidalproc',
                'rapidtide/scripts/showhist']
 if addtidepool:
     script_list.append('rapidtide/scripts/tidepool')
@@ -144,15 +146,11 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords=['fMRI', 
-        'correlation',
-        'RIPTiDe',
-        'noise'],
+    keywords=['fMRI', 'correlation', 'RIPTiDe', 'noise'],
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    #packages=['rapidtide'],
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
@@ -163,7 +161,8 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy', 'scipy', 'pandas', 'scikit-learn', 'nibabel', 'matplotlib', 'statsmodels'],
+    install_requires=['numpy', 'scipy', 'pandas', 'scikit-learn', 'nibabel',
+                      'matplotlib', 'statsmodels'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -177,13 +176,12 @@ setup(
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
-    include_package_data = True,
+    include_package_data=True,
     zip_safe=False,
     package_data={
-        'reference': [
-                        'reference/*.txt',
-                        'reference/*.nii.gz',
-                        ],
+        'reference': ['reference/*.txt',
+                      'reference/*.nii.gz',
+                      ],
     },
 
     # To provide executable scripts, use entry points in preference to the

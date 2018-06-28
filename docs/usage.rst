@@ -1,12 +1,9 @@
 Usage
 =====
 
-rapidtide minimally requires:
-
-#. acquired echo times (in milliseconds), and
-#. functional datasets equal to the number of acquired echoes.
-
-But you can supply many other options, viewable with ``rapidtide2 -h``.
+For more information about how the rapidtide library can be used, please see
+the API page. Common rapidtide workflows can also be called from the command
+line.
 
 Command line options
 --------------------
