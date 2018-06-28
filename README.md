@@ -11,7 +11,7 @@ HTML documentation is here: http://rapidtide.readthedocs.io/en/latest/
 [![Travis-CI](https://travis-ci.org/bbfrederick/rapidtide.svg?branch=master)](https://travis-ci.org/bbfrederick/rapidtide)
 [![Coverage](https://codecov.io/gh/bbfrederick/rapidtide/branch/master/graph/badge.svg)](https://codecov.io/gh/bbfrederick/rapidtide)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.814990.svg)](https://doi.org/10.5281/zenodo.814990)
-[![Funded by NIH](https://img.shields.io/badge/Funded%20by-R01--NS097512--01A1-yellowgreen.svg)](http://grantome.com/grant/NIH/R01-NS097512-01A1)
+[![Funded by NIH](https://img.shields.io/badge/NIH-R01--NS097512--01A1-yellowgreen.svg)](http://grantome.com/grant/NIH/R01-NS097512-01A1)
 
 NOTE
 ====
