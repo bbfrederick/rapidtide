@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import getopt
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy import sin, arange, pi, randn
@@ -344,7 +345,7 @@ stepsize = sampletime * round(stepsize / sampletime)
 startpoint = max([int(starttime * Fs), 0])
 if len(infilename) == 1:
     # each column is a timecourse, each row is a timepoint
-    inputdata = tide.readvecs(infilename[0])
+    inputdata = tide_io.readvecs(infilename[0])
     print('input data shape is ', inputdata.shape)
     if inputdata.shape[0] > 2:
         matrixoutput = True
@@ -352,9 +353,9 @@ if len(infilename) == 1:
     endpoint = min([startpoint + int(duration * Fs), numpoints])
     trimmeddata = inputdata[:, startpoint:endpoint]
 elif len(infilename) == 2:
-    inputdata1 = tide.readvec(infilename[0])
+    inputdata1 = tide_io.readvec(infilename[0])
     numpoints = len(inputdata1)
-    inputdata2 = tide.readvec(infilename[1])
+    inputdata2 = tide_io.readvec(infilename[1])
     endpoint1 = min([startpoint + int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))])
     endpoint2 = min([int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))])
     trimmeddata = zeros((2, numpoints), dtype='float')
@@ -443,11 +444,11 @@ if matrixoutput:
     init_sizes = init_hdr['pixdim']
     init_sizes[4] = sampletime
     init_hdr['toffset'] = times[0]
-    tide.savetonifti(corrpertime, init_hdr, init_sizes, outfilename + '_pearsonR')
-    tide.savetonifti(ppertime, init_hdr, init_sizes, outfilename + '_corrp')
-    tide.savetonifti(Rvals, init_hdr, init_sizes, outfilename + '_maxxcorr')
-    tide.savetonifti(delayvals, init_hdr, init_sizes, outfilename + '_delayvals')
-    tide.savetonifti(valid, init_hdr, init_sizes, outfilename + '_valid')
+    tide_io.savetonifti(corrpertime, init_hdr, init_sizes, outfilename + '_pearsonR')
+    tide_io.savetonifti(ppertime, init_hdr, init_sizes, outfilename + '_corrp')
+    tide_io.savetonifti(Rvals, init_hdr, init_sizes, outfilename + '_maxxcorr')
+    tide_io.savetonifti(delayvals, init_hdr, init_sizes, outfilename + '_delayvals')
+    tide_io.savetonifti(valid, init_hdr, init_sizes, outfilename + '_valid')
     rows = []
     cols = []
     for i in range(numcomponents):
@@ -482,11 +483,11 @@ else:
                                                                          weighting=corrweighting, \
                                                                          prewindow=prewindow, dodetrend=False,
                                                                          display=False)
-    tide.writenpvecs(corrpertime, outfilename + "_pearson.txt")
-    tide.writenpvecs(ppertime, outfilename + "_pvalue.txt")
-    tide.writenpvecs(Rvals, outfilename + "_Rvalue.txt")
-    tide.writenpvecs(delayvals, outfilename + "_delay.txt")
-    tide.writenpvecs(valid, outfilename + "_mask.txt")
+    tide_io.writenpvecs(corrpertime, outfilename + "_pearson.txt")
+    tide_io.writenpvecs(ppertime, outfilename + "_pvalue.txt")
+    tide_io.writenpvecs(Rvals, outfilename + "_Rvalue.txt")
+    tide_io.writenpvecs(delayvals, outfilename + "_delay.txt")
+    tide_io.writenpvecs(valid, outfilename + "_mask.txt")
     filtereddata1 = tide.corrnormalize(theprefilter.apply(Fs, trimmeddata[0, :]), False, dodetrend)
     filtereddata2 = tide.corrnormalize(theprefilter.apply(Fs, trimmeddata[1, :]), False, dodetrend)
 

@@ -29,6 +29,7 @@ if platform.system() == 'Darwin':
 else:
     matplotlib.use('TkAgg')
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy import sin, arange, pi, randn
@@ -59,7 +60,7 @@ datafilename = sys.argv[1]
 sampletime = float(sys.argv[2])
 Fs = 1.0 / sampletime
 
-tcdata = tide.readvecs(datafilename)
+tcdata = tide_io.readvecs(datafilename)
 thedims = tcdata.shape
 tclen = thedims[1]
 numcomponents = thedims[0]
@@ -144,4 +145,4 @@ outputcorrmask_hdr = outputcorrmask_img.get_header()
 outputcorrmask_hdr['pixdim'][4] = float(sys.argv[2])
 outputcorrmask_img.to_filename(datafilename + '_corrmask.nii.gz')
 
-tide.writenpvecs(reformdata, datafilename + '_reformdata.txt')
+tide_io.writenpvecs(reformdata, datafilename + '_reformdata.txt')

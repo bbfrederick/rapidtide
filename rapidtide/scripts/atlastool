@@ -26,6 +26,7 @@ import subprocess
 import getopt
 import string
 import rapidtide.tide_funcs as tide
+import rapidtide.io_funcs as tide_io
 from sklearn.cluster import KMeans, MiniBatchKMeans
 
 import numpy as np
@@ -90,7 +91,7 @@ for o, a in opts:
         assert False, "unhandled option"
 
 print('loading template data')
-template_img, template_data, template_hdr, templatedims, templatesizes = tide.readfromnifti(inputtemplatename)
+template_img, template_data, template_hdr, templatedims, templatesizes = tide_io.readfromnifti(inputtemplatename)
 
 print('reshaping')
 xsize = templatedims[1]
@@ -135,7 +136,7 @@ if targetfile is not None:
         # first write out a temp file with the data
         outputvoxels = templatevoxels
         template_hdr['dim'][4] = numregions
-        tide.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, templatesizes, 'temppre')
+        tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, templatesizes, 'temppre')
         flirtcmd = os.path.join(fsldir, 'bin', 'flirt')
         thecommand = []
         thecommand.append(flirtcmd)
@@ -149,7 +150,7 @@ if targetfile is not None:
         thecommand.append('-out')
         thecommand.append('temppost')
         subprocess.call(thecommand)
-        template_img, template_data, template_hdr, templatedims, templatesizes = tide.readfromnifti('temppost')
+        template_img, template_data, template_hdr, templatedims, templatesizes = tide_io.readfromnifti('temppost')
         xsize = templatedims[1]
         ysize = templatedims[2]
         numslices = templatedims[3]
@@ -163,7 +164,7 @@ if targetfile is not None:
 if volumeperregion:
     outputvoxels = templatevoxels
     template_hdr['dim'][4] = numregions
-    tide.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, templatesizes, outputtemplatename)
+    tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, templatesizes, outputtemplatename)
 else:
     print('collapsing back to 3d')
     outputvoxels = templatevoxels[:, 0] * 0
@@ -171,4 +172,4 @@ else:
         if np.max(templatevoxels[i, :]) > 0.5:
             outputvoxels[i] = np.argmax(templatevoxels[i, :]) + 1
     template_hdr['dim'][4] = 1
-    tide.savetonifti(outputvoxels.reshape((xsize, ysize, numslices)), template_hdr, templatesizes, outputtemplatename)
+    tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices)), template_hdr, templatesizes, outputtemplatename)
