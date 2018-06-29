@@ -2410,8 +2410,6 @@ def main():
         tmask_y = maketmask(optiondict['tmaskname'], reference_x, rt_floatset(reference_y))
         tmaskos_y = tide.doresample(reference_x, tmask_y, os_fmri_x, method=optiondict['interptype'])
         tide_io.writenpvecs(tmask_y, outputname + '_temporalmask.txt')
-
-    if optiondict['usetmask']:
         resampnonosref_y *= tmask_y
         thefit, R = tide.mlregress(tmask_y, resampnonosref_y)
         resampnonosref_y -= thefit[0, 1] * tmask_y
