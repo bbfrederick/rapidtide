@@ -31,8 +31,8 @@ import scipy as sp
 
 import getopt
 import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-import rapidtide.filter_funcs as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
 from scipy.signal import hilbert, welch, savgol_filter
 import nibabel as nib
 
@@ -392,6 +392,7 @@ cardiacfromfmri, slicesamplerate, numsteps = cardiacfromimage(fmri_data, mask, x
     debug=debug)
 slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
 tide_io.writevec(cardiacfromfmri, outputroot + '_cardiacfromfmri.txt')
+tide_io.writevec(tide.corrnormalize(tide.arbresample(cardiacfromfmri, slicesamplerate, 100.0), False, False), outputroot + '_cardiacfromfmri_100Hz.txt')
 cardiacwaveform = cardiacfromfmri
 infodict['slicesamplerate'] = slicesamplerate
 infodict['numsteps'] = numsteps
@@ -439,6 +440,7 @@ if cardiacfile is not None:
         infodict['kalminit_file_ph' + str(i)] = phases_file[i]
 
     tide_io.writevec(cardiacfromfile, outputroot + '_cardiacfromfile.txt')
+    tide_io.writevec(tide.corrnormalize(tide.arbresample(inputwave, inputfreq, 100.0), False, False), outputroot + '_cardiacfromfile_100Hz.txt')
     thexcorr = tide.fastcorrelate(cardiacfromfile, cardiacfromfmri, usefft=True)
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / slicesamplerate

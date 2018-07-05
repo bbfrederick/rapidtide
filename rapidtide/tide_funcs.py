@@ -37,8 +37,8 @@ import resource
 #from scipy import signal
 from scipy.stats import johnsonsb
 
-import rapidtide.io_funcs as tide_io
-import rapidtide.filter_funcs as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -1775,20 +1775,26 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
     if method == 'cubic':
         cj = signal.cspline1d(pad_y)
         return tide_filt.unpadvec(np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
-        #return np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
     elif method == 'quadratic':
         qj = signal.qspline1d(pad_y)
         return tide_filt.unpadvec(np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
-        #return np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]))
     elif method == 'univariate':
         interpolator = sp.interpolate.UnivariateSpline(pad_x, pad_y, k=3, s=0)  # s=0 interpolates
         return tide_filt.unpadvec(np.float64(interpolator(new_x)), padlen=padlen)
-        #return np.float64(interpolator(new_x))
     else:
         print('invalid interpolation method')
         return None
 
 
+def arbresample(orig_y, init_freq, final_freq, intermed_freq=0.0, method='univariate', debug=False):
+    if intermed_freq <= 0.0:
+        intermed_freq = np.max([2.0 * init_freq, 2.0 * final_freq])
+    orig_x = sp.linspace(0.0, 1.0 / init_freq * len(orig_y), num=len(orig_y), endpoint=False)
+    if debug:
+        print('arbresample:', len(orig_x), len(orig_y), init_freq, final_freq, intermed_freq)
+    return dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method=method, debug=debug)
+
+    
 def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate', debug=False):
     if intermed_freq <= final_freq:
         print('intermediate frequency must be higher than final frequency')
@@ -1796,16 +1802,17 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
 
     # upsample
     endpoint = orig_x[-1] - orig_x[0]
+    init_freq = len(orig_x) / endpoint
     intermed_ts = 1.0 / intermed_freq
     numresamppts = int(endpoint // intermed_ts + 1)
     intermed_x = np.arange(0.0, intermed_ts * numresamppts, intermed_ts)
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
 
-    # antialias
+    # antialias and ringstop filter
+    aafilterfreq = np.min([final_freq, init_freq]) / 2.0 
     aafilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
-    aafilter.setarb(0.0, 0.0, 0.95 * final_freq, final_freq)
+    aafilter.setarb(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
     antialias_y = aafilter.apply(intermed_freq, intermed_y)
-    # antialias_y = tide_filt.dolptrapfftfilt(intermed_freq,0.9*final_freq,final_freq,intermed_y)
 
     # downsample
     final_ts = 1.0 / final_freq

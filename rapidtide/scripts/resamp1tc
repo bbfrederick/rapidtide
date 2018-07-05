@@ -28,7 +28,7 @@ import getopt
 
 import matplotlib
 import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
+import rapidtide.io as tide_io
 from scipy import arange
 from numpy import max, floor
 import pylab as plt
@@ -37,7 +37,7 @@ import pylab as plt
 def usage():
     print("resamp1tc - resample a timeseries file")
     print("")
-    print("usage: resamp1tc infilename insamplerate outputfile outsamplerate [-s] [--nodisplay]")
+    print("usage: resamp1tc infilename insamplerate outputfile outsamplerate [--nodisplay]")
     print("")
     print("required arguments:")
     print("	inputfile	- the name of the input text file")
@@ -46,7 +46,6 @@ def usage():
     print("	outsamplerate	- the sample rate of the output file in Hz")
     print("")
     print(" options:")
-    print("     -s              - split output data into physiological bands (LFO, respiratory, cardiac)")
     print("     --nodisplay     - do not plot the data (for noninteractive use)")
     print("")
     return ()
@@ -78,12 +77,8 @@ def main():
         if o == "--nodisplay":
             display = False
             print('turning display off')
-        elif o == "-s":
-            splittcs = True
         else:
             assert False, "unhandled option"
-
-    print('splittcs=', splittcs)
 
     intimestep = 1.0 / insamplerate
     outtimestep = 1.0 / outsamplerate
@@ -97,6 +92,7 @@ def main():
     IF = max([60.0, 2.0 * insamplerate])
     if outsamplerate < insamplerate:
         outputdata2 = tide.dotwostepresample(in_t, inputdata, IF, outsamplerate)
+        outputdata3 = tide.arbresample(inputdata, insamplerate, outsamplerate)
         print(len(out_t), len(outputdata2))
         if len(out_t) < len(outputdata2):
             outputdata2 = outputdata2[0:len(out_t)]
@@ -109,7 +105,7 @@ def main():
     if display:
         plt.plot(out_t, outputdata - 0.4, 'r')
         if outsamplerate < insamplerate:
-            plt.plot(out_t, outputdata2 - 0.8, 'g')
+            plt.plot(out_t, outputdata2 - 0.8, 'g', out_t, outputdata3 - 1.2, 'b')
             plt.legend(('original signal', 'resampled', 'dualresampled'))
         else:
             plt.legend(('original signal', 'resampled'))
