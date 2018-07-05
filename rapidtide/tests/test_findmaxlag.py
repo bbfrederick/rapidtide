@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
+import rapidtide.io as tide_io
 import numpy as np
 import pylab as plt
 
