@@ -25,8 +25,8 @@ import getopt
 import string
 import platform
 import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-import rapidtide.filter_funcs as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
 
 from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
 from pylab import *

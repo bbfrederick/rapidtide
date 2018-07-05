@@ -31,8 +31,8 @@ import scipy as sp
 
 import getopt
 import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-import rapidtide.filter_funcs as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
 from scipy.signal import hilbert, welch, savgol_filter
 import nibabel as nib
 

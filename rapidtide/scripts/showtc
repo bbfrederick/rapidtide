@@ -31,8 +31,8 @@ import matplotlib.cm as cm
 
 import bisect
 import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-import rapidtide.filter_funcs as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
 import numpy as np
 from scipy import arange, fftpack, linspace
 from scipy.signal import welch

@@ -37,8 +37,8 @@ import resource
 #from scipy import signal
 from scipy.stats import johnsonsb
 
-import rapidtide.io_funcs as tide_io
-import rapidtide.filter_funcs as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
