@@ -25,7 +25,7 @@ import getopt
 import string
 import platform
 import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
+import rapidtide.io as tide_io
 
 from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
 from pylab import *

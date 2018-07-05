@@ -28,7 +28,7 @@ import getopt
 
 import matplotlib
 import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
+import rapidtide.io as tide_io
 from scipy import arange
 from numpy import max, floor
 import pylab as plt

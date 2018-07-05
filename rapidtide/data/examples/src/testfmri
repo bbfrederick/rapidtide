@@ -6,6 +6,7 @@ rapidtide2 \
         --lagminthresh=0.25 \
         --refinepasses=3 \
         --despecklepasses=4 \
+        --tmask=tmask.txt \
         -s 100.0 \
         -L \
 	-r -20,20 \
