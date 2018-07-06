@@ -32,6 +32,7 @@ modules_list= ['rapidtide/tide_funcs',
                 'rapidtide/util',
                 'rapidtide/io',
                 'rapidtide/filter',
+                'rapidtide/fit',
                 'rapidtide/resample']
 
 if addtidepool:
