@@ -34,6 +34,7 @@ import rapidtide.tide_funcs as tide
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 import rapidtide.resample as tide_resample
 from scipy.signal import hilbert, welch, savgol_filter
 import nibabel as nib
@@ -114,7 +115,7 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
     validvoxels = np.where(maskbyvox > 0)[0]
     for spatialloc in validvoxels:
         if detrend:
-            normdata[spatialloc, :] = tide.pcnormalize(tide.detrend(imbyvox[spatialloc, :], demean=False))
+            normdata[spatialloc, :] = tide.pcnormalize(tide_fit.detrend(imbyvox[spatialloc, :], demean=False))
         else:
             normdata[spatialloc, :] = tide.pcnormalize(imbyvox[spatialloc, :])
     normbyslice = normdata.reshape((xsize * ysize, numslices, timepoints))
@@ -449,7 +450,7 @@ if cardiacfile is not None:
     xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     maxdelay = xcorr_x[np.argmax(thexcorr)]
     searchrange = 10.0
-    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss(
+    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
             xcorr_x, thexcorr, -searchrange, searchrange, 1000.0,
             refine=True,
             useguess=False,
@@ -560,7 +561,7 @@ for theslice in range(numslices):
     for t in range(timepoints):
         thevals, theweights, theindices = tide_resample.congrid(outphases, phasevals[theslice, t], 1.0, congridwidth)
         if detrend:
-            filteredmr = -tide.detrend(fmri_data_byslice[validlocs, theslice, t], demean=False)
+            filteredmr = -tide_fit.detrend(fmri_data_byslice[validlocs, theslice, t], demean=False)
         else:
             filteredmr = -fmri_data_byslice[validlocs, theslice, t]
         for i in range(len(theindices)):

@@ -33,6 +33,7 @@ import os
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 
 # ---------------------------------------- Global constants -------------------------------------------
 donotbeaggressive = True
@@ -126,7 +127,7 @@ class congrid:
         fullwidthpts += ((fullwidthpts % 2) - 1)
         self.hires_x = np.linspace(-fullwidth / 2.0, fullwidth / 2.0, numpts = fullwidthpts, endpoint=True)
         if method == 'gauss':
-            self.hires_y = gauss_eval(self.hires_x, np.array([1.0, 0.0, width])
+            self.hires_y = tide_fit.gauss_eval(self.hires_x, np.array([1.0, 0.0, width])
         if debug:
             print(self.hires_x)
         if doplot:
@@ -163,7 +164,7 @@ def congrid(xaxis, loc, val, width, debug=False):
         if debug:
             print('new key:', offsetkey)
         xvals = np.linspace(-xstep * (widthinpts // 2), xstep * (widthinpts // 2), num = widthinpts, endpoint=True) + offset
-        congridyvals[offsetkey] = gauss_eval(xvals, np.array([1.0, 0.0, width]))
+        congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, width]))
         yvals = congridyvals[offsetkey]
     startpt = int(center - widthinpts // 2)
     indices = range(startpt, startpt + widthinpts)

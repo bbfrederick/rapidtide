@@ -38,6 +38,7 @@ import rapidtide.tide_funcs as tide
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 import rapidtide.resample as tide_resample
 
 from sklearn.decomposition import FastICA, PCA
@@ -381,7 +382,7 @@ def onecorrfit(thetc, corrscale, optiondict, disablethresholds=False, displayplo
 
     if not optiondict['fixdelay']:
         if optiondict['findmaxtype'] == 'gauss':
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss_rev(
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss_rev(
                 corrscale,
                 thetc,
                 optiondict['lagmin'], optiondict['lagmax'], widthlimit,
@@ -410,7 +411,7 @@ def onecorrfit(thetc, corrscale, optiondict, disablethresholds=False, displayplo
             else:
                 flipfac = rt_floatset(1.0)
 
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_quad(
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_quad(
                 corrscale,
                 flipfac * thetc,
                 optiondict['lagmin'], optiondict['lagmax'], widthlimit,
@@ -473,7 +474,7 @@ def procOneVoxelFitcorr(vox, corrtc, corrscale, genlagtc, initial_fmri_x, option
         thegaussout = rt_floatset(0.0 * corrtc)
         thewindowout = rt_floatset(0.0 * corrtc)
         if (not optiondict['fixdelay']) and (maxsigma != 0.0):
-            thegaussout = rt_floatset(tide.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
+            thegaussout = rt_floatset(tide_fit.gauss_eval(corrscale, [maxval, maxlag, maxsigma]))
         else:
             thegaussout = rt_floatset(0.0)
             thewindowout = rt_floatset(0.0)
@@ -657,7 +658,7 @@ def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, 
     else:
         thisweight = 1.0
     if optiondict['dodetrend']:
-        normtc = tide.detrend(fmritc * normfac * thisweight, demean=True)
+        normtc = tide_fit.detrend(fmritc * normfac * thisweight, demean=True)
     else:
         normtc = fmritc * normfac * thisweight
     shifttr = -(-optiondict['offsettime'] + lagtime) / fmritr  # lagtime is in seconds
@@ -1129,9 +1130,9 @@ def allocshared(theshape, thetype):
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     # mask to interesting voxels
     if optiondict['globalmaskmethod'] == 'mean':
-        themask = tide_util.makemask(np.mean(indata, axis=1), optiondict['corrmaskthreshpct'])
+        themask = tide.makemask(np.mean(indata, axis=1), optiondict['corrmaskthreshpct'])
     elif optiondict['globalmaskmethod'] == 'variance':
-        themask = tide_util.makemask(np.var(indata, axis=1), optiondict['corrmaskthreshpct'])
+        themask = tide.makemask(np.var(indata, axis=1), optiondict['corrmaskthreshpct'])
     if optiondict['nothresh']:
         themask *= 0
         themask += 1
@@ -2290,7 +2291,7 @@ def main():
                 sys.exit()
             corrmask = np.uint16(nimcorrmask.reshape((numspatiallocs)))
     else:
-        corrmask = np.uint16(tide_util.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
+        corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
                                        threshpct=optiondict['corrmaskthreshpct']))
        
     if optiondict['nothresh']:
@@ -2411,7 +2412,7 @@ def main():
 
     # detrend the regressor if necessary
     if optiondict['dodetrend']:
-        reference_y = invertfac * tide.detrend(inputvec[0:numreference], demean=optiondict['dodemean'])
+        reference_y = invertfac * tide_fit.detrend(inputvec[0:numreference], demean=optiondict['dodemean'])
     else:
         reference_y = invertfac * (inputvec[0:numreference] - np.mean(inputvec[0:numreference]))
 
@@ -2445,10 +2446,10 @@ def main():
 
     # write out the resampled reference regressors
     if optiondict['dodetrend']:
-        resampnonosref_y = tide.detrend(
+        resampnonosref_y = tide_fit.detrend(
             tide_resample.doresample(reference_x, reference_y, initial_fmri_x, method=optiondict['interptype']),
             demean=optiondict['dodemean'])
-        resampref_y = tide.detrend(
+        resampref_y = tide_fit.detrend(
             tide_resample.doresample(reference_x, reference_y, os_fmri_x, method=optiondict['interptype']),
             demean=optiondict['dodemean'])
     else:
@@ -2808,10 +2809,10 @@ def main():
             tide_io.writenpvecs(normoutputdata, outputname + '_refinedregressor_pass' + str(thepass) + '.txt')
 
             if optiondict['dodetrend']:
-                resampnonosref_y = tide.detrend(tide_resample.doresample(initial_fmri_x, normoutputdata, initial_fmri_x,
+                resampnonosref_y = tide_fit.detrend(tide_resample.doresample(initial_fmri_x, normoutputdata, initial_fmri_x,
                                                                 method=optiondict['interptype']),
                                                 demean=optiondict['dodemean'])
-                resampref_y = tide.detrend(tide_resample.doresample(initial_fmri_x, normoutputdata, os_fmri_x,
+                resampref_y = tide_fit.detrend(tide_resample.doresample(initial_fmri_x, normoutputdata, os_fmri_x,
                                                            method=optiondict['interptype']),
                                            demean=optiondict['dodemean'])
             else:
@@ -2929,10 +2930,10 @@ def main():
             resampref_y_pw = rt_floatset(resampref_y)
         if optiondict['usewindowfunc']:
             referencetc_pw = tide.stdnormalize(
-                tide_filt.windowfunction(np.shape(resampref_y_pw)[0], type=optiondict['windowfunc']) * tide.detrend(tide.stdnormalize(resampref_y_pw))) / \
+                tide_filt.windowfunction(np.shape(resampref_y_pw)[0], type=optiondict['windowfunc']) * tide_fit.detrend(tide.stdnormalize(resampref_y_pw))) / \
                              np.shape(resampref_y_pw)[0]
         else:
-            referencetc_pw = tide.stdnormalize(tide.detrend(tide.stdnormalize(resampref_y_pw))) / np.shape(
+            referencetc_pw = tide.stdnormalize(tide_fit.detrend(tide.stdnormalize(resampref_y_pw))) / np.shape(
                 resampref_y_pw)[0]
         print('')
         if optiondict['displayplots']:
