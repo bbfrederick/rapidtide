@@ -33,9 +33,9 @@ import os
 #from scipy import signal
 from scipy.stats import johnsonsb
 
+import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
-import rapidtide.resample as tide_resample
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -373,7 +373,7 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # make an initial guess at the fit parameters for the gaussian
     # start with finding the maximum value
     if useguess:
-        maxindex = valtoindex(thexcorr_x, maxguess)
+        maxindex = tide_util.valtoindex(thexcorr_x, maxguess)
         nlowerlim = int(maxindex - widthlimit / 2.0)
         nupperlim = int(maxindex + widthlimit / 2.0)
         if nlowerlim < lowerlim:
@@ -548,8 +548,8 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # set the search range
     lowerlim = 0
     upperlim = len(thexcorr_x) - 1
-    #lowerlim = np.max([valtoindex(thexcorr_x, lagmin, toleft=True), 0])
-    #upperlim = np.min([valtoindex(thexcorr_x, lagmax, toleft=False), len(thexcorr_x) - 1])
+    #lowerlim = np.max([tide_util.valtoindex(thexcorr_x, lagmin, toleft=True), 0])
+    #upperlim = np.min([tide_util.valtoindex(thexcorr_x, lagmax, toleft=False), len(thexcorr_x) - 1])
     if debug:
         print('initial search indices are', lowerlim, 'to', upperlim, '(', thexcorr_x[lowerlim], thexcorr_x[upperlim], ')')
 
@@ -557,7 +557,7 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # start with finding the maximum value and its location
     flipfac = 1.0
     if useguess:
-        maxindex = valtoindex(thexcorr_x, maxguess)
+        maxindex = tide_util.valtoindex(thexcorr_x, maxguess)
     else:
         maxindex, flipfac = maxindex_noedge(thexcorr_x, thexcorr_y, bipolar=bipolar)
         thexcorr_y *= flipfac
