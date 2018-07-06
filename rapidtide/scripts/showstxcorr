@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import getopt
 import rapidtide.tide_funcs as tide
+import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 from scipy.signal import correlate
@@ -64,7 +65,7 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
         corrlist_pear[i] = pearsonr(filteredindata, filteredshuffleddata)[0]
 
         # progress
-        tide.progressbar(i + 1, numreps, label='Percent complete')
+        tide_util.progressbar(i + 1, numreps, label='Percent complete')
 
     # jump to line after progress bar
     print()

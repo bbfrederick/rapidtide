@@ -37,6 +37,7 @@ from functools import partial
 import resource
 
 import rapidtide.tide_funcs as tide
+import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.resample as tide_resample
@@ -183,7 +184,7 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
 
             # progress
             if optiondict['showprogressbar']:
-                tide.progressbar(i + 1, optiondict['numestreps'], label='Percent complete')
+                tide_util.progressbar(i + 1, optiondict['numestreps'], label='Percent complete')
 
         # jump to line after progress bar
         print()
@@ -229,7 +230,7 @@ def process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chun
     numchunks = int(totalnum // chunksize)
     remainder = totalnum - numchunks * chunksize
     if showprogressbar:
-        tide.progressbar(0, totalnum, label="Percent complete")
+        tide_util.progressbar(0, totalnum, label="Percent complete")
 
     # process all of the complete chunks
     for thechunk in range(numchunks):
@@ -246,7 +247,7 @@ def process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chun
                 data_out.append(ret)
             numreturned += 1
             if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
-                tide.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
+                tide_util.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
             if numreturned > chunksize - 1:
                 break
 
@@ -263,11 +264,11 @@ def process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chun
             data_out.append(ret)
         numreturned += 1
         if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
-            tide.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
+            tide_util.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
         if numreturned > remainder - 1:
             break
     if showprogressbar:
-        tide.progressbar(totalnum, totalnum, label="Percent complete")
+        tide_util.progressbar(totalnum, totalnum, label="Percent complete")
     print()
 
     return data_out
@@ -342,7 +343,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
     else:
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
-                tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
+                tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
             dummy, meanval[vox], corrout[vox, :], theglobalmax = procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x,
                                                                            fmridata[vox, :], os_fmri_x, oversampfreq,
                                                                            corrorigin, lagmininpts, lagmaxinpts,
@@ -537,7 +538,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     else:
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
-                tide.progressbar(vox + 1, inputshape[0], label='Percent complete')
+                tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
             if initiallags is None:
                 dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], R2[
                     vox], lagmask[vox], failreason = \
@@ -699,7 +700,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
         psdlist = []
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
-                tide.progressbar(vox + 1, inputshape[0], label='Percent complete (timeshifting)')
+                tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete (timeshifting)')
             if (maskarray[vox] > 0) or optiondict['shiftall']:
                 retvals = procOneVoxelTimeShift(vox, fmridata[vox, :], optiondict, lagstrengths[vox], R2[vox],
                                                 lagtimes[vox], padtrs, fmritr, theprefilter)
@@ -902,7 +903,7 @@ def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondi
         volumetotal = 0
         for vox in range(0, numspatiallocs):
             if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict['showprogressbar']:
-                tide.progressbar(vox + 1, numspatiallocs, label='Percent complete')
+                tide_util.progressbar(vox + 1, numspatiallocs, label='Percent complete')
             inittc = fmri_data[vox, optiondict['addedskip']:].copy()
             if np.mean(inittc) >= threshval:
                 dummy, meanvalue[vox], rvalue[vox], r2value[vox], fitcoff[vox], fitNorm[vox], datatoremove[vox], \
@@ -981,7 +982,7 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
         volumetotal = 0
         for vox in range(0, numspatiallocs):
             if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict['showprogressbar']:
-                tide.progressbar(vox + 1, numspatiallocs, label='Percent complete')
+                tide_util.progressbar(vox + 1, numspatiallocs, label='Percent complete')
             inittc = fmri_data[vox, optiondict['addedskip']:].copy()
             if np.mean(inittc) >= threshval:
                 dummy, meanvalue[vox], rvalue[vox], r2value[vox], fitcoff[vox], fitNorm[vox], datatoremove[vox], \
@@ -1101,9 +1102,9 @@ def logmem(msg, file=None):
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     # mask to interesting voxels
     if optiondict['globalmaskmethod'] == 'mean':
-        themask = tide.makemask(np.mean(indata, axis=1), optiondict['corrmaskthreshpct'])
+        themask = tide_util.makemask(np.mean(indata, axis=1), optiondict['corrmaskthreshpct'])
     elif optiondict['globalmaskmethod'] == 'variance':
-        themask = tide.makemask(np.var(indata, axis=1), optiondict['corrmaskthreshpct'])
+        themask = tide_util.makemask(np.var(indata, axis=1), optiondict['corrmaskthreshpct'])
     if optiondict['nothresh']:
         themask *= 0
         themask += 1
@@ -1491,7 +1492,7 @@ def main():
     optiondict['displayplots'] = False
     optiondict['debug'] = False
     optiondict['verbose'] = False
-    optiondict['release_version'], optiondict['git_tag'] = tide.version()
+    optiondict['release_version'], optiondict['git_tag'] = tide_util.version()
     optiondict['python_version'] = str(sys.version_info)
     optiondict['multiproc'] = False
     optiondict['nprocs'] = -1
@@ -2171,7 +2172,7 @@ def main():
         reportstep = 10
         for i in range(validstart, validend + 1):
             if (i % reportstep == 0 or i == validend) and optiondict['showprogressbar']:
-                tide.progressbar(i - validstart + 1, timepoints, label='Percent complete')
+                tide_util.progressbar(i - validstart + 1, timepoints, label='Percent complete')
             nim_data[:, :, :, i] = tide_filt.ssmooth(xdim, ydim, slicethickness, optiondict['gausssigma'],
                                                 nim_data[:, :, :, i])
         timings.append(['End 3D smoothing', time.time(), None, None])
@@ -2241,7 +2242,7 @@ def main():
                 sys.exit()
             corrmask = np.uint16(nimcorrmask.reshape((numspatiallocs)))
     else:
-        corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
+        corrmask = np.uint16(tide_util.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
                                        threshpct=optiondict['corrmaskthreshpct']))
        
     if optiondict['nothresh']:
@@ -3125,7 +3126,7 @@ def main():
 
     # Post refinement step 5 - process and save timing information
     nodeline = 'Processed on ' + platform.node()
-    tide.proctiminginfo(timings, outputfile=outputname + '_runtimings.txt', extraheader=nodeline)
+    tide_util.proctiminginfo(timings, outputfile=outputname + '_runtimings.txt', extraheader=nodeline)
 
 
 if __name__ == '__main__':
