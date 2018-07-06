@@ -455,6 +455,15 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
     return thevals
 
 
+def makemask(image, threshpct=25.0, verbose=False):
+    fracval = getfracval(image, 0.98)
+    threshval = (threshpct / 100.0) * fracval
+    if verbose:
+        print('fracval:', fracval, ' threshpct:', threshpct, ' mask threshhold:', threshval)
+    themask = np.where(image > threshval, np.int16(1), np.int16(0))
+    return themask
+
+
 # --------------------------- Spectral analysis functions ---------------------------------------
 def phase(mcv):
     return np.arctan2(mcv.imag, mcv.real)

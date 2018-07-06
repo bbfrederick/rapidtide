@@ -37,6 +37,7 @@ import rapidtide.tide_funcs as tide
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy.stats import skew
@@ -334,7 +335,7 @@ if debug:
 dofindmaxlag=True
 if dofindmaxlag:
     print('executing findmaxlag')
-    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss(
+    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
             xcorr_x_trim, thexcorr_trim, -searchrange,searchrange,1000.0,
             refine=True,
             useguess=False,

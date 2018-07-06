@@ -241,15 +241,6 @@ def progressbar(thisval, end_val, label='Percent', barsize=60):
     sys.stdout.flush()
 
 
-def makemask(image, threshpct=25.0, verbose=False):
-    fracval = getfracval(image, 0.98)
-    threshval = (threshpct / 100.0) * fracval
-    if verbose:
-        print('fracval:', fracval, ' threshpct:', threshpct, ' mask threshhold:', threshval)
-    themask = np.where(image > threshval, np.int16(1), np.int16(0))
-    return themask
-
-
 def makelaglist(lagstart, lagend, lagstep):
     numsteps = int((lagend - lagstart) // lagstep + 1)
     lagend = lagstart + lagstep * (numsteps - 1)

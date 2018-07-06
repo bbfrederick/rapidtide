@@ -28,6 +28,7 @@ import rapidtide.tide_funcs as tide
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy import sin, arange, pi, randn
@@ -381,7 +382,7 @@ reformdata = reshape(trimmeddata, (numcomponents, tclen))
 print('preprocessing all timecourses')
 for component in range(0, numcomponents):
     filtereddata = tide.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]), False, dodetrend)
-    reformdata[component, :] = tide.stdnormalize(tide.detrend(tide.stdnormalize(filtereddata)))
+    reformdata[component, :] = tide.stdnormalize(tide_fit.detrend(tide.stdnormalize(filtereddata)))
 
 xcorr_x = r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
 laglimit = 15.0
