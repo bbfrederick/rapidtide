@@ -41,7 +41,7 @@ else:
     print('FSL directory not found - aborting')
     sys.exit()
 
-c3dexists = tide.isexecutable("c3d_affine_tool")
+c3dexists = tide_util.isexecutable("c3d_affine_tool")
 print('c3dexists =', c3dexists)
 
 def makethecmd(theinputfile, reftarget, xform, outputname, warpfile=None):
