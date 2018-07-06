@@ -31,6 +31,7 @@ else:
 import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy import sin, arange, pi, randn
@@ -71,7 +72,7 @@ print("data array shape is ", reformdata.shape)
 for component in range(0, numcomponents):
     filtereddata = tide_filt.dolpfiltfilt(Fs, Fc, reformdata[component, :], 3)
     reformdata[component, :] = tide.stdnormalize(
-        tide_filt.hamming(len(filtereddata)) * tide.detrend(tide.stdnormalize(filtereddata)))
+        tide_filt.hamming(len(filtereddata)) * tide_fit.detrend(tide.stdnormalize(filtereddata)))
 
 xcorr_x = r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
 laglimit = 15.0
@@ -97,7 +98,7 @@ for component1 in range(0, numcomponents):
         # plot(xcorr_x,outputdata[component1,component2,0,:])
         # maxdelay=xcorr_x[argmax(thexcorr)]
         # maxval=thexcorr[argmax(thexcorr)]
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss(
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
             xcorr_x[searchstart:searchend], thexcorr[searchstart:searchend],
             -laglimit, laglimit, widthlimit, refine=True,
             useguess=False,
