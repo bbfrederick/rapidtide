@@ -35,8 +35,6 @@ import resource
 from scipy.stats import johnsonsb
 
 import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-import rapidtide.resample as tide_resample
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -241,6 +239,24 @@ def progressbar(thisval, end_val, label='Percent', barsize=60):
     spaces = ' ' * (barsize - len(hashes))
     sys.stdout.write("\r{0}: [{1}] {2:.3f}%".format(label, hashes + spaces, 100.0 * percent))
     sys.stdout.flush()
+
+
+def makemask(image, threshpct=25.0, verbose=False):
+    fracval = getfracval(image, 0.98)
+    threshval = (threshpct / 100.0) * fracval
+    if verbose:
+        print('fracval:', fracval, ' threshpct:', threshpct, ' mask threshhold:', threshval)
+    themask = np.where(image > threshval, np.int16(1), np.int16(0))
+    return themask
+
+
+def makelaglist(lagstart, lagend, lagstep):
+    numsteps = int((lagend - lagstart) // lagstep + 1)
+    lagend = lagstart + lagstep * (numsteps - 1)
+    print("creating list of ", numsteps, " lag steps (", lagstart, " to ", lagend, " in steps of ", lagstep, ")")
+    #thelags = np.r_[0.0:1.0 * numsteps] * lagstep + lagstart
+    thelags = np.arange(0.0, 1.0 * numsteps) * lagstep + lagstart
+    return thelags
 
 
 # ------------------------------------------ Version function ----------------------------------

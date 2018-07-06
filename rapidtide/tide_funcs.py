@@ -362,7 +362,150 @@ def mlregress(x, y, intercept=True):
     return np.atleast_1d(solution[0].T), R
 
 
+# Find the image intensity value which thefrac of the non-zero voxels in the image exceed
+def getfracval(datamat, thefrac, numbins=200):
+    themax = datamat.max()
+    themin = datamat.min()
+    (meanhist, bins) = np.histogram(datamat, bins=numbins, range=(themin, themax))
+    cummeanhist = np.cumsum(meanhist)
+    target = cummeanhist[numbins - 1] * thefrac
+    for i in range(0, numbins):
+        if cummeanhist[i] >= target:
+            return bins[i]
+    return 0.0
+
+
+def makepmask(rvals, pval, sighistfit, onesided=True):
+    if onesided:
+        return np.where(rvals > getfracvalsfromfit(sighistfit, 1.0 - pval), np.int16(1), np.int16(0))
+    else:
+        return np.where(np.abs(rvals) > getfracvalsfromfit(sighistfit, 1.0 - pval / 2.0), np.int16(1), np.int16(0))
+
+
+def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False):
+    themax = datamat.max()
+    themin = datamat.min()
+    (meanhist, bins) = np.histogram(datamat, bins=numbins, range=(themin, themax))
+    cummeanhist = np.cumsum(meanhist)
+    if nozero:
+        cummeanhist = cummeanhist - cummeanhist[0]
+    thevals = []
+    if displayplots:
+        fig = pl.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('cumulative mean sum of histogram')
+        plot(bins[-numbins:], cummeanhist[-numbins:])
+        pl.show()
+    for thisfrac in thefracs:
+        target = cummeanhist[numbins - 1] * thisfrac
+        thevals.append(0.0)
+        for i in range(0, numbins):
+            if cummeanhist[i] >= target:
+                thevals[-1] = bins[i]
+                break
+    return thevals
+
+
+def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
+    themax = 1.0
+    themin = 0.0
+    bins = np.arange(themin, themax, (themax - themin) / numbins)
+    meanhist = johnsonsb.pdf(bins, histfit[0], histfit[1], histfit[2], histfit[3])
+    corrfac = (1.0 - histfit[-1]) / (1.0 * numbins)
+    meanhist *= corrfac
+    meanhist[0] = histfit[-1]
+
+    cummeanhist = histfit[-1] + (1.0 - histfit[-1]) * johnsonsb.cdf(bins, histfit[0], histfit[1], histfit[2],
+                                                                    histfit[3])
+    thevals = []
+    if displayplots:
+        fig = pl.figure()
+        ax = fig.add_subplot(211)
+        ax.set_title('probability histogram')
+        pl.plot(bins[-numbins:], meanhist[-numbins:])
+        ax = fig.add_subplot(212)
+        ax.set_title('cumulative mean sum of histogram')
+        pl.plot(bins[-numbins:], cummeanhist[-numbins:])
+        pl.show()
+    for thisfrac in thefracs:
+        target = cummeanhist[numbins - 1] * thisfrac
+        thevals.append(0.0)
+        for i in range(0, numbins):
+            if cummeanhist[i] >= target:
+                thevals[-1] = bins[i]
+                break
+    return thevals
+
+
+def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
+    # print('entering getfracvalsfromfit: histfit=',histfit, ' thefracs=', thefracs)
+    thedist = johnsonsb(histfit[0], histfit[1], histfit[2], histfit[3])
+    # print('froze the distribution')
+    if displayplots:
+        themin = 0.001
+        themax = 0.999
+        bins = np.arange(themin, themax, (themax - themin) / numbins)
+        fig = pl.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('probability histogram')
+        pl.plot(bins, johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3]))
+        pl.show()
+    # thevals = johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3])
+    thevals = thedist.ppf(thefracs)
+    return thevals
+
+
+# --------------------------- Spectral analysis functions ---------------------------------------
+def phase(mcv):
+    return np.arctan2(mcv.imag, mcv.real)
+
+
+def polarfft(invec, samplerate):
+    if np.shape(invec)[0] % 2 == 1:
+        thevec = invec[:-1]
+    else:
+        thevec = invec
+    spec = fftpack.fft(tide_filt.hamming(np.shape(thevec)[0]) * thevec)[0:np.shape(thevec)[0] // 2]
+    magspec = abs(spec)
+    phspec = phase(spec)
+    maxfreq = samplerate / 2.0
+    freqs = np.arange(0.0, maxfreq, maxfreq / (np.shape(spec)[0]))
+    return freqs, magspec, phspec
+
+
+def complex_cepstrum(x):
+    # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
+    def _unwrap(phase):
+        samples = phase.shape[-1]
+        unwrapped = np.unwrap(phase)
+        center = (samples + 1) // 2
+        if samples == 1: 
+            center = 0  
+        ndelay = np.array(np.round(unwrapped[...,center]/np.pi))
+        unwrapped -= np.pi * ndelay[...,None] * np.arange(samples) / center
+        return unwrapped, ndelay
+        
+    spectrum = fftpack.fft(x)
+    unwrapped_phase, ndelay = _unwrap(np.angle(spectrum))
+    log_spectrum = np.log(np.abs(spectrum)) + 1j * unwrapped_phase
+    ceps = fftpack.ifft(log_spectrum).real
+    
+    return ceps, ndelay
+
+
+def real_cepstrum(x):
+    # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
+    return fftpack.ifft(np.log(np.abs(fftpack.fft(x)))).real
 # --------------------------- miscellaneous math functions -------------------------------------------------
+def thederiv(y):
+    dyc = [0.0] * len(y)
+    dyc[0] = (y[0] - y[1]) / 2.0
+    for i in range(1, len(y) - 1):
+        dyc[i] = (y[i + 1] - y[i - 1]) / 2.0
+    dyc[-1] = (y[-1] - y[-2]) / 2.0
+    return dyc
+
+
 def primes(n):
     # found on stackoverflow: https://stackoverflow.com/questions/16996217/prime-factorization-list
     primfac = []
@@ -830,6 +973,74 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
         return 0.0 * product
     
 
+# --------------------------- Normalization functions -------------------------------------------------
+def znormalize(vector):
+    return stdnormalize(vector)
+
+
+@conditionaljit()
+def stdnormalize(vector):
+    demeaned = vector - np.mean(vector)
+    sigstd = np.std(demeaned)
+    if sigstd > 0.0:
+        return demeaned / sigstd
+    else:
+        return demeaned
+
+
+def varnormalize(vector):
+    demeaned = vector - np.mean(vector)
+    sigvar = np.var(demeaned)
+    if sigvar > 0.0:
+        return demeaned / sigvar
+    else:
+        return demeaned
+
+
+def pcnormalize(vector):
+    sigmean = np.mean(vector)
+    if sigmean > 0.0:
+        return vector / sigmean - 1.0
+    else:
+        return vector
+
+
+def ppnormalize(vector):
+    demeaned = vector - np.mean(vector)
+    sigpp = np.max(demeaned) - np.min(demeaned)
+    if sigpp > 0.0:
+        return demeaned / sigpp
+    else:
+        return demeaned
+
+
+@conditionaljit()
+def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
+    # detrend first
+    if dodetrend:
+        intervec = stdnormalize(detrend(thedata, demean=True))
+    else:
+        intervec = stdnormalize(thedata)
+
+    # then window
+    if prewindow:
+        return stdnormalize(tide_filt.windowfunction(np.shape(thedata)[0], type=windowfunc) * intervec) / np.sqrt(np.shape(thedata)[0])
+    else:
+        return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
+
+
+def rms(vector):
+    return np.sqrt(np.mean(np.square(vector)))
+
+
+def envdetect(vector, filtwidth=3.0):
+    demeaned = vector - np.mean(vector)
+    sigabs = abs(demeaned)
+    return tide_filt.dolptrapfftfilt(1.0, 1.0 / (2.0 * filtwidth), 1.1 / (2.0 * filtwidth), sigabs)
+
+
+"""
+# --------------------------- Fitting functions -------------------------------------------------
 def gaussresidualssk(p, y, x):
     err = y - gausssk_eval(x, p)
     return err
@@ -905,118 +1116,6 @@ def risetime_eval(x, p):
         return p[1] * (1.0 - np.exp(-corrx / p[2]))
 
 
-# Find the image intensity value which thefrac of the non-zero voxels in the image exceed
-def getfracval(datamat, thefrac, numbins=200):
-    themax = datamat.max()
-    themin = datamat.min()
-    (meanhist, bins) = np.histogram(datamat, bins=numbins, range=(themin, themax))
-    cummeanhist = np.cumsum(meanhist)
-    target = cummeanhist[numbins - 1] * thefrac
-    for i in range(0, numbins):
-        if cummeanhist[i] >= target:
-            return bins[i]
-    return 0.0
-
-
-def makepmask(rvals, pval, sighistfit, onesided=True):
-    if onesided:
-        return np.where(rvals > getfracvalsfromfit(sighistfit, 1.0 - pval), np.int16(1), np.int16(0))
-    else:
-        return np.where(np.abs(rvals) > getfracvalsfromfit(sighistfit, 1.0 - pval / 2.0), np.int16(1), np.int16(0))
-
-
-def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False):
-    themax = datamat.max()
-    themin = datamat.min()
-    (meanhist, bins) = np.histogram(datamat, bins=numbins, range=(themin, themax))
-    cummeanhist = np.cumsum(meanhist)
-    if nozero:
-        cummeanhist = cummeanhist - cummeanhist[0]
-    thevals = []
-    if displayplots:
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('cumulative mean sum of histogram')
-        plot(bins[-numbins:], cummeanhist[-numbins:])
-        pl.show()
-    for thisfrac in thefracs:
-        target = cummeanhist[numbins - 1] * thisfrac
-        thevals.append(0.0)
-        for i in range(0, numbins):
-            if cummeanhist[i] >= target:
-                thevals[-1] = bins[i]
-                break
-    return thevals
-
-
-def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
-    themax = 1.0
-    themin = 0.0
-    bins = np.arange(themin, themax, (themax - themin) / numbins)
-    meanhist = johnsonsb.pdf(bins, histfit[0], histfit[1], histfit[2], histfit[3])
-    corrfac = (1.0 - histfit[-1]) / (1.0 * numbins)
-    meanhist *= corrfac
-    meanhist[0] = histfit[-1]
-
-    cummeanhist = histfit[-1] + (1.0 - histfit[-1]) * johnsonsb.cdf(bins, histfit[0], histfit[1], histfit[2],
-                                                                    histfit[3])
-    thevals = []
-    if displayplots:
-        fig = pl.figure()
-        ax = fig.add_subplot(211)
-        ax.set_title('probability histogram')
-        pl.plot(bins[-numbins:], meanhist[-numbins:])
-        ax = fig.add_subplot(212)
-        ax.set_title('cumulative mean sum of histogram')
-        pl.plot(bins[-numbins:], cummeanhist[-numbins:])
-        pl.show()
-    for thisfrac in thefracs:
-        target = cummeanhist[numbins - 1] * thisfrac
-        thevals.append(0.0)
-        for i in range(0, numbins):
-            if cummeanhist[i] >= target:
-                thevals[-1] = bins[i]
-                break
-    return thevals
-
-
-def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
-    # print('entering getfracvalsfromfit: histfit=',histfit, ' thefracs=', thefracs)
-    thedist = johnsonsb(histfit[0], histfit[1], histfit[2], histfit[3])
-    # print('froze the distribution')
-    if displayplots:
-        themin = 0.001
-        themax = 0.999
-        bins = np.arange(themin, themax, (themax - themin) / numbins)
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('probability histogram')
-        pl.plot(bins, johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3]))
-        pl.show()
-    # thevals = johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3])
-    thevals = thedist.ppf(thefracs)
-    return thevals
-
-
-def makemask(image, threshpct=25.0, verbose=False):
-    fracval = getfracval(image, 0.98)
-    threshval = (threshpct / 100.0) * fracval
-    if verbose:
-        print('fracval:', fracval, ' threshpct:', threshpct, ' mask threshhold:', threshval)
-    themask = np.where(image > threshval, np.int16(1), np.int16(0))
-    return themask
-
-
-def makelaglist(lagstart, lagend, lagstep):
-    numsteps = int((lagend - lagstart) // lagstep + 1)
-    lagend = lagstart + lagstep * (numsteps - 1)
-    print("creating list of ", numsteps, " lag steps (", lagstart, " to ", lagend, " in steps of ", lagstep, ")")
-    #thelags = np.r_[0.0:1.0 * numsteps] * lagstep + lagstart
-    thelags = np.arange(0.0, 1.0 * numsteps) * lagstep + lagstart
-    return thelags
-
-
-# --------------------------- Fitting functions -------------------------------------------------
 def locpeak(data, samplerate, lastpeaktime, winsizeinsecs=5.0, thresh=0.75, hysteresissecs=0.4):
     # look at a limited time window
     winsizeinsecs = 5.0
@@ -1624,260 +1723,4 @@ def gaussfitsk(height, loc, width, skewness, xvals, yvals):
 def gaussfit(height, loc, width, xvals, yvals):
     plsq, dummy = sp.optimize.leastsq(gaussresiduals, np.array([height, loc, width]), args=(yvals, xvals), maxfev=5000)
     return plsq[0], plsq[1], plsq[2]
-
-
-# --------------------------- Normalization functions -------------------------------------------------
-def znormalize(vector):
-    return stdnormalize(vector)
-
-
-@conditionaljit()
-def stdnormalize(vector):
-    demeaned = vector - np.mean(vector)
-    sigstd = np.std(demeaned)
-    if sigstd > 0.0:
-        return demeaned / sigstd
-    else:
-        return demeaned
-
-
-def varnormalize(vector):
-    demeaned = vector - np.mean(vector)
-    sigvar = np.var(demeaned)
-    if sigvar > 0.0:
-        return demeaned / sigvar
-    else:
-        return demeaned
-
-
-def pcnormalize(vector):
-    sigmean = np.mean(vector)
-    if sigmean > 0.0:
-        return vector / sigmean - 1.0
-    else:
-        return vector
-
-
-def ppnormalize(vector):
-    demeaned = vector - np.mean(vector)
-    sigpp = np.max(demeaned) - np.min(demeaned)
-    if sigpp > 0.0:
-        return demeaned / sigpp
-    else:
-        return demeaned
-
-
-@conditionaljit()
-def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
-    # detrend first
-    if dodetrend:
-        intervec = stdnormalize(detrend(thedata, demean=True))
-    else:
-        intervec = stdnormalize(thedata)
-
-    # then window
-    if prewindow:
-        return stdnormalize(tide_filt.windowfunction(np.shape(thedata)[0], type=windowfunc) * intervec) / np.sqrt(np.shape(thedata)[0])
-    else:
-        return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
-
-
-def rms(vector):
-    return np.sqrt(np.mean(np.square(vector)))
-
-
-# --------------------------- Spectral analysis functions ---------------------------------------
-def phase(mcv):
-    return np.arctan2(mcv.imag, mcv.real)
-
-
-def polarfft(invec, samplerate):
-    if np.shape(invec)[0] % 2 == 1:
-        thevec = invec[:-1]
-    else:
-        thevec = invec
-    spec = fftpack.fft(tide_filt.hamming(np.shape(thevec)[0]) * thevec)[0:np.shape(thevec)[0] // 2]
-    magspec = abs(spec)
-    phspec = phase(spec)
-    maxfreq = samplerate / 2.0
-    freqs = np.arange(0.0, maxfreq, maxfreq / (np.shape(spec)[0]))
-    return freqs, magspec, phspec
-
-
-def complex_cepstrum(x):
-    # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
-    def _unwrap(phase):
-        samples = phase.shape[-1]
-        unwrapped = np.unwrap(phase)
-        center = (samples + 1) // 2
-        if samples == 1: 
-            center = 0  
-        ndelay = np.array(np.round(unwrapped[...,center]/np.pi))
-        unwrapped -= np.pi * ndelay[...,None] * np.arange(samples) / center
-        return unwrapped, ndelay
-        
-    spectrum = fftpack.fft(x)
-    unwrapped_phase, ndelay = _unwrap(np.angle(spectrum))
-    log_spectrum = np.log(np.abs(spectrum)) + 1j * unwrapped_phase
-    ceps = fftpack.ifft(log_spectrum).real
-    
-    return ceps, ndelay
-
-
-def real_cepstrum(x):
-    # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
-    return fftpack.ifft(np.log(np.abs(fftpack.fft(x)))).real
-
-
-def envdetect(vector, filtwidth=3.0):
-    demeaned = vector - np.mean(vector)
-    sigabs = abs(demeaned)
-    return tide_filt.dolptrapfftfilt(1.0, 1.0 / (2.0 * filtwidth), 1.1 / (2.0 * filtwidth), sigabs)
-
-
-# --------------------------- Utility functions -------------------------------------------------
-def logmem(msg, file=None):
-    global lastmaxrss_parent, lastmaxrss_child
-    if msg is None:
-        lastmaxrss_parent = 0
-        lastmaxrss_child = 0
-        logline = ','.join([ 
-            '',
-            'Self Max RSS',
-            'Self Diff RSS',
-            'Self Shared Mem',
-            'Self Unshared Mem',
-            'Self Unshared Stack',
-            'Self Non IO Page Fault'
-            'Self IO Page Fault'
-            'Self Swap Out',
-            'Children Max RSS',
-            'Children Diff RSS',
-            'Children Shared Mem',
-            'Children Unshared Mem',
-            'Children Unshared Stack',
-            'Children Non IO Page Fault'
-            'Children IO Page Fault'
-            'Children Swap Out'])
-    else:
-        rcusage = resource.getrusage(resource.RUSAGE_SELF)
-        outvals = [msg]
-        outvals.append(str(rcusage.ru_maxrss))
-        outvals.append(str(rcusage.ru_maxrss - lastmaxrss_parent))
-        lastmaxrss_parent = rcusage.ru_maxrss
-        outvals.append(str(rcusage.ru_ixrss))
-        outvals.append(str(rcusage.ru_idrss))
-        outvals.append(str(rcusage.ru_isrss))
-        outvals.append(str(rcusage.ru_minflt))
-        outvals.append(str(rcusage.ru_majflt))
-        outvals.append(str(rcusage.ru_nswap))
-        rcusage = resource.getrusage(resource.RUSAGE_CHILDREN)
-        outvals.append(str(rcusage.ru_maxrss))
-        outvals.append(str(rcusage.ru_maxrss - lastmaxrss_child))
-        lastmaxrss_child = rcusage.ru_maxrss
-        outvals.append(str(rcusage.ru_ixrss))
-        outvals.append(str(rcusage.ru_idrss))
-        outvals.append(str(rcusage.ru_isrss))
-        outvals.append(str(rcusage.ru_minflt))
-        outvals.append(str(rcusage.ru_majflt))
-        outvals.append(str(rcusage.ru_nswap))
-        logline = ','.join(outvals)
-    if file is None:
-        print(logline)
-    else:
-        file.writelines(logline + "\n")
-
-
-def findexecutable(command):
-    import shutil
-
-    theversion = sys.version_info
-    if (theversion[0] >= 3) and (theversion[1] >= 3):
-        return shutil.which(command)
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            if os.access(os.path.join(path, command), os.X_OK):
-                return os.path.join(path, command)
-        return None
-
-
-def isexecutable(command):
-    import shutil
-
-    theversion = sys.version_info
-    if (theversion[0] >= 3) and (theversion[1] >= 3):
-        if shutil.which(command) is not None:
-            return True
-        else:
-            return False
-    else:
-        return any(
-            os.access(os.path.join(path, command), os.X_OK) 
-            for path in os.environ["PATH"].split(os.pathsep)
-        )
-
-
-def savecommandline(theargs, thename):
-    tide_io.writevec([' '.join(theargs)], thename + '_commandline.txt')
-
-
-def valtoindex(thearray, thevalue, toleft=True):
-    if toleft:
-        return bisect.bisect_left(thearray, thevalue)
-    else:
-        return bisect.bisect_right(thearray, thevalue)
-
-
-def progressbar(thisval, end_val, label='Percent', barsize=60):
-    percent = float(thisval) / end_val
-    hashes = '#' * int(round(percent * barsize))
-    spaces = ' ' * (barsize - len(hashes))
-    sys.stdout.write("\r{0}: [{1}] {2:.3f}%".format(label, hashes + spaces, 100.0 * percent))
-    sys.stdout.flush()
-
-
-# ------------------------------------------ Version function ----------------------------------
-def version():
-    thispath, thisfile = os.path.split(__file__)
-    print(thispath)
-    if os.path.isfile(os.path.join(thispath, '_gittag.py')):
-        with open(os.path.join(thispath, '_gittag.py')) as f:
-            for line in f:
-                if line.startswith('__gittag__'):
-                    fulltag = (line.split()[2]).split('-')
-                    break
-        return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
-    else:
-        return 'UNKNOWN', 'UNKNOWN'
-
-
-# --------------------------- timing functions -------------------------------------------------
-def timefmt(thenumber):
-    return "{:10.2f}".format(thenumber)
-
-
-def proctiminginfo(thetimings, outputfile='', extraheader=None):
-    theinfolist = []
-    start = thetimings[0]
-    starttime = float(start[1])
-    lasteventtime = starttime
-    if extraheader is not None:
-        print(extraheader)
-        theinfolist.append(extraheader)
-    headerstring = 'Clock time\tProgram time\tDuration\tDescription'
-    print(headerstring)
-    theinfolist.append(headerstring)
-    for theevent in thetimings:
-        theduration = float(theevent[1] - lasteventtime)
-        outstring = time.strftime("%Y%m%dT%H%M%S", time.localtime(theevent[1])) + \
-                    timefmt(float(theevent[1]) - starttime) + \
-                    '\t' + timefmt(theduration) + '\t' + theevent[0]
-        if theevent[2] is not None:
-            outstring += " ({0:.2f} {1}/second)".format(float(theevent[2]) / theduration, theevent[3])
-        print(outstring)
-        theinfolist.append(outstring)
-        lasteventtime = float(theevent[1])
-    if outputfile != '':
-        tide_io.writevec(theinfolist, outputfile)
-
-
+"""

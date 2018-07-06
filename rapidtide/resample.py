@@ -30,7 +30,7 @@ import time
 import sys
 import os
 
-import rapidtide.tide_funcs as tide
+import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 
@@ -154,7 +154,7 @@ def congrid(xaxis, loc, val, width, debug=False):
     if loc < xaxis[0] or loc > xaxis[-1]:
         print('loc', loc, 'not in range', xaxis[0], xaxis[-1])
         
-    center = tide.valtoindex(xaxis, loc)
+    center = tide_util.valtoindex(xaxis, loc)
     offset = loc - xaxis[center]
     offsetkey = str(np.round(offset, 3))
     try:
