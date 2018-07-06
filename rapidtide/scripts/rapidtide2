@@ -39,6 +39,7 @@ import resource
 import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.resample as tide_resample
 
 from sklearn.decomposition import FastICA, PCA
 from pylab import figure, plot, show
@@ -213,7 +214,7 @@ def procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, o
                             corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc):
     global rt_floattype
     if optiondict['oversampfactor'] >= 1:
-        thetc[:] = tide.doresample(fmri_x, fmritc, os_fmri_x, method=optiondict['interptype'])
+        thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=optiondict['interptype'])
     else:
         thetc[:] = fmritc
     thexcorr, theglobalmax = onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
@@ -589,7 +590,7 @@ def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, 
     else:
         normtc = fmritc * normfac * thisweight
     shifttr = -(-optiondict['offsettime'] + lagtime) / fmritr  # lagtime is in seconds
-    [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide.timeshift(normtc, shifttr, padtrs)
+    [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide_resample.timeshift(normtc, shifttr, padtrs)
     if optiondict['filterbeforePCA']:
         outtc = theprefilter.apply(optiondict['fmrifreq'], shiftedtc)
         outweights = theprefilter.apply(optiondict['fmrifreq'], weights)
@@ -2396,19 +2397,19 @@ def main():
     # write out the resampled reference regressors
     if optiondict['dodetrend']:
         resampnonosref_y = tide.detrend(
-            tide.doresample(reference_x, reference_y, initial_fmri_x, method=optiondict['interptype']),
+            tide_resample.doresample(reference_x, reference_y, initial_fmri_x, method=optiondict['interptype']),
             demean=optiondict['dodemean'])
         resampref_y = tide.detrend(
-            tide.doresample(reference_x, reference_y, os_fmri_x, method=optiondict['interptype']),
+            tide_resample.doresample(reference_x, reference_y, os_fmri_x, method=optiondict['interptype']),
             demean=optiondict['dodemean'])
     else:
-        resampnonosref_y = tide.doresample(reference_x, reference_y, initial_fmri_x, method=optiondict['interptype'])
-        resampref_y = tide.doresample(reference_x, reference_y, os_fmri_x, method=optiondict['interptype'])
+        resampnonosref_y = tide_resample.doresample(reference_x, reference_y, initial_fmri_x, method=optiondict['interptype'])
+        resampref_y = tide_resample.doresample(reference_x, reference_y, os_fmri_x, method=optiondict['interptype'])
 
     # prepare the temporal mask
     if optiondict['usetmask']:
         tmask_y = maketmask(optiondict['tmaskname'], reference_x, rt_floatset(reference_y))
-        tmaskos_y = tide.doresample(reference_x, tmask_y, os_fmri_x, method=optiondict['interptype'])
+        tmaskos_y = tide_resample.doresample(reference_x, tmask_y, os_fmri_x, method=optiondict['interptype'])
         tide_io.writenpvecs(tmask_y, outputname + '_temporalmask.txt')
         resampnonosref_y *= tmask_y
         thefit, R = tide.mlregress(tmask_y, resampnonosref_y)
@@ -2749,16 +2750,16 @@ def main():
             tide_io.writenpvecs(normoutputdata, outputname + '_refinedregressor_pass' + str(thepass) + '.txt')
 
             if optiondict['dodetrend']:
-                resampnonosref_y = tide.detrend(tide.doresample(initial_fmri_x, normoutputdata, initial_fmri_x,
+                resampnonosref_y = tide.detrend(tide_resample.doresample(initial_fmri_x, normoutputdata, initial_fmri_x,
                                                                 method=optiondict['interptype']),
                                                 demean=optiondict['dodemean'])
-                resampref_y = tide.detrend(tide.doresample(initial_fmri_x, normoutputdata, os_fmri_x,
+                resampref_y = tide.detrend(tide_resample.doresample(initial_fmri_x, normoutputdata, os_fmri_x,
                                                            method=optiondict['interptype']),
                                            demean=optiondict['dodemean'])
             else:
-                resampnonosref_y = tide.doresample(initial_fmri_x, normoutputdata, initial_fmri_x,
+                resampnonosref_y = tide_resample.doresample(initial_fmri_x, normoutputdata, initial_fmri_x,
                                                    method=optiondict['interptype'])
-                resampref_y = tide.doresample(initial_fmri_x, normoutputdata, os_fmri_x,
+                resampref_y = tide_resample.doresample(initial_fmri_x, normoutputdata, os_fmri_x,
                                               method=optiondict['interptype'])
             if optiondict['usetmask']:
                 resampnonosref_y *= tmask_y

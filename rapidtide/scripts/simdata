@@ -25,6 +25,7 @@ import getopt
 import string
 import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
+import rapidtide.resample as tide_resample
 
 from numpy import r_, zeros, ones, shape, random
 from scipy.signal import cspline1d, cspline1d_eval, butter, lfilter, correlate
@@ -158,7 +159,7 @@ padvalue = fmritr * numpadtrs
 
 genlagtc = tide.fastresampler(nirs_x, nirs_y, padvalue=padvalue, doplot=False)
 fmri_y_f = genlagtc.yfromx(initial_fmri_x)
-fmri_y = tide.doresample(nirs_x, nirs_y, initial_fmri_x)
+fmri_y = tide_resample.doresample(nirs_x, nirs_y, initial_fmri_x)
 #fig = figure()
 #ax = fig.add_subplot(111)
 #plot(initial_fmri_x, fmri_y_f + 1.0, initial_fmri_x, fmri_y)
@@ -172,7 +173,7 @@ fmri_y = tide.doresample(nirs_x, nirs_y, initial_fmri_x)
 
 # loop over space
 for k in range(0, numslices):
-    sliceoffsettime = tide.calcsliceoffset(sliceordertype, k, numslices, fmritr)
+    sliceoffsettime = tide_resample.calcsliceoffset(sliceordertype, k, numslices, fmritr)
     print("processing slice ", k, ": sliceoffsettime=", sliceoffsettime)
     for j in range(0, ysize):
         for i in range(0, xsize):
@@ -184,7 +185,7 @@ for k in range(0, numslices):
             if fastresample:
                 fmri_y = genlagtc.yfromx(fmri_x)
             else:
-                fmri_y = tide.doresample(nirs_x, nirs_y, fmri_x)
+                fmri_y = tide_resample.doresample(nirs_x, nirs_y, fmri_x)
             thenoise = noiselevel * standard_normal(len(fmri_y))
             simdata[i, j, k, :] = immeandata[i, j, k] * (1.0 + (boldpcdata[i, j, k] / 100.0) * fmri_y) + thenoise
 
