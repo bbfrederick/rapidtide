@@ -2580,7 +2580,7 @@ def main():
     # print('setting up fast resampling with padvalue =',padvalue)
     numpadtrs = int(padvalue // fmritr)
     padvalue = fmritr * numpadtrs
-    genlagtc = tide.fastresampler(reference_x, reference_y, padvalue=padvalue)
+    genlagtc = tide_resample.fastresampler(reference_x, reference_y, padvalue=padvalue)
 
     # cycle over all voxels
     refine = True
@@ -2829,7 +2829,7 @@ def main():
                 resampref_y -= thefit[0, 1] * tmaskos_y
 
             # reinitialize lagtc for resampling
-            genlagtc = tide.fastresampler(initial_fmri_x, normoutputdata, padvalue=padvalue)
+            genlagtc = tide_resample.fastresampler(initial_fmri_x, normoutputdata, padvalue=padvalue)
             nonosrefname = '_reference_fmrires_pass' + str(thepass + 1) + '.txt'
             osrefname = '_reference_resampres_pass' + str(thepass + 1) + '.txt'
             tide_io.writenpvecs(tide.stdnormalize(resampnonosref_y), outputname + nonosrefname)
