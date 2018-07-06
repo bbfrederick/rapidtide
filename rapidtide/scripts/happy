@@ -33,6 +33,7 @@ import getopt
 import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.resample as tide_resample
 from scipy.signal import hilbert, welch, savgol_filter
 import nibabel as nib
 
@@ -392,7 +393,7 @@ cardiacfromfmri, slicesamplerate, numsteps = cardiacfromimage(fmri_data, mask, x
     debug=debug)
 slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
 tide_io.writevec(cardiacfromfmri, outputroot + '_cardiacfromfmri.txt')
-tide_io.writevec(tide.corrnormalize(tide.arbresample(cardiacfromfmri, slicesamplerate, 100.0), False, False), outputroot + '_cardiacfromfmri_100Hz.txt')
+tide_io.writevec(tide.corrnormalize(tide_resample.arbresample(cardiacfromfmri, slicesamplerate, 100.0), False, False), outputroot + '_cardiacfromfmri_100Hz.txt')
 cardiacwaveform = cardiacfromfmri
 infodict['slicesamplerate'] = slicesamplerate
 infodict['numsteps'] = numsteps
@@ -428,7 +429,7 @@ if cardiacfile is not None:
         print('inputfreq =', inputfreq)
         print('inputstart =', inputstart)
         print('inputtimeaxis: len=', len(inputtimeaxis), 'vals=', inputtimeaxis)
-    cardiacfromfile = tide.doresample(inputtimeaxis, inputwave, slicetimeaxis, method='cubic', padlen=0)
+    cardiacfromfile = tide_resample.doresample(inputtimeaxis, inputwave, slicetimeaxis, method='cubic', padlen=0)
     cardiacfromfile = tide.corrnormalize(cardiacfromfile, False, False)
 
     # find key components of cardiac waveform
@@ -440,7 +441,7 @@ if cardiacfile is not None:
         infodict['kalminit_file_ph' + str(i)] = phases_file[i]
 
     tide_io.writevec(cardiacfromfile, outputroot + '_cardiacfromfile.txt')
-    tide_io.writevec(tide.corrnormalize(tide.arbresample(inputwave, inputfreq, 100.0), False, False), outputroot + '_cardiacfromfile_100Hz.txt')
+    tide_io.writevec(tide.corrnormalize(tide_resample.arbresample(inputwave, inputfreq, 100.0), False, False), outputroot + '_cardiacfromfile_100Hz.txt')
     thexcorr = tide.fastcorrelate(cardiacfromfile, cardiacfromfmri, usefft=True)
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / slicesamplerate
@@ -510,7 +511,7 @@ tide_io.writedict(infodict, outputroot + '_info.txt')
 
 # interpolate the instantaneous phase
 upsampledslicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
-interpphase = phasemod(tide.doresample(slicetimeaxis, instantaneous_phase, upsampledslicetimeaxis, method='cubic', padlen=0))
+interpphase = phasemod(tide_resample.doresample(slicetimeaxis, instantaneous_phase, upsampledslicetimeaxis, method='cubic', padlen=0))
 tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 
 # calculate RRI
@@ -520,7 +521,7 @@ therri = rrifromphase(upsampledslicetimeaxis, interpphase)
 phasevals = np.zeros((numslices, timepoints), dtype=np.float64)
 for theslice in range(numslices):
     thetimes = sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False) + slicetimes[theslice]
-    phasevals[theslice, :] = phasemod(tide.doresample(slicetimeaxis, instantaneous_phase, thetimes, method='cubic', padlen=0))
+    phasevals[theslice, :] = phasemod(tide_resample.doresample(slicetimeaxis, instantaneous_phase, thetimes, method='cubic', padlen=0))
     if debug:
         tide_io.writevec(thetimes, outputroot + '_times_' + str(theslice).zfill(2) + '.txt')
         tide_io.writevec(phasevals[theslice, :], outputroot + '_phasevals_' + str(theslice).zfill(2) + '.txt')
@@ -556,7 +557,7 @@ for theslice in range(numslices):
     print('doing slice', theslice)
     validlocs = np.where(maskbyslice[:, theslice] > 0)[0]
     for t in range(timepoints):
-        thevals, theweights, theindices = tide.congrid(outphases, phasevals[theslice, t], 1.0, congridwidth)
+        thevals, theweights, theindices = tide_resample.congrid(outphases, phasevals[theslice, t], 1.0, congridwidth)
         if detrend:
             filteredmr = -tide.detrend(fmri_data_byslice[validlocs, theslice, t], demean=False)
         else:

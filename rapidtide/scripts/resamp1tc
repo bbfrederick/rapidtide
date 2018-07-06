@@ -29,6 +29,7 @@ import getopt
 import matplotlib
 import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
+import rapidtide.resample as tide_resample
 from scipy import arange
 from numpy import max, floor
 import pylab as plt
@@ -88,11 +89,11 @@ def main():
 
     in_t = arange(0.0, totaltime, intimestep)
     out_t = arange(0.0, outtimestep * numoutpoints, outtimestep)
-    outputdata = tide.doresample(in_t, inputdata, out_t, method='cubic')
+    outputdata = tide_resample.doresample(in_t, inputdata, out_t, method='cubic')
     IF = max([60.0, 2.0 * insamplerate])
     if outsamplerate < insamplerate:
-        outputdata2 = tide.dotwostepresample(in_t, inputdata, IF, outsamplerate)
-        outputdata3 = tide.arbresample(inputdata, insamplerate, outsamplerate)
+        outputdata2 = tide_resample.dotwostepresample(in_t, inputdata, IF, outsamplerate)
+        outputdata3 = tide_resample.arbresample(inputdata, insamplerate, outsamplerate)
         print(len(out_t), len(outputdata2))
         if len(out_t) < len(outputdata2):
             outputdata2 = outputdata2[0:len(out_t)]
