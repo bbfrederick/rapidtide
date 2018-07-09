@@ -119,7 +119,7 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
             sidelobewidth = (corrscale[sidelobeindex + numbins] - corrscale[sidelobeindex]) * 2.0
             fitstart = sidelobeindex - numbins
             fitend = sidelobeindex + numbins
-            sidelobeamp, sidelobetime, sidelobewidth = gaussfit(sidelobeamp, sidelobetime, sidelobewidth,
+            sidelobeamp, sidelobetime, sidelobewidth = tide_fit.gaussfit(sidelobeamp, sidelobetime, sidelobewidth,
                                                                 corrscale[fitstart:fitend + 1],
                                                                 thexcorr[fitstart:fitend + 1])
 
