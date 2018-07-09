@@ -45,6 +45,7 @@ else:
     print('using qt5 bindings')
     import rapidtide.tidepoolTemplate_qt5 as uiTemplate
 import rapidtide.tide_funcs as tide
+import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
 import sys
 import getopt
@@ -517,7 +518,7 @@ class overlay:
     def updateStats(self):
         self.minval = self.maskeddata.min()
         self.maxval = self.maskeddata.max()
-        self.robustmin, self.robustmax = tide.getfracvals(self.maskeddata, [0.02, 0.98], nozero=True)
+        self.robustmin, self.robustmax = tide_stats.getfracvals(self.maskeddata, [0.02, 0.98], nozero=True)
         self.dispmin = self.robustmin
         self.dispmax = self.robustmax
         self.histy, self.histx = np.histogram(self.maskeddata[np.where(self.maskeddata != 0.0)],
@@ -969,7 +970,7 @@ def set_0p05():
     global overlays, loadedfuncmaps, ui
     print('setting functional mask to p<0.05')
     ui.setMask_Button.setText('p<0.05')
-    #overlays['jit_mask'] = tide.makepmask(overlays['lagstrengths'], 0.05, sighistfit, onesided=True)
+    #overlays['jit_mask'] = tide_stats.makepmask(overlays['lagstrengths'], 0.05, sighistfit, onesided=True)
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['p_lt_0p050_mask'].data)
         #overlays[themap].setFuncMask(overlays['jit_mask'].data)
@@ -1654,8 +1655,8 @@ def main():
     #  This is currently very broken, so it's disabled
     #if sighistfitname is not None:
     #    thepcts = np.array([0.95, 0.99, 0.995, 0.999])
-    #    thervals = tide.rfromp(sighistfitname, thepcts)
-    #    tide.printthresholds(thepcts, thervals, 'Crosscorrelation significance thresholds from data:')
+    #    thervals = tide_stats.rfromp(sighistfitname, thepcts)
+    #    tide_stats.printthresholds(thepcts, thervals, 'Crosscorrelation significance thresholds from data:')
 
     # set the background image
     if 'anatomic' in overlays:

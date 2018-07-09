@@ -24,6 +24,7 @@ import sys
 import getopt
 import string
 import rapidtide.tide_funcs as tide
+import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
 
 from numpy import r_, zeros, ones, shape, where, sort
@@ -88,19 +89,19 @@ pcts_data = zeros((numspatiallocs,len(thepercentiles)),dtype='float')
 pcts_fit = zeros((numspatiallocs,len(thepercentiles)),dtype='float')
 
 # cycle over all voxels
-#therange=(0,1.1*tide.getfracvals(corr_data,[0.95],numbins=1000,nozero=True)[0])
+#therange=(0,1.1*tide_stats.getfracvals(corr_data,[0.95],numbins=1000,nozero=True)[0])
 therange=(0,np.max(corr_data))
 print('the range is ',therange)
 
 print('now cycling over all voxels')
 for spatialloc in range(0,numspatiallocs):
     sorteddata[spatialloc,:]=sort(corr_data[spatialloc,:])
-    #temphist = tide.makehistogram(corr_data[spatialloc,:], histlen, therange)
+    #temphist = tide_stats.makehistogram(corr_data[spatialloc,:], histlen, therange)
     #outputhists[spatialloc,:] = temphist[0]
     #histfit = tide.fitpdf(temphist, histlen, 0, corr_data[spatialloc,:])
-    #pcts_data[spatialloc,:] = tide.getfracvals(corr_data[spatialloc,:], \
+    #pcts_data[spatialloc,:] = tide_stats.getfracvals(corr_data[spatialloc,:], \
     #    thepercentiles, numbins=int(np.sqrt(len(corr_data[spatialloc,:])) * 5.0), nozero=True)
-    #pcts_fit[spatialloc,:] = tide.getfracvalsfromfit(histfit, thepercentiles, numbins=100000)
+    #pcts_fit[spatialloc,:] = tide_stats.getfracvalsfromfit(histfit, thepercentiles, numbins=100000)
     if spatialloc % 100 == 0:
         progressbar(spatialloc + 1, numspatiallocs, label='Percent complete')
     
