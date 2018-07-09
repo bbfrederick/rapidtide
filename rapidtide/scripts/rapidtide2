@@ -37,6 +37,7 @@ from functools import partial
 import resource
 
 import rapidtide.tide_funcs as tide
+import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
@@ -1103,9 +1104,9 @@ def logmem(msg, file=None):
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     # mask to interesting voxels
     if optiondict['globalmaskmethod'] == 'mean':
-        themask = tide.makemask(np.mean(indata, axis=1), optiondict['corrmaskthreshpct'])
+        themask = tide_stats.makemask(np.mean(indata, axis=1), optiondict['corrmaskthreshpct'])
     elif optiondict['globalmaskmethod'] == 'variance':
-        themask = tide.makemask(np.var(indata, axis=1), optiondict['corrmaskthreshpct'])
+        themask = tide_stats.makemask(np.var(indata, axis=1), optiondict['corrmaskthreshpct'])
     if optiondict['nothresh']:
         themask *= 0
         themask += 1
@@ -2226,7 +2227,7 @@ def main():
 
     # find the threshold value for the image data
     logmem('before selecting valid voxels', file=memfile)
-    threshval = tide.getfracval(fmri_data[:, optiondict['addedskip']:], 0.98) / 25.0
+    threshval = tide_stats.getfracval(fmri_data[:, optiondict['addedskip']:], 0.98) / 25.0
     if optiondict['corrmaskname'] is not None:
         if optiondict['textio']:
             corrmask = tide_io.readvecs(optiondict['corrmaskname']).astype('int16')
@@ -2243,7 +2244,7 @@ def main():
                 sys.exit()
             corrmask = np.uint16(nimcorrmask.reshape((numspatiallocs)))
     else:
-        corrmask = np.uint16(tide.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
+        corrmask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
                                        threshpct=optiondict['corrmaskthreshpct']))
        
     if optiondict['nothresh']:
@@ -2628,7 +2629,7 @@ def main():
             for thispercentile in thepercentiles:
                 thepvalnames.append("{:.3f}".format(1.0 - thispercentile).replace('.', 'p'))
 
-            pcts, pcts_fit, sigfit = tide.sigFromDistributionData(corrdistdata, optiondict['sighistlen'],
+            pcts, pcts_fit, sigfit = tide_stats.sigFromDistributionData(corrdistdata, optiondict['sighistlen'],
                                                                   thepercentiles, twotail=optiondict['bipolar'],
                                                                   displayplots=optiondict['displayplots'],
                                                                   nozero=optiondict['nohistzero'],
@@ -2636,10 +2637,10 @@ def main():
             if optiondict['ampthreshfromsig']:
                 print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
                 optiondict['ampthresh'] = pcts[2]
-            tide.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
+            tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
             if optiondict['dosighistfit']:
-                tide.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
-                tide.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
+                tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
+                tide_stats.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
                                           outputname + '_nullcorrelationhist_pass' + str(thepass),
                                           displaytitle='Null correlation histogram, pass' + str(thepass),
                                           displayplots=optiondict['displayplots'], refine=False)
@@ -2665,7 +2666,7 @@ def main():
                                                   optiondict)
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
-        tide.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
+        tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
                               outputname + '_globallaghist_pass' + str(thepass),
                               displaytitle='lagtime histogram', displayplots=optiondict['displayplots'],
                               therange=(corrscale[0], corrscale[-1]), refine=False)
@@ -2732,7 +2733,7 @@ def main():
             print('\n\nRegressor refinement, pass' + str(thepass))
             timings.append(['Regressor refinement start, pass ' + str(thepass), time.time(), None, None])
             if optiondict['refineoffset']:
-                peaklag, peakheight, peakwidth = tide.gethistprops(lagtimes[np.where(lagmask > 0)],
+                peaklag, peakheight, peakwidth = tide_stats.gethistprops(lagtimes[np.where(lagmask > 0)],
                                                                    optiondict['histlen'])
                 optiondict['offsettime'] = peaklag
                 optiondict['offsettime_total'] += peaklag
@@ -2908,16 +2909,16 @@ def main():
 
     # Post refinement step 3 - make and save interesting histograms
     timings.append(['Start saving histograms', time.time(), None, None])
-    tide.makeandsavehistogram(lagtimes[np.where(lagmask > 0)], optiondict['histlen'], 0, outputname + '_laghist',
+    tide_stats.makeandsavehistogram(lagtimes[np.where(lagmask > 0)], optiondict['histlen'], 0, outputname + '_laghist',
                               displaytitle='lagtime histogram', displayplots=optiondict['displayplots'], refine=False)
-    tide.makeandsavehistogram(lagstrengths[np.where(lagmask > 0)], optiondict['histlen'], 0,
+    tide_stats.makeandsavehistogram(lagstrengths[np.where(lagmask > 0)], optiondict['histlen'], 0,
                               outputname + '_strengthhist',
                               displaytitle='lagstrength histogram', displayplots=optiondict['displayplots'],
                               therange=(0.0, 1.0))
-    tide.makeandsavehistogram(lagsigma[np.where(lagmask > 0)], optiondict['histlen'], 1, outputname + '_widthhist',
+    tide_stats.makeandsavehistogram(lagsigma[np.where(lagmask > 0)], optiondict['histlen'], 1, outputname + '_widthhist',
                               displaytitle='lagsigma histogram', displayplots=optiondict['displayplots'])
     if optiondict['doglmfilt']:
-        tide.makeandsavehistogram(r2value[np.where(lagmask > 0)], optiondict['histlen'], 1, outputname + '_Rhist',
+        tide_stats.makeandsavehistogram(r2value[np.where(lagmask > 0)], optiondict['histlen'], 1, outputname + '_Rhist',
                                   displaytitle='correlation R2 histogram', displayplots=optiondict['displayplots'])
     timings.append(['Finished saving histograms', time.time(), None, None])
 

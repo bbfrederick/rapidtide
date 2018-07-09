@@ -32,6 +32,7 @@ import scipy as sp
 
 import getopt
 import rapidtide.tide_funcs as tide
+import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
@@ -369,7 +370,7 @@ fmri_data = nim_data.reshape((numspatiallocs, timepoints))
 
 # make and save a mask of the voxels to process
 tide_util.logmem('before mask creation', file=memfile)
-mask = np.uint16(tide.makemask(np.mean(fmri_data[:, :], axis=1),
+mask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, :], axis=1),
                                        threshpct=maskthreshpct))
 mask3d = mask.reshape((xsize, ysize, numslices))
 theheader = nim_hdr
@@ -608,11 +609,11 @@ timings.append(['Phase projected data saved', time.time(), None, None])
 app2d = app.reshape((numspatiallocs, destpoints))
 validlocs = np.where(mask > 0)[0]
 histinput = app2d[validlocs, :].reshape((len(validlocs), destpoints))
-tide.makeandsavehistogram(histinput, histlen, 0, outputroot + '_histogram')
+tide_stats.makeandsavehistogram(histinput, histlen, 0, outputroot + '_histogram')
 
 # make find vessel threshholds 
 tide_util.logmem('before making vessel masks', file=memfile)
-hardvesselthresh = tide.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
+hardvesselthresh = tide_stats.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
 softvesselthresh = softvesselfrac * hardvesselthresh
 print('hard, soft vessel threshholds set to', hardvesselthresh, softvesselthresh)
 

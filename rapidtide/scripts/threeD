@@ -30,6 +30,7 @@ import sys
 import os
 import numpy as np
 import rapidtide.tide_funcs as tide
+import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
 import time
 
@@ -94,7 +95,7 @@ minsize = np.min([xdim, ydim, slicethickness])
 volumelist = []
 transfacs = (0, 0, 0)
 scalefacs = (xdim / minsize, ydim / minsize, slicethickness / minsize)
-datarobustmax = tide.getfracvals(nim_data, [0.98])[0]
+datarobustmax = tide_stats.getfracvals(nim_data, [0.98])[0]
 fracval = 0.2
 clims = (datarobustmax * fracval, 2.0 * datarobustmax)
 

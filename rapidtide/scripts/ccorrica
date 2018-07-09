@@ -30,6 +30,7 @@ else:
     matplotlib.use('TkAgg')
 import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
+import rapidtide.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 from scipy.signal import correlate
@@ -110,10 +111,10 @@ for component1 in range(0, numcomponents):
         outputcorrmask[component1, component2, 0, 0] = maskval
 
 # symmetrize the matrices
-outputcorrmax[:, :, 0, 0] = tide.symmetrize(outputcorrmax[:, :, 0, 0], zerodiagonal=True)
-outputcorrlag[:, :, 0, 0] = tide.symmetrize(outputcorrlag[:, :, 0, 0], antisymmetric=True)
-outputcorrwidth[:, :, 0, 0] = tide.symmetrize(outputcorrwidth[:, :, 0, 0])
-outputcorrmask[:, :, 0, 0] = tide.symmetrize(outputcorrmask[:, :, 0, 0], zerodiagonal=True)
+outputcorrmax[:, :, 0, 0] = tide_stats.symmetrize(outputcorrmax[:, :, 0, 0], zerodiagonal=True)
+outputcorrlag[:, :, 0, 0] = tide_stats.symmetrize(outputcorrlag[:, :, 0, 0], antisymmetric=True)
+outputcorrwidth[:, :, 0, 0] = tide_stats.symmetrize(outputcorrwidth[:, :, 0, 0])
+outputcorrmask[:, :, 0, 0] = tide_stats.symmetrize(outputcorrmask[:, :, 0, 0], zerodiagonal=True)
 
 # show()
 outputaffine = eye(4)
