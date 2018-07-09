@@ -176,7 +176,7 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
         dataseg2 = tide_math.corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
         times.append(i * sampletime)
         xcorrpertime.append(fastcorrelate(dataseg1, dataseg2, weighting=weighting))
-        maxindex, thedelayval, theRval, maxsigma, maskval, failreason, peakstart, peakend = findmaxlag_gauss(
+        maxindex, thedelayval, theRval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
             xcorr_x, xcorrpertime[-1], -laglimit, laglimit, 1000.0,
             refine=True,
             useguess=False,
