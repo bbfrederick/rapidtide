@@ -40,6 +40,7 @@ from scipy.stats import johnsonsb
 import rapidtide.util as tide_util
 import rapidtide.resample as tide_resample
 import rapidtide.fit as tide_fit
+import rapidtide.miscmath as tide_math
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -181,7 +182,7 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
 
 
 def quickcorr(data1, data2, windowfunc='hamming'):
-    thepcorr = sp.stats.stats.pearsonr(corrnormalize(data1, True, True, windowfunc=windowfunc), corrnormalize(data2, True, True, windowfunc=windowfunc))
+    thepcorr = sp.stats.stats.pearsonr(tide_math.corrnormalize(data1, True, True, windowfunc=windowfunc), tide_math.corrnormalize(data2, True, True, windowfunc=windowfunc))
     return thepcorr
 
 
@@ -192,8 +193,8 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewind
     corrpertime = []
     ppertime = []
     for i in range(halfwindow, np.shape(data1)[0] - halfwindow, samplestep):
-        dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
-        dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
+        dataseg1 = tide_math.corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
+        dataseg2 = tide_math.corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
         thepcorr = sp.stats.stats.pearsonr(dataseg1, dataseg2)
         times.append(i * sampletime)
         corrpertime.append(thepcorr[0])
@@ -208,8 +209,8 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     if laglimit is None:
         laglimit = windowtime / 2.0
 
-    dataseg1 = corrnormalize(data1[0:2 * halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
-    dataseg2 = corrnormalize(data2[0:2 * halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
+    dataseg1 = tide_math.corrnormalize(data1[0:2 * halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
+    dataseg2 = tide_math.corrnormalize(data2[0:2 * halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
     thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
     xcorrlen = np.shape(thexcorr)[0]
     xcorr_x = np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
@@ -220,8 +221,8 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     delayvals = []
     valid = []
     for i in range(halfwindow,np.shape(data1)[0] - halfwindow, samplestep):
-        dataseg1 = corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
-        dataseg2 = corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
+        dataseg1 = tide_math.corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
+        dataseg2 = tide_math.corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
         times.append(i * sampletime)
         xcorrpertime.append(fastcorrelate(dataseg1, dataseg2, weighting=weighting))
         maxindex, thedelayval, theRval, maxsigma, maskval, failreason, peakstart, peakend = findmaxlag_gauss(
@@ -253,10 +254,10 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
     # Choudhary, H., Bahl, R. & Kumar, A. 
     # Inter-sensor Time Delay Estimation using cepstrum of sum and difference signals in 
     #     underwater multipath environment. in 1–7 (IEEE, 2015). doi:10.1109/UT.2015.7108308
-    ceps1, _ = complex_cepstrum(data1)
-    ceps2, _ = complex_cepstrum(data2)
-    additive_cepstrum, _ = complex_cepstrum(data1 + data2)
-    difference_cepstrum, _ = complex_cepstrum(data1 - data2)
+    ceps1, _ = tide_math.complex_cepstrum(data1)
+    ceps2, _ = tide_math.complex_cepstrum(data2)
+    additive_cepstrum, _ = tide_math.complex_cepstrum(data1 + data2)
+    difference_cepstrum, _ = tide_math.complex_cepstrum(data1 - data2)
     residual_cepstrum = additive_cepstrum - difference_cepstrum
     if displayplots:
         tvec = timestep * np.arange(0.0, len(data1))
