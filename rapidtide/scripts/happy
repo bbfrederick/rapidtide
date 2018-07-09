@@ -38,6 +38,7 @@ import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.resample as tide_resample
+import rapidtide.correlate as tide_corr
 from scipy.signal import hilbert, welch, savgol_filter
 import nibabel as nib
 
@@ -462,7 +463,7 @@ if cardiacfile is not None:
     tide_io.writevec(tide.corrnormalize(tide_resample.arbresample(inputwave, inputfreq, 100.0), False, False), outputroot + '_cardiacfromfile_100Hz.txt')
     timings.append(['Cardiac signal from physiology data resampled and saved', time.time(), None, None])
 
-    thexcorr = tide.fastcorrelate(cardiacfromfile, cardiacfromfmri, usefft=True)
+    thexcorr = tide_corr.fastcorrelate(cardiacfromfile, cardiacfromfmri, usefft=True)
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / slicesamplerate
     xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
