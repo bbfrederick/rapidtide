@@ -29,7 +29,6 @@ from itertools import cycle
 import sys
 import os
 import numpy as np
-import rapidtide.tide_funcs as tide
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
 import time

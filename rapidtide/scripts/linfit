@@ -24,7 +24,7 @@ import sys
 import getopt
 import string
 import platform
-import rapidtide.tide_funcs as tide
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 
 from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
@@ -221,9 +221,9 @@ for thetime in range(0, timepoints):
             voxelstofit = np.where(regionvoxels[:, region] * thisdatamask > 0.5)
             voxelstoreconstruct = np.where(regionvoxels[:, region] > 0.5)
             if order == 2:
-                thefit, R = tide.mlregress([rs_templatefile[voxelstofit], np.square(rs_templatefile[voxelstofit])], rs_datafile[voxelstofit, thetime][0])
+                thefit, R = tide_fit.mlregress([rs_templatefile[voxelstofit], np.square(rs_templatefile[voxelstofit])], rs_datafile[voxelstofit, thetime][0])
             else:
-                thefit, R = tide.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0])
+                thefit, R = tide_fit.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0])
             lincoffs[region, thetime] = thefit[0, 1]
             offsets[region, thetime] = thefit[0, 0]
             rvals[region, thetime] = R
@@ -239,7 +239,7 @@ for thetime in range(0, timepoints):
     else:
         voxelstofit = np.where(thisdatamask > 0.5)
         voxelstoreconstruct = np.where(rs_templatemask > 0.5)
-        thefit, R = tide.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0])
+        thefit, R = tide_fit.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0])
         lincoffs[thetime] = thefit[0, 1]
         offsets[thetime] = thefit[0, 0]
         rvals[thetime] = R

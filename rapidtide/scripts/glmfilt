@@ -22,7 +22,6 @@
 from __future__ import print_function, division
 import sys
 import numpy as np
-import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 

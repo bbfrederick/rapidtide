@@ -81,45 +81,6 @@ except ImportError:
     pyfftwexists = False
 
 
-def checkimports(optiondict):
-    if pyfftwexists:
-        print('monkey patched scipy.fftpack to use pyfftw')
-    else:
-        print('using standard scipy.fftpack')
-    optiondict['pyfftwexists'] = pyfftwexists
-
-    if numbaexists:
-        print('numba exists')
-    else:
-        print('numba does not exist')
-    optiondict['numbaexists'] = numbaexists
-
-    if memprofilerexists:
-        print('memprofiler exists')
-    else:
-        print('memprofiler does not exist')
-    optiondict['memprofilerexists'] = memprofilerexists
-
-    if nibabelexists:
-        print('nibabel exists')
-    else:
-        print('nibabel does not exist')
-    optiondict['nibabelexists'] = nibabelexists
-
-    if donotbeaggressive:
-        print('no aggressive optimization')
-    else:
-        print('aggressive optimization')
-    optiondict['donotbeaggressive'] = donotbeaggressive
-
-    global donotusenumba
-    if donotusenumba:
-        print('will not use numba even if present')
-    else:
-        print('using numba if present')
-    optiondict['donotusenumba'] = donotusenumba
-
-
 def conditionaljit():
     def resdec(f):
         if (not numbaexists) or donotusenumba:

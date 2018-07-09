@@ -23,7 +23,7 @@ from __future__ import print_function
 import sys
 import getopt
 import string
-import rapidtide.tide_funcs as tide
+import rapidtide.miscmath as tide_math
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
 
@@ -103,7 +103,7 @@ nim_fmri, fmridata, fmriheader, fmridims, fmrisizes = tide_io.readfromnifti(fmri
 print("fmri data: ", numtrs, " timepoints, tr = ", fmritr)
 
 # read in the timecourse to resample
-inputvec = tide.stdnormalize(tide_io.readvec(filename))
+inputvec = tide_math.stdnormalize(tide_io.readvec(filename))
 simregressorpts = len(inputvec)
 
 # prepare the input data for interpolation
@@ -157,7 +157,7 @@ padvalue = 60.0
 numpadtrs = int(padvalue / fmritr)
 padvalue = fmritr * numpadtrs
 
-genlagtc = tide.fastresampler(nirs_x, nirs_y, padvalue=padvalue, doplot=False)
+genlagtc = tide_resample.fastresampler(nirs_x, nirs_y, padvalue=padvalue, doplot=False)
 fmri_y_f = genlagtc.yfromx(initial_fmri_x)
 fmri_y = tide_resample.doresample(nirs_x, nirs_y, initial_fmri_x)
 #fig = figure()

@@ -44,7 +44,6 @@ if qtbinding == 'pyqt4':
 else:
     print('using qt5 bindings')
     import rapidtide.tidepoolTemplate_qt5 as uiTemplate
-import rapidtide.tide_funcs as tide
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
 import sys

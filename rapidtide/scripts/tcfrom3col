@@ -29,7 +29,6 @@ import numpy as np
 
 import getopt
 from pylab import figure, plot, show
-import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
 
 def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):

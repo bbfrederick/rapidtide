@@ -36,7 +36,7 @@ import multiprocessing as mp
 from functools import partial
 import resource
 
-import rapidtide.tide_funcs as tide
+import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
@@ -203,7 +203,7 @@ def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, nc
     thetc = thetc_classfilter
 
     # prepare timecourse by normalizing, detrending, and applying a window function 
-    preppedtc = tide.corrnormalize(thetc, optiondict['usewindowfunc'], optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
+    preppedtc = tide_math.corrnormalize(thetc, optiondict['usewindowfunc'], optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
 
     # now actually do the correlation
     thexcorr = tide_corr.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=optiondict['corrweighting'])
@@ -602,7 +602,7 @@ def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, 
         outtc = 1.0 * shiftedtc
         outweights = 1.0 * weights
     if optiondict['psdfilter']:
-        freqs, psd = welch(tide.corrnormalize(shiftedtc, True, True), fmritr, scaling='spectrum', window='hamming',
+        freqs, psd = welch(tide_math.corrnormalize(shiftedtc, True, True), fmritr, scaling='spectrum', window='hamming',
                            return_onesided=False, nperseg=len(shiftedtc))
         return vox, outtc, outweights, np.sqrt(psd)
     else:
@@ -761,9 +761,9 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
                 * np.where(lagtimes < upper, np.int16(1), np.int16(0)))[0]
             print('    summing', np.shape(inlagrange)[0], 'regressors with lags from', lower, 'to', upper)
             if np.shape(inlagrange)[0] > 0:
-                dispersioncalcout[lagnum, :] = tide.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0), False, True,
+                dispersioncalcout[lagnum, :] = tide_math.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0), False, True,
                     windowfunc=optiondict['windowfunc'])
-                freqs, dispersioncalcspecmag[lagnum, :], dispersioncalcspecphase[lagnum, :] = tide.polarfft(
+                freqs, dispersioncalcspecmag[lagnum, :], dispersioncalcspecphase[lagnum, :] = tide_math.polarfft(
                     dispersioncalcout[lagnum, :],
                     1.0 / fmritr)
             inlagrange = None
@@ -786,8 +786,8 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
         thefit = FastICA(n_components=icacomponents).fit(refinevoxels)  # Reconstruct signals
         print('Using first of ', len(thefit.components_), ' components')
         icadata = thefit.components_[0]
-        filteredavg = tide.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), True, True)
-        filteredica = tide.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], icadata), True, True)
+        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), True, True)
+        filteredica = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], icadata), True, True)
         thepxcorr = pearsonr(filteredavg, filteredica)[0]
         print('ica/avg correlation = ', thepxcorr)
         if thepxcorr > 0.0:
@@ -799,8 +799,8 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
         thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
         print('Using first of ', len(thefit.components_), ' components')
         pcadata = thefit.components_[0]
-        filteredavg = tide.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), True, True)
-        filteredpca = tide.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], pcadata), True, True)
+        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), True, True)
+        filteredpca = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], pcadata), True, True)
         thepxcorr = pearsonr(filteredavg, filteredpca)[0]
         print('pca/avg correlation = ', thepxcorr)
         if thepxcorr > 0.0:
@@ -1131,7 +1131,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
                 globalmean = globalmean + indata[vox, :]
     print()
     print('used ', numvoxelsused, ' voxels to calculate global mean signal')
-    return tide.stdnormalize(globalmean)
+    return tide_math.stdnormalize(globalmean)
 
 
 def usage():
@@ -1512,7 +1512,7 @@ def main():
     # start the clock!
     timings = [['Start', time.time(), None, None]]
     print('rapidtide2 version:', optiondict['release_version'], optiondict['git_tag'])
-    tide.checkimports(optiondict)
+    tide_util.checkimports(optiondict)
 
     # get the command line parameters
     filename = None
@@ -2062,7 +2062,7 @@ def main():
 
     # disable numba now if we're going to do it (before any jits)
     if optiondict['nonumba']:
-        tide.disablenumba()
+        tide_util.disablenumba()
 
     # set the internal precision
     global rt_floatset, rt_floattype
@@ -2379,7 +2379,7 @@ def main():
     reference_y = reference_y_classfilter
 
     # write out the reference regressor used
-    tide_io.writenpvecs(tide.stdnormalize(reference_y), outputname + '_reference_origres.txt')
+    tide_io.writenpvecs(tide_math.stdnormalize(reference_y), outputname + '_reference_origres.txt')
 
     # filter the input data for antialiasing
     if optiondict['antialias']:
@@ -2429,8 +2429,8 @@ def main():
         nonosrefname = '_reference_fmrires.txt'
         osrefname = '_reference_resampres.txt'
 
-    tide_io.writenpvecs(tide.stdnormalize(resampnonosref_y), outputname + nonosrefname)
-    tide_io.writenpvecs(tide.stdnormalize(resampref_y), outputname + osrefname)
+    tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
+    tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
     timings.append(['End of reference prep', time.time(), None, None])
 
     corrtr = oversamptr
@@ -2546,8 +2546,8 @@ def main():
             print('\n\n*********************')
             print('Pass number ', thepass)
 
-        referencetc = tide.corrnormalize(resampref_y, optiondict['usewindowfunc'], optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
-        nonosreferencetc = tide.corrnormalize(resampnonosref_y, optiondict['usewindowfunc'], optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
+        referencetc = tide_math.corrnormalize(resampref_y, optiondict['usewindowfunc'], optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
+        nonosreferencetc = tide_math.corrnormalize(resampnonosref_y, optiondict['usewindowfunc'], optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
         oversampfreq = optiondict['oversampfactor'] / fmritr
 
         # Step -1 - check the regressor for periodic components in the passband
@@ -2591,8 +2591,8 @@ def main():
                         acfixfilter = tide_filt.noncausalfilter(debug=optiondict['debug'])
                         acfixfilter.settype('arb_stop')
                         acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
-                        cleaned_referencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
-                        cleaned_nonosreferencetc = tide.stdnormalize(acfixfilter.apply(fmrifreq, nonosreferencetc))
+                        cleaned_referencetc = tide_math.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
+                        cleaned_nonosreferencetc = tide_math.stdnormalize(acfixfilter.apply(fmrifreq, nonosreferencetc))
                         tide_io.writenpvecs(cleaned_referencetc,
                                          outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
                 else:
@@ -2750,7 +2750,7 @@ def main():
                 cleaned_nonosreferencetc, fmri_data_valid[:, :], fmritr, shiftedtcs, weights, thepass,
                 lagstrengths, lagtimes, lagsigma, R2, theprefilter, optiondict,
                 padtrs=numpadtrs, includemask=internalincludemask_valid, excludemask=internalexcludemask_valid)
-            normoutputdata = tide.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
+            normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
             tide_io.writenpvecs(normoutputdata, outputname + '_refinedregressor_pass' + str(thepass) + '.txt')
 
             if optiondict['dodetrend']:
@@ -2777,8 +2777,8 @@ def main():
             genlagtc = tide_resample.fastresampler(initial_fmri_x, normoutputdata, padvalue=padvalue)
             nonosrefname = '_reference_fmrires_pass' + str(thepass + 1) + '.txt'
             osrefname = '_reference_resampres_pass' + str(thepass + 1) + '.txt'
-            tide_io.writenpvecs(tide.stdnormalize(resampnonosref_y), outputname + nonosrefname)
-            tide_io.writenpvecs(tide.stdnormalize(resampref_y), outputname + osrefname)
+            tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
+            tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
             timings.append(
                 ['Regressor refinement end, pass ' + str(thepass), time.time(), voxelsprocessed_rr, 'voxels'])
 
@@ -2874,11 +2874,11 @@ def main():
         else:
             resampref_y_pw = rt_floatset(resampref_y)
         if optiondict['usewindowfunc']:
-            referencetc_pw = tide.stdnormalize(
-                tide_filt.windowfunction(np.shape(resampref_y_pw)[0], type=optiondict['windowfunc']) * tide_fit.detrend(tide.stdnormalize(resampref_y_pw))) / \
+            referencetc_pw = tide_math.stdnormalize(
+                tide_filt.windowfunction(np.shape(resampref_y_pw)[0], type=optiondict['windowfunc']) * tide_fit.detrend(tide_math.stdnormalize(resampref_y_pw))) / \
                              np.shape(resampref_y_pw)[0]
         else:
-            referencetc_pw = tide.stdnormalize(tide_fit.detrend(tide.stdnormalize(resampref_y_pw))) / np.shape(
+            referencetc_pw = tide_math.stdnormalize(tide_fit.detrend(tide_math.stdnormalize(resampref_y_pw))) / np.shape(
                 resampref_y_pw)[0]
         print('')
         if optiondict['displayplots']:
