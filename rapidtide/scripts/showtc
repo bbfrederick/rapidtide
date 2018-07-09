@@ -30,7 +30,6 @@ import matplotlib
 import matplotlib.cm as cm
 
 import bisect
-import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit

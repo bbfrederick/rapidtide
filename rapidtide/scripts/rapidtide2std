@@ -30,7 +30,6 @@ import getopt
 import platform
 import os
 import subprocess
-import rapidtide.tide_funcs as tide
 
 fsldir = os.environ.get('FSLDIR')
 if fsldir is not None:

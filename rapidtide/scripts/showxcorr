@@ -33,7 +33,7 @@ import numpy as np
 #    matplotlib.use('TkAgg')
 
 import getopt
-import rapidtide.tide_funcs as tide
+import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
@@ -58,17 +58,17 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
     corrlist_pear = zeros((numreps), dtype='float')
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
 
-    filteredindata = tide.corrnormalize(thefilter.apply(Fs, indata), prewindow, dodetrend)
+    filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata), prewindow, dodetrend)
     for i in range(0, numreps):
         # make a shuffled copy of the regressors
         shuffleddata = permutation(indata)
 
         # filter it
-        filteredshuffleddata = tide.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend)
+        filteredshuffleddata = tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend)
 
         # crosscorrelate with original
         if gccphat:
-            theshuffledxcorr = tide.gccphat(filteredindata, filteredshuffleddata, False)
+            theshuffledxcorr = tide_corr.gccphat(filteredindata, filteredshuffleddata, False)
         else:
             theshuffledxcorr = tide_corr.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr)
 
@@ -296,8 +296,8 @@ if trimdata:
 if theprefilter.gettype() != 'none':
     if verbose:
         print("filtering to ", theprefilter.gettype(), " band")
-filtereddata1 = tide.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend)
-filtereddata2 = tide.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend)
+filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend)
+filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend)
 if flipregressor:
     filtereddata2 *= -1.0
 if dumpfiltered:
@@ -305,17 +305,17 @@ if dumpfiltered:
     tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
 
 if dopartial:
-    controlvars = tide.readnpvecs(controlvariablefile)
+    controlvars = tide_io.readnpvecs(controlvariablefile)
     regressorvec = []
     for j in range(0, numregressors):
-        regressorvec.append(tide.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]), prewindow, dodetrend))
+        regressorvec.append(tide_math.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]), prewindow, dodetrend))
     if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
         thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
     if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
         thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
 if gccphat:
-    thexcorr = tide.gccphat(filtereddata1, filtereddata2, doplot)
+    thexcorr = tide_corr.gccphat(filtereddata1, filtereddata2, doplot)
 else:
     thexcorr = tide_corr.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr)
 thepxcorr = pearsonr(filtereddata1, filtereddata2)

@@ -28,7 +28,7 @@ if platform.system() == 'Darwin':
     matplotlib.use('MacOSX')
 else:
     matplotlib.use('TkAgg')
-import rapidtide.tide_funcs as tide
+import rapidtide.miscmath as tide_math
 import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
 import rapidtide.filter as tide_filt
@@ -72,8 +72,8 @@ print("data array shape is ", reformdata.shape)
 
 for component in range(0, numcomponents):
     filtereddata = tide_filt.dolpfiltfilt(Fs, Fc, reformdata[component, :], 3)
-    reformdata[component, :] = tide.stdnormalize(
-        tide_filt.hamming(len(filtereddata)) * tide_fit.detrend(tide.stdnormalize(filtereddata)))
+    reformdata[component, :] = tide_math.stdnormalize(
+        tide_filt.hamming(len(filtereddata)) * tide_fit.detrend(tide_math.stdnormalize(filtereddata)))
 
 xcorr_x = r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
 laglimit = 15.0

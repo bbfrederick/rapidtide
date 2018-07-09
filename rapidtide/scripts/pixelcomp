@@ -23,7 +23,6 @@ from __future__ import print_function, division
 import sys
 import getopt
 import string
-import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
 
 import matplotlib.pyplot as plt

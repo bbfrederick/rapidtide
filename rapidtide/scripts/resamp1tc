@@ -27,7 +27,6 @@ import platform
 import getopt
 
 import matplotlib
-import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
 from scipy import arange

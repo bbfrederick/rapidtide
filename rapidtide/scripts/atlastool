@@ -25,7 +25,6 @@ import os
 import subprocess
 import getopt
 import string
-import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
 from sklearn.cluster import KMeans, MiniBatchKMeans
 
