@@ -31,7 +31,6 @@ import sys
 import os
 
 import rapidtide.util as tide_util
-import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 
