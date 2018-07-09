@@ -29,6 +29,7 @@ import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.correlate as tide_corr
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy import sin, arange, pi, randn
@@ -54,7 +55,7 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
         filteredshuffleddata = tide.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend)
 
         # crosscorrelate with original
-        theshuffledxcorr = tide.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr,
+        theshuffledxcorr = tide_corr.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr,
                                               weighting=corrweighting)
 
         # find and tabulate correlation coefficient at optimal lag
@@ -403,11 +404,11 @@ else:
 if matrixoutput:
     # find the lengths of the outputfiles
     print('finding timecourse lengths')
-    times, corrpertime, ppertime = tide.shorttermcorr_1D(reformdata[0, :], reformdata[0, :], sampletime, windowtime, \
+    times, corrpertime, ppertime = tide_corr.shorttermcorr_1D(reformdata[0, :], reformdata[0, :], sampletime, windowtime, \
                                                          samplestep=int(stepsize // sampletime), prewindow=prewindow,
                                                          dodetrend=False)
     plength = len(times)
-    times, xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(reformdata[0, :], reformdata[0, :], sampletime,
+    times, xcorrpertime, Rvals, delayvals, valid = tide_corr.shorttermcorr_2D(reformdata[0, :], reformdata[0, :], sampletime,
                                                                          windowtime, \
                                                                          samplestep=int(stepsize // sampletime),
                                                                          weighting=corrweighting, \
@@ -429,14 +430,14 @@ if matrixoutput:
         for component2 in range(0, numcomponents):
             times, \
             corrpertime[component1, component2, 0, :], \
-            ppertime[component1, component2, 0, :] = tide.shorttermcorr_1D( \
+            ppertime[component1, component2, 0, :] = tide_corr.shorttermcorr_1D( \
                 reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
                 samplestep=int(stepsize // sampletime), prewindow=prewindow, dodetrend=False)
             times, \
             xcorrpertime, \
             Rvals[component1, component2, 0, :], \
             delayvals[component1, component2, 0, :], \
-            valid[component1, component2, 0, :] = tide.shorttermcorr_2D( \
+            valid[component1, component2, 0, :] = tide_corr.shorttermcorr_2D( \
                 reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
                 samplestep=int(stepsize // sampletime), weighting=corrweighting, \
                 prewindow=prewindow, dodetrend=False, display=False)
@@ -476,11 +477,11 @@ if matrixoutput:
         df.to_csv(outfilename + '_seg_' + str(segment).zfill(4) + '_valid.csv', index=False)
 
 else:
-    times, corrpertime, ppertime = tide.shorttermcorr_1D(reformdata[0, :], flipfac * reformdata[1, :], sampletime,
+    times, corrpertime, ppertime = tide_corr.shorttermcorr_1D(reformdata[0, :], flipfac * reformdata[1, :], sampletime,
                                                          windowtime, \
                                                          samplestep=int(stepsize // sampletime), prewindow=prewindow,
                                                          dodetrend=False)
-    times, xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(reformdata[0, :], flipfac * reformdata[1, :],
+    times, xcorrpertime, Rvals, delayvals, valid = tide_corr.shorttermcorr_2D(reformdata[0, :], flipfac * reformdata[1, :],
                                                                          sampletime, windowtime, \
                                                                          samplestep=int(stepsize // sampletime),
                                                                          weighting=corrweighting, \

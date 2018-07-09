@@ -42,6 +42,7 @@ import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.correlate as tide_corr
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 from scipy.stats import skew
@@ -68,7 +69,7 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
         filteredshuffleddata = np.nan_to_num(tide.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend, windowfunc=windowfunc))
 
         # crosscorrelate with original
-        theshuffledxcorr = tide.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr, weighting=corrweighting)
+        theshuffledxcorr = tide_corr.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr, weighting=corrweighting)
 
         # find and tabulate correlation coefficient at optimal lag
         theshuffledxcorr_trim = theshuffledxcorr[searchstart:searchend + 1]
@@ -371,10 +372,10 @@ if dopartial:
     if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
         thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
-thexcorr = tide.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr, weighting=corrweighting, displayplots=debug)
+thexcorr = tide_corr.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr, weighting=corrweighting, displayplots=debug)
 if calccepstraldelay:
-    cepdelay = tide.cepstraldelay(filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display)
-    cepcoff = tide.delayedcorr(filtereddata1, filtereddata2, cepdelay, 1.0 / Fs)
+    cepdelay = tide_corr.cepstraldelay(filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display)
+    cepcoff = tide_corr.delayedcorr(filtereddata1, filtereddata2, cepdelay, 1.0 / Fs)
     print('cepstral delay time is', cepdelay,', correlation is', cepcoff)
 thepxcorr = pearsonr(filtereddata1, filtereddata2)
 

@@ -29,11 +29,13 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 addtidepool = True
 
 modules_list= ['rapidtide/tide_funcs',
-                'rapidtide/util',
-                'rapidtide/io',
+                'rapidtide/correlate',
                 'rapidtide/filter',
                 'rapidtide/fit',
-                'rapidtide/resample']
+                'rapidtide/io',
+                'rapidtide/resample',
+                'rapidtide/stats',
+                'rapidtide/util']
 
 if addtidepool:
     modules_list.append('rapidtide/tidepoolTemplate_qt4')

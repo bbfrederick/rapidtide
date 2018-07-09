@@ -43,6 +43,7 @@ import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.resample as tide_resample
+import rapidtide.correlate as tide_corr
 
 from sklearn.decomposition import FastICA, PCA
 from pylab import figure, plot, show
@@ -205,7 +206,7 @@ def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, nc
     preppedtc = tide.corrnormalize(thetc, optiondict['usewindowfunc'], optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
 
     # now actually do the correlation
-    thexcorr = tide.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=optiondict['corrweighting'])
+    thexcorr = tide_corr.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=optiondict['corrweighting'])
 
     # find the global maximum value
     theglobalmax = np.argmax(thexcorr)
@@ -2566,7 +2567,7 @@ def main():
             thelagthresh = np.max((abs(optiondict['lagmin']), abs(optiondict['lagmax'])))
             theampthresh = 0.1
             print('searching for sidelobes with amplitude >', theampthresh, 'with abs(lag) <', thelagthresh, 's')
-            sidelobetime, sidelobeamp = tide.autocorrcheck(corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts],
+            sidelobetime, sidelobeamp = tide_corr.autocorrcheck(corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts],
                                                            thexcorr, acampthresh=theampthresh,
                                                            aclagthresh=thelagthresh,
                                                            prewindow=optiondict['usewindowfunc'],
