@@ -11,8 +11,8 @@ rapidtide2 \
         -L \
 	-r -20,20 \
 	-f 2 \
-        --multiproc \
-        --noglm
+        --accheck \
+        --multiproc
 #rapidtide2x \
 	#fmri.nii.gz \
 	#../dst/dgsr_lfox \
