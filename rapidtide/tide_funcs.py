@@ -37,6 +37,7 @@ import resource
 #from scipy import signal
 from scipy.stats import johnsonsb
 
+import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.resample as tide_resample
@@ -709,7 +710,7 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
             return None, None
         if maxpeaks[i, 1] > acampthresh:
             sidelobetime = maxpeaks[i, 0]
-            sidelobeindex = valtoindex(corrscale, sidelobetime)
+            sidelobeindex = tide_util.valtoindex(corrscale, sidelobetime)
             sidelobeamp = thexcorr[sidelobeindex]
             numbins = 1
             while (sidelobeindex + numbins < np.shape(corrscale)[0] - 1) and (
