@@ -308,9 +308,9 @@ if dopartial:
     for j in range(0, numregressors):
         regressorvec.append(tide.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]), prewindow, dodetrend))
     if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
-        thefit, filtereddata1 = tide.mlregress(regressorvec, filtereddata1)
+        thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
     if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
-        thefit, filtereddata2 = tide.mlregress(regressorvec, filtereddata2)
+        thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
 if gccphat:
     thexcorr = tide.gccphat(filtereddata1, filtereddata2, doplot)

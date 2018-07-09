@@ -665,7 +665,7 @@ if doglm:
         validlocs = np.where(maskbyslice[:, theslice] > 0)[0]
         for theloc in validlocs:
             lagtc = cardiacnoise[theloc, theslice, :]
-            thefit, R = tide.mlregress(lagtc, fmri_data_byslice[theloc, theslice, :])
+            thefit, R = tide_fit.mlregress(lagtc, fmri_data_byslice[theloc, theslice, :])
             fitcoff = thefit[0, 1]
             datatoremove = fitcoff * lagtc
             filtereddata[theloc, theslice, :] = fmri_data_byslice[theloc, theslice, :] - datatoremove

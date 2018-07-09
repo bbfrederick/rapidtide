@@ -24,6 +24,7 @@ import sys
 import numpy as np
 import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
 
 
 def main():
@@ -134,7 +135,7 @@ def main():
                     else:
                         regressorvec.append(evdata[j])
                 if np.max(trimmeddata[x, y, z, :]) - np.min(trimmeddata[x, y, z, :]) > 0.0:
-                    thefit, R = tide.mlregress(regressorvec, trimmeddata[x, y, z, :])
+                    thefit, R = tide_fit.mlregress(regressorvec, trimmeddata[x, y, z, :])
                     meandata[x, y, z] = thefit[0, 0]
                     Rdata[x, y, z] = R
                     for j in range(0, numregressors):

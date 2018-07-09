@@ -883,7 +883,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
         outputdata = averagedata
 
     if optiondict['cleanrefined']:
-        thefit, R = tide.mlregress(averagediscard, averagedata)
+        thefit, R = tide_fit.mlregress(averagediscard, averagedata)
         fitcoff = rt_floatset(thefit[0, 1])
         datatoremove = rt_floatset(fitcoff * averagediscard)
         outputdata -= datatoremove 
@@ -906,7 +906,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
 
 
 def procOneVoxelWiener(vox, lagtc, inittc):
-    thefit, R = tide.mlregress(lagtc, inittc)
+    thefit, R = tide_fit.mlregress(lagtc, inittc)
     fitcoff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoff * lagtc)
     return vox, rt_floatset(thefit[0, 0]), rt_floatset(R), rt_floatset(R * R), fitcoff, \
@@ -985,7 +985,7 @@ def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondi
 
 
 def procOneVoxelGLM(vox, lagtc, inittc):
-    thefit, R = tide.mlregress(lagtc, inittc)
+    thefit, R = tide_fit.mlregress(lagtc, inittc)
     fitcoff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoff * lagtc)
     return vox, rt_floatset(thefit[0, 0]), rt_floatset(R), rt_floatset(R * R), fitcoff, \
@@ -2464,10 +2464,10 @@ def main():
 
     if optiondict['usetmask']:
         resampnonosref_y *= tmask_y
-        thefit, R = tide.mlregress(tmask_y, resampnonosref_y)
+        thefit, R = tide_fit.mlregress(tmask_y, resampnonosref_y)
         resampnonosref_y -= thefit[0, 1] * tmask_y
         resampref_y *= tmaskos_y
-        thefit, R = tide.mlregress(tmaskos_y, resampref_y)
+        thefit, R = tide_fit.mlregress(tmaskos_y, resampref_y)
         resampref_y -= thefit[0, 1] * tmaskos_y
 
     if optiondict['passes'] > 1:
@@ -2822,10 +2822,10 @@ def main():
                                               method=optiondict['interptype'])
             if optiondict['usetmask']:
                 resampnonosref_y *= tmask_y
-                thefit, R = tide.mlregress(tmask_y, resampnonosref_y)
+                thefit, R = tide_fit.mlregress(tmask_y, resampnonosref_y)
                 resampnonosref_y -= thefit[0, 1] * tmask_y
                 resampref_y *= tmaskos_y
-                thefit, R = tide.mlregress(tmaskos_y, resampref_y)
+                thefit, R = tide_fit.mlregress(tmaskos_y, resampref_y)
                 resampref_y -= thefit[0, 1] * tmaskos_y
 
             # reinitialize lagtc for resampling

@@ -26,6 +26,7 @@ import string
 import platform
 import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
 
 from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
 from pylab import *
@@ -189,7 +190,7 @@ maskedtemplate = rs_templatefile * bin_templatemask
 # cycle over all images
 print("now cycling over all images")
 for thetime in range(0,timepoints):
-    thefit, R = tide.mlregress(maskedtemplate, maskeddata[:, thetime])
+    thefit, R = tide_fit.mlregress(maskedtemplate, maskeddata[:, thetime])
     lincoffs[thetime] = thefit[0, 1]
     offsets[thetime] = thefit[0, 0]
     rvals[thetime] = R

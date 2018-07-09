@@ -147,63 +147,6 @@ def disablenumba():
     donotusenumba = True
 
 
-# --------------------------- histogram functions -------------------------------------------------
-def gethistprops(indata, histlen, refine=False, therange=None):
-    thestore = np.zeros((2, histlen), dtype='float64')
-    if therange is None:
-        thehist = np.histogram(indata, histlen)
-    else:
-        thehist = np.histogram(indata, histlen, therange)
-    thestore[0, :] = thehist[1][-histlen:]
-    thestore[1, :] = thehist[0][-histlen:]
-    # get starting values for the peak, ignoring first and last point of histogram
-    peakindex = np.argmax(thestore[1, 1:-2])
-    peaklag = thestore[0, peakindex + 1]
-    peakheight = thestore[1, peakindex + 1]
-    numbins = 1
-    while (peakindex + numbins < histlen - 1) and (thestore[1, peakindex + numbins] > peakheight / 2.0):
-        numbins += 1
-    peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
-    if refine:
-        peakheight, peaklag, peakwidth = gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
-    return peaklag, peakheight, peakwidth
-
-
-def makehistogram(indata, histlen, therange=None):
-    if therange is None:
-        thehist = np.histogram(indata, histlen)
-    else:
-        thehist = np.histogram(indata, histlen, therange)
-    return thehist
-
-
-def makeandsavehistogram(indata, histlen, endtrim, outname,
-                         displaytitle='histogram', displayplots=False,
-                         refine=False, therange=None):
-    thestore = np.zeros((2, histlen), dtype='float64')
-    thehist = makehistogram(indata, histlen, therange)
-    thestore[0, :] = thehist[1][-histlen:]
-    thestore[1, :] = thehist[0][-histlen:]
-    # get starting values for the peak, ignoring first and last point of histogram
-    peakindex = np.argmax(thestore[1, 1:-2])
-    peaklag = thestore[0, peakindex + 1]
-    # peakheight = max(thestore[1,:])
-    peakheight = thestore[1, peakindex + 1]
-    numbins = 1
-    while (peakindex + numbins < histlen - 1) and (thestore[1, peakindex + numbins] > peakheight / 2.0):
-        numbins += 1
-    peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
-    if refine:
-        peakheight, peaklag, peakwidth = gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
-    tide_io.writenpvecs(np.array([peaklag]), outname + '_peak.txt')
-    tide_io.writenpvecs(thestore, outname + '.txt')
-    if displayplots:
-        fig = pl.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title(displaytitle)
-        pl.plot(thestore[0, :(-1 - endtrim)], thestore[1, :(-1 - endtrim)])
-
-
 # --------------------------- probability functions -------------------------------------------------
 def printthresholds(pcts, thepercentiles, labeltext):
     print(labeltext)
@@ -308,6 +251,63 @@ def fisher(r):
     return 0.5 * np.log((1 + r) / (1 - r))
 
 
+# --------------------------- histogram functions -------------------------------------------------
+def gethistprops(indata, histlen, refine=False, therange=None):
+    thestore = np.zeros((2, histlen), dtype='float64')
+    if therange is None:
+        thehist = np.histogram(indata, histlen)
+    else:
+        thehist = np.histogram(indata, histlen, therange)
+    thestore[0, :] = thehist[1][-histlen:]
+    thestore[1, :] = thehist[0][-histlen:]
+    # get starting values for the peak, ignoring first and last point of histogram
+    peakindex = np.argmax(thestore[1, 1:-2])
+    peaklag = thestore[0, peakindex + 1]
+    peakheight = thestore[1, peakindex + 1]
+    numbins = 1
+    while (peakindex + numbins < histlen - 1) and (thestore[1, peakindex + numbins] > peakheight / 2.0):
+        numbins += 1
+    peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
+    if refine:
+        peakheight, peaklag, peakwidth = gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
+    return peaklag, peakheight, peakwidth
+
+
+def makehistogram(indata, histlen, therange=None):
+    if therange is None:
+        thehist = np.histogram(indata, histlen)
+    else:
+        thehist = np.histogram(indata, histlen, therange)
+    return thehist
+
+
+def makeandsavehistogram(indata, histlen, endtrim, outname,
+                         displaytitle='histogram', displayplots=False,
+                         refine=False, therange=None):
+    thestore = np.zeros((2, histlen), dtype='float64')
+    thehist = makehistogram(indata, histlen, therange)
+    thestore[0, :] = thehist[1][-histlen:]
+    thestore[1, :] = thehist[0][-histlen:]
+    # get starting values for the peak, ignoring first and last point of histogram
+    peakindex = np.argmax(thestore[1, 1:-2])
+    peaklag = thestore[0, peakindex + 1]
+    # peakheight = max(thestore[1,:])
+    peakheight = thestore[1, peakindex + 1]
+    numbins = 1
+    while (peakindex + numbins < histlen - 1) and (thestore[1, peakindex + numbins] > peakheight / 2.0):
+        numbins += 1
+    peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
+    if refine:
+        peakheight, peaklag, peakwidth = gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
+    tide_io.writenpvecs(np.array([peaklag]), outname + '_peak.txt')
+    tide_io.writenpvecs(thestore, outname + '.txt')
+    if displayplots:
+        fig = pl.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title(displaytitle)
+        pl.plot(thestore[0, :(-1 - endtrim)], thestore[1, :(-1 - endtrim)])
+
+
 def symmetrize(a, antisymmetric=False, zerodiagonal=False):
     if antisymmetric:
         intermediate = (a - a.T) / 2.0
@@ -317,51 +317,6 @@ def symmetrize(a, antisymmetric=False, zerodiagonal=False):
         return intermediate - np.diag(intermediate.diagonal())
     else:
         return intermediate
-
-
-### I don't remember where this came from.  Need to check license
-def mlregress(x, y, intercept=True):
-    """Return the coefficients from a multiple linear regression, along with R, the coefficient of determination.
-
-    x: The independent variables (pxn or nxp).
-    y: The dependent variable (1xn or nx1).
-    intercept: Specifies whether or not the slope intercept should be considered.
-
-    The routine computes the coefficients (b_0, b_1, ..., b_p) from the data (x,y) under
-    the assumption that y = b0 + b_1 * x_1 + b_2 * x_2 + ... + b_p * x_p.
-
-    If intercept is False, the routine assumes that b0 = 0 and returns (b_1, b_2, ..., b_p).
-    """
-
-    warnings.filterwarnings("ignore", "invalid*")
-    y = np.atleast_1d(y)
-    n = y.shape[0]
-
-    x = np.atleast_2d(x)
-    p, nx = x.shape
-
-    if nx != n:
-        x = x.transpose()
-        p, nx = x.shape
-        if nx != n:
-            raise AttributeError('x and y must have have the same number of samples (%d and %d)' % (nx, n))
-
-    if intercept is True:
-        xc = np.vstack((np.ones(n), x))
-        beta = np.ones(p + 1)
-    else:
-        xc = x
-        beta = np.ones(p)
-
-    solution = np.linalg.lstsq(np.mat(xc).T, np.mat(y).T, rcond=-1)
-
-    # Computation of the coefficient of determination.
-    Rx = np.atleast_2d(np.corrcoef(x, rowvar=1))
-    c = np.corrcoef(x, y, rowvar=1)[-1, :p]
-    R2 = np.dot(np.dot(c, np.linalg.inv(Rx)), c.T)
-    R = np.sqrt(R2)
-
-    return np.atleast_1d(solution[0].T), R
 
 
 # Find the image intensity value which thefrac of the non-zero voxels in the image exceed
@@ -536,172 +491,11 @@ def largestfac(n):
 
 
 
-# --------------------------- Peak detection functions ----------------------------------------------
-# The following three functions are taken from the peakdetect distribution by Sixten Bergman
-# They were distributed under the DWTFYWTPL, so I'm relicensing them under Apache 2.0
-# From his header:
-# You can redistribute it and/or modify it under the terms of the Do What The
-# Fuck You Want To Public License, Version 2, as published by Sam Hocevar. See
-# http://www.wtfpl.net/ for more details.
-
-def parabfit(x_axis, y_axis, peakloc, peaksize):
-    func = lambda x, a, tau, c: a * ((x - tau) ** 2) + c
-    fitted_peaks = []
-    distance = abs(x_axis[raw_peaks[1][0]] - x_axis[raw_peaks[0][0]]) / 4
-    index = peakloc
-    x_data = x_axis[index - points // 2: index + points // 2 + 1]
-    y_data = y_axis[index - points // 2: index + points // 2 + 1]
-    # get a first approximation of tau (peak position in time)
-    tau = x_axis[index]
-    # get a first approximation of peak amplitude
-    c = y_axis[index]
-    a = np.sign(c) * (-1) * (np.sqrt(abs(c)) / distance) ** 2
-    """Derived from ABC formula to result in a solution where A=(rot(c)/t)**2"""
-
-    # build list of approximations
-
-    p0 = (a, tau, c)
-    popt, pcov = curve_fit(func, x_data, y_data, p0)
-    # retrieve tau and c i.e x and y value of peak
-    x, y = popt[1:3]
-    return x, y
-
-
-def _datacheck_peakdetect(x_axis, y_axis):
-    if x_axis is None:
-        x_axis = range(len(y_axis))
-
-    if np.shape(y_axis) != np.shape(x_axis):
-        raise ValueError(
-            "Input vectors y_axis and x_axis must have same length")
-
-    # needs to be a numpy array
-    y_axis = np.array(y_axis)
-    x_axis = np.array(x_axis)
-    return x_axis, y_axis
-
-
-def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0.0):
-    """
-    Converted from/based on a MATLAB script at: 
-    http://billauer.co.il/peakdet.html
-    
-    function for detecting local maxima and minima in a signal.
-    Discovers peaks by searching for values which are surrounded by lower
-    or larger values for maxima and minima respectively
-    
-    keyword arguments:
-    y_axis -- A list containing the signal over which to find peaks
-    
-    x_axis -- A x-axis whose values correspond to the y_axis list and is used
-        in the return to specify the position of the peaks. If omitted an
-        index of the y_axis is used.
-        (default: None)
-    
-    lookahead -- distance to look ahead from a peak candidate to determine if
-        it is the actual peak
-        (default: 200) 
-        '(samples / period) / f' where '4 >= f >= 1.25' might be a good value
-    
-    delta -- this specifies a minimum difference between a peak and
-        the following points, before a peak may be considered a peak. Useful
-        to hinder the function from picking up false peaks towards to end of
-        the signal. To work well delta should be set to delta >= RMSnoise * 5.
-        (default: 0)
-            When omitted delta function causes a 20% decrease in speed.
-            When used Correctly it can double the speed of the function
-    
-    
-    return: two lists [max_peaks, min_peaks] containing the positive and
-        negative peaks respectively. Each cell of the lists contains a tuple
-        of: (position, peak_value) 
-        to get the average peak value do: np.mean(max_peaks, 0)[1] on the
-        results to unpack one of the lists into x, y coordinates do: 
-        x, y = zip(*max_peaks)
-    """
-    max_peaks = []
-    min_peaks = []
-    dump = []  # Used to pop the first hit which almost always is false
-
-    # check input data
-    x_axis, y_axis = _datacheck_peakdetect(x_axis, y_axis)
-    # store data length for later use
-    length = np.shape(y_axis)[0]
-
-    # perform some checks
-    if lookahead < 1:
-        raise ValueError("Lookahead must be '1' or above in value")
-    if not (np.isscalar(delta) and delta >= 0):
-        raise ValueError("delta must be a positive number")
-
-    # maxima and minima candidates are temporarily stored in
-    # mx and mn respectively
-    mn, mx = np.Inf, -np.Inf
-
-    # Only detect peak if there is 'lookahead' amount of points after it
-    for index, (x, y) in enumerate(zip(x_axis[:-lookahead],
-                                       y_axis[:-lookahead])):
-        if y > mx:
-            mx = y
-            mxpos = x
-        if y < mn:
-            mn = y
-            mnpos = x
-
-        ####look for max####
-        if y < mx - delta and mx != np.Inf:
-            # Maxima peak candidate found
-            # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index:index + lookahead].max() < mx:
-                max_peaks.append([mxpos, mx])
-                dump.append(True)
-                # set algorithm to only find minima now
-                mx = np.Inf
-                mn = np.Inf
-                if index + lookahead >= length:
-                    # end is within lookahead no more peaks can be found
-                    break
-                continue
-                # else:  #slows shit down this does
-                #    mx = ahead
-                #    mxpos = x_axis[np.where(y_axis[index:index+lookahead]==mx)]
-
-        ####look for min####
-        if y > mn + delta and mn != -np.Inf:
-            # Minima peak candidate found
-            # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index:index + lookahead].min() > mn:
-                min_peaks.append([mnpos, mn])
-                dump.append(False)
-                # set algorithm to only find maxima now
-                mn = -np.Inf
-                mx = -np.Inf
-                if index + lookahead >= length:
-                    # end is within lookahead no more peaks can be found
-                    break
-                    # else:  #slows shit down this does
-                    #    mn = ahead
-                    #    mnpos = x_axis[np.where(y_axis[index:index+lookahead]==mn)]
-
-    # Remove the false hit on the first value of the y_axis
-    try:
-        if dump[0]:
-            max_peaks.pop(0)
-        else:
-            min_peaks.pop(0)
-        del dump
-    except IndexError:
-        # no peaks were found, should the function return empty lists?
-        pass
-
-    return [max_peaks, min_peaks]
-
-
 # --------------------------- Correlation functions -------------------------------------------------
 def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=10.0, displayplots=False, prewindow=True,
                   dodetrend=True):
     lookahead = 2
-    peaks = peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
+    peaks = tide_fit.peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
     maxpeaks = np.asarray(peaks[0], dtype='float64')
     minpeaks = np.asarray(peaks[1], dtype='float64')
     zeropkindex = np.argmin(abs(maxpeaks[:, 0]))
