@@ -38,6 +38,7 @@ import resource
 from scipy.stats import johnsonsb
 
 import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -226,7 +227,7 @@ def gethistprops(indata, histlen, refine=False, therange=None):
         numbins += 1
     peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
     if refine:
-        peakheight, peaklag, peakwidth = gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
+        peakheight, peaklag, peakwidth = tide_fit.gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
     return peaklag, peakheight, peakwidth
 
 
@@ -255,7 +256,7 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
         numbins += 1
     peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
     if refine:
-        peakheight, peaklag, peakwidth = gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
+        peakheight, peaklag, peakwidth = tide_fit.gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
     tide_io.writenpvecs(np.array([peaklag]), outname + '_peak.txt')
     tide_io.writenpvecs(thestore, outname + '.txt')
     if displayplots:
