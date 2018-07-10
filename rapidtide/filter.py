@@ -37,14 +37,12 @@ try:
 except ImportError:
     memprofilerexists = False
 
-
 try:
     from numba import jit
 
     numbaexists = True
 except ImportError:
     numbaexists = False
-
 
 try:
     import nibabel as nib
@@ -53,12 +51,11 @@ try:
 except ImportError:
     nibabelexists = False
 
-
 donotusenumba = False
-
 
 try:
     import pyfftw
+
     pyfftwexists = True
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
@@ -137,10 +134,10 @@ def dohpfiltfilt(samplefreq, cutofffreq, indata, order, padlen=20, debug=False):
 def dobpfiltfilt(samplefreq, cutofffreq_low, cutofffreq_high, indata, order, padlen=20):
     if cutofffreq_high > samplefreq / 2.0:
         cutofffreq_high = samplefreq / 2.0
-    if cutofffreq_log < 0.0:
+    if cutofffreq_low < 0.0:
         cutofffreq_low = 0.0
     [b, a] = signal.butter(order, [2.0 * cutofffreq_low / samplefreq, 2.0 * cutofffreq_high / samplefreq],
-                              'bandpass')
+                           'bandpass')
     return unpadvec(signal.filtfilt(b, a, padvec(indata, padlen=padlen)).real, padlen=padlen)
 
 
@@ -169,7 +166,7 @@ def getlpfftfunc(samplefreq, cutofffreq, indata, debug=False):
     # cutoffbin = int((cutofffreq / samplefreq) * len(filterfunc) / 2.0)
     cutoffbin = int((cutofffreq / samplefreq) * np.shape(filterfunc)[0])
     if debug:
-        print('getlpfftfunc - samplefreq, cutofffreq, len(indata):', samplefreq, cutofffreq, np.shpae(indata)[0])
+        print('getlpfftfunc - samplefreq, cutofffreq, len(indata):', samplefreq, cutofffreq, np.shape(indata)[0])
     filterfunc[cutoffbin:-cutoffbin] = 0.0
     return filterfunc
 
@@ -200,7 +197,7 @@ def dobpfftfilt(samplefreq, cutofffreq_low, cutofffreq_high, indata, padlen=20, 
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
     filterfunc = getlpfftfunc(samplefreq, cutofffreq_high, padindata, debug=debug) * (
-        1.0 - getlpfftfunc(samplefreq, cutofffreq_low, padindata, debug=debug))
+            1.0 - getlpfftfunc(samplefreq, cutofffreq_low, padindata, debug=debug))
     indata_trans *= filterfunc
     return unpadvec(fftpack.ifft(indata_trans).real, padlen=padlen)
 
@@ -244,12 +241,12 @@ def dobptrapfftfilt(samplefreq, stopfreq_low, passfreq_low, passfreq_high, stopf
                     debug=False):
     padindata = padvec(indata, padlen=padlen)
     indata_trans = fftpack.fft(padindata)
-    if False:
+    if debug:
         print("samplefreq=", samplefreq, " Fstopl=", stopfreq_low, " Fpassl=", passfreq_low, " Fpassu=", passfreq_high,
               " Fstopu=", stopfreq_high)
     filterfunc = getlptrapfftfunc(samplefreq, passfreq_high, stopfreq_high, padindata, debug=debug) * (
-        1.0 - getlptrapfftfunc(samplefreq, stopfreq_low, passfreq_low, padindata, debug=debug))
-    if False:
+            1.0 - getlptrapfftfunc(samplefreq, stopfreq_low, passfreq_low, padindata, debug=debug))
+    if debug:
         freqs = np.arange(0.0, samplefreq, samplefreq / np.shape(filterfunc)[0])
         pl.plot(freqs, filterfunc)
         pl.show()
@@ -329,26 +326,27 @@ def fastfiltfilt(b, a, zi, edge, x):
 # Written 2015 by Dan Stowell. Public domain.
 def wiener_deconvolution(signal, kernel, lambd):
     "lambd is the SNR in the fourier domain"
-    kernel = np.hstack((kernel, np.zeros(len(signal) - len(kernel)))) # zero pad the kernel to same length
+    kernel = np.hstack((kernel, np.zeros(len(signal) - len(kernel))))  # zero pad the kernel to same length
     H = fftpack.fft(kernel)
-    #deconvolved = np.real(fftpack.ifft(fftpack.fft(signal)*np.conj(H)/(H*np.conj(H) + lambd**2)))
-    deconvolved = np.roll(np.real(fftpack.ifft(fftpack.fft(signal)*np.conj(H)/(H*np.conj(H) + lambd**2))),
-        int(len(signal) // 2))
+    # deconvolved = np.real(fftpack.ifft(fftpack.fft(signal)*np.conj(H)/(H*np.conj(H) + lambd**2)))
+    deconvolved = np.roll(np.real(fftpack.ifft(fftpack.fft(signal) * np.conj(H) / (H * np.conj(H) + lambd ** 2))),
+                          int(len(signal) // 2))
     return deconvolved
+
 
 def pspec(signal):
     S = fftpack.fft(signal)
-    return(np.sqrt(S * np.conj(S)))
+    return (np.sqrt(S * np.conj(S)))
 
 
 def csdfilter(obsdata, commondata, padlen=20, debug=False):
     padobsdata = padvec(obsdata, padlen=padlen)
     padcommondata = padvec(commondata, padlen=padlen)
     obsdata_trans = fftpack.fft(padobsdata)
-    filterfunc = np.sqrt(np.abs(fftpack.fft(padobsdata)*np.conj(fftpack.fft(padcommondata))))
+    filterfunc = np.sqrt(np.abs(fftpack.fft(padobsdata) * np.conj(fftpack.fft(padcommondata))))
     obsdata_trans *= filterfunc
     return unpadvec(fftpack.ifft(obsdata_trans).real, padlen=padlen)
-    
+
 
 def specsplit(samplerate, inputdata, bandwidth, usebutterworth=False):
     lowestfreq = samplerate / (2.0 * np.shape(inputdata)[0])
@@ -411,8 +409,9 @@ def arb_pass(samplerate, inputdata, arb_lowerstop, arb_lowerpass, arb_upperpass,
         # set up for bandpass
         if usebutterworth:
             return (dohpfiltfilt(samplerate, arb_lowerpass,
-                                 dolpfiltfilt(samplerate, arb_upperpass, inputdata, butterorder, padlen=padlen, debug=debug),
-                                     butterorder, padlen=padlen, debug=debug))
+                                 dolpfiltfilt(samplerate, arb_upperpass, inputdata, butterorder, padlen=padlen,
+                                              debug=debug),
+                                 butterorder, padlen=padlen, debug=debug))
         else:
             if usetrapfftfilt:
                 return (
@@ -633,11 +632,13 @@ class noncausalfilter:
 
 # --------------------------- Window functions -------------------------------------------------
 BHwindows = {}
+
+
 def blackmanharris(length, debug=False):
-    #return a0 - a1 * np.cos(argvec) + a2 * np.cos(2.0 * argvec) - a3 * np.cos(3.0 * argvec)
+    # return a0 - a1 * np.cos(argvec) + a2 * np.cos(2.0 * argvec) - a3 * np.cos(3.0 * argvec)
     try:
         return BHwindows[str(length)]
-    except:
+    except KeyError:
         argvec = np.arange(0.0, 2.0 * np.pi, 2.0 * np.pi / float(length))
         a0 = 0.35875
         a1 = 0.48829
@@ -650,11 +651,13 @@ def blackmanharris(length, debug=False):
 
 
 hannwindows = {}
+
+
 def hann(length, debug=False):
-    #return 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
+    # return 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
     try:
         return hannwindows[str(length)]
-    except: 
+    except KeyError:
         hannwindows[str(length)] = 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
         if debug:
             print('initialized hann window for length', length)
@@ -662,12 +665,15 @@ def hann(length, debug=False):
 
 
 hammingwindows = {}
+
+
 def hamming(length, debug=False):
-#   return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
+    #   return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
     try:
         return hammingwindows[str(length)]
-    except:
-        hammingwindows[str(length)] = 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
+    except KeyError:
+        hammingwindows[str(length)] = 0.54 - 0.46 * np.cos(
+            (np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
         if debug:
             print('initialized hamming window for length', length)
         return hammingwindows[str(length)]

@@ -23,10 +23,8 @@
 from __future__ import print_function, division
 
 import sys
-import platform
 import getopt
 
-import matplotlib
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
 from scipy import arange

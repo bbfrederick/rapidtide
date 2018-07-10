@@ -20,17 +20,13 @@
 #       $Id: linfit,v 1.4 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function, division
-import sys
 import getopt
-import string
-import platform
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 
-from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
 from pylab import *
-import nibabel as nib
 from sklearn.decomposition import FastICA, PCA, SparsePCA
+
 
 def usage():
     print("usage: spatialdecomp datafile outputroot")
@@ -47,7 +43,8 @@ def usage():
     print("	--nodemean         - do not demean data prior to decomposition")
     print("	--novarnorm        - do not variance normalize data prior to decomposition")
     print("")
-    return()
+    return ()
+
 
 # set default variable values
 usedmask = False
@@ -60,10 +57,11 @@ sigma = 0.0
 
 # parse command line arguments
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "nodemean", "novarnorm", "dmask=", "smooth=", "ncomp=", "type="])
+    opts, args = getopt.gnu_getopt(sys.argv, 'h',
+                                   ["help", "nodemean", "novarnorm", "dmask=", "smooth=", "ncomp=", "type="])
 except getopt.GetoptError as err:
     # print(help information and exit:
-    print(str(err)) # will print something like "option -a not recognized"
+    print(str(err))  # will print something like "option -a not recognized"
     usage()
     sys.exit(2)
 
@@ -73,8 +71,8 @@ if len(args) < 3:
     usage()
     sys.exit()
 
-datafilename=args[1]
-outputrootname=args[2]
+datafilename = args[1]
+outputrootname = args[2]
 
 for o, a in opts:
     if o == "--dmask":
@@ -109,32 +107,31 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
-
 print('Will perform', decomptype, 'analysis')
-    
+
 # save the command line
 tide_io.writevec([' '.join(sys.argv)], outputrootname + '_commandline.txt')
 
 # read in data
 print("reading in data arrays")
 datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide_io.readfromnifti(datafilename)
-#datafile_img = nib.load(datafilename)
-#datafile_data = datafile_img.get_data()
-#datafile_hdr = datafile_img.get_header()
-#datafiledims = datafile_hdr['dim']
-#datafilesizes = datafile_hdr['pixdim']
+# datafile_img = nib.load(datafilename)
+# datafile_data = datafile_img.get_data()
+# datafile_hdr = datafile_img.get_header()
+# datafiledims = datafile_hdr['dim']
+# datafilesizes = datafile_hdr['pixdim']
 
 if usedmask:
     datamask_img, datamask_data, datamask_hdr, datamaskdims, datamasksizes = tide_io.readfromnifti(datamaskname)
-    #datamask_img = nib.load(datamaskname)
-    #datamask_data = datamask_img.get_data()
-    #datamask_hdr = datamask_img.get_header()
-    #datamaskdims = datamask_hdr['dim']
-    #datamasksizes = datamask_hdr['pixdim']
+    # datamask_img = nib.load(datamaskname)
+    # datamask_data = datamask_img.get_data()
+    # datamask_hdr = datamask_img.get_header()
+    # datamaskdims = datamask_hdr['dim']
+    # datamasksizes = datamask_hdr['pixdim']
 
 xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
 xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
-    
+
 # check dimensions
 if usedmask:
     print("checking mask dimensions")
@@ -162,7 +159,7 @@ rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
 print("masking arrays")
 if usedmask:
     if datamaskdims[4] == 1:
-        proclocs = np.where(datamask_data.reshape((numspatiallocs)) > 0.9)
+        proclocs = np.where(datamask_data.reshape(numspatiallocs) > 0.9)
     else:
         proclocs = np.where(np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1) > 0.9)
         rs_mask = datamask_data.reshape((numspatiallocs, timepoints))[proclocs, :]
@@ -171,7 +168,7 @@ else:
     datamaskdims = [1, xsize, ysize, numslices, 1]
     themaxes = np.max(rs_datafile, axis=1)
     themins = np.min(rs_datafile, axis=1)
-    thediffs = (themaxes - themins).reshape((numspatiallocs))
+    thediffs = (themaxes - themins).reshape(numspatiallocs)
     proclocs = np.where(thediffs > 0.0)
 procdata = rs_datafile[proclocs, :][0]
 print(rs_datafile.shape, procdata.shape)
@@ -236,7 +233,8 @@ else:
     theheader['dim'][4] = thecomponents.shape[1]
     tempout = np.zeros((numspatiallocs, thecomponents.shape[1]), dtype='float')
     tempout[proclocs, :] = thecomponents[:, :]
-    tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, thecomponents.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_components')
+    tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, thecomponents.shape[1])), datafile_hdr, datafilesizes,
+                        outputrootname + '_components')
 
     # save the coefficients
     print("writing out the coefficients")
@@ -250,4 +248,5 @@ else:
     theheader['dim'][4] = invtransformeddata.shape[1]
     tempout = np.zeros((numspatiallocs, invtransformeddata.shape[1]), dtype='float')
     tempout[proclocs, :] = invtransformeddata[:, :]
-    tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, invtransformeddata.shape[1])), datafile_hdr, datafilesizes, outputrootname + '_fit')
+    tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, invtransformeddata.shape[1])), datafile_hdr,
+                        datafilesizes, outputrootname + '_fit')

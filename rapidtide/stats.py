@@ -22,19 +22,8 @@ from __future__ import print_function, division
 
 import numpy as np
 import scipy as sp
-from scipy import fftpack, ndimage, signal
-from numpy.fft import rfftn, irfftn
 import pylab as pl
-import warnings
-import time
-import sys
-import bisect
-import os
-import pandas as pd
-import json
-import resource
 
-#from scipy import signal
 from scipy.stats import johnsonsb
 
 import rapidtide.io as tide_io
@@ -309,7 +298,7 @@ def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False
         fig = pl.figure()
         ax = fig.add_subplot(111)
         ax.set_title('cumulative mean sum of histogram')
-        plot(bins[-numbins:], cummeanhist[-numbins:])
+        pl.plot(bins[-numbins:], cummeanhist[-numbins:])
         pl.show()
     for thisfrac in thefracs:
         target = cummeanhist[numbins - 1] * thisfrac

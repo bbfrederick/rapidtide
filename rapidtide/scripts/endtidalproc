@@ -21,20 +21,12 @@
 #
 from __future__ import print_function
 import sys
-import platform
 import getopt
-from cycler import cycler
-
-import matplotlib
-import matplotlib.cm as cm
-
-import bisect
+fimport bisect
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import numpy as np
-from scipy import arange, fftpack
-
-from pylab import figure, plot, legend, show, xlabel, ylabel, savefig, title, subplot, tight_layout, suptitle, xlim, ylim, box, setp
+from scipy import arange
 
 
 def phase(mcv): 

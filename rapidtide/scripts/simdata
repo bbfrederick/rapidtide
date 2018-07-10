@@ -20,19 +20,10 @@
 #       $Id: simdata,v 1.18 2016/06/14 12:04:51 frederic Exp $
 #
 from __future__ import print_function
-import sys
-import getopt
-import string
 import rapidtide.miscmath as tide_math
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
-
-from numpy import r_, zeros, ones, shape, random
-from scipy.signal import cspline1d, cspline1d_eval, butter, lfilter, correlate
-from scipy import fftpack, argmax
-from scipy.stats import histogram
 from pylab import *
-import nibabel as nib
 
 
 def usage():
@@ -116,7 +107,7 @@ print('nirs regressor runs from ', nirs_x[0], ' to ', nirs_x[-1])
 # prepare the output timepoints
 fmrifreq = 1.0 / fmritr
 initial_fmri_x = r_[0.0:fmritr * (numtrs - fmriskip):fmritr] + fmritr * fmriskip
-print('length of fmri after removing skip:',len(initial_fmri_x))
+print('length of fmri after removing skip:', len(initial_fmri_x))
 print('fmri time runs from ', initial_fmri_x[0], ' to ', initial_fmri_x[-1])
 
 # read in the immean, boldpc and lag files
@@ -160,15 +151,15 @@ padvalue = fmritr * numpadtrs
 genlagtc = tide_resample.fastresampler(nirs_x, nirs_y, padvalue=padvalue, doplot=False)
 fmri_y_f = genlagtc.yfromx(initial_fmri_x)
 fmri_y = tide_resample.doresample(nirs_x, nirs_y, initial_fmri_x)
-#fig = figure()
-#ax = fig.add_subplot(111)
-#plot(initial_fmri_x, fmri_y_f + 1.0, initial_fmri_x, fmri_y)
-#show()
+# fig = figure()
+# ax = fig.add_subplot(111)
+# plot(initial_fmri_x, fmri_y_f + 1.0, initial_fmri_x, fmri_y)
+# show()
 
-#fig = figure()
-#ax = fig.add_subplot(111)
-#ax.set_title('Regressors')
-#plot(nirs_x, nirs_y)
+# fig = figure()
+# ax = fig.add_subplot(111)
+# ax.set_title('Regressors')
+# plot(nirs_x, nirs_y)
 # show()
 
 # loop over space

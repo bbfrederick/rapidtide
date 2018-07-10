@@ -20,15 +20,9 @@
 #       $Id: histnifti,v 1.8 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function, division
-import sys
-import os
 import subprocess
 import getopt
-import string
 import rapidtide.io as tide_io
-from sklearn.cluster import KMeans, MiniBatchKMeans
-
-import numpy as np
 from pylab import *
 
 
@@ -108,7 +102,7 @@ else:
     # file is 3d, construct a 4d array
     print('going from 3d to 4d')
     numregions = np.max(template_data).astype(int)
-    rs_template = np.reshape(template_data, (numvoxels)).astype(int)
+    rs_template = np.reshape(template_data, numvoxels).astype(int)
     templatevoxels = np.zeros((numvoxels, numregions), dtype(int))
     for theregion in range(1, numregions + 1):
         templatevoxels[:, theregion - 1] = np.where(rs_template == theregion, 1, 0)
