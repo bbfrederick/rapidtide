@@ -21,18 +21,11 @@
 from __future__ import print_function, division
 
 import numpy as np
-import scipy as sp
-from scipy import fftpack, ndimage, signal
-from numpy.fft import rfftn, irfftn
-import warnings
 import time
 import sys
 import bisect
 import os
 import resource
-
-#from scipy import signal
-from scipy.stats import johnsonsb
 
 import rapidtide.io as tide_io
 
@@ -49,14 +42,12 @@ try:
 except ImportError:
     memprofilerexists = False
 
-
 try:
     from numba import jit
 
     numbaexists = True
 except ImportError:
     numbaexists = False
-
 
 try:
     import nibabel as nib
@@ -65,12 +56,11 @@ try:
 except ImportError:
     nibabelexists = False
 
-
 donotusenumba = False
-
 
 try:
     import pyfftw
+
     pyfftwexists = True
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
@@ -146,7 +136,7 @@ def logmem(msg, file=None):
     if msg is None:
         lastmaxrss_parent = 0
         lastmaxrss_child = 0
-        logline = ','.join([ 
+        logline = ','.join([
             '',
             'Self Max RSS',
             'Self Diff RSS',
@@ -217,7 +207,7 @@ def isexecutable(command):
             return False
     else:
         return any(
-            os.access(os.path.join(path, command), os.X_OK) 
+            os.access(os.path.join(path, command), os.X_OK)
             for path in os.environ["PATH"].split(os.pathsep)
         )
 
@@ -245,7 +235,7 @@ def makelaglist(lagstart, lagend, lagstep):
     numsteps = int((lagend - lagstart) // lagstep + 1)
     lagend = lagstart + lagstep * (numsteps - 1)
     print("creating list of ", numsteps, " lag steps (", lagstart, " to ", lagend, " in steps of ", lagstep, ")")
-    #thelags = np.r_[0.0:1.0 * numsteps] * lagstep + lagstart
+    # thelags = np.r_[0.0:1.0 * numsteps] * lagstep + lagstart
     thelags = np.arange(0.0, 1.0 * numsteps) * lagstep + lagstart
     return thelags
 
@@ -254,6 +244,7 @@ def makelaglist(lagstart, lagend, lagstep):
 def version():
     thispath, thisfile = os.path.split(__file__)
     print(thispath)
+    fulltag = 'UNKNOWN', 'UNKNOWN'
     if os.path.isfile(os.path.join(thispath, '_gittag.py')):
         with open(os.path.join(thispath, '_gittag.py')) as f:
             for line in f:
@@ -293,5 +284,3 @@ def proctiminginfo(thetimings, outputfile='', extraheader=None):
         lasteventtime = float(theevent[1])
     if outputfile != '':
         tide_io.writevec(theinfolist, outputfile)
-
-

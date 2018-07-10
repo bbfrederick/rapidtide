@@ -21,20 +21,7 @@
 from __future__ import print_function, division
 
 import numpy as np
-import scipy as sp
-from scipy import fftpack, ndimage, signal
-from numpy.fft import rfftn, irfftn
-import pylab as pl
-import warnings
-import time
-import sys
-import os
-import pandas as pd
-import json
-import resource
-
-#from scipy import signal
-from scipy.stats import johnsonsb
+from scipy import fftpack
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
@@ -52,14 +39,12 @@ try:
 except ImportError:
     memprofilerexists = False
 
-
 try:
     from numba import jit
 
     numbaexists = True
 except ImportError:
     numbaexists = False
-
 
 try:
     import nibabel as nib
@@ -68,12 +53,11 @@ try:
 except ImportError:
     nibabelexists = False
 
-
 donotusenumba = False
-
 
 try:
     import pyfftw
+
     pyfftwexists = True
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
@@ -128,23 +112,25 @@ def complex_cepstrum(x):
         samples = phase.shape[-1]
         unwrapped = np.unwrap(phase)
         center = (samples + 1) // 2
-        if samples == 1: 
-            center = 0  
-        ndelay = np.array(np.round(unwrapped[...,center]/np.pi))
-        unwrapped -= np.pi * ndelay[...,None] * np.arange(samples) / center
+        if samples == 1:
+            center = 0
+        ndelay = np.array(np.round(unwrapped[..., center] / np.pi))
+        unwrapped -= np.pi * ndelay[..., None] * np.arange(samples) / center
         return unwrapped, ndelay
-        
+
     spectrum = fftpack.fft(x)
     unwrapped_phase, ndelay = _unwrap(np.angle(spectrum))
     log_spectrum = np.log(np.abs(spectrum)) + 1j * unwrapped_phase
     ceps = fftpack.ifft(log_spectrum).real
-    
+
     return ceps, ndelay
 
 
 def real_cepstrum(x):
     # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
     return fftpack.ifft(np.log(np.abs(fftpack.fft(x)))).real
+
+
 # --------------------------- miscellaneous math functions -------------------------------------------------
 def thederiv(y):
     dyc = [0.0] * len(y)
@@ -159,13 +145,13 @@ def primes(n):
     # found on stackoverflow: https://stackoverflow.com/questions/16996217/prime-factorization-list
     primfac = []
     d = 2
-    while d*d <= n:
+    while d * d <= n:
         while (n % d) == 0:
             primfac.append(d)  # supposing you want multiple factors repeated
             n //= d
         d += 1
     if n > 1:
-       primfac.append(n)
+        primfac.append(n)
     return primfac
 
 
@@ -224,7 +210,8 @@ def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
 
     # then window
     if prewindow:
-        return stdnormalize(tide_filt.windowfunction(np.shape(thedata)[0], type=windowfunc) * intervec) / np.sqrt(np.shape(thedata)[0])
+        return stdnormalize(tide_filt.windowfunction(np.shape(thedata)[0],
+                                                     type=windowfunc) * intervec) / np.sqrt(np.shape(thedata)[0])
     else:
         return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
 
@@ -237,5 +224,3 @@ def envdetect(vector, filtwidth=3.0):
     demeaned = vector - np.mean(vector)
     sigabs = abs(demeaned)
     return tide_filt.dolptrapfftfilt(1.0, 1.0 / (2.0 * filtwidth), 1.1 / (2.0 * filtwidth), sigabs)
-
-

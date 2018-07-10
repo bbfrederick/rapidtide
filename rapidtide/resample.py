@@ -22,13 +22,9 @@ from __future__ import print_function, division
 
 import numpy as np
 import scipy as sp
-from scipy import fftpack, ndimage, signal
-from numpy.fft import rfftn, irfftn
+from scipy import fftpack, signal
 import pylab as pl
-import warnings
-import time
 import sys
-import os
 
 import rapidtide.util as tide_util
 import rapidtide.filter as tide_filt
@@ -47,12 +43,11 @@ try:
 except ImportError:
     numbaexists = False
 
-
 donotusenumba = False
-
 
 try:
     import pyfftw
+
     pyfftwexists = True
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
@@ -118,42 +113,47 @@ class congrid:
 '''
 
 congridyvals = {}
+
+
 def congrid(xaxis, loc, val, width, debug=False):
     xstep = xaxis[1] - xaxis[0]
-    #weights = xaxis * 0.0
+    # weights = xaxis * 0.0
     widthinpts = int(np.round(width * 4.6 / xstep))
     widthinpts -= widthinpts % 2 - 1
     if loc < xaxis[0] or loc > xaxis[-1]:
         print('loc', loc, 'not in range', xaxis[0], xaxis[-1])
-        
+
     center = tide_util.valtoindex(xaxis, loc)
     offset = loc - xaxis[center]
     offsetkey = str(np.round(offset, 3))
     try:
         yvals = congridyvals[offsetkey]
-    except:
+    except KeyError:
         if debug:
             print('new key:', offsetkey)
-        xvals = np.linspace(-xstep * (widthinpts // 2), xstep * (widthinpts // 2), num = widthinpts, endpoint=True) + offset
+        xvals = np.linspace(-xstep * (widthinpts // 2), xstep * (widthinpts // 2), num=widthinpts,
+                            endpoint=True) + offset
         congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, width]))
         yvals = congridyvals[offsetkey]
     startpt = int(center - widthinpts // 2)
     indices = range(startpt, startpt + widthinpts)
     indices = np.remainder(indices, len(xaxis))
-    #weights[indices] = yvals[:]
-    #return val * weights, weights, indices
+    # weights[indices] = yvals[:]
+    # return val * weights, weights, indices
     return val * yvals, yvals, indices
-            
+
 
 class fastresampler:
-    def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100, doplot=False, debug=False, method='univariate'):
+    def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100, doplot=False, debug=False,
+                 method='univariate'):
         self.upsampleratio = upsampleratio
         self.padvalue = padvalue
         self.initstep = timeaxis[1] - timeaxis[0]
         self.initstart = timeaxis[0]
         self.initend = timeaxis[-1]
         self.hiresstep = self.initstep / np.float64(self.upsampleratio)
-        self.hires_x = np.arange(timeaxis[0] - self.padvalue, self.initstep * len(timeaxis) + self.padvalue, self.hiresstep)
+        self.hires_x = np.arange(timeaxis[0] - self.padvalue, self.initstep * len(timeaxis) + self.padvalue,
+                                 self.hiresstep)
         self.hiresstart = self.hires_x[0]
         self.hiresend = self.hires_x[-1]
         if method == 'poly':
@@ -222,20 +222,22 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
     tstep = orig_x[1] - orig_x[0]
     if padlen > 0:
         pad_x = np.concatenate((np.arange(orig_x[0] - padlen * tstep, orig_x[0], tstep),
-            orig_x,
-            np.arange(orig_x[-1] + tstep, orig_x[-1] + tstep * (padlen + 1), tstep)))
+                                orig_x,
+                                np.arange(orig_x[-1] + tstep, orig_x[-1] + tstep * (padlen + 1), tstep)))
     else:
         pad_x = orig_x
     if padlen > 0:
-        print('padlen=',padlen)
-        print('tstep=',tstep)
+        print('padlen=', padlen)
+        print('tstep=', tstep)
         print(pad_x)
     if method == 'cubic':
         cj = signal.cspline1d(pad_y)
-        return tide_filt.unpadvec(np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
+        return tide_filt.unpadvec(
+            np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
     elif method == 'quadratic':
         qj = signal.qspline1d(pad_y)
-        return tide_filt.unpadvec(np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
+        return tide_filt.unpadvec(
+            np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
     elif method == 'univariate':
         interpolator = sp.interpolate.UnivariateSpline(pad_x, pad_y, k=3, s=0)  # s=0 interpolates
         return tide_filt.unpadvec(np.float64(interpolator(new_x)), padlen=padlen)
@@ -252,7 +254,7 @@ def arbresample(orig_y, init_freq, final_freq, intermed_freq=0.0, method='univar
         print('arbresample:', len(orig_x), len(orig_y), init_freq, final_freq, intermed_freq)
     return dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method=method, debug=debug)
 
-    
+
 def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate', debug=False):
     if intermed_freq <= final_freq:
         print('intermediate frequency must be higher than final frequency')
@@ -267,7 +269,7 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
 
     # antialias and ringstop filter
-    aafilterfreq = np.min([final_freq, init_freq]) / 2.0 
+    aafilterfreq = np.min([final_freq, init_freq]) / 2.0
     aafilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
     aafilter.setarb(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
     antialias_y = aafilter.apply(intermed_freq, intermed_y)
@@ -423,4 +425,3 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 
     return ([shifted_y[padtrs:padtrs + thelen], shifted_weights[padtrs:padtrs + thelen], shifted_y,
              shifted_weights])
-

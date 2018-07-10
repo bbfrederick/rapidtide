@@ -21,13 +21,6 @@
 #
 from __future__ import print_function
 import sys
-import matplotlib
-import platform
-
-if platform.system() == 'Darwin':
-    matplotlib.use('MacOSX')
-else:
-    matplotlib.use('TkAgg')
 import rapidtide.miscmath as tide_math
 import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
@@ -35,11 +28,8 @@ import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
-from scipy import sin, arange, pi, randn
-from numpy import r_, argmax, zeros, shape, reshape, eye
+from numpy import r_, zeros, reshape, eye
 import nibabel as nib
-
-from pylab import plot, legend, show, hold
 
 
 def usage():

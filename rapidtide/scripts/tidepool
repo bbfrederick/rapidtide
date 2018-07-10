@@ -27,17 +27,21 @@ A simple GUI for looking at the results of a rapidtide analysis
 
 from __future__ import print_function, division
 
-qtbinding = 'pyqt4'
 from pyqtgraph.Qt import QtGui, QtCore
+
+qtbinding = 'pyqt4'
 try:
     from PyQt5.QtWidgets import *
+
     qtbinding = 'pyqt5'
 except:
     from PyQt4 import *
+
     qtbinding = 'pyqt4'
 
 import pyqtgraph as pg
 import numpy as np
+
 if qtbinding == 'pyqt4':
     print('using qt4 bindings')
     import rapidtide.tidepoolTemplate_qt4 as uiTemplate
@@ -51,13 +55,10 @@ import getopt
 import argparse
 from rapidtide.OrthoImageItem import OrthoImageItem
 import os
-from pkg_resources import resource_string
 import pandas as pd
-import copy
 from statsmodels.robust.scale import mad
 
 from nibabel.affines import apply_affine
-
 
 # some predefined colortables
 g2y2r_state = {'ticks': [(0.5, (255, 255, 0, 255)), (1.0, (255, 0, 0, 255)), (0.0, (0, 255, 0, 255))], 'mode': 'rgb'}
@@ -182,7 +183,8 @@ viridis_state = {'ticks': [(0.000, (68, 1, 84)), (0.004, (68, 2, 86)), (0.008, (
                            (1.000, (253, 231, 37))], 'mode': 'rgb'}
 
 atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
-            'ATT': {'atlasname': 'ATTbasedFlowTerritories_split'}}
+           'ATT': {'atlasname': 'ATTbasedFlowTerritories_split'}}
+
 
 def selectFile():
     global datafileroot
@@ -202,9 +204,9 @@ class xyztlocation(QtGui.QWidget):
     movieTimer = QtCore.QTimer()
 
     def __init__(self, xpos, ypos, zpos, tpos, xdim, ydim, zdim, tdim, toffset, tr, affine, \
-            XPosSpinBox=None, YPosSpinBox=None, ZPosSpinBox=None, TPosSpinBox=None, \
-            XCoordSpinBox=None, YCoordSpinBox=None, ZCoordSpinBox=None, TCoordSpinBox=None, \
-            TimeSlider=None, runMovieButton=None):
+                 XPosSpinBox=None, YPosSpinBox=None, ZPosSpinBox=None, TPosSpinBox=None, \
+                 XCoordSpinBox=None, YCoordSpinBox=None, ZCoordSpinBox=None, TCoordSpinBox=None, \
+                 TimeSlider=None, runMovieButton=None):
         QtGui.QWidget.__init__(self)
 
         self.XPosSpinBox = XPosSpinBox
@@ -232,7 +234,7 @@ class xyztlocation(QtGui.QWidget):
 
     def setXYZInfo(self, xdim, ydim, zdim, affine):
         self.xdim = xdim
-        self.ydim = ydim 
+        self.ydim = ydim
         self.zdim = zdim
         self.affine = affine
         self.invaffine = np.linalg.inv(self.affine)
@@ -248,9 +250,9 @@ class xyztlocation(QtGui.QWidget):
         ymax = np.max([yllcoord, yulcoord])
         zmin = np.min([zllcoord, zulcoord])
         zmax = np.max([zllcoord, zulcoord])
-        self.setupSpinBox(self.XCoordSpinBox, self.getXcoord, xmin, xmax, (xmax - xmin)/self.xdim, self.xcoord)
-        self.setupSpinBox(self.YCoordSpinBox, self.getYcoord, ymin, ymax, (ymax - ymin)/self.ydim, self.ycoord)
-        self.setupSpinBox(self.ZCoordSpinBox, self.getZcoord, zmin, zmax, (zmax - zmin)/self.zdim, self.zcoord)
+        self.setupSpinBox(self.XCoordSpinBox, self.getXcoord, xmin, xmax, (xmax - xmin) / self.xdim, self.xcoord)
+        self.setupSpinBox(self.YCoordSpinBox, self.getYcoord, ymin, ymax, (ymax - ymin) / self.ydim, self.ycoord)
+        self.setupSpinBox(self.ZCoordSpinBox, self.getZcoord, zmin, zmax, (zmax - zmin) / self.zdim, self.zcoord)
 
     def setTInfo(self, tdim, tr, toffset):
         self.tdim = tdim
@@ -262,7 +264,7 @@ class xyztlocation(QtGui.QWidget):
         tulcoord = self.tr2real(self.tdim - 1)
         tmin = np.min([tllcoord, tulcoord])
         tmax = np.max([tllcoord, tulcoord])
-        self.setupSpinBox(self.TCoordSpinBox, self.getTcoord, tmin, tmax, (tmax - tmin)/self.tdim, self.tcoord)
+        self.setupSpinBox(self.TCoordSpinBox, self.getTcoord, tmin, tmax, (tmax - tmin) / self.tdim, self.tcoord)
         self.setupTimeSlider(self.TimeSlider, self.readTimeSlider, 0, self.tdim - 1, self.tpos)
         self.setupRunMovieButton(self.runMovieButton, self.runMovieToggle)
 
@@ -288,7 +290,7 @@ class xyztlocation(QtGui.QWidget):
             thespinbox.valueChanged.connect(thehandler)
 
     def updateXYZValues(self):
-        #print('resetting XYZ spinbox values')
+        # print('resetting XYZ spinbox values')
         if self.XPosSpinBox is not None:
             self.XPosSpinBox.setValue(self.xpos)
         if self.YPosSpinBox is not None:
@@ -301,16 +303,16 @@ class xyztlocation(QtGui.QWidget):
             self.YCoordSpinBox.setValue(self.ycoord)
         if self.ZCoordSpinBox is not None:
             self.ZCoordSpinBox.setValue(self.zcoord)
-        #print('done resetting XYZ spinbox values')
+        # print('done resetting XYZ spinbox values')
         self.updatedXYZ.emit()
 
     def updateTValues(self):
-        #print('resetting T spinbox values')
+        # print('resetting T spinbox values')
         if self.TPosSpinBox is not None:
             self.TPosSpinBox.setValue(self.tpos)
         if self.TCoordSpinBox is not None:
             self.TCoordSpinBox.setValue(self.tcoord)
-        #print('done resetting T spinbox values')
+        # print('done resetting T spinbox values')
         self.updatedT.emit()
 
     def real2tr(self, time):
@@ -353,7 +355,7 @@ class xyztlocation(QtGui.QWidget):
             self.updateTValues()
 
     def getXpos(self, event):
-        #print('entering getXpos')
+        # print('entering getXpos')
         newx = int(self.XPosSpinBox.value())
         if self.xpos != newx:
             self.xpos = newx
@@ -361,7 +363,7 @@ class xyztlocation(QtGui.QWidget):
             self.updateXYZValues()
 
     def getYpos(self, event):
-        #print('entering getYpos')
+        # print('entering getYpos')
         newy = int(self.YPosSpinBox.value())
         if self.ypos != newy:
             self.ypos = newy
@@ -369,7 +371,7 @@ class xyztlocation(QtGui.QWidget):
             self.updateXYZValues()
 
     def getZpos(self, event):
-        #print('entering getZpos')
+        # print('entering getZpos')
         newz = int(self.ZPosSpinBox.value())
         if self.zpos != newz:
             self.zpos = newz
@@ -377,7 +379,7 @@ class xyztlocation(QtGui.QWidget):
             self.updateXYZValues()
 
     def getTpos(self, event):
-        #print('entering getTpos')
+        # print('entering getTpos')
         newt = int(self.TPosSpinBox.value())
         if self.tpos != newt:
             self.tpos = newt
@@ -496,7 +498,7 @@ class overlay:
             self.affine = self.header.get_base_affine()
         self.invaffine = np.linalg.inv(self.affine)
         self.xpos = 0
-        self.ypos= 0
+        self.ypos = 0
         self.zpos = 0
         self.tpos = 0
         self.xcoord = 0.0
@@ -505,14 +507,14 @@ class overlay:
         self.tcoord = 0.0
 
         if self.verbose:
-            print('overlay initialized:', self.name, self.filename, self.minval, self.dispmin, self.dispmax, self.maxval)
+            print('overlay initialized:', self.name, self.filename, self.minval, self.dispmin, self.dispmax,
+                  self.maxval)
         self.summarize()
 
-
     def duplicate(self, newname, newlabel):
-        return overlay(newname, self.filename, self.namebase, funcmask=self.funcmask, geommask=self.geommask, label=newlabel, report=self.report,
-                 lut_state=self.lut_state)
-
+        return overlay(newname, self.filename, self.namebase, funcmask=self.funcmask, geommask=self.geommask,
+                       label=newlabel, report=self.report,
+                       lut_state=self.lut_state)
 
     def updateStats(self):
         self.minval = self.maskeddata.min()
@@ -523,7 +525,6 @@ class overlay:
         self.histy, self.histx = np.histogram(self.maskeddata[np.where(self.maskeddata != 0.0)],
                                               bins=np.linspace(self.minval, self.maxval, 200))
         # print(self.name,':',self.minval, self.maxval, self.robustmin, self.robustmax)
-
 
     def setData(self, data, isaMask=False):
         self.data = data.copy()
@@ -550,34 +551,27 @@ class overlay:
             print('overlay sizes:', self.xsize, self.ysize, self.zsize, self.tr)
             print('overlay toffset:', self.toffset)
 
-
     def setLabel(self, label):
         self.label = label
-
 
     def real2tr(self, time):
         return np.round((time - self.toffset) / self.tr, 0)
 
-
     def tr2real(self, tpos):
         return self.toffset + self.tr * tpos
-
 
     def real2vox(self, xcoord, ycoord, zcoord, time):
         x, y, z = apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
         t = self.real2tr(time)
         return int(np.round(x, 0)), int(np.round(y, 0)), int(np.round(z, 0)), int(np.round(t, 0))
 
-
     def vox2real(self, xpos, ypos, zpos, tpos):
         return np.concatenate((apply_affine(self.affine, [xpos, ypos, zpos]), [self.tr2real(tpos)]), axis=0)
-
 
     def setXYZpos(self, xpos, ypos, zpos):
         self.xpos = int(xpos)
         self.ypos = int(ypos)
         self.zpos = int(zpos)
-
 
     def setTpos(self, tpos):
         if tpos > self.tdim - 1:
@@ -585,13 +579,11 @@ class overlay:
         else:
             self.tpos = int(tpos)
 
-
     def getFocusVal(self):
         if self.tdim > 1:
             return self.maskeddata[self.xpos, self.ypos, self.zpos, self.tpos]
         else:
             return self.maskeddata[self.xpos, self.ypos, self.zpos]
-
 
     def setFuncMask(self, funcmask, maskdata=True):
         self.funcmask = funcmask
@@ -605,7 +597,6 @@ class overlay:
         if maskdata:
             self.maskData()
 
-
     def setGeomMask(self, geommask, maskdata=True):
         self.geommask = geommask
         if self.geommask is None:
@@ -618,31 +609,25 @@ class overlay:
         if maskdata:
             self.maskData()
 
-
     def maskData(self):
         self.mask = self.geommask * self.funcmask
         self.maskeddata = self.data.copy()
         self.maskeddata[np.where(self.mask < 0.5)] = 0.0
         self.updateStats()
 
-
     def setReport(self, report):
         self.report = report
-
 
     def setTR(self, trval):
         self.tr = trval
 
-
     def settoffset(self, toffset):
         self.toffset = toffset
-
 
     def setLUT(self, lut_state):
         self.lut_state = lut_state
         self.gradient.restoreState(lut_state)
         self.theLUT = self.gradient.getLookupTable(512, alpha=True)
-
 
     def summarize(self):
         print()
@@ -752,11 +737,16 @@ def calcAtlasStats():
             for regnum, region in enumerate(atlaslabels):
                 print('calculating stats for region', regnum + 1, '(', region, ')')
                 atlasstats[themap][region] = {}
-                atlasstats[themap][region]['mean'] = np.mean(overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
-                atlasstats[themap][region]['median'] = np.median(overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
-                atlasstats[themap][region]['robustmean'] = mad(overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
-                atlasstats[themap][region]['std'] = np.std(overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
-                atlasstats[themap][region]['MAD'] = mad(overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+                atlasstats[themap][region]['mean'] = np.mean(
+                    overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+                atlasstats[themap][region]['median'] = np.median(
+                    overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+                atlasstats[themap][region]['robustmean'] = mad(
+                    overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+                atlasstats[themap][region]['std'] = np.std(
+                    overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+                atlasstats[themap][region]['MAD'] = mad(
+                    overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
             atlasstatmap = overlays[themap].duplicate(themap + '_atlasstat', overlays[themap].label)
             atlasstatmap.funcmask = overlays['atlasmask'].data
             atlasstatmap.data *= 0.0
@@ -791,7 +781,8 @@ def updateAtlasStats():
             print('loading', averagingmode, 'into', themap + '_atlasstat')
             for regnum, region in enumerate(atlaslabels):
                 if themap is not 'atlas':
-                    overlays[themap + '_atlasstat'].data[np.where(overlays['atlas'].data == (regnum + 1))] = atlasstats[themap][region][averagingmode]
+                    overlays[themap + '_atlasstat'].data[np.where(overlays['atlas'].data == (regnum + 1))] = \
+                    atlasstats[themap][region][averagingmode]
                 overlays[themap + '_atlasstat'].maskData()
                 overlays[themap + '_atlasstat'].updateStats()
 
@@ -969,10 +960,10 @@ def set_0p05():
     global overlays, loadedfuncmaps, ui
     print('setting functional mask to p<0.05')
     ui.setMask_Button.setText('p<0.05')
-    #overlays['jit_mask'] = tide_stats.makepmask(overlays['lagstrengths'], 0.05, sighistfit, onesided=True)
+    # overlays['jit_mask'] = tide_stats.makepmask(overlays['lagstrengths'], 0.05, sighistfit, onesided=True)
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['p_lt_0p050_mask'].data)
-        #overlays[themap].setFuncMask(overlays['jit_mask'].data)
+        # overlays[themap].setFuncMask(overlays['jit_mask'].data)
     updateOrthoImages()
     updateHistogram()
 
@@ -1063,7 +1054,7 @@ def overlay_radioButton_clicked(which, enabled):
             else:
                 ui.rainbow_radioButton.setChecked(True)
 
-            print('setting t position limits to ',0, overlays[focusmap].tdim - 1)
+            print('setting t position limits to ', 0, overlays[focusmap].tdim - 1)
             currentloc.setTInfo(overlays[focusmap].tdim, overlays[focusmap].tr, overlays[focusmap].toffset)
 
             updateHistogram()
@@ -1165,15 +1156,15 @@ def printfocusvals():
     global currentloc
     logstatus(ui.logOutput, 'Print focus vals\n\n')
     for key in overlays:
-        #print(key, overlays[key].report)
+        # print(key, overlays[key].report)
         if key != 'mnibrainmask':
-            #print('key=', key)
+            # print('key=', key)
             if overlays[key].report:
-                #print('gettting ', key, ' value at ', currentloc.xpos, currentloc.ypos, currentloc.zpos, currentloc.tpos)
+                # print('gettting ', key, ' value at ', currentloc.xpos, currentloc.ypos, currentloc.zpos, currentloc.tpos)
                 overlays[key].setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos)
                 overlays[key].setTpos(currentloc.tpos)
                 focusval = overlays[key].getFocusVal()
-                #print('focusval =', focusval)
+                # print('focusval =', focusval)
                 if key != 'atlas':
                     outstring = str(overlays[key].label.ljust(28)) + str(':') + str(focusval)
                     logstatus(ui.logOutput, outstring)
@@ -1202,7 +1193,8 @@ def loadfuncmaps(thefileroot, theoverlays, thefuncmaps):
                 zsize = theoverlays[themap].zsize
                 tr = theoverlays[themap].tr
             else:
-                if xdim != theoverlays[themap].xdim or ydim != theoverlays[themap].ydim or zdim != theoverlays[themap].zdim:
+                if xdim != theoverlays[themap].xdim or ydim != theoverlays[themap].ydim or zdim != theoverlays[
+                    themap].zdim:
                     print('overlay dimensions do not match!')
                     sys.exit()
                 if xsize != theoverlays[themap].xsize or ysize != theoverlays[themap].ysize or zsize != theoverlays[
@@ -1212,7 +1204,7 @@ def loadfuncmaps(thefileroot, theoverlays, thefuncmaps):
             loadedfuncmaps.append(themap)
         else:
             print('map: ', thefileroot + themap + '.nii.gz', ' does not exist!')
-    print('functional maps loaded:',loadedfuncmaps)
+    print('functional maps loaded:', loadedfuncmaps)
     return loadedfuncmaps
 
 
@@ -1222,7 +1214,8 @@ def loadanatomics(thefileroot, theoverlays, anatname, MNIcoords, xsize, ysize, z
     except KeyError:
         fsldir = None
 
-    referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data', 'reference')
+    referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
+                                'reference')
 
     if anatname != '':
         print('using user input anatomic name')
@@ -1230,7 +1223,7 @@ def loadanatomics(thefileroot, theoverlays, anatname, MNIcoords, xsize, ysize, z
             thepath, thebase = os.path.split(anatname)
             theoverlays['anatomic'] = overlay('anatomic', anatname, thebase)
             print('using ', anatname, ' as background')
-            #allloadedmaps.append('anatomic')
+            # allloadedmaps.append('anatomic')
             return True
         else:
             print('specified file does not exist!')
@@ -1240,14 +1233,14 @@ def loadanatomics(thefileroot, theoverlays, anatname, MNIcoords, xsize, ysize, z
         thepath, thebase = os.path.split(thefileroot)
         theoverlays['anatomic'] = overlay('anatomic', thefileroot + 'highres_head.nii.gz', thebase)
         print('using ', thefileroot + 'highres_head.nii.gz', ' as background')
-        #allloadedmaps.append('anatomic')
+        # allloadedmaps.append('anatomic')
         return True
     elif os.path.isfile(thefileroot + 'highres.nii.gz'):
         print('using hires anatomic name')
         thepath, thebase = os.path.split(thefileroot)
         theoverlays['anatomic'] = overlay('anatomic', thefileroot + 'highres.nii.gz', thebase)
         print('using ', thefileroot + 'highres.nii.gz', ' as background')
-        #allloadedmaps.append('anatomic')
+        # allloadedmaps.append('anatomic')
         return True
     elif MNIcoords:
         mniname = ''
@@ -1261,16 +1254,16 @@ def loadanatomics(thefileroot, theoverlays, anatname, MNIcoords, xsize, ysize, z
         if os.path.isfile(mniname):
             theoverlays['anatomic'] = overlay('anatomic', mniname, 'MNI152')
             print('using ', mniname, ' as background')
-            #allloadedmaps.append('anatomic')
+            # allloadedmaps.append('anatomic')
             return True
         else:
-            print('xsize, ysize, zsize=',xsize, ysize, zsize)
+            print('xsize, ysize, zsize=', xsize, ysize, zsize)
             print('MNI template brain ', mniname, ' not loaded')
     elif os.path.isfile(thefileroot + 'mean.nii.gz'):
         thepath, thebase = os.path.split(thefileroot)
         theoverlays['anatomic'] = overlay('anatomic', thefileroot + 'mean.nii.gz', thebase)
         print('using ', thefileroot + 'mean.nii.gz', ' as background')
-        #allloadedmaps.append('anatomic')
+        # allloadedmaps.append('anatomic')
         return True
     else:
         print('no anatomic image loaded')
@@ -1286,27 +1279,28 @@ def loadfuncmasks(thefileroot, theoverlays, thefuncmasks):
             loadedfuncmasks.append(themap)
         else:
             print('mask: ', thefileroot + themap + '.nii.gz', ' does not exist!')
-    #theoverlays['jit_mask'] = overlay('jit_mask', thefileroot + 'lagmask' + '.nii.gz', thebase)
-    #loadedfuncmasks.append('jit_mask')
+    # theoverlays['jit_mask'] = overlay('jit_mask', thefileroot + 'lagmask' + '.nii.gz', thebase)
+    # loadedfuncmasks.append('jit_mask')
     print(loadedfuncmasks)
     return loadedfuncmasks
 
 
 def loadgeommask(thefileroot, theoverlays, geommaskname, MNIcoords, xsize, ysize, zsize):
-    referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data', 'reference')
+    referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
+                                'reference')
     if geommaskname != '':
         if os.path.isfile(geommaskname):
             thepath, thebase = os.path.split(geommaskname)
             theoverlays['geommask'] = overlay('geommask', geommaskname, thebase, isaMask=True)
             print('using ', geommaskname, ' as geometric mask')
-            #allloadedmaps.append('geommask')
+            # allloadedmaps.append('geommask')
             return True
     elif MNIcoords:
         try:
             fsldir = os.environ['FSLDIR']
         except KeyError:
             fsldir = None
-        print('fsldir set to ',fsldir)
+        print('fsldir set to ', fsldir)
         if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
             if fsldir is not None:
                 geommaskname = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm_brain_mask.nii.gz')
@@ -1316,7 +1310,7 @@ def loadgeommask(thefileroot, theoverlays, geommaskname, MNIcoords, xsize, ysize
             thepath, thebase = os.path.split(geommaskname)
             theoverlays['geommask'] = overlay('geommask', geommaskname, thebase, isaMask=True)
             print('using ', geommaskname, ' as background')
-            #allloadedmaps.append('geommask')
+            # allloadedmaps.append('geommask')
             return True
         else:
             print('no geometric mask loaded')
@@ -1468,7 +1462,7 @@ def main():
     colorbar = np.zeros((25, 256), dtype=np.float64)
     for i in range(0, 256):
         colorbar[:, i] = i * (1.0 / 255.0)
-    #img_colorbar.setImage(colorbar.astype(np.float64), levels=[0.0, 1.0])
+    # img_colorbar.setImage(colorbar.astype(np.float64), levels=[0.0, 1.0])
     img_colorbar.setImage(colorbar, levels=[0.0, 1.0])
 
     # set up the timecourse plot window
@@ -1498,7 +1492,6 @@ def main():
     ui.viridis_radioButton.clicked.connect(viridis_radioButton_clicked)
     ui.jet_radioButton.clicked.connect(jet_radioButton_clicked)
     ui.rainbow_radioButton.clicked.connect(rainbow_radioButton_clicked)
-
 
     overlaybuttons = [ui.overlay_radioButton_01,
                       ui.overlay_radioButton_02,
@@ -1558,7 +1551,6 @@ def main():
     ui.setMask_Button.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     ui.setMask_Button.customContextMenuRequested.connect(on_context_menu)
 
-
     # read in all the datasets
     thesubject = RapidtideDataset('main', datafileroot)
 
@@ -1568,7 +1560,8 @@ def main():
     # first the functional maps
     funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'R2', 'fitNorm', 'fitcoff']
     if userise:
-        funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'R2', 'risetime_epoch_0', 'starttime_epoch_0', 'maxamp_epoch_0']
+        funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'R2', 'risetime_epoch_0', 'starttime_epoch_0',
+                    'maxamp_epoch_0']
     if usecorrout:
         funcmaps += ['corrout']
     loadedfuncmaps = loadfuncmaps(datafileroot, overlays, funcmaps)
@@ -1612,10 +1605,11 @@ def main():
 
     if MNIcoords:
         global atlasname, atlaslabels
-        #atlasname = 'ASPECTS'
+        # atlasname = 'ASPECTS'
         atlasshortname = 'ATT'
         atlasname = atlases[atlasshortname]['atlasname']
-        referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data', 'reference')
+        referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
+                                    'reference')
         atlaslabels = tide_io.readlabels(os.path.join(referencedir, atlasname + '_regions.txt'))
         print(atlaslabels)
         if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
@@ -1635,12 +1629,12 @@ def main():
     try:
         test = overlays['atlas']
         print('there is an atlas')
-        #ui.report_pushButton.show()
-        #ui.report_pushButton.setDisabled(False)
+        # ui.report_pushButton.show()
+        # ui.report_pushButton.setDisabled(False)
     except KeyError:
         print('there is not an atlas')
-        #ui.report_pushButton.hide()
-        #ui.report_pushButton.setDisabled(True)
+        # ui.report_pushButton.hide()
+        # ui.report_pushButton.setDisabled(True)
     print('done')
 
     win.setWindowTitle('TiDePool - ' + datafileroot)
@@ -1652,7 +1646,7 @@ def main():
         sighistfitname = None
 
     #  This is currently very broken, so it's disabled
-    #if sighistfitname is not None:
+    # if sighistfitname is not None:
     #    thepcts = np.array([0.95, 0.99, 0.995, 0.999])
     #    thervals = tide_stats.rfromp(sighistfitname, thepcts)
     #    tide_stats.printthresholds(thepcts, thervals, 'Crosscorrelation significance thresholds from data:')
@@ -1813,7 +1807,7 @@ def main():
 
     print('setting functional masks')
     for theoverlay in loadedfuncmaps:
-        if 'p_lt_0p050_mask' in overlays and False:   # disable this BBF 2/8/18
+        if 'p_lt_0p050_mask' in overlays and False:  # disable this BBF 2/8/18
             overlays[theoverlay].setFuncMask(overlays['p_lt_0p050_mask'].data)
             ui.setMask_Button.setText('p<0.05')
         else:
@@ -1836,20 +1830,20 @@ def main():
 
     def loadpane(themap, thepane, view, button, panemap, orthoimages, bgmap=None):
         if bgmap is None:
-            orthoimages[themap.name] = OrthoImageItem(themap, view[thepane], button=button[thepane], 
-                                                 imgsize=sm_imgsize)
+            orthoimages[themap.name] = OrthoImageItem(themap, view[thepane], button=button[thepane],
+                                                      imgsize=sm_imgsize)
         else:
             orthoimages[themap.name] = OrthoImageItem(themap, view[thepane], button=button[thepane], bgmap=bgmap,
-                                                 imgsize=sm_imgsize)
+                                                      imgsize=sm_imgsize)
         panemap[thepane] = themap.name
 
     print('focusmap is:', focusmap, 'bgmap is:', bgmap)
     if bgmap is None:
         mainwin = OrthoImageItem(overlays[focusmap], ui.main_graphicsView, imgsize=lg_imgsize,
-                            enableMouse=True)
+                                 enableMouse=True)
     else:
         mainwin = OrthoImageItem(overlays[focusmap], ui.main_graphicsView, bgmap=overlays[bgmap], imgsize=lg_imgsize,
-                            enableMouse=True)
+                                 enableMouse=True)
     mainwin.updated.connect(updateXYZFromMainWin)
 
     orthoimages = {}
@@ -1859,7 +1853,7 @@ def main():
             loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages)
         else:
             loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages,
-                 bgmap=overlays[bgmap])
+                     bgmap=overlays[bgmap])
     print('done loading panes')
 
     # set up the histogram window
@@ -1897,18 +1891,18 @@ def main():
     # initialize the location picker
     global currentloc
     currentloc = \
-            xyztlocation(xpos, ypos, zpos, tpos, xdim, ydim, zdim, tdim,
-            overlays[focusmap].toffset, overlays[focusmap].tr, overlays[focusmap].affine,
-            XPosSpinBox=ui.pixnumX_doubleSpinBox,
-            YPosSpinBox=ui.pixnumY_doubleSpinBox,
-            ZPosSpinBox=ui.pixnumZ_doubleSpinBox,
-            TPosSpinBox=ui.pixnumT_doubleSpinBox, 
-            XCoordSpinBox=ui.coordX_doubleSpinBox,
-            YCoordSpinBox=ui.coordY_doubleSpinBox,
-            ZCoordSpinBox=ui.coordZ_doubleSpinBox,
-            TCoordSpinBox=ui.coordT_doubleSpinBox,
-            TimeSlider=ui.TimeSlider,
-            runMovieButton=ui.runMovieButton)
+        xyztlocation(xpos, ypos, zpos, tpos, xdim, ydim, zdim, tdim,
+                     overlays[focusmap].toffset, overlays[focusmap].tr, overlays[focusmap].affine,
+                     XPosSpinBox=ui.pixnumX_doubleSpinBox,
+                     YPosSpinBox=ui.pixnumY_doubleSpinBox,
+                     ZPosSpinBox=ui.pixnumZ_doubleSpinBox,
+                     TPosSpinBox=ui.pixnumT_doubleSpinBox,
+                     XCoordSpinBox=ui.coordX_doubleSpinBox,
+                     YCoordSpinBox=ui.coordY_doubleSpinBox,
+                     ZCoordSpinBox=ui.coordZ_doubleSpinBox,
+                     TCoordSpinBox=ui.coordT_doubleSpinBox,
+                     TimeSlider=ui.TimeSlider,
+                     runMovieButton=ui.runMovieButton)
     currentloc.updatedXYZ.connect(updateXYZFromControls)
     currentloc.updatedT.connect(updateTFromControls)
     updateHistogram()

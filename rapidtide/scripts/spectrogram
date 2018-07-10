@@ -87,8 +87,6 @@ def main():
     # It's _not_ an array of datetime objects!
     time = mpl.dates.drange(start, end, delta)
 
-    num = time.size
-
     # -- Generate some data
     x = yvecs[0]
     y = yvecs[0]

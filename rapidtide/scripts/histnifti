@@ -20,15 +20,8 @@
 #       $Id: histnifti,v 1.8 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function
-import sys
-import getopt
-import string
-import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
-
-from numpy import r_, zeros, ones, shape, where, sort
 from pylab import *
-import nibabel as nib
 
 def usage():
     print('usage: histnifti inputfile outputroot')
@@ -63,11 +56,7 @@ inputfilename=sys.argv[1]
 outputroot=sys.argv[2]
 
 print('loading data')
-input_img = nib.load(inputfilename)
-input_data = input_img.get_data()
-input_hdr = input_img.get_header()
-thedims=input_hdr['dim']
-thesizes=input_hdr['pixdim']
+input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
 tr=thesizes[4]
 Fs=1.0/tr
 print('tr from header =',tr,', sample frequency is ',Fs)

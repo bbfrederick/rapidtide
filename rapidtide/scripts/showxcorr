@@ -22,40 +22,24 @@
 from __future__ import print_function, division
 
 import sys
-import platform
-
-import matplotlib
 import numpy as np
-
-#if platform.system() == 'Darwin':
-#    matplotlib.use('MacOSX')
-#else:
-#    matplotlib.use('TkAgg')
-
 import getopt
 import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
-import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.correlate as tide_corr
-from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
-from scipy.stats import skew
-from scipy import sin, arange, pi, randn
-from numpy import r_, argmax, zeros, shape, reshape, eye, sqrt
-from numpy.random import shuffle, permutation
-import nibabel as nib
-
-from pylab import plot, legend, show, figure
-
+from numpy import r_, argmax, zeros
+from numpy.random import permutation
+from pylab import plot, show, figure
 
 
 def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend, numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
-    corrlist = zeros((numreps), dtype='float')
-    corrlist_pear = zeros((numreps), dtype='float')
+    corrlist = zeros(numreps, dtype='float')
+    corrlist_pear = zeros(numreps, dtype='float')
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
 
     filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata), prewindow, dodetrend)
@@ -68,7 +52,9 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
 
         # crosscorrelate with original
         if gccphat:
-            theshuffledxcorr = tide_corr.gccphat(filteredindata, filteredshuffleddata, False)
+            theshuffledxcorr = tide_corr.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr,
+                                                       weighting='PHAT')
+
         else:
             theshuffledxcorr = tide_corr.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr)
 
@@ -81,7 +67,7 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, se
         corrlist_pear[i] = pearsonr(filteredindata, filteredshuffleddata)[0]
 
         # progress
-        #tide_util.progressbar(i + 1, numreps, label='Percent complete')
+        # tide_util.progressbar(i + 1, numreps, label='Percent complete')
 
     # jump to line after progress bar
     print()
@@ -128,6 +114,7 @@ def usage():
     print("                    repetition")
     print("")
     return ()
+
 
 # get the command line parameters
 searchrange = 15.0
@@ -305,9 +292,9 @@ if dumpfiltered:
     tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
 
 if dopartial:
-    controlvars = tide_io.readnpvecs(controlvariablefile)
+    controlvars = tide_io.readvecs(controlvariablefile)
     regressorvec = []
-    for j in range(0, numregressors):
+    for j in range(0, controlvars.shape[0]):
         regressorvec.append(tide_math.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]), prewindow, dodetrend))
     if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
         thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
@@ -315,7 +302,7 @@ if dopartial:
         thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
 if gccphat:
-    thexcorr = tide_corr.gccphat(filtereddata1, filtereddata2, doplot)
+    thexcorr = tide_corr.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr, weighting='PHAT')
 else:
     thexcorr = tide_corr.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr)
 thepxcorr = pearsonr(filtereddata1, filtereddata2)
@@ -333,22 +320,22 @@ if debug:
     print('searching for peak correlation over range ', searchstart, searchend)
 maxdelay = xcorr_x_trim[argmax(thexcorr_trim)]
 if debug:
-    print('maxdelay before refinement',maxdelay)
-dofindmaxlag=True
+    print('maxdelay before refinement', maxdelay)
+dofindmaxlag = True
 if dofindmaxlag:
     print('executing findmaxlag')
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
-            xcorr_x_trim, thexcorr_trim, -searchrange,searchrange,1000.0,
-            refine=True,
-            useguess=False,
-            fastgauss=False,
-            displayplots=False)
+        xcorr_x_trim, thexcorr_trim, -searchrange, searchrange, 1000.0,
+        refine=True,
+        useguess=False,
+        fastgauss=False,
+        displayplots=False)
     print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
     R = maxval
 if debug:
-    print('maxdelay after refinement',maxdelay)
+    print('maxdelay after refinement', maxdelay)
     if failreason > 0:
-        print('failreason =',failreason)
+        print('failreason =', failreason)
 else:
     R = thexcorr_trim[argmax(thexcorr_trim)]
 
@@ -371,11 +358,13 @@ if estimate_significance:
     pearpcts, pearpcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist_pear, histlen, thepercentiles)
     if debug:
         tide_stats.printthresholds(pearpcts, thepercentiles, 'Pearson correlation significance thresholds from data:')
-        tide_stats.printthresholds(pearpcts_fit, thepercentiles, 'Pearson correlation significance thresholds from fit:')
+        tide_stats.printthresholds(pearpcts_fit, thepercentiles,
+                                   'Pearson correlation significance thresholds from fit:')
 
     if writecorrlists:
         tide_io.writenpvecs(corrlist, "corrlist.txt")
         tide_io.writenpvecs(corrlist_pear, "corrlist_pear.txt")
+
 
 def printthresholds(pcts, thepercentiles, labeltext):
     print(labeltext)
@@ -395,7 +384,7 @@ if debug:
     print(thepxcorr)
 
 if verbose:
-    if (uselabel == True):
+    if uselabel:
         print(thelabel, ":\t", maxdelay)
     else:
         print("Crosscorrelation_Rmax:\t", R)
@@ -407,7 +396,7 @@ if verbose:
 
 if summarymode:
     if estimate_significance:
-        if (uselabel == True):
+        if uselabel:
             if labelline:
                 print('thelabel', 'pearson_R', 'pearson_R(p=0.05)', 'xcorr_R', 'xcorr_R(P=0.05)', 'xcorr_maxdelay')
             print(thelabel, thepxcorr[0], pearpcts_fit[0], R, pcts_fit[0], -maxdelay)
@@ -416,7 +405,7 @@ if summarymode:
                 print('pearson_R', 'pearson_R(p=0.05)', 'xcorr_R', 'xcorr_R(P=0.05)', 'xcorr_maxdelay')
             print(thepxcorr[0], pearpcts_fit[0], R, pcts_fit[0], -maxdelay)
     else:
-        if (uselabel == True):
+        if uselabel:
             if labelline:
                 print('thelabel', 'pearson_r', 'pearson_p', 'xcorr_R', 'xcorr_maxdelay')
             print(thelabel, thepxcorr[0], thepxcorr[1], R, -maxdelay)

@@ -30,6 +30,7 @@ from scipy import arange
 
 from pylab import plot, xlabel, ylabel, title, legend, show, hold, bar
 
+
 def usage():
     print("usage: showxy textfilename[,LINELABEL] [-x XLABEL] [-y YLABEL] [-t TITLE], [-i FILENAME[,LINELABEL]]")
     print("	plots xy data in text file")
@@ -43,8 +44,7 @@ def usage():
     print("	-t	use TITLE at the top of the graph")
     print("	-i	add FILENAME to the plot, with label LINELABEL")
     print("	-p	plot as individual points (do not connect points)")
-    return()
-    return()
+    return ()
 
 
 # now check options
@@ -52,13 +52,13 @@ try:
     opts, args = getopt.gnu_getopt(sys.argv[1:], "pbi:x:y:l:t:", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
-    print(str(err)) # will print something like "option -a not recognized"
+    print(str(err))  # will print something like "option -a not recognized"
     usage()
     sys.exit(2)
 
 print('opts:', opts)
 print('args:', args)
-   
+
 # make sure there is at least one filename argument
 nargs = len(args)
 if nargs < 1:
@@ -68,11 +68,11 @@ if nargs < 1:
 
 # handle filename args
 argvec = sys.argv[1].split(',')
-#textfilename=[argvec[0]]
-#if len(argvec) > 1:
+# textfilename=[argvec[0]]
+# if len(argvec) > 1:
 #    thelegend=[argvec[1]]
 #    uselegend=True
-#else:
+# else:
 #    thelegend=[argvec[0]]
 
 numfiles = 0
@@ -86,27 +86,27 @@ for i in range(len(args)):
         thelegend.append(thesplit[1])
     else:
         thelegend.append(thesplit[0])
-    print('input file number ',numfiles,' is ', textfilename[-1],', label is', thelegend[-1])
+    print('input file number ', numfiles, ' is ', textfilename[-1], ', label is', thelegend[-1])
 
-usebarplot=False
-usexlabel=False
-useylabel=False
-usetitle=False
-uselegend=False
-usepoints=False
+usebarplot = False
+usexlabel = False
+useylabel = False
+usetitle = False
+uselegend = False
+usepoints = False
 for o, a in opts:
     if o == "-x":
         usexlabel = True
-        thexlabel=a
-        print("labelling x axis with ",thexlabel)
+        thexlabel = a
+        print("labelling x axis with ", thexlabel)
     elif o == "-y":
         useylabel = True
-        theylabel=a
-        print("labelling y axis with ",theylabel)
+        theylabel = a
+        print("labelling y axis with ", theylabel)
     elif o == "-t":
         usetitle = True
-        thetitle=a
-        print("using title ",thetitle)
+        thetitle = a
+        print("using title ", thetitle)
     elif o == '-i':
         argvec = a.split(',')
         if not (0 < len(argvec) <= 2):
@@ -115,11 +115,11 @@ for o, a in opts:
         textfilename.append(argvec[0])
         if len(argvec) == 2:
             thelegend.append(argvec[1])
-            uselegend=True
+            uselegend = True
         else:
             thelegend.append(argvec[0])
         numfiles += 1
-        print('input file number ',numfiles,' is ', textfilename[-1],', label is', thelegend[-1])
+        print('input file number ', numfiles, ' is ', textfilename[-1], ', label is', thelegend[-1])
     elif o == '-p':
         usepoints = True
     elif o == '-b':
@@ -132,22 +132,22 @@ xvecs = []
 yvecs = []
 for i in range(0, numfiles):
     print('reading data from', textfilename[i])
-    indata=tide_io.readvecs(textfilename[i])
-    xvecs.append(1.0 * indata[0,:])
-    yvecs.append(1.0 * indata[1,:])
+    indata = tide_io.readvecs(textfilename[i])
+    xvecs.append(1.0 * indata[0, :])
+    yvecs.append(1.0 * indata[1, :])
 
 numvecs = len(xvecs)
 colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
 for i in range(0, numfiles):
     if usebarplot:
-        bar(xvecs[i],yvecs[i],width=1.5,color='lightgray',align='center',edgecolor=None)
+        bar(xvecs[i], yvecs[i], width=1.5, color='lightgray', align='center', edgecolor=None)
     else:
         if usepoints:
-            plot(xvecs[i],yvecs[i], color=colorlist[i], marker='.', linestyle='None')
+            plot(xvecs[i], yvecs[i], color=colorlist[i], marker='.', linestyle='None')
         else:
-            plot(xvecs[i],yvecs[i], color=colorlist[i])
+            plot(xvecs[i], yvecs[i], color=colorlist[i])
 if uselegend:
-    legend(thelegend,loc=1)
+    legend(thelegend, loc=1)
 if usetitle:
     title(thetitle, fontsize=18, fontweight='bold')
 if usexlabel:

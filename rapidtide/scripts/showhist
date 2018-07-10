@@ -22,15 +22,8 @@
 from __future__ import print_function
 import sys
 import getopt
-import matplotlib
-import platform
 import rapidtide.io as tide_io
 from pylab import plot, xlabel, ylabel, title, legend, show
-
-#if platform.system() == 'Darwin':
-#    matplotlib.use('MacOSX')
-#else:
-#    matplotlib.use('TkAgg')
 
 
 def usage():
