@@ -20,11 +20,12 @@
 #       $Id: linfit,v 1.4 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function, division
+import sys
 import getopt
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 
-from pylab import *
+from matplotlib.pyplot import *
 import nibabel as nib
 
 

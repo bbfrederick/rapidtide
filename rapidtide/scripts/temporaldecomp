@@ -20,10 +20,10 @@
 #       $Id: linfit,v 1.4 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function, division
+import sys
 import getopt
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
-from pylab import *
 from sklearn.decomposition import FastICA, PCA, SparsePCA
 
 

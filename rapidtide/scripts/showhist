@@ -23,7 +23,7 @@ from __future__ import print_function
 import sys
 import getopt
 import rapidtide.io as tide_io
-from pylab import plot, xlabel, ylabel, title, legend, show
+from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show
 
 
 def usage():

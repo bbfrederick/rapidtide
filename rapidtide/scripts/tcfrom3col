@@ -24,7 +24,7 @@ from __future__ import print_function, division
 import sys
 import bisect
 import numpy as np
-from pylab import figure, plot, show
+from matplotlib.pyplot import figure, plot, show
 import rapidtide.io as tide_io
 
 

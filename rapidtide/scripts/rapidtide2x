@@ -44,7 +44,7 @@ import rapidtide.resample as tide_resample
 import rapidtide.correlate as tide_corr
 
 from sklearn.decomposition import FastICA, PCA
-from pylab import figure, plot, show
+from matplotlib.pyplot import figure, plot, show
 import numpy as np
 from statsmodels.tsa.stattools import pacf_yw
 from scipy.stats.stats import pearsonr
