@@ -12,7 +12,7 @@ import argparse
 
 import nibabel as nib
 
-#from rapidtide import rapidtide
+# from rapidtide import workflows
 
 
 def is_valid_file(parser, arg):
@@ -730,6 +730,9 @@ def get_parser():
 
 
 def main(argv=None):
+    """
+    Compile arguments for rapidtide workflow.
+    """
     args = vars(get_parser().parse_args(argv))
 
     if args['arbvec'] is not None:
@@ -813,7 +816,7 @@ def main(argv=None):
         args['ampthresh'] = 0.7
         args['lagmaskthresh'] = 0.1
 
-    #rapidtide.run(args)
+    # workflows.rapidtide(args)
     print(args)
 
 
