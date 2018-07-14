@@ -20,17 +20,10 @@
 #
 from __future__ import print_function, division
 
-import sys
 import getopt
-import string
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-
+import rapidtide.io as tide_io
 import matplotlib.pyplot as plt
-import numpy as np
-
-from pylab import *
-import nibabel as nib
+import sys
 
 def bland_altman_plot(data1, data2, *args, **kwargs):
     data1     = np.asarray(data1)
@@ -93,29 +86,16 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
-input1_img = nib.load(inputfilename1)
-input1_data = input1_img.get_data()
-input1_hdr = input1_img.get_header()
-thedims1=input1_hdr['dim']
-
-mask1_img = nib.load(maskfilename1)
-mask1_data = mask1_img.get_data()
-mask1_hdr = mask1_img.get_header()
-themaskdims1=mask1_hdr['dim']
+input1_img, input1_data, input1_hdr, thedims1, thesizes1 = tide_io.readfromnifti(inputfilename1)
+mask1_img, mask1_data, mask1_hdr, themaskdims1, themasksizes1 = tide_io.readfromnifti(maskfilename1)
 
 if not tide_io.checkspacematch(thedims1,themaskdims1):
     print('input image 1 dimensions do not match mask')
     exit()
 
-input2_img = nib.load(inputfilename2)
-input2_data = input2_img.get_data()
-input2_hdr = input2_img.get_header()
-thedims2=input2_hdr['dim']
+input2_img, input2_data, input2_hdr, thedims2, thesizes2 = tide_io.readfromnifti(inputfilename2)
+mask2_img, mask2_data, mask2_hdr, themaskdims2, themasksizes2 = tide_io.readfromnifti(maskfilename2)
 
-mask2_img = nib.load(maskfilename2)
-mask2_data = mask2_img.get_data()
-mask2_hdr = mask2_img.get_header()
-themaskdims2=mask2_hdr['dim']
 
 if not tide_io.checkspacematch(thedims2,themaskdims2):
     print('input image 2 dimensions do not match mask')
@@ -143,7 +123,7 @@ H, xedges, yedges = np.histogram2d(thearray[:,0],thearray[:,1], bins=numbins, no
 extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
 cset = plt.contour(H,extent=extent)
 #plt.plot(thearray[:,0], thearray[:,1], 'k.')
-show()
+plt.show()
 
 # now fit the line
 fitorder=1

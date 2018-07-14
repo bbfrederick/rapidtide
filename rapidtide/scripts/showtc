@@ -22,46 +22,45 @@
 from __future__ import print_function
 import sys
 import os
-import platform
 import getopt
-from cycler import cycler
-
-import matplotlib
 import matplotlib.cm as cm
-
 import bisect
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-import rapidtide.filter_funcs as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 import numpy as np
 from scipy import arange, fftpack, linspace
-from scipy.signal import welch
 
-from pylab import figure, plot, legend, show, xlabel, ylabel, savefig, title, subplot, tight_layout, suptitle, xlim, ylim, box, setp
+from matplotlib.pyplot import figure, show, savefig, setp
 
 
-def phase(mcv): 
-    return np.arctan2(mcv.imag, mcv.real) 
+def phase(mcv):
+    return np.arctan2(mcv.imag, mcv.real)
 
 
 def usage():
     print("showtc - plots the data in text files")
     print("")
-    print("usage: showtc texfilename[:col1,col2...,coln] [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate=Fs] [--sampletime=Ts]")
+    print(
+        "usage: showtc texfilename[:col1,col2...,coln] [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate=Fs] [--sampletime=Ts]")
     print("")
     print("required arguments:")
     print("    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line")
-    print("                       A list of comma separated numbers following the filename and preceded by a colon is used to select columns to plot")
+    print(
+        "                       A list of comma separated numbers following the filename and preceded by a colon is used to select columns to plot")
     print("")
     print("optional arguments:")
     print("    --nolegend               - turn off legend label")
-    print("    --pspec                  - show the power spectra magnitudes of the input data instead of the timecourses")
+    print(
+        "    --pspec                  - show the power spectra magnitudes of the input data instead of the timecourses")
     print("    --phase                  - show the power spectra phases of the input data instead of the timecourses")
     print("    --transpose              - swap rows and columns in the input files")
     print("    --waterfall              - plot multiple timecourses as a waterfall")
-    print("    --voffset=VOFFSET        - plot multiple timecourses as with VOFFSET between them (use negative VOFFSET to set automatically)")
+    print(
+        "    --voffset=VOFFSET        - plot multiple timecourses as with VOFFSET between them (use negative VOFFSET to set automatically)")
     print("    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)")
-    print("    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)")
+    print(
+        "    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)")
     print("    --colorlist=C1,C2,..     - cycle through the list of colors specified by CN")
     print("    --linewidth=LW           - set linewidth to LW points (default is 1)")
     print("    --legendlist=L1,L2,..    - cycle through the list of legends specified by LN")
@@ -75,12 +74,14 @@ def usage():
     print("    --endtime=END            - end plot at END seconds")
     return ()
 
+
 # set default variable values
 dolegend = True
 dotranspose = False
 dowaterfall = False
 dopspec = False
 detrend = True
+demean = False
 useHamming = True
 domag = True
 samplerate = 1.0
@@ -102,9 +103,12 @@ theendtime = 1000000.0
 
 # get the command line parameters
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "voffset=", "noxax", "noyax",
-                                                   "starttime=", "endtime=",
-                                                   "samplerate=", "colorlist=", "linewidth=", "legendlist=", "title=", "separatelinked", "separate", "sampletime=", "tofile="])
+    opts, args = getopt.gnu_getopt(sys.argv, "F",
+                                   ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "voffset=", "noxax",
+                                    "noyax",
+                                    "starttime=", "endtime=",
+                                    "samplerate=", "colorlist=", "linewidth=", "legendlist=", "title=",
+                                    "separatelinked", "separate", "sampletime=", "tofile="])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like 'option -a not recognized'
@@ -220,7 +224,7 @@ shortcolnames = True
 # read in all the data
 for i in range(0, numfiles):
     print('filename ', i, textfilename[i])
-    
+
     # check file type
     filebase, extension = os.path.splitext(textfilename[i][0])
     if extension == '.json':
@@ -238,8 +242,8 @@ for i in range(0, numfiles):
         for column in (textfilename[i][1]).split(','):
             collist.append(int(column))
     else:
-        collist = range(0, invecs.shape[0]) 
-    #for j in range(0, invecs.shape[0]):
+        collist = range(0, invecs.shape[0])
+        # for j in range(0, invecs.shape[0]):
     for j in collist:
         print('appending vector number ', j)
         if dopspec:
@@ -248,14 +252,14 @@ for i in range(0, numfiles):
             else:
                 invec = invecs[j, :]
             if detrend:
-                invec = tide.detrend(invec, order=1, demean=True)
+                invec = tide_fit.detrend(invec, order=1, demean=True)
             elif demean:
-                invec = invec = mean(invec)
+                invec = invec = np.mean(invec)
 
             if len(invec) >= 1024:
-                nperseg=1024
+                nperseg = 1024
             else:
-                nperseg=None
+                nperseg = None
             '''
             thex, they = welch(invec, thissamplerate, nperseg=nperseg)
             xvecs.append(thex)
@@ -303,43 +307,43 @@ thestartpoint = np.max([0, bisect.bisect_right(xvecs[0], thestarttime)])
 theendpoint = np.min([minlen - 1, bisect.bisect_left(xvecs[0], theendtime)])
 thestarttime = xvecs[0][thestartpoint]
 theendtime = xvecs[0][theendpoint]
-#print('full range (pts):',thestartpoint, theendpoint)
-#print('full range (time):',thestarttime, theendtime)
+# print('full range (pts):',thestartpoint, theendpoint)
+# print('full range (time):',thestarttime, theendtime)
 currentxmax = -100000000.0
-currentxmin = 100000000.0    
+currentxmin = 100000000.0
 for thevec in xvecs:
     currentxmax = np.max([np.max(thevec), currentxmax])
     currentxmin = np.min([np.min(thevec), currentxmin])
 xrange = (np.min([currentxmin, theendtime]), np.max([currentxmax, thestarttime]))
-ymins = [] 
+ymins = []
 ymaxs = []
 for thevec in yvecs:
     ymins.append(np.min(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
     ymaxs.append(np.max(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
 currentymax = -100000000.0
-currentymin = 100000000.0    
+currentymin = 100000000.0
 for thevec in xvecs:
     currentymax = np.max([np.max(thevec), currentymax])
     currentymin = np.min([np.min(thevec), currentymin])
-yrange = (currentymin,  currentymax)
+yrange = (currentymin, currentymax)
 if voffset < 0.0:
     voffset = yrange[1] - yrange[0]
 if not separate:
     for i in range(0, numvecs):
         yvecs[i] += (numvecs - i - 1) * voffset
     currentymax = -100000000.0
-    currentymin = 100000000.0    
+    currentymin = 100000000.0
     for thevec in yvecs:
         currentymax = np.max([np.max(thevec), currentymax])
         currentymin = np.min([np.min(thevec), currentymin])
-    yrange = (currentymin,  currentymax)
+    yrange = (currentymin, currentymax)
 
     if dowaterfall:
-        xstep = (xrange[1] - xrange[0])/numvecs
+        xstep = (xrange[1] - xrange[0]) / numvecs
         ystep = yrange[1] - yrange[0]
         for i in range(numvecs):
             xvecs[i] = xvecs[i] + i * xstep
-            yvecs[i] = 10.0 * yvecs[i]/ystep + i * ystep
+            yvecs[i] = 10.0 * yvecs[i] / ystep + i * ystep
 
 # now plot it out
 if separate:
@@ -385,21 +389,21 @@ for i in range(0, numvecs):
         ax.legend(fontsize=thelegendfontsize, loc=2)
     ax.set_xlim(xrange)
     if linky:
-        #print(yrange)
+        # print(yrange)
         ax.set_ylim(yrange)
     else:
         themax = np.max(yvecs[i])
         themin = np.min(yvecs[i])
         thediff = themax - themin
-        #print(themin, themax, thediff)
+        # print(themin, themax, thediff)
         ax.set_ylim(top=(themax + thediff / 20.0), bottom=(themin - thediff / 20.0))
     if showxax:
         ax.tick_params(axis='x', labelsize=thexlabelfontsize, which='both')
     if showyax:
         ax.tick_params(axis='y', labelsize=theylabelfontsize, which='both')
-    #box(on=None)
-    #ax.xaxis.set_visible(showxax)
-    #ax.yaxis.set_visible(showyax)
+    # box(on=None)
+    # ax.xaxis.set_visible(showxax)
+    # ax.yaxis.set_visible(showyax)
 
     if separate:
         fig.subplots_adjust(hspace=0)
@@ -418,9 +422,7 @@ for i in range(0, numvecs):
         if showxax:
             ax.set_xlabel('Time (s)', fontsize=thexlabelfontsize, fontweight='bold')
 
-
-
-#fig.tight_layout()
+# fig.tight_layout()
 
 if outputfile is None:
     show()

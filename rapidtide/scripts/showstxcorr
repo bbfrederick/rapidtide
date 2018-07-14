@@ -21,50 +21,50 @@
 #
 from __future__ import print_function, division
 import sys
-import matplotlib.pyplot as plt
 import pandas as pd
 import getopt
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-import rapidtide.filter_funcs as tide_filt
-from scipy.signal import correlate
+import rapidtide.miscmath as tide_math
+import rapidtide.util as tide_util
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+import rapidtide.correlate as tide_corr
 from scipy.stats.stats import pearsonr
-from scipy import sin, arange, pi, randn
-from numpy import r_, argmax, zeros, shape, reshape, eye, round
+import numpy as np
 import nibabel as nib
 
-from pylab import plot, legend, show, figure
+from matplotlib.pyplot import plot, legend, show, figure
 
 
 def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend,
                             corrweighting='none', numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
-    corrlist = zeros((numreps), dtype='float')
-    corrlist_pear = zeros((numreps), dtype='float')
+    corrlist = np.zeros((numreps), dtype='float')
+    corrlist_pear = np.zeros((numreps), dtype='float')
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
 
-    filteredindata = tide.corrnormalize(thefilter.apply(Fs, indata), prewindow, dodetrend)
+    filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata), prewindow, dodetrend)
     for i in range(0, numreps):
         # make a shuffled copy of the regressors
-        shuffleddata = permutation(indata)
+        shuffleddata = np.random.permutation(indata)
 
         # filter it
-        filteredshuffleddata = tide.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend)
+        filteredshuffleddata = tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend)
 
         # crosscorrelate with original
-        theshuffledxcorr = tide.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr,
-                                              weighting=corrweighting)
+        theshuffledxcorr = tide_corr.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr,
+                                                   weighting=corrweighting)
 
         # find and tabulate correlation coefficient at optimal lag
         theshuffledxcorr_trim = theshuffledxcorr[searchstart:searchend + 1]
-        maxdelay = xcorr_x_trim[argmax(theshuffledxcorr_trim)]
-        corrlist[i] = theshuffledxcorr_trim[argmax(theshuffledxcorr_trim)]
+        maxdelay = xcorr_x_trim[np.argmax(theshuffledxcorr_trim)]
+        corrlist[i] = theshuffledxcorr_trim[np.argmax(theshuffledxcorr_trim)]
 
         # find and tabulate correlation coefficient at 0 lag
         corrlist_pear[i] = pearsonr(filteredindata, filteredshuffleddata)[0]
 
         # progress
-        tide.progressbar(i + 1, numreps, label='Percent complete')
+        tide_util.progressbar(i + 1, numreps, label='Percent complete')
 
     # jump to line after progress bar
     print()
@@ -277,7 +277,7 @@ for o, a in opts:
             print('windowtime set to', windowtime)
             print('setting default filter to pass', window_lowestfreq, 'to', window_upperfreq)
     elif o == "-S":
-        stepsize = sampletime * round(float(a) / sampletime)
+        stepsize = sampletime * np.round(float(a) / sampletime)
         if verbose:
             print('stepsize set to', stepsize)
     elif o == "-N":
@@ -342,7 +342,7 @@ if sampletime is None:
     sys.exit()
 
 # read in the files and get everything trimmed to the right length
-stepsize = sampletime * round(stepsize / sampletime)
+stepsize = sampletime * np.round(stepsize / sampletime)
 startpoint = max([int(starttime * Fs), 0])
 if len(infilename) == 1:
     # each column is a timecourse, each row is a timepoint
@@ -359,7 +359,7 @@ elif len(infilename) == 2:
     inputdata2 = tide_io.readvec(infilename[1])
     endpoint1 = min([startpoint + int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))])
     endpoint2 = min([int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))])
-    trimmeddata = zeros((2, numpoints), dtype='float')
+    trimmeddata = np.zeros((2, numpoints), dtype='float')
     trimmeddata[0, :] = inputdata1[startpoint:endpoint1]
     trimmeddata[1, :] = inputdata2[0:endpoint2]
 else:
@@ -375,14 +375,14 @@ if theprefilter.gettype() != 'none':
 thedims = trimmeddata.shape
 tclen = thedims[1]
 numcomponents = thedims[0]
-reformdata = reshape(trimmeddata, (numcomponents, tclen))
+reformdata = np.reshape(trimmeddata, (numcomponents, tclen))
 
 print('preprocessing all timecourses')
 for component in range(0, numcomponents):
-    filtereddata = tide.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]), False, dodetrend)
-    reformdata[component, :] = tide.stdnormalize(tide.detrend(tide.stdnormalize(filtereddata)))
+    filtereddata = tide_math.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]), False, dodetrend)
+    reformdata[component, :] = tide_math.stdnormalize(tide_fit.detrend(tide_math.stdnormalize(filtereddata)))
 
-xcorr_x = r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
+xcorr_x = np.r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
 laglimit = 15.0
 widthlimit = 15.0
 halfwindow = int(laglimit * Fs)
@@ -401,25 +401,28 @@ else:
 if matrixoutput:
     # find the lengths of the outputfiles
     print('finding timecourse lengths')
-    times, corrpertime, ppertime = tide.shorttermcorr_1D(reformdata[0, :], reformdata[0, :], sampletime, windowtime, \
-                                                         samplestep=int(stepsize // sampletime), prewindow=prewindow,
-                                                         dodetrend=False)
+    times, corrpertime, ppertime = tide_corr.shorttermcorr_1D(reformdata[0, :], reformdata[0, :], sampletime,
+                                                              windowtime, \
+                                                              samplestep=int(stepsize // sampletime),
+                                                              prewindow=prewindow,
+                                                              dodetrend=False)
     plength = len(times)
-    times, xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(reformdata[0, :], reformdata[0, :], sampletime,
-                                                                         windowtime, \
-                                                                         samplestep=int(stepsize // sampletime),
-                                                                         weighting=corrweighting, \
-                                                                         prewindow=prewindow, dodetrend=False,
-                                                                         display=False)
+    times, xcorrpertime, Rvals, delayvals, valid = tide_corr.shorttermcorr_2D(reformdata[0, :], reformdata[0, :],
+                                                                              sampletime,
+                                                                              windowtime, \
+                                                                              samplestep=int(stepsize // sampletime),
+                                                                              weighting=corrweighting, \
+                                                                              prewindow=prewindow, dodetrend=False,
+                                                                              display=False)
     xlength = len(times)
 
     # now allocate the output arrays
     print('allocating data arrays')
-    Rvals = zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
-    delayvals = zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
-    valid = zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
-    corrpertime = zeros((numcomponents, numcomponents, 1, plength), dtype='float')
-    ppertime = zeros((numcomponents, numcomponents, 1, plength), dtype='float')
+    Rvals = np.zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
+    delayvals = np.zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
+    valid = np.zeros((numcomponents, numcomponents, 1, xlength), dtype='float')
+    corrpertime = np.zeros((numcomponents, numcomponents, 1, plength), dtype='float')
+    ppertime = np.zeros((numcomponents, numcomponents, 1, plength), dtype='float')
 
     # do the correlations
     for component1 in range(0, numcomponents):
@@ -427,19 +430,19 @@ if matrixoutput:
         for component2 in range(0, numcomponents):
             times, \
             corrpertime[component1, component2, 0, :], \
-            ppertime[component1, component2, 0, :] = tide.shorttermcorr_1D( \
+            ppertime[component1, component2, 0, :] = tide_corr.shorttermcorr_1D( \
                 reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
                 samplestep=int(stepsize // sampletime), prewindow=prewindow, dodetrend=False)
             times, \
             xcorrpertime, \
             Rvals[component1, component2, 0, :], \
             delayvals[component1, component2, 0, :], \
-            valid[component1, component2, 0, :] = tide.shorttermcorr_2D( \
+            valid[component1, component2, 0, :] = tide_corr.shorttermcorr_2D( \
                 reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
                 samplestep=int(stepsize // sampletime), weighting=corrweighting, \
                 prewindow=prewindow, dodetrend=False, display=False)
 
-    outputaffine = eye(4)
+    outputaffine = np.eye(4)
     init_img = nib.Nifti1Image(corrpertime, outputaffine)
     init_hdr = init_img.get_header()
     init_sizes = init_hdr['pixdim']
@@ -474,27 +477,29 @@ if matrixoutput:
         df.to_csv(outfilename + '_seg_' + str(segment).zfill(4) + '_valid.csv', index=False)
 
 else:
-    times, corrpertime, ppertime = tide.shorttermcorr_1D(reformdata[0, :], flipfac * reformdata[1, :], sampletime,
-                                                         windowtime, \
-                                                         samplestep=int(stepsize // sampletime), prewindow=prewindow,
-                                                         dodetrend=False)
-    times, xcorrpertime, Rvals, delayvals, valid = tide.shorttermcorr_2D(reformdata[0, :], flipfac * reformdata[1, :],
-                                                                         sampletime, windowtime, \
-                                                                         samplestep=int(stepsize // sampletime),
-                                                                         weighting=corrweighting, \
-                                                                         prewindow=prewindow, dodetrend=False,
-                                                                         display=False)
+    times, corrpertime, ppertime = tide_corr.shorttermcorr_1D(reformdata[0, :], flipfac * reformdata[1, :], sampletime,
+                                                              windowtime, \
+                                                              samplestep=int(stepsize // sampletime),
+                                                              prewindow=prewindow,
+                                                              dodetrend=False)
+    times, xcorrpertime, Rvals, delayvals, valid = tide_corr.shorttermcorr_2D(reformdata[0, :],
+                                                                              flipfac * reformdata[1, :],
+                                                                              sampletime, windowtime, \
+                                                                              samplestep=int(stepsize // sampletime),
+                                                                              weighting=corrweighting, \
+                                                                              prewindow=prewindow, dodetrend=False,
+                                                                              display=False)
     tide_io.writenpvecs(corrpertime, outfilename + "_pearson.txt")
     tide_io.writenpvecs(ppertime, outfilename + "_pvalue.txt")
     tide_io.writenpvecs(Rvals, outfilename + "_Rvalue.txt")
     tide_io.writenpvecs(delayvals, outfilename + "_delay.txt")
     tide_io.writenpvecs(valid, outfilename + "_mask.txt")
-    filtereddata1 = tide.corrnormalize(theprefilter.apply(Fs, trimmeddata[0, :]), False, dodetrend)
-    filtereddata2 = tide.corrnormalize(theprefilter.apply(Fs, trimmeddata[1, :]), False, dodetrend)
+    filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimmeddata[0, :]), False, dodetrend)
+    filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimmeddata[1, :]), False, dodetrend)
 
 """
     if display:
-        #timeaxis = r_[0.0:len(filtereddata1)] * sampletime
+        #timeaxis = np.r_[0.0:len(filtereddata1)] * sampletime
         fig, ax1 = plt.subplots()
         ax1.plot(times, corrpertime, 'k')
         ax1.set_ylabel('Pearson R', color='k')

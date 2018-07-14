@@ -2,7 +2,7 @@
 from __future__ import print_function, division
 
 from rapidtide.tide_funcs import valtoindex
-from rapidtide.filter_funcs import noncausalfilter
+from rapidtide.filter import noncausalfilter
 import numpy as np
 import scipy as sp
 import pylab as plt
