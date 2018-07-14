@@ -23,7 +23,7 @@ from __future__ import print_function
 import sys
 import getopt
 import string
-import rapidtide.tide_funcs as tide
+import rapidtide.miscmath as tide_math
 
 from numpy import r_, zeros, ones, random
 from pylab import *
@@ -44,7 +44,7 @@ def testsimulate(display=False):
     timecourse[700:750] = 1.0
 
     # read in the timecourse to resample
-    inputvec = tide.stdnormalize(timecourse)
+    inputvec = tide_math.stdnormalize(timecourse)
     simregressorpts = len(inputvec)
 
     # prepare the input data for interpolation

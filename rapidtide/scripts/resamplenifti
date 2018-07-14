@@ -22,15 +22,10 @@
 
 from __future__ import print_function, division
 
-import platform
-import sys
 import getopt
-import string
-import matplotlib
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-import rapidtide.filter_funcs as tide_filt
-from numpy import r_, zeros, ones, shape, where
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
+import rapidtide.resample as tide_resample
 from pylab import *
 import nibabel as nib
 
@@ -136,7 +131,7 @@ def main():
                     input_y = tide_filt.doprecalcfftfilt(aafiltfunc, input_data[xloc, yloc, zloc, :])
                 else:
                     input_y = input_data[xloc, yloc, zloc, :]
-                resampledtcs[xloc, yloc, zloc, :] = tide.doresample(input_x, input_y, output_x)
+                resampledtcs[xloc, yloc, zloc, :] = tide_resample.doresample(input_x, input_y, output_x)
 
     # now do the ones with other numbers of time points
     inputaffine = input_img.get_affine()

@@ -21,7 +21,6 @@
 from __future__ import print_function, division
 
 import numpy as np
-import warnings
 import sys
 import os
 import pandas as pd
@@ -42,9 +41,9 @@ except ImportError:
 if nibabelexists:
     def readfromnifti(inputfile):
         if os.path.isfile(inputfile):
-            inputfilename = inputfile 
+            inputfilename = inputfile
         elif os.path.isfile(inputfile + '.nii.gz'):
-            inputfilename = inputfile  + '.nii.gz'
+            inputfilename = inputfile + '.nii.gz'
         elif os.path.isfile(inputfile + '.nii'):
             inputfilename = inputfile + '.nii'
         else:
@@ -203,13 +202,13 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None):
                 print('no column named', columnname, 'in', inputfilename)
                 return None, None, None
         # we can only get here if columnname is undefined
-        if not (0 < columnum < len(columns)):
+        if not (0 < columnnum < len(columns)):
             print('specified column number', columnnum, 'is out of range in', inputfilename)
             return None, None, None
         else:
-            return samplerate, starttime, data[thecolnum, :]
-        
-    
+            return samplerate, starttime, data[columnnum, :]
+
+
 def readvecs(inputfilename):
     thefile = open(inputfilename, 'r')
     lines = thefile.readlines()

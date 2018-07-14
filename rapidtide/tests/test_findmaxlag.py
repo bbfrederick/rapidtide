@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
+import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
 import numpy as np
 import pylab as plt
 
@@ -22,13 +23,13 @@ def testfindmaxlag(textfilename='../data/examples/src/lt_rt.txt', display=False,
     testmaxval = 0.8
     testmaxlag = 8.0
     testmaxsigma = 5.0
-    yvecs=tide.gauss_eval(xvecs, np.array([testmaxval, testmaxlag, testmaxsigma]))
+    yvecs=tide_fit.gauss_eval(xvecs, np.array([testmaxval, testmaxlag, testmaxsigma]))
     lagmin = -20
     lagmax = 20
     widthlimit = 1000.0
     absmaxsigma = 1000.0
 
-    maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide.findmaxlag_gauss(
+    maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
         xvecs,
         yvecs,
         lagmin, lagmax, widthlimit,
@@ -38,7 +39,7 @@ def testfindmaxlag(textfilename='../data/examples/src/lt_rt.txt', display=False,
         searchfrac=searchfrac,
         zerooutbadfit=False)
 
-    maxindexr, maxlagr, maxvalr, maxsigmar, maskvalr, failreasonr, peakstartr, peakendr = tide.findmaxlag_gauss_rev(
+    maxindexr, maxlagr, maxvalr, maxsigmar, maskvalr, failreasonr, peakstartr, peakendr = tide_fit.findmaxlag_gauss_rev(
         xvecs,
         yvecs,
         lagmin, lagmax, widthlimit,
@@ -53,8 +54,8 @@ def testfindmaxlag(textfilename='../data/examples/src/lt_rt.txt', display=False,
     print('final results:', maxindexr, maxlagr, maxvalr, maxsigmar, maskvalr, failreasonr, peakstartr, peakendr)
     oversampfactor=10
     gauss_xvecs=arange(xvecs[0],xvecs[-1],(xvecs[1]-xvecs[0])/oversampfactor,dtype='float')
-    gauss_yvecs=tide.gauss_eval(gauss_xvecs, (maxval, maxlag, maxsigma))
-    gauss_yvecsr=tide.gauss_eval(gauss_xvecs, (maxvalr, maxlagr, maxsigmar))
+    gauss_yvecs=tide_fit.gauss_eval(gauss_xvecs, (maxval, maxlag, maxsigma))
+    gauss_yvecsr=tide_fit.gauss_eval(gauss_xvecs, (maxvalr, maxlagr, maxsigmar))
     if display:
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)

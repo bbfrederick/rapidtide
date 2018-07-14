@@ -21,20 +21,12 @@
 #
 from __future__ import print_function
 import sys
-import platform
 import getopt
-from cycler import cycler
-
-import matplotlib
-import matplotlib.cm as cm
-
-import bisect
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
+fimport bisect
+import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
 import numpy as np
-from scipy import arange, fftpack
-
-from pylab import figure, plot, legend, show, xlabel, ylabel, savefig, title, subplot, tight_layout, suptitle, xlim, ylim, box, setp
+from scipy import arange
 
 
 def phase(mcv): 
@@ -147,7 +139,7 @@ theendtime = xvec[theendpoint]
 maxtime = 1.0
 f = 2.0
 lookaheadval = int((samplerate * maxtime) / f)
-maxpeaks, minpeaks = tide.peakdetect(yvec, lookahead=lookaheadval, delta=thethresh)
+maxpeaks, minpeaks = tide_fit.peakdetect(yvec, lookahead=lookaheadval, delta=thethresh)
 
 if isoxygen:
     peaklist = minpeaks

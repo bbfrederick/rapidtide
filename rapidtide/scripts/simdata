@@ -20,18 +20,10 @@
 #       $Id: simdata,v 1.18 2016/06/14 12:04:51 frederic Exp $
 #
 from __future__ import print_function
-import sys
-import getopt
-import string
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-
-from numpy import r_, zeros, ones, shape, random
-from scipy.signal import cspline1d, cspline1d_eval, butter, lfilter, correlate
-from scipy import fftpack, argmax
-from scipy.stats import histogram
+import rapidtide.miscmath as tide_math
+import rapidtide.io as tide_io
+import rapidtide.resample as tide_resample
 from pylab import *
-import nibabel as nib
 
 
 def usage():
@@ -102,7 +94,7 @@ nim_fmri, fmridata, fmriheader, fmridims, fmrisizes = tide_io.readfromnifti(fmri
 print("fmri data: ", numtrs, " timepoints, tr = ", fmritr)
 
 # read in the timecourse to resample
-inputvec = tide.stdnormalize(tide_io.readvec(filename))
+inputvec = tide_math.stdnormalize(tide_io.readvec(filename))
 simregressorpts = len(inputvec)
 
 # prepare the input data for interpolation
@@ -115,7 +107,7 @@ print('nirs regressor runs from ', nirs_x[0], ' to ', nirs_x[-1])
 # prepare the output timepoints
 fmrifreq = 1.0 / fmritr
 initial_fmri_x = r_[0.0:fmritr * (numtrs - fmriskip):fmritr] + fmritr * fmriskip
-print('length of fmri after removing skip:',len(initial_fmri_x))
+print('length of fmri after removing skip:', len(initial_fmri_x))
 print('fmri time runs from ', initial_fmri_x[0], ' to ', initial_fmri_x[-1])
 
 # read in the immean, boldpc and lag files
@@ -156,23 +148,23 @@ padvalue = 60.0
 numpadtrs = int(padvalue / fmritr)
 padvalue = fmritr * numpadtrs
 
-genlagtc = tide.fastresampler(nirs_x, nirs_y, padvalue=padvalue, doplot=False)
+genlagtc = tide_resample.fastresampler(nirs_x, nirs_y, padvalue=padvalue, doplot=False)
 fmri_y_f = genlagtc.yfromx(initial_fmri_x)
-fmri_y = tide.doresample(nirs_x, nirs_y, initial_fmri_x)
-#fig = figure()
-#ax = fig.add_subplot(111)
-#plot(initial_fmri_x, fmri_y_f + 1.0, initial_fmri_x, fmri_y)
-#show()
+fmri_y = tide_resample.doresample(nirs_x, nirs_y, initial_fmri_x)
+# fig = figure()
+# ax = fig.add_subplot(111)
+# plot(initial_fmri_x, fmri_y_f + 1.0, initial_fmri_x, fmri_y)
+# show()
 
-#fig = figure()
-#ax = fig.add_subplot(111)
-#ax.set_title('Regressors')
-#plot(nirs_x, nirs_y)
+# fig = figure()
+# ax = fig.add_subplot(111)
+# ax.set_title('Regressors')
+# plot(nirs_x, nirs_y)
 # show()
 
 # loop over space
 for k in range(0, numslices):
-    sliceoffsettime = tide.calcsliceoffset(sliceordertype, k, numslices, fmritr)
+    sliceoffsettime = tide_resample.calcsliceoffset(sliceordertype, k, numslices, fmritr)
     print("processing slice ", k, ": sliceoffsettime=", sliceoffsettime)
     for j in range(0, ysize):
         for i in range(0, xsize):
@@ -184,7 +176,7 @@ for k in range(0, numslices):
             if fastresample:
                 fmri_y = genlagtc.yfromx(fmri_x)
             else:
-                fmri_y = tide.doresample(nirs_x, nirs_y, fmri_x)
+                fmri_y = tide_resample.doresample(nirs_x, nirs_y, fmri_x)
             thenoise = noiselevel * standard_normal(len(fmri_y))
             simdata[i, j, k, :] = immeandata[i, j, k] * (1.0 + (boldpcdata[i, j, k] / 100.0) * fmri_y) + thenoise
 

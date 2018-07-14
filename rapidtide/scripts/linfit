@@ -20,16 +20,10 @@
 #       $Id: linfit,v 1.4 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function, division
-import sys
 import getopt
-import string
-import platform
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-
-from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
+import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 from pylab import *
-import nibabel as nib
 
 
 def usage():
@@ -95,36 +89,15 @@ for o, a in opts:
 
 # read in data
 print("reading in data arrays")
-datafile_img = nib.load(datafilename)
-datafile_data = datafile_img.get_data()
-datafile_hdr = datafile_img.get_header()
-datafiledims = datafile_hdr['dim']
-datafilesizes = datafile_hdr['pixdim']
-
-datamask_img = nib.load(datamaskname)
-datamask_data = datamask_img.get_data()
-datamask_hdr = datamask_img.get_header()
-datamaskdims = datamask_hdr['dim']
-datamasksizes = datamask_hdr['pixdim']
-
-templatefile_img = nib.load(templatefilename)
-templatefile_data = templatefile_img.get_data()
-templatefile_hdr = templatefile_img.get_header()
-templatefiledims = templatefile_hdr['dim']
-templatefilesizes = templatefile_hdr['pixdim']
-
-templatemask_img = nib.load(templatemaskname)
-templatemask_data = templatemask_img.get_data()
-templatemask_hdr = templatemask_img.get_header()
-templatemaskdims = templatemask_hdr['dim']
-templatemasksizes = templatemask_hdr['pixdim']
+datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide_io.readfromnifti(datafilename)
+datamask_img, datamask_data, datamask_hdr, datamaskdims, datamasksizes = tide_io.readfromnifti(datamaskname)
+templatefile_img, templatefile_data, templatefile_hdr, templatefiledims, templatefilesizes = tide_io.readfromnifti(
+    templatefilename)
+templatemask_img, templatemask_data, templatemask_hdr, templatemaskdims, templatemasksizes = tide_io.readfromnifti(
+    templatemaskname)
 
 if multiregionfit:
-    regionatlas_img = nib.load(regionatlasname)
-    regionatlas_data = regionatlas_img.get_data()
-    regionatlas_hdr = regionatlas_img.get_header()
-    regionatlasdims = regionatlas_hdr['dim']
-    regionatlassizes = regionatlas_hdr['pixdim']
+    regionatlas_img, regionatlas_data, regionatlas_hdr, regionatlasdims, regionatlassizes = tide_io.readfromnifti(regionatlasname)
 
 xsize = datafiledims[1]
 ysize = datafiledims[2]
@@ -137,14 +110,14 @@ if not tide_io.checkspacematch(datafiledims, datamaskdims):
     print('input mask spatial dimensions do not match image')
     exit()
 if datamaskdims[4] == 1:
-   print("using 3d data mask")
-   datamask3d = True
+    print("using 3d data mask")
+    datamask3d = True
 else:
     if not tide_io.checktimematch(datafiledims, datamaskdims, 0, 0):
         print('input mask time dimension does not match image')
         exit()
 if not tide_io.checkspacematch(datafiledims, templatefiledims):
-    print(thedims, 'template file spatial dimensions do not match image')
+    print(templatefiledims, 'template file spatial dimensions do not match image')
     exit()
 if not templatefiledims[4] == 1:
     print('template file time dimension is not equal to 1')
@@ -168,31 +141,31 @@ print("allocating arrays")
 numspatiallocs = int(xsize) * int(ysize) * int(numslices)
 rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
 if datamask3d:
-    rs_datamask = datamask_data.reshape((numspatiallocs))
+    rs_datamask = datamask_data.reshape(numspatiallocs)
 else:
     rs_datamask = datamask_data.reshape((numspatiallocs, timepoints))
 rs_datamask_bin = where(rs_datamask > 0.9, 1.0, 0.0)
-rs_templatefile = templatefile_data.reshape((numspatiallocs))
-rs_templatemask = templatemask_data.reshape((numspatiallocs))
+rs_templatefile = templatefile_data.reshape(numspatiallocs)
+rs_templatemask = templatemask_data.reshape(numspatiallocs)
 rs_templatemask_bin = where(rs_templatemask > 0.1, 1.0, 0.0)
 if regionatlasname is not None:
-    rs_regionatlas = regionatlas_data.reshape((numspatiallocs))
+    rs_regionatlas = regionatlas_data.reshape(numspatiallocs)
     numregions = int(np.max(rs_regionatlas))
 
 fitdata = zeros((numspatiallocs, timepoints), dtype='float')
-#residuals = zeros((numspatiallocs, timepoints), dtype='float')
-#newtemplate = zeros((numspatiallocs), dtype='float')
-#newmask = zeros((numspatiallocs), dtype='float')
+# residuals = zeros((numspatiallocs, timepoints), dtype='float')
+# newtemplate = zeros((numspatiallocs), dtype='float')
+# newmask = zeros((numspatiallocs), dtype='float')
 if multiregionfit:
     lincoffs = zeros((numregions, timepoints), dtype='float')
     sqrcoffs = zeros((numregions, timepoints), dtype='float')
     offsets = zeros((numregions, timepoints), dtype='float')
     rvals = zeros((numregions, timepoints), dtype='float')
 else:
-    lincoffs = zeros((timepoints), dtype='float')
-    sqrcoffs = zeros((timepoints), dtype='float')
-    offsets = zeros((timepoints), dtype='float')
-    rvals = zeros((timepoints), dtype='float')
+    lincoffs = zeros(timepoints, dtype='float')
+    sqrcoffs = zeros(timepoints, dtype='float')
+    offsets = zeros(timepoints, dtype='float')
+    rvals = zeros(timepoints, dtype='float')
 
 if multiregionfit:
     print('making region masks')
@@ -221,34 +194,39 @@ for thetime in range(0, timepoints):
             voxelstofit = np.where(regionvoxels[:, region] * thisdatamask > 0.5)
             voxelstoreconstruct = np.where(regionvoxels[:, region] > 0.5)
             if order == 2:
-                thefit, R = tide.mlregress([rs_templatefile[voxelstofit], np.square(rs_templatefile[voxelstofit])], rs_datafile[voxelstofit, thetime][0])
+                thefit, R = tide_fit.mlregress([rs_templatefile[voxelstofit], np.square(rs_templatefile[voxelstofit])],
+                                               rs_datafile[voxelstofit, thetime][0])
             else:
-                thefit, R = tide.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0])
+                thefit, R = tide_fit.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0])
             lincoffs[region, thetime] = thefit[0, 1]
             offsets[region, thetime] = thefit[0, 0]
             rvals[region, thetime] = R
             if order == 2:
                 sqrcoffs[region, thetime] = thefit[0, 2]
-                fitdata[voxelstoreconstruct, thetime] += sqrcoffs[region, thetime] * np.square(rs_templatefile[voxelstoreconstruct]) + \
-                                                            lincoffs[region, thetime] * rs_templatefile[voxelstoreconstruct] + \
-                                                            offsets[region, thetime]
+                fitdata[voxelstoreconstruct, thetime] += sqrcoffs[region, thetime] * np.square(
+                    rs_templatefile[voxelstoreconstruct]) + \
+                                                         lincoffs[region, thetime] * rs_templatefile[
+                                                             voxelstoreconstruct] + \
+                                                         offsets[region, thetime]
             else:
-                fitdata[voxelstoreconstruct, thetime] += lincoffs[region, thetime] * rs_templatefile[voxelstoreconstruct] + offsets[region, thetime]
-            #newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[region, thetime]) * rs_datamask
-            #newmask += rs_datamask * rs_templatemask_bin
+                fitdata[voxelstoreconstruct, thetime] += lincoffs[region, thetime] * rs_templatefile[
+                    voxelstoreconstruct] + offsets[region, thetime]
+            # newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[region, thetime]) * rs_datamask
+            # newmask += rs_datamask * rs_templatemask_bin
     else:
         voxelstofit = np.where(thisdatamask > 0.5)
         voxelstoreconstruct = np.where(rs_templatemask > 0.5)
-        thefit, R = tide.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0])
+        thefit, R = tide_fit.mlregress(rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0])
         lincoffs[thetime] = thefit[0, 1]
         offsets[thetime] = thefit[0, 0]
         rvals[thetime] = R
-        fitdata[voxelstoreconstruct, thetime] = lincoffs[thetime] * rs_templatefile[voxelstoreconstruct] + offsets[thetime]
-        #if datamask3d:
+        fitdata[voxelstoreconstruct, thetime] = lincoffs[thetime] * rs_templatefile[voxelstoreconstruct] + offsets[
+            thetime]
+        # if datamask3d:
         #    newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask
-        #else:
+        # else:
         #    newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask[:, thetime]
-        #newmask += rs_datamask[:, thetime] * rs_templatemask_bin
+        # newmask += rs_datamask[:, thetime] * rs_templatemask_bin
 residuals = rs_datafile - fitdata
 
 # write out the data files
@@ -268,9 +246,6 @@ else:
 
 print("writing nifti series")
 tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
-                 outputrootname + '_fit')
+                    outputrootname + '_fit')
 tide_io.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
-                 outputrootname + '_residuals')
-#newtemplate = where(newmask > 0, newtemplate / newmask, 0.0)
-#tide_io.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr, templatefilesizes,
-#                 outputrootname + '_newtemplate')
+                    outputrootname + '_residuals')
