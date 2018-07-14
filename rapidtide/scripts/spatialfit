@@ -20,19 +20,17 @@
 #       $Id: linfit,v 1.4 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function, division
-import sys
 import getopt
-import string
-import platform
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
+import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
 
-from numpy import r_, zeros, ones, shape, where, mean, std, shape, nan_to_num
 from pylab import *
 import nibabel as nib
 
+
 def usage():
-    print("usage: spatialfit datafile [--dmask=DATAMASK] templatefile [--tmask=TEMPLATEMASK] outputroot [--order=ORDER]")
+    print(
+        "usage: spatialfit datafile [--dmask=DATAMASK] templatefile [--tmask=TEMPLATEMASK] outputroot [--order=ORDER]")
     print("")
     print("required arguments:")
     print("	datafile	- the name of the 3 or 4 dimensional nifti file to fit")
@@ -44,7 +42,8 @@ def usage():
     print("	--dmask=TEMPLATEMASK	- use TEMPLATEMASK to specify which voxels in the template to use")
     print("	--order=ORDER   	- fit up to ORDER order - default is 1 - linear")
     print("")
-    return()
+    return ()
+
 
 # set default variable values
 usedmask = False
@@ -56,7 +55,7 @@ try:
     opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "tmask=", "order="])
 except getopt.GetoptError as err:
     # print(help information and exit:
-    print(str(err)) # will print something like "option -a not recognized"
+    print(str(err))  # will print something like "option -a not recognized"
     usage()
     sys.exit(2)
 
@@ -66,9 +65,9 @@ if len(args) != 4:
     usage()
     sys.exit()
 
-datafilename=args[1]
-templatefilename=args[2]
-outputrootname=args[3]
+datafilename = args[1]
+templatefilename = args[2]
+outputrootname = args[3]
 
 print(datafilename, templatefilename, outputrootname)
 
@@ -83,7 +82,7 @@ for o, a in opts:
         print('using', templatemaskname, 'as template mask')
     elif o == "--order":
         order = int(a)
-        if not (0 <= order <=4):
+        if not (0 <= order <= 4):
             print('order should be between 0 and 4')
             sys.exit()
         if order == 1:
@@ -124,15 +123,15 @@ if usetmask:
     templatemaskdims = templatemask_hdr['dim']
     templatemasksizes = templatemask_hdr['pixdim']
 
-xsize=datafiledims[1]
-ysize=datafiledims[2]
-numslices=datafiledims[3]
-timepoints=datafiledims[4]
-    
+xsize = datafiledims[1]
+ysize = datafiledims[2]
+numslices = datafiledims[3]
+timepoints = datafiledims[4]
+
 # check dimensions
 print("checking dimensions")
 if not tide_io.checkspacematch(datafiledims, templatefiledims):
-    print(thedims, 'template file spatial dimensions do not match image')
+    print(templatefiledims, 'template file spatial dimensions do not match image')
     exit()
 if not templatefiledims[4] == 1:
     print('template file time dimension is not equal to 1')
@@ -172,14 +171,14 @@ else:
 
 bin_templatemask = where(rs_templatemask > 0.1, 1.0, 0.0)
 
-fitdata = zeros((numspatiallocs, timepoints),dtype='float')
-residuals = zeros((numspatiallocs, timepoints),dtype='float')
-normalized = zeros((numspatiallocs, timepoints),dtype='float')
-newtemplate = zeros((numspatiallocs),dtype='float')
-newmask = zeros((numspatiallocs),dtype='float')
-lincoffs = zeros((timepoints),dtype='float')
-offsets = zeros((timepoints),dtype='float')
-rvals = zeros((timepoints),dtype='float')
+fitdata = zeros((numspatiallocs, timepoints), dtype='float')
+residuals = zeros((numspatiallocs, timepoints), dtype='float')
+normalized = zeros((numspatiallocs, timepoints), dtype='float')
+newtemplate = zeros((numspatiallocs), dtype='float')
+newmask = zeros((numspatiallocs), dtype='float')
+lincoffs = zeros((timepoints), dtype='float')
+offsets = zeros((timepoints), dtype='float')
+rvals = zeros((timepoints), dtype='float')
 
 # mask everything
 print('masking data and template')
@@ -188,17 +187,17 @@ maskedtemplate = rs_templatefile * bin_templatemask
 
 # cycle over all images
 print("now cycling over all images")
-for thetime in range(0,timepoints):
-    thefit, R = tide.mlregress(maskedtemplate, maskeddata[:, thetime])
+for thetime in range(0, timepoints):
+    thefit, R = tide_fit.mlregress(maskedtemplate, maskeddata[:, thetime])
     lincoffs[thetime] = thefit[0, 1]
     offsets[thetime] = thefit[0, 0]
     rvals[thetime] = R
     fitdata[:, thetime] = lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
-    newtemplate += nan_to_num(maskeddata[:, thetime]/ lincoffs[thetime]) * rs_datamask[:, thetime]
+    newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask[:, thetime]
     newmask += rs_datamask[:, thetime] * bin_templatemask
     normalized[:, thetime] = (rs_datafile[:, thetime] - offsets[thetime]) / lincoffs[thetime]
 residuals = rs_datafile - fitdata
-    
+
 # write out the data files
 print("writing time series")
 tide_io.writenpvecs(lincoffs, outputrootname + '_lincoffs.txt')
@@ -208,8 +207,12 @@ print("slope mean, std:", mean(lincoffs), std(lincoffs))
 print("offset mean, std:", mean(offsets), std(offsets))
 
 print("writing nifti series")
-tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes, outputrootname + '_fit')
-tide_io.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes, outputrootname + '_residuals')
-tide_io.savetonifti(normalized.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes, outputrootname + '_normalized')
+tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+                    outputrootname + '_fit')
+tide_io.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+                    outputrootname + '_residuals')
+tide_io.savetonifti(normalized.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+                    outputrootname + '_normalized')
 newtemplate = where(newmask > 0, newtemplate / newmask, 0.0)
-tide_io.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr, templatefilesizes, outputrootname + '_newtemplate')
+tide_io.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr, templatefilesizes,
+                    outputrootname + '_newtemplate')

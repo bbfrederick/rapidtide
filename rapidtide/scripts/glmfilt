@@ -22,8 +22,8 @@
 from __future__ import print_function, division
 import sys
 import numpy as np
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
+import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
 
 
 def main():
@@ -32,12 +32,12 @@ def main():
     #
     # read in the datafile
     nargs = len(sys.argv)
-    if (nargs < 5):
+    if nargs < 5:
         print("usage: glmfilt datafile numskip outputroot evfile [evfile_2...evfile_n]")
         print("    Fits and removes the effect of voxel specific and/or global regressors")
         exit()
 
-    #initialize some variables
+    # initialize some variables
     evdata = []
     evisnifti = []
     thedims_in = []
@@ -52,7 +52,7 @@ def main():
     evfilename.append(sys.argv[4])
     numfiles = 1
     print(evfilename[0])
-    if (nargs > 5):
+    if nargs > 5:
         for i in range(5, nargs):
             numfiles += 1
             evfilename.append(sys.argv[i])
@@ -108,11 +108,11 @@ def main():
 
     for j in range(0, numregressors):
         for i in range(0, 4):
-            if (thedims_in[i] != thedims_ev[j][i]):
+            if thedims_in[i] != thedims_ev[j][i]:
                 print("Input file and ev file ", j, " dimensions do not match")
                 print("dimension ", i, ":", thedims_in[i], " != ", thedims_ev[j][i])
                 exit()
-        if (timepoints - numskip != thedims_ev[j][4]):
+        if timepoints - numskip != thedims_ev[j][4]:
             print("Input file and ev file ", j, " dimensions do not match")
             print("dimension ", 4, ":", timepoints, "!= ", thedims_ev[j][4], "+", numskip)
             exit()
@@ -134,21 +134,20 @@ def main():
                     else:
                         regressorvec.append(evdata[j])
                 if np.max(trimmeddata[x, y, z, :]) - np.min(trimmeddata[x, y, z, :]) > 0.0:
-                    thefit, R = tide.mlregress(regressorvec, trimmeddata[x, y, z, :])
+                    thefit, R = tide_fit.mlregress(regressorvec, trimmeddata[x, y, z, :])
                     meandata[x, y, z] = thefit[0, 0]
                     Rdata[x, y, z] = R
                     for j in range(0, numregressors):
                         fitdata[x, y, z, j] = thefit[0, j + 1]
-                        #datatoremove[x, y, z, :, j] = thefit[0, j + 1] * regressorvec[j]
+                        # datatoremove[x, y, z, :, j] = thefit[0, j + 1] * regressorvec[j]
                 else:
                     meandata[x, y, z] = 0.0
                     Rdata[x, y, z] = 0.0
                     for j in range(0, numregressors):
                         fitdata[x, y, z, j] = 0.0
-                        #datatoremove[x, y, z, :, j] = 0.0 * regressorvec[j]
-                #totaltoremove[x, y, z, :] = np.sum(datatoremove[x, y, z, :, :], axis=1)
-                #filtereddata[x, y, z, :] = trimmeddata[x, y, z, :] - totaltoremove[x, y, z, :]
-
+                        # datatoremove[x, y, z, :, j] = 0.0 * regressorvec[j]
+                # totaltoremove[x, y, z, :] = np.sum(datatoremove[x, y, z, :, :], axis=1)
+                # filtereddata[x, y, z, :] = trimmeddata[x, y, z, :] - totaltoremove[x, y, z, :]
 
     # first save the things with a small numbers of timepoints
     print("fitting complete: about to save the fit data")
@@ -162,9 +161,9 @@ def main():
 
     print()
     print("Now constructing the array of data to remove")
-    #datatoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip, numregressors), dtype='float')
+    # datatoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip, numregressors), dtype='float')
     totaltoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip), dtype='float')
-    #filtereddata = 1.0 * totaltoremove
+    # filtereddata = 1.0 * totaltoremove
     for z in range(0, numslices):
         print("processing slice ", z)
         for y in range(0, ysize):
@@ -179,10 +178,10 @@ def main():
     # now save the things with full timecourses
     theheader = nim_header
     theheader['dim'][4] = timepoints - numskip
-    #for j in range(0, numregressors):
-        #tide_io.savetonifti(datatoremove[:, :, :, :, j], theheader, thesizes_in,
-                         #outputroot + "_toremove" + str(j))
-    #datatoremove = None
+    # for j in range(0, numregressors):
+    # tide_io.savetonifti(datatoremove[:, :, :, :, j], theheader, thesizes_in,
+    # outputroot + "_toremove" + str(j))
+    # datatoremove = None
     tide_io.savetonifti(totaltoremove, theheader, thesizes_in, outputroot + "_totaltoremove")
     filtereddata = trimmeddata - totaltoremove
     totaltoremove = None
@@ -192,7 +191,6 @@ def main():
 
 
 if __name__ == "__main__":
-    #import cProfile as profile
-    #profile.run('main()', 'rapidtide_profile')
+    # import cProfile as profile
+    # profile.run('main()', 'rapidtide_profile')
     main()
-

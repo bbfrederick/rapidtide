@@ -29,13 +29,13 @@ from itertools import cycle
 import sys
 import os
 import numpy as np
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
-import time
+import rapidtide.stats as tide_stats
+import rapidtide.io as tide_io
 
-from vispy import app, scene, io
+from vispy import app, scene
 from vispy.color import get_colormaps, BaseColormap
 from vispy.visuals.transforms import STTransform
+
 
 def usage():
     print(os.path.basename(sys.argv[0]), "- render 3 (or 4) d images")
@@ -45,9 +45,9 @@ def usage():
     print("required arguments:")
     print("    niftifile:                3 or 4 dimensional nifti file containing MR data")
     print("")
-    #print("optional arguments:")
-    #print("    --debug                    - turn on debugging messages")
-    #print("    --glm                      - generate voxelwise aliased synthetic cardiac regressors and filter them out")
+    # print("optional arguments:")
+    # print("    --debug                    - turn on debugging messages")
+    # print("    --glm                      - generate voxelwise aliased synthetic cardiac regressors and filter them out")
 
 
 def incrementvolume(volumelist):
@@ -94,16 +94,16 @@ minsize = np.min([xdim, ydim, slicethickness])
 volumelist = []
 transfacs = (0, 0, 0)
 scalefacs = (xdim / minsize, ydim / minsize, slicethickness / minsize)
-datarobustmax = tide.getfracvals(nim_data, [0.98])[0]
+datarobustmax = tide_stats.getfracvals(nim_data, [0.98])[0]
 fracval = 0.2
 clims = (datarobustmax * fracval, 2.0 * datarobustmax)
 
 for thevol in vollist:
-   volumelist.append(scene.visuals.Volume(thevol, parent=view.scene, threshold=0.2,
-                               emulate_texture=emulate_texture, clim=clims))
-   volumelist[-1].transform = scene.STTransform(translate=transfacs)
-   volumelist[-1].transform = scene.STTransform(scale=scalefacs)
-   volumelist[-1].visible = False
+    volumelist.append(scene.visuals.Volume(thevol, parent=view.scene, threshold=0.2,
+                                           emulate_texture=emulate_texture, clim=clims))
+    volumelist[-1].transform = scene.STTransform(translate=transfacs)
+    volumelist[-1].transform = scene.STTransform(scale=scalefacs)
+    volumelist[-1].visible = False
 volumelist[activevol].visible = True
 
 # Create three cameras (Fly, Turntable and Arcball)
@@ -136,6 +136,7 @@ class TransGrays(BaseColormap):
         return vec4(t, t, t, t*0.05);
     }
     """
+
 
 # Setup colormap iterators
 opaque_cmaps = cycle(get_colormaps())
@@ -181,10 +182,10 @@ def on_key_press(event):
             thevolume.cmap = cmap
     elif event.text == '3':
         incrementvolume(volumelist)
-        #volumelist[activevol].visible = False
-        #activevol = (activevol + 1) % len(volumelist)
-        #print('activevol set to', activevol)
-        #volumelist[activevol].visible = True
+        # volumelist[activevol].visible = False
+        # activevol = (activevol + 1) % len(volumelist)
+        # print('activevol set to', activevol)
+        # volumelist[activevol].visible = True
     elif event.text == '4':
         if volumelist[activevol].method in ['mip', 'iso']:
             cmap = opaque_cmap = next(opaque_cmaps)
@@ -201,6 +202,7 @@ def on_key_press(event):
             thevolume.threshold += s
         th = volumelist[activevol].threshold
         print("Isosurface threshold: %0.3f" % th)
+
 
 # for testing performance
 # @canvas.connect
