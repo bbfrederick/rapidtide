@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.abspath('sphinxext'))
 sys.path.insert(0, os.path.abspath('../rapidtide'))
 
 from github_link import make_linkcode_resolve
+import rapidtide
 
 # -- General configuration ------------------------------------------------
 
