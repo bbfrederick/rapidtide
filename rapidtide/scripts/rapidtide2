@@ -45,7 +45,7 @@ import rapidtide.resample as tide_resample
 import rapidtide.correlate as tide_corr
 
 from sklearn.decomposition import FastICA, PCA
-from pylab import figure, plot, show
+from matplotlib.pyplot import figure, plot, show
 import numpy as np
 from statsmodels.tsa.stattools import pacf_yw
 from scipy.stats.stats import pearsonr
@@ -1416,7 +1416,7 @@ def main():
     optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict['corrmaskname'] = None  # name of correlation mask
     optiondict[
-        'check_autocorrelation'] = True  # check for periodic components that corrupt the autocorrelation
+        'check_autocorrelation'] = False  # check for periodic components that corrupt the autocorrelation
     optiondict[
         'fix_autocorrelation'] = False  # remove periodic components that corrupt the autocorrelation
     optiondict[

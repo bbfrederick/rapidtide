@@ -33,7 +33,7 @@ import rapidtide.correlate as tide_corr
 from scipy.stats.stats import pearsonr
 from numpy import r_, argmax, zeros
 from numpy.random import permutation
-from pylab import plot, show, figure
+from matplotlib.pyplot import plot, show, figure
 
 
 def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend, numreps=1000):

@@ -33,7 +33,7 @@ from scipy.stats.stats import pearsonr
 import numpy as np
 import nibabel as nib
 
-from pylab import plot, legend, show, figure
+from matplotlib.pyplot import plot, legend, show, figure
 
 
 def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend,

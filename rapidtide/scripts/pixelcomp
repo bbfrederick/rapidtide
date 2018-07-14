@@ -22,7 +22,8 @@ from __future__ import print_function, division
 
 import getopt
 import rapidtide.io as tide_io
-from pylab import *
+import matplotlib.pyplot as plt
+import sys
 
 def bland_altman_plot(data1, data2, *args, **kwargs):
     data1     = np.asarray(data1)
@@ -122,7 +123,7 @@ H, xedges, yedges = np.histogram2d(thearray[:,0],thearray[:,1], bins=numbins, no
 extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
 cset = plt.contour(H,extent=extent)
 #plt.plot(thearray[:,0], thearray[:,1], 'k.')
-show()
+plt.show()
 
 # now fit the line
 fitorder=1

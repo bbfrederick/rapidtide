@@ -21,7 +21,7 @@
 #
 from __future__ import print_function
 import rapidtide.io as tide_io
-from pylab import *
+import sys
 
 def usage():
     print('usage: histnifti inputfile outputroot')

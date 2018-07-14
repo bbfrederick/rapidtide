@@ -29,7 +29,7 @@ import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
 from scipy import arange
 from numpy import max, floor
-import pylab as plt
+import matplotlib.pyplot as plt
 
 
 def usage():

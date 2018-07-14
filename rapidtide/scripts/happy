@@ -40,7 +40,7 @@ import rapidtide.resample as tide_resample
 import rapidtide.correlate as tide_corr
 from scipy.signal import hilbert, welch, savgol_filter
 
-from pylab import plot, show, figure
+from matplotlib.pyplot import plot, show, figure
 
 
 def usage():
