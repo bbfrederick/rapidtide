@@ -21,19 +21,12 @@
 #
 
 from __future__ import print_function, division
-
+import sys
 import getopt
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.resample as tide_resample
-from pylab import *
 import nibabel as nib
-
-#if platform.system() == 'Darwin':
-#    matplotlib.use('MacOSX')
-#else:
-#    matplotlib.use('TkAgg')
-
 
 def usage():
     print("usage: resamplenifti inputfile inputtr outputname outputtr [-a]")
@@ -52,7 +45,6 @@ def usage():
 def main():
     # set default variable values
     antialias = True
-    displayplots = False
     widthlimit = 10.0
     fastresample = True
 

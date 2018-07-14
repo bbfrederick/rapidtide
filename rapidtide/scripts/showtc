@@ -31,7 +31,7 @@ import rapidtide.fit as tide_fit
 import numpy as np
 from scipy import arange, fftpack, linspace
 
-from pylab import figure, show, savefig, setp
+from matplotlib.pyplot import figure, show, savefig, setp
 
 
 def phase(mcv):

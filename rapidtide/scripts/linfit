@@ -23,7 +23,7 @@ from __future__ import print_function, division
 import getopt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-from pylab import *
+import sys
 
 
 def usage():
