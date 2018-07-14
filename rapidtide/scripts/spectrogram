@@ -26,8 +26,7 @@ import datetime
 import numpy as np
 import matplotlib as mpl
 
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
+import rapidtide.io as tide_io
 import matplotlib.pyplot as plt
 from matplotlib import mlab
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -87,8 +86,6 @@ def main():
     # to one day, and 0.0 corresponds to 1900 (I think...)
     # It's _not_ an array of datetime objects!
     time = mpl.dates.drange(start, end, delta)
-
-    num = time.size
 
     # -- Generate some data
     x = yvecs[0]

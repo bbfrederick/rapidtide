@@ -22,15 +22,11 @@
 from __future__ import print_function, division
 
 import sys
-import platform
 import bisect
-
 import numpy as np
+from matplotlib.pyplot import figure, plot, show
+import rapidtide.io as tide_io
 
-import getopt
-from pylab import figure, plot, show
-import rapidtide.tide_funcs as tide
-import rapidtide.io_funcs as tide_io
 
 def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
     theshape = np.shape(inputdata)
@@ -50,6 +46,7 @@ def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
         show()
     return outputvector
 
+
 def usage():
     print("tcfrom3col - convert a 3 column fsl style regressor into a one column timecourse")
     print("")
@@ -63,6 +60,7 @@ def usage():
     print("	outfile:     the name of the output time course file")
     print("")
     return ()
+
 
 # get the command line parameters
 debug = False

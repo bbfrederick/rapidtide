@@ -12,7 +12,7 @@ import argparse
 
 import nibabel as nib
 
-#from rapidtide import rapidtide
+# from rapidtide import workflows
 
 
 def is_valid_file(parser, arg):
@@ -37,18 +37,6 @@ def invert_float(parser, arg):
 
     if arg != 'auto':
         arg = 1. / arg
-    return arg
-
-
-def is_two_or_four_floats(parser, arg):
-    print(len(arg))
-    #if len(arg) not in (2, 4) or not all([isinstance(a, float) for a in arg]):
-    #    parser.error('Value {0} must be tuple of two or four '
-    #                 'integers'.format(arg))
-
-    if len(arg) == 2:
-        arg.append(arg[0]*0.9)
-        arg.append(arg[1]*1.1)
     return arg
 
 
@@ -176,8 +164,9 @@ def get_parser():
                           dest='arbvec',
                           action='store',
                           nargs='+',
-                          type=lambda x: is_two_or_four_floats(parser, x),
-                          metavar='LOWERFREQ UPPERFREQ [LOWERSTOP UPPERSTOP]',
+                          type=lambda x: is_float(parser, x),
+                          metavar=('LOWERFREQ UPPERFREQ',
+                                   'LOWERSTOP UPPERSTOP'),
                           help=('Filter data and regressors from LOWERFREQ to '
                                 'UPPERFREQ. LOWERSTOP and UPPERSTOP can also '
                                 'be specified, or will be calculated '
@@ -741,7 +730,18 @@ def get_parser():
 
 
 def main(argv=None):
+    """
+    Compile arguments for rapidtide workflow.
+    """
     args = vars(get_parser().parse_args(argv))
+
+    if args['arbvec'] is not None:
+        if len(args['arbvec']) == 2:
+            args['arbvec'].append(args['arbvec'][0] * 0.9)
+            args['arbvec'].append(args['arbvec'][1] * 1.1)
+        elif len(args['arbvec']) != 4:
+            raise ValueError("Argument '--arb' (or '-F') must be either two "
+                             "or four floats.")
 
     if args['offsettime'] is not None:
         args['offsettime_total'] = -1 * args['offsettime']
@@ -816,7 +816,7 @@ def main(argv=None):
         args['ampthresh'] = 0.7
         args['lagmaskthresh'] = 0.1
 
-    #rapidtide.run(args)
+    # workflows.rapidtide(args)
     print(args)
 
 
