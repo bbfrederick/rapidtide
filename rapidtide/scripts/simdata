@@ -20,10 +20,11 @@
 #       $Id: simdata,v 1.18 2016/06/14 12:04:51 frederic Exp $
 #
 from __future__ import print_function
+import sys
 import rapidtide.miscmath as tide_math
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
-from pylab import *
+from matplotlib.pyplot import *
 
 
 def usage():

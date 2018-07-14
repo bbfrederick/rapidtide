@@ -51,7 +51,7 @@ from numpy import r_, argmax, zeros, shape, reshape, eye, sqrt
 from numpy.random import shuffle, permutation
 import nibabel as nib
 
-from pylab import plot, legend, show, figure
+from matplotlib.pyplot import plot, legend, show, figure
 
 
 def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend,
