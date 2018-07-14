@@ -11,5 +11,5 @@ Command line options
 Run rapidtide2
 **************
 .. argparse::
-   :ref: rapidtide.scripts.rapidtide2
+   :ref: rapidtide.scripts.run_rapidtide.get_parser
    :prog: rapidtide2

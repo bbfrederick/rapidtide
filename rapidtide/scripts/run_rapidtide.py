@@ -12,7 +12,7 @@ import argparse
 
 import nibabel as nib
 
-# from rapidtide import workflows
+from rapidtide import workflows
 
 
 def is_valid_file(parser, arg):
@@ -735,6 +735,7 @@ def main(argv=None):
     """
     args = vars(get_parser().parse_args(argv))
 
+    # Additional argument parsing not handled by argparse
     if args['arbvec'] is not None:
         if len(args['arbvec']) == 2:
             args['arbvec'].append(args['arbvec'][0] * 0.9)
@@ -794,10 +795,7 @@ def main(argv=None):
     if args['inputfreq'] == 'auto':
         args['inputfreq'] = 1. / fmri_tr
 
-    if args['butterorder']:
-        args['usebutterworthfilter'] = True
-    else:
-        args['usebutterworthfilter'] = False
+    args['usebutterworthfilter'] = bool(args['butterorder'])
 
     if args['venousrefine']:
         print('WARNING: Using "venousrefine" macro. Overriding any affected '
@@ -816,8 +814,10 @@ def main(argv=None):
         args['ampthresh'] = 0.7
         args['lagmaskthresh'] = 0.1
 
-    # workflows.rapidtide(args)
-    print(args)
+    workflows.rapidtide2.rapidtide_workflow(**vars(args))
+    # out_str = ["{0}='{1}'".format(k, v) for k, v in args.items()]
+    # out_str = ', '.join(out_str)
+    # print(out_str)
 
 
 if __name__ == '__main__':
