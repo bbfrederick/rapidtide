@@ -908,7 +908,7 @@ def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, l
           '\n	', sigmafails, ' sigmafails')
 
     if optiondict['psdfilter']:
-        outputdata = tide_filt.xfuncfilt(outputdata, snr)
+        outputdata = tide_filt.transferfuncfilt(outputdata, snr)
 
     # garbage collect
     collected = gc.collect()
