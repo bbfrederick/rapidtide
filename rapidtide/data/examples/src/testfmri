@@ -12,7 +12,7 @@ rapidtide2 \
 	-r -20,20 \
 	-f 2 \
         --accheck \
-        --multiproc
+        --nprocs=-1
 #rapidtide2x \
 	#fmri.nii.gz \
 	#../dst/dgsr_lfox \

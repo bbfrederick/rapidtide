@@ -79,11 +79,11 @@ def usage():
 dolegend = True
 dotranspose = False
 dowaterfall = False
-dopspec = False
+dospectrum = False
 detrend = True
 demean = False
 useHamming = True
-domag = True
+specmode = 'power'
 samplerate = 1.0
 voffset = 0.0
 colornames = []
@@ -136,8 +136,8 @@ for o, a in opts:
         linky = True
         print('put each plot in a separate window, with the same y scale')
     elif o == '--pspec':
-        dopspec = True
-        domag = True
+        dospectrum = True
+        specmode = 'power'    
         print('showing power spectra magnitude')
     elif o == '--tofile':
         outputfile = a
@@ -161,8 +161,8 @@ for o, a in opts:
             colornames.append(thiscolor)
         print('Colors used:', colornames)
     elif o == '--phase':
-        dopspec = True
-        domag = False
+        dospectrum = True
+        specmode = 'phase'    
         print('showing power spectra phase')
     elif o == '--noyax':
         showyax = False
@@ -246,7 +246,7 @@ for i in range(0, numfiles):
         # for j in range(0, invecs.shape[0]):
     for j in collist:
         print('appending vector number ', j)
-        if dopspec:
+        if dospectrum:
             if invecs.shape[1] % 2 == 1:
                 invec = invecs[j, :-1]
             else:
@@ -260,21 +260,13 @@ for i in range(0, numfiles):
                 nperseg = 1024
             else:
                 nperseg = None
-            '''
-            thex, they = welch(invec, thissamplerate, nperseg=nperseg)
-            xvecs.append(thex)
-            yvecs.append(they)
-            '''
+
             if useHamming:
-                pspec = fftpack.fft(tide_filt.hamming(len(invec)) * invec)[0:len(invec) // 2]
+               freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(invec)) * invec, Fs = thissamplerate, mode=specmode)
             else:
-                pspec = fftpack.fft(invec)[0:len(invec) // 2]
-            if domag:
-                yvecs.append(abs(pspec) * 1.0)
-            else:
-                yvecs.append(phase(pspec) * 1.0)
-            maxfreq = thissamplerate / 2.0
-            xvecs.append(linspace(0.0, maxfreq, len(yvecs[i]), endpoint=False))
+               freqaxis, spectrum = tide_filt.spectrum(invec, Fs = thissamplerate, mode=specmode)
+            xvecs.append(freqaxis)
+            yvecs.append(spectrum)
         else:
             yvecs.append(invecs[j] * 1.0)
             xvecs.append(thisstartoffset + arange(0.0, len(yvecs[numvecs]), 1.0) / thissamplerate)
@@ -409,10 +401,10 @@ for i in range(0, numvecs):
         fig.subplots_adjust(hspace=0)
         setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
 
-    if dopspec:
+    if dospectrum:
         if showxax:
             ax.set_xlabel('Frequency (Hz)', fontsize=thexlabelfontsize, fontweight='bold')
-        if domag:
+        if specmode=='power':
             if showyax:
                 ax.set_ylabel('Signal power', fontsize=theylabelfontsize, fontweight='bold')
         else:
