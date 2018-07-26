@@ -1,8 +1,9 @@
 # emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; -*-
 # ex: set sts=4 ts=4 sw=4 et:
+"""
+Common rapidtide workflows.
+"""
 
-# Overrides submodules with their functions.
-from .rapidtide2 import rapidtide2
-
+from .rapidtide2 import rapidtide_workflow
 
 __all__ = ['rapidtide2']
