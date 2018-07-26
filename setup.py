@@ -29,7 +29,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 addtidepool = True
 
-modules_list= ['rapidtide/miscmath',
+modules_list = ['rapidtide/miscmath',
                 'rapidtide/correlate',
                 'rapidtide/filter',
                 'rapidtide/fit',
