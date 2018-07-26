@@ -178,6 +178,13 @@ setup(
     extras_require={
         'jit': ['numba'],
         'gui': ['pyqtgraph'],
+        'doc': [
+            'sphinx>=1.5.3',
+            'sphinx_rtd_theme',
+            'sphinx-argparse',
+            'numpydoc',
+            'm2r',
+            ],
     },
 
     # If there are data files included in your packages that need to be
