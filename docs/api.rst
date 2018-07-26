@@ -49,6 +49,28 @@ API
 
     rapidtide.filter.padvec
     rapidtide.filter.unpadvec
+    rapidtide.filter.ssmooth
+    rapidtide.filter.dolpfiltfilt
+    rapidtide.filter.dohpfiltfilt
+    rapidtide.filter.dobpfiltfilt
+    rapidtide.filter.transferfuncfilt
+    rapidtide.filter.getlpfftfunc
+    rapidtide.filter.dolpfftfilt
+    rapidtide.filter.dohpfftfilt
+    rapidtide.filter.dobpfftfilt
+    rapidtide.filter.getlptrapfftfunc
+    rapidtide.filter.dolptrapfftfilt
+    rapidtide.filter.dohptrapfftfilt
+    rapidtide.filter.dobptrapfftfilt
+    rapidtide.filter.wiener_deconvolution
+    rapidtide.filter.pspec
+    rapidtide.filter.spectrum
+    rapidtide.filter.csdfilter
+    rapidtide.filter.arb_pass
+    rapidtide.filter.blackmanharris
+    rapidtide.filter.hann
+    rapidtide.filter.hamming
+    rapidtide.filter.windowfunction
 
 .. currentmodule:: rapidtide
 

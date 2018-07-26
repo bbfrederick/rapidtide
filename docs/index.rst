@@ -53,8 +53,8 @@ Contents
 
    introduction
    usage
-   contributing
    api
+   contributing
 
 Indices and tables
 ==================
