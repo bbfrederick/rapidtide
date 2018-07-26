@@ -891,42 +891,42 @@ class noncausalfilter:
 
     Attributes
     ----------
-        filtertype : str
-            The type of filter.  Options are 'none' (default), 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop',
-            'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'.
+    filtertype : str
+        The type of filter.  Options are 'none' (default), 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop',
+        'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'.
 
-        species: str
-            Species (for setting physiological ranges).  Options are 'human' (default)
+    species: str
+        Species (for setting physiological ranges).  Options are 'human' (default)
 
-        lowerpass: float
-            Lower pass frequency for current filter.
+    lowerpass: float
+        Lower pass frequency for current filter.
 
-        lowerstop: float
-            Lower stop frequency for current filter.
+    lowerstop: float
+        Lower stop frequency for current filter.
 
-        upperpass: float
-            Upper pass frequency for current filter.
+    upperpass: float
+        Upper pass frequency for current filter.
 
-        upperstop: float
-            Upper stop frequency for current filter.
+    upperstop: float
+        Upper stop frequency for current filter.
 
-        usebutterworth: boolean
-            Use Butterworth filter.  Default is False.
+    usebutterworth: boolean
+        Use Butterworth filter.  Default is False.
 
-        butterworthorder: int
-            Butterworth filter order.  Default is 6.
+    butterworthorder: int
+        Butterworth filter order.  Default is 6.
 
-        usetrapfftfilt: boolean
-            Use trapezoidal pass band for FFT filter.  Default is True.
+    usetrapfftfilt: boolean
+        Use trapezoidal pass band for FFT filter.  Default is True.
 
-        correctfreq: boolean
-            Fix pass frequencies that are impossible.  Default is True.
+    correctfreq: boolean
+        Fix pass frequencies that are impossible.  Default is True.
 
-        padtime: float
-            Amount of time to end pad to reduce edge effects.  Default is 30.0 seconds
+    padtime: float
+        Amount of time to end pad to reduce edge effects.  Default is 30.0 seconds
 
-        debug: boolean
-            Enable extended debugging messages.  Default is False.
+    debug: boolean
+        Enable extended debugging messages.  Default is False.
 
     Methods
     -------
@@ -1302,8 +1302,8 @@ def lfilter_zi(b, a):
     # compute the zi state from the filter parameters. see [Gust96].
 
     # Based on:
-    # [Gust96] Fredrik Gustafsson, Determining the initial states in forward-backward 
-    # filtering, IEEE Transactions on Signal Processing, pp. 988--992, April 1996, 
+    # [Gust96] Fredrik Gustafsson, Determining the initial states in forward-backward
+    # filtering, IEEE Transactions on Signal Processing, pp. 988--992, April 1996,
     # Volume 44, Issue 4
 
     n = max(len(a), len(b))
@@ -1414,4 +1414,3 @@ def specsplit(Fs, inputdata, bandwidth, usebutterworth=False):
     return bandcenters, lowestfreq, upperlim, alldata
 
 """
-
