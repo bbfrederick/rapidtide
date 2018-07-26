@@ -12,7 +12,7 @@ API
     :toctree: generated/
     :template: function.rst
 
-    rapidtide.workflows.rapidtide2
+    rapidtide.workflows.rapidtide_workflow
 
 .. currentmodule:: rapidtide
 
