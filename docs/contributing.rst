@@ -3,7 +3,7 @@ Contributing to rapidtide
 
 This document explains how to set up a development environment for contributing
 to rapidtide and code style conventions we follow within the project.
-For a more general guide to the tedana development, please see our
+For a more general guide to rapidtide development, please see our
 `contributing guide`_.
 
 .. _contributing guide: https://github.com/bbfrederick/rapidtide/blob/master/CONTRIBUTING.md
