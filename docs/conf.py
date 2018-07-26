@@ -50,7 +50,8 @@ extensions = [
     'sphinx.ext.doctest',
     'numpydoc',
     'sphinx.ext.ifconfig',
-    'sphinx.ext.linkcode'
+    'sphinx.ext.linkcode',
+    'm2r',
 ]
 
 import sphinx

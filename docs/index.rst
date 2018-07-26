@@ -55,6 +55,7 @@ Contents
    usage
    api
    contributing
+   whats_new
 
 Indices and tables
 ==================
