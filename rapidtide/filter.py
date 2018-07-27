@@ -882,6 +882,107 @@ def arb_pass(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
             else:
                 return dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=padlen, debug=debug)
 
+@conditionaljit()
+def getarbpassfunc(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
+             usebutterworth=False, butterorder=6,
+             usetrapfftfilt=True, padlen=20, debug=False):
+    r"""generates the transfer function for an arb_pass filter for a given length of input waveform over a specified
+    range.  By default it is a trapezoidal FFT filter, but brickwall and butterworth filters are also available.
+    Ends are padded to reduce transients.
+
+    Parameters
+    ----------
+    Fs : float
+        Sample rate in Hz
+        :param Fs:
+
+    inputdata : 1D numpy array
+        Input data to be filtered
+        :param inputdata:
+
+    lowerstop : float
+        Upper end of lower stopband in Hz
+        :param lowerstop:
+
+    lowerpass : float
+        Lower end of passband in Hz
+        :param lowerpass:
+
+    upperpass : float
+        Upper end of passband in Hz
+        :param upperpass:
+
+    upperstop : float
+        Lower end of upper stopband in Hz
+        :param upperstop:
+
+    Returns
+    -------
+    filtereddata : 1D float array
+        The filtered data
+
+    Other Parameters
+    ----------------
+    usebutterworth : boolean
+        Whether to use a Butterworth filter characteristic.  Default is False.
+        :param usebutterworth:
+
+    butterorder : int
+        Order of Butterworth filter.  Default is 6.
+        :param butterorder:
+
+    usetrapfftfilt : boolean
+        Whether to use trapezoidal transition band for FFT filter.  Default is True.
+        :param usetrapfftfilt:
+
+    padlen : int
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
+    """
+    padinputdata = padvec(inputdata, padlen=padlen)
+
+    # check filter limits to see if we should do a lowpass, bandpass, or highpass
+    if lowerpass <= 0.0:
+        # set up for lowpass
+        if usebutterworth:
+            return dolpfiltfilt(Fs, upperpass, inputdata, butterorder, padlen=padlen, debug=debug)
+        else:
+            if usetrapfftfilt:
+                return getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug)
+                #return dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=padlen, debug=debug)
+            else:
+                return getlptrapfftfunc(Fs, upperpass, padinputdata, debug=debug)
+    elif (upperpass >= Fs / 2.0) or (upperpass <= 0.0):
+        # set up for highpass
+        if usebutterworth:
+            return dohpfiltfilt(Fs, lowerpass, inputdata, butterorder, padlen=padlen, debug=debug)
+        else:
+            if usetrapfftfilt:
+                return 1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)
+            else:
+                return 1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)
+    else:
+        # set up for bandpass
+        if usebutterworth:
+            return (dohpfiltfilt(Fs, lowerpass,
+                                 dolpfiltfilt(Fs, upperpass, padinputdata,
+                                              butterorder, padlen=padlen, debug=debug),
+                                 butterorder, padlen=padlen, debug=debug))
+        else:
+            if usetrapfftfilt:
+                return (
+                    getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug) * \
+                    (1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)))
+            else:
+                return (
+                    getlpfftfunc(Fs, upperpass, padinputdata, debug=debug) * \
+                    (1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)))
+
 
 class noncausalfilter:
     """
@@ -930,11 +1031,28 @@ class noncausalfilter:
 
     Methods
     -------
-    colorspace(c='rgb')
-        Represent the photo in the given colorspace.
-    gamma(n=1.0)
-        Change the photo's gamma exposure.
-
+    settype(thetype)
+        Set the filter type. Options are 'none' (default), 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop',
+        'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'.
+    gettype()
+        Return the current filter type.
+    getfreqlimits()
+        Return the current frequency limits.
+    setbutter(useit, order=self.butterworthorder)
+        Set options for Butterworth filter (set useit to True to make Butterworth the active filter type, set order
+        with the order parameter)
+    setpadtime(padtime)
+        Set the end pad time in seconds.
+    setdebug(debug)
+        Turn debugging on and off with the debug flag.
+    getpadtime()
+        Return the current end pad time.
+    settrapfft(useit)
+        Set to use trapezoidal FFT filter.  If false use brickwall.
+    setarb(lowerstop, lowerpass, upperpass, upperstop)
+        Set the frequency parameters of the 'arb' and 'arb_stop' filter.
+    apply(Fs, data)
+        Apply the filter to a dataset.
     """
     def __init__(self, filtertype='none', usebutterworth=False, butterworthorder=6, usetrapfftfilt=True,
                  correctfreq=True, padtime=30.0, debug=False):
