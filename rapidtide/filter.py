@@ -81,7 +81,7 @@ def disablenumba():
 # NB: No automatic padding for precalculated filters
 
 def padvec(inputdata, padlen=20):
-    r"""padvec returns a padded copy of the input data; padlen points of
+    r"""Returns a padded copy of the input data; padlen points of
     reflected data are prepended and appended to the input data to reduce
     end effects when the data is then filtered.
 
@@ -110,7 +110,7 @@ def padvec(inputdata, padlen=20):
 
 
 def unpadvec(inputdata, padlen=20):
-    r"""unpadvec returns a input data with the end pads removed (see padvec);
+    r"""Returns a input data with the end pads removed (see padvec);
     padlen points of reflected data are removed from each end of the array
     end effects when the data is then filtered.
 
@@ -139,7 +139,7 @@ def unpadvec(inputdata, padlen=20):
 
 
 def ssmooth(xsize, ysize, zsize, sigma, inputdata):
-    r"""ssmooth applies an isotropic gaussian spatial filter to a 3D array
+    r"""Applies an isotropic gaussian spatial filter to a 3D array
 
     Parameters
     ----------
@@ -174,7 +174,7 @@ def ssmooth(xsize, ysize, zsize, sigma, inputdata):
 
 # - butterworth filters
 def dolpfiltfilt(Fs, upperpass, inputdata, order, padlen=20, debug=False):
-    r"""dolpfiltfilt performs a bidirectional (zero phase) Butterworth lowpass filter on an input vector
+    r"""Performs a bidirectional (zero phase) Butterworth lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -220,7 +220,7 @@ def dolpfiltfilt(Fs, upperpass, inputdata, order, padlen=20, debug=False):
 
 
 def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, debug=False):
-    r"""dohpfiltfilt performs a bidirectional (zero phase) Butterworth highpass filter on an input vector
+    r"""Performs a bidirectional (zero phase) Butterworth highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -266,7 +266,7 @@ def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, debug=False):
 
 
 def dobpfiltfilt(Fs, lowerpass, upperpass, inputdata, order, padlen=20, debug=False):
-    r"""dobpfiltfilt performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
+    r"""Performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -321,7 +321,7 @@ def dobpfiltfilt(Fs, lowerpass, upperpass, inputdata, order, padlen=20, debug=Fa
 
 # - direct filter with specified transfer function
 def transferfuncfilt(inputdata, transferfunc):
-    r"""transferfuncfilt filters input data using a previously calculated transfer function.
+    r"""Filters input data using a previously calculated transfer function.
 
     Parameters
     ----------
@@ -344,7 +344,7 @@ def transferfuncfilt(inputdata, transferfunc):
 
 # - fft brickwall filters
 def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
-    r"""getlpfftfunc generates a brickwall lowpass transfer function.
+    r"""Generates a brickwall lowpass transfer function.
 
     Parameters
     ----------
@@ -381,7 +381,7 @@ def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
 
 
 def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, debug=False):
-    r"""dolpfftfilt performs an FFT brickwall lowpass filter on an input vector
+    r"""Performs an FFT brickwall lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -422,7 +422,7 @@ def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, debug=False):
 
 
 def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, debug=False):
-    r"""dohpfftfilt performs an FFT brickwall highpass filter on an input vector
+    r"""Performs an FFT brickwall highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -463,7 +463,7 @@ def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, debug=False):
 
 
 def dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=20, debug=False):
-    r"""dobpfftfilt performs an FFT brickwall bandpass filter on an input vector
+    r"""Performs an FFT brickwall bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -510,7 +510,7 @@ def dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=20, debug=False):
 
 # - fft trapezoidal filters
 def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
-    r"""getlptrapfftfunc generates a trapezoidal lowpass transfer function.
+    r"""Generates a trapezoidal lowpass transfer function.
 
     Parameters
     ----------
@@ -560,7 +560,7 @@ def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
 
 
 def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, debug=False):
-    r"""dolptrapfftfilt performs an FFT filter with a trapezoidal lowpass transfer
+    r"""Performs an FFT filter with a trapezoidal lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -605,7 +605,7 @@ def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, debug=False)
 
 
 def dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=20, debug=False):
-    r"""dohptrapfftfilt performs an FFT filter with a trapezoidal highpass transfer
+    r"""Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -651,7 +651,7 @@ def dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=20, debug=False)
 
 def dobptrapfftfilt(Fs, lowerstop, lowerpass, upperpass, upperstop, inputdata, padlen=20,
                     debug=False):
-    r"""dobptrapfftfilt performs an FFT filter with a trapezoidal bandpass transfer
+    r"""Performs an FFT filter with a trapezoidal bandpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -731,7 +731,7 @@ def pspec(inputdata):
 
 
 def spectrum(inputdata, Fs=1.0, mode='power'):
-    r"""spectrum performs an FFT of the input data, and returns the frequency axis and spectrum
+    r"""Performs an FFT of the input data, and returns the frequency axis and spectrum
     of the input signal.
 
     Parameters
@@ -754,7 +754,7 @@ def spectrum(inputdata, Fs=1.0, mode='power'):
         Sample rate in Hz.  Defaults to 1.0
         :param Fs:
 
-    mode : str
+    mode : {'real', 'imag', 'mag', 'phase', 'power'}
         The type of spectrum to return.  Legal values are 'real', 'imag', 'mag', 'phase', and 'power' (default)
         :param mode:
     """
@@ -790,7 +790,7 @@ def csdfilter(obsdata, commondata, padlen=20, debug=False):
 def arb_pass(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
              usebutterworth=False, butterorder=6,
              usetrapfftfilt=True, padlen=20, debug=False):
-    r"""arb_pass filters an input waveform over a specified range.  By default it is a trapezoidal
+    r"""Filters an input waveform over a specified range.  By default it is a trapezoidal
     FFT filter, but brickwall and butterworth filters are also available.  Ends are padded to reduce
     transients.
 
@@ -882,11 +882,12 @@ def arb_pass(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
             else:
                 return dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=padlen, debug=debug)
 
+
 @conditionaljit()
 def getarbpassfunc(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
-             usebutterworth=False, butterorder=6,
-             usetrapfftfilt=True, padlen=20, debug=False):
-    r"""generates the transfer function for an arb_pass filter for a given length of input waveform over a specified
+                   usebutterworth=False, butterorder=6,
+                   usetrapfftfilt=True, padlen=20, debug=False):
+    r"""Generates the transfer function for an arb_pass filter for a given length of input waveform over a specified
     range.  By default it is a trapezoidal FFT filter, but brickwall and butterworth filters are also available.
     Ends are padded to reduce transients.
 
@@ -954,7 +955,6 @@ def getarbpassfunc(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
         else:
             if usetrapfftfilt:
                 return getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug)
-                #return dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=padlen, debug=debug)
             else:
                 return getlptrapfftfunc(Fs, upperpass, padinputdata, debug=debug)
     elif (upperpass >= Fs / 2.0) or (upperpass <= 0.0):
@@ -976,12 +976,12 @@ def getarbpassfunc(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
         else:
             if usetrapfftfilt:
                 return (
-                    getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug) * \
-                    (1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)))
+                        getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug) * \
+                        (1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)))
             else:
                 return (
-                    getlpfftfunc(Fs, upperpass, padinputdata, debug=debug) * \
-                    (1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)))
+                        getlpfftfunc(Fs, upperpass, padinputdata, debug=debug) * \
+                        (1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)))
 
 
 class noncausalfilter:
@@ -992,11 +992,11 @@ class noncausalfilter:
 
     Attributes
     ----------
-    filtertype : str
+    filtertype : {'none' 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'}
         The type of filter.  Options are 'none' (default), 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop',
         'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'.
 
-    species: str
+    species: {'human'}
         Species (for setting physiological ranges).  Options are 'human' (default)
 
     lowerpass: float
@@ -1054,6 +1054,7 @@ class noncausalfilter:
     apply(Fs, data)
         Apply the filter to a dataset.
     """
+
     def __init__(self, filtertype='none', usebutterworth=False, butterworthorder=6, usetrapfftfilt=True,
                  correctfreq=True, padtime=30.0, debug=False):
         self.filtertype = filtertype
@@ -1268,7 +1269,7 @@ BHwindows = {}
 
 
 def blackmanharris(length, debug=False):
-    r"""blackmanharris returns a Blackman Harris window function of the specified length.
+    r"""Returns a Blackman Harris window function of the specified length.
     Once calculated, windows are cached for speed.
 
     Parameters
@@ -1308,7 +1309,7 @@ hannwindows = {}
 
 
 def hann(length, debug=False):
-    r"""hann returns a Hann window function of the specified length.  Once calculated, windows
+    r"""Returns a Hann window function of the specified length.  Once calculated, windows
     are cached for speed.
 
     Parameters
@@ -1344,7 +1345,7 @@ hammingwindows = {}
 
 def hamming(length, debug=False):
     #   return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
-    r"""hamming returns a Hamming window function of the specified length.  Once calculated, windows
+    r"""Returns a Hamming window function of the specified length.  Once calculated, windows
     are cached for speed.
 
     Parameters
@@ -1376,7 +1377,7 @@ def hamming(length, debug=False):
 
 
 def windowfunction(length, type='hamming', debug=False):
-    r"""windowfunc returns a window function of the specified length and type.  Once calculated, windows
+    r"""Returns a window function of the specified length and type.  Once calculated, windows
     are cached for speed.
 
     Parameters
@@ -1392,7 +1393,7 @@ def windowfunction(length, type='hamming', debug=False):
 
     Other Parameters
     ----------------
-    type : string
+    type : {'hamming', 'hann', 'blackmanharris'}
         Window type.  Choices are 'hamming' (default), 'hann', and 'blackmanharris'.
        :param type:
 
