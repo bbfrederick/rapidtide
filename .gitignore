@@ -1,3 +1,30 @@
+# regenerating old entries
+
+# notes to self
+newrelease_todo
+rapidtide/_gittag.py
+changecalls
+
+# any generated test data
+rapidtide/data/examples/dst/*
+
+# some local test data
+rapidtide/data/examples/src/*corrfunc*
+rapidtide/data/examples/src/*trimmed*
+test.nii.gz
+*junk*
+
+# local executables
+wiener*
+wavedecomp
+
+# PyCharm files
+.idea
+
+# any local safety copies
+*.safe
+*/*.safe
+
 docs/generated/
 
 # Byte-compiled / optimized / DLL files
