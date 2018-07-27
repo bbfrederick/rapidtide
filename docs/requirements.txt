@@ -1,3 +1,3 @@
 numpydoc
 m2r
-sphinxarg.ext
+sphinx-argparse
