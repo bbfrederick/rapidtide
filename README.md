@@ -4,6 +4,8 @@ Rapidtide is a suite of python programs used to perform rapid time delay
 analysis on functional imaging data to find time lagged  correlations
 between the voxelwise time series and other time series.
 
+Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation Status](https://readthedocs.org/projects/rapidtide/badge/?version=latest)](http://rapidtide.readthedocs.io/en/latest/?badge=latest)
 [![Travis-CI](https://travis-ci.org/bbfrederick/rapidtide.svg?branch=master)](https://travis-ci.org/bbfrederick/rapidtide)
