@@ -24,7 +24,10 @@ Citing rapidtide
 
 .. _10.5281/zenodo.814990: https://doi.org/10.5281/zenodo.814990
 
-
+Contents
+========
+.. toctree::
+   :maxdepth: 2
    introduction
    usage
    api
