@@ -726,6 +726,15 @@ def wiener_deconvolution(signal, kernel, lambd):
 
 
 def pspec(inputdata):
+    """
+
+    Args:
+        inputdata: 1D numpy array
+            Input data
+
+    Returns:
+
+    """
     S = fftpack.fft(inputdata)
     return np.sqrt(S * np.conj(S))
 
@@ -737,7 +746,7 @@ def spectrum(inputdata, Fs=1.0, mode='power'):
     Parameters
     ----------
     inputdata : 1D numpy array
-        Input data to be filtered
+        Input data
         :param inputdata:
 
     Returns
@@ -778,6 +787,23 @@ def spectrum(inputdata, Fs=1.0, mode='power'):
 
 
 def csdfilter(obsdata, commondata, padlen=20, debug=False):
+    """
+
+    Args:
+        obsdata: 1D numpy array
+            Input data
+        commondata: 1D numpy array
+            Shared data
+        padlen: int
+            Number of reflected points to add on each end of the input data
+        debug: bool
+            Set to True for additiona information on function internals.
+
+    Returns:
+        filtereddata: 1D numpy array
+            The filtered data
+
+    """
     padobsdata = padvec(obsdata, padlen=padlen)
     padcommondata = padvec(commondata, padlen=padlen)
     obsdata_trans = fftpack.fft(padobsdata)
