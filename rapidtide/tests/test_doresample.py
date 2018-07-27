@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from rapidtide.tide_funcs import doresample
+from rapidtide.resample import doresample
 import numpy as np
 import pylab as plt
 

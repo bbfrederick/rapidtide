@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import rapidtide.tide_funcs as tide
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import numpy as np
