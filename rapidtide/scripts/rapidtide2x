@@ -1930,6 +1930,7 @@ def main():
             linkchar = '='
             print('Data time step forced to ', realtr)
         elif o == '-t':
+            print('DEPRECATION WARNING: The -t option is obsolete and will be removed in a future version.  Use --datatstep=TSTEP or --datafreq=FREQ instead')
             realtr = float(a)
             print('Data time step forced to ', realtr)
         elif o == '-c':
@@ -2108,7 +2109,7 @@ def main():
             print('Will multiply regressor by timecourse in ', optiondict['tmaskname'])
         elif o == '--refinepasses' or o == '--passes':
             if o == '--refinepasses':
-                print('WARNING - refinepasses is depracated - use passes instead')
+                print('DEPRECATION WARNING - refinepasses is deprecated and will be removed in a future version - use passes instead')
             optiondict['passes'] = int(a)
             linkchar = '='
             print('Will do ', optiondict['passes'], ' processing passes')

@@ -199,7 +199,8 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
     return corrlist
 
 
-def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc, optiondict):
+def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
+                   ncprefilter, referencetc, optiondict, saveintermediate=False):
     thetc_classfilter = ncprefilter.apply(oversampfreq, thetc)
     thetc = thetc_classfilter
 
@@ -209,6 +210,17 @@ def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, nc
 
     # now actually do the correlation
     thexcorr = tide_corr.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=optiondict['corrweighting'])
+
+    if optiondict['corrfitprefilt'] is not None:
+        if optiondict['corrfitprefilt'] < 0.0:
+            # set filter automatically
+            cutoff = 1.0
+        else:
+            cutoff = optiondict['corrfitprefilt']
+        if saveintermediate:
+            tide_io.writevec(thexcorr, 'corrfunc')
+            thexcorr = tide_filt.dohpfftfilt(oversampfreq, cutoff, thexcorr, padlen=0)
+            tide_io.writevec(thexcorr, 'hp_corrfunc')
 
     # find the global maximum value
     theglobalmax = np.argmax(thexcorr)
@@ -223,8 +235,13 @@ def procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, o
         thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=optiondict['interptype'])
     else:
         thetc[:] = fmritc
+    #if vox == 20000:
+    #    saveintermediate = True
+    #else:
+    #    saveintermediate = False
+
     thexcorr, theglobalmax = onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
-                                            referencetc, optiondict)
+                                            referencetc, optiondict, saveintermediate=False)
     return vox, np.mean(thetc), thexcorr, theglobalmax
 
 
@@ -366,7 +383,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
     return volumetotal, theglobalmaxlist
 
 
-def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None):
+def onecorrfit(corrfunc, corrscale, optiondict, displayplots=False, initiallag=None):
     if initiallag is not None:
         maxguess = initiallag
         useguess = True
@@ -377,17 +394,18 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
         widthlimit = optiondict['widthlimit']
 
     if optiondict['bipolar']:
-        if max(thetc) < -1.0 * min(thetc):
+        if max(corrfunc) < -1.0 * min(corrfunc):
             flipfac = rt_floatset(-1.0)
         else:
             flipfac = rt_floatset(1.0)
     else:
         flipfac = rt_floatset(1.0)
+
     if not optiondict['fixdelay']:
         if optiondict['findmaxtype'] == 'gauss':
             maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
                 corrscale,
-                flipfac * thetc,
+                flipfac * corrfunc,
                 optiondict['lagmin'], optiondict['lagmax'], widthlimit,
                 edgebufferfrac=optiondict['edgebufferfrac'],
                 threshval=optiondict['lthreshval'],
@@ -404,7 +422,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
         else:
             maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_quad(
                 corrscale,
-                flipfac * thetc,
+                flipfac * corrfunc,
                 optiondict['lagmin'], optiondict['lagmax'], widthlimit,
                 edgebufferfrac=optiondict['edgebufferfrac'],
                 threshval=optiondict['lthreshval'],
@@ -424,7 +442,7 @@ def onecorrfit(thetc, corrscale, optiondict, displayplots=False, initiallag=None
         failreason = np.int16(0)
         maxlag = rt_floatset(optiondict['fixeddelayvalue'])
         maxindex = np.int16(bisect.bisect_left(corrscale, optiondict['fixeddelayvalue']))
-        maxval = rt_floatset(flipfac * thetc[maxindex])
+        maxval = rt_floatset(flipfac * corrfunc[maxindex])
         maxsigma = rt_floatset(1.0)
         maskval = np.uint16(1)
 
@@ -1283,6 +1301,8 @@ def usage():
     print("Correlation fitting options:")
     print("    -Z DELAYTIME               - Don't fit the delay time - set it to DELAYTIME seconds ")
     print("                                 for all voxels")
+    print("    --corrfilt=FREQ            - Highpass the the correlation function at FREQ Hz prior to fitting to")
+    print("                                 remove baseline roll.")
     print("    -r LAGMIN,LAGMAX           - Limit fit to a range of lags from LAGMIN to LAGMAX")
     print("    -s SIGMALIMIT              - Reject lag fits with linewidth wider than SIGMALIMIT")
     print("    -B                         - Bipolar mode - match peak correlation ignoring sign")
@@ -1425,6 +1445,7 @@ def main():
     optiondict['nothresh'] = False  # disable voxel intensity threshholding
 
     # correlation fitting options
+    optiondict['corrfitprefilt'] = None
     optiondict['bipolar'] = False  # find peak with highest magnitude, regardless of sign
     optiondict['gaussrefine'] = True  # fit gaussian after initial guess at parameters
     optiondict['fastgauss'] = False  # use a non-iterative gaussian peak fit (DOES NOT WORK)
@@ -1564,6 +1585,7 @@ def main():
                                                                                                           'corrmaskthresh=',
                                                                                                           'despecklepasses=',
                                                                                                           'despecklethresh=',
+                                                                                                          'corrfilt=',
                                                                                                           'accheck',
                                                                                                           'acfix',
                                                                                                           'noprogressbar',
@@ -1730,7 +1752,10 @@ def main():
             optiondict['multiproc'] = True
             optiondict['nprocs'] = int(a)
             linkchar = '='
-            print('will use', optiondict['nprocs'], 'processes for calculation')
+            if optiondict['nprocs'] < 0:
+                print('will use n_cpus - 1 processes for calculation')
+            else:
+                print('will use', optiondict['nprocs'], 'processes for calculation')
         elif o == '--nonumba':
             optiondict['nonumba'] = True
             print('disabling numba if present')
@@ -1840,6 +1865,9 @@ def main():
             optiondict['usebutterworthfilter'] = True
             theprefilter.setbutter(optiondict['usebutterworthfilter'], optiondict['filtorder'])
             print('Using butterworth bandlimit filter')
+        elif o == '--corrfilt':
+            optiondict['corrfitprefilt'] = float(a)
+            print('Will highpass filter the correlation filter to', optiondict['corrfitprefilt'], 'Hz prior to fitting')
         elif o == '-Z':
             optiondict['fixeddelayvalue'] = float(a)
             optiondict['fixdelay'] = True
@@ -1885,6 +1913,7 @@ def main():
             linkchar = '='
             print('Data time step forced to ', realtr)
         elif o == '-t':
+            print('DEPRECATION WARNING: The -t option is obsolete and will be removed in a future version.  Use --datatstep=TSTEP or --datafreq=FREQ instead')
             realtr = float(a)
             print('Data time step forced to ', realtr)
         elif o == '-c':
@@ -2058,7 +2087,7 @@ def main():
             print('Will multiply regressor by timecourse in ', optiondict['tmaskname'])
         elif o == '--refinepasses' or o == '--passes':
             if o == '--refinepasses':
-                print('WARNING - refinepasses is depracated - use passes instead')
+                print('DEPRECATION WARNING - refinepasses is deprecated and will be removed in a future version - use passes instead')
             optiondict['passes'] = int(a)
             linkchar = '='
             print('Will do ', optiondict['passes'], ' processing passes')
