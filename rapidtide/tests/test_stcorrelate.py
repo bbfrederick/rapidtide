@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
-from rapidtide.tide_funcs import timeshift, shorttermcorr_1D, shorttermcorr_2D
+from rapidtide.resample import timeshift
+from rapidtide.correlate import shorttermcorr_1D, shorttermcorr_2D
 from rapidtide.filter import dolpfiltfilt, noncausalfilter
 from rapidtide.io import writenpvecs
 import numpy as np
