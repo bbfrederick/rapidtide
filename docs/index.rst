@@ -384,7 +384,7 @@ The base command you'd use would be:
 
 		rapidtide2 inputfmrifile outputname -L --passes=3 --refineoffset
 
-This will do a fairly simple analysis.  First, the -L option means that rapidtide2 will prefilter the data to the LFO band (0.009-0.15Hz). It will then construct a regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor is specified), and then use crosscorrelation to determine the time delay in each voxel.  The --refinepasses=3 option directs rapidtide to to perform the delay analysis 3 times, each time generating a new estimate of the global noise signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.  After the three passes are complete, it will then use a GLM filter to remove a lagged copy of the final mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also a number of maps output with the prefix "outputname_" of delay, correlation strength and so on.
+This will do a fairly simple analysis.  First, the -L option means that rapidtide2 will prefilter the data to the LFO band (0.009-0.15Hz). It will then construct a regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor is specified), and then use crosscorrelation to determine the time delay in each voxel.  The --passes=3 option directs rapidtide to to perform the delay analysis 3 times, each time generating a new estimate of the global noise signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.  After the three passes are complete, it will then use a GLM filter to remove a lagged copy of the final mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also a number of maps output with the prefix "outputname_" of delay, correlation strength and so on.
 
 Mapping long time delays in response to a gas challenge experiment
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -925,13 +925,12 @@ Usage:
 		  -m GEOMASKNAME   Set geometric mask image
 
 
-tide_funcs.py
+filter.py, correlate.py, resample.py, fit.py, io.py, miscmath.py, stats.py, util.py
 -------------
 
 Description:
 ^^^^^^^^^^^^
-	This is the library of the various helper routines that are used by pretty much every program in here for correlation, resampling, filtering, normalization, significance estimation, file I/O, etc.
-
+	These are the libraries containing most of the routines that do the heavy lifting.
 
 Inputs:
 ^^^^^^^
