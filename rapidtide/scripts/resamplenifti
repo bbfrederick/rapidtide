@@ -120,7 +120,8 @@ def main():
         for yloc in range(0, ysize):
             for xloc in range(0, xsize):
                 if antialias:
-                    input_y = tide_filt.doprecalcfftfilt(aafiltfunc, input_data[xloc, yloc, zloc, :])
+                    #input_y = tide_filt.doprecalcfftfilt(aafiltfunc, input_data[xloc, yloc, zloc, :])
+                    input_y = tide_filt.transferfuncfilt(input_data[xloc, yloc, zloc, :], aafiltfunc)
                 else:
                     input_y = input_data[xloc, yloc, zloc, :]
                 resampledtcs[xloc, yloc, zloc, :] = tide_resample.doresample(input_x, input_y, output_x)
