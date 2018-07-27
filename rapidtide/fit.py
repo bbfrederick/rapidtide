@@ -500,8 +500,8 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # lowerlim = np.max([tide_util.valtoindex(thexcorr_x, lagmin, toleft=True), 0])
     # upperlim = np.min([tide_util.valtoindex(thexcorr_x, lagmax, toleft=False), len(thexcorr_x) - 1])
     if debug:
-        print('initial search indices are', lowerlim, 'to', upperlim, '(', thexcorr_x[lowerlim], thexcorr_x[upperlim],
-              ')')
+        print('initial search indices are', lowerlim, 'to', upperlim,
+              '(', thexcorr_x[lowerlim], thexcorr_x[upperlim], ')')
 
     # make an initial guess at the fit parameters for the gaussian
     # start with finding the maximum value and its location

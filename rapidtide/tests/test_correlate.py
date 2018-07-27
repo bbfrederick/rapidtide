@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
 
-from rapidtide.tide_funcs import fastcorrelate
+from rapidtide.correlate import fastcorrelate
 import numpy as np
 import pylab as plt
 

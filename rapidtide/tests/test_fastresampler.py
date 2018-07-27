@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from rapidtide.tide_funcs import fastresampler
+from rapidtide.resample import fastresampler
 import numpy as np
 import pylab as plt
 
