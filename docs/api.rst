@@ -31,6 +31,15 @@ API
 
     rapidtide.correlate.autocorrcheck
     rapidtide.correlate.quickcorr
+    rapidtide.correlate.shorttermcorr_1D
+    rapidtide.correlate.shorttermcorr_2D
+    rapidtide.correlate.delayedcorr
+    rapidtide.correlate.cepstraldelay
+    rapidtide.correlate.fastcorrelate
+    rapidtide.correlate._centered
+    rapidtide.correlate._check_valid_mode_shapes
+    rapidtide.correlate.weightedfftconvolve
+    rapidtide.correlate.gccproduct
 
 .. currentmodule:: rapidtide
 
@@ -168,6 +177,19 @@ API
 
     rapidtide.miscmath.phase
     rapidtide.miscmath.polarfft
+    rapidtide.miscmath.complex_cepstrum
+    rapidtide.miscmath.real_cepstrum
+    rapidtide.miscmath.thederiv
+    rapidtide.miscmath.primes
+    rapidtide.miscmath.largestfac
+    rapidtide.miscmath.znormalize
+    rapidtide.miscmath.stdnormalize
+    rapidtide.miscmath.varnormalize
+    rapidtide.miscmath.pcnormalize
+    rapidtide.miscmath.ppnormalize
+    rapidtide.miscmath.corrnormalize
+    rapidtide.miscmath.rms
+    rapidtide.miscmath.envdetect
 
 .. currentmodule:: rapidtide
 
@@ -185,11 +207,11 @@ API
     :template: function.rst
 
     rapidtide.resample.congrid
-
-    :toctree: generated/
-    :template: class.rst
-
-    rapidtide.resample.fastresampler
+    rapidtide.resample.doresample
+    rapidtide.resample.arbresample
+    rapidtide.resample.dotwostepresample
+    rapidtide.resample.calcsliceoffset
+    rapidtide.resample.timeshift
 
 .. currentmodule:: rapidtide
 
@@ -206,7 +228,23 @@ API
     :toctree: generated/
     :template: function.rst
 
-    rapidtide.stats.printthresholds
+    rapidtide.stats.fitjsbpdf
+    rapidtide.stats.getjohnsonppf
+    rapidtide.stats.sigFromDistributionData
+    rapidtide.stats.rfromp
+    rapidtide.stats.tfromr
+    rapidtide.stats.zfromr
+    rapidtide.stats.fisher
+    rapidtide.stats.gethistprops
+    rapidtide.stats.makehistogram
+    rapidtide.stats.makeandsavehistogram
+    rapidtide.stats.symmetrize
+    rapidtide.stats.getfracval
+    rapidtide.stats.makepmask
+    rapidtide.stats.getfracvals
+    rapidtide.stats.getfracvalsfromfit_old
+    rapidtide.stats.getfracvalsfromfit
+    rapidtide.stats.makemask
 
 .. currentmodule:: rapidtide
 
@@ -224,6 +262,16 @@ API
     :template: function.rst
 
     rapidtide.util.logmem
+    rapidtide.util.findexecutable
+    rapidtide.util.isexecutable
+    rapidtide.util.savecommandline
+    rapidtide.util.valtoindex
+    rapidtide.util.progressbar
+    rapidtide.util.makelaglist
+    rapidtide.util.version
+    rapidtide.util.timefmt
+    rapidtide.util.proctiminginfo
+
 
 .. currentmodule:: rapidtide
 
