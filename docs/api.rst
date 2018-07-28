@@ -40,8 +40,11 @@ API
 :mod:`rapidtide.filter`: Filters
 --------------------------------------------------
 .. automodule:: rapidtide.filter
-    :no-members:
+    :members:
     :no-inherited-members:
+
+.. autoclass:: rapidtide.filter
+    :members:
 
 .. autosummary:: rapidtide.filter
     :toctree: generated/
@@ -98,7 +101,7 @@ API
 :mod:`rapidtide.io`: Input/output functions
 --------------------------------------------------
 .. automodule:: rapidtide.io
-    :no-members:
+    :members:
     :no-inherited-members:
 
 .. autosummary:: rapidtide.io
