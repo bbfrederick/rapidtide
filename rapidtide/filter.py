@@ -726,13 +726,16 @@ def wiener_deconvolution(signal, kernel, lambd):
 
 
 def pspec(inputdata):
-    """
+    r"""Calculate the power spectrum of an input signal
+    Parameters
+    ----------
+    inputdata: 1D numpy array
+        Input data
 
-    Args:
-        inputdata: 1D numpy array
-            Input data
-
-    Returns:
+    Returns
+    -------
+    spectrum: 1D numpy array
+        The power spectrum of the input signal.
 
     """
     S = fftpack.fft(inputdata)
@@ -787,21 +790,26 @@ def spectrum(inputdata, Fs=1.0, mode='power'):
 
 
 def csdfilter(obsdata, commondata, padlen=20, debug=False):
-    """
+    r"""Cross spectral density filter - makes a filter transfer function that preserves common frequencies.
 
-    Args:
-        obsdata: 1D numpy array
-            Input data
-        commondata: 1D numpy array
-            Shared data
-        padlen: int
-            Number of reflected points to add on each end of the input data
-        debug: bool
-            Set to True for additiona information on function internals.
+    Parameters
+    ----------
+    obsdata: 1D numpy array
+        Input data
+    commondata: 1D numpy array
+        Shared data
 
-    Returns:
-        filtereddata: 1D numpy array
-            The filtered data
+    Optional parameters
+    -------------------
+    padlen: int
+        Number of reflected points to add on each end of the input data.  Default is 20.
+    debug: bool
+        Set to True for additiona information on function internals.  Default is False.
+
+    Returns
+    -------
+    filtereddata: 1D numpy array
+        The filtered data
 
     """
     padobsdata = padvec(obsdata, padlen=padlen)
