@@ -55,6 +55,8 @@ For a number of reasons.
 
     - It’s giving back to the community.  I benefit from the generosity of a lot of authors who have made the open source tools I use for work and play, so I figure I can pony up too.
 
+[‡] or better yet, you, empowered user, can fix it, and push back a fix that benefits everybody...
+
 Python version compatibility
 -----------------------------
 I've now switched over to using python 3 as my daily driver, so I know that
