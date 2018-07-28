@@ -41,13 +41,20 @@ except ImportError:
 if nibabelexists:
     def readfromnifti(inputfile):
         """
+        Open a nifti file and read in the various important parts
 
         Parameters
         ----------
-        inputfile
+        inputfile : str
+            The name of the nifti file.
 
         Returns
         -------
+        nim : nifti image structure
+        nim_data : array-like
+        nim_hdr : nifti header
+        thedims : int array
+        thesizes : float array
 
         """
         if os.path.isfile(inputfile):
@@ -70,14 +77,17 @@ if nibabelexists:
     # dims are the array dimensions along each axis
     def parseniftidims(thedims):
         """
+        Split the dims array into individual elements
 
         Parameters
         ----------
-        thedims
+        thedims : int array
+            The nifti dims structure
 
         Returns
         -------
-
+        nx, ny, nz, nt : int
+            Number of points along each dimension
         """
         return thedims[1], thedims[2], thedims[3], thedims[4]
 
@@ -85,14 +95,17 @@ if nibabelexists:
     # sizes are the mapping between voxels and physical coordinates
     def parseniftisizes(thesizes):
         """
+        Split the size array into individual elements
 
         Parameters
         ----------
-        thesizes
+        thesizes : float array
+            The nifti voxel size structure
 
         Returns
         -------
-
+        dimx, dimy, dimz, dimt : float
+            Scaling from voxel number to physical coordinates
         """
         return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
