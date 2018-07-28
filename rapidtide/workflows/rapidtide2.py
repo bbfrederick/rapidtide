@@ -818,7 +818,7 @@ def _main(argv=None):
         args['ampthresh'] = 0.7
         args['lagmaskthresh'] = 0.1
 
-    rapidtide_workflow(**vars(args))
+    rapidtide_workflow(**args)
 
 
 if __name__ == '__main__':
