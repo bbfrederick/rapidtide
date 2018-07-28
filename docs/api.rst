@@ -44,6 +44,9 @@ API
     :no-members:
     :no-inherited-members:
 
+.. autoclass:: rapidtide.filter
+    :no-members:
+
 .. autosummary:: rapidtide.filter
     :toctree: generated/
     :template: function.rst
