@@ -251,7 +251,7 @@ if nibabelexists:
         return dimmatch and resmatch
  
 
-    def checkspacresematch(sizes1, sizes2):
+    def checkspaceresmatch(sizes1, sizes2):
         r"""Check the spatial pixdims of two nifti files to determine if they have the same resolution
 
         Parameters
@@ -277,7 +277,7 @@ if nibabelexists:
 
 
     def checkspacedimmatch(dims1, dims2):
-        r"""Check the headers of two nifti files to determine if the cover the same number of voxels in each dimension
+        r"""Check the dimension arrays of two nifti files to determine if the cover the same number of voxels in each dimension
 
         Parameters
         ----------
