@@ -161,14 +161,17 @@ if nibabelexists:
 
 
     def checkiftext(filename):
-        r"""
+        r"""Check to see if the specified filename ends in '.txt'
 
         Parameters
         ----------
-        filename
+        filename : str
+            The file name
 
         Returns
         -------
+        istext : bool
+            True if filename ends with '.txt'
 
         """
         if filename.endswith(".txt"):
@@ -178,14 +181,17 @@ if nibabelexists:
 
 
     def getniftiroot(filename):
-        r"""
+        r"""Strip a nifti filename down to the root with no extensions
 
         Parameters
         ----------
-        filename
+        filename : str
+            The file name to strip
 
         Returns
         -------
+        strippedname : str
+            The file name without any nifti extensions
 
         """
         if filename.endswith(".nii"):
@@ -197,14 +203,19 @@ if nibabelexists:
 
 
     def fmritimeinfo(niftifilename):
-        r"""
+        r"""Retrieve the repetition time and number of timepoints from a nifti file
 
         Parameters
         ----------
-        niftifilename
+        niftifilename : str
+            The name of the nifti file
 
         Returns
         -------
+        tr : float
+            The repetition time, in seconds
+        timepoints : int
+            The number of points along the time axis
 
         """
         nim = nib.load(niftifilename)
@@ -219,17 +230,66 @@ if nibabelexists:
         return tr, timepoints
 
 
-    def checkspacematch(dims1, dims2):
-        r"""
+    def checkspacematch(hdr1, hdr2):
+        r"""Check the headers of two nifti files to determine if the cover the same volume at the same resolution
 
         Parameters
         ----------
-        dims1
-        dims2
+        hdr1 : nifti header structure
+            The header of the first file
+        hdr2 : nifti header structure
+            The header of the second file
 
         Returns
         -------
+        ismatched : bool
+            True if the spatial dimensions and resolutions of the two files match.
 
+        """
+        dimmatch = checkspaceresmatch(hdr1['pixdim'], hdr2['pixdim'])
+        resmatch = checkspacedimmatch(hdr1['dim'], hdr2['dim'])
+        return dimmatch and resmatch
+ 
+
+    def checkspacresematch(sizes1, sizes2):
+        r"""Check the spatial pixdims of two nifti files to determine if they have the same resolution
+
+        Parameters
+        ----------
+        sizes1 : float array
+            The size array from the first nifti file 
+        sizes2 : float array
+            The size array from the second nifti file 
+
+        Returns
+        -------
+        ismatched : bool
+            True if the spatial resolutions of the two files match.
+
+        """
+        for i in range(1, 4):
+            if sizes1[i] != sizes2[i]:
+                print("File spatial resolutions do not match")
+                print("sizeension ", i, ":", sizes1[i], "!=", sizes2[i])
+                return False
+            else:
+                return True
+
+
+    def checkspacedimmatch(dims1, dims2):
+        r"""Check the headers of two nifti files to determine if the cover the same number of voxels in each dimension
+
+        Parameters
+        ----------
+        dims1 : int array
+            The dimension array from the first nifti file 
+        dims2 : int array
+            The dimension array from the second nifti file 
+
+        Returns
+        -------
+        ismatched : bool
+            True if the spatial dimensions of the two files match.
         """
         for i in range(1, 4):
             if dims1[i] != dims2[i]:
@@ -240,18 +300,24 @@ if nibabelexists:
                 return True
 
 
-    def checktimematch(dims1, dims2, numskip1, numskip2):
-        r"""
+    def checktimematch(dims1, dims2, numskip1=0, numskip2=0):
+        r"""Check the dimensions of two nifti files to determine if the cover the same number of timepoints
 
         Parameters
         ----------
-        dims1
-        dims2
-        numskip1
-        numskip2
+        dims1 : int array
+            The dimension array from the first nifti file 
+        dims2 : int array
+            The dimension array from the second nifti file 
+        numskip1 : int, optional
+            Number of timepoints skipped at the beginning of file 1
+        numskip2 : int, optional
+            Number of timepoints skipped at the beginning of file 2
 
         Returns
         -------
+        ismatched : bool
+            True if the time dimension of the two files match.
 
         """
         if (dims1[4] - numskip1) != (dims2[4] - numskip2):
@@ -287,14 +353,17 @@ def checkifparfile(filename):
 
 
 def readbidssidecar(inputfilename):
-    r"""
+    r"""Read key value pairs out of a BIDS sidecar file
 
     Parameters
     ----------
-    inputfilename
+    inputfilename : str
+        The name of the sidecar file (with extension)
 
     Returns
     -------
+    thedict : dict
+        The key value pairs from the json file
 
     """
     thefileroot, theext = os.path.splitext(inputfilename)
@@ -308,14 +377,25 @@ def readbidssidecar(inputfilename):
 
 
 def readbidstsv(inputfilename):
-    r"""
+    r"""Read time series out of a BIDS tsv file
 
     Parameters
     ----------
-    inputfilename
+    inputfilename : str
+        The root name of the tsv and accompanying json file (no extension)
 
     Returns
     -------
+        samplerate : float
+            Sample rate in Hz
+        starttime : float
+            Time of first point, in seconds
+        columns : str array
+            Names of the timecourses contained in the file
+        data : 2D numpy array
+            Timecourses from the file
+
+    NOTE:  If file does not exist or is not valid, all return values are None
 
     """
     thefileroot, theext = os.path.splitext(inputfilename)
