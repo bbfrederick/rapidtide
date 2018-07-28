@@ -40,6 +40,16 @@ except ImportError:
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 if nibabelexists:
     def readfromnifti(inputfile):
+        """
+
+        Parameters
+        ----------
+        inputfile
+
+        Returns
+        -------
+
+        """
         if os.path.isfile(inputfile):
             inputfilename = inputfile
         elif os.path.isfile(inputfile + '.nii.gz'):
@@ -59,15 +69,48 @@ if nibabelexists:
 
     # dims are the array dimensions along each axis
     def parseniftidims(thedims):
+        """
+
+        Parameters
+        ----------
+        thedims
+
+        Returns
+        -------
+
+        """
         return thedims[1], thedims[2], thedims[3], thedims[4]
 
 
     # sizes are the mapping between voxels and physical coordinates
     def parseniftisizes(thesizes):
+        """
+
+        Parameters
+        ----------
+        thesizes
+
+        Returns
+        -------
+
+        """
         return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
 
     def savetonifti(thearray, theheader, thepixdim, thename):
+        """
+
+        Parameters
+        ----------
+        thearray
+        theheader
+        thepixdim
+        thename
+
+        Returns
+        -------
+
+        """
         outputaffine = theheader.get_best_affine()
         qaffine, qcode = theheader.get_qform(coded=True)
         saffine, scode = theheader.get_sform(coded=True)
@@ -84,6 +127,16 @@ if nibabelexists:
 
 
     def checkifnifti(filename):
+        """
+
+        Parameters
+        ----------
+        filename
+
+        Returns
+        -------
+
+        """
         if filename.endswith(".nii") or filename.endswith(".nii.gz"):
             return True
         else:
@@ -91,6 +144,16 @@ if nibabelexists:
 
 
     def checkiftext(filename):
+        """
+
+        Parameters
+        ----------
+        filename
+
+        Returns
+        -------
+
+        """
         if filename.endswith(".txt"):
             return True
         else:
@@ -98,6 +161,16 @@ if nibabelexists:
 
 
     def getniftiroot(filename):
+        """
+
+        Parameters
+        ----------
+        filename
+
+        Returns
+        -------
+
+        """
         if filename.endswith(".nii"):
             return filename[:-4]
         elif filename.endswith(".nii.gz"):
@@ -107,6 +180,16 @@ if nibabelexists:
 
 
     def fmritimeinfo(niftifilename):
+        """
+
+        Parameters
+        ----------
+        niftifilename
+
+        Returns
+        -------
+
+        """
         nim = nib.load(niftifilename)
         hdr = nim.get_header()
         thedims = hdr['dim']
@@ -120,6 +203,17 @@ if nibabelexists:
 
 
     def checkspacematch(dims1, dims2):
+        """
+
+        Parameters
+        ----------
+        dims1
+        dims2
+
+        Returns
+        -------
+
+        """
         for i in range(1, 4):
             if dims1[i] != dims2[i]:
                 print("File spatial voxels do not match")
@@ -130,6 +224,19 @@ if nibabelexists:
 
 
     def checktimematch(dims1, dims2, numskip1, numskip2):
+        """
+
+        Parameters
+        ----------
+        dims1
+        dims2
+        numskip1
+        numskip2
+
+        Returns
+        -------
+
+        """
         if (dims1[4] - numskip1) != (dims2[4] - numskip2):
             print("File numbers of timepoints do not match")
             print("dimension ", 4, ":", dims1[4],
@@ -143,6 +250,16 @@ if nibabelexists:
 
 # --------------------------- non-NIFTI file I/O functions ------------------------------------------
 def checkifparfile(filename):
+    """
+
+    Parameters
+    ----------
+    filename
+
+    Returns
+    -------
+
+    """
     if filename.endswith(".par"):
         return True
     else:
@@ -150,6 +267,16 @@ def checkifparfile(filename):
 
 
 def readbidssidecar(inputfilename):
+    """
+
+    Parameters
+    ----------
+    inputfilename
+
+    Returns
+    -------
+
+    """
     thefileroot, theext = os.path.splitext(inputfilename)
     if os.path.exists(thefileroot + '.json'):
         with open(thefileroot + '.json', 'r') as json_data:
@@ -161,6 +288,16 @@ def readbidssidecar(inputfilename):
 
 
 def readbidstsv(inputfilename):
+    """
+
+    Parameters
+    ----------
+    inputfilename
+
+    Returns
+    -------
+
+    """
     thefileroot, theext = os.path.splitext(inputfilename)
     if os.path.exists(thefileroot + '.json') and os.path.exists(thefileroot + '.tsv.gz'):
         with open(thefileroot + '.json', 'r') as json_data:
@@ -188,6 +325,18 @@ def readbidstsv(inputfilename):
 
 
 def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None):
+    """
+
+    Parameters
+    ----------
+    inputfilename
+    columnnum
+    columnname
+
+    Returns
+    -------
+
+    """
     samplerate, starttime, columns, data = readbidstsv(inputfilename)
     if data is None:
         print('no valid datafile found')
@@ -210,6 +359,16 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None):
 
 
 def readvecs(inputfilename):
+    """
+
+    Parameters
+    ----------
+    inputfilename
+
+    Returns
+    -------
+
+    """
     thefile = open(inputfilename, 'r')
     lines = thefile.readlines()
     numvecs = len(lines[0].split())
@@ -225,6 +384,19 @@ def readvecs(inputfilename):
 
 
 def readvec(inputfilename):
+    r"""Read an array of floats in from a text file.
+
+    Parameters
+    ----------
+    inputfilename : str
+        The name of the text file
+
+    Returns
+    -------
+    inputdata : 1D numpy float array
+        The data from the file
+
+    """
     inputvec = np.zeros(MAXLINES, dtype='float64')
     numvals = 0
     with open(inputfilename, 'r') as thefile:
@@ -237,6 +409,16 @@ def readvec(inputfilename):
 
 
 def readlabels(inputfilename):
+    """
+
+    Parameters
+    ----------
+    inputfilename
+
+    Returns
+    -------
+
+    """
     inputvec = []
     with open(inputfilename, 'r') as thefile:
         lines = thefile.readlines()
@@ -246,6 +428,23 @@ def readlabels(inputfilename):
 
 
 def writedict(thedict, outputfile, lineend=''):
+    """
+    Write all the key value pairs from a dictionary to a text file.
+
+    Parameters
+    ----------
+    thedict : dict
+        A dictionary
+    outputfile : str
+        The name of the output file
+    lineend : { 'mac', 'win', 'linux' }, optional
+        Line ending style to use. Default is 'linux'.
+
+    Returns
+    -------
+
+
+    """
     if lineend == 'mac':
         thelineending = '\r'
         openmode = 'wb'
@@ -264,6 +463,20 @@ def writedict(thedict, outputfile, lineend=''):
 
 
 def writevec(thevec, outputfile, lineend=''):
+    r"""Write a vector out to a text file.
+    Parameters
+    ----------
+    thevec : 1D numpy or python array
+        The array to write.
+    outputfile : str
+        The name of the output file
+    lineend : { 'mac', 'win', 'linux' }, optional
+        Line ending style to use. Default is 'linux'.
+
+    Returns
+    -------
+
+    """
     if lineend == 'mac':
         thelineending = '\r'
         openmode = 'wb'
@@ -283,6 +496,21 @@ def writevec(thevec, outputfile, lineend=''):
 
 # rewritten to guarantee file closure, combines writenpvec and writenpvecs
 def writenpvecs(thevecs, outputfile, lineend=''):
+    r"""Write out a two dimensional numpy array to a text file
+
+    Parameters
+    ----------
+    thevecs: 1D or 2D numpy array
+        The data to write to the file
+    outputfile : str
+        The name of the output file
+    lineend : { 'mac', 'win', 'linux' }, optional
+        Line ending style to use. Default is 'linux'.
+
+    Returns
+    -------
+
+    """
     theshape = np.shape(thevecs)
     if lineend == 'mac':
         thelineending = '\r'
