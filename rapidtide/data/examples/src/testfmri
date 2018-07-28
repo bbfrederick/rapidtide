@@ -1,17 +1,18 @@
 #!/bin/csh -f
 rapidtide2 \
 	fmri.nii.gz \
-	../dst/dgsr_lfo \
+	../dst/dgsr_lfo_corrfilt_0p02 \
         --limitoutput \
         --lagminthresh=0.25 \
-        --refinepasses=3 \
-        --despecklepasses=4 \
         --tmask=tmask.txt \
         -s 100.0 \
         -L \
 	-r -20,20 \
 	-f 2 \
+        --refinepasses=3 \
+        --despecklepasses=4 \
         --accheck \
+        --corrfilt=0.02 \
         --nprocs=-1
 #rapidtide2x \
 	#fmri.nii.gz \
