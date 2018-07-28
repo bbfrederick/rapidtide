@@ -1,7 +1,7 @@
 #!/bin/csh -f
-rapidtide2 \
+rapidtide2x \
 	fmri.nii.gz \
-	../dst/dgsr_lfo_corrfilt_0p02 \
+	../dst/dgsr_maskcheck \
         --limitoutput \
         --lagminthresh=0.25 \
         --tmask=tmask.txt \
@@ -12,7 +12,9 @@ rapidtide2 \
         --refinepasses=3 \
         --despecklepasses=4 \
         --accheck \
-        --corrfilt=0.02 \
+        --includemask=fmri_mask.nii.gz \
+        --excludemask=fmri_emptymask.nii.gz \
+        --corrmask=fmri_mask.nii.gz \
         --nprocs=-1
 #rapidtide2x \
 	#fmri.nii.gz \
