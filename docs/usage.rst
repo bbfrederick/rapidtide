@@ -15,3 +15,14 @@ documentation: :py:func:`rapidtide.workflows.rapidtide_workflow`.
    :ref: rapidtide.workflows.rapidtide2._get_parser
    :prog: rapidtide2
    :func: _get_parser
+
+Run showxcorrx
+--------------
+This is the showxcorrx workflow.
+The learn more about this workflow, check out the workflow
+documentation: :py:func:`rapidtide.workflows.showxcorrx_workflow`.
+
+.. argparse::
+  :ref: rapidtide.workflows.showxcorrx._get_parser
+  :prog: showxcorrx
+  :func: _get_parser
