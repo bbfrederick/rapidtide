@@ -976,8 +976,7 @@ def getarbpassfunc(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
                         (1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)))
 
 
-class noncausalfilter
-
+class noncausalfilter:
     def __init__(self, filtertype='none', usebutterworth=False, butterworthorder=6, usetrapfftfilt=True,
                  correctfreq=True, padtime=30.0, debug=False):
         r"""A zero time delay filter for one dimensional signals, especially physiological ones.
