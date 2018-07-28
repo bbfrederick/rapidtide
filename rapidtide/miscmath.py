@@ -90,14 +90,17 @@ def disablenumba():
 
 # --------------------------- Spectral analysis functions ---------------------------------------
 def phase(mcv):
-    """
+    r"""Return phase of complex numbers.
 
     Parameters
     ----------
-    mcv
+    mcv : complex array
+        A complex vector
 
     Returns
     -------
+    phase : float array
+        The phase angle of the numbers, in radians
 
     """
     return np.arctan2(mcv.imag, mcv.real)
