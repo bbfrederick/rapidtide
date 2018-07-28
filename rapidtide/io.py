@@ -384,14 +384,17 @@ def readvecs(inputfilename):
 
 
 def readvec(inputfilename):
-    """
+    r"""Read an array of floats in from a text file.
 
     Parameters
     ----------
-    inputfilename
+    inputfilename : str
+        The name of the text file
 
     Returns
     -------
+    inputdata : 1D numpy float array
+        The data from the file
 
     """
     inputvec = np.zeros(MAXLINES, dtype='float64')
@@ -426,15 +429,20 @@ def readlabels(inputfilename):
 
 def writedict(thedict, outputfile, lineend=''):
     """
+    Write all the key value pairs from a dictionary to a text file.
 
     Parameters
     ----------
-    thedict
-    outputfile
-    lineend
+    thedict : dict
+        A dictionary
+    outputfile : str
+        The name of the output file
+    lineend : { 'mac', 'win', 'linux' }, optional
+        Line ending style to use. Default is 'linux'.
 
     Returns
     -------
+
 
     """
     if lineend == 'mac':
@@ -455,17 +463,15 @@ def writedict(thedict, outputfile, lineend=''):
 
 
 def writevec(thevec, outputfile, lineend=''):
-    """
-
+    r"""Write a vector out to a text file.
     Parameters
     ----------
-    thevec
-    outputfile
-
-    Optional Parameters
-    -------------------
-    lineend : { 'mac', 'win', 'linux' }
-        Type of line ending to use - default is 'linux'
+    thevec : 1D numpy or python array
+        The array to write.
+    outputfile : str
+        The name of the output file
+    lineend : { 'mac', 'win', 'linux' }, optional
+        Line ending style to use. Default is 'linux'.
 
     Returns
     -------
@@ -490,20 +496,16 @@ def writevec(thevec, outputfile, lineend=''):
 
 # rewritten to guarantee file closure, combines writenpvec and writenpvecs
 def writenpvecs(thevecs, outputfile, lineend=''):
-    """
-    Write out a two dimensional numpy array to a text file
+    r"""Write out a two dimensional numpy array to a text file
 
     Parameters
     ----------
     thevecs: 1D or 2D numpy array
         The data to write to the file
     outputfile : str
-        Output file name
-
-    Optional Parameters
-    -------------------
-    lineend : { 'mac', 'win', 'linux' }
-        Type of line ending to use - default is 'linux'
+        The name of the output file
+    lineend : { 'mac', 'win', 'linux' }, optional
+        Line ending style to use. Default is 'linux'.
 
     Returns
     -------
