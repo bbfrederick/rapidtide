@@ -43,9 +43,6 @@ API
     :no-members:
     :no-inherited-members:
 
-.. autoclass:: rapidtide.filter
-    :no-members:
-
 .. autosummary:: rapidtide.filter
     :toctree: generated/
     :template: function.rst
@@ -92,6 +89,31 @@ API
 
     rapidtide.fit.gaussresidualssk
     rapidtide.fit.gaussskresiduals
+    rapidtide.fit.gaussresiduals
+    rapidtide.fit.trapezoidresiduals
+    rapidtide.fit.risetimeresiduals
+    rapidtide.fit.gausssk_eval
+    rapidtide.fit.gauss_eval
+    rapidtide.fit.trapezoid_eval_loop
+    rapidtide.fit.risetime_eval_loop
+    rapidtide.fit.trapezoid_eval
+    rapidtide.fit.risetime_eval
+    rapidtide.fit.locpeak
+    rapidtide.fit.trendgen
+    rapidtide.fit.detrend
+    rapidtide.fit.findfirstabove
+    rapidtide.fit.findtrapezoidfunc
+    rapidtide.fit.findrisetimefunc
+    rapidtide.fit.findmaxlag_gauss
+    rapidtide.fit.maxindex_noedge
+    rapidtide.fit.findmaxlag_gauss_rev
+    rapidtide.fit.findmaxlag_quad
+    rapidtide.fit.gaussfitsk
+    rapidtide.fit.gaussfit
+    rapidtide.fit.mlregress
+    rapidtide.fit.parabfit
+    rapidtide.fit._datacheck_peakdetect
+    rapidtide.fit.peakdetect
 
 .. currentmodule:: rapidtide
 
@@ -108,8 +130,26 @@ API
     :toctree: generated/
     :template: function.rst
 
+    rapidtide.io.readfromnifti
+    rapidtide.io.parseniftidims
+    rapidtide.io.parseniftisizes
+    rapidtide.io.savetonifti
+    rapidtide.io.checkifnifti
+    rapidtide.io.checkiftext
+    rapidtide.io.getniftiroot
+    rapidtide.io.fmritimeinfo
+    rapidtide.io.checkspacematch
+    rapidtide.io.checktimematch
     rapidtide.io.checkifparfile
     rapidtide.io.readbidssidecar
+    rapidtide.io.readbidstsv
+    rapidtide.io.readcolfrombidstsv
+    rapidtide.io.readvecs
+    rapidtide.io.readvec
+    rapidtide.io.readlabels
+    rapidtide.io.writedict
+    rapidtide.io.writevec
+    rapidtide.io.writenpvecs
 
 .. currentmodule:: rapidtide
 
