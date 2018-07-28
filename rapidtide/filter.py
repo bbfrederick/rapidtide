@@ -684,6 +684,7 @@ def wiener_deconvolution(signal, kernel, lambd):
 
 def pspec(inputdata):
     r"""Calculate the power spectrum of an input signal
+
     Parameters
     ----------
     inputdata: 1D numpy array
