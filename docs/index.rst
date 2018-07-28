@@ -32,6 +32,7 @@ Contents
    introduction
    usage
    api
+   auto_examples/index
    contributing
    whats_new
 
