@@ -83,6 +83,7 @@ API
     rapidtide.filter.windowfunction
 
     :template: class.rst
+
     rapidtide.filter.noncausalfilter
 
 .. currentmodule:: rapidtide
@@ -218,6 +219,7 @@ API
     rapidtide.resample.timeshift
 
     :template: class.rst
+
     rapidtide.resample.fastresampler
 
 .. currentmodule:: rapidtide
