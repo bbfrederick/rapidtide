@@ -23,60 +23,10 @@
 #
 from __future__ import print_function, division
 
-import os.path as op
-
 import argparse
 import nibabel as nib
 
-
-def _is_valid_file(parser, arg):
-    """
-    Check if argument is existing file.
-    """
-    if not op.isfile(arg) and arg is not None:
-        parser.error('The file {0} does not exist!'.format(arg))
-
-    return arg
-
-
-def _invert_float(parser, arg):
-    """
-    Check if argument is float or auto.
-    """
-    if arg != 'auto':
-        try:
-            arg = float(arg)
-        except parser.error:
-            parser.error('Value {0} is not a float or "auto"'.format(arg))
-
-    if arg != 'auto':
-        arg = 1. / arg
-    return arg
-
-
-def _is_float(parser, arg):
-    """
-    Check if argument is float or auto.
-    """
-    if arg != 'auto':
-        try:
-            arg = float(arg)
-        except parser.error:
-            parser.error('Value {0} is not a float or "auto"'.format(arg))
-
-    return arg
-
-
-def _is_range(parser, arg):
-    """
-    Check if argument is min/max pair.
-    """
-    if arg is not None and len(arg) != 2:
-        parser.error('Argument must be min/max pair.')
-    elif arg is not None and arg[0] > arg[1]:
-        parser.error('Argument min must be lower than max.')
-
-    return arg
+from .parser_funcs import (is_valid_file, invert_float, is_float)
 
 
 def _get_parser():
@@ -84,9 +34,10 @@ def _get_parser():
     Argument parser for rapidtide
     """
     parser = argparse.ArgumentParser()
+
     # Required arguments
     parser.add_argument('in_file',
-                        type=lambda x: _is_valid_file(parser, x),
+                        type=lambda x: is_valid_file(parser, x),
                         help='The input data file (BOLD fmri file or NIRS)')
     parser.add_argument('prefix',
                         help='The root name for the output files')
@@ -118,7 +69,7 @@ def _get_parser():
                         dest='realtr',
                         action='store',
                         metavar='TSTEP',
-                        type=lambda x: _is_float(parser, x),
+                        type=lambda x: is_float(parser, x),
                         help=('Set the timestep of the data file to TSTEP. '
                               'This will override the TR in an '
                               'fMRI file. NOTE: if using data from a text '
@@ -129,7 +80,7 @@ def _get_parser():
                         dest='realtr',
                         action='store',
                         metavar='FREQ',
-                        type=lambda x: _invert_float(parser, x),
+                        type=lambda x: invert_float(parser, x),
                         help=('Set the timestep of the data file to 1/FREQ. '
                               'This will override the TR in an '
                               'fMRI file. NOTE: if using data from a text '
@@ -178,7 +129,7 @@ def _get_parser():
                           dest='arbvec',
                           action='store',
                           nargs='+',
-                          type=lambda x: _is_float(parser, x),
+                          type=lambda x: is_float(parser, x),
                           metavar=('LOWERFREQ UPPERFREQ',
                                    'LOWERSTOP UPPERSTOP'),
                           help=('Filter data and regressors from LOWERFREQ to '
@@ -275,7 +226,7 @@ def _get_parser():
     preproc.add_argument('--slicetimes',
                          dest='slicetimes',
                          action='store',
-                         type=lambda x: _is_valid_file(parser, x),
+                         type=lambda x: is_valid_file(parser, x),
                          metavar='FILE',
                          help=('Apply offset times from FILE to each slice in '
                                'the dataset'),
@@ -308,7 +259,7 @@ def _get_parser():
     corr.add_argument('--regressor',
                       dest='regressorfile',
                       action='store',
-                      type=lambda x: _is_valid_file(parser, x),
+                      type=lambda x: is_valid_file(parser, x),
                       metavar='FILE',
                       help=('Read probe regressor from file FILE (if none '
                             'specified, generate and use global regressor)'),
@@ -318,7 +269,7 @@ def _get_parser():
     reg_group.add_argument('--regressorfreq',
                            dest='inputfreq',
                            action='store',
-                           type=lambda x: _is_float(parser, x),
+                           type=lambda x: is_float(parser, x),
                            metavar='FREQ',
                            help=('Probe regressor in file has sample '
                                  'frequency FREQ (default is 1/tr) '
@@ -328,7 +279,7 @@ def _get_parser():
     reg_group.add_argument('--regressortstep',
                            dest='inputfreq',
                            action='store',
-                           type=lambda x: _invert_float(parser, x),
+                           type=lambda x: invert_float(parser, x),
                            metavar='TSTEP',
                            help=('Probe regressor in file has sample '
                                  'frequency FREQ (default is 1/tr) '
@@ -374,7 +325,7 @@ def _get_parser():
     mask_group.add_argument('--corrmask',
                             dest='corrmaskname',
                             action='store',
-                            type=lambda x: _is_valid_file(parser, x),
+                            type=lambda x: is_valid_file(parser, x),
                             metavar='FILE',
                             help=('Only do correlations in voxels in FILE '
                                   '(if set, corrmaskthresh is ignored).'),
@@ -483,7 +434,7 @@ def _get_parser():
     reg_ref.add_argument('--includemask',
                          dest='includemaskname',
                          action='store',
-                         type=lambda x: _is_valid_file(parser, x),
+                         type=lambda x: is_valid_file(parser, x),
                          metavar='FILE',
                          help=('Only use voxels in NAME for global regressor '
                                'generation and regressor refinement'),
@@ -491,7 +442,7 @@ def _get_parser():
     reg_ref.add_argument('--excludemask',
                          dest='excludemaskname',
                          action='store',
-                         type=lambda x: _is_valid_file(parser, x),
+                         type=lambda x: is_valid_file(parser, x),
                          metavar='FILE',
                          help=('Do not use voxels in NAME for global '
                                'regressor generation and regressor '
@@ -601,7 +552,7 @@ def _get_parser():
     output.add_argument('--glmsourcefile',
                         dest='glmsourcefile',
                         action='store',
-                        type=lambda x: _is_valid_file(parser, x),
+                        type=lambda x: is_valid_file(parser, x),
                         metavar='FILE',
                         help=('Regress delayed regressors out of FILE instead '
                               'of the initial fmri file used to estimate '
@@ -715,7 +666,7 @@ def _get_parser():
     experimental.add_argument('--tmask',
                               dest='tmaskname',
                               action='store',
-                              type=lambda x: _is_valid_file(parser, x),
+                              type=lambda x: is_valid_file(parser, x),
                               metavar='FILE',
                               help=('Only correlate during epochs specified '
                                     'in MASKFILE (NB: each line of FILE '
@@ -867,7 +818,7 @@ def _main(argv=None):
         args['ampthresh'] = 0.7
         args['lagmaskthresh'] = 0.1
 
-    rapidtide_workflow(**vars(args))
+    rapidtide_workflow(**args)
 
 
 if __name__ == '__main__':

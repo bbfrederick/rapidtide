@@ -52,6 +52,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.linkcode',
     'm2r',
+    'sphinx_gallery.gen_gallery',
 ]
 
 import sphinx
@@ -340,3 +341,14 @@ intersphinx_mapping = {
     'http://nipy.org/nibabel/': None,
     'http://pandas.pydata.org/pandas-docs/stable/': None,
 }
+
+sphinx_gallery_conf = {
+    # path to your examples scripts
+    'examples_dirs'     : '../examples',
+    # path where to save gallery generated examples
+    'gallery_dirs'      : 'auto_examples',
+    'backreferences_dir': '_build/gen_modules/backreferences',
+    # Modules for which function level galleries are created.  In
+    # this case sphinx_gallery and numpy in a tuple of strings.
+    'doc_module'        : ('rapidtide'),
+    }

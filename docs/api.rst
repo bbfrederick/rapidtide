@@ -13,6 +13,7 @@ API
     :template: function.rst
 
     rapidtide.workflows.rapidtide_workflow
+    rapidtide.workflows.showxcorrx_workflow
 
 .. currentmodule:: rapidtide
 
