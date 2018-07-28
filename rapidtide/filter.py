@@ -91,16 +91,16 @@ def padvec(inputdata, padlen=20):
         An array of any numerical type.
         :param inputdata:
 
+    Optional Parameters
+    -------------------
+    padlen : int
+        The number of points to remove from each end.  Default is 20.
+        :param padlen:
+
     Returns
     -------
     paddeddata : 1D array
         The input data, with padlen reflected points added to each end
-
-    Other Parameters
-    ----------------
-    padlen : int
-        The number of points to reflect around each endpoint.  Default is 20.
-        :param padlen:
 
     """
     if padlen > 0:
@@ -111,8 +111,7 @@ def padvec(inputdata, padlen=20):
 
 def unpadvec(inputdata, padlen=20):
     r"""Returns a input data with the end pads removed (see padvec);
-    padlen points of reflected data are removed from each end of the array
-    end effects when the data is then filtered.
+    padlen points of reflected data are removed from each end of the array.
 
     Parameters
     ----------
@@ -120,16 +119,17 @@ def unpadvec(inputdata, padlen=20):
         An array of any numerical type.
         :param inputdata:
 
+    Optional Parameters
+    -------------------
+    padlen : int
+        The number of points to remove from each end.  Default is 20.
+        :param padlen:
+
     Returns
     -------
     unpaddeddata : 1D array
         The input data, with the padding data removed
 
-    Other Parameters
-    ----------------
-    padlen : int
-        The number of points to remove from each end.  Default is 20.
-        :param padlen:
 
     """
     if padlen > 0:
