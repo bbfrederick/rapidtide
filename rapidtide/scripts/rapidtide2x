@@ -2280,7 +2280,7 @@ def main():
         else:
             nimincludemask, theincludemask, nimincludemask_hdr, theincludemaskdims, theincludmasksizes = tide_io.readfromnifti(
                 optiondict['includemaskname'])
-            if not tide_io.checkspacedimmatch(theincludemaskdims, thedims):
+            if not tide_io.checkspacematch(nimincludemask_hdr, nim_hdr):
                 print('Dimensions of include mask do not match the fmri data - exiting')
                 sys.exit()
         internalincludemask = theincludemask.reshape(numspatiallocs)
@@ -2297,7 +2297,7 @@ def main():
             nimexcludemask, theexcludemask, nimexcludemask_hdr, theexcludemaskdims, theexcludmasksizes = tide_io.readfromnifti(
                 optiondict['excludemaskname'])
             theexcludemask = 1.0 - theexcludemask
-            if not tide_io.checkspacedimmatch(theexcludemaskdims, thedims):
+            if not tide_io.checkspacematch(nimexcludemask_hdr, nim_hdr):
                 print('Dimensions of exclude mask do not match the fmri data - exiting')
                 sys.exit()
         internalexcludemask = theexcludemask.reshape(numspatiallocs)
@@ -2317,7 +2317,7 @@ def main():
         else:
             nimcorrmask, nimcorrmask, nimcorrmask_hdr, corrmaskdims, theincludmasksizes = tide_io.readfromnifti(
                 optiondict['corrmaskname'])
-            if not tide_io.checkspacedimmatch(corrmaskdims, thedims):
+            if not tide_io.checkspacematch(nimcorrmask_hdr, nim_hdr):
                 print('Dimensions of correlation mask do not match the fmri data - exiting')
                 sys.exit()
             corrmask = np.uint16(nimcorrmask.reshape((numspatiallocs)))
