@@ -92,38 +92,133 @@ def disablenumba():
 
 # --------------------------- Fitting functions -------------------------------------------------
 def gaussresidualssk(p, y, x):
+    """
+
+    Parameters
+    ----------
+    p
+    y
+    x
+
+    Returns
+    -------
+
+    """
     err = y - gausssk_eval(x, p)
     return err
 
 
 def gaussskresiduals(p, y, x):
+    """
+
+    Parameters
+    ----------
+    p
+    y
+    x
+
+    Returns
+    -------
+
+    """
     return y - gausssk_eval(x, p)
 
 
 @conditionaljit()
 def gaussresiduals(p, y, x):
+    """
+
+    Parameters
+    ----------
+    p
+    y
+    x
+
+    Returns
+    -------
+
+    """
     return y - p[0] * np.exp(-(x - p[1]) ** 2 / (2.0 * p[2] * p[2]))
 
 
 def trapezoidresiduals(p, y, x, toplength):
+    """
+
+    Parameters
+    ----------
+    p
+    y
+    x
+    toplength
+
+    Returns
+    -------
+
+    """
     return y - trapezoid_eval_loop(x, toplength, p)
 
 
 def risetimeresiduals(p, y, x):
+    """
+
+    Parameters
+    ----------
+    p
+    y
+    x
+
+    Returns
+    -------
+
+    """
     return y - risetime_eval_loop(x, p)
 
 
 def gausssk_eval(x, p):
+    """
+
+    Parameters
+    ----------
+    x
+    p
+
+    Returns
+    -------
+
+    """
     t = (x - p[1]) / p[2]
     return p[0] * sp.stats.norm.pdf(t) * sp.stats.norm.cdf(p[3] * t)
 
 
 @conditionaljit()
 def gauss_eval(x, p):
+    """
+
+    Parameters
+    ----------
+    x
+    p
+
+    Returns
+    -------
+
+    """
     return p[0] * np.exp(-(x - p[1]) ** 2 / (2.0 * p[2] * p[2]))
 
 
 def trapezoid_eval_loop(x, toplength, p):
+    """
+
+    Parameters
+    ----------
+    x
+    toplength
+    p
+
+    Returns
+    -------
+
+    """
     r = np.zeros(len(x), dtype='float64')
     for i in range(0, len(x)):
         r[i] = trapezoid_eval(x[i], toplength, p)
@@ -131,6 +226,17 @@ def trapezoid_eval_loop(x, toplength, p):
 
 
 def risetime_eval_loop(x, p):
+    """
+
+    Parameters
+    ----------
+    x
+    p
+
+    Returns
+    -------
+
+    """
     r = np.zeros(len(x), dtype='float64')
     for i in range(0, len(x)):
         r[i] = risetime_eval(x[i], p)
@@ -139,6 +245,18 @@ def risetime_eval_loop(x, p):
 
 @conditionaljit()
 def trapezoid_eval(x, toplength, p):
+    """
+
+    Parameters
+    ----------
+    x
+    toplength
+    p
+
+    Returns
+    -------
+
+    """
     corrx = x - p[0]
     if corrx < 0.0:
         return 0.0
@@ -150,6 +268,17 @@ def trapezoid_eval(x, toplength, p):
 
 @conditionaljit()
 def risetime_eval(x, p):
+    """
+
+    Parameters
+    ----------
+    x
+    p
+
+    Returns
+    -------
+
+    """
     corrx = x - p[0]
     if corrx < 0.0:
         return 0.0
@@ -158,6 +287,21 @@ def risetime_eval(x, p):
 
 
 def locpeak(data, samplerate, lastpeaktime, winsizeinsecs=5.0, thresh=0.75, hysteresissecs=0.4):
+    """
+
+    Parameters
+    ----------
+    data
+    samplerate
+    lastpeaktime
+    winsizeinsecs
+    thresh
+    hysteresissecs
+
+    Returns
+    -------
+
+    """
     # look at a limited time window
     winsizeinsecs = 5.0
     numpoints = int(winsizeinsecs * samplerate)
@@ -201,6 +345,18 @@ def locpeak(data, samplerate, lastpeaktime, winsizeinsecs=5.0, thresh=0.75, hyst
 # generate the polynomial fit timecourse from the coefficients
 @conditionaljit()
 def trendgen(thexvals, thefitcoffs, demean):
+    """
+
+    Parameters
+    ----------
+    thexvals
+    thefitcoffs
+    demean
+
+    Returns
+    -------
+
+    """
     theshape = thefitcoffs.shape
     order = theshape[0] - 1
     thepoly = thexvals
@@ -216,6 +372,18 @@ def trendgen(thexvals, thefitcoffs, demean):
 
 @conditionaljit()
 def detrend(inputdata, order=1, demean=False):
+    """
+
+    Parameters
+    ----------
+    inputdata
+    order
+    demean
+
+    Returns
+    -------
+
+    """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     thecoffs = np.polyfit(thetimepoints, inputdata, order)
     thefittc = trendgen(thetimepoints, thecoffs, demean)
@@ -224,6 +392,17 @@ def detrend(inputdata, order=1, demean=False):
 
 @conditionaljit()
 def findfirstabove(theyvals, thevalue):
+    """
+
+    Parameters
+    ----------
+    theyvals
+    thevalue
+
+    Returns
+    -------
+
+    """
     for i in range(0, len(theyvals)):
         if theyvals[i] >= thevalue:
             return i
@@ -233,6 +412,28 @@ def findfirstabove(theyvals, thevalue):
 def findtrapezoidfunc(thexvals, theyvals, thetoplength, initguess=None, debug=False,
                       minrise=0.0, maxrise=200.0, minfall=0.0, maxfall=200.0, minstart=-100.0, maxstart=100.0,
                       refine=False, displayplots=False):
+    """
+
+    Parameters
+    ----------
+    thexvals
+    theyvals
+    thetoplength
+    initguess
+    debug
+    minrise
+    maxrise
+    minfall
+    maxfall
+    minstart
+    maxstart
+    refine
+    displayplots
+
+    Returns
+    -------
+
+    """
     # guess at parameters: risestart, riseamplitude, risetime
     if initguess is None:
         initstart = 0.0
@@ -260,6 +461,25 @@ def findtrapezoidfunc(thexvals, theyvals, thetoplength, initguess=None, debug=Fa
 
 def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
                      minrise=0.0, maxrise=200.0, minstart=-100.0, maxstart=100.0, refine=False, displayplots=False):
+    """
+
+    Parameters
+    ----------
+    thexvals
+    theyvals
+    initguess
+    debug
+    minrise
+    maxrise
+    minstart
+    maxstart
+    refine
+    displayplots
+
+    Returns
+    -------
+
+    """
     # guess at parameters: risestart, riseamplitude, risetime
     if initguess is None:
         initstart = 0.0
@@ -288,6 +508,34 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                      edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                      debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
                      searchfrac=0.5, fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
+    """
+
+    Parameters
+    ----------
+    thexcorr_x
+    thexcorr_y
+    lagmin
+    lagmax
+    widthlimit
+    edgebufferfrac
+    threshval
+    uthreshval
+    debug
+    tweaklims
+    zerooutbadfit
+    refine
+    maxguess
+    useguess
+    searchfrac
+    fastgauss
+    lagmod
+    enforcethresh
+    displayplots
+
+    Returns
+    -------
+
+    """
     # set initial parameters
     # widthlimit is in seconds
     # maxsigma is in Hz
@@ -437,6 +685,18 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
 
 @conditionaljit2()
 def maxindex_noedge(thexcorr_x, thexcorr_y, bipolar=False):
+    """
+
+    Parameters
+    ----------
+    thexcorr_x
+    thexcorr_y
+    bipolar
+
+    Returns
+    -------
+
+    """
     lowerlim = 0
     upperlim = len(thexcorr_x) - 1
     done = False
@@ -471,6 +731,37 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                          edgebufferfrac=0.0, threshval=0.0, uthreshval=1.0,
                          debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
                          searchfrac=0.5, fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
+    """
+
+    Parameters
+    ----------
+    thexcorr_x
+    thexcorr_y
+    lagmin
+    lagmax
+    widthlimit
+    absmaxsigma
+    hardlimit
+    bipolar
+    edgebufferfrac
+    threshval
+    uthreshval
+    debug
+    tweaklims
+    zerooutbadfit
+    refine
+    maxguess
+    useguess
+    searchfrac
+    fastgauss
+    lagmod
+    enforcethresh
+    displayplots
+
+    Returns
+    -------
+
+    """
     # set initial parameters 
     # widthlimit is in seconds
     # maxsigma is in Hz
@@ -654,6 +945,33 @@ def findmaxlag_quad(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                     edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
                     debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
                     fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
+    """
+
+    Parameters
+    ----------
+    thexcorr_x
+    thexcorr_y
+    lagmin
+    lagmax
+    widthlimit
+    edgebufferfrac
+    threshval
+    uthreshval
+    debug
+    tweaklims
+    zerooutbadfit
+    refine
+    maxguess
+    useguess
+    fastgauss
+    lagmod
+    enforcethresh
+    displayplots
+
+    Returns
+    -------
+
+    """
     # set initial parameters
     # widthlimit is in seconds
     # maxsigma is in Hz
@@ -759,18 +1077,59 @@ def findmaxlag_quad(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
 
 
 def gaussfitsk(height, loc, width, skewness, xvals, yvals):
+    """
+
+    Parameters
+    ----------
+    height
+    loc
+    width
+    skewness
+    xvals
+    yvals
+
+    Returns
+    -------
+
+    """
     plsq, dummy = sp.optimize.leastsq(gaussresidualssk, np.array([height, loc, width, skewness]),
                                       args=(yvals, xvals), maxfev=5000)
     return plsq
 
 
 def gaussfit(height, loc, width, xvals, yvals):
+    """
+
+    Parameters
+    ----------
+    height
+    loc
+    width
+    xvals
+    yvals
+
+    Returns
+    -------
+
+    """
     plsq, dummy = sp.optimize.leastsq(gaussresiduals, np.array([height, loc, width]), args=(yvals, xvals), maxfev=5000)
     return plsq[0], plsq[1], plsq[2]
 
 
 ### I don't remember where this came from.  Need to check license
 def mlregress(x, y, intercept=True):
+    """
+
+    Parameters
+    ----------
+    x
+    y
+    intercept
+
+    Returns
+    -------
+
+    """
     """Return the coefficients from a multiple linear regression, along with R, the coefficient of determination.
 
     x: The independent variables (pxn or nxp).
@@ -823,6 +1182,19 @@ def mlregress(x, y, intercept=True):
 # http://www.wtfpl.net/ for more details.
 
 def parabfit(x_axis, y_axis, peakloc, peaksize):
+    """
+
+    Parameters
+    ----------
+    x_axis
+    y_axis
+    peakloc
+    peaksize
+
+    Returns
+    -------
+
+    """
     func = lambda x, a, tau, c: a * ((x - tau) ** 2) + c
     fitted_peaks = []
     distance = abs(x_axis[raw_peaks[1][0]] - x_axis[raw_peaks[0][0]]) / 4
@@ -846,6 +1218,17 @@ def parabfit(x_axis, y_axis, peakloc, peaksize):
 
 
 def _datacheck_peakdetect(x_axis, y_axis):
+    """
+
+    Parameters
+    ----------
+    x_axis
+    y_axis
+
+    Returns
+    -------
+
+    """
     if x_axis is None:
         x_axis = range(len(y_axis))
 
