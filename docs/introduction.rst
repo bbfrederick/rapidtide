@@ -33,7 +33,7 @@ any information about" - maybe EtCO2 variation, or sympathetic nervous
 system activity - so not really random.
 
 Yes, but correlation analysis is easy - why use this package?
-=======================
+-------------------------------------------------------------
 The simple answer is "correlation analysis is easy, but using a prewritten
 package that handles file I/O, filtering, resampling, windowing, and the
 rest for you is even easier".  A slightly more complex answer is that
