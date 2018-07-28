@@ -976,54 +976,54 @@ def getarbpassfunc(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
                         (1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)))
 
 
-class noncausalfilter:
+class noncausalfilter
+    r"""A zero time delay filter for one dimensional signals, especially physiological ones.
+
+    Parameters
+    ----------
+    filtertype : {'none' 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'}, optional
+        The type of filter.
+    usebutterworth: boolean, optional
+        Use Butterworth filter.  Default is False.
+    butterworthorder: int, optional
+        Butterworth filter order.  Default is 6.
+    usetrapfftfilt: boolean, optional
+        Use trapezoidal pass band for FFT filter.  Default is True.
+    correctfreq: boolean, optional
+        Fix pass frequencies that are impossible.  Default is True.
+    padtime: float, optional
+        Amount of time to end pad to reduce edge effects.  Default is 30.0 seconds
+    debug: boolean, optional
+        Enable extended debugging messages.  Default is False.
+
+    Methods
+    -------
+    settype(thetype)
+        Set the filter type. Options are 'none' (default), 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop',
+        'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'.
+    gettype()
+        Return the current filter type.
+    getfreqlimits()
+        Return the current frequency limits.
+    setbutter(useit, order=self.butterworthorder)
+        Set options for Butterworth filter (set useit to True to make Butterworth the active filter type, set order
+        with the order parameter)
+    setpadtime(padtime)
+        Set the end pad time in seconds.
+    setdebug(debug)
+        Turn debugging on and off with the debug flag.
+    getpadtime()
+        Return the current end pad time.
+    settrapfft(useit)
+        Set to use trapezoidal FFT filter.  If false use brickwall.
+    setarb(lowerstop, lowerpass, upperpass, upperstop)
+        Set the frequency parameters of the 'arb' and 'arb_stop' filter.
+    apply(Fs, data)
+        Apply the filter to a dataset.
+    """
+
     def __init__(self, filtertype='none', usebutterworth=False, butterworthorder=6, usetrapfftfilt=True,
                  correctfreq=True, padtime=30.0, debug=False):
-        r"""A zero time delay filter for one dimensional signals, especially physiological ones.
-
-        Parameters
-        ----------
-        filtertype : {'none' 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'}, optional
-            The type of filter.  Options are 'none' (default), 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop',
-            'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'.
-        usebutterworth: boolean, optional
-            Use Butterworth filter.  Default is False.
-        butterworthorder: int, optional
-            Butterworth filter order.  Default is 6.
-        usetrapfftfilt: boolean, optional
-            Use trapezoidal pass band for FFT filter.  Default is True.
-        correctfreq: boolean, optional
-            Fix pass frequencies that are impossible.  Default is True.
-        padtime: float, optional
-            Amount of time to end pad to reduce edge effects.  Default is 30.0 seconds
-        debug: boolean, optional
-            Enable extended debugging messages.  Default is False.
-
-        Methods
-        -------
-        settype(thetype)
-            Set the filter type. Options are 'none' (default), 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop',
-            'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'.
-        gettype()
-            Return the current filter type.
-        getfreqlimits()
-            Return the current frequency limits.
-        setbutter(useit, order=self.butterworthorder)
-            Set options for Butterworth filter (set useit to True to make Butterworth the active filter type, set order
-                with the order parameter)
-        setpadtime(padtime)
-            Set the end pad time in seconds.
-        setdebug(debug)
-            Turn debugging on and off with the debug flag.
-        getpadtime()
-            Return the current end pad time.
-        settrapfft(useit)
-            Set to use trapezoidal FFT filter.  If false use brickwall.
-        setarb(lowerstop, lowerpass, upperpass, upperstop)
-            Set the frequency parameters of the 'arb' and 'arb_stop' filter.
-        apply(Fs, data)
-            Apply the filter to a dataset.
-        """
         self.filtertype = filtertype
         self.species = 'human'
         self.arb_lowerpass = 0.05
