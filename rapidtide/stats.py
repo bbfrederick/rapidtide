@@ -96,12 +96,38 @@ def disablenumba():
 
 # --------------------------- probability functions -------------------------------------------------
 def printthresholds(pcts, thepercentiles, labeltext):
+    """
+
+    Parameters
+    ----------
+    pcts
+    thepercentiles
+    labeltext
+
+    Returns
+    -------
+
+    """
     print(labeltext)
     for i in range(0, len(pcts)):
         print('\tp <', "{:.3f}".format(1.0 - thepercentiles[i]), ': ', pcts[i])
 
 
 def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
+    """
+
+    Parameters
+    ----------
+    thehist
+    histlen
+    thedata
+    displayplots
+    nozero
+
+    Returns
+    -------
+
+    """
     thestore = np.zeros((2, histlen), dtype='float64')
     thestore[0, :] = thehist[1][:-1]
     thestore[1, :] = thehist[0][:] / (1.0 * len(thedata))
@@ -140,12 +166,40 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
 
 
 def getjohnsonppf(percentile, params, zeroterm):
+    """
+
+    Parameters
+    ----------
+    percentile
+    params
+    zeroterm
+
+    Returns
+    -------
+
+    """
     johnsonfunc = johnsonsb(params[0], params[1], params[2], params[3])
     corrfac = 1.0 - zeroterm
 
 
 def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False, twotail=False, nozero=False,
                             dosighistfit=True):
+    """
+
+    Parameters
+    ----------
+    vallist
+    histlen
+    thepercentiles
+    displayplots
+    twotail
+    nozero
+    dosighistfit
+
+    Returns
+    -------
+
+    """
     thehistogram = makehistogram(np.abs(vallist), histlen, therange=[0.0, 1.0])
     if dosighistfit:
         histfit = fitjsbpdf(thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero)
@@ -161,12 +215,38 @@ def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False
 
 
 def rfromp(fitfile, thepercentiles, numbins=1000):
+    """
+
+    Parameters
+    ----------
+    fitfile
+    thepercentiles
+    numbins
+
+    Returns
+    -------
+
+    """
     thefit = np.array(tide_io.readvecs(fitfile)[0]).astype('float64')
     print('thefit = ', thefit)
     return getfracvalsfromfit(thefit, thepercentiles, numbins=1000, displayplots=True)
 
 
 def tfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
+    """
+
+    Parameters
+    ----------
+    r
+    nsamps
+    dfcorrfac
+    oversampfactor
+    returnp
+
+    Returns
+    -------
+
+    """
     if r >= 1.0:
         tval = float("inf")
         pval = 0.0
@@ -181,6 +261,20 @@ def tfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
 
 
 def zfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
+    """
+
+    Parameters
+    ----------
+    r
+    nsamps
+    dfcorrfac
+    oversampfactor
+    returnp
+
+    Returns
+    -------
+
+    """
     if r >= 1.0:
         zval = float("inf")
         pval = 0.0
@@ -195,11 +289,34 @@ def zfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
 
 
 def fisher(r):
+    """
+
+    Parameters
+    ----------
+    r
+
+    Returns
+    -------
+
+    """
     return 0.5 * np.log((1 + r) / (1 - r))
 
 
 # --------------------------- histogram functions -------------------------------------------------
 def gethistprops(indata, histlen, refine=False, therange=None):
+    """
+
+    Parameters
+    ----------
+    indata
+    histlen
+    refine
+    therange
+
+    Returns
+    -------
+
+    """
     thestore = np.zeros((2, histlen), dtype='float64')
     if therange is None:
         thehist = np.histogram(indata, histlen)
@@ -221,6 +338,18 @@ def gethistprops(indata, histlen, refine=False, therange=None):
 
 
 def makehistogram(indata, histlen, therange=None):
+    """
+
+    Parameters
+    ----------
+    indata
+    histlen
+    therange
+
+    Returns
+    -------
+
+    """
     if therange is None:
         thehist = np.histogram(indata, histlen)
     else:
@@ -231,6 +360,23 @@ def makehistogram(indata, histlen, therange=None):
 def makeandsavehistogram(indata, histlen, endtrim, outname,
                          displaytitle='histogram', displayplots=False,
                          refine=False, therange=None):
+    """
+
+    Parameters
+    ----------
+    indata
+    histlen
+    endtrim
+    outname
+    displaytitle
+    displayplots
+    refine
+    therange
+
+    Returns
+    -------
+
+    """
     thestore = np.zeros((2, histlen), dtype='float64')
     thehist = makehistogram(indata, histlen, therange)
     thestore[0, :] = thehist[1][-histlen:]
@@ -256,6 +402,18 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
 
 
 def symmetrize(a, antisymmetric=False, zerodiagonal=False):
+    """
+
+    Parameters
+    ----------
+    a
+    antisymmetric
+    zerodiagonal
+
+    Returns
+    -------
+
+    """
     if antisymmetric:
         intermediate = (a - a.T) / 2.0
     else:
@@ -268,6 +426,18 @@ def symmetrize(a, antisymmetric=False, zerodiagonal=False):
 
 # Find the image intensity value which thefrac of the non-zero voxels in the image exceed
 def getfracval(datamat, thefrac, numbins=200):
+    """
+
+    Parameters
+    ----------
+    datamat
+    thefrac
+    numbins
+
+    Returns
+    -------
+
+    """
     themax = datamat.max()
     themin = datamat.min()
     (meanhist, bins) = np.histogram(datamat, bins=numbins, range=(themin, themax))
@@ -280,6 +450,19 @@ def getfracval(datamat, thefrac, numbins=200):
 
 
 def makepmask(rvals, pval, sighistfit, onesided=True):
+    """
+
+    Parameters
+    ----------
+    rvals
+    pval
+    sighistfit
+    onesided
+
+    Returns
+    -------
+
+    """
     if onesided:
         return np.where(rvals > getfracvalsfromfit(sighistfit, 1.0 - pval), np.int16(1), np.int16(0))
     else:
@@ -287,6 +470,20 @@ def makepmask(rvals, pval, sighistfit, onesided=True):
 
 
 def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False):
+    """
+
+    Parameters
+    ----------
+    datamat
+    thefracs
+    numbins
+    displayplots
+    nozero
+
+    Returns
+    -------
+
+    """
     themax = datamat.max()
     themin = datamat.min()
     (meanhist, bins) = np.histogram(datamat, bins=numbins, range=(themin, themax))
@@ -311,6 +508,19 @@ def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False
 
 
 def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
+    """
+
+    Parameters
+    ----------
+    histfit
+    thefracs
+    numbins
+    displayplots
+
+    Returns
+    -------
+
+    """
     themax = 1.0
     themin = 0.0
     bins = np.arange(themin, themax, (themax - themin) / numbins)
@@ -342,6 +552,19 @@ def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
 
 
 def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
+    """
+
+    Parameters
+    ----------
+    histfit
+    thefracs
+    numbins
+    displayplots
+
+    Returns
+    -------
+
+    """
     # print('entering getfracvalsfromfit: histfit=',histfit, ' thefracs=', thefracs)
     thedist = johnsonsb(histfit[0], histfit[1], histfit[2], histfit[3])
     # print('froze the distribution')
@@ -360,6 +583,18 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
 
 
 def makemask(image, threshpct=25.0, verbose=False):
+    """
+
+    Parameters
+    ----------
+    image
+    threshpct
+    verbose
+
+    Returns
+    -------
+
+    """
     fracval = getfracval(image, 0.98)
     threshval = (threshpct / 100.0) * fracval
     if verbose:
