@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#/usr/bin/env python
 #
 #   Copyright 2016 Blaise Frederick
 #
@@ -108,14 +108,18 @@ if nibabelexists:
 
 
     def savetonifti(thearray, theheader, thepixdim, thename):
-        r"""
+        r""" Save a data array out to a nifti file
 
         Parameters
         ----------
-        thearray
-        theheader
-        thepixdim
-        thename
+        thearray : array-like
+            The data array to save.
+        theheader : nifti header
+            A valid nifti header
+        thepixdim : array
+            The pixel dimensions.
+        thename : str
+            The name of the nifti file to save
 
         Returns
         -------
@@ -137,14 +141,17 @@ if nibabelexists:
 
 
     def checkifnifti(filename):
-        r"""
+        r"""Check to see if a file name is a valid nifti name.
 
         Parameters
         ----------
-        filename
+        filename : str
+            The file name
 
         Returns
         -------
+        isnifti : bool
+            True if name is a valid nifti file name.
 
         """
         if filename.endswith(".nii") or filename.endswith(".nii.gz"):
@@ -260,14 +267,17 @@ if nibabelexists:
 
 # --------------------------- non-NIFTI file I/O functions ------------------------------------------
 def checkifparfile(filename):
-    r"""
+    r"""Checks to see if a file is an FSL style motion parameter file
 
     Parameters
     ----------
-    filename
+    filename : str
+        The name of the file in question.
 
     Returns
     -------
+    isparfile : bool
+        True if filename ends in '.par', False otherwise.
 
     """
     if filename.endswith(".par"):

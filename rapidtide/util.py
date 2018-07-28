@@ -132,6 +132,17 @@ def disablenumba():
 
 # --------------------------- Utility functions -------------------------------------------------
 def logmem(msg, file=None):
+    """
+
+    Parameters
+    ----------
+    msg
+    file
+
+    Returns
+    -------
+
+    """
     global lastmaxrss_parent, lastmaxrss_child
     if msg is None:
         lastmaxrss_parent = 0
@@ -184,6 +195,16 @@ def logmem(msg, file=None):
 
 
 def findexecutable(command):
+    """
+
+    Parameters
+    ----------
+    command
+
+    Returns
+    -------
+
+    """
     import shutil
 
     theversion = sys.version_info
@@ -197,6 +218,16 @@ def findexecutable(command):
 
 
 def isexecutable(command):
+    """
+
+    Parameters
+    ----------
+    command
+
+    Returns
+    -------
+
+    """
     import shutil
 
     theversion = sys.version_info
@@ -213,10 +244,33 @@ def isexecutable(command):
 
 
 def savecommandline(theargs, thename):
+    """
+
+    Parameters
+    ----------
+    theargs
+    thename
+
+    Returns
+    -------
+
+    """
     tide_io.writevec([' '.join(theargs)], thename + '_commandline.txt')
 
 
 def valtoindex(thearray, thevalue, toleft=True):
+    """
+
+    Parameters
+    ----------
+    thearray
+    thevalue
+    toleft
+
+    Returns
+    -------
+
+    """
     if toleft:
         return bisect.bisect_left(thearray, thevalue)
     else:
@@ -224,6 +278,19 @@ def valtoindex(thearray, thevalue, toleft=True):
 
 
 def progressbar(thisval, end_val, label='Percent', barsize=60):
+    """
+
+    Parameters
+    ----------
+    thisval
+    end_val
+    label
+    barsize
+
+    Returns
+    -------
+
+    """
     percent = float(thisval) / end_val
     hashes = '#' * int(round(percent * barsize))
     spaces = ' ' * (barsize - len(hashes))
@@ -232,6 +299,18 @@ def progressbar(thisval, end_val, label='Percent', barsize=60):
 
 
 def makelaglist(lagstart, lagend, lagstep):
+    """
+
+    Parameters
+    ----------
+    lagstart
+    lagend
+    lagstep
+
+    Returns
+    -------
+
+    """
     numsteps = int((lagend - lagstart) // lagstep + 1)
     lagend = lagstart + lagstep * (numsteps - 1)
     print("creating list of ", numsteps, " lag steps (", lagstart, " to ", lagend, " in steps of ", lagstep, ")")
@@ -242,6 +321,12 @@ def makelaglist(lagstart, lagend, lagstep):
 
 # ------------------------------------------ Version function ----------------------------------
 def version():
+    """
+
+    Returns
+    -------
+
+    """
     thispath, thisfile = os.path.split(__file__)
     print(thispath)
     fulltag = 'UNKNOWN', 'UNKNOWN'
@@ -258,10 +343,32 @@ def version():
 
 # --------------------------- timing functions -------------------------------------------------
 def timefmt(thenumber):
+    """
+
+    Parameters
+    ----------
+    thenumber
+
+    Returns
+    -------
+
+    """
     return "{:10.2f}".format(thenumber)
 
 
 def proctiminginfo(thetimings, outputfile='', extraheader=None):
+    """
+
+    Parameters
+    ----------
+    thetimings
+    outputfile
+    extraheader
+
+    Returns
+    -------
+
+    """
     theinfolist = []
     start = thetimings[0]
     starttime = float(start[1])
