@@ -90,10 +90,7 @@ def padvec(inputdata, padlen=20):
     inputdata : 1D array
         An array of any numerical type.
         :param inputdata:
-
-    Optional Parameters
-    -------------------
-    padlen : int
+    padlen : int, optional
         The number of points to remove from each end.  Default is 20.
         :param padlen:
 
@@ -118,10 +115,7 @@ def unpadvec(inputdata, padlen=20):
     inputdata : 1D array
         An array of any numerical type.
         :param inputdata:
-
-    Optional Parameters
-    -------------------
-    padlen : int
+    padlen : int, optional
         The number of points to remove from each end.  Default is 20.
         :param padlen:
 
@@ -182,33 +176,26 @@ def dolpfiltfilt(Fs, upperpass, inputdata, order, padlen=20, debug=False):
     Fs : float
         Sample rate in Hz
         :param Fs:
-
     upperpass : float
         Upper end of passband in Hz
         :param upperpass:
-
     inputdata : 1D numpy array
         Input data to be filtered
         :param inputdata:
-
     order : int
         Order of Butterworth filter.
         :param order:
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
 
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
 
     """
     if upperpass > Fs / 2.0:
@@ -241,21 +228,18 @@ def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, debug=False):
         Order of Butterworth filter.
         :param order:
 
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     if lowerpass < 0.0:
         lowerpass = 0.0
@@ -291,21 +275,18 @@ def dobpfiltfilt(Fs, lowerpass, upperpass, inputdata, order, padlen=20, debug=Fa
         Order of Butterworth filter.
         :param order:
 
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     if upperpass > Fs / 2.0:
         upperpass = Fs / 2.0
@@ -360,17 +341,14 @@ def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
         Input data to be filtered
         :param inputdata:
 
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     transferfunc : 1D float array
         The transfer function
-
-    Other Parameters
-    ----------------
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     transferfunc = np.ones(np.shape(inputdata), dtype=np.float64)
     cutoffbin = int((upperpass / Fs) * np.shape(transferfunc)[0])
@@ -398,21 +376,18 @@ def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, debug=False):
         Input data to be filtered
         :param inputdata:
 
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     padinputdata = padvec(inputdata, padlen=padlen)
     inputdata_trans = fftpack.fft(padinputdata)
@@ -439,21 +414,18 @@ def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, debug=False):
         Input data to be filtered
         :param inputdata:
 
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     padinputdata = padvec(inputdata, padlen=padlen)
     inputdata_trans = fftpack.fft(padinputdata)
@@ -484,21 +456,18 @@ def dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=20, debug=False):
         Input data to be filtered
         :param inputdata:
 
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     padinputdata = padvec(inputdata, padlen=padlen)
     inputdata_trans = fftpack.fft(padinputdata)
@@ -530,17 +499,14 @@ def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
         Input data to be filtered
         :param inputdata:
 
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     transferfunc : 1D float array
         The transfer function
-
-    Other Parameters
-    ----------------
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     transferfunc = np.ones(np.shape(inputdata), dtype='float64')
     passbin = int((upperpass / Fs) * np.shape(transferfunc)[0])
@@ -581,21 +547,18 @@ def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, debug=False)
         Input data to be filtered
         :param inputdata:
 
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     padinputdata = padvec(inputdata, padlen=padlen)
     inputdata_trans = fftpack.fft(padinputdata)
@@ -626,21 +589,18 @@ def dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=20, debug=False)
         Input data to be filtered
         :param inputdata:
 
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     padinputdata = padvec(inputdata, padlen=padlen)
     inputdata_trans = fftpack.fft(padinputdata)
@@ -680,21 +640,18 @@ def dobptrapfftfilt(Fs, lowerstop, lowerpass, upperpass, upperstop, inputdata, p
         Input data to be filtered
         :param inputdata:
 
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     padinputdata = padvec(inputdata, padlen=padlen)
     inputdata_trans = fftpack.fft(padinputdata)
@@ -752,6 +709,14 @@ def spectrum(inputdata, Fs=1.0, mode='power'):
         Input data
         :param inputdata:
 
+    Fs : float, optional
+        Sample rate in Hz.  Defaults to 1.0
+        :param Fs:
+
+    mode : {'real', 'imag', 'mag', 'phase', 'power'}, optional
+        The type of spectrum to return.  Default is 'power'.
+        :param mode:
+
     Returns
     -------
     specaxis : 1D float array
@@ -798,12 +763,9 @@ def csdfilter(obsdata, commondata, padlen=20, debug=False):
         Input data
     commondata: 1D numpy array
         Shared data
-
-    Optional parameters
-    -------------------
-    padlen: int
+    padlen: int, optional
         Number of reflected points to add on each end of the input data.  Default is 20.
-    debug: bool
+    debug: bool, optional
         Set to True for additiona information on function internals.  Default is False.
 
     Returns
@@ -854,33 +816,30 @@ def arb_pass(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
         Lower end of upper stopband in Hz
         :param upperstop:
 
+    usebutterworth : boolean, optional
+        Whether to use a Butterworth filter characteristic.  Default is False.
+        :param usebutterworth:
+
+    butterorder : int, optional
+        Order of Butterworth filter.  Default is 6.
+        :param butterorder:
+
+    usetrapfftfilt : boolean, optional
+        Whether to use trapezoidal transition band for FFT filter.  Default is True.
+        :param usetrapfftfilt:
+
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    usebutterworth : boolean
-        Whether to use a Butterworth filter characteristic.  Default is False.
-        :param usebutterworth:
-
-    butterorder : int
-        Order of Butterworth filter.  Default is 6.
-        :param butterorder:
-
-    usetrapfftfilt : boolean
-        Whether to use trapezoidal transition band for FFT filter.  Default is True.
-        :param usetrapfftfilt:
-
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     # check filter limits to see if we should do a lowpass, bandpass, or highpass
     if lowerpass <= 0.0:
@@ -951,32 +910,30 @@ def getarbpassfunc(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
         Lower end of upper stopband in Hz
         :param upperstop:
 
+    usebutterworth : boolean, optional
+        Whether to use a Butterworth filter characteristic.  Default is False.
+        :param usebutterworth:
+
+    butterorder : int, optional
+        Order of Butterworth filter.  Default is 6.
+        :param butterorder:
+
+    usetrapfftfilt : boolean, optional
+        Whether to use trapezoidal transition band for FFT filter.  Default is True.
+        :param usetrapfftfilt:
+
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     filtereddata : 1D float array
         The filtered data
-
-    Other Parameters
-    ----------------
-    usebutterworth : boolean
-        Whether to use a Butterworth filter characteristic.  Default is False.
-        :param usebutterworth:
-
-    butterorder : int
-        Order of Butterworth filter.  Default is 6.
-        :param butterorder:
-
-    usetrapfftfilt : boolean
-        Whether to use trapezoidal transition band for FFT filter.  Default is True.
-        :param usetrapfftfilt:
-
-    padlen : int
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
 
     """
     padinputdata = padvec(inputdata, padlen=padlen)
@@ -1091,6 +1048,18 @@ class noncausalfilter:
 
     def __init__(self, filtertype='none', usebutterworth=False, butterworthorder=6, usetrapfftfilt=True,
                  correctfreq=True, padtime=30.0, debug=False):
+        r"""A zero time delay filter for one dimensional signals, especially physiological ones.
+
+        Parameters
+        ----------
+        filtertype
+        usebutterworth
+        butterworthorder
+        usetrapfftfilt
+        correctfreq
+        padtime
+        debug
+        """
         self.filtertype = filtertype
         self.species = 'human'
         self.arb_lowerpass = 0.05
@@ -1312,17 +1281,14 @@ def blackmanharris(length, debug=False):
         The length of the window function
         :param length:
 
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     windowfunc : 1D float array
         The window function
-
-    Other Parameters
-    ----------------
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     # return a0 - a1 * np.cos(argvec) + a2 * np.cos(2.0 * argvec) - a3 * np.cos(3.0 * argvec)
     try:
@@ -1352,17 +1318,14 @@ def hann(length, debug=False):
         The length of the window function
         :param length:
 
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     windowfunc : 1D float array
         The window function
-
-    Other Parameters
-    ----------------
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     # return 0.5 * (1.0 - np.cos(np.arange(0.0, 1.0, 1.0 / float(length)) * 2.0 * np.pi))
     try:
@@ -1388,17 +1351,14 @@ def hamming(length, debug=False):
         The length of the window function
         :param length:
 
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     windowfunc : 1D float array
         The window function
-
-    Other Parameters
-    ----------------
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     try:
         return hammingwindows[str(length)]
@@ -1420,21 +1380,18 @@ def windowfunction(length, type='hamming', debug=False):
         The length of the window function
          :param length:
 
+    type : {'hamming', 'hann', 'blackmanharris'}, optional
+        Window type.  Choices are 'hamming' (default), 'hann', and 'blackmanharris'.
+       :param type:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
     Returns
     -------
     windowfunc : 1D float array
         The window function
-
-    Other Parameters
-    ----------------
-    type : {'hamming', 'hann', 'blackmanharris'}
-        Window type.  Choices are 'hamming' (default), 'hann', and 'blackmanharris'.
-       :param type:
-
-    debug : boolean
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
     """
     if type == 'hamming':
         return hamming(length, debug=debug)
