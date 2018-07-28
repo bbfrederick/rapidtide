@@ -15,6 +15,7 @@ API
     rapidtide.workflows.rapidtide_workflow
     rapidtide.workflows.showxcorrx_workflow
 
+
 .. currentmodule:: rapidtide
 
 .. _calibration_ref:
@@ -41,6 +42,7 @@ API
     rapidtide.correlate._check_valid_mode_shapes
     rapidtide.correlate.weightedfftconvolve
     rapidtide.correlate.gccproduct
+
 
 .. currentmodule:: rapidtide
 
@@ -86,6 +88,7 @@ API
 
     rapidtide.filter.noncausalfilter
 
+
 .. currentmodule:: rapidtide
 
 .. _calibration_ref:
@@ -129,6 +132,7 @@ API
     rapidtide.fit._datacheck_peakdetect
     rapidtide.fit.peakdetect
 
+
 .. currentmodule:: rapidtide
 
 .. _calibration_ref:
@@ -153,6 +157,8 @@ API
     rapidtide.io.getniftiroot
     rapidtide.io.fmritimeinfo
     rapidtide.io.checkspacematch
+    rapidtide.io.checkspacresematch
+    rapidtide.io.checkspacedimmatch
     rapidtide.io.checktimematch
     rapidtide.io.checkifparfile
     rapidtide.io.readbidssidecar
@@ -164,6 +170,7 @@ API
     rapidtide.io.writedict
     rapidtide.io.writevec
     rapidtide.io.writenpvecs
+
 
 .. currentmodule:: rapidtide
 
@@ -196,6 +203,7 @@ API
     rapidtide.miscmath.rms
     rapidtide.miscmath.envdetect
 
+
 .. currentmodule:: rapidtide
 
 .. _calibration_ref:
@@ -221,6 +229,7 @@ API
     :template: class.rst
 
     rapidtide.resample.fastresampler
+
 
 .. currentmodule:: rapidtide
 
@@ -254,6 +263,7 @@ API
     rapidtide.stats.getfracvalsfromfit_old
     rapidtide.stats.getfracvalsfromfit
     rapidtide.stats.makemask
+
 
 .. currentmodule:: rapidtide
 
