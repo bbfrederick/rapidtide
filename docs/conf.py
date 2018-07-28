@@ -34,7 +34,7 @@ pdf_break_level = 2
 # generate autosummary even if no references
 autosummary_generate = True
 autodoc_default_flags = ['members', 'inherited-members']
-add_module_names = False
+add_module_names = True
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
