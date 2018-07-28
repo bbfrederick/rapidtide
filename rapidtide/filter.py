@@ -1021,8 +1021,6 @@ class noncausalfilter
             Set to use trapezoidal FFT filter.  If false use brickwall.
         setarb(lowerstop, lowerpass, upperpass, upperstop)
             Set the frequency parameters of the 'arb' and 'arb_stop' filter.
-        apply(Fs, data)
-            Apply the filter to a dataset.
         """
         self.filtertype = filtertype
         self.species = 'human'
@@ -1128,6 +1126,20 @@ class noncausalfilter
         self.upperstop = 1.0 * self.arb_upperstop
 
     def apply(self, Fs, data):
+        r"""Apply the filter to a dataset.
+
+        Parameters
+        ----------
+        Fs : float
+            Sample frequency
+        data : 1D float array
+            The data to filter
+
+        Returns
+        -------
+        filtereddata : 1D float array
+            The filtered data
+        """
         # do some bounds checking
         nyquistlimit = 0.5 * Fs
         lowestfreq = 2.0 * Fs / np.shape(data)[0]
