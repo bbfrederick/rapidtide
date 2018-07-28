@@ -161,7 +161,7 @@ def _get_parser():
     parser.add_argument('--windowfunc',
                         dest='windowfunc',
                         action='store',
-                        choices=['hamming', 'blackmanharris', 'hann', 'nfone'],
+                        choices=['hamming', 'blackmanharris', 'hann', 'none'],
                         help=('Window function to apply before correlation '
                               '(default is hamming)"'),
                         default='hamming')
@@ -196,8 +196,9 @@ def _get_parser():
                               'Carlo with TRIALS repetition'),
                         default=0)
 
-    filttype = parser.add_mutually_exclusive_group()
-    filttype.add_argument('-F', '--arb',
+    filttype = parser.add_argument_group('Filter types')
+    ft_mutex = filttype.add_mutually_exclusive_group()
+    ft_mutex.add_argument('-F', '--arb',
                           dest='arbvec',
                           action='store',
                           nargs='+',
@@ -209,41 +210,42 @@ def _get_parser():
                                 'be specified, or will be calculated '
                                 'automatically'),
                           default=None)
-    filttype.add_argument('--filtertype',
+    ft_mutex.add_argument('--filtertype',
                           dest='filtertype',
                           action='store',
                           type=str,
                           choices=['arb', 'vlf', 'lfo', 'resp', 'cardiac'],
                           help=('Filter data and regressors to specific band'),
                           default='arb')
-    filttype.add_argument('-V', '--vlf',
+    ft_mutex.add_argument('-V', '--vlf',
                           dest='filtertype',
                           action='store_const',
                           const='vlf',
                           help=('Filter data and regressors to VLF band'),
                           default='arb')
-    filttype.add_argument('-L', '--lfo',
+    ft_mutex.add_argument('-L', '--lfo',
                           dest='filtertype',
                           action='store_const',
                           const='lfo',
                           help=('Filter data and regressors to LFO band'),
                           default='arb')
-    filttype.add_argument('-R', '--resp',
+    ft_mutex.add_argument('-R', '--resp',
                           dest='filtertype',
                           action='store_const',
                           const='resp',
                           help=('Filter data and regressors to respiratory '
                                 'band'),
                           default='arb')
-    filttype.add_argument('-C', '--cardiac',
+    ft_mutex.add_argument('-C', '--cardiac',
                           dest='filtertype',
                           action='store_const',
                           const='cardiac',
                           help=('Filter data and regressors to cardiac band'),
                           default='arb')
 
-    cc_group = parser.add_mutually_exclusive_group()
-    cc_group.add_argument('--corrweighting',
+    cc_group = parser.add_argument_group('Correlation weighting options')
+    cc_mutex = cc_group.add_mutually_exclusive_group()
+    cc_mutex.add_argument('--corrweighting',
                           dest='corrweighting',
                           action='store',
                           type=str,
@@ -251,15 +253,15 @@ def _get_parser():
                           help=('Method to use for cross-correlation '
                                 'weighting.'),
                           default='none')
-    cc_group.add_argument('--nodetrend',
+    cc_mutex.add_argument('--nodetrend',
                           dest='dodetrend',
                           action='store_false',
                           help='Disable linear trend removal',
                           default=True)
-    cc_group.add_argument('--nowindow',
+    cc_mutex.add_argument('--nowindow',
                           dest='prewindow',
                           action='store_false',
-                          help='Do not prewindow data before corrlation',
+                          help='Do not prewindow data before correlation',
                           default=True)
 
     parser.add_argument('--verbose',
@@ -606,7 +608,7 @@ def _main(argv=None):
             args['arbvec'].append(args['arbvec'][0] * 0.9)
             args['arbvec'].append(args['arbvec'][1] * 1.1)
         elif len(args['arbvec']) != 4:
-            raise ValueError("Argument '-F' must be either two "
+            raise ValueError("Argument '-F' or '--arbvec' must be either two "
                              "or four floats.")
 
     showxcorrx_workflow(**args)
