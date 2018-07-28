@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#/usr/bin/env python
 #
 #   Copyright 2016 Blaise Frederick
 #
@@ -260,14 +260,17 @@ if nibabelexists:
 
 # --------------------------- non-NIFTI file I/O functions ------------------------------------------
 def checkifparfile(filename):
-    r"""
+    r"""Checks to see if a file is an FSL style motion parameter file
 
     Parameters
     ----------
-    filename
+    filename : str
+        The name of the file in question.
 
     Returns
     -------
+    isparfile : bool
+        True if filename ends in '.par', False otherwise.
 
     """
     if filename.endswith(".par"):
