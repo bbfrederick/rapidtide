@@ -282,12 +282,56 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
                         controlvariablefile=None, numreps=0,
                         arbvec=None, filtertype='arb', corrweighting='none',
                         dodetrend=True, prewindow=True, verbose=False):
-    """
-    Calculate and display crosscorrelation between two timeseries.
+    r"""Calculate and display crosscorrelation between two timeseries.
 
     Parameters
     ----------
-
+    infilename1 : str
+        The name of a text file containing a timeseries, one timepoint per line.
+    infilename2 : str
+        The name of a text file containing a timeseries, one timepoint per line.
+    Fs : float
+        The sample rate of the time series, in Hz.
+    thelabel : str, optional
+        The label for the output graph.  Default is blank.
+    starttime : float, optional
+        Time offset into the timeseries, in seconds, to start using the time data.  Default is 0
+    duration : float, optional
+        Length of time from each time series, in seconds, to use for the cross-correlation.  Default is the entire time series.
+    searchrange : float, optional
+        Only search for cross-correlation peaks between -searchrange and +searchrange seconds (default is 15).
+    display : bool, optional
+        Plot cross-correlation function in a matplotlib window.  Default is True.
+    trimdata : bool, optional
+        Trim time series to the length of the shorter series.  Default is False.
+    summarymode : bool, optional
+        Output a table of interesting results for later processing.  Default is False.
+    labelline : bool, optional
+        Print an explanatory header line over the summary information.  Default is False.
+    flipregressor : bool, optional
+        Invert timeseries 2 prior to cross-correlation.
+    windowfunc : {'hamming', 'hann', 'blackmanharris'}
+        Window function to apply prior to cross-correlation.  Default is 'hamming'.
+    calccepstraldelay : bool, optional
+        Use cepstral estimation of delay.  Default is False.
+    corroutputfile : bool, optional
+        Save the correlation function to a file.  Default is False.
+    controlvariablefile : bool, optional
+        Save internal variables to a text file.  Default is False.
+    numreps : int, optional
+        Number of null correlations to perform to estimate significance.  Default is 10000
+    arbvec : [float,float,float,float], optional
+        Frequency limits of the arb_pass filter.
+    filtertype : 'none', 'card', 'lfo', 'vlf', 'resp', 'arb'
+        Type of filter to apply data prior to correlation.  Default is 'none'
+    corrweighting : {'none', 'Liang', 'Eckart', 'PHAT'}, optional
+         Weighting function to apply to the crosscorrelation in the Fourier domain.  Default is 'none'
+    dodetrend : bool, optional
+       Detrend data prior to cross-correlation.  Default is True.
+    prewindow : bool, optional
+        Apply window function prior to cross-correlation.  Default is True.
+    verbose : bool, optional
+        Print internal status information.  Default is False.
 
     Notes
     -----
