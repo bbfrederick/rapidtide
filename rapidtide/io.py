@@ -40,8 +40,7 @@ except ImportError:
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 if nibabelexists:
     def readfromnifti(inputfile):
-        """
-        Open a nifti file and read in the various important parts
+        r"""Open a nifti file and read in the various important parts
 
         Parameters
         ----------
@@ -76,8 +75,7 @@ if nibabelexists:
 
     # dims are the array dimensions along each axis
     def parseniftidims(thedims):
-        """
-        Split the dims array into individual elements
+        r"""Split the dims array into individual elements
 
         Parameters
         ----------
@@ -94,8 +92,7 @@ if nibabelexists:
 
     # sizes are the mapping between voxels and physical coordinates
     def parseniftisizes(thesizes):
-        """
-        Split the size array into individual elements
+        r"""Split the size array into individual elements
 
         Parameters
         ----------
@@ -111,7 +108,7 @@ if nibabelexists:
 
 
     def savetonifti(thearray, theheader, thepixdim, thename):
-        """
+        r"""
 
         Parameters
         ----------
@@ -140,7 +137,7 @@ if nibabelexists:
 
 
     def checkifnifti(filename):
-        """
+        r"""
 
         Parameters
         ----------
@@ -157,7 +154,7 @@ if nibabelexists:
 
 
     def checkiftext(filename):
-        """
+        r"""
 
         Parameters
         ----------
@@ -174,7 +171,7 @@ if nibabelexists:
 
 
     def getniftiroot(filename):
-        """
+        r"""
 
         Parameters
         ----------
@@ -193,7 +190,7 @@ if nibabelexists:
 
 
     def fmritimeinfo(niftifilename):
-        """
+        r"""
 
         Parameters
         ----------
@@ -216,7 +213,7 @@ if nibabelexists:
 
 
     def checkspacematch(dims1, dims2):
-        """
+        r"""
 
         Parameters
         ----------
@@ -237,7 +234,7 @@ if nibabelexists:
 
 
     def checktimematch(dims1, dims2, numskip1, numskip2):
-        """
+        r"""
 
         Parameters
         ----------
@@ -263,7 +260,7 @@ if nibabelexists:
 
 # --------------------------- non-NIFTI file I/O functions ------------------------------------------
 def checkifparfile(filename):
-    """
+    r"""
 
     Parameters
     ----------
@@ -280,7 +277,7 @@ def checkifparfile(filename):
 
 
 def readbidssidecar(inputfilename):
-    """
+    r"""
 
     Parameters
     ----------
@@ -301,7 +298,7 @@ def readbidssidecar(inputfilename):
 
 
 def readbidstsv(inputfilename):
-    """
+    r"""
 
     Parameters
     ----------
@@ -338,7 +335,7 @@ def readbidstsv(inputfilename):
 
 
 def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None):
-    """
+    r"""
 
     Parameters
     ----------
@@ -372,7 +369,7 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None):
 
 
 def readvecs(inputfilename):
-    """
+    r"""
 
     Parameters
     ----------
@@ -422,7 +419,7 @@ def readvec(inputfilename):
 
 
 def readlabels(inputfilename):
-    """
+    r"""
 
     Parameters
     ----------
@@ -441,7 +438,7 @@ def readlabels(inputfilename):
 
 
 def writedict(thedict, outputfile, lineend=''):
-    """
+    r"""
     Write all the key value pairs from a dictionary to a text file.
 
     Parameters
