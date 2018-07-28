@@ -97,6 +97,23 @@ def disablenumba():
 # --------------------------- Correlation functions -------------------------------------------------
 def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=10.0, displayplots=False, prewindow=True,
                   dodetrend=True):
+    """
+
+    Parameters
+    ----------
+    corrscale
+    thexcorr
+    delta
+    acampthresh
+    aclagthresh
+    displayplots
+    prewindow
+    dodetrend
+
+    Returns
+    -------
+
+    """
     lookahead = 2
     peaks = tide_fit.peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
     maxpeaks = np.asarray(peaks[0], dtype='float64')
@@ -131,6 +148,18 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
 
 
 def quickcorr(data1, data2, windowfunc='hamming'):
+    """
+
+    Parameters
+    ----------
+    data1
+    data2
+    windowfunc
+
+    Returns
+    -------
+
+    """
     thepcorr = sp.stats.stats.pearsonr(tide_math.corrnormalize(data1, True, True, windowfunc=windowfunc),
                                        tide_math.corrnormalize(data2, True, True, windowfunc=windowfunc))
     return thepcorr
@@ -138,6 +167,23 @@ def quickcorr(data1, data2, windowfunc='hamming'):
 
 def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewindow=False, dodetrend=False,
                      windowfunc='hamming'):
+    """
+
+    Parameters
+    ----------
+    data1
+    data2
+    sampletime
+    windowtime
+    samplestep
+    prewindow
+    dodetrend
+    windowfunc
+
+    Returns
+    -------
+
+    """
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
     times = []
@@ -158,6 +204,26 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewind
 
 def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimit=None, weighting='none',
                      prewindow=False, windowfunc='hamming', dodetrend=False, display=False):
+    """
+
+    Parameters
+    ----------
+    data1
+    data2
+    sampletime
+    windowtime
+    samplestep
+    laglimit
+    weighting
+    prewindow
+    windowfunc
+    dodetrend
+    display
+
+    Returns
+    -------
+
+    """
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
 
@@ -204,10 +270,36 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
 
 
 def delayedcorr(data1, data2, delayval, timestep):
+    """
+
+    Parameters
+    ----------
+    data1
+    data2
+    delayval
+    timestep
+
+    Returns
+    -------
+
+    """
     return sp.stats.stats.pearsonr(data1, tide_resample.timeshift(data2, delayval / timestep, 30)[0])
 
 
 def cepstraldelay(data1, data2, timestep, displayplots=True):
+    """
+
+    Parameters
+    ----------
+    data1
+    data2
+    timestep
+    displayplots
+
+    Returns
+    -------
+
+    """
     # Choudhary, H., Bahl, R. & Kumar, A. 
     # Inter-sensor Time Delay Estimation using cepstrum of sum and difference signals in 
     #     underwater multipath environment. in 1–7 (IEEE, 2015). doi:10.1109/UT.2015.7108308
@@ -248,6 +340,20 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
 
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
 def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=False):
+    """
+
+    Parameters
+    ----------
+    input1
+    input2
+    usefft
+    weighting
+    displayplots
+
+    Returns
+    -------
+
+    """
     if usefft:
         # Do an array flipped convolution, which is a correlation.
         if weighting == 'none':
@@ -260,6 +366,17 @@ def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=Fa
 
 
 def _centered(arr, newsize):
+    """
+
+    Parameters
+    ----------
+    arr
+    newsize
+
+    Returns
+    -------
+
+    """
     # Return the center newsize portion of the array.
     newsize = np.asarray(newsize)
     currsize = np.array(arr.shape)
@@ -270,6 +387,17 @@ def _centered(arr, newsize):
 
 
 def _check_valid_mode_shapes(shape1, shape2):
+    """
+
+    Parameters
+    ----------
+    shape1
+    shape2
+
+    Returns
+    -------
+
+    """
     for d1, d2 in zip(shape1, shape2):
         if not d1 >= d2:
             raise ValueError(
@@ -357,6 +485,20 @@ def weightedfftconvolve(in1, in2, mode="full", weighting='none', displayplots=Fa
 
 
 def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
+    """
+
+    Parameters
+    ----------
+    fft1
+    fft2
+    weighting
+    threshfrac
+    displayplots
+
+    Returns
+    -------
+
+    """
     product = fft1 * fft2
     if weighting == 'none':
         return product
