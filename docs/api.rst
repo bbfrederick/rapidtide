@@ -157,7 +157,7 @@ API
     rapidtide.io.getniftiroot
     rapidtide.io.fmritimeinfo
     rapidtide.io.checkspacematch
-    rapidtide.io.checkspacresematch
+    rapidtide.io.checkspaceresmatch
     rapidtide.io.checkspacedimmatch
     rapidtide.io.checktimematch
     rapidtide.io.checkifparfile
