@@ -151,7 +151,7 @@ def correlationpass(fmridata, fmrifftdata, referencetc,
             corrout[voxel[0], :] = voxel[2]
             theglobalmaxlist.append(voxel[3] + 0)
             volumetotal += 1
-        data_out = []
+        del data_out
     else:
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
