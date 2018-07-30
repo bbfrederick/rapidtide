@@ -1,7 +1,7 @@
 # History of changes
 
 ## Version 1.6 (7/27/18)
-* (documentation) Major revisions by Talor Salo to clean things up.
+* (documentation) Major revisions by Taylor Salo to clean things up.
 * (tide_funcs.py) tide_funcs.py has been split into filter.py, fit.py, io.py, miscmath.py, resample.py, stats.py, and util.py.  All executables fixed to match.
 * (rapidtide2, 2x) Improved tmask, fixed a bug.
 * (resamp1tc, resample.py) Added arbresample, modified dotwostepresample.
@@ -216,7 +216,7 @@
 * Reorganized the distribution into what seems to be a more canonical layout.
 * Resolved the issues I seem to have introduced with Python 3 compatibility.
 * Significantly cleaned up resampling and filtering code and improved reliability.
-* Added some unit tests for critical routines.  Strangely, they all fail on Travis-CI, 
+* Added some unit tests for critical routines.  Strangely, they all fail on Travis-CI,
   but work on my local machine.  It seems to be a numerical precision issue.  The answers
   are rightish, just not right on Travis.
 
@@ -361,7 +361,7 @@
 * Reorganized the distribution into what seems to be a more canonical layout.
 * Resolved the issues I seem to have introduced with Python 3 compatibility.
 * Significantly cleaned up resampling and filtering code and improved reliability.
-* Added some unit tests for critical routines.  Strangely, they all fail on Travis-CI, 
+* Added some unit tests for critical routines.  Strangely, they all fail on Travis-CI,
   but work on my local machine.  It seems to be a numerical precision issue.  The answers
   are rightish, just not right on Travis.
 
