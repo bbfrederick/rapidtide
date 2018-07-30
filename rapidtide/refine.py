@@ -40,7 +40,14 @@ from scipy.stats.stats import pearsonr
 from scipy.signal import welch
 
 
-def _procOneVoxelTimeShift(vox, fmritc, lagstrength, R2val, lagtime, padtrs, fmritr, theprefilter,
+def _procOneVoxelTimeShift(vox,
+                           fmritc,
+                           lagstrength,
+                           R2val,
+                           lagtime,
+                           padtrs,
+                           fmritr,
+                           theprefilter,
                            fmrifreq,
                            refineprenorm='mean',
                            lagmaxthresh=5.0,
@@ -158,8 +165,6 @@ def refineregressor(fmridata,
     maskarray : 3D array
         Mask of voxels used for refinement
     """
-    # print('entering refineregressor with padtrs=', padtrs)
-    print('*************entering the spiffy new factored refineregressor!*************')
     inputshape = np.shape(fmridata)
     ampmask = np.where(lagstrengths >= optiondict['ampthresh'], np.int16(1), np.int16(0))
     if optiondict['lagmaskside'] == 'upper':
@@ -188,11 +193,12 @@ def refineregressor(fmridata,
     ampfails = np.sum(1 - ampmask)
     lagfails = np.sum(1 - delaymask)
     sigmafails = np.sum(1 - sigmamask)
+    refinemask = locationmask * ampmask * delaymask * sigmamask
     if optiondict['shiftall']:
-        maskarray = locationmask
+        shiftmask = locationmask
     else:
-        maskarray = locationmask * ampmask * delaymask * sigmamask
-    volumetotal = np.sum(maskarray)
+        shiftmask = refinemask
+    volumetotal = np.sum(shiftmask)
     reportstep = 1000
 
     # timeshift the valid voxels
@@ -234,7 +240,7 @@ def refineregressor(fmridata,
                     break
 
         data_out = tide_multiproc.run_multiproc(timeshift_consumer,
-                                                inputshape, maskarray,
+                                                inputshape, shiftmask,
                                                 nprocs=optiondict['nprocs'],
                                                 showprogressbar=True,
                                                 chunksize=optiondict['mp_chunksize'])
@@ -253,13 +259,7 @@ def refineregressor(fmridata,
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
                 tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete (timeshifting)')
-            if maskarray is None:
-                dothisone = True
-            elif (maskarray[vox] > 0) or optiondict['shiftall']:
-                dothisone = True
-            else:
-                dothisone = False
-            if dothisone:
+            if shiftmask[vox] > 0:
                 retvals = _procOneVoxelTimeShift(vox,
                                                  fmridata[vox, :],
                                                  lagstrengths[vox],
@@ -293,7 +293,7 @@ def refineregressor(fmridata,
         snr = np.nan_to_num(averagepsd / stdpsd)
 
     # now generate the refined timecourse(s)
-    validlist = np.where(maskarray > 0)[0]
+    validlist = np.where(refinemask > 0)[0]
     refinevoxels = shiftedtcs[validlist]
     refineweights = weights[validlist]
     weightsum = np.sum(refineweights, axis=0) / volumetotal
@@ -395,4 +395,4 @@ def refineregressor(fmridata,
     collected = gc.collect()
     print("Garbage collector: collected %d objects." % collected)
 
-    return volumetotal, outputdata, maskarray
+    return volumetotal, outputdata, refinemask
