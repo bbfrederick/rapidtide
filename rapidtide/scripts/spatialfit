@@ -131,7 +131,7 @@ timepoints = datafiledims[4]
 
 # check dimensions
 print("checking dimensions")
-if not tide_io.checkspacematch(datafiledims, templatefiledims):
+if not tide_io.checkspacedimmatch(datafiledims, templatefiledims):
     print(templatefiledims, 'template file spatial dimensions do not match image')
     exit()
 if not templatefiledims[4] == 1:
@@ -139,15 +139,15 @@ if not templatefiledims[4] == 1:
     exit()
 
 if usedmask:
-    if not tide_io.checkspacematch(datafiledims, datamaskdims):
+    if not tide_io.checkspacedimmatch(datafiledims, datamaskdims):
         print('input mask spatial dimensions do not match image')
         exit()
-    if not tide_io.checktimematch(datafiledims, datamaskdims, 0, 0):
+    if not tide_io.checktimematch(datafiledims, datamaskdims):
         print('input mask time dimension does not match image')
         exit()
 
 if usetmask:
-    if not tide_io.checkspacematch(datafiledims, templatemaskdims):
+    if not tide_io.checkspacedimmatch(datafiledims, templatemaskdims):
         print('template mask spatial dimensions do not match image')
         exit()
     if not templatemaskdims[4] == 1:

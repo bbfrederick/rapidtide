@@ -116,6 +116,20 @@ congridyvals = {}
 
 
 def congrid(xaxis, loc, val, width, debug=False):
+    """
+
+    Parameters
+    ----------
+    xaxis
+    loc
+    val
+    width
+    debug
+
+    Returns
+    -------
+
+    """
     xstep = xaxis[1] - xaxis[0]
     # weights = xaxis * 0.0
     widthinpts = int(np.round(width * 4.6 / xstep))
@@ -218,6 +232,20 @@ class fastresampler:
 
 
 def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
+    """
+
+    Parameters
+    ----------
+    orig_x
+    orig_y
+    new_x
+    method
+    padlen
+
+    Returns
+    -------
+
+    """
     pad_y = tide_filt.padvec(orig_y, padlen=padlen)
     tstep = orig_x[1] - orig_x[0]
     if padlen > 0:
@@ -247,6 +275,21 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
 
 
 def arbresample(orig_y, init_freq, final_freq, intermed_freq=0.0, method='univariate', debug=False):
+    """
+
+    Parameters
+    ----------
+    orig_y
+    init_freq
+    final_freq
+    intermed_freq
+    method
+    debug
+
+    Returns
+    -------
+
+    """
     if intermed_freq <= 0.0:
         intermed_freq = np.max([2.0 * init_freq, 2.0 * final_freq])
     orig_x = sp.linspace(0.0, 1.0 / init_freq * len(orig_y), num=len(orig_y), endpoint=False)
@@ -256,6 +299,21 @@ def arbresample(orig_y, init_freq, final_freq, intermed_freq=0.0, method='univar
 
 
 def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate', debug=False):
+    """
+
+    Parameters
+    ----------
+    orig_x
+    orig_y
+    intermed_freq
+    final_freq
+    method
+    debug
+
+    Returns
+    -------
+
+    """
     if intermed_freq <= final_freq:
         print('intermediate frequency must be higher than final frequency')
         sys.exit()
@@ -282,6 +340,20 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
 
 
 def calcsliceoffset(sotype, slicenum, numslices, tr, multiband=1):
+    """
+
+    Parameters
+    ----------
+    sotype
+    slicenum
+    numslices
+    tr
+    multiband
+
+    Returns
+    -------
+
+    """
     # Slice timing correction
     # 0 : None
     # 1 : Regular up (0, 1, 2, 3, ...)
@@ -370,6 +442,19 @@ def calcsliceoffset(sotype, slicenum, numslices, tr, multiband=1):
 # NB: a positive value of shifttrs delays the signal, a negative value advances it
 # timeshift using fourier phase multiplication
 def timeshift(inputtc, shifttrs, padtrs, doplot=False):
+    """
+
+    Parameters
+    ----------
+    inputtc
+    shifttrs
+    padtrs
+    doplot
+
+    Returns
+    -------
+
+    """
     # set up useful parameters
     thelen = np.shape(inputtc)[0]
     thepaddedlen = thelen + 2 * padtrs

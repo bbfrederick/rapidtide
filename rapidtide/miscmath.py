@@ -90,10 +90,34 @@ def disablenumba():
 
 # --------------------------- Spectral analysis functions ---------------------------------------
 def phase(mcv):
+    r"""Return phase of complex numbers.
+
+    Parameters
+    ----------
+    mcv : complex array
+        A complex vector
+
+    Returns
+    -------
+    phase : float array
+        The phase angle of the numbers, in radians
+
+    """
     return np.arctan2(mcv.imag, mcv.real)
 
 
 def polarfft(invec, samplerate):
+    """
+
+    Parameters
+    ----------
+    invec
+    samplerate
+
+    Returns
+    -------
+
+    """
     if np.shape(invec)[0] % 2 == 1:
         thevec = invec[:-1]
     else:
@@ -107,6 +131,16 @@ def polarfft(invec, samplerate):
 
 
 def complex_cepstrum(x):
+    """
+
+    Parameters
+    ----------
+    x
+
+    Returns
+    -------
+
+    """
     # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
     def _unwrap(phase):
         samples = phase.shape[-1]
@@ -127,12 +161,32 @@ def complex_cepstrum(x):
 
 
 def real_cepstrum(x):
+    """
+
+    Parameters
+    ----------
+    x
+
+    Returns
+    -------
+
+    """
     # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
     return fftpack.ifft(np.log(np.abs(fftpack.fft(x)))).real
 
 
 # --------------------------- miscellaneous math functions -------------------------------------------------
 def thederiv(y):
+    """
+
+    Parameters
+    ----------
+    y
+
+    Returns
+    -------
+
+    """
     dyc = [0.0] * len(y)
     dyc[0] = (y[0] - y[1]) / 2.0
     for i in range(1, len(y) - 1):
@@ -142,6 +196,16 @@ def thederiv(y):
 
 
 def primes(n):
+    """
+
+    Parameters
+    ----------
+    n
+
+    Returns
+    -------
+
+    """
     # found on stackoverflow: https://stackoverflow.com/questions/16996217/prime-factorization-list
     primfac = []
     d = 2
@@ -156,16 +220,46 @@ def primes(n):
 
 
 def largestfac(n):
+    """
+
+    Parameters
+    ----------
+    n
+
+    Returns
+    -------
+
+    """
     return primes(n)[-1]
 
 
 # --------------------------- Normalization functions -------------------------------------------------
 def znormalize(vector):
+    """
+
+    Parameters
+    ----------
+    vector
+
+    Returns
+    -------
+
+    """
     return stdnormalize(vector)
 
 
 @conditionaljit()
 def stdnormalize(vector):
+    """
+
+    Parameters
+    ----------
+    vector
+
+    Returns
+    -------
+
+    """
     demeaned = vector - np.mean(vector)
     sigstd = np.std(demeaned)
     if sigstd > 0.0:
@@ -175,6 +269,16 @@ def stdnormalize(vector):
 
 
 def varnormalize(vector):
+    """
+
+    Parameters
+    ----------
+    vector
+
+    Returns
+    -------
+
+    """
     demeaned = vector - np.mean(vector)
     sigvar = np.var(demeaned)
     if sigvar > 0.0:
@@ -184,6 +288,16 @@ def varnormalize(vector):
 
 
 def pcnormalize(vector):
+    """
+
+    Parameters
+    ----------
+    vector
+
+    Returns
+    -------
+
+    """
     sigmean = np.mean(vector)
     if sigmean > 0.0:
         return vector / sigmean - 1.0
@@ -192,6 +306,16 @@ def pcnormalize(vector):
 
 
 def ppnormalize(vector):
+    """
+
+    Parameters
+    ----------
+    vector
+
+    Returns
+    -------
+
+    """
     demeaned = vector - np.mean(vector)
     sigpp = np.max(demeaned) - np.min(demeaned)
     if sigpp > 0.0:
@@ -202,6 +326,19 @@ def ppnormalize(vector):
 
 @conditionaljit()
 def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
+    """
+
+    Parameters
+    ----------
+    thedata
+    prewindow
+    dodetrend
+    windowfunc
+
+    Returns
+    -------
+
+    """
     # detrend first
     if dodetrend:
         intervec = stdnormalize(tide_fit.detrend(thedata, demean=True))
@@ -217,10 +354,31 @@ def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
 
 
 def rms(vector):
+    """
+
+    Parameters
+    ----------
+    vector
+
+    Returns
+    -------
+
+    """
     return np.sqrt(np.mean(np.square(vector)))
 
 
 def envdetect(vector, filtwidth=3.0):
+    """
+
+    Parameters
+    ----------
+    vector
+    filtwidth
+
+    Returns
+    -------
+
+    """
     demeaned = vector - np.mean(vector)
     sigabs = abs(demeaned)
     return tide_filt.dolptrapfftfilt(1.0, 1.0 / (2.0 * filtwidth), 1.1 / (2.0 * filtwidth), sigabs)

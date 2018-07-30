@@ -127,10 +127,10 @@ xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
 # check dimensions
 if usedmask:
     print("checking mask dimensions")
-    if not tide_io.checkspacematch(datafiledims, datamaskdims):
+    if not tide_io.checkspacedimmatch(datafiledims, datamaskdims):
         print('input mask spatial dimensions do not match image')
         exit()
-    if not (tide_io.checktimematch(datafiledims, datamaskdims, 0, 0) or datamaskdims[4] == 1):
+    if not (tide_io.checktimematch(datafiledims, datamaskdims) or datamaskdims[4] == 1):
         print('input mask time dimension does not match image')
         exit()
 

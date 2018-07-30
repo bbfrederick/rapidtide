@@ -1,4 +1,19 @@
 # History of changes
+
+## Version 1.6 (7/27/18)
+* (documentation) Major revisions by Talor Salo to clean things up.
+* (tide_funcs.py) tide_funcs.py has been split into filter.py, fit.py, io.py, miscmath.py, resample.py, stats.py, and util.py.  All executables fixed to match.
+* (rapidtide2, 2x) Improved tmask, fixed a bug.
+* (resamp1tc, resample.py) Added arbresample, modified dotwostepresample.
+* (filter.py) Consolodated doprecalcfftfilt and xfunc into transferfuncfilt.
+* (filter.py) Added docstrings, code cleanup and regularization.
+* (filter.py) Added new 'spectrum' routine.
+* (filter.py) Initial support for precalculated arb filtering.
+* (showtc) Updated to use new spectrum routine.
+* (spectrogram) added to distro.
+* (rapidtide2, 2x, resamp1tc showxcorr, showxcorrx, showstxcorr) eliminated all use of Butterworth filters by default.
+
+
 ## Version 1.5 (6/11/18)
 * (documentation) Added description of rapidtide output files.
 * (tide_funcs) Fixed a VERY old bug in detrend that added an offset to the detrended timecourse.  The effect of the bug on rapidtide2(x) is probably small, because we almost always use data that has already been detrended.  The effect in some very particular use cases, though, was large enough that I finally noticed it after 3 years.
