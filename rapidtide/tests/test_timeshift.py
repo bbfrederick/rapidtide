@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
-from rapidtide.resample import timeshift
-from rapidtide.filter import dolpfiltfilt
+
 import numpy as np
 import pylab as plt
 
-def mse(vec1, vec2):
-    return np.mean(np.square(vec2 - vec1))
+from rapidtide.resample import timeshift
+from rapidtide.filter import dolpfiltfilt
+from rapidtide.tests.utils import mse
 
 
-def testtimeshift(debug=False):
+def test_timeshift(debug=False):
     tr = 1.0
     padvalue = 300.0
     testlen = 1000
@@ -68,9 +68,11 @@ def testtimeshift(debug=False):
     if debug:
         plt.legend(legend)
         plt.show()
-    
+
+
 def main():
-    testtimeshift(debug=True)
+    test_timeshift(debug=True)
+
 
 if __name__ == '__main__':
     main()

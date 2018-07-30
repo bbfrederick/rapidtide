@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
 
-from rapidtide.correlate import fastcorrelate
 import numpy as np
 import pylab as plt
 
-def testfastcorrelate(display=False):
+from rapidtide.correlate import fastcorrelate
+
+
+def test_fastcorrelate(display=False):
     inlen = 1000
     offset = 100
     sig1 = np.zeros((inlen), dtype='float')
@@ -29,8 +31,10 @@ def testfastcorrelate(display=False):
     aethresh = 10
     np.testing.assert_almost_equal(fastcorrelate_result, stdcorrelate_result, aethresh)
 
+
 def main():
-    testfastcorrelate(display=True)
+    test_fastcorrelate(display=True)
+
 
 if __name__ == '__main__':
     main()
