@@ -252,7 +252,7 @@ def refineregressor(fmridata,
             weights[voxel[0], :] = voxel[2]
             if optiondict['psdfilter']:
                 psdlist.append(voxel[3])
-        data_out = []
+        del data_out
 
     else:
         psdlist = []
@@ -381,8 +381,7 @@ def refineregressor(fmridata,
         datatoremove = rt_floatset(fitcoff * averagediscard)
         outputdata -= datatoremove
     print()
-    print(str(
-        volumetotal) + ' voxels used for refinement:',
+    print('Timeshift applied to ' + str(int(volumetotal)) + ' voxels, ' + str(len(validlist)) + ' used for refinement:',
           '\n	', locationfails, ' locationfails',
           '\n	', ampfails, ' ampfails',
           '\n	', lagfails, ' lagfails',
