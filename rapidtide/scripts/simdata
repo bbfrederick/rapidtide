@@ -114,15 +114,15 @@ print('fmri time runs from ', initial_fmri_x[0], ' to ', initial_fmri_x[-1])
 # read in the immean, boldpc and lag files
 print("reading in source files")
 nim_immean, immeandata, immeanheader, immeandims, immeansizes = tide_io.readfromnifti(immeanfilename)
-if not tide_io.checkspacematch(immeandims, fmridims):
+if not tide_io.checkspacedimmatch(immeandims, fmridims):
     print("immean file does not match")
     exit()
 nim_boldpc, boldpcdata, boldpcheader, boldpcdims, boldpcsizes = tide_io.readfromnifti(boldpcfilename)
-if not tide_io.checkspacematch(boldpcdims, fmridims):
+if not tide_io.checkspacedimmatch(boldpcdims, fmridims):
     print("boldpc file does not match")
     exit()
 nim_lag, lagdata, lagheader, lagdims, lagsizes = tide_io.readfromnifti(lagfilename)
-if not tide_io.checkspacematch(lagdims, fmridims):
+if not tide_io.checkspacedimmatch(lagdims, fmridims):
     print("lag file does not match")
     exit()
 

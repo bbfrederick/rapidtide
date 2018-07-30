@@ -13,6 +13,8 @@ API
     :template: function.rst
 
     rapidtide.workflows.rapidtide_workflow
+    rapidtide.workflows.showxcorrx_workflow
+
 
 .. currentmodule:: rapidtide
 
@@ -31,6 +33,16 @@ API
 
     rapidtide.correlate.autocorrcheck
     rapidtide.correlate.quickcorr
+    rapidtide.correlate.shorttermcorr_1D
+    rapidtide.correlate.shorttermcorr_2D
+    rapidtide.correlate.delayedcorr
+    rapidtide.correlate.cepstraldelay
+    rapidtide.correlate.fastcorrelate
+    rapidtide.correlate._centered
+    rapidtide.correlate._check_valid_mode_shapes
+    rapidtide.correlate.weightedfftconvolve
+    rapidtide.correlate.gccproduct
+
 
 .. currentmodule:: rapidtide
 
@@ -72,6 +84,11 @@ API
     rapidtide.filter.hamming
     rapidtide.filter.windowfunction
 
+    :template: class.rst
+
+    rapidtide.filter.noncausalfilter
+
+
 .. currentmodule:: rapidtide
 
 .. _calibration_ref:
@@ -89,6 +106,32 @@ API
 
     rapidtide.fit.gaussresidualssk
     rapidtide.fit.gaussskresiduals
+    rapidtide.fit.gaussresiduals
+    rapidtide.fit.trapezoidresiduals
+    rapidtide.fit.risetimeresiduals
+    rapidtide.fit.gausssk_eval
+    rapidtide.fit.gauss_eval
+    rapidtide.fit.trapezoid_eval_loop
+    rapidtide.fit.risetime_eval_loop
+    rapidtide.fit.trapezoid_eval
+    rapidtide.fit.risetime_eval
+    rapidtide.fit.locpeak
+    rapidtide.fit.trendgen
+    rapidtide.fit.detrend
+    rapidtide.fit.findfirstabove
+    rapidtide.fit.findtrapezoidfunc
+    rapidtide.fit.findrisetimefunc
+    rapidtide.fit.findmaxlag_gauss
+    rapidtide.fit.maxindex_noedge
+    rapidtide.fit.findmaxlag_gauss_rev
+    rapidtide.fit.findmaxlag_quad
+    rapidtide.fit.gaussfitsk
+    rapidtide.fit.gaussfit
+    rapidtide.fit.mlregress
+    rapidtide.fit.parabfit
+    rapidtide.fit._datacheck_peakdetect
+    rapidtide.fit.peakdetect
+
 
 .. currentmodule:: rapidtide
 
@@ -105,8 +148,29 @@ API
     :toctree: generated/
     :template: function.rst
 
+    rapidtide.io.readfromnifti
+    rapidtide.io.parseniftidims
+    rapidtide.io.parseniftisizes
+    rapidtide.io.savetonifti
+    rapidtide.io.checkifnifti
+    rapidtide.io.checkiftext
+    rapidtide.io.getniftiroot
+    rapidtide.io.fmritimeinfo
+    rapidtide.io.checkspacematch
+    rapidtide.io.checkspaceresmatch
+    rapidtide.io.checkspacedimmatch
+    rapidtide.io.checktimematch
     rapidtide.io.checkifparfile
     rapidtide.io.readbidssidecar
+    rapidtide.io.readbidstsv
+    rapidtide.io.readcolfrombidstsv
+    rapidtide.io.readvecs
+    rapidtide.io.readvec
+    rapidtide.io.readlabels
+    rapidtide.io.writedict
+    rapidtide.io.writevec
+    rapidtide.io.writenpvecs
+
 
 .. currentmodule:: rapidtide
 
@@ -125,6 +189,20 @@ API
 
     rapidtide.miscmath.phase
     rapidtide.miscmath.polarfft
+    rapidtide.miscmath.complex_cepstrum
+    rapidtide.miscmath.real_cepstrum
+    rapidtide.miscmath.thederiv
+    rapidtide.miscmath.primes
+    rapidtide.miscmath.largestfac
+    rapidtide.miscmath.znormalize
+    rapidtide.miscmath.stdnormalize
+    rapidtide.miscmath.varnormalize
+    rapidtide.miscmath.pcnormalize
+    rapidtide.miscmath.ppnormalize
+    rapidtide.miscmath.corrnormalize
+    rapidtide.miscmath.rms
+    rapidtide.miscmath.envdetect
+
 
 .. currentmodule:: rapidtide
 
@@ -142,11 +220,16 @@ API
     :template: function.rst
 
     rapidtide.resample.congrid
+    rapidtide.resample.doresample
+    rapidtide.resample.arbresample
+    rapidtide.resample.dotwostepresample
+    rapidtide.resample.calcsliceoffset
+    rapidtide.resample.timeshift
 
-    :toctree: generated/
     :template: class.rst
 
     rapidtide.resample.fastresampler
+
 
 .. currentmodule:: rapidtide
 
@@ -163,7 +246,24 @@ API
     :toctree: generated/
     :template: function.rst
 
-    rapidtide.stats.printthresholds
+    rapidtide.stats.fitjsbpdf
+    rapidtide.stats.getjohnsonppf
+    rapidtide.stats.sigFromDistributionData
+    rapidtide.stats.rfromp
+    rapidtide.stats.tfromr
+    rapidtide.stats.zfromr
+    rapidtide.stats.fisher
+    rapidtide.stats.gethistprops
+    rapidtide.stats.makehistogram
+    rapidtide.stats.makeandsavehistogram
+    rapidtide.stats.symmetrize
+    rapidtide.stats.getfracval
+    rapidtide.stats.makepmask
+    rapidtide.stats.getfracvals
+    rapidtide.stats.getfracvalsfromfit_old
+    rapidtide.stats.getfracvalsfromfit
+    rapidtide.stats.makemask
+
 
 .. currentmodule:: rapidtide
 
@@ -181,6 +281,16 @@ API
     :template: function.rst
 
     rapidtide.util.logmem
+    rapidtide.util.findexecutable
+    rapidtide.util.isexecutable
+    rapidtide.util.savecommandline
+    rapidtide.util.valtoindex
+    rapidtide.util.progressbar
+    rapidtide.util.makelaglist
+    rapidtide.util.version
+    rapidtide.util.timefmt
+    rapidtide.util.proctiminginfo
+
 
 .. currentmodule:: rapidtide
 

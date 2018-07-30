@@ -1,6 +1,5 @@
 Introduction
 ============
-
 Why do I want to know about time lagged correlations?
 -----------------------------------------------------
 This comes out of work by our group (The Opto-Magnetic group at McLean
@@ -29,35 +28,34 @@ As an aside, some of these tools are just generally useful for looking at
 correlations between timecourses from other sources – for example doing PPI, or
 even some seed based analyses.
 
+[*] "random" in this context means "determined by something we don't have
+any information about" - maybe EtCO2 variation, or sympathetic nervous
+system activity - so not really random.
+
+Yes, but correlation analysis is easy - why use this package?
+-------------------------------------------------------------
+The simple answer is "correlation analysis is easy, but using a prewritten
+package that handles file I/O, filtering, resampling, windowing, and the
+rest for you is even easier".  A slightly more complex answer is that
+while correlation analysis is pretty easy to do, it's hard to do right;
+there are lots and lots of ways to do it incorrectly.  Fortunately, I've
+made most of those mistakes for you over the last 6 years, and corrected
+my code accordingly.  So rather than repeat my boring mistakes, why not
+make new, interesting mistakes?  Explore your own, unique chunk of
+wrongspace...
+
 Why are you releasing your code?
 --------------------------------
 For a number of reasons.
-    #.    I want people to use it!  I think if it were easier for people to do
-    time delay analysis, they’d be more likely to do it.  I don’t have enough
-    time or people in my group to do every experiment that I think would be
-    interesting, so I’m hoping other people will, so I can read their papers
-    and learn interesting things.
+    - I want people to use it!  I think if it were easier for people to do time delay analysis, they’d be more likely to do it.  I don’t have enough time or people in my group to do every experiment that I think would be interesting, so I’m hoping other people will, so I can read their papers and learn interesting things.
 
-    #.    It’s the right way to do science – I can say lots of things, but if
-    nobody can replicate my results, nobody will believe it (we’ve gotten that
-    a lot, because some of the implications of what we’ve seen in resting state
-    data can be a little uncomfortable).  We’ve reached a stage in fMRI where
-    getting from data to results involves a huge amount of processing, so part
-    of confirming results involves being able to see how the data were
-    processed. If you had to do everything from scratch, you’d never even try
-    to confirm anybody’s results.
+    - It’s the right way to do science – I can say lots of things, but if nobody can replicate my results, nobody will believe it (we’ve gotten that a lot, because some of the implications of what we’ve seen in resting state data can be a little uncomfortable).  We’ve reached a stage in fMRI where getting from data to results involves a huge amount of processing, so part of confirming results involves being able to see how the data were processed. If you had to do everything from scratch, you’d never even try to confirm anybody’s results.
 
-    #.    In any complicated processing scheme, it’s quite possible (or in my
-    case, likely) to make dumb mistakes, either coding errors or conceptual
-    errors, and I almost certainly have made some (although hopefully the worst
-    ones have been dealt with at this point).  More users and more eyes on the
-    code make it more likely that they will be found.  As much as I’m queasy
-    about somebody potentially finding a mistake in my code, I’d rather that
-    they did so, so I can fix it[‡].
+    - In any complicated processing scheme, it’s quite possible (or in my case, likely) to make dumb mistakes, either coding errors or conceptual errors, and I almost certainly have made some (although hopefully the worst ones have been dealt with at this point).  More users and more eyes on the code make it more likely that they will be found.  As much as I’m queasy about somebody potentially finding a mistake in my code, I’d rather that they did so, so I can fix it[‡].
 
-    #.    It’s giving back to the community.  I benefit from the generosity of
-    a lot of authors who have made the open source tools I use for work and
-    play, so I figure I can pony up too.
+    - It’s giving back to the community.  I benefit from the generosity of a lot of authors who have made the open source tools I use for work and play, so I figure I can pony up too.
+
+[‡] or better yet, you, empowered user, can fix it, and push back a fix that benefits everybody...
 
 Python version compatibility
 -----------------------------
