@@ -6,31 +6,28 @@ python:
   - "3.6"
   - "nightly" # currently points to 3.6-dev
 
+matrix:
+  include:
+    - python: 3.6
+      env:
+        - COVERAGE=1
+
 # Setup anaconda
 before_install:
-  - sudo apt-get update
-  # We do this conditionally because it saves us some downloading if the
-  # version is the same.
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda config --add channels conda-forge
-  - conda update -q conda
-  # Useful for debugging any issues with conda
-  - conda info -a
+  - pip install pytest pytest-cov codecov
+  - pip install -r requirements.txt
 
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION nomkl numpy scipy matplotlib scikit-learn statsmodels pyqt pytest nibabel pyqtgraph
-  # - conda install --yes -c conda-forge nibabel
+install:
   - python setup.py install
-  - pip install pytest pytest-cov
-  - conda list
 
-# command to run tests
-#
-script: py.test
+script:
+  - |
+    if [ "${COVERAGE}" == "1" ]; then
+        TEST_ARGS="--cov-report term-missing --cov=rapidtide";
+    else
+        TEST_ARGS="";
+    fi
+    py.test ${TEST_ARGS} rapidtide;
+
+after_success:
+  - codecov
