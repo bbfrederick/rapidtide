@@ -36,7 +36,12 @@ modules_list = ['rapidtide/miscmath',
                 'rapidtide/io',
                 'rapidtide/resample',
                 'rapidtide/stats',
-                'rapidtide/util']
+                'rapidtide/util',
+                'rapidtide/multiproc',
+                'rapidtide/nullcorrpass',
+                'rapidtide/corrpass',
+                'rapidtide/corrfit',
+                'rapidtide/refine']
 
 if addtidepool:
     modules_list.append('rapidtide/tidepoolTemplate_qt4')
