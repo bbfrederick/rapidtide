@@ -1,60 +1,72 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import rapidtide.io as tide_io
-import rapidtide.fit as tide_fit
+
+import os.path as op
+
 import numpy as np
 import pylab as plt
-
-def mse(vec1, vec2):
-    return np.mean(np.square(vec2 - vec1))
-
 from scipy import arange
 
+import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
+from rapidtide.tests.utils import get_test_data_path
 
-def testfindmaxlag(textfilename='../data/examples/src/lt_rt.txt', display=False, debug=False):
+
+def test_findmaxlag(display=False, debug=False):
+    textfilename = op.join(get_test_data_path(), 'lt_rt.txt')
+    display = False
+    debug = False
+
     # set default variable values
-    searchfrac=0.75
-    limitfit=False
+    searchfrac = 0.75
+    limitfit = False
 
-    indata=tide_io.readvecs(textfilename)
-    xvecs=indata[0,:]
-    yvecs=indata[1,:]
+    indata = tide_io.readvecs(textfilename)
+    xvecs = indata[0, :]
+    yvecs = indata[1, :]
     testmaxval = 0.8
     testmaxlag = 8.0
     testmaxsigma = 5.0
-    yvecs=tide_fit.gauss_eval(xvecs, np.array([testmaxval, testmaxlag, testmaxsigma]))
+    yvecs = tide_fit.gauss_eval(xvecs, np.array([testmaxval, testmaxlag,
+                                                 testmaxsigma]))
     lagmin = -20
     lagmax = 20
     widthlimit = 1000.0
     absmaxsigma = 1000.0
 
-    maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
-        xvecs,
-        yvecs,
-        lagmin, lagmax, widthlimit,
-        tweaklims=False,
-        refine=True,
-        debug=debug,
-        searchfrac=searchfrac,
-        zerooutbadfit=False)
+    (maxindex, maxlag, maxval, maxsigma, maskval,
+     failreason, peakstart, peakend) = tide_fit.findmaxlag_gauss(
+         xvecs,
+         yvecs,
+         lagmin, lagmax, widthlimit,
+         tweaklims=False,
+         refine=True,
+         debug=debug,
+         searchfrac=searchfrac,
+         zerooutbadfit=False)
 
-    maxindexr, maxlagr, maxvalr, maxsigmar, maskvalr, failreasonr, peakstartr, peakendr = tide_fit.findmaxlag_gauss_rev(
-        xvecs,
-        yvecs,
-        lagmin, lagmax, widthlimit,
-        absmaxsigma=absmaxsigma,
-        tweaklims=False,
-        refine=True,
-        debug=debug,
-        searchfrac=searchfrac,
-        zerooutbadfit=False)
+    (maxindexr, maxlagr, maxvalr, maxsigmar, maskvalr,
+     failreasonr, peakstartr, peakendr) = tide_fit.findmaxlag_gauss_rev(
+         xvecs,
+         yvecs,
+         lagmin, lagmax, widthlimit,
+         absmaxsigma=absmaxsigma,
+         tweaklims=False,
+         refine=True,
+         debug=debug,
+         searchfrac=searchfrac,
+         zerooutbadfit=False)
 
-    print('final results:', maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend)
-    print('final results:', maxindexr, maxlagr, maxvalr, maxsigmar, maskvalr, failreasonr, peakstartr, peakendr)
-    oversampfactor=10
-    gauss_xvecs=arange(xvecs[0],xvecs[-1],(xvecs[1]-xvecs[0])/oversampfactor,dtype='float')
-    gauss_yvecs=tide_fit.gauss_eval(gauss_xvecs, (maxval, maxlag, maxsigma))
-    gauss_yvecsr=tide_fit.gauss_eval(gauss_xvecs, (maxvalr, maxlagr, maxsigmar))
+    print('final results:', maxindex, maxlag, maxval, maxsigma, maskval,
+          failreason, peakstart, peakend)
+    print('final results:', maxindexr, maxlagr, maxvalr, maxsigmar, maskvalr,
+          failreasonr, peakstartr, peakendr)
+    oversampfactor = 10
+    gauss_xvecs = arange(xvecs[0], xvecs[-1],
+                         (xvecs[1]-xvecs[0]) / oversampfactor, dtype='float')
+    gauss_yvecs = tide_fit.gauss_eval(gauss_xvecs, (maxval, maxlag, maxsigma))
+    gauss_yvecsr = tide_fit.gauss_eval(gauss_xvecs, (maxvalr, maxlagr,
+                                                     maxsigmar))
     if display:
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
@@ -63,9 +75,11 @@ def testfindmaxlag(textfilename='../data/examples/src/lt_rt.txt', display=False,
         ax.plot(gauss_xvecs[(peakstartr*oversampfactor):(peakendr*oversampfactor+1)], 0.2 + gauss_yvecsr[(peakstartr*oversampfactor):(peakendr*oversampfactor+1)],'b.')
         #ax.set_xlim((lagmin, lagmax))
         plt.show()
-    
+
+
 def main():
-    testfindmaxlag(display=True, debug=True)
+    test_findmaxlag(display=True, debug=True)
+
 
 if __name__ == '__main__':
     main()

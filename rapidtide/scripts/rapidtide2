@@ -24,33 +24,37 @@
 
 from __future__ import print_function, division
 
-import time
-import getopt
-import platform
 import bisect
-import warnings
-import os
-import sys
-import gc
+import getopt
 import multiprocessing as mp
-import resource
+import os
+import platform
+import sys
+import time
+import warnings
 
-import rapidtide.miscmath as tide_math
-import rapidtide.stats as tide_stats
-import rapidtide.util as tide_util
-import rapidtide.io as tide_io
+import numpy as np
+from matplotlib.pyplot import figure, plot, show
+from scipy import ndimage
+from statsmodels.tsa.stattools import pacf_yw
+
+import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
-import rapidtide.correlate as tide_corr
+import rapidtide.stats as tide_stats
+import rapidtide.util as tide_util
 
+import rapidtide.corrpass as tide_corrpass
+import rapidtide.refine as tide_refine
+
+import gc
 from sklearn.decomposition import FastICA, PCA
-from matplotlib.pyplot import figure, plot, show
-import numpy as np
-from statsmodels.tsa.stattools import pacf_yw
 from scipy.stats.stats import pearsonr
 from scipy.signal import welch
-from scipy import ndimage
 
 try:
     from memory_profiler import profile
@@ -105,7 +109,7 @@ def procOneNullCorrelation(iteration, indata, ncprefilter, oversampfreq, corrsca
     shuffleddata = np.random.permutation(indata)
 
     # crosscorrelate with original
-    thexcorr, dummy = onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
+    thexcorr, dummy = tide_corrpass.onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
                                      indata,
                                      optiondict)
 
@@ -119,7 +123,7 @@ def procOneNullCorrelation(iteration, indata, ncprefilter, oversampfreq, corrsca
 
 def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
                             optiondict):
-    if optiondict['multiproc']:
+    if optiondict['nprocs'] > 1:
         # define the consumer function here so it inherits most of the arguments
         def nullCorrelation_consumer(inQ, outQ):
             while True:
@@ -152,7 +156,7 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
         for d in range(optiondict['numestreps']):
             data_in.append(d)
         print('processing', len(data_in), 'correlations with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
+        data_out = tide_multiproc._process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
                                 chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
@@ -173,7 +177,7 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
             shuffleddata = np.random.permutation(indata)
 
             # crosscorrelate with original
-            thexcorr, dummy = onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
+            thexcorr, dummy = tide_corrpass.onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
                                              ncprefilter,
                                              indata,
                                              optiondict)
@@ -197,190 +201,6 @@ def getNullDistributionData(indata, corrscale, ncprefilter, oversampfreq, corror
     numnonzero = len(np.where(corrlist != 0.0)[0])
     print(numnonzero, 'non-zero correlations out of', len(corrlist), '(', 100.0 * numnonzero / len(corrlist), '%)')
     return corrlist
-
-
-def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
-                   ncprefilter, referencetc, optiondict, saveintermediate=False):
-    thetc_classfilter = ncprefilter.apply(oversampfreq, thetc)
-    thetc = thetc_classfilter
-
-    # prepare timecourse by normalizing, detrending, and applying a window function 
-    preppedtc = tide_math.corrnormalize(thetc, optiondict['usewindowfunc'], optiondict['dodetrend'],
-                                        windowfunc=optiondict['windowfunc'])
-
-    # now actually do the correlation
-    thexcorr = tide_corr.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=optiondict['corrweighting'])
-
-    if optiondict['corrfitprefilt'] is not None:
-        if optiondict['corrfitprefilt'] < 0.0:
-            # set filter automatically
-            cutoff = 1.0
-        else:
-            cutoff = optiondict['corrfitprefilt']
-        if saveintermediate:
-            tide_io.writevec(thexcorr, 'corrfunc')
-            thexcorr = tide_filt.dohpfftfilt(oversampfreq, cutoff, thexcorr, padlen=0)
-            tide_io.writevec(thexcorr, 'hp_corrfunc')
-
-    # find the global maximum value
-    theglobalmax = np.argmax(thexcorr)
-
-    return thexcorr[corrorigin - lagmininpts:corrorigin + lagmaxinpts], theglobalmax
-
-
-def procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, oversampfreq,
-                            corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc):
-    global rt_floattype
-    if optiondict['oversampfactor'] >= 1:
-        thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=optiondict['interptype'])
-    else:
-        thetc[:] = fmritc
-    #if vox == 20000:
-    #    saveintermediate = True
-    #else:
-    #    saveintermediate = False
-
-    thexcorr, theglobalmax = onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
-                                            referencetc, optiondict, saveintermediate=False)
-    return vox, np.mean(thetc), thexcorr, theglobalmax
-
-
-def process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chunksize=10000):
-    # send pos/data to workers
-    data_out = []
-    totalnum = len(data_in)
-    numchunks = int(totalnum // chunksize)
-    remainder = totalnum - numchunks * chunksize
-    if showprogressbar:
-        tide_util.progressbar(0, totalnum, label="Percent complete")
-
-    # process all of the complete chunks
-    for thechunk in range(numchunks):
-        # queue the chunk
-        for i, dat in enumerate(data_in[thechunk * chunksize:(thechunk + 1) * chunksize]):
-            inQ.put(dat)
-        offset = thechunk * chunksize
-
-        # retrieve the chunk
-        numreturned = 0
-        while True:
-            ret = outQ.get()
-            if ret is not None:
-                data_out.append(ret)
-            numreturned += 1
-            if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
-                tide_util.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
-            if numreturned > chunksize - 1:
-                break
-
-    # queue the remainder
-    for i, dat in enumerate(data_in[numchunks * chunksize:numchunks * chunksize + remainder]):
-        inQ.put(dat)
-    numreturned = 0
-    offset = numchunks * chunksize
-
-    # retrieve the remainder
-    while True:
-        ret = outQ.get()
-        if ret is not None:
-            data_out.append(ret)
-        numreturned += 1
-        if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
-            tide_util.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
-        if numreturned > remainder - 1:
-            break
-    if showprogressbar:
-        tide_util.progressbar(totalnum, totalnum, label="Percent complete")
-    print()
-
-    return data_out
-
-
-def correlationpass(fmridata, fmrifftdata, referencetc,
-                    fmri_x, os_fmri_x,
-                    tr,
-                    corrorigin, lagmininpts, lagmaxinpts,
-                    corrmask, corrout, meanval,
-                    ncprefilter,
-                    optiondict):
-    oversampfreq = optiondict['oversampfactor'] / tr
-    inputshape = np.shape(fmridata)
-    volumetotal = 0
-    reportstep = 1000
-    thetc = np.zeros(np.shape(os_fmri_x), dtype=rt_floattype)
-    theglobalmaxlist = []
-    if optiondict['multiproc']:
-        # define the consumer function here so it inherits most of the arguments
-        def correlation_consumer(inQ, outQ):
-            while True:
-                try:
-                    # get a new message
-                    val = inQ.get()
-
-                    # this is the 'TERM' signal
-                    if val is None:
-                        break
-
-                    # process and send the data
-                    outQ.put(procOneVoxelCorrelation(val, thetc, optiondict, fmri_x, fmridata[val, :], os_fmri_x,
-                                                     oversampfreq,
-                                                     corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc))
-
-                except Exception as e:
-                    print("error!", e)
-                    break
-
-        # initialize the workers and the queues
-        n_workers = optiondict['nprocs']
-        inQ = mp.Queue()
-        outQ = mp.Queue()
-        workers = [mp.Process(target=correlation_consumer, args=(inQ, outQ)) for i in range(n_workers)]
-        for i, w in enumerate(workers):
-            w.start()
-
-        # pack the data and send to workers
-        data_in = []
-        for d in range(inputshape[0]):
-            data_in.append(d)
-        print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
-                                chunksize=optiondict['mp_chunksize'])
-
-        # shut down workers
-        for i in range(n_workers):
-            inQ.put(None)
-        for w in workers:
-            w.terminate()
-            w.join()
-
-        # unpack the data
-        volumetotal = 0
-        for voxel in data_out:
-            # corrmask[voxel[0]] = 1
-            meanval[voxel[0]] = voxel[1]
-            corrout[voxel[0], :] = voxel[2]
-            theglobalmaxlist.append(voxel[3] + 0)
-            volumetotal += 1
-        data_out = []
-    else:
-        for vox in range(0, inputshape[0]):
-            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
-                tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            dummy, meanval[vox], corrout[vox, :], theglobalmax = procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x,
-                                                                                         fmridata[vox, :], os_fmri_x,
-                                                                                         oversampfreq,
-                                                                                         corrorigin, lagmininpts,
-                                                                                         lagmaxinpts,
-                                                                                         ncprefilter, referencetc)
-            theglobalmaxlist.append(theglobalmax + 0)
-            volumetotal += 1
-    print('\nCorrelation performed on ' + str(volumetotal) + ' voxels')
-
-    # garbage collect
-    collected = gc.collect()
-    print("Garbage collector: collected %d objects." % collected)
-
-    return volumetotal, theglobalmaxlist
 
 
 def onecorrfit(corrfunc, corrscale, optiondict, displayplots=False, initiallag=None):
@@ -497,7 +317,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     zerolagtc = rt_floatset(genlagtc.yfromx(initial_fmri_x))
     sliceoffsettime = 0.0
 
-    if optiondict['multiproc']:
+    if optiondict['nprocs'] > 1:
         # define the consumer function here so it inherits most of the arguments
         def fitcorr_consumer(inQ, outQ):
             while True:
@@ -540,7 +360,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                 if initiallags[d] > -1000000.0:
                     data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
+        data_out = tide_multiproc._process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
                                 chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
@@ -592,280 +412,6 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     return volumetotal
 
 
-def procOneVoxelTimeShift(vox, fmritc, optiondict, lagstrength, R2val, lagtime, padtrs, fmritr, theprefilter):
-    if optiondict['refineprenorm'] == 'mean':
-        thedivisor = np.mean(fmritc)
-    elif optiondict['refineprenorm'] == 'var':
-        thedivisor = np.var(fmritc)
-    elif optiondict['refineprenorm'] == 'std':
-        thedivisor = np.std(fmritc)
-    elif optiondict['refineprenorm'] == 'invlag':
-        if lagtime < optiondict['lagmaxthresh']:
-            thedivisor = optiondict['lagmaxthresh'] - lagtime
-        else:
-            thedivisor = 0.0
-    else:
-        thedivisor = 1.0
-    if thedivisor != 0.0:
-        normfac = 1.0 / thedivisor
-    else:
-        normfac = 0.0
-
-    if optiondict['refineweighting'] == 'R':
-        thisweight = lagstrength
-    elif optiondict['refineweighting'] == 'R2':
-        thisweight = R2val
-    else:
-        thisweight = 1.0
-    if optiondict['dodetrend']:
-        normtc = tide_fit.detrend(fmritc * normfac * thisweight, demean=True)
-    else:
-        normtc = fmritc * normfac * thisweight
-    shifttr = -(-optiondict['offsettime'] + lagtime) / fmritr  # lagtime is in seconds
-    [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide_resample.timeshift(normtc, shifttr, padtrs)
-    if optiondict['filterbeforePCA']:
-        outtc = theprefilter.apply(optiondict['fmrifreq'], shiftedtc)
-        outweights = theprefilter.apply(optiondict['fmrifreq'], weights)
-    else:
-        outtc = 1.0 * shiftedtc
-        outweights = 1.0 * weights
-    if optiondict['psdfilter']:
-        freqs, psd = welch(tide_math.corrnormalize(shiftedtc, True, True), fmritr, scaling='spectrum', window='hamming',
-                           return_onesided=False, nperseg=len(shiftedtc))
-        return vox, outtc, outweights, np.sqrt(psd)
-    else:
-        return vox, outtc, outweights, None
-
-
-def refineregressor(reference, fmridata, fmritr, shiftedtcs, weights, passnum, lagstrengths, lagtimes,
-                    lagsigma, R2,
-                    theprefilter, optiondict, padtrs=60, includemask=None, excludemask=None):
-    # print('entering refineregressor with padtrs=', padtrs)
-    inputshape = np.shape(fmridata)
-    ampmask = np.where(lagstrengths >= optiondict['ampthresh'], np.int16(1), np.int16(0))
-    if optiondict['lagmaskside'] == 'upper':
-        delaymask = \
-            np.where(lagtimes > optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
-            np.where(lagtimes < optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
-    elif optiondict['lagmaskside'] == 'lower':
-        delaymask = \
-            np.where(lagtimes < -optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
-            np.where(lagtimes > -optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
-    else:
-        abslag = abs(lagtimes)
-        delaymask = \
-            np.where(abslag > optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
-            np.where(abslag < optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
-    sigmamask = np.where(lagsigma < optiondict['sigmathresh'], np.int16(1), np.int16(0))
-    locationmask = 0 * ampmask + 1
-    if includemask is not None:
-        locationmask = locationmask * includemask
-    if excludemask is not None:
-        locationmask = locationmask * excludemask
-    print('location mask created')
-
-    # first generate the refine mask
-    locationfails = np.sum(1 - locationmask)
-    ampfails = np.sum(1 - ampmask)
-    lagfails = np.sum(1 - delaymask)
-    sigmafails = np.sum(1 - sigmamask)
-    maskarray = locationmask * ampmask * delaymask * sigmamask
-    volumetotal = np.sum(maskarray)
-    reportstep = 1000
-
-    # timeshift the valid voxels
-    if optiondict['multiproc']:
-        # define the consumer function here so it inherits most of the arguments
-        def timeshift_consumer(inQ, outQ):
-            while True:
-                try:
-                    # get a new message
-                    val = inQ.get()
-
-                    # this is the 'TERM' signal
-                    if val is None:
-                        break
-
-                    # process and send the data
-                    outQ.put(procOneVoxelTimeShift(val, fmridata[val, :], optiondict,
-                                                   lagstrengths[val], R2[val], lagtimes[val], padtrs, fmritr,
-                                                   theprefilter))
-
-                except Exception as e:
-                    print("error!", e)
-                    break
-
-        # initialize the workers and the queues
-        n_workers = optiondict['nprocs']
-        inQ = mp.Queue()
-        outQ = mp.Queue()
-        workers = [mp.Process(target=timeshift_consumer, args=(inQ, outQ)) for i in range(n_workers)]
-        for i, w in enumerate(workers):
-            w.start()
-
-        # pack the data and send to workers
-        data_in = []
-        for d in range(inputshape[0]):
-            if (maskarray[d] > 0) or optiondict['shiftall']:
-                data_in.append(d)
-        print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
-                                chunksize=optiondict['mp_chunksize'])
-
-        # shut down workers
-        for i in range(n_workers):
-            inQ.put(None)
-        for w in workers:
-            w.terminate()
-            w.join()
-
-        # unpack the data
-        psdlist = []
-        for voxel in data_out:
-            shiftedtcs[voxel[0], :] = voxel[1]
-            weights[voxel[0], :] = voxel[2]
-            if optiondict['psdfilter']:
-                psdlist.append(voxel[3])
-        data_out = []
-    else:
-        psdlist = []
-        for vox in range(0, inputshape[0]):
-            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
-                tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete (timeshifting)')
-            if (maskarray[vox] > 0) or optiondict['shiftall']:
-                retvals = procOneVoxelTimeShift(vox, fmridata[vox, :], optiondict, lagstrengths[vox], R2[vox],
-                                                lagtimes[vox], padtrs, fmritr, theprefilter)
-                shiftedtcs[retvals[0], :] = retvals[1]
-                weights[retvals[0], :] = retvals[2]
-                if optiondict['psdfilter']:
-                    psdlist.append(retvals[3])
-        print()
-
-    if optiondict['psdfilter']:
-        print(len(psdlist))
-        print(psdlist[0])
-        print(np.shape(np.asarray(psdlist, dtype=rt_floattype)))
-        averagepsd = np.mean(np.asarray(psdlist, dtype=rt_floattype), axis=0)
-        stdpsd = np.std(np.asarray(psdlist, dtype=rt_floattype), axis=0)
-        snr = np.nan_to_num(averagepsd / stdpsd)
-        # fig = figure()
-        # ax = fig.add_subplot(111)
-        # ax.set_title('Average and stedev of PSD')
-        # plot(averagepsd)
-        # plot(stdpsd)
-        # show()
-        # fig = figure()
-        # ax = fig.add_subplot(111)
-        # ax.set_title('SNR')
-        # plot(snr)
-        # show()
-
-    # now generate the refined timecourse(s)
-    validlist = np.where(maskarray > 0)[0]
-    refinevoxels = shiftedtcs[validlist]
-    refineweights = weights[validlist]
-    weightsum = np.sum(refineweights, axis=0) / volumetotal
-    averagedata = np.sum(refinevoxels, axis=0) / volumetotal
-    if optiondict['shiftall']:
-        invalidlist = np.where((1 - ampmask) > 0)[0]
-        discardvoxels = shiftedtcs[invalidlist]
-        discardweights = weights[invalidlist]
-        discardweightsum = np.sum(discardweights, axis=0) / volumetotal
-        averagediscard = np.sum(discardvoxels, axis=0) / volumetotal
-    if optiondict['dodispersioncalc']:
-        print('splitting regressors by time lag for phase delay estimation')
-        laglist = np.arange(optiondict['dispersioncalc_lower'], optiondict['dispersioncalc_upper'],
-                            optiondict['dispersioncalc_step'])
-        dispersioncalcout = np.zeros((np.shape(laglist)[0], inputshape[1]), dtype=rt_floattype)
-        fftlen = int(inputshape[1] // 2)
-        fftlen -= fftlen % 2
-        dispersioncalcspecmag = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
-        dispersioncalcspecphase = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
-        for lagnum in range(0, np.shape(laglist)[0]):
-            lower = laglist[lagnum] - optiondict['dispersioncalc_step'] / 2.0
-            upper = laglist[lagnum] + optiondict['dispersioncalc_step'] / 2.0
-            inlagrange = np.where(
-                locationmask * ampmask * np.where(lower < lagtimes, np.int16(1), np.int16(0))
-                * np.where(lagtimes < upper, np.int16(1), np.int16(0)))[0]
-            print('    summing', np.shape(inlagrange)[0], 'regressors with lags from', lower, 'to', upper)
-            if np.shape(inlagrange)[0] > 0:
-                dispersioncalcout[lagnum, :] = tide_math.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0), False,
-                                                                       True,
-                                                                       windowfunc=optiondict['windowfunc'])
-                freqs, dispersioncalcspecmag[lagnum, :], dispersioncalcspecphase[lagnum, :] = tide_math.polarfft(
-                    dispersioncalcout[lagnum, :],
-                    1.0 / fmritr)
-            inlagrange = None
-        tide_io.writenpvecs(dispersioncalcout,
-                            optiondict['outputname'] + '_dispersioncalcvecs_pass' + str(passnum) + '.txt')
-        tide_io.writenpvecs(dispersioncalcspecmag,
-                            optiondict['outputname'] + '_dispersioncalcspecmag_pass' + str(passnum) + '.txt')
-        tide_io.writenpvecs(dispersioncalcspecphase,
-                            optiondict['outputname'] + '_dispersioncalcspecphase_pass' + str(passnum) + '.txt')
-        tide_io.writenpvecs(freqs, optiondict['outputname'] + '_dispersioncalcfreqs_pass' + str(passnum) + '.txt')
-
-    if optiondict['estimatePCAdims']:
-        pcacomponents = 'mle'
-    else:
-        pcacomponents = 1
-    icacomponents = 1
-
-    if optiondict['refinetype'] == 'ica':
-        print('performing ica refinement')
-        thefit = FastICA(n_components=icacomponents).fit(refinevoxels)  # Reconstruct signals
-        print('Using first of ', len(thefit.components_), ' components')
-        icadata = thefit.components_[0]
-        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), True, True)
-        filteredica = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], icadata), True, True)
-        thepxcorr = pearsonr(filteredavg, filteredica)[0]
-        print('ica/avg correlation = ', thepxcorr)
-        if thepxcorr > 0.0:
-            outputdata = 1.0 * icadata
-        else:
-            outputdata = -1.0 * icadata
-    elif optiondict['refinetype'] == 'pca':
-        print('performing pca refinement')
-        thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
-        print('Using first of ', len(thefit.components_), ' components')
-        pcadata = thefit.components_[0]
-        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), True, True)
-        filteredpca = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], pcadata), True, True)
-        thepxcorr = pearsonr(filteredavg, filteredpca)[0]
-        print('pca/avg correlation = ', thepxcorr)
-        if thepxcorr > 0.0:
-            outputdata = 1.0 * pcadata
-        else:
-            outputdata = -1.0 * pcadata
-    elif optiondict['refinetype'] == 'weighted_average':
-        print('performing weighted averaging refinement')
-        outputdata = np.nan_to_num(averagedata / weightsum)
-    else:
-        print('performing unweighted averaging refinement')
-        outputdata = averagedata
-
-    if optiondict['cleanrefined']:
-        thefit, R = tide_fit.mlregress(averagediscard, averagedata)
-        fitcoff = rt_floatset(thefit[0, 1])
-        datatoremove = rt_floatset(fitcoff * averagediscard)
-        outputdata -= datatoremove
-    print()
-    print(str(
-        volumetotal) + ' voxels used for refinement:',
-          '\n	', locationfails, ' locationfails',
-          '\n	', ampfails, ' ampfails',
-          '\n	', lagfails, ' lagfails',
-          '\n	', sigmafails, ' sigmafails')
-
-    if optiondict['psdfilter']:
-        outputdata = tide_filt.transferfuncfilt(outputdata, snr)
-
-    # garbage collect
-    collected = gc.collect()
-    print("Garbage collector: collected %d objects." % collected)
-
-    return volumetotal, outputdata, maskarray
-
-
 def procOneVoxelWiener(vox, lagtc, inittc):
     thefit, R = tide_fit.mlregress(lagtc, inittc)
     fitcoff = rt_floatset(thefit[0, 1])
@@ -876,7 +422,7 @@ def procOneVoxelWiener(vox, lagtc, inittc):
 
 def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict, meanvalue, rvalue, r2value, fitcoff,
                fitNorm, datatoremove, filtereddata):
-    if optiondict['multiproc']:
+    if optiondict['nprocs'] > 1:
         # define the consumer function here so it inherits most of the arguments
         def Wiener_consumer(inQ, outQ):
             while True:
@@ -909,7 +455,7 @@ def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondi
             if np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
+        data_out = tide_multiproc._process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
                                 chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
@@ -955,7 +501,7 @@ def procOneVoxelGLM(vox, lagtc, inittc):
 
 def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict, meanvalue, rvalue, r2value, fitcoff,
             fitNorm, datatoremove, filtereddata):
-    if optiondict['multiproc']:
+    if optiondict['nprocs'] > 1:
         # define the consumer function here so it inherits most of the arguments
         def GLM_consumer(inQ, outQ):
             while True:
@@ -988,7 +534,7 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
             if (np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval) or optiondict['nothresh']:
                 data_in.append(d)
         print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
+        data_out = tide_multiproc._process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
                                 chunksize=optiondict['mp_chunksize'])
 
         # shut down workers
@@ -1021,9 +567,6 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
                 filtereddata[vox] = \
                     procOneVoxelGLM(vox, lagtc[vox, :], inittc)
                 volumetotal += 1
-                # if optiondict['doprewhiten']:
-                #    arcoffs[vox, :] = pacf_yw(thefilttc, nlags=optiondict['armodelorder'])[1:]
-                #    prewhiteneddata[vox, :] = rt_floatset(prewhiten(inittc, arcoffs[vox, :]))
 
     return volumetotal
 
@@ -1086,49 +629,6 @@ def allocshared(theshape, thetype):
     outarray = np.frombuffer(outarray_shared, dtype=thetype, count=thesize)
     outarray.shape = theshape
     return outarray, outarray_shared, theshape
-
-
-def logmem(msg, file=None):
-    if msg is None:
-        logline = ','.join([
-            '',
-            'Self Max RSS',
-            'Self Shared Mem',
-            'Self Unshared Mem',
-            'Self Unshared Stack',
-            'Self Non IO Page Fault'
-            'Self IO Page Fault'
-            'Self Swap Out',
-            'Children Max RSS',
-            'Children Shared Mem',
-            'Children Unshared Mem',
-            'Children Unshared Stack',
-            'Children Non IO Page Fault'
-            'Children IO Page Fault'
-            'Children Swap Out'])
-    else:
-        rcusage = resource.getrusage(resource.RUSAGE_SELF)
-        outvals = [msg]
-        outvals.append(str(rcusage.ru_maxrss))
-        outvals.append(str(rcusage.ru_ixrss))
-        outvals.append(str(rcusage.ru_idrss))
-        outvals.append(str(rcusage.ru_isrss))
-        outvals.append(str(rcusage.ru_minflt))
-        outvals.append(str(rcusage.ru_majflt))
-        outvals.append(str(rcusage.ru_nswap))
-        rcusage = resource.getrusage(resource.RUSAGE_CHILDREN)
-        outvals.append(str(rcusage.ru_maxrss))
-        outvals.append(str(rcusage.ru_ixrss))
-        outvals.append(str(rcusage.ru_idrss))
-        outvals.append(str(rcusage.ru_isrss))
-        outvals.append(str(rcusage.ru_minflt))
-        outvals.append(str(rcusage.ru_majflt))
-        outvals.append(str(rcusage.ru_nswap))
-        logline = ','.join(outvals)
-    if file is None:
-        print(logline)
-    else:
-        file.writelines(logline + "\n")
 
 
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
@@ -1436,7 +936,7 @@ def main():
     optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict['corrmaskname'] = None  # name of correlation mask
     optiondict[
-        'check_autocorrelation'] = False  # check for periodic components that corrupt the autocorrelation
+        'check_autocorrelation'] = True  # check for periodic components that corrupt the autocorrelation
     optiondict[
         'fix_autocorrelation'] = False  # remove periodic components that corrupt the autocorrelation
     optiondict[
@@ -1539,8 +1039,7 @@ def main():
     optiondict['verbose'] = False
     optiondict['release_version'], optiondict['git_tag'] = tide_util.version()
     optiondict['python_version'] = str(sys.version_info)
-    optiondict['multiproc'] = False
-    optiondict['nprocs'] = -1
+    optiondict['nprocs'] = 1
     optiondict['mp_chunksize'] = 50000
     optiondict['showprogressbar'] = True
 
@@ -1741,7 +1240,6 @@ def main():
             theprefilter.setdebug(optiondict['debug'])
             print('enabling additional data output for debugging')
         elif o == '--multiproc':
-            optiondict['multiproc'] = True
             optiondict['nprocs'] = -1
             print('enabling multiprocessing')
         elif o == '--nosharedmem':
@@ -1749,7 +1247,6 @@ def main():
             linkchar = '='
             print('will not use shared memory for large array storage')
         elif o == '--nprocs':
-            optiondict['multiproc'] = True
             optiondict['nprocs'] = int(a)
             linkchar = '='
             if optiondict['nprocs'] < 0:
@@ -1913,7 +1410,8 @@ def main():
             linkchar = '='
             print('Data time step forced to ', realtr)
         elif o == '-t':
-            print('DEPRECATION WARNING: The -t option is obsolete and will be removed in a future version.  Use --datatstep=TSTEP or --datafreq=FREQ instead')
+            print(
+                'DEPRECATION WARNING: The -t option is obsolete and will be removed in a future version.  Use --datatstep=TSTEP or --datafreq=FREQ instead')
             realtr = float(a)
             print('Data time step forced to ', realtr)
         elif o == '-c':
@@ -2087,7 +1585,8 @@ def main():
             print('Will multiply regressor by timecourse in ', optiondict['tmaskname'])
         elif o == '--refinepasses' or o == '--passes':
             if o == '--refinepasses':
-                print('DEPRECATION WARNING - refinepasses is deprecated and will be removed in a future version - use passes instead')
+                print(
+                    'DEPRECATION WARNING - refinepasses is deprecated and will be removed in a future version - use passes instead')
             optiondict['passes'] = int(a)
             linkchar = '='
             print('Will do ', optiondict['passes'], ' processing passes')
@@ -2111,7 +1610,7 @@ def main():
     timings.append(['Argument parsing done', time.time(), None, None])
 
     # don't use shared memory if there is only one process
-    if not optiondict['multiproc']:
+    if optiondict['nprocs'] == 1:
         optiondict['sharedmem'] = False
         print('running single process - disabled shared memory use')
 
@@ -2156,10 +1655,10 @@ def main():
     # open up the memory usage file
     if not optiondict['memprofile']:
         memfile = open(outputname + '_memusage.csv', 'w')
-        logmem(None, file=memfile)
+        tide_util.logmem(None, file=memfile)
 
     # open the fmri datafile
-    logmem('before reading in fmri data', file=memfile)
+    tide_util.logmem('before reading in fmri data', file=memfile)
     if tide_io.checkiftext(fmrifilename):
         print('input file is text - all I/O will be to text files')
         optiondict['textio'] = True
@@ -2194,7 +1693,7 @@ def main():
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
             slicesize = numspatiallocs / int(numslices)
         xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
-    logmem('after reading in fmri data', file=memfile)
+    tide_util.logmem('after reading in fmri data', file=memfile)
 
     # correct some fields if necessary
     if optiondict['isgrayordinate']:
@@ -2244,7 +1743,7 @@ def main():
         timepoints = validend - validstart + 1
 
     # read in the optional masks
-    logmem('before setting masks', file=memfile)
+    tide_util.logmem('before setting masks', file=memfile)
     internalincludemask = None
     internalexcludemask = None
     if optiondict['includemaskname'] is not None:
@@ -2258,7 +1757,7 @@ def main():
         else:
             nimincludemask, theincludemask, nimincludemask_hdr, theincludemaskdims, theincludmasksizes = tide_io.readfromnifti(
                 optiondict['includemaskname'])
-            if not tide_io.checkspacedimmatch(theincludemaskdims, thedims):
+            if not tide_io.checkspacematch(nimincludemask_hdr, nim_hdr):
                 print('Dimensions of include mask do not match the fmri data - exiting')
                 sys.exit()
         internalincludemask = theincludemask.reshape(numspatiallocs)
@@ -2275,14 +1774,14 @@ def main():
             nimexcludemask, theexcludemask, nimexcludemask_hdr, theexcludemaskdims, theexcludmasksizes = tide_io.readfromnifti(
                 optiondict['excludemaskname'])
             theexcludemask = 1.0 - theexcludemask
-            if not tide_io.checkspacedimmatch(theexcludemaskdims, thedims):
+            if not tide_io.checkspacematch(nimexcludemask_hdr, nim_hdr):
                 print('Dimensions of exclude mask do not match the fmri data - exiting')
                 sys.exit()
         internalexcludemask = theexcludemask.reshape(numspatiallocs)
-    logmem('after setting masks', file=memfile)
+    tide_util.logmem('after setting masks', file=memfile)
 
     # find the threshold value for the image data
-    logmem('before selecting valid voxels', file=memfile)
+    tide_util.logmem('before selecting valid voxels', file=memfile)
     threshval = tide_stats.getfracval(fmri_data[:, optiondict['addedskip']:], 0.98) / 25.0
     if optiondict['corrmaskname'] is not None:
         if optiondict['textio']:
@@ -2295,7 +1794,7 @@ def main():
         else:
             nimcorrmask, nimcorrmask, nimcorrmask_hdr, corrmaskdims, theincludmasksizes = tide_io.readfromnifti(
                 optiondict['corrmaskname'])
-            if not tide_io.checkspacedimmatch(corrmaskdims, thedims):
+            if not tide_io.checkspacematch(nimcorrmask_hdr, nim_hdr):
                 print('Dimensions of correlation mask do not match the fmri data - exiting')
                 sys.exit()
             corrmask = np.uint16(nimcorrmask.reshape((numspatiallocs)))
@@ -2326,7 +1825,7 @@ def main():
         print('internalexcludemask_valid has size:', internalexcludemask_valid.size)
     else:
         internalexcludemask_valid = None
-    logmem('after selecting valid voxels', file=memfile)
+    tide_util.logmem('after selecting valid voxels', file=memfile)
 
     # move fmri_data_valid into shared memory
     if optiondict['sharedmem']:
@@ -2335,17 +1834,17 @@ def main():
         if optiondict['memprofile']:
             numpy2shared_func = profile(numpy2shared, precision=2)
         else:
-            logmem('before fmri data move', file=memfile)
+            tide_util.logmem('before fmri data move', file=memfile)
             numpy2shared_func = numpy2shared
         fmri_data_valid, fmri_data_valid_shared, fmri_data_valid_shared_shape = numpy2shared_func(fmri_data_valid,
                                                                                                   rt_floatset)
         timings.append(['End moving fmri_data to shared memory', time.time(), None, None])
 
     # get rid of memory we aren't using
-    logmem('before purging full sized fmri data', file=memfile)
+    tide_util.logmem('before purging full sized fmri data', file=memfile)
     fmri_data = None
     nim_data = None
-    logmem('after purging full sized fmri data', file=memfile)
+    tide_util.logmem('after purging full sized fmri data', file=memfile)
 
     # read in the timecourse to resample
     timings.append(['Start of reference prep', time.time(), None, None])
@@ -2511,7 +2010,7 @@ def main():
         tide_io.writenpvecs(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts], outputname + '_corrtimes.txt')
 
     # allocate all of the data arrays
-    logmem('before main array allocation', file=memfile)
+    tide_util.logmem('before main array allocation', file=memfile)
     if optiondict['textio']:
         nativespaceshape = xsize
         nativearmodelshape = (xsize, optiondict['armodelorder'])
@@ -2534,7 +2033,7 @@ def main():
     R2 = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
     outarmodelarray = np.zeros(internalarmodelshape, dtype=rt_floattype)
-    logmem('after main array allocation', file=memfile)
+    tide_util.logmem('after main array allocation', file=memfile)
 
     corroutlen = np.shape(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])[0]
     if optiondict['textio']:
@@ -2555,7 +2054,7 @@ def main():
         corrout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
         gaussout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
         outcorrarray = np.zeros(internalcorrshape, dtype=rt_floattype)
-    logmem('after correlation array allocation', file=memfile)
+    tide_util.logmem('after correlation array allocation', file=memfile)
 
     if optiondict['textio']:
         nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
@@ -2567,7 +2066,7 @@ def main():
     internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
     lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-    logmem('after lagtc array allocation', file=memfile)
+    tide_util.logmem('after lagtc array allocation', file=memfile)
 
     if optiondict['passes'] > 1:
         if optiondict['sharedmem']:
@@ -2577,7 +2076,7 @@ def main():
             shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
         # refinemask = np.zeros(internalvalidspaceshape, dtype='uint16')
-        logmem('after refinement array allocation', file=memfile)
+        tide_util.logmem('after refinement array allocation', file=memfile)
     if optiondict['sharedmem']:
         outfmriarray, dummy, dummy = allocshared(internalfmrishape, rt_floatset)
     else:
@@ -2620,7 +2119,7 @@ def main():
             lagindpad = corrorigin - 2 * np.max((lagmininpts, lagmaxinpts))
             acmininpts = lagmininpts + lagindpad
             acmaxinpts = lagmaxinpts + lagindpad
-            thexcorr, dummy = onecorrelation(referencetc, oversampfreq, corrorigin, acmininpts, acmaxinpts,
+            thexcorr, dummy = tide_corrpass.onecorrelation(referencetc, oversampfreq, corrorigin, acmininpts, acmaxinpts,
                                              theprefilter,
                                              referencetc,
                                              optiondict)
@@ -2680,7 +2179,7 @@ def main():
             if optiondict['memprofile']:
                 getNullDistributionData_func = profile(getNullDistributionData, precision=2)
             else:
-                logmem('before getnulldistristributiondata', file=memfile)
+                tide_util.logmem('before getnulldistristributiondata', file=memfile)
                 getNullDistributionData_func = getNullDistributionData
             corrdistdata = getNullDistributionData_func(cleaned_referencetc, corrscale, theprefilter,
                                                         oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
@@ -2718,19 +2217,22 @@ def main():
         print('\n\nCorrelation calculation, pass ' + str(thepass))
         timings.append(['Correlation calculation start, pass ' + str(thepass), time.time(), None, None])
         if optiondict['memprofile']:
-            correlationpass_func = profile(correlationpass, precision=2)
+            correlationpass_func = profile(tide_corrpass.correlationpass, precision=2)
         else:
-            logmem('before correlationpass', file=memfile)
-            correlationpass_func = correlationpass
+            tide_util.logmem('before correlationpass', file=memfile)
+            correlationpass_func = tide_corrpass.correlationpass
         voxelsprocessed_cp, theglobalmaxlist = correlationpass_func(fmri_data_valid[:, optiondict['addedskip']:],
                                                                     fft_fmri_data,
                                                                     cleaned_referencetc,
                                                                     initial_fmri_x, os_fmri_x,
                                                                     fmritr,
                                                                     corrorigin, lagmininpts, lagmaxinpts,
-                                                                    corrmask, corrout, meanval,
+                                                                    corrout, meanval,
                                                                     theprefilter,
-                                                                    optiondict)
+                                                                    optiondict,
+                                                                    rt_floatset=rt_floatset,
+                                                                    rt_floattype=rt_floattype
+                                                                    )
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
@@ -2746,7 +2248,7 @@ def main():
         if optiondict['memprofile']:
             fitcorr_func = profile(fitcorr, precision=2)
         else:
-            logmem('before fitcorr', file=memfile)
+            tide_util.logmem('before fitcorr', file=memfile)
             fitcorr_func = fitcorr
         voxelsprocessed_fc = fitcorr_func(genlagtc, initial_fmri_x,
                                           lagtc, slicesize,
@@ -2769,8 +2271,8 @@ def main():
                 outmaparray[validvoxels] = eval('lagtimes')[:]
                 medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape((numspatiallocs))
                 initlags = \
-                np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, -1000000.0)[
-                    validvoxels]
+                    np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, -1000000.0)[
+                        validvoxels]
                 if len(initlags) > 0:
                     voxelsprocessed_fc_ds += fitcorr_func(genlagtc, initial_fmri_x,
                                                           lagtc, slicesize,
@@ -2810,12 +2312,12 @@ def main():
 
             # regenerate regressor for next pass
             if optiondict['memprofile']:
-                refineregressor_func = profile(refineregressor, precision=2)
+                refineregressor_func = profile(tide_refine.refineregressor, precision=2)
             else:
-                logmem('before refineregressor', file=memfile)
-                refineregressor_func = refineregressor
+                tide_util.logmem('before refineregressor', file=memfile)
+                refineregressor_func = tide_refine.refineregressor
             voxelsprocessed_rr, outputdata, refinemask = refineregressor_func(
-                cleaned_nonosreferencetc, fmri_data_valid[:, :], fmritr, shiftedtcs, weights, thepass,
+                fmri_data_valid[:, :], fmritr, shiftedtcs, weights, thepass,
                 lagstrengths, lagtimes, lagsigma, R2, theprefilter, optiondict,
                 padtrs=numpadtrs, includemask=internalincludemask_valid, excludemask=internalexcludemask_valid)
             normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
@@ -2861,8 +2363,8 @@ def main():
         wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         wpeak = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
 
-        voxelsprocessed_wiener = wienerpass(numspatiallocs, reportstep, fmri_data_valid, threshval, lagtc,
-            optiondict, wienerdeconv, wpeak, resampref_y)
+        voxelsprocessed_wiener = wienerpass(numspatiallocs, reportstep, fmri_data_valid, threshval,
+                                            optiondict, wienerdeconv, wpeak, resampref_y)
         timings.append(['Wiener deconvolution end', time.time(), voxelsprocessed_wiener, 'voxels'])
 
     # Post refinement step 1 - GLM fitting to remove moving signal
@@ -2897,7 +2399,7 @@ def main():
                 if optiondict['memprofile']:
                     numpy2shared_func = profile(numpy2shared, precision=2)
                 else:
-                    logmem('before movetoshared (glm)', file=memfile)
+                    tide_util.logmem('before movetoshared (glm)', file=memfile)
                     numpy2shared_func = numpy2shared
                 fmri_data_valid, fmri_data_valid_shared, fmri_data_valid_shared_shape = numpy2shared_func(
                     fmri_data_valid, rt_floatset)
@@ -2923,7 +2425,7 @@ def main():
         if optiondict['memprofile']:
             memcheckpoint('about to start glm noise removal...')
         else:
-            logmem('before glm', file=memfile)
+            tide_util.logmem('before glm', file=memfile)
 
         if optiondict['preservefiltering']:
             for i in range(len(validvoxels)):
@@ -2937,7 +2439,7 @@ def main():
         if optiondict['memprofile']:
             memcheckpoint('...done')
         else:
-            logmem('after glm filter', file=memfile)
+            tide_util.logmem('after glm filter', file=memfile)
         if optiondict['doprewhiten']:
             arcoff_ref = pacf_yw(resampref_y, nlags=optiondict['armodelorder'])[1:]
             print('\nAR coefficient(s) for reference waveform: ', arcoff_ref)
@@ -2973,11 +2475,11 @@ def main():
     if optiondict['doprewhiten']:
         print('Step 3 - reprocessing prewhitened data')
         timings.append(['Step 3 start', time.time(), None, None])
-        dummy, dummy = correlationpass(prewhiteneddata, fft_fmri_data, referencetc_pw,
+        dummy, dummy = tide_corrpass.correlationpass(prewhiteneddata, fft_fmri_data, referencetc_pw,
                                        initial_fmri_x, os_fmri_x,
                                        fmritr,
                                        corrorigin, lagmininpts, lagmaxinpts,
-                                       corrmask, corrout, meanval,
+                                       corrout, meanval,
                                        theprefilter,
                                        optiondict)
 
@@ -3028,7 +2530,7 @@ def main():
         if optiondict['memprofile']:
             memcheckpoint('about to write ' + mapname)
         else:
-            logmem('about to write ' + mapname, file=memfile)
+            tide_util.logmem('about to write ' + mapname, file=memfile)
         outmaparray[validvoxels] = eval(mapname)[:]
         if optiondict['textio']:
             tide_io.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
@@ -3043,7 +2545,7 @@ def main():
             if optiondict['memprofile']:
                 memcheckpoint('about to write ' + mapname)
             else:
-                logmem('about to write ' + mapname, file=memfile)
+                tide_util.logmem('about to write ' + mapname, file=memfile)
             outmaparray[validvoxels] = eval(mapname)[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
@@ -3061,7 +2563,7 @@ def main():
             if optiondict['memprofile']:
                 memcheckpoint('about to write ' + mapname)
             else:
-                logmem('about to write ' + mapname, file=memfile)
+                tide_util.logmem('about to write ' + mapname, file=memfile)
             outmaparray = eval(mapname)[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),

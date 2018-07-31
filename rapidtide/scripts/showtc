@@ -72,10 +72,12 @@ def usage():
     print("    --noyax                  - don't show y axis")
     print("    --starttime=START        - start plot at START seconds")
     print("    --endtime=END            - end plot at END seconds")
+    print("    --debug                  - print debugging information")
     return ()
 
 
 # set default variable values
+debug = False
 dolegend = True
 dotranspose = False
 dowaterfall = False
@@ -106,6 +108,7 @@ try:
     opts, args = getopt.gnu_getopt(sys.argv, "F",
                                    ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "voffset=", "noxax",
                                     "noyax",
+                                    "debug",
                                     "starttime=", "endtime=",
                                     "samplerate=", "colorlist=", "linewidth=", "legendlist=", "title=",
                                     "separatelinked", "separate", "sampletime=", "tofile="])
@@ -127,6 +130,9 @@ for o, a in opts:
     if o == "--nolegend":
         dolegend = False
         print('turning off legend label')
+    elif o == '--debug':
+        debug = True
+        print('turning debuggin on')
     elif o == '--separate':
         separate = True
         linky = False
@@ -236,7 +242,8 @@ for i in range(0, numfiles):
         colnames = None
     if dotranspose:
         invecs = np.transpose(invecs)
-    print('   ', invecs.shape[0], ' columns')
+    if debug:
+        print('   ', invecs.shape[0], ' columns')
     if len(textfilename[i]) == 2:
         collist = []
         for column in (textfilename[i][1]).split(','):
@@ -245,7 +252,8 @@ for i in range(0, numfiles):
         collist = range(0, invecs.shape[0])
         # for j in range(0, invecs.shape[0]):
     for j in collist:
-        print('appending vector number ', j)
+        if debug:
+            print('appending vector number ', j)
         if dospectrum:
             if invecs.shape[1] % 2 == 1:
                 invec = invecs[j, :-1]
@@ -269,7 +277,7 @@ for i in range(0, numfiles):
             yvecs.append(spectrum)
         else:
             yvecs.append(invecs[j] * 1.0)
-            xvecs.append(thisstartoffset + arange(0.0, len(yvecs[numvecs]), 1.0) / thissamplerate)
+            xvecs.append(thisstartoffset + arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate)
         if len(yvecs[-1]) < minlen:
             minlen = len(yvecs[-1])
         if not legendset:
@@ -299,10 +307,11 @@ thestartpoint = np.max([0, bisect.bisect_right(xvecs[0], thestarttime)])
 theendpoint = np.min([minlen - 1, bisect.bisect_left(xvecs[0], theendtime)])
 thestarttime = xvecs[0][thestartpoint]
 theendtime = xvecs[0][theendpoint]
-# print('full range (pts):',thestartpoint, theendpoint)
-# print('full range (time):',thestarttime, theendtime)
-currentxmax = -100000000.0
-currentxmin = 100000000.0
+if debug:
+    print('full range (pts):',thestartpoint, theendpoint)
+    print('full range (time):',thestarttime, theendtime)
+currentxmax = -1e38
+currentxmin = 1e38
 for thevec in xvecs:
     currentxmax = np.max([np.max(thevec), currentxmax])
     currentxmin = np.min([np.min(thevec), currentxmin])
@@ -312,19 +321,24 @@ ymaxs = []
 for thevec in yvecs:
     ymins.append(np.min(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
     ymaxs.append(np.max(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
-currentymax = -100000000.0
-currentymin = 100000000.0
-for thevec in xvecs:
+currentymax = -1e38
+currentymin = 1e38
+for thevec in yvecs:
     currentymax = np.max([np.max(thevec), currentymax])
     currentymin = np.min([np.min(thevec), currentymin])
 yrange = (currentymin, currentymax)
+if debug:
+    print('xrange:', xrange)
+    print('yrange:', yrange)
 if voffset < 0.0:
     voffset = yrange[1] - yrange[0]
+if debug:
+    print('voffset:', voffset)
 if not separate:
     for i in range(0, numvecs):
         yvecs[i] += (numvecs - i - 1) * voffset
-    currentymax = -100000000.0
-    currentymin = 100000000.0
+    currentymax = -1e38
+    currentymin = 1e38
     for thevec in yvecs:
         currentymax = np.max([np.max(thevec), currentymax])
         currentymin = np.min([np.min(thevec), currentymin])

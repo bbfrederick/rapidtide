@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
 
-from rapidtide.utils import valtoindex
-from rapidtide.filter import noncausalfilter
 import numpy as np
 import scipy as sp
 import pylab as plt
+
+from rapidtide.util import valtoindex
+from rapidtide.filter import noncausalfilter
+
 
 def spectralfilterprops(thefilter, debug=False):
     lowerstop, lowerpass, upperpass, upperstop = thefilter['filter'].getfreqlimits()
@@ -123,7 +125,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
         'timeaxis':    1.0 * timeaxis,
         'waveform':    0.3 * np.random.normal(size=tclen),
         })
-    
+
     scratch = timeaxis * 0.0
     scratch[int(tclen / 5):int(2 * tclen / 5)] = 1.0
     scratch[int(3 * tclen / 5):int(4 * tclen / 5)] = 1.0
@@ -152,13 +154,18 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
             plt.show()
 
 
-def testfilterprops(display=False):
-    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=display)
-    eval_filterprops(sampletime=2.0,  tclengthinsecs=300.0, numruns=100, display=display)
-    eval_filterprops(sampletime=0.1,  tclengthinsecs=1000.0, numruns=10, display=display)
+def test_filterprops(display=False):
+    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100,
+                     display=display)
+    eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100,
+                     display=display)
+    eval_filterprops(sampletime=0.1, tclengthinsecs=1000.0, numruns=10,
+                     display=display)
+
 
 def main():
-    testfilterprops(display=True)
+    test_filterprops(display=True)
+
 
 if __name__ == '__main__':
     main()
