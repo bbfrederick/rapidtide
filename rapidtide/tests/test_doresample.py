@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-from rapidtide.resample import doresample
 import numpy as np
 import pylab as plt
 
-def mse(vec1, vec2):
-    return np.mean(np.square(vec2 - vec1))
+from rapidtide.resample import doresample, fastresampler
+from rapidtide.tests.utils import mse
 
 
-def testfastresampler(debug=False):
+def test_fastresampler(debug=False):
     tr = 1.0
     padvalue = 30.0
     testlen = 1000
@@ -64,9 +63,11 @@ def testfastresampler(debug=False):
     if debug:
         plt.legend(legend)
         plt.show()
-    
+
+
 def main():
-    testfastresampler(debug=True)
+    test_fastresampler(debug=True)
+
 
 if __name__ == '__main__':
     main()
