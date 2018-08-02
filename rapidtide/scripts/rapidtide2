@@ -1792,12 +1792,12 @@ def main():
                 print('Dimensions of correlation mask do not match the fmri data - exiting')
                 sys.exit()
         else:
-            nimcorrmask, nimcorrmask, nimcorrmask_hdr, corrmaskdims, theincludmasksizes = tide_io.readfromnifti(
+            nimcorrmask, thecorrmask, nimcorrmask_hdr, corrmaskdims, theincludmasksizes = tide_io.readfromnifti(
                 optiondict['corrmaskname'])
             if not tide_io.checkspacematch(nimcorrmask_hdr, nim_hdr):
                 print('Dimensions of correlation mask do not match the fmri data - exiting')
                 sys.exit()
-            corrmask = np.uint16(nimcorrmask.reshape((numspatiallocs)))
+            corrmask = np.uint16(np.where(thecorrmask > 0, 1, 0).reshape((numspatiallocs)))
     else:
         corrmask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
                                                  threshpct=optiondict['corrmaskthreshpct']))
@@ -2075,7 +2075,6 @@ def main():
         else:
             shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-        # refinemask = np.zeros(internalvalidspaceshape, dtype='uint16')
         tide_util.logmem('after refinement array allocation', file=memfile)
     if optiondict['sharedmem']:
         outfmriarray, dummy, dummy = allocshared(internalfmrishape, rt_floatset)
@@ -2268,6 +2267,7 @@ def main():
             voxelsprocessed_fc_ds = 0
             for despecklepass in range(optiondict['despeckle_passes']):
                 print('\n\nCorrelation despeckling subpass ' + str(despecklepass + 1))
+                outmaparray *= 0.0
                 outmaparray[validvoxels] = eval('lagtimes')[:]
                 medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape((numspatiallocs))
                 initlags = \
@@ -2531,6 +2531,7 @@ def main():
             memcheckpoint('about to write ' + mapname)
         else:
             tide_util.logmem('about to write ' + mapname, file=memfile)
+        outmaparray *= 0.0
         outmaparray[validvoxels] = eval(mapname)[:]
         if optiondict['textio']:
             tide_io.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
@@ -2546,6 +2547,7 @@ def main():
                 memcheckpoint('about to write ' + mapname)
             else:
                 tide_util.logmem('about to write ' + mapname, file=memfile)
+            outmaparray *= 0.0
             outmaparray[validvoxels] = eval(mapname)[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
@@ -2564,6 +2566,7 @@ def main():
                 memcheckpoint('about to write ' + mapname)
             else:
                 tide_util.logmem('about to write ' + mapname, file=memfile)
+            outmaparray *= 0.0
             outmaparray = eval(mapname)[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
@@ -2579,6 +2582,7 @@ def main():
             if optiondict['dosighistfit']:
                 tide_io.writenpvecs(sigfit, outputname + '_sigfit' + '.txt')
             tide_io.writenpvecs(np.array([pcts[i]]), outputname + '_p_lt_' + thepvalnames[i] + '_thresh.txt')
+            outmaparray *= 0.0
             outmaparray[validvoxels] = pmask[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
@@ -2588,6 +2592,7 @@ def main():
                                     outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d)
 
     if optiondict['passes'] > 1:
+        outmaparray *= 0.0
         outmaparray[validvoxels] = refinemask[:]
         if optiondict['textio']:
             tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
