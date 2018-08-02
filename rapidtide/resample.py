@@ -20,6 +20,8 @@
 #
 from __future__ import print_function, division
 
+import time
+
 import numpy as np
 import scipy as sp
 from scipy import fftpack, signal
@@ -274,12 +276,12 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
         return None
 
 
-def arbresample(orig_y, init_freq, final_freq, intermed_freq=0.0, method='univariate', debug=False):
+def arbresample(inputdata, init_freq, final_freq, intermed_freq=0.0, method='univariate', debug=False, decimate=False):
     """
 
     Parameters
     ----------
-    orig_y
+    inputdata
     init_freq
     final_freq
     intermed_freq
@@ -290,12 +292,48 @@ def arbresample(orig_y, init_freq, final_freq, intermed_freq=0.0, method='univar
     -------
 
     """
-    if intermed_freq <= 0.0:
-        intermed_freq = np.max([2.0 * init_freq, 2.0 * final_freq])
-    orig_x = sp.linspace(0.0, 1.0 / init_freq * len(orig_y), num=len(orig_y), endpoint=False)
+    if decimate:
+        if final_freq > init_freq:
+            # upsample only
+            return upsample(inputdata, init_freq, final_freq, method=method, debug=debug)
+        elif final_freq < init_freq:
+            # downsampling, so upsample by an amount that allows integer decimation
+            intermed_freq = final_freq * np.ceil(init_freq / final_freq)
+            q = int(intermed_freq // final_freq)
+            if debug:
+               print('going from', init_freq, 'to', final_freq, ': upsampling to', intermed_freq, 'Hz, then decimating by,', q)
+            if intermed_freq == init_freq:
+                upsampled = inputdata
+            else:
+                upsampled = upsample(inputdata, init_freq, intermed_freq, method=method, debug=debug)
+            return signal.decimate(upsampled, q)
+        else:
+            return inputdata
+    else:
+        if intermed_freq <= 0.0:
+            intermed_freq = np.max([2.0 * init_freq, 2.0 * final_freq])
+        orig_x = sp.linspace(0.0, 1.0 / init_freq * len(inputdata), num=len(inputdata), endpoint=False)
+        if debug:
+            print('arbresample:', len(orig_x), len(inputdata), init_freq, final_freq, intermed_freq)
+        return dotwostepresample(orig_x, inputdata, intermed_freq, final_freq, method=method, debug=debug)
+
+
+def upsample(inputdata, Fs_init, Fs_higher, method='univariate', debug=False):
+    starttime = time.time()
+    if Fs_higher <= Fs_init:
+        print('upsample: target frequency must be higher than initial frequency')
+        sys.exit()
+
+    # upsample
+    orig_x = sp.linspace(0.0, 1.0 / Fs_init * len(inputdata), num=len(inputdata), endpoint=False)
+    endpoint = orig_x[-1] - orig_x[0]
+    ts_higher = 1.0 / Fs_higher
+    numresamppts = int(endpoint // ts_higher + 1)
+    upsampled_x = np.arange(0.0, ts_higher * numresamppts, ts_higher)
+    upsampled_y = doresample(orig_x, inputdata, upsampled_x, method=method)
     if debug:
-        print('arbresample:', len(orig_x), len(orig_y), init_freq, final_freq, intermed_freq)
-    return dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method=method, debug=debug)
+        print('upsampling took', time.time() - starttime, 'seconds')
+    return upsampled_y
 
 
 def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate', debug=False):
@@ -312,6 +350,7 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
 
     Returns
     -------
+    resampled_y
 
     """
     if intermed_freq <= final_freq:
@@ -319,24 +358,34 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
         sys.exit()
 
     # upsample
+    starttime = time.time()
     endpoint = orig_x[-1] - orig_x[0]
     init_freq = len(orig_x) / endpoint
     intermed_ts = 1.0 / intermed_freq
     numresamppts = int(endpoint // intermed_ts + 1)
     intermed_x = np.arange(0.0, intermed_ts * numresamppts, intermed_ts)
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
+    if debug:
+        print('upsampling took', time.time() - starttime, 'seconds')
 
     # antialias and ringstop filter
+    starttime = time.time()
     aafilterfreq = np.min([final_freq, init_freq]) / 2.0
     aafilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
     aafilter.setarb(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
     antialias_y = aafilter.apply(intermed_freq, intermed_y)
+    if debug:
+        print('antialiasing took', time.time() - starttime, 'seconds')
 
     # downsample
+    starttime = time.time()
     final_ts = 1.0 / final_freq
     numresamppts = np.ceil(endpoint / final_ts) + 1
     final_x = np.arange(0.0, final_ts * numresamppts, final_ts)
-    return doresample(intermed_x, antialias_y, final_x, method=method)
+    resampled_y = doresample(intermed_x, antialias_y, final_x, method=method)
+    if debug:
+        print('downsampling took', time.time() - starttime, 'seconds')
+    return resampled_y
 
 
 def calcsliceoffset(sotype, slicenum, numslices, tr, multiband=1):
