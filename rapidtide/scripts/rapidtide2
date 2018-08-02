@@ -776,7 +776,7 @@ def usage():
     print("")
     print("Correlation options:")
     print("    -O OVERSAMPFAC             - Oversample the fMRI data by the following integral ")
-    print("                                 factor (default is 2)")
+    print("                                 factor.  Setting to -1 chooses the factor automatically (default)")
     print("    --regressor=FILENAME       - Read probe regressor from file FILENAME (if none ")
     print("                                 specified, generate and use global regressor)")
     print("    --regressorfreq=FREQ       - Probe regressor in file has sample frequency FREQ ")
