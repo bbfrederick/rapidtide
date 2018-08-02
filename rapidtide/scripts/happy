@@ -28,6 +28,7 @@ import platform
 
 import numpy as np
 import scipy as sp
+#import gc
 
 import getopt
 import rapidtide.miscmath as tide_math
@@ -38,10 +39,82 @@ import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.resample as tide_resample
 import rapidtide.correlate as tide_corr
+import rapidtide.multiproc as tide_multiproc
 from scipy.signal import hilbert, welch, savgol_filter
 
 from matplotlib.pyplot import plot, show, figure
 
+
+def _procOneVoxelNormalize(vox, voxels):
+    if detrend:
+        normtc = tide_math.pcnormalize(tide_fit.detrend(voxels[vox, :], demean=False))
+    else:
+        normtc = tide_math.pcnormalize(voxels[vox, :])
+    return vox, normtc
+
+
+def tcnorm(validimbyvox, nprocs=1, detrend=False):
+    """
+
+    Parameters
+    ----------
+    validimbyvox : 4D numpy array
+    detrend : bool, optional
+
+    Returns
+    -------
+    normvoxels : 4D numpy array
+
+    """
+    inputshape = np.shape(validimbyvox)
+    print(inputshape)
+    normvoxels = validimbyvox * 0.0
+    volumetotal = 0
+    reportstep = 1000
+    if nprocs > 1:
+        # define the consumer function here so it inherits most of the arguments
+        def normalize_consumer(inQ, outQ):
+            while True:
+                try:
+                    # get a new message
+                    val = inQ.get()
+
+                    # this is the 'TERM' signal
+                    if val is None:
+                        break
+
+                    # process and send the data
+                    outQ.put(_procOneVoxelNormalize(val, validimbyvox))
+
+                except Exception as e:
+                    print("error!", e)
+                    break
+
+        data_out = tide_multiproc.run_multiproc(normalize_consumer,
+                                                inputshape, None,
+                                                nprocs=nprocs,
+                                                showprogressbar=True,
+                                                chunksize=10000)
+
+        # unpack the data
+        volumetotal = 0
+        for voxel in data_out:
+            normvoxels[voxel[0], :] = voxel[1]
+            volumetotal += 1
+        del data_out
+    else:
+        for vox in range(0, inputshape[0]):
+            if (vox % reportstep == 0 or vox == inputshape[0] - 1):
+                tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
+            dummy, normvoxels[vox, :] = _procOneVoxelNormalize(vox, validimbyvox)
+            volumetotal += 1
+    print('\nNormalization performed on ' + str(volumetotal) + ' voxels')
+
+    # garbage collect
+    #collected = gc.collect()
+    #print("Garbage collector: collected %d objects." % collected)
+
+    return volumetotal, normvoxels
 
 def usage():
     print(os.path.basename(sys.argv[0]), "- Hypersampling by Analytic Phase Projection - Yay!")
@@ -79,6 +152,7 @@ def usage():
     print("                                 in the first TR of the fmri file (default is 0.0)")
     print("    --stdfreq=FREQ             - Frequency to which the cardiac signals are resampled for output.  Default")
     print("                                 is 25.")
+    print("    --nprocs=NPROCS            - Set to number of processors to use for calculations.  Default is 1.  Setting negative will use ncpus - 1")
     print("")
     print("debugging arguments (probably not of interest to users)")
     print("    --debug                    - turn on debugging information")
@@ -116,15 +190,16 @@ def cardiacsig(thisphase, amps=[1.0, 0.0, 0.0], phases=None, overallphase=0.0):
 
 
 def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr, slicetimes, initprefilter,
-                     notchwidth=0.015, detrend=True, debug=False):
+                     notchwidth=0.015, detrend=True, nprocs=1, debug=False):
     # normalize every voxel over time
+    print('normalizing voxels...')
     normdata = imbyvox * 0.0
     validvoxels = np.where(maskbyvox > 0)[0]
-    for spatialloc in validvoxels:
-        if detrend:
-            normdata[spatialloc, :] = tide_math.pcnormalize(tide_fit.detrend(imbyvox[spatialloc, :], demean=False))
-        else:
-            normdata[spatialloc, :] = tide_math.pcnormalize(imbyvox[spatialloc, :])
+    starttime = time.time()
+    means = np.mean(imbyvox[validvoxels, :], axis=1).flatten()
+    for timepoint in range(imbyvox.shape[1]):
+        normdata[validvoxels, timepoint] = (imbyvox[validvoxels, timepoint] / means ) - 1.0
+    print('normalization took', time.time() - starttime, 'seconds')
     normbyslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
     sortedtimes = np.sort(slicetimes)
@@ -135,6 +210,7 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
     print(len(slicetimes), 'slice times with', numsteps, 'unique values - diff is', minstep)
 
     # make slice means
+    print('making slice means...')
     hirestc = np.zeros((timepoints * numsteps), dtype=np.float64)
     sliceavs = np.zeros((numslices, timepoints), dtype=np.float64)
     for theslice in range(numslices):
@@ -146,6 +222,7 @@ def cardiacfromimage(imbyvox, maskbyvox, xsize, ysize, numslices, timepoints, tr
     filthirestc = -1.0 * tide_math.corrnormalize(initprefilter.apply(slicesamplerate, hirestc), False, False)
 
     # delete the TR frequency and the first subharmonic
+    print('notch filtering...')
     maxpass = np.min([slicesamplerate / 2.0, initprefilter.getfreqlimits()[2]])
     if notchwidth > 0.0:
         stopfreq = 1.0 / tr
@@ -206,6 +283,32 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
     return peakfreq, amps, phases
 
 
+def cleanpleth(Fs, plethwaveform):
+    # first bandpass the plethysmogram to calculate the envelope
+    arb_lower = 0.5
+    arb_lowerstop = arb_lower * 0.9
+    arb_upper = 3.0
+    arb_upperstop = arb_upper * 1.1
+    plethfilter = tide_filt.noncausalfilter(filtertype='arb')
+    plethfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+    print('filtering')
+    filtplethwaveform = plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform, False, False))
+    print('envelope detection')
+    envelope = tide_math.envdetect(Fs, filtplethwaveform, cutoff=0.15)
+    envmean = np.mean(envelope)
+    print('normalizing')
+    normpleth = envmean * np.where(envelope > 0.0, filtplethwaveform / envelope, 0.0)
+
+    # now high pass the plethysmogram to eliminate baseline
+    arb_upper = 10.0
+    arb_upperstop = arb_upper * 1.1
+    plethfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+    filtplethwaveform = plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform, False, False))
+
+    # return the filtered waveform, the normalized waveform, and the envelope
+    return filtplethwaveform, normpleth, envelope
+
+
 # get the command line parameters
 debug = False
 dofilter = False
@@ -230,6 +333,7 @@ arb_upper = 5.0
 softvesselfrac = 0.4
 infodict = {}
 stdfreq = 25.0
+nprocs = 1
 
 # start the clock!
 timings = [['Start', time.time(), None, None]]
@@ -280,6 +384,7 @@ try:
                                                    "outputbins=",
                                                    "gridbins=",
                                                    "stdfreq=",
+                                                   "nprocs=",
                                                    "smoothlen=",
                                                    "help"])
 except getopt.GetoptError as err:
@@ -321,6 +426,11 @@ for o, a in opts:
     elif o == "--notchwidth":
         notchwidth = float(a) / 100.0
         print('setting notchwidth to', notchwidth * 100.0, '%')
+    elif o == "--nprocs":
+        nprocs = int(a)
+        if nprocs < 1:
+            nprocs = tide_multiproc.maxcpus()
+        print('will use', nprocs, 'processors for long calculations')
     elif o == "--stdfreq":
         stdfreq = float(a)
         print('setting common output frequency to', stdfreq)
@@ -359,11 +469,11 @@ for o, a in opts:
 memfile = open(outputroot + '_memusage.csv', 'w')
 tide_util.logmem(None, file=memfile)
 
-theprefilter = tide_filt.noncausalfilter()
-theprefilter.settype('arb')
+thecardbandfilter = tide_filt.noncausalfilter()
+thecardbandfilter.settype('arb')
 arb_lowerstop = arb_lower * 0.9
 arb_upperstop = arb_upper * 1.1
-theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+thecardbandfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
 infodict['filtermaxbpm'] = arb_upper * 60.0
 infodict['filterminbpm'] = arb_lower * 60.0
 infodict['notchwidthpct'] = notchwidth * 100.0
@@ -419,7 +529,8 @@ print('generating cardiac signal from fmri data')
 tide_util.logmem('before cardiacfromimage', file=memfile)
 cardfromfmri, slicesamplerate, numsteps, normdata = cardiacfromimage(fmri_data, mask, xsize, ysize, numslices,
                                                                         timepoints, tr,
-                                                                        slicetimes, theprefilter,
+                                                                        slicetimes, thecardbandfilter,
+                                                                        nprocs=nprocs,
                                                                         notchwidth=notchwidth,
                                                                         detrend=detrend,
                                                                         debug=debug)
@@ -444,7 +555,7 @@ for i in range(len(amps_bold)):
 timings.append(['Cardiac signal from image data analyzed', time.time(), None, None])
 
 tide_io.writevec(
-    tide_math.corrnormalize(tide_resample.arbresample(cardfromfmri, slicesamplerate, stdfreq), False, False),
+    tide_math.corrnormalize(tide_resample.arbresample(cardfromfmri, slicesamplerate, stdfreq, decimate=True, debug=True), False, False),
     outputroot + '_cardiacfromfmri_' + str(stdfreq) + 'Hz.txt')
 timings.append(['Cardiac signal from image data resampled and saved', time.time(), None, None])
 
@@ -456,28 +567,37 @@ if cardiacfile is not None:
     # check file type
     filebase, extension = os.path.splitext(cardiacfile)
     if extension == '.json':
-        inputfreq, inputstart, cardfromfile_fullres = tide_io.readcolfrombidstsv(cardiacfile, columnname=colname,
+        inputfreq, inputstart, pleth_fullres = tide_io.readcolfrombidstsv(cardiacfile, columnname=colname,
                                                                                  columnnum=colnum)
     else:
-        cardfromfile_fullres = np.transpose(tide_io.readvecs(cardiacfile))
-        print(cardfromfile_fullres.shape)
-        if len(cardfromfile_fullres.shape) != 1:
-            cardfromfile_fullres = cardfromfile_fullres[:, colnum]
-    inputtimeaxis = sp.arange(0.0, (1.0 / inputfreq) * len(cardfromfile_fullres), 1.0 / inputfreq) + inputstart
+        pleth_fullres = np.transpose(tide_io.readvecs(cardiacfile))
+        print(pleth_fullres.shape)
+        if len(pleth_fullres.shape) != 1:
+            pleth_fullres = pleth_fullres[:, colnum]
+    inputtimeaxis = sp.arange(0.0, (1.0 / inputfreq) * len(pleth_fullres), 1.0 / inputfreq) + inputstart
     if debug:
-        print('cardfromfile_fullres: len=', len(cardfromfile_fullres), 'vals=', cardfromfile_fullres)
+        print('pleth_fullres: len=', len(pleth_fullres), 'vals=', pleth_fullres)
         print('inputfreq =', inputfreq)
         print('inputstart =', inputstart)
         print('inputtimeaxis: len=', len(inputtimeaxis), 'vals=', inputtimeaxis)
-    cardfromfile_sliceres = tide_resample.doresample(inputtimeaxis, cardfromfile_fullres, slicetimeaxis, method='cubic',
-                                                     padlen=0)
-    # cardfromfile = tide_math.corrnormalize(theprefilter.apply(slicesamplerate, cardfromfile), False, False)
     timings.append(['Cardiac signal from physiology data read in', time.time(), None, None])
 
+    # amplitude correct the waveform to remove gain fluctuations
+    cleanpleth_fullres, normpleth_fullres, cardamp = cleanpleth(inputfreq, pleth_fullres)
+    tide_io.writevec(pleth_fullres, outputroot + '_rawpleth.txt')
+    tide_io.writevec(cleanpleth_fullres, outputroot + '_cleanpleth.txt')
+    tide_io.writevec(cardamp, outputroot + '_cardenvelopefromfile.txt')
+    timings.append(['Cardiac signal from physiology data cleaned', time.time(), None, None])
+
+    # downsample to slice time resolution
+    pleth_sliceres = tide_resample.doresample(inputtimeaxis, cleanpleth_fullres, slicetimeaxis, method='cubic',
+                                                     padlen=0)
+
     # find key components of cardiac waveform
-    filtcardfromfile = tide_math.corrnormalize(theprefilter.apply(slicesamplerate, cardfromfile_sliceres), False, False)
-    peakfreq_file, amps_file, phases_file = getcardcoeffs(filtcardfromfile, slicesamplerate, smoothlen=smoothlen,
+    filtpleth = tide_math.corrnormalize(thecardbandfilter.apply(slicesamplerate, pleth_sliceres), False, False)
+    peakfreq_file, amps_file, phases_file = getcardcoeffs(filtpleth, slicesamplerate, smoothlen=smoothlen,
                                                           debug=debug)
+    timings.append(['Cardiac coefficients calculated from pleth waveform', time.time(), None, None])
     infodict['cardiacpeakbpm_file'] = np.round(peakfreq_file * 60.0, 2)
     infodict['kalminit_file_cardiacfreq'] = peakfreq_file
     for i in range(len(amps_file)):
@@ -485,13 +605,13 @@ if cardiacfile is not None:
         infodict['kalminit_file_ph' + str(i)] = phases_file[i]
     timings.append(['Cardiac signal from physiology data analyzed', time.time(), None, None])
 
-    tide_io.writevec(cardfromfile_sliceres, outputroot + '_cardiacfromfile.txt')
+    tide_io.writevec(pleth_sliceres, outputroot + '_pleth.txt')
     tide_io.writevec(tide_math.corrnormalize(
-        theprefilter.apply(stdfreq, tide_resample.arbresample(cardfromfile_fullres, inputfreq, stdfreq)), False, False),
-                     outputroot + '_cardiacfromfile_' + str(stdfreq) + 'Hz.txt')
+        thecardbandfilter.apply(stdfreq, tide_resample.arbresample(cleanpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True)), False, False),
+                     outputroot + '_pleth_' + str(stdfreq) + 'Hz.txt')
     timings.append(['Cardiac signal from physiology data resampled and saved', time.time(), None, None])
 
-    thexcorr = tide_corr.fastcorrelate(filtcardfromfile, cardfromfmri, usefft=True)
+    thexcorr = tide_corr.fastcorrelate(filtpleth, cardfromfmri, usefft=True)
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / slicesamplerate
     xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
@@ -505,16 +625,16 @@ if cardiacfile is not None:
         displayplots=False)
     print('Input cardiac waveform delay is', maxdelay, 'relative to fMRI data')
     print('Correlation coefficient between cardiac regressors:', maxval)
-    cardiacwaveform = cardfromfile_sliceres
+    cardiacwaveform = pleth_sliceres
 
     if doplot:
         figure()
-        plot(slicetimeaxis, cardfromfile_sliceres, 'r', slicetimeaxis, cardfromfmri, 'b')
+        plot(slicetimeaxis, pleth_sliceres, 'r', slicetimeaxis, cardfromfmri, 'b')
         show()
-    infodict['cardiacfromfile'] = True
+    infodict['pleth'] = True
     peakfreq = peakfreq_file
 else:
-    infodict['cardiacfromfile'] = False
+    infodict['pleth'] = False
     peakfreq = peakfreq_bold
 
 # now tune the prefilter to hone in on the primary harmonic
@@ -522,8 +642,8 @@ arb_lower = 0.4 * peakfreq
 arb_upper = 1.4 * peakfreq
 arb_lowerstop = 0.9 * arb_lower
 arb_upperstop = 1.1 * arb_upper
-theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-filthiresfund = tide_math.corrnormalize(theprefilter.apply(slicesamplerate, cardiacwaveform), False, False)
+thecardbandfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+filthiresfund = tide_math.corrnormalize(thecardbandfilter.apply(slicesamplerate, cardiacwaveform), False, False)
 tide_io.writevec(filthiresfund, outputroot + '_cardiacfundamental.txt')
 
 # account for slice time offests
@@ -549,10 +669,10 @@ gencardiac = tide_math.corrnormalize(
 tide_io.writevec(gencardiac, outputroot + '_synthcardiacfromfmri.txt')
 timings.append(['Synthetic cardiac waveform generated', time.time(), None, None])
 
-if infodict['cardiacfromfile']:
+if infodict['pleth']:
     gencardiac = tide_math.corrnormalize(
         amplitude_envelope * cardiacsig(instantaneous_phase, amps=amps_file, phases=phases_file), False, False)
-    tide_io.writevec(gencardiac, outputroot + '_synthcardiacfromfile.txt')
+    tide_io.writevec(gencardiac, outputroot + '_synthcardiacfrompleth.txt')
 
 # save the information file
 tide_io.writedict(infodict, outputroot + '_info.txt')
