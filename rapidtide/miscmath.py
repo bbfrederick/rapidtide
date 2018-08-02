@@ -367,18 +367,26 @@ def rms(vector):
     return np.sqrt(np.mean(np.square(vector)))
 
 
-def envdetect(vector, filtwidth=3.0):
+def envdetect(Fs, inputdata, cutoff=0.25):
     """
 
     Parameters
     ----------
-    vector
-    filtwidth
+    Fs : float
+        Sample frequency in Hz.
+    inputdata : float array
+        Data to be envelope detected
+    cutoff : float
+        Highest possible modulation frequency
 
     Returns
     -------
+    envelope : float array
+        The envelope function
 
     """
-    demeaned = vector - np.mean(vector)
+    demeaned = inputdata - np.mean(inputdata)
     sigabs = abs(demeaned)
-    return tide_filt.dolptrapfftfilt(1.0, 1.0 / (2.0 * filtwidth), 1.1 / (2.0 * filtwidth), sigabs)
+    theenvbpf = tide_filt.noncausalfilter(filtertype='arb')
+    theenvbpf.setarb(0.0, 0.0, cutoff, 1.1 * cutoff)
+    return theenvbpf.apply(Fs, sigabs)
