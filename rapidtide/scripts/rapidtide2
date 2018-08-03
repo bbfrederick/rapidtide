@@ -312,10 +312,13 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             R2, optiondict, initiallags=None):
     displayplots = False
     inputshape = np.shape(corrout)
+    if initiallags is None:
+        themask = None
+    else:
+        themask = np.where(initiallags > -1000000.0, 1, 0)
     volumetotal, ampfails, lagfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0
     reportstep = 1000
     zerolagtc = rt_floatset(genlagtc.yfromx(initial_fmri_x))
-    sliceoffsettime = 0.0
 
     if optiondict['nprocs'] > 1:
         # define the consumer function here so it inherits most of the arguments
@@ -331,13 +334,12 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
 
                     # process and send the data
                     if initiallags is None:
-                        outQ.put(
-                            procOneVoxelFitcorr(val, corrout[val, :], corrscale, genlagtc, initial_fmri_x, optiondict,
-                                                displayplots))
+                        thislag = None
                     else:
-                        outQ.put(
-                            procOneVoxelFitcorr(val, corrout[val, :], corrscale, genlagtc, initial_fmri_x, optiondict,
-                                                displayplots, initiallag=initiallags[val]))
+                        thislag = initiallags[val]
+                    outQ.put(
+                        procOneVoxelFitcorr(val, corrout[val, :], corrscale, genlagtc, initial_fmri_x, optiondict,
+                                            displayplots, initiallag=thislag))
 
                 except Exception as e:
                     print("error!", e)
@@ -386,20 +388,20 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
                 tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            if initiallags is None:
-                dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox, :], \
-                R2[
-                    vox], lagmask[vox], failreason = \
-                    procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict,
-                                        displayplots)
-                volumetotal += volumetotalinc
+            if themask is None:
+                dothisone = True
+                thislag = None
+            elif themask[vox] > 0:
+                dothisone = True
+                thislag = initiallags[vox]
             else:
+                dothisone = False
+            if dothisone:
                 if initiallags[vox] != 0.0:
-                    dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], gaussout[vox,
-                                                                                                           :], R2[
-                        vox], lagmask[vox], failreason = \
+                    dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], \
+                    gaussout[vox, :], R2[vox], lagmask[vox], failreason = \
                         procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict,
-                                            displayplots, initiallags[vox])
+                                            displayplots, initiallag=thislag)
                     volumetotal += volumetotalinc
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
     print('\tampfails=', ampfails, ' lagfails=', lagfails, ' widthfail=', widthfails, ' edgefail=', edgefails,
@@ -1052,7 +1054,7 @@ def main():
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
-    print('rapidtide2 version:', optiondict['release_version'], optiondict['git_tag'])
+    print(sys.argv[0], 'version:', optiondict['release_version'], optiondict['git_tag'])
     tide_util.checkimports(optiondict)
 
     # get the command line parameters
@@ -1178,9 +1180,10 @@ def main():
             print('Enabled GCC-PHAT fitting')
         elif o == '--weiner':
             print('It\'s spelled wiener, not weiner')
-            print('The filter is named after Norbert Wiener, an MIT mathemetician.  The name')
-            print('probably indicates that his family came from Vienna.')
-            print('Spell it right and try again.')
+            print('The filter is named after Norbert Wiener, an MIT mathematician.')
+            print('The name probably indicates that his family came from Vienna.')
+            print('Spell it right and try again.  I mean, I know what you meant, and could just')
+            print('call the routine you wanted anyway, but then how would you learn?')
             sys.exit()
         elif o == '--cleanrefined':
             optiondict['cleanrefined'] = True

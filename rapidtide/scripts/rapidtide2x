@@ -52,6 +52,8 @@ import rapidtide.nullcorrpass as tide_nullcorr
 import rapidtide.corrpass as tide_corrpass
 import rapidtide.corrfit as tide_corrfit
 import rapidtide.refine as tide_refine
+import rapidtide.glmpass as tide_glmpass
+import rapidtide.wiener as tide_wiener
 
 try:
     from memory_profiler import profile
@@ -750,7 +752,7 @@ def main():
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
-    print('rapidtide2 version:', optiondict['release_version'], optiondict['git_tag'])
+    print(sys.argv[0], 'version:', optiondict['release_version'], optiondict['git_tag'])
     tide_util.checkimports(optiondict)
 
     # get the command line parameters
@@ -877,9 +879,10 @@ def main():
             print('Enabled GCC-PHAT fitting')
         elif o == '--weiner':
             print('It\'s spelled wiener, not weiner')
-            print('The filter is named after Norbert Wiener, an MIT mathemetician.  The name')
-            print('probably indicates that his family came from Vienna.')
-            print('Spell it right and try again.')
+            print('The filter is named after Norbert Wiener, an MIT mathematician.')
+            print('The name probably indicates that his family came from Vienna.')
+            print('Spell it right and try again.  I mean, I know what you meant, and could just')
+            print('call the routine you wanted anyway, but then how would you learn?')
             sys.exit()
         elif o == '--cleanrefined':
             optiondict['cleanrefined'] = True
@@ -2088,7 +2091,12 @@ def main():
         wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         wpeak = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
 
-        voxelsprocessed_wiener = wienerpass(numspatiallocs, reportstep, fmri_data_valid, threshval,
+        if optiondict['memprofile']:
+            wienerpass_func = profile(wienerpass, precision=2)
+        else:
+            tide_util.logmem('before wienerpass', file=memfile)
+            wienerpass_func = wienerpass
+        voxelsprocessed_wiener = wienerpass_func(numspatiallocs, reportstep, fmri_data_valid, threshval,
                                             optiondict, wienerdeconv, wpeak, resampref_y)
         timings.append(['Wiener deconvolution end', time.time(), voxelsprocessed_wiener, 'voxels'])
 
@@ -2155,10 +2163,15 @@ def main():
         if optiondict['preservefiltering']:
             for i in range(len(validvoxels)):
                 fmri_data_valid[i] = theprefilter.apply(optiondict['fmrifreq'], fmri_data_valid[i])
-        voxelsprocessed_glm = glmpass(numvalidspatiallocs, reportstep, fmri_data_valid, threshval, lagtc,
+        if optiondict['memprofile']:
+            glmpass_func = profile(glmpass, precision=2)
+        else:
+            tide_util.logmem('before glmpass', file=memfile)
+            glmpass_func = glmpass
+        voxelsprocessed_glm = glmpass_func(numvalidspatiallocs, reportstep, fmri_data_valid, threshval, lagtc,
                                       optiondict, meanvalue, rvalue, r2value, fitcoff, fitNorm,
                                       datatoremove, filtereddata)
-        fmri_data_valid = None
+        del fmri_data_valid
 
         timings.append(['GLM filtering end, pass ' + str(thepass), time.time(), voxelsprocessed_glm, 'voxels'])
         if optiondict['memprofile']:
