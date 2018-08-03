@@ -117,8 +117,9 @@ class congrid:
 congridyvals = {}
 
 
-def congrid(xaxis, loc, val, width, debug=False):
+def congrid(xaxis, loc, val, width, kernel='gauss', debug=False):
     """
+    Perform a convolution gridding operation with a Kaiser-Bessel or Gaussian kernel of width 'width'
 
     Parameters
     ----------
@@ -131,32 +132,60 @@ def congrid(xaxis, loc, val, width, debug=False):
     Returns
     -------
 
+    Notes
+    -----
+    See  IEEE TRANSACTIONS ON MEDICAL IMAGING. VOL. IO.NO. 3, SEPTEMBER 1991
+
     """
+    winwidth = np.array([   1.5,     2.0,    2.5,    3.0,    3.5,    4.0,    4.5,   5.0])
+    optsigma = np.array([0.4241, 0.4927, 0.4839, 0.5063, 0.5516, 0.5695, 0.5682, 0.5974])
+    optbeta  = np.array([1.9980, 2.3934, 3.3800, 4.2054, 4.9107, 5.7567, 6.6291, 7.4302])
     xstep = xaxis[1] - xaxis[0]
     # weights = xaxis * 0.0
-    widthinpts = int(np.round(width * 4.6 / xstep))
-    widthinpts -= widthinpts % 2 - 1
     if loc < xaxis[0] or loc > xaxis[-1]:
         print('loc', loc, 'not in range', xaxis[0], xaxis[-1])
 
+    # find the closest grid point to the target location, calculate relative offsets from this point
     center = tide_util.valtoindex(xaxis, loc)
     offset = loc - xaxis[center]
     offsetkey = str(np.round(offset, 3))
-    try:
-        yvals = congridyvals[offsetkey]
-    except KeyError:
-        if debug:
-            print('new key:', offsetkey)
-        xvals = np.linspace(-xstep * (widthinpts // 2), xstep * (widthinpts // 2), num=widthinpts,
-                            endpoint=True) + offset
-        congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, width]))
-        yvals = congridyvals[offsetkey]
-    startpt = int(center - widthinpts // 2)
-    indices = range(startpt, startpt + widthinpts)
-    indices = np.remainder(indices, len(xaxis))
-    # weights[indices] = yvals[:]
-    # return val * weights, weights, indices
-    return val * yvals, yvals, indices
+
+    # check width
+    #if not (1.5 <= width <= 5.0) or (fmod(width, 0.5) > 0.0):
+    #    print('congrid: width must be a half-integral value between 1.5 and 5.0 inclusive')
+    #else:
+    #    kernelindex = int((width - 1.5) // 0.5)
+    if kernel == 'gauss':
+        widthinpts = int(np.round(width * 4.6 / xstep))
+        widthinpts -= widthinpts % 2 - 1
+        try:
+            yvals = congridyvals[offsetkey]
+        except KeyError:
+            if debug:
+                print('new key:', offsetkey)
+            xvals = np.linspace(-xstep * (widthinpts // 2), xstep * (widthinpts // 2), num=widthinpts,
+                                endpoint=True) + offset
+            congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, width]))
+            yvals = congridyvals[offsetkey]
+        startpt = int(center - widthinpts // 2)
+        indices = range(startpt, startpt + widthinpts)
+        indices = np.remainder(indices, len(xaxis))
+        # weights[indices] = yvals[:]
+        return val * yvals, yvals, indices
+    else:
+        beta = optbeta[kernelindex]
+        try:
+            yvals = congridyvals[offsetkey]
+        except KeyError:
+            xvals = np.linspace(-xstep * (widthinpts // 2), xstep * (widthinpts // 2), num=widthinpts,
+                                endpoint=True) + offset
+            congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, width]))
+            yvals = congridyvals[offsetkey]
+        startpt = int(center - widthinpts // 2)
+        indices = range(startpt, startpt + widthinpts)
+        indices = np.remainder(indices, len(xaxis))
+        # weights[indices] = yvals[:]
+        return val * yvals, yvals, indices
 
 
 class fastresampler:
