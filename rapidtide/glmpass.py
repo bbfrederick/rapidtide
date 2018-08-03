@@ -66,31 +66,6 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
                     print("error!", e)
                     break
 
-        """"# initialize the workers and the queues
-        n_workers = optiondict['nprocs']
-        inQ = mp.Queue()
-        outQ = mp.Queue()
-        workers = [mp.Process(target=GLM_consumer, args=(inQ, outQ)) for i in range(n_workers)]
-        for i, w in enumerate(workers):
-            w.start()
-
-        # pack the data and send to workers
-        data_in = []
-        for d in range(numspatiallocs):
-            if (np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval) or optiondict['nothresh']:
-                data_in.append(d)
-        print('processing', len(data_in), 'voxels with', n_workers, 'processes')
-        data_out = tide_multiproc._process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
-                                chunksize=optiondict['mp_chunksize'])
-
-        # shut down workers
-        for i in range(n_workers):
-            inQ.put(None)
-        for w in workers:
-            w.terminate()
-            w.join()
-        """
-
         data_out = tide_multiproc.run_multiproc(GLM_consumer,
                                                 inputshape, None,
                                                 nprocs=optiondict['nprocs'],
