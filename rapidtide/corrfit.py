@@ -268,10 +268,23 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
             else:
                 dothisone = False
             if dothisone:
-                dummy, volumetotalinc, lagtc[vox, :], lagtimes[vox], lagstrengths[vox], lagsigma[vox], \
-                gaussout[vox, :], windowout[vox, :], \
-                R2[vox], lagmask[vox], failreason = \
-                    _procOneVoxelFitcorr(vox, corrout[vox, :], corrscale, genlagtc, initial_fmri_x, optiondict,
+                dummy, \
+                volumetotalinc, \
+                lagtc[vox, :], \
+                lagtimes[vox], \
+                lagstrengths[vox], \
+                lagsigma[vox], \
+                gaussout[vox, :], \
+                windowout[vox, :], \
+                R2[vox], \
+                lagmask[vox], \
+                failreason = \
+                    _procOneVoxelFitcorr(vox,
+                                         corrout[vox, :],
+                                         corrscale,
+                                         genlagtc,
+                                         initial_fmri_x,
+                                         optiondict,
                                          displayplots,
                                          initiallag=thislag,
                                          rt_floatset=rt_floatset,
