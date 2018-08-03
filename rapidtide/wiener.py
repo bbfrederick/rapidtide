@@ -1,0 +1,125 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+# $Author: frederic $
+# $Date: 2016/07/11 14:50:43 $
+# $Id: rapidtide,v 1.161 2016/07/11 14:50:43 frederic Exp $
+#
+#
+#
+
+from __future__ import print_function, division
+
+import numpy as np
+
+import rapidtide.fit as tide_fit
+import rapidtide.multiproc as tide_multiproc
+import rapidtide.util as tide_util
+
+
+def _procOneVoxelWiener(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype='float64'):
+    thefit, R = tide_fit.mlregress(lagtc, inittc)
+    fitcoff = rt_floatset(thefit[0, 1])
+    datatoremove = rt_floatset(fitcoff * lagtc)
+    return vox, rt_floatset(thefit[0, 0]), rt_floatset(R), rt_floatset(R * R), fitcoff, \
+           rt_floatset(thefit[0, 1] / thefit[0, 0]), datatoremove, rt_floatset(inittc - datatoremove)
+
+
+def wienerpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict, meanvalue, rvalue, r2value, fitcoff,
+               fitNorm, datatoremove, filtereddata):
+    inputshape = np.shape(fmri_data)
+    themask = np.where(np.mean(fmri_data, axis=1) > threshval, 1, 0)
+    if optiondict['nprocs'] > 1:
+        # define the consumer function here so it inherits most of the arguments
+        def Wiener_consumer(inQ, outQ):
+            while True:
+                try:
+                    # get a new message
+                    val = inQ.get()
+
+                    # this is the 'TERM' signal
+                    if val is None:
+                        break
+
+                    # process and send the data
+                    outQ.put(_procOneVoxelWiener(val,
+                                                 lagtc[val, :],
+                                                 fmri_data[val,
+                                                 optiondict['addedskip']:],
+                                                 rt_floatset=np.float64,
+                                                 rt_floattype='float64'))
+
+                except Exception as e:
+                    print("error!", e)
+                    break
+
+        """"
+        # initialize the workers and the queues
+        n_workers = optiondict['nprocs']
+        inQ = mp.Queue()
+        outQ = mp.Queue()
+        workers = [mp.Process(target=Wiener_consumer, args=(inQ, outQ)) for i in range(n_workers)]
+        for i, w in enumerate(workers):
+            w.start()
+
+        # pack the data and send to workers
+        data_in = []
+        for d in range(numspatiallocs):
+            if np.mean(fmri_data[d, optiondict['addedskip']:]) >= threshval:
+                data_in.append(d)
+        print('processing', len(data_in), 'voxels with', n_workers, 'processes')
+        data_out = tide_multiproc._process_data(data_in, inQ, outQ, showprogressbar=optiondict['showprogressbar'],
+                                chunksize=optiondict['mp_chunksize'])
+
+        # shut down workers
+        for i in range(n_workers):
+            inQ.put(None)
+        for w in workers:
+            w.terminate()
+            w.join()
+        """
+
+        data_out = tide_multiproc.run_multiproc(Wiener_consumer,
+                                                inputshape, themask,
+                                                nprocs=optiondict['nprocs'],
+                                                showprogressbar=True,
+                                                chunksize=optiondict['mp_chunksize'])
+        # unpack the data
+        volumetotal = 0
+        for voxel in data_out:
+            meanvalue[voxel[0]] = voxel[1]
+            rvalue[voxel[0]] = voxel[2]
+            r2value[voxel[0]] = voxel[3]
+            fitcoff[voxel[0]] = voxel[4]
+            fitNorm[voxel[0]] = voxel[5]
+            datatoremove[voxel[0], :] = voxel[6]
+            filtereddata[voxel[0], :] = voxel[7]
+            volumetotal += 1
+        data_out = []
+    else:
+        volumetotal = 0
+        for vox in range(0, numspatiallocs):
+            if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict['showprogressbar']:
+                tide_util.progressbar(vox + 1, numspatiallocs, label='Percent complete')
+            inittc = fmri_data[vox, optiondict['addedskip']:].copy()
+            if np.mean(inittc) >= threshval:
+                dummy, meanvalue[vox], rvalue[vox], r2value[vox], fitcoff[vox], fitNorm[vox], datatoremove[vox], \
+                filtereddata[vox] = _procOneVoxelWiener(vox, lagtc[vox, :], inittc, rt_floatset=np.float64,
+                                                        rt_floattype='float64')
+            volumetotal += 1
+
+    return volumetotal
