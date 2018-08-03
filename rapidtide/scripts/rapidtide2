@@ -1640,7 +1640,7 @@ def main():
 
     # set set the number of worker processes if multiprocessing
     if optiondict['nprocs'] < 1:
-        optiondict['nprocs'] = mp.cpu_count() - 1
+        optiondict['nprocs'] = tide_multiproc.maxcpus()
 
     # write out the command used
     tide_io.writevec(formattedcmdline, outputname + '_formattedcommandline.txt')
