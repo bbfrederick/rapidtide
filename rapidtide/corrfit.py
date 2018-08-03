@@ -179,6 +179,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
         themask = None
     else:
         themask = np.where(initiallags > -1000000.0, 1, 0)
+    reportstep = 1000
     volumetotal, ampfails, lagfails, windowfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0, 0
     FML_BADAMPLOW = np.uint16(0x01)
     FML_BADAMPNEG = np.uint16(0x02)
@@ -188,7 +189,6 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
     FML_HITEDGE = np.uint16(0x20)
     FML_FITFAIL = np.uint16(0x40)
     FML_INITFAIL = np.uint16(0x80)
-    reportstep = 1000
     zerolagtc = rt_floatset(genlagtc.yfromx(initial_fmri_x))
     sliceoffsettime = 0.0
 

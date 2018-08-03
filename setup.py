@@ -41,6 +41,8 @@ modules_list = ['rapidtide/miscmath',
                 'rapidtide/nullcorrpass',
                 'rapidtide/corrpass',
                 'rapidtide/corrfit',
+                'rapidtide/glmpass',
+                'rapidtide/wiener',
                 'rapidtide/refine']
 
 if addtidepool:
