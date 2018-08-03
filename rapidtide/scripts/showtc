@@ -355,9 +355,9 @@ if not separate:
 if separate:
     thexaxfontsize = 6
     theyaxfontsize = 6
-    thexlabelfontsize = 4
-    theylabelfontsize = 4
-    thelegendfontsize = 6
+    thexlabelfontsize = 5
+    theylabelfontsize = 5
+    thelegendfontsize = 8
     thetitlefontsize = 6
     thesuptitlefontsize = 10
 else:

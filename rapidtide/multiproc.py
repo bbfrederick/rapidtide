@@ -28,6 +28,9 @@ import multiprocessing as mp
 
 import rapidtide.util as tide_util
 
+def maxcpus():
+    return mp.cpu_count() - 1
+
 
 def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chunksize=10000):
     # send pos/data to workers
