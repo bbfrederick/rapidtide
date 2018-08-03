@@ -42,6 +42,7 @@ def _procOneVoxelGLM(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype='f
 def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict, meanvalue, rvalue, r2value, fitcoff,
             fitNorm, datatoremove, filtereddata):
     inputshape = np.shape(fmri_data)
+    themask = np.where(np.mean(fmri_data, axis=1) > threshval, 1, 0)
     if optiondict['nprocs'] > 1:
         # define the consumer function here so it inherits most of the arguments
         def GLM_consumer(inQ, outQ):
@@ -57,8 +58,7 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
                     # process and send the data
                     outQ.put(_procOneVoxelGLM(val,
                                               lagtc[val, :],
-                                              fmri_data[val,
-                                              optiondict['addedskip']:],
+                                              fmri_data[val, :],
                                               rt_floatset=np.float64,
                                               rt_floattype='float64'))
 
@@ -67,7 +67,7 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
                     break
 
         data_out = tide_multiproc.run_multiproc(GLM_consumer,
-                                                inputshape, None,
+                                                inputshape, themask,
                                                 nprocs=optiondict['nprocs'],
                                                 showprogressbar=True,
                                                 chunksize=optiondict['mp_chunksize'])
@@ -83,15 +83,22 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
             datatoremove[voxel[0], :] = voxel[6]
             filtereddata[voxel[0], :] = voxel[7]
             volumetotal += 1
-        data_out = []
+
+        del data_out
     else:
         volumetotal = 0
         for vox in range(0, numspatiallocs):
             if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict['showprogressbar']:
                 tide_util.progressbar(vox + 1, numspatiallocs, label='Percent complete')
             inittc = fmri_data[vox, optiondict['addedskip']:].copy()
-            if np.mean(inittc) >= threshval:
-                dummy, meanvalue[vox], rvalue[vox], r2value[vox], fitcoff[vox], fitNorm[vox], datatoremove[vox], \
+            if themask[vox] > 0:
+                dummy, \
+                meanvalue[vox],\
+                rvalue[vox], \
+                r2value[vox], \
+                fitcoff[vox], \
+                fitNorm[vox], \
+                datatoremove[vox], \
                 filtereddata[vox] = \
                     _procOneVoxelGLM(vox,
                                      lagtc[vox, :],
