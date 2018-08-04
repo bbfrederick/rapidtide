@@ -2109,7 +2109,7 @@ def main():
             memcheckpoint('about to write ' + mapname)
         else:
             tide_util.logmem('about to write ' + mapname, file=memfile)
-        outmaparray *= 0.0
+        outmaparray[:] = 0.0
         outmaparray[validvoxels] = eval(mapname)[:]
         if optiondict['textio']:
             tide_io.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
@@ -2125,7 +2125,7 @@ def main():
                 memcheckpoint('about to write ' + mapname)
             else:
                 tide_util.logmem('about to write ' + mapname, file=memfile)
-            outmaparray *= 0.0
+            outmaparray[:] = 0.0
             outmaparray[validvoxels] = eval(mapname)[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
@@ -2144,7 +2144,7 @@ def main():
                 memcheckpoint('about to write ' + mapname)
             else:
                 tide_util.logmem('about to write ' + mapname, file=memfile)
-            outmaparray *= 0.0
+            outmaparray[:] = 0.0
             outmaparray = eval(mapname)[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
@@ -2160,7 +2160,7 @@ def main():
             if optiondict['dosighistfit']:
                 tide_io.writenpvecs(sigfit, outputname + '_sigfit' + '.txt')
             tide_io.writenpvecs(np.array([pcts[i]]), outputname + '_p_lt_' + thepvalnames[i] + '_thresh.txt')
-            outmaparray *= 0.0
+            outmaparray[:] = 0.0
             outmaparray[validvoxels] = pmask[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
@@ -2170,7 +2170,7 @@ def main():
                                     outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d)
 
     if optiondict['passes'] > 1:
-        outmaparray *= 0.0
+        outmaparray[:] = 0.0
         outmaparray[validvoxels] = refinemask[:]
         if optiondict['textio']:
             tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
@@ -2196,6 +2196,7 @@ def main():
             theheader['dim'][4] = np.shape(corrscale)[0]
         theheader['toffset'] = corrscale[corrorigin - lagmininpts]
         theheader['pixdim'][4] = corrtr
+    outcorrarray[:, :] = 0.0
     outcorrarray[validvoxels, :] = gaussout[:, :]
     if optiondict['textio']:
         tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
@@ -2204,6 +2205,7 @@ def main():
         tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes,
                             outputname + '_gaussout' + outsuffix4d)
     del gaussout
+    outcorrarray[:, :] = 0.0
     outcorrarray[validvoxels, :] = windowout[:, :]
     if optiondict['textio']:
         tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
@@ -2212,6 +2214,7 @@ def main():
         tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes,
                             outputname + '_windowout' + outsuffix4d)
     del windowout
+    outcorrarray[:, :] = 0.0
     outcorrarray[validvoxels, :] = corrout[:, :]
     if optiondict['textio']:
         tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
