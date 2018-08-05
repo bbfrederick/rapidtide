@@ -31,7 +31,11 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 
 
-def _procOneVoxelGLM(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype='float64'):
+def _procOneVoxelGLM(vox,
+                     lagtc,
+                     inittc,
+                     rt_floatset=np.float64,
+                     rt_floattype='float64'):
     thefit, R = tide_fit.mlregress(lagtc, inittc)
     fitcoff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoff * lagtc)
@@ -39,8 +43,21 @@ def _procOneVoxelGLM(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype='f
            rt_floatset(thefit[0, 1] / thefit[0, 0]), datatoremove, rt_floatset(inittc - datatoremove)
 
 
-def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict, meanvalue, rvalue, r2value, fitcoff,
-            fitNorm, datatoremove, filtereddata):
+def glmpass(numspatiallocs,
+            reportstep,
+            fmri_data,
+            threshval,
+            lagtc,
+            optiondict,
+            meanvalue,
+            rvalue,
+            r2value,
+            fitcoff,
+            fitNorm,
+            datatoremove,
+            filtereddata,
+            rt_floatset=np.float64,
+            rt_floattype='float64'):
     inputshape = np.shape(fmri_data)
     themask = np.where(np.mean(fmri_data, axis=1) > threshval, 1, 0)
     if optiondict['nprocs'] > 1:
@@ -59,8 +76,8 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
                     outQ.put(_procOneVoxelGLM(val,
                                               lagtc[val, :],
                                               fmri_data[val, :],
-                                              rt_floatset=np.float64,
-                                              rt_floattype='float64'))
+                                              rt_floatset=rt_floatset,
+                                              rt_floattype=rt_floattype))
 
                 except Exception as e:
                     print("error!", e)
@@ -103,8 +120,8 @@ def glmpass(numspatiallocs, reportstep, fmri_data, threshval, lagtc, optiondict,
                     _procOneVoxelGLM(vox,
                                      lagtc[vox, :],
                                      inittc,
-                                     rt_floatset=np.float64,
-                                     rt_floattype='float64')
+                                     rt_floatset=rt_floatset,
+                                     rt_floattype=rt_floattype)
                 volumetotal += 1
 
     return volumetotal
