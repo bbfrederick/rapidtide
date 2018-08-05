@@ -25,6 +25,8 @@
 from __future__ import print_function, division
 
 import multiprocessing as mp
+import threading as thread
+import queue as thrQueue
 
 import rapidtide.util as tide_util
 
@@ -109,5 +111,34 @@ def run_multiproc(consumerfunc, inputshape, maskarray, nprocs=1, showprogressbar
     for w in workers:
         w.terminate()
         w.join()
+
+    return data_out
+
+def run_multithread(consumerfunc, inputshape, maskarray, nprocs=1, showprogressbar=True, chunksize=1000):
+    # initialize the workers and the queues
+    n_workers = nprocs
+    inQ = thrQueue.Queue()
+    outQ = thrQueue.Queue()
+    workers = [thread.Thread(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
+    for i, w in enumerate(workers):
+        w.start()
+
+    # pack the data and send to workers
+    data_in = []
+    for d in range(inputshape[0]):
+        if maskarray is None:
+            data_in.append(d)
+        elif maskarray[d] > 0:
+            data_in.append(d)
+    print('processing', len(data_in), 'voxels with', n_workers, 'threads')
+    data_out = _process_data(data_in, inQ, outQ, showprogressbar=showprogressbar,
+                             chunksize=chunksize)
+
+    # shut down workers
+    for i in range(n_workers):
+        inQ.put(None)
+    #for w in workers:
+    #   #.terminate()
+    #   w.join()
 
     return data_out
