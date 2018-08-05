@@ -35,7 +35,14 @@ import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
 
 
-def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc, optiondict):
+def onecorrelation(thetc,
+                   oversampfreq,
+                   corrorigin,
+                   lagmininpts,
+                   lagmaxinpts,
+                   ncprefilter,
+                   referencetc,
+                   optiondict):
     thetc_classfilter = ncprefilter.apply(oversampfreq, thetc)
     thetc = thetc_classfilter
 
@@ -52,8 +59,18 @@ def onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, nc
     return thexcorr[corrorigin - lagmininpts:corrorigin + lagmaxinpts], theglobalmax
 
 
-def _procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, oversampfreq,
-                             corrorigin, lagmininpts, lagmaxinpts, ncprefilter, referencetc,
+def _procOneVoxelCorrelation(vox,
+                             thetc,
+                             optiondict,
+                             fmri_x,
+                             fmritc,
+                             os_fmri_x,
+                             oversampfreq,
+                             corrorigin,
+                             lagmininpts,
+                             lagmaxinpts,
+                             ncprefilter,
+                             referencetc,
                              rt_floatset=np.float64,
                              rt_floattype='float64'
                              ):
@@ -61,16 +78,28 @@ def _procOneVoxelCorrelation(vox, thetc, optiondict, fmri_x, fmritc, os_fmri_x, 
         thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=optiondict['interptype'])
     else:
         thetc[:] = fmritc
-    thexcorr, theglobalmax = onecorrelation(thetc, oversampfreq, corrorigin, lagmininpts, lagmaxinpts, ncprefilter,
-                                            referencetc, optiondict)
+    thexcorr, theglobalmax = onecorrelation(thetc,
+                                            oversampfreq,
+                                            corrorigin,
+                                            lagmininpts,
+                                            lagmaxinpts,
+                                            ncprefilter,
+                                            referencetc,
+                                            optiondict)
     return vox, np.mean(thetc), thexcorr, theglobalmax
 
 
-def correlationpass(fmridata, fmrifftdata, referencetc,
-                    fmri_x, os_fmri_x,
+def correlationpass(fmridata,
+                    fmrifftdata,
+                    referencetc,
+                    fmri_x,
+                    os_fmri_x,
                     tr,
-                    corrorigin, lagmininpts, lagmaxinpts,
-                    corrout, meanval,
+                    corrorigin,
+                    lagmininpts,
+                    lagmaxinpts,
+                    corrout,
+                    meanval,
                     ncprefilter,
                     optiondict,
                     rt_floatset=np.float64,
