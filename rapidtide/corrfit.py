@@ -34,7 +34,9 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 
 
-def onecorrfit(thetc, corrscale, optiondict,
+def onecorrfit(thetc,
+               corrscale,
+               optiondict,
                disablethresholds=False,
                displayplots=False,
                initiallag=None,
@@ -122,16 +124,17 @@ def _procOneVoxelFitcorr(vox,
                          genlagtc,
                          initial_fmri_x,
                          optiondict,
-                         displayplots,
+                         displayplots=False,
                          initiallag=None,
                          rt_floatset=np.float64,
                          rt_floattype='float64'):
-    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = onecorrfit(corrtc, corrscale,
+    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = onecorrfit(corrtc,
+                                                                                             corrscale,
                                                                                              optiondict,
                                                                                              displayplots=displayplots,
                                                                                              initiallag=initiallag,
-                                                                                             rt_floatset=np.float64,
-                                                                                             rt_floattype='float64')
+                                                                                             rt_floatset=rt_floatset,
+                                                                                             rt_floattype=rt_floattype)
 
     if maxval > 0.3:
         displayplots = False
@@ -168,9 +171,23 @@ def _procOneVoxelFitcorr(vox,
            thewindowout, theR2, maskval, failreason
 
 
-def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
-            corrscale, lagmask, failimage, lagtimes, lagstrengths, lagsigma, corrout, meanval,
-            gaussout, windowout, R2, optiondict, initiallags=None,
+def fitcorr(genlagtc,
+            initial_fmri_x,
+            lagtc,
+            slicesize,
+            corrscale,
+            lagmask,
+            failimage,
+            lagtimes,
+            lagstrengths,
+            lagsigma,
+            corrout,
+            meanval,
+            gaussout,
+            windowout,
+            R2,
+            optiondict,
+            initiallags=None,
             rt_floatset=np.float64,
             rt_floattype='float64'):
     displayplots = False
@@ -215,7 +232,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                                                   genlagtc,
                                                   initial_fmri_x,
                                                   optiondict,
-                                                  displayplots,
+                                                  displayplots=displayplots,
                                                   initiallag=thislag,
                                                   rt_floatset=rt_floatset,
                                                   rt_floattype=rt_floattype))
@@ -267,6 +284,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                 thislag = initiallags[vox]
             else:
                 dothisone = False
+                thislag = None
             if dothisone:
                 dummy, \
                 volumetotalinc, \
@@ -285,7 +303,7 @@ def fitcorr(genlagtc, initial_fmri_x, lagtc, slicesize,
                                          genlagtc,
                                          initial_fmri_x,
                                          optiondict,
-                                         displayplots,
+                                         displayplots=displayplots,
                                          initiallag=thislag,
                                          rt_floatset=rt_floatset,
                                          rt_floattype=rt_floattype)
