@@ -1,15 +1,19 @@
 # History of changes
 
-## Version 1.6 (8/2/18)
-* (documentation) Major revisions by Taylor Salo to clean things up.
+## Version 1.6 (8/6/18)
+* (documentation) Major revisions to clean things up (tsalo).
+* (workflows) Initial creation (work in progress) (tsalo).
+* (testing) Reorganized and fixed - now it actually works! (tsalo).
+* (coverage) Code coverage for testing is now tracked (21% - we can improve significantly with workflows) (tsalo).
+* (rapidtide2, 2x, happy) Finally found (and fixed) the reason for a range of random stalls and slowdowns when running on a cluster.  MKL extensions were silently distributing some numpy calculations over all cores (which means running N jobs running on a cluster tried to use N^2 cores - not good at all...).  The maxiumum number of MKL threads is now settable on the command line, and defaults to 1 (no multiprocessor numpy).  Strangely, this makes everything a little faster in single processor mode, and A LOT faster in multiprocessor mode.
 * (tide_funcs.py) tide_funcs.py has been split into filter.py, fit.py, io.py, miscmath.py, resample.py, stats.py, and util.py.  All executables fixed to match.
 * (rapidtide2, 2x) Oversample factor is now set automatically by default to make the correlation timestep 0.5 or less.  This dramatically improves fits for longer TRs (> 1.5 seconds).
-* (rapidtide2, 2x) Moved the major passes (null correlation, correlation, correlation fit, and refine) into separate modules for maintainability and to simplify tinkering.
+* (rapidtide2, 2x) Moved the major passes (null correlation, correlation, correlation fit, refine, wiener filter and glm) into separate modules for maintainability and to simplify tinkering.
 * (rapidtide2, 2x) Isolated multiprocessing code to make speeding up new routines easier and avoid massive code duplication.
 * (rapidtide2, 2x) Fixed some bugs in correlation mask reading and saving include and exclude masks.
 * (rapidtide2, 2x) Improved tmask, fixed a bug.
 * (resamp1tc, resample.py) Added arbresample, modified dotwostepresample.
-* (filter.py) Consolodated doprecalcfftfilt and xfunc into transferfuncfilt.
+* (filter.py) Consolidated doprecalcfftfilt and xfunc into transferfuncfilt.
 * (filter.py) Added docstrings, code cleanup and regularization.
 * (filter.py) Added new 'spectrum' routine.
 * (filter.py) Initial support for precalculated arb filtering.
