@@ -44,6 +44,13 @@ from scipy.signal import hilbert, welch, savgol_filter
 
 from matplotlib.pyplot import plot, show, figure
 
+try:
+    import mkl
+
+    mklexists = True
+except ImportError:
+    mklexists = False
+
 
 def _procOneVoxelNormalize(vox, voxels):
     if detrend:
@@ -339,6 +346,7 @@ softvesselfrac = 0.4
 infodict = {}
 stdfreq = 25.0
 nprocs = 1
+mklthreads = 1
 
 # start the clock!
 timings = [['Start', time.time(), None, None]]
@@ -390,6 +398,7 @@ try:
                                                    "gridbins=",
                                                    "stdfreq=",
                                                    "nprocs=",
+                                                   'mklthreads=',
                                                    "smoothlen=",
                                                    "help"])
 except getopt.GetoptError as err:
@@ -436,6 +445,13 @@ for o, a in opts:
         if nprocs < 1:
             nprocs = tide_multiproc.maxcpus()
         print('will use', nprocs, 'processors for long calculations')
+    elif o == '--mklthreads':
+            mklthreads = int(a)
+            linkchar = '='
+            if mklexists:
+                print('will use', mklthreads, 'MKL threads for accelerated numpy processing.')
+            else:
+                print('MKL not present - ignoring --mklthreads')
     elif o == "--stdfreq":
         stdfreq = float(a)
         print('setting common output frequency to', stdfreq)
@@ -473,6 +489,12 @@ for o, a in opts:
 
 memfile = open(outputroot + '_memusage.csv', 'w')
 tide_util.logmem(None, file=memfile)
+
+# set the number of MKL threads to use
+if mklexists:
+    mklmaxthreads = mkl.get_max_threads()
+    print('mkl max threads =', mklmaxthreads)
+    mkl.set_num_threads(mklthreads)
 
 thecardbandfilter = tide_filt.noncausalfilter()
 thecardbandfilter.settype('arb')
