@@ -1697,12 +1697,16 @@ def main():
             lagindpad = corrorigin - 2 * np.max((lagmininpts, lagmaxinpts))
             acmininpts = lagmininpts + lagindpad
             acmaxinpts = lagmaxinpts + lagindpad
-            thexcorr, dummy = tide_corrpass.onecorrelation(referencetc, oversampfreq, corrorigin, acmininpts, acmaxinpts,
-                                             theprefilter,
-                                             referencetc,
-                                             optiondict)
+            thexcorr, dummy = tide_corrpass.onecorrelation(referencetc,
+                                                           oversampfreq,
+                                                           corrorigin,
+                                                           acmininpts,
+                                                           acmaxinpts,
+                                                           theprefilter,
+                                                           referencetc,
+                                                           optiondict)
             maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
-                tide_corrfit.onecorrfit(thexcorr, corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts],
+                tide_corrfit.onecorrfitx(thexcorr, corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts],
                                         optiondict,
                                         rt_floatset=rt_floatset,
                                         rt_floattype=rt_floattype
@@ -1763,13 +1767,21 @@ def main():
                 print('calling getNullDistributionData with args:', oversampfreq, fmritr, corrorigin, lagmininpts,
                       lagmaxinpts)
             if optiondict['memprofile']:
-                getNullDistributionData_func = profile(tide_nullcorr.getNullDistributionData, precision=2)
+                getNullDistributionData_func = profile(tide_nullcorr.getNullDistributionDatax, precision=2)
             else:
                 tide_util.logmem('before getnulldistristributiondata', file=memfile)
-                getNullDistributionData_func = tide_nullcorr.getNullDistributionData
-            corrdistdata = getNullDistributionData_func(cleaned_referencetc, corrscale, theprefilter,
-                                                        oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
-                                                        optiondict)
+                getNullDistributionData_func = tide_nullcorr.getNullDistributionDatax
+            corrdistdata = getNullDistributionData_func(cleaned_referencetc,
+                                                        corrscale,
+                                                        theprefilter,
+                                                        oversampfreq,
+                                                        corrorigin,
+                                                        lagmininpts,
+                                                        lagmaxinpts,
+                                                        optiondict,
+                                                        rt_floatset=rt_floatset,
+                                                        rt_floattype=rt_floattype
+                                                        )
             tide_io.writenpvecs(corrdistdata, outputname + '_corrdistdata_pass' + str(thepass) + '.txt')
 
             # calculate percentiles for the crosscorrelation from the distribution data
@@ -1837,10 +1849,10 @@ def main():
         timings.append(['Time lag estimation start, pass ' + str(thepass), time.time(), None, None])
 
         if optiondict['memprofile']:
-            fitcorr_func = profile(tide_corrfit.fitcorr, precision=2)
+            fitcorr_func = profile(tide_corrfit.fitcorrx, precision=2)
         else:
             tide_util.logmem('before fitcorr', file=memfile)
-            fitcorr_func = tide_corrfit.fitcorr
+            fitcorr_func = tide_corrfit.fitcorrx
         voxelsprocessed_fc = fitcorr_func(genlagtc,
                                           initial_fmri_x,
                                           lagtc,
@@ -1858,7 +1870,8 @@ def main():
                                           R2,
                                           optiondict,
                                           rt_floatset=rt_floatset,
-                                          rt_floattype=rt_floattype)
+                                          rt_floattype=rt_floattype
+                                          )
         timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
 
         # Step 2b - Correlation time despeckle
@@ -2315,6 +2328,7 @@ def main():
         tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes,
                             outputname + '_corrout' + outsuffix4d)
     del corrout
+
     if optiondict['saveprewhiten']:
         if not optiondict['textio']:
             theheader = nim.header
