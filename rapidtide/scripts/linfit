@@ -24,6 +24,7 @@ import getopt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import sys
+import numpy as np
 
 
 def usage():
@@ -144,32 +145,32 @@ if datamask3d:
     rs_datamask = datamask_data.reshape(numspatiallocs)
 else:
     rs_datamask = datamask_data.reshape((numspatiallocs, timepoints))
-rs_datamask_bin = where(rs_datamask > 0.9, 1.0, 0.0)
+rs_datamask_bin = np.where(rs_datamask > 0.9, 1.0, 0.0)
 rs_templatefile = templatefile_data.reshape(numspatiallocs)
 rs_templatemask = templatemask_data.reshape(numspatiallocs)
-rs_templatemask_bin = where(rs_templatemask > 0.1, 1.0, 0.0)
+rs_templatemask_bin = np.where(rs_templatemask > 0.1, 1.0, 0.0)
 if regionatlasname is not None:
     rs_regionatlas = regionatlas_data.reshape(numspatiallocs)
     numregions = int(np.max(rs_regionatlas))
 
-fitdata = zeros((numspatiallocs, timepoints), dtype='float')
-# residuals = zeros((numspatiallocs, timepoints), dtype='float')
-# newtemplate = zeros((numspatiallocs), dtype='float')
-# newmask = zeros((numspatiallocs), dtype='float')
+fitdata = np.zeros((numspatiallocs, timepoints), dtype='float')
+# residuals = np.zeros((numspatiallocs, timepoints), dtype='float')
+# newtemplate = np.zeros((numspatiallocs), dtype='float')
+# newmask = np.zeros((numspatiallocs), dtype='float')
 if multiregionfit:
-    lincoffs = zeros((numregions, timepoints), dtype='float')
-    sqrcoffs = zeros((numregions, timepoints), dtype='float')
-    offsets = zeros((numregions, timepoints), dtype='float')
-    rvals = zeros((numregions, timepoints), dtype='float')
+    lincoffs = np.zeros((numregions, timepoints), dtype='float')
+    sqrcoffs = np.zeros((numregions, timepoints), dtype='float')
+    offsets = np.zeros((numregions, timepoints), dtype='float')
+    rvals = np.zeros((numregions, timepoints), dtype='float')
 else:
-    lincoffs = zeros(timepoints, dtype='float')
-    sqrcoffs = zeros(timepoints, dtype='float')
-    offsets = zeros(timepoints, dtype='float')
-    rvals = zeros(timepoints, dtype='float')
+    lincoffs = np.zeros(timepoints, dtype='float')
+    sqrcoffs = np.zeros(timepoints, dtype='float')
+    offsets = np.zeros(timepoints, dtype='float')
+    rvals = np.zeros(timepoints, dtype='float')
 
 if multiregionfit:
     print('making region masks')
-    regionvoxels = zeros((numspatiallocs, numregions), dtype='float')
+    regionvoxels = np.zeros((numspatiallocs, numregions), dtype='float')
     for region in range(0, numregions):
         thisregion = np.where((rs_regionatlas * rs_templatemask_bin) == (region + 1))
         regionvoxels[thisregion, region] = 1.0
@@ -203,11 +204,9 @@ for thetime in range(0, timepoints):
             rvals[region, thetime] = R
             if order == 2:
                 sqrcoffs[region, thetime] = thefit[0, 2]
-                fitdata[voxelstoreconstruct, thetime] += sqrcoffs[region, thetime] * np.square(
-                    rs_templatefile[voxelstoreconstruct]) + \
-                                                         lincoffs[region, thetime] * rs_templatefile[
-                                                             voxelstoreconstruct] + \
-                                                         offsets[region, thetime]
+                fitdata[voxelstoreconstruct, thetime] += \
+                    sqrcoffs[region, thetime] * np.square(rs_templatefile[voxelstoreconstruct]) + \
+                    lincoffs[region, thetime] * rs_templatefile[voxelstoreconstruct] + offsets[region, thetime]
             else:
                 fitdata[voxelstoreconstruct, thetime] += lincoffs[region, thetime] * rs_templatefile[
                     voxelstoreconstruct] + offsets[region, thetime]
@@ -238,11 +237,11 @@ tide_io.writenpvecs(offsets, outputrootname + '_offsets.txt')
 tide_io.writenpvecs(rvals, outputrootname + '_rvals.txt')
 if multiregionfit:
     for region in range(0, numregions):
-        print("region", region + 1, "slope mean, std:", mean(lincoffs[:, region]), std(lincoffs[:, region]))
-        print("region", region + 1, "offset mean, std:", mean(offsets[:, region]), std(offsets[:, region]))
+        print("region", region + 1, "slope mean, std:", np.mean(lincoffs[:, region]), np.std(lincoffs[:, region]))
+        print("region", region + 1, "offset mean, std:", np.mean(offsets[:, region]), np.std(offsets[:, region]))
 else:
-    print("slope mean, std:", mean(lincoffs), std(lincoffs))
-    print("offset mean, std:", mean(offsets), std(offsets))
+    print("slope mean, std:", np.mean(lincoffs), np.std(lincoffs))
+    print("offset mean, std:", np.mean(offsets), np.std(offsets))
 
 print("writing nifti series")
 tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
