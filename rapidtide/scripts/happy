@@ -251,13 +251,22 @@ def phaseanalysis(firstharmonic):
     analytic_signal = hilbert(firstharmonic)
     amplitude_envelope = np.abs(analytic_signal)
     instantaneous_phase = np.angle(analytic_signal / amplitude_envelope)
-    # tide_io.writevec((analytic_signal / amplitude_envelope).real, outputroot + '_oscillatory.txt')
     instantaneous_phase = np.unwrap(instantaneous_phase)
     return instantaneous_phase, amplitude_envelope
 
 
 def savgolsmooth(data, smoothlen=301, polyorder=3):
     return savgol_filter(data, smoothlen, polyorder)
+
+
+def getfundamental(inputdata, Fs, fundfreq):
+    arb_lower = 0.4 * fundfreq
+    arb_upper = 1.4 * fundfreq
+    arb_lowerstop = 0.9 * arb_lower
+    arb_upperstop = 1.1 * arb_upper
+    thefundfilter = tide_filt.noncausalfilter(filtertype='arb')
+    thefundfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+    return thefundfilter.apply(Fs, inputdata)
 
 
 def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
@@ -552,7 +561,7 @@ else:
 timings.append(['Slice times determined', time.time(), None, None])
 
 # now get an estimate of the cardiac signal
-print('generating cardiac signal from fmri data')
+print('estimating cardiac signal from fmri data')
 tide_util.logmem('before cardiacfromimage', file=memfile)
 cardfromfmri, slicesamplerate, numsteps, normdata = cardiacfromimage(fmri_data, mask, xsize, ysize, numslices,
                                                                      timepoints, tr,
@@ -677,22 +686,9 @@ else:
     infodict['pleth'] = False
     peakfreq = peakfreq_bold
 
-# now tune the prefilter to hone in on the primary harmonic
-arb_lower = 0.4 * peakfreq
-arb_upper = 1.4 * peakfreq
-arb_lowerstop = 0.9 * arb_lower
-arb_upperstop = 1.1 * arb_upper
-thecardbandfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-filthiresfund = tide_math.corrnormalize(thecardbandfilter.apply(slicesamplerate, cardiacwaveform), False, False)
+#  extract the fundamental
+filthiresfund = tide_math.corrnormalize(getfundamental(cardiacwaveform, slicesamplerate, peakfreq), False, False)
 tide_io.writevec(filthiresfund, outputroot + '_cardiacfundamental.txt')
-
-# account for slice time offests
-offsets = nim_data[:, :, :, 0] * 0.0
-for i in range(numslices):
-    offsets[:, :, i] = slicetimes[i]
-
-# remap to space by time
-fmri_offsets = offsets.reshape(numspatiallocs)
 
 # now calculate the phase waveform
 tide_util.logmem('before analytic phase analysis', file=memfile)
@@ -702,6 +698,14 @@ tide_io.writevec(instantaneous_phase, outputroot + '_instphase_unwrapped.txt')
 initialphase = instantaneous_phase[0]
 infodict['kalminit_phi0'] = initialphase
 timings.append(['Phase waveform generated', time.time(), None, None])
+
+# account for slice time offests
+offsets = nim_data[:, :, :, 0] * 0.0
+for i in range(numslices):
+    offsets[:, :, i] = slicetimes[i]
+
+# remap to space by time
+fmri_offsets = offsets.reshape(numspatiallocs)
 
 # Make synthetic cardiac files
 gencardiac = tide_math.corrnormalize(
