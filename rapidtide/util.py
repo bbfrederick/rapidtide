@@ -69,6 +69,10 @@ except ImportError:
 
 
 def checkimports(optiondict):
+    from numpy.distutils.system_info import get_info
+    optiondict['blas_opt'] = get_info('blas_opt')
+    optiondict['lapack_opt'] = get_info('lapack_opt')
+
     if pyfftwexists:
         print('monkey patched scipy.fftpack to use pyfftw')
     else:
@@ -391,3 +395,64 @@ def proctiminginfo(thetimings, outputfile='', extraheader=None):
         lasteventtime = float(theevent[1])
     if outputfile != '':
         tide_io.writevec(theinfolist, outputfile)
+
+
+# --------------------------- testing functions -------------------------------------------------
+def comparemap(map1, map2, mask=None):
+    if map1.shape != map2.shape:
+        print('comparemap: maps do not have the same shape - aborting')
+        sys.exit()
+    if mask is not None:
+        if map1.shape != mask.shape:
+            print('comparemap: mask does not have the same shape as the maps - aborting')
+            sys.exit()
+    else:  
+        mask = map1 * 0 + 1
+
+    validvoxels = np.where(mask > 0)[0]
+    map1valid = map1[validvoxels]
+    map2valid = map2[validvoxels]
+    diff = map2valid - map1valid
+    reldiff = np.where(map1valid != 0.0, diff / map1valid, 0.0)
+    maxdiff = np.max(diff)
+    mindiff = np.min(diff)
+    meandiff = np.mean(diff)
+    mse = np.mean(np.square(diff))
+
+    maxreldiff = np.max(reldiff)
+    minreldiff = np.min(reldiff)
+    meanreldiff = np.mean(reldiff)
+    relmse = np.mean(np.square(reldiff))
+
+    return mindiff, maxdiff, meandiff, mse, minreldiff, maxreldiff, meanreldiff, relmse
+
+
+def comparerapidtideruns(root1, root2):
+    results = {}
+    for map in ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'fitCoff']:
+        filename1 = root1 + '_' + map + '.nii.gz'
+        maskname1 = root1 + '_lagmask.nii.gz'
+        filename2 = root2 + '_' + map + '.nii.gz'
+        maskname2 = root2 + '_lagmask.nii.gz'
+        masknim1, maskdata1, maskhdr1, themaskdims1, themasksizes1 = tide_io.readfromnifti(maskname1)
+        masknim2, maskdata2, maskhdr2, themaskdims2, themasksizes2 = tide_io.readfromnifti(maskname2)
+        if tide_io.checkspacematch(maskhdr1, maskhdr2):
+            mask = maskdata1 * maskdata2
+            if os.path.isfile(filename1) and os.path.isfile(filename2):
+                # files exist - read them in and process them
+                nim1, data1, hdr1, thedims1, thesizes1 = tide_io.readfromnifti(filename1)
+                nim2, data2, hdr2, thedims2, thesizes2 = tide_io.readfromnifti(filename2)
+                if tide_io.checkspacematch(hdr1, hdr2) and tide_io.checkspacematch(hdr1, maskhdr1):
+                    # files match in size
+                    results[map] = {}
+                    results[map]['mindiff'], results[map]['maxdiff'], results[map]['meandiff'], results[map]['mse'], \
+                        results[map]['relmindiff'], results[map]['relmaxdiff'], results[map]['relmeandiff'], results[map]['relmse'] = comparemap(data1, data2, mask=mask)
+                else:
+                    print('mask dimensions don\'t match - aborting')
+                    sys.exit()
+            else:
+                print('map', map, 'does not exist - skipping')
+        else:
+            print('mask dimensions don\'t match - aborting')
+            sys.exit()
+    return results

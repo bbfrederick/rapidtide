@@ -1,21 +1,36 @@
 #!/bin/csh -f
 rapidtide2x \
 	fmri.nii.gz \
-	../dst/dgsr_maskcheck \
+	../dst/dgsr_rapidtide2x_multiproc \
         --limitoutput \
         --lagminthresh=0.25 \
         --tmask=tmask.txt \
-        -s 100.0 \
+        -s 25.0 \
         -L \
 	-r -20,20 \
 	-f 2 \
         --refinepasses=3 \
         --despecklepasses=4 \
         --accheck \
-        --includemask=fmri_mask.nii.gz \
-        --excludemask=fmri_emptymask.nii.gz \
-        --corrmask=fmri_mask.nii.gz \
         --nprocs=-1
+rapidtide2 \
+	fmri.nii.gz \
+	../dst/dgsr_rapidtide2_multiproc \
+        --limitoutput \
+        --lagminthresh=0.25 \
+        --tmask=tmask.txt \
+        -s 25.0 \
+        -L \
+	-r -20,20 \
+	-f 2 \
+        --refinepasses=3 \
+        --despecklepasses=4 \
+        --accheck \
+        --nprocs=-1
+
+diffmaps ../dst/dgsr_rapidtide2_multiproc ../dst/dgsr_rapidtide2x_multiproc ../dst/diff
+
+
 #rapidtide2x \
 	#fmri.nii.gz \
 	#../dst/dgsr_lfox \

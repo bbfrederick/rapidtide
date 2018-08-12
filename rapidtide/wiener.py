@@ -31,11 +31,11 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 
 
-def _procOneVoxelGLM(vox,
-                     lagtc,
-                     inittc,
-                     rt_floatset=np.float64,
-                     rt_floattype='float64'):
+def _procOneVoxelWiener(vox,
+                        lagtc,
+                        inittc,
+                        rt_floatset=np.float64,
+                        rt_floattype='float64'):
     thefit, R = tide_fit.mlregress(lagtc, inittc)
     fitcoff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoff * lagtc)
@@ -43,26 +43,26 @@ def _procOneVoxelGLM(vox,
            rt_floatset(thefit[0, 1] / thefit[0, 0]), datatoremove, rt_floatset(inittc - datatoremove)
 
 
-def glmpass(numspatiallocs,
-            reportstep,
-            fmri_data,
-            threshval,
-            lagtc,
-            optiondict,
-            meanvalue,
-            rvalue,
-            r2value,
-            fitcoff,
-            fitNorm,
-            datatoremove,
-            filtereddata,
-            rt_floatset=np.float64,
-            rt_floattype='float64'):
+def wienerpass(numspatiallocs,
+               reportstep,
+               fmri_data,
+               threshval,
+               lagtc,
+               optiondict,
+               meanvalue,
+               rvalue,
+               r2value,
+               fitcoff,
+               fitNorm,
+               datatoremove,
+               filtereddata,
+               rt_floatset=np.float64,
+               rt_floattype='float64'):
     inputshape = np.shape(fmri_data)
     themask = np.where(np.mean(fmri_data, axis=1) > threshval, 1, 0)
     if optiondict['nprocs'] > 1:
         # define the consumer function here so it inherits most of the arguments
-        def GLM_consumer(inQ, outQ):
+        def Wiener_consumer(inQ, outQ):
             while True:
                 try:
                     # get a new message
@@ -73,22 +73,22 @@ def glmpass(numspatiallocs,
                         break
 
                     # process and send the data
-                    outQ.put(_procOneVoxelGLM(val,
-                                              lagtc[val, :],
-                                              fmri_data[val, :],
-                                              rt_floatset=rt_floatset,
-                                              rt_floattype=rt_floattype))
+                    outQ.put(_procOneVoxelWiener(val,
+                                                 lagtc[val, :],
+                                                 fmri_data[val,
+                                                 optiondict['addedskip']:],
+                                                 rt_floatset=rt_floatset,
+                                                 rt_floattype=rt_floattype))
 
                 except Exception as e:
                     print("error!", e)
                     break
 
-        data_out = tide_multiproc.run_multiproc(GLM_consumer,
+        data_out = tide_multiproc.run_multiproc(Wiener_consumer,
                                                 inputshape, themask,
                                                 nprocs=optiondict['nprocs'],
                                                 showprogressbar=True,
                                                 chunksize=optiondict['mp_chunksize'])
-
         # unpack the data
         volumetotal = 0
         for voxel in data_out:
@@ -100,28 +100,20 @@ def glmpass(numspatiallocs,
             datatoremove[voxel[0], :] = voxel[6]
             filtereddata[voxel[0], :] = voxel[7]
             volumetotal += 1
-
-        del data_out
+        data_out = []
     else:
         volumetotal = 0
         for vox in range(0, numspatiallocs):
             if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict['showprogressbar']:
                 tide_util.progressbar(vox + 1, numspatiallocs, label='Percent complete')
             inittc = fmri_data[vox, optiondict['addedskip']:].copy()
-            if themask[vox] > 0:
-                dummy, \
-                meanvalue[vox],\
-                rvalue[vox], \
-                r2value[vox], \
-                fitcoff[vox], \
-                fitNorm[vox], \
-                datatoremove[vox], \
-                filtereddata[vox] = \
-                    _procOneVoxelGLM(vox,
-                                     lagtc[vox, :],
-                                     inittc,
-                                     rt_floatset=rt_floatset,
-                                     rt_floattype=rt_floattype)
-                volumetotal += 1
+            if np.mean(inittc) >= threshval:
+                dummy, meanvalue[vox], rvalue[vox], r2value[vox], fitcoff[vox], fitNorm[vox], datatoremove[vox], \
+                filtereddata[vox] = _procOneVoxelWiener(vox,
+                                                        lagtc[vox, :],
+                                                        inittc,
+                                                        rt_floatset=rt_floatset,
+                                                        t_floattype=rt_floattype)
+            volumetotal += 1
 
     return volumetotal
