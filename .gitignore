@@ -15,7 +15,8 @@ test.nii.gz
 *junk*
 
 # local executables
-wiener*
+wiener_deconv*
+testwiener
 wavedecomp
 
 # PyCharm files
