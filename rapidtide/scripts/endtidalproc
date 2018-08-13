@@ -22,7 +22,7 @@
 from __future__ import print_function
 import sys
 import getopt
-fimport bisect
+import bisect
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import numpy as np
