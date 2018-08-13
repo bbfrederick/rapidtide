@@ -85,7 +85,7 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
     return data_out
 
 
-def run_multiproc(consumerfunc, inputshape, maskarray, nprocs=1, showprogressbar=True, chunksize=1000):
+def run_multiproc(consumerfunc, inputshape, maskarray, nprocs=1, procbyvoxel=True, showprogressbar=True, chunksize=1000):
     # initialize the workers and the queues
     n_workers = nprocs
     inQ = mp.Queue()
@@ -94,14 +94,20 @@ def run_multiproc(consumerfunc, inputshape, maskarray, nprocs=1, showprogressbar
     for i, w in enumerate(workers):
         w.start()
 
+    if procbyvoxel:
+        indexaxis = 0
+        procunit = 'voxels'
+    else:
+        indexaxis = 1
+        procunit = 'timepoints'
     # pack the data and send to workers
     data_in = []
-    for d in range(inputshape[0]):
+    for d in range(inputshape[indexaxis]):
         if maskarray is None:
             data_in.append(d)
         elif maskarray[d] > 0:
             data_in.append(d)
-    print('processing', len(data_in), 'voxels with', n_workers, 'processes')
+    print('processing', len(data_in), procunit + ' with', n_workers, 'processes')
     data_out = _process_data(data_in, inQ, outQ, showprogressbar=showprogressbar,
                              chunksize=chunksize)
 
