@@ -18,6 +18,7 @@ test.nii.gz
 wiener_deconv*
 testwiener
 wavedecomp
+getphase.py
 
 # PyCharm files
 .idea
