@@ -2096,7 +2096,6 @@ def main():
                                            fmri_data_valid,
                                            threshval,
                                            lagtc,
-                                           optiondict,
                                            meanvalue,
                                            rvalue,
                                            r2value,
@@ -2104,6 +2103,10 @@ def main():
                                            fitNorm,
                                            datatoremove,
                                            filtereddata,
+                                           nprocs=optiondict['nprocs'],
+                                           showprogressbar=optiondict['showprogressbar'],
+                                           addedskip=optiondict['addedskip'],
+                                           mp_chunksize=optiondict['mp_chunksize'],
                                            rt_floatset=rt_floatset,
                                            rt_floattype=rt_floattype
                                            )
