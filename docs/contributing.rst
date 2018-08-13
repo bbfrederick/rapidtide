@@ -19,7 +19,7 @@ Docstrings should follow `numpydoc`_ convention. We encourage extensive
 documentation.
 
 The code itself should follow `PEP8`_ convention as much as possible, with at
-most about 500 lines of code (not including docstrings) per script.
+most about 500 lines of code (not including docstrings) per file.
 
 .. _numpydoc: https://numpydoc.readthedocs.io/en/latest/format.html
 .. _PEP8: https://www.python.org/dev/peps/pep-0008/
@@ -35,7 +35,7 @@ When opening a pull request, please use one of the following prefixes:
     + **[TST]** for new or updated tests
     + **[DOC]** for new or updated documentation
     + **[STY]** for stylistic changes
-    + **[RF]** for refactoring existing code
+    + **[REF]** for refactoring existing code
 
 Pull requests should be submitted early and often!
 If your pull request is not yet ready to be merged, please also include the **[WIP]** prefix.
