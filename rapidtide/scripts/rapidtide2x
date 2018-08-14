@@ -87,28 +87,6 @@ def memcheckpoint(message):
     print(message)
 
 
-def startendcheck(timepoints, startpoint, endpoint):
-    if startpoint > timepoints - 1:
-        print('startpoint is too large (maximum is ', timepoints - 1, ')')
-        sys.exit()
-    if startpoint < 0:
-        realstart = 0
-        print('startpoint set to minimum, (0)')
-    else:
-        realstart = startpoint
-        print('startpoint set to ', startpoint)
-    if endpoint > timepoints - 1:
-        realend = timepoints - 1
-        print('endppoint set to maximum, (', timepoints - 1, ')')
-    else:
-        realend = endpoint
-        print('endpoint set to ', endpoint)
-    if realstart >= realend:
-        print('endpoint (', realend, ') must be greater than startpoint (', realstart, ')')
-        sys.exit()
-    return realstart, realend
-
-
 def maketmask(filename, timeaxis, maskvector, debug=False):
     inputdata = tide_io.readvecs(filename)
     theshape = np.shape(inputdata)
@@ -1293,7 +1271,7 @@ def main():
     timings.append(['Finish reading fmrifile', time.time(), None, None])
 
     # if the user has specified start and stop points, limit check, then use these numbers
-    validstart, validend = startendcheck(timepoints, optiondict['startpoint'], optiondict['endpoint'])
+    validstart, validend = tide_util.startendcheck(timepoints, optiondict['startpoint'], optiondict['endpoint'])
     if abs(optiondict['lagmin']) > (validend - validstart + 1) * fmritr / 2.0:
         print('magnitude of lagmin exceeds', (validend - validstart + 1) * fmritr / 2.0, ' - invalid')
         sys.exit()

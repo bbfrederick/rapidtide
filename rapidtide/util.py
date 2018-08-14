@@ -262,6 +262,41 @@ def savecommandline(theargs, thename):
     tide_io.writevec([' '.join(theargs)], thename + '_commandline.txt')
 
 
+def startendcheck(timepoints, startpoint, endpoint):
+    """
+
+    Parameters
+    ----------
+    timepoints
+    startpoint
+    endpoint
+
+    Returns
+    -------
+
+    """
+    if startpoint > timepoints - 1:
+        print('startpoint is too large (maximum is ', timepoints - 1, ')')
+        sys.exit()
+    if startpoint < 0:
+        realstart = 0
+        print('startpoint set to minimum, (0)')
+    else:
+        realstart = startpoint
+        print('startpoint set to ', startpoint)
+    if endpoint > timepoints - 1:
+        realend = timepoints - 1
+        print('endppoint set to maximum, (', timepoints - 1, ')')
+    else:
+        realend = endpoint
+        print('endpoint set to ', endpoint)
+    if realstart >= realend:
+        print('endpoint (', realend, ') must be greater than startpoint (', realstart, ')')
+        sys.exit()
+    return realstart, realend
+
+
+
 def valtoindex(thearray, thevalue, toleft=True):
     """
 
