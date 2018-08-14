@@ -19,10 +19,12 @@ Docstrings should follow `numpydoc`_ convention. We encourage extensive
 documentation.
 
 The code itself should follow `PEP8`_ convention as much as possible, with at
-most about 500 lines of code (not including docstrings) per file.
+most about 500 lines of code (not including docstrings) per file*.
 
 .. _numpydoc: https://numpydoc.readthedocs.io/en/latest/format.html
 .. _PEP8: https://www.python.org/dev/peps/pep-0008/
+
+* obviously some of the existing files don't conform to this - working on it...
 
 Pull Requests
 #############
