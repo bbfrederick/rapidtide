@@ -1,7 +1,7 @@
 Rapidtide
-=======================
+=========
 Rapidtide is a suite of python programs used to perform rapid time delay
-analysis on functional imaging data to find time lagged  correlations
+analysis on functional imaging data to find time lagged correlations
 between the voxelwise time series and other time series.
 
 Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
@@ -29,7 +29,7 @@ the "in between" releases will be somewhat more reliable.  Check back often for
 exciting new features and bug fixes!
 
 Why do I want to know about time lagged correlations?
-=======================
+=====================================================
 This comes out of work by our group (The Opto-Magnetic group at McLean
 Hospital - http://www.nirs-fmri.net) looking at the correlations between
 neuroimaging data (fMRI) and NIRS data recorded simultaneously, either
@@ -57,7 +57,7 @@ any information about" - maybe EtCO2 variation, or sympathetic nervous
 system activity - so not really random.
 
 Yes, but correlation analysis is easy - why use this package?
-=======================
+=============================================================
 The simple answer is "correlation analysis is easy, but using a prewritten
 package that handles file I/O, filtering, resampling, windowing, and the
 rest for you is even easier".  A slightly more complex answer is that
@@ -69,7 +69,7 @@ make new, interesting mistakes?  Explore your own, unique chunk of
 wrongspace...
 
 Ok, I'm sold.  What's in here?
-=======================
+==============================
 - **rapidtide2** - This is the heart of the package - this is the
 	workhorse program that will determine the time lagged
 	correlations between all the voxels in a NIFTI file and a
@@ -93,7 +93,7 @@ Ok, I'm sold.  What's in here?
         windowing, and correlation options.
 
 - **rapidtide2std** - This is a utility for registering rapidtide output maps
-	to standard coordinates.  It's usually much faster to run rapidtide
+	      to standard coordinates.  It's usually much faster to run rapidtide
         in native space then transform afterwards to MNI152 space.  NB: this
         will only work if you have a working FSL installation.
 
@@ -131,19 +131,17 @@ Ok, I'm sold.  What's in here?
         overlays and the like, so I cobbled this together.  It may be generally
         useful to anybody wanting to display functional data.
 
-
 Support
-=======================
-This code base is being developed and supported by a grant from the US NIH (1R01 NS097512).
-
+=======
+This code base is being developed and supported by a grant from the US NIH ([1R01 NS097512](http://grantome.com/grant/NIH/R01-NS097512-02)).
 
 References
-=======================
+==========
 Links to PDFs of all papers mentioned here can be found on the OMG website:
 http://www.nirs-fmri.net/publications
 
-Multimodal Cerebral circulation Imaging
------------------------
+Multimodal Cerebral Circulation Imaging
+---------------------------------------
 
 1) Tong Y, Frederick BD. (2010) Time lag dependent multimodal processing
 	of concurrent fMRI and near-infrared spectroscopy (NIRS) data
@@ -211,7 +209,7 @@ Multimodal Cerebral circulation Imaging
 	10.1177/0271678X16631755. PubMed PMID: 26873885.
 
 Physiological noise identification and removal using time delay methods
------------------------
+-----------------------------------------------------------------------
 
 1) Tong Y, Lindsey KP, Frederick BD. (2011b) Partitioning of
 	physiological noise signals in the brain with concurrent
