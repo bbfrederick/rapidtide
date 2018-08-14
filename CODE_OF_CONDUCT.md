@@ -49,7 +49,7 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting Elizabeth DuPre at elizabeth.dupre@mail.mcgill.ca.
+reported by contacting Blaise Frederick at bbfrederick@mclean.harvard.edu.
 Confidentiality will be respected in reporting.
 
 ## Attribution
