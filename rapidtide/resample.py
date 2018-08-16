@@ -162,12 +162,17 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', debug=False):
         if not (1.5 <= width <= 5.0) or (np.fmod(width, 0.5) > 0.0):
             print('congrid: width is', width)
             print('congrid: width must be a half-integral value between 1.5 and 5.0 inclusive')
+            sys.exit()
         else:
             kernelindex = int((width - 1.5) // 0.5)
 
     # find the closest grid point to the target location, calculate relative offsets from this point
-    center = tide_util.valtoindex(xaxis, loc)
-    offset = np.round((loc - xaxis[center]) / xstep, 3)  # will vary fron 0.0 to 1.0
+    center = tide_util.valtoindex(xaxis, loc, toleft=False)
+    offset = np.fmod(np.round((loc - xaxis[center]) / xstep, 3), 1.0)  # will vary from 0.0 to 1.0
+    if not (0.0 <= offset < 1.0):
+        print('(loc, xstep, center, offset):', loc, xstep, center, offset)
+        print('xaxis:', xaxis)
+        sys.exit()
     offsetkey = str(offset)
 
     if kernel == 'old':
