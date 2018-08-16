@@ -2039,7 +2039,6 @@ def main():
             tide_util.logmem('before glmpass', file=memfile)
             glmpass_func = tide_glmpass.glmpass
         voxelsprocessed_glm = glmpass_func(numvalidspatiallocs,
-                                           reportstep,
                                            fmri_data_valid,
                                            threshval,
                                            lagtc,
@@ -2050,6 +2049,7 @@ def main():
                                            fitNorm,
                                            datatoremove,
                                            filtereddata,
+                                           reportstep=reportstep,
                                            nprocs=optiondict['nprocs'],
                                            showprogressbar=optiondict['showprogressbar'],
                                            addedskip=optiondict['addedskip'],
