@@ -22,6 +22,7 @@ from __future__ import print_function, division
 
 import numpy as np
 import scipy as sp
+import scipy.special as sps
 import pylab as pl
 import warnings
 
@@ -188,6 +189,26 @@ def gausssk_eval(x, p):
     """
     t = (x - p[1]) / p[2]
     return p[0] * sp.stats.norm.pdf(t) * sp.stats.norm.cdf(p[3] * t)
+
+
+@conditionaljit()
+def kaiserbessel_eval(x, p):
+    """
+
+    Parameters
+    ----------
+    x: array-like
+        arguments to the KB function
+    p: array-like
+        The Kaiser-Bessel window parameters [alpha, tau] (wikipedia) or [beta, W/2] (Jackson, J. I., Meyer, C. H.,
+        Nishimura, D. G. & Macovski, A. Selection of a convolution function for Fourier inversion using gridding
+        [computerised tomography application]. IEEE Trans. Med. Imaging 10, 473–478 (1991))
+
+    Returns
+    -------
+
+    """
+    return np.where(np.fabs(x) <= p[1], sps.i0(p[0] * np.sqrt(1.0 - np.square((x / p[1])))) / p[1], 0.0)
 
 
 @conditionaljit()
