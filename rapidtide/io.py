@@ -136,6 +136,39 @@ if nibabelexists:
             suffix = '.nii.gz'
         output_nifti.set_qform(qaffine, code=int(qcode))
         output_nifti.set_sform(saffine, code=int(scode))
+        thedtype = thearray.dtype
+        if thedtype == np.uint8:
+            theheader.datatype = 2
+        elif thedtype == np.int16:
+            theheader.datatype = 4
+        elif thedtype == np.int32:
+            theheader.datatype = 8
+        elif thedtype == np.float32:
+            theheader.datatype = 16
+        elif thedtype == np.complex64:
+            theheader.datatype = 32
+        elif thedtype == np.float64:
+            theheader.datatype = 64
+        elif thedtype == np.int8:
+            theheader.datatype = 256
+        elif thedtype == np.uint16:
+            theheader.datatype = 512
+        elif thedtype == np.uint32:
+            theheader.datatype = 768
+        elif thedtype == np.int64:
+            theheader.datatype = 1024
+        elif thedtype == np.uint64:
+            theheader.datatype = 1280
+        elif thedtype == np.float128:
+            theheader.datatype = 1536
+        elif thedtype == np.complex128:
+            theheader.datatype = 1792
+        elif thedtype == np.complex256:
+            theheader.datatype = 2048
+        else:
+            print('type', thedtype, 'is not legal')
+            sys.exit()
+
         output_nifti.to_filename(thename + suffix)
         output_nifti = None
 
