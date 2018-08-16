@@ -297,7 +297,7 @@ def startendcheck(timepoints, startpoint, endpoint):
 
 
 
-def valtoindex(thearray, thevalue, toleft=True):
+def valtoindex(thearray, thevalue, circular=True, toleft=True):
     """
 
     Parameters
@@ -310,10 +310,25 @@ def valtoindex(thearray, thevalue, toleft=True):
     -------
 
     """
+    closestidx = (np.abs(thearray - thevalue)).argmin()
+    if (thevalue - thearray[closestidx]) >= 0.0:
+        if toleft:
+            return np.max([0, closestidx - 1])
+        else:
+            return closestidx
+    else:
+        if toleft:
+            return closestidx
+        else:
+            return np.max([0, closestidx - 1])
+    return closestidx
+
+    """
     if toleft:
         return bisect.bisect_left(thearray, thevalue)
     else:
         return bisect.bisect_right(thearray, thevalue)
+    """
 
 
 def progressbar(thisval, end_val, label='Percent', barsize=60):
