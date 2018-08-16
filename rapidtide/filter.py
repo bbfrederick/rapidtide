@@ -732,7 +732,7 @@ def spectrum(inputdata, Fs=1.0, mode='power'):
         Sample rate in Hz.  Defaults to 1.0
         :param Fs:
 
-    mode : {'real', 'imag', 'mag', 'phase', 'power'}
+    mode : {'real', 'imag', 'complex', 'mag', 'phase', 'power'}
         The type of spectrum to return.  Legal values are 'real', 'imag', 'mag', 'phase', and 'power' (default)
         :param mode:
     """
@@ -743,6 +743,8 @@ def spectrum(inputdata, Fs=1.0, mode='power'):
         specvals = specvals.real
     elif mode == 'imag':
         specvals = specvals.imag
+    elif mode == 'complex':
+        pass
     elif mode == 'mag':
         specvals = np.absolute(specvals)
     elif mode == 'phase':
