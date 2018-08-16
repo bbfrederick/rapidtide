@@ -44,7 +44,6 @@ def _procOneItemGLM(vox,
 
 
 def glmpass(numprocitems,
-            reportstep,
             fmri_data,
             threshval,
             lagtc,
@@ -55,15 +54,19 @@ def glmpass(numprocitems,
             fitNorm,
             datatoremove,
             filtereddata,
+            reportstep=1000,
             nprocs=1,
             procbyvoxel=True,
             showprogressbar=True,
             addedskip=0,
-            mp_chunksize=10000,
+            mp_chunksize=1000,
             rt_floatset=np.float64,
             rt_floattype='float64'):
     inputshape = np.shape(fmri_data)
-    themask = np.where(np.mean(fmri_data, axis=1) > threshval, 1, 0)
+    if threshval is None:
+        themask = None
+    else:
+        themask = np.where(np.mean(fmri_data, axis=1) > threshval, 1, 0)
     if nprocs > 1:
         # define the consumer function here so it inherits most of the arguments
         def GLM_consumer(inQ, outQ):
@@ -80,13 +83,13 @@ def glmpass(numprocitems,
                     if procbyvoxel:
                         outQ.put(_procOneItemGLM(val,
                                                   lagtc[val, :],
-                                                  fmri_data[val, :],
+                                                  fmri_data[val, addedskip:],
                                                   rt_floatset=rt_floatset,
                                                   rt_floattype=rt_floattype))
                     else:
                         outQ.put(_procOneItemGLM(val,
                                                   lagtc[:, val],
-                                                  fmri_data[:, val],
+                                                  fmri_data[:, addedskip + val],
                                                   rt_floatset=rt_floatset,
                                                   rt_floattype=rt_floattype))
 
@@ -152,7 +155,7 @@ def glmpass(numprocitems,
             for timepoint in range(0, numprocitems):
                 if (timepoint % reportstep == 0 or timepoint == numprocitems - 1) and showprogressbar:
                     tide_util.progressbar(timepoint + 1, numprocitems, label='Percent complete')
-                inittc = fmri_data[timepoint, addedskip:].copy()
+                inittc = fmri_data[:, addedskip + timepoint].copy()
                 if themask[timepoint] > 0:
                     dummy, \
                     meanvalue[timepoint], \
