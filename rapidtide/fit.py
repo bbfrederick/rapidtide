@@ -809,8 +809,6 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # set the search range
     lowerlim = 0
     upperlim = len(thexcorr_x) - 1
-    # lowerlim = np.max([tide_util.valtoindex(thexcorr_x, lagmin, toleft=True), 0])
-    # upperlim = np.min([tide_util.valtoindex(thexcorr_x, lagmax, toleft=False), len(thexcorr_x) - 1])
     if debug:
         print('initial search indices are', lowerlim, 'to', upperlim,
               '(', thexcorr_x[lowerlim], thexcorr_x[upperlim], ')')
