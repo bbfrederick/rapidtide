@@ -384,6 +384,27 @@ def checkifparfile(filename):
     else:
         return False
 
+def readparfile(filename):
+    r"""Checks to see if a file is an FSL style motion parameter file
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file in question.
+
+    Returns
+    -------
+    motiondict: dict
+        All the timecourses in the file, keyed by name
+
+    """
+    labels = ['X', 'Y', 'Z', 'RotX', 'RotY', 'RotZ']
+    motiontimeseries = tide_io.readvecs(filename)
+    motiondict = {}
+    for j in range(0, 6):
+        motiondict[labels[j]] = 1.0 * motiontimeseries[j, :]
+    return motiondict
+
 
 def readbidssidecar(inputfilename):
     r"""Read key value pairs out of a BIDS sidecar file
@@ -407,6 +428,29 @@ def readbidssidecar(inputfilename):
     else:
         print('sidecar file does not exist')
         return {}
+
+
+def readfmriprepconfounds(inputfilename):
+    r"""Read time series out of an fmriprep confounds tsv file
+
+    Parameters
+    ----------
+    inputfilename : str
+        The root name of the tsv (no extension)
+
+    Returns
+    -------
+        confounddict: dict
+            All the timecourses in the file, keyed by the first column
+
+    NOTE:  If file does not exist or is not valid, return None
+
+    """
+    confounddict = {}
+    df = pd.read_csv(inputfilename + '.tsv', sep='\t', quotechar='"')
+    for thecolname, theseries in df.iteritems():
+        confounddict[thecolname] = theseries.values
+    return confounddict
 
 
 def readbidstsv(inputfilename):
