@@ -441,9 +441,9 @@ def readfmriprepconfounds(inputfilename):
     Returns
     -------
         confounddict: dict
-            All the timecourses in the file, keyed by the first column
+            All the timecourses in the file, keyed by the first row
 
-    NOTE:  If file does not exist or is not valid, return None
+    NOTE:  If file does not exist or is not valid, return an empty dictionary
 
     """
     confounddict = {}
