@@ -371,8 +371,8 @@ def cleanpleth(Fs, plethwaveform):
     return filtplethwaveform, normpleth, envelope
 
 
-def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', mingap=2.0):
-    absdev = np.fabs(thewaveform - np.mean(thewaveform))
+def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', mingap=2.0, debug=True):
+    absdev = np.fabs(thewaveform - np.median(thewaveform))
     if thetype == 'triangle':
         thresh = threshold_triangle(np.reshape(absdev, (len(absdev), 1)))
     elif thetype == 'mad':
@@ -382,12 +382,15 @@ def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', minga
     else:
         print('bad thresholding type')
         sys.exit()
-    thebadpts = np.where(thewaveform - np.mean(thewaveform) >= thresh, 1.0, 0.0)
+    print('bad point threshhold set to', thresh, 'using the', thetype, 'method for', nameroot)
+    if debug:
+        tide_io.writevec(absdev, outputroot + '_' + nameroot + '_absdev.txt')
+    thebadpts = np.where(absdev >= thresh, 1.0, 0.0)
 
     # now fill in gaps
     streakthresh = int(np.round(mingap * samplerate))
     lastbad = 0
-    if thebadpts[0] == 1.0:
+    if thebadpts[0] == 1.0
         isbad = True
     else:
         isbad = False
@@ -728,7 +731,7 @@ timings.append(['Cardiac signal from image data analyzed', time.time(), None, No
 cardfromfmri_stdres = tide_math.corrnormalize(
         tide_resample.arbresample(cardfromfmri, slicesamplerate, stdfreq, decimate=True, debug=True), False, False)
 tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(stdfreq) + 'Hz.txt')
-thebadcardpts_stdres = findbadpts(cardfromfmri_stdres, 'cardfromfmri_' + str(stdfreq) + 'Hz.txt', stdfreq, infodict)
+thebadcardpts_stdres = findbadpts(cardfromfmri_stdres, 'cardfromfmri_' + str(stdfreq) + 'Hz', stdfreq, infodict)
 
 timings.append(['Cardiac signal from image data resampled and saved', time.time(), None, None])
 
@@ -774,13 +777,13 @@ if cardiacfile is not None:
     timings.append(['Cardiac signal from physiology data resampled to slice resolution and saved', time.time(), None, None])
 
     # find bad points in plethysmogram
-    thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', slicesamplerate, infodict)
+    thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', slicesamplerate, infodict, thetype='mad')
 
     # resample to standard resolution and save
     pleth_stdres = tide_math.corrnormalize(
             tide_resample.arbresample(cleanpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True), False, False)
     tide_io.writevec(pleth_stdres, outputroot + '_pleth_' + str(stdfreq) + 'Hz.txt')
-    thebadplethpts_stdres = findbadpts(pleth_stdres, 'pleth_' + str(stdfreq) + 'Hz.txt', stdfreq, infodict)
+    thebadplethpts_stdres = findbadpts(pleth_stdres, 'pleth_' + str(stdfreq) + 'Hz', stdfreq, infodict, thetype='mad')
     tide_io.writevec(
         tide_math.corrnormalize(
             tide_resample.arbresample(normpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True), False, False),
