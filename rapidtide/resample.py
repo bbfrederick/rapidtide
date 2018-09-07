@@ -167,9 +167,9 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', debug=False):
             kernelindex = int((width - 1.5) // 0.5)
 
     # find the closest grid point to the target location, calculate relative offsets from this point
-    center = tide_util.valtoindex(xaxis, loc, toleft=False)
+    center = tide_util.valtoindex(xaxis, loc)
     offset = np.fmod(np.round((loc - xaxis[center]) / xstep, 3), 1.0)  # will vary from 0.0 to 1.0
-    if not (0.0 <= offset < 1.0):
+    if not (-0.5 <= offset <= 0.5):
         print('(loc, xstep, center, offset):', loc, xstep, center, offset)
         print('xaxis:', xaxis)
         sys.exit()
