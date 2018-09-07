@@ -297,31 +297,29 @@ def startendcheck(timepoints, startpoint, endpoint):
 
 
 
-def valtoindex(thearray, thevalue, circular=True, toleft=True):
+def valtoindex(thearray, thevalue, evenspacing=True):
     """
 
     Parameters
     ----------
-    thearray
-    thevalue
-    toleft
+    thearray: array-like
+        An ordered list of values (does not need to be equally spaced)
+    thevalue: float
+        The value to search for in the array
+    evenspacing: boolean, optional
+        If True (default), assume data is evenly spaced for faster calculation.
 
     Returns
     -------
+    closestidx: int
+        The index of the sample in thearray that is closest to val
 
     """
-    closestidx = (np.abs(thearray - thevalue)).argmin()
-    if (thevalue - thearray[closestidx]) >= 0.0:
-        if toleft:
-            return np.max([0, closestidx - 1])
-        else:
-            return closestidx
+    if evenspacing:
+        limval = np.max([thearray[0], np.min([thearray[-1], thevalue])])
+        return int(np.round((limval - thearray[0]) / (thearray[1] - thearray[0]), 0))
     else:
-        if toleft:
-            return closestidx
-        else:
-            return np.max([0, closestidx - 1])
-    return closestidx
+        return (np.abs(thearray - thevalue)).argmin()
 
     """
     if toleft:
