@@ -373,24 +373,32 @@ def cleanpleth(Fs, plethwaveform):
 
 def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', mingap=2.0, debug=True):
     absdev = np.fabs(thewaveform - np.median(thewaveform))
-    if thetype == 'triangle':
-        thresh = threshold_triangle(np.reshape(absdev, (len(absdev), 1)))
-    elif thetype == 'mad':
-        medianval = np.median(thewaveform)
-        sigma = mad(thewaveform, center=medianval)
-        thresh = 3.0 * sigma
+    if thetype == 'triangle' or thetype == 'mad':
+        absdev = np.fabs(thewaveform - np.median(thewaveform))
+        if thetype == 'triangle':
+            thresh = threshold_triangle(np.reshape(absdev, (len(absdev), 1)))
+        else:
+            medianval = np.median(thewaveform)
+            sigma = mad(thewaveform, center=medianval)
+            thresh = 3.0 * sigma
+        thebadpts = np.where(absdev >= thresh, 1.0, 0.0)
+        print('bad point threshhold set to', thresh, 'using the', thetype, 'method for', nameroot)
+    elif thetype == 'fracval':
+        lower, upper = tide_stats.getfracvals(thewaveform, [0.10, 0.90], numbins=200)
+        therange = upper - lower
+        lowerthresh = lower - therange
+        upperthresh = upper + therange
+        thebadpts = np.where((lowerthresh <= thewaveform) & (thewaveform <= upperthresh), 0.0, 1.0)
+        thresh = (lowerthresh, upperthresh)
+        print('values outside of ',lowerthresh, 'to', upperthresh, 'marked as bad using the', thetype, 'method for', nameroot)
     else:
         print('bad thresholding type')
         sys.exit()
-    print('bad point threshhold set to', thresh, 'using the', thetype, 'method for', nameroot)
-    if debug:
-        tide_io.writevec(absdev, outputroot + '_' + nameroot + '_absdev.txt')
-    thebadpts = np.where(absdev >= thresh, 1.0, 0.0)
 
     # now fill in gaps
     streakthresh = int(np.round(mingap * samplerate))
     lastbad = 0
-    if thebadpts[0] == 1.0
+    if thebadpts[0] == 1.0:
         isbad = True
     else:
         isbad = False
@@ -408,7 +416,8 @@ def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', minga
         thebadpts[lastbad:] = 1.0
 
     tide_io.writevec(thebadpts, outputroot + '_' + nameroot + '_badpts.txt')
-    infodict[nameroot + '_thresh'] = thresh
+    infodict[nameroot + '_threshvalue'] = thresh
+    infodict[nameroot + '_threshmethod'] = thetype
     return thebadpts
 
 
@@ -777,13 +786,13 @@ if cardiacfile is not None:
     timings.append(['Cardiac signal from physiology data resampled to slice resolution and saved', time.time(), None, None])
 
     # find bad points in plethysmogram
-    thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', slicesamplerate, infodict, thetype='mad')
+    thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', slicesamplerate, infodict, thetype='fracval')
 
     # resample to standard resolution and save
     pleth_stdres = tide_math.corrnormalize(
             tide_resample.arbresample(cleanpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True), False, False)
     tide_io.writevec(pleth_stdres, outputroot + '_pleth_' + str(stdfreq) + 'Hz.txt')
-    thebadplethpts_stdres = findbadpts(pleth_stdres, 'pleth_' + str(stdfreq) + 'Hz', stdfreq, infodict, thetype='mad')
+    thebadplethpts_stdres = findbadpts(pleth_stdres, 'pleth_' + str(stdfreq) + 'Hz', stdfreq, infodict, thetype='fracval')
     tide_io.writevec(
         tide_math.corrnormalize(
             tide_resample.arbresample(normpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True), False, False),
