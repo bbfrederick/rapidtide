@@ -235,10 +235,9 @@ def cardiacfromimage(normdata_byslice,
                      slicetimes,
                      initprefilter,
                      notchwidth=0.015,
-                     offsetbyvox=None,
-                     detrend=True,
                      nprocs=1,
-                     debug=False):
+                     debug=False,
+                     usemask=True):
 
     # find out what timepoints we have, and their spacing
     sortedtimes = np.sort(slicetimes)
@@ -254,7 +253,10 @@ def cardiacfromimage(normdata_byslice,
     sliceavs = np.zeros((numslices, timepoints), dtype=np.float64)
     for theslice in range(numslices):
         print('averaging slice', theslice)
-        validvoxels = np.where(mask_byslice[:, theslice] > 0)[0]
+        if usemask:
+            validvoxels = np.where(mask_byslice[:, theslice] > 0)[0]
+        else:
+            validvoxels = np.where(mask_byslice[:, theslice] >= 0)[0]
         if len(validvoxels) > 0:
             sliceavs[theslice, :] = np.mean(normdata_byslice[validvoxels, theslice, :], axis=0)
             for t in range(timepoints):
@@ -396,6 +398,7 @@ spatialglmdenoise = True
 savecardiacnoise = True
 usecongrid = True
 forcedhr = None
+usemaskcardfromfmri = False
 
 # start the clock!
 timings = [['Start', time.time(), None, None]]
@@ -618,10 +621,21 @@ demeandata = fmri_data * 0.0
 validvoxels = np.where(mask > 0)[0]
 starttime = time.time()
 means = np.mean(fmri_data[:, :], axis=1).flatten()
+# detrend if we are going to
+reportstep = int(numspatiallocs // 100)
+if detrend:
+    print('detrending...')
+    for idx, thevox in enumerate(validvoxels):
+        if (idx % reportstep == 0) or (idx == len(validvoxels) - 1):
+            tide_util.progressbar(idx + 1, len(validvoxels), label='Percent complete')
+        fmri_data[thevox, :] = tide_fit.detrend(fmri_data[thevox, :], demean=False)
+    print('done')
+
 demeandata[validvoxels, :] = fmri_data[validvoxels, :] - means[validvoxels, None]
 normdata[validvoxels, :] = np.nan_to_num(demeandata[validvoxels, :] / means[validvoxels, None])
 print('normalization took', time.time() - starttime, 'seconds')
 normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
+del nim_data
 
 # now get an estimate of the cardiac signal
 print('estimating cardiac signal from fmri data')
@@ -635,7 +649,7 @@ cardfromfmri, slicesamplerate, numsteps = cardiacfromimage(normdata_byslice,
                                                            thecardbandfilter,
                                                            nprocs=nprocs,
                                                            notchwidth=notchwidth,
-                                                           detrend=detrend,
+                                                           usemask=usemaskcardfromfmri,
                                                            debug=debug)
 timings.append(['Cardiac signal generated from image data', time.time(), None, None])
 slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
@@ -775,7 +789,6 @@ infodict['phi0'] = initialphase
 timings.append(['Phase waveform generated', time.time(), None, None])
 
 # account for slice time offests
-#offsets = nim_data[:, :, :, 0] * 0.0
 offsets_byslice = np.zeros((xsize * ysize, numslices), dtype=np.float64)
 for i in range(numslices):
     offsets_byslice[:, i] = slicetimes[i]
@@ -859,10 +872,7 @@ for theslice in range(numslices):
     if len(validlocs) > 0:
         if usecongrid:
             for t in range(timepoints):
-                if detrend:
-                    filteredmr = -tide_fit.detrend(fmri_data_byslice[validlocs, theslice, t], demean=False)
-                else:
-                    filteredmr = -fmri_data_byslice[validlocs, theslice, t]
+                filteredmr = -fmri_data_byslice[validlocs, theslice, t]
                 thevals, theweights, theindices = tide_resample.congrid(outphases,
                                                                         phasevals[theslice, t],
                                                                         1.0,

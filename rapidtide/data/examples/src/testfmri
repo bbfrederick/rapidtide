@@ -1,9 +1,8 @@
 #!/bin/csh -f
-rapidtide2x \
+rapidtide2 \
 	fmri.nii.gz \
-	../dst/dgsr_rapidtide2x_multiproc \
+	../dst/dgsr_rapidtide2_multiproc \
         --limitoutput \
-        --lagminthresh=0.25 \
         --tmask=tmask.txt \
         -s 25.0 \
         -L \
@@ -15,9 +14,8 @@ rapidtide2x \
         --nprocs=-1
 rapidtide2 \
 	fmri.nii.gz \
-	../dst/dgsr_rapidtide2_multiproc \
+	../dst/dgsr_rapidtide2_singleproc \
         --limitoutput \
-        --lagminthresh=0.25 \
         --tmask=tmask.txt \
         -s 25.0 \
         -L \
@@ -26,9 +24,9 @@ rapidtide2 \
         --refinepasses=3 \
         --despecklepasses=4 \
         --accheck \
-        --nprocs=-1
+        --nprocs=1
 
-diffmaps ../dst/dgsr_rapidtide2_multiproc ../dst/dgsr_rapidtide2x_multiproc ../dst/diff
+diffmaps ../dst/dgsr_rapidtide2_multiproc ../dst/dgsr_rapidtide2_singleproc ../dst/diff
 
 
 #rapidtide2x \
