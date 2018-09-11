@@ -320,8 +320,6 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
         tide_io.writevec(smoothspectrum.real, 'smoothspectrum.txt')
     ampspec = np.abs(smoothspectrum)
     phasespec = np.angle(smoothspectrum)
-    #maxfreq = slicesamplerate / 2.0
-    #freqaxis = sp.linspace(0.0, maxfreq, len(ampspec), endpoint=False)
     if debug:
         figure()
         plot(freqaxis, ampspec, 'r')
@@ -330,13 +328,7 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
     print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
     normfac = np.sqrt(2.0) * tide_math.rms(cardiacwaveform)
     print('normfac:', normfac)
-    amps = [normfac,
-            normfac * ampspec[2 * np.argmax(ampspec)] / ampspec[np.argmax(ampspec)],
-            normfac * ampspec[3 * np.argmax(ampspec)] / ampspec[np.argmax(ampspec)]]
-    phases = [0.0,
-              phasespec[2 * np.argmax(ampspec)] - phasespec[np.argmax(ampspec)],
-              phasespec[3 * np.argmax(ampspec)] - phasespec[np.argmax(ampspec)]]
-    return peakfreq, amps, phases
+    return peakfreq
 
 
 def cleanpleth(Fs, plethwaveform):
@@ -660,15 +652,10 @@ infodict['numsteps'] = numsteps
 
 # find key components of cardiac waveform
 print('extracting harmonic components')
-peakfreq_bold, amps_bold, phases_bold = getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=smoothlen,
+peakfreq_bold = getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=smoothlen,
                                                       debug=debug)
 infodict['cardiacbpm_frombold'] = np.round(peakfreq_bold * 60.0, 2)
 infodict['cardiacfreq_frombold'] = peakfreq_bold
-#print('harmonic amplitudes:', amps_bold[0], amps_bold[1], amps_bold[2])
-#print('harmonic phases:', phases_bold[0], phases_bold[1], phases_bold[2])
-#for i in range(len(amps_bold)):
-#    infodict['kalminit_bold_amp' + str(i)] = amps_bold[i]
-#    infodict['kalminit_bold_ph' + str(i)] = phases_bold[i]
 timings.append(['Cardiac signal from image data analyzed', time.time(), None, None])
 
 tide_io.writevec(
@@ -731,7 +718,7 @@ if cardiacfile is not None:
 
     # find key components of cardiac waveform
     filtpleth = tide_math.corrnormalize(thecardbandfilter.apply(slicesamplerate, pleth_sliceres), False, False)
-    peakfreq_file, amps_file, phases_file = getcardcoeffs(filtpleth, slicesamplerate, smoothlen=smoothlen,
+    peakfreq_file = getcardcoeffs(filtpleth, slicesamplerate, smoothlen=smoothlen,
                                                           debug=debug)
     timings.append(['Cardiac coefficients calculated from pleth waveform', time.time(), None, None])
     infodict['cardiacbpm_fromphysio'] = np.round(peakfreq_file * 60.0, 2)
@@ -795,17 +782,6 @@ for i in range(numslices):
 
 # remap to space by time
 fmri_offsets = offsets_byslice.reshape(numspatiallocs)
-
-# Make synthetic cardiac files
-#gencardiac = tide_math.corrnormalize(
-#    amplitude_envelope * cardiacsig(instantaneous_phase, amps=amps_bold, phases=phases_bold), False, False)
-#tide_io.writevec(gencardiac, outputroot + '_synthcardiacfromfmri.txt')
-#timings.append(['Synthetic cardiac waveform generated', time.time(), None, None])
-#
-#if infodict['pleth']:
-#    gencardiac = tide_math.corrnormalize(
-#        amplitude_envelope * cardiacsig(instantaneous_phase, amps=amps_file, phases=phases_file), False, False)
-#    tide_io.writevec(gencardiac, outputroot + '_synthcardiacfrompleth.txt')
 
 # save the information file
 tide_io.writedict(infodict, outputroot + '_info.txt')
