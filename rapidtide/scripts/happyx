@@ -152,7 +152,8 @@ def usage():
     print("                                 format json file, use column named COL (if no file is specified ")
     print("                                 is specified, estimate cardiac signal from data)")
     print("    --cardiacfreq=FREQ         - Cardiac waveform in cardiacfile has sample frequency FREQ ")
-    print("                                 (default is 32Hz). NB: --cardiacfreq and --cardiactstep")
+    print("                            "
+          "     (default is 32Hz). NB: --cardiacfreq and --cardiactstep")
     print("                                 are two ways to specify the same thing")
     print("    --cardiactstep=TSTEP       - Cardiac waveform in file has sample time step TSTEP ")
     print("                                 (default is 0.03125s) NB: --cardiacfreq and --cardiactstep")
@@ -171,6 +172,7 @@ def usage():
     print("    --debug                    - turn on debugging information")
     print("    --nodetrend                - disable data detrending")
     print("    --normalize                - normalize fmri data")
+    print("    --nodemean                 - do not demean fmri data")
     print("    --disablenotch             - disable subharmonic notch filter")
 
     return ()
@@ -416,7 +418,7 @@ def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', minga
 # get the command line parameters
 debug = False
 dofilter = False
-fmrimod = 'none'
+fmrimod = 'demean'
 histlen = 100
 doplot = False
 smoothlen = 301
@@ -493,7 +495,7 @@ try:
                                                    "glm",
                                                    "debug",
                                                    "normalize",
-                                                   "demean",
+                                                   "nodemean",
                                                    "outputbins=",
                                                    "gridbins=",
                                                    "gridkernel=",
@@ -583,9 +585,9 @@ for o, a in opts:
     elif o == "--normalize":
         fmrimod = 'norm'
         print('will normalize fmri before gridding')
-    elif o == "--demean":
-        fmrimod = 'demean'
-        print('will demean fmri before gridding')
+    elif o == "--nodemean":
+        fmrimod = 'none'
+        print('will not demean fmri before gridding')
     elif o == '--cardiacfile':
         inputlist = a.split(':')
         cardiacfile = inputlist[0]
