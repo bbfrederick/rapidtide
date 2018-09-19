@@ -1,6 +1,7 @@
 # History of changes
 
-## Version 1.6 (8/6/18)
+## Version 1.6 (9/19/18)
+* (whole project) Cleanup and reorganization (tsalo).
 * (documentation) Major revisions to clean things up (tsalo).
 * (workflows) Initial creation (work in progress) (tsalo).
 * (testing) Reorganized and fixed - now it actually works! (tsalo).
@@ -12,14 +13,22 @@
 * (rapidtide2, 2x) Isolated multiprocessing code to make speeding up new routines easier and avoid massive code duplication.
 * (rapidtide2, 2x) Fixed some bugs in correlation mask reading and saving include and exclude masks.
 * (rapidtide2, 2x) Improved tmask, fixed a bug.
+* (rapidtide2, 2x, glmfilt) Made glmpass more general so it could be used in other scripts)
 * (resamp1tc, resample.py) Added arbresample, modified dotwostepresample.
+* (fit.py) Added Kaiser Bessel window function.
+* (io.py) savetonifti now properly sets output data type in header.
+* (io.py) Added routine to read in motion timecourses.
 * (filter.py) Consolidated doprecalcfftfilt and xfunc into transferfuncfilt.
+* (filter.py) Added new "complex" spectrum option.
 * (filter.py) Added docstrings, code cleanup and regularization.
 * (filter.py) Added new 'spectrum' routine.
 * (filter.py) Initial support for precalculated arb filtering.
+* (resample.py) Adjusted gridding to be symmetric around output value.
+* (util.py) Reimplemented valtoindex to make it faster.
 * (showtc) Updated to use new spectrum routine.
 * (spectrogram) added to distro.
 * (rapidtide2, 2x, resamp1tc showxcorr, showxcorrx, showstxcorr) eliminated all use of Butterworth filters by default.
+* (spatialfit) Fixed numpy imports
 
 
 ## Version 1.5 (6/11/18)
