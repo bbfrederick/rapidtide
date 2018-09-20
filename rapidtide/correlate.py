@@ -96,7 +96,7 @@ def disablenumba():
 
 # --------------------------- Correlation functions -------------------------------------------------
 def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=10.0, displayplots=False, prewindow=True,
-                  dodetrend=True):
+                  detrendorder=1):
     """
 
     Parameters
@@ -108,7 +108,7 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
     aclagthresh
     displayplots
     prewindow
-    dodetrend
+    detrendorder
 
     Returns
     -------
@@ -160,12 +160,18 @@ def quickcorr(data1, data2, windowfunc='hamming'):
     -------
 
     """
-    thepcorr = sp.stats.stats.pearsonr(tide_math.corrnormalize(data1, True, True, windowfunc=windowfunc),
-                                       tide_math.corrnormalize(data2, True, True, windowfunc=windowfunc))
+    thepcorr = sp.stats.stats.pearsonr(tide_math.corrnormalize(data1,
+                                                               prewindow=True,
+                                                               detrendorder=1,
+                                                               windowfunc=windowfunc),
+                                       tide_math.corrnormalize(data2,
+                                                               prewindow=True,
+                                                               detrendorder=1,
+                                                               windowfunc=windowfunc))
     return thepcorr
 
 
-def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewindow=False, dodetrend=False,
+def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewindow=False, detrendorder=0,
                      windowfunc='hamming'):
     """
 
@@ -177,7 +183,7 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewind
     windowtime
     samplestep
     prewindow
-    dodetrend
+    detrendorder
     windowfunc
 
     Returns
@@ -190,9 +196,13 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewind
     corrpertime = []
     ppertime = []
     for i in range(halfwindow, np.shape(data1)[0] - halfwindow, samplestep):
-        dataseg1 = tide_math.corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend,
+        dataseg1 = tide_math.corrnormalize(data1[i - halfwindow:i + halfwindow],
+                                           prewindow=prewindow,
+                                           detrendorder=detrendorder,
                                            windowfunc=windowfunc)
-        dataseg2 = tide_math.corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend,
+        dataseg2 = tide_math.corrnormalize(data2[i - halfwindow:i + halfwindow],
+                                           prewindow=prewindow,
+                                           detrendorder=detrendorder,
                                            windowfunc=windowfunc)
         thepcorr = sp.stats.stats.pearsonr(dataseg1, dataseg2)
         times.append(i * sampletime)
@@ -203,7 +213,7 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewind
 
 
 def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimit=None, weighting='none',
-                     prewindow=False, windowfunc='hamming', dodetrend=False, display=False):
+                     prewindow=False, windowfunc='hamming', detrendorder=0, display=False):
     """
 
     Parameters
@@ -217,7 +227,7 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     weighting
     prewindow
     windowfunc
-    dodetrend
+    detrendorder
     display
 
     Returns
@@ -230,8 +240,8 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     if laglimit is None:
         laglimit = windowtime / 2.0
 
-    dataseg1 = tide_math.corrnormalize(data1[0:2 * halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
-    dataseg2 = tide_math.corrnormalize(data2[0:2 * halfwindow], prewindow, dodetrend, windowfunc=windowfunc)
+    dataseg1 = tide_math.corrnormalize(data1[0:2 * halfwindow], prewindow=prewindow, detrendorder=detrendorder, windowfunc=windowfunc)
+    dataseg2 = tide_math.corrnormalize(data2[0:2 * halfwindow], prewindow=prewindow, detrendorder=detrendorder, windowfunc=windowfunc)
     thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
     xcorrlen = np.shape(thexcorr)[0]
     xcorr_x = np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
@@ -242,9 +252,13 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     delayvals = []
     valid = []
     for i in range(halfwindow, np.shape(data1)[0] - halfwindow, samplestep):
-        dataseg1 = tide_math.corrnormalize(data1[i - halfwindow:i + halfwindow], prewindow, dodetrend,
+        dataseg1 = tide_math.corrnormalize(data1[i - halfwindow:i + halfwindow],
+                                           prewindow=prewindow,
+                                           detrendorder=detrendorder,
                                            windowfunc=windowfunc)
-        dataseg2 = tide_math.corrnormalize(data2[i - halfwindow:i + halfwindow], prewindow, dodetrend,
+        dataseg2 = tide_math.corrnormalize(data2[i - halfwindow:i + halfwindow],
+                                           prewindow=prewindow,
+                                           detrendorder=detrendorder,
                                            windowfunc=windowfunc)
         times.append(i * sampletime)
         xcorrpertime.append(fastcorrelate(dataseg1, dataseg2, weighting=weighting))

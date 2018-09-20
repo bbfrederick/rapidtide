@@ -34,6 +34,10 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
 
+# this is here until numpy deals with their fft issue
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 
 def onecorrelation(thetc,
                    oversampfreq,
@@ -47,7 +51,9 @@ def onecorrelation(thetc,
     thetc = thetc_classfilter
 
     # prepare timecourse by normalizing, detrending, and applying a window function 
-    preppedtc = tide_math.corrnormalize(thetc, optiondict['usewindowfunc'], optiondict['dodetrend'],
+    preppedtc = tide_math.corrnormalize(thetc,
+                                        prewindow=optiondict['usewindowfunc'],
+                                        detrendorder=optiondict['detrendorder'],
                                         windowfunc=optiondict['windowfunc'])
 
     # now actually do the correlation

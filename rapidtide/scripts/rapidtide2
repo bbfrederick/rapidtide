@@ -260,7 +260,7 @@ def usage():
     print("      --datafreq=FREQ            NOTE: if using data from a text file, for example with")
     print("                                 NIRS data, using one of these options is mandatory.")
     print("    -a                         - Disable antialiasing filter")
-    print("    --nodetrend                - Disable linear trend removal")
+    print("    --detrendorder=ORDER       - Set order of trend removal (0 to disable, default is 1 - linear)")
     print("    -I                         - Invert the sign of the regressor before processing")
     print("    -i                         - Use specified interpolation type (options are 'cubic',")
     print("                                 'quadratic', and 'univariate (default)')")
@@ -445,7 +445,7 @@ def main():
 
     # correlation options
     optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
-    optiondict['dodetrend'] = True  # remove linear trends prior to correlation
+    optiondict['detrendorder'] = 1  # remove linear trends prior to correlation
     optiondict['usewindowfunc'] = True  # apply a window prior to correlation
     optiondict['windowfunc'] = 'hamming'  # the particular window function to use for correlation
     optiondict['corrweighting'] = 'none'  # use a standard unweighted crosscorrelation for calculate time delays
@@ -629,7 +629,7 @@ def main():
                                                                                                           'debug',
                                                                                                           'nonumba',
                                                                                                           'tmask=',
-                                                                                                          'nodetrend',
+                                                                                                          'detrendorder=',
                                                                                                           'slicetimes=',
                                                                                                           'glmsourcefile=',
                                                                                                           'preservefiltering',
@@ -686,15 +686,12 @@ def main():
             print('Turned on verbose mode')
         elif o == '--liang':
             optiondict['corrweighting'] = 'Liang'
-            optiondict['dodetrend'] = True
             print('Enabled Liang weighted crosscorrelation')
         elif o == '--eckart':
             optiondict['corrweighting'] = 'Eckart'
-            optiondict['dodetrend'] = True
             print('Enabled Eckart weighted crosscorrelation')
         elif o == '--phat':
             optiondict['corrweighting'] = 'PHAT'
-            optiondict['dodetrend'] = True
             print('Enabled GCC-PHAT fitting')
         elif o == '--weiner':
             print('It\'s spelled wiener, not weiner')
@@ -1024,9 +1021,10 @@ def main():
             optiondict['slicetimes'] = tide_io.readvecs(a)
             linkchar = '='
             print('Using slicetimes from file', a)
-        elif o == '--nodetrend':
-            optiondict['dodetrend'] = False
-            print('Disabling linear trend removal in regressor generation and correlation preparation')
+        elif o == '--detrendorder':
+            optiondict['detrendorder'] = int(a)
+            print('Setting trend removal order to', optiondict['detrendorder'],
+                  'for regressor generation and correlation preparation')
         elif o == '--refineupperlag':
             optiondict['lagmaskside'] = 'upper'
             print('Will only use lags between ', optiondict['lagminthresh'], ' and ', optiondict['lagmaxthresh'],
@@ -1459,8 +1457,10 @@ def main():
         invertfac = 1.0
 
     # detrend the regressor if necessary
-    if optiondict['dodetrend']:
-        reference_y = invertfac * tide_fit.detrend(inputvec[0:numreference], demean=optiondict['dodemean'])
+    if optiondict['detrendorder'] > 0:
+        reference_y = invertfac * tide_fit.detrend(inputvec[0:numreference],
+                                                   order=optiondict['detrendorder'],
+                                                   demean=optiondict['dodemean'])
     else:
         reference_y = invertfac * (inputvec[0:numreference] - np.mean(inputvec[0:numreference]))
 
@@ -1495,12 +1495,14 @@ def main():
         sys.exit()
 
     # write out the resampled reference regressors
-    if optiondict['dodetrend']:
+    if optiondict['detrendorder'] > 0:
         resampnonosref_y = tide_fit.detrend(
             tide_resample.doresample(reference_x, reference_y, initial_fmri_x, method=optiondict['interptype']),
+            order=optiondict['detrendorder'],
             demean=optiondict['dodemean'])
         resampref_y = tide_fit.detrend(
             tide_resample.doresample(reference_x, reference_y, os_fmri_x, method=optiondict['interptype']),
+            order=optiondict['detrendorder'],
             demean=optiondict['dodemean'])
     else:
         resampnonosref_y = tide_resample.doresample(reference_x, reference_y, initial_fmri_x,
@@ -1642,10 +1644,14 @@ def main():
             print('\n\n*********************')
             print('Pass number ', thepass)
 
-        referencetc = tide_math.corrnormalize(resampref_y, optiondict['usewindowfunc'], optiondict['dodetrend'],
+        referencetc = tide_math.corrnormalize(resampref_y,
+                                              prewindow=optiondict['usewindowfunc'],
+                                              detrendorder=optiondict['detrendorder'],
                                               windowfunc=optiondict['windowfunc'])
-        nonosreferencetc = tide_math.corrnormalize(resampnonosref_y, optiondict['usewindowfunc'],
-                                                   optiondict['dodetrend'], windowfunc=optiondict['windowfunc'])
+        nonosreferencetc = tide_math.corrnormalize(resampnonosref_y,
+                                                   prewindow=optiondict['usewindowfunc'],
+                                                   detrendorder=optiondict['detrendorder'],
+                                                   windowfunc=optiondict['windowfunc'])
         oversampfreq = optiondict['oversampfactor'] / fmritr
 
         # Step -1 - check the regressor for periodic components in the passband
@@ -1675,7 +1681,7 @@ def main():
                 thexcorr, acampthresh=theampthresh,
                 aclagthresh=thelagthresh,
                 prewindow=optiondict['usewindowfunc'],
-                dodetrend=optiondict['dodetrend'])
+                detrendorder=optiondict['detrendorder'])
             if sidelobetime is not None:
                 passsuffix = '_pass' + str(thepass + 1)
                 optiondict['acsidelobelag' + passsuffix] = sidelobetime
@@ -1913,13 +1919,15 @@ def main():
             normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
             tide_io.writenpvecs(normoutputdata, outputname + '_refinedregressor_pass' + str(thepass) + '.txt')
 
-            if optiondict['dodetrend']:
+            if optiondict['detrendorder'] > 0:
                 resampnonosref_y = tide_fit.detrend(
                     tide_resample.doresample(initial_fmri_x, normoutputdata, initial_fmri_x,
                                              method=optiondict['interptype']),
+                    order=optiondict['detrendorder'],
                     demean=optiondict['dodemean'])
                 resampref_y = tide_fit.detrend(tide_resample.doresample(initial_fmri_x, normoutputdata, os_fmri_x,
                                                                         method=optiondict['interptype']),
+                                               order=optiondict['detrendorder'],
                                                demean=optiondict['dodemean'])
             else:
                 resampnonosref_y = tide_resample.doresample(initial_fmri_x, normoutputdata, initial_fmri_x,
@@ -2073,12 +2081,11 @@ def main():
         if optiondict['usewindowfunc']:
             referencetc_pw = tide_math.stdnormalize(
                 tide_filt.windowfunction(np.shape(resampref_y_pw)[0], type=optiondict['windowfunc']) * tide_fit.detrend(
-                    tide_math.stdnormalize(resampref_y_pw))) / \
+                    tide_math.stdnormalize(resampref_y_pw), order=optiondict['detrendorder'])) / \
                              np.shape(resampref_y_pw)[0]
         else:
-            referencetc_pw = tide_math.stdnormalize(tide_fit.detrend(tide_math.stdnormalize(resampref_y_pw))) / \
-                             np.shape(
-                                 resampref_y_pw)[0]
+            referencetc_pw = tide_math.stdnormalize(tide_fit.detrend(tide_math.stdnormalize(resampref_y_pw),
+                                                                     order=optiondict['detrendorder'])) / np.shape(resampref_y_pw)[0]
         print('')
         if optiondict['displayplots']:
             fig = figure()

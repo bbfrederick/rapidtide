@@ -38,12 +38,12 @@ def test_stcorrelate(debug=False):
     times, corrpertime, ppertime = shorttermcorr_1D(sig1, sig2, tr, windowtime, \
                                                     samplestep=int(stepsize // tr),
                                                     prewindow=prewindow,
-                                                    dodetrend=False)
+                                                    detrendorder=0)
     plength = len(times)
     times, xcorrpertime, Rvals, delayvals, valid = shorttermcorr_2D(sig1, sig2, tr, windowtime, \
                                                                     samplestep=int(stepsize // tr),
                                                                     weighting=corrweighting, \
-                                                                    prewindow=prewindow, dodetrend=False,
+                                                                    prewindow=prewindow, detrendorder=0,
                                                                     display=False)
     xlength = len(times)
     writenpvecs(corrpertime, outfilename + "_pearson.txt")

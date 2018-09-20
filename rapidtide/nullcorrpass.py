@@ -32,10 +32,17 @@ import rapidtide.corrpass as tide_corrpass
 import rapidtide.corrfit as tide_corrfit
 
 
-def _procOneNullCorrelationx(iteration, indata, ncprefilter, oversampfreq, corrscale, corrorigin, lagmininpts,
-                            lagmaxinpts, optiondict,
-                            rt_floatset=np.float64,
-                            rt_floattype='float64'):
+def _procOneNullCorrelationx(iteration,
+                             indata,
+                             ncprefilter,
+                             oversampfreq,
+                             corrscale,
+                             corrorigin,
+                             lagmininpts,
+                             lagmaxinpts,
+                             optiondict,
+                             rt_floatset=np.float64,
+                             rt_floattype='float64'):
     # make a shuffled copy of the regressors
     shuffleddata = np.random.permutation(indata)
 
@@ -47,11 +54,13 @@ def _procOneNullCorrelationx(iteration, indata, ncprefilter, oversampfreq, corrs
 
     # fit the correlation
     maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = \
-        tide_corrfit.onecorrfitx(thexcorr, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
-                                optiondict, disablethresholds=True,
-                                rt_floatset=rt_floatset,
-                                rt_floattype=rt_floattype
-                                )
+        tide_corrfit.onecorrfitx(thexcorr,
+                                 corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
+                                 optiondict,
+                                 disablethresholds=True,
+                                 rt_floatset=rt_floatset,
+                                 rt_floattype=rt_floattype
+                                 )
 
     return maxval
 

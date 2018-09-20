@@ -39,7 +39,7 @@ import rapidtide.correlate as tide_corr
 from rapidtide.workflows.parser_funcs import is_valid_file, is_float
 
 
-def _get_null_distribution(indata, xcorr_x, thefilter, prewindow, dodetrend,
+def _get_null_distribution(indata, xcorr_x, thefilter, prewindow, detrendorder,
                            searchstart, searchend, Fs, dofftcorr,
                            windowfunc='hamming', corrweighting='none',
                            numreps=1000):
@@ -53,7 +53,8 @@ def _get_null_distribution(indata, xcorr_x, thefilter, prewindow, dodetrend,
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
 
     filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata),
-                                             prewindow, dodetrend,
+                                             prewindow=prewindow,
+                                             detrendorder=detrendorder,
                                              windowfunc=windowfunc)
     for i in range(numreps):
         # make a shuffled copy of the regressors
@@ -62,7 +63,8 @@ def _get_null_distribution(indata, xcorr_x, thefilter, prewindow, dodetrend,
         # filter it
         filteredshuffleddata = np.nan_to_num(
             tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata),
-                                    prewindow, dodetrend,
+                                    prewindow=prewindow,
+                                    detrendorder=detrendorder,
                                     windowfunc=windowfunc))
 
         # crosscorrelate with original
@@ -253,11 +255,12 @@ def _get_parser():
                           help=('Method to use for cross-correlation '
                                 'weighting.'),
                           default='none')
-    cc_mutex.add_argument('--nodetrend',
-                          dest='dodetrend',
-                          action='store_false',
+    cc_mutex.add_argument('--detrendorder',
+                          dest='detrendorder',
+                          action='store',
+                          type=int,
                           help='Disable linear trend removal',
-                          default=True)
+                          default=1)
     cc_mutex.add_argument('--nowindow',
                           dest='prewindow',
                           action='store_false',
@@ -281,7 +284,7 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
                         calccepstraldelay=False, corroutputfile=False,
                         controlvariablefile=None, numreps=0,
                         arbvec=None, filtertype='arb', corrweighting='none',
-                        dodetrend=True, prewindow=True, verbose=False):
+                        detrendorder=1, prewindow=True, verbose=False):
     r"""Calculate and display crosscorrelation between two timeseries.
 
     Parameters
@@ -326,8 +329,8 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
         Type of filter to apply data prior to correlation.  Default is 'none'
     corrweighting : {'none', 'Liang', 'Eckart', 'PHAT'}, optional
          Weighting function to apply to the crosscorrelation in the Fourier domain.  Default is 'none'
-    dodetrend : bool, optional
-       Detrend data prior to cross-correlation.  Default is True.
+    detrendorder : int, optional
+       Order of polynomial used to detrend crosscorrelation inputs.  Default is 1 (0 disables)
     prewindow : bool, optional
         Apply window function prior to cross-correlation.  Default is True.
     verbose : bool, optional
@@ -426,10 +429,12 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
             print("filtering to ", theprefilter.gettype(), " band")
     print(windowfunc)
     filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
-                                            prewindow, dodetrend,
+                                            prewindow=prewindow,
+                                            detrendorder=detrendorder,
                                             windowfunc=windowfunc)
     filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
-                                            prewindow, dodetrend,
+                                            prewindow=prewindow,
+                                            detrendorder=detrendorder,
                                             windowfunc=windowfunc)
     if flipregressor:
         filtereddata2 *= -1.0
@@ -444,8 +449,10 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
         regressorvec = []
         for j in range(0, numregressors):
             regressorvec.append(tide_math.corrnormalize(
-                theprefilter.apply(Fs, controlvars[j, :]), prewindow,
-                dodetrend, windowfunc=windowfunc))
+                theprefilter.apply(Fs, controlvars[j, :]),
+                prewindow=prewindow,
+                detrendorder=detrendorder,
+                windowfunc=windowfunc))
 
         if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
             thefit, filtereddata1 = tide_fit.mlregress(regressorvec,
@@ -471,18 +478,18 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
 
     # calculate the coherence
     f, Cxy = sp.signal.coherence(
-        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow,
-                                dodetrend, windowfunc=windowfunc),
-        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow,
-                                dodetrend, windowfunc=windowfunc),
+        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow=prewindow,
+                                detrendorder=detrendorder, windowfunc=windowfunc),
+        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow=prewindow,
+                                detrendorder=detrendorder, windowfunc=windowfunc),
         Fs)
 
     # calculate the cross spectral density
     f, Pxy = sp.signal.csd(
-        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow,
-                                dodetrend, windowfunc=windowfunc),
-        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow,
-                                dodetrend, windowfunc=windowfunc),
+        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow=prewindow,
+                                detrendorder=detrendorder, windowfunc=windowfunc),
+        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow=prewindow,
+                                detrendorder=detrendorder, windowfunc=windowfunc),
         Fs)
 
     xcorrlen = len(thexcorr)
@@ -528,7 +535,7 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
         (corrlist,
          corrlist_pear) = _get_null_distribution(trimdata1, xcorr_x,
                                                  theprefilter, prewindow,
-                                                 dodetrend, searchstart,
+                                                 detrendorder, searchstart,
                                                  searchend, Fs, dofftcorr,
                                                  corrweighting=corrweighting,
                                                  numreps=numreps,

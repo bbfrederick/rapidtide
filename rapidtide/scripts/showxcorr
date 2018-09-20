@@ -36,19 +36,23 @@ from numpy.random import permutation
 from matplotlib.pyplot import plot, show, figure
 
 
-def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend, numreps=1000):
+def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, detrendorder, searchstart, searchend, numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
     corrlist = zeros(numreps, dtype='float')
     corrlist_pear = zeros(numreps, dtype='float')
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
 
-    filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata), prewindow, dodetrend)
+    filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata),
+                                             prewindow=prewindow,
+                                             detrendorder=detrendorder)
     for i in range(0, numreps):
         # make a shuffled copy of the regressors
         shuffleddata = permutation(indata)
 
         # filter it
-        filteredshuffleddata = tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend)
+        filteredshuffleddata = tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata),
+                                                       prewindow=prewindow,
+                                                       detrendorder=detrendorder)
 
         # crosscorrelate with original
         if gccphat:
@@ -122,7 +126,7 @@ uselabel = False
 display = True
 gccphat = False
 prewindow = False
-dodetrend = False
+detrendorder = 0
 dopartial = False
 duration = 1000000.0
 starttime = 0.0
@@ -189,9 +193,9 @@ for o, a in opts:
         if verbose:
             print('turning on label line')
     elif o == "-t":
-        dodetrend = True
+        detrendorder = 1
         if verbose:
-            print('enabling detrending')
+            print('enabling linear detrending')
     elif o == "-w":
         prewindow = True
         if verbose:
@@ -283,8 +287,12 @@ if trimdata:
 if theprefilter.gettype() != 'none':
     if verbose:
         print("filtering to ", theprefilter.gettype(), " band")
-filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend)
-filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend)
+filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
+                                        prewindow=prewindow,
+                                        detrendorder=detrendorder)
+filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
+                                        prewindow=prewindow,
+                                        detrendorder=detrendorder)
 if flipregressor:
     filtereddata2 *= -1.0
 if dumpfiltered:
@@ -295,7 +303,9 @@ if dopartial:
     controlvars = tide_io.readvecs(controlvariablefile)
     regressorvec = []
     for j in range(0, controlvars.shape[0]):
-        regressorvec.append(tide_math.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]), prewindow, dodetrend))
+        regressorvec.append(tide_math.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]),
+                                                    prewindow=prewindow,
+                                                    detrendorder=detrendorder))
     if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
         thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
     if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
@@ -343,7 +353,7 @@ else:
 if estimate_significance:
     # generate a list of correlations from shuffled data
     corrlist, corrlist_pear = getNullDistributionData(trimdata1, xcorr_x, theprefilter,
-                                                      prewindow, dodetrend, searchstart, searchend, numreps=numreps)
+                                                      prewindow, detrendorder, searchstart, searchend, numreps=numreps)
 
     # calculate percentiles for the crosscorrelation from the distribution data
     histlen = 100
