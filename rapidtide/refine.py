@@ -52,7 +52,7 @@ def _procOneVoxelTimeShift(vox,
                            refineprenorm='mean',
                            lagmaxthresh=5.0,
                            refineweighting='R',
-                           dodetrend=True,
+                           detrendorder=1,
                            offsettime=0.0,
                            filterbeforePCA=False,
                            psdfilter=False,
@@ -83,8 +83,8 @@ def _procOneVoxelTimeShift(vox,
         thisweight = R2val
     else:
         thisweight = 1.0
-    if dodetrend:
-        normtc = tide_fit.detrend(fmritc * normfac * thisweight, demean=True)
+    if detrendorder > 0:
+        normtc = tide_fit.detrend(fmritc * normfac * thisweight, order=detrendorder, demean=True)
     else:
         normtc = fmritc * normfac * thisweight
     shifttr = -(-offsettime + lagtime) / fmritr  # lagtime is in seconds
@@ -227,7 +227,7 @@ def refineregressor(fmridata,
                                                     refineprenorm=optiondict['refineprenorm'],
                                                     lagmaxthresh=optiondict['lagmaxthresh'],
                                                     refineweighting=optiondict['refineweighting'],
-                                                    dodetrend=optiondict['dodetrend'],
+                                                    detrendorder=optiondict['detrendorder'],
                                                     offsettime=optiondict['offsettime'],
                                                     filterbeforePCA=optiondict['filterbeforePCA'],
                                                     psdfilter=optiondict['psdfilter'],
@@ -272,7 +272,7 @@ def refineregressor(fmridata,
                                                  refineprenorm=optiondict['refineprenorm'],
                                                  lagmaxthresh=optiondict['lagmaxthresh'],
                                                  refineweighting=optiondict['refineweighting'],
-                                                 dodetrend=optiondict['dodetrend'],
+                                                 detrendorder=optiondict['detrendorder'],
                                                  offsettime=optiondict['offsettime'],
                                                  filterbeforePCA=optiondict['filterbeforePCA'],
                                                  psdfilter=optiondict['psdfilter'],
@@ -321,8 +321,9 @@ def refineregressor(fmridata,
                 * np.where(lagtimes < upper, np.int16(1), np.int16(0)))[0]
             print('    summing', np.shape(inlagrange)[0], 'regressors with lags from', lower, 'to', upper)
             if np.shape(inlagrange)[0] > 0:
-                dispersioncalcout[lagnum, :] = tide_math.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0), False,
-                                                                       True,
+                dispersioncalcout[lagnum, :] = tide_math.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0),
+                                                                       prewindow=False,
+                                                                       detrendorder=optiondict['detrendorder'],
                                                                        windowfunc=optiondict['windowfunc'])
                 freqs, dispersioncalcspecmag[lagnum, :], dispersioncalcspecphase[lagnum, :] = tide_math.polarfft(
                     dispersioncalcout[lagnum, :],
@@ -347,8 +348,8 @@ def refineregressor(fmridata,
         thefit = FastICA(n_components=icacomponents).fit(refinevoxels)  # Reconstruct signals
         print('Using first of ', len(thefit.components_), ' components')
         icadata = thefit.components_[0]
-        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), True, True)
-        filteredica = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], icadata), True, True)
+        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), prewindow=True, detrendorder=optiondict['detrendorder'])
+        filteredica = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], icadata), prewindow=True, detrendorder=optiondict['detrendorder'])
         thepxcorr = pearsonr(filteredavg, filteredica)[0]
         print('ica/avg correlation = ', thepxcorr)
         if thepxcorr > 0.0:
@@ -360,8 +361,8 @@ def refineregressor(fmridata,
         thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
         print('Using first of ', len(thefit.components_), ' components')
         pcadata = thefit.components_[0]
-        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), True, True)
-        filteredpca = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], pcadata), True, True)
+        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), prewindow=True, detrendorder=optiondict['detrendorder'])
+        filteredpca = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], pcadata), prewindow=True, detrendorder=optiondict['detrendorder'])
         thepxcorr = pearsonr(filteredavg, filteredpca)[0]
         print('pca/avg correlation = ', thepxcorr)
         if thepxcorr > 0.0:

@@ -36,20 +36,24 @@ import nibabel as nib
 from matplotlib.pyplot import plot, legend, show, figure
 
 
-def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend,
+def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, detrendorder, searchstart, searchend,
                             corrweighting='none', numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
     corrlist = np.zeros((numreps), dtype='float')
     corrlist_pear = np.zeros((numreps), dtype='float')
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
 
-    filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata), prewindow, dodetrend)
+    filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata),
+                                             prewindow=prewindow,
+                                             detrendorder=detrendorder)
     for i in range(0, numreps):
         # make a shuffled copy of the regressors
         shuffleddata = np.random.permutation(indata)
 
         # filter it
-        filteredshuffleddata = tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend)
+        filteredshuffleddata = tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata),
+                                                       prewndow=prewindow,
+                                                       detrendorder=detrendorder)
 
         # crosscorrelate with original
         theshuffledxcorr = tide_corr.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr,
@@ -140,7 +144,7 @@ uselabel = False
 display = True
 corrweighting = 'none'
 prewindow = True
-dodetrend = True
+detrendorder = 1
 dopartial = False
 duration = 1000000.0
 starttime = 0.0
@@ -245,7 +249,7 @@ for o, a in opts:
     elif o == "-t":
         print("DEPRECATION WARNING: detrending is now on by default.  Use --nodetrend to disable it")
     elif o == "--nodetrend":
-        dodetrend = False
+        detrendorder = 0
         if verbose:
             print('disabling detrending')
     elif o == "-w":
@@ -379,8 +383,10 @@ reformdata = np.reshape(trimmeddata, (numcomponents, tclen))
 
 print('preprocessing all timecourses')
 for component in range(0, numcomponents):
-    filtereddata = tide_math.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]), False, dodetrend)
-    reformdata[component, :] = tide_math.stdnormalize(tide_fit.detrend(tide_math.stdnormalize(filtereddata)))
+    filtereddata = tide_math.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]),
+                                           prewindow=False,
+                                           detrendorder=detrendorder)
+    reformdata[component, :] = tide_math.stdnormalize(tide_fit.detrend(tide_math.stdnormalize(filtereddata), order=detrendorder))
 
 xcorr_x = np.r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
 laglimit = 15.0
@@ -405,14 +411,14 @@ if matrixoutput:
                                                               windowtime, \
                                                               samplestep=int(stepsize // sampletime),
                                                               prewindow=prewindow,
-                                                              dodetrend=False)
+                                                              detrendorder=0)
     plength = len(times)
     times, xcorrpertime, Rvals, delayvals, valid = tide_corr.shorttermcorr_2D(reformdata[0, :], reformdata[0, :],
                                                                               sampletime,
                                                                               windowtime, \
                                                                               samplestep=int(stepsize // sampletime),
                                                                               weighting=corrweighting, \
-                                                                              prewindow=prewindow, dodetrend=False,
+                                                                              prewindow=prewindow, detrendorder=0,
                                                                               display=False)
     xlength = len(times)
 
@@ -432,7 +438,7 @@ if matrixoutput:
             corrpertime[component1, component2, 0, :], \
             ppertime[component1, component2, 0, :] = tide_corr.shorttermcorr_1D( \
                 reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
-                samplestep=int(stepsize // sampletime), prewindow=prewindow, dodetrend=False)
+                samplestep=int(stepsize // sampletime), prewindow=prewindow, detrendorder=0)
             times, \
             xcorrpertime, \
             Rvals[component1, component2, 0, :], \
@@ -440,7 +446,7 @@ if matrixoutput:
             valid[component1, component2, 0, :] = tide_corr.shorttermcorr_2D( \
                 reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
                 samplestep=int(stepsize // sampletime), weighting=corrweighting, \
-                prewindow=prewindow, dodetrend=False, display=False)
+                prewindow=prewindow, detrendorder=0, display=False)
 
     outputaffine = np.eye(4)
     init_img = nib.Nifti1Image(corrpertime, outputaffine)
@@ -478,24 +484,28 @@ if matrixoutput:
 
 else:
     times, corrpertime, ppertime = tide_corr.shorttermcorr_1D(reformdata[0, :], flipfac * reformdata[1, :], sampletime,
-                                                              windowtime, \
+                                                              windowtime,
                                                               samplestep=int(stepsize // sampletime),
                                                               prewindow=prewindow,
-                                                              dodetrend=False)
+                                                              detrendorder=0)
     times, xcorrpertime, Rvals, delayvals, valid = tide_corr.shorttermcorr_2D(reformdata[0, :],
                                                                               flipfac * reformdata[1, :],
                                                                               sampletime, windowtime, \
                                                                               samplestep=int(stepsize // sampletime),
                                                                               weighting=corrweighting, \
-                                                                              prewindow=prewindow, dodetrend=False,
+                                                                              prewindow=prewindow, detrendorder=0,
                                                                               display=False)
     tide_io.writenpvecs(corrpertime, outfilename + "_pearson.txt")
     tide_io.writenpvecs(ppertime, outfilename + "_pvalue.txt")
     tide_io.writenpvecs(Rvals, outfilename + "_Rvalue.txt")
     tide_io.writenpvecs(delayvals, outfilename + "_delay.txt")
     tide_io.writenpvecs(valid, outfilename + "_mask.txt")
-    filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimmeddata[0, :]), False, dodetrend)
-    filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimmeddata[1, :]), False, dodetrend)
+    filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimmeddata[0, :]),
+                                            prewindow=False,
+                                            detrendorder=detrendorder)
+    filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimmeddata[1, :]),
+                                            prewindow=False,
+                                            detrendorder=detrendorder)
 
 """
     if display:

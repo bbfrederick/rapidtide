@@ -325,14 +325,14 @@ def ppnormalize(vector):
 
 
 @conditionaljit()
-def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
+def corrnormalize(thedata, prewindow=True, detrendorder=1, windowfunc='hamming'):
     """
 
     Parameters
     ----------
     thedata
     prewindow
-    dodetrend
+    detrendorder
     windowfunc
 
     Returns
@@ -340,8 +340,8 @@ def corrnormalize(thedata, prewindow, dodetrend, windowfunc='hamming'):
 
     """
     # detrend first
-    if dodetrend:
-        intervec = stdnormalize(tide_fit.detrend(thedata, demean=True))
+    if detrendorder > 0:
+        intervec = stdnormalize(tide_fit.detrend(thedata, order=detrendorder, demean=True))
     else:
         intervec = stdnormalize(thedata)
 

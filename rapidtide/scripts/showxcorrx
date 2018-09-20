@@ -54,21 +54,27 @@ import nibabel as nib
 from matplotlib.pyplot import plot, legend, show, figure
 
 
-def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, dodetrend, searchstart, searchend,
+def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, detrendorder, searchstart, searchend,
                             windowfunc='hamming', corrweighting='none', numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
     corrlist = zeros(numreps, dtype='float')
     corrlist_pear = zeros(numreps, dtype='float')
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
 
-    filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata), prewindow, dodetrend, windowfunc=windowfunc)
+    filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata),
+                                             prewindow=prewindow,
+                                             detrendorder=detrendorder,
+                                             windowfunc=windowfunc)
     for i in range(0, numreps):
         # make a shuffled copy of the regressors
         shuffleddata = permutation(indata)
 
         # filter it
         filteredshuffleddata = np.nan_to_num(
-            tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata), prewindow, dodetrend, windowfunc=windowfunc))
+            tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata),
+                                    prewindow=prewindow,
+                                    detrendorder=detrendorder,
+                                    windowfunc=windowfunc))
 
         # crosscorrelate with original
         theshuffledxcorr = tide_corr.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr,
@@ -166,7 +172,7 @@ display = True
 corrweighting = 'none'
 prewindow = True
 windowfunc = 'hamming'
-dodetrend = True
+detrendorder = 1
 dopartial = False
 duration = 1000000.0
 starttime = 0.0
@@ -251,7 +257,7 @@ for o, a in opts:
     elif o == "-t":
         print("DEPRECATION WARNING: detrending is now on by default.  Use --nodetrend to disable it")
     elif o == "--nodetrend":
-        dodetrend = False
+        detrendorder = 0
         if verbose:
             print('disabling detrending')
     elif o == "-w":
@@ -361,8 +367,14 @@ if theprefilter.gettype() != 'none':
     if verbose:
         print("filtering to ", theprefilter.gettype(), " band")
 print(windowfunc)
-filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend, windowfunc=windowfunc)
-filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend, windowfunc=windowfunc)
+filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
+                                        prewindow=prewindow,
+                                        detrendorder=detrendorder,
+                                        windowfunc=windowfunc)
+filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
+                                        prewindow=prewindow,
+                                        detrendorder=detrendorder,
+                                        windowfunc=windowfunc)
 if flipregressor:
     filtereddata2 *= -1.0
 if dumpfiltered:
@@ -373,7 +385,9 @@ if dopartial:
     controlvars = tide_io.readnpvecs(controlvariablefile)
     regressorvec = []
     for j in range(0, numregressors):
-        regressorvec.append(tide_math.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]), prewindow, dodetrend,
+        regressorvec.append(tide_math.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]),
+                                                    prewindow=prewindow,
+                                                    detrendorder=detrendorder,
                                                     windowfunc=windowfunc))
     if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
         thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
@@ -390,14 +404,26 @@ thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
 # calculate the coherence
 f, Cxy = sp.signal.coherence(
-    tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend, windowfunc=windowfunc),
-    tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend, windowfunc=windowfunc),
+    tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
+                            prewindow=prewindow,
+                            detrendorder=detrendorder,
+                            windowfunc=windowfunc),
+    tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
+                            prewindow=prewindow,
+                            detrendorder=detrendorder,
+                            windowfunc=windowfunc),
     Fs)
 
 # calculate the cross spectral density
 f, Pxy = sp.signal.csd(
-    tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1), prewindow, dodetrend, windowfunc=windowfunc),
-    tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2), prewindow, dodetrend, windowfunc=windowfunc),
+    tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
+                            prewindow=prewindow,
+                            detrendorder=detrendorder,
+                            windowfunc=windowfunc),
+    tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
+                            prewindow=prewindow,
+                            detrendorder=detrendorder,
+                            windowfunc=windowfunc),
     Fs)
 
 xcorrlen = len(thexcorr)
@@ -436,7 +462,7 @@ else:
 if estimate_significance:
     # generate a list of correlations from shuffled data
     corrlist, corrlist_pear = getNullDistributionData(trimdata1, xcorr_x, theprefilter,
-                                                      prewindow, dodetrend, searchstart, searchend,
+                                                      prewindow, detrendorder, searchstart, searchend,
                                                       corrweighting=corrweighting, numreps=numreps,
                                                       windowfunc=windowfunc)
 

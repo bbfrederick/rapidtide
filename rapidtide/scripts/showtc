@@ -82,7 +82,7 @@ dolegend = True
 dotranspose = False
 dowaterfall = False
 dospectrum = False
-detrend = True
+detrendorder = 1
 demean = False
 useHamming = True
 specmode = 'power'
@@ -259,8 +259,8 @@ for i in range(0, numfiles):
                 invec = invecs[j, :-1]
             else:
                 invec = invecs[j, :]
-            if detrend:
-                invec = tide_fit.detrend(invec, order=1, demean=True)
+            if detrendorder > 0:
+                invec = tide_fit.detrend(invec, order=detrendorder, demean=True)
             elif demean:
                 invec = invec = np.mean(invec)
 
