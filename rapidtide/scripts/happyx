@@ -55,6 +55,12 @@ try:
 except ImportError:
     mklexists = False
 
+try:
+    import rapidtide.dlfilter as tide_dlfilt
+    dlfilterexists = True
+except ImportError:
+    dlfilterexists = False
+
 
 def _procOneVoxelNormalize(vox, voxels):
     if detrend:
@@ -725,6 +731,7 @@ infodict['numsteps'] = numsteps
 
 # find key components of cardiac waveform
 print('extracting harmonic components')
+tide_io.writevec(cardfromfmri * (1.0 - thebadcardpts), outputroot + '_cardfromfmri_sliceres_censored.txt')
 peakfreq_bold = getcardcoeffs((1.0 - thebadcardpts) * cardiacwaveform,
                                                       slicesamplerate, smoothlen=smoothlen,
                                                       debug=debug)
@@ -736,8 +743,21 @@ cardfromfmri_stdres = tide_math.corrnormalize(
         tide_resample.arbresample(cardfromfmri, slicesamplerate, stdfreq, decimate=True, debug=True),
     prewindow=False,
     detrendorder=0)
+
+if dlfilterexists:
+    cardfromfmri_stdres = tide_dlfilt.dlcardfilt(cardfromfmri_stdres, thebadcardpts_stdres)
+    thebadcardpts_stdres *= 0.0
+    cardfromfmri = tide_math.corrnormalize(
+        tide_resample.arbresample(cardfromfmri, stdfreq, slicesamplerate, decimate=True, debug=True),
+        prewindow=False,
+        detrendorder=0)
+    thebadcardpts *= 0.0
+    tide_io.writevec(cardfromfmri, outputroot + '_cardfromfmri_sliceres_dlfiltered.txt')
+    infodict['used_dlreconstruction_filter'] = True
+
 tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(stdfreq) + 'Hz.txt')
 thebadcardpts_stdres = findbadpts(cardfromfmri_stdres, 'cardfromfmri_' + str(stdfreq) + 'Hz', stdfreq, infodict)
+
 
 timings.append(['Cardiac signal from image data resampled and saved', time.time(), None, None])
 
@@ -849,9 +869,17 @@ tide_io.writevec(badpointlist, outputroot + '_overall_sliceres_badpts.txt')
 if forcedhr is not None:
     peakfreq = forcedhr
     infodict['forcedhr'] = peakfreq
-filthiresfund = tide_math.corrnormalize(getfundamental(cardiacwaveform, slicesamplerate, peakfreq),
-                                        prewindow=False,
-                                        detrendorder=0)
+if cardiacfile is None:
+    filthiresfund = tide_math.corrnormalize(getfundamental(cardiacwaveform*(1.0 - thebadcardpts),
+                                                           slicesamplerate,
+                                                           peakfreq),
+                                            prewindow=False, detrendorder=0)
+else:
+    filthiresfund = tide_math.corrnormalize(getfundamental(cardiacwaveform,
+                                                           slicesamplerate,
+                                                           peakfreq),
+                                            prewindow=False,
+                                            detrendorder=0)
 tide_io.writevec(filthiresfund, outputroot + '_cardiacfundamental.txt')
 
 # now calculate the phase waveform
