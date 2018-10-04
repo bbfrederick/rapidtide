@@ -13,7 +13,7 @@ import os
 
 from keras.models import Sequential
 from keras.optimizers import RMSprop
-from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization
+from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, MaxPooling1D
 
 
 def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epochs,
@@ -34,6 +34,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
     model.add(BatchNormalization())
     model.add(Dropout(rate=dropout_prob))
     model.add(Activation('relu'))
+    #model.add(MaxPooling1D())
 
     # make the intermediate layers
     for layer in range(num_layers - 2):
@@ -41,6 +42,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
         model.add(BatchNormalization())
         model.add(Dropout(rate=dropout_prob))
         model.add(Activation('relu'))
+        #model.add(MaxPooling1D())
 
     # make the output layer
     model.add(Convolution1D(filters=train_y.shape[2], kernel_size=kernel_size, padding='same'))
