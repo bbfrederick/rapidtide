@@ -14,14 +14,13 @@ import sys
 num_epochs = 10
 thewindow_sizes = [128]
 thelayer_nums = [4]
-thefilter_nums = [10]
-thefilter_lengths = [10]
+thefilter_nums = [20]
+thefilter_lengths = [30]
 thedropout_rates = [0.3]
 dofft = True
-nettype = 'lstm'
-arch = 'mac'
+nettype = 'cnn'
 
-if arch == 'mac':
+if sys.platform == 'darwin':
     thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
 else:
     thedatadir = '/data1/frederic/test/output'
@@ -47,7 +46,7 @@ for c1, window_size in list(enumerate(thewindow_sizes)):
                                                                                            dropout_rate,
                                                                                            num_epochs,
                                                                                            thesuffix='25.0Hz',
-                                                                                           fft=dofft,
+                                                                                           dofft=dofft,
                                                                                            thedatadir=thedatadir)
 
                     elif nettype == 'lstm':
