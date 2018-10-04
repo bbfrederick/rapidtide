@@ -14,10 +14,10 @@ import sys
 num_epochs = 10
 thewindow_sizes = [128]
 thelayer_nums = [4]
-thefilter_nums = [20]
-thefilter_lengths = [30]
+thefilter_nums = [64]
+thefilter_lengths = [5]
 thedropout_rates = [0.3]
-dofft = True
+dofft = False
 nettype = 'cnn'
 
 if sys.platform == 'darwin':
