@@ -21,12 +21,16 @@ def lstm(window_size,
         filter_length,
         dropout_prob,
         num_epochs,
+        dofft=False,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output'):
     folder = './batch/'
     #    train_x, train_y, val_x, val_y, Ns = dl.prep_ind(w)
     print('cnn - loading data')
-    train_x, train_y, val_x, val_y, Ns = dl.prep(window_size, thesuffix=thesuffix, thedatadir=thedatadir)
+    if dofft:
+        train_x, train_y, val_x, val_y, Ns, tclen, dummy, dummy = dl.prep(window_size, thesuffix=thesuffix, thedatadir=thedatadir, dofft=True)
+    else:
+        train_x, train_y, val_x, val_y, Ns, tclen = dl.prep(window_size, thesuffix=thesuffix, thedatadir=thedatadir, dofft=False)
     model = Sequential()
 
     model.add(LSTM(num_units , activation='tanh', input_shape=(window_size + 1, 1), recurrent_activation='hard_sigmoid'))
