@@ -40,9 +40,9 @@ model.load_weights('./model_whole.h5')
 dofft = True
 thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
 if dofft:
-    train_x, train_y, val_x, val_y, Ns, tclen, Xscale, Yscale = dl.prep(window_size, thesuffix='25.0Hz', thedatadir=thedatadir, fft=True)
+    train_x, train_y, val_x, val_y, Ns, tclen, Xscale, Yscale = dl.prep(window_size, thesuffix='25.0Hz', thedatadir=thedatadir, dofft=True)
 else:
-    train_x, train_y, val_x, val_y, Ns, tclen = dl.prep(window_size, thesuffix='25.0Hz', thedatadir=thedatadir)
+    train_x, train_y, val_x, val_y, Ns, tclen = dl.prep(window_size, thesuffix='25.0Hz', thedatadir=thedatadir, dofft=False)
 
 YPred2 = model.predict(val_x)
 length = (tclen - window_size - 1)
@@ -54,8 +54,8 @@ val_y = val_y[-K * length:, :, :]
 YPred2 = YPred2[-K * length:, :, :]
 
 
-YPred2_val = YPred2.reshape(K, -1, (window_size + lag), val_x.shape[2])
-val_y_val  = val_y.reshape(K, -1, (window_size + lag), val_x.shape[2])
+YPred2_val = YPred2.reshape(K, -1, (window_size + lag), val_y.shape[2])
+val_y_val  = val_y.reshape(K, -1, (window_size + lag), val_y.shape[2])
 val_x_val  = val_x.reshape(K, -1, (window_size + lag), val_x.shape[2])
 print('val_y_val shape:', val_y_val.shape)
 
@@ -70,7 +70,7 @@ for k in range(Ns):
     print(k)
     for i in range(0, Nv):
         if dofft:
-            output_pred[k, i:(i + window_size)] += dl.filtscale(YPred2_val[k, i, :, :], scalefac=Xscale[k, i], reverse=True)
+            output_pred[k, i:(i + window_size)] += dl.filtscale(YPred2_val[k, i, :, :], scalefac=1.0, reverse=True)
             output_real[k, i:(i + window_size)] += dl.filtscale(val_y_val[k, i, :, :], scalefac=Yscale[k, i], reverse=True)
             output_raw[k, i:(i + window_size)] += dl.filtscale(val_x_val[k, i, :, :], scalefac=Xscale[k, i], reverse=True)
         else:

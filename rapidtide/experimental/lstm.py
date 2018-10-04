@@ -15,7 +15,12 @@ from keras.optimizers import RMSprop
 from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM
 
 
-def lstm(window_size, num_layers, num_units, filter_length, dropout_prob, num_epochs,
+def lstm(window_size,
+        num_layers,
+        num_units,
+        filter_length,
+        dropout_prob,
+        num_epochs,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output'):
     folder = './batch/'

@@ -60,7 +60,7 @@ def prep(window_size,
         endskip=0,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
-        fft=False,
+        dofft=False,
         debug=False):
 
     print('entering dataload prep')
@@ -165,7 +165,7 @@ def prep(window_size,
         for i in range((N_pts - window_size - 1)):
             Yb[j * ((N_pts - window_size - 1)) + i, :, 0] = Y[0, step * i:(step * i + window_size + lag), j]
 
-    if fft:
+    if dofft:
         Xb_fourier = np.zeros((N_subjs * (N_pts - window_size - 1), window_size + lag, 2))
         print('dimensions of Xb_fourier:', Xb_fourier.shape)
         Xscale_fourier = np.zeros((N_subjs, N_pts - window_size - 1))
@@ -185,7 +185,7 @@ def prep(window_size,
     perm = np.arange(Xb.shape[0])
     limit = int(0.8 * Xb.shape[0])
 
-    if fft:
+    if dofft:
         train_x = Xb_fourier[perm[:limit], :, :]
         train_y = Yb_fourier[perm[:limit], :, :]
 

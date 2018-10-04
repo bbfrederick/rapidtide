@@ -19,14 +19,14 @@ from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropou
 def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epochs,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
-        fft=False):
+        dofft=False):
     folder = './batch/'
 
     print('cnn - loading data')
-    if fft:
-        train_x, train_y, val_x, val_y, Ns, tclen, dummy, dummy = dl.prep(window_size, thesuffix=thesuffix, thedatadir=thedatadir, fft=True)
+    if dofft:
+        train_x, train_y, val_x, val_y, Ns, tclen, dummy, dummy = dl.prep(window_size, thesuffix=thesuffix, thedatadir=thedatadir, dofft=True)
     else:
-        train_x, train_y, val_x, val_y, Ns, tclen = dl.prep(window_size, thesuffix=thesuffix, thedatadir=thedatadir)
+        train_x, train_y, val_x, val_y, Ns, tclen = dl.prep(window_size, thesuffix=thesuffix, thedatadir=thedatadir, dofft=False)
     model = Sequential()
 
     print('data shape:', train_x.shape)
@@ -43,7 +43,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
         model.add(Activation('relu'))
 
     # make the output layer
-    model.add(Convolution1D(filters=train_x.shape[2], kernel_size=kernel_size, padding='same'))
+    model.add(Dense(filters=train_y.shape[2], kernel_size=kernel_size, padding='same'))
 
     model.summary()
     model.compile(optimizer=RMSprop(), loss='mse')
