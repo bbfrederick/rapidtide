@@ -11,6 +11,9 @@ rapidtide/data/examples/dst/*
 # some local test data
 rapidtide/data/examples/src/*corrfunc*
 rapidtide/data/examples/src/*trimmed*
+rapidtide/experimental/batch
+rapidtide/experimental/__pycache__
+rapidtide/experimental/.*
 test.nii.gz
 *junk*
 
