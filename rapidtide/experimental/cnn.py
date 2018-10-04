@@ -43,7 +43,8 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
         model.add(Activation('relu'))
 
     # make the output layer
-    model.add(Dense(filters=train_y.shape[2], kernel_size=kernel_size, padding='same'))
+    model.add(Convolution1D(filters=train_y.shape[2], kernel_size=kernel_size, padding='same'))
+    #model.add(Dense(units=window_size, input_shape=((train_x.shape[2],)), activation='linear'))
 
     model.summary()
     model.compile(optimizer=RMSprop(), loss='mse')
