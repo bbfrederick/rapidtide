@@ -62,15 +62,15 @@ except ImportError:
     dlfilterexists = False
 
 
-def _procOneVoxelNormalize(vox, voxels):
-    if detrend:
-        normtc = tide_math.pcnormalize(tide_fit.detrend(voxels[vox, :], demean=False))
+def _procOneVoxelNormalize(vox, voxels, detrendorder=0):
+    if detrendorder > 0:
+        normtc = tide_math.pcnormalize(tide_fit.detrend(voxels[vox, :], detrendorder=detrendorder, demean=False))
     else:
         normtc = tide_math.pcnormalize(voxels[vox, :])
     return vox, normtc
 
 
-def tcnorm(validimbyvox, nprocs=1, detrend=False):
+def tcnorm(validimbyvox, nprocs=1, detrendorder=0):
     """
 
     Parameters
@@ -102,7 +102,7 @@ def tcnorm(validimbyvox, nprocs=1, detrend=False):
                         break
 
                     # process and send the data
-                    outQ.put(_procOneVoxelNormalize(val, validimbyvox))
+                    outQ.put(_procOneVoxelNormalize(val, validimbyvox, detrendorder=detrendorder))
 
                 except Exception as e:
                     print("error!", e)
@@ -124,7 +124,7 @@ def tcnorm(validimbyvox, nprocs=1, detrend=False):
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1):
                 tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            dummy, normvoxels[vox, :] = _procOneVoxelNormalize(vox, validimbyvox)
+            dummy, normvoxels[vox, :] = _procOneVoxelNormalize(vox, validimbyvox, detrendorder=detrendorder)
             volumetotal += 1
     print('\nNormalization performed on ' + str(volumetotal) + ' voxels')
 
@@ -148,8 +148,8 @@ def usage():
     print("")
     print("optional arguments:")
     print("    --glm                      - generate voxelwise aliased synthetic cardiac regressors and filter them out")
-    print("    --minhr=MINHR              - highpass filter cardiac data to MINHR BPM (default is 180.0)")
-    print("    --maxhr=MAXHR              - lowpass filter cardiac data to MAXHR BPM (default is 36.0)")
+    print("    --minhr=MINHR              - highpass filter cardiac data to MINHR BPM (default is 45)")
+    print("    --maxhr=MAXHR              - lowpass filter cardiac data to MAXHR BPM (default is 180)")
     print( "    --notchwidth=WIDTH         - Set the width of the notch filter, in percent of the notch frequency (default is 1.5)")
     print("    --outputbins=BINS          - number of output phase bins (default is 32)")
     print("    --gridbins=BINS            - width of the gridding kernel in output phase bins (default is 1.5)")
@@ -171,6 +171,8 @@ def usage():
     print("    --forcehr=BPM              - Force heart rate fundamental detector to be centered at BPM (overrides peak")
     print("                                 frequencies found from spectrum).  Useful if there is structured noise")
     print("    --nocensor                 - Bad points will not be excluded from analytic phase projection")
+    print("    --estmask=MASKNAME         - Generation of cardiac waveform from data will be restricted to voxels in")
+    print("                                 MASKNAME.")
     #print(
     #    "    --nprocs=NPROCS            - Set to number of processors to use for calculations.  Default is 1.  Setting negative will use ncpus - 1")
     print("")
@@ -180,6 +182,8 @@ def usage():
     print("    --normalize                - normalize fmri data")
     print("    --nodemean                 - do not demean fmri data")
     print("    --disablenotch             - disable subharmonic notch filter")
+    print("    --nomask                   - disable data masking for calculating cardiac waveform")
+
 
     return ()
 
@@ -446,9 +450,8 @@ colname = None
 inputfreq = 32.0
 inputstart = 0.0
 doglm = False
-detrend = True
 notchwidth = 0.015
-arb_lower = 0.5
+arb_lower = 0.75
 arb_upper = 3.0
 softvesselfrac = 0.4
 infodict = {}
@@ -459,8 +462,10 @@ spatialglmdenoise = True
 savecardiacnoise = True
 usecongrid = True
 forcedhr = None
-usemaskcardfromfmri = False
+usemaskcardfromfmri = True
 censorbadpts = True
+estmaskname = None
+detrendorder = 3
 
 # start the clock!
 timings = [['Start', time.time(), None, None]]
@@ -515,9 +520,11 @@ try:
                                                    "stdfreq=",
                                                    "nprocs=",
                                                    'mklthreads=',
+                                                   "estmask=",
                                                    "smoothlen=",
                                                    "forcehr=",
                                                    "nocensor",
+                                                   "nomask",
                                                    "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
@@ -535,13 +542,15 @@ for o, a in opts:
         notchwidth = -1.0
         print('Disabling subharmonic notch filter')
     elif o == "--nodetrend":
-        detrend = False
+        detrendorder = 0
         print('will disable data detrending')
     elif o == "--debug":
         debug = True
         print('extended debugging messages')
-    elif o == "--nocensor":
+    elif o == "--nomask":
         censorbadpts = False
+    elif o == "--nocensor":
+        usemaskcardfromfmri = False
         print('will not censor bad points')
     elif o == "--outputbins":
         destpoints = int(a)
@@ -601,6 +610,10 @@ for o, a in opts:
     elif o == "--nodemean":
         fmrimod = 'none'
         print('will not demean fmri before gridding')
+    elif o == '--estmask':
+        estmaskname = a
+        usemaskcardfromfmri = True
+        print('Will restrict cardiac waveform fit to voxels in', estmaskname)
     elif o == '--cardiacfile':
         inputlist = a.split(':')
         cardiacfile = inputlist[0]
@@ -632,7 +645,7 @@ tide_util.logmem(None, file=memfile)
 if mklexists:
     mklmaxthreads = mkl.get_max_threads()
     print('mkl max threads =', mklmaxthreads)
-    mkl.set_num_threads(mklthreads)
+    mkl.set_num_threads(np.min([mklthreads, mklmaxthreads]))
 
 thecardbandfilter = tide_filt.noncausalfilter()
 thecardbandfilter.settype('arb')
@@ -676,6 +689,21 @@ tide_io.savetonifti(mask.reshape((xsize, ysize, numslices)), theheader, thesizes
 timings.append(['Mask saved', time.time(), None, None])
 mask_byslice = mask.reshape((xsize * ysize, numslices))
 
+# read in additional mask if present
+if estmaskname is not None:
+    tide_util.logmem('before reading in estmask', file=memfile)
+    estmask, estmask_data, estmask_hdr, theestmaskdims, theestmasksizes = tide_io.readfromnifti(estmaskname)
+    xsize_estmask, ysize_estmask, numslices_estmask, timepoints_estmask = tide_io.parseniftidims(theestmaskdims)
+    if not tide_io.checkspacematch(nim_hdr, estmask_hdr):
+        print('Dimensions of mask do not match the fmri data - exiting')
+        sys.exit()
+    if timepoints_estmask > 1:
+        print('Mask must have only 3 dimensions - exiting')
+        sys.exit()
+    cardestmask_byslice = mask_byslice * estmask_data.reshape(xsize * ysize, numslices)
+else:
+    cardestmask_byslice = mask_byslice
+
 # get slice times
 slicetimes = getslicetimesfromfile(slicetimename)
 timings.append(['Slice times determined', time.time(), None, None])
@@ -689,12 +717,12 @@ starttime = time.time()
 means = np.mean(fmri_data[:, :], axis=1).flatten()
 # detrend if we are going to
 reportstep = int(numspatiallocs // 100)
-if detrend:
-    print('detrending...')
+if detrendorder > 0:
+    print('detrending to order', detrendorder, '...')
     for idx, thevox in enumerate(validvoxels):
         if (idx % reportstep == 0) or (idx == len(validvoxels) - 1):
             tide_util.progressbar(idx + 1, len(validvoxels), label='Percent complete')
-        fmri_data[thevox, :] = tide_fit.detrend(fmri_data[thevox, :], demean=False)
+        fmri_data[thevox, :] = tide_fit.detrend(fmri_data[thevox, :], order=detrendorder, demean=False)
     print('done')
 
 demeandata[validvoxels, :] = fmri_data[validvoxels, :] - means[validvoxels, None]
@@ -989,8 +1017,8 @@ for theslice in range(numslices):
         else:
             destinds = ((phasevals[theslice, :] + np.pi + 0.5 * outphasestep) // outphasestep).astype(int)
             for t in proclist:
-                if detrend:
-                    filteredmr = -tide_fit.detrend(fmri_data_byslice[validlocs, theslice, t], demean=False)
+                if detrendorder > 0:
+                    filteredmr = -tide_fit.detrend(fmri_data_byslice[validlocs, theslice, t], order=detrendorder, demean=False)
                 else:
                     filteredmr = -fmri_data_byslice[validlocs, theslice, t]
                 weight_byslice[validlocs, theslice, destinds[t]] += 1
