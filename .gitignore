@@ -11,9 +11,10 @@ rapidtide/data/examples/dst/*
 # some local test data
 rapidtide/data/examples/src/*corrfunc*
 rapidtide/data/examples/src/*trimmed*
-rapidtide/experimental/batch
+rapidtide/experimental/batch/*
 rapidtide/experimental/__pycache__
 rapidtide/experimental/.*
+rapidtide/experimental/the*txt
 test.nii.gz
 *junk*
 
@@ -40,6 +41,13 @@ __pycache__/
 
 # C extensions
 *.so
+
+# swap files
+.*.swp
+*/.*.swp
+*/*/.*.swp
+*/*/*/.*.swp
+
 
 # Distribution / packaging
 .Python
