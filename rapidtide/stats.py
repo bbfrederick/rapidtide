@@ -587,12 +587,17 @@ def makemask(image, threshpct=25.0, verbose=False):
 
     Parameters
     ----------
-    image
-    threshpct
-    verbose
+    image: array-like
+        The image data to generate the mask for.
+    threshpct: float
+        Voxels with values greater then threshpct of the 98th percentile of voxel values are preserved.
+    verbose: bool
+        If true, print additional debugging information.
 
     Returns
     -------
+    themask: array-like
+        An int16 mask with dimensions matching the input. 1 for voxels to preserve, 0 elsewhere
 
     """
     fracval = getfracval(image, 0.98)
