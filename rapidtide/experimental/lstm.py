@@ -33,13 +33,13 @@ def lstm(window_size,
         train_x, train_y, val_x, val_y, Ns, tclen = dl.prep(window_size, thesuffix=thesuffix, thedatadir=thedatadir, dofft=False)
     model = Sequential()
 
-    model.add(LSTM(num_units , activation='tanh', input_shape=(window_size + 1, 1), recurrent_activation='hard_sigmoid'))
+    model.add(LSTM(num_units , activation='tanh', input_shape=(window_size, 1), recurrent_activation='hard_sigmoid'))
     model.add(Dropout(rate=dropout_prob))
     model.add(Dense(units=window_size, activation='linear'))
     model.compile (loss ="mean_squared_error" , optimizer="adam")  
     history = model.fit(train_x, train_y,
                         batch_size=1024,
-                        nb_epoch=num_epochs,
+                        epochs=num_epochs,
                         shuffle=False,
                         validation_data=(val_x, val_y))
 
