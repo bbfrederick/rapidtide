@@ -24,7 +24,10 @@ nettype = 'cnn'
 
 infodict = {}
 infodict['window_size'] = thewindow_sizes[0]
-infodict['dofft'] = dofft
+if dofft:
+    infodict['dofft'] = 1
+else:
+    infodict['dofft'] = 0
 infodict['nettype'] = nettype
 infodict['lag'] = 0
 tide_io.writedict(infodict, 'model_meta')
