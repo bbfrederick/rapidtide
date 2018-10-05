@@ -23,6 +23,7 @@ def lstm(window_size,
         num_epochs,
         dofft=False,
         thesuffix='sliceres',
+        modelname=modelname,
         thedatadir='/data1/frederic/test/output'):
     folder = './batch/'
     #    train_x, train_y, val_x, val_y, Ns = dl.prep_ind(w)
@@ -45,11 +46,11 @@ def lstm(window_size,
 
     # save the model structure to a json file
     model_json = model.to_json()
-    with open("model.json", "w") as json_file:
+    with open(modelname + ".json", "w") as json_file:
         json_file.write(model_json)
 
     # serialize weights to HDF5
-    model.save_weights('model_whole.h5')
+    model.save_weights(modelname + '_weights.h5')
 
     YPred = model.predict(val_x)
 
