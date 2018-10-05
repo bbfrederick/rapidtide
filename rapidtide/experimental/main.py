@@ -10,6 +10,8 @@ import cnn
 import lstm
 import numpy as np
 import sys
+import json
+import io as tide_io
 
 num_epochs = 10
 thewindow_sizes = [128]
@@ -19,6 +21,14 @@ thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
 nettype = 'cnn'
+
+infodict = {}
+infodict['window_size'] = thewindow_sizes[0]
+infodict['dofft'] = dofft
+infodict['nettype'] = nettype
+infodict['lag'] = 0
+tide_io.writedict(infodict, 'model_meta')
+
 
 if sys.platform == 'darwin':
     thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
