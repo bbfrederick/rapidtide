@@ -430,6 +430,45 @@ def readbidssidecar(inputfilename):
         return {}
 
 
+def writedicttojson(thedict, thefilename):
+    r"""Write key value pairs to a json file
+
+    Parameters
+    ----------
+    thedict : dict
+        The key value pairs from the json file
+    thefilename : str
+        The name of the json file (with extension)
+
+    """
+    with open(thefilename, 'wb') as fp:
+        fp.write(json.dumps(thedict, sort_keys=True, indent=4, separators=(',', ':')).encode("utf-8"))
+
+
+def readdictfromjson(inputfilename):
+    r"""Read key value pairs out of a json file
+
+    Parameters
+    ----------
+    inputfilename : str
+        The name of the json file (with extension)
+
+    Returns
+    -------
+    thedict : dict
+        The key value pairs from the json file
+
+    """
+    thefileroot, theext = os.path.splitext(inputfilename)
+    if os.path.exists(thefileroot + '.json'):
+        with open(thefileroot + '.json', 'r') as json_data:
+            d = json.load(json_data)
+            return d
+    else:
+        print('specified json file does not exist')
+        return {}
+
+
 def readfmriprepconfounds(inputfilename):
     r"""Read time series out of an fmriprep confounds tsv file
 
