@@ -19,15 +19,24 @@ from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropou
 def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epochs,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
+        excludethresh=4.0,
         modelname='model',
         dofft=False):
     folder = './batch/'
 
     print('cnn - loading data')
     if dofft:
-        train_x, train_y, val_x, val_y, Ns, tclen, dummy, dummy = dl.prep(window_size, thesuffix=thesuffix, thedatadir=thedatadir, dofft=True)
+        train_x, train_y, val_x, val_y, Ns, tclen, dummy, dummy = dl.prep(window_size,
+                                                                        thesuffix=thesuffix,
+                                                                        thedatadir=thedatadir,
+                                                                        dofft=True,
+                                                                        excludethresh=excludethresh)
     else:
-        train_x, train_y, val_x, val_y, Ns, tclen = dl.prep(window_size, thesuffix=thesuffix, thedatadir=thedatadir, dofft=False)
+        train_x, train_y, val_x, val_y, Ns, tclen = dl.prep(window_size,
+                                                                        thesuffix=thesuffix,
+                                                                        thedatadir=thedatadir,
+                                                                        dofft=False,
+                                                                        excludethresh=excludethresh)
     model = Sequential()
 
     print('data shape:', train_x.shape)
