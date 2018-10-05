@@ -14,6 +14,7 @@ import json
 import rapidtide.io as tide_io
 
 num_epochs = 5
+excludethresh = 4.0
 thewindow_sizes = [128]
 thelayer_nums = [5]
 thefilter_nums = [64]
@@ -31,6 +32,7 @@ else:
     infodict['dofft'] = 0
 infodict['nettype'] = nettype
 infodict['lag'] = 0
+infodict['excludethresh'] = excludethresh
 infodict['num_epochs'] = num_epochs
 infodict['num_layers'] = thelayer_nums[0]
 infodict['num_filters'] = thefilter_nums[0]
@@ -68,6 +70,7 @@ for c1, window_size in list(enumerate(thewindow_sizes)):
                                                                                            num_epochs,
                                                                                            thesuffix='25.0Hz',
                                                                                            dofft=dofft,
+                                                                                           excludethresh=excludethresh,
                                                                                            modelname=modelname,
                                                                                            thedatadir=thedatadir)
 
@@ -79,6 +82,7 @@ for c1, window_size in list(enumerate(thewindow_sizes)):
                                                                                            dropout_rate,
                                                                                            num_epochs,
                                                                                            thesuffix='25.0Hz',
+                                                                                           1xcludethresh=excludethresh,
                                                                                            modelname=modelname,
                                                                                            thedatadir=thedatadir)
                     else:
