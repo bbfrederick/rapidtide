@@ -23,34 +23,22 @@ def spectrum(inputdata, Fs):
     return pspecaxis, pspecvals
 
 
-def readjsondict(inputfilename):
-    thefileroot, theext = os.path.splitext(inputfilename)
-    if os.path.exists(thefileroot + '.json'):
-        with open(thefileroot + '.json', 'r') as json_data:
-            d = json.load(json_data)
-            return d
-    else:
-        print('sidecar file does not exist')
-        return {}
-
 # set initial parameters
-lag = 0
-window_size = 128
-dofft = False
+modelname = 'model'
 
 # Model reconstruction from JSON file
 print('reading model')
-with open('model.json', 'r') as f:
+with open(modelname + '.json', 'r') as f:
     model = model_from_json(f.read())
 print('./model read')
 model.summary()
 
 # now load weights
-model.load_weights('./model_whole.h5')
+model.load_weights('./' + modelname + '_weights.h5')
 
 # now load additional information
 print('reading metadata')
-model_meta = readjsondict('model_meta.json')
+model_meta = tide_io.readdictfromjson(modelname + '_meta.json')
 print('./model_meta read')
 
 lag = model_meta['lag']
