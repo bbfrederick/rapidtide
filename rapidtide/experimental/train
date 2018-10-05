@@ -22,14 +22,14 @@ thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
 nettype = 'cnn'
-modelname = '_'.join['model',
+modelname = '_'.join(['model',
                         'w' + str(thewindow_sizes[0]),
-                        'l' + str(thelayer_nums)[0]),
+                        'l' + str(thelayer_nums[0]),
                         'fn' + str(thefilter_nums[0]),
                         'fl' + str(thefilter_lengths[0]),
                         'd' + str(thedropout_rates[0]),
                         'e' + str(thefilter_lengths[0]),
-                        nettype]
+                        nettype])
 
 infodict = {}
 infodict['window_size'] = thewindow_sizes[0]

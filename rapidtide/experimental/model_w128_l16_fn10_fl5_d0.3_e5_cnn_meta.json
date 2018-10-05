@@ -1,0 +1,14 @@
+{
+    "dofft":0,
+    "dropout_rate":0.3,
+    "excludethresh":6.0,
+    "filter_length":5,
+    "lag":0,
+    "modelname":"model_w128_l16_fn10_fl5_d0.3_e5_cnn",
+    "nettype":"cnn",
+    "num_epochs":10,
+    "num_filters":10,
+    "num_layers":16,
+    "train_arch":"darwin",
+    "window_size":128
+}
