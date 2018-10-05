@@ -24,11 +24,11 @@ dofft = False
 nettype = 'cnn'
 modelname = '_'.join['model',
                         'w' + str(thewindow_sizes[0]),
-                        'l' + str(thelayer_nums)[0],
-                        'fn' + thefilter_nums[0],
-                        'fl' + thefilter_lengths[0],
-                        'd' + thedropout_rates[0],
-                        'e' + thefilter_lengths[0],
+                        'l' + str(thelayer_nums)[0]),
+                        'fn' + str(thefilter_nums[0]),
+                        'fl' + str(thefilter_lengths[0]),
+                        'd' + str(thedropout_rates[0]),
+                        'e' + str(thefilter_lengths[0]),
                         nettype]
 
 infodict = {}
