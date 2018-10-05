@@ -21,6 +21,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
         thedatadir='/data1/frederic/test/output',
         excludethresh=4.0,
         modelname='model',
+        usebadpts=False,
         dofft=False):
     folder = './batch/'
 
@@ -30,12 +31,14 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
                                                                         thesuffix=thesuffix,
                                                                         thedatadir=thedatadir,
                                                                         dofft=True,
+                                                                        usebadpts=usebadpts,
                                                                         excludethresh=excludethresh)
     else:
         train_x, train_y, val_x, val_y, Ns, tclen = dl.prep(window_size,
                                                                         thesuffix=thesuffix,
                                                                         thedatadir=thedatadir,
                                                                         dofft=False,
+                                                                        usebadpts=usebadpts,
                                                                         excludethresh=excludethresh)
     model = Sequential()
 

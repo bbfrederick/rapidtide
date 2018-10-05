@@ -22,6 +22,7 @@ thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
 nettype = 'cnn'
+usebadpts = True
 modelname = '_'.join(['model',
                         'w' + str(thewindow_sizes[0]),
                         'l' + str(thelayer_nums[0]),
@@ -31,8 +32,15 @@ modelname = '_'.join(['model',
                         'e' + str(thefilter_lengths[0]),
                         nettype])
 
+if usebadpts:
+    modelname += '_usebadpts'
+
 infodict = {}
 infodict['window_size'] = thewindow_sizes[0]
+if usebadpts:
+    infodict['usebadpts'] = 1
+else:
+    infodict['usebadpts'] = 0
 if dofft:
     infodict['dofft'] = 1
 else:
@@ -79,6 +87,7 @@ for c1, window_size in list(enumerate(thewindow_sizes)):
                                                                                            dofft=dofft,
                                                                                            excludethresh=excludethresh,
                                                                                            modelname=modelname,
+                                                                                           usebadpts=usebadpts,
                                                                                            thedatadir=thedatadir)
 
                     elif nettype == 'lstm':

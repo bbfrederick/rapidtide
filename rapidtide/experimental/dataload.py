@@ -51,11 +51,19 @@ def filtscale(data, scalefac=1.0, reverse=False, hybrid=False, lognormalize=True
             specvals = themag * np.exp(1.0j * thephase)
             return  fftpack.ifft(specvals).real
 
+def tobadpts(name):
+    return name.replace('.txt', '_badpts.txt')
+
+
+def tocardfmri(name):
+    return name.replace('normpleth', 'cardfromfmri')
+
 
 def prep(window_size,
         step=1,
         lag=0,
         excludethresh=10.0,
+        usebadpts=False,
         startskip=200,
         endskip=0,
         thesuffix='sliceres',
@@ -66,14 +74,23 @@ def prep(window_size,
     print('entering dataload prep')
     fromfile = sorted(glob.glob(os.path.join(thedatadir, '*normpleth_' + thesuffix + '.txt')))
 
-    # make sure both files exist
+    # make sure all files exist
     cleanfilelist = []
     print('checking datafiles')
     for physioname in fromfile:
-        if os.path.isfile(physioname.replace('normpleth', 'cardfromfmri')):
-            cleanfilelist.append(physioname)
-            print(cleanfilelist[-1])
-    print(len(cleanfilelist), 'runs pass both files present check')
+        if os.path.isfile(tocardfmri(physioname)):
+            if usebadpts:
+                if os.path.isfile(tobadpts(physioname.replace('normpleth', 'pleth'))) \
+                    and os.path.isfile(tobadpts(tocardfmri(physioname))):
+                    cleanfilelist.append(physioname)
+                    print(cleanfilelist[-1])
+            else:
+                cleanfilelist.append(physioname)
+                print(cleanfilelist[-1])
+    if usebadpts:
+        print(len(cleanfilelist), 'runs pass all 4 files present check')
+    else:
+        print(len(cleanfilelist), 'runs pass both files present check')
 
     # find out how long the files are
     tempy = np.loadtxt(cleanfilelist[0])
@@ -162,6 +179,25 @@ def prep(window_size,
     for j in range(N_subjs):
         for i in range((N_pts - window_size - 1)):
             Yb[j * ((N_pts - window_size - 1)) + i, :, 0] = Y[0, step * i:(step * i + window_size + lag), j]
+
+    if usebadpts:
+        Xb_withbad = np.zeros((N_subjs * (N_pts - window_size - 1), window_size + lag, 2))
+        print('dimensions of Xb_withbad:', Xb_withbad.shape)
+        Xscale_withbad = np.zeros((N_subjs, N_pts - window_size - 1))
+        print('dimensions of Xscale_withbad:', Xscale_withbad.shape)
+        Yb_withbad = np.zeros((N_subjs * (N_pts - window_size - 1), window_size + lag, 2))
+        print('dimensions of Yb_withbad:', Yb_withbad.shape)
+        Yscale_withbad = np.zeros((N_subjs, N_pts - window_size - 1))
+        print('dimensions of Yscale_withbad:', Yscale_withbad.shape)
+        for j in range(N_subjs):
+            print('transforming subject',j)
+            for i in range((N_pts - window_size - 1)):
+                Xb_withbad[j * ((N_pts - window_size - 1)) + i, :, :], Xscale_withbad[j, i] = \
+                    filtscale(X[0, step * i:(step * i + window_size + lag), j])
+                Yb_withbad[j * ((N_pts - window_size - 1)) + i, :, :], Yscale_withbad[j, i] = \
+                    filtscale(Y[0, step * i:(step * i + window_size + lag), j])
+    
+    perm = np.arange(Xb.shape[0])
 
     if dofft:
         Xb_fourier = np.zeros((N_subjs * (N_pts - window_size - 1), window_size + lag, 2))
