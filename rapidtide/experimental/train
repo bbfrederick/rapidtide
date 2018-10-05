@@ -13,16 +13,23 @@ import sys
 import json
 import rapidtide.io as tide_io
 
-num_epochs = 5
-excludethresh = 4.0
+num_epochs = 10
+excludethresh = 6.0
 thewindow_sizes = [128]
-thelayer_nums = [5]
-thefilter_nums = [64]
+thelayer_nums = [16]
+thefilter_nums = [10]
 thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
 nettype = 'cnn'
-modelname = 'model'
+modelname = '_'.join['model',
+                        'w' + str(thewindow_sizes[0]),
+                        'l' + str(thelayer_nums)[0],
+                        'fn' + thefilter_nums[0],
+                        'fl' + thefilter_lengths[0],
+                        'd' + thedropout_rates[0],
+                        'e' + thefilter_lengths[0],
+                        nettype]
 
 infodict = {}
 infodict['window_size'] = thewindow_sizes[0]
