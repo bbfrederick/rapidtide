@@ -13,6 +13,7 @@ from keras.models import model_from_json
 from scipy import fftpack
 import rapidtide.io as tide_io
 import os
+import json
 
 
 def spectrum(inputdata, Fs):
@@ -22,9 +23,20 @@ def spectrum(inputdata, Fs):
     return pspecaxis, pspecvals
 
 
+def readjsondict(inputfilename):
+    thefileroot, theext = os.path.splitext(inputfilename)
+    if os.path.exists(thefileroot + '.json'):
+        with open(thefileroot + '.json', 'r') as json_data:
+            d = json.load(json_data)
+            return d
+    else:
+        print('sidecar file does not exist')
+        return {}
+
 # set initial parameters
 lag = 0
 window_size = 128
+dofft = False
 
 # Model reconstruction from JSON file
 print('reading model')
@@ -36,8 +48,20 @@ model.summary()
 # now load weights
 model.load_weights('./model_whole.h5')
 
+# now load additional information
+print('reading metadata')
+model_meta = readjsondict('model_meta.json')
+print('./model_meta read')
+
+lag = model_meta['lag']
+window_size = model_meta['window_size']
+dofft = model_meta['dofft']
+if dofft == 1:
+    dofft = True
+else:
+    dofft = False
+
 # read in the dataset
-dofft = True
 thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
 if dofft:
     train_x, train_y, val_x, val_y, Ns, tclen, Xscale, Yscale = dl.prep(window_size, thesuffix='25.0Hz', thedatadir=thedatadir, dofft=True)
