@@ -23,7 +23,7 @@ def usage():
     print("	--model=MODELROOT         - use model named MODELROOT (default is model)")
 
 # handle required args first
-if len(sys.argv) != 3:
+if len(sys.argv) < 3:
     usage()
     sys.exit()
 fmrifilename = sys.argv[1]
