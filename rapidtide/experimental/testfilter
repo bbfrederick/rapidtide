@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function, division
+import getopt
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -10,15 +12,41 @@ import rapidtide.io as tide_io
 from keras.models import model_from_json
 
 
+def usage():
+    print("usage: testfilter inputfile outputfile --model=MODELROOT")
+    print("")
+    print("required arguments:")
+    print("	inputfile                 - the name of a text file containing 25.0Hz raw cardiac signal")
+    print("	outputfile                - the name of the output text file")
+    print("")
+    print("optional arguments:")
+    print("	--model=MODELROOT         - use model named MODELROOT (default is model)")
+
 # handle required args first
 if len(sys.argv) != 3:
-    print('requires input and output name')
+    usage()
     sys.exit()
 fmrifilename = sys.argv[1]
-#plethfilename = sys.argv[2]
 predfilename = sys.argv[2]
 
 modelname = 'model'
+
+# now scan for optional arguments
+try:
+    opts, args = getopt.getopt(sys.argv[3:], "", ["model=", "help"])
+except getopt.GetoptError as err:
+    # print(help information and exit:
+    print(str(err))  # will print something like "option -a not recognized"
+    usage()
+    sys.exit(2)
+
+for o, a in opts:
+    if o == "--model":
+        modelname = a
+        print('will use', modelname)
+    else:
+        assert False, "unhandled option"
+
 
 # read in the data
 fmridata = tide_io.readvec(fmrifilename)
@@ -41,6 +69,7 @@ window_size = model_meta['window_size']
 
 scaleddata = fmridata / np.std(fmridata)
 predicteddata = scaleddata * 0.0
+weightarray = scaleddata * 0.0
 N_pts = len(scaleddata)
 X = np.zeros(((N_pts - window_size - 1), window_size, 1))
 for i in range(X.shape[0]):
@@ -51,7 +80,11 @@ Y = model.predict(X)
 print('Y.shape', Y.shape)
 for i in range(X.shape[0]):
     predicteddata[i:i + window_size] += Y[i, :, 0]
-predicteddata /= window_size
+
+weightarray[:] = window_size
+weightarray[0:window_size] = np.linspace(1.0, window_size, window_size, endpoint=False)
+weightarray[-(window_size + 1):-1] = np.linspace(window_size, 1.0, window_size, endpoint=False)
+predicteddata /= weightarray
 tide_io.writevec(predicteddata, predfilename)
 
 plt.figure()
