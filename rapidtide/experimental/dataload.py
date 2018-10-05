@@ -102,8 +102,6 @@ def prep(window_size,
             count += 1
     print(count, 'runs pass file length check')
 
-    count = 50
-
     y = y1[startskip:, :count]
     x = x1[startskip:, :count]
     print('xshape, yshape:', x.shape, y.shape)
