@@ -19,6 +19,7 @@ from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropou
 def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epochs,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
+        modelname=modelname,
         dofft=False):
     folder = './batch/'
 
@@ -59,11 +60,11 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
 
     # save the model structure to a json file
     model_json = model.to_json()
-    with open("model.json", "w") as json_file:
+    with open(modelname + ".json", "w") as json_file:
         json_file.write(model_json)
 
     # serialize weights to HDF5
-    model.save_weights('model_whole.h5')
+    model.save_weights(modelname + '_weights.h5')
 
     YPred = model.predict(val_x)
 

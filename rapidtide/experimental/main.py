@@ -13,14 +13,15 @@ import sys
 import json
 import io as tide_io
 
-num_epochs = 10
+num_epochs = 5
 thewindow_sizes = [128]
-thelayer_nums = [4]
+thelayer_nums = [5]
 thefilter_nums = [64]
 thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
 nettype = 'cnn'
+modelname = 'model'
 
 infodict = {}
 infodict['window_size'] = thewindow_sizes[0]
@@ -30,8 +31,15 @@ else:
     infodict['dofft'] = 0
 infodict['nettype'] = nettype
 infodict['lag'] = 0
-tide_io.writedict(infodict, 'model_meta')
+infodict['num_epochs'] = num_epochs
+infodict['num_layers'] = thelayer_nums[0]
+infodict['num_filters'] = thefilter_nums[0]
+infodict['filter_length'] = thefilter_lengths[0]
+infodict['dropout_rate'] = thedropout_rates[0]
+infodict['train_arch'] = sys.platform
+infodict['modelname'] = modelname
 
+tide_io.writedicttojson(infodict, modelname + '_meta.json')
 
 if sys.platform == 'darwin':
     thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
@@ -60,6 +68,7 @@ for c1, window_size in list(enumerate(thewindow_sizes)):
                                                                                            num_epochs,
                                                                                            thesuffix='25.0Hz',
                                                                                            dofft=dofft,
+                                                                                           modelname=modelname,
                                                                                            thedatadir=thedatadir)
 
                     elif nettype == 'lstm':
@@ -70,6 +79,7 @@ for c1, window_size in list(enumerate(thewindow_sizes)):
                                                                                            dropout_rate,
                                                                                            num_epochs,
                                                                                            thesuffix='25.0Hz',
+                                                                                           modelname=modelname,
                                                                                            thedatadir=thedatadir)
                     else:
                         print('unknown network type:', nettype)
