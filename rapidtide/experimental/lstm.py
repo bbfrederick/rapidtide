@@ -23,7 +23,7 @@ def lstm(window_size,
         num_epochs,
         dofft=False,
         thesuffix='sliceres',
-        modelname=modelname,
+        modelname='model',
         thedatadir='/data1/frederic/test/output'):
     folder = './batch/'
     #    train_x, train_y, val_x, val_y, Ns = dl.prep_ind(w)

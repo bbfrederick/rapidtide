@@ -19,7 +19,7 @@ from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropou
 def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epochs,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
-        modelname=modelname,
+        modelname='model',
         dofft=False):
     folder = './batch/'
 
