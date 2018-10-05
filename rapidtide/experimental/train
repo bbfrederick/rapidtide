@@ -82,7 +82,7 @@ for c1, window_size in list(enumerate(thewindow_sizes)):
                                                                                            dropout_rate,
                                                                                            num_epochs,
                                                                                            thesuffix='25.0Hz',
-                                                                                           1xcludethresh=excludethresh,
+                                                                                           excludethresh=excludethresh,
                                                                                            modelname=modelname,
                                                                                            thedatadir=thedatadir)
                     else:
