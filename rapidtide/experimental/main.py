@@ -11,7 +11,7 @@ import lstm
 import numpy as np
 import sys
 import json
-import io as tide_io
+import rapidtide.io as tide_io
 
 num_epochs = 5
 thewindow_sizes = [128]
