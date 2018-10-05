@@ -213,7 +213,7 @@ def cardiacsig(thisphase, amps=[1.0, 0.0, 0.0], phases=None, overallphase=0.0):
 def getslicetimesfromfile(slicetimename):
     filebase, extension = os.path.splitext(slicetimename)
     if extension == '.json':
-        jsoninfodict = tide_io.readbidssidecar(slicetimename)
+        jsoninfodict = tide_io.readdictfromjson(slicetimename)
         try:
             slicetimelist = jsoninfodict['SliceTiming']
             slicetimes = np.zeros((len(slicetimelist)), dtype=np.float64)
