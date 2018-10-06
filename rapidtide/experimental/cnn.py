@@ -24,7 +24,10 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
         usebadpts=False,
         activation='relu',
         dofft=False):
-    folder = './batch/'
+
+    folder = 'batch'
+    lossfilename = os.path.join('.', folder, modelname.replace('model_', 'loss_') + '.png')
+    print('lossfilename:', lossfilename)
 
     print('cnn - loading data')
     if dofft:
@@ -71,6 +74,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
                         verbose=1,
                         validation_data=(val_x, val_y))
 
+    '''
     # save the model structure to a json file
     model_json = model.to_json()
     with open(modelname + ".json", "w") as json_file:
@@ -78,6 +82,8 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
 
     # serialize weights to HDF5
     model.save_weights(modelname + '_weights.h5')
+    '''
+    model.save(modelname + '.h5')
 
     YPred = model.predict(val_x)
 
@@ -109,9 +115,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
     plt.plot(epochs, val_loss, 'b', label='Validation loss')
     plt.title('Training and validation loss')
     plt.legend()
-    plt.savefig(
-        folder + 'loss' + '_layer_' + str(num_layers) + '_filter_num_' + str(num_filters) + '_dropout_prob_' + str(
-            dropout_prob) + '_window_size_' + str(window_size) + '.png')
+    plt.savefig(lossfilename)
     plt.close()
 
     # print('loss, val_loss', loss, val_loss)

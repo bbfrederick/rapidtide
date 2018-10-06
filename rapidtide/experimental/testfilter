@@ -9,7 +9,7 @@ import sys
 import glob
 from scipy import fftpack
 import rapidtide.io as tide_io
-from keras.models import model_from_json
+from keras.models import model_from_json, load_model
 
 
 def usage():
@@ -51,6 +51,7 @@ for o, a in opts:
 # read in the data
 fmridata = tide_io.readvec(fmrifilename)
 
+'''
 # Model reconstruction from JSON file
 print('reading model')
 with open(modelname + '.json', 'r') as f:
@@ -60,6 +61,12 @@ model.summary()
 
 # now load weights
 model.load_weights('./' + modelname + '_weights.h5')
+'''
+
+# load in the model with weights
+model = load_model(os.path.join('.', modelname + '.h5'))
+model.summary()
+
 
 # now load additional information
 print('reading metadata')

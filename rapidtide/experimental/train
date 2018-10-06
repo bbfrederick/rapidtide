@@ -15,15 +15,15 @@ import json
 import rapidtide.io as tide_io
 
 num_epochs = 3
-excludethresh = 6.0
+excludethresh = 4.0
 thewindow_sizes = [128]
 thelayer_nums = [16]
-thefilter_nums = [15]
+thefilter_nums = [10]
 thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
 nettype = 'cnn'
-activation = 'tanh'
+activation = 'relu'
 usebadpts = False
 modelname = '_'.join(['model',
                         'w' + str(thewindow_sizes[0]),
@@ -31,7 +31,8 @@ modelname = '_'.join(['model',
                         'fn' + str(thefilter_nums[0]),
                         'fl' + str(thefilter_lengths[0]),
                         'd' + str(thedropout_rates[0]),
-                        'e' + str(thefilter_lengths[0]),
+                        'e' + str(num_epochs),
+                        't' + str(excludethresh),
                         activation,
                         nettype])
 
@@ -116,5 +117,5 @@ for c1, window_size in list(enumerate(thewindow_sizes)):
                         print('unknown network type:', nettype)
                         sys.exit()
 
-np.save('loss.npy', loss)
-np.save('loss_val.npy', loss_val)
+                    np.save(modelname.replace('model_', 'loss_') + '.npy', loss)
+                    np.save(modelname.replace('model_', 'loss_val_') + '.npy', loss_val)
