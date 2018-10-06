@@ -11,6 +11,7 @@ import numpy as np
 import os
 import glob
 from scipy import fftpack
+from statsmodels.robust.scale import mad
 
 try:
     import pyfftw
@@ -62,7 +63,7 @@ def tocardfmri(name):
 def prep(window_size,
         step=1,
         lag=0,
-        excludethresh=10.0,
+        excludethresh=4.0,
         usebadpts=False,
         startskip=200,
         endskip=0,
@@ -103,6 +104,8 @@ def prep(window_size,
     s = len(cleanfilelist)
     x1 = np.zeros([tclen, s])
     y1 = np.zeros([tclen, s])
+    if usebadpts:
+        bad1 = np.zeros([tclen, s])
 
     # now read the data in
     count = 0
@@ -116,11 +119,19 @@ def prep(window_size,
         if (ntempx >= tclen) and (ntempy >= tclen):
             x1[:tclen, count] = tempx[:tclen]
             y1[:tclen, count] = tempy[:tclen]
+            if usebadpts:
+                tempbad1 = np.loadtxt(tobadpts(cleanfilelist[i].replace('normpleth', 'pleth')))
+                tempbad2 = np.loadtxt(tobadpts(tocardfmri(cleanfilelist[i])))
+                bad1[:tclen, count] = 1.0 - (1.0 - tempbad1[:tclen]) * (1.0 - tempbad2[:tclen])
             count += 1
     print(count, 'runs pass file length check')
 
+    count = 50
+
     y = y1[startskip:, :count]
     x = x1[startskip:, :count]
+    if usebadpts:
+        bad = bad1[startskip:, :count]
     print('xshape, yshape:', x.shape, y.shape)
 
     # normalize input and output data
@@ -128,32 +139,34 @@ def prep(window_size,
     print('y shape:', y.shape, 'count:', count)
     if debug:
         for thesubj in range(count):
-            print('prenorm sub', thesubj, 'min, max mean std x, y:', thesubj,
-                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]),
-                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(y[:, thesubj]))
+            print('prenorm sub', thesubj, 'min, max mean MAD x, y:', thesubj,
+                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), mad(x[:, thesubj]),
+                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), mad(y[:, thesubj]))
 
     y -= np.mean(y, axis=0)
-    thestd = np.std(y, axis=0)
-    for thesubj in range(thestd.shape[0]):
-        if thestd[thesubj] > 0.0:
-            y[:, thesubj] /= thestd[thesubj]
+    themad = mad(y, axis=0)
+    for thesubj in range(themad.shape[0]):
+        if themad[thesubj] > 0.0:
+            y[:, thesubj] /= themad[thesubj]
 
     x -= np.mean(x, axis=0)
-    thestd = np.std(x, axis=0)
-    for thesubj in range(thestd.shape[0]):
-        if thestd[thesubj] > 0.0:
-            x[:, thesubj] /= thestd[thesubj]
+    themad = mad(x, axis=0)
+    for thesubj in range(themad.shape[0]):
+        if themad[thesubj] > 0.0:
+            x[:, thesubj] /= themad[thesubj]
 
     if debug:
         for thesubj in range(count):
-            print('postnorm sub', thesubj, 'min, max mean std x, y:', thesubj,
-                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]),
-                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(y[:, thesubj]))
+            print('postnorm sub', thesubj, 'min, max mean MAD x, y:', thesubj,
+                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), mad(x[:, thesubj]),
+                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), mad(y[:, thesubj]))
 
 
     cleansubjs = (np.max(x, axis=0) < excludethresh) & (np.min(x, axis=0) > -excludethresh)
     x = x[:, cleansubjs]
     y = y[:, cleansubjs]
+    if usebadpts:
+        bad = bad[:, cleansubjs]
 
     print('after filtering, shape of x is', x.shape)
 
@@ -162,9 +175,13 @@ def prep(window_size,
 
     X = np.zeros((1, N_pts, N_subjs))
     Y = np.zeros((1, N_pts, N_subjs))
+    if usebadpts:
+        BAD = np.zeros((1, N_pts, N_subjs))
 
     X[0, :, :] = x
     Y[0, :, :] = y
+    if usebadpts:
+        BAD[0, :, :] = bad
 
     Xb = np.zeros((N_subjs * (N_pts - window_size - 1), window_size + lag, 1))
     print('dimensions of Xb:', Xb.shape)
@@ -183,19 +200,14 @@ def prep(window_size,
     if usebadpts:
         Xb_withbad = np.zeros((N_subjs * (N_pts - window_size - 1), window_size + lag, 2))
         print('dimensions of Xb_withbad:', Xb_withbad.shape)
-        Xscale_withbad = np.zeros((N_subjs, N_pts - window_size - 1))
-        print('dimensions of Xscale_withbad:', Xscale_withbad.shape)
-        Yb_withbad = np.zeros((N_subjs * (N_pts - window_size - 1), window_size + lag, 2))
-        print('dimensions of Yb_withbad:', Yb_withbad.shape)
-        Yscale_withbad = np.zeros((N_subjs, N_pts - window_size - 1))
-        print('dimensions of Yscale_withbad:', Yscale_withbad.shape)
         for j in range(N_subjs):
-            print('transforming subject',j)
+            print('packing data for subject',j)
             for i in range((N_pts - window_size - 1)):
-                Xb_withbad[j * ((N_pts - window_size - 1)) + i, :, :], Xscale_withbad[j, i] = \
-                    filtscale(X[0, step * i:(step * i + window_size + lag), j])
-                Yb_withbad[j * ((N_pts - window_size - 1)) + i, :, :], Yscale_withbad[j, i] = \
-                    filtscale(Y[0, step * i:(step * i + window_size + lag), j])
+                Xb_withbad[j * ((N_pts - window_size - 1)) + i, :, 0] = \
+                    X[0, step * i:(step * i + window_size + lag), j]
+                Xb_withbad[j * ((N_pts - window_size - 1)) + i, :, 1] = \
+                    BAD[0, step * i:(step * i + window_size + lag), j]
+        Xb = Xb_withbad
     
     perm = np.arange(Xb.shape[0])
 
