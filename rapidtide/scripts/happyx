@@ -349,6 +349,10 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
     return peakfreq
 
 
+def madnorm(thewaveform):
+    medianval = np.median(thewaveform)
+    return thewaveform / mad(thewaveform, center=medianval)
+
 def cleanpleth(Fs, plethwaveform):
     # first bandpass the plethysmogram to calculate the envelope
     arb_lower = 0.5
@@ -358,23 +362,23 @@ def cleanpleth(Fs, plethwaveform):
     plethfilter = tide_filt.noncausalfilter(filtertype='arb')
     plethfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
     print('filtering')
-    # filtplethwaveform = plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform, prewindow=False,
-    #         detrendorder=0))
+    filtplethwaveform = madnorm(plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform, prewindow=False,
+             detrendorder=0)))
     print('envelope detection')
-    # envelope = tide_math.envdetect(Fs, filtplethwaveform, cutoff=0.15)
-    envelope = tide_math.envdetect(Fs, plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform,
-                                                                                     prewindow=False,
-                                                                                     detrendorder=0)),
-                                   cutoff=0.15)
+    envelope = tide_math.envdetect(Fs, filtplethwaveform, cutoff=0.15)
+    #envelope = tide_math.envdetect(Fs, plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform,
+    #                                                                                 prewindow=False,
+    #                                                                                 detrendorder=0)),
+    #                               cutoff=0.15)
     envmean = np.mean(envelope)
 
     # now high pass the plethysmogram to eliminate baseline
     arb_upper = 10.0
     arb_upperstop = arb_upper * 1.1
     plethfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-    filtplethwaveform = plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform,
+    filtplethwaveform = madnorm(plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform,
                                                                       prewindow=False,
-                                                                      detrendorder=0))
+                                                                      detrendorder=0)))
     print('normalizing')
     normpleth = envmean * np.where(envelope > 0.0, filtplethwaveform / envelope, 0.0)
 
