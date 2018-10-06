@@ -26,7 +26,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
         dofft=False):
 
     folder = 'batch'
-    lossfilename = os.path.join('.', folder, modelname.replace('model_', 'loss_') + '.png')
+    lossfilename = os.path.join(modelname, 'loss.png')
     print('lossfilename:', lossfilename)
 
     print('cnn - loading data')
@@ -74,16 +74,8 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
                         verbose=1,
                         validation_data=(val_x, val_y))
 
-    '''
-    # save the model structure to a json file
-    model_json = model.to_json()
-    with open(modelname + ".json", "w") as json_file:
-        json_file.write(model_json)
-
-    # serialize weights to HDF5
-    model.save_weights(modelname + '_weights.h5')
-    '''
-    model.save(modelname + '.h5')
+    # save the trained model
+    model.save(os.path.join(modelname, 'model.h5'))
 
     YPred = model.predict(val_x)
 
@@ -101,7 +93,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
     print(description)
     print('Prediction Error: ', sq_error, 'Raw Error: ', sq_error2)
 
-    f = open("loss.txt", "a")
+    f = open(os.path.join(modelname, "loss.txt"), "a")
     f.write(description + '\n')
     f.write('Prediction Error: ' + str(sq_error) + ' Raw Error: ' + str(sq_error2) + '\n')
     f.close()
@@ -118,5 +110,4 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
     plt.savefig(lossfilename)
     plt.close()
 
-    # print('loss, val_loss', loss, val_loss)
-    return loss, val_loss
+    return loss, val_loss, sq_error, sq_error2
