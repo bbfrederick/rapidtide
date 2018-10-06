@@ -66,14 +66,32 @@ print('reading metadata')
 model_meta = tide_io.readdictfromjson(modelname + '_meta.json')
 print('./model_meta read')
 window_size = model_meta['window_size']
+usebadpts = model_meta['usebadpts']
+if usebadpts == 1:
+    usebadpts = True
+else:
+    usebadpts = False
 
+if usebadpts:
+    try:
+        badpts = tide_io.readvec(fmrifilename.replace('.txt', '_badpts.txt'))
+    except:
+        print('bad points file', fmrifilename.replace('.txt', '_badpts.txt'), 'not found!')
+        sys.exit() 
+        
 scaleddata = fmridata / np.std(fmridata)
 predicteddata = scaleddata * 0.0
 weightarray = scaleddata * 0.0
 N_pts = len(scaleddata)
-X = np.zeros(((N_pts - window_size - 1), window_size, 1))
-for i in range(X.shape[0]):
-    X[i, :, 0] = scaleddata[i:i + window_size]
+if usebadpts:
+    X = np.zeros(((N_pts - window_size - 1), window_size, 2))
+    for i in range(X.shape[0]):
+        X[i, :, 0] = scaleddata[i:i + window_size]
+        X[i, :, 1] = badpts[i:i + window_size]
+else:
+    X = np.zeros(((N_pts - window_size - 1), window_size, 1))
+    for i in range(X.shape[0]):
+        X[i, :, 0] = scaleddata[i:i + window_size]
 window_size = model_meta['window_size']
 
 Y = model.predict(X)
