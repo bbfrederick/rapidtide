@@ -22,6 +22,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
         excludethresh=4.0,
         modelname='model',
         usebadpts=False,
+        activation='relu',
         dofft=False):
     folder = './batch/'
 
@@ -46,7 +47,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
     model.add(Convolution1D(filters=num_filters, kernel_size=kernel_size, padding='same', input_shape=(None, train_x.shape[2])))
     model.add(BatchNormalization())
     model.add(Dropout(rate=dropout_prob))
-    model.add(Activation('relu'))
+    model.add(Activation(activation))
     #model.add(MaxPooling1D())
 
     # make the intermediate layers
@@ -54,7 +55,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
         model.add(Convolution1D(filters=num_filters, kernel_size=kernel_size, padding='same'))
         model.add(BatchNormalization())
         model.add(Dropout(rate=dropout_prob))
-        model.add(Activation('relu'))
+        model.add(Activation(activation))
         #model.add(MaxPooling1D())
 
     # make the output layer

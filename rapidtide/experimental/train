@@ -10,19 +10,21 @@ import cnn
 import lstm
 import numpy as np
 import sys
+import os
 import json
 import rapidtide.io as tide_io
 
-num_epochs = 10
+num_epochs = 3
 excludethresh = 6.0
 thewindow_sizes = [128]
 thelayer_nums = [16]
-thefilter_nums = [10]
+thefilter_nums = [15]
 thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
 nettype = 'cnn'
-usebadpts = True
+activation = 'tanh'
+usebadpts = False
 modelname = '_'.join(['model',
                         'w' + str(thewindow_sizes[0]),
                         'l' + str(thelayer_nums[0]),
@@ -30,6 +32,7 @@ modelname = '_'.join(['model',
                         'fl' + str(thefilter_lengths[0]),
                         'd' + str(thedropout_rates[0]),
                         'e' + str(thefilter_lengths[0]),
+                        activation,
                         nettype])
 
 if usebadpts:
@@ -58,9 +61,16 @@ infodict['modelname'] = modelname
 
 tide_io.writedicttojson(infodict, modelname + '_meta.json')
 
-if sys.platform == 'darwin':
+thiscomputer = os.uname().nodename
+print('thiscomputer:', thiscomputer)
+if thiscomputer.startswith('bbf-tbmbp'):
+    print('setting up to run on mac')
     thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
+elif thiscomputer.startswith('DESKTOP'):
+    print('setting up to run on windows bash')
+    thedatadir = '/home/frederic/Dropbox/timecourses'
 else:
+    print('setting up to run on mclean cluster')
     thedatadir = '/data1/frederic/test/output'
 
 loss = np.zeros(
@@ -85,6 +95,7 @@ for c1, window_size in list(enumerate(thewindow_sizes)):
                                                                                            num_epochs,
                                                                                            thesuffix='25.0Hz',
                                                                                            dofft=dofft,
+                                                                                           activation=activation,
                                                                                            excludethresh=excludethresh,
                                                                                            modelname=modelname,
                                                                                            usebadpts=usebadpts,
