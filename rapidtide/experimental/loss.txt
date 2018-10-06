@@ -40,3 +40,47 @@ Num layers:  4 Num filters:  10 Dropout prob:  0.3 Window size:  128
 Prediction Error: 0.13381241860580304 Raw Error: 1.5287661048197527
 Num layers:  4 Num filters:  10 Dropout prob:  0.3 Window size:  128
 Prediction Error: 0.05013053483492388 Raw Error: 0.10108939347325928
+Num layers:  4 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.050345235217 Raw Error: 0.101089393473
+Num layers:  4 Num filters:  20 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.0436099320622 Raw Error: 0.101089393473
+Num layers:  4 Num filters:  20 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.0414536102554 Raw Error: 0.101089393473
+Num layers:  4 Num filters:  64 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.167483546516 Raw Error: 1.52876610482
+Num layers:  5 Num filters:  64 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.154345573189 Raw Error: 1.52876610482
+Num layers:  5 Num filters:  64 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.398090292389 Raw Error: 1.49766080416
+Num layers:  5 Num filters:  64 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.268535574296 Raw Error: 1.63231772013
+Num layers:  12 Num filters:  20 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.252627120078 Raw Error: 1.63231772013
+Num layers:  12 Num filters:  20 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.204295758334 Raw Error: 1.52703702649
+Num layers:  16 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.224114930029 Raw Error: 1.52703702649
+Num layers:  16 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.09670849007320587 Raw Error: 0.9835811621146393
+Num layers:  16 Num filters:  15 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.09505059610977314 Raw Error: 1.247798748038172
+Num layers:  16 Num filters:  15 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.34593123213110033 Raw Error: 1.247798748038172
+Num layers:  16 Num filters:  15 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.3206868274816058 Raw Error: 1.247798748038172
+Num layers:  16 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.2864451779954343 Raw Error: 1.5237705316141792
+Num layers:  16 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.272372743701593 Raw Error: 1.5237705316141792
+Num layers:  16 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.9134389668415795 Raw Error: 1.5237705316141792
+Num layers:  16 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.23652676379408374 Raw Error: 1.5237705316141792
+Num layers:  16 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.27274542736407503 Raw Error: 1.5237705316141792
+Num layers:  16 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.25097621775126244 Raw Error: 1.5237705316141792
+Num layers:  16 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.6917459955772276 Raw Error: 1.5237705316141792
+Num layers:  16 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.2436899717546065 Raw Error: 1.5237705316141792
