@@ -24,7 +24,9 @@ def trainmodel(num_epochs=3,
                 dofft=False,
                 nettype='cnn',
                 activation='relu',
-                usebadpts=False):
+                usebadpts=False,
+                readlim=None,
+                countlim=None):
 
     # make the target directory
     #modeldir = os.path.join(os.path.split(os.path.split(os.path.split(os.abspath(__file__))[0])[0])[0], 'rapidtide', 'models')
@@ -38,6 +40,8 @@ def trainmodel(num_epochs=3,
                             't' + str(excludethresh),
                             activation,
                             nettype])
+    if usebadpts:
+        modelname += '_usebadpts'
     modelname = os.path.join(modeldir, modelname)
 
     try:
@@ -45,9 +49,6 @@ def trainmodel(num_epochs=3,
     except OSError:
         pass
 
-    if usebadpts:
-        modelname += '_usebadpts'
-    
     infodict = {}
     infodict['window_size'] = window_size
     infodict['usebadpts'] = usebadpts
@@ -91,19 +92,22 @@ def trainmodel(num_epochs=3,
                                                                excludethresh=excludethresh,
                                                                modelname=modelname,
                                                                usebadpts=usebadpts,
-                                                               thedatadir=thedatadir)
+                                                               thedatadir=thedatadir,
+                                                               readlim=readlim,
+                                                               countlim=countlim)
 
     elif nettype == 'lstm':
-        thisloss, thisval_loss, pred_err, raw_err = lstm.lstm(window_size,
-                                                               num_layers,
-                                                               num_filters,
-                                                               filter_length,
-                                                               dropout_rate,
-                                                               num_epochs,
+        thisloss, thisval_loss, pred_err, raw_err = lstm.lstm(window_size=window_size,
+                                                               num_layers=num_layers,
+                                                               num_units=window_size,
+                                                               dropout_rate=dropout_rate,
+                                                               num_epochs=num_epochs,
                                                                thesuffix='25.0Hz',
                                                                excludethresh=excludethresh,
                                                                modelname=modelname,
-                                                               thedatadir=thedatadir)
+                                                               thedatadir=thedatadir,
+                                                               readlim=readlim,
+                                                               countlim=countlim)
     else:
         print('unknown network type:', nettype)
         sys.exit()
@@ -114,8 +118,8 @@ def trainmodel(num_epochs=3,
     infodict['prediction_error'] = pred_err
     tide_io.writedicttojson(infodict, os.path.join(modelname, 'model_meta.json'))
     
-num_epochs = 3
-excludethresh = 5.0
+num_epochs = 10
+excludethresh = 8.0
 thewindow_sizes = [128]
 thelayer_nums = [16]
 thefilter_nums = [10]
@@ -123,23 +127,28 @@ thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
 nettype = 'cnn'
-activation = 'relu'
-usebadpts = False
+activation = 'tanh'
+theusebadpts = [False, True]
+countlim = None
+readlim = 50
 
-for c1, window_size in list(enumerate(thewindow_sizes)):
-    for c2, num_layers in list(enumerate(thelayer_nums)):
-        for c3, num_filters in list(enumerate(thefilter_nums)):
-            for c4, filter_length in list(enumerate(thefilter_lengths)):
-                for c5, dropout_rate in list(enumerate(thedropout_rates)):
-                    # print('layer numbers: ', num_layers,'filter numers: ', num_filters, 'Dropout Prob: ',p, 'window Size: ', window_size)
-                    trainmodel(num_epochs=num_epochs,
-                                excludethresh=excludethresh,
-                                window_size=window_size,
-                                num_layers=num_layers,
-                                num_filters=num_filters,
-                                filter_length=filter_length,
-                                dropout_rate=dropout_rate,
-                                dofft=dofft,
-                                nettype=nettype,
-                                activation=activation,
-                                usebadpts=usebadpts)
+for window_size in thewindow_sizes:
+    for num_layers in thelayer_nums:
+        for num_filters in thefilter_nums:
+            for filter_length in thefilter_lengths:
+                for dropout_rate in thedropout_rates:
+                    for usebadpts in theusebadpts:
+                        # print('layer numbers: ', num_layers,'filter numers: ', num_filters, 'Dropout Prob: ',p, 'window Size: ', window_size)
+                        trainmodel(num_epochs=num_epochs,
+                                    excludethresh=excludethresh,
+                                    window_size=window_size,
+                                    num_layers=num_layers,
+                                    num_filters=num_filters,
+                                    filter_length=filter_length,
+                                    dropout_rate=dropout_rate,
+                                    dofft=dofft,
+                                    nettype=nettype,
+                                    activation=activation,
+                                    usebadpts=usebadpts,
+                                    readlim=readlim,
+                                    countlim=countlim)
