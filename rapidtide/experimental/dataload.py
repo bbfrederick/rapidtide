@@ -70,7 +70,9 @@ def prep(window_size,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
         dofft=False,
-        debug=False):
+        debug=False,
+        readlim=None,
+        countlim=None):
 
     print('entering dataload prep')
     fromfile = sorted(glob.glob(os.path.join(thedatadir, '*normpleth_' + thesuffix + '.txt')))
@@ -101,7 +103,10 @@ def prep(window_size,
 
     # allocate target arrays
     print('allocating arrays')
-    s = len(cleanfilelist)
+    if readlim is None:
+        s = len(cleanfilelist)
+    else:
+        s = readlim
     x1 = np.zeros([tclen, s])
     y1 = np.zeros([tclen, s])
     if usebadpts:
@@ -126,7 +131,8 @@ def prep(window_size,
             count += 1
     print(count, 'runs pass file length check')
 
-    count = 50
+    if countlim is not None:
+        count = countlim
 
     y = y1[startskip:, :count]
     x = x1[startskip:, :count]
@@ -231,6 +237,8 @@ def prep(window_size,
     perm = np.arange(Xb.shape[0])
     limit = int(0.8 * Xb.shape[0])
 
+    batchsize = N_pts - window_size - 1
+
     if dofft:
         train_x = Xb_fourier[perm[:limit], :, :]
         train_y = Yb_fourier[perm[:limit], :, :]
@@ -238,7 +246,7 @@ def prep(window_size,
         val_x = Xb_fourier[perm[limit:], :, :]
         val_y = Yb_fourier[perm[limit:], :, :]
         print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
-        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, Xscale_fourier, Yscale_fourier
+        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize, Xscale_fourier, Yscale_fourier
     else:
         train_x = Xb[perm[:limit], :, :]
         train_y = Yb[perm[:limit], :, :]
@@ -246,4 +254,4 @@ def prep(window_size,
         val_x = Xb[perm[limit:], :, :]
         val_y = Yb[perm[limit:], :, :]
         print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
-        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip
+        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize
