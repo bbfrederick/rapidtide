@@ -23,7 +23,9 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
         modelname='model',
         usebadpts=False,
         activation='relu',
-        dofft=False):
+        dofft=False,
+        readlim=None,
+        countlim=None):
 
     folder = 'batch'
     lossfilename = os.path.join(modelname, 'loss.png')
@@ -31,19 +33,23 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
 
     print('cnn - loading data')
     if dofft:
-        train_x, train_y, val_x, val_y, Ns, tclen, dummy, dummy = dl.prep(window_size,
-                                                                        thesuffix=thesuffix,
-                                                                        thedatadir=thedatadir,
-                                                                        dofft=True,
-                                                                        usebadpts=usebadpts,
-                                                                        excludethresh=excludethresh)
+        train_x, train_y, val_x, val_y, Ns, tclen, thebatchsize, dummy, dummy = dl.prep(window_size,
+                                                                                    thesuffix=thesuffix,
+                                                                                    thedatadir=thedatadir,
+                                                                                    dofft=True,
+                                                                                    usebadpts=usebadpts,
+                                                                                    excludethresh=excludethresh,
+                                                                                    readlim=readlim,
+                                                                                    countlim=countlim)
     else:
-        train_x, train_y, val_x, val_y, Ns, tclen = dl.prep(window_size,
+        train_x, train_y, val_x, val_y, Ns, tclen, thebatchsize = dl.prep(window_size,
                                                                         thesuffix=thesuffix,
                                                                         thedatadir=thedatadir,
                                                                         dofft=False,
                                                                         usebadpts=usebadpts,
-                                                                        excludethresh=excludethresh)
+                                                                        excludethresh=excludethresh,
+                                                                        readlim=readlim,
+                                                                        countlim=countlim)
     model = Sequential()
 
     print('data shape:', train_x.shape)
