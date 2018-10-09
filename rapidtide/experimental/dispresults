@@ -26,6 +26,7 @@ def spectrum(inputdata, Fs):
 # set initial parameters
 modelname = 'model'
 
+'''
 # Model reconstruction from JSON file
 print('reading model')
 with open(modelname + '.json', 'r') as f:
@@ -35,6 +36,10 @@ model.summary()
 
 # now load weights
 model.load_weights('./' + modelname + '_weights.h5')
+'''
+
+# load the model with weights
+model.load(os.path.join('.', modelname + '.h5')
 
 # now load additional information
 print('reading metadata')
