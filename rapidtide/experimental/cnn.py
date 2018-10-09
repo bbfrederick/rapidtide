@@ -17,7 +17,7 @@ from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropou
 from keras.callbacks import TerminateOnNaN, ModelCheckpoint
 
 
-def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epochs,
+def cnn(window_size, num_layers, num_filters, kernel_size, dropout_rate, num_epochs,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
         excludethresh=4.0,
@@ -56,7 +56,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
     print('data shape:', train_x.shape)
     model.add(Convolution1D(filters=num_filters, kernel_size=kernel_size, padding='same', input_shape=(None, train_x.shape[2])))
     model.add(BatchNormalization())
-    model.add(Dropout(rate=dropout_prob))
+    model.add(Dropout(rate=dropout_rate))
     model.add(Activation(activation))
     #model.add(MaxPooling1D())
 
@@ -64,7 +64,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
     for layer in range(num_layers - 2):
         model.add(Convolution1D(filters=num_filters, kernel_size=kernel_size, padding='same'))
         model.add(BatchNormalization())
-        model.add(Dropout(rate=dropout_prob))
+        model.add(Dropout(rate=dropout_rate))
         model.add(Activation(activation))
         #model.add(MaxPooling1D())
 
@@ -74,13 +74,13 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
 
     model.summary()
     model.compile(optimizer=RMSprop(), loss='mse')
-    modelpath = os.path.join(modelname, 'model.{epoch:02d}-{val_loss:.2f}.h5')
+    modelpath = os.path.join(modelname, 'model_e{epoch:02d}_v{val_loss:.4f}.h5')
     history = model.fit(train_x, train_y,
                         batch_size=1024,
                         epochs=num_epochs,
                         shuffle=True,
                         verbose=1,
-                        callbacks=[TerminateOnNaN, ModelCheckpoint(modelpath)],
+                        callbacks=[TerminateOnNaN(), ModelCheckpoint(modelpath)],
                         validation_data=(val_x, val_y))
 
     # save the trained model
@@ -96,7 +96,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
     description = ' '.join([
         'Num layers: ', str(num_layers),
         'Num filters: ', str(num_filters),
-        'Dropout prob: ', str(dropout_prob),
+        'Dropout prob: ', str(dropout_rate),
         'Window size: ', str(window_size)
     ])
     print(description)
