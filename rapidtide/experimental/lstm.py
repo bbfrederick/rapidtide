@@ -49,10 +49,25 @@ def lstm(window_size=128,
     print('dimension of output data', train_y.shape)
     model = Sequential()
 
-    model.add(LSTM(num_units , activation='tanh', input_shape=(train_x.shape[1], train_x.shape[2],), recurrent_activation='hard_sigmoid'))
-    #model.add(Dropout(rate=dropout_rate))
-    #model.add(Flatten())
-    #model.add(Dense(window_size, input_shape=(train_x.shape[1],), activation='linear'))
+    model.add(LSTM(num_units,
+                    activation='tanh',
+                    input_shape=(window_size, train_x.shape[2],),
+                    return_sequences=True,
+                    recurrent_activation='hard_sigmoid'))
+    model.add(BatchNormalization())
+    model.add(Dropout(rate=dropout_rate))
+
+    for layer in range(num_layers - 2):
+        model.add(LSTM(num_units,
+                    activation='tanh',
+                    input_shape=(window_size, train_x.shape[2],),
+                    return_sequences=True,
+                    recurrent_activation='hard_sigmoid'))
+        model.add(BatchNormalization())
+        model.add(Dropout(rate=dropout_rate))
+
+    # finish off with a Dense layer
+    model.add(Dense(1, input_shape=(train_x.shape[2],), activation='linear'))
     model.compile (loss ="mean_squared_error" , optimizer="adam")  
     history = model.fit(train_x, train_y,
                         batch_size=train_x.shape[0],
