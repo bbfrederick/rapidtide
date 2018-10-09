@@ -25,6 +25,7 @@ def trainmodel(num_epochs=3,
                 nettype='cnn',
                 activation='relu',
                 usebadpts=False,
+                num_units=32,
                 readlim=None,
                 countlim=None):
 
@@ -99,7 +100,7 @@ def trainmodel(num_epochs=3,
     elif nettype == 'lstm':
         thisloss, thisval_loss, pred_err, raw_err = lstm.lstm(window_size=window_size,
                                                                num_layers=num_layers,
-                                                               num_units=window_size,
+                                                               num_units=num_units,
                                                                dropout_rate=dropout_rate,
                                                                num_epochs=num_epochs,
                                                                thesuffix='25.0Hz',
@@ -118,7 +119,7 @@ def trainmodel(num_epochs=3,
     infodict['prediction_error'] = pred_err
     tide_io.writedicttojson(infodict, os.path.join(modelname, 'model_meta.json'))
     
-num_epochs = 10
+num_epochs = 5
 excludethresh = 8.0
 thewindow_sizes = [128]
 thelayer_nums = [16]
@@ -126,11 +127,12 @@ thefilter_nums = [10]
 thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
-nettype = 'cnn'
+nettype = 'lstm'
 activation = 'tanh'
 theusebadpts = [False, True]
 countlim = None
 readlim = 50
+num_units = 32
 
 for window_size in thewindow_sizes:
     for num_layers in thelayer_nums:
@@ -150,5 +152,6 @@ for window_size in thewindow_sizes:
                                     nettype=nettype,
                                     activation=activation,
                                     usebadpts=usebadpts,
+                                    num_units=num_units,
                                     readlim=readlim,
                                     countlim=countlim)
