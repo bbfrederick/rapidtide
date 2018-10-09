@@ -14,6 +14,7 @@ import os
 from keras.models import Sequential
 from keras.optimizers import RMSprop
 from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, MaxPooling1D
+from keras.callbacks import TerminateOnNaN, ModelCheckpoint
 
 
 def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epochs,
@@ -78,6 +79,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_prob, num_epo
                         epochs=num_epochs,
                         shuffle=True,
                         verbose=1,
+                        callbacks=[TerminateOnNaN, ModelCheckpoint(os.path.join(modelname, 'model.{epoch:02d}-{val_loss:.2f}.h5'))],
                         validation_data=(val_x, val_y))
 
     # save the trained model
