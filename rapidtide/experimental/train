@@ -121,16 +121,16 @@ def trainmodel(num_epochs=3,
     tide_io.writedicttojson(infodict, os.path.join(modelname, 'model_meta.json'))
     
 num_epochs = 5
-excludethresh = 8.0
-thewindow_sizes = [128]
-thelayer_nums = [5]
+excludethresh = 10.0
+thewindow_sizes = [64]
+thelayer_nums = [2]
 thefilter_nums = [10]
 thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
 nettype = 'lstm'
 activation = 'tanh'
-theusebadpts = [False, True]
+theusebadpts = [False]
 countlim = None
 readlim = 50
 num_units = 32
