@@ -174,10 +174,10 @@ def prep(window_size,
                   np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
 
 
-    cleansubjs = (np.max(x, axis=0) < excludethresh) & (np.min(x, axis=0) > -excludethresh)
+    cleansubjs = np.where((np.max(x, axis=0) < excludethresh) and (np.min(x, axis=0) > -excludethresh))[0]
     x = x[:, cleansubjs]
     y = y[:, cleansubjs]
-    cleannames = names[cleansubjs[0]]
+    cleannames = names[cleansubjs]
     if usebadpts:
         bad = bad[:, cleansubjs]
 
@@ -199,7 +199,7 @@ def prep(window_size,
     Xb = np.zeros((N_subjs * (N_pts - window_size - 1), window_size + lag, 1))
     print('dimensions of Xb:', Xb.shape)
     for j in range(N_subjs):
-        print('sub', j, 'min, max X, Y:', j, np.min(X[0, :, j]), np.max(X[0, :, j]), np.min(Y[0, :, j]),
+        print('sub', j, '(', cleannames[j], '), min, max X, Y:', j, np.min(X[0, :, j]), np.max(X[0, :, j]), np.min(Y[0, :, j]),
               np.max(Y[0, :, j]))
         for i in range((N_pts - window_size - 1)):
             Xb[j * ((N_pts - window_size - 1)) + i, :, 0] = X[0, step * i:(step * i + window_size + lag), j]
