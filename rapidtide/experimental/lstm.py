@@ -9,15 +9,18 @@ Created on Sat Jul 28 23:01:07 2018
 import matplotlib.pyplot as plt
 import dataload as dl
 import numpy as np
+import os
 
 from keras.models import Sequential
 from keras.optimizers import RMSprop
 from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, Flatten
+from keras.callbacks import TerminateOnNaN, ModelCheckpoint
 
 
 def lstm(window_size=128,
         num_layers=3,
         num_units=1,
+        filter_length=5,
         dropout_rate=0.3,
         excludethresh=4.0,
         num_epochs=3,
@@ -66,13 +69,20 @@ def lstm(window_size=128,
         model.add(BatchNormalization())
         model.add(Dropout(rate=dropout_rate))
 
-    # finish off with a Dense layer
-    model.add(Dense(1, input_shape=(train_x.shape[2],), activation='linear'))
+    # make the output layer
+    model.add(Convolution1D(filters=train_y.shape[2], kernel_size=filter_length, padding='same'))
+    #model.add(Dense(1, input_shape=(train_x.shape[2],), activation='linear'))
+
+    model.summary()
+
+    # now compile and train
     model.compile (loss ="mean_squared_error" , optimizer="adam")  
+    modelpath = os.path.join(modelname, 'model_e{epoch:02d}_v{val_loss:.4f}.h5')
     history = model.fit(train_x, train_y,
                         batch_size=train_x.shape[0],
                         epochs=num_epochs,
                         shuffle=False,
+                        callbacks=[TerminateOnNaN(), ModelCheckpoint(modelpath)],
                         validation_data=(val_x, val_y))
 
     # save the model structure to a json file
@@ -80,8 +90,9 @@ def lstm(window_size=128,
     with open(modelname + ".json", "w") as json_file:
         json_file.write(model_json)
 
-    # serialize weights to HDF5
-    model.save_weights(modelname + '_weights.h5')
+    # save the trained model
+    model.save(os.path.join(modelname, 'model.h5'))
+
 
     YPred = model.predict(val_x)
 
@@ -99,7 +110,7 @@ def lstm(window_size=128,
     print(description)
     print('Prediction Error: ', sq_error, 'Raw Error: ', sq_error2)
 
-    f = open("loss.txt", "a")
+    f = open(os.path.join(modelname, "loss.txt"), "a")
     f.write(description + '\n')
     f.write('Prediction Error: ' + str(sq_error) + ' Raw Error: ' + str(sq_error2) + '\n')
     f.close()
