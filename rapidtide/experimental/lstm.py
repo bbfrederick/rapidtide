@@ -32,7 +32,6 @@ def lstm(window_size=128,
         readlim=None,
         countlim=None):
 
-    folder = 'batch'
     lossfilename = os.path.join(modelname, 'loss.png')
     print('lossfilename:', lossfilename)
 
@@ -58,21 +57,8 @@ def lstm(window_size=128,
     print('dimension of output data', train_y.shape)
     model = Sequential()
 
-    model.add(Bidirectional(LSTM(num_units,
-                     dropout=0.2,
-                     recurrent_dropout=0.2,
-                     return_sequences=True),
-                     input_shape=(window_size, 1)))
-    model.add(TimeDistributed(Dense(1)))
-
-
-    #model.add(LSTM(num_units,
-                    #activation='tanh',
-                    #input_shape=(window_size, train_x.shape[2],),
-                    #return_sequences=True,
-                    #recurrent_activation='hard_sigmoid'))
-
-    for layer in range(num_layers - 2):
+    # each layer consists of an LSTM followed by a dense time distributed layer to get it back to the window size
+    for layer in range(num_layers):
         model.add(Bidirectional(LSTM(num_units,
                      dropout=0.2,
                      recurrent_dropout=0.2,
