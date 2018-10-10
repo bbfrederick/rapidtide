@@ -31,7 +31,10 @@ def lstm(window_size=128,
         readlim=None,
         countlim=None):
 
-    folder = './batch/'
+    folder = 'batch'
+    lossfilename = os.path.join(modelname, 'loss.png')
+    print('lossfilename:', lossfilename)
+
     print('lstm - loading data')
     if dofft:
         train_x, train_y, val_x, val_y, Ns, tclen, thebatchsize, dummy, dummy = dl.prep(window_size,
@@ -85,14 +88,8 @@ def lstm(window_size=128,
                         callbacks=[TerminateOnNaN(), ModelCheckpoint(modelpath)],
                         validation_data=(val_x, val_y))
 
-    # save the model structure to a json file
-    model_json = model.to_json()
-    with open(modelname + ".json", "w") as json_file:
-        json_file.write(model_json)
-
     # save the trained model
     model.save(os.path.join(modelname, 'model.h5'))
-
 
     YPred = model.predict(val_x)
 
@@ -103,7 +100,7 @@ def lstm(window_size=128,
     sq_error2 = (np.mean(np.square(error2)))
     description = ' '.join([
         'Num layers: ', str(num_layers),
-        'Num filters: ', str(num_filters),
+        'Num units: ', str(num_units),
         'Dropout prob: ', str(dropout_rate),
         'Window size: ', str(window_size)
     ])
@@ -124,9 +121,7 @@ def lstm(window_size=128,
     plt.plot(epochs, val_loss, 'b', label='Validation loss')
     plt.title('Training and validation loss')
     plt.legend()
-    plt.savefig(
-        folder + 'loss' + '_layer_' + str(num_layers) + '_filter_num_' + str(num_filters) + '_dropout_rate_' + str(
-            dropout_rate) + '_window_size_' + str(window_size) + '.png')
+    plt.savefig(lossfilename)
     plt.close()
 
     # print('loss, val_loss', loss, val_loss)
