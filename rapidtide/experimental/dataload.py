@@ -173,11 +173,15 @@ def prep(window_size,
                   np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]), mad(x[:, thesubj]),
                   np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
 
-
-    cleansubjs = np.where((np.max(x, axis=0) < excludethresh) and (np.min(x, axis=0) > -excludethresh))[0]
+    thefabs = np.fabs(x)
+    themax = np.max(thefabs, axis=0)
+    cleansubjs = np.where(themax < excludethresh)[0]
     x = x[:, cleansubjs]
     y = y[:, cleansubjs]
-    cleannames = names[cleansubjs]
+    cleannames = []
+    print(cleansubjs)
+    for theindex in cleansubjs:
+        cleannames.append(names[theindex])
     if usebadpts:
         bad = bad[:, cleansubjs]
 
