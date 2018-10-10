@@ -71,7 +71,6 @@ def prep(window_size,
         thedatadir='/data1/frederic/test/output',
         dofft=False,
         debug=False,
-        islstm=False,
         readlim=None,
         countlim=None):
 
@@ -110,6 +109,7 @@ def prep(window_size,
         s = readlim
     x1 = np.zeros([tclen, s])
     y1 = np.zeros([tclen, s])
+    names = []
     if usebadpts:
         bad1 = np.zeros([tclen, s])
 
@@ -125,6 +125,7 @@ def prep(window_size,
         if (ntempx >= tclen) and (ntempy >= tclen):
             x1[:tclen, count] = tempx[:tclen]
             y1[:tclen, count] = tempy[:tclen]
+            names.append(cleanfilelist[i])
             if usebadpts:
                 tempbad1 = np.loadtxt(tobadpts(cleanfilelist[i].replace('normpleth', 'pleth')))
                 tempbad2 = np.loadtxt(tobadpts(tocardfmri(cleanfilelist[i])))
@@ -133,8 +134,10 @@ def prep(window_size,
     print(count, 'runs pass file length check')
 
     if countlim is not None:
-        count = countlim
+        if count > countlim:
+            count = countlim
 
+    print('filtering', count, 'subjects worth of data')
     y = y1[startskip:, :count]
     x = x1[startskip:, :count]
     if usebadpts:
@@ -146,11 +149,12 @@ def prep(window_size,
     print('y shape:', y.shape, 'count:', count)
     if debug:
         for thesubj in range(count):
-            print('prenorm sub', thesubj, 'min, max mean MAD x, y:', thesubj,
-                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), mad(x[:, thesubj]),
-                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), mad(y[:, thesubj]))
+            print('prenorm sub', thesubj, 'min, max, mean, std, MAD x, y:', thesubj,
+                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]), mad(x[:, thesubj]),
+                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
 
     y -= np.mean(y, axis=0)
+    thestd = np.std(y, axis=0)
     themad = mad(y, axis=0)
     for thesubj in range(themad.shape[0]):
         if themad[thesubj] > 0.0:
@@ -158,20 +162,22 @@ def prep(window_size,
 
     x -= np.mean(x, axis=0)
     themad = mad(x, axis=0)
+    thestd = np.std(x, axis=0)
     for thesubj in range(themad.shape[0]):
         if themad[thesubj] > 0.0:
             x[:, thesubj] /= themad[thesubj]
 
     if debug:
         for thesubj in range(count):
-            print('postnorm sub', thesubj, 'min, max mean MAD x, y:', thesubj,
-                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), mad(x[:, thesubj]),
-                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), mad(y[:, thesubj]))
+            print('postnorm sub', thesubj, 'min, max, mean, std, MAD x, y:', thesubj,
+                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]), mad(x[:, thesubj]),
+                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
 
 
     cleansubjs = (np.max(x, axis=0) < excludethresh) & (np.min(x, axis=0) > -excludethresh)
     x = x[:, cleansubjs]
     y = y[:, cleansubjs]
+    cleannames = names[cleansubjs[0]]
     if usebadpts:
         bad = bad[:, cleansubjs]
 
@@ -189,21 +195,6 @@ def prep(window_size,
     Y[0, :, :] = y
     if usebadpts:
         BAD[0, :, :] = bad
-
-    if islstm:
-        Xb = np.zeros((N_subjs, N_pts))
-        Yb = np.zeros((N_subjs, N_pts))
-        for j in range(N_subjs):
-            Xb[j, :] = X[0, :, j]
-            Yb[j, :] = Y[0, :, j]
-
-        train_x = X[:limit, :]
-        train_y = Y[:limit, :]
-
-        val_x = Xb[limit:, :]
-        val_y = Yb[limit:, :]
-        batchsize = int(N_pts // window_size)
-        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize
 
     Xb = np.zeros((N_subjs * (N_pts - window_size - 1), window_size + lag, 1))
     print('dimensions of Xb:', Xb.shape)
