@@ -129,12 +129,12 @@ thefilter_nums = [10]
 thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
-nettype = 'cnn'
+nettype = 'lstm'
 activation = 'relu'
 theusebadpts = [False]
 countlim = None
 readlim = 50
-num_units = 32
+num_units = 8
 
 for window_size in thewindow_sizes:
     for num_layers in thelayer_nums:

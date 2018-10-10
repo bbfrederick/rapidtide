@@ -13,7 +13,7 @@ import os
 
 from keras.models import Sequential
 from keras.optimizers import RMSprop
-from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, Flatten
+from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, Flatten, TimeDistributed
 from keras.callbacks import TerminateOnNaN, ModelCheckpoint
 
 
@@ -57,26 +57,27 @@ def lstm(window_size=128,
     print('dimension of output data', train_y.shape)
     model = Sequential()
 
-    model.add(LSTM(num_units,
-                    activation='tanh',
-                    input_shape=(window_size, train_x.shape[2],),
-                    return_sequences=True,
-                    recurrent_activation='hard_sigmoid'))
-    model.add(BatchNormalization())
-    model.add(Dropout(rate=dropout_rate))
+    model.add(Bidirectional(LSTM(num_units,
+                     dropout=0.2,
+                     recurrent_dropout=0.2,
+                     return_sequences=True),
+                     input_shape=(window_size, 1)))
+    model.add(TimeDistributed(Dense(1)))
+
+
+    #model.add(LSTM(num_units,
+                    #activation='tanh',
+                    #input_shape=(window_size, train_x.shape[2],),
+                    #return_sequences=True,
+                    #recurrent_activation='hard_sigmoid'))
 
     for layer in range(num_layers - 2):
-        model.add(LSTM(num_units,
-                    activation='tanh',
-                    input_shape=(window_size, train_x.shape[2],),
-                    return_sequences=True,
-                    recurrent_activation='hard_sigmoid'))
-        model.add(BatchNormalization())
-        model.add(Dropout(rate=dropout_rate))
-
-    # make the output layer
-    model.add(Convolution1D(filters=train_y.shape[2], kernel_size=filter_length, padding='same'))
-    #model.add(Dense(1, input_shape=(train_x.shape[2],), activation='linear'))
+        model.add(Bidirectional(LSTM(num_units,
+                     dropout=0.2,
+                     recurrent_dropout=0.2,
+                     return_sequences=True),
+                     input_shape=(window_size, 1)))
+        model.add(TimeDistributed(Dense(1)))
 
     model.summary()
 
