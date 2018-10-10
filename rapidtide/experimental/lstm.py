@@ -85,7 +85,7 @@ def lstm(window_size=128,
     model.compile (loss ="mean_squared_error" , optimizer="adam")  
     modelpath = os.path.join(modelname, 'model_e{epoch:02d}_v{val_loss:.4f}.h5')
     history = model.fit(train_x, train_y,
-                        batch_size=train_x.shape[0],
+                        batch_size=1024,
                         epochs=num_epochs,
                         shuffle=False,
                         callbacks=[TerminateOnNaN(), ModelCheckpoint(modelpath)],
