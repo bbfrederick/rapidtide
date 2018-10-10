@@ -41,6 +41,7 @@ def lstm(window_size=128,
                                                                                       thesuffix=thesuffix,
                                                                                       thedatadir=thedatadir,
                                                                                       dofft=True,
+                                                                                      islstm=False,
                                                                                       readlim=readlim,
                                                                                       countlim=countlim)
     else:
@@ -48,6 +49,7 @@ def lstm(window_size=128,
                                                                           thesuffix=thesuffix,
                                                                           thedatadir=thedatadir,
                                                                           dofft=False,
+                                                                          islstm=False,
                                                                           readlim=readlim,
                                                                           countlim=countlim)
 

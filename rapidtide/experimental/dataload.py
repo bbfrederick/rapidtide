@@ -71,6 +71,7 @@ def prep(window_size,
         thedatadir='/data1/frederic/test/output',
         dofft=False,
         debug=False,
+        islstm=False,
         readlim=None,
         countlim=None):
 
@@ -188,6 +189,21 @@ def prep(window_size,
     Y[0, :, :] = y
     if usebadpts:
         BAD[0, :, :] = bad
+
+    if islstm:
+        Xb = np.zeros((N_subjs, N_pts))
+        Yb = np.zeros((N_subjs, N_pts))
+        for j in range(N_subjs):
+            Xb[j, :] = X[0, :, j]
+            Yb[j, :] = Y[0, :, j]
+
+        train_x = X[:limit, :]
+        train_y = Y[:limit, :]
+
+        val_x = Xb[limit:, :]
+        val_y = Yb[limit:, :]
+        batchsize = int(N_pts // window_size)
+        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize
 
     Xb = np.zeros((N_subjs * (N_pts - window_size - 1), window_size + lag, 1))
     print('dimensions of Xb:', Xb.shape)
