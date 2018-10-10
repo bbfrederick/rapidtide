@@ -26,11 +26,11 @@ def trainmodel(num_epochs=3,
                 activation='relu',
                 usebadpts=False,
                 num_units=32,
+                debug=False,
                 readlim=None,
                 countlim=None):
 
     # make the target directory
-    #modeldir = os.path.join(os.path.split(os.path.split(os.path.split(os.abspath(__file__))[0])[0])[0], 'rapidtide', 'models')
     modeldir = '.'
     modelname = '_'.join([  'model',
                             'w' + str(window_size),
@@ -95,6 +95,7 @@ def trainmodel(num_epochs=3,
                                                                modelname=modelname,
                                                                usebadpts=usebadpts,
                                                                thedatadir=thedatadir,
+                                                               debug=debug,
                                                                readlim=readlim,
                                                                countlim=countlim)
 
@@ -109,6 +110,7 @@ def trainmodel(num_epochs=3,
                                                                excludethresh=excludethresh,
                                                                modelname=modelname,
                                                                thedatadir=thedatadir,
+                                                               debug=debug,
                                                                readlim=readlim,
                                                                countlim=countlim)
     else:
@@ -124,7 +126,7 @@ def trainmodel(num_epochs=3,
 num_epochs = 5
 excludethresh = 10.0
 thewindow_sizes = [64]
-thelayer_nums = [2]
+thelayer_nums = [3]
 thefilter_nums = [10]
 thefilter_lengths = [5]
 thedropout_rates = [0.3]
@@ -133,8 +135,9 @@ nettype = 'lstm'
 activation = 'relu'
 theusebadpts = [False]
 countlim = None
-readlim = 50
-num_units = 8
+readlim = None
+num_units = 16
+debug = True
 
 for window_size in thewindow_sizes:
     for num_layers in thelayer_nums:
@@ -155,5 +158,6 @@ for window_size in thewindow_sizes:
                                     activation=activation,
                                     usebadpts=usebadpts,
                                     num_units=num_units,
+                                    debug=debug,
                                     readlim=readlim,
                                     countlim=countlim)
