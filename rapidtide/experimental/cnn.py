@@ -25,6 +25,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_rate, num_epo
         usebadpts=False,
         activation='relu',
         dofft=False,
+        debug=False,
         readlim=None,
         countlim=None):
 
@@ -38,6 +39,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_rate, num_epo
                                                                                     thesuffix=thesuffix,
                                                                                     thedatadir=thedatadir,
                                                                                     dofft=True,
+                                                                                    debug=debug,
                                                                                     usebadpts=usebadpts,
                                                                                     excludethresh=excludethresh,
                                                                                     readlim=readlim,
@@ -47,6 +49,7 @@ def cnn(window_size, num_layers, num_filters, kernel_size, dropout_rate, num_epo
                                                                         thesuffix=thesuffix,
                                                                         thedatadir=thedatadir,
                                                                         dofft=False,
+                                                                        debug=debug,
                                                                         usebadpts=usebadpts,
                                                                         excludethresh=excludethresh,
                                                                         readlim=readlim,

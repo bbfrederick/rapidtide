@@ -27,6 +27,7 @@ def lstm(window_size=128,
         dofft=False,
         thesuffix='25.0Hz',
         modelname='model',
+        debug=False,
         thedatadir='/data1/frederic/test/output',
         readlim=None,
         countlim=None):
@@ -41,7 +42,7 @@ def lstm(window_size=128,
                                                                                       thesuffix=thesuffix,
                                                                                       thedatadir=thedatadir,
                                                                                       dofft=True,
-                                                                                      islstm=False,
+                                                                                      debug=debug,
                                                                                       readlim=readlim,
                                                                                       countlim=countlim)
     else:
@@ -49,7 +50,7 @@ def lstm(window_size=128,
                                                                           thesuffix=thesuffix,
                                                                           thedatadir=thedatadir,
                                                                           dofft=False,
-                                                                          islstm=False,
+                                                                          debug=debug,
                                                                           readlim=readlim,
                                                                           countlim=countlim)
 
@@ -128,4 +129,4 @@ def lstm(window_size=128,
     plt.close()
 
     # print('loss, val_loss', loss, val_loss)
-    return loss, val_loss
+    return loss, val_loss, sq_error, sq_error2
