@@ -15,6 +15,7 @@ rapidtide/experimental/batch/*
 rapidtide/experimental/__pycache__
 rapidtide/experimental/.*
 rapidtide/experimental/the*txt
+rapidtide/experimental/model_*
 test.nii.gz
 *junk*
 

@@ -32,7 +32,8 @@ def trainmodel(num_epochs=3,
     # make the target directory
     #modeldir = os.path.join(os.path.split(os.path.split(os.path.split(os.abspath(__file__))[0])[0])[0], 'rapidtide', 'models')
     modeldir = '.'
-    modelname = '_'.join([  'w' + str(window_size),
+    modelname = '_'.join([  'model',
+                            'w' + str(window_size),
                             'l' + str(num_layers),
                             'fn' + str(num_filters),
                             'fl' + str(filter_length),
