@@ -24,6 +24,7 @@ def hybrid(window_size, num_layers, num_filters, kernel_size, dropout_rate, num_
         modelname='model',
         usebadpts=False,
         activation='relu',
+        invert=False,
         num_units=16,
         dofft=False,
         debug=False,
@@ -58,25 +59,48 @@ def hybrid(window_size, num_layers, num_filters, kernel_size, dropout_rate, num_
     model = Sequential()
 
     print('data shape:', train_x.shape)
-    # start with an LSTM layer to find hidden states
-    model.add(Bidirectional(LSTM(num_units,
-                 dropout=dropout_rate,
-                 recurrent_dropout=dropout_rate,
-                 return_sequences=True),
-                input_shape=(window_size, 1)))
-    model.add(TimeDistributed(Dense(1)))
-    model.add(Dropout(rate=dropout_rate))
-
-    # then make make the intermediate CNN layers
-    for layer in range(num_layers - 2):
-        model.add(Convolution1D(filters=num_filters, kernel_size=kernel_size, padding='same'))
+    if invert:
+        # make the input layer
+        model.add(Convolution1D(filters=num_filters, kernel_size=kernel_size, padding='same', input_shape=(window_size, train_x.shape[2])))
         model.add(BatchNormalization())
         model.add(Dropout(rate=dropout_rate))
         model.add(Activation(activation))
-        #model.add(MaxPooling1D())
 
-    # make the output layer
-    model.add(Convolution1D(filters=train_y.shape[2], kernel_size=kernel_size, padding='same'))
+        # then make make the intermediate CNN layers
+        for layer in range(num_layers - 2):
+            model.add(Convolution1D(filters=num_filters, kernel_size=kernel_size, padding='same'))
+            model.add(BatchNormalization())
+            model.add(Dropout(rate=dropout_rate))
+            model.add(Activation(activation))
+    
+        # finish with an LSTM layer to find hidden states
+        model.add(Bidirectional(LSTM(num_units,
+                     dropout=dropout_rate,
+                     recurrent_dropout=dropout_rate,
+                     return_sequences=True),
+                     input_shape=(window_size, 1)))
+        model.add(TimeDistributed(Dense(1)))
+    
+    else:
+        # start with an LSTM layer to find hidden states
+        model.add(Bidirectional(LSTM(num_units,
+                     dropout=dropout_rate,
+                     recurrent_dropout=dropout_rate,
+                     return_sequences=True),
+                    input_shape=(window_size, 1)))
+        model.add(TimeDistributed(Dense(1)))
+        model.add(Dropout(rate=dropout_rate))
+    
+        # then make make the intermediate CNN layers
+        for layer in range(num_layers - 2):
+            model.add(Convolution1D(filters=num_filters, kernel_size=kernel_size, padding='same'))
+            model.add(BatchNormalization())
+            model.add(Dropout(rate=dropout_rate))
+            model.add(Activation(activation))
+            #model.add(MaxPooling1D())
+    
+        # make the output layer
+        model.add(Convolution1D(filters=train_y.shape[2], kernel_size=kernel_size, padding='same'))
 
     model.summary()
     model.compile(optimizer=RMSprop(), loss='mse')

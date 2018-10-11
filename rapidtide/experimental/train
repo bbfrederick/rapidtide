@@ -24,6 +24,7 @@ def trainmodel(num_epochs=3,
                 filter_length=5,
                 dropout_rate=0.3,
                 dofft=False,
+                invert=False,
                 nettype='cnn',
                 activation='relu',
                 usebadpts=False,
@@ -111,6 +112,7 @@ def trainmodel(num_epochs=3,
                                                                thesuffix='25.0Hz',
                                                                num_units=num_units,
                                                                dofft=dofft,
+                                                               invert=invert,
                                                                activation=activation,
                                                                excludethresh=excludethresh,
                                                                modelname=modelname,
@@ -173,6 +175,7 @@ countlim = None
 readlim = 50
 num_units = 16
 debug = True
+invert = True
 
 for window_size in thewindow_sizes:
     for num_layers in thelayer_nums:
@@ -189,6 +192,7 @@ for window_size in thewindow_sizes:
                                     filter_length=filter_length,
                                     dropout_rate=dropout_rate,
                                     dofft=dofft,
+                                    invert=invert,
                                     nettype=nettype,
                                     activation=activation,
                                     usebadpts=usebadpts,
