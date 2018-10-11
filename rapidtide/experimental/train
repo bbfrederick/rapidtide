@@ -9,6 +9,7 @@ Created on Sat Jul 28 23:09:24 2018
 import cnn
 import lstm
 import gru
+import hybrid
 import numpy as np
 import sys
 import os
@@ -100,6 +101,25 @@ def trainmodel(num_epochs=3,
                                                                readlim=readlim,
                                                                countlim=countlim)
 
+    if nettype == 'hybrid':
+        thisloss, thisval_loss, pred_err, raw_err = hybrid.hybrid(window_size,
+                                                               num_layers,
+                                                               num_filters,
+                                                               filter_length,
+                                                               dropout_rate,
+                                                               num_epochs,
+                                                               thesuffix='25.0Hz',
+                                                               num_units=num_units,
+                                                               dofft=dofft,
+                                                               activation=activation,
+                                                               excludethresh=excludethresh,
+                                                               modelname=modelname,
+                                                               usebadpts=usebadpts,
+                                                               thedatadir=thedatadir,
+                                                               debug=debug,
+                                                               readlim=readlim,
+                                                               countlim=countlim)
+
     elif nettype == 'lstm':
         thisloss, thisval_loss, pred_err, raw_err = lstm.lstm(window_size=window_size,
                                                                num_layers=num_layers,
@@ -138,15 +158,15 @@ def trainmodel(num_epochs=3,
     infodict['prediction_error'] = pred_err
     tide_io.writedicttojson(infodict, os.path.join(modelname, 'model_meta.json'))
     
-num_epochs = 5
+num_epochs = 1
 excludethresh = 10.0
-thewindow_sizes = [64]
-thelayer_nums = [1]
+thewindow_sizes = [128]
+thelayer_nums = [5]
 thefilter_nums = [10]
 thefilter_lengths = [5]
 thedropout_rates = [0.3]
 dofft = False
-nettype = 'gru'
+nettype = 'hybrid'
 activation = 'relu'
 theusebadpts = [False]
 countlim = None
