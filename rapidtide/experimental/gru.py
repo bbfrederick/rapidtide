@@ -76,14 +76,16 @@ def gru(window_size=128,
     history = model.fit(train_x, train_y,
                         batch_size=1024,
                         epochs=num_epochs,
-                        shuffle=False,
+                        shuffle=True,
                         callbacks=[TerminateOnNaN(), ModelCheckpoint(modelpath)],
                         validation_data=(val_x, val_y))
 
     # save the trained model
     model.save(os.path.join(modelname, 'model.h5'))
 
+    print('doing prediction')
     YPred = model.predict(val_x)
+    print('prediction finished')
 
     error = val_y - YPred
     sq_error = (np.mean(np.square(error)))
