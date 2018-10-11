@@ -61,11 +61,13 @@ def gru(window_size=128,
 
     # each layer consists of an GRU followed by a dense time distributed layer to get it back to the window size
     for layer in range(num_layers):
-        model.add(Bidirectional(GRU(num_units,
-                     dropout=0.2,
-                     recurrent_dropout=0.2,
-                     return_sequences=True),
-                     input_shape=(window_size, 1)))
+        model.add(Bidirectional(
+            GRU(num_units,
+                 dropout=dropout_rate,
+                 recurrent_dropout=dropout_rate,
+                 return_sequences=True),
+            merge_mode='ave',
+            input_shape=(window_size, 1)))
         model.add(TimeDistributed(Dense(1)))
 
     model.summary()
