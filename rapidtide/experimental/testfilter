@@ -62,12 +62,7 @@ model_meta = tide_io.readdictfromjson(os.path.join(modelname, 'model_meta.json')
 print('./model_meta read')
 window_size = model_meta['window_size']
 usebadpts = model_meta['usebadpts']
-'''
-if usebadpts == 1:
-    usebadpts = True
-else:
-    usebadpts = False
-'''
+
 
 if usebadpts:
     try:
