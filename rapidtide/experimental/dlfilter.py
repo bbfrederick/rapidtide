@@ -11,6 +11,7 @@ import dataload as dl
 import numpy as np
 import os
 import sys
+from statsmodels.robust.scale import mad
 
 import rapidtide.io as tide_io
 
@@ -18,16 +19,10 @@ from keras.models import Sequential
 from keras.optimizers import RMSprop
 from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, MaxPooling1D, LSTM, TimeDistributed
 from keras.callbacks import TerminateOnNaN, ModelCheckpoint
+from keras.models import load_model
 
 class dlfilter:
     """Base class for deep learning filter"""
-    window_size = 128
-    num_units = 16
-    num_layers = 5
-    num_filters = 10
-    kernel_size = 5
-    dropout_rate = 0.3
-    num_epochs = 1
     thesuffix = 'sliceres'
     thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
     modelroot = '.'
@@ -50,6 +45,7 @@ class dlfilter:
     modelname = None
     inputsize = None
     infodict = {}
+
 
     def __init__(self,
         window_size=128,
@@ -92,6 +88,8 @@ class dlfilter:
         self.readlim = readlim
         self.countlim = countlim
         self.model = None
+        self.initialized = False
+        self.trained = False
 
         # populate infodict
         self.infodict['window_size'] = self.window_size
@@ -105,8 +103,11 @@ class dlfilter:
         self.infodict['train_arch'] = sys.platform
 
 
-
     def loaddata(self):
+        if not self.initialized:
+            print('model must be initialized prior to loading data')
+            sys.exit()
+
         if self.dofft:
             self.train_x, self.train_y, self.val_x, self.val_y, self.Ns, self.tclen, self.thebatchsize, dummy, dummy = dl.prep(self.window_size,
                                                                         thesuffix=self.thesuffix,
@@ -127,6 +128,7 @@ class dlfilter:
                                                                         excludethresh=self.excludethresh,
                                                                         readlim=self.readlim,
                                                                         countlim=self.countlim)
+
     def evaluate(self):
         self.lossfilename = os.path.join(self.modelname, 'loss.png')
         print('lossfilename:', self.lossfilename)
@@ -187,13 +189,31 @@ class dlfilter:
         self.model.save(os.path.join(self.modelname, 'model.h5'))
 
 
+    def loadmodel(self, modelname):
+        # read in the data
+
+        # load in the model with weights
+        self.model = load_model(os.path.join(modelname, 'model.h5'))
+        self.model.summary()
+
+        # now load additional information
+        self.infodict = tide_io.readdictfromjson(os.path.join(modelname, 'model_meta.json'))
+        self.window_size = self.infodict['window_size']
+        self.usebadpts = self.infodict['usebadpts']
+
+        # model is ready to use
+        self.initialized = True
+        self.trained = True
+
+
     def initialize(self):
         self.getname()
         self.makenet()
         self.model.summary()
-        self.model.compile(optimizer=RMSprop(), loss='mse')
         self.savemodel()
         self.initmetadata()
+        self.initialized = True
+        self.trained = False
 
 
     def train(self):
@@ -208,6 +228,35 @@ class dlfilter:
                         callbacks=[TerminateOnNaN(), ModelCheckpoint(self.intermediatemodelpath)],
                         validation_data=(self.val_x, self.val_y))
         self.savemodel()
+        self.trained = True
+
+
+    def apply(self, inputdata, badpts=None):
+        initscale = mad(inputdata)
+        scaleddata = inputdata / initscale
+        predicteddata = scaleddata * 0.0
+        weightarray = scaleddata * 0.0
+        N_pts = len(scaleddata)
+        if self.usebadpts:
+            if badpts is None:
+                badpts = scaleddata * 0.0
+            X = np.zeros(((N_pts - self.window_size - 1), self.window_size, 2))
+            for i in range(X.shape[0]):
+                X[i, :, 0] = scaleddata[i:i + self.window_size]
+                X[i, :, 1] = badpts[i:i + self.window_size]
+        else:
+            X = np.zeros(((N_pts - self.window_size - 1), self.window_size, 1))
+            for i in range(X.shape[0]):
+                X[i, :, 0] = scaleddata[i:i + self.window_size]
+        
+        Y = self.model.predict(X)
+        for i in range(X.shape[0]):
+            predicteddata[i:i + self.window_size] += Y[i, :, 0]
+        
+        weightarray[:] = self.window_size
+        weightarray[0:self.window_size] = np.linspace(1.0, self.window_size, self.window_size, endpoint=False)
+        weightarray[-(self.window_size + 1):-1] = np.linspace(self.window_size, 1.0, self.window_size, endpoint=False)
+        return initscale * predicteddata / weightarray
 
 
 class cnn(dlfilter):

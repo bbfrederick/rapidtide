@@ -21,7 +21,7 @@ invert = True
 
 
 if nettype == 'cnn':
-    num_layers = 16
+    num_layers = 5
     thefilter = dlfilter.cnn(
                             num_epochs=num_epochs,
                             excludethresh=excludethresh,
