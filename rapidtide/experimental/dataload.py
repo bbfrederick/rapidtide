@@ -75,7 +75,10 @@ def prep(window_size,
         countlim=None):
 
     print('entering dataload prep')
-    fromfile = sorted(glob.glob(os.path.join(thedatadir, '*normpleth_' + thesuffix + '.txt')))
+    print('searching for data with suffix', thesuffix, 'in', thedatadir)
+    searchstring = os.path.join(thedatadir, '*normpleth_' + thesuffix + '.txt')
+    print('searchstring:', searchstring)
+    fromfile = sorted(glob.glob(searchstring))
 
     # make sure all files exist
     cleanfilelist = []
