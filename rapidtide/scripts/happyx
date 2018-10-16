@@ -41,7 +41,7 @@ import rapidtide.resample as tide_resample
 import rapidtide.correlate as tide_corr
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.glmpass as tide_glmpass
-from scipy.signal import hilbert, welch, savgol_filter
+from scipy.signal import welch, savgol_filter
 from skimage.filters import threshold_triangle  #, apply_hysteresis_threshold
 from statsmodels.robust import mad
 
@@ -171,6 +171,7 @@ def usage():
     print("    --forcehr=BPM              - Force heart rate fundamental detector to be centered at BPM (overrides peak")
     print("                                 frequencies found from spectrum).  Useful if there is structured noise")
     print("    --nocensor                 - Bad points will not be excluded from analytic phase projection")
+    print("    --nophasefilt              - Disable the phase trend filter (probably not a good idea")
     print("    --estmask=MASKNAME         - Generation of cardiac waveform from data will be restricted to voxels in")
     print("                                 MASKNAME.")
     #print(
@@ -186,22 +187,6 @@ def usage():
 
 
     return ()
-
-
-def phasemod(phase):
-    """
-
-    Parameters
-    ----------
-    phase : array-like
-        An unwrapped phase vector
-
-    Returns
-    -------
-    wrapped : array-like
-        The phase vector, remapped to the range of +/-np.pi
-    """
-    return np.fmod(np.pi + phase, 2.0 * np.pi) - np.pi
 
 
 def rrifromphase(timeaxis, thephase):
@@ -299,14 +284,6 @@ def cardiacfromimage(normdata_byslice,
     return filthirestc, slicesamplerate, numsteps
 
 
-def phaseanalysis(firstharmonic):
-    analytic_signal = hilbert(firstharmonic)
-    amplitude_envelope = np.abs(analytic_signal)
-    instantaneous_phase = np.angle(analytic_signal / amplitude_envelope)
-    instantaneous_phase = np.unwrap(instantaneous_phase)
-    return instantaneous_phase, amplitude_envelope
-
-
 def savgolsmooth(data, smoothlen=301, polyorder=3):
     return savgol_filter(data, smoothlen, polyorder)
 
@@ -349,10 +326,6 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
     return peakfreq
 
 
-def madnorm(thewaveform):
-    medianval = np.median(thewaveform)
-    return thewaveform / mad(thewaveform, center=medianval)
-
 def cleanpleth(Fs, plethwaveform):
     # first bandpass the plethysmogram to calculate the envelope
     arb_lower = 0.5
@@ -362,8 +335,8 @@ def cleanpleth(Fs, plethwaveform):
     plethfilter = tide_filt.noncausalfilter(filtertype='arb')
     plethfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
     print('filtering')
-    filtplethwaveform = madnorm(plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform, prewindow=False,
-             detrendorder=0)))
+    filtplethwaveform = tide_math.madnormalize(plethfilter.apply(Fs,
+                tide_math.corrnormalize(plethwaveform, prewindow=False, detrendorder=0)))
     print('envelope detection')
     envelope = tide_math.envdetect(Fs, filtplethwaveform, cutoff=0.15)
     #envelope = tide_math.envdetect(Fs, plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform,
@@ -376,7 +349,7 @@ def cleanpleth(Fs, plethwaveform):
     arb_upper = 10.0
     arb_upperstop = arb_upper * 1.1
     plethfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-    filtplethwaveform = madnorm(plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform,
+    filtplethwaveform = tide_math.madnormalize(plethfilter.apply(Fs, tide_math.corrnormalize(plethwaveform,
                                                                       prewindow=False,
                                                                       detrendorder=0)))
     print('normalizing')
@@ -470,6 +443,7 @@ usemaskcardfromfmri = True
 censorbadpts = True
 estmaskname = None
 detrendorder = 3
+filtphase = True
 
 # start the clock!
 timings = [['Start', time.time(), None, None]]
@@ -528,6 +502,7 @@ try:
                                                    "smoothlen=",
                                                    "forcehr=",
                                                    "nocensor",
+                                                   "nophasefilt",
                                                    "nomask",
                                                    "help"])
 except getopt.GetoptError as err:
@@ -553,6 +528,9 @@ for o, a in opts:
         print('extended debugging messages')
     elif o == "--nomask":
         censorbadpts = False
+    elif o == "--nophasefilt":
+        filtphase = False
+        print('disabling phase trend filter')
     elif o == "--nocensor":
         usemaskcardfromfmri = False
         print('will not censor bad points')
@@ -916,9 +894,13 @@ tide_io.writevec(filthiresfund, outputroot + '_cardiacfundamental.txt')
 
 # now calculate the phase waveform
 tide_util.logmem('before analytic phase analysis', file=memfile)
-instantaneous_phase, amplitude_envelope = phaseanalysis(filthiresfund)
+instantaneous_phase, amplitude_envelope = tide_fit.phaseanalysis(filthiresfund)
 tide_io.writevec(amplitude_envelope, outputroot + '_ampenv.txt')
 tide_io.writevec(instantaneous_phase, outputroot + '_instphase_unwrapped.txt')
+if filtphase:
+    print('filtering phase waveform')
+    instantaneous_phase = tide_math.trendfilt(instantaneous_phase, debug=debug)
+    tide_io.writevec(instantaneous_phase, outputroot + '_filtered_instphase_unwrapped.txt')
 initialphase = instantaneous_phase[0]
 infodict['phi0'] = initialphase
 timings.append(['Phase waveform generated', time.time(), None, None])
@@ -936,7 +918,7 @@ tide_io.writedict(infodict, outputroot + '_info.txt')
 
 # interpolate the instantaneous phase
 upsampledslicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
-interpphase = phasemod(
+interpphase = tide_math.phasemod(
     tide_resample.doresample(slicetimeaxis, instantaneous_phase, upsampledslicetimeaxis, method='cubic', padlen=0))
 tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 
@@ -947,7 +929,7 @@ tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 phasevals = np.zeros((numslices, timepoints), dtype=np.float64)
 for theslice in range(numslices):
     thetimes = sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False) + slicetimes[theslice]
-    phasevals[theslice, :] = phasemod(
+    phasevals[theslice, :] = tide_math.phasemod(
         tide_resample.doresample(slicetimeaxis, instantaneous_phase, thetimes, method='cubic', padlen=0))
     if debug:
         tide_io.writevec(thetimes, outputroot + '_times_' + str(theslice).zfill(2) + '.txt')

@@ -172,22 +172,6 @@ def usage():
     return ()
 
 
-def phasemod(phase):
-    """
-
-    Parameters
-    ----------
-    phase : array-like
-        An unwrapped phase vector
-
-    Returns
-    -------
-    wrapped : array-like
-        The phase vector, remapped to the range of +/-np.pi
-    """
-    return np.fmod(np.pi + phase, 2.0 * np.pi) - np.pi
-
-
 def rrifromphase(timeaxis, thephase):
     return None
 
@@ -281,14 +265,6 @@ def cardiacfromimage(normdata_byslice,
             filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
 
     return filthirestc, slicesamplerate, numsteps
-
-
-def phaseanalysis(firstharmonic):
-    analytic_signal = hilbert(firstharmonic)
-    amplitude_envelope = np.abs(analytic_signal)
-    instantaneous_phase = np.angle(analytic_signal / amplitude_envelope)
-    instantaneous_phase = np.unwrap(instantaneous_phase)
-    return instantaneous_phase, amplitude_envelope
 
 
 def savgolsmooth(data, smoothlen=301, polyorder=3):
@@ -788,7 +764,7 @@ tide_io.writevec(filthiresfund, outputroot + '_cardiacfundamental.txt')
 
 # now calculate the phase waveform
 tide_util.logmem('before analytic phase analysis', file=memfile)
-instantaneous_phase, amplitude_envelope = phaseanalysis(filthiresfund)
+instantaneous_phase, amplitude_envelope = tide_fit.phaseanalysis(filthiresfund)
 tide_io.writevec(amplitude_envelope, outputroot + '_ampenv.txt')
 tide_io.writevec(instantaneous_phase, outputroot + '_instphase_unwrapped.txt')
 initialphase = instantaneous_phase[0]
@@ -808,7 +784,7 @@ tide_io.writedict(infodict, outputroot + '_info.txt')
 
 # interpolate the instantaneous phase
 upsampledslicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
-interpphase = phasemod(
+interpphase = tide_math.phasemod(
     tide_resample.doresample(slicetimeaxis, instantaneous_phase, upsampledslicetimeaxis, method='cubic', padlen=0))
 tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 
@@ -819,7 +795,7 @@ tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 phasevals = np.zeros((numslices, timepoints), dtype=np.float64)
 for theslice in range(numslices):
     thetimes = sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False) + slicetimes[theslice]
-    phasevals[theslice, :] = phasemod(
+    phasevals[theslice, :] = tide_math.phasemod(
         tide_resample.doresample(slicetimeaxis, instantaneous_phase, thetimes, method='cubic', padlen=0))
     if debug:
         tide_io.writevec(thetimes, outputroot + '_times_' + str(theslice).zfill(2) + '.txt')

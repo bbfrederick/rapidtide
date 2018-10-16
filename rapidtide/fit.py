@@ -26,8 +26,9 @@ import scipy.special as sps
 import pylab as pl
 import warnings
 
-import rapidtide.util as tide_util
+from scipy.signal import hilbert
 
+import rapidtide.util as tide_util
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -1375,3 +1376,11 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0.0):
         pass
 
     return [max_peaks, min_peaks]
+
+
+def phaseanalysis(firstharmonic):
+    analytic_signal = hilbert(firstharmonic)
+    amplitude_envelope = np.abs(analytic_signal)
+    instantaneous_phase = np.angle(analytic_signal / amplitude_envelope)
+    instantaneous_phase = np.unwrap(instantaneous_phase)
+    return instantaneous_phase, amplitude_envelope
