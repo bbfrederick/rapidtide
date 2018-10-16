@@ -1,0 +1,23 @@
+{
+    "dofft":false,
+    "dropout_rate":0.3,
+    "excludethresh":4.0,
+    "kernel_size":5,
+    "lag":0,
+    "loss":[
+        0.932896157694244
+    ],
+    "modelname":"model_cnn_w128_l5_fn10_fl5_d0.3_e1_t4.0_relu",
+    "nettype":"cnn",
+    "num_epochs":1,
+    "num_filters":10,
+    "num_layers":5,
+    "prediction_error":0.43041503878847315,
+    "raw_error":1.5237705316141792,
+    "train_arch":"darwin",
+    "usebadpts":false,
+    "val_loss":[
+        0.43041503895993627
+    ],
+    "window_size":128
+}

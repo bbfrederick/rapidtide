@@ -1,0 +1,2 @@
+Num layers:  2 Num filters:  10 Dropout prob:  0.3 Window size:  64
+Prediction Error: 0.27856446085611863 Raw Error: 1.1977492494298954

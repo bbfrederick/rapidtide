@@ -1,0 +1,31 @@
+{
+    "dofft":false,
+    "dropout_rate":0.3,
+    "excludethresh":4.0,
+    "kernel_size":5,
+    "lag":0,
+    "loss":[
+        0.43860113916399335,
+        0.1426442708867393,
+        0.08946182147950481,
+        0.0814560920378385,
+        0.07726023207822763
+    ],
+    "modelname":"model_lstm_w128_l1_nu16_d0.3_rd0.3_e5_t4.0_relu",
+    "nettype":"cnn",
+    "num_epochs":5,
+    "num_filters":10,
+    "num_layers":1,
+    "prediction_error":0.4500907317228294,
+    "raw_error":1.5237705316141792,
+    "train_arch":"darwin",
+    "usebadpts":false,
+    "val_loss":[
+        0.6697824091826127,
+        0.7102693884822198,
+        0.7276979694077259,
+        0.7329004279144729,
+        0.7354832093201168
+    ],
+    "window_size":128
+}

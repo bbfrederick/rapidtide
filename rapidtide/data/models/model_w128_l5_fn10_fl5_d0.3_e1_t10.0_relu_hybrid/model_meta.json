@@ -1,0 +1,23 @@
+{
+    "dofft":false,
+    "dropout_rate":0.3,
+    "excludethresh":10.0,
+    "filter_length":5,
+    "lag":0,
+    "loss":[
+        0.4336648531395926
+    ],
+    "modelname":"./model_w128_l5_fn10_fl5_d0.3_e1_t10.0_relu_hybrid",
+    "nettype":"hybrid",
+    "num_epochs":1,
+    "num_filters":10,
+    "num_layers":5,
+    "prediction_error":0.1089675758223311,
+    "raw_error":1.1978820253471738,
+    "train_arch":"darwin",
+    "usebadpts":false,
+    "val_loss":[
+        0.5083658314597898
+    ],
+    "window_size":128
+}

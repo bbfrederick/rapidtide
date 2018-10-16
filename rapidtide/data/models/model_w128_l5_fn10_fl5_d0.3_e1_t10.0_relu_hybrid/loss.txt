@@ -1,0 +1,4 @@
+Num layers:  5 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.15523639328083402 Raw Error: 1.1978820253471738
+Num layers:  5 Num filters:  10 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.1089675758223311 Raw Error: 1.1978820253471738

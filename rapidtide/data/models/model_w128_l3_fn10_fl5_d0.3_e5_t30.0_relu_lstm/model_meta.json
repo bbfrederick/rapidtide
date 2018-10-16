@@ -1,0 +1,31 @@
+{
+    "dofft":false,
+    "dropout_rate":0.3,
+    "excludethresh":30.0,
+    "filter_length":5,
+    "lag":0,
+    "loss":[
+        0.41085691687698705,
+        0.24068205404890647,
+        0.2124168531421284,
+        0.20012885159299845,
+        0.19145904518774806
+    ],
+    "modelname":"./model_w128_l3_fn10_fl5_d0.3_e5_t30.0_relu_lstm",
+    "nettype":"lstm",
+    "num_epochs":5,
+    "num_filters":10,
+    "num_layers":3,
+    "prediction_error":0.1638939269485288,
+    "raw_error":1.2507762699075748,
+    "train_arch":"linux",
+    "usebadpts":false,
+    "val_loss":[
+        0.1886396811703794,
+        0.17801171295313303,
+        0.17069505136871652,
+        0.16653321617553085,
+        0.16389392715900825
+    ],
+    "window_size":128
+}

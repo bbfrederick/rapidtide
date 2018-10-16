@@ -1,0 +1,10 @@
+Num layers:  2 Num units:  8 Dropout prob:  0.3 Window size:  64
+Prediction Error: 0.788803407626 Raw Error: 1.52517351388
+Num layers:  2 Num units:  8 Dropout prob:  0.3 Window size:  64
+Prediction Error: 0.834164075046 Raw Error: 1.25136946978
+Num layers:  2 Num units:  16 Dropout prob:  0.3 Window size:  64
+Prediction Error: 0.19732516454 Raw Error: 1.25136946978
+Num layers:  2 Num units:  16 Dropout prob:  0.3 Window size:  64
+Prediction Error: 0.8251702005369431 Raw Error: 1.2513694697799895
+Num layers:  2 Num units:  16 Dropout prob:  0.3 Window size:  64
+Prediction Error: 0.22464528959314312 Raw Error: 1.2513694697799895
