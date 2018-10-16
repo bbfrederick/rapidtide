@@ -1,0 +1,31 @@
+{
+    "dofft":false,
+    "dropout_rate":0.3,
+    "excludethresh":10.0,
+    "filter_length":5,
+    "lag":0,
+    "loss":[
+        0.6733651122449207,
+        0.6286588123606551,
+        0.6206241357030653,
+        0.6163059442505698,
+        0.6134030158294113
+    ],
+    "modelname":"./model_w64_l3_fn10_fl5_d0.3_e5_t10.0_relu_gru",
+    "nettype":"gru",
+    "num_epochs":5,
+    "num_filters":10,
+    "num_layers":3,
+    "prediction_error":0.4863781034620989,
+    "raw_error":1.5327043115006274,
+    "train_arch":"linux",
+    "usebadpts":false,
+    "val_loss":[
+        0.5072997135723378,
+        0.49987475619013855,
+        0.4942442168285229,
+        0.49180070274200954,
+        0.4863781052749128
+    ],
+    "window_size":64
+}

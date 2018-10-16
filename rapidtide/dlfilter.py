@@ -28,7 +28,8 @@ class dlfilter:
     modelroot = '.'
     excludethresh = 4.0
     modelname = None
-    modelpath = None
+    modelpath = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
+                                    'models')
     intermediatemodelpath = None
     usebadpts = False
     activation = 'relu'

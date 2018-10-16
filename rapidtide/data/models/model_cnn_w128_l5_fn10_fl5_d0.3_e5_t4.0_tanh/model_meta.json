@@ -1,0 +1,31 @@
+{
+    "dofft":false,
+    "dropout_rate":0.3,
+    "excludethresh":4.0,
+    "kernel_size":5,
+    "lag":0,
+    "loss":[
+        0.4416214487308283,
+        0.241937176969391,
+        0.1699331960293627,
+        0.13817681821232175,
+        0.12461930701485474
+    ],
+    "modelname":"model_cnn_w128_l5_fn10_fl5_d0.3_e5_t4.0_tanh",
+    "nettype":"cnn",
+    "num_epochs":5,
+    "num_filters":10,
+    "num_layers":5,
+    "prediction_error":0.3274931887498025,
+    "raw_error":1.5237705316141792,
+    "train_arch":"darwin",
+    "usebadpts":false,
+    "val_loss":[
+        0.38645481565887513,
+        0.35257997975755195,
+        0.36734766537278934,
+        0.32028936883009934,
+        0.32749319359569073
+    ],
+    "window_size":128
+}

@@ -1,0 +1,2 @@
+Num layers:  3 Num units:  16 Dropout prob:  0.3 Window size:  128
+Prediction Error: 0.163893926949 Raw Error: 1.25077626991
