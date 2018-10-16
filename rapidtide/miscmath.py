@@ -22,9 +22,11 @@ from __future__ import print_function, division
 
 import numpy as np
 from scipy import fftpack
+import matplotlib.pyplot as plt
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+from statsmodels.robust import mad
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -249,6 +251,26 @@ def znormalize(vector):
 
 
 @conditionaljit()
+def madnormalize(vector):
+    """
+
+    Parameters
+    ----------
+    vector
+
+    Returns
+    -------
+
+    """
+    demedianed = vector - np.median(vector)
+    sigmad = mad(demedianed)
+    if sigmad > 0.0:
+        return demedianed / sigmad
+    else:
+        return demedianed
+
+
+@conditionaljit()
 def stdnormalize(vector):
     """
 
@@ -390,3 +412,46 @@ def envdetect(Fs, inputdata, cutoff=0.25):
     theenvbpf = tide_filt.noncausalfilter(filtertype='arb')
     theenvbpf.setarb(0.0, 0.0, cutoff, 1.1 * cutoff)
     return theenvbpf.apply(Fs, sigabs)
+
+
+def phasemod(phase):
+    """
+
+    Parameters
+    ----------
+    phase : array-like
+        An unwrapped phase vector
+
+    Returns
+    -------
+    wrapped : array-like
+        The phase vector, remapped to the range of +/-np.pi
+    """
+    return np.fmod(np.pi + phase, 2.0 * np.pi) - np.pi
+
+
+def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):  
+    """
+
+    Parameters
+    ----------
+    inputdata : array-like
+        A data vector with a polynomial trend and impulsive noise
+
+    Returns
+    -------
+    patched : array-like
+        The input data with the impulsive noise removed
+    """
+    thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
+    thecoffs = np.polyfit(thetimepoints, inputdata, order)
+    thefittc = tide_fit.trendgen(thetimepoints, thecoffs, True)
+    detrended = inputdata - thefittc
+    if debug:
+        plt.figure()
+        plt.plot(detrended)
+    detrended[np.where(np.fabs(madnormalize(detrended)) > ndevs)] = 0.0
+    if debug:
+        plt.plot(detrended)
+        plt.show()
+    return detrended + thefittc
