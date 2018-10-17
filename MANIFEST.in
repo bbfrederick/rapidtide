@@ -2,3 +2,4 @@ recursive-include rapidtide *.py
 recursive-include rapidtide/data/examples/src fmri.nii.gz timecourse1.txt timecourse2.txt nirs.txt
 recursive-include rapidtide/scripts *
 recursive-include rapidtide/data/reference *.nii.gz *.txt
+recursive-include rapidtide/data/models *

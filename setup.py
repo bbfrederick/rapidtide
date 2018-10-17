@@ -42,6 +42,7 @@ modules_list = ['rapidtide/miscmath',
                 'rapidtide/corrpass',
                 'rapidtide/corrfit',
                 'rapidtide/glmpass',
+                'rapidtide/dlfilter',
                 'rapidtide/wiener',
                 'rapidtide/refine']
 

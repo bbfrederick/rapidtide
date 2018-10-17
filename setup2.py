@@ -203,9 +203,9 @@ setup(
     include_package_data=True,
     zip_safe=False,
     package_data={
+        'models': ['models/model*/*'],
         'reference': ['reference/*.txt',
-                      'reference/*.nii.gz',
-                      'models/*'],
+                      'reference/*.nii.gz'],
     },
 
     # To provide executable scripts, use entry points in preference to the

@@ -59,8 +59,10 @@ except ImportError:
 try:
     import rapidtide.dlfilter as tide_dlfilt
     dlfilterexists = True
+    print('dlfilter exists')
 except ImportError:
     dlfilterexists = False
+    print('dlfilter does not exist')
 
 
 def _procOneVoxelNormalize(vox, voxels, detrendorder=0):
@@ -716,7 +718,7 @@ normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 # now get an estimate of the cardiac signal
 print('estimating cardiac signal from fmri data')
 tide_util.logmem('before cardiacfromimage', file=memfile)
-cardfromfmri, slicesamplerate, numsteps = cardiacfromimage(normdata_byslice,
+cardfromfmri_sliceres, slicesamplerate, numsteps = cardiacfromimage(normdata_byslice,
                                                            mask_byslice,
                                                            numslices,
                                                            timepoints,
@@ -729,12 +731,12 @@ cardfromfmri, slicesamplerate, numsteps = cardiacfromimage(normdata_byslice,
                                                            debug=debug)
 timings.append(['Cardiac signal generated from image data', time.time(), None, None])
 slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
-tide_io.writevec(cardfromfmri, outputroot + '_cardfromfmri_sliceres.txt')
+tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_sliceres.txt')
 
 # find bad points in cardiac from fmri
-thebadcardpts = findbadpts(cardfromfmri, 'cardfromfmri_sliceres', slicesamplerate, infodict)
+thebadcardpts = findbadpts(cardfromfmri_sliceres, 'cardfromfmri_sliceres', slicesamplerate, infodict)
 
-cardiacwaveform = cardfromfmri
+cardiacwaveform = cardfromfmri_sliceres
 badpointlist = thebadcardpts + 0.0
 
 infodict['slicesamplerate'] = slicesamplerate
@@ -742,7 +744,7 @@ infodict['numsteps'] = numsteps
 
 # find key components of cardiac waveform
 print('extracting harmonic components')
-tide_io.writevec(cardfromfmri * (1.0 - thebadcardpts), outputroot + '_cardfromfmri_sliceres_censored.txt')
+tide_io.writevec(cardfromfmri_sliceres * (1.0 - thebadcardpts), outputroot + '_cardfromfmri_sliceres_censored.txt')
 peakfreq_bold = getcardcoeffs((1.0 - thebadcardpts) * cardiacwaveform,
                                                       slicesamplerate, smoothlen=smoothlen,
                                                       debug=debug)
@@ -751,23 +753,26 @@ infodict['cardiacfreq_frombold'] = peakfreq_bold
 timings.append(['Cardiac signal from image data analyzed', time.time(), None, None])
 
 cardfromfmri_stdres = tide_math.corrnormalize(
-        tide_resample.arbresample(cardfromfmri, slicesamplerate, stdfreq, decimate=True, debug=True),
+        tide_resample.arbresample(cardfromfmri_sliceres, slicesamplerate, stdfreq, decimate=True, debug=True),
     prewindow=False,
     detrendorder=0)
-
-if dlfilterexists:
-    thedlfilter = tide_dlfilt.loadmodel('model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu')
-    dlfilteredcard = thedlfilter.apply(cardfromfmri_stdres)
-    cardfromfmri = tide_math.corrnormalize(
-        tide_resample.arbresample(dlfilteredcard, stdfreq, slicesamplerate, decimate=True, debug=True),
-        prewindow=False,
-        detrendorder=0)
-    tide_io.writevec(cardfromfmri, outputroot + '_cardfromfmri_sliceres_dlfiltered.txt')
-    infodict['used_dlreconstruction_filter'] = True
 
 tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(stdfreq) + 'Hz.txt')
 thebadcardpts_stdres = findbadpts(cardfromfmri_stdres, 'cardfromfmri_' + str(stdfreq) + 'Hz', stdfreq, infodict)
 
+if dlfilterexists:
+    modelpath = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
+                                    'models')
+    thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
+    thedlfilter.loadmodel('model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu')
+    dlfilteredcard = thedlfilter.apply(cardfromfmri_stdres)
+    tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
+    cardfromfmri_sliceres = tide_math.corrnormalize(
+        tide_resample.arbresample(dlfilteredcard, stdfreq, slicesamplerate, decimate=True, debug=True),
+        prewindow=False,
+        detrendorder=0)
+    tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_dlfiltered_sliceres.txt')
+    infodict['used_dlreconstruction_filter'] = True
 
 timings.append(['Cardiac signal from image data resampled and saved', time.time(), None, None])
 
@@ -845,7 +850,7 @@ if cardiacfile is not None:
     timings.append(['Cardiac parameters extracted from physiology data', time.time(), None, None])
 
     # check the match between the bold and physio cardiac signals
-    thexcorr = tide_corr.fastcorrelate(filtpleth, cardfromfmri, usefft=True)
+    thexcorr = tide_corr.fastcorrelate(filtpleth, cardfromfmri_sliceres, usefft=True)
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / slicesamplerate
     xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
@@ -866,7 +871,7 @@ if cardiacfile is not None:
 
     if doplot:
         figure()
-        plot(slicetimeaxis, pleth_sliceres, 'r', slicetimeaxis, cardfromfmri, 'b')
+        plot(slicetimeaxis, pleth_sliceres, 'r', slicetimeaxis, cardfromfmri_sliceres, 'b')
         show()
     infodict['pleth'] = True
     peakfreq = peakfreq_file

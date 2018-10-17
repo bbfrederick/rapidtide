@@ -10,7 +10,7 @@ import glob
 from scipy import fftpack
 import rapidtide.io as tide_io
 from statsmodels.robust.scale import mad
-import dlfilter as dlfilter
+import rapidtide.dlfilter as dlfilter
 
 
 def usage():
