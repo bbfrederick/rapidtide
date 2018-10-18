@@ -20,7 +20,7 @@ Created on Sat Jul 28 23:01:07 2018
 @author: neuro
 """
 import matplotlib.pyplot as plt
-#import dataload as dl
+matplotlib.use('Agg')
 import numpy as np
 import os
 import sys
