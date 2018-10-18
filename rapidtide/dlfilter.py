@@ -505,8 +505,8 @@ def tobadpts(name):
     return name.replace('.txt', '_badpts.txt')
 
 
-def targettoinput(name, targetfrag='normpleth', inpufrag='cardfromfmri'):
-    return name.replace(targetfrag, infrag)
+def targettoinput(name, targetfrag='normpleth', inputfrag='cardfromfmri'):
+    return name.replace(targetfrag, inputfrag)
 
 
 def getmatchedfiles(searchstring, usebadpts=False, targetfrag='normpleth', inpufrag='cardfromfmri'):
@@ -537,13 +537,16 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='normpleth', inpuf
     return matchedfilelist, tclen
 
 
-def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, countlim=None):
+def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, readlim=None):
+
+    print('readindata called with usebadpts, startskip, readlim =', usebadpts, startskip, readlim)
     # allocate target arrays
     print('allocating arrays')
-    if readlim is None:
-        s = len(matchedfilelist)
-    else:
-        s = readlim
+    s = len(matchedfilelist)
+    if readlim is not None:
+        if s > readlim:
+            print('trimming read list to', readlim, 'from', s)
+            s = readlim
     x1 = np.zeros([tclen, s])
     y1 = np.zeros([tclen, s])
     names = []
@@ -570,14 +573,10 @@ def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, countlim=No
             count += 1
     print(count, 'runs pass file length check')
 
-    if countlim is not None:
-        if count > countlim:
-            count = countlim
-
     if usebadpts:
-        return x1[startskip:, :count], y1[startskip:, :count], bad1[startskip:, :count]
+        return x1[startskip:, :count], y1[startskip:, :count], names[:count], bad1[startskip:, :count]
     else:
-        return x1[startskip:, :count], y1[startskip:, :count]
+        return x1[startskip:, :count], y1[startskip:, :count], names[:count]
 
 
 def prep(window_size,
@@ -588,6 +587,8 @@ def prep(window_size,
         endskip=0,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
+        inputfrag='cardfromfmri',
+        targetfrag='normpleth',
         dofft=False,
         debug=False,
         readlim=None,
@@ -600,16 +601,16 @@ def prep(window_size,
 
     # read in the data from the matched files
     if usebadpts:
-        x, y, bad = readindata(matchedfilelist, tclen, usebadpts=True, startskip=startskip, countlim=countlim)
+        x, y, names, bad = readindata(matchedfilelist, tclen, usebadpts=True, startskip=startskip, readlim=readlim)
     else:
-        x, y = readindata(matchedfilelist, tclen, startskip=startskip, countlim=countlim)
+        x, y, names = readindata(matchedfilelist, tclen, startskip=startskip, readlim=readlim)
     print('xshape, yshape:', x.shape, y.shape)
 
     # normalize input and output data
     print('normalizing data')
-    print('y shape:', y.shape, 'count:', count)
+    print('count:', x.shape[1])
     if debug:
-        for thesubj in range(count):
+        for thesubj in range(x.shape[1]):
             print('prenorm sub', thesubj, 'min, max, mean, std, MAD x, y:', thesubj,
                   np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]), mad(x[:, thesubj]),
                   np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
@@ -629,7 +630,7 @@ def prep(window_size,
             x[:, thesubj] /= themad[thesubj]
 
     if debug:
-        for thesubj in range(count):
+        for thesubj in range(x.shape[1]):
             print('postnorm sub', thesubj, 'min, max, mean, std, MAD x, y:', thesubj,
                   np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]), mad(x[:, thesubj]),
                   np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
@@ -637,10 +638,16 @@ def prep(window_size,
     thefabs = np.fabs(x)
     themax = np.max(thefabs, axis=0)
     cleansubjs = np.where(themax < excludethresh)[0]
+
+    cleancount = len(cleansubjs)
+    if countlim is not None:
+        if cleancount > countlim:
+            print('reducing count to', countlim, 'from', cleancount)
+            cleansubjs = cleansubjs[:countlim]
+
     x = x[:, cleansubjs]
     y = y[:, cleansubjs]
     cleannames = []
-    print(cleansubjs)
     for theindex in cleansubjs:
         cleannames.append(names[theindex])
     if usebadpts:
