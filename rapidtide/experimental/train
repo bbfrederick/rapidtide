@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import dlfilter as dlfilter
+import rapidtide.dlfilter as dlfilter
 import os
 
 num_epochs = 10
