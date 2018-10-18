@@ -4,7 +4,7 @@ import rapidtide.dlfilter as dlfilter
 import os
 
 num_epochs = 10
-excludethresh = 10.0
+excludethresh = 4.0
 window_size = 128
 num_layers = 16
 num_filters = 10
@@ -44,6 +44,7 @@ if nettype == 'cnn':
                             dropout_rate=dropout_rate,
                             usebadpts=usebadpts,
                             readlim=readlim,
+                            countlim=countlim,
                             thedatadir=thedatadir,
                             activation=activation,
                             num_filters=num_filters,
@@ -58,6 +59,7 @@ elif nettype == 'lstm':
                             dropout_rate=dropout_rate,
                             usebadpts=usebadpts,
                             readlim=readlim,
+                            countlim=countlim,
                             thedatadir=thedatadir,
                             num_units=num_units)
 elif nettype == 'hybrid':
@@ -70,6 +72,7 @@ elif nettype == 'hybrid':
                             dropout_rate=dropout_rate,
                             usebadpts=usebadpts,
                             readlim=readlim,
+                            countlim=countlim,
                             thedatadir=thedatadir,
                             activation=activation,
                             num_filters=num_filters,
