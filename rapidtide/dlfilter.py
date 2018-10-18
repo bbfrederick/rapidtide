@@ -178,6 +178,7 @@ class dlfilter:
     
         epochs = range(len(self.loss))
     
+        plt.figure()
         plt.plot(epochs, self.loss, 'bo', label='Training loss')
         plt.plot(epochs, self.val_loss, 'b', label='Validation loss')
         plt.title('Training and validation loss')
