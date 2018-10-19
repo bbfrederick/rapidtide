@@ -118,6 +118,7 @@ class dlfilter:
         self.model = None
         self.initialized = False
         self.trained = False
+        self.usetensorboard = False
 
         # populate infodict
         self.infodict['window_size'] = self.window_size
@@ -246,8 +247,11 @@ class dlfilter:
         self.trained = False
 
 
-    def train(self):
+    def train(self): 
         self.intermediatemodelpath = os.path.join(self.modelname, 'model_e{epoch:02d}_v{val_loss:.4f}.h5')
+        if self.usetensorboard:
+            tensorboard = TensorBoard(log_dir=self.intermediatemodelpath + "logs/{}".format(time()))
+            model.fit(x_train, y_train, verbose=1, callbacks=[tensorboard])
         self.history = self.model.fit(
                         self.train_x,
                         self.train_y,
