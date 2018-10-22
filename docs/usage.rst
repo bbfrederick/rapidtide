@@ -114,11 +114,13 @@ The following files are produced, assuming XXX is the outputname:
 		XXX_R2.nii.gz                                         - The squared maximum correlation coefficient at every voxel.
 		XXX_refinemask.nii.gz                                 - The voxels used for refinement in the last refinement pass (only 
 									present if refinement is performed).
+		XXX_lagregressors.nii.gz                              - The delayed sLFO regressor for every voxel (not scaled).
 		XXX_laghist_peak.txt
 		XXX_laghist.txt
 
 		GLM filter results
 		XXX_filtereddata.nii.gz                               - The input data with the voxel specific delayed LFO waveform regressed out.
+		XXX_datatoremove.nii.gz                               - The scaled, delayed regressor that was removed from every voxel.
 		XXX_fitcoff.nii.gz                                    - Map of the fit amplitude for the delayed LFO waveform.
 		XXX_fitNorm.nii.gz                                    - I have no idea.
 		XXX_fitR2.nii.gz                                      - Map of the squared R value for the fit (multiply by 100 to get the percent of the        
