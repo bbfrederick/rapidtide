@@ -496,6 +496,7 @@ def main():
 
     # output options
     optiondict['savelagregressors'] = True
+    optiondict['savedatatoremove'] = True
     optiondict['saveglmfiltered'] = True
     optiondict['saveprewhiten'] = False
     optiondict['savecorrtimes'] = False
@@ -752,6 +753,7 @@ def main():
             print('mean scale voxels prior to generating global mean')
         elif o == '--limitoutput':
             optiondict['savelagregressors'] = False
+            optiondict['savedatatoremove'] = False
             print('disabling output of lagregressors and some ancillary GLM timecourses')
         elif o == '--debug':
             optiondict['debug'] = True
@@ -2326,6 +2328,14 @@ def main():
         del shiftedtcs
 
     if optiondict['doglmfilt'] and optiondict['saveglmfiltered']:
+        if optiondict['savedatatoremove']:
+            outfmriarray[validvoxels, :] = datatoremove[:, :]
+            if optiondict['textio']:
+                tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
+                                outputname + '_datatoremove' + outsuffix4d + '.txt')
+            else:
+                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+                                outputname + '_datatoremove' + outsuffix4d)
         del datatoremove
         outfmriarray[validvoxels, :] = filtereddata[:, :]
         if optiondict['textio']:
