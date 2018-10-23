@@ -75,9 +75,6 @@ class dlfilter:
     def __init__(self,
         window_size=128,
         num_layers=5,
-        num_units=16,
-        num_filters=10,
-        kernel_size=5,
         dropout_rate=0.3,
         num_epochs=1,
         activation='relu',
@@ -93,10 +90,6 @@ class dlfilter:
         countlim=None):
 
         self.window_size = window_size
-        self.num_layers = num_layers
-        self.num_units = num_units
-        self.num_filters = num_filters
-        self.kernel_size = kernel_size
         self.dropout_rate = dropout_rate
         self.num_epochs = num_epochs
         self.usebadpts = usebadpts
@@ -126,7 +119,6 @@ class dlfilter:
         self.infodict['dofft'] = self.dofft
         self.infodict['excludethresh'] = self.excludethresh
         self.infodict['num_epochs'] = self.num_epochs
-        self.infodict['num_layers'] = self.num_layers
         self.infodict['modelname'] = self.modelname
         self.infodict['dropout_rate'] = self.dropout_rate
         self.infodict['train_arch'] = sys.platform
@@ -390,10 +382,10 @@ class lstm(dlfilter):
 
 
 class hybrid(dlfilter):
-    def __init__(self, invert=False, num_units=16, *args, **kwargs):
+    def __init__(self, invert=False, num_filters=10, kernel_size=5, num_units=16, *args, **kwargs):
+        self.invert = invert
         self.num_filters = num_filters
         self.kernel_size = kernel_size
-        self.invert = invert
         self.num_units = num_units
         self.infodict['nettype'] = 'hybrid'
         self.infodict['num_filters'] = self.num_filters
