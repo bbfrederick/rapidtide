@@ -399,11 +399,60 @@ def readparfile(filename):
 
     """
     labels = ['X', 'Y', 'Z', 'RotX', 'RotY', 'RotZ']
-    motiontimeseries = tide_io.readvecs(filename)
+    motiontimeseries = readvecs(filename)
     motiondict = {}
     for j in range(0, 6):
         motiondict[labels[j]] = 1.0 * motiontimeseries[j, :]
     return motiondict
+
+
+def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, derivdelayed=False):
+    r"""Calculates various motion related timecourses from motion data dict, and returns an array
+
+    Parameters
+    ----------
+    motiondict: dict
+        A dictionary of the 6 motion direction vectors
+
+    Returns
+    -------
+    motionregressors: array
+        All the derivative timecourses to use in a numpy array
+
+    """
+    labels = ['X', 'Y', 'Z', 'RotX', 'RotY', 'RotZ']
+    numpoints = len(motiondict[labels[0]])
+    if end == -1:
+        end = numpoints
+    if (0 <= start <= numpoints - 1) and (start < end + 1):
+        numoutputpoints = end - start + 1
+
+    numoutputregressors = 0
+    if position:
+        numoutputregressors += 6
+    if deriv:
+        numoutputregressors += 6
+    if derivdelayed:
+        numoutputregressors += 6
+    if numoutputregressors > 0:
+        outputregressors = np.zeros((numoutputregressors, numoutputpoints), dtype=float)
+    else:
+        print('no output types selected - exiting')
+        sys.exit()
+    activecolumn = 0
+    if position:
+        for thelabel in labels:
+            outputregressors[activecolumn, :] = motiondict[thelabel][start:end + 1]
+            activecolumn += 1
+    if deriv:
+        for thelabel in labels:
+            outputregressors[activecolumn, 1:] = np.diff(motiondict[thelabel][start:end + 1])
+            activecolumn += 1
+    if derivdelayed:
+        for thelabel in labels:
+            outputregressors[activecolumn, 2:] = np.diff(motiondict[thelabel][start:end + 1])[1:]
+            activecolumn += 1
+    return outputregressors
 
 
 def readbidssidecar(inputfilename):

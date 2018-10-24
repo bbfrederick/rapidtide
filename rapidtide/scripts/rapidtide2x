@@ -204,8 +204,9 @@ def usage():
         "[-I]",
         "[-Z DELAYTIME]",
         "[--nofitfilt]",
-        "[--searchfrac=]",
+        "[--searchfrac=SEARCHFRAC]",
         "[-N NREPS]",
+        "[--motionfile=MOTFILE]",
         "[--numskip=SKIP]",
         "[--refineweighting=TYPE]",
         "[--refineprenorm=TYPE]",
@@ -293,6 +294,9 @@ def usage():
     print("                                 (default is 0)")
     print("    --nothresh                 - Disable voxel intensity threshold (especially useful")
     print("                                 for NIRS data)")
+    print("    --motionfile=MOTFILE       - Read motion regressors out of MOTFILE text file (6 columns by")
+    print("                                 timepoints rows of position info) and regress their derivatives")
+    print("                                 and delayed derivatives out of the data prior to analysis.")
     print("")
     print("Correlation options:")
     print("    -O OVERSAMPFAC             - Oversample the fMRI data by the following integral ")
@@ -495,6 +499,8 @@ def main():
     optiondict['doprewhiten'] = False  # prewhiten the data (I have no idea if this works)
     optiondict['armodelorder'] = 1  # AR model order for prewhitening the data (I have no idea if this works)
     optiondict['dodeconv'] = False  # do Wiener deconvolution to find voxel transfer function
+    optiondict['motionfilename'] = None  # by default do no motion regression
+    optiondict['savemotionfiltered'] = True  # save motion filtered file for debugging
 
     # filter options
     optiondict['trapezoidalfftfilter'] = True
@@ -619,6 +625,7 @@ def main():
                                                                                                           'refinepasses=',
                                                                                                           'passes=',
                                                                                                           'corrmask=',
+                                                                                                          'motionfile=',
                                                                                                           'includemask=',
                                                                                                           'excludemask=',
                                                                                                           'refineoffset',
@@ -909,6 +916,9 @@ def main():
             optiondict['lagmin'] = optiondict['fixeddelayvalue'] - 10.0
             optiondict['lagmax'] = optiondict['fixeddelayvalue'] + 10.0
             print('Delay will be set to ', optiondict['fixeddelayvalue'], 'in all voxels')
+        elif o == '--motionfile':
+            optiondict['motionfilename'] = a
+            print('Will regress derivatives and delayed derivatives of motion out of data prior to analysis')
         elif o == '-f':
             optiondict['gausssigma'] = float(a)
             optiondict['dogaussianfilter'] = True
@@ -1399,6 +1409,35 @@ def main():
     del fmri_data
     del nim_data
     tide_util.logmem('after purging full sized fmri data', file=memfile)
+
+    # filter out motion regressors here
+    if optiondict['motionfilename'] is not None:
+        print('regressing out motion')
+        motionregressors = tide_io.calcmotregressors(tide_io.readparfile(optiondict['motionfilename']),
+            start=validstart, end=validend, position=False, deriv=True, derivdelayed=True)
+        timings.append(['Motion filtering start', time.time(), None, None])
+
+        tide_glmpass.multicomponentglm(fmri_data_valid,
+                     motionregressors,
+                     rt_floatset=rt_floatset,
+                     rt_floattype=rt_floattype)
+
+        timings.append(['Motion filtering end', time.time(), fmri_data_valid.shape[0], 'voxels'])
+        if optiondict['memprofile']:
+            memcheckpoint('...done')
+        else:
+            tide_util.logmem('after motion glm filter', file=memfile)
+
+        if optiondict['savemotionfiltered']:
+            outfmriarray = np.zeros((numspatiallocs, timepoints), dtype=rt_floattype)
+            outfmriarray[validvoxels, :] = fmri_data_valid[:, :]
+            if optiondict['textio']:
+                tide_io.writenpvecs(outfmriarray.reshape((numspatiallocs, timepoints)),
+                                outputname + '_motionfiltered' + '' + '.txt')
+            else:
+                tide_io.savetonifti(outfmriarray.reshape((xsize, ysize, numslices, timepoints)), nim_hdr, thesizes,
+                                outputname + '_motionfiltered' + '')
+
 
     # read in the timecourse to resample
     timings.append(['Start of reference prep', time.time(), None, None])

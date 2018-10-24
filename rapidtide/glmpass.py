@@ -27,6 +27,7 @@ from __future__ import print_function, division
 import numpy as np
 
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 
@@ -172,3 +173,17 @@ def glmpass(numprocitems,
                                         rt_floattype=rt_floattype)
                     itemstotal += 1
     return itemstotal
+
+
+def multicomponentglm(data,
+                     regressors,
+                     rt_floatset=np.float64,
+                     rt_floattype='float64'):
+    datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
+    for i in range(data.shape[0]):
+        datatoremove *= 0.0
+        thefit, R = tide_fit.mlregress(regressors, data[i, :])
+        for j in range(regressors.shape[0]):
+            datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * regressors[j, :])
+        data[i, :] -= datatoremove
+
