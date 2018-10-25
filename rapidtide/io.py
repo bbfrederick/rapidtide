@@ -423,7 +423,7 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, de
     labels = ['X', 'Y', 'Z', 'RotX', 'RotY', 'RotZ']
     numpoints = len(motiondict[labels[0]])
     if end == -1:
-        end = numpoints
+        end = numpoints - 1
     if (0 <= start <= numpoints - 1) and (start < end + 1):
         numoutputpoints = end - start + 1
 
