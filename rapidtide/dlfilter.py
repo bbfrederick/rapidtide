@@ -93,6 +93,7 @@ class dlfilter:
         self.dropout_rate = dropout_rate
         self.num_epochs = num_epochs
         self.usebadpts = usebadpts
+        self.num_layers = num_layers
         if self.usebadpts:
             self.inputsize = 2
         else:
