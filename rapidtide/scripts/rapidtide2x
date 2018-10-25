@@ -577,6 +577,8 @@ def main():
     optiondict['mklthreads'] = 1
     optiondict['mp_chunksize'] = 50000
     optiondict['showprogressbar'] = True
+    optiondict['savecorrmask'] = True
+    optiondict['savedespecklemasks'] = True
 
     # package options
     optiondict['memprofilerexists'] = memprofilerexists
@@ -1370,6 +1372,15 @@ def main():
         corrmask *= 0
         corrmask += 1
         threshval = -10000000.0
+    if optiondict['savecorrmask']:
+        theheader = nim_hdr
+        if fileiscifti:
+            theheader['intent_code'] = 3006
+        else:
+            theheader['dim'][0] = 3
+            theheader['dim'][4] = 1
+        tide_io.savetonifti(corrmask.reshape(xsize, ysize, numslices), theheader, thesizes, outputname + 'corrmask')
+
     if optiondict['verbose']:
         print('image threshval =', threshval)
     validvoxels = np.where(corrmask > 0)[0]
@@ -1940,16 +1951,15 @@ def main():
                     print('Nothing left to do! Terminating despeckling')
                     break
 
-            """
-            theheader = nim_hdr
-            if fileiscifti:
-                theheader['intent_code'] = 3006
-            else:
-                theheader['dim'][0] = 3
-                theheader['dim'][4] = 1
-            tide_io.savetonifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)).reshape(nativespaceshape), theheader, thesizes,
-                             outputname + '_despecklemask_pass' + str(thepass))
-            """
+            if optiondict['savedespecklemasks']:
+                theheader = nim_hdr
+                if fileiscifti:
+                    theheader['intent_code'] = 3006
+                else:
+                    theheader['dim'][0] = 3
+                    theheader['dim'][4] = 1
+                tide_io.savetonifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)).reshape(nativespaceshape), theheader, thesizes,
+                                 outputname + '_despecklemask_pass' + str(thepass))
             print('\n\n', voxelsprocessed_fc_ds, 'voxels despeckled in', optiondict['despeckle_passes'], 'passes')
             timings.append(
                 ['Correlation despeckle end, pass ' + str(thepass), time.time(), voxelsprocessed_fc_ds, 'voxels'])
