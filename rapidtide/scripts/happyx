@@ -182,7 +182,7 @@ def usage():
     print("                                 MASKNAME.")
     #print(
     #    "    --nprocs=NPROCS            - Set to number of processors to use for calculations.  Default is 1.  Setting negative will use ncpus - 1")
-    print("    --motionfile=MOTFILE       - Read motion regressors out of MOTFILE text file (6 columns by
+    print("    --motionfile=MOTFILE       - Read motion regressors out of MOTFILE text file (6 columns by")
     print("                                 timepoints rows of position info) and regress them, their derivatives,")
     print("                                 and delayed derivatives out of the data prior to analysis.")
     print("")
@@ -454,6 +454,7 @@ censorbadpts = True
 estmaskname = None
 detrendorder = 3
 filtphase = True
+savemotionglmfilt = True
 
 # start the clock!
 timings = [['Start', time.time(), None, None]]
@@ -669,16 +670,7 @@ infodict['mrsamplerate'] = mrsamplerate
 timings.append(['Image data read in', time.time(), None, None])
 
 # remap to space by time
-fmri_data = nim_data.reshape((numspatiallocs, timepoints))
-
-# filter out motion regressors here
-if motionfilename is not None:
-    print('regressing out motion')
-    motionregressors = tide_io.calcmotregressors(tide_io.readparfile(motionfilename),
-        position=True, deriv=True, derivdelayed=True)
-    timings.append(['Motion filtering start', time.time(), None, None])
-    tide_glmpass.multicomponentglm(fmri_data_valid, motionregressors)
-    timings.append(['Motion filtering end', time.time(), numspatiallocs, 'voxels'])
+fmri_data = np.float64(nim_data.reshape((numspatiallocs, timepoints)))
 
 # remap to voxel by slice by time
 fmri_data_byslice = nim_data.reshape((xsize * ysize, numslices, timepoints))
@@ -687,12 +679,25 @@ fmri_data_byslice = nim_data.reshape((xsize * ysize, numslices, timepoints))
 tide_util.logmem('before mask creation', file=memfile)
 mask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, :], axis=1),
                                      threshpct=maskthreshpct))
+validvoxels = np.where(mask > 0)[0]
 theheader = nim_hdr
 theheader['dim'][4] = 1
 timings.append(['Mask created', time.time(), None, None])
 tide_io.savetonifti(mask.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_mask')
 timings.append(['Mask saved', time.time(), None, None])
 mask_byslice = mask.reshape((xsize * ysize, numslices))
+
+# filter out motion regressors here
+if motionfilename is not None:
+    print('regressing out motion')
+    motionregressors = tide_io.calcmotregressors(tide_io.readparfile(motionfilename),
+        position=True, deriv=True, derivdelayed=True)
+    timings.append(['Motion filtering start', time.time(), None, None])
+    tide_glmpass.multicomponentglm(fmri_data[validvoxels, :], motionregressors, debug=True)
+    timings.append(['Motion filtering end', time.time(), numspatiallocs, 'voxels'])
+    print()
+    if savemotionglmfilt:
+        tide_io.savetonifti(fmri_data.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_motionfiltered')
 
 # read in additional mask if present
 if estmaskname is not None:
@@ -717,7 +722,6 @@ timings.append(['Slice times determined', time.time(), None, None])
 print('normalizing voxels...')
 normdata = fmri_data * 0.0
 demeandata = fmri_data * 0.0
-validvoxels = np.where(mask > 0)[0]
 starttime = time.time()
 means = np.mean(fmri_data[:, :], axis=1).flatten()
 # detrend if we are going to
