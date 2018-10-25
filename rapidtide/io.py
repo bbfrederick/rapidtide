@@ -623,7 +623,40 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None):
             return samplerate, starttime, data[columnnum, :]
 
 
-def readvecs(inputfilename):
+def colspectolist(colspec):
+    collist = []
+    theranges = colspec.split(',')
+    def safeint(s):
+        try:
+            int(s)
+            return int(s)
+        except ValueError:
+            print('COLSPECTOLIST:', s, 'is not a legal integer - exiting')
+            return None
+    for thisrange in theranges:
+        print('processing range', thisrange)
+        theendpoints = thisrange.split('-')
+        print('COLSPECTOLIST: processing endpoints', theendpoints)
+        if len(theendpoints) == 1:
+            collist.append(safeint(theendpoints[0]))
+        elif len(theendpoints) == 2:
+            start = safeint(theendpoints[0])
+            end = safeint(theendpoints[1])
+            if start < 0:
+                print('COLSPECTOLIST:',start, 'must be greater than zero')
+                return(None)
+            if end < start:
+                print('COLSPECTOLIST:',end, 'must be greater than or equal to', start)
+                return(None)
+            for i in range(start, end + 1):
+                collist.append(i)
+        else:
+            print('COLSPECTOLIST: bad range specification - exiting')
+            return None
+    return sorted(collist)
+
+
+def readvecs(inputfilename, colspec=None):
     r"""
 
     Parameters
@@ -636,15 +669,25 @@ def readvecs(inputfilename):
     """
     thefile = open(inputfilename, 'r')
     lines = thefile.readlines()
-    numvecs = len(lines[0].split())
+    if colspec is None:
+        numvecs = len(lines[0].split())
+        collist = range(0, numvecs)
+    else:
+        collist = colspectolist(colspec)
+        if collist[-1] > len(lines[0].split()):
+            print('READVECS: too many columns requested - exiting')
+            sys.exit()
+        numvecs = len(collist)
     inputvec = np.zeros((numvecs, MAXLINES), dtype='float64')
     numvals = 0
     for line in lines:
         if len(line) > 1:
             numvals += 1
             thetokens = line.split()
-            for vecnum in range(0, numvecs):
-                inputvec[vecnum, numvals - 1] = np.float64(thetokens[vecnum])
+            outloc = 0
+            for vecnum in collist:
+                inputvec[outloc, numvals - 1] = np.float64(thetokens[vecnum])
+                outloc += 1
     return 1.0 * inputvec[:, 0:numvals]
 
 
