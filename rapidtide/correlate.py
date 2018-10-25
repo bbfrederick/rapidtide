@@ -499,7 +499,7 @@ def weightedfftconvolve(in1, in2, mode="full", weighting='none', displayplots=Fa
 
 
 def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
-    """
+    """Calculate product for generalized crosscorrelation
 
     Parameters
     ----------
