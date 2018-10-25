@@ -177,10 +177,36 @@ def glmpass(numprocitems,
 
 def multicomponentglm(data,
                      regressors,
+                     debug=False,
+                     showprogressbar=True,
+                     reportstep=1000,
                      rt_floatset=np.float64,
                      rt_floattype='float64'):
+    r"""Filters multiple regressors out of an array of data in place
+
+    Parameters
+    ----------
+    data : 2d numpy array
+        A data array.  First index is the spatial dimension, second is the time (filtering) dimension.
+
+    regressors: 2d numpy array
+        The set of regressors to filter out of each timecourse.  The first dimension is the regressor number, second is the time (filtering) dimension:
+
+    debug : boolean
+        Print additional diagnostic information if True
+
+    Returns
+    -------
+    """
+    if debug:
+        print('data shape:', data.shape)
+        print('regressors shape:', regressors.shape)
     datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
     for i in range(data.shape[0]):
+        if showprogressbar and (i % reportstep == 0):
+            tide_util.progressbar(i + 1, data.shape[0], label='Percent complete')
+        if showprogressbar:
+            tide_util.progressbar(data.shape[0], data.shape[0], label='Percent complete')
         datatoremove *= 0.0
         thefit, R = tide_fit.mlregress(regressors, data[i, :])
         for j in range(regressors.shape[0]):
