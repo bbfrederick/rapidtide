@@ -835,9 +835,9 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     peakpoints[-1] = 0
     peakstart = maxindex + 0
     peakend = maxindex + 0
-    while thegrad[peakend + 1] < 0.0 and peakpoints[peakend + 1] == 1:
+    while peakend < (len(thexcorr_x) - 2) and thegrad[peakend + 1] < 0.0 and peakpoints[peakend + 1] == 1:
         peakend += 1
-    while thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
+    while peakstart > 1 and thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
         peakstart -= 1
     # This is calculated from first principles, but it's always big by a factor or ~1.4. 
     #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
