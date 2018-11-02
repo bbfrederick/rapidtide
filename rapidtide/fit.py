@@ -1143,10 +1143,11 @@ def gaussfit(height, loc, width, xvals, yvals):
 
 
 def orthogonalizeregressors(theregressors):
-    print('orthogonalizeregressors, input dimensions:', theregressors.shape)
-    Q, R = np.linag.qr(theregressors)
-    print('orthogonalizeregressors, output dimensions:', Q.shape)
-    return Q
+    #print('orthogonalizeregressors, input dimensions:', theregressors.shape)
+    #Q, R = np.linalg.qr(theregressors)
+    #print('orthogonalizeregressors, output dimensions:', Q.shape)
+    #return Q
+    return theregressors
 
 
 ### I don't remember where this came from.  Need to check license
