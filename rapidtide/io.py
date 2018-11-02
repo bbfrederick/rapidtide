@@ -406,6 +406,33 @@ def readparfile(filename):
     return motiondict
 
 
+def readmotion(filename, colspec=None):
+    r"""Reads motion regressors from filename (from the columns specified in colspec, if given)
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file in question.
+    colspec: str, optional
+        The column numbers from the input file to use for the 6 motion regressors
+
+    Returns
+    -------
+    motiondict: dict
+        All the timecourses in the file, keyed by name
+
+    """
+    labels = ['X', 'Y', 'Z', 'RotX', 'RotY', 'RotZ']
+    motiontimeseries = readvecs(filename, colspec=colspec)
+    if motiontimeseries.shape[0] != 6:
+        print('readmotion: expect 6 motion regressors', motiontimeseries.shape[0], 'given')
+        sys.exit()
+    motiondict = {}
+    for j in range(0, 6):
+        motiondict[labels[j]] = 1.0 * motiontimeseries[j, :]
+    return motiondict
+
+
 def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, derivdelayed=False):
     r"""Calculates various motion related timecourses from motion data dict, and returns an array
 
@@ -636,7 +663,6 @@ def colspectolist(colspec):
     for thisrange in theranges:
         print('processing range', thisrange)
         theendpoints = thisrange.split('-')
-        print('COLSPECTOLIST: processing endpoints', theendpoints)
         if len(theendpoints) == 1:
             collist.append(safeint(theendpoints[0]))
         elif len(theendpoints) == 2:
@@ -676,6 +702,9 @@ def readvecs(inputfilename, colspec=None):
         collist = colspectolist(colspec)
         if collist[-1] > len(lines[0].split()):
             print('READVECS: too many columns requested - exiting')
+            sys.exit()
+        if max(collist) > len(lines[0].split()) - 1:
+            print('READVECS: requested column', max(collist), 'too large - exiting')
             sys.exit()
         numvecs = len(collist)
     inputvec = np.zeros((numvecs, MAXLINES), dtype='float64')
