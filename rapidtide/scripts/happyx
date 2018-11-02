@@ -715,7 +715,9 @@ if motionfilename is not None:
             position=True, deriv=True, derivdelayed=True)
         )
     timings.append(['Motion filtering start', time.time(), None, None])
+    print('start motion filtering')
     tide_glmpass.confoundglm(fmri_data[validvoxels, :], motionregressors, debug=True)
+    print('motion filtering complete')
     timings.append(['Motion filtering end', time.time(), numspatiallocs, 'voxels'])
     print()
     if savemotionglmfilt:
