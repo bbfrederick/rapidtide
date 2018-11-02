@@ -1435,7 +1435,7 @@ def main():
         else:
             themotionfilename = splitfilename[0]
             colspec = splitfilename[1]
-        motionregressors = tide_fit.orthogonalizeregressors(
+        motionregressors = tide_fit.gram_schmidt(
             tide_io.calcmotregressors(
                 tide_io.readmotion(themotionfilename, colspec=colspec),
                 start=validstart, end=validend, position=False, deriv=True, derivdelayed=True)

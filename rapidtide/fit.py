@@ -1142,12 +1142,16 @@ def gaussfit(height, loc, width, xvals, yvals):
     return plsq[0], plsq[1], plsq[2]
 
 
-def orthogonalizeregressors(theregressors):
-    #print('orthogonalizeregressors, input dimensions:', theregressors.shape)
-    #Q, R = np.linalg.qr(theregressors)
-    #print('orthogonalizeregressors, output dimensions:', Q.shape)
-    #return Q
-    return theregressors
+def gram_schmidt(theregressors):
+    print('gram_schmidt, input dimensions:', theregressors.shape)
+    basis = []
+    for i in range(theregressors.shape[0]):
+        w = theregressors[i, :] - np.sum(np.dot(theregressors[i, :], b) * b for b in basis)
+        if (w > 1e-10).any():
+            basis.append(w / np.linalg.norm(w))
+    outputbasis = np.array(basis)
+    print('gram_schmidt, output dimensions:', outputbasis.shape)
+    return outputbasis
 
 
 ### I don't remember where this came from.  Need to check license
