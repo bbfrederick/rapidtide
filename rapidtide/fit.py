@@ -757,14 +757,20 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
 
     Parameters
     ----------
-    thexcorr_x
-    thexcorr_y
-    lagmin
-    lagmax
-    widthlimit
+    thexcorr_x:  1D float array
+        The time axis of the correlation function
+    thexcorr_y: 1D float array
+        The values of the correlation function
+    lagmin: float
+        The minimum allowed lag time in seconds
+    lagmax: float
+        The maximum allowed lag time in seconds
+    widthlimit: float
+        The maximum allowed peak halfwidth in seconds
     absmaxsigma
     hardlimit
-    bipolar
+    bipolar: boolean
+        If true find the correlation peak with the maximum absolute value, regardless of sign
     edgebufferfrac
     threshval
     uthreshval
