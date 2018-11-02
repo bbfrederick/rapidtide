@@ -1147,7 +1147,7 @@ def gram_schmidt(theregressors):
     basis = []
     for i in range(theregressors.shape[0]):
         w = theregressors[i, :] - np.sum(np.dot(theregressors[i, :], b) * b for b in basis)
-        if (w > 1e-10).any():
+        if (np.fabs(w) > 1e-10).any():
             basis.append(w / np.linalg.norm(w))
     outputbasis = np.array(basis)
     print('gram_schmidt, output dimensions:', outputbasis.shape)
