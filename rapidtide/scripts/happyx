@@ -191,6 +191,7 @@ def usage():
     print("                                     specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For")
     print("                                     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9")
     print("                                     for X, Y, Z, RotX, RotY, RotZ, respectively")
+    print("    --cardestonly                  - Estimate the cardiac waveform from the fMRI data, then quit.")
     print("")
     print("debugging arguments (probably not of interest to users)")
     print("    --debug                        - turn on debugging information")
@@ -460,7 +461,8 @@ censorbadpts = True
 estmaskname = None
 detrendorder = 3
 filtphase = True
-savemotionglmfilt = True
+savemotionglmfilt = False
+cardestonly = False
 
 # start the clock!
 timings = [['Start', time.time(), None, None]]
@@ -510,6 +512,7 @@ try:
                                                    "debug",
                                                    "normalize",
                                                    "nodemean",
+                                                   "cardestonly",
                                                    "outputbins=",
                                                    "gridbins=",
                                                    "gridkernel=",
@@ -552,6 +555,9 @@ for o, a in opts:
     elif o == "--nophasefilt":
         filtphase = False
         print('disabling phase trend filter')
+    elif o == "--cardestonly":
+        cardestonly = True
+        print('will stop processing after calculating cardiac waveforms')
     elif o == "--nocensor":
         usemaskcardfromfmri = False
         print('will not censor bad points')
@@ -967,6 +973,10 @@ tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 
 # calculate RRI
 # therri = rrifromphase(upsampledslicetimeaxis, interpphase)
+
+if cardestonly:
+    print('cardiac waveform calculations done - exiting')
+    sys.exit()
 
 # find the phase values for all timepoints in all slices
 phasevals = np.zeros((numslices, timepoints), dtype=np.float64)
