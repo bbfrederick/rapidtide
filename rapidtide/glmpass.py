@@ -175,7 +175,7 @@ def glmpass(numprocitems,
     return itemstotal
 
 
-def multicomponentglm(data,
+def confoundglm(data,
                      regressors,
                      debug=False,
                      showprogressbar=True,

@@ -1435,11 +1435,14 @@ def main():
         else:
             themotionfilename = splitfilename[0]
             colspec = splitfilename[1]
-        motionregressors = tide_io.calcmotregressors(tide_io.readmotion(themotionfilename, colspec=colspec),
-            start=validstart, end=validend, position=False, deriv=True, derivdelayed=True)
+        motionregressors = tide_fit.orthogonalizeregressors(
+            tide_io.calcmotregressors(
+                tide_io.readmotion(themotionfilename, colspec=colspec),
+                start=validstart, end=validend, position=False, deriv=True, derivdelayed=True)
+            )
         timings.append(['Motion filtering start', time.time(), None, None])
 
-        tide_glmpass.multicomponentglm(fmri_data_valid,
+        tide_glmpass.confoundglm(fmri_data_valid,
                      motionregressors,
                      rt_floatset=rt_floatset,
                      rt_floattype=rt_floattype)
