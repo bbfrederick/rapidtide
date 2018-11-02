@@ -714,6 +714,7 @@ if motionfilename is not None:
             tide_io.readmotion(themotionfilename, colspec=colspec),
             position=True, deriv=True, derivdelayed=True)
         )
+    infodict['numorthogmotregressors'] = motionregressors.shape[0]
     timings.append(['Motion filtering start', time.time(), None, None])
     print('start motion filtering')
     tide_glmpass.confoundglm(fmri_data[validvoxels, :], motionregressors, debug=True)
