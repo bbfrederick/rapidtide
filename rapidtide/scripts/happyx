@@ -709,7 +709,7 @@ if motionfilename is not None:
     else:
         themotionfilename = splitfilename[0]
         colspec = splitfilename[1]
-    motionregressors = tide_fit.orthogonalizeregressors(
+    motionregressors = tide_fit.gram_schmidt(
         tide_io.calcmotregressors(
             tide_io.readmotion(themotionfilename, colspec=colspec),
             position=True, deriv=True, derivdelayed=True)
@@ -717,9 +717,9 @@ if motionfilename is not None:
     timings.append(['Motion filtering start', time.time(), None, None])
     print('start motion filtering')
     tide_glmpass.confoundglm(fmri_data[validvoxels, :], motionregressors, debug=True)
+    print()
     print('motion filtering complete')
     timings.append(['Motion filtering end', time.time(), numspatiallocs, 'voxels'])
-    print()
     if savemotionglmfilt:
         tide_io.savetonifti(fmri_data.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_motionfiltered')
 
