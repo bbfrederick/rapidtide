@@ -6,7 +6,7 @@ import os
 num_epochs = 10
 excludethresh = 4.0
 window_size = 128
-num_layers = 16
+num_layers = 10
 num_filters = 10
 kernel_size = 5
 dropout_rate = 0.3
@@ -16,7 +16,7 @@ activation = 'relu'
 usebadpts = False
 countlim = None
 readlim = None
-num_units = 16
+num_units = 128
 debug = True
 invert = True
 
@@ -35,7 +35,6 @@ else:
 
 
 if nettype == 'cnn':
-    num_layers = 5
     thefilter = dlfilter.cnn(
                             num_epochs=num_epochs,
                             excludethresh=excludethresh,
@@ -46,6 +45,8 @@ if nettype == 'cnn':
                             readlim=readlim,
                             countlim=countlim,
                             thedatadir=thedatadir,
+                            inputfrag='motcorr_cardfromfmri',
+                            targetfrag='motcorr_normpleth',
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size)
@@ -61,6 +62,8 @@ elif nettype == 'lstm':
                             readlim=readlim,
                             countlim=countlim,
                             thedatadir=thedatadir,
+                            inputfrag='motcorr_cardfromfmri',
+                            targetfrag='motcorr_normpleth',
                             num_units=num_units)
 elif nettype == 'hybrid':
     num_layers = 10
@@ -74,6 +77,8 @@ elif nettype == 'hybrid':
                             readlim=readlim,
                             countlim=countlim,
                             thedatadir=thedatadir,
+                            inputfrag='motcorr_cardfromfmri',
+                            targetfrag='motcorr_normpleth',
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size,

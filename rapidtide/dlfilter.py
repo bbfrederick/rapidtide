@@ -50,6 +50,8 @@ class dlfilter:
     """Base class for deep learning filter"""
     thesuffix = 'sliceres'
     thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
+    inputfrag='cardfromfmri'
+    targetfrag='normpleth'
     modelroot = '.'
     excludethresh = 4.0
     modelname = None
@@ -86,6 +88,8 @@ class dlfilter:
         thesuffix='25.0Hz',
         modelpath='.',
         thedatadir='/Users/frederic/Documents/MR_data/physioconn/timecourses',
+        inputfrag='cardfromfmri'
+        targetfrag='normpleth'
         readlim=None,
         countlim=None):
 
@@ -113,6 +117,8 @@ class dlfilter:
         self.initialized = False
         self.trained = False
         self.usetensorboard = False
+        self.inputfrag = inputfrag
+        self.targetfrag = targetfrag
 
         # populate infodict
         self.infodict['window_size'] = self.window_size
@@ -134,6 +140,8 @@ class dlfilter:
             self.train_x, self.train_y, self.val_x, self.val_y, self.Ns, self.tclen, self.thebatchsize, dummy, dummy = prep(self.window_size,
                                                                         thesuffix=self.thesuffix,
                                                                         thedatadir=self.thedatadir,
+                                                                        inputfrag=self.inputfrag,
+                                                                        targetfrag=self.targetfrag,
                                                                         dofft=self.dofft,
                                                                         debug=self.debug,
                                                                         usebadpts=self.usebadpts,
@@ -144,6 +152,8 @@ class dlfilter:
             self.train_x, self.train_y, self.val_x, self.val_y, self.Ns, self.tclen, self.thebatchsize = prep(self.window_size,
                                                                         thesuffix=self.thesuffix,
                                                                         thedatadir=self.thedatadir,
+                                                                        inputfrag=self.inputfrag,
+                                                                        targetfrag=self.targetfrag,
                                                                         dofft=self.dofft,
                                                                         debug=self.debug,
                                                                         usebadpts=self.usebadpts,
