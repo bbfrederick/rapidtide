@@ -88,8 +88,8 @@ class dlfilter:
         thesuffix='25.0Hz',
         modelpath='.',
         thedatadir='/Users/frederic/Documents/MR_data/physioconn/timecourses',
-        inputfrag='cardfromfmri'
-        targetfrag='normpleth'
+        inputfrag='cardfromfmri',
+        targetfrag='normpleth',
         readlim=None,
         countlim=None):
 
