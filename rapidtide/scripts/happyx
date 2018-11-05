@@ -312,7 +312,7 @@ def getfundamental(inputdata, Fs, fundfreq):
     return thefundfilter.apply(Fs, inputdata)
 
 
-def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
+def getcardcoeffs(cardiacwaveform, slicesamplerate, minfreq=30.0, smoothlen=301, debug=False):
     if len(cardiacwaveform) > 1024:
         thex, they = welch(cardiacwaveform, slicesamplerate, nperseg=1024)
     else:
@@ -322,8 +322,14 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, smoothlen=301, debug=False):
     freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(cardiacwaveform)) * cardiacwaveform,
                                             Fs=slicesamplerate,
                                             mode='complex')
+    # remove any spikes at zero frequency
+    minbin = int(minfreq // (60.0 * (freqaxis[1] - freqaxis[0])))
+    spectrum[0:minbin] = 0.0
+
+    # smooth the spectrum
     smoothspectrum = savgolsmooth(spectrum.real, smoothlen=smoothlen) + savgolsmooth(spectrum.imag,
                                                                                      smoothlen=smoothlen) * 1.0j
+    # find the max
     if debug:
         tide_io.writevec(spectrum.real, 'spectrum.txt')
         tide_io.writevec(smoothspectrum.real, 'smoothspectrum.txt')
@@ -860,7 +866,7 @@ if cardiacfile is not None:
     pleth_stdres = tide_math.madnormalize(
             tide_resample.arbresample(cleanpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True))
     tide_io.writevec(pleth_stdres, outputroot + '_pleth_' + str(stdfreq) + 'Hz.txt')
-    thebadplethpts_stdres = findbadpts(pleth_stdres, 'rawpleth_' + str(stdfreq) + 'Hz', stdfreq, infodict, thetype='fracval')
+    thebadplethpts_stdres = findbadpts(pleth_stdres, 'pleth_' + str(stdfreq) + 'Hz', stdfreq, infodict, thetype='fracval')
     timings.append(['Cardiac signal from physiology data resampled to standard and saved', time.time(), None, None])
 
     # find key components of cardiac waveform
