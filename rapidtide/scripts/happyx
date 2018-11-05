@@ -363,7 +363,7 @@ def cleanpleth(Fs, plethwaveform):
     normpleth = envmean * np.where(envelope > 0.0, filtplethwaveform / envelope, 0.0)
 
     # return the filtered waveform, the normalized waveform, and the envelope
-    return tide_maths.madnormalize(filtplethwaveform), tide_maths.madnormalize(normpleth), envelope
+    return tide_math.madnormalize(filtplethwaveform), tide_math.madnormalize(normpleth), envelope
 
 
 def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', retainthresh=0.89, mingap=2.0, debug=True):
