@@ -280,7 +280,7 @@ def cardiacfromimage(normdata_byslice,
                 hirestc[numsteps * t + sliceoffsets[theslice]] += sliceavs[theslice, t]
     slicesamplerate = 1.0 * numsteps / tr
     print('slice sample rate is ', slicesamplerate)
-    filthirestc = -1.0 * tide_math.stdnormalize(initprefilter.apply(slicesamplerate, hirestc))
+    filthirestc = -1.0 * tide_math.madnormalize(initprefilter.apply(slicesamplerate, hirestc))
 
     # delete the TR frequency and the first subharmonic
     print('notch filtering...')
@@ -295,7 +295,7 @@ def cardiacfromimage(normdata_byslice,
             setnotchfilter(trnotchfilter, harmonic * stopfreq, notchwidth=notchwidth)
             filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
 
-    return filthirestc, slicesamplerate, numsteps
+    return tide_math.madnormalize(filthirestc), slicesamplerate, numsteps
 
 
 def savgolsmooth(data, smoothlen=301, polyorder=3):
@@ -349,7 +349,7 @@ def cleanpleth(Fs, plethwaveform):
     plethfilter = tide_filt.noncausalfilter(filtertype='arb')
     plethfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
     print('filtering')
-    filtplethwaveform = tide_math.madnormalize(plethfilter.apply(Fs, tide_math.stdnormalize(plethwaveform)))
+    filtplethwaveform = tide_math.madnormalize(plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform)))
     print('envelope detection')
     envelope = tide_math.envdetect(Fs, filtplethwaveform, cutoff=0.15)
     envmean = np.mean(envelope)
@@ -358,15 +358,15 @@ def cleanpleth(Fs, plethwaveform):
     arb_upper = 10.0
     arb_upperstop = arb_upper * 1.1
     plethfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-    filtplethwaveform = tide_math.madnormalize(plethfilter.apply(Fs, tide_math.stdnormalize(plethwaveform)))
+    filtplethwaveform = tide_math.madnormalize(plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform)))
     print('normalizing')
     normpleth = envmean * np.where(envelope > 0.0, filtplethwaveform / envelope, 0.0)
 
     # return the filtered waveform, the normalized waveform, and the envelope
-    return filtplethwaveform, normpleth, envelope
+    return tide_maths.madnormalize(filtplethwaveform), tide_maths.madnormalize(normpleth), envelope
 
 
-def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', mingap=2.0, debug=True):
+def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', retainthresh=0.89, mingap=2.0, debug=True):
     absdev = np.fabs(thewaveform - np.median(thewaveform))
     if thetype == 'triangle' or thetype == 'mad':
         absdev = np.fabs(thewaveform - np.median(thewaveform))
@@ -375,11 +375,12 @@ def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', minga
         else:
             medianval = np.median(thewaveform)
             sigma = mad(thewaveform, center=medianval)
-            thresh = 3.0 * sigma
+            numsigma = np.sqrt(1.0/(1.0 - retainthresh))
+            thresh = numsigma * sigma
         thebadpts = np.where(absdev >= thresh, 1.0, 0.0)
         print('bad point threshhold set to', thresh, 'using the', thetype, 'method for', nameroot)
     elif thetype == 'fracval':
-        lower, upper = tide_stats.getfracvals(thewaveform, [0.10, 0.90], numbins=200)
+        lower, upper = tide_stats.getfracvals(thewaveform, [(1.0 - retainthresh) / 2.0, (1.0 + retainthresh) / 2.0], numbins=200)
         therange = upper - lower
         lowerthresh = lower - therange
         upperthresh = upper + therange
@@ -792,7 +793,7 @@ infodict['cardiacbpm_frombold'] = np.round(peakfreq_bold * 60.0, 2)
 infodict['cardiacfreq_frombold'] = peakfreq_bold
 timings.append(['Cardiac signal from image data analyzed', time.time(), None, None])
 
-cardfromfmri_stdres = tide_math.stdnormalize(tide_resample.arbresample(cardfromfmri_sliceres,
+cardfromfmri_stdres = tide_math.madnormalize(tide_resample.arbresample(cardfromfmri_sliceres,
                                                                        slicesamplerate,
                                                                        stdfreq,
                                                                        decimate=True,
@@ -808,7 +809,7 @@ if dlfilterexists:
     thedlfilter.loadmodel('model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu')
     dlfilteredcard = thedlfilter.apply(cardfromfmri_stdres)
     tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
-    cardfromfmri_sliceres = tide_math.stdnormalize(
+    cardfromfmri_sliceres = tide_math.madnormalize(
         tide_resample.arbresample(dlfilteredcard, stdfreq, slicesamplerate, decimate=True, debug=True))
     tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_dlfiltered_sliceres.txt')
     infodict['used_dlreconstruction_filter'] = True
@@ -842,7 +843,6 @@ if cardiacfile is not None:
     # filter and amplitude correct the waveform to remove gain fluctuations
     cleanpleth_fullres, normpleth_fullres, cardamp = cleanpleth(inputfreq, pleth_fullres)
     tide_io.writevec(pleth_fullres, outputroot + '_rawpleth_native.txt')
-    tide_io.writevec(normpleth_fullres, outputroot + '_normpleth_native.txt')
     tide_io.writevec(cleanpleth_fullres, outputroot + '_pleth_native.txt')
     tide_io.writevec(cardamp, outputroot + '_cardenvelopefromfile_native.txt')
     timings.append(['Cardiac signal from physiology data cleaned', time.time(), None, None])
@@ -850,28 +850,21 @@ if cardiacfile is not None:
     # resample to slice time resolution and save
     pleth_sliceres = tide_resample.doresample(inputtimeaxis, cleanpleth_fullres, slicetimeaxis, method='cubic',
                                               padlen=0)
-    normpleth_sliceres = tide_resample.doresample(inputtimeaxis, normpleth_fullres, slicetimeaxis, method='cubic',
-                                                  padlen=0)
     tide_io.writevec(pleth_sliceres, outputroot + '_pleth_sliceres.txt')
-    tide_io.writevec(normpleth_sliceres, outputroot + '_normpleth_sliceres.txt')
     timings.append(['Cardiac signal from physiology data resampled to slice resolution and saved', time.time(), None, None])
 
     # find bad points in plethysmogram
     thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', slicesamplerate, infodict, thetype='fracval')
 
     # resample to standard resolution and save
-    pleth_stdres = tide_math.stdnormalize(
+    pleth_stdres = tide_math.madnormalize(
             tide_resample.arbresample(cleanpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True))
     tide_io.writevec(pleth_stdres, outputroot + '_pleth_' + str(stdfreq) + 'Hz.txt')
-    thebadplethpts_stdres = findbadpts(pleth_stdres, 'pleth_' + str(stdfreq) + 'Hz', stdfreq, infodict, thetype='fracval')
-    tide_io.writevec(
-        tide_math.stdnormalize(
-            tide_resample.arbresample(normpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True)),
-        outputroot + '_normpleth_' + str(stdfreq) + 'Hz.txt')
+    thebadplethpts_stdres = findbadpts(pleth_stdres, 'rawpleth_' + str(stdfreq) + 'Hz', stdfreq, infodict, thetype='fracval')
     timings.append(['Cardiac signal from physiology data resampled to standard and saved', time.time(), None, None])
 
     # find key components of cardiac waveform
-    filtpleth = tide_math.stdnormalize(thecardbandfilter.apply(slicesamplerate, pleth_sliceres))
+    filtpleth = tide_math.madnormalize(thecardbandfilter.apply(slicesamplerate, pleth_sliceres))
     peakfreq_file = getcardcoeffs((1.0 - thebadplethpts_sliceres) * filtpleth,
                                                           slicesamplerate, smoothlen=smoothlen,
                                                           debug=debug)
@@ -918,11 +911,11 @@ if forcedhr is not None:
     peakfreq = forcedhr
     infodict['forcedhr'] = peakfreq
 if cardiacfile is None:
-    filthiresfund = tide_math.stdnormalize(getfundamental(cardiacwaveform*(1.0 - thebadcardpts),
+    filthiresfund = tide_math.madnormalize(getfundamental(cardiacwaveform*(1.0 - thebadcardpts),
                                                            slicesamplerate,
                                                            peakfreq))
 else:
-    filthiresfund = tide_math.stdnormalize(getfundamental(cardiacwaveform,
+    filthiresfund = tide_math.madnormalize(getfundamental(cardiacwaveform,
                                                            slicesamplerate,
                                                            peakfreq))
 tide_io.writevec(filthiresfund, outputroot + '_cardiacfundamental.txt')
