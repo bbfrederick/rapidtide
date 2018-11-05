@@ -203,10 +203,8 @@ def confoundglm(data,
         print('regressors shape:', regressors.shape)
     datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
     for i in range(data.shape[0]):
-        if showprogressbar and (i % reportstep == 0):
+        if showprogressbar and (i % reportstep == 0 or i == data.shape[0] - 1):
             tide_util.progressbar(i + 1, data.shape[0], label='Percent complete')
-        if showprogressbar:
-            tide_util.progressbar(data.shape[0], data.shape[0], label='Percent complete')
         datatoremove *= 0.0
         thefit, R = tide_fit.mlregress(regressors, data[i, :])
         for j in range(regressors.shape[0]):
