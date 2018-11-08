@@ -1440,6 +1440,7 @@ def main():
                 tide_io.readmotion(themotionfilename, colspec=colspec),
                 start=validstart, end=validend, position=False, deriv=True, derivdelayed=True)
             )
+        tide_io.writenpvecs(motionregressors, outputname + '_orthogonalizedmotion.txt')
         timings.append(['Motion filtering start', time.time(), None, None])
 
         tide_glmpass.confoundglm(fmri_data_valid,
