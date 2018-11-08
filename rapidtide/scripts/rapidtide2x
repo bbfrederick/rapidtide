@@ -504,7 +504,7 @@ def main():
     optiondict['armodelorder'] = 1  # AR model order for prewhitening the data (I have no idea if this works)
     optiondict['dodeconv'] = False  # do Wiener deconvolution to find voxel transfer function
     optiondict['motionfilename'] = None  # by default do no motion regression
-    optiondict['savemotionfiltered'] = True  # save motion filtered file for debugging
+    optiondict['savemotionfiltered'] = False  # save motion filtered file for debugging
 
     # filter options
     optiondict['trapezoidalfftfilter'] = True
@@ -650,6 +650,7 @@ def main():
                                                                                                           'nprocs=',
                                                                                                           'debug',
                                                                                                           'nonumba',
+                                                                                                          'savemotionglmfilt',
                                                                                                           'tmask=',
                                                                                                           'detrendorder=',
                                                                                                           'slicetimes=',
@@ -807,6 +808,9 @@ def main():
                 print('will use n_cpus - 1 processes for calculation')
             else:
                 print('will use', optiondict['nprocs'], 'processes for calculation')
+        elif o == '--savemotionglmfilt':
+            optiondict['savemotionfiltered'] = True
+            print('saveing motion filtered data')
         elif o == '--nonumba':
             optiondict['nonumba'] = True
             print('disabling numba if present')
