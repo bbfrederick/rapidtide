@@ -30,6 +30,7 @@ rapidtide2 \
         --detrendorder=3
 
 diffmaps ../dst/dgsr_rapidtide2x_multiproc_cubic ../dst/dgsr_rapidtide2_multiproc_cubic ../dst/diff
+#	-r -20,20 \
 
 
 #rapidtide2x \
