@@ -460,6 +460,7 @@ estmaskname = None
 detrendorder = 3
 filtphase = True
 savemotionglmfilt = False
+motionfilename = None
 cardestonly = False
 
 # start the clock!
@@ -521,6 +522,7 @@ try:
                                                    "smoothlen=",
                                                    "forcehr=",
                                                    "nocensor",
+                                                   "savemotionglmfilt",
                                                    "nophasefilt",
                                                    "nomask",
                                                    "help"])
@@ -548,6 +550,8 @@ for o, a in opts:
     elif o == "--debug":
         debug = True
         print('extended debugging messages')
+    elif o == "--savemotionglmfilt":
+        savemotionglmfilt = True
     elif o == "--nomask":
         censorbadpts = False
     elif o == "--nophasefilt":
@@ -681,9 +685,10 @@ timings.append(['Image data read in', time.time(), None, None])
 
 # remap to space by time
 fmri_data = np.float64(nim_data.reshape((numspatiallocs, timepoints)))
+del nim_data
 
 # remap to voxel by slice by time
-fmri_data_byslice = nim_data.reshape((xsize * ysize, numslices, timepoints))
+fmri_data_byslice = fmri_data.reshape((xsize * ysize, numslices, timepoints))
 
 # make and save a mask of the voxels to process
 tide_util.logmem('before mask creation', file=memfile)
@@ -712,6 +717,7 @@ if motionfilename is not None:
             tide_io.readmotion(themotionfilename, colspec=colspec),
             position=True, deriv=True, derivdelayed=True)
         )
+    tide_io.writenpvecs(motionregressors, outputroot + '_orthogonalizedmotion.txt')
     infodict['numorthogmotregressors'] = motionregressors.shape[0]
     timings.append(['Motion filtering start', time.time(), None, None])
     print('start motion filtering')
@@ -957,9 +963,6 @@ interpphase = tide_math.phasemod(
     tide_resample.doresample(slicetimeaxis, instantaneous_phase, upsampledslicetimeaxis, method='cubic', padlen=0))
 tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 
-# calculate RRI
-# therri = rrifromphase(upsampledslicetimeaxis, interpphase)
-
 if cardestonly:
     print('cardiac waveform calculations done - exiting')
     sys.exit()
@@ -1002,12 +1005,10 @@ congridwidth = congridbins * phasestep
 
 if fmrimod == 'norm':
     fmri_data_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
-    del nim_data
 elif fmrimod == 'demean':
     fmri_data_byslice = demeandata.reshape((xsize * ysize, numslices, timepoints))
-    del nim_data
 else:
-    fmri_data_byslice = nim_data.reshape((xsize * ysize, numslices, timepoints))
+    fmri_data_byslice = fmri_data.reshape((xsize * ysize, numslices, timepoints))
 
 # now do the phase projection
 timings.append(['Phase projection to image started', time.time(), None, None])
