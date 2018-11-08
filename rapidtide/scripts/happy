@@ -613,7 +613,6 @@ demeandata[validvoxels, :] = fmri_data[validvoxels, :] - means[validvoxels, None
 normdata[validvoxels, :] = np.nan_to_num(demeandata[validvoxels, :] / means[validvoxels, None])
 print('normalization took', time.time() - starttime, 'seconds')
 normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
-del nim_data
 
 # now get an estimate of the cardiac signal
 print('estimating cardiac signal from fmri data')
