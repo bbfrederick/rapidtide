@@ -352,7 +352,7 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, minfreq=30.0, smoothlen=301,
 
 def cleancardiac(Fs, plethwaveform):
     # first bandpass the cardiac signal to calculate the envelope
-    plethfilter = tide_filt.noncausalfilter('card')
+    plethfilter = tide_filt.noncausalfilter('cardiac')
     print('filtering')
     print('envelope detection')
     envelope = tide_math.envdetect(Fs,

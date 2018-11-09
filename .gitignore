@@ -11,6 +11,7 @@ rapidtide/data/examples/dst/*
 # some local test data
 rapidtide/data/examples/src/*corrfunc*
 rapidtide/data/examples/src/*trimmed*
+rapidtide/data/examples/src/sub-01*
 rapidtide/experimental/batch/*
 rapidtide/experimental/__pycache__
 rapidtide/experimental/.*
