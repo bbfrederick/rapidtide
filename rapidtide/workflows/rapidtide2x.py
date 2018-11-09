@@ -31,7 +31,7 @@ from .parser_funcs import (is_valid_file, invert_float, is_float)
 
 def _get_parser():
     """
-    Argument parser for rapidtide2
+    Argument parser for rapidtide2x
     """
     parser = argparse.ArgumentParser()
 
@@ -92,6 +92,14 @@ def _get_parser():
                          action='store_false',
                          help='Disable antialiasing filter',
                          default=True)
+    preproc.add_argument('--detrendorder',
+                         dest='detrendorder',
+                         action='store',
+                         type=int,
+                         metavar='ORDER',
+                         help=('Set order of trend removal (0 to disable,'
+                               ' default is 1 - linear) '),
+                         default=1)
     preproc.add_argument('--invert',
                          dest='invertregressor',
                          action='store_true',
