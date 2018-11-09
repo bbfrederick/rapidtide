@@ -252,6 +252,7 @@ def cardiacfromimage(normdata_byslice,
                      slicetimes,
                      initprefilter,
                      notchwidth=0.015,
+                     madnorm=True,
                      nprocs=1,
                      debug=False,
                      usemask=True):
@@ -275,7 +276,10 @@ def cardiacfromimage(normdata_byslice,
         else:
             validvoxels = np.where(mask_byslice[:, theslice] >= 0)[0]
         if len(validvoxels) > 0:
-            sliceavs[theslice, :] = np.mean(normdata_byslice[validvoxels, theslice, :], axis=0)
+            if madnorm:
+                sliceavs[theslice, :] = tide_math.madnormalize(np.mean(normdata_byslice[validvoxels, theslice, :], axis=0))
+            else:
+                sliceavs[theslice, :] = np.mean(normdata_byslice[validvoxels, theslice, :], axis=0)
             for t in range(timepoints):
                 hirestc[numsteps * t + sliceoffsets[theslice]] += sliceavs[theslice, t]
     slicesamplerate = 1.0 * numsteps / tr
@@ -346,18 +350,14 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, minfreq=30.0, smoothlen=301,
     return peakfreq
 
 
-def cleanpleth(Fs, plethwaveform):
-    # first bandpass the plethysmogram to calculate the envelope
-    arb_lower = 0.5
-    arb_lowerstop = arb_lower * 0.9
-    arb_upper = 3.0
-    arb_upperstop = arb_upper * 1.1
-    plethfilter = tide_filt.noncausalfilter(filtertype='arb')
-    plethfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+def cleancardiac(Fs, plethwaveform):
+    # first bandpass the cardiac signal to calculate the envelope
+    plethfilter = tide_filt.noncausalfilter('card')
     print('filtering')
-    filtplethwaveform = tide_math.madnormalize(plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform)))
     print('envelope detection')
-    envelope = tide_math.envdetect(Fs, filtplethwaveform, cutoff=0.15)
+    envelope = tide_math.envdetect(Fs,
+                                   tide_math.madnormalize(plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform))),
+                                   cutoff=0.15)
     envmean = np.mean(envelope)
 
     # now high pass the plethysmogram to eliminate baseline
@@ -366,10 +366,10 @@ def cleanpleth(Fs, plethwaveform):
     plethfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
     filtplethwaveform = tide_math.madnormalize(plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform)))
     print('normalizing')
-    normpleth = envmean * np.where(envelope > 0.0, filtplethwaveform / envelope, 0.0)
+    normpleth = tide_math.madnormalize(envmean * np.where(envelope > 0.0, filtplethwaveform / envelope, 0.0))
 
     # return the filtered waveform, the normalized waveform, and the envelope
-    return tide_math.madnormalize(filtplethwaveform), tide_math.madnormalize(normpleth), envelope
+    return filtplethwaveform, normpleth, envelope
 
 
 def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', retainthresh=0.89, mingap=2.0, debug=True):
@@ -422,6 +422,62 @@ def findbadpts(thewaveform, nameroot, samplerate, infodict, thetype='mad', retai
     infodict[nameroot + '_threshmethod'] = thetype
     return thebadpts
 
+def getphysiofile(cardiacfile, inputfreq, inputstart, timings, infodict, outputroot):
+    print('reading cardiac signal from file')
+    infodict['cardiacfromfmri'] = False
+
+    # check file type
+    filebase, extension = os.path.splitext(cardiacfile)
+    if extension == '.json':
+        inputfreq, inputstart, pleth_fullres = tide_io.readcolfrombidstsv(cardiacfile, columnname=colname,
+                                                                          columnnum=colnum)
+    else:
+        pleth_fullres = np.transpose(tide_io.readvecs(cardiacfile))
+        print(pleth_fullres.shape)
+        if len(pleth_fullres.shape) != 1:
+            pleth_fullres = pleth_fullres[:, colnum]
+    inputtimeaxis = sp.arange(0.0, (1.0 / inputfreq) * len(pleth_fullres), 1.0 / inputfreq) + inputstart
+    if debug:
+        print('pleth_fullres: len=', len(pleth_fullres), 'vals=', pleth_fullres)
+        print('inputfreq =', inputfreq)
+        print('inputstart =', inputstart)
+        print('inputtimeaxis: len=', len(inputtimeaxis), 'vals=', inputtimeaxis)
+    timings.append(['Cardiac signal from physiology data read in', time.time(), None, None])
+
+    # filter and amplitude correct the waveform to remove gain fluctuations
+    cleanpleth_fullres, normpleth_fullres, plethenv = cleancardiac(inputfreq, pleth_fullres)
+    tide_io.writevec(pleth_fullres, outputroot + '_rawpleth_native.txt')
+    tide_io.writevec(cleanpleth_fullres, outputroot + '_pleth_native.txt')
+    tide_io.writevec(plethenv, outputroot + '_cardenvelopefromfile_native.txt')
+    timings.append(['Cardiac signal from physiology data cleaned', time.time(), None, None])
+
+    # resample to slice time resolution and save
+    pleth_sliceres = tide_resample.doresample(inputtimeaxis, cleanpleth_fullres, slicetimeaxis, method='cubic',
+                                              padlen=0)
+    tide_io.writevec(pleth_sliceres, outputroot + '_pleth_sliceres.txt')
+
+    # resample to standard resolution and save
+    pleth_stdres = tide_math.madnormalize(
+        tide_resample.arbresample(cleanpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True))
+    tide_io.writevec(pleth_stdres, outputroot + '_pleth_' + str(stdfreq) + 'Hz.txt')
+
+    timings.append(
+        ['Cardiac signal from physiology data resampled to slice resolution and saved', time.time(), None, None])
+
+    return pleth_sliceres
+
+
+def readestmask(thefilename, nim_hdr, xsize, ysize, numslices):
+    estmask, estmask_data, estmask_hdr, theestmaskdims, theestmasksizes = tide_io.readfromnifti(thefilename)
+    xsize_estmask, ysize_estmask, numslices_estmask, timepoints_estmask = tide_io.parseniftidims(theestmaskdims)
+    if not tide_io.checkspacematch(nim_hdr, estmask_hdr):
+        print('Dimensions of mask do not match the fmri data - exiting')
+        sys.exit()
+    if timepoints_estmask > 1:
+        print('Mask must have only 3 dimensions - exiting')
+        sys.exit()
+    return estmask_data.reshape(xsize * ysize, numslices)
+
 
 # get the command line parameters
 debug = False
@@ -462,6 +518,7 @@ filtphase = True
 savemotionglmfilt = False
 motionfilename = None
 cardestonly = False
+domadnorm = True
 
 # start the clock!
 timings = [['Start', time.time(), None, None]]
@@ -522,6 +579,7 @@ try:
                                                    "smoothlen=",
                                                    "forcehr=",
                                                    "nocensor",
+                                                   "nomadnorm",
                                                    "savemotionglmfilt",
                                                    "nophasefilt",
                                                    "nomask",
@@ -563,6 +621,9 @@ for o, a in opts:
     elif o == "--nocensor":
         usemaskcardfromfmri = False
         print('will not censor bad points')
+    elif o == "--nomadnorm":
+        domadnorm = False
+        print('disabling MAD normalization between slices')
     elif o == "--outputbins":
         destpoints = int(a)
         print('will use', destpoints, 'output bins')
@@ -727,21 +788,12 @@ if motionfilename is not None:
     timings.append(['Motion filtering end', time.time(), numspatiallocs, 'voxels'])
     if savemotionglmfilt:
         tide_io.savetonifti(fmri_data.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes, outputroot + '_motionfiltered')
+        timings.append(['Motion filtered data saved', time.time(), numspatiallocs, 'voxels'])
 
 # read in additional mask if present
 if estmaskname is not None:
     tide_util.logmem('before reading in estmask', file=memfile)
-    estmask, estmask_data, estmask_hdr, theestmaskdims, theestmasksizes = tide_io.readfromnifti(estmaskname)
-    xsize_estmask, ysize_estmask, numslices_estmask, timepoints_estmask = tide_io.parseniftidims(theestmaskdims)
-    if not tide_io.checkspacematch(nim_hdr, estmask_hdr):
-        print('Dimensions of mask do not match the fmri data - exiting')
-        sys.exit()
-    if timepoints_estmask > 1:
-        print('Mask must have only 3 dimensions - exiting')
-        sys.exit()
-    cardestmask_byslice = mask_byslice * estmask_data.reshape(xsize * ysize, numslices)
-else:
-    cardestmask_byslice = mask_byslice
+    mask_byslice *= readestmask(estmaskname, nim_hdr, xsize, ysize, numslices)
 
 # get slice times
 slicetimes = getslicetimesfromfile(slicetimename)
@@ -752,7 +804,6 @@ print('normalizing voxels...')
 normdata = fmri_data * 0.0
 demeandata = fmri_data * 0.0
 starttime = time.time()
-means = np.mean(fmri_data[:, :], axis=1).flatten()
 # detrend if we are going to
 reportstep = int(numspatiallocs // 100)
 if detrendorder > 0:
@@ -761,10 +812,13 @@ if detrendorder > 0:
         if (idx % reportstep == 0) or (idx == len(validvoxels) - 1):
             tide_util.progressbar(idx + 1, len(validvoxels), label='Percent complete')
         fmri_data[thevox, :] = tide_fit.detrend(fmri_data[thevox, :], order=detrendorder, demean=False)
+    timings.append(['Detrending finished', time.time(), numspatiallocs, 'voxels'])
     print('done')
 
+means = np.mean(fmri_data[:, :], axis=1).flatten()
 demeandata[validvoxels, :] = fmri_data[validvoxels, :] - means[validvoxels, None]
 normdata[validvoxels, :] = np.nan_to_num(demeandata[validvoxels, :] / means[validvoxels, None])
+timings.append(['Normalization finished', time.time(), numspatiallocs, 'voxels'])
 print('normalization took', time.time() - starttime, 'seconds')
 normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
@@ -778,6 +832,7 @@ cardfromfmri_sliceres, slicesamplerate, numsteps = cardiacfromimage(normdata_bys
                                                            tr,
                                                            slicetimes,
                                                            thecardbandfilter,
+                                                           madnorm=domadnorm,
                                                            nprocs=nprocs,
                                                            notchwidth=notchwidth,
                                                            usemask=usemaskcardfromfmri,
@@ -831,47 +886,11 @@ timings.append(['Cardiac signal from image data resampled and saved', time.time(
 # get the cardiac signal from a file, if specified
 if cardiacfile is not None:
     tide_util.logmem('before cardiacfromfile', file=memfile)
-    print('reading cardiac signal from file')
-    infodict['cardiacfromfmri'] = False
-
-    # check file type
-    filebase, extension = os.path.splitext(cardiacfile)
-    if extension == '.json':
-        inputfreq, inputstart, pleth_fullres = tide_io.readcolfrombidstsv(cardiacfile, columnname=colname,
-                                                                          columnnum=colnum)
-    else:
-        pleth_fullres = np.transpose(tide_io.readvecs(cardiacfile))
-        print(pleth_fullres.shape)
-        if len(pleth_fullres.shape) != 1:
-            pleth_fullres = pleth_fullres[:, colnum]
-    inputtimeaxis = sp.arange(0.0, (1.0 / inputfreq) * len(pleth_fullres), 1.0 / inputfreq) + inputstart
-    if debug:
-        print('pleth_fullres: len=', len(pleth_fullres), 'vals=', pleth_fullres)
-        print('inputfreq =', inputfreq)
-        print('inputstart =', inputstart)
-        print('inputtimeaxis: len=', len(inputtimeaxis), 'vals=', inputtimeaxis)
-    timings.append(['Cardiac signal from physiology data read in', time.time(), None, None])
-
-    # filter and amplitude correct the waveform to remove gain fluctuations
-    cleanpleth_fullres, normpleth_fullres, cardamp = cleanpleth(inputfreq, pleth_fullres)
-    tide_io.writevec(pleth_fullres, outputroot + '_rawpleth_native.txt')
-    tide_io.writevec(cleanpleth_fullres, outputroot + '_pleth_native.txt')
-    tide_io.writevec(cardamp, outputroot + '_cardenvelopefromfile_native.txt')
-    timings.append(['Cardiac signal from physiology data cleaned', time.time(), None, None])
-
-    # resample to slice time resolution and save
-    pleth_sliceres = tide_resample.doresample(inputtimeaxis, cleanpleth_fullres, slicetimeaxis, method='cubic',
-                                              padlen=0)
-    tide_io.writevec(pleth_sliceres, outputroot + '_pleth_sliceres.txt')
-    timings.append(['Cardiac signal from physiology data resampled to slice resolution and saved', time.time(), None, None])
+    pleth_sliceres = getphysiofile(cardiacfile, inputfreq, inputstart, timings, infodict, outputroot)
 
     # find bad points in plethysmogram
     thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', slicesamplerate, infodict, thetype='fracval')
 
-    # resample to standard resolution and save
-    pleth_stdres = tide_math.madnormalize(
-            tide_resample.arbresample(cleanpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True))
-    tide_io.writevec(pleth_stdres, outputroot + '_pleth_' + str(stdfreq) + 'Hz.txt')
     thebadplethpts_stdres = findbadpts(pleth_stdres, 'pleth_' + str(stdfreq) + 'Hz', stdfreq, infodict, thetype='fracval')
     timings.append(['Cardiac signal from physiology data resampled to standard and saved', time.time(), None, None])
 
@@ -884,7 +903,6 @@ if cardiacfile is not None:
     infodict['cardiacbpm_fromphysio'] = np.round(peakfreq_file * 60.0, 2)
     infodict['cardiacfreq_fromphysio'] = peakfreq_file
     timings.append(['Cardiac signal from physiology data analyzed', time.time(), None, None])
-
     timings.append(['Cardiac parameters extracted from physiology data', time.time(), None, None])
 
     # check the match between the bold and physio cardiac signals
@@ -1052,7 +1070,7 @@ for theslice in range(numslices):
             rawapp_byslice[validlocs, theslice, :] = \
                 np.nan_to_num(rawapp_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :])
     else:
-        rawapp_byslice[:, theslice, :]
+        rawapp_byslice[:, theslice, :] = 0.0
 
     slicemin = np.min(rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
     app_byslice[validlocs, theslice, :] = rawapp_byslice[validlocs, theslice, :] - slicemin
@@ -1066,7 +1084,6 @@ theheader['toffset'] = -np.pi
 theheader['pixdim'][4] = 2.0 * np.pi / destpoints
 tide_io.savetonifti(app, theheader, thesizes, outputroot + '_app')
 tide_io.savetonifti(rawapp, theheader, thesizes, outputroot + '_rawapp')
-# tide_io.savetonifti(weights, theheader, thesizes, outputroot + '_weights')
 timings.append(['Phase projected data saved', time.time(), None, None])
 
 # make and save a voxel intensity histogram

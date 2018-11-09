@@ -3,7 +3,6 @@ rapidtide2x \
 	fmri.nii.gz \
 	../dst/dgsr_rapidtide2x_multiproc_cubic \
         --limitoutput \
-        --tmask=tmask.txt \
         -s 25.0 \
         -L \
 	-r -20,20 \
@@ -14,23 +13,22 @@ rapidtide2x \
         --nprocs=-1 \
         --detrendorder=3
 
-rapidtide2 \
-	fmri.nii.gz \
-	../dst/dgsr_rapidtide2_multiproc_cubic \
-        --limitoutput \
-        --tmask=tmask.txt \
-        -s 25.0 \
-        -L \
-	-r -20,20 \
-	-f 2 \
-        --refinepasses=3 \
-        --despecklepasses=4 \
-        --accheck \
-        --nprocs=-1 \
-        --detrendorder=3
-
-diffmaps ../dst/dgsr_rapidtide2x_multiproc_cubic ../dst/dgsr_rapidtide2_multiproc_cubic ../dst/diff
+#rapidtide2 \
+#	fmri.nii.gz \
+#	../dst/dgsr_rapidtide2_multiproc_cubic \
+#        --limitoutput \
+#        --tmask=tmask.txt \
+#        -s 25.0 \
+#        -L \
 #	-r -20,20 \
+#	-f 2 \
+#        --refinepasses=3 \
+#        --despecklepasses=4 \
+#        --accheck \
+#        --nprocs=-1 \
+#        --detrendorder=3
+#
+#diffmaps ../dst/dgsr_rapidtide2x_multiproc_cubic ../dst/dgsr_rapidtide2_multiproc_cubic ../dst/diff
 
 
 #rapidtide2x \
