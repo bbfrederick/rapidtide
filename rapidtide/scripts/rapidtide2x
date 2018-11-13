@@ -1387,7 +1387,7 @@ def main():
         else:
             theheader['dim'][0] = 3
             theheader['dim'][4] = 1
-        tide_io.savetonifti(corrmask.reshape(xsize, ysize, numslices), theheader, thesizes, outputname + 'corrmask')
+        tide_io.savetonifti(corrmask.reshape(xsize, ysize, numslices), theheader, thesizes, outputname + '_corrmask')
 
     if optiondict['verbose']:
         print('image threshval =', threshval)
@@ -2265,7 +2265,8 @@ def main():
 
     # first generate the MTT map
     MTT = np.square(lagsigma) - (optiondict['acwidth'] * optiondict['acwidth'])
-    MTT = np.where(MTT > 0.0, np.sqrt(MTT), 0.0)
+    MTT = np.where(MTT > 0.0, MTT, 0.0)
+    MTT = np.sqrt(MTT)
 
     for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask', 'failimage', 'MTT']:
         if optiondict['memprofile']:
