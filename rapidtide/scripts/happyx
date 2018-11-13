@@ -478,7 +478,6 @@ def readestmask(thefilename, nim_hdr, xsize, ysize, numslices):
         sys.exit()
     return estmask_data.reshape(xsize * ysize, numslices)
 
-
 # get the command line parameters
 debug = False
 dofilter = False

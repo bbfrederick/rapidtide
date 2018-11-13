@@ -30,7 +30,6 @@ rapidtide2x \
 #
 #diffmaps ../dst/dgsr_rapidtide2x_multiproc_cubic ../dst/dgsr_rapidtide2_multiproc_cubic ../dst/diff
 
-
 #rapidtide2x \
 	#fmri.nii.gz \
 	#../dst/dgsr_lfox \
