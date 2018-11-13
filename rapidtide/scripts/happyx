@@ -464,7 +464,7 @@ def getphysiofile(cardiacfile, inputfreq, inputstart, timings, infodict, outputr
     timings.append(
         ['Cardiac signal from physiology data resampled to slice resolution and saved', time.time(), None, None])
 
-    return pleth_sliceres
+    return pleth_sliceres, pleth_stdres
 
 
 def readestmask(thefilename, nim_hdr, xsize, ysize, numslices):
@@ -885,7 +885,7 @@ timings.append(['Cardiac signal from image data resampled and saved', time.time(
 # get the cardiac signal from a file, if specified
 if cardiacfile is not None:
     tide_util.logmem('before cardiacfromfile', file=memfile)
-    pleth_sliceres = getphysiofile(cardiacfile, inputfreq, inputstart, timings, infodict, outputroot)
+    pleth_sliceres, pleth_stdres = getphysiofile(cardiacfile, inputfreq, inputstart, timings, infodict, outputroot)
 
     # find bad points in plethysmogram
     thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', slicesamplerate, infodict, thetype='fracval')
