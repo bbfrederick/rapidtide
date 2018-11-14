@@ -387,6 +387,10 @@ def upsample(inputdata, Fs_init, Fs_higher, method='univariate', debug=False):
     numresamppts = int(endpoint // ts_higher + 1)
     upsampled_x = np.arange(0.0, ts_higher * numresamppts, ts_higher)
     upsampled_y = doresample(orig_x, inputdata, upsampled_x, method=method)
+    initfilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
+    stopfreq = np.min([1.1 * Fs_init, Fs_higher])
+    initfilter.setarb(0.0, 0.0, Fs_init, stopfreq)
+    upsampled_y = initfilter.apply(Fs_higher, upsampled_y)
     if debug:
         print('upsampling took', time.time() - starttime, 'seconds')
     return upsampled_y
