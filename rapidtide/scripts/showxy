@@ -28,28 +28,29 @@ import rapidtide.io as tide_io
 import matplotlib.cm as cm
 from scipy import arange
 
-from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show, bar
+from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show, bar, savefig
 
 
 def usage():
-    print("usage: showxy textfilename[,LINELABEL] [-x XLABEL] [-y YLABEL] [-t TITLE], [-i FILENAME[,LINELABEL]]")
-    print("	plots xy data in text file")
+    print("usage: showxy textfilename[,LINELABEL] [-x XLABEL] [-y YLABEL] [-t TITLE] [-o FILENAME] [-i FILENAME[,LINELABEL]]")
+    print("\tplots xy data in text file")
     print("")
     print("required arguments:")
-    print("	textfilename	- a text file containing one timepoint per line")
+    print("\ttextfilename	- a text file containing one timepoint per line")
     print("")
     print("optional arguments:")
-    print("	-x	use XLABEL on the x axis")
-    print("	-y	use YLABEL on the y axis")
-    print("	-t	use TITLE at the top of the graph")
-    print("	-i	add FILENAME to the plot, with label LINELABEL")
-    print("	-p	plot as individual points (do not connect points)")
+    print("\t-x\tuse XLABEL on the x axis")
+    print("\t-y\tuse YLABEL on the y axis")
+    print("\t-t\tuse TITLE at the top of the graph")
+    print("\t-i\tadd FILENAME to the plot, with label LINELABEL")
+    print("\t-p\tplot as individual points (do not connect points)")
+    print("\t-o\tsave plot to FILENAME instead of displaying to screen")
     return ()
 
 
 # now check options
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], "pbi:x:y:l:t:", ["help"])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "o:pbi:x:y:l:t:", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -a not recognized"
@@ -94,6 +95,8 @@ useylabel = False
 usetitle = False
 uselegend = True
 usepoints = False
+outputfile = None
+
 for o, a in opts:
     if o == "-x":
         usexlabel = True
@@ -103,6 +106,9 @@ for o, a in opts:
         useylabel = True
         theylabel = a
         print("labelling y axis with ", theylabel)
+    elif o == "-o":
+        outputfile = a
+        print("saving plot to ", outputfile)
     elif o == "-t":
         usetitle = True
         thetitle = a
@@ -154,4 +160,8 @@ if usexlabel:
     xlabel(thexlabel, fontsize=16, fontweight='bold')
 if useylabel:
     ylabel(theylabel, fontsize=16, fontweight='bold')
-show()
+
+if outputfile is None:
+    show()
+else:
+    savefig(outputfile, bbox_inches='tight')

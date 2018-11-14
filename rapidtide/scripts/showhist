@@ -23,7 +23,7 @@ from __future__ import print_function
 import sys
 import getopt
 import rapidtide.io as tide_io
-from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show
+from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show, savefig
 
 
 def usage():
@@ -32,6 +32,12 @@ def usage():
     print("")
     print("required arguments:")
     print("	textfilename	- a text file containing one timepoint per line")
+    print("")
+    print("optional arguments:")
+    print("\t-x\tuse XLABEL on the x axis")
+    print("\t-y\tuse YLABEL on the y axis")
+    print("\t-t\tuse TITLE at the top of the graph")
+    print("\t-o\tsave plot to FILENAME instead of displaying to screen")
     return ()
 
 
@@ -49,7 +55,7 @@ textfilename = sys.argv[1]
 
 # now check options
 try:
-    opts, args = getopt.getopt(sys.argv[2:], "x:y:l:t:", ["help"])
+    opts, args = getopt.getopt(sys.argv[2:], "o:x:y:l:t:", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -a not recognized"
@@ -64,6 +70,7 @@ thelegendlabel = ''
 thetitle = ''
 thexlabel = ''
 theylabel = ''
+outputfile = None
 
 for o, a in opts:
     if o == "-x":
@@ -78,6 +85,9 @@ for o, a in opts:
         uselegend = True
         thelegendlabel = a
         print("using legend ", thelegendlabel)
+    elif o == "-o":
+        outputfile = a
+        print("saving plot to ", outputfile)
     elif o == "-t":
         usetitle = True
         thetitle = a
@@ -97,4 +107,8 @@ if usexlabel:
     xlabel(thexlabel, fontsize=16, fontweight='bold')
 if useylabel:
     ylabel(theylabel, fontsize=16, fontweight='bold')
-show()
+
+if outputfile is None:
+    show()
+else:
+    savefig(outputfile, bbox_inches='tight')
