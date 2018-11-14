@@ -182,6 +182,8 @@ def usage():
     print("    --nophasefilt                  - Disable the phase trend filter (probably not a good idea")
     print("    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to")
     print("                                     voxels in MASKNAME.")
+    print("    --numskip=SKIP                 - SKIP tr's at the beginning of the fmri file (default is 0).")
+    print("    --motskip=SKIP                 - SKIP tr's at the beginning of the motion regressor file (default is 0).")
     #print(
     #    "    --nprocs=NPROCS            - Set to number of processors to use for calculations.  Default is 1.  Setting negative will use ncpus - 1")
     print("    --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.")
@@ -518,6 +520,8 @@ savemotionglmfilt = False
 motionfilename = None
 cardestonly = False
 domadnorm = True
+numskip = 0
+motskip = 0
 
 # start the clock!
 timings = [['Start', time.time(), None, None]]
@@ -577,6 +581,8 @@ try:
                                                    "estmask=",
                                                    "smoothlen=",
                                                    "forcehr=",
+                                                   "numskip=",
+                                                   "motskip=",
                                                    "nocensor",
                                                    "nomadnorm",
                                                    "savemotionglmfilt",
@@ -626,6 +632,12 @@ for o, a in opts:
     elif o == "--outputbins":
         destpoints = int(a)
         print('will use', destpoints, 'output bins')
+    elif o == '--numskip':
+        numskip = int(a)
+        print('Skipping first', numskip, 'fmri trs')
+    elif o == '--motskip':
+        motskip = int(a)
+        print('Skipping first', motskip, 'motion trs')
     elif o == "--smoothlen":
         smoothlen = int(a)
         smoothlen = smoothlen + (1 - smoothlen % 2)
@@ -732,6 +744,11 @@ timings.append(['Argument parsing done', time.time(), None, None])
 tide_util.logmem('before reading in fmri data', file=memfile)
 nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
 xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
+
+# adjust for numskip
+timepoints -= numskip
+nim_data_withskip = nim_data[:, :, :, numskip:]
+
 xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
 spaceunit, timeunit = nim_hdr.get_xyzt_units()
 if timeunit == 'msec':
@@ -744,7 +761,7 @@ infodict['mrsamplerate'] = mrsamplerate
 timings.append(['Image data read in', time.time(), None, None])
 
 # remap to space by time
-fmri_data = np.float64(nim_data.reshape((numspatiallocs, timepoints)))
+fmri_data = np.float64(nim_data_withskip.reshape((numspatiallocs, timepoints)))
 del nim_data
 
 # remap to voxel by slice by time
@@ -775,7 +792,7 @@ if motionfilename is not None:
     motionregressors = tide_fit.gram_schmidt(
         tide_io.calcmotregressors(
             tide_io.readmotion(themotionfilename, colspec=colspec),
-            position=True, deriv=True, derivdelayed=True)
+            position=True, deriv=True, derivdelayed=True)[:, motskip:]
         )
     tide_io.writenpvecs(motionregressors, outputroot + '_orthogonalizedmotion.txt')
     infodict['numorthogmotregressors'] = motionregressors.shape[0]
