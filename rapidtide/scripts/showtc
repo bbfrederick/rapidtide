@@ -63,6 +63,7 @@ def usage():
         "    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)")
     print("    --colorlist=C1,C2,..     - cycle through the list of colors specified by CN")
     print("    --linewidth=LW           - set linewidth to LW points (default is 1)")
+    print("    --fontscalefac=FAC       - scale all font sizes by FAC (default is 1.0)")
     print("    --legendlist=L1,L2,..    - cycle through the list of legends specified by LN")
     print("    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen")
     print("    --title=TITLE            - use TITLE as the overall title of the graph")
@@ -102,6 +103,7 @@ thestartpoint = 0
 theendpoint = 100000000
 thestarttime = -1000000.0
 theendtime = 1000000.0
+fontscalefac = 1.0
 
 # get the command line parameters
 try:
@@ -109,6 +111,7 @@ try:
                                    ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "voffset=", "noxax",
                                     "noyax",
                                     "debug",
+                                    "fontscalefac=",
                                     "starttime=", "endtime=",
                                     "samplerate=", "colorlist=", "linewidth=", "legendlist=", "title=",
                                     "separatelinked", "separate", "sampletime=", "tofile="])
@@ -153,6 +156,9 @@ for o, a in opts:
         for thislegend in a.split(','):
             legendlist.append(thislegend)
         print('Colors used:', colornames)
+    elif o == '--fontscalefac':
+        fontscalefac = float(a)
+        print('Font scaling factor set to:', fontscalefac)
     elif o == '--starttime':
         thestarttime = float(a)
         print('Start time set to:', thestarttime)
@@ -353,21 +359,21 @@ if not separate:
 
 # now plot it out
 if separate:
-    thexaxfontsize = 6
-    theyaxfontsize = 6
-    thexlabelfontsize = 5
-    theylabelfontsize = 5
-    thelegendfontsize = 8
-    thetitlefontsize = 6
-    thesuptitlefontsize = 10
+    thexaxfontsize = 6 * fontscalefac
+    theyaxfontsize = 6 * fontscalefac
+    thexlabelfontsize = 5 * fontscalefac
+    theylabelfontsize = 5 * fontscalefac
+    thelegendfontsize = 8 * fontscalefac
+    thetitlefontsize = 6 * fontscalefac
+    thesuptitlefontsize = 10 * fontscalefac
 else:
-    thexaxfontsize = 10
-    theyaxfontsize = 10
-    thexlabelfontsize = 10
-    theylabelfontsize = 10
-    thelegendfontsize = 8
-    thetitlefontsize = 10
-    thesuptitlefontsize = 10
+    thexaxfontsize = 10 * fontscalefac
+    theyaxfontsize = 10 * fontscalefac
+    thexlabelfontsize = 10 * fontscalefac
+    theylabelfontsize = 10 * fontscalefac
+    thelegendfontsize = 8 * fontscalefac
+    thetitlefontsize = 10 * fontscalefac
+    thesuptitlefontsize = 10 * fontscalefac
 
 if len(colornames) > 0:
     colorlist = [colornames[i % len(colornames)] for i in range(numvecs)]
