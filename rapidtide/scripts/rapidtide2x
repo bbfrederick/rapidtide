@@ -504,6 +504,7 @@ def main():
     optiondict['armodelorder'] = 1  # AR model order for prewhitening the data (I have no idea if this works)
     optiondict['dodeconv'] = False  # do Wiener deconvolution to find voxel transfer function
     optiondict['motionfilename'] = None  # by default do no motion regression
+    optiondict['delayderiv'] = False  # do not do delayed derivative
     optiondict['savemotionfiltered'] = False  # save motion filtered file for debugging
 
     # filter options
@@ -1442,7 +1443,7 @@ def main():
         motionregressors = tide_fit.gram_schmidt(
             tide_io.calcmotregressors(
                 tide_io.readmotion(themotionfilename, colspec=colspec),
-                start=validstart, end=validend, position=False, deriv=True, derivdelayed=True)
+                start=validstart, end=validend, position=False, deriv=True, derivdelayed=optiondict['delayderiv'])
             )
         tide_io.writenpvecs(motionregressors, outputname + '_orthogonalizedmotion.txt')
         timings.append(['Motion filtering start', time.time(), None, None])
