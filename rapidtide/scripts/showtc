@@ -73,6 +73,10 @@ def usage():
     print("    --noyax                  - don't show y axis")
     print("    --starttime=START        - start plot at START seconds")
     print("    --endtime=END            - end plot at END seconds")
+    print("    --legendloc=LOC          - Integer from 0 to 10 inclusive specifying legend location.  Legal values are:")
+    print("                               0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right,")
+    print("                               5: right, 6: center left, 7: center right, 8: lower center, 9: upper center,")
+    print("                               10: center.  Default is 2.")
     print("    --debug                  - print debugging information")
     return ()
 
@@ -104,6 +108,7 @@ theendpoint = 100000000
 thestarttime = -1000000.0
 theendtime = 1000000.0
 fontscalefac = 1.0
+legendloc = 2
 
 # get the command line parameters
 try:
@@ -112,6 +117,7 @@ try:
                                     "noyax",
                                     "debug",
                                     "fontscalefac=",
+                                    "legendloc=",
                                     "starttime=", "endtime=",
                                     "samplerate=", "colorlist=", "linewidth=", "legendlist=", "title=",
                                     "separatelinked", "separate", "sampletime=", "tofile="])
@@ -159,6 +165,13 @@ for o, a in opts:
     elif o == '--fontscalefac':
         fontscalefac = float(a)
         print('Font scaling factor set to:', fontscalefac)
+    elif o == '--legendloc':
+        legendloc = int(a)
+        if 0 <= legendloc <= 10:
+            print('Legend location set to:', legendloc)
+        else:
+            print(legendloc, 'is not a valid legend location - exiting')
+            sys.exit()
     elif o == '--starttime':
         thestarttime = float(a)
         print('Start time set to:', thestarttime)
@@ -398,7 +411,7 @@ for i in range(0, numvecs):
         ax = axlist[i]
     ax.plot(xvecs[i], yvecs[i], color=colorlist[i], label=linelabels[i], linewidth=thelinewidth)
     if dolegend:
-        ax.legend(fontsize=thelegendfontsize, loc=2)
+        ax.legend(fontsize=thelegendfontsize, loc=legendloc)
     ax.set_xlim(xrange)
     if linky:
         # print(yrange)
