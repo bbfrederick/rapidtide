@@ -49,6 +49,16 @@ if nargs < 2:
 
 # set default variable values
 dolegend = True
+usexlabel = False
+useylabel = False
+usetitle = False
+uselegend = False
+thelegendlabel = ''
+thetitle = ''
+thexlabel = ''
+theylabel = ''
+outputfile = None
+
 
 # handle required args first
 textfilename = sys.argv[1]
@@ -61,16 +71,6 @@ except getopt.GetoptError as err:
     print(str(err))  # will print something like "option -a not recognized"
     usage()
     sys.exit(2)
-
-usexlabel = False
-useylabel = False
-usetitle = False
-uselegend = False
-thelegendlabel = ''
-thetitle = ''
-thexlabel = ''
-theylabel = ''
-outputfile = None
 
 for o, a in opts:
     if o == "-x":

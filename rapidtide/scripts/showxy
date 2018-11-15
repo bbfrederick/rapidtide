@@ -47,6 +47,14 @@ def usage():
     print("\t-o\tsave plot to FILENAME instead of displaying to screen")
     return ()
 
+# set default variable values
+usebarplot = False
+usexlabel = False
+useylabel = False
+usetitle = False
+uselegend = True
+usepoints = False
+outputfile = None
 
 # now check options
 try:
@@ -88,14 +96,6 @@ for i in range(len(args)):
     else:
         thelegend.append(thesplit[0])
     print('input file number ', numfiles, ' is ', textfilename[-1], ', label is', thelegend[-1])
-
-usebarplot = False
-usexlabel = False
-useylabel = False
-usetitle = False
-uselegend = True
-usepoints = False
-outputfile = None
 
 for o, a in opts:
     if o == "-x":
