@@ -4,6 +4,4 @@ happyx \
     sub-01_ses-060_task-rest_run-001_bold.nii.gz \
     sub-01_ses-060_task-rest_run-001_bold.json \
     ../dst/happyx_motfilt_x \
-    --motionfile=sub-01_ses-060_task-rest_run-001_bold_prefiltered_func_data_mcf.par \
-    --numskip=10 \
-    --motskip=10 
+    --motionfile=sub-01_ses-060_task-rest_run-001_bold_prefiltered_func_data_mcf.par 
