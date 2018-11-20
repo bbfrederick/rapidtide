@@ -40,11 +40,18 @@ except ImportError:
 
 import rapidtide.io as tide_io
 
+try:
+    import plaidml.keras
+    plaidml.keras.install_backend("plaidml")
+except:
+    pass
+
 from keras.models import Sequential
 from keras.optimizers import RMSprop
 from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, MaxPooling1D, LSTM, TimeDistributed
 from keras.callbacks import TerminateOnNaN, ModelCheckpoint
 from keras.models import load_model
+
 
 class dlfilter:
     """Base class for deep learning filter"""
