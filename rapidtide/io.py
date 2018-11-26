@@ -693,7 +693,7 @@ def readvecs(inputfilename, colspec=None):
     -------
 
     """
-    with thefile = open(inputfilename, 'r'):
+    with open(inputfilename, 'r') as thefile:
         lines = thefile.readlines()
     if colspec is None:
         numvecs = len(lines[0].split())
