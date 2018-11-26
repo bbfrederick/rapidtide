@@ -693,8 +693,8 @@ def readvecs(inputfilename, colspec=None):
     -------
 
     """
-    thefile = open(inputfilename, 'r')
-    lines = thefile.readlines()
+    with thefile = open(inputfilename, 'r'):
+        lines = thefile.readlines()
     if colspec is None:
         numvecs = len(lines[0].split())
         collist = range(0, numvecs)
