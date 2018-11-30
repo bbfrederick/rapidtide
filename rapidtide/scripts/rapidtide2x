@@ -504,7 +504,9 @@ def main():
     optiondict['armodelorder'] = 1  # AR model order for prewhitening the data (I have no idea if this works)
     optiondict['dodeconv'] = False  # do Wiener deconvolution to find voxel transfer function
     optiondict['motionfilename'] = None  # by default do no motion regression
-    optiondict['delayderiv'] = False  # do not do delayed derivative
+    optiondict['mot_pos'] = False  # do not do position
+    optiondict['mot_deriv'] = True  # do use derivative
+    optiondict['mot_delayderiv'] = False  # do not do delayed derivative
     optiondict['savemotionfiltered'] = False  # save motion filtered file for debugging
 
     # filter options
@@ -1433,7 +1435,18 @@ def main():
     # filter out motion regressors here
     if optiondict['motionfilename'] is not None:
         print('regressing out motion')
-        splitfilename = optiondict['motionfilename'].split(':')
+
+        timings.append(['Motion filtering start', time.time(), None, None])
+        motionregressors, fmri_data_valid = tide_glmpass.motionregress(optiondict['motionfilename'],
+                                                                    fmri_data_valid,
+                                                                    tr,
+                                                                    motstart=validstart,
+                                                                    motend=validend,
+                                                                    position=optiondict['mot_pos'],
+                                                                    deriv=optiondict['mot_deriv'],
+                                                                    derivdelayed=optiondict['mot_delayderiv'])
+
+        '''splitfilename = optiondict['motionfilename'].split(':')
         if len(splitfilename) == 1:
             themotionfilename = splitfilename[0]
             colspec = None
@@ -1452,8 +1465,10 @@ def main():
                      motionregressors,
                      rt_floatset=rt_floatset,
                      rt_floattype=rt_floattype)
+        '''
 
         timings.append(['Motion filtering end', time.time(), fmri_data_valid.shape[0], 'voxels'])
+        tide_io.writenpvecs(motionregressors, outputname + '_orthogonalizedmotion.txt')
         if optiondict['memprofile']:
             memcheckpoint('...done')
         else:
