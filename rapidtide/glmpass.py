@@ -27,6 +27,7 @@ from __future__ import print_function, division
 import numpy as np
 
 import rapidtide.fit as tide_fit
+import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
@@ -175,6 +176,53 @@ def glmpass(numprocitems,
     return itemstotal
 
 
+def motionregress(themotionfilename,
+                  thedata,
+                  tr,
+                  orthogonalize=True,
+                  motstart=0,
+                  motend=-1,
+                  motionhp=None,
+                  motionlp=None,
+                  position=True,
+                  deriv=True,
+                  derivdelayed=False):
+    print('regressing out motion')
+    splitfilename = themotionfilename.split(':')
+    if len(splitfilename) == 1:
+        themotionfilename = splitfilename[0]
+        colspec = None
+    else:
+        themotionfilename = splitfilename[0]
+        colspec = splitfilename[1]
+    motionregressors = tide_io.calcmotregressors(
+        tide_io.readmotion(themotionfilename, colspec=colspec),
+        position=position, deriv=deriv, derivdelayed=derivdelayed)
+    if motend == -1:
+        motionregressors = motionregressors[:, motstart:]
+    else:
+        motionregressors = motionregressors[:, motstart:motend]
+    if (motionlp is not None) or (motionhp is not None):
+        mothpfilt = tide_filt.noncausalfilter(filtertype='arb')
+        if motionlp is None:
+            motionlp = 0.5 / tr
+        else:
+            motionlp = np.min([0.5 / tr, motionlp])
+        if motionhp is None:
+            motionhp = 0.0
+        mothpfilt.setarb(0.9 * motionhp, motionhp, motionlp, np.min([0.5 / tr, motionlp * 1.1]))
+        for i in range(motionregressors.shape[0]):
+            motionregressors[i, :] = mothpfilt.apply(1.0 / tr, motionregressors[i, :])
+    if orthogonalize:
+        motionregressors = tide_fit.gram_schmidt(motionregressors)
+
+    print('start motion filtering')
+    filtereddata = confoundglm(thedata, motionregressors, debug=True)
+    print()
+    print('motion filtering complete')
+    return motionregressors, filtereddata
+
+
 def confoundglm(data,
                      regressors,
                      debug=False,
@@ -202,12 +250,15 @@ def confoundglm(data,
         print('data shape:', data.shape)
         print('regressors shape:', regressors.shape)
     datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
+    filtereddata = data * 0.0
     for i in range(data.shape[0]):
-        if showprogressbar and (i % reportstep == 0 or i == data.shape[0] - 1):
+        if showprogressbar and (i > 0) and (i % reportstep == 0 or i == data.shape[0] - 1):
             tide_util.progressbar(i + 1, data.shape[0], label='Percent complete')
         datatoremove *= 0.0
         thefit, R = tide_fit.mlregress(regressors, data[i, :])
+        if i == 0 and debug:
+            print('fit shape:', thefit.shape)
         for j in range(regressors.shape[0]):
             datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * regressors[j, :])
-        data[i, :] -= datatoremove
-
+        filtereddata[i, :] = data[i, :] - datatoremove
+    return filtereddata
