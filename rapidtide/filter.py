@@ -1113,10 +1113,10 @@ class noncausalfilter:
 
     def setarb(self, lowerstop, lowerpass, upperpass, upperstop):
         if not (lowerstop <= lowerpass < upperpass):
-            print('noncausalfilter error: lowerpass must be between lowerstop and upperpass')
+            print('noncausalfilter error: lowerpass (', lowerpass,') must be between lowerstop and upperpass (', lowerstop, upperpass, ')')
             sys.exit()
         if not (lowerpass < upperpass <= upperstop):
-            print('noncausalfilter error: upperpass must be between lowerpass and upperstop')
+            print('noncausalfilter error: upperpass (', upperpass,') must be between lowerpass and upperstop(', lowerpass, upperstop, ')')
             sys.exit()
         self.arb_lowerstop = 1.0 * lowerstop
         self.arb_lowerpass = 1.0 * lowerpass
