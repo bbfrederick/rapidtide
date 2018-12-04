@@ -212,13 +212,13 @@ def rrifromphase(timeaxis, thephase):
     return None
 
 
-def setnotchfilter(thefilter, thefreq, notchwidth=0.01):
+def setnotchfilter(thefilter, thefreq, notchwidth=1.0):
     thefilter.settype('arb_stop')
     thefilter.setarb(
-        thefreq * (1.0 - notchwidth / 2.0),
-        thefreq * (1.0 - notchwidth / 2.0),
-        thefreq * (1.0 + notchwidth / 2.0),
-        thefreq * (1.0 + notchwidth / 2.0))
+        thefreq - notchwidth / 2.0,
+        thefreq - notchwidth / 2.0,
+        thefreq + notchwidth / 2.0,
+        thefreq + notchwidth / 2.0)
 
 
 def cardiacsig(thisphase, amps=[1.0, 0.0, 0.0], phases=None, overallphase=0.0):
@@ -254,7 +254,7 @@ def cardiacfromimage(normdata_byslice,
                      tr,
                      slicetimes,
                      initprefilter,
-                     notchwidth=0.015,
+                     notchpct=0.015,
                      madnorm=True,
                      nprocs=1,
                      debug=False,
@@ -295,13 +295,18 @@ def cardiacfromimage(normdata_byslice,
     # delete the TR frequency and the first subharmonic
     print('notch filtering...')
     maxpass = np.min([slicesamplerate / 2.0, initprefilter.getfreqlimits()[2]])
-    if notchwidth > 0.0:
+    if notchpct > 0.0:
         stopfreq = 1.0 / tr
+        freqstep = 0.5 * slicesamplerate / len(filthirestc)
         maxharmonic = int(maxpass // stopfreq)
         print('highest harmonic is', maxharmonic, '(', maxharmonic * stopfreq, 'Hz)')
         trnotchfilter = tide_filt.noncausalfilter(debug=debug)
         for harmonic in range(1, maxharmonic + 1):
             print('removing harmonic at', harmonic * stopfreq)
+            print('notchpct, notchwidth freq, slicesamplerate, stopfreq, freqstep, minfreqstep', notchpct, notchpct * harmonic * stopfreq, slicesamplerate, stopfreq, freqstep, freqstep / (harmonic * stopfreq))
+            notchwidth = np.max([notchpct * harmonic * stopfreq, freqstep])
+            print('\tnotchwidth, bins', notchwidth, int(notchwidth // freqstep))
+            print()
             setnotchfilter(trnotchfilter, harmonic * stopfreq, notchwidth=notchwidth)
             filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
 
@@ -537,7 +542,7 @@ inputfreq = 32.0
 inputstart = 0.0
 doglm = False
 motionfile = None
-notchwidth = 0.015
+notchpct = 0.015
 arb_lower = 0.75
 arb_upper = 3.0
 softvesselfrac = 0.4
@@ -658,7 +663,7 @@ for o, a in opts:
         doglm = True
         print('will generate and remove aliased voxelwise cardiac regressors')
     elif o == "--disablenotch":
-        notchwidth = -1.0
+        notchpct = -1.0
         print('Disabling subharmonic notch filter')
     elif o == "--nodetrend":
         detrendorder = 0
@@ -718,8 +723,8 @@ for o, a in opts:
         print('will set bottom of cardiac band to', newval * 60.0, 'BPM from', arb_lower * 60.0, 'BPM')
         arb_lower = newval
     elif o == "--notchwidth":
-        notchwidth = float(a) / 100.0
-        print('setting notchwidth to', notchwidth * 100.0, '%')
+        notchpct = float(a) / 100.0
+        print('setting notchwidth to', notchpct * 100.0, '%')
     elif o == "--nprocs":
         nprocs = int(a)
         if nprocs < 1:
@@ -814,7 +819,7 @@ arb_upperstop = arb_upper * 1.1
 thecardbandfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
 infodict['filtermaxbpm'] = arb_upper * 60.0
 infodict['filterminbpm'] = arb_lower * 60.0
-infodict['notchwidthpct'] = notchwidth * 100.0
+infodict['notchpct'] = notchpct * 100.0
 timings.append(['Argument parsing done', time.time(), None, None])
 
 # read in the image data
@@ -903,7 +908,7 @@ cardfromfmri_sliceres, slicesamplerate, numsteps = cardiacfromimage(normdata_bys
                                                                     thecardbandfilter,
                                                                     madnorm=domadnorm,
                                                                     nprocs=nprocs,
-                                                                    notchwidth=notchwidth,
+                                                                    notchpct=notchpct,
                                                                     usemask=usemaskcardfromfmri,
                                                                     debug=debug)
 timings.append(['Cardiac signal generated from image data', time.time(), None, None])
