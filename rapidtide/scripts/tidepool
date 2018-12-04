@@ -737,16 +737,12 @@ def calcAtlasStats():
             for regnum, region in enumerate(atlaslabels):
                 print('calculating stats for region', regnum + 1, '(', region, ')')
                 atlasstats[themap][region] = {}
-                atlasstats[themap][region]['mean'] = np.mean(
-                    overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
-                atlasstats[themap][region]['median'] = np.median(
-                    overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
-                atlasstats[themap][region]['robustmean'] = mad(
-                    overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
-                atlasstats[themap][region]['std'] = np.std(
-                    overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
-                atlasstats[themap][region]['MAD'] = mad(
-                    overlays[themap].data[np.where(overlays['atlas'].data == (regnum + 1))])
+                maskedregion = np.where((overlays['atlas'].data == (regnum + 1)) & (overlays[themap].mask > 0))
+                atlasstats[themap][region]['mean'] = np.mean(overlays[themap].data[maskedregion])
+                atlasstats[themap][region]['median'] = np.median(overlays[themap].data[maskedregion])
+                atlasstats[themap][region]['robustmean'] = mad(overlays[themap].data[maskedregion])
+                atlasstats[themap][region]['std'] = np.std(overlays[themap].data[maskedregion])
+                atlasstats[themap][region]['MAD'] = mad(overlays[themap].data[maskedregion])
             atlasstatmap = overlays[themap].duplicate(themap + '_atlasstat', overlays[themap].label)
             atlasstatmap.funcmask = overlays['atlasmask'].data
             atlasstatmap.data *= 0.0
@@ -787,6 +783,7 @@ def updateAtlasStats():
                 overlays[themap + '_atlasstat'].updateStats()
 
 
+'''
 def doAtlasAveraging(state):
     global atlasaveragingdone
     print('in doAtlasAveraging')
@@ -797,6 +794,7 @@ def doAtlasAveraging(state):
         atlasaveragingdone = False
         print('atlas averaging is turned off')
     updateOrthoImages()
+'''
 
 
 def updateAveragingMode():
@@ -921,79 +919,92 @@ def set_atlasmask():
     ui.setMask_Button.setText('Valid mask')
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['atlasmask'].data)
-
     updateOrthoImages()
     updateHistogram()
 
 
 def set_lagmask():
-    global overlays, loadedfuncmaps, ui
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone
     print('Using valid fit points as functional mask')
     ui.setMask_Button.setText('Valid mask')
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['lagmask'].data)
+    atlasaveragingdone = False
+    updateAveragingMode()
     updateOrthoImages()
     updateHistogram()
 
 
 def set_refinemask():
-    global overlays, loadedfuncmaps, ui
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone
     print('Voxel refinement mask')
     ui.setMask_Button.setText('Refine mask')
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['refinemask'].data)
+    atlasaveragingdone = False
+    updateAveragingMode()
     updateOrthoImages()
     updateHistogram()
 
 
 def set_nomask():
-    global overlays, loadedfuncmaps, ui
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone
     print('disabling functional mask')
     ui.setMask_Button.setText('No Mask')
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(None)
+    atlasaveragingdone = False
+    updateAveragingMode()
     updateOrthoImages()
     updateHistogram()
 
 
 def set_0p05():
-    global overlays, loadedfuncmaps, ui
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone
     print('setting functional mask to p<0.05')
     ui.setMask_Button.setText('p<0.05')
     # overlays['jit_mask'] = tide_stats.makepmask(overlays['lagstrengths'], 0.05, sighistfit, onesided=True)
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['p_lt_0p050_mask'].data)
         # overlays[themap].setFuncMask(overlays['jit_mask'].data)
+    atlasaveragingdone = False
+    updateAveragingMode()
     updateOrthoImages()
     updateHistogram()
 
 
 def set_0p01():
-    global overlays, loadedfuncmaps, ui
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone
     print('setting functional mask to p<0.01')
     ui.setMask_Button.setText('p<0.01')
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['p_lt_0p010_mask'].data)
+    atlasaveragingdone = False
+    updateAveragingMode()
     updateOrthoImages()
     updateHistogram()
 
 
 def set_0p005():
-    global overlays, loadedfuncmaps, ui
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone
     print('setting functional mask to p<0.005')
     ui.setMask_Button.setText('p<0.005')
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['p_lt_0p005_mask'].data)
+    atlasaveragingdone = False
+    updateAveragingMode()
     updateOrthoImages()
     updateHistogram()
 
 
 def set_0p001():
-    global overlays, loadedfuncmaps, ui
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone
     print('setting functional mask to p<0.001')
     ui.setMask_Button.setText('p<0.001')
     for themap in loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['p_lt_0p001_mask'].data)
+    atlasaveragingdone = False
+    updateAveragingMode()
     updateOrthoImages()
     updateHistogram()
 
@@ -1328,7 +1339,7 @@ def main():
     global focusmap, bgmap
     global maps
     global roi
-    global overlays, loadedfuncmaps, atlasavgmaps, atlasstats, averagingmode
+    global overlays, loadedfuncmaps, atlasstats, averagingmode
     global mainwin, orthoimages, overlaybuttons, panetomap
     global img_colorbar
     global lg_imgsize, scalefacx, scalefacy, scalefacz
