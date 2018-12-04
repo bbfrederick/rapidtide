@@ -1612,6 +1612,7 @@ def main():
                                     'reference')
         atlaslabels = tide_io.readlabels(os.path.join(referencedir, atlasname + '_regions.txt'))
         print(atlaslabels)
+        atlasniftiname = None
         if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
             atlasniftiname = os.path.join(referencedir, atlasname + '_2mm.nii.gz')
             atlasmaskniftiname = os.path.join(referencedir, atlasname + '_2mm_mask.nii.gz')
