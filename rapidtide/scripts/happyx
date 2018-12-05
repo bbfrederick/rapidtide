@@ -153,7 +153,7 @@ def usage():
     print("optional arguments:")
     print("    --glm                          - generate voxelwise aliased synthetic cardiac regressors and filter")
     print("                                     them out")
-    print("    --minhr=MINHR                  - highpass filter cardiac data to MINHR BPM (default is 45)")
+    print("    --minhr=MINHR                  - highpass filter cardiac data to MINHR BPM (default is 40)")
     print("    --maxhr=MAXHR                  - lowpass filter cardiac data to MAXHR BPM (default is 180)")
     print(
         "    --envcutoff=CUTOFF             - lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4)")
@@ -543,8 +543,8 @@ inputstart = 0.0
 doglm = False
 motionfile = None
 notchpct = 0.015
-arb_lower = 0.75
-arb_upper = 3.0
+minhr = 40
+maxhr = 180
 softvesselfrac = 0.4
 infodict = {}
 stdfreq = 25.0
@@ -717,11 +717,6 @@ for o, a in opts:
         else:
             print('illegal gridding kernel specified - aborting')
             sys.exit()
-    elif o == "--minhr":
-        newval = float(a) / 60.0
-        # if newval > arb_lower:
-        print('will set bottom of cardiac band to', newval * 60.0, 'BPM from', arb_lower * 60.0, 'BPM')
-        arb_lower = newval
     elif o == "--notchwidth":
         notchpct = float(a) / 100.0
         print('setting notchwidth to', notchpct * 100.0, '%')
@@ -746,11 +741,14 @@ for o, a in opts:
     elif o == "--envthresh":
         threshoff = float(a)
         print('will set lowest value of cardiac envelope band to', envthresh, 'x the maximum value')
+    elif o == "--minhr":
+        newval = float(a)
+        print('will set bottom of cardiac band to', newval, 'BPM from', minhr, 'BPM')
+        minhr = newval
     elif o == "--maxhr":
-        newval = float(a) / 60.0
-        # if newval < arb_upper:
-        print('will set top of cardiac band to', newval * 60.0, 'BPM from', arb_upper * 60.0, 'BPM')
-        arb_upper = newval
+        newval = float(a)
+        print('will set top of cardiac band to', newval, 'BPM from', maxhr, 'BPM')
+        maxhr = newval
     elif o == "--forcehr":
         forcedhr = float(a) / 60.0
         print('force heart rate detector to', forcedhr * 60.0, 'BPM')
@@ -812,6 +810,9 @@ if mklexists:
     print('mkl max threads =', mklmaxthreads)
     mkl.set_num_threads(np.min([mklthreads, mklmaxthreads]))
 
+# set up cardiac filter
+arb_lower = minhr / 60.0
+arb_upper = maxhr / 60.0
 thecardbandfilter = tide_filt.noncausalfilter()
 thecardbandfilter.settype('arb')
 arb_lowerstop = arb_lower * 0.9
