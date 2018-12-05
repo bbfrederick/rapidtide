@@ -321,13 +321,6 @@ def valtoindex(thearray, thevalue, evenspacing=True):
     else:
         return (np.abs(thearray - thevalue)).argmin()
 
-    """
-    if toleft:
-        return bisect.bisect_left(thearray, thevalue)
-    else:
-        return bisect.bisect_right(thearray, thevalue)
-    """
-
 
 def progressbar(thisval, end_val, label='Percent', barsize=60):
     """

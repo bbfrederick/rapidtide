@@ -3,7 +3,7 @@ from __future__ import print_function, division
 
 import numpy as np
 import scipy as sp
-import pylab as plt
+import matplotlib.pyplot as plt
 
 from rapidtide.util import valtoindex
 from rapidtide.filter import noncausalfilter
@@ -12,9 +12,9 @@ from rapidtide.filter import noncausalfilter
 def spectralfilterprops(thefilter, debug=False):
     lowerstop, lowerpass, upperpass, upperstop = thefilter['filter'].getfreqlimits()
     lowerstopindex = valtoindex(thefilter['frequencies'], lowerstop)
-    lowerpassindex = valtoindex(thefilter['frequencies'], lowerpass, toleft=False)
+    lowerpassindex = valtoindex(thefilter['frequencies'], lowerpass)
     upperpassindex = valtoindex(thefilter['frequencies'], upperpass)
-    upperstopindex = np.min([valtoindex(thefilter['frequencies'], upperstop, toleft=False), len(thefilter['frequencies']) - 1])
+    upperstopindex = np.min([valtoindex(thefilter['frequencies'], upperstop), len(thefilter['frequencies']) - 1])
     if debug:
         print('target freqs:', lowerstop, lowerpass, upperpass, upperstop)
         print('actual freqs:', thefilter['frequencies'][lowerstopindex],
@@ -93,7 +93,6 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
     if display:
         legend = []
         plt.figure()
-        plt.hold(True)
         plt.ylim([-1.1, 1.1 * len(allfilters)])
         offset = 0.0
         for thefilter in allfilters:
@@ -139,7 +138,6 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
     if display:
         legend = []
         plt.figure()
-        plt.hold(True)
         plt.ylim([-2.2, 2.2 * len(testwaves)])
         offset = 0.0
         for thewave in testwaves:
