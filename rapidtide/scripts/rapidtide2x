@@ -302,6 +302,12 @@ def usage():
     print("                                     specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For")
     print("                                     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9")
     print("                                     for X, Y, Z, RotX, RotY, RotZ, respectively")
+    print("    --motpos                       - Toggle whether displacement regressors will be used in motion regression.")
+    print("                                     Default is False.")
+    print("    --motderiv                     - Toggle whether derivatives will be used in motion regression.")
+    print("                                     Default is True.")
+    print("    --motdelayderiv                - Toggle whether delayed derivative  regressors will be used in motion regression.")
+    print("                                     Default is False.")
     print("")
     print("Correlation options:")
     print("    -O OVERSAMPFAC                 - Oversample the fMRI data by the following integral ")
@@ -635,6 +641,9 @@ def main():
                                                                                                           'passes=',
                                                                                                           'corrmask=',
                                                                                                           'motionfile=',
+                                                                                                          'motpos',
+                                                                                                          'motderiv',
+                                                                                                          'motdelayderiv',
                                                                                                           'includemask=',
                                                                                                           'excludemask=',
                                                                                                           'refineoffset',
@@ -932,6 +941,15 @@ def main():
         elif o == '--motionfile':
             optiondict['motionfilename'] = a
             print('Will regress derivatives and delayed derivatives of motion out of data prior to analysis')
+        elif o == '--motpos':
+            optiondict['mot_pos'] = not optiondict['mot_pos']
+            print(optiondict['mot_pos'], 'set to', optiondict['mot_pos'])
+        elif o == '--motderiv':
+            optiondict['mot_deriv'] = not optiondict['mot_deriv']
+            print(optiondict['mot_deriv'], 'set to', optiondict['mot_deriv'])
+        elif o == '--motdelayderiv':
+            optiondict['mot_delayderiv'] = not optiondict['mot_delayderiv']
+            print(optiondict['mot_delayderiv'], 'set to', optiondict['mot_delayderiv'])
         elif o == '-f':
             optiondict['gausssigma'] = float(a)
             optiondict['dogaussianfilter'] = True
@@ -1445,27 +1463,6 @@ def main():
                                                                     position=optiondict['mot_pos'],
                                                                     deriv=optiondict['mot_deriv'],
                                                                     derivdelayed=optiondict['mot_delayderiv'])
-
-        '''splitfilename = optiondict['motionfilename'].split(':')
-        if len(splitfilename) == 1:
-            themotionfilename = splitfilename[0]
-            colspec = None
-        else:
-            themotionfilename = splitfilename[0]
-            colspec = splitfilename[1]
-        motionregressors = tide_fit.gram_schmidt(
-            tide_io.calcmotregressors(
-                tide_io.readmotion(themotionfilename, colspec=colspec),
-                start=validstart, end=validend, position=False, deriv=True, derivdelayed=optiondict['delayderiv'])
-            )
-        tide_io.writenpvecs(motionregressors, outputname + '_orthogonalizedmotion.txt')
-        timings.append(['Motion filtering start', time.time(), None, None])
-
-        tide_glmpass.confoundglm(fmri_data_valid,
-                     motionregressors,
-                     rt_floatset=rt_floatset,
-                     rt_floattype=rt_floattype)
-        '''
 
         timings.append(['Motion filtering end', time.time(), fmri_data_valid.shape[0], 'voxels'])
         tide_io.writenpvecs(motionregressors, outputname + '_orthogonalizedmotion.txt')
