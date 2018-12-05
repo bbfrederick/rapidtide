@@ -60,7 +60,7 @@ def eval_phaseanalysis(rootname=None, display=False):
 
 
 def test_phaseanalysis(display=False):
-    eval_phaseanalysis(rootname='./phasetest', display=display)
+    eval_phaseanalysis(rootname='rapidtide/tests/phasetest', display=display)
 
 def main():
     test_phaseanalysis(display=True)
