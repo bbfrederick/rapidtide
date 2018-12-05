@@ -1441,7 +1441,7 @@ def main():
                                                                     fmri_data_valid,
                                                                     tr,
                                                                     motstart=validstart,
-                                                                    motend=validend,
+                                                                    motend=validend + 1,
                                                                     position=optiondict['mot_pos'],
                                                                     deriv=optiondict['mot_deriv'],
                                                                     derivdelayed=optiondict['mot_delayderiv'])
