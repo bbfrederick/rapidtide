@@ -1,5 +1,37 @@
 # History of changes
 
+## Version 1.7 (12/5/18)
+* (whole project) Stopped pretending happy doesn't exist - adding to the changelog and will start writing docs.
+* (whole project) Tried to generate some workflows.
+* (whole project) Update issue templates.
+* (whole project) Put back some critical information that got lost in the docs reorganization.
+* (happyx) Changed default minhr to 40 BPM, cleaned up specification of min/max HR.
+* (happyx) Put a lower limit on the envelope function in cleancardiac to limit gain..
+* (happyx) Can use weighted masks, calculate envelop normalized cardiac waveforms..
+* (happyx) Fixed notch filter to always filter at least one frequency bin.
+* (happyx) Added ability to skip trs in fmrifile and motion file.
+* (happyx) Mad normalize slice timecourses, refactor code, add some test data.
+* (happy, happyx) Moved some routines out of happy(x) into libraries, added trendfilter.
+* (happy, happyx, rapidtide2, rapidtide2x) Added motion regressor filtering.
+* (happyx, rapidtide2, rapidtide2x) Add high order polynomial detrending.
+* (happyx) Added deep learning filter for refining cardiac waveform (off by default).
+* (rapidtide2, rapidtide2x) Oversample factor was erroneously set to 0 if TR <=0.5 seconds.
+* (showxcorrx) Added file output capability.
+* (showxcorrx) Set verbose to False by default.
+* (showxcorrx) Trimming extraneous output.
+* (tidepool) First crack at fixing atlas averaging.
+* (tidepool) Initialize atlasniftiname.
+* (showxy) Added Bland-Altman plots with annotations, range specifications, font scaling.
+* (showxy) Updated for new matplotlib interface, enabled legends.
+* (showtc) Now can specify legend location.
+* (showtc) Added fontscalefac option.
+* (resample.py) Fixed cutoff frequency on upsample filter.
+* (resample.py) Lowpass filter after upsampling.
+* (fit.py) Limit peakstart and peakend to stay within legal range.
+* (io.py) New additions to readvecs to specify columns.
+* (dlfilter.py) added.
+
+
 ## Version 1.6 (9/19/18)
 * (whole project) Cleanup and reorganization (tsalo).
 * (documentation) Major revisions to clean things up (tsalo).
