@@ -115,6 +115,7 @@ def usage():
         "[--nodetrend]",
         "[--nowindow]",
         "[-f]",
+        "[-o OUTPUTFILE]",
         "[--phat]",
         "[--liang]",
         "[--eckart]",
@@ -161,6 +162,7 @@ def usage():
     print("                         return the partial correlation")
     print("    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS ")
     print("                         repetition")
+    print("    -o OUTPUTFILE      - Writes summary lines to OUTPUTFILE (sets -A)")
     print("")
     return ()
 
@@ -181,6 +183,7 @@ thelabel = ""
 trimdata = False
 verbose = False
 summarymode = False
+outputfile = None
 dofftcorr = True
 labelline = False
 estimate_significance = False
@@ -212,7 +215,7 @@ numpoints = len(inputdata1)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w",
+    opts, args = getopt.getopt(sys.argv[4:], "o:fN:r:z:aATtVLRCF:dl:s:D:w",
                                ["phat", "liang", "eckart", "nodetrend", "nowindow", "windowfunc=", "cepstral",
                                 "savecorr=", "help"])
 except getopt.GetoptError as err:
@@ -322,6 +325,10 @@ for o, a in opts:
         theprefilter.settype('cardiac')
         if verbose:
             print('prefiltering to cardiac band')
+    elif o == "-o":
+        verbose = False
+        outputfile = a
+        summarymode = True
     elif o == "-A":
         verbose = False
         summarymode = True
@@ -516,23 +523,23 @@ if verbose:
 
 if summarymode:
     if estimate_significance:
-        if uselabel:
-            if labelline:
-                print('thelabel', 'pearson_R', 'pearson_R(p=0.05)', 'xcorr_R', 'xcorr_R(P=0.05)', 'xcorr_maxdelay')
-            print(thelabel, thepxcorr[0], pearpcts_fit[0], R, pcts_fit[0], -maxdelay)
-        else:
-            if labelline:
-                print('pearson_R', 'pearson_R(p=0.05)', 'xcorr_R', 'xcorr_R(P=0.05)', 'xcorr_maxdelay')
-            print(thepxcorr[0], pearpcts_fit[0], R, pcts_fit[0], -maxdelay)
+        thelabelitems = ['pearson_R',       'pearson_R(p=0.05)',  'xcorr_R', 'xcorr_R(p=0.05)', 'xcorr_maxdelay']
+        thedataitems =  [ str(thepxcorr[0]), str(pearpcts_fit[0]), str(R),    str(pcts_fit[0]),  str(-maxdelay)]
     else:
-        if uselabel:
-            if labelline:
-                print('thelabel', 'pearson_r', 'pearson_p', 'xcorr_R', 'xcorr_maxdelay')
-            print(thelabel, thepxcorr[0], thepxcorr[1], R, -maxdelay)
-        else:
-            if labelline:
-                print('pearson_r\tpearson_p\txcorr_R\txcorr_t\txcorr_maxdelay')
-            print(thepxcorr[0], '\t', thepxcorr[1], '\t', R, '\t', -maxdelay)
+        thelabelitems = ['pearson_R',       'pearson_p',       'xcorr_R', 'xcorr_maxdelay']
+        thedataitems =  [ str(thepxcorr[0]), str(thepxcorr[1]), str(R),    str(-maxdelay)]
+    if uselabel:
+        thelabelitems = ['thelabel'] + thelabelitems
+        thedataitems =  [thelabel] + thedataitems
+    if labelline:
+        outputstring = '\t'.join(thelabelitems) + '\n' + '\t'.join(thedataitems)
+    else:
+        outputstring = '\t'.join(thedataitems)
+    if outputfile is None:
+        print(outputstring)
+    else:
+        with open(outputfile, "w") as text_file:
+            text_file.write(outputstring + '\n')
 
 if display:
     fig = figure()
