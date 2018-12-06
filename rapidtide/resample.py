@@ -550,7 +550,7 @@ def calcsliceoffset(sotype, slicenum, numslices, tr, multiband=1):
 
 # NB: a positive value of shifttrs delays the signal, a negative value advances it
 # timeshift using fourier phase multiplication
-def timeshift(inputtc, shifttrs, padtrs, doplot=False):
+def timeshift(inputtc, shifttrs, padtrs, doplot=False, debug=False):
     """
 
     Parameters
@@ -567,6 +567,8 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
     # set up useful parameters
     thelen = np.shape(inputtc)[0]
     thepaddedlen = thelen + 2 * padtrs
+    if debug:
+        print('timesshift: thelen, padtrs, thepaddedlen=', thelen, padtrs, thepaddedlen)
     imag = 1.j
 
     # initialize variables
@@ -617,5 +619,5 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False):
 
         pl.show()
 
-    return ([shifted_y[padtrs:padtrs + thelen], shifted_weights[padtrs:padtrs + thelen], shifted_y,
-             shifted_weights])
+    return [shifted_y[padtrs:padtrs + thelen], shifted_weights[padtrs:padtrs + thelen], shifted_y,
+             shifted_weights]
