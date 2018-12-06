@@ -632,7 +632,6 @@ def prep(window_size,
                   np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
 
     y -= np.mean(y, axis=0)
-    thestd = np.std(y, axis=0)
     themad = mad(y, axis=0)
     for thesubj in range(themad.shape[0]):
         if themad[thesubj] > 0.0:
@@ -640,7 +639,6 @@ def prep(window_size,
 
     x -= np.mean(x, axis=0)
     themad = mad(x, axis=0)
-    thestd = np.std(x, axis=0)
     for thesubj in range(themad.shape[0]):
         if themad[thesubj] > 0.0:
             x[:, thesubj] /= themad[thesubj]
