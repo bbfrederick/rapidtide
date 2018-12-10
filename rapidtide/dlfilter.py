@@ -601,6 +601,7 @@ def prep(window_size,
         usebadpts=False,
         startskip=200,
         endskip=0,
+        excludesubject=True,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
         inputfrag='cardfromfmri',
@@ -609,6 +610,31 @@ def prep(window_size,
         debug=False,
         readlim=None,
         countlim=None):
+    '''
+    prep - reads in training and validation data for 1D filter
+
+    Parameters
+    ----------
+    window_size
+    step
+    excludethresh
+    usebadpts
+    startskip
+    endskip
+    thesuffix
+    thedatadir
+    inputfrag
+    targetfrag
+    dofft
+    debug
+    readlim
+    countlim
+
+    Returns
+    -------
+    train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize
+
+    '''
 
     searchstring = os.path.join(thedatadir, '*normpleth_' + thesuffix + '.txt')
 
@@ -651,6 +677,10 @@ def prep(window_size,
 
     thefabs = np.fabs(x)
     themax = np.max(thefabs, axis=0)
+
+    if excludesubject:
+        pass
+
     cleansubjs = np.where(themax < excludethresh)[0]
 
     cleancount = len(cleansubjs)
