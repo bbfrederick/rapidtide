@@ -499,27 +499,8 @@ def printthresholds(pcts, thepercentiles, labeltext):
         print('\tp <', "{:.3f}".format(1.0 - thepercentiles[i]), ': ', pcts[i])
 
 
-# report the pearson correlation
-if showpearson and verbose:
-    print('Pearson_R:\t', thepxcorr[0])
-    if estimate_significance:
-        for idx, percentile in enumerate(thepercentiles):
-            print('    pear_p(', "{:.3f}".format(1.0 - percentile), '):\t', pearpcts[idx])
-    print("")
-
 if debug:
     print(thepxcorr)
-
-if verbose:
-    if uselabel:
-        print(thelabel, ":\t", maxdelay)
-    else:
-        print("Crosscorrelation_Rmax:\t", R)
-        print("Crosscorrelation_maxdelay:\t", maxdelay)
-        if estimate_significance:
-            for idx, percentile in enumerate(thepercentiles):
-                print('    xc_p(', "{:.3f}".format(1.0 - percentile), '):\t', pcts[idx])
-        print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
 
 if summarymode:
     if estimate_significance:
@@ -540,6 +521,23 @@ if summarymode:
     else:
         with open(outputfile, "w") as text_file:
             text_file.write(outputstring + '\n')
+else:
+    # report the pearson correlation
+    if showpearson:
+        print('Pearson_R:\t', thepxcorr[0])
+        if estimate_significance:
+            for idx, percentile in enumerate(thepercentiles):
+                print('    pear_p(', "{:.3f}".format(1.0 - percentile), '):\t', pearpcts[idx])
+        print("")
+    if uselabel:
+        print(thelabel, ":\t", maxdelay)
+    else:
+        print("Crosscorrelation_Rmax:\t", R)
+        print("Crosscorrelation_maxdelay:\t", maxdelay)
+        if estimate_significance:
+            for idx, percentile in enumerate(thepercentiles):
+                print('    xc_p(', "{:.3f}".format(1.0 - percentile), '):\t', pcts[idx])
+        print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
 
 if display:
     fig = figure()
