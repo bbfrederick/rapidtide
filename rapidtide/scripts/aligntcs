@@ -27,9 +27,12 @@ import getopt
 
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
-from scipy import arange
-from numpy import max, floor
-import matplotlib.pyplot as plt
+import rapidtide.miscmath as tide_math
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+import rapidtide.correlate as tide_corr
+import numpy as np
+from matplotlib.pyplot import plot, show, figure
 
 
 def usage():
@@ -52,6 +55,8 @@ def usage():
 
 def main():
     display = True
+    verbose = False
+    searchrange = None
 
     # get the command line parameters
     nargs = len(sys.argv)
@@ -61,12 +66,16 @@ def main():
     infile1 = sys.argv[1]
     insamplerate1 = float(sys.argv[2])
     infile2 = sys.argv[3]
-    insamplerate3 = float(sys.argv[4])
+    insamplerate2 = float(sys.argv[4])
     outputfile = sys.argv[5]
+    print(sys.argv, len(sys.argv))
+
+    theprefilter = tide_filt.noncausalfilter()
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(sys.argv[5:], "s", ["nodisplay", "help"])
+        opts, args = getopt.getopt(sys.argv[6:], "r:VLRCF:", ["nodisplay", "help"])
+        print('options:', opts)
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like "option -x not recognized"
@@ -77,12 +86,49 @@ def main():
         if o == "--nodisplay":
             display = False
             print('turning display off')
+        elif o == "-r":
+            searchrange = float(a)
+            print('peak search restricted to +/-', searchrange, ' seconds')
+        elif o == "-V":
+            theprefilter.settype('vlf')
+            if verbose:
+                print('prefiltering to vlf band')
+        elif o == "-L":
+            theprefilter.settype('lfo')
+            if verbose:
+                print('prefiltering to lfo band')
+        elif o == "-R":
+            theprefilter.settype('resp')
+            if verbose:
+                print('prefiltering to respiratory band')
+        elif o == "-C":
+            theprefilter.settype('cardiac')
+            if verbose:
+                print('prefiltering to cardiac band')
+        elif o == "-F":
+            arbvec = a.split(',')
+            if len(arbvec) != 2 and len(arbvec) != 4:
+                usage()
+                sys.exit()
+            if len(arbvec) == 2:
+                arb_lower = float(arbvec[0])
+                arb_upper = float(arbvec[1])
+                arb_lowerstop = 0.9 * float(arbvec[0])
+                arb_upperstop = 1.1 * float(arbvec[1])
+            if len(arbvec) == 4:
+                arb_lower = float(arbvec[0])
+                arb_upper = float(arbvec[1])
+                arb_lowerstop = float(arbvec[2])
+                arb_upperstop = float(arbvec[3])
+            theprefilter.settype('arb')
+            theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+            if verbose:
+                print('prefiltering to ', arb_lower, arb_upper, "(stops at ", arb_lowerstop, arb_upperstop, ")")
         else:
             assert False, "unhandled option"
 
     intimestep1 = 1.0 / insamplerate1
     intimestep2 = 1.0 / insamplerate2
-    outtimestep = 1.0 / outsamplerate
     inputdata1 = tide_io.readvec(infile1)
     inputdata2 = tide_io.readvec(infile2)
 
@@ -98,40 +144,44 @@ def main():
     else:
         paddeddata1 = tide_math.corrnormalize(theprefilter.apply(insamplerate1, inputdata1))
 
-    paddeddata2 = np.zeros(int(np.ceil(fulltime // intimestep1)), dtype=float)
-    if time2 < fulltime:
-        
-    
-        
-        
-    numoutpoints = floor(totaltime / outtimestep) + 1
+    timeaxisfull = np.linspace(0.0, intimestep1 * len(paddeddata1), num=len(paddeddata1), endpoint=False)
+    timeaxis1 = np.linspace(0.0, intimestep1 * len(inputdata1), num=len(inputdata1), endpoint=False)
+    timeaxis2 = np.linspace(0.0, intimestep2 * len(inputdata2), num=len(inputdata2), endpoint=False)
+    paddeddata2 = tide_resample.doresample(timeaxis2, tide_math.corrnormalize(theprefilter.apply(insamplerate2, inputdata2)), timeaxisfull)
 
-    in_t = arange(0.0, totaltime, intimestep)
-    out_t = arange(0.0, outtimestep * numoutpoints, outtimestep)
-    outputdata = tide_resample.doresample(in_t, inputdata, out_t, method='cubic')
-    IF = max([60.0, 2.0 * insamplerate])
-    if outsamplerate < insamplerate:
-        outputdata2 = tide_resample.dotwostepresample(in_t, inputdata, IF, outsamplerate)
-        outputdata3 = tide_resample.arbresample(inputdata, insamplerate, outsamplerate)
-        print(len(out_t), len(outputdata2))
-        if len(out_t) < len(outputdata2):
-            outputdata2 = outputdata2[0:len(out_t)]
+    # now paddeddata1 and 2 are on the same timescales
+    thexcorr = tide_corr.fastcorrelate(paddeddata1, paddeddata2)
+    xcorrlen = len(thexcorr)
+    xcorr_x = np.r_[0.0:xcorrlen] * intimestep1 - (xcorrlen * intimestep1) / 2.0 + intimestep1 / 2.0
 
-    if display:
-        plt.plot(in_t, inputdata + 0.4, 'k')
+    if searchrange is None:
+        searchrange = (xcorrlen * intimestep1) / 4.0
+    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
+        xcorr_x, thexcorr, -searchrange, searchrange, 1000.0,
+        refine=True,
+        useguess=False,
+        fastgauss=False,
+        displayplots=False)
 
-    tide_io.writevec(outputdata, outputfile)
-    tide_io.writevec(outputdata, outputfile + '_dual')
-    if display:
-        plt.plot(out_t, outputdata - 0.4, 'r')
-        if outsamplerate < insamplerate:
-            plt.plot(out_t, outputdata2 - 0.8, 'g', out_t, outputdata3 - 1.2, 'b')
-            plt.legend(('original signal', 'resampled', 'dualresampled'))
-        else:
-            plt.legend(('original signal', 'resampled'))
+    print("Crosscorrelation_Rmax:\t", maxval)
+    print("Crosscorrelation_maxdelay:\t", maxdelay)
+
+    # now align the second timecourse to the first
+
+    aligneddata2 = tide_resample.doresample(timeaxis2, inputdata2, timeaxis1 - maxdelay)
+    tide_io.writevec(aligneddata2, outputfile)
 
     if display:
-        plt.show()
+        fig = figure()
+        ax = fig.add_subplot(111)
+        # ax.set_title('GCC')
+        plot(xcorr_x, thexcorr, 'k')
+        show()
+        fig = figure()
+        plot(timeaxis1, inputdata1)
+        plot(timeaxis1, aligneddata2)
+        plot()
+        show()
 
 if __name__ == '__main__':
     main()
