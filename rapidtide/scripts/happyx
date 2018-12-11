@@ -1104,7 +1104,7 @@ arb_lowerstop = arb_lower
 arb_upperstop = arb_upper
 phasefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
 
-outphases = sp.linspace(-np.pi, np.pi - 0.000000000001, num=destpoints, endpoint=True)
+outphases = sp.linspace(-np.pi, np.pi, num=destpoints, endpoint=False)
 outphasestep = outphases[1] - outphases[0]
 phasestep = outphases[1] - outphases[0]
 congridwidth = congridbins * phasestep
@@ -1137,7 +1137,8 @@ for theslice in range(numslices):
                                                                         phasevals[theslice, t],
                                                                         1.0,
                                                                         congridbins,
-                                                                        kernel=gridkernel)
+                                                                        kernel=gridkernel,
+                                                                        cyclic=True)
                 for i in range(len(theindices)):
                     weight_byslice[validlocs, theslice, theindices[i]] += theweights[i]
                     rawapp_byslice[validlocs, theslice, theindices[i]] += theweights[i] * filteredmr
