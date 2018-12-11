@@ -376,6 +376,159 @@ When we started this whole research effort, I waw originally planning to denoise
 
 
 
+happy
+----------
+
+Description:
+^^^^^^^^^^^^
+
+	happy is a new addition to the rapidtide suite.  It's complementary to rapidtide - it's focussed on fast, cardiac signals in fMRI, rather than the slow, LFO signals we are usually looking at.  It's sort of a Frankenprogram - it has three distinct jobs, which are related, but are very distinct.
+
+	The first thing happy does is try to extract a cardiac waveform from the fMRI data.  This is something I've been thinking about for a long time.  Words go here
+	
+	The second task is to take this raw estimate of the cardiac waveform, and clean it up using a deep learning filter.  The original signal is useful, but pretty gross, but I figured you should be able to exploit the pseudoperiodic nature of the signal to greatly improve it.  This is also a testbed to work on using neural nets to process time domain signals.  It seemed like a worthwhile project, so it got grafted in.
+	
+	The final task (which was actually the initial task, and the reason I wrote happy to begin with) is to implement Henning Voss' totally cool hypersampling with analytic phase projection (guess where the name "happy" comes from).  This is fairly straightforward, as Voss describes his method very clearly.  But I have lots of data with no simultaneously recorded cardiac signals, and I was too lazy to go find datasets with pleth data to play with, so that's why I did the cardiac waveform extraction part.
+
+     
+Inputs:
+^^^^^^^
+	Happy needs a 4D BOLD fMRI data file (space by time) as input.  This can be Nifti1 or Nifti2.  If you have a simultaneously recorded cardiac waveform, it will happily use it, otherwise it will try to construct (and refine) one.
+
+     
+Outputs:
+^^^^^^^^
+	Outputs are space or space by time Nifti or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
+	
+The following files are produced, assuming XXX is the outputname:
+
+    ::
+
+		Informational/diagnostic files
+		XXX_commandline.txt                                   - The command line used to run happy
+		XXX_info.txt                                          - Various useful internal variables
+		XXX_memusage.csv                                      - Memory statistics for the program at various
+		XXX_runtimings.txt                                    - Detailed timing information
+
+
+		Waveforms
+		XXX_cardfromfmri_sliceres.txt
+		XXX_cardfromfmri_sliceres_badpts.txt
+		XXX_cardfromfmri_sliceres_censored.txt
+		XXX_cardfromfmri_25.0Hz.txt
+		XXX_normcardfromfmri_25.0Hz.txt
+		XXX_cardfromfmrienv_25.0Hz.txt
+		XXX_cardfromfmri_25.0Hz_badpts.txt
+		XXX_overall_sliceres_badpts.txt
+		XXX_cardiacfundamental.txt
+		XXX_ampenv.txt
+		XXX_instphase_unwrapped.txt
+		XXX_filtered_instphase_unwrapped.txt
+		XXX_orthogonalizedmotion.txt
+		XXX_interpinstphase.txt
+		
+		Histograms
+		XXX_histogram_peak.txt
+		XXX_histogram.txt
+
+                Images
+		XXX_app.nii.gz
+		XXX_rawapp.nii.gz
+		XXX_mask.nii.gz
+		XXX_maskedapp.nii.gz
+		XXX_vesselmask.nii.gz
+		XXX_minphase.nii.gz
+		XXX_maxphase.nii.gz
+		XXX_arteries.nii.gz
+		XXX_veins.nii.gz
+		XXX_vesselmap.nii.gz
+
+    
+Usage:
+^^^^^^
+
+	::
+
+		happy - Hypersampling by Analytic Phase Projection - Yay!
+
+		usage:  happy  fmrifile slicetimefile outputroot [options]
+
+		required arguments:
+		    fmrifile:                 nifti file containing BOLD fmri data
+		    slicetimefile:            text file containing the offset time in seconds of each slice relative
+					      to the start of the TR, one value per line, OR the BIDS sidecar JSON file
+					      for the fmrifile (contains the SliceTiming field
+		    outputroot:               base name for all output files
+
+		optional arguments:
+		    --glm                          - generate voxelwise aliased synthetic cardiac regressors and filter
+						     them out
+		    --minhr=MINHR                  - highpass filter cardiac data to MINHR BPM (default is 40)
+		    --maxhr=MAXHR                  - lowpass filter cardiac data to MAXHR BPM (default is 180)
+		    --envcutoff=CUTOFF             - lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4)
+		    --notchwidth=WIDTH             - Set the width of the notch filter, in percent of the notch frequency
+						     (default is 1.5)
+		    --outputbins=BINS              - number of output phase bins (default is 32)
+		    --gridbins=BINS                - width of the gridding kernel in output phase bins (default is 1.5)
+		    --cardiacfile=FILE[:COL]       - Read the cardiac waveform from file FILE.  If COL is an integer,
+						     format json file, use column named COL (if no file is specified 
+						     is specified, estimate cardiac signal from data)
+		    --cardiacfreq=FREQ             - Cardiac waveform in cardiacfile has sample frequency FREQ 
+						     (default is 32Hz). NB: --cardiacfreq and --cardiactstep
+						     are two ways to specify the same thing
+		    --cardiactstep=TSTEP           - Cardiac waveform in file has sample time step TSTEP 
+						     (default is 0.03125s) NB: --cardiacfreq and --cardiactstep
+						     are two ways to specify the same thing
+		    --cardiacstart=START           - The time delay in seconds into the cardiac file, corresponding
+						     in the first TR of the fmri file (default is 0.0)
+		    --stdfreq=FREQ                 - Frequency to which the cardiac signals are resampled for output.
+						     Default is 25.
+		    --forcehr=BPM                  - Force heart rate fundamental detector to be centered at BPM
+						     (overrides peak frequencies found from spectrum).  Useful
+						     if there is structured noise that confuses the peak finder.
+		    --nocensor                     - Bad points will not be excluded from analytic phase projection
+		    --nophasefilt                  - Disable the phase trend filter (probably not a good idea
+		    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to
+						     voxels in MASKNAME and weighted by the mask intensity.
+		    --numskip=SKIP                 - SKIP tr's at the beginning of the fmri file (default is 0).
+		    --motskip=SKIP                 - SKIP tr's at the beginning of the motion regressor file (default is 0).
+		    --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.
+						     (with timepoints rows) and regress them, their derivatives, 
+						     and delayed derivatives out of the data prior to analysis.
+						     If COLSPEC is present, use the comma separated list of ranges to
+						     specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For
+						     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9
+						     for X, Y, Z, RotX, RotY, RotZ, respectively
+		    --motionhp=HPFREQ              - highpass filter motion regressors to HPFREQ Hz prior to regression
+		    --motionlp=LPFREQ              - lowpass filter motion regressors to HPFREQ Hz prior to regression
+		    --cardestonly                  - Estimate the cardiac waveform from the fMRI data, then quit.
+
+		debugging arguments (probably not of interest to users)
+		    --debug                        - turn on debugging information
+		    --nodetrend                    - disable data detrending
+		    --normalize                    - normalize fmri data
+		    --nodemean                     - do not demean fmri data
+		    --disablenotch                 - disable subharmonic notch filter
+		    --nomask                       - disable data masking for calculating cardiac waveform
+
+
+		        
+	These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
+	
+Examples:
+^^^^^^^^^
+
+Just getting the cardiac waveform from resting state data
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The base command you'd use would be:
+
+	::
+
+		happy inputfmrifile slicetimefile outputfile --cardestonly
+
+
+
 rapidtide2std
 -------------
 
@@ -493,7 +646,8 @@ Usage:
 
 		showxcorrx - calculate and display crosscorrelation between two timeseries
 
-		usage: showxcorrx timecourse1 timecourse2 samplerate [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [--nowindow] [-f] [--phat] [--liang] [--eckart] [-z FILENAME] [-N TRIALS]
+		usage:  showxcorrx  timecourse1 timecourse2 samplerate
+		[-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [--nowindow] [-f] [-o OUTPUTFILE] [--phat] [--liang] [--eckart] [--savecorr=FILE] [-z FILENAME] [-N TRIALS]
 
 		required arguments:
 		    timcoursefile1: text file containing a timeseries
@@ -529,10 +683,12 @@ Usage:
 		    -a                 - if summary mode is on, add a header line showing what values 
 					 mean
 		    -f                 - negate (flip) second regressor
+		    -savecorr=FILE     - Save the correlation function to the file FILE in xy format
 		    -z FILENAME        - use the columns of FILENAME as controlling variables and 
 					 return the partial correlation
 		    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS 
 					 repetition
+		    -o OUTPUTFILE      - Writes summary lines to OUTPUTFILE (sets -A)
 
 
 showtc
@@ -560,10 +716,11 @@ Usage:
 
 		showtc - plots the data in text files
 
-		usage: showtc texfilename [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate=Fs] [--sampletime=Ts]
+		usage: showtc texfilename[:col1,col2...,coln] [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate=Fs] [--sampletime=Ts]
 
 		required arguments:
 		    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line
+				       A list of comma separated numbers following the filename and preceded by a colon is used to select columns to plot
 
 		optional arguments:
 		    --nolegend               - turn off legend label
@@ -576,15 +733,21 @@ Usage:
 		    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)
 		    --colorlist=C1,C2,..     - cycle through the list of colors specified by CN
 		    --linewidth=LW           - set linewidth to LW points (default is 1)
+		    --fontscalefac=FAC       - scale all font sizes by FAC (default is 1.0)
 		    --legendlist=L1,L2,..    - cycle through the list of legends specified by LN
 		    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen
 		    --title=TITLE            - use TITLE as the overall title of the graph
 		    --separate               - use a separate subplot for each timecourse
+		    --separatelinked         - use a separate subplot for each timecourse, but use a common y scaling
 		    --noxax                  - don't show x axis
 		    --noyax                  - don't show y axis
 		    --starttime=START        - start plot at START seconds
 		    --endtime=END            - end plot at END seconds
-
+		    --legendloc=LOC          - Integer from 0 to 10 inclusive specifying legend location.  Legal values are:
+					       0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right,
+					       5: right, 6: center left, 7: center right, 8: lower center, 9: upper center,
+					       10: center.  Default is 2.
+		    --debug                  - print debugging information
 
 histnifti
 --------
