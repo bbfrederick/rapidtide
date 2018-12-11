@@ -116,9 +116,11 @@ class congrid:
 '''
 
 congridyvals = {}
+congridyvals['kernel'] = 'kaiser'
+congridyvals['width'] = 1.5
 
 
-def congrid(xaxis, loc, val, width, kernel='kaiser', debug=False):
+def congrid(xaxis, loc, val, width, kernel='kaiser', cyclic=True, debug=False):
     """
     Perform a convolution gridding operation with a Kaiser-Bessel or Gaussian kernel of width 'width'
 
@@ -131,7 +133,7 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', debug=False):
     val: float
         The value to be gridded
     width: float
-        The width of the gridding kernel
+        The width of the gridding kernel in target bins
     kernel: {'old', 'gauss', 'kaiser'}, optional
         The type of convolution gridding kernel.  Default is 'kaiser'.
     debug: bool, optional
@@ -151,10 +153,21 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', debug=False):
     See  IEEE TRANSACTIONS ON MEDICAL IMAGING. VOL. IO.NO. 3, SEPTEMBER 1991
 
     """
+    global congridyvals
+
+    if (congridyvals['kernel'] != kernel) or (congridyvals['width'] != width):
+        if congridyvals['kernel'] != kernel:
+            print(congridyvals['kernel'], '!=', kernel)
+        if congridyvals['width'] != width:
+            print(congridyvals['width'],'!=', width)
+        print('(re)initializing congridyvals')
+        congridyvals = {}
+        congridyvals['kernel'] = kernel
+        congridyvals['width'] = width * 1.0
     optsigma = np.array([0.4241, 0.4927, 0.4839, 0.5063, 0.5516, 0.5695, 0.5682, 0.5974])
     optbeta  = np.array([1.9980, 2.3934, 3.3800, 4.2054, 4.9107, 5.7567, 6.6291, 7.4302])
     xstep = xaxis[1] - xaxis[0]
-    if loc < xaxis[0] or loc > xaxis[-1]:
+    if (loc < xaxis[0] - xstep / 2.0 or loc > xaxis[-1] + xstep / 2.0) and not cyclic:
         print('loc', loc, 'not in range', xaxis[0], xaxis[-1])
 
     # choose the smoothing kernel based on the width
@@ -168,7 +181,14 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', debug=False):
 
     # find the closest grid point to the target location, calculate relative offsets from this point
     center = tide_util.valtoindex(xaxis, loc)
-    offset = np.fmod(np.round((loc - xaxis[center]) / xstep, 3), 1.0)  # will vary from 0.0 to 1.0
+    offset = np.fmod(np.round((loc - xaxis[center]) / xstep, 3), 1.0)  # will vary from -0.5 to 0.5
+    if cyclic:
+        if center == len(xaxis) - 1 and offset > 0.5:
+            center = 0
+            offset -= 1.0
+        if center == 0 and offset < -0.5:
+            center = len(xaxis) - 1
+            offset += 1.0
     if not (-0.5 <= offset <= 0.5):
         print('(loc, xstep, center, offset):', loc, xstep, center, offset)
         print('xaxis:', xaxis)
@@ -176,6 +196,8 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', debug=False):
     offsetkey = str(offset)
 
     if kernel == 'old':
+        if debug:
+            print('gridding with old kernel')
         widthinpts = int(np.round(width * 4.6 / xstep))
         widthinpts -= widthinpts % 2 - 1
         try:
@@ -190,6 +212,8 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', debug=False):
         startpt = int(center - widthinpts // 2)
         indices = range(startpt, startpt + widthinpts)
         indices = np.remainder(indices, len(xaxis))
+        if debug:
+            print('center, offset, indices, yvals', center, offset, indices, yvals)
         return val * yvals, yvals, indices
     else:
         offsetinpts = center + offset
@@ -201,7 +225,7 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', debug=False):
         except KeyError:
             if debug:
                 print('new key:', offsetkey)
-            xvals = xaxis[indices] + offset * xstep
+            xvals = indices - center + offset
             if kernel == 'gauss':
                 sigma = optsigma[kernelindex]
                 congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, sigma]))
@@ -212,6 +236,10 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', debug=False):
                 print('illegal kernel value in congrid - exiting')
                 sys.exit()
             yvals = congridyvals[offsetkey]
+            if debug:
+                print('xvals, yvals', xvals, yvals)
+        if debug:
+            print('center, offset, indices, yvals', center, offset, indices, yvals)
         return val * yvals, yvals, indices
 
 
