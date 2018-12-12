@@ -449,9 +449,9 @@ Usage:
 
 	::
 
-		happy - Hypersampling by Analytic Phase Projection - Yay!
+		happyx - Hypersampling by Analytic Phase Projection - Yay!
 
-		usage:  happy  fmrifile slicetimefile outputroot [options]
+		usage:  happyx  fmrifile slicetimefile outputroot
 
 		required arguments:
 		    fmrifile:                 nifti file containing BOLD fmri data
@@ -461,15 +461,48 @@ Usage:
 		    outputroot:               base name for all output files
 
 		optional arguments:
-		    --glm                          - generate voxelwise aliased synthetic cardiac regressors and filter
+
+		Processing steps:
+		    --cardcalconly                 - Stop after all cardiac regressor calculation steps (before phase projection).
+		    --dodlfilter                   - Refine cardiac waveform from the fMRI data using a deep learning filter.
+						     NOTE: this will only work if you have a working Keras installation;
+						     if not, this option is ignored.
+						     OTHER NOTE: Some versions of tensorflow seem to have some weird conflict
+						     with MKL which I can't seem to be able to fix.  If the dl filter bombs
+						     complaining about multiple openmp libraries, try rerunning with the
+						     secret and inadvisable '--usesuperdangerousworkaround' flag.  Good luck!
+		    --glm                          - Generate voxelwise aliased synthetic cardiac regressors and filter
 						     them out
+
+		Performance:
+		    --mklthreads=NTHREADS          - Use NTHREADS MKL threads to accelerate processing (defaults to 1 - more
+						     threads up to the number of cores can accelerate processing a lot, but
+						     can really kill you on clusters unless you're very careful.  Use at your
+						     own risk.)
+
+		Preprocessing:
+		    --numskip=SKIP                 - SKIP tr's at the beginning of the fmri file (default is 0).
+		    --motskip=SKIP                 - SKIP tr's at the beginning of the motion regressor file (default is 0).
+		    --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.
+						     (with timepoints rows) and regress them, their derivatives, 
+						     and delayed derivatives out of the data prior to analysis.
+						     If COLSPEC is present, use the comma separated list of ranges to
+						     specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For
+						     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9
+						     for X, Y, Z, RotX, RotY, RotZ, respectively
+		    --motionhp=HPFREQ              - highpass filter motion regressors to HPFREQ Hz prior to regression
+		    --motionlp=LPFREQ              - lowpass filter motion regressors to HPFREQ Hz prior to regression
+
+		Cardiac estimation tuning:
+		    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to
+						     voxels in MASKNAME and weighted by the mask intensity.
 		    --minhr=MINHR                  - highpass filter cardiac data to MINHR BPM (default is 40)
 		    --maxhr=MAXHR                  - lowpass filter cardiac data to MAXHR BPM (default is 180)
 		    --envcutoff=CUTOFF             - lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4)
 		    --notchwidth=WIDTH             - Set the width of the notch filter, in percent of the notch frequency
 						     (default is 1.5)
-		    --outputbins=BINS              - number of output phase bins (default is 32)
-		    --gridbins=BINS                - width of the gridding kernel in output phase bins (default is 1.5)
+
+		External cardiac waveform options:
 		    --cardiacfile=FILE[:COL]       - Read the cardiac waveform from file FILE.  If COL is an integer,
 						     format json file, use column named COL (if no file is specified 
 						     is specified, estimate cardiac signal from data)
@@ -486,30 +519,22 @@ Usage:
 		    --forcehr=BPM                  - Force heart rate fundamental detector to be centered at BPM
 						     (overrides peak frequencies found from spectrum).  Useful
 						     if there is structured noise that confuses the peak finder.
-		    --nocensor                     - Bad points will not be excluded from analytic phase projection
-		    --nophasefilt                  - Disable the phase trend filter (probably not a good idea
-		    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to
-						     voxels in MASKNAME and weighted by the mask intensity.
-		    --numskip=SKIP                 - SKIP tr's at the beginning of the fmri file (default is 0).
-		    --motskip=SKIP                 - SKIP tr's at the beginning of the motion regressor file (default is 0).
-		    --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.
-						     (with timepoints rows) and regress them, their derivatives, 
-						     and delayed derivatives out of the data prior to analysis.
-						     If COLSPEC is present, use the comma separated list of ranges to
-						     specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For
-						     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9
-						     for X, Y, Z, RotX, RotY, RotZ, respectively
-		    --motionhp=HPFREQ              - highpass filter motion regressors to HPFREQ Hz prior to regression
-		    --motionlp=LPFREQ              - lowpass filter motion regressors to HPFREQ Hz prior to regression
-		    --cardestonly                  - Estimate the cardiac waveform from the fMRI data, then quit.
+		Phase projection tuning:
+		    --outputbins=BINS              - number of output phase bins (default is 32)
+		    --gridbins=BINS                - width of the gridding kernel in output phase bins (default is 3.0)
+		    --gridkernel=KERNEL            - convolution gridding kernel.  Options are 'old', 'gauss', and 'kaiser'
+						     (default is 'kaiser')
 
-		debugging arguments (probably not of interest to users)
+		Debugging arguments (probably not of interest to users):
 		    --debug                        - turn on debugging information
 		    --nodetrend                    - disable data detrending
+		    --noorthog                     - disable orthogonalization of motion confound regressors
 		    --normalize                    - normalize fmri data
 		    --nodemean                     - do not demean fmri data
 		    --disablenotch                 - disable subharmonic notch filter
 		    --nomask                       - disable data masking for calculating cardiac waveform
+		    --nocensor                     - Bad points will not be excluded from analytic phase projection
+		    --nophasefilt                  - Disable the phase trend filter (probably not a good idea)
 
 
 		        
