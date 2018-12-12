@@ -19,8 +19,6 @@ Created on Sat Jul 28 23:01:07 2018
 
 @author: neuro
 """
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import os
