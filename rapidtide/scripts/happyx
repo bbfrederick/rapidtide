@@ -151,17 +151,53 @@ def usage():
     print("    outputroot:               base name for all output files")
     print("")
     print("optional arguments:")
-    print("    --cardestonly                  - Estimate the cardiac waveform from the fMRI data, then quit.")
+    print("")
+    print("Processing steps:")
+    print("    --cardcalconly                 - Stop after all cardiac regressor calculation steps (before phase projection).")
+    print("    --dodlfilter                   - Refine cardiac waveform from the fMRI data using a deep learning filter.")
+    print("                                     NOTE: this will only work if you have a working Keras installation;")
+    print("                                     if not, this option is ignored.")
+    print("                                     OTHER NOTE: Some versions of tensorflow seem to have some weird conflict")
+    print("                                     with MKL which I can't seem to be able to fix.  If the dl filter bombs")
+    print("                                     complaining about multiple openmp libraries, try rerunning with the")
+    print("                                     secret and inadvisable '--usesuperdangerousworkaround' flag.  Good luck!")
     print("    --glm                          - Generate voxelwise aliased synthetic cardiac regressors and filter")
     print("                                     them out")
+    print("")
+    print("Performance:")
+    print("    --mklthreads=NTHREADS          - Use NTHREADS MKL threads to accelerate processing (defaults to 1 - more")
+    print("                                     threads up to the number of cores can accelerate processing a lot, but")
+    print("                                     can really kill you on clusters unless you're very careful.  Use at your")
+    print("                                     own risk.)")
+    print("")
+    print("Preprocessing:")
+    print("    --numskip=SKIP                 - SKIP tr's at the beginning of the fmri file (default is 0).")
+    print(
+        "    --motskip=SKIP                 - SKIP tr's at the beginning of the motion regressor file (default is 0).")
+    # print(
+    #    "    --nprocs=NPROCS            - Set to number of processors to use for calculations.  Default is 1.  Setting negative will use ncpus - 1")
+    print("    --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.")
+    print("                                     (with timepoints rows) and regress them, their derivatives, ")
+    print("                                     and delayed derivatives out of the data prior to analysis.")
+    print("                                     If COLSPEC is present, use the comma separated list of ranges to")
+    print("                                     specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For")
+    print("                                     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9")
+    print("                                     for X, Y, Z, RotX, RotY, RotZ, respectively")
+    print("    --motionhp=HPFREQ              - highpass filter motion regressors to HPFREQ Hz prior to regression")
+    print("    --motionlp=LPFREQ              - lowpass filter motion regressors to HPFREQ Hz prior to regression")
+    print("")
+    print("Cardiac estimation tuning:")
+    print("    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to")
+    print("                                     voxels in MASKNAME and weighted by the mask intensity.")
     print("    --minhr=MINHR                  - highpass filter cardiac data to MINHR BPM (default is 40)")
     print("    --maxhr=MAXHR                  - lowpass filter cardiac data to MAXHR BPM (default is 180)")
     print(
         "    --envcutoff=CUTOFF             - lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4)")
     print("    --notchwidth=WIDTH             - Set the width of the notch filter, in percent of the notch frequency")
     print("                                     (default is 1.5)")
-    print("    --outputbins=BINS              - number of output phase bins (default is 32)")
-    print("    --gridbins=BINS                - width of the gridding kernel in output phase bins (default is 1.5)")
+
+    print("")
+    print("External cardiac waveform options:")
     print("    --cardiacfile=FILE[:COL]       - Read the cardiac waveform from file FILE.  If COL is an integer,")
     print("                                     format json file, use column named COL (if no file is specified ")
     print("                                     is specified, estimate cardiac signal from data)")
@@ -178,25 +214,13 @@ def usage():
     print("    --forcehr=BPM                  - Force heart rate fundamental detector to be centered at BPM")
     print("                                     (overrides peak frequencies found from spectrum).  Useful")
     print("                                     if there is structured noise that confuses the peak finder.")
-    print("    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to")
-    print("                                     voxels in MASKNAME and weighted by the mask intensity.")
-    print("    --numskip=SKIP                 - SKIP tr's at the beginning of the fmri file (default is 0).")
-    print(
-        "    --motskip=SKIP                 - SKIP tr's at the beginning of the motion regressor file (default is 0).")
-    # print(
-    #    "    --nprocs=NPROCS            - Set to number of processors to use for calculations.  Default is 1.  Setting negative will use ncpus - 1")
-    print("    --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.")
-    print("                                     (with timepoints rows) and regress them, their derivatives, ")
-    print("                                     and delayed derivatives out of the data prior to analysis.")
-    print("                                     If COLSPEC is present, use the comma separated list of ranges to")
-    print("                                     specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For")
-    print("                                     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9")
-    print("                                     for X, Y, Z, RotX, RotY, RotZ, respectively")
-    print("    --motionhp=HPFREQ              - highpass filter motion regressors to HPFREQ Hz prior to regression")
-    print("    --motionlp=LPFREQ              - lowpass filter motion regressors to HPFREQ Hz prior to regression")
-    print("    --cardestonly                  - Estimate the cardiac waveform from the fMRI data, then quit.")
+    print("Phase projection tuning:")
+    print("    --outputbins=BINS              - number of output phase bins (default is 32)")
+    print("    --gridbins=BINS                - width of the gridding kernel in output phase bins (default is 3.0)")
+    print("    --gridkernel=KERNEL            - convolution gridding kernel.  Options are 'old', 'gauss', and 'kaiser'")
+    print("                                     (default is 'kaiser')")
     print("")
-    print("debugging arguments (probably not of interest to users)")
+    print("Debugging arguments (probably not of interest to users):")
     print("    --debug                        - turn on debugging information")
     print("    --nodetrend                    - disable data detrending")
     print("    --noorthog                     - disable orthogonalization of motion confound regressors")
@@ -205,7 +229,7 @@ def usage():
     print("    --disablenotch                 - disable subharmonic notch filter")
     print("    --nomask                       - disable data masking for calculating cardiac waveform")
     print("    --nocensor                     - Bad points will not be excluded from analytic phase projection")
-    print("    --nophasefilt                  - Disable the phase trend filter (probably not a good idea")
+    print("    --nophasefilt                  - Disable the phase trend filter (probably not a good idea)")
 
     return ()
 
@@ -537,8 +561,8 @@ envthresh = 0.2
 maskthreshpct = 10.0
 upsamplefac = 100
 destpoints = 32
-congridbins = 1.5
-gridkernel = 'old'
+congridbins = 3.0
+gridkernel = 'kaiser'
 cardiacfile = None
 colnum = 0
 colname = None
@@ -565,7 +589,7 @@ detrendorder = 3
 filtphase = True
 savemotionglmfilt = False
 motionfilename = None
-cardestonly = False
+cardcalconly = False
 domadnorm = True
 numskip = 0
 motskip = 0
@@ -576,6 +600,7 @@ motfilt_pos = True
 motfilt_deriv = True
 motfilt_derivdelayed = False
 orthogonalize = True
+mpfix = False
 
 # start the clock!
 timings = [['Start', time.time(), None, None]]
@@ -629,7 +654,7 @@ try:
                                                    "motionlp=",
                                                    "normalize",
                                                    "nodemean",
-                                                   "cardestonly",
+                                                   "cardcalconly",
                                                    "outputbins=",
                                                    "gridbins=",
                                                    "gridkernel=",
@@ -644,6 +669,7 @@ try:
                                                    "nocensor",
                                                    "nomadnorm",
                                                    "dodlfilter",
+                                                   "usesuperdangerousworkaround",
                                                    "savemotionglmfilt",
                                                    "nophasefilt",
                                                    "nomask",
@@ -683,10 +709,13 @@ for o, a in opts:
         filtphase = False
         print('disabling phase trend filter')
     elif o == "--dodlfilter":
-        dodlfilter = True
-        print('will apply deep learning filter to enhance the cardiac waveforms')
-    elif o == "--cardestonly":
-        cardestonly = True
+        if dlfilterexists:
+            dodlfilter = True
+            print('will apply deep learning filter to enhance the cardiac waveforms')
+        else:
+            print('dlfilter not found - check to make sure Keras is installed and working.  Disabling.')
+    elif o == "--cardcalconly":
+        cardcalconly = True
         print('will stop processing after calculating cardiac waveforms')
     elif o == "--nocensor":
         usemaskcardfromfmri = False
@@ -721,6 +750,9 @@ for o, a in opts:
         else:
             print('illegal gridding kernel specified - aborting')
             sys.exit()
+    elif o == "--usesuperdangerousworkaround":
+        mpfix = True
+        print('trying super dangerous workaround to make dlfilter work')
     elif o == "--notchwidth":
         notchpct = float(a) / 100.0
         print('setting notchwidth to', notchpct * 100.0, '%')
@@ -733,6 +765,11 @@ for o, a in opts:
         mklthreads = int(a)
         linkchar = '='
         if mklexists:
+            mklmaxthreads = mkl.get_max_threads()
+            if mklthreads > mklmaxthreads:
+                print('mkl max threads =', mklmaxthreads, ' - using max')
+                mklthreads = mklmaxthreads
+
             print('will use', mklthreads, 'MKL threads for accelerated numpy processing.')
         else:
             print('MKL not present - ignoring --mklthreads')
@@ -810,9 +847,7 @@ tide_util.logmem(None, file=memfile)
 
 # set the number of MKL threads to use
 if mklexists:
-    mklmaxthreads = mkl.get_max_threads()
-    print('mkl max threads =', mklmaxthreads)
-    mkl.set_num_threads(np.min([mklthreads, mklmaxthreads]))
+    mkl.set_num_threads(mklthreads)
 
 # set up cardiac filter
 arb_lower = minhr / 60.0
@@ -943,7 +978,7 @@ cardfromfmri_stdres = tide_math.madnormalize(tide_resample.arbresample(cardfromf
                                                                        slicesamplerate,
                                                                        stdfreq,
                                                                        decimate=True,
-                                                                       debug=True))
+                                                                       debug=False))
 
 tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(stdfreq) + 'Hz.txt')
 filtcardfromfmri_stdres, normcardfromfmri_stdres, cardfromfmrienv_stdres = cleancardiac(stdfreq, cardfromfmri_stdres,
@@ -953,8 +988,13 @@ tide_io.writevec(normcardfromfmri_stdres, outputroot + '_normcardfromfmri_' + st
 tide_io.writevec(cardfromfmrienv_stdres, outputroot + '_cardfromfmrienv_' + str(stdfreq) + 'Hz.txt')
 thebadcardpts_stdres = findbadpts(cardfromfmri_stdres, 'cardfromfmri_' + str(stdfreq) + 'Hz', stdfreq, infodict)
 
+timings.append(['Cardiac signal from image data resampled and saved', time.time(), None, None])
+
 if dodlfilter:
     if dlfilterexists:
+        if mpfix:
+            print('performing super dangerous openmp workaround')
+            os.environ['KMP_DUPLICATE_LIB_OK'] = "TRUE"
         modelpath = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
                                  'models')
         thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
@@ -965,10 +1005,9 @@ if dodlfilter:
             tide_resample.arbresample(dlfilteredcard, stdfreq, slicesamplerate, decimate=True, debug=True))
         tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_dlfiltered_sliceres.txt')
         infodict['used_dlreconstruction_filter'] = True
+        timings.append(['Deep learning filter applied', time.time(), None, None])
     else:
         print('dlfilter could not be loaded - skipping')
-
-timings.append(['Cardiac signal from image data resampled and saved', time.time(), None, None])
 
 # get the cardiac signal from a file, if specified
 if cardiacfile is not None:
@@ -1073,8 +1112,13 @@ interpphase = tide_math.phasemod(
     tide_resample.doresample(slicetimeaxis, instantaneous_phase, upsampledslicetimeaxis, method='cubic', padlen=0))
 tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 
-if cardestonly:
+if cardcalconly:
     print('cardiac waveform calculations done - exiting')
+    # Process and save timing information
+    nodeline = 'Processed on ' + platform.node()
+    tide_util.proctiminginfo(timings, outputfile=outputroot + '_runtimings.txt', extraheader=nodeline)
+    tide_util.logmem('final', file=memfile)
+
     sys.exit()
 
 # find the phase values for all timepoints in all slices
