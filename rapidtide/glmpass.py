@@ -186,7 +186,8 @@ def motionregress(themotionfilename,
                   motionlp=None,
                   position=True,
                   deriv=True,
-                  derivdelayed=False):
+                  derivdelayed=False,
+                  debug=False):
     print('regressing out motion')
     splitfilename = themotionfilename.split(':')
     if len(splitfilename) == 1:
@@ -217,19 +218,19 @@ def motionregress(themotionfilename,
         motionregressors = tide_fit.gram_schmidt(motionregressors)
 
     print('start motion filtering')
-    filtereddata = confoundglm(thedata, motionregressors, debug=True)
+    filtereddata = confoundglm(thedata, motionregressors, debug=debug)
     print()
     print('motion filtering complete')
     return motionregressors, filtereddata
 
 
 def confoundglm(data,
-                     regressors,
-                     debug=False,
-                     showprogressbar=True,
-                     reportstep=1000,
-                     rt_floatset=np.float64,
-                     rt_floattype='float64'):
+                 regressors,
+                 debug=False,
+                 showprogressbar=True,
+                 reportstep=1000,
+                 rt_floatset=np.float64,
+                 rt_floattype='float64'):
     r"""Filters multiple regressors out of an array of data in place
 
     Parameters
