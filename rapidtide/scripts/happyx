@@ -151,7 +151,8 @@ def usage():
     print("    outputroot:               base name for all output files")
     print("")
     print("optional arguments:")
-    print("    --glm                          - generate voxelwise aliased synthetic cardiac regressors and filter")
+    print("    --cardestonly                  - Estimate the cardiac waveform from the fMRI data, then quit.")
+    print("    --glm                          - Generate voxelwise aliased synthetic cardiac regressors and filter")
     print("                                     them out")
     print("    --minhr=MINHR                  - highpass filter cardiac data to MINHR BPM (default is 40)")
     print("    --maxhr=MAXHR                  - lowpass filter cardiac data to MAXHR BPM (default is 180)")
@@ -177,8 +178,6 @@ def usage():
     print("    --forcehr=BPM                  - Force heart rate fundamental detector to be centered at BPM")
     print("                                     (overrides peak frequencies found from spectrum).  Useful")
     print("                                     if there is structured noise that confuses the peak finder.")
-    print("    --nocensor                     - Bad points will not be excluded from analytic phase projection")
-    print("    --nophasefilt                  - Disable the phase trend filter (probably not a good idea")
     print("    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to")
     print("                                     voxels in MASKNAME and weighted by the mask intensity.")
     print("    --numskip=SKIP                 - SKIP tr's at the beginning of the fmri file (default is 0).")
@@ -200,10 +199,13 @@ def usage():
     print("debugging arguments (probably not of interest to users)")
     print("    --debug                        - turn on debugging information")
     print("    --nodetrend                    - disable data detrending")
+    print("    --noorthog                     - disable orthogonalization of motion confound regressors")
     print("    --normalize                    - normalize fmri data")
     print("    --nodemean                     - do not demean fmri data")
     print("    --disablenotch                 - disable subharmonic notch filter")
     print("    --nomask                       - disable data masking for calculating cardiac waveform")
+    print("    --nocensor                     - Bad points will not be excluded from analytic phase projection")
+    print("    --nophasefilt                  - Disable the phase trend filter (probably not a good idea")
 
     return ()
 
@@ -303,10 +305,12 @@ def cardiacfromimage(normdata_byslice,
         trnotchfilter = tide_filt.noncausalfilter(debug=debug)
         for harmonic in range(1, maxharmonic + 1):
             print('removing harmonic at', harmonic * stopfreq)
-            print('notchpct, notchwidth freq, slicesamplerate, stopfreq, freqstep, minfreqstep', notchpct, notchpct * harmonic * stopfreq, slicesamplerate, stopfreq, freqstep, freqstep / (harmonic * stopfreq))
+            if debug:
+                print('notchpct, notchwidth freq, slicesamplerate, stopfreq, freqstep, minfreqstep', notchpct, notchpct * harmonic * stopfreq, slicesamplerate, stopfreq, freqstep, freqstep / (harmonic * stopfreq))
             notchwidth = np.max([notchpct * harmonic * stopfreq, freqstep])
-            print('\tnotchwidth, bins', notchwidth, int(notchwidth // freqstep))
-            print()
+            if debug:
+                print('\tnotchwidth, bins', notchwidth, int(notchwidth // freqstep))
+                print()
             setnotchfilter(trnotchfilter, harmonic * stopfreq, notchwidth=notchwidth)
             filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
 
@@ -658,7 +662,7 @@ for o, a in opts:
         print('got an x')
     elif o == '--motionfile':
         motionfilename = a
-        print('Will regress motion, derivatives, and delayed derivatives of motion out of data prior to analysis')
+        print('Will regress motion out of data prior to analysis')
     elif o == "--glm":
         doglm = True
         print('will generate and remove aliased voxelwise cardiac regressors')
@@ -1057,7 +1061,7 @@ offsets_byslice = np.zeros((xsize * ysize, numslices), dtype=np.float64)
 for i in range(numslices):
     offsets_byslice[:, i] = slicetimes[i]
 
-# remap to space by time
+# remap offsets to space by time
 fmri_offsets = offsets_byslice.reshape(numspatiallocs)
 
 # save the information file
@@ -1095,6 +1099,7 @@ weight_byslice = weights.reshape((xsize * ysize, numslices, destpoints))
 timings.append(['Output arrays allocated', time.time(), None, None])
 
 # high pass filter to remove trends
+'''
 imagingtime = tr * timepoints
 phasefilter = tide_filt.noncausalfilter()
 phasefilter.settype('arb')
@@ -1103,6 +1108,7 @@ arb_upper = 0.5 / tr
 arb_lowerstop = arb_lower
 arb_upperstop = arb_upper
 phasefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+'''
 
 outphases = sp.linspace(-np.pi, np.pi, num=destpoints, endpoint=False)
 outphasestep = outphases[1] - outphases[0]
