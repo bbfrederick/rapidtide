@@ -117,7 +117,7 @@ class congrid:
 
 congridyvals = {}
 congridyvals['kernel'] = 'kaiser'
-congridyvals['width'] = 1.5
+congridyvals['width'] = 3.0
 
 
 def congrid(xaxis, loc, val, width, kernel='kaiser', cyclic=True, debug=False):
