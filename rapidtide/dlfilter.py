@@ -527,6 +527,8 @@ def targettoinput(name, targetfrag='xyz', inputfrag='abc', debug=False):
 
 def getmatchedfiles(searchstring, usebadpts=False, targetfrag='xyz', inputfrag='abc', debug=False):
     fromfile = sorted(glob.glob(searchstring))
+    if debug:
+        print('searchstring:', searchstring, '->', fromfile)
 
     # make sure all files exist
     matchedfilelist = []
@@ -554,8 +556,7 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='xyz', inputfrag='
 
 
 def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebadpts=False, startskip=0, readlim=None, debug=False):
-
-    print('readindata called with usebadpts, startskip, readlim =', usebadpts, startskip, readlim)
+    print('readindata called with usebadpts, startskip, readlim, targetfrag, inputfrag =', usebadpts, startskip, readlim, targetfrag, inputfrag)
     # allocate target arrays
     print('allocating arrays')
     s = len(matchedfilelist)
@@ -636,7 +637,7 @@ def prep(window_size,
 
     '''
 
-    searchstring = os.path.join(thedatadir, '*alignedpleth_' + thesuffix + '.txt')
+    searchstring = os.path.join(thedatadir, '*_' + inputfrag + '_' + thesuffix + '.txt')
 
     # find matched files
     matchedfilelist, tclen = getmatchedfiles(searchstring, usebadpts=usebadpts, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)
