@@ -580,12 +580,10 @@ def getphysiofile(cardiacfile, colnum, colname,
     # resample to slice time resolution and save
     pleth_sliceres = tide_resample.doresample(inputtimeaxis, cleanpleth_fullres, slicetimeaxis, method='cubic',
                                               padlen=0)
-    tide_io.writevec(pleth_sliceres, outputroot + '_pleth_sliceres.txt')
 
     # resample to standard resolution and save
     pleth_stdres = tide_math.madnormalize(
         tide_resample.arbresample(cleanpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True))
-    tide_io.writevec(pleth_stdres, outputroot + '_pleth_' + str(stdfreq) + 'Hz.txt')
 
     timings.append(
         ['Cardiac signal from physiology data resampled to slice resolution and saved', time.time(), None, None])
@@ -1126,6 +1124,8 @@ def happy_main(thearguments):
             pleth_sliceres, dummy1, dummy2, dummy2 = tide_resample.timeshift(pleth_sliceres, alignpts_sliceres, int(10.0 * slicesamplerate))
             alignpts_stdres = -maxdelay * stdfreq  # maxdelay is in seconds
             pleth_stdres, dummy1, dummy2, dummy3 = tide_resample.timeshift(pleth_stdres, alignpts_stdres, int(10.0 * stdfreq))
+        tide_io.writevec(pleth_sliceres, outputroot + '_pleth_sliceres.txt')
+        tide_io.writevec(pleth_stdres, outputroot + '_pleth_' + str(stdfreq) + 'Hz.txt')
 
         # now clean up cardiac signal
         filtpleth_stdres, normpleth_stdres, plethenv_stdres = cleancardiac(stdfreq, pleth_stdres, cutoff=envcutoff,
