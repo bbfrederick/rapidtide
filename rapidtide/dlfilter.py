@@ -525,16 +525,16 @@ def targettoinput(name, targetfrag='alignedpleth', inputfrag='cardfromfmri', deb
     return name.replace(targetfrag, inputfrag)
 
 
-def getmatchedfiles(searchstring, usebadpts=False, targetfrag='alignedpleth', inputfrag='cardfromfmri'):
+def getmatchedfiles(searchstring, usebadpts=False, targetfrag='alignedpleth', inputfrag='cardfromfmri', debug=False):
     fromfile = sorted(glob.glob(searchstring))
 
     # make sure all files exist
     matchedfilelist = []
     for targetname in fromfile:
-        if os.path.isfile(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag)):
+        if os.path.isfile(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)):
             if usebadpts:
                 if os.path.isfile(tobadpts(targetname.replace('alignedpleth', 'pleth'))) \
-                    and os.path.isfile(tobadpts(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag))):
+                    and os.path.isfile(tobadpts(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug))):
                     matchedfilelist.append(targetname)
                     print(matchedfilelist[-1])
             else:
@@ -547,13 +547,13 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='alignedpleth', in
 
     # find out how long the files are
     tempy = np.loadtxt(matchedfilelist[0])
-    tempx = np.loadtxt(targettoinput(matchedfilelist[0], targetfrag=targetfrag, inputfrag=inputfrag))
+    tempx = np.loadtxt(targettoinput(matchedfilelist[0], targetfrag=targetfrag, inputfrag=inputfrag, debug=debug))
     tclen = np.min([tempx.shape[0], tempy.shape[0]])
     print('tclen set to', tclen)
     return matchedfilelist, tclen
 
 
-def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, readlim=None):
+def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, readlim=None, debug=False):
 
     print('readindata called with usebadpts, startskip, readlim =', usebadpts, startskip, readlim)
     # allocate target arrays
@@ -575,7 +575,7 @@ def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, readlim=Non
     for i in range(s):
         print('processing ', matchedfilelist[i])
         tempy = np.loadtxt(matchedfilelist[i])
-        tempx = np.loadtxt(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag))
+        tempx = np.loadtxt(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag, debug=debug))
         ntempx = tempx.shape[0]
         ntempy = tempy.shape[0]
         if (ntempx >= tclen) and (ntempy >= tclen):
@@ -584,7 +584,7 @@ def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, readlim=Non
             names.append(matchedfilelist[i])
             if usebadpts:
                 tempbad1 = np.loadtxt(tobadpts(matchedfilelist[i].replace('alignedpleth', 'pleth')))
-                tempbad2 = np.loadtxt(tobadpts(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag)))
+                tempbad2 = np.loadtxt(tobadpts(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)))
                 bad1[:tclen, count] = 1.0 - (1.0 - tempbad1[:tclen]) * (1.0 - tempbad2[:tclen])
             count += 1
     print(count, 'runs pass file length check')
@@ -639,11 +639,11 @@ def prep(window_size,
     searchstring = os.path.join(thedatadir, '*alignedpleth_' + thesuffix + '.txt')
 
     # find matched files
-    matchedfilelist, tclen = getmatchedfiles(searchstring, usebadpts=usebadpts, targetfrag=targetfrag, inputfrag=inputfrag)
+    matchedfilelist, tclen = getmatchedfiles(searchstring, usebadpts=usebadpts, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)
 
     # read in the data from the matched files
     if usebadpts:
-        x, y, names, bad = readindata(matchedfilelist, tclen, usebadpts=True, startskip=startskip, readlim=readlim)
+        x, y, names, bad = readindata(matchedfilelist, tclen, usebadpts=True, startskip=startskip, readlim=readlim, debug=debug)
     else:
         x, y, names = readindata(matchedfilelist, tclen, startskip=startskip, readlim=readlim)
     print('xshape, yshape:', x.shape, y.shape)
