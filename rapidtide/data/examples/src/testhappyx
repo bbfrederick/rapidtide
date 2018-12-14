@@ -1,115 +1,12 @@
 #!/bin/csh -f
 
 happyx \
-    sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    sub-01_ses-059_task-rest_run-001_bold.json \
-    ../dst/happyx_motfilt_kaiser_30_mkl1 \
-    --cardcalconly \
+    ses-060_bold_trunc.nii.gz \
+    ses-060_bold_trunc.json \
+    ../dst/XXX \
     --dodlfilter \
-    --numskip=10 \
-    --motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par --usesuperdangerousworkaround
+    --motionfile=ses-060_bold_trunc_prefiltered_func_data_mcf.par
 
-happyx \
-    sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    sub-01_ses-059_task-rest_run-001_bold.json \
-    ../dst/happyx_motfilt_kaiser_30_mkl4 \
-    --cardcalconly \
-    --dodlfilter \
-    --mklthreads=4 \
-    --numskip=10 \
-    --motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par --usesuperdangerousworkaround
-
-
-happyx \
-    sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    sub-01_ses-059_task-rest_run-001_bold.json \
-    ../dst/happyx_motfilt_kaiser_15 \
-    --mklthreads=4 \
-    --gridkernel='kaiser' \
-    --gridbins=1.5 \
-    --numskip=10 \
-    --motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par 
-
-happyx \
-    sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    sub-01_ses-059_task-rest_run-001_bold.json \
-    ../dst/happyx_motfilt_kaiser_20 \
-    --mklthreads=4 \
-    --gridkernel='kaiser' \
-    --gridbins=2.0 \
-    --numskip=10 \
-    --motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par 
-
-happyx \
-    sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    sub-01_ses-059_task-rest_run-001_bold.json \
-    ../dst/happyx_motfilt_kaiser_25 \
-    --mklthreads=4 \
-    --gridkernel='kaiser' \
-    --gridbins=2.5 \
-    --numskip=10 \
-    --motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par 
-
-happyx \
-    sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    sub-01_ses-059_task-rest_run-001_bold.json \
-    ../dst/happyx_motfilt_kaiser_30 \
-    --mklthreads=4 \
-    --gridkernel='kaiser' \
-    --gridbins=3.0 \
-    --numskip=10 \
-    --motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par 
-
-happyx \
-    sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    sub-01_ses-059_task-rest_run-001_bold.json \
-    ../dst/happyx_motfilt_kaiser_35 \
-    --mklthreads=4 \
-    --gridkernel='kaiser' \
-    --gridbins=3.5 \
-    --numskip=10 \
-    --motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par 
-
-happyx \
-    sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    sub-01_ses-059_task-rest_run-001_bold.json \
-    ../dst/happyx_motfilt_kaiser_40 \
-    --mklthreads=4 \
-    --gridkernel='kaiser' \
-    --gridbins=4.0 \
-    --numskip=10 \
-    --motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par 
-
-happyx \
-    sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    sub-01_ses-059_task-rest_run-001_bold.json \
-    ../dst/happyx_motfilt_kaiser_45 \
-    --mklthreads=4 \
-    --gridkernel='kaiser' \
-    --gridbins=4.5 \
-    --numskip=10 \
-    --motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par 
-
-happyx \
-    sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    sub-01_ses-059_task-rest_run-001_bold.json \
-    ../dst/happyx_motfilt_kaiser_50 \
-    --mklthreads=4 \
-    --gridkernel='kaiser' \
-    --gridbins=5.0 \
-    --numskip=10 \
-    --motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par 
-
-#happyx \
-    #sub-01_ses-059_task-rest_run-001_bold.nii.gz \
-    #sub-01_ses-059_task-rest_run-001_bold.json \
-    #../dst/happyx_motfilt_kaiser_45 \
-    #--mklthreads=4 \
-    #--gridkernel='kaiser' \
-    #--gridbins=4.5 \
-    #--numskip=10 \
-    #--motionfile=sub-01_ses-059_task-rest_run-001_bold_prefiltered_func_data_mcf.par 
-#
 #happyx \
     #sub-01_ses-059_task-rest_run-001_bold.nii.gz \
     #sub-01_ses-059_task-rest_run-001_bold.json \
