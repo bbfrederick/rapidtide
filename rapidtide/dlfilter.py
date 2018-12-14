@@ -55,8 +55,8 @@ class dlfilter:
     """Base class for deep learning filter"""
     thesuffix = 'sliceres'
     thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
-    inputfrag='cardfromfmri'
-    targetfrag='alignedpleth'
+    inputfrag='abc'
+    targetfrag='xyz'
     modelroot = '.'
     excludethresh = 4.0
     modelname = None
@@ -93,8 +93,8 @@ class dlfilter:
         thesuffix='25.0Hz',
         modelpath='.',
         thedatadir='/Users/frederic/Documents/MR_data/physioconn/timecourses',
-        inputfrag='cardfromfmri',
-        targetfrag='alignedpleth',
+        inputfrag='abc',
+        targetfrag='xyz',
         readlim=None,
         countlim=None):
 
@@ -519,13 +519,13 @@ def tobadpts(name):
     return name.replace('.txt', '_badpts.txt')
 
 
-def targettoinput(name, targetfrag='alignedpleth', inputfrag='cardfromfmri', debug=False):
+def targettoinput(name, targetfrag='xyz', inputfrag='abc', debug=False):
     if debug:
         print('replacing', inputfrag, 'with', targetfrag)
     return name.replace(targetfrag, inputfrag)
 
 
-def getmatchedfiles(searchstring, usebadpts=False, targetfrag='alignedpleth', inputfrag='cardfromfmri', debug=False):
+def getmatchedfiles(searchstring, usebadpts=False, targetfrag='xyz', inputfrag='abc', debug=False):
     fromfile = sorted(glob.glob(searchstring))
 
     # make sure all files exist
@@ -553,7 +553,7 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='alignedpleth', in
     return matchedfilelist, tclen
 
 
-def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, readlim=None, debug=False):
+def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebadpts=False, startskip=0, readlim=None, debug=False):
 
     print('readindata called with usebadpts, startskip, readlim =', usebadpts, startskip, readlim)
     # allocate target arrays
@@ -604,8 +604,8 @@ def prep(window_size,
         excludesubject=True,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
-        inputfrag='cardfromfmri',
-        targetfrag='alignedpleth',
+        inputfrag='abc',
+        targetfrag='xyz',
         dofft=False,
         debug=False,
         readlim=None,
@@ -643,9 +643,11 @@ def prep(window_size,
 
     # read in the data from the matched files
     if usebadpts:
-        x, y, names, bad = readindata(matchedfilelist, tclen, usebadpts=True, startskip=startskip, readlim=readlim, debug=debug)
+        x, y, names, bad = readindata(matchedfilelist, tclen, targetfrag=targetfrag, inputfrag=inputfrag, 
+                                        usebadpts=True, startskip=startskip, readlim=readlim, debug=debug)
     else:
-        x, y, names = readindata(matchedfilelist, tclen, startskip=startskip, readlim=readlim)
+        x, y, names = readindata(matchedfilelist, tclen, targetfrag=targetfrag, inputfrag=inputfrag,
+                                    startskip=startskip, readlim=readlim, debug=debug)
     print('xshape, yshape:', x.shape, y.shape)
 
     # normalize input and output data
