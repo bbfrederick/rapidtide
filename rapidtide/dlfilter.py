@@ -57,6 +57,7 @@ class dlfilter:
     thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
     inputfrag='abc'
     targetfrag='xyz'
+    namesuffix=None
     modelroot = '.'
     excludethresh = 4.0
     modelname = None
@@ -95,6 +96,7 @@ class dlfilter:
         thedatadir='/Users/frederic/Documents/MR_data/physioconn/timecourses',
         inputfrag='abc',
         targetfrag='xyz',
+        namesuffix=None,
         readlim=None,
         countlim=None):
 
@@ -124,6 +126,7 @@ class dlfilter:
         self.usetensorboard = False
         self.inputfrag = inputfrag
         self.targetfrag = targetfrag
+        self.namesuffix = namesuffix
 
         # populate infodict
         self.infodict['window_size'] = self.window_size
@@ -324,6 +327,8 @@ class cnn(dlfilter):
                             self.activation])
         if self.usebadpts:
             self.modelname += '_usebadpts'
+        if self.namesuffix is not None:
+            self.modelname += '_' + namesuffix
         self.modelpath = os.path.join(self.modelroot, self.modelname)
 
         try:

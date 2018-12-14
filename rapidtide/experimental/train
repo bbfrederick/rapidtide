@@ -47,6 +47,7 @@ if nettype == 'cnn':
                             thedatadir=thedatadir,
                             inputfrag='motfilt_cardfromfmri',
                             targetfrag='motfilt_alignedpleth',
+                            namesuffix='aligned',
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size,
