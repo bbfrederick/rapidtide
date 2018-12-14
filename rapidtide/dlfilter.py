@@ -519,7 +519,9 @@ def tobadpts(name):
     return name.replace('.txt', '_badpts.txt')
 
 
-def targettoinput(name, targetfrag='alignedpleth', inputfrag='cardfromfmri'):
+def targettoinput(name, targetfrag='alignedpleth', inputfrag='cardfromfmri', debug=False):
+    if debug:
+        print('replacing', inputfrag, 'with', targetfrag)
     return name.replace(targetfrag, inputfrag)
 
 
@@ -529,10 +531,10 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='alignedpleth', in
     # make sure all files exist
     matchedfilelist = []
     for targetname in fromfile:
-        if os.path.isfile(targettoinput(targetname)):
+        if os.path.isfile(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag)):
             if usebadpts:
                 if os.path.isfile(tobadpts(targetname.replace('alignedpleth', 'pleth'))) \
-                    and os.path.isfile(tobadpts(targettoinput(targetname))):
+                    and os.path.isfile(tobadpts(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag))):
                     matchedfilelist.append(targetname)
                     print(matchedfilelist[-1])
             else:
@@ -545,7 +547,7 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='alignedpleth', in
 
     # find out how long the files are
     tempy = np.loadtxt(matchedfilelist[0])
-    tempx = np.loadtxt(targettoinput(matchedfilelist[0]))
+    tempx = np.loadtxt(targettoinput(matchedfilelist[0], targetfrag=targetfrag, inputfrag=inputfrag))
     tclen = np.min([tempx.shape[0], tempy.shape[0]])
     print('tclen set to', tclen)
     return matchedfilelist, tclen
@@ -573,7 +575,7 @@ def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, readlim=Non
     for i in range(s):
         print('processing ', matchedfilelist[i])
         tempy = np.loadtxt(matchedfilelist[i])
-        tempx = np.loadtxt(targettoinput(matchedfilelist[i]))
+        tempx = np.loadtxt(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag))
         ntempx = tempx.shape[0]
         ntempy = tempy.shape[0]
         if (ntempx >= tclen) and (ntempy >= tclen):
@@ -582,7 +584,7 @@ def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, readlim=Non
             names.append(matchedfilelist[i])
             if usebadpts:
                 tempbad1 = np.loadtxt(tobadpts(matchedfilelist[i].replace('alignedpleth', 'pleth')))
-                tempbad2 = np.loadtxt(tobadpts(targettoinput(matchedfilelist[i])))
+                tempbad2 = np.loadtxt(tobadpts(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag)))
                 bad1[:tclen, count] = 1.0 - (1.0 - tempbad1[:tclen]) * (1.0 - tempbad2[:tclen])
             count += 1
     print(count, 'runs pass file length check')
