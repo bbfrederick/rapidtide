@@ -1039,8 +1039,8 @@ def happy_main(thearguments):
                                                                            debug=False))
 
     cardfromfmri_s_mean, cardfromfmri_s_std, cardfromfmri_s_waveform = plethquality(cardfromfmri_stdres, stdfreq)
-    infodict['dlfiltered_S_sqi_mean'] = cardfromfmri_s_mean
-    infodict['dlfiltered_S_sqi_std'] = cardfromfmri_s_std
+    infodict['cardfromfmri_S_sqi_mean'] = cardfromfmri_s_mean
+    infodict['cardfromfmri_S_sqi_std'] = cardfromfmri_s_std
     tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(stdfreq) + 'Hz.txt')
     filtcardfromfmri_stdres, normcardfromfmri_stdres, cardfromfmrienv_stdres = cleancardiac(stdfreq, cardfromfmri_stdres,
                                                                                             cutoff=envcutoff,
