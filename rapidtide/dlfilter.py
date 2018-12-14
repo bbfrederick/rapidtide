@@ -637,7 +637,7 @@ def prep(window_size,
 
     '''
 
-    searchstring = os.path.join(thedatadir, '*_' + inputfrag + '_' + thesuffix + '.txt')
+    searchstring = os.path.join(thedatadir, '*_' + targetfrag + '_' + thesuffix + '.txt')
 
     # find matched files
     matchedfilelist, tclen = getmatchedfiles(searchstring, usebadpts=usebadpts, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)
