@@ -328,7 +328,7 @@ class cnn(dlfilter):
         if self.usebadpts:
             self.modelname += '_usebadpts'
         if self.namesuffix is not None:
-            self.modelname += '_' + namesuffix
+            self.modelname += '_' + self.namesuffix
         self.modelpath = os.path.join(self.modelroot, self.modelname)
 
         try:
