@@ -45,8 +45,8 @@ if nettype == 'cnn':
                             readlim=readlim,
                             countlim=countlim,
                             thedatadir=thedatadir,
-                            inputfrag='motcorr_cardfromfmri',
-                            targetfrag='motcorr_alignedpleth',
+                            inputfrag='motfilt_cardfromfmri',
+                            targetfrag='motfilt_alignedpleth',
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size)
@@ -62,8 +62,8 @@ elif nettype == 'lstm':
                             readlim=readlim,
                             countlim=countlim,
                             thedatadir=thedatadir,
-                            inputfrag='motcorr_cardfromfmri',
-                            targetfrag='motcorr_alignedpleth',
+                            inputfrag='motfilt_cardfromfmri',
+                            targetfrag='motfilt_alignedpleth',
                             num_units=num_units)
 elif nettype == 'hybrid':
     num_layers = 10
@@ -77,8 +77,8 @@ elif nettype == 'hybrid':
                             readlim=readlim,
                             countlim=countlim,
                             thedatadir=thedatadir,
-                            inputfrag='motcorr_cardfromfmri',
-                            targetfrag='motcorr_alignedpleth',
+                            inputfrag='motfilt_cardfromfmri',
+                            targetfrag='motfilt_alignedpleth',
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size,
