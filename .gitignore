@@ -8,9 +8,6 @@ changecalls
 # any generated test data
 rapidtide/data/examples/dst/*
 
-# The experimental directory
-rapidtide/experimental/*
-
 # some local test data
 rapidtide/data/examples/src/*corrfunc*
 rapidtide/data/examples/src/*trimmed*
