@@ -231,6 +231,7 @@ def usage():
     print("    --nomask                       - disable data masking for calculating cardiac waveform")
     print("    --nocensor                     - Bad points will not be excluded from analytic phase projection")
     print("    --nophasefilt                  - Disable the phase trend filter (probably not a good idea)")
+    print("    --nocardiacalign               - Disable alignment of pleth signal to fmri derived cardiac signal.")
 
     return ()
 
@@ -658,6 +659,7 @@ def happy_main(thearguments):
     motfilt_derivdelayed = False
     orthogonalize = True
     mpfix = False
+    aligncardiac = True
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
@@ -733,6 +735,7 @@ def happy_main(thearguments):
                                                        "nomask",
                                                        "noorthog",
                                                        "nomotpos",
+                                                       "nocardiacalign",
                                                        "nomotderiv",
                                                        "help"])
     except getopt.GetoptError as err:
@@ -766,6 +769,9 @@ def happy_main(thearguments):
         elif o == "--nophasefilt":
             filtphase = False
             print('disabling phase trend filter')
+        elif o == "--nocardiacalign":
+            aligncardiac = False
+            print('disabling cardiac alignment')
         elif o == "--dodlfilter":
             if dlfilterexists:
                 dodlfilter = True
@@ -1082,35 +1088,10 @@ def happy_main(thearguments):
                                                      envcutoff, envthresh,
                                                      timings, infodict, outputroot,
                                                      debug=True)
-        filtpleth_stdres, normpleth_stdres, plethenv_stdres = cleancardiac(stdfreq, pleth_stdres, cutoff=envcutoff,
-                                                                           thresh=envthresh)
-        s_mean, s_std, s_waveform = plethquality(filtpleth_stdres, stdfreq)
-        infodict['pleth_S_sqi_mean'] = s_mean
-        infodict['pleth_S_sqi_std'] = s_std
-        tide_io.writevec(normpleth_stdres, outputroot + '_normpleth_' + str(stdfreq) + 'Hz.txt')
-        tide_io.writevec(plethenv_stdres, outputroot + '_plethenv_' + str(stdfreq) + 'Hz.txt')
-
-        # find bad points in plethysmogram
-        thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', outputroot, slicesamplerate, infodict, thetype='fracval')
-
-        thebadplethpts_stdres = findbadpts(pleth_stdres, 'pleth_' + str(stdfreq) + 'Hz', outputroot, stdfreq, infodict,
-                                           thetype='fracval')
-        timings.append(['Cardiac signal from physiology data resampled to standard and saved', time.time(), None, None])
-
-        # find key components of cardiac waveform
-        filtpleth = tide_math.madnormalize(thecardbandfilter.apply(slicesamplerate, pleth_sliceres))
-        peakfreq_file = getcardcoeffs((1.0 - thebadplethpts_sliceres) * filtpleth,
-                                      slicesamplerate, smoothlen=smoothlen,
-                                      debug=debug)
-        timings.append(['Cardiac coefficients calculated from pleth waveform', time.time(), None, None])
-        infodict['cardiacbpm_fromphysio'] = np.round(peakfreq_file * 60.0, 2)
-        infodict['cardiacfreq_fromphysio'] = peakfreq_file
-        timings.append(['Cardiac signal from physiology data analyzed', time.time(), None, None])
-        timings.append(['Cardiac parameters extracted from physiology data', time.time(), None, None])
 
         # check the match between the bold and physio cardiac signals
         thexcorr = tide_corr.fastcorrelate(
-            tide_math.corrnormalize(filtpleth,
+            tide_math.corrnormalize(pleth_sliceres,
                                     prewindow=True,
                                     detrendorder=3,
                                     windowfunc='hamming'),
@@ -1139,14 +1120,41 @@ def happy_main(thearguments):
         infodict['corrcoeff'] = maxval
         infodict['delay'] = maxdelay
 
-        alignedpts_sliceres = -maxdelay / slicesamplerate  # maxdelay is in seconds
-        alignedpleth_sliceres, dummy1, dummy2, dummy2 = tide_resample.timeshift(pleth_sliceres, alignedpts_sliceres, int(10.0 * slicesamplerate))
-        alignedpts_stdres = -maxdelay * stdfreq  # maxdelay is in seconds
-        alignedpleth_stdres, dummy1, dummy2, dummy3 = tide_resample.timeshift(filtpleth_stdres, alignedpts_stdres, int(10.0 * stdfreq))
-        tide_io.writevec(alignedpleth_sliceres, outputroot + '_alignedpleth_sliceres.txt')
-        tide_io.writevec(alignedpleth_stdres, outputroot + '_alignedpleth_' + str(stdfreq) + 'Hz.txt')
+        # align the pleth signal with the cardiac signal derived from the data
+        if aligncardiac:
+            alignpts_sliceres = -maxdelay / slicesamplerate  # maxdelay is in seconds
+            pleth_sliceres, dummy1, dummy2, dummy2 = tide_resample.timeshift(pleth_sliceres, alignpts_sliceres, int(10.0 * slicesamplerate))
+            alignpts_stdres = -maxdelay * stdfreq  # maxdelay is in seconds
+            pleth_stdres, dummy1, dummy2, dummy3 = tide_resample.timeshift(pleth_stdres, alignpts_stdres, int(10.0 * stdfreq))
 
-        cardiacwaveform = alignedpleth_sliceres
+        # now clean up cardiac signal
+        filtpleth_stdres, normpleth_stdres, plethenv_stdres = cleancardiac(stdfreq, pleth_stdres, cutoff=envcutoff,
+                                                                           thresh=envthresh)
+        s_mean, s_std, s_waveform = plethquality(filtpleth_stdres, stdfreq)
+        infodict['pleth_S_sqi_mean'] = s_mean
+        infodict['pleth_S_sqi_std'] = s_std
+        tide_io.writevec(normpleth_stdres, outputroot + '_normpleth_' + str(stdfreq) + 'Hz.txt')
+        tide_io.writevec(plethenv_stdres, outputroot + '_plethenv_' + str(stdfreq) + 'Hz.txt')
+
+        # find bad points in plethysmogram
+        thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', outputroot, slicesamplerate, infodict, thetype='fracval')
+
+        thebadplethpts_stdres = findbadpts(pleth_stdres, 'pleth_' + str(stdfreq) + 'Hz', outputroot, stdfreq, infodict,
+                                           thetype='fracval')
+        timings.append(['Cardiac signal from physiology data resampled to standard and saved', time.time(), None, None])
+
+        # find key components of cardiac waveform
+        filtpleth = tide_math.madnormalize(thecardbandfilter.apply(slicesamplerate, pleth_sliceres))
+        peakfreq_file = getcardcoeffs((1.0 - thebadplethpts_sliceres) * filtpleth,
+                                      slicesamplerate, smoothlen=smoothlen,
+                                      debug=debug)
+        timings.append(['Cardiac coefficients calculated from pleth waveform', time.time(), None, None])
+        infodict['cardiacbpm_fromphysio'] = np.round(peakfreq_file * 60.0, 2)
+        infodict['cardiacfreq_fromphysio'] = peakfreq_file
+        timings.append(['Cardiac signal from physiology data analyzed', time.time(), None, None])
+        timings.append(['Cardiac parameters extracted from physiology data', time.time(), None, None])
+
+        cardiacwaveform = pleth_sliceres
 
         badpointlist = 1.0 - (1.0 - thebadplethpts_sliceres) * (1.0 - badpointlist)
 
