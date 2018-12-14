@@ -56,7 +56,7 @@ class dlfilter:
     thesuffix = 'sliceres'
     thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
     inputfrag='cardfromfmri'
-    targetfrag='normpleth'
+    targetfrag='alignedpleth'
     modelroot = '.'
     excludethresh = 4.0
     modelname = None
@@ -94,7 +94,7 @@ class dlfilter:
         modelpath='.',
         thedatadir='/Users/frederic/Documents/MR_data/physioconn/timecourses',
         inputfrag='cardfromfmri',
-        targetfrag='normpleth',
+        targetfrag='alignedpleth',
         readlim=None,
         countlim=None):
 
@@ -519,11 +519,11 @@ def tobadpts(name):
     return name.replace('.txt', '_badpts.txt')
 
 
-def targettoinput(name, targetfrag='normpleth', inputfrag='cardfromfmri'):
+def targettoinput(name, targetfrag='alignedpleth', inputfrag='cardfromfmri'):
     return name.replace(targetfrag, inputfrag)
 
 
-def getmatchedfiles(searchstring, usebadpts=False, targetfrag='normpleth', inpufrag='cardfromfmri'):
+def getmatchedfiles(searchstring, usebadpts=False, targetfrag='alignedpleth', inputfrag='cardfromfmri'):
     fromfile = sorted(glob.glob(searchstring))
 
     # make sure all files exist
@@ -531,7 +531,7 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='normpleth', inpuf
     for targetname in fromfile:
         if os.path.isfile(targettoinput(targetname)):
             if usebadpts:
-                if os.path.isfile(tobadpts(targetname.replace('normpleth', 'pleth'))) \
+                if os.path.isfile(tobadpts(targetname.replace('alignedpleth', 'pleth'))) \
                     and os.path.isfile(tobadpts(targettoinput(targetname))):
                     matchedfilelist.append(targetname)
                     print(matchedfilelist[-1])
@@ -581,7 +581,7 @@ def readindata(matchedfilelist, tclen, usebadpts=False, startskip=0, readlim=Non
             y1[:tclen, count] = tempy[:tclen]
             names.append(matchedfilelist[i])
             if usebadpts:
-                tempbad1 = np.loadtxt(tobadpts(matchedfilelist[i].replace('normpleth', 'pleth')))
+                tempbad1 = np.loadtxt(tobadpts(matchedfilelist[i].replace('alignedpleth', 'pleth')))
                 tempbad2 = np.loadtxt(tobadpts(targettoinput(matchedfilelist[i])))
                 bad1[:tclen, count] = 1.0 - (1.0 - tempbad1[:tclen]) * (1.0 - tempbad2[:tclen])
             count += 1
@@ -603,7 +603,7 @@ def prep(window_size,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
         inputfrag='cardfromfmri',
-        targetfrag='normpleth',
+        targetfrag='alignedpleth',
         dofft=False,
         debug=False,
         readlim=None,
@@ -634,10 +634,10 @@ def prep(window_size,
 
     '''
 
-    searchstring = os.path.join(thedatadir, '*normpleth_' + thesuffix + '.txt')
+    searchstring = os.path.join(thedatadir, '*alignedpleth_' + thesuffix + '.txt')
 
     # find matched files
-    matchedfilelist, tclen = getmatchedfiles(searchstring, usebadpts=usebadpts, targetfrag=targetfrag, inpufrag=inputfrag)
+    matchedfilelist, tclen = getmatchedfiles(searchstring, usebadpts=usebadpts, targetfrag=targetfrag, inputfrag=inputfrag)
 
     # read in the data from the matched files
     if usebadpts:

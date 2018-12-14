@@ -9,7 +9,7 @@ window_size = 128
 num_layers = 10
 num_filters = 10
 kernel_size = 5
-dropout_rate = 0.3
+dropout_rate = 0.1
 dofft = False
 nettype = 'cnn'
 activation = 'relu'
@@ -46,7 +46,7 @@ if nettype == 'cnn':
                             countlim=countlim,
                             thedatadir=thedatadir,
                             inputfrag='motcorr_cardfromfmri',
-                            targetfrag='motcorr_normpleth',
+                            targetfrag='motcorr_alignedpleth',
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size)
@@ -63,7 +63,7 @@ elif nettype == 'lstm':
                             countlim=countlim,
                             thedatadir=thedatadir,
                             inputfrag='motcorr_cardfromfmri',
-                            targetfrag='motcorr_normpleth',
+                            targetfrag='motcorr_alignedpleth',
                             num_units=num_units)
 elif nettype == 'hybrid':
     num_layers = 10
@@ -78,7 +78,7 @@ elif nettype == 'hybrid':
                             countlim=countlim,
                             thedatadir=thedatadir,
                             inputfrag='motcorr_cardfromfmri',
-                            targetfrag='motcorr_normpleth',
+                            targetfrag='motcorr_alignedpleth',
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size,
