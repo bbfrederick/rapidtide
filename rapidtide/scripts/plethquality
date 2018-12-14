@@ -59,12 +59,12 @@ def usage():
     print("usage: plethquality inputfile outputfile samplerate")
     print("")
     print("required arguments:")
-    print("	inputfile                 - the name of a text file containing a cardiac signal")
-    print("	outputfile                - the name of the output text file")
-    print("     samplerate                - data samplerate in Hz")
+    print("    inputfile                 - the name of a text file containing a cardiac signal")
+    print("    outputfile                - the name of the output text file")
+    print("    samplerate                - data samplerate in Hz")
     print("")
     print("optional arguments:")
-    print("	--nodisp                  - do not plot quality waveform")
+    print("    --nodisp                  - do not plot quality waveform")
 
 # handle required args first
 if len(sys.argv) < 4:
