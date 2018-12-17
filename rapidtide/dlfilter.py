@@ -598,12 +598,19 @@ def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebad
     count = 0
     print('checking data')
     for i in range(s):
+        nanfound = False
         print('processing ', matchedfilelist[i])
         tempy = np.loadtxt(matchedfilelist[i])
         tempx = np.loadtxt(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag, debug=debug))
+        if np.any(np.isnan(tempy)):
+            print('NaN found in file', matchedfilelist[i])
+            nanfound = True
+        if np.any(np.isnan(tempx)):
+            print('NaN found in file', targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag))
+            nanfound = True
         ntempx = tempx.shape[0]
         ntempy = tempy.shape[0]
-        if (ntempx >= tclen) and (ntempy >= tclen):
+        if (ntempx >= tclen) and (ntempy >= tclen) and not nanfound:
             x1[:tclen, count] = tempx[:tclen]
             y1[:tclen, count] = tempy[:tclen]
             names.append(matchedfilelist[i])
