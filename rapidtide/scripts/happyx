@@ -162,6 +162,7 @@ def usage():
     print("                                     with MKL which I can't seem to be able to fix.  If the dl filter bombs")
     print("                                     complaining about multiple openmp libraries, try rerunning with the")
     print("                                     secret and inadvisable '--usesuperdangerousworkaround' flag.  Good luck!")
+    print("    --model=MODELNAME              - use model MODELNAME for dl filter (default is model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu)")
     print("    --glm                          - Generate voxelwise aliased synthetic cardiac regressors and filter")
     print("                                     them out")
     print("")
@@ -650,6 +651,7 @@ def happy_main(thearguments):
     numskip = 0
     motskip = 0
     dodlfilter = False
+    modelname = 'model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu'
     motionhp = None
     motionlp = None
     motfilt_pos = True
@@ -727,6 +729,7 @@ def happy_main(thearguments):
                                                        "nocensor",
                                                        "nomadnorm",
                                                        "dodlfilter",
+                                                       "model=",
                                                        "usesuperdangerousworkaround",
                                                        "savemotionglmfilt",
                                                        "nophasefilt",
@@ -776,6 +779,9 @@ def happy_main(thearguments):
                 print('will apply deep learning filter to enhance the cardiac waveforms')
             else:
                 print('dlfilter not found - check to make sure Keras is installed and working.  Disabling.')
+        if o == "--model":
+            modelname = a
+            print('will use', modelname, 'for the deep learning filter;')
         elif o == "--cardcalconly":
             cardcalconly = True
             print('will stop processing after calculating cardiac waveforms')
@@ -1063,7 +1069,8 @@ def happy_main(thearguments):
             modelpath = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
                                      'models')
             thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
-            thedlfilter.loadmodel('model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu')
+            #thedlfilter.loadmodel('model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu')
+            thedlfilter.loadmodel(modelname)
             dlfilteredcard = thedlfilter.apply(cardfromfmri_stdres)
             tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
             cardfromfmri_sliceres = tide_math.madnormalize(
