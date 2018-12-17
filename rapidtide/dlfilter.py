@@ -96,8 +96,10 @@ class dlfilter:
         thedatadir='/Users/frederic/Documents/MR_data/physioconn/timecourses',
         inputfrag='abc',
         targetfrag='xyz',
+        excludebysubject=True,
         startskip=200,
         endskip=200,
+        step=1,
         namesuffix=None,
         readlim=None,
         countlim=None):
@@ -131,6 +133,8 @@ class dlfilter:
         self.namesuffix = namesuffix
         self.startskip = startskip
         self.endskip = endskip
+        self.step = step
+        self.excludebysubject = excludebysubject
 
         # populate infodict
         self.infodict['window_size'] = self.window_size
@@ -142,6 +146,7 @@ class dlfilter:
         self.infodict['dropout_rate'] = self.dropout_rate
         self.infodict['startskip'] = self.startskip
         self.infodict['endskip'] = self.endskip
+        self.infodict['step'] = self.step
         self.infodict['train_arch'] = sys.platform
 
 
@@ -158,11 +163,12 @@ class dlfilter:
                                                                         targetfrag=self.targetfrag,
                                                                         startskip=self.startskip,
                                                                         endskip=self.endskip,
+                                                                        step=self.step,
                                                                         dofft=self.dofft,
                                                                         debug=self.debug,
                                                                         usebadpts=self.usebadpts,
                                                                         excludethresh=self.excludethresh,
-                                                                        readlim=self.readlim,
+                                                                        excludebysubject=self.excludebysubject,                                                                        readlim=self.readlim,
                                                                         countlim=self.countlim)
         else:
             self.train_x, self.train_y, self.val_x, self.val_y, self.Ns, self.tclen, self.thebatchsize = prep(self.window_size,
@@ -172,10 +178,12 @@ class dlfilter:
                                                                         targetfrag=self.targetfrag,
                                                                         startskip=self.startskip,
                                                                         endskip=self.endskip,
+                                                                        step=self.step,
                                                                         dofft=self.dofft,
                                                                         debug=self.debug,
                                                                         usebadpts=self.usebadpts,
                                                                         excludethresh=self.excludethresh,
+                                                                        excludebysubject=self.excludebysubject,
                                                                         readlim=self.readlim,
                                                                         countlim=self.countlim)
 
@@ -635,6 +643,7 @@ def prep(window_size,
     window_size
     step
     excludethresh
+    excludebysubject
     usebadpts
     startskip
     endskip
@@ -694,13 +703,56 @@ def prep(window_size,
                   np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]), mad(x[:, thesubj]),
                   np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
 
-    if excludebysubject:
+    # now decide what to keep and what to exclude
+    thefabs = np.fabs(x)
+    if not excludebysubject:
+        N_pts = x.shape[0]
+        N_subjs = x.shape[1]
+        windowspersubject = int((N_pts - window_size - 1) // step)
+        print(N_subjs, 'subjects with',
+              N_pts, 'points will be evaluated with',
+              windowspersubject, 'windows per subject with step', step)
+        usewindow = np.zeros(N_subjs * windowspersubject, dtype=int)
+        subjectstarts = np.zeros(N_subjs, dtype=int)
+        # check each window
+        numgoodwindows = 0
+        print('checking windows')
+        for subj in range(N_subjs):
+            subjectstarts[subj] = numgoodwindows
+            print(names[subj], 'starts at', numgoodwindows)
+            for windownumber in range(windowspersubject):
+                if np.max(thefabs[step * windownumber:(step * windownumber + window_size), subj]) <= excludethresh:
+                    usewindow[subj * windowspersubject + windownumber] = 1
+                    numgoodwindows += 1
+        print('found', numgoodwindows, 'out of a potential', N_subjs * windowspersubject,
+              '(', 100.0 * numgoodwindows / (N_subjs * windowspersubject), '%)')
+
+        for subj in range(N_subjs):
+            print(names[subj], 'starts at', subjectstarts[subj])
+
+        print('copying data into windows')
+        Xb = np.zeros((numgoodwindows, window_size, 1))
+        Yb = np.zeros((numgoodwindows, window_size, 1))
+        if usebadpts:
+            Xb_withbad = np.zeros((numgoodwindows, window_size, 1))
+        print('dimensions of Xb:', Xb.shape)
+        thiswindow = 0
+        for subj in range(N_subjs):
+            for windownumber in range(windowspersubject):
+                if usewindow[subj * windowspersubject + windownumber] == 1:
+                    Xb[thiswindow, :, 0] = x[step * windownumber:(step * windownumber + window_size), subj]
+                    Yb[thiswindow, :, 0] = y[step * windownumber:(step * windownumber + window_size), subj]
+                    if usebadpts:
+                        Xb_withbad[thiswindow, :, 0] = bad[step * windownumber:(step * windownumber + window_size), subj]
+                    thiswindow += 1
+
+    else:
         # now check for subjects that have regions that exceed the target
-        thefabs = np.fabs(x)
         themax = np.max(thefabs, axis=0)
 
         cleansubjs = np.where(themax < excludethresh)[0]
 
+        totalcount = x.shape[1] + 0
         cleancount = len(cleansubjs)
         if countlim is not None:
             if cleancount > countlim:
@@ -730,69 +782,77 @@ def prep(window_size,
         if usebadpts:
             BAD[0, :, :] = bad
 
-        Xb = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 1))
+        windowspersubject = int((N_pts - window_size - 1) // step)
+        print('found', windowspersubject * cleancount, 'out of a potential', windowspersubject * totalcount,
+              '(', 100.0 * cleancount / totalcount, '%)')
+        print(windowspersubject, cleancount, totalcount)
+
+        Xb = np.zeros((N_subjs * windowspersubject, window_size, 1))
         print('dimensions of Xb:', Xb.shape)
         for j in range(N_subjs):
             print('sub', j, '(', cleannames[j], '), min, max X, Y:', j, np.min(X[0, :, j]), np.max(X[0, :, j]), np.min(Y[0, :, j]),
                   np.max(Y[0, :, j]))
-            for i in range((N_pts - window_size - 1)):
-                Xb[j * ((N_pts - window_size - 1)) + i, :, 0] = X[0, step * i:(step * i + window_size), j]
+            for i in range(windowspersubject):
+                Xb[j * windowspersubject + i, :, 0] = X[0, step * i:(step * i + window_size), j]
 
-        Yb = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 1))
+        Yb = np.zeros((N_subjs * windowspersubject, window_size, 1))
         print('dimensions of Yb:', Yb.shape)
         for j in range(N_subjs):
-            for i in range((N_pts - window_size - 1)):
-                Yb[j * ((N_pts - window_size - 1)) + i, :, 0] = Y[0, step * i:(step * i + window_size), j]
+            for i in range(windowspersubject):
+                Yb[j * windowspersubject + i, :, 0] = Y[0, step * i:(step * i + window_size), j]
 
         if usebadpts:
-            Xb_withbad = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 2))
+            Xb_withbad = np.zeros((N_subjs * windowspersubject, window_size, 2))
             print('dimensions of Xb_withbad:', Xb_withbad.shape)
             for j in range(N_subjs):
                 print('packing data for subject',j)
-                for i in range((N_pts - window_size - 1)):
-                    Xb_withbad[j * ((N_pts - window_size - 1)) + i, :, 0] = \
+                for i in range(windowspersubject):
+                    Xb_withbad[j * windowspersubject + i, :, 0] = \
                         X[0, step * i:(step * i + window_size), j]
-                    Xb_withbad[j * ((N_pts - window_size - 1)) + i, :, 1] = \
+                    Xb_withbad[j * windowspersubject + i, :, 1] = \
                         BAD[0, step * i:(step * i + window_size), j]
             Xb = Xb_withbad
 
-        perm = np.arange(Xb.shape[0])
+    print('Xb.shape:', Xb.shape)
+    print('Yb.shape:', Yb.shape)
 
-        if dofft:
-            Xb_fourier = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 2))
-            print('dimensions of Xb_fourier:', Xb_fourier.shape)
-            Xscale_fourier = np.zeros((N_subjs, N_pts - window_size - 1))
-            print('dimensions of Xscale_fourier:', Xscale_fourier.shape)
-            Yb_fourier = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 2))
-            print('dimensions of Yb_fourier:', Yb_fourier.shape)
-            Yscale_fourier = np.zeros((N_subjs, N_pts - window_size - 1))
-            print('dimensions of Yscale_fourier:', Yscale_fourier.shape)
-            for j in range(N_subjs):
-                print('transforming subject',j)
-                for i in range((N_pts - window_size - 1)):
-                    Xb_fourier[j * ((N_pts - window_size - 1)) + i, :, :], Xscale_fourier[j, i] = \
-                        filtscale(X[0, step * i:(step * i + window_size), j])
-                    Yb_fourier[j * ((N_pts - window_size - 1)) + i, :, :], Yscale_fourier[j, i] = \
-                        filtscale(Y[0, step * i:(step * i + window_size), j])
+    perm = np.arange(Xb.shape[0])
 
-        perm = np.arange(Xb.shape[0])
-        limit = int(0.8 * Xb.shape[0])
+    if dofft:
+        Xb_fourier = np.zeros((N_subjs * windowspersubject, window_size, 2))
+        print('dimensions of Xb_fourier:', Xb_fourier.shape)
+        Xscale_fourier = np.zeros((N_subjs, windowspersubject))
+        print('dimensions of Xscale_fourier:', Xscale_fourier.shape)
+        Yb_fourier = np.zeros((N_subjs * windowspersubject, window_size, 2))
+        print('dimensions of Yb_fourier:', Yb_fourier.shape)
+        Yscale_fourier = np.zeros((N_subjs, windowspersubject))
+        print('dimensions of Yscale_fourier:', Yscale_fourier.shape)
+        for j in range(N_subjs):
+            print('transforming subject',j)
+            for i in range((N_pts - window_size - 1)):
+                Xb_fourier[j * (windowspersubject) + i, :, :], Xscale_fourier[j, i] = \
+                    filtscale(X[0, step * i:(step * i + window_size), j])
+                Yb_fourier[j * (windowspersubject) + i, :, :], Yscale_fourier[j, i] = \
+                    filtscale(Y[0, step * i:(step * i + window_size), j])
 
-        batchsize = N_pts - window_size - 1
+    perm = np.arange(Xb.shape[0])
+    limit = int(0.8 * Xb.shape[0])
 
-        if dofft:
-            train_x = Xb_fourier[perm[:limit], :, :]
-            train_y = Yb_fourier[perm[:limit], :, :]
+    batchsize = windowspersubject
 
-            val_x = Xb_fourier[perm[limit:], :, :]
-            val_y = Yb_fourier[perm[limit:], :, :]
-            print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
-            return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize, Xscale_fourier, Yscale_fourier
-        else:
-            train_x = Xb[perm[:limit], :, :]
-            train_y = Yb[perm[:limit], :, :]
+    if dofft:
+        train_x = Xb_fourier[perm[:limit], :, :]
+        train_y = Yb_fourier[perm[:limit], :, :]
 
-            val_x = Xb[perm[limit:], :, :]
-            val_y = Yb[perm[limit:], :, :]
-            print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
-            return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize
+        val_x = Xb_fourier[perm[limit:], :, :]
+        val_y = Yb_fourier[perm[limit:], :, :]
+        print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
+        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip - endskip, batchsize, Xscale_fourier, Yscale_fourier
+    else:
+        train_x = Xb[perm[:limit], :, :]
+        train_y = Yb[perm[:limit], :, :]
+
+        val_x = Xb[perm[limit:], :, :]
+        val_y = Yb[perm[limit:], :, :]
+        print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
+        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip - endskip, batchsize

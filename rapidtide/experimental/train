@@ -21,6 +21,8 @@ debug = True
 invert = True
 startskip = 200
 endskip = 200
+step = 5
+excludebysubject = False
 
 thiscomputer = os.uname().nodename
 print('thiscomputer:', thiscomputer)
@@ -41,7 +43,9 @@ if nettype == 'cnn':
                             num_epochs=num_epochs,
                             startskip=startskip,
                             endskip=endskip,
+                            step=step,
                             excludethresh=excludethresh,
+                            excludebysubject=excludebysubject,
                             window_size=window_size,
                             num_layers=num_layers,
                             dropout_rate=dropout_rate,
@@ -62,7 +66,9 @@ elif nettype == 'lstm':
                             num_epochs=num_epochs,
                             startskip=startskip,
                             endskip=endskip,
+                            step=step,
                             excludethresh=excludethresh,
+                            excludebysubject=excludebysubject,
                             window_size=window_size,
                             num_layers=num_layers,
                             dropout_rate=dropout_rate,
@@ -79,7 +85,9 @@ elif nettype == 'hybrid':
                             num_epochs=num_epochs,
                             startskip=startskip,
                             endskip=endskip,
+                            step=step,
                             excludethresh=excludethresh,
+                            excludebysubject=excludebysubject,
                             window_size=window_size,
                             num_layers=num_layers,
                             dropout_rate=dropout_rate,
