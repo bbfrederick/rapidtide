@@ -3,13 +3,13 @@
 import rapidtide.dlfilter as dlfilter
 import os
 
-num_epochs = 10
+num_epochs = 5
 excludethresh = 4.0
 window_size = 128
 num_layers = 10
 num_filters = 10
 kernel_size = 5
-dropout_rate = 0.2
+dropout_rate = 0.3
 dofft = False
 nettype = 'cnn'
 activation = 'relu'
@@ -19,6 +19,8 @@ readlim = None
 num_units = 128
 debug = True
 invert = True
+startskip = 200
+endskip = 200
 
 thiscomputer = os.uname().nodename
 print('thiscomputer:', thiscomputer)
@@ -37,6 +39,8 @@ else:
 if nettype == 'cnn':
     thefilter = dlfilter.cnn(
                             num_epochs=num_epochs,
+                            startskip=startskip,
+                            endskip=endskip,
                             excludethresh=excludethresh,
                             window_size=window_size,
                             num_layers=num_layers,
@@ -46,8 +50,8 @@ if nettype == 'cnn':
                             countlim=countlim,
                             thedatadir=thedatadir,
                             inputfrag='motfilt_cardfromfmri',
-                            targetfrag='motfilt_alignedpleth',
-                            namesuffix='aligned',
+                            targetfrag='motfilt_normpleth',
+                            namesuffix='normaligned',
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size,
@@ -56,6 +60,8 @@ elif nettype == 'lstm':
     num_layers = 2
     thefilter = dlfilter.lstm(
                             num_epochs=num_epochs,
+                            startskip=startskip,
+                            endskip=endskip,
                             excludethresh=excludethresh,
                             window_size=window_size,
                             num_layers=num_layers,
@@ -71,6 +77,8 @@ elif nettype == 'hybrid':
     num_layers = 10
     thefilter = dlfilter.hybrid(
                             num_epochs=num_epochs,
+                            startskip=startskip,
+                            endskip=endskip,
                             excludethresh=excludethresh,
                             window_size=window_size,
                             num_layers=num_layers,

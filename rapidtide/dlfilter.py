@@ -96,6 +96,8 @@ class dlfilter:
         thedatadir='/Users/frederic/Documents/MR_data/physioconn/timecourses',
         inputfrag='abc',
         targetfrag='xyz',
+        startskip=200,
+        endskip=200,
         namesuffix=None,
         readlim=None,
         countlim=None):
@@ -127,6 +129,8 @@ class dlfilter:
         self.inputfrag = inputfrag
         self.targetfrag = targetfrag
         self.namesuffix = namesuffix
+        self.startskip = startskip
+        self.endskip = endskip
 
         # populate infodict
         self.infodict['window_size'] = self.window_size
@@ -136,6 +140,8 @@ class dlfilter:
         self.infodict['num_epochs'] = self.num_epochs
         self.infodict['modelname'] = self.modelname
         self.infodict['dropout_rate'] = self.dropout_rate
+        self.infodict['startskip'] = self.startskip
+        self.infodict['endskip'] = self.endskip
         self.infodict['train_arch'] = sys.platform
 
 
@@ -150,6 +156,8 @@ class dlfilter:
                                                                         thedatadir=self.thedatadir,
                                                                         inputfrag=self.inputfrag,
                                                                         targetfrag=self.targetfrag,
+                                                                        startskip=self.startskip,
+                                                                        endskip=self.endskip,
                                                                         dofft=self.dofft,
                                                                         debug=self.debug,
                                                                         usebadpts=self.usebadpts,
@@ -162,6 +170,8 @@ class dlfilter:
                                                                         thedatadir=self.thedatadir,
                                                                         inputfrag=self.inputfrag,
                                                                         targetfrag=self.targetfrag,
+                                                                        startskip=self.startskip,
+                                                                        endskip=self.endskip,
                                                                         dofft=self.dofft,
                                                                         debug=self.debug,
                                                                         usebadpts=self.usebadpts,
@@ -526,11 +536,12 @@ def tobadpts(name):
 
 def targettoinput(name, targetfrag='xyz', inputfrag='abc', debug=False):
     if debug:
-        print('replacing', inputfrag, 'with', targetfrag)
+        print('replacing', targetfrag, 'with', inputfrag)
     return name.replace(targetfrag, inputfrag)
 
 
 def getmatchedfiles(searchstring, usebadpts=False, targetfrag='xyz', inputfrag='abc', debug=False):
+    # list all of the target files
     fromfile = sorted(glob.glob(searchstring))
     if debug:
         print('searchstring:', searchstring, '->', fromfile)
@@ -560,8 +571,8 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='xyz', inputfrag='
     return matchedfilelist, tclen
 
 
-def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebadpts=False, startskip=0, readlim=None, debug=False):
-    print('readindata called with usebadpts, startskip, readlim, targetfrag, inputfrag =', usebadpts, startskip, readlim, targetfrag, inputfrag)
+def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebadpts=False, startskip=0, endskip=0, readlim=None, debug=False):
+    print('readindata called with usebadpts, startskip, endskip, readlim, targetfrag, inputfrag =', usebadpts, startskip, endskip, readlim, targetfrag, inputfrag)
     # allocate target arrays
     print('allocating arrays')
     s = len(matchedfilelist)
@@ -596,9 +607,9 @@ def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebad
     print(count, 'runs pass file length check')
 
     if usebadpts:
-        return x1[startskip:, :count], y1[startskip:, :count], names[:count], bad1[startskip:, :count]
+        return x1[startskip:-endskip, :count], y1[startskip:-endskip, :count], names[:count], bad1[startskip:-endskip, :count]
     else:
-        return x1[startskip:, :count], y1[startskip:, :count], names[:count]
+        return x1[startskip:-endskip, :count], y1[startskip:-endskip, :count], names[:count]
 
 
 def prep(window_size,
@@ -606,8 +617,8 @@ def prep(window_size,
         excludethresh=4.0,
         usebadpts=False,
         startskip=200,
-        endskip=0,
-        excludesubject=True,
+        endskip=200,
+        excludebysubject=True,
         thesuffix='sliceres',
         thedatadir='/data1/frederic/test/output',
         inputfrag='abc',
@@ -650,10 +661,10 @@ def prep(window_size,
     # read in the data from the matched files
     if usebadpts:
         x, y, names, bad = readindata(matchedfilelist, tclen, targetfrag=targetfrag, inputfrag=inputfrag, 
-                                        usebadpts=True, startskip=startskip, readlim=readlim, debug=debug)
+                                        usebadpts=True, startskip=startskip, endskip=endskip, readlim=readlim, debug=debug)
     else:
         x, y, names = readindata(matchedfilelist, tclen, targetfrag=targetfrag, inputfrag=inputfrag,
-                                    startskip=startskip, readlim=readlim, debug=debug)
+                                    startskip=startskip, endskip=endskip, readlim=readlim, debug=debug)
     print('xshape, yshape:', x.shape, y.shape)
 
     # normalize input and output data
@@ -683,106 +694,105 @@ def prep(window_size,
                   np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]), mad(x[:, thesubj]),
                   np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
 
-    thefabs = np.fabs(x)
-    themax = np.max(thefabs, axis=0)
+    if excludebysubject:
+        # now check for subjects that have regions that exceed the target
+        thefabs = np.fabs(x)
+        themax = np.max(thefabs, axis=0)
 
-    if excludesubject:
-        pass
+        cleansubjs = np.where(themax < excludethresh)[0]
 
-    cleansubjs = np.where(themax < excludethresh)[0]
+        cleancount = len(cleansubjs)
+        if countlim is not None:
+            if cleancount > countlim:
+                print('reducing count to', countlim, 'from', cleancount)
+                cleansubjs = cleansubjs[:countlim]
 
-    cleancount = len(cleansubjs)
-    if countlim is not None:
-        if cleancount > countlim:
-            print('reducing count to', countlim, 'from', cleancount)
-            cleansubjs = cleansubjs[:countlim]
+        x = x[:, cleansubjs]
+        y = y[:, cleansubjs]
+        cleannames = []
+        for theindex in cleansubjs:
+            cleannames.append(names[theindex])
+        if usebadpts:
+            bad = bad[:, cleansubjs]
 
-    x = x[:, cleansubjs]
-    y = y[:, cleansubjs]
-    cleannames = []
-    for theindex in cleansubjs:
-        cleannames.append(names[theindex])
-    if usebadpts:
-        bad = bad[:, cleansubjs]
+        print('after filtering, shape of x is', x.shape)
 
-    print('after filtering, shape of x is', x.shape)
+        N_pts = y.shape[0]
+        N_subjs = y.shape[1]
 
-    N_pts = y.shape[0]
-    N_subjs = y.shape[1]
+        X = np.zeros((1, N_pts, N_subjs))
+        Y = np.zeros((1, N_pts, N_subjs))
+        if usebadpts:
+            BAD = np.zeros((1, N_pts, N_subjs))
 
-    X = np.zeros((1, N_pts, N_subjs))
-    Y = np.zeros((1, N_pts, N_subjs))
-    if usebadpts:
-        BAD = np.zeros((1, N_pts, N_subjs))
+        X[0, :, :] = x
+        Y[0, :, :] = y
+        if usebadpts:
+            BAD[0, :, :] = bad
 
-    X[0, :, :] = x
-    Y[0, :, :] = y
-    if usebadpts:
-        BAD[0, :, :] = bad
-
-    Xb = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 1))
-    print('dimensions of Xb:', Xb.shape)
-    for j in range(N_subjs):
-        print('sub', j, '(', cleannames[j], '), min, max X, Y:', j, np.min(X[0, :, j]), np.max(X[0, :, j]), np.min(Y[0, :, j]),
-              np.max(Y[0, :, j]))
-        for i in range((N_pts - window_size - 1)):
-            Xb[j * ((N_pts - window_size - 1)) + i, :, 0] = X[0, step * i:(step * i + window_size), j]
-
-    Yb = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 1))
-    print('dimensions of Yb:', Yb.shape)
-    for j in range(N_subjs):
-        for i in range((N_pts - window_size - 1)):
-            Yb[j * ((N_pts - window_size - 1)) + i, :, 0] = Y[0, step * i:(step * i + window_size), j]
-
-    if usebadpts:
-        Xb_withbad = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 2))
-        print('dimensions of Xb_withbad:', Xb_withbad.shape)
+        Xb = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 1))
+        print('dimensions of Xb:', Xb.shape)
         for j in range(N_subjs):
-            print('packing data for subject',j)
+            print('sub', j, '(', cleannames[j], '), min, max X, Y:', j, np.min(X[0, :, j]), np.max(X[0, :, j]), np.min(Y[0, :, j]),
+                  np.max(Y[0, :, j]))
             for i in range((N_pts - window_size - 1)):
-                Xb_withbad[j * ((N_pts - window_size - 1)) + i, :, 0] = \
-                    X[0, step * i:(step * i + window_size), j]
-                Xb_withbad[j * ((N_pts - window_size - 1)) + i, :, 1] = \
-                    BAD[0, step * i:(step * i + window_size), j]
-        Xb = Xb_withbad
-    
-    perm = np.arange(Xb.shape[0])
+                Xb[j * ((N_pts - window_size - 1)) + i, :, 0] = X[0, step * i:(step * i + window_size), j]
 
-    if dofft:
-        Xb_fourier = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 2))
-        print('dimensions of Xb_fourier:', Xb_fourier.shape)
-        Xscale_fourier = np.zeros((N_subjs, N_pts - window_size - 1))
-        print('dimensions of Xscale_fourier:', Xscale_fourier.shape)
-        Yb_fourier = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 2))
-        print('dimensions of Yb_fourier:', Yb_fourier.shape)
-        Yscale_fourier = np.zeros((N_subjs, N_pts - window_size - 1))
-        print('dimensions of Yscale_fourier:', Yscale_fourier.shape)
+        Yb = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 1))
+        print('dimensions of Yb:', Yb.shape)
         for j in range(N_subjs):
-            print('transforming subject',j)
             for i in range((N_pts - window_size - 1)):
-                Xb_fourier[j * ((N_pts - window_size - 1)) + i, :, :], Xscale_fourier[j, i] = \
-                    filtscale(X[0, step * i:(step * i + window_size), j])
-                Yb_fourier[j * ((N_pts - window_size - 1)) + i, :, :], Yscale_fourier[j, i] = \
-                    filtscale(Y[0, step * i:(step * i + window_size), j])
-    
-    perm = np.arange(Xb.shape[0])
-    limit = int(0.8 * Xb.shape[0])
+                Yb[j * ((N_pts - window_size - 1)) + i, :, 0] = Y[0, step * i:(step * i + window_size), j]
 
-    batchsize = N_pts - window_size - 1
+        if usebadpts:
+            Xb_withbad = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 2))
+            print('dimensions of Xb_withbad:', Xb_withbad.shape)
+            for j in range(N_subjs):
+                print('packing data for subject',j)
+                for i in range((N_pts - window_size - 1)):
+                    Xb_withbad[j * ((N_pts - window_size - 1)) + i, :, 0] = \
+                        X[0, step * i:(step * i + window_size), j]
+                    Xb_withbad[j * ((N_pts - window_size - 1)) + i, :, 1] = \
+                        BAD[0, step * i:(step * i + window_size), j]
+            Xb = Xb_withbad
 
-    if dofft:
-        train_x = Xb_fourier[perm[:limit], :, :]
-        train_y = Yb_fourier[perm[:limit], :, :]
+        perm = np.arange(Xb.shape[0])
 
-        val_x = Xb_fourier[perm[limit:], :, :]
-        val_y = Yb_fourier[perm[limit:], :, :]
-        print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
-        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize, Xscale_fourier, Yscale_fourier
-    else:
-        train_x = Xb[perm[:limit], :, :]
-        train_y = Yb[perm[:limit], :, :]
+        if dofft:
+            Xb_fourier = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 2))
+            print('dimensions of Xb_fourier:', Xb_fourier.shape)
+            Xscale_fourier = np.zeros((N_subjs, N_pts - window_size - 1))
+            print('dimensions of Xscale_fourier:', Xscale_fourier.shape)
+            Yb_fourier = np.zeros((N_subjs * (N_pts - window_size - 1), window_size, 2))
+            print('dimensions of Yb_fourier:', Yb_fourier.shape)
+            Yscale_fourier = np.zeros((N_subjs, N_pts - window_size - 1))
+            print('dimensions of Yscale_fourier:', Yscale_fourier.shape)
+            for j in range(N_subjs):
+                print('transforming subject',j)
+                for i in range((N_pts - window_size - 1)):
+                    Xb_fourier[j * ((N_pts - window_size - 1)) + i, :, :], Xscale_fourier[j, i] = \
+                        filtscale(X[0, step * i:(step * i + window_size), j])
+                    Yb_fourier[j * ((N_pts - window_size - 1)) + i, :, :], Yscale_fourier[j, i] = \
+                        filtscale(Y[0, step * i:(step * i + window_size), j])
 
-        val_x = Xb[perm[limit:], :, :]
-        val_y = Yb[perm[limit:], :, :]
-        print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
-        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize
+        perm = np.arange(Xb.shape[0])
+        limit = int(0.8 * Xb.shape[0])
+
+        batchsize = N_pts - window_size - 1
+
+        if dofft:
+            train_x = Xb_fourier[perm[:limit], :, :]
+            train_y = Yb_fourier[perm[:limit], :, :]
+
+            val_x = Xb_fourier[perm[limit:], :, :]
+            val_y = Yb_fourier[perm[limit:], :, :]
+            print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
+            return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize, Xscale_fourier, Yscale_fourier
+        else:
+            train_x = Xb[perm[:limit], :, :]
+            train_y = Yb[perm[:limit], :, :]
+
+            val_x = Xb[perm[limit:], :, :]
+            val_y = Yb[perm[limit:], :, :]
+            print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
+            return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize
