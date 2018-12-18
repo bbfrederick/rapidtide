@@ -61,7 +61,7 @@ if nettype == 'cnn':
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size,
-                            debug=True)
+                            debug=debug)
 elif nettype == 'lstm':
     num_layers = 2
     thefilter = dlfilter.lstm(

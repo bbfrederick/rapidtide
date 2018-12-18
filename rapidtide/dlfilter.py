@@ -40,13 +40,15 @@ import rapidtide.io as tide_io
 
 try:
     import plaidml.keras
+
     plaidml.keras.install_backend("plaidml")
-except:
+except ImportError:
     pass
 
 from keras.models import Sequential
 from keras.optimizers import RMSprop
-from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, MaxPooling1D, LSTM, TimeDistributed
+from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
+    TimeDistributed
 from keras.callbacks import TerminateOnNaN, ModelCheckpoint
 from keras.models import load_model
 
@@ -55,9 +57,9 @@ class dlfilter:
     """Base class for deep learning filter"""
     thesuffix = 'sliceres'
     thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
-    inputfrag='abc'
-    targetfrag='xyz'
-    namesuffix=None
+    inputfrag = 'abc'
+    targetfrag = 'xyz'
+    namesuffix = None
     modelroot = '.'
     excludethresh = 4.0
     modelname = None
@@ -75,35 +77,33 @@ class dlfilter:
     val_y = None
     model = None
     modelpath = None
-    modelname = '.'
     inputsize = None
     infodict = {}
 
-
     def __init__(self,
-        window_size=128,
-        num_layers=5,
-        dropout_rate=0.3,
-        num_epochs=1,
-        activation='relu',
-        modelroot='.',
-        dofft=False,
-        debug=False,
-        excludethresh=4.0,
-        usebadpts=False,
-        thesuffix='25.0Hz',
-        modelpath='.',
-        thedatadir='/Users/frederic/Documents/MR_data/physioconn/timecourses',
-        inputfrag='abc',
-        targetfrag='xyz',
-        excludebysubject=True,
-        startskip=200,
-        endskip=200,
-        step=1,
-        namesuffix=None,
-        readlim=None,
-        readskip=None,
-        countlim=None):
+                 window_size=128,
+                 num_layers=5,
+                 dropout_rate=0.3,
+                 num_epochs=1,
+                 activation='relu',
+                 modelroot='.',
+                 dofft=False,
+                 debug=False,
+                 excludethresh=4.0,
+                 usebadpts=False,
+                 thesuffix='25.0Hz',
+                 modelpath='.',
+                 thedatadir='/Users/frederic/Documents/MR_data/physioconn/timecourses',
+                 inputfrag='abc',
+                 targetfrag='xyz',
+                 excludebysubject=True,
+                 startskip=200,
+                 endskip=200,
+                 step=1,
+                 namesuffix=None,
+                 readlim=None,
+                 readskip=None,
+                 countlim=None):
 
         self.window_size = window_size
         self.dropout_rate = dropout_rate
@@ -151,69 +151,71 @@ class dlfilter:
         self.infodict['step'] = self.step
         self.infodict['train_arch'] = sys.platform
 
-
     def loaddata(self):
         if not self.initialized:
             print('model must be initialized prior to loading data')
             sys.exit()
 
         if self.dofft:
-            self.train_x, self.train_y, self.val_x, self.val_y, self.Ns, self.tclen, self.thebatchsize, dummy, dummy = prep(self.window_size,
-                                                                        thesuffix=self.thesuffix,
-                                                                        thedatadir=self.thedatadir,
-                                                                        inputfrag=self.inputfrag,
-                                                                        targetfrag=self.targetfrag,
-                                                                        startskip=self.startskip,
-                                                                        endskip=self.endskip,
-                                                                        step=self.step,
-                                                                        dofft=self.dofft,
-                                                                        debug=self.debug,
-                                                                        usebadpts=self.usebadpts,
-                                                                        excludethresh=self.excludethresh,
-                                                                        excludebysubject=self.excludebysubject,
-                                                                        readlim=self.readlim,
-                                                                        readskip=self.readskip,
-                                                                        countlim=self.countlim)
+            self.train_x, self.train_y, self.val_x, self.val_y, self.Ns, self.tclen, self.thebatchsize, dummy, dummy = prep(
+                self.window_size,
+                thesuffix=self.thesuffix,
+                thedatadir=self.thedatadir,
+                inputfrag=self.inputfrag,
+                targetfrag=self.targetfrag,
+                startskip=self.startskip,
+                endskip=self.endskip,
+                step=self.step,
+                dofft=self.dofft,
+                debug=self.debug,
+                usebadpts=self.usebadpts,
+                excludethresh=self.excludethresh,
+                excludebysubject=self.excludebysubject,
+                readlim=self.readlim,
+                readskip=self.readskip,
+                countlim=self.countlim)
         else:
-            self.train_x, self.train_y, self.val_x, self.val_y, self.Ns, self.tclen, self.thebatchsize = prep(self.window_size,
-                                                                        thesuffix=self.thesuffix,
-                                                                        thedatadir=self.thedatadir,
-                                                                        inputfrag=self.inputfrag,
-                                                                        targetfrag=self.targetfrag,
-                                                                        startskip=self.startskip,
-                                                                        endskip=self.endskip,
-                                                                        step=self.step,
-                                                                        dofft=self.dofft,
-                                                                        debug=self.debug,
-                                                                        usebadpts=self.usebadpts,
-                                                                        excludethresh=self.excludethresh,
-                                                                        excludebysubject=self.excludebysubject,
-                                                                        readlim=self.readlim,
-                                                                        readskip=self.readskip,
-                                                                        countlim=self.countlim)
+            self.train_x, self.train_y, self.val_x, self.val_y, self.Ns, self.tclen, self.thebatchsize = prep(
+                self.window_size,
+                thesuffix=self.thesuffix,
+                thedatadir=self.thedatadir,
+                inputfrag=self.inputfrag,
+                targetfrag=self.targetfrag,
+                startskip=self.startskip,
+                endskip=self.endskip,
+                step=self.step,
+                dofft=self.dofft,
+                debug=self.debug,
+                usebadpts=self.usebadpts,
+                excludethresh=self.excludethresh,
+                excludebysubject=self.excludebysubject,
+                readlim=self.readlim,
+                readskip=self.readskip,
+                countlim=self.countlim)
 
     def evaluate(self):
         self.lossfilename = os.path.join(self.modelname, 'loss.png')
         print('lossfilename:', self.lossfilename)
-    
+
         YPred = self.model.predict(self.val_x)
 
         error = self.val_y - YPred
         self.pred_error = (np.mean(np.square(error)))
-    
+
         error2 = self.val_x - self.val_y
         self.raw_error = (np.mean(np.square(error2)))
         print('Prediction Error: ', self.pred_error, 'Raw Error: ', self.raw_error)
-    
+
         f = open(os.path.join(self.modelname, 'loss.txt'), 'w')
-        f.write(self.modelname + ': Prediction Error: ' + str(self.pred_error) + ' Raw Error: ' + str(self.raw_error) + '\n')
+        f.write(self.modelname + ': Prediction Error: ' + str(self.pred_error) + ' Raw Error: ' + str(
+            self.raw_error) + '\n')
         f.close()
-    
+
         self.loss = self.history.history['loss']
         self.val_loss = self.history.history['val_loss']
-    
+
         epochs = range(len(self.loss))
-    
+
         plt.figure()
         plt.plot(epochs, self.loss, 'bo', label='Training loss')
         plt.plot(epochs, self.val_loss, 'b', label='Validation loss')
@@ -222,9 +224,8 @@ class dlfilter:
         plt.savefig(self.lossfilename)
         plt.close()
         self.updatemetadata()
-    
-        return self.loss, self.val_loss, self.pred_error, self.raw_error
 
+        return self.loss, self.val_loss, self.pred_error, self.raw_error
 
     def initmetadata(self):
         self.infodict = {}
@@ -239,7 +240,6 @@ class dlfilter:
         self.infodict['modelname'] = self.modelname
         tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, 'model_meta.json'))
 
-
     def updatemetadata(self):
         self.infodict['loss'] = self.loss
         self.infodict['val_loss'] = self.val_loss
@@ -247,11 +247,9 @@ class dlfilter:
         self.infodict['prediction_error'] = self.pred_error
         tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, 'model_meta.json'))
 
-
     def savemodel(self):
         # save the trained model
         self.model.save(os.path.join(self.modelname, 'model.h5'))
-
 
     def loadmodel(self, modelname):
         # read in the data
@@ -270,7 +268,6 @@ class dlfilter:
         self.initialized = True
         self.trained = True
 
-
     def initialize(self):
         self.getname()
         self.makenet()
@@ -280,24 +277,23 @@ class dlfilter:
         self.initialized = True
         self.trained = False
 
-
-    def train(self): 
+    def train(self):
         self.intermediatemodelpath = os.path.join(self.modelname, 'model_e{epoch:02d}_v{val_loss:.4f}.h5')
         if self.usetensorboard:
             tensorboard = TensorBoard(log_dir=self.intermediatemodelpath + "logs/{}".format(time()))
-            model.fit(x_train, y_train, verbose=1, callbacks=[tensorboard])
-        self.history = self.model.fit(
-                        self.train_x,
-                        self.train_y,
-                        batch_size=1024,
-                        epochs=self.num_epochs,
-                        shuffle=True,
-                        verbose=1,
-                        callbacks=[TerminateOnNaN(), ModelCheckpoint(self.intermediatemodelpath)],
-                        validation_data=(self.val_x, self.val_y))
+            self.model.fit(self.train_x, self.train_y, verbose=1, callbacks=[tensorboard])
+        else:
+            self.history = self.model.fit(
+                self.train_x,
+                self.train_y,
+                batch_size=1024,
+                epochs=self.num_epochs,
+                shuffle=True,
+                verbose=1,
+                callbacks=[TerminateOnNaN(), ModelCheckpoint(self.intermediatemodelpath)],
+                validation_data=(self.val_x, self.val_y))
         self.savemodel()
         self.trained = True
-
 
     def apply(self, inputdata, badpts=None):
         initscale = mad(inputdata)
@@ -316,11 +312,11 @@ class dlfilter:
             X = np.zeros(((N_pts - self.window_size - 1), self.window_size, 1))
             for i in range(X.shape[0]):
                 X[i, :, 0] = scaleddata[i:i + self.window_size]
-        
+
         Y = self.model.predict(X)
         for i in range(X.shape[0]):
             predicteddata[i:i + self.window_size] += Y[i, :, 0]
-        
+
         weightarray[:] = self.window_size
         weightarray[0:self.window_size] = np.linspace(1.0, self.window_size, self.window_size, endpoint=False)
         weightarray[-(self.window_size + 1):-1] = np.linspace(self.window_size, 1.0, self.window_size, endpoint=False)
@@ -336,18 +332,16 @@ class cnn(dlfilter):
         self.infodict['kernel_size'] = self.kernel_size
         super(cnn, self).__init__(*args, **kwargs)
 
-
     def getname(self):
-        self.modelname = '_'.join([  'model',
-                            'cnn',
-                            'w' + str(self.window_size),
-                            'l' + str(self.num_layers),
-                            'fn' + str(self.num_filters),
-                            'fl' + str(self.kernel_size),
-                            'd' + str(self.dropout_rate),
-                            'e' + str(self.num_epochs),
-                            't' + str(self.excludethresh),
-                            self.activation])
+        self.modelname = '_'.join(['model',
+                                   'cnn',
+                                   'w' + str(self.window_size),
+                                   'l' + str(self.num_layers),
+                                   'fn' + str(self.num_filters),
+                                   'fl' + str(self.kernel_size),
+                                   'e' + str(self.num_epochs),
+                                   't' + str(self.excludethresh),
+                                   self.activation])
         if self.usebadpts:
             self.modelname += '_usebadpts'
         if self.namesuffix is not None:
@@ -359,27 +353,25 @@ class cnn(dlfilter):
         except OSError:
             pass
 
-
     def makenet(self):
         self.model = Sequential()
 
         # make the input layer
-        self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same', input_shape=(None, self.inputsize)))
+        self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same',
+                                     input_shape=(None, self.inputsize)))
         self.model.add(BatchNormalization())
-        self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
 
         # make the intermediate layers
         for layer in range(self.num_layers - 2):
             self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same'))
             self.model.add(BatchNormalization())
-            self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
-    
+
         # make the output layer
         self.model.add(Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding='same'))
         self.model.compile(optimizer=RMSprop(),
-                            loss='mse')
+                           loss='mse')
 
 
 class lstm(dlfilter):
@@ -389,18 +381,17 @@ class lstm(dlfilter):
         self.infodict['num_units'] = self.num_units
         super(lstm, self).__init__(*args, **kwargs)
 
-
     def getname(self):
-        self.modelname = '_'.join([  'model',
-                            'lstm',
-                            'w' + str(self.window_size),
-                            'l' + str(self.num_layers),
-                            'nu' + str(self.num_units),
-                            'd' + str(self.dropout_rate),
-                            'rd' + str(self.dropout_rate),
-                            'e' + str(self.num_epochs),
-                            't' + str(self.excludethresh)
-                            ])
+        self.modelname = '_'.join(['model',
+                                   'lstm',
+                                   'w' + str(self.window_size),
+                                   'l' + str(self.num_layers),
+                                   'nu' + str(self.num_units),
+                                   'd' + str(self.dropout_rate),
+                                   'rd' + str(self.dropout_rate),
+                                   'e' + str(self.num_epochs),
+                                   't' + str(self.excludethresh)
+                                   ])
         self.modelpath = os.path.join(self.modelroot, self.modelname)
 
         try:
@@ -408,21 +399,20 @@ class lstm(dlfilter):
         except OSError:
             pass
 
-
     def makenet(self):
         self.model = Sequential()
 
         # each layer consists of an LSTM followed by a dense time distributed layer to get it back to the window size
         for layer in range(self.num_layers):
             self.model.add(Bidirectional(LSTM(self.num_units,
-                     dropout=self.dropout_rate,
-                     recurrent_dropout=self.dropout_rate,
-                     return_sequences=True),
-                     input_shape=(self.window_size, 1)))
+                                              dropout=self.dropout_rate,
+                                              recurrent_dropout=self.dropout_rate,
+                                              return_sequences=True),
+                                         input_shape=(self.window_size, 1)))
             self.model.add(TimeDistributed(Dense(1)))
 
         self.model.compile(optimizer='adam',
-                            loss='mse')
+                           loss='mse')
 
 
 class hybrid(dlfilter):
@@ -438,20 +428,19 @@ class hybrid(dlfilter):
         self.infodict['num_units'] = self.num_units
         super(hybrid, self).__init__(*args, **kwargs)
 
-
     def getname(self):
-        self.modelname = '_'.join([  'model',
-                            'hybrid',
-                            'w' + str(self.window_size),
-                            'l' + str(self.num_layers),
-                            'fn' + str(self.num_filters),
-                            'fl' + str(self.kernel_size),
-                            'nu' + str(self.num_units),
-                            'd' + str(self.dropout_rate),
-                            'rd' + str(self.dropout_rate),
-                            'e' + str(self.num_epochs),
-                            't' + str(self.excludethresh),
-                            self.activation])
+        self.modelname = '_'.join(['model',
+                                   'hybrid',
+                                   'w' + str(self.window_size),
+                                   'l' + str(self.num_layers),
+                                   'fn' + str(self.num_filters),
+                                   'fl' + str(self.kernel_size),
+                                   'nu' + str(self.num_units),
+                                   'd' + str(self.dropout_rate),
+                                   'rd' + str(self.dropout_rate),
+                                   'e' + str(self.num_epochs),
+                                   't' + str(self.excludethresh),
+                                   self.activation])
         if self.invert:
             self.modelname += '_invert'
         self.modelpath = os.path.join(self.modelroot, self.modelname)
@@ -466,52 +455,49 @@ class hybrid(dlfilter):
 
         if self.invert:
             # make the input layer
-            self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same', input_shape=(self.window_size, self.inputsize)))
+            self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same',
+                                         input_shape=(self.window_size, self.inputsize)))
             self.model.add(BatchNormalization())
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
-    
+
             # then make make the intermediate CNN layers
             for layer in range(self.num_layers - 2):
                 self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same'))
                 self.model.add(BatchNormalization())
                 self.model.add(Dropout(rate=self.dropout_rate))
                 self.model.add(Activation(self.activation))
-    
+
             # finish with an LSTM layer to find hidden states
             self.model.add(Bidirectional(LSTM(self.num_units,
-                         dropout=self.dropout_rate,
-                         recurrent_dropout=self.dropout_rate,
-                         return_sequences=True),
-                         input_shape=(self.window_size, 1)))
+                                              dropout=self.dropout_rate,
+                                              recurrent_dropout=self.dropout_rate,
+                                              return_sequences=True),
+                                         input_shape=(self.window_size, 1)))
             self.model.add(TimeDistributed(Dense(1)))
-    
+
         else:
             # start with an LSTM layer to find hidden states
             self.model.add(Bidirectional(LSTM(self.num_units,
-                         dropout=self.dropout_rate,
-                         recurrent_dropout=self.dropout_rate,
-                         return_sequences=True),
-                        input_shape=(self.window_size, 1)))
+                                              dropout=self.dropout_rate,
+                                              recurrent_dropout=self.dropout_rate,
+                                              return_sequences=True),
+                                         input_shape=(self.window_size, 1)))
             self.model.add(TimeDistributed(Dense(1)))
             self.model.add(Dropout(rate=self.dropout_rate))
-    
+
             # then make make the intermediate CNN layers
             for layer in range(self.num_layers - 2):
                 self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same'))
                 self.model.add(BatchNormalization())
                 self.model.add(Dropout(rate=self.dropout_rate))
                 self.model.add(Activation(self.activation))
-    
+
             # make the output layer
             self.model.add(Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding='same'))
-    
+
         self.model.compile(optimizer=RMSprop(),
-                        loss='mse')
-
-
-
-
+                           loss='mse')
 
 
 def filtscale(data, scalefac=1.0, reverse=False, hybrid=False, lognormalize=True, epsilon=1e-10, numorders=6):
@@ -528,7 +514,7 @@ def filtscale(data, scalefac=1.0, reverse=False, hybrid=False, lognormalize=True
         thephase = np.angle(specvals)
         thephase = thephase / (2.0 * np.pi) - 0.5
         if hybrid:
-            return np.stack((thedata, themag), axis=1), scalefac
+            return np.stack((data, themag), axis=1), scalefac
         else:
             return np.stack((themag, thephase), axis=1), scalefac
     else:
@@ -541,7 +527,8 @@ def filtscale(data, scalefac=1.0, reverse=False, hybrid=False, lognormalize=True
             else:
                 themag = data[:, 0] * scalefac
             specvals = themag * np.exp(1.0j * thephase)
-            return  fftpack.ifft(specvals).real
+            return fftpack.ifft(specvals).real
+
 
 def tobadpts(name):
     return name.replace('.txt', '_badpts.txt')
@@ -565,12 +552,15 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='xyz', inputfrag='
         if os.path.isfile(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)):
             if usebadpts:
                 if os.path.isfile(tobadpts(targetname.replace('alignedpleth', 'pleth'))) \
-                    and os.path.isfile(tobadpts(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug))):
-                    matchedfilelist.append(targetname)
-                    print(matchedfilelist[-1])
+                        and os.path.isfile(
+                            tobadpts(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug))):
+                                matchedfilelist.append(targetname)
+                                if debug:
+                                    print(matchedfilelist[-1])
             else:
                 matchedfilelist.append(targetname)
-                print(matchedfilelist[-1])
+                if debug:
+                    print(matchedfilelist[-1])
     if usebadpts:
         print(len(matchedfilelist), 'runs pass all 4 files present check')
     else:
@@ -605,52 +595,90 @@ def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebad
     # now read the data in
     count = 0
     print('checking data')
+    nanfiles = []
+    shortfiles = []
+    strangemagfiles = []
     for i in range(readskip, readskip + s):
         nanfound = False
         print('processing ', matchedfilelist[i])
         tempy = np.loadtxt(matchedfilelist[i])
         tempx = np.loadtxt(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag, debug=debug))
         if np.any(np.isnan(tempy)):
-            print('NaN found in file', matchedfilelist[i])
+            print('NaN found in file', matchedfilelist[i], '- discarding')
             nanfound = True
+            nanfiles.append(matchedfilelist[i])
         if np.any(np.isnan(tempx)):
-            print('NaN found in file', targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag))
+            print('NaN found in file', targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag), '- discarding')
             nanfound = True
+            nanfiles.append(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag))
+        strangefound = False
+        if not (0.5 < np.std(tempx) < 20.0):
+            print('file', targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag),
+                 'has an extreme standard deviation - discarding')
+            strangefound = True
+            strangemagfiles.append(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag))
+        if not (0.5 < np.std(tempy) < 20.0):
+            print('file', matchedfilelist[i], 'has an extreme standard deviation - discarding')
+            strangefound = True
+            strangemagfiles.append(matchedfilelist[i])
+        shortfound = False
         ntempx = tempx.shape[0]
         ntempy = tempy.shape[0]
-        if (ntempx >= tclen) and (ntempy >= tclen) and not nanfound:
+        if ntempx < tclen:
+            print('file', targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag), 'is short - discarding')
+            shortfound = True
+            shortfiles.append(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag))
+        if ntempy < tclen:
+            print('file', matchedfilelist[i], 'is short - discarding')
+            shortfound = True
+            shortfiles.append(matchedfilelist[i])
+        if (ntempx >= tclen) and (ntempy >= tclen) and (not nanfound) and (not shortfound) and (not strangefound):
             x1[:tclen, count] = tempx[:tclen]
             y1[:tclen, count] = tempy[:tclen]
             names.append(matchedfilelist[i])
             if usebadpts:
                 tempbad1 = np.loadtxt(tobadpts(matchedfilelist[i].replace('alignedpleth', 'pleth')))
-                tempbad2 = np.loadtxt(tobadpts(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)))
+                tempbad2 = np.loadtxt(tobadpts(
+                    targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)))
                 bad1[:tclen, count] = 1.0 - (1.0 - tempbad1[:tclen]) * (1.0 - tempbad2[:tclen])
             count += 1
     print(count, 'runs pass file length check')
+    if len(nanfiles) > 0:
+        print('files with NaNs:')
+        for thefile in nanfiles:
+            print('\t', thefile)
+    if len(shortfiles) > 0:
+        print('short files:')
+        for thefile in shortfiles:
+            print('\t', thefile)
+    if len(strangemagfiles) > 0:
+        print('files with extreme standard deviations:')
+        for thefile in strangemagfiles:
+            print('\t', thefile)
 
     if usebadpts:
-        return x1[startskip:-endskip, :count], y1[startskip:-endskip, :count], names[:count], bad1[startskip:-endskip, :count]
+        return x1[startskip:-endskip, :count], y1[startskip:-endskip, :count], names[:count], bad1[startskip:-endskip,
+                                                                                              :count]
     else:
         return x1[startskip:-endskip, :count], y1[startskip:-endskip, :count], names[:count]
 
 
 def prep(window_size,
-        step=1,
-        excludethresh=4.0,
-        usebadpts=False,
-        startskip=200,
-        endskip=200,
-        excludebysubject=True,
-        thesuffix='sliceres',
-        thedatadir='/data1/frederic/test/output',
-        inputfrag='abc',
-        targetfrag='xyz',
-        dofft=False,
-        debug=False,
-        readlim=None,
-        readskip=None,
-        countlim=None):
+         step=1,
+         excludethresh=4.0,
+         usebadpts=False,
+         startskip=200,
+         endskip=200,
+         excludebysubject=True,
+         thesuffix='sliceres',
+         thedatadir='/data1/frederic/test/output',
+         inputfrag='abc',
+         targetfrag='xyz',
+         dofft=False,
+         debug=False,
+         readlim=None,
+         readskip=None,
+         countlim=None):
     '''
     prep - reads in training and validation data for 1D filter
 
@@ -670,6 +698,7 @@ def prep(window_size,
     dofft
     debug
     readlim
+    readskip
     countlim
 
     Returns
@@ -681,7 +710,8 @@ def prep(window_size,
     searchstring = os.path.join(thedatadir, '*_' + targetfrag + '_' + thesuffix + '.txt')
 
     # find matched files
-    matchedfilelist, tclen = getmatchedfiles(searchstring, usebadpts=usebadpts, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)
+    matchedfilelist, tclen = getmatchedfiles(searchstring, usebadpts=usebadpts, targetfrag=targetfrag,
+                                             inputfrag=inputfrag, debug=debug)
 
     # read in the data from the matched files
     if usebadpts:
@@ -703,8 +733,10 @@ def prep(window_size,
     if debug:
         for thesubj in range(x.shape[1]):
             print('prenorm sub', thesubj, 'min, max, mean, std, MAD x, y:', thesubj,
-                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]), mad(x[:, thesubj]),
-                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
+                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]),
+                  mad(x[:, thesubj]),
+                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]),
+                  mad(y[:, thesubj]))
 
     y -= np.mean(y, axis=0)
     themad = mad(y, axis=0)
@@ -721,25 +753,29 @@ def prep(window_size,
     if debug:
         for thesubj in range(x.shape[1]):
             print('postnorm sub', thesubj, 'min, max, mean, std, MAD x, y:', thesubj,
-                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]), mad(x[:, thesubj]),
-                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]), mad(y[:, thesubj]))
+                  np.min(x[:, thesubj]), np.max(x[:, thesubj]), np.mean(x[:, thesubj]), np.std(x[:, thesubj]),
+                  mad(x[:, thesubj]),
+                  np.min(y[:, thesubj]), np.max(y[:, thesubj]), np.mean(y[:, thesubj]), np.std(x[:, thesubj]),
+                  mad(y[:, thesubj]))
 
     # now decide what to keep and what to exclude
     thefabs = np.fabs(x)
     if not excludebysubject:
         N_pts = x.shape[0]
         N_subjs = x.shape[1]
-        windowspersubject = int((N_pts - window_size - 1) // step)
+        windowspersubject = np.int64((N_pts - window_size - 1) // step)
         print(N_subjs, 'subjects with',
               N_pts, 'points will be evaluated with',
               windowspersubject, 'windows per subject with step', step)
-        usewindow = np.zeros(N_subjs * windowspersubject, dtype=int)
-        subjectstarts = np.zeros(N_subjs, dtype=int)
+        usewindow = np.zeros(N_subjs * windowspersubject, dtype=np.int64)
+        subjectstarts = np.zeros(N_subjs, dtype=np.int64)
         # check each window
         numgoodwindows = 0
         print('checking windows')
+        subjectnames = []
         for subj in range(N_subjs):
             subjectstarts[subj] = numgoodwindows
+            subjectnames.append(names[subj])
             print(names[subj], 'starts at', numgoodwindows)
             for windownumber in range(windowspersubject):
                 if np.max(thefabs[step * windownumber:(step * windownumber + window_size), subj]) <= excludethresh:
@@ -764,7 +800,8 @@ def prep(window_size,
                     Xb[thiswindow, :, 0] = x[step * windownumber:(step * windownumber + window_size), subj]
                     Yb[thiswindow, :, 0] = y[step * windownumber:(step * windownumber + window_size), subj]
                     if usebadpts:
-                        Xb_withbad[thiswindow, :, 0] = bad[step * windownumber:(step * windownumber + window_size), subj]
+                        Xb_withbad[thiswindow, :, 0] = bad[step * windownumber:(step * windownumber + window_size),
+                                                       subj]
                     thiswindow += 1
 
     else:
@@ -782,11 +819,11 @@ def prep(window_size,
 
         x = x[:, cleansubjs]
         y = y[:, cleansubjs]
-        cleannames = []
         for theindex in cleansubjs:
             cleannames.append(names[theindex])
         if usebadpts:
             bad = bad[:, cleansubjs]
+        subjectnames = cleannames
 
         print('after filtering, shape of x is', x.shape)
 
@@ -811,7 +848,8 @@ def prep(window_size,
         Xb = np.zeros((N_subjs * windowspersubject, window_size, 1))
         print('dimensions of Xb:', Xb.shape)
         for j in range(N_subjs):
-            print('sub', j, '(', cleannames[j], '), min, max X, Y:', j, np.min(X[0, :, j]), np.max(X[0, :, j]), np.min(Y[0, :, j]),
+            print('sub', j, '(', cleannames[j], '), min, max X, Y:', j, np.min(X[0, :, j]), np.max(X[0, :, j]),
+                  np.min(Y[0, :, j]),
                   np.max(Y[0, :, j]))
             for i in range(windowspersubject):
                 Xb[j * windowspersubject + i, :, 0] = X[0, step * i:(step * i + window_size), j]
@@ -826,7 +864,7 @@ def prep(window_size,
             Xb_withbad = np.zeros((N_subjs * windowspersubject, window_size, 2))
             print('dimensions of Xb_withbad:', Xb_withbad.shape)
             for j in range(N_subjs):
-                print('packing data for subject',j)
+                print('packing data for subject', j)
                 for i in range(windowspersubject):
                     Xb_withbad[j * windowspersubject + i, :, 0] = \
                         X[0, step * i:(step * i + window_size), j]
@@ -834,10 +872,13 @@ def prep(window_size,
                         BAD[0, step * i:(step * i + window_size), j]
             Xb = Xb_withbad
 
+        subjectstarts = range(N_subjs) * windowspersubject
+        for subj in range(N_subjs):
+            print(names[subj], 'starts at', subjectstarts[subj])
+
+
     print('Xb.shape:', Xb.shape)
     print('Yb.shape:', Yb.shape)
-
-    perm = np.arange(Xb.shape[0])
 
     if dofft:
         Xb_fourier = np.zeros((N_subjs * windowspersubject, window_size, 2))
@@ -849,18 +890,29 @@ def prep(window_size,
         Yscale_fourier = np.zeros((N_subjs, windowspersubject))
         print('dimensions of Yscale_fourier:', Yscale_fourier.shape)
         for j in range(N_subjs):
-            print('transforming subject',j)
+            print('transforming subject', j)
             for i in range((N_pts - window_size - 1)):
-                Xb_fourier[j * (windowspersubject) + i, :, :], Xscale_fourier[j, i] = \
+                Xb_fourier[j * windowspersubject + i, :, :], Xscale_fourier[j, i] = \
                     filtscale(X[0, step * i:(step * i + window_size), j])
-                Yb_fourier[j * (windowspersubject) + i, :, :], Yscale_fourier[j, i] = \
+                Yb_fourier[j * windowspersubject + i, :, :], Yscale_fourier[j, i] = \
                     filtscale(Y[0, step * i:(step * i + window_size), j])
 
-    limit = int(0.8 * Xb.shape[0])
-    perm_train = np.random.permutation(np.arange(limit))
-    perm_val = np.random.permutation(np.arange(limit, Xb.shape[0]))
+    limit = np.int64(0.8 * Xb.shape[0])
+    print('limit:', limit, 'out of', len(subjectstarts))
+    # find nearest subject start
+    firstvalsubject = np.abs(subjectstarts - limit).argmin()
+    print('firstvalsubject:', firstvalsubject)
+    perm_train = np.random.permutation(np.int64(np.arange(subjectstarts[firstvalsubject])))
+    perm_val = np.random.permutation(np.int64(np.arange(subjectstarts[firstvalsubject], Xb.shape[0])))
 
-    perm = np.arange(Xb.shape[0])
+    print('training subjects:')
+    for i in range(0, firstvalsubject):
+        print('\t', i, subjectnames[i])
+    print('validation subjects:')
+    for i in range(firstvalsubject, len(subjectstarts)):
+        print('\t', i, subjectnames[i])
+
+    perm = range(Xb.shape[0])
 
     batchsize = windowspersubject
 
@@ -873,13 +925,6 @@ def prep(window_size,
         print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
         return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip - endskip, batchsize, Xscale_fourier, Yscale_fourier
     else:
-        '''
-        train_x = Xb[perm[:limit], :, :]
-        train_y = Yb[perm[:limit], :, :]
-
-        val_x = Xb[perm[limit:], :, :]
-        val_y = Yb[perm[limit:], :, :]
-        '''
         train_x = Xb[perm_train, :, :]
         train_y = Yb[perm_train, :, :]
 
