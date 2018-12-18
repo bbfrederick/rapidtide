@@ -1,0 +1,112 @@
+#!/usr/bin/env python
+
+from __future__ import print_function, division
+import getopt
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import sys
+import glob
+from scipy import fftpack
+import rapidtide.io as tide_io
+from statsmodels.robust.scale import mad
+import rapidtide.dlfilter as dlfilter
+
+
+def usage():
+    print("usage: applydlfilter inputfile outputfile [--model=MODELROOT] [--filesarelists]")
+    print("")
+    print("required arguments:")
+    print("	inputfile                 - the name of a text file containing 25.0Hz raw cardiac signal")
+    print("	outputfile                - the name of the output text file")
+    print("")
+    print("optional arguments:")
+    print("	--model=MODELROOT         - use model named MODELROOT (default is model)")
+    print("	--filesarelists           - input files contain lists of filenames, rather than data")
+    print("	--nodisplay               - disables display")
+
+# handle required args first
+if len(sys.argv) < 3:
+    usage()
+    sys.exit()
+fmrifilename = sys.argv[1]
+display = True
+predfilename = sys.argv[2]
+
+modelname = 'model'
+filesarelists = False
+
+# now scan for optional arguments
+try:
+    opts, args = getopt.getopt(sys.argv[3:], "x", ["model=", "nodisplay", "filesarelists", "help"])
+except getopt.GetoptError as err:
+    # print(help information and exit:
+    print(str(err))  # will print something like "option -a not recognized"
+    usage()
+    sys.exit(2)
+
+for o, a in opts:
+    if o == "--model":
+        modelname = a
+        print('will use', modelname)
+    elif o == "--nodisplay":
+        display = False
+        print('disabling display')
+    elif o == "--filesarelists":
+        filesarelists = True
+        print('will treat specified files as lists')
+    else:
+        assert False, "unhandled option"
+
+if filesarelists:
+    fmrifilenamelist = []
+    with open(fmrifilename, 'r') as f:
+        inputlist = f.readlines()
+        for line in inputlist:
+            fmrifilenamelist.append(line.strip())
+            print(fmrifilenamelist[-1])
+    predfilenamelist = []
+    with open(predfilename, 'r') as f:
+        inputlist = f.readlines()
+        for line in inputlist:
+            predfilenamelist.append(line.strip())
+            print(predfilenamelist[-1])
+    if len(fmrifilenamelist) != len(predfilenamelist):
+        print('list lengths do not match - exiting')
+        sys.exit()
+else:
+    fmrifilenamelist = [fmrifilename]
+    predfilenamelist = [predfilename]
+
+
+# load the filter
+thedlfilter = dlfilter.dlfilter()
+thedlfilter.loadmodel(modelname)
+model = thedlfilter.model
+window_size = thedlfilter.window_size
+usebadpts = thedlfilter.usebadpts
+
+badpts = None
+if usebadpts:
+    try:
+        badpts = tide_io.readvec(fmrifilename.replace('.txt', '_badpts.txt'))
+    except:
+        print('bad points file', fmrifilename.replace('.txt', '_badpts.txt'), 'not found!')
+        sys.exit() 
+
+for idx, fmrifilename in enumerate(fmrifilenamelist):
+    # read in the data
+    print('reading in', fmrifilename)
+    fmridata = tide_io.readvec(fmrifilename)
+
+    print('filtering...')
+    predicteddata = thedlfilter.apply(fmridata, badpts=badpts)
+
+    print('writing to', predfilenamelist[idx])
+    tide_io.writevec(predicteddata, predfilenamelist[idx])
+
+    if display:
+        plt.figure()
+        plt.plot(fmridata)
+        plt.plot(predicteddata)
+        plt.show()
