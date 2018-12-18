@@ -102,6 +102,7 @@ class dlfilter:
         step=1,
         namesuffix=None,
         readlim=None,
+        readskip=None,
         countlim=None):
 
         self.window_size = window_size
@@ -123,6 +124,7 @@ class dlfilter:
         print('modeldir from dlfilter:', self.modelpath)
         self.excludethresh = excludethresh
         self.readlim = readlim
+        self.readskip = readskip
         self.countlim = countlim
         self.model = None
         self.initialized = False
@@ -168,7 +170,9 @@ class dlfilter:
                                                                         debug=self.debug,
                                                                         usebadpts=self.usebadpts,
                                                                         excludethresh=self.excludethresh,
-                                                                        excludebysubject=self.excludebysubject,                                                                        readlim=self.readlim,
+                                                                        excludebysubject=self.excludebysubject,
+                                                                        readlim=self.readlim,
+                                                                        readskip=self.readskip,
                                                                         countlim=self.countlim)
         else:
             self.train_x, self.train_y, self.val_x, self.val_y, self.Ns, self.tclen, self.thebatchsize = prep(self.window_size,
@@ -185,6 +189,7 @@ class dlfilter:
                                                                         excludethresh=self.excludethresh,
                                                                         excludebysubject=self.excludebysubject,
                                                                         readlim=self.readlim,
+                                                                        readskip=self.readskip,
                                                                         countlim=self.countlim)
 
     def evaluate(self):
@@ -579,25 +584,28 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='xyz', inputfrag='
     return matchedfilelist, tclen
 
 
-def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebadpts=False, startskip=0, endskip=0, readlim=None, debug=False):
-    print('readindata called with usebadpts, startskip, endskip, readlim, targetfrag, inputfrag =', usebadpts, startskip, endskip, readlim, targetfrag, inputfrag)
+def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebadpts=False,
+               startskip=0, endskip=0,
+               readlim=None, readskip=None, debug=False):
+    print('readindata called with usebadpts, startskip, endskip, readlim, readskip, targetfrag, inputfrag =',
+          usebadpts, startskip, endskip, readlim, readskip, targetfrag, inputfrag)
     # allocate target arrays
     print('allocating arrays')
-    s = len(matchedfilelist)
+    s = len(matchedfilelist[readskip:])
     if readlim is not None:
         if s > readlim:
             print('trimming read list to', readlim, 'from', s)
             s = readlim
-    x1 = np.zeros([tclen, s])
-    y1 = np.zeros([tclen, s])
+    x1 = np.zeros((tclen, s))
+    y1 = np.zeros((tclen, s))
     names = []
     if usebadpts:
-        bad1 = np.zeros([tclen, s])
+        bad1 = np.zeros((tclen, s))
 
     # now read the data in
     count = 0
     print('checking data')
-    for i in range(s):
+    for i in range(readskip, readskip + s):
         nanfound = False
         print('processing ', matchedfilelist[i])
         tempy = np.loadtxt(matchedfilelist[i])
@@ -641,6 +649,7 @@ def prep(window_size,
         dofft=False,
         debug=False,
         readlim=None,
+        readskip=None,
         countlim=None):
     '''
     prep - reads in training and validation data for 1D filter
@@ -676,11 +685,16 @@ def prep(window_size,
 
     # read in the data from the matched files
     if usebadpts:
-        x, y, names, bad = readindata(matchedfilelist, tclen, targetfrag=targetfrag, inputfrag=inputfrag, 
-                                        usebadpts=True, startskip=startskip, endskip=endskip, readlim=readlim, debug=debug)
+        x, y, names, bad = readindata(matchedfilelist, tclen,
+                                      targetfrag=targetfrag, inputfrag=inputfrag,
+                                      usebadpts=True,
+                                      startskip=startskip, endskip=endskip,
+                                      readlim=readlim, readskip=readskip, debug=debug)
     else:
-        x, y, names = readindata(matchedfilelist, tclen, targetfrag=targetfrag, inputfrag=inputfrag,
-                                    startskip=startskip, endskip=endskip, readlim=readlim, debug=debug)
+        x, y, names = readindata(matchedfilelist, tclen,
+                                 targetfrag=targetfrag, inputfrag=inputfrag,
+                                 startskip=startskip, endskip=endskip,
+                                 readlim=readlim, readskip=readskip, debug=debug)
     print('xshape, yshape:', x.shape, y.shape)
 
     # normalize input and output data

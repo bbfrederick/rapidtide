@@ -15,7 +15,8 @@ nettype = 'cnn'
 activation = 'relu'
 usebadpts = False
 countlim = None
-readlim = None
+readlim = 50
+readskip = 150
 num_units = 128
 debug = False
 invert = True
@@ -51,6 +52,7 @@ if nettype == 'cnn':
                             dropout_rate=dropout_rate,
                             usebadpts=usebadpts,
                             readlim=readlim,
+                            readskip=readskip,
                             countlim=countlim,
                             thedatadir=thedatadir,
                             inputfrag='motfilt_cardfromfmri',
@@ -74,6 +76,7 @@ elif nettype == 'lstm':
                             dropout_rate=dropout_rate,
                             usebadpts=usebadpts,
                             readlim=readlim,
+                            readskip=readskip,
                             countlim=countlim,
                             thedatadir=thedatadir,
                             inputfrag='motfilt_cardfromfmri',
@@ -93,6 +96,7 @@ elif nettype == 'hybrid':
                             dropout_rate=dropout_rate,
                             usebadpts=usebadpts,
                             readlim=readlim,
+                            readskip=readskip,
                             countlim=countlim,
                             thedatadir=thedatadir,
                             inputfrag='motfilt_cardfromfmri',
