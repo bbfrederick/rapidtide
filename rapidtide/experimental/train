@@ -15,14 +15,14 @@ nettype = 'cnn'
 activation = 'relu'
 usebadpts = False
 countlim = None
-readlim = 50
-readskip = 150
+readlim = None
+readskip = 0
 num_units = 128
 debug = False
 invert = True
 startskip = 200
 endskip = 200
-step = 5
+step = 20
 excludebysubject = False
 
 thiscomputer = os.uname().nodename

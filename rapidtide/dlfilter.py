@@ -63,7 +63,7 @@ class dlfilter:
     modelname = None
     intermediatemodelpath = None
     usebadpts = False
-    activation = 'relu'
+    activation = 'tanh'
     dofft = False
     debug = False
     readlim = None
@@ -368,7 +368,7 @@ class cnn(dlfilter):
         self.model.add(BatchNormalization())
         self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
-    
+
         # make the intermediate layers
         for layer in range(self.num_layers - 2):
             self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same'))
@@ -856,8 +856,11 @@ def prep(window_size,
                 Yb_fourier[j * (windowspersubject) + i, :, :], Yscale_fourier[j, i] = \
                     filtscale(Y[0, step * i:(step * i + window_size), j])
 
-    perm = np.arange(Xb.shape[0])
     limit = int(0.8 * Xb.shape[0])
+    perm_train = np.random.permutation(np.arange(limit))
+    perm_val = np.random.permutation(np.arange(limit, Xb.shape[0]))
+
+    perm = np.arange(Xb.shape[0])
 
     batchsize = windowspersubject
 
@@ -870,10 +873,18 @@ def prep(window_size,
         print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
         return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip - endskip, batchsize, Xscale_fourier, Yscale_fourier
     else:
+        '''
         train_x = Xb[perm[:limit], :, :]
         train_y = Yb[perm[:limit], :, :]
 
         val_x = Xb[perm[limit:], :, :]
         val_y = Yb[perm[limit:], :, :]
+        '''
+        train_x = Xb[perm_train, :, :]
+        train_y = Yb[perm_train, :, :]
+
+        val_x = Xb[perm_val, :, :]
+        val_y = Yb[perm_val, :, :]
+
         print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
         return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip - endskip, batchsize
