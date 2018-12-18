@@ -216,6 +216,8 @@ class dlfilter:
 
         epochs = range(len(self.loss))
 
+        self.updatemetadata()
+
         plt.figure()
         plt.plot(epochs, self.loss, 'bo', label='Training loss')
         plt.plot(epochs, self.val_loss, 'b', label='Validation loss')
@@ -223,7 +225,7 @@ class dlfilter:
         plt.legend()
         plt.savefig(self.lossfilename)
         plt.close()
-        self.updatemetadata()
+
 
         return self.loss, self.val_loss, self.pred_error, self.raw_error
 
