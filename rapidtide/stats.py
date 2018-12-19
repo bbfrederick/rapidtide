@@ -337,13 +337,14 @@ def gethistprops(indata, histlen, refine=False, therange=None):
     return peaklag, peakheight, peakwidth
 
 
-def makehistogram(indata, histlen, therange=None):
+def makehistogram(indata, histlen, binsize=None, therange=None):
     """
 
     Parameters
     ----------
     indata
     histlen
+    binsize
     therange
 
     Returns
@@ -351,15 +352,23 @@ def makehistogram(indata, histlen, therange=None):
 
     """
     if therange is None:
-        thehist = np.histogram(indata, histlen)
+        therange = [indata.min(), indata.max()]
+    if histlen is None and binsize is None:
+        thebins = 10
+    elif binsize is not None:
+        thebins = sp.linspace(therange[0], therange[1], (therange[1] - therange[0]) / binsize + 1, endpoint=True)
     else:
-        thehist = np.histogram(indata, histlen, therange)
+        thebins = histlen
+    thehist = np.histogram(indata, thebins, therange)
     return thehist
 
 
 def makeandsavehistogram(indata, histlen, endtrim, outname,
-                         displaytitle='histogram', displayplots=False,
-                         refine=False, therange=None):
+                         binsize=None,
+                         displaytitle='histogram',
+                         displayplots=False,
+                         refine=False,
+                         therange=None):
     """
 
     Parameters
@@ -377,14 +386,14 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
     -------
 
     """
-    thestore = np.zeros((2, histlen), dtype='float64')
-    thehist = makehistogram(indata, histlen, therange)
-    thestore[0, :] = thehist[1][-histlen:]
+    thehist = makehistogram(indata, histlen, binsize=binsize, therange=therange)
+    thestore = np.zeros((2, len(thehist[0])), dtype='float64')
+    #thestore[0, :] = thehist[1][-histlen:]
+    thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
     thestore[1, :] = thehist[0][-histlen:]
     # get starting values for the peak, ignoring first and last point of histogram
     peakindex = np.argmax(thestore[1, 1:-2])
     peaklag = thestore[0, peakindex + 1]
-    # peakheight = max(thestore[1,:])
     peakheight = thestore[1, peakindex + 1]
     numbins = 1
     while (peakindex + numbins < histlen - 1) and (thestore[1, peakindex + numbins] > peakheight / 2.0):
@@ -392,6 +401,8 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
     peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
     if refine:
         peakheight, peaklag, peakwidth = tide_fit.gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
+    centerofmass = np.sum(thestore[0, :] * thestore[1, :]) / np.sum(thestore[1, :])
+    tide_io.writenpvecs(np.array([centerofmass]), outname + '_centerofmass.txt')
     tide_io.writenpvecs(np.array([peaklag]), outname + '_peak.txt')
     tide_io.writenpvecs(thestore, outname + '.txt')
     if displayplots:
