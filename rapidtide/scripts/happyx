@@ -628,8 +628,8 @@ def happy_main(thearguments):
     inputstart = 0.0
     doglm = False
     notchpct = 0.015
-    minhr = 40
-    maxhr = 180
+    minhr = 40.0
+    maxhr = 180.0
     softvesselfrac = 0.4
     infodict = {}
     stdfreq = 25.0
@@ -748,7 +748,7 @@ def happy_main(thearguments):
     for o, a in opts:
         if o == "-x":
             print('got an x')
-        elif o == '--motionfile':
+        elif o == "--motionfile":
             motionfilename = a
             print('Will regress motion out of data prior to analysis')
         elif o == "--glm":
@@ -779,7 +779,7 @@ def happy_main(thearguments):
                 print('will apply deep learning filter to enhance the cardiac waveforms')
             else:
                 print('dlfilter not found - check to make sure Keras is installed and working.  Disabling.')
-        if o == "--model":
+        elif o == "--model":
             modelname = a
             print('will use', modelname, 'for the deep learning filter;')
         elif o == "--cardcalconly":
