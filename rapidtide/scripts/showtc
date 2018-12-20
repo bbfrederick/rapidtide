@@ -66,6 +66,7 @@ def usage():
     print("    --fontscalefac=FAC       - scale all font sizes by FAC (default is 1.0)")
     print("    --legendlist=L1,L2,..    - cycle through the list of legends specified by LN")
     print("    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen")
+    print("    --saveres=DPI            - write figure to file at DPI dots per inch (default is 1000)")
     print("    --title=TITLE            - use TITLE as the overall title of the graph")
     print("    --separate               - use a separate subplot for each timecourse")
     print("    --separatelinked         - use a separate subplot for each timecourse, but use a common y scaling")
@@ -109,6 +110,7 @@ thestarttime = -1000000.0
 theendtime = 1000000.0
 fontscalefac = 1.0
 legendloc = 2
+saveres = 1000
 
 # get the command line parameters
 try:
@@ -120,7 +122,7 @@ try:
                                     "legendloc=",
                                     "starttime=", "endtime=",
                                     "samplerate=", "colorlist=", "linewidth=", "legendlist=", "title=",
-                                    "separatelinked", "separate", "sampletime=", "tofile="])
+                                    "separatelinked", "separate", "sampletime=", "tofile=", "saveres="])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like 'option -a not recognized'
@@ -154,6 +156,9 @@ for o, a in opts:
         dospectrum = True
         specmode = 'power'    
         print('showing power spectra magnitude')
+    elif o == '--saveres':
+        saveres = int(a)
+        print('Writing output to file at', saveres, 'dpi')
     elif o == '--tofile':
         outputfile = a
         print('Writing output to file', outputfile)
@@ -452,4 +457,4 @@ for i in range(0, numvecs):
 if outputfile is None:
     show()
 else:
-    savefig(outputfile, bbox_inches='tight')
+    savefig(outputfile, bbox_inches='tight', dpi=saveres)
