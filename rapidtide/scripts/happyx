@@ -654,9 +654,9 @@ def happy_main(thearguments):
     modelname = 'model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu'
     motionhp = None
     motionlp = None
-    motfilt_pos = True
+    motfilt_pos = False
     motfilt_deriv = True
-    motfilt_derivdelayed = False
+    motfilt_derivdelayed = True
     orthogonalize = True
     mpfix = False
     aligncardiac = True
@@ -735,9 +735,9 @@ def happy_main(thearguments):
                                                        "nophasefilt",
                                                        "nomask",
                                                        "noorthog",
-                                                       "nomotpos",
                                                        "nocardiacalign",
                                                        "nomotderiv",
+                                                       "nomotderivdelayed",
                                                        "help"])
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -876,8 +876,8 @@ def happy_main(thearguments):
         elif o == "--noorthog":
             orthogonalize = False
             print('will not orthogonalize motion regressors')
-        elif o == "--nomotpos":
-            motfilt_pos = False
+        elif o == "--nomotderivdelayed":
+            motfilt_derivdelayed = False
             print('will not use motion position regressors')
         elif o == "--nomotderiv":
             motfilt_deriv = False
