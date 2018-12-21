@@ -56,7 +56,7 @@ def bland_altman_plot(data1, data2, identifier=None, fontscalefac=1.0, xrange=No
     mdstring = 'Mean diff: ' + format(md, '.3f')
     sdstring = 'Std diff: ' + format(sd, '.3f')
     annotate(mdstring + '\n' + sdstring,
-                xy=(0.75, 0.90),
+                xy=(0.65, 0.90),
                 xycoords='figure fraction',
                 horizontalalignment='left',
                 verticalalignment='top',
@@ -91,7 +91,7 @@ def stringtorange(thestring):
 
 
 def usage():
-    print("usage: showxy textfilename[,LINELABEL] [-x XLABEL] [-y YLABEL] [-t TITLE] [-o FILENAME] [-i FILENAME[,LINELABEL]]")
+    print("usage: showxy textfilename[,LINELABEL] [-x XLABEL] [-y YLABEL] [-t TITLE] [-o FILENAME] [-i FILENAME[,LINELABEL]] [-r DPI]")
     print("\tplots xy data in text file")
     print("")
     print("required arguments:")
@@ -109,6 +109,7 @@ def usage():
     print("\t-b\tmake a bar plot x vs y")
     print("\t-B\tmake a Bland-Altman plot of x vs y")
     print("\t-f\tscale all font sizes by FAC (default is 1.0)")
+    print("\t-r\tsave plots at DPI dots per inch (default is 1000)")
     return ()
 
 # set default variable values
@@ -124,10 +125,12 @@ fontscalefac = 1.0
 xrange = None
 yrange = None
 verbose = False
+saveres = 1000
+legendloc = 1
 
 # now check options
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], "X:Y:f:o:pbi:x:y:l:t:B", ["help"])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "r:X:Y:f:o:pbi:x:y:l:t:B", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -a not recognized"
@@ -189,6 +192,9 @@ for o, a in opts:
         outputfile = a
         if verbose:
             print("saving plot to ", outputfile)
+    elif o == '-r':
+        saveres = int(a)
+        print('writing output to file at', saveres, 'dpi')
     elif o == "-t":
         usetitle = True
         thetitle = a
@@ -244,7 +250,7 @@ for i in range(0, numfiles):
         else:
             plot(xvecs[i], yvecs[i], color=colorlist[i])
 if uselegend:
-    legend(thelegend, loc=1)
+    legend(thelegend, loc=legendloc)
 if usetitle:
     title(thetitle, fontsize=fontscalefac * 18, fontweight='bold')
 if usexlabel:
@@ -255,4 +261,4 @@ if useylabel:
 if outputfile is None:
     show()
 else:
-    savefig(outputfile, bbox_inches='tight')
+    savefig(outputfile, bbox_inches='tight', dpi=saveres)
