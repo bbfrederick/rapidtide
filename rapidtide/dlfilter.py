@@ -80,6 +80,7 @@ class dlfilter:
     model = None
     modelpath = None
     inputsize = None
+    usehdf = True
     infodict = {}
 
     def __init__(self,
@@ -95,6 +96,7 @@ class dlfilter:
                  usebadpts=False,
                  thesuffix='25.0Hz',
                  modelpath='.',
+                 usehdf=True,
                  thedatadir='/Users/frederic/Documents/MR_data/physioconn/timecourses',
                  inputfrag='abc',
                  targetfrag='xyz',
@@ -118,6 +120,7 @@ class dlfilter:
             self.inputsize = 1
         self.activation = activation
         self.modelroot = modelroot
+        self.usehdf = usehdf
         self.dofft = dofft
         self.debug = debug
         self.thesuffix = thesuffix
@@ -251,16 +254,30 @@ class dlfilter:
         self.infodict['prediction_error'] = self.pred_error
         tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, 'model_meta.json'))
 
-    def savemodel(self):
-        # save the trained model
-        self.model.save(os.path.join(self.modelname, 'model.h5'))
+    def savemodel(self, usehdf=True):
+        if usehdf:
+            # save the trained model as a single hdf file
+            self.model.save(os.path.join(self.modelname, 'model.h5'))
+        else:
+            # save the model structure to JSON
+            model_json = self.model.to_json()
+            with open(os.path.join(self.modelname, 'model.json'), "w") as json_file:
+                json_file.write(model_json)
+            # save the weights to hdf
+            self.model.save_weights(os.path.join(self.modelname, 'model_weights.h5'))
 
-    def loadmodel(self, modelname):
+    def loadmodel(self, modelname, usehdf=True):
         # read in the data
         print('loading', modelname)
 
-        # load in the model with weights
-        self.model = load_model(os.path.join(self.modelpath, modelname, 'model.h5'))
+        if usehdf:
+            # load in the model with weights from hdf
+            self.model = load_model(os.path.join(self.modelpath, modelname, 'model.h5'))
+        else:
+            with open(os.path.join(self.modelname, 'model.json'), "r") as json_file:
+                loaded_model_json = json_file.read()
+            self.model = model_from_json(loaded_model_json)
+            self.model.load_weights(os.path.join(self.modelname, 'model_weights.h5'))
         self.model.summary()
 
         # now load additional information
@@ -276,7 +293,8 @@ class dlfilter:
         self.getname()
         self.makenet()
         self.model.summary()
-        self.savemodel()
+        self.savemodel(usehdf=True)
+        self.savemodel(usehdf=False)
         self.initmetadata()
         self.initialized = True
         self.trained = False
@@ -296,7 +314,8 @@ class dlfilter:
                 verbose=1,
                 callbacks=[TerminateOnNaN(), ModelCheckpoint(self.intermediatemodelpath)],
                 validation_data=(self.val_x, self.val_y))
-        self.savemodel()
+        self.savemodel(usehdf=True)
+        self.savemodel(usehdf=False)
         self.trained = True
 
     def apply(self, inputdata, badpts=None):
@@ -364,12 +383,14 @@ class cnn(dlfilter):
         self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same',
                                      input_shape=(None, self.inputsize)))
         self.model.add(BatchNormalization())
+        self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
 
         # make the intermediate layers
         for layer in range(self.num_layers - 2):
             self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same'))
             self.model.add(BatchNormalization())
+            self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
 
         # make the output layer
