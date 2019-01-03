@@ -427,7 +427,7 @@ def phasemod(phase):
     wrapped : array-like
         The phase vector, remapped to the range of +/-np.pi
     """
-    return np.fmod(np.pi + phase, 2.0 * np.pi) - np.pi
+    return ((-phase + np.pi) % (2.0 * np.pi) - np.pi) * -1.0
 
 
 def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):  
