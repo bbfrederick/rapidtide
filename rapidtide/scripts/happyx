@@ -1071,6 +1071,8 @@ def happy_main(thearguments):
             thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
             #thedlfilter.loadmodel('model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu')
             thedlfilter.loadmodel(modelname)
+            normdlfilteredcard = thedlfilter.apply(normcardfromfmri_stdres)
+            tide_io.writevec(normdlfilteredcard, outputroot + '_normcardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
             dlfilteredcard = thedlfilter.apply(cardfromfmri_stdres)
             tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
             cardfromfmri_sliceres = tide_math.madnormalize(
