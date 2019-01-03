@@ -701,7 +701,7 @@ def pspec(inputdata):
     return np.sqrt(S * np.conj(S))
 
 
-def spectrum(inputdata, Fs=1.0, mode='power'):
+def spectrum(inputdata, Fs=1.0, mode='power', trim=True):
     r"""Performs an FFT of the input data, and returns the frequency axis and spectrum
     of the input signal.
 
@@ -718,6 +718,9 @@ def spectrum(inputdata, Fs=1.0, mode='power'):
     mode : {'real', 'imag', 'mag', 'phase', 'power'}, optional
         The type of spectrum to return.  Default is 'power'.
         :param mode:
+
+    trim: bool
+        If True (default) return only the positive frequency values
 
     Returns
     -------
@@ -737,9 +740,14 @@ def spectrum(inputdata, Fs=1.0, mode='power'):
         The type of spectrum to return.  Legal values are 'real', 'imag', 'mag', 'phase', and 'power' (default)
         :param mode:
     """
-    specvals = fftpack.fft(inputdata)[0:len(inputdata) // 2]
-    maxfreq = Fs / 2.0
-    specaxis = np.linspace(0.0, maxfreq, len(specvals), endpoint=False)
+    if trim:
+        specvals = fftpack.fft(inputdata)[0:len(inputdata) // 2]
+        maxfreq = Fs / 2.0
+        specaxis = np.linspace(0.0, maxfreq, len(specvals), endpoint=False)
+    else:
+        specvals = fftpack.fft(inputdata)
+        maxfreq = Fs
+        specaxis = np.linspace(0.0, maxfreq, len(specvals), endpoint=False)
     if mode == 'real':
         specvals = specvals.real
     elif mode == 'imag':
