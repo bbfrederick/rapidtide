@@ -651,7 +651,7 @@ def happy_main(thearguments):
     numskip = 0
     motskip = 0
     dodlfilter = False
-    modelname = 'model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu'
+    modelname = 'model_cnn_w128_l10_fn10_fl5_d0.3_e10_t4.0_relu_normaligned'
     motionhp = None
     motionlp = None
     motfilt_pos = False
