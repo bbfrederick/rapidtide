@@ -368,6 +368,8 @@ class cnn(dlfilter):
                                    self.activation])
         if self.usebadpts:
             self.modelname += '_usebadpts'
+        if self.excludebysubject:
+            self.modelname += '_excludebysubject'
         if self.namesuffix is not None:
             self.modelname += '_' + self.namesuffix
         self.modelpath = os.path.join(self.modelroot, self.modelname)
@@ -418,6 +420,8 @@ class lstm(dlfilter):
                                    'e' + str(self.num_epochs),
                                    't' + str(self.excludethresh)
                                    ])
+        if self.excludebysubject:
+            self.modelname += '_excludebysubject'
         self.modelpath = os.path.join(self.modelroot, self.modelname)
 
         try:
@@ -469,6 +473,8 @@ class hybrid(dlfilter):
                                    self.activation])
         if self.invert:
             self.modelname += '_invert'
+        if self.excludebysubject:
+            self.modelname += '_excludebysubject'
         self.modelpath = os.path.join(self.modelroot, self.modelname)
 
         try:
