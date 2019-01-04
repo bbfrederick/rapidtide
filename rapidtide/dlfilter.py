@@ -107,7 +107,8 @@ class dlfilter:
                  namesuffix=None,
                  readlim=None,
                  readskip=None,
-                 countlim=None):
+                 countlim=None,
+                 **kwargs):
 
         self.window_size = window_size
         self.dropout_rate = dropout_rate
