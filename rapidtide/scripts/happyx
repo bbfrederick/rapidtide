@@ -515,7 +515,7 @@ def entropy(waveform):
     return -np.sum(np.square(waveform) * np.nan_to_num(np.log2(np.square(waveform))))
 
 
-def plethquality(waveform, Fs, S_windowsecs=3.0, K_windowsecs=60.0, E_windowsecs=1.0, detrendorder=8, debug=True):
+def plethquality(waveform, Fs, S_windowsecs=5.0, K_windowsecs=60.0, E_windowsecs=1.0, detrendorder=8, debug=True):
     """
 
     Parameters
@@ -525,7 +525,8 @@ def plethquality(waveform, Fs, S_windowsecs=3.0, K_windowsecs=60.0, E_windowsecs
     Fs: float
         The sample rate of the data
     S_windowsecs: float
-        Skewness window duration in seconds.  Defaults to 2.0 (optimal according to Elgendi)
+        Skewness window duration in seconds.  Defaults to 5.0 (optimal for discrimination of "good" from "acceptable"
+        and "unfit" according to Elgendi)
     K_windowsecs: float
         Skewness window duration in seconds.  Defaults to 2.0 (after Selveraj)
     E_windowsecs: float
