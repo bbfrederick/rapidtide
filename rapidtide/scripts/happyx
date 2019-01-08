@@ -1038,8 +1038,8 @@ def happy_main(thearguments):
     peakfreq_bold = getcardcoeffs((1.0 - thebadcardpts) * cardiacwaveform,
                                   slicesamplerate, smoothlen=smoothlen,
                                   debug=debug)
-    infodict['cardiacbpm_frombold'] = np.round(peakfreq_bold * 60.0, 2)
-    infodict['cardiacfreq_frombold'] = peakfreq_bold
+    infodict['cardiacbpm_bold'] = np.round(peakfreq_bold * 60.0, 2)
+    infodict['cardiacfreq_bold'] = peakfreq_bold
     timings.append(['Cardiac signal from image data analyzed', time.time(), None, None])
 
     cardfromfmri_stdres = tide_math.madnormalize(tide_resample.arbresample(cardfromfmri_sliceres,
@@ -1049,8 +1049,8 @@ def happy_main(thearguments):
                                                                            debug=False))
 
     cardfromfmri_s_mean, cardfromfmri_s_std, cardfromfmri_s_waveform = plethquality(cardfromfmri_stdres, stdfreq)
-    infodict['cardfromfmri_S_sqi_mean'] = cardfromfmri_s_mean
-    infodict['cardfromfmri_S_sqi_std'] = cardfromfmri_s_std
+    infodict['S_sqi_mean_bold'] = cardfromfmri_s_mean
+    infodict['S_sqi_std_bold'] = cardfromfmri_s_std
     tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(stdfreq) + 'Hz.txt')
     filtcardfromfmri_stdres, normcardfromfmri_stdres, cardfromfmrienv_stdres = cleancardiac(stdfreq, cardfromfmri_stdres,
                                                                                             cutoff=envcutoff,
@@ -1082,11 +1082,11 @@ def happy_main(thearguments):
             peakfreq_dlfiltered = getcardcoeffs(cardfromfmri_sliceres,
                                           slicesamplerate, smoothlen=smoothlen,
                                           debug=debug)
-            infodict['cardiacbpm_fromdlfiltered'] = np.round(peakfreq_dlfiltered * 60.0, 2)
-            infodict['cardiacfreq_fromdlfiltered'] = peakfreq_dlfiltered
+            infodict['cardiacbpm_dlfiltered'] = np.round(peakfreq_dlfiltered * 60.0, 2)
+            infodict['cardiacfreq_dlfiltered'] = peakfreq_dlfiltered
             dl_s_mean, dl_s_std, dl_s_waveform = plethquality(dlfilteredcard, stdfreq)
-            infodict['dlfiltered_S_sqi_mean'] = dl_s_mean
-            infodict['dlfiltered_S_sqi_std'] = dl_s_std
+            infodict['S_sqi_mean_dlfiltered'] = dl_s_mean
+            infodict['S_sqi_std_dlfiltered'] = dl_s_std
 
             timings.append(['Deep learning filter applied', time.time(), None, None])
         else:
@@ -1145,8 +1145,8 @@ def happy_main(thearguments):
         filtpleth_stdres, normpleth_stdres, plethenv_stdres = cleancardiac(stdfreq, pleth_stdres, cutoff=envcutoff,
                                                                            thresh=envthresh)
         s_mean, s_std, s_waveform = plethquality(filtpleth_stdres, stdfreq)
-        infodict['pleth_S_sqi_mean'] = s_mean
-        infodict['pleth_S_sqi_std'] = s_std
+        infodict['S_sqi_mean_pleth'] = s_mean
+        infodict['S_sqi_std_pleth'] = s_std
         tide_io.writevec(normpleth_stdres, outputroot + '_normpleth_' + str(stdfreq) + 'Hz.txt')
         tide_io.writevec(plethenv_stdres, outputroot + '_plethenv_' + str(stdfreq) + 'Hz.txt')
 
@@ -1163,8 +1163,8 @@ def happy_main(thearguments):
                                       slicesamplerate, smoothlen=smoothlen,
                                       debug=debug)
         timings.append(['Cardiac coefficients calculated from pleth waveform', time.time(), None, None])
-        infodict['cardiacbpm_fromphysio'] = np.round(peakfreq_file * 60.0, 2)
-        infodict['cardiacfreq_fromphysio'] = peakfreq_file
+        infodict['cardiacbpm_pleth'] = np.round(peakfreq_file * 60.0, 2)
+        infodict['cardiacfreq_pleth'] = peakfreq_file
         timings.append(['Cardiac signal from physiology data analyzed', time.time(), None, None])
         timings.append(['Cardiac parameters extracted from physiology data', time.time(), None, None])
 

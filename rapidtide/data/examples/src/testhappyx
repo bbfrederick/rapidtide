@@ -3,6 +3,11 @@
 happyx \
     ses-060_bold_trunc.nii.gz \
     ses-060_bold_trunc.json \
-    ../dst/XXX \
-    --dodlfilter \
-    --motionfile=ses-060_bold_trunc_prefiltered_func_data_mcf.par
+    ../dst/happyx \
+    --dodlfilter
+
+#happyx \
+#    ses-060_bold_trunc.nii.gz \
+#    ses-060_bold_trunc.json \
+#    ../dst/XXX \
+#    --motionfile=ses-060_bold_trunc_prefiltered_func_data_mcf.par
