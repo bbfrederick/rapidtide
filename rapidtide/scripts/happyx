@@ -496,8 +496,26 @@ def findbadpts(thewaveform, nameroot, outputroot,  samplerate, infodict, thetype
     return thebadpts
 
 
+def approximateentropy(waveform, m, r):
 
-def plethquality(waveform, Fs, S_windowsecs=5.0, debug=False):
+    def _maxdist(x_i, x_j):
+        return max([abs(ua - va) for ua, va in zip(x_i, x_j)])
+
+    def _phi(m):
+        x = [[waveform[j] for j in range(i, i + m - 1 + 1)] for i in range(N - m + 1)]
+        C = [len([1 for x_j in x if _maxdist(x_i, x_j) <= r]) / (N - m + 1.0) for x_i in x]
+        return (N - m + 1.0)**(-1) * sum(np.log(C))
+
+    N = len(waveform)
+
+    return abs(_phi(m+1) - _phi(m))
+
+
+def entropy(waveform):
+    return -np.sum(np.square(waveform) * np.nan_to_num(np.log2(np.square(waveform))))
+
+
+def plethquality(waveform, Fs, S_windowsecs=3.0, K_windowsecs=60.0, E_windowsecs=1.0, detrendorder=8, debug=True):
     """
 
     Parameters
@@ -507,7 +525,11 @@ def plethquality(waveform, Fs, S_windowsecs=5.0, debug=False):
     Fs: float
         The sample rate of the data
     S_windowsecs: float
-        Window duration in seconds.  Defaults to 2.0 (optimal according to Elgendi
+        Skewness window duration in seconds.  Defaults to 2.0 (optimal according to Elgendi)
+    K_windowsecs: float
+        Skewness window duration in seconds.  Defaults to 2.0 (after Selveraj)
+    E_windowsecs: float
+        Entropy window duration in seconds.  Defaults to 0.5 (after Selveraj)
     debug: boolean
         Turn on extended output
 
@@ -519,28 +541,66 @@ def plethquality(waveform, Fs, S_windowsecs=5.0, debug=False):
         The standard deviation of the quality index over all time
     S_waveform: array
         The quality metric over all timepoints
+    K_sqi_mean: float
+        The mean value of the quality index over all time
+    K_std_mean: float
+        The standard deviation of the quality index over all time
+    K_waveform: array
+        The quality metric over all timepoints
+    E_sqi_mean: float
+        The mean value of the quality index over all time
+    E_std_mean: float
+        The standard deviation of the quality index over all time
+    E_waveform: array
+        The quality metric over all timepoints
 
 
-    Calculates the windowed skewness quality metrics described in Elgendi, M. "Optimal Signal Quality Index for
-    Photoplethysmogram Signals". Bioengineering 2016, Vol. 3, Page 21 3, 21 (2016).
+    Calculates the windowed skewness, kurtosis, and entropy quality metrics described in Elgendi, M.
+    "Optimal Signal Quality Index for Photoplethysmogram Signals". Bioengineering 2016, Vol. 3, Page 21 3, 21 (2016).
     """
-    # calculate S_sqi over a sliding window.  Window size should be an odd number of points.
+    # detrend the waveform
+    dt_waveform = tide_fit.detrend(waveform, order=detrendorder, demean=True)
+
+    # calculate S_sqi and K_sqi over a sliding window.  Window size should be an odd number of points.
     S_windowpts = int(np.round(S_windowsecs * Fs, 0))
     S_windowpts += 1 - S_windowpts % 2
-    S_waveform = waveform * 0.0
+    S_waveform = dt_waveform * 0.0
+    K_windowpts = int(np.round(K_windowsecs * Fs, 0))
+    K_windowpts += 1 - K_windowpts % 2
+    K_waveform = dt_waveform * 0.0
+    E_windowpts = int(np.round(E_windowsecs * Fs, 0))
+    E_windowpts += 1 - E_windowpts % 2
+    E_waveform = dt_waveform * 0.0
+
     if debug:
         print('S_windowsecs, S_windowpts:', S_windowsecs, S_windowpts)
-    for i in range(0, len(waveform)):
+        print('K_windowsecs, K_windowpts:', K_windowsecs, K_windowpts)
+        print('E_windowsecs, E_windowpts:', E_windowsecs, E_windowpts)
+    for i in range(0, len(dt_waveform)):
         startpt = np.max([0, i - S_windowpts // 2])
-        endpt = np.min([i + S_windowpts // 2, len(waveform)])
-        S_waveform[i] = skew(waveform[startpt:endpt + 1], nan_policy='omit')
+        endpt = np.min([i + S_windowpts // 2, len(dt_waveform)])
+        S_waveform[i] = skew(dt_waveform[startpt:endpt + 1], nan_policy='omit')
+
+        startpt = np.max([0, i - K_windowpts // 2])
+        endpt = np.min([i + K_windowpts // 2, len(dt_waveform)])
+        K_waveform[i] = kurtosis(dt_waveform[startpt:endpt + 1], fisher=False)
+
+        startpt = np.max([0, i - E_windowpts // 2])
+        endpt = np.min([i + E_windowpts // 2, len(dt_waveform)])
+        #E_waveform[i] = entropy(dt_waveform[startpt:endpt + 1])
+        r = 0.2 * np.std(dt_waveform[startpt:endpt + 1])
+        E_waveform[i] = approximateentropy(dt_waveform[startpt:endpt + 1], 2, r)
         if debug:
-            print(i, startpt, endpt, endpt - startpt + 1, S_waveform[i])
+            print(i, startpt, endpt, endpt - startpt + 1, S_waveform[i], K_waveform[i], E_waveform[i])
 
     S_sqi_mean = np.mean(S_waveform)
     S_sqi_std = np.std(S_waveform)
+    K_sqi_mean = np.mean(K_waveform)
+    K_sqi_std = np.std(K_waveform)
+    E_sqi_mean = np.mean(E_waveform)
+    E_sqi_std = np.std(E_waveform)
 
-    return S_sqi_mean, S_sqi_std, S_waveform
+    return S_sqi_mean, S_sqi_std, S_waveform, K_sqi_mean, K_sqi_std, K_waveform, E_sqi_mean, E_sqi_std, E_waveform
 
 
 def getphysiofile(cardiacfile, colnum, colname,
@@ -1048,15 +1108,28 @@ def happy_main(thearguments):
                                                                            decimate=True,
                                                                            debug=False))
 
-    cardfromfmri_s_mean, cardfromfmri_s_std, cardfromfmri_s_waveform = plethquality(cardfromfmri_stdres, stdfreq)
-    infodict['S_sqi_mean_bold'] = cardfromfmri_s_mean
-    infodict['S_sqi_std_bold'] = cardfromfmri_s_std
     tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(stdfreq) + 'Hz.txt')
     filtcardfromfmri_stdres, normcardfromfmri_stdres, cardfromfmrienv_stdres = cleancardiac(stdfreq, cardfromfmri_stdres,
                                                                                             cutoff=envcutoff,
                                                                                             thresh=envthresh)
     tide_io.writevec(normcardfromfmri_stdres, outputroot + '_normcardfromfmri_' + str(stdfreq) + 'Hz.txt')
     tide_io.writevec(cardfromfmrienv_stdres, outputroot + '_cardfromfmrienv_' + str(stdfreq) + 'Hz.txt')
+
+    # calculate quality metrics
+    cardfromfmri_s_mean, cardfromfmri_s_std, cardfromfmri_s_waveform, \
+    cardfromfmri_k_mean, cardfromfmri_k_std, cardfromfmri_k_waveform, \
+    cardfromfmri_e_mean, cardfromfmri_e_std, cardfromfmri_e_waveform\
+        = plethquality(normcardfromfmri_stdres, stdfreq)
+    infodict['S_sqi_mean_bold'] = cardfromfmri_s_mean
+    infodict['S_sqi_std_bold'] = cardfromfmri_s_std
+    infodict['K_sqi_mean_bold'] = cardfromfmri_k_mean
+    infodict['K_sqi_std_bold'] = cardfromfmri_k_std
+    infodict['E_sqi_mean_bold'] = cardfromfmri_e_mean
+    infodict['E_sqi_std_bold'] = cardfromfmri_e_std
+    tide_io.writevec(cardfromfmri_s_waveform, outputroot + '_normcardfromfmri_S_sqi_' + str(stdfreq) + 'Hz.txt')
+    tide_io.writevec(cardfromfmri_k_waveform, outputroot + '_normcardfromfmri_K_sqi_' + str(stdfreq) + 'Hz.txt')
+    tide_io.writevec(cardfromfmri_e_waveform, outputroot + '_normcardfromfmri_E_sqi_' + str(stdfreq) + 'Hz.txt')
+
     thebadcardpts_stdres = findbadpts(cardfromfmri_stdres, 'cardfromfmri_' + str(stdfreq) + 'Hz', outputroot, stdfreq, infodict)
 
     timings.append(['Cardiac signal from image data resampled and saved', time.time(), None, None])
@@ -1074,6 +1147,22 @@ def happy_main(thearguments):
             normdlfilteredcard = thedlfilter.apply(normcardfromfmri_stdres)
             tide_io.writevec(normdlfilteredcard, outputroot + '_normcardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
             dlfilteredcard = thedlfilter.apply(cardfromfmri_stdres)
+
+            # calculate quality metrics
+            dl_s_mean, dl_s_std, dl_s_waveform, \
+            dl_k_mean, dl_k_std, dl_k_waveform, \
+            dl_e_mean, dl_e_std, dl_e_waveform \
+                = plethquality(dlfilteredcard, stdfreq)
+            infodict['S_sqi_mean_dlfiltered'] = dl_s_mean
+            infodict['S_sqi_std_dlfiltered'] = dl_s_std
+            infodict['K_sqi_mean_dlfiltered'] = dl_k_mean
+            infodict['K_sqi_std_dlfiltered'] = dl_k_std
+            infodict['E_sqi_mean_dlfiltered'] = dl_e_mean
+            infodict['E_sqi_std_dlfiltered'] = dl_e_std
+            tide_io.writevec(dl_s_waveform, outputroot + '_normcardfromfmri_dlfiltered_S_sqi_' + str(stdfreq) + 'Hz.txt')
+            tide_io.writevec(dl_k_waveform, outputroot + '_normcardfromfmri_dlfiltered_K_sqi_' + str(stdfreq) + 'Hz.txt')
+            tide_io.writevec(dl_e_waveform, outputroot + '_normcardfromfmri_dlfiltered_E_sqi_' + str(stdfreq) + 'Hz.txt')
+
             tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
             cardfromfmri_sliceres = tide_math.madnormalize(
                 tide_resample.arbresample(dlfilteredcard, stdfreq, slicesamplerate, decimate=True, debug=True))
@@ -1084,9 +1173,6 @@ def happy_main(thearguments):
                                           debug=debug)
             infodict['cardiacbpm_dlfiltered'] = np.round(peakfreq_dlfiltered * 60.0, 2)
             infodict['cardiacfreq_dlfiltered'] = peakfreq_dlfiltered
-            dl_s_mean, dl_s_std, dl_s_waveform = plethquality(dlfilteredcard, stdfreq)
-            infodict['S_sqi_mean_dlfiltered'] = dl_s_mean
-            infodict['S_sqi_std_dlfiltered'] = dl_s_std
 
             timings.append(['Deep learning filter applied', time.time(), None, None])
         else:
@@ -1144,11 +1230,23 @@ def happy_main(thearguments):
         # now clean up cardiac signal
         filtpleth_stdres, normpleth_stdres, plethenv_stdres = cleancardiac(stdfreq, pleth_stdres, cutoff=envcutoff,
                                                                            thresh=envthresh)
-        s_mean, s_std, s_waveform = plethquality(filtpleth_stdres, stdfreq)
-        infodict['S_sqi_mean_pleth'] = s_mean
-        infodict['S_sqi_std_pleth'] = s_std
         tide_io.writevec(normpleth_stdres, outputroot + '_normpleth_' + str(stdfreq) + 'Hz.txt')
         tide_io.writevec(plethenv_stdres, outputroot + '_plethenv_' + str(stdfreq) + 'Hz.txt')
+
+        # calculate quality metrics
+        s_mean, s_std, s_waveform, \
+        k_mean, k_std, k_waveform, \
+        e_mean, e_std, e_waveform \
+            = plethquality(filtpleth_stdres, stdfreq)
+        infodict['S_sqi_mean_pleth'] = s_mean
+        infodict['S_sqi_std_pleth'] = s_std
+        infodict['K_sqi_mean_pleth'] = k_mean
+        infodict['K_sqi_std_pleth'] = k_std
+        infodict['E_sqi_mean_pleth'] = e_mean
+        infodict['E_sqi_std_pleth'] = e_std
+        tide_io.writevec(s_waveform, outputroot + '_normpleth_S_sqi_' + str(stdfreq) + 'Hz.txt')
+        tide_io.writevec(k_waveform, outputroot + '_normpleth_K_sqi_' + str(stdfreq) + 'Hz.txt')
+        tide_io.writevec(e_waveform, outputroot + '_normpleth_E_sqi_' + str(stdfreq) + 'Hz.txt')
 
         # find bad points in plethysmogram
         thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', outputroot, slicesamplerate, infodict, thetype='fracval')
