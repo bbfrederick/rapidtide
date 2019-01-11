@@ -482,6 +482,33 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, de
     return outputregressors
 
 
+def sliceinfo(slicetimes, tr):
+    # find out what timepoints we have, and their spacing
+    sortedtimes = np.sort(slicetimes)
+    diffs = sortedtimes[1:] - sortedtimes[0:-1]
+    minstep = np.max(diffs)
+    numsteps = int(np.round(tr / minstep, 0))
+    sliceoffsets = np.around(slicetimes / minstep).astype(np.int32) % numsteps
+    return numsteps, minstep, sliceoffsets
+
+
+def getslicetimesfromfile(slicetimename):
+    filebase, extension = os.path.splitext(slicetimename)
+    if extension == '.json':
+        jsoninfodict = readdictfromjson(slicetimename)
+        try:
+            slicetimelist = jsoninfodict['SliceTiming']
+            slicetimes = np.zeros((len(slicetimelist)), dtype=np.float64)
+            for idx, thetime in enumerate(slicetimelist):
+                slicetimes[idx] = float(thetime)
+        except KeyError:
+            print(slicetimename, 'is not a valid BIDS sidecar file')
+            sys.exit()
+    else:
+        slicetimes = readvec(slicetimename)
+    return slicetimes
+
+
 def readbidssidecar(inputfilename):
     r"""Read key value pairs out of a BIDS sidecar file
 

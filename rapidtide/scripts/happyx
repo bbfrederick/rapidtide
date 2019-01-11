@@ -250,23 +250,6 @@ def cardiacsig(thisphase, amps=[1.0, 0.0, 0.0], phases=None, overallphase=0.0):
     return total
 
 
-def getslicetimesfromfile(slicetimename):
-    filebase, extension = os.path.splitext(slicetimename)
-    if extension == '.json':
-        jsoninfodict = tide_io.readdictfromjson(slicetimename)
-        try:
-            slicetimelist = jsoninfodict['SliceTiming']
-            slicetimes = np.zeros((len(slicetimelist)), dtype=np.float64)
-            for idx, thetime in enumerate(slicetimelist):
-                slicetimes[idx] = float(thetime)
-        except KeyError:
-            print(slicetimename, 'is not a valid BIDS sidecar file')
-            sys.exit()
-    else:
-        slicetimes = tide_io.readvec(slicetimename)
-    return slicetimes
-
-
 def cardiacfromimage(normdata_byslice,
                      mask_byslice,
                      numslices,
@@ -280,11 +263,7 @@ def cardiacfromimage(normdata_byslice,
                      debug=False,
                      usemask=True):
     # find out what timepoints we have, and their spacing
-    sortedtimes = np.sort(slicetimes)
-    diffs = sortedtimes[1:] - sortedtimes[0:-1]
-    minstep = np.max(diffs)
-    numsteps = int(np.round(tr / minstep, 0))
-    sliceoffsets = np.around(slicetimes / minstep).astype(np.int32) % numsteps
+    numsteps, minstep, sliceoffsets = tide_io.sliceinfo(slicetimes, tr)
     print(len(slicetimes), 'slice times with', numsteps, 'unique values - diff is', minstep)
 
     # make slice means
@@ -1033,7 +1012,7 @@ def happy_main(thearguments):
         mask_byslice = readestmask(estmaskname, nim_hdr, xsize, ysize, numslices) * np.float64(mask_byslice)
 
     # get slice times
-    slicetimes = getslicetimesfromfile(slicetimename)
+    slicetimes = tide_io.getslicetimesfromfile(slicetimename)
     timings.append(['Slice times determined', time.time(), None, None])
 
     # normalize the input data
