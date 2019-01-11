@@ -822,14 +822,13 @@ def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False)
             print('removing harmonic at', harmonic * stopfreq)
             if debug:
                 print('notchpct, notchwidth freq, Fs, stopfreq, freqstep, minfreqstep', notchpct, notchpct * harmonic * stopfreq, Fs, stopfreq, freqstep, freqstep / (harmonic * stopfreq))
-            notchwidth = np.max([notchpct * harmonic * stopfreq, freqstep])
+            notchwidth = np.max([notchpct * harmonic * stopfreq * 0.01, freqstep])
             if debug:
                 print('\tnotchwidth, bins', notchwidth, int(notchwidth // freqstep))
                 print()
             setnotchfilter(thenotchfilter, harmonic * stopfreq, notchwidth=notchwidth)
             filteredtc = thenotchfilter.apply(Fs, filteredtc)
     return filteredtc
-
 
 
 def csdfilter(obsdata, commondata, padlen=20, debug=False):
