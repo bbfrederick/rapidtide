@@ -62,7 +62,7 @@ def bland_altman_plot(data1, data2, identifier=None, fontscalefac=1.0, xrange=No
                 verticalalignment='top',
                 fontsize=fontscalefac * 16)
 
-    scatter(mean, diff, *args, **kwargs)
+    scatter(mean, diff, facecolors='none', edgecolors='b', *args, **kwargs)
     axhline(md, color='gray', linestyle='--')
     axhline(md + 2 * sd, color='gray', linestyle='--')
     axhline(md - 2 * sd, color='gray', linestyle='--')
