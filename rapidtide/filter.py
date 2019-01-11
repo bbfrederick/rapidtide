@@ -766,6 +766,72 @@ def spectrum(inputdata, Fs=1.0, mode='power', trim=True):
     return specaxis, specvals
 
 
+def setnotchfilter(thefilter, thefreq, notchwidth=1.0):
+    r"""Set notch filter - sets the filter parameters for the notch.
+
+    Parameters
+    ----------
+    thefilter: noncausalfilter function
+        The filter function to use
+    thefreq: float
+        Frequency of the notch
+    notchwidth: float
+        width of the notch in percent of the notch frequency
+    """
+    thefilter.settype('arb_stop')
+    thefilter.setarb(
+        thefreq - notchwidth / 2.0,
+        thefreq - notchwidth / 2.0,
+        thefreq + notchwidth / 2.0,
+        thefreq + notchwidth / 2.0)
+
+
+def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False):
+    r"""Harmonic notch filter - removes a fundamental and its harmonics from a timecourse.
+
+    Parameters
+    ----------
+    timecourse: 1D numpy array
+        Input data
+    Fs: float
+        Sample rate
+    Ffundamental: float
+        Fundamental frequency to be removed from the data
+    notchpct: float, optional
+        Width of the notch relative to the filter frequency in percent.  Default is 1.0.
+    debug: bool, optional
+        Set to True for additiona information on function internals.  Default is False.
+
+    Returns
+    -------
+    filteredtc: 1D numpy array
+        The filtered data
+
+    """
+    # delete the fundamental and its harmonics
+    print('notch filtering...')
+    filteredtc = timecourse + 0.0
+    maxpass = Fs / 2.0
+    if notchpct > 0.0:
+        stopfreq = Ffundamental
+        freqstep = 0.5 * Fs / len(filteredtc)
+        maxharmonic = int(maxpass // stopfreq)
+        print('highest harmonic is', maxharmonic, '(', maxharmonic * stopfreq, 'Hz)')
+        thenotchfilter = noncausalfilter(debug=debug)
+        for harmonic in range(1, maxharmonic + 1):
+            print('removing harmonic at', harmonic * stopfreq)
+            if debug:
+                print('notchpct, notchwidth freq, Fs, stopfreq, freqstep, minfreqstep', notchpct, notchpct * harmonic * stopfreq, Fs, stopfreq, freqstep, freqstep / (harmonic * stopfreq))
+            notchwidth = np.max([notchpct * harmonic * stopfreq, freqstep])
+            if debug:
+                print('\tnotchwidth, bins', notchwidth, int(notchwidth // freqstep))
+                print()
+            setnotchfilter(thenotchfilter, harmonic * stopfreq, notchwidth=notchwidth)
+            filteredtc = thenotchfilter.apply(Fs, filteredtc)
+    return filteredtc
+
+
+
 def csdfilter(obsdata, commondata, padlen=20, debug=False):
     r"""Cross spectral density filter - makes a filter transfer function that preserves common frequencies.
 
