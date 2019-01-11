@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+# $Author: frederic $
+#       $Date: 2016/07/11 14:50:43 $
+#       $Id: showxcorr,v 1.41 2016/07/11 14:50:43 frederic Exp $
+#
+from __future__ import print_function, division
+
+import time
+import sys
+import os
+import platform
+
+import numpy as np
+import scipy as sp
+
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
+
+def usage():
+    print('highresmotion - creates subsampled motion timecourses at the slice acquisition time resolution')
+    print('    usage: highresmotion fmrifile slicetimefile outputname')
+
+'''
+nargs = len(sys.argv)
+if nargs < 4:
+    usage()
+    exit()
+
+fmrifilename = sys.argv[1]
+slicetimename = sys.argv[2]
+outfilename = sys.argv[3]
+
+
+# read in the image data
+nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
+xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
+xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
+spaceunit, timeunit = nim_hdr.get_xyzt_units()
+if timeunit == 'msec':
+    tr /= 1000.0
+
+slicetimes = tide_io.getslicetimesfromfile(slicetimename)
+numsteps, minstep, sliceoffsets = tide_io.sliceinfo(slicetimes, tr)
+print('There are', numsteps, 'unique slice acquisition times with spacing', minstep)
+print('Effective sampling rate:', 1.0 / minstep)
+'''
+
+tr = 0.72
+numsteps = 11
+Fs = 15.2778
+
+thedata = tide_io.readvecs('MotionHR.par')
+print(thedata.shape)
+
+for i in range(thedata.shape[0]):
+    thedata[i, :] = tide_filt.harmonicnotchfilter(thedata[i, :], Fs, 1.0 / tr, debug=False)
+
+tide_io.writenpvecs(thedata, 'hoot.par')
