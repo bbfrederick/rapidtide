@@ -241,15 +241,6 @@ def rrifromphase(timeaxis, thephase):
     return None
 
 
-def setnotchfilter(thefilter, thefreq, notchwidth=1.0):
-    thefilter.settype('arb_stop')
-    thefilter.setarb(
-        thefreq - notchwidth / 2.0,
-        thefreq - notchwidth / 2.0,
-        thefreq + notchwidth / 2.0,
-        thefreq + notchwidth / 2.0)
-
-
 def cardiacsig(thisphase, amps=[1.0, 0.0, 0.0], phases=None, overallphase=0.0):
     total = 0.0
     if phases is None:
@@ -323,23 +314,7 @@ def cardiacfromimage(normdata_byslice,
 
     # delete the TR frequency and the first subharmonic
     print('notch filtering...')
-    maxpass = np.min([slicesamplerate / 2.0, initprefilter.getfreqlimits()[2]])
-    if notchpct > 0.0:
-        stopfreq = 1.0 / tr
-        freqstep = 0.5 * slicesamplerate / len(filthirestc)
-        maxharmonic = int(maxpass // stopfreq)
-        print('highest harmonic is', maxharmonic, '(', maxharmonic * stopfreq, 'Hz)')
-        trnotchfilter = tide_filt.noncausalfilter(debug=debug)
-        for harmonic in range(1, maxharmonic + 1):
-            print('removing harmonic at', harmonic * stopfreq)
-            if debug:
-                print('notchpct, notchwidth freq, slicesamplerate, stopfreq, freqstep, minfreqstep', notchpct, notchpct * harmonic * stopfreq, slicesamplerate, stopfreq, freqstep, freqstep / (harmonic * stopfreq))
-            notchwidth = np.max([notchpct * harmonic * stopfreq, freqstep])
-            if debug:
-                print('\tnotchwidth, bins', notchwidth, int(notchwidth // freqstep))
-                print()
-            setnotchfilter(trnotchfilter, harmonic * stopfreq, notchwidth=notchwidth)
-            filthirestc = trnotchfilter.apply(slicesamplerate, filthirestc)
+    filthirestc = tide_filt.harmonicnotchfilter(filthirestc, slicesamplerate, 1.0 / tr, notchpct=notchpct, debug=False)
 
     return tide_math.madnormalize(filthirestc), slicesamplerate, numsteps
 
@@ -515,7 +490,7 @@ def entropy(waveform):
     return -np.sum(np.square(waveform) * np.nan_to_num(np.log2(np.square(waveform))))
 
 
-def plethquality(waveform, Fs, S_windowsecs=5.0, K_windowsecs=60.0, E_windowsecs=1.0, detrendorder=8, debug=True):
+def plethquality(waveform, Fs, S_windowsecs=5.0, K_windowsecs=60.0, E_windowsecs=1.0, detrendorder=8, debug=False):
     """
 
     Parameters
