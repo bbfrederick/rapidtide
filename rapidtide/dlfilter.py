@@ -365,6 +365,7 @@ class cnn(dlfilter):
                                    'fl' + str(self.kernel_size),
                                    'e' + str(self.num_epochs),
                                    't' + str(self.excludethresh),
+                                   's' + str(self.step),
                                    self.activation])
         if self.usebadpts:
             self.modelname += '_usebadpts'
@@ -418,7 +419,8 @@ class lstm(dlfilter):
                                    'd' + str(self.dropout_rate),
                                    'rd' + str(self.dropout_rate),
                                    'e' + str(self.num_epochs),
-                                   't' + str(self.excludethresh)
+                                   't' + str(self.excludethresh),
+                                   's' + str(self.step)
                                    ])
         if self.excludebysubject:
             self.modelname += '_excludebysubject'
@@ -470,6 +472,7 @@ class hybrid(dlfilter):
                                    'rd' + str(self.dropout_rate),
                                    'e' + str(self.num_epochs),
                                    't' + str(self.excludethresh),
+                                   's' + str(self.step),
                                    self.activation])
         if self.invert:
             self.modelname += '_invert'
