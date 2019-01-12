@@ -348,9 +348,10 @@ class dlfilter:
 
 
 class cnn(dlfilter):
-    def __init__(self, num_filters=10, kernel_size=5, *args, **kwargs):
+    def __init__(self, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
         self.num_filters = num_filters
         self.kernel_size = kernel_size
+        self.dilation_rate = dilation_rate
         self.infodict['nettype'] = 'cnn'
         self.infodict['num_filters'] = self.num_filters
         self.infodict['kernel_size'] = self.kernel_size
@@ -366,6 +367,7 @@ class cnn(dlfilter):
                                    'e' + str(self.num_epochs),
                                    't' + str(self.excludethresh),
                                    's' + str(self.step),
+                                   'd' + str(self.dilation_rate),
                                    self.activation])
         if self.usebadpts:
             self.modelname += '_usebadpts'
@@ -392,7 +394,10 @@ class cnn(dlfilter):
 
         # make the intermediate layers
         for layer in range(self.num_layers - 2):
-            self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same'))
+            self.model.add(Convolution1D(filters=self.num_filters,
+                                         kernel_size=self.kernel_size,
+                                         dilation_rate=self.dilation_rate,
+                                         padding='same'))
             self.model.add(BatchNormalization())
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
