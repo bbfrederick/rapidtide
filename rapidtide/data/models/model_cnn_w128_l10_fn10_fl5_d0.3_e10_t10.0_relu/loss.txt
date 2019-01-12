@@ -1,1 +1,0 @@
-model_cnn_w128_l10_fn10_fl5_d0.3_e10_t10.0_relu: Prediction Error: 0.375816182573 Raw Error: 1.45522065782
