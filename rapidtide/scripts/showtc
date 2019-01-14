@@ -28,6 +28,7 @@ import bisect
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.util as tide_util
 import numpy as np
 from scipy import arange, fftpack, linspace
 
@@ -111,6 +112,8 @@ theendtime = 1000000.0
 fontscalefac = 1.0
 legendloc = 2
 saveres = 1000
+ylabel = ''
+xlabel = ''
 
 # get the command line parameters
 try:
@@ -118,6 +121,8 @@ try:
                                    ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "voffset=", "noxax",
                                     "noyax",
                                     "debug",
+                                    "xlabel=",
+                                    "ylabel=",
                                     "fontscalefac=",
                                     "legendloc=",
                                     "starttime=", "endtime=",
@@ -177,6 +182,12 @@ for o, a in opts:
         else:
             print(legendloc, 'is not a valid legend location - exiting')
             sys.exit()
+    elif o == '--xlabel':
+        xlabel = a
+        print('X label set to:', xlabel)
+    elif o == '--ylabel':
+        ylabel = a
+        print('Y label set to:', ylabel)
     elif o == '--starttime':
         thestarttime = float(a)
         print('Start time set to:', thestarttime)
@@ -327,8 +338,8 @@ for i in range(0, numfiles):
         samplerates.append(thissamplerate + 0.0)
         numvecs += 1
 
-thestartpoint = np.max([0, bisect.bisect_right(xvecs[0], thestarttime)])
-theendpoint = np.min([minlen - 1, bisect.bisect_left(xvecs[0], theendtime)])
+thestartpoint = tide_util.valtoindex(xvecs[0], thestarttime)
+theendpoint = tide_util.valtoindex(xvecs[0], theendtime)
 thestarttime = xvecs[0][thestartpoint]
 theendtime = xvecs[0][theendpoint]
 if debug:
@@ -379,9 +390,9 @@ if not separate:
 if separate:
     thexaxfontsize = 6 * fontscalefac
     theyaxfontsize = 6 * fontscalefac
-    thexlabelfontsize = 5 * fontscalefac
-    theylabelfontsize = 5 * fontscalefac
-    thelegendfontsize = 8 * fontscalefac
+    thexlabelfontsize = 6 * fontscalefac
+    theylabelfontsize = 6 * fontscalefac
+    thelegendfontsize = 5 * fontscalefac
     thetitlefontsize = 6 * fontscalefac
     thesuptitlefontsize = 10 * fontscalefac
 else:
@@ -414,7 +425,8 @@ else:
 for i in range(0, numvecs):
     if separate:
         ax = axlist[i]
-    ax.plot(xvecs[i], yvecs[i], color=colorlist[i], label=linelabels[i], linewidth=thelinewidth)
+    ax.plot(xvecs[i], yvecs[i],
+            color=colorlist[i], label=linelabels[i], linewidth=thelinewidth)
     if dolegend:
         ax.legend(fontsize=thelegendfontsize, loc=legendloc)
     ax.set_xlim(xrange)
@@ -440,17 +452,21 @@ for i in range(0, numvecs):
         setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
 
     if dospectrum:
-        if showxax:
-            ax.set_xlabel('Frequency (Hz)', fontsize=thexlabelfontsize, fontweight='bold')
+        if xlabel is None:
+            xlabel = 'Frequency (Hz)'
         if specmode=='power':
-            if showyax:
-                ax.set_ylabel('Signal power', fontsize=theylabelfontsize, fontweight='bold')
+            if ylabel is None:
+                ylabel = 'Signal power'
         else:
-            if showyax:
-                ax.set_ylabel('Signal phase', fontsize=theylabelfontsize, fontweight='bold')
+            if ylabel is None:
+                ylabel = 'Signal phase'
     else:
-        if showxax:
-            ax.set_xlabel('Time (s)', fontsize=thexlabelfontsize, fontweight='bold')
+        if xlabel is None:
+            xlabel = 'Time (s)'
+    if showxax:
+        ax.set_xlabel(xlabel, fontsize=thexlabelfontsize, fontweight='bold')
+    if showyax:
+        ax.set_ylabel(ylabel, fontsize=theylabelfontsize, fontweight='bold')
 
 # fig.tight_layout()
 
