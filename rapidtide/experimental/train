@@ -35,7 +35,7 @@ elif thiscomputer.startswith('DESKTOP'):
     thedatadir = '/home/frederic/Dropbox/timecourses'
 else:
     print('setting up to run on mclean cluster')
-    thedatadir = '/data1/frederic/test/output'
+    thedatadir = '/data1/frederic/physioconn/output_complete'
 
 
 
