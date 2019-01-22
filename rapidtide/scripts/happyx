@@ -694,11 +694,6 @@ def happy_main(thearguments):
         "***********************************************************************************************************************************")
     print("")
 
-    '''nargs = len(sys.argv)
-    if nargs < 4:
-        usage()
-        exit()'''
-
     fmrifilename = thearguments[1]
     slicetimename = thearguments[2]
     outputroot = thearguments[3]
@@ -1310,18 +1305,6 @@ def happy_main(thearguments):
     weights = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
     weight_byslice = weights.reshape((xsize * ysize, numslices, destpoints))
     timings.append(['Output arrays allocated', time.time(), None, None])
-
-    # high pass filter to remove trends
-    '''
-    imagingtime = tr * timepoints
-    phasefilter = tide_filt.noncausalfilter()
-    phasefilter.settype('arb')
-    arb_lower = 4.0 / imagingtime
-    arb_upper = 0.5 / tr
-    arb_lowerstop = arb_lower
-    arb_upperstop = arb_upper
-    phasefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-    '''
 
     outphases = sp.linspace(-np.pi, np.pi, num=destpoints, endpoint=False)
     outphasestep = outphases[1] - outphases[0]
