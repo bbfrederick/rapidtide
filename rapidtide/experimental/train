@@ -78,8 +78,8 @@ elif nettype == 'sepcnn':
                             readskip=readskip,
                             countlim=countlim,
                             thedatadir=thedatadir,
-                            inputfrag='motfilt_cardfromfmri',
-                            targetfrag='motfilt_normpleth',
+                            inputfrag='cardfromfmri',
+                            targetfrag='normpleth',
                             namesuffix='normaligned',
                             activation=activation,
                             num_filters=num_filters,
@@ -102,8 +102,8 @@ elif nettype == 'lstm':
                             readskip=readskip,
                             countlim=countlim,
                             thedatadir=thedatadir,
-                            inputfrag='motfilt_cardfromfmri',
-                            targetfrag='motfilt_alignedpleth',
+                            inputfrag='cardfromfmri',
+                            targetfrag='alignedpleth',
                             num_units=num_units)
 elif nettype == 'hybrid':
     num_layers = 10
@@ -122,8 +122,8 @@ elif nettype == 'hybrid':
                             readskip=readskip,
                             countlim=countlim,
                             thedatadir=thedatadir,
-                            inputfrag='motfilt_cardfromfmri',
-                            targetfrag='motfilt_alignedpleth',
+                            inputfrag='cardfromfmri',
+                            targetfrag='alignedpleth',
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size,
