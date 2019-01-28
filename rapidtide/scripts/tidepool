@@ -800,8 +800,9 @@ def doAtlasAveraging(state):
 def updateAveragingMode():
     global averagingmode, focusmap
     global atlasaveragingdone
+    global overlays
     print('in updateAveragingMode')
-    if not atlasaveragingdone:
+    if ('atlas' in overlays) and (not atlasaveragingdone):
         calcAtlasStats()
         set_atlasmask()
     updateAtlasStats()
