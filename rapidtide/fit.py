@@ -750,9 +750,20 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                          absmaxsigma=1000.0,
                          hardlimit=True,
                          bipolar=False,
-                         edgebufferfrac=0.0, threshval=0.0, uthreshval=1.0,
-                         debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
-                         searchfrac=0.5, fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
+                         edgebufferfrac=0.0,
+                         threshval=0.0,
+                         uthreshval=1.0,
+                         debug=False,
+                         tweaklims=True,
+                         zerooutbadfit=True,
+                         refine=False,
+                         maxguess=0.0,
+                         useguess=False,
+                         searchfrac=0.5,
+                         fastgauss=False,
+                         lagmod=1000.0,
+                         enforcethresh=True,
+                         displayplots=False):
     """
 
     Parameters
@@ -926,16 +937,22 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             failreason |= (FML_FITFAIL + FML_BADLAG)
             if debug:
                 print('bad lag after refinement')
+            if lagmin > maxlag:
+                maxlag = lagmin
+            else:
+                maxlag = lagmax
             fitfail = True
         if maxsigma > absmaxsigma:
             failreason |= (FML_FITFAIL + FML_BADWIDTH)
             if debug:
                 print('bad width after refinement')
+            maxsigma = absmaxsigma
             fitfail = True
         if not (0.0 < maxsigma):
             failreason |= (FML_FITFAIL + FML_BADSEARCHWINDOW)
             if debug:
                 print('bad width after refinement')
+            maxsigma = 0.0
             fitfail = True
         if fitfail:
             if debug:
