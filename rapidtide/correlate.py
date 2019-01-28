@@ -118,32 +118,34 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
     peaks = tide_fit.peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
     maxpeaks = np.asarray(peaks[0], dtype='float64')
     minpeaks = np.asarray(peaks[1], dtype='float64')
-    zeropkindex = np.argmin(abs(maxpeaks[:, 0]))
-    for i in range(zeropkindex + 1, maxpeaks.shape[0]):
-        if maxpeaks[i, 0] > aclagthresh:
-            return None, None
-        if maxpeaks[i, 1] > acampthresh:
-            sidelobetime = maxpeaks[i, 0]
-            sidelobeindex = tide_util.valtoindex(corrscale, sidelobetime)
-            sidelobeamp = thexcorr[sidelobeindex]
-            numbins = 1
-            while (sidelobeindex + numbins < np.shape(corrscale)[0] - 1) and (
-                    thexcorr[sidelobeindex + numbins] > sidelobeamp / 2.0):
-                numbins += 1
-            sidelobewidth = (corrscale[sidelobeindex + numbins] - corrscale[sidelobeindex]) * 2.0
-            fitstart = sidelobeindex - numbins
-            fitend = sidelobeindex + numbins
-            sidelobeamp, sidelobetime, sidelobewidth = tide_fit.gaussfit(sidelobeamp, sidelobetime, sidelobewidth,
-                                                                         corrscale[fitstart:fitend + 1],
-                                                                         thexcorr[fitstart:fitend + 1])
+    if len(peaks[0]) > 0:
+        print(peaks)
+        zeropkindex = np.argmin(abs(maxpeaks[:, 0]))
+        for i in range(zeropkindex + 1, maxpeaks.shape[0]):
+            if maxpeaks[i, 0] > aclagthresh:
+                return None, None
+            if maxpeaks[i, 1] > acampthresh:
+                sidelobetime = maxpeaks[i, 0]
+                sidelobeindex = tide_util.valtoindex(corrscale, sidelobetime)
+                sidelobeamp = thexcorr[sidelobeindex]
+                numbins = 1
+                while (sidelobeindex + numbins < np.shape(corrscale)[0] - 1) and (
+                        thexcorr[sidelobeindex + numbins] > sidelobeamp / 2.0):
+                    numbins += 1
+                sidelobewidth = (corrscale[sidelobeindex + numbins] - corrscale[sidelobeindex]) * 2.0
+                fitstart = sidelobeindex - numbins
+                fitend = sidelobeindex + numbins
+                sidelobeamp, sidelobetime, sidelobewidth = tide_fit.gaussfit(sidelobeamp, sidelobetime, sidelobewidth,
+                                                                             corrscale[fitstart:fitend + 1],
+                                                                             thexcorr[fitstart:fitend + 1])
 
-            if displayplots:
-                pl.plot(corrscale[fitstart:fitend + 1], thexcorr[fitstart:fitend + 1], 'k',
-                        corrscale[fitstart:fitend + 1],
-                        tide_fit.gauss_eval(corrscale[fitstart:fitend + 1], [sidelobeamp, sidelobetime, sidelobewidth]),
-                        'r')
-                pl.show()
-            return sidelobetime, sidelobeamp
+                if displayplots:
+                    pl.plot(corrscale[fitstart:fitend + 1], thexcorr[fitstart:fitend + 1], 'k',
+                            corrscale[fitstart:fitend + 1],
+                            tide_fit.gauss_eval(corrscale[fitstart:fitend + 1], [sidelobeamp, sidelobetime, sidelobewidth]),
+                            'r')
+                    pl.show()
+                return sidelobetime, sidelobeamp
     return None, None
 
 
