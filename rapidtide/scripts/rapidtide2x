@@ -1865,8 +1865,11 @@ def main():
                                                                         nozero=optiondict['nohistzero'],
                                                                         dosighistfit=optiondict['dosighistfit'])
             if optiondict['ampthreshfromsig']:
-                print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
-                optiondict['ampthresh'] = pcts[2]
+                if pcts is None:
+                    print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
+                    optiondict['ampthresh'] = pcts[2]
+                else:
+                    print('leaving ampthresh unchanged')
             tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
             if optiondict['dosighistfit']:
                 tide_stats.printthresholds(pcts_fit, thepercentiles,
