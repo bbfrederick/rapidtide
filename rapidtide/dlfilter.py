@@ -448,6 +448,7 @@ class denseautoencoder(dlfilter):
 
         self.model.add(Dense(sizefac * self.encoding_dim,
                                  input_shape=(None, self.inputsize)))
+        self.model.add(BatchNormalization())
         self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
 
@@ -456,6 +457,7 @@ class denseautoencoder(dlfilter):
             sizefac = int(sizefac // 2)
             print('encoder layer', i + 1, ', sizefac:', sizefac)
             self.model.add(Dense(sizefac * self.encoding_dim))
+            self.model.add(BatchNormalization())
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
 
@@ -463,6 +465,7 @@ class denseautoencoder(dlfilter):
         sizefac = int(sizefac // 2)
         print('encoding layer - sizefac:', sizefac)
         self.model.add(Dense(self.encoding_dim))
+        self.model.add(BatchNormalization())
         self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
 
@@ -471,6 +474,7 @@ class denseautoencoder(dlfilter):
             sizefac = int(sizefac * 2)
             print('decoding layer', i, ', sizefac:', sizefac)
             self.model.add(Dense(sizefac * self.encoding_dim))
+            self.model.add(BatchNormalization())
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
 
