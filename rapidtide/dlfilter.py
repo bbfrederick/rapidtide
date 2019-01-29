@@ -441,34 +441,42 @@ class denseautoencoder(dlfilter):
         self.model = Sequential()
 
         # make the input layer
-        sizefac = 2 ^ (self.num_layers - 1)
+        sizefac = 2
+        for i in range(1, self.num_layers - 1):
+            sizefac = int(sizefac * 2)
+        print('input layer - sizefac:', sizefac)
+
         self.model.add(Dense(sizefac * self.encoding_dim,
                                  input_shape=(None, self.inputsize)))
         self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
 
         # make the intermediate encoding layers
-        for i in range(self.num_layers - 1, 1, -1):
-            sizefac /= 2
+        for i in range(1, self.num_layers - 1):
+            sizefac = int(sizefac // 2)
+            print('encoder layer', i + 1, ', sizefac:', sizefac)
             self.model.add(Dense(sizefac * self.encoding_dim))
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
 
         # make the encoding layer
+        sizefac = int(sizefac // 2)
+        print('encoding layer - sizefac:', sizefac)
         self.model.add(Dense(self.encoding_dim))
         self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
 
         # make the intermediate decoding layers
         for i in range(1, self.num_layers):
-            sizefac *= 2
+            sizefac = int(sizefac * 2)
+            print('decoding layer', i, ', sizefac:', sizefac)
             self.model.add(Dense(sizefac * self.encoding_dim))
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
 
         # make the output layer
-        self.model.add(Dense(self.inputsize, kernel_size=self.kernel_size, padding='same'))
-        self.model.compile(optimizer=adam, loss='binary_crossentropy')
+        self.model.add(Dense(self.inputsize, activation='relu'))
+        self.model.compile(optimizer='adam', loss='mse')
 
 
 class sepcnn(dlfilter):

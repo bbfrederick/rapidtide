@@ -5,7 +5,7 @@ import os
 
 num_epochs = 5
 excludethresh = 4.0
-window_size = 201
+window_size = 256
 num_layers = 4
 num_filters = 10
 kernel_size = 5
