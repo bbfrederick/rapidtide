@@ -408,6 +408,69 @@ class cnn(dlfilter):
                            loss='mse')
 
 
+class denseautoencoder(dlfilter):
+    def __init__(self, encoding_dim=10, *args, **kwargs):
+        self.encoding_dim = encoding_dim
+        self.infodict['nettype'] = 'autoencoder'
+        self.infodict['encoding_dim'] = self.encoding_dim
+        super(denseautoencoder, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        self.modelname = '_'.join(['model',
+                                   'denseautoencoder',
+                                   'w' + str(self.window_size),
+                                   'en' + str(self.encoding_dim),
+                                   'e' + str(self.num_epochs),
+                                   't' + str(self.excludethresh),
+                                   's' + str(self.step),
+                                   self.activation])
+        if self.usebadpts:
+            self.modelname += '_usebadpts'
+        if self.excludebysubject:
+            self.modelname += '_excludebysubject'
+        if self.namesuffix is not None:
+            self.modelname += '_' + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        self.model = Sequential()
+
+        # make the input layer
+        sizefac = 2 ^ (self.num_layers - 1)
+        self.model.add(Dense(sizefac * self.encoding_dim,
+                                 input_shape=(None, self.inputsize)))
+        self.model.add(Dropout(rate=self.dropout_rate))
+        self.model.add(Activation(self.activation))
+
+        # make the intermediate encoding layers
+        for i in range(self.num_layers - 1, 1, -1):
+            sizefac /= 2
+            self.model.add(Dense(sizefac * self.encoding_dim))
+            self.model.add(Dropout(rate=self.dropout_rate))
+            self.model.add(Activation(self.activation))
+
+        # make the encoding layer
+        self.model.add(Dense(self.encoding_dim))
+        self.model.add(Dropout(rate=self.dropout_rate))
+        self.model.add(Activation(self.activation))
+
+        # make the intermediate decoding layers
+        for i in range(1, self.num_layers):
+            sizefac *= 2
+            self.model.add(Dense(sizefac * self.encoding_dim))
+            self.model.add(Dropout(rate=self.dropout_rate))
+            self.model.add(Activation(self.activation))
+
+        # make the output layer
+        self.model.add(Dense(self.inputsize, kernel_size=self.kernel_size, padding='same'))
+        self.model.compile(optimizer=adam, loss='binary_crossentropy')
+
+
 class sepcnn(dlfilter):
     def __init__(self, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
         self.num_filters = num_filters

@@ -5,13 +5,13 @@ import os
 
 num_epochs = 5
 excludethresh = 4.0
-window_size = 61
-num_layers = 10
+window_size = 201
+num_layers = 4
 num_filters = 10
 kernel_size = 5
 dropout_rate = 0.3
 dofft = False
-nettype = 'sepcnn'
+nettype = 'denseautoencoder'
 activation = 'relu'
 usebadpts = False
 countlim = None
@@ -23,6 +23,7 @@ invert = True
 startskip = 200
 endskip = 200
 step = 20
+encoding_dim = 32
 excludebysubject = False
 
 thiscomputer = os.uname().nodename
@@ -61,6 +62,28 @@ if nettype == 'cnn':
                             activation=activation,
                             num_filters=num_filters,
                             kernel_size=kernel_size,
+                            debug=debug)
+elif nettype == 'denseautoencoder':
+    thefilter = dlfilter.denseautoencoder(
+                            num_epochs=num_epochs,
+                            startskip=startskip,
+                            endskip=endskip,
+                            step=step,
+                            excludethresh=excludethresh,
+                            excludebysubject=excludebysubject,
+                            window_size=window_size,
+                            num_layers=num_layers,
+                            dropout_rate=dropout_rate,
+                            usebadpts=usebadpts,
+                            readlim=readlim,
+                            readskip=readskip,
+                            countlim=countlim,
+                            thedatadir=thedatadir,
+                            inputfrag='cardfromfmri',
+                            targetfrag='normpleth',
+                            namesuffix='normaligned',
+                            activation=activation,
+                            encoding_dim=encoding_dim,
                             debug=debug)
 elif nettype == 'sepcnn':
     thefilter = dlfilter.sepcnn(
