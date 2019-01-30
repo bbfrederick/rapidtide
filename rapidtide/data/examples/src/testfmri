@@ -11,6 +11,7 @@ rapidtide2x \
         --despecklepasses=4 \
         --accheck \
         --nprocs=-1 \
+        --nofitfilt \
         --detrendorder=3
 
 #rapidtide2 \

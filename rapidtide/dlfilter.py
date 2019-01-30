@@ -523,10 +523,8 @@ class convautoencoder(dlfilter):
         self.model = Sequential()
 
         # make the input layer
-        sizefac = 2
-        for i in range(1, self.num_layers - 1):
-            sizefac = int(sizefac * 2)
-        print('input layer - sizefac:', sizefac)
+        layersize = self.window_size
+        print('input layer size:', layersize)
 
         self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same',
                                      input_shape=(None, self.inputsize)))
@@ -534,17 +532,21 @@ class convautoencoder(dlfilter):
         self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
         self.model.add(MaxPooling1D(2, padding='same'))
+        layersize = int(layersize // 2)
 
         # make the intermediate encoding layers
         for i in range(1, self.num_layers - 1):
+            print('input layer size:', layersize)
             self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size,padding='same'))
             self.model.add(BatchNormalization())
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
             self.model.add(MaxPooling1D(2, padding='same'))
+            layersize = int(layersize // 2)
 
 
         # make the encoding layer
+        print('input layer size:', layersize)
         self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same'))
         self.model.add(BatchNormalization())
         self.model.add(Dropout(rate=self.dropout_rate))
@@ -553,12 +555,15 @@ class convautoencoder(dlfilter):
         # make the intermediate decoding layers
         for i in range(1, self.num_layers):
             self.model.add(UpSampling1D(2))
+            layersize = layersize * 2
+            print('input layer size:', layersize)
             self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same'))
             self.model.add(BatchNormalization())
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
 
         # make the output layer
+        print('input layer size:', layersize)
         self.model.add(Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding='same'))
         self.model.compile(optimizer=RMSprop(), loss='mse')
 
