@@ -480,7 +480,7 @@ class denseautoencoder(dlfilter):
 
         # make the output layer
         self.model.add(Dense(self.inputsize, activation='relu'))
-        self.model.compile(optimizer='adam', loss='mse')
+        self.model.compile(optimizer=RMSprop(), loss='mse')
 
 
 class sepcnn(dlfilter):
