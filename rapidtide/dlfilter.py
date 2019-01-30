@@ -87,6 +87,7 @@ class dlfilter:
                  window_size=128,
                  num_layers=5,
                  dropout_rate=0.3,
+                 num_pretrain_epochs=0,
                  num_epochs=1,
                  activation='relu',
                  modelroot='.',
@@ -112,6 +113,7 @@ class dlfilter:
 
         self.window_size = window_size
         self.dropout_rate = dropout_rate
+        self.num_pretrain_epochs = num_pretrain_epochs
         self.num_epochs = num_epochs
         self.usebadpts = usebadpts
         self.num_layers = num_layers
@@ -149,6 +151,7 @@ class dlfilter:
         self.infodict['usebadpts'] = self.usebadpts
         self.infodict['dofft'] = self.dofft
         self.infodict['excludethresh'] = self.excludethresh
+        self.infodict['num_pretrain_epochs'] = self.num_pretrain_epochs
         self.infodict['num_epochs'] = self.num_epochs
         self.infodict['modelname'] = self.modelname
         self.infodict['dropout_rate'] = self.dropout_rate
@@ -306,6 +309,17 @@ class dlfilter:
             tensorboard = TensorBoard(log_dir=self.intermediatemodelpath + "logs/{}".format(time()))
             self.model.fit(self.train_x, self.train_y, verbose=1, callbacks=[tensorboard])
         else:
+            if self.num_pretrain_epochs > 0:
+                print('pretraining model to reproduce input data')
+                self.history = self.model.fit(
+                    self.train_y,
+                    self.train_y,
+                    batch_size=1024,
+                    epochs=self.num_pretrain_epochs,
+                    shuffle=True,
+                    verbose=1,
+                    callbacks=[TerminateOnNaN(), ModelCheckpoint(self.intermediatemodelpath)],
+                    validation_data=(self.val_y, self.val_y))
             self.history = self.model.fit(
                 self.train_x,
                 self.train_y,

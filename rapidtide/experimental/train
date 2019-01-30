@@ -3,6 +3,7 @@
 import rapidtide.dlfilter as dlfilter
 import os
 
+num_pretrain_epochs = 5
 num_epochs = 5
 excludethresh = 4.0
 window_size = 256
@@ -65,6 +66,7 @@ if nettype == 'cnn':
                             debug=debug)
 elif nettype == 'convautoencoder':
     thefilter = dlfilter.convautoencoder(
+                            num_pretrain_epochs=num_pretrain_epochs,
                             num_epochs=num_epochs,
                             startskip=startskip,
                             endskip=endskip,
@@ -89,6 +91,7 @@ elif nettype == 'convautoencoder':
                             debug=debug)
 elif nettype == 'denseautoencoder':
     thefilter = dlfilter.denseautoencoder(
+                            num_pretrain_epochs=num_pretrain_epochs,
                             num_epochs=num_epochs,
                             startskip=startskip,
                             endskip=endskip,
