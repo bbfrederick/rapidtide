@@ -1672,7 +1672,11 @@ def main():
                                                            acmaxinpts,
                                                            theprefilter,
                                                            referencetc,
-                                                           optiondict)
+                                                           usewindowfunc=optiondict['usewindowfunc'],
+                                                           detrendorder=optiondict['detrendorder'],
+                                                           windowfunc=optiondict['windowfunc'],
+                                                           corrweighting=optiondict['corrweighting'])
+
             outputarray = np.asarray([corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts], thexcorr])
             tide_io.writenpvecs(outputarray, outputname + '_referenceautocorr_pass' + str(thepass) + '.txt')
             thelagthresh = np.max((abs(optiondict['lagmin']), abs(optiondict['lagmax'])))

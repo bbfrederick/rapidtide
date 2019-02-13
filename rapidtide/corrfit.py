@@ -37,6 +37,7 @@ import rapidtide.util as tide_util
 def onecorrfitx(thetc,
                corrscale,
                optiondict,
+               zerooutbadfit=True,
                disablethresholds=False,
                displayplots=False,
                initiallag=None,
@@ -84,7 +85,7 @@ def onecorrfitx(thetc,
                 searchfrac=optiondict['searchfrac'],
                 fastgauss=optiondict['fastgauss'],
                 enforcethresh=optiondict['enforcethresh'],
-                zerooutbadfit=optiondict['zerooutbadfit'],
+                zerooutbadfit=zerooutbadfit,
                 lagmod=optiondict['lagmod'],
                 hardlimit=optiondict['hardlimit'],
                 displayplots=displayplots)
@@ -102,7 +103,7 @@ def onecorrfitx(thetc,
                 useguess=useguess,
                 fastgauss=optiondict['fastgauss'],
                 enforcethresh=optiondict['enforcethresh'],
-                zerooutbadfit=optiondict['zerooutbadfit'],
+                zerooutbadfit=zerooutbadfit,
                 lagmod=optiondict['lagmod'],
                 displayplots=displayplots)
             maxval *= flipfac
@@ -124,6 +125,7 @@ def _procOneVoxelFitcorrx(vox,
                          genlagtc,
                          initial_fmri_x,
                          optiondict,
+                         zerooutbadfit=True,
                          displayplots=False,
                          initiallag=None,
                          rt_floatset=np.float64,
@@ -131,6 +133,7 @@ def _procOneVoxelFitcorrx(vox,
     maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = onecorrfitx(corrtc,
                                                                                              corrscale,
                                                                                              optiondict,
+                                                                                             zerooutbadfit=zerooutbadfit,
                                                                                              displayplots=displayplots,
                                                                                              initiallag=initiallag,
                                                                                              rt_floatset=rt_floatset,
@@ -187,6 +190,7 @@ def fitcorrx(genlagtc,
             windowout,
             R2,
             optiondict,
+            zerooutbadfit=True,
             initiallags=None,
             rt_floatset=np.float64,
             rt_floattype='float64'):
@@ -199,7 +203,7 @@ def fitcorrx(genlagtc,
     reportstep = 1000
     volumetotal, ampfails, lagfails, windowfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0, 0
     FML_BADAMPLOW = np.uint16(0x01)
-    FML_BADAMPNEG = np.uint16(0x02)
+    FML_BADAMPHIGH = np.uint16(0x02)
     FML_BADSEARCHWINDOW = np.uint16(0x04)
     FML_BADWIDTH = np.uint16(0x08)
     FML_BADLAG = np.uint16(0x10)
@@ -232,6 +236,7 @@ def fitcorrx(genlagtc,
                                                   genlagtc,
                                                   initial_fmri_x,
                                                   optiondict,
+                                                  zerooutbadfit=zerooutbadfit,
                                                   displayplots=displayplots,
                                                   initiallag=thislag,
                                                   rt_floatset=rt_floatset,
@@ -259,7 +264,7 @@ def fitcorrx(genlagtc,
             R2[voxel[0]] = voxel[8]
             lagmask[voxel[0]] = voxel[9]
             failimage[voxel[0]] = voxel[10] & 0x3f
-        if (FML_BADAMPLOW | FML_BADAMPNEG) & voxel[10]:
+        if (FML_BADAMPLOW | FML_BADAMPHIGH) & voxel[10]:
             ampfails += 1
         if FML_BADSEARCHWINDOW & voxel[10]:
             windowfails += 1
@@ -303,12 +308,13 @@ def fitcorrx(genlagtc,
                                          genlagtc,
                                          initial_fmri_x,
                                          optiondict,
+                                         zerooutbadfit=zerooutbadfit,
                                          displayplots=displayplots,
                                          initiallag=thislag,
                                          rt_floatset=rt_floatset,
                                          rt_floattype=rt_floattype)
                 volumetotal += volumetotalinc
-                if (FML_BADAMPLOW | FML_BADAMPNEG) & failreason:
+                if (FML_BADAMPLOW | FML_BADAMPHIGH) & failreason:
                     ampfails += 1
                 if FML_BADSEARCHWINDOW & failreason:
                     windowfails += 1
@@ -339,6 +345,7 @@ def fitcorrx(genlagtc,
 def onecorrfit(corrfunc,
                corrscale,
                optiondict,
+               zerooutbadfit=True,
                displayplots=False,
                initiallag=None,
                rt_floatset=np.float64,
@@ -376,7 +383,7 @@ def onecorrfit(corrfunc,
                 useguess=useguess,
                 fastgauss=optiondict['fastgauss'],
                 enforcethresh=optiondict['enforcethresh'],
-                zerooutbadfit=optiondict['zerooutbadfit'],
+                zerooutbadfit=zerooutbadfit,
                 lagmod=optiondict['lagmod'],
                 displayplots=displayplots)
         else:
@@ -393,7 +400,7 @@ def onecorrfit(corrfunc,
                 useguess=useguess,
                 fastgauss=optiondict['fastgauss'],
                 enforcethresh=optiondict['enforcethresh'],
-                zerooutbadfit=optiondict['zerooutbadfit'],
+                zerooutbadfit=zerooutbadfit,
                 lagmod=optiondict['lagmod'],
                 displayplots=displayplots)
         maxval *= flipfac
@@ -415,7 +422,8 @@ def _procOneVoxelFitcorr(vox,
                          genlagtc,
                          initial_fmri_x,
                          optiondict,
-                         displayplots,
+                         zerooutbadfit=True,
+                         displayplots=False,
                          initiallag=None,
                          rt_floatset=np.float64,
                          rt_floattype='float64'
@@ -423,6 +431,7 @@ def _procOneVoxelFitcorr(vox,
     maxindex, maxlag, maxval, maxsigma, maskval, failreason = onecorrfit(corrtc,
                                                                          corrscale,
                                                                          optiondict,
+                                                                         zerooutbadfit=zerooutbadfit,
                                                                          displayplots=displayplots,
                                                                          initiallag=initiallag,
                                                                          rt_floatset=rt_floatset,
@@ -471,6 +480,7 @@ def fitcorr(genlagtc,
             gaussout,
             R2,
             optiondict,
+            zerooutbadfit=True,
             initiallags=None,
             rt_floatset=np.float64,
             rt_floattype='float64'
@@ -508,7 +518,8 @@ def fitcorr(genlagtc,
                                              corrscale, genlagtc,
                                              initial_fmri_x,
                                              optiondict,
-                                             displayplots,
+                                             zerooutbadfit=zerooutbadfit,
+                                             displayplots=False,
                                              initiallag=thislag,
                                              rt_floatset=rt_floatset,
                                              rt_floattype=rt_floattype))
@@ -565,7 +576,8 @@ def fitcorr(genlagtc,
                                          genlagtc,
                                          initial_fmri_x,
                                          optiondict,
-                                         displayplots,
+                                         zerooutbadfit=zerooutbadfit,
+                                         displayplots=False,
                                          initiallag=thislag,
                                          rt_floatset=rt_floatset,
                                          rt_floattype=rt_floattype)

@@ -46,18 +46,21 @@ def onecorrelation(thetc,
                    lagmaxinpts,
                    ncprefilter,
                    referencetc,
-                   optiondict):
+                   usewindowfunc=True,
+                   detrendorder=1,
+                   windowfunc='hamming',
+                   corrweighting='none'):
     thetc_classfilter = ncprefilter.apply(oversampfreq, thetc)
     thetc = thetc_classfilter
 
     # prepare timecourse by normalizing, detrending, and applying a window function 
     preppedtc = tide_math.corrnormalize(thetc,
-                                        prewindow=optiondict['usewindowfunc'],
-                                        detrendorder=optiondict['detrendorder'],
-                                        windowfunc=optiondict['windowfunc'])
+                                        prewindow=usewindowfunc,
+                                        detrendorder=detrendorder,
+                                        windowfunc=windowfunc)
 
     # now actually do the correlation
-    thexcorr = tide_corr.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=optiondict['corrweighting'])
+    thexcorr = tide_corr.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=corrweighting)
 
     # find the global maximum value
     theglobalmax = np.argmax(thexcorr)
@@ -91,7 +94,11 @@ def _procOneVoxelCorrelation(vox,
                                             lagmaxinpts,
                                             ncprefilter,
                                             referencetc,
-                                            optiondict)
+                                            usewindowfunc=optiondict['usewindowfunc'],
+                                            detrendorder=optiondict['detrendorder'],
+                                            windowfunc=optiondict['windowfunc'],
+                                            corrweighting=optiondict['corrweighting'])
+
     return vox, np.mean(thetc), thexcorr, theglobalmax
 
 

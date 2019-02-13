@@ -50,13 +50,17 @@ def _procOneNullCorrelationx(iteration,
     thexcorr, dummy = tide_corrpass.onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
                                                    ncprefilter,
                                                    indata,
-                                                   optiondict)
+                                                   usewindowfunc=optiondict['usewindowfunc'],
+                                                   detrendorder=optiondict['detrendorder'],
+                                                   windowfunc=optiondict['windowfunc'],
+                                                   corrweighting=optiondict['corrweighting'])
 
     # fit the correlation
     maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = \
         tide_corrfit.onecorrfitx(thexcorr,
                                  corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
                                  optiondict,
+                                 zerooutbadfit=True,
                                  disablethresholds=True,
                                  rt_floatset=rt_floatset,
                                  rt_floattype=rt_floattype
@@ -147,12 +151,16 @@ def _procOneNullCorrelation(iteration, indata, ncprefilter, oversampfreq, corrsc
     thexcorr, dummy = tide_corrpass.onecorrelation(shuffleddata, oversampfreq, corrorigin, lagmininpts, lagmaxinpts,
                                                    ncprefilter,
                                                    indata,
-                                                   optiondict)
+                                                   usewindowfunc=optiondict['usewindowfunc'],
+                                                   detrendorder=optiondict['detrendorder'],
+                                                   windowfunc=optiondict['windowfunc'],
+                                                   corrweighting=optiondict['corrweighting'])
 
     # fit the correlation
     maxindex, maxlag, maxval, maxsigma, maskval, failreason = \
         tide_corrfit.onecorrfit(thexcorr, corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
                    optiondict,
+                   zerooutbadfit=True,
                    rt_floatset=rt_floatset,
                    rt_floattype=rt_floattype)
 
@@ -225,14 +233,17 @@ def getNullDistributionData(indata,
                                                            lagmaxinpts,
                                                            ncprefilter,
                                                            indata,
-                                                           optiondict
-                                                           )
+                                                           usewindowfunc=optiondict['usewindowfunc'],
+                                                           detrendorder=optiondict['detrendorder'],
+                                                           windowfunc=optiondict['windowfunc'],
+                                                           corrweighting=optiondict['corrweighting'])
 
             # fit the correlation
             maxindex, maxlag, maxval, maxsigma, maskval, failreason = \
                 tide_corrfit.onecorrfit(thexcorr,
                            corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
                            optiondict,
+                           zerooutbadfit=True,
                            rt_floatset=rt_floatset,
                            rt_floattype=rt_floattype
                            )

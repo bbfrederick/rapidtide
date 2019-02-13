@@ -1772,10 +1772,15 @@ def main():
                                                            acmaxinpts,
                                                            theprefilter,
                                                            referencetc,
-                                                           optiondict)
+                                                           usewindowfunc=optiondict['usewindowfunc'],
+                                                           detrendorder=optiondict['detrendorder'],
+                                                           windowfunc=optiondict['windowfunc'],
+                                                           corrweighting=optiondict['corrweighting'])
+
             maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
                 tide_corrfit.onecorrfitx(thexcorr, corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts],
                                         optiondict,
+                                        zerooutbadfit=optiondict['zerooutbadfit'],
                                         rt_floatset=rt_floatset,
                                         rt_floattype=rt_floattype
                                         )
