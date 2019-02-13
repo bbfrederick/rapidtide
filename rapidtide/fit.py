@@ -581,7 +581,7 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         while (thexcorr_y[upperlim - 1] < thexcorr_y[upperlim]) and (upperlim - 1) > lowerlim:
             upperlim -= 1
     FML_BADAMPLOW = np.uint16(0x01)
-    FML_BADAMPNEG = np.uint16(0x02)
+    FML_BADAMPHIGH = np.uint16(0x02)
     FML_BADSEARCHWINDOW = np.uint16(0x04)
     FML_BADWIDTH = np.uint16(0x08)
     FML_BADLAG = np.uint16(0x10)
@@ -631,14 +631,24 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     fitstart = max(1, maxindex - j)
     if not ((lagmin + binwidth) <= maxlag_init <= (lagmax - binwidth)):
         failreason += FML_HITEDGE
+        if lagmin + binwidth <= maxlag_init:
+            maxlag_init = lagmin + binwidth
+        else:
+            maxlag_init = lagmax - binwidth
     if i + j + 1 < 3:
         failreason += FML_BADSEARCHWINDOW
+        maxsigma_init = np.float64((3.0 * binwidth / (2.0 * np.sqrt(-np.log(searchfrac)))) / np.sqrt(2.0))
     if maxsigma_init > widthlimit:
         failreason += FML_BADWIDTH
+        maxsigma_init = widthlimit
     if (maxval_init < threshval) and enforcethresh:
         failreason += FML_BADAMPLOW
-    if (maxval_init < 0.0) and enforcethresh:
-        failreason += FML_BADAMPNEG
+    if (maxval_init < 0.0):
+        failreason += FML_BADAMPLOW
+        maxval_init = 0.0
+    if (maxval_init > 1.0):
+        failreason |= FML_BADAMPHIGH
+        maxval_init = 1.0
     if failreason > 0:
         maskval = np.uint16(0)
     if failreason > 0 and zerooutbadfit:
@@ -816,7 +826,7 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # define error values
     failreason = np.uint16(0)
     FML_BADAMPLOW = np.uint16(0x01)
-    FML_BADAMPNEG = np.uint16(0x02)
+    FML_BADAMPHIGH = np.uint16(0x02)
     FML_BADSEARCHWINDOW = np.uint16(0x04)
     FML_BADWIDTH = np.uint16(0x08)
     FML_BADLAG = np.uint16(0x10)
@@ -870,14 +880,21 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         rangeextension = (lagmax - lagmin) * 0.75
     if not ((lagmin - rangeextension - binwidth) <= maxlag_init <= (lagmax + rangeextension + binwidth)):
         failreason |= (FML_INITFAIL | FML_BADLAG)
+        if (lagmin - rangeextension - binwidth) <= maxlag_init:
+            maxlag_init = lagmin - rangeextension - binwidth
+        else:
+            maxlag_init = lagmax + rangeextension + binwidth
         if debug:
             print('bad initial')
     if maxsigma_init > absmaxsigma:
         failreason |= (FML_INITFAIL | FML_BADWIDTH)
+        maxsigma_init = absmaxsigma
         if debug:
             print('bad initial width - too high')
     if peakend - peakstart < 2:
         failreason |= (FML_INITFAIL | FML_BADSEARCHWINDOW)
+        maxsigma_init = np.float64(
+            ((2 + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac)))) / np.sqrt(2.0))
         if debug:
             print('bad initial width - too low')
     if not (threshval <= maxval_init <= uthreshval) and enforcethresh:
@@ -885,9 +902,15 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         if debug:
             print('bad initial amp:', maxval_init, 'is less than', threshval)
     if (maxval_init < 0.0):
-        failreason |= (FML_INITFAIL | FML_BADAMPNEG)
+        failreason |= (FML_INITFAIL | FML_BADAMPLOW)
+        maxval_init = 0.0
         if debug:
-            print('bad initial amp:', maxval_init, 'is less than', threshval)
+            print('bad initial amp:', maxval_init, 'is less than 0.0')
+    if (maxval_init > 1.0):
+        failreason |= (FML_INITFAIL | FML_BADAMPHIGH)
+        maxval_init = 1.0
+        if debug:
+            print('bad initial amp:', maxval_init, 'is greater than 1.0')
     if failreason > 0 and zerooutbadfit:
         maxval = np.float64(0.0)
         maxlag = np.float64(0.0)
@@ -1035,7 +1058,7 @@ def findmaxlag_quad(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         while (thexcorr_y[upperlim - 1] < thexcorr_y[upperlim]) and (upperlim - 1) > lowerlim:
             upperlim -= 1
     FML_BADAMPLOW = np.uint16(0x01)
-    FML_BADAMPNEG = np.uint16(0x02)
+    FML_BADAMPHIGH = np.uint16(0x02)
     FML_BADSEARCHWINDOW = np.uint16(0x04)
     FML_BADWIDTH = np.uint16(0x08)
     FML_BADLAG = np.uint16(0x10)
