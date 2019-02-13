@@ -96,7 +96,7 @@ def disablenumba():
 
 # --------------------------- Correlation functions -------------------------------------------------
 def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=10.0, displayplots=False, prewindow=True,
-                  detrendorder=1):
+                  detrendorder=1, debug=False):
     """
 
     Parameters
@@ -109,6 +109,7 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
     displayplots
     prewindow
     detrendorder
+    debug
 
     Returns
     -------
@@ -119,7 +120,8 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
     maxpeaks = np.asarray(peaks[0], dtype='float64')
     minpeaks = np.asarray(peaks[1], dtype='float64')
     if len(peaks[0]) > 0:
-        print(peaks)
+        if debug:
+            print(peaks)
         zeropkindex = np.argmin(abs(maxpeaks[:, 0]))
         for i in range(zeropkindex + 1, maxpeaks.shape[0]):
             if maxpeaks[i, 0] > aclagthresh:
