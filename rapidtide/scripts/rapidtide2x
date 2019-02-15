@@ -1335,7 +1335,7 @@ def main():
         fmri_data = nim_data.reshape((numspatiallocs, timepoints))
     else:
         fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
-        timepoints = validend - validstart + 1
+        validtimepoints = validend - validstart + 1
 
     # read in the optional masks
     tide_util.logmem('before setting masks', file=memfile)
@@ -1472,13 +1472,13 @@ def main():
             tide_util.logmem('after motion glm filter', file=memfile)
 
         if optiondict['savemotionfiltered']:
-            outfmriarray = np.zeros((numspatiallocs, timepoints), dtype=rt_floattype)
+            outfmriarray = np.zeros((numspatiallocs, validtimepoints), dtype=rt_floattype)
             outfmriarray[validvoxels, :] = fmri_data_valid[:, :]
             if optiondict['textio']:
-                tide_io.writenpvecs(outfmriarray.reshape((numspatiallocs, timepoints)),
+                tide_io.writenpvecs(outfmriarray.reshape((numspatiallocs, validtimepoints)),
                                 outputname + '_motionfiltered' + '' + '.txt')
             else:
-                tide_io.savetonifti(outfmriarray.reshape((xsize, ysize, numslices, timepoints)), nim_hdr, thesizes,
+                tide_io.savetonifti(outfmriarray.reshape((xsize, ysize, numslices, validtimepoints)), nim_hdr, thesizes,
                                 outputname + '_motionfiltered' + '')
 
 
@@ -1526,8 +1526,8 @@ def main():
     optiondict['fmrifreq'] = fmrifreq
     skiptime = fmritr * (optiondict['preprocskip'] + optiondict['addedskip'])
     print('first fMRI point is at ', skiptime, ' seconds relative to time origin')
-    initial_fmri_x = np.arange(0.0, timepoints - optiondict['addedskip']) * fmritr + skiptime
-    os_fmri_x = np.arange(0.0, (timepoints - optiondict['addedskip']) * optiondict['oversampfactor'] - (
+    initial_fmri_x = np.arange(0.0, validtimepoints - optiondict['addedskip']) * fmritr + skiptime
+    os_fmri_x = np.arange(0.0, (validtimepoints - optiondict['addedskip']) * optiondict['oversampfactor'] - (
             optiondict['oversampfactor'] - 1)) * oversamptr + skiptime
 
     if optiondict['verbose']:
@@ -1635,7 +1635,7 @@ def main():
     if optiondict['verbose']:
         print('corrtr=', corrtr)
 
-    numccorrlags = 2 * optiondict['oversampfactor'] * (timepoints - optiondict['addedskip']) - 1
+    numccorrlags = 2 * optiondict['oversampfactor'] * (validtimepoints - optiondict['addedskip']) - 1
     corrscale = np.arange(0.0, numccorrlags) * corrtr - (numccorrlags * corrtr) / 2.0 + (optiondict[
                                                                                              'oversampfactor'] - 0.5) * corrtr
     corrorigin = numccorrlags // 2 + 1
