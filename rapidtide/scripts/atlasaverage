@@ -30,22 +30,46 @@ from sklearn.cluster import KMeans, MiniBatchKMeans
 import numpy as np
 from pylab import *
 
+def summarize(thevoxels, method='mean'):
+    theshape = thevoxels.shape
+    if len(theshape) > 1:
+        numtimepoints = theshape[1]
+    else:
+        numtimepoints = 1
+
+    if method == 'mean':
+        themethod = np.mean
+    elif method == 'median':
+        themethod = np.median
+    else:
+        print('illegal summary method in summarize')
+        sys.exit()
+    if numtimepoints > 1:
+        regionsummary = np.nan_to_num(themethod(thevoxels, axis=1))
+    else:
+        regionsummary = np.nan_to_num(themethod(thevoxels))
+    return regionsummary
+
 
 def usage():
     print(
         'usage: atlasaverage fmrifile templatefile outputfile [--stdnorm] [--pctnorm] [--ppnorm] [--varnorm] [--nonorm]')
     print('')
     print('required arguments:')
-    print('    inputfile        - the name of the file with the kmeans cluster centers')
+    print('    inputfile        - the name of the 3 or 4D nifti file with the data to be averaged over atlas regions')
     print('    templatefile     - the name of the template region file')
     print('    outputfile       - the name of the output text file')
     print('')
     print('optional arguments:')
     print('    --nonorm         - don\'t normalize timecourses (default)')
-    print('    --pctnorm        - scale each timecourse to it\'s percentage of the mean')
-    print('    --varnorm        - scale each timecourse to have a variance of 1.0')
-    print('    --stdnorm        - scale each timecourse to have a standard deviation of 1.0')
-    print('    --ppnorm         - scale each timecourse to have a peak to peak range of 1.0')
+    print('    --pctnorm        - scale each timecourse to it\'s percentage of the mean over time')
+    print('    --varnorm        - scale each timecourse to have a variance over time of 1.0')
+    print('    --stdnorm        - scale each timecourse to have a standard deviation over time of 1.0')
+    print('    --ppnorm         - scale each timecourse to have a peak to peak range over time of 1.0')
+    print('    --mean           - calculate the mean over each spatial region (default)')
+    print('    --nzmean         - calculate the mean over nonzero values in each spatial region')
+    print('    --mad            - calculate the median average deviate over each spatial region')
+    print('    --nzmad          - calculate the median average deviate over nonzero values in each spatial region')
     print('')
     return ()
 
@@ -61,6 +85,7 @@ templatefile = sys.argv[2]
 outputfile = sys.argv[3]
 
 normmethod = 'none'
+summarymethod = 'mean'
 
 # now scan for optional arguments
 try:
@@ -123,9 +148,10 @@ timecourses = np.zeros((numregions, numtimepoints), dtype='float')
 if numtimepoints > 1:
     for theregion in range(1, numregions + 1):
         thevoxels = inputvoxels[np.where(templatevoxels == theregion), :]
-        print('extracting', thevoxels.shape[1], 'voxels from region', theregion)
+        print('extracting', thevoxels.shape[1], 'voxels from region', theregion, 'of', numregions)
         if thevoxels.shape[1] > 0:
-            regiontimecourse = np.nan_to_num(np.mean(thevoxels, axis=1))
+            #regiontimecourse = np.nan_to_num(np.mean(thevoxels, axis=1))
+            regiontimecourse = summarize(thevoxels, method=summarymethod)
         else:
             regiontimecourse = timecourses[0, :] * 0.0
         if normmethod == 'none':
@@ -146,7 +172,9 @@ if numtimepoints > 1:
 else:
     outputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
     for theregion in range(1, numregions + 1):
-        regionval = np.nan_to_num(np.mean(inputvoxels[np.where(templatevoxels == theregion)]))
+        thevoxels = inputvoxels[np.where(templatevoxels == theregion)]
+        #regionval = np.nan_to_num(np.mean(thevoxels))
+        regionval = summarize(thevoxels, method=summarymethod)
         outputvoxels[np.where(templatevoxels == theregion)] = regionval
     template_hdr['dim'][4] = numregions
     tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, templatesizes, outputfile)
