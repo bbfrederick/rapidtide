@@ -192,7 +192,7 @@ def usage():
     print("")
     print("Cardiac estimation tuning:")
     print("    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to")
-    print("                                     voxels in MASKNAME and weighted by the mask intensity (overrides"
+    print("                                     voxels in MASKNAME and weighted by the mask intensity (overrides")
     print("                                     normal variance mask.)")
     print("    --minhr=MINHR                  - highpass filter cardiac data to MINHR BPM (default is 40)")
     print("    --maxhr=MAXHR                  - lowpass filter cardiac data to MAXHR BPM (default is 180)")
