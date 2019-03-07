@@ -1321,7 +1321,7 @@ def main():
 
     # find the threshold value for the image data
     tide_util.logmem('before selecting valid voxels', file=memfile)
-    threshval = tide_stats.getfracval(fmri_data[:, optiondict['addedskip']:], 0.98) / 25.0
+    threshval = tide_stats.getfracvals(fmri_data[:, optiondict['addedskip']:], [0.98])[0] / 25.0
     if optiondict['corrmaskname'] is not None:
         if optiondict['textio']:
             corrmask = tide_io.readvecs(optiondict['corrmaskname']).astype('int16')
