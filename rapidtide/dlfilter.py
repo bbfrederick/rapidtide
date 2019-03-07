@@ -50,7 +50,7 @@ except ImportError:
 from keras.models import Sequential
 from keras.optimizers import RMSprop
 from keras.layers import Bidirectional, Convolution1D, SeparableConvolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
-    TimeDistributed, MaxPooling1D, UpSampling1D
+    TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
 from keras.callbacks import TerminateOnNaN, ModelCheckpoint
 from keras.models import load_model
 
@@ -537,16 +537,42 @@ class convautoencoder(dlfilter):
         self.model = Sequential()
 
         # make the input layer
-        layersize = self.window_size
-        print('input layer size:', layersize)
-
         self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same',
                                      input_shape=(None, self.inputsize)))
         self.model.add(BatchNormalization())
         self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
         self.model.add(MaxPooling1D(2, padding='same'))
-        layersize = int(layersize // 2)
+
+        layersize = self.windowsize
+        nfilters = self.num_filters
+        num_encodinglayers = 3
+        num_decodinglayers = 3
+        layerprops = [(layersize, nfilters)]
+        # make the encoding layers
+        for i in range(num_encodinglayers):
+            layersize = int(layersize // 2)
+            nfilters *= 2
+            print('input layer size:', layersize, ', nfilters:', nfilters)
+            self.model.add(Convolution1D(filters=nfilters, kernel_size=self.kernel_size,padding='same'))
+            self.model.add(BatchNormalization())
+            self.model.add(Dropout(rate=self.dropout_rate))
+            self.model.add(Activation(self.activation))
+            self.model.add(MaxPooling1D(2, padding='same'))
+
+        # make the decoding layers
+        for i in range(num_decodinglayers):
+            self.model.add(UpSampling1D(2))
+            layersize *= 2
+            nfilters = int(nfilters // 2)
+            print('input layer size:', layersize)
+            self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same'))
+            self.model.add(BatchNormalization())
+            self.model.add(Dropout(rate=self.dropout_rate))
+            self.model.add(Activation(self.activation))
+
+
+
 
         # make the intermediate encoding layers
         for i in range(1, self.num_layers - 1):
@@ -579,7 +605,8 @@ class convautoencoder(dlfilter):
         # make the output layer
         print('input layer size:', layersize)
         self.model.add(Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding='same'))
-        self.model.compile(optimizer=RMSprop(), loss='mse')
+        self.model.compile(optimizer='adam', loss='mse')
+
 
 
 class sepcnn(dlfilter):
