@@ -21,6 +21,10 @@
 #
 from __future__ import print_function, division
 
+#import matplotlib
+#matplotlib.use('TkAgg')
+from matplotlib.pyplot import plot, show, figure
+
 import time
 import sys
 import os
@@ -29,7 +33,6 @@ import platform
 import numpy as np
 import scipy as sp
 # import gc
-
 import getopt
 import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
@@ -47,7 +50,6 @@ from scipy.stats import kurtosis, skew
 from skimage.filters import threshold_triangle  # , apply_hysteresis_threshold
 from statsmodels.robust import mad
 
-from matplotlib.pyplot import plot, show, figure
 
 try:
     import mkl
@@ -190,7 +192,8 @@ def usage():
     print("")
     print("Cardiac estimation tuning:")
     print("    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to")
-    print("                                     voxels in MASKNAME and weighted by the mask intensity.")
+    print("                                     voxels in MASKNAME and weighted by the mask intensity (overrides"
+    print("                                     normal variance mask.)")
     print("    --minhr=MINHR                  - highpass filter cardiac data to MINHR BPM (default is 40)")
     print("    --maxhr=MAXHR                  - lowpass filter cardiac data to MAXHR BPM (default is 180)")
     print(
@@ -216,6 +219,7 @@ def usage():
     print("    --forcehr=BPM                  - Force heart rate fundamental detector to be centered at BPM")
     print("                                     (overrides peak frequencies found from spectrum).  Useful")
     print("                                     if there is structured noise that confuses the peak finder.")
+    print("")
     print("Phase projection tuning:")
     print("    --outputbins=BINS              - number of output phase bins (default is 32)")
     print("    --gridbins=BINS                - width of the gridding kernel in output phase bins (default is 3.0)")
@@ -233,6 +237,8 @@ def usage():
     print("    --nocensor                     - Bad points will not be excluded from analytic phase projection")
     print("    --nophasefilt                  - Disable the phase trend filter (probably not a good idea)")
     print("    --nocardiacalign               - Disable alignment of pleth signal to fmri derived cardiac signal.")
+    print("    --novarmask                    - Disable the variance mask that tries to restrict waveform extraction")
+    print("                                     to blood vessels")
 
     return ()
 
@@ -365,7 +371,7 @@ def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings):
     return normdata, demeandata
 
 
-def cleancardiac(Fs, plethwaveform, cutoff=0.4, thresh=0.2, debug=False):
+def cleancardiac(Fs, plethwaveform, cutoff=0.4, thresh=0.2, nyquist=None, debug=False):
     # first bandpass the cardiac signal to calculate the envelope
     if debug:
         print('entering cleancardiac')
@@ -386,6 +392,10 @@ def cleancardiac(Fs, plethwaveform, cutoff=0.4, thresh=0.2, debug=False):
     plethfilter.settype('arb')
     arb_upper = 10.0
     arb_upperstop = arb_upper * 1.1
+    if nyquist is not None:
+        if nyquist < arb_upper:
+            arb_upper = nyquist
+            arb_upperstop = nyquist
     plethfilter.setarb(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
     filtplethwaveform = tide_math.madnormalize(plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform)))
     print('normalizing')
@@ -586,8 +596,11 @@ def getphysiofile(cardiacfile, colnum, colname,
     timings.append(['Cardiac signal from physiology data read in', time.time(), None, None])
 
     # filter and amplitude correct the waveform to remove gain fluctuations
-    cleanpleth_fullres, normpleth_fullres, plethenv_fullres = cleancardiac(inputfreq, pleth_fullres, cutoff=envcutoff,
-                                                                           thresh=envthresh, debug=debug)
+    cleanpleth_fullres, normpleth_fullres, plethenv_fullres = cleancardiac(inputfreq, pleth_fullres,
+                                                                           cutoff=envcutoff,
+                                                                           thresh=envthresh,
+                                                                           nyquist=inputfreq / 2.0,
+                                                                           debug=debug)
     tide_io.writevec(pleth_fullres, outputroot + '_rawpleth_native.txt')
     tide_io.writevec(cleanpleth_fullres, outputroot + '_pleth_native.txt')
     tide_io.writevec(plethenv_fullres, outputroot + '_cardenvelopefromfile_native.txt')
@@ -626,12 +639,16 @@ def happy_main(thearguments):
     # get the command line parameters
     debug = False
     fmrimod = 'demean'
+    centric = True
     histlen = 100
     doplot = False
     smoothlen = 101
     envcutoff = 0.4
     envthresh = 0.2
     maskthreshpct = 10.0
+    varmaskthreshpct = 75.0
+    varmasktype = 'mad'
+    usevarmask = True
     upsamplefac = 100
     destpoints = 32
     congridbins = 3.0
@@ -739,6 +756,8 @@ def happy_main(thearguments):
                                                        "nocensor",
                                                        "nomadnorm",
                                                        "dodlfilter",
+                                                       "noncentric",
+                                                       "novarmask",
                                                        "model=",
                                                        "usesuperdangerousworkaround",
                                                        "savemotionglmfilt",
@@ -780,9 +799,15 @@ def happy_main(thearguments):
         elif o == "--nophasefilt":
             filtphase = False
             print('disabling phase trend filter')
+        elif o == "--novarmask":
+            usevarmask = False
+            print('disabling variance mask for waveform extraction')
         elif o == "--nocardiacalign":
             aligncardiac = False
             print('disabling cardiac alignment')
+        elif o == "--noncentric":
+            centric = False
+            print('performing noncentric projection')
         elif o == "--dodlfilter":
             if dlfilterexists:
                 dodlfilter = True
@@ -894,6 +919,7 @@ def happy_main(thearguments):
             print('will not use motion derivative regressors')
         elif o == '--estmask':
             estmaskname = a
+            usevarmask = False
             usemaskcardfromfmri = True
             print('Will restrict cardiac waveform fit to voxels in', estmaskname)
         elif o == '--cardiacfile':
@@ -1014,11 +1040,26 @@ def happy_main(thearguments):
     normdata, demeandata = normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings)
     normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
+    # find the most variable voxels in each slice
+    if usevarmask:
+        varmask_byslice = mask_byslice * 0
+        if varmasktype == 'std':
+            var_byslice = np.std(normdata_byslice, axis=2)
+        elif varmasktype == 'mad':
+            var_byslice = mad(normdata_byslice, axis=2)
+        tide_io.savetonifti(var_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_var')
+        for theslice in range(numslices):
+            varmask_byslice[:, theslice] = tide_stats.makemask(var_byslice[:, theslice],
+                                                               threshpct=varmaskthreshpct, nozero=True)
+        tide_io.savetonifti(varmask_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_varmask')
+    else:
+        varmask_byslice = mask_byslice
+
     # now get an estimate of the cardiac signal
     print('estimating cardiac signal from fmri data')
     tide_util.logmem('before cardiacfromimage', file=memfile)
     cardfromfmri_sliceres, slicesamplerate, numsteps = cardiacfromimage(normdata_byslice,
-                                                                        mask_byslice,
+                                                                        varmask_byslice,
                                                                         numslices,
                                                                         timepoints,
                                                                         tr,
@@ -1061,6 +1102,7 @@ def happy_main(thearguments):
     tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(stdfreq) + 'Hz.txt')
     filtcardfromfmri_stdres, normcardfromfmri_stdres, cardfromfmrienv_stdres = cleancardiac(stdfreq, cardfromfmri_stdres,
                                                                                             cutoff=envcutoff,
+                                                                                            nyquist=slicesamplerate / 2.0,
                                                                                             thresh=envthresh)
     tide_io.writevec(normcardfromfmri_stdres, outputroot + '_normcardfromfmri_' + str(stdfreq) + 'Hz.txt')
     tide_io.writevec(cardfromfmrienv_stdres, outputroot + '_cardfromfmrienv_' + str(stdfreq) + 'Hz.txt')
@@ -1273,7 +1315,9 @@ def happy_main(thearguments):
     # interpolate the instantaneous phase
     upsampledslicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
     interpphase = tide_math.phasemod(
-        tide_resample.doresample(slicetimeaxis, instantaneous_phase, upsampledslicetimeaxis, method='cubic', padlen=0))
+        tide_resample.doresample(slicetimeaxis, instantaneous_phase, upsampledslicetimeaxis,
+                                 method='cubic', padlen=0),
+        centric=centric)
     tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 
     if cardcalconly:
@@ -1290,7 +1334,8 @@ def happy_main(thearguments):
     for theslice in range(numslices):
         thetimes = sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False) + slicetimes[theslice]
         phasevals[theslice, :] = tide_math.phasemod(
-            tide_resample.doresample(slicetimeaxis, instantaneous_phase, thetimes, method='cubic', padlen=0))
+            tide_resample.doresample(slicetimeaxis, instantaneous_phase, thetimes, method='cubic', padlen=0),
+            centric=centric)
         if debug:
             tide_io.writevec(thetimes, outputroot + '_times_' + str(theslice).zfill(2) + '.txt')
             tide_io.writevec(phasevals[theslice, :], outputroot + '_phasevals_' + str(theslice).zfill(2) + '.txt')
@@ -1302,11 +1347,16 @@ def happy_main(thearguments):
     app_byslice = app.reshape((xsize * ysize, numslices, destpoints))
     rawapp = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
     rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, destpoints))
+    rawapp_bypoint = np.zeros((destpoints), dtype=np.float64)
     weights = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
     weight_byslice = weights.reshape((xsize * ysize, numslices, destpoints))
+    weight_bypoint = np.zeros((destpoints), dtype=np.float64)
     timings.append(['Output arrays allocated', time.time(), None, None])
 
-    outphases = sp.linspace(-np.pi, np.pi, num=destpoints, endpoint=False)
+    if centric:
+        outphases = sp.linspace(-np.pi, np.pi, num=destpoints, endpoint=False)
+    else:
+        outphases = sp.linspace(0.0, 2.0 * np.pi, num=destpoints, endpoint=False)
     outphasestep = outphases[1] - outphases[0]
     phasestep = outphases[1] - outphases[0]
     congridwidth = congridbins * phasestep
@@ -1326,6 +1376,20 @@ def happy_main(thearguments):
         censorlist = np.zeros(timepoints, dtype='int')
         censorlist[np.where(badpointlist > 0.0)[0] // numsteps] = 1
         proclist = np.where(censorlist < 1)[0]
+
+    for t in proclist:
+        thevals, theweights, theindices = tide_resample.congrid(outphases,
+                                                                tide_math.phasemod(instantaneous_phase[t], centric=centric),
+                                                                1.0,
+                                                                congridbins,
+                                                                kernel=gridkernel,
+                                                                cyclic=True)
+        for i in range(len(theindices)):
+            weight_bypoint[theindices[i]] += theweights[i]
+            rawapp_bypoint[theindices[i]] += theweights[i] * cardfromfmri_sliceres[t]
+    rawapp_bypoint = np.nan_to_num(rawapp_bypoint / weight_bypoint)
+    app_bypoint = rawapp_bypoint - np.min(rawapp_bypoint)
+    tide_io.writevec(app_bypoint, outputroot + '_cardcyclefromfmri.txt')
 
     for theslice in range(numslices):
         print('phase projecting for slice', theslice)
