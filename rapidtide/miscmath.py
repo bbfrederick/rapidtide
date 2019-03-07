@@ -414,20 +414,25 @@ def envdetect(Fs, inputdata, cutoff=0.25):
     return theenvbpf.apply(Fs, sigabs)
 
 
-def phasemod(phase):
+def phasemod(phase, centric=True):
     """
 
     Parameters
     ----------
     phase : array-like
         An unwrapped phase vector
+    centric: boolean, optional
+        Determines whether to do modulo to centric (-np.pi to np.pi) or non-centric (0 to 2 * np.pi) range
 
     Returns
     -------
     wrapped : array-like
         The phase vector, remapped to the range of +/-np.pi
     """
-    return ((-phase + np.pi) % (2.0 * np.pi) - np.pi) * -1.0
+    if centric:
+        return ((-phase + np.pi) % (2.0 * np.pi) - np.pi) * -1.0
+    else:
+        return phase % (2.0 * np.pi)
 
 
 def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):  
