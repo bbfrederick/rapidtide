@@ -440,31 +440,6 @@ def symmetrize(a, antisymmetric=False, zerodiagonal=False):
         return intermediate
 
 
-# Find the image intensity value which thefrac of the non-zero voxels in the image exceed
-def getfracval(datamat, thefrac, numbins=200):
-    """
-
-    Parameters
-    ----------
-    datamat
-    thefrac
-    numbins
-
-    Returns
-    -------
-
-    """
-    themax = datamat.max()
-    themin = datamat.min()
-    (meanhist, bins) = np.histogram(datamat, bins=numbins, range=(themin, themax))
-    cummeanhist = np.cumsum(meanhist)
-    target = cummeanhist[numbins - 1] * thefrac
-    for i in range(0, numbins):
-        if cummeanhist[i] >= target:
-            return bins[i]
-    return 0.0
-
-
 def makepmask(rvals, pval, sighistfit, onesided=True):
     """
 
@@ -483,6 +458,34 @@ def makepmask(rvals, pval, sighistfit, onesided=True):
         return np.where(rvals > getfracvalsfromfit(sighistfit, 1.0 - pval), np.int16(1), np.int16(0))
     else:
         return np.where(np.abs(rvals) > getfracvalsfromfit(sighistfit, 1.0 - pval / 2.0), np.int16(1), np.int16(0))
+
+
+# Find the image intensity value which thefrac of the non-zero voxels in the image exceed
+def getfracval(datamat, thefrac, numbins=200):
+    """
+
+    Parameters
+    ----------
+    datamat
+    thefrac
+    numbins
+
+    Returns
+    -------
+
+    """
+    return getfracvals(datamat, [thefrac], numbins=numbins)[0]
+    '''
+    themax = datamat.max()
+    themin = datamat.min()
+    (meanhist, bins) = np.histogram(datamat, bins=numbins, range=(themin, themax))
+    cummeanhist = np.cumsum(meanhist)
+    target = cummeanhist[numbins - 1] * thefrac
+    for i in range(0, numbins):
+        if cummeanhist[i] >= target:
+            return bins[i]
+    return 0.0
+    '''
 
 
 def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False):
@@ -598,7 +601,7 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
     return thevals
 
 
-def makemask(image, threshpct=25.0, verbose=False):
+def makemask(image, threshpct=25.0, verbose=False, nozero=False):
     """
 
     Parameters
@@ -616,7 +619,7 @@ def makemask(image, threshpct=25.0, verbose=False):
         An int16 mask with dimensions matching the input. 1 for voxels to preserve, 0 elsewhere
 
     """
-    fracval = getfracval(image, 0.98)
+    fracval = getfracvals(image, [0.98], nozero=nozero)[0]
     threshval = (threshpct / 100.0) * fracval
     if verbose:
         print('fracval:', fracval, ' threshpct:', threshpct, ' mask threshhold:', threshval)
