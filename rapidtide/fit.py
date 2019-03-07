@@ -20,10 +20,11 @@
 #
 from __future__ import print_function, division
 
+import matplotlib.pyplot as pl
+
 import numpy as np
 import scipy as sp
 import scipy.special as sps
-import pylab as pl
 import warnings
 
 from scipy.signal import hilbert
@@ -1438,9 +1439,25 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0.0):
     return [max_peaks, min_peaks]
 
 
-def phaseanalysis(firstharmonic):
+def phaseanalysis(firstharmonic, displayplots=False):
+    print('entering phaseanalysis')
     analytic_signal = hilbert(firstharmonic)
     amplitude_envelope = np.abs(analytic_signal)
-    instantaneous_phase = np.angle(analytic_signal / amplitude_envelope)
+    instantaneous_phase = np.angle(analytic_signal)
+    if displayplots:
+        print('making plots')
+        fig = pl.figure()
+        ax1 = fig.add_subplot(311)
+        ax1.set_title('Analytic signal')
+        X = np.linspace(0.0, 1.0, num=len(firstharmonic))
+        pl.plot(X, analytic_signal.real, 'k', X, analytic_signal.imag, 'r')
+        ax2 = fig.add_subplot(312)
+        ax2.set_title('Phase')
+        pl.plot(X, instantaneous_phase, 'g')
+        ax3 = fig.add_subplot(313)
+        ax3.set_title('Amplitude')
+        pl.plot(X, amplitude_envelope, 'b')
+        pl.show()
+        pl.savefig('phaseanalysistest.jpg')
     instantaneous_phase = np.unwrap(instantaneous_phase)
     return instantaneous_phase, amplitude_envelope
