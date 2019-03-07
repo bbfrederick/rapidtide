@@ -1,7 +1,7 @@
 #!/bin/csh -f
 rapidtide2x \
 	fmri.nii.gz \
-	../dst/dgsr_newhist \
+	../dst/dgsr_nofitfilt2 \
         --limitoutput \
         -s 25.0 \
         -L \
@@ -12,6 +12,50 @@ rapidtide2x \
         --accheck \
         --nprocs=-1 \
         --nofitfilt \
+        --timerange=10,260 \
+        --detrendorder=3
+
+rapidtide2x \
+	fmri.nii.gz \
+	../dst/dgsr_nofitfilt2x \
+        --limitoutput \
+        -s 25.0 \
+        -L \
+	-r -20,20 \
+	-f 2 \
+        --refinepasses=3 \
+        --despecklepasses=4 \
+        --accheck \
+        --nprocs=-1 \
+        --nofitfilt \
+        --detrendorder=3
+
+rapidtide2 \
+	fmri.nii.gz \
+	../dst/dgsr_2 \
+        --limitoutput \
+        -s 25.0 \
+        -L \
+	-r -20,20 \
+	-f 2 \
+        --refinepasses=3 \
+        --despecklepasses=4 \
+        --accheck \
+        --nprocs=-1 \
+        --detrendorder=3
+
+rapidtide2x \
+	fmri.nii.gz \
+	../dst/dgsr_2x \
+        --limitoutput \
+        -s 25.0 \
+        -L \
+	-r -20,20 \
+	-f 2 \
+        --refinepasses=3 \
+        --despecklepasses=4 \
+        --accheck \
+        --nprocs=-1 \
         --detrendorder=3
 
 #rapidtide2 \

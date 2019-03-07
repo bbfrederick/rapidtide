@@ -6,6 +6,13 @@ happyx \
     ../dst/happyx \
     --dodlfilter
 
+happyx \
+    ses-060_bold_trunc.nii.gz \
+    ses-060_bold_trunc.json \
+    ../dst/happyx_novarmask \
+    --novarmask \
+    --dodlfilter
+
 #happyx \
 #    ses-060_bold_trunc.nii.gz \
 #    ses-060_bold_trunc.json \

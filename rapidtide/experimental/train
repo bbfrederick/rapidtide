@@ -16,7 +16,7 @@ nettype = 'convautoencoder'
 activation = 'relu'
 usebadpts = False
 countlim = None
-readlim = None
+readlim = 10
 readskip = 0
 num_units = 128
 debug = False
@@ -65,6 +65,7 @@ if nettype == 'cnn':
                             kernel_size=kernel_size,
                             debug=debug)
 elif nettype == 'convautoencoder':
+    num_filters = 256
     thefilter = dlfilter.convautoencoder(
                             num_pretrain_epochs=num_pretrain_epochs,
                             num_epochs=num_epochs,
