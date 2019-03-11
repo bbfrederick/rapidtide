@@ -595,13 +595,15 @@ def readfmriprepconfounds(inputfilename):
     return confounddict
 
 
-def readbidstsv(inputfilename):
+def readbidstsv(inputfilename, debug=False):
     r"""Read time series out of a BIDS tsv file
 
     Parameters
     ----------
     inputfilename : str
         The root name of the tsv and accompanying json file (no extension)
+    debug : bool
+        Output additional debugging information
 
     Returns
     -------
@@ -618,7 +620,10 @@ def readbidstsv(inputfilename):
 
     """
     thefileroot, theext = os.path.splitext(inputfilename)
-    if os.path.exists(thefileroot + '.json') and os.path.exists(thefileroot + '.tsv.gz'):
+    if debug:
+        print('thefileroot:', thefileroot)
+        print('theext:', theext)
+    if os.path.exists(thefileroot + '.json') and (os.path.exists(thefileroot + '.tsv.gz') or os.path.exists(thefileroot + '.tsv')):
         with open(thefileroot + '.json', 'r') as json_data:
             d = json.load(json_data)
             try:
@@ -636,14 +641,17 @@ def readbidstsv(inputfilename):
             except:
                 print('no columns found in json')
                 return [None, None, None, None]
-        df = pd.read_csv(thefileroot + '.tsv.gz', compression='gzip', header=0, sep='\t', quotechar='"')
+        if os.path.exists(thefileroot + '.tsv.gz'):
+            df = pd.read_csv(thefileroot + '.tsv.gz', compression='gzip', header=0, sep='\t', quotechar='"')
+        else:
+            df = pd.read_csv(thefileroot + '.tsv', header=0, sep='\t', quotechar='"')
         return samplerate, starttime, columns, np.transpose(df.as_matrix())
     else:
         print('file pair does not exist')
         return [None, None, None, None]
 
 
-def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None):
+def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False):
     r"""
 
     Parameters
@@ -656,7 +664,7 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None):
     -------
 
     """
-    samplerate, starttime, columns, data = readbidstsv(inputfilename)
+    samplerate, starttime, columns, data = readbidstsv(inputfilename, debug=debug)
     if data is None:
         print('no valid datafile found')
         return None, None, None
