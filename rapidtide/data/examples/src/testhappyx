@@ -9,6 +9,13 @@ happyx \
 happyx \
     ses-060_bold_trunc.nii.gz \
     ses-060_bold_trunc.json \
+    ../dst/happyx_withvesselmask \
+    --estmask=../dst/happyx_vesselmask.nii.gz
+    --dodlfilter
+
+happyx \
+    ses-060_bold_trunc.nii.gz \
+    ses-060_bold_trunc.json \
     ../dst/happyx_novarmask \
     --novarmask \
     --dodlfilter
