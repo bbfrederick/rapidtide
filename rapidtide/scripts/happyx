@@ -268,7 +268,7 @@ def physiofromimage(normdata_byslice,
                      slicetimes,
                      cardprefilter,
                      respprefilter,
-                     notchpct=0.015,
+                     notchpct=1.5,
                      madnorm=True,
                      nprocs=1,
                      debug=False,
@@ -300,9 +300,10 @@ def physiofromimage(normdata_byslice,
                 hirestc[numsteps * t + sliceoffsets[theslice]] += sliceavs[theslice, t]
     slicesamplerate = 1.0 * numsteps / tr
     print('slice sample rate is ', slicesamplerate)
+
     # delete the TR frequency and the first subharmonic
     print('notch filtering...')
-    filthirestc = tide_filt.harmonicnotchfilter(hirestc, slicesamplerate, 1.0 / tr, notchpct=notchpct, debug=False)
+    filthirestc = tide_filt.harmonicnotchfilter(hirestc, slicesamplerate, 1.0 / tr, notchpct=notchpct, debug=debug)
 
     # now get the cardiac and respiratory waveforms
     hirescardtc = -1.0 * tide_math.madnormalize(cardprefilter.apply(slicesamplerate, filthirestc))
@@ -673,7 +674,7 @@ def happy_main(thearguments):
     inputfreq = 32.0
     inputstart = 0.0
     doglm = False
-    notchpct = 0.015
+    notchpct = 1.5
     minhr = 40.0
     maxhr = 180.0
     softvesselfrac = 0.4
@@ -874,8 +875,8 @@ def happy_main(thearguments):
             mpfix = True
             print('trying super dangerous workaround to make dlfilter work')
         elif o == "--notchwidth":
-            notchpct = float(a) / 100.0
-            print('setting notchwidth to', notchpct * 100.0, '%')
+            notchpct = float(a)
+            print('setting notchwidth to', notchpct, '%')
         elif o == "--nprocs":
             nprocs = int(a)
             if nprocs < 1:
@@ -989,7 +990,7 @@ def happy_main(thearguments):
     therespbandfilter.settype('resp')
     infodict['filtermaxbpm'] = arb_upper * 60.0
     infodict['filterminbpm'] = arb_lower * 60.0
-    infodict['notchpct'] = notchpct * 100.0
+    infodict['notchpct'] = notchpct
     timings.append(['Argument parsing done', time.time(), None, None])
 
     # read in the image data
@@ -1069,7 +1070,8 @@ def happy_main(thearguments):
     normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
     # read in estimation mask if present. Otherwise, make variance mask if selected, otherwise use intensity mask.
-    print(estmaskname, usevarmask, varmaskthreshpct, varmasktype)
+    if debug:
+        print(estmaskname, usevarmask, varmaskthreshpct, varmasktype)
     if estmaskname is not None:
         tide_util.logmem('before reading in estmask', file=memfile)
         estmask_byslice = readextmask(estmaskname, nim_hdr, xsize, ysize, numslices) * np.float64(mask_byslice)

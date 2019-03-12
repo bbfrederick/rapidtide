@@ -776,7 +776,7 @@ def setnotchfilter(thefilter, thefreq, notchwidth=1.0):
     thefreq: float
         Frequency of the notch
     notchwidth: float
-        width of the notch in percent of the notch frequency
+        width of the notch in Hz
     """
     thefilter.settype('arb_stop')
     thefilter.setarb(
@@ -818,16 +818,22 @@ def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False)
         maxharmonic = int(maxpass // stopfreq)
         if debug:
             print('highest harmonic is', maxharmonic, '(', maxharmonic * stopfreq, 'Hz)')
-        thenotchfilter = noncausalfilter(debug=debug)
+        thenotchfilter = noncausalfilter()
         for harmonic in range(1, maxharmonic + 1):
-            if debug:
-                print('removing harmonic at', harmonic * stopfreq)
-                print('notchpct, notchwidth freq, Fs, stopfreq, freqstep, minfreqstep', notchpct, notchpct * harmonic * stopfreq, Fs, stopfreq, freqstep, freqstep / (harmonic * stopfreq))
+            notchfreq = harmonic * stopfreq
+            print('removing harmonic at', notchfreq)
             notchwidth = np.max([notchpct * harmonic * stopfreq * 0.01, freqstep])
             if debug:
-                print('\tnotchwidth, bins', notchwidth, int(notchwidth // freqstep))
+                print('\tFs:', Fs)
+                print('\tstopfreq:', stopfreq)
+                print('\tnotchpct:', notchpct)
+                print('\tnotchwidth:', notchwidth)
+                print('\tnotchfreq:', notchfreq)
+                print('\tfreqstep:', freqstep)
+                print('\tminfreqstep:', freqstep / notchfreq)
+                print('\tbins:', int(notchwidth // freqstep))
                 print()
-            setnotchfilter(thenotchfilter, harmonic * stopfreq, notchwidth=notchwidth)
+            setnotchfilter(thenotchfilter, notchfreq, notchwidth=notchwidth)
             filteredtc = thenotchfilter.apply(Fs, filteredtc)
     return filteredtc
 
