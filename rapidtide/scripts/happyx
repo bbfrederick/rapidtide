@@ -1076,7 +1076,7 @@ def happy_main(thearguments):
         print('using estmask from file', estmaskname)
     else:
         # just fall back to the intensity mask
-        estmask_byslice = mask_byslice
+        estmask_byslice = mask_byslice.astype('float64')
         print('not using separate estimation mask')
     if usevarmask:
         # find the most variable voxels in each slice
@@ -1088,7 +1088,7 @@ def happy_main(thearguments):
         for theslice in range(numslices):
             estmask_byslice[:, theslice] *= tide_stats.makemask(var_byslice[:, theslice],
                                                                threshpct=varmaskthreshpct,
-                                                               nozero=True)
+                                                               nozero=True).astype('float64')
         tide_io.savetonifti(estmask_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_varmask')
         print('using variance estimation mask with threshold', varmaskthreshpct)
 
