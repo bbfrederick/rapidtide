@@ -939,7 +939,6 @@ def happy_main(thearguments):
             print('will not use motion derivative regressors')
         elif o == '--estmask':
             estmaskname = a
-            usevarmask = False
             usemaskcardfromfmri = True
             print('Will restrict cardiac waveform fit to voxels in', estmaskname)
         elif o == '--projmask':
@@ -1070,26 +1069,28 @@ def happy_main(thearguments):
     normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
     # read in estimation mask if present. Otherwise, make variance mask if selected, otherwise use intensity mask.
+    print(estmaskname, usevarmask, varmaskthreshpct, varmasktype)
     if estmaskname is not None:
         tide_util.logmem('before reading in estmask', file=memfile)
         estmask_byslice = readextmask(estmaskname, nim_hdr, xsize, ysize, numslices) * np.float64(mask_byslice)
+        print('using estmask from file', estmaskname)
     else:
-        if usevarmask:
-            # find the most variable voxels in each slice
-            estmask_byslice = mask_byslice * 0
-            if varmasktype == 'std':
-                var_byslice = np.std(normdata_byslice, axis=2)
-            elif varmasktype == 'mad':
-                var_byslice = mad(normdata_byslice, axis=2)
-            tide_io.savetonifti(var_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_var')
-            for theslice in range(numslices):
-                estmask_byslice[:, theslice] = tide_stats.makemask(var_byslice[:, theslice],
-                                                                   threshpct=varmaskthreshpct,
-                                                                   nozero=True)
-            tide_io.savetonifti(varmask_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_varmask')
-        else:
-            # just fall back to the intensity mask
-            estmask_byslice = mask_byslice
+        # just fall back to the intensity mask
+        estmask_byslice = mask_byslice
+        print('not using separate estimation mask')
+    if usevarmask:
+        # find the most variable voxels in each slice
+        if varmasktype == 'std':
+            var_byslice = np.std(normdata_byslice, axis=2)
+        elif varmasktype == 'mad':
+            var_byslice = mad(normdata_byslice, axis=2)
+        tide_io.savetonifti(var_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_var')
+        for theslice in range(numslices):
+            estmask_byslice[:, theslice] *= tide_stats.makemask(var_byslice[:, theslice],
+                                                               threshpct=varmaskthreshpct,
+                                                               nozero=True)
+        tide_io.savetonifti(estmask_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_varmask')
+        print('using variance estimation mask with threshold', varmaskthreshpct)
 
 
     # now get an estimate of the cardiac signal
