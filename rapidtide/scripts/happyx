@@ -663,6 +663,7 @@ def happy_main(thearguments):
     maskthreshpct = 10.0
     varmaskthreshpct = 75.0
     varmasktype = 'mad'
+    varmaskbyslice = False
     usevarmask = True
     upsamplefac = 100
     destpoints = 32
@@ -776,6 +777,7 @@ def happy_main(thearguments):
                                                        "noncentric",
                                                        "novarmask",
                                                        "varmaskthreshpct=",
+                                                       "varmaskbyslice",
                                                        "model=",
                                                        "usesuperdangerousworkaround",
                                                        "savemotionglmfilt",
@@ -820,6 +822,9 @@ def happy_main(thearguments):
         elif o == "--novarmask":
             usevarmask = False
             print('disabling variance mask for waveform extraction')
+        elif o == "--varmaskbyslice":
+            varmaskbyslice = True
+            print('will variance mask by percentile by slice, not volume')
         elif o == "--nocardiacalign":
             aligncardiac = False
             print('disabling cardiac alignment')
@@ -1070,6 +1075,11 @@ def happy_main(thearguments):
     normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
     # read in estimation mask if present. Otherwise, make variance mask if selected, otherwise use intensity mask.
+    infodict['estmaskname'] = estmaskname
+    infodict['usevarmask'] = usevarmask
+    infodict['varmaskthreshpct'] = varmaskthreshpct
+    infodict['varmasktype'] = varmasktype
+    infodict['varmaskbyslice'] = varmaskbyslice
     if debug:
         print(estmaskname, usevarmask, varmaskthreshpct, varmasktype)
     if estmaskname is not None:
@@ -1087,10 +1097,15 @@ def happy_main(thearguments):
         elif varmasktype == 'mad':
             var_byslice = mad(normdata_byslice, axis=2)
         tide_io.savetonifti(var_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_var')
-        for theslice in range(numslices):
-            estmask_byslice[:, theslice] *= tide_stats.makemask(var_byslice[:, theslice],
-                                                               threshpct=varmaskthreshpct,
-                                                               nozero=True).astype('float64')
+        if varmaskbyslice:
+            for theslice in range(numslices):
+                estmask_byslice[:, theslice] *= tide_stats.makemask(var_byslice[:, theslice],
+                                                                   threshpct=varmaskthreshpct,
+                                                                   nozero=True).astype('float64')
+        else:
+            estmask_byslice *= tide_stats.makemask(var_byslice,
+                                                   threshpct=varmaskthreshpct,
+                                                   nozero=True).astype('float64')
         tide_io.savetonifti(estmask_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_varmask')
         print('using variance estimation mask with threshold', varmaskthreshpct)
 
@@ -1222,12 +1237,13 @@ def happy_main(thearguments):
                                                      debug=False)
 
         # check the match between the bold and physio cardiac signals
+        thecardfilt = tide_filt.noncausalfilter(filtertype='cardiac')
         thexcorr = tide_corr.fastcorrelate(
-            tide_math.corrnormalize(pleth_sliceres,
+            tide_math.corrnormalize(thecardfilt.apply(slicesamplerate, pleth_sliceres),
                                     prewindow=True,
                                     detrendorder=3,
                                     windowfunc='hamming'),
-            tide_math.corrnormalize(cardfromfmri_sliceres,
+            tide_math.corrnormalize(thecardfilt.apply(slicesamplerate, cardfromfmri_sliceres),
                                     prewindow=True,
                                     detrendorder=3,
                                     windowfunc='hamming'),
