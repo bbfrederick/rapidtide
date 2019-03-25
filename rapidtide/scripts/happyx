@@ -965,7 +965,7 @@ def happy_main(thearguments):
             if len(inputlist) > 1:
                 try:
                     colnum = int(inputlist[1])
-                except IndexError:
+                except ValueError:
                     colname = inputlist[1]
             print('Will use cardiac file', cardiacfilename)
         elif o == '--cardiacfreq':
