@@ -229,7 +229,7 @@ def usage():
     print("                                     (default is 'kaiser')")
     print("    --projmask=MASKNAME            - Phase projection will be restricted to voxels in MASKNAME")
     print("                                     (overrides normal intensity mask.)")
-    print("    --projectwithraw               - Use fmri derived cardiac waveform as phase source for projection, even "
+    print("    --projectwithraw               - Use fmri derived cardiac waveform as phase source for projection, even")
     print("                                     if a plethysmogram is supplied")
     print("")
     print("Debugging arguments (probably not of interest to users):")
