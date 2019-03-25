@@ -229,6 +229,8 @@ def usage():
     print("                                     (default is 'kaiser')")
     print("    --projmask=MASKNAME            - Phase projection will be restricted to voxels in MASKNAME")
     print("                                     (overrides normal intensity mask.)")
+    print("    --projectwithraw               - Use fmri derived cardiac waveform as phase source for projection, even "
+    print("                                     if a plethysmogram is supplied")
     print("")
     print("Debugging arguments (probably not of interest to users):")
     print("    --debug                        - turn on debugging information")
@@ -709,6 +711,7 @@ def happy_main(thearguments):
     orthogonalize = True
     mpfix = False
     aligncardiac = True
+    projectwithraw = False
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
@@ -782,6 +785,7 @@ def happy_main(thearguments):
                                                        "usesuperdangerousworkaround",
                                                        "savemotionglmfilt",
                                                        "nophasefilt",
+                                                       "projectwithraw",
                                                        "nomask",
                                                        "noorthog",
                                                        "nocardiacalign",
@@ -846,6 +850,9 @@ def happy_main(thearguments):
         elif o == "--nocensor":
             usemaskcardfromfmri = False
             print('will not censor bad points')
+        elif o == "--projectwithraw":
+            projectwithraw = True
+            print('will use fmri derived cardiac waveform as phase source for projection')
         elif o == "--nomadnorm":
             domadnorm = False
             print('disabling MAD normalization between slices')
@@ -1316,9 +1323,9 @@ def happy_main(thearguments):
         timings.append(['Cardiac signal from physiology data analyzed', time.time(), None, None])
         timings.append(['Cardiac parameters extracted from physiology data', time.time(), None, None])
 
-        cardiacwaveform = pleth_sliceres
-
-        badpointlist = 1.0 - (1.0 - thebadplethpts_sliceres) * (1.0 - badpointlist)
+        if not projectwithraw:
+            cardiacwaveform = pleth_sliceres
+            badpointlist = 1.0 - (1.0 - thebadplethpts_sliceres) * (1.0 - badpointlist)
 
         if doplot:
             figure()
