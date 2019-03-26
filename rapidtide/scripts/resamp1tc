@@ -27,7 +27,7 @@ import getopt
 
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
-from scipy import arange
+from scipy import arange, linspace
 from numpy import max, floor
 import matplotlib.pyplot as plt
 
@@ -45,12 +45,14 @@ def usage():
     print("")
     print(" options:")
     print("     --nodisplay     - do not plot the data (for noninteractive use)")
+    print("     --noantialias   - disable antialiasing filter when downloading)")
     print("")
     return ()
 
 
 def main():
     display = True
+    antialias = True
 
     # get the command line parameters
     nargs = len(sys.argv)
@@ -64,7 +66,7 @@ def main():
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(sys.argv[5:], "s", ["nodisplay", "help"])
+        opts, args = getopt.getopt(sys.argv[5:], "s", ["nodisplay", "noantialias", "help"])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like "option -x not recognized"
@@ -75,38 +77,29 @@ def main():
         if o == "--nodisplay":
             display = False
             print('turning display off')
+        elif o == "--noantialias":
+            antialias = False
+            print('turning off antialiasing')
         else:
             assert False, "unhandled option"
 
     intimestep = 1.0 / insamplerate
     outtimestep = 1.0 / outsamplerate
     inputdata = tide_io.readvec(filename)
-    totaltime = intimestep * len(inputdata)
-    numoutpoints = floor(totaltime / outtimestep) + 1
 
-    in_t = arange(0.0, totaltime, intimestep)
-    out_t = arange(0.0, outtimestep * numoutpoints, outtimestep)
-    outputdata = tide_resample.doresample(in_t, inputdata, out_t, method='cubic')
-    IF = max([60.0, 2.0 * insamplerate])
-    if outsamplerate < insamplerate:
-        outputdata2 = tide_resample.dotwostepresample(in_t, inputdata, IF, outsamplerate)
-        outputdata3 = tide_resample.arbresample(inputdata, insamplerate, outsamplerate)
-        print(len(out_t), len(outputdata2))
-        if len(out_t) < len(outputdata2):
-            outputdata2 = outputdata2[0:len(out_t)]
+    outputdata = tide_resample.arbresample(inputdata, insamplerate, outsamplerate, decimate=False, antialias=antialias)
+    in_t = intimestep * linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True)
+    out_t = outtimestep * linspace(0.0, len(outputdata), len(outputdata), endpoint=True)
+    if len(out_t) < len(outputdata):
+        outputdata = outputdata[0:len(out_t)]
 
     if display:
-        plt.plot(in_t, inputdata + 0.4, 'k')
+        plt.plot(in_t, inputdata, 'k')
 
     tide_io.writevec(outputdata, outputfile)
-    tide_io.writevec(outputdata, outputfile + '_dual')
     if display:
-        plt.plot(out_t, outputdata - 0.4, 'r')
-        if outsamplerate < insamplerate:
-            plt.plot(out_t, outputdata2 - 0.8, 'g', out_t, outputdata3 - 1.2, 'b')
-            plt.legend(('original signal', 'resampled', 'dualresampled'))
-        else:
-            plt.legend(('original signal', 'resampled'))
+        plt.plot(out_t, outputdata, 'r')
+        plt.legend(('original signal', 'resampled'))
 
     if display:
         plt.show()

@@ -317,8 +317,9 @@ class fastresampler:
         return out_y
 
 
-def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
+def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False):
     """
+    Resample data from one spacing to another.  By default, does not apply any antialiasing filter.
 
     Parameters
     ----------
@@ -344,6 +345,16 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
         print('padlen=', padlen)
         print('tstep=', tstep)
         print(pad_x)
+
+    # antialias and ringstop filter
+    init_freq = len(pad_x) / (pad_x[-1] - pad_x[0])
+    final_freq = len(new_x) / (new_x[-1] - new_x[0])
+    if antialias and (init_freq > final_freq):
+        aafilterfreq = final_freq / 2.0
+        aafilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False)
+        aafilter.setarb(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
+        pad_y = aafilter.apply(init_freq, pad_y)
+
     if method == 'cubic':
         cj = signal.cspline1d(pad_y)
         return tide_filt.unpadvec(
@@ -360,7 +371,7 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0):
         return None
 
 
-def arbresample(inputdata, init_freq, final_freq, intermed_freq=0.0, method='univariate', debug=False, decimate=False):
+def arbresample(inputdata, init_freq, final_freq, intermed_freq=0.0, method='univariate', antialias=True, debug=False, decimate=False):
     """
 
     Parameters
@@ -390,16 +401,22 @@ def arbresample(inputdata, init_freq, final_freq, intermed_freq=0.0, method='uni
                 upsampled = inputdata
             else:
                 upsampled = upsample(inputdata, init_freq, intermed_freq, method=method, debug=debug)
-            return signal.decimate(upsampled, q)
+            if antialias:
+                return signal.decimate(upsampled, q)
+            else:
+                initaxis = sp.linspace(0, len(upsampled), len(upsampled), endpoint=False)
+                print(len(initaxis), len(upsampled))
+                f = sp.interpolate.interp1d(initaxis, upsampled)
+                return f(q // 2 + q * sp.linspace(0, len(upsampled) // q, len(upsampled) // q, endpoint=False))
         else:
             return inputdata
     else:
         if intermed_freq <= 0.0:
             intermed_freq = np.max([2.0 * init_freq, 2.0 * final_freq])
-        orig_x = sp.linspace(0.0, 1.0 / init_freq * len(inputdata), num=len(inputdata), endpoint=False)
+        orig_x = (1.0 / init_freq) * sp.linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=False)
         if debug:
             print('arbresample:', len(orig_x), len(inputdata), init_freq, final_freq, intermed_freq)
-        return dotwostepresample(orig_x, inputdata, intermed_freq, final_freq, method=method, debug=debug)
+        return dotwostepresample(orig_x, inputdata, intermed_freq, final_freq, method=method, antialias=antialias, debug=debug)
 
 
 def upsample(inputdata, Fs_init, Fs_higher, method='univariate', debug=False):
@@ -409,7 +426,7 @@ def upsample(inputdata, Fs_init, Fs_higher, method='univariate', debug=False):
         sys.exit()
 
     # upsample
-    orig_x = sp.linspace(0.0, 1.0 / Fs_init * len(inputdata), num=len(inputdata), endpoint=False)
+    orig_x = sp.linspace(0.0, (1.0 / Fs_init) * len(inputdata), num=len(inputdata), endpoint=False)
     endpoint = orig_x[-1] - orig_x[0]
     ts_higher = 1.0 / Fs_higher
     numresamppts = int(endpoint // ts_higher + 1)
@@ -424,7 +441,7 @@ def upsample(inputdata, Fs_init, Fs_higher, method='univariate', debug=False):
     return upsampled_y
 
 
-def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate', debug=False):
+def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate', antialias=True, debug=False):
     """
 
     Parameters
@@ -451,25 +468,31 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
     init_freq = len(orig_x) / endpoint
     intermed_ts = 1.0 / intermed_freq
     numresamppts = int(endpoint // intermed_ts + 1)
-    intermed_x = np.arange(0.0, intermed_ts * numresamppts, intermed_ts)
+    intermed_x = intermed_ts * sp.linspace(0.0,  1.0 * numresamppts, numresamppts, endpoint=False)
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
     if debug:
+        print('init_freq, intermed_freq, final_freq:', init_freq, intermed_freq, final_freq)
+        print('intermed_ts, numresamppts:', intermed_ts, numresamppts)
         print('upsampling took', time.time() - starttime, 'seconds')
 
     # antialias and ringstop filter
-    starttime = time.time()
-    aafilterfreq = np.min([final_freq, init_freq]) / 2.0
-    aafilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
-    aafilter.setarb(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
-    antialias_y = aafilter.apply(intermed_freq, intermed_y)
-    if debug:
-        print('antialiasing took', time.time() - starttime, 'seconds')
+    if antialias:
+        starttime = time.time()
+        aafilterfreq = np.min([final_freq, init_freq]) / 2.0
+        aafilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
+        aafilter.setarb(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
+        antialias_y = aafilter.apply(intermed_freq, intermed_y)
+        if debug:
+            print('antialiasing took', time.time() - starttime, 'seconds')
+    else:
+        antialias_y = intermed_y
 
     # downsample
     starttime = time.time()
     final_ts = 1.0 / final_freq
-    numresamppts = np.ceil(endpoint / final_ts) + 1
-    final_x = np.arange(0.0, final_ts * numresamppts, final_ts)
+    numresamppts = np.ceil(endpoint / final_ts)
+    #final_x = np.arange(0.0, final_ts * numresamppts, final_ts)
+    final_x = final_ts * sp.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
     resampled_y = doresample(intermed_x, antialias_y, final_x, method=method)
     if debug:
         print('downsampling took', time.time() - starttime, 'seconds')
