@@ -371,7 +371,12 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False)
         return None
 
 
-def arbresample(inputdata, init_freq, final_freq, intermed_freq=0.0, method='univariate', antialias=True, debug=False, decimate=False):
+def arbresample(inputdata, init_freq, final_freq,
+                intermed_freq=0.0,
+                method='univariate',
+                antialias=True,
+                decimate=False,
+                debug=False):
     """
 
     Parameters
@@ -387,10 +392,15 @@ def arbresample(inputdata, init_freq, final_freq, intermed_freq=0.0, method='uni
     -------
 
     """
+    if debug:
+        print("arbresample - initial points:", len(inputdata))
     if decimate:
         if final_freq > init_freq:
             # upsample only
-            return upsample(inputdata, init_freq, final_freq, method=method, debug=debug)
+            upsampled = upsample(inputdata, init_freq, final_freq, method=method, debug=debug)
+            if debug:
+                print("arbresample - upsampled points:", len(upsampled))
+            return upsampled
         elif final_freq < init_freq:
             # downsampling, so upsample by an amount that allows integer decimation
             intermed_freq = final_freq * np.ceil(init_freq / final_freq)
@@ -401,22 +411,31 @@ def arbresample(inputdata, init_freq, final_freq, intermed_freq=0.0, method='uni
                 upsampled = inputdata
             else:
                 upsampled = upsample(inputdata, init_freq, intermed_freq, method=method, debug=debug)
+            if debug:
+                print("arbresample - upsampled points:", len(upsampled))
             if antialias:
-                return signal.decimate(upsampled, q)
+                downsampled = signal.decimate(upsampled, q)
+                if debug:
+                    print("arbresample - downsampled points:", len(downsampled))
+                return downsampled
             else:
                 initaxis = sp.linspace(0, len(upsampled), len(upsampled), endpoint=False)
                 print(len(initaxis), len(upsampled))
                 f = sp.interpolate.interp1d(initaxis, upsampled)
-                return f(q // 2 + q * sp.linspace(0, len(upsampled) // q, len(upsampled) // q, endpoint=False))
+                downsampled = f(q // 2 + q * sp.linspace(0, len(upsampled) // q, len(upsampled) // q, endpoint=False))
+                return downsampled
         else:
+            if debug:
+                print("arbresample - final points:", len(inputdata))
             return inputdata
     else:
         if intermed_freq <= 0.0:
             intermed_freq = np.max([2.0 * init_freq, 2.0 * final_freq])
         orig_x = (1.0 / init_freq) * sp.linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=False)
+        resampled = dotwostepresample(orig_x, inputdata, intermed_freq, final_freq, method=method, antialias=antialias, debug=debug)
         if debug:
-            print('arbresample:', len(orig_x), len(inputdata), init_freq, final_freq, intermed_freq)
-        return dotwostepresample(orig_x, inputdata, intermed_freq, final_freq, method=method, antialias=antialias, debug=debug)
+            print("arbresample - resampled points:", len(resampled))
+        return resampled
 
 
 def upsample(inputdata, Fs_init, Fs_higher, method='univariate', debug=False):
