@@ -1167,13 +1167,13 @@ def happy_main(thearguments):
     slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
     tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_sliceres.txt')
     # stash away a copy of the waveform if we need it later
-    raw_cardfromfmri_sliceres = 1.0 * cardfromfmri_sliceres
+    raw_cardfromfmri_sliceres = np.array(cardfromfmri_sliceres)
 
     # find bad points in cardiac from fmri
     thebadcardpts = findbadpts(cardfromfmri_sliceres, 'cardfromfmri_sliceres', outputroot, slicesamplerate, infodict)
 
-    cardiacwaveform = cardfromfmri_sliceres
-    badpointlist = thebadcardpts + 0.0
+    cardiacwaveform = np.array(cardfromfmri_sliceres)
+    badpointlist = np.array(thebadcardpts)
 
     infodict['slicesamplerate'] = slicesamplerate
     infodict['numsteps'] = numsteps
@@ -1251,7 +1251,7 @@ def happy_main(thearguments):
 
             tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
             cardfromfmri_sliceres = tide_math.madnormalize(
-                tide_resample.arbresample(dlfilteredcard, stdfreq, slicesamplerate, decimate=True, debug=True))
+                tide_resample.arbresample(dlfilteredcard, stdfreq, slicesamplerate, decimate=True, debug=False))
             tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_dlfiltered_sliceres.txt')
             infodict['used_dlreconstruction_filter'] = True
             peakfreq_dlfiltered = getcardcoeffs(cardfromfmri_sliceres, slicesamplerate,
@@ -1326,7 +1326,7 @@ def happy_main(thearguments):
         if dodlfilter and dlfilterexists:
             dlfilteredpleth = thedlfilter.apply(pleth_stdres)
             tide_io.writevec(dlfilteredpleth, outputroot + '_pleth_dlfiltered_' + str(stdfreq) + 'Hz.txt')
-            maxval, maxdelay = checkcardmatch(pleth_stdres, dlfilteredpleth, slicesamplerate, debug=debug)
+            maxval, maxdelay = checkcardmatch(pleth_stdres, dlfilteredpleth, stdfreq, debug=debug)
             print('Filtered pleth cardiac waveform delay is', maxdelay, 'relative to raw pleth data')
             print('Correlation coefficient between pleth regressors:', maxval)
             infodict['corrcoeff_pleth2filtpleth'] = maxval
@@ -1547,7 +1547,7 @@ def happy_main(thearguments):
 
     # save a vessel masked version of app
     vesselmask = np.where(np.max(app, axis=3) > softvesselthresh, 1, 0)
-    maskedapp2d = app2d + 0.0
+    maskedapp2d = np.array(app2d)
     maskedapp2d[np.where(vesselmask.reshape(numspatiallocs) == 0)[0], :] = 0.0
     tide_io.savetonifti(maskedapp2d.reshape((xsize, ysize, numslices, destpoints)), theheader, thesizes,
                         outputroot + '_maskedapp')
