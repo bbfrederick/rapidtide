@@ -1323,6 +1323,15 @@ def happy_main(thearguments):
         tide_io.writevec(k_waveform, outputroot + '_normpleth_K_sqi_' + str(stdfreq) + 'Hz.txt')
         tide_io.writevec(e_waveform, outputroot + '_normpleth_E_sqi_' + str(stdfreq) + 'Hz.txt')
 
+        if dodlfilter and dlfilterexists:
+            dlfilteredpleth = thedlfilter.apply(pleth_stdres)
+            tide_io.writevec(dlfilteredpleth, outputroot + '_pleth_dlfiltered_' + str(stdfreq) + 'Hz.txt')
+            maxval, maxdelay = checkcardmatch(pleth_stdres, dlfilteredpleth, slicesamplerate, debug=debug)
+            print('Filtered pleth cardiac waveform delay is', maxdelay, 'relative to raw pleth data')
+            print('Correlation coefficient between pleth regressors:', maxval)
+            infodict['corrcoeff_pleth2filtpleth'] = maxval
+            infodict['delay_pleth2filtpleth'] = maxdelay
+
         # find bad points in plethysmogram
         thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', outputroot, slicesamplerate, infodict, thetype='fracval')
 
