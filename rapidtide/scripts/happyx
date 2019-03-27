@@ -1259,6 +1259,13 @@ def happy_main(thearguments):
             infodict['cardiacbpm_dlfiltered'] = np.round(peakfreq_dlfiltered * 60.0, 2)
             infodict['cardiacfreq_dlfiltered'] = peakfreq_dlfiltered
 
+            # check the match between the raw and filtered cardiac signals
+            maxval, maxdelay = checkcardmatch(raw_cardfromfmri_sliceres, cardfromfmri_sliceres, slicesamplerate, debug=debug)
+            print('Filtered cardiac fmri waveform delay is', maxdelay, 'relative to raw fMRI data')
+            print('Correlation coefficient between cardiac regressors:', maxval)
+            infodict['corrcoeff_raw2filt'] = maxval
+            infodict['delay_raw2filt'] = maxdelay
+
             timings.append(['Deep learning filter applied', time.time(), None, None])
         else:
             print('dlfilter could not be loaded - skipping')
@@ -1276,15 +1283,15 @@ def happy_main(thearguments):
         maxval, maxdelay = checkcardmatch(pleth_sliceres, raw_cardfromfmri_sliceres, slicesamplerate, debug=debug)
         print('Input cardiac waveform delay is', maxdelay, 'relative to fMRI data')
         print('Correlation coefficient between cardiac regressors:', maxval)
-        infodict['corrcoeff_raw'] = maxval
-        infodict['delay_raw'] = maxdelay
+        infodict['corrcoeff_raw2pleth'] = maxval
+        infodict['delay_raw2pleth'] = maxdelay
 
         if dodlfilter and dlfilterexists:
             maxval, maxdelay = checkcardmatch(pleth_sliceres, cardfromfmri_sliceres, slicesamplerate, debug=debug)
             print('Input cardiac waveform delay is', maxdelay, 'relative to filtered fMRI data')
             print('Correlation coefficient between cardiac regressors:', maxval)
-            infodict['corrcoeff_dlfiltered'] = maxval
-            infodict['delay_dlfiltered'] = maxdelay
+            infodict['corrcoeff_filt2pleth'] = maxval
+            infodict['delay_filt2pleth'] = maxdelay
 
         # align the pleth signal with the cardiac signal derived from the data
         if aligncardiac:

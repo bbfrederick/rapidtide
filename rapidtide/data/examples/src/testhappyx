@@ -11,6 +11,7 @@ happyx \
     ses-060_bold_trunc.nii.gz \
     ses-060_bold_trunc.json \
     ../dst/happyx_secondpass \
+    --dodlfilter \
     --mklthreads=4 \
     --cardcalconly --estmask=../dst/happyx_firstpass_vesselmask.nii.gz
 
