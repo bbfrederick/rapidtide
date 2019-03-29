@@ -609,6 +609,9 @@ def getphysiofile(cardiacfile, colnum, colname,
         print('inputstart:', inputstart)
         print('pleth_fullres:', pleth_fullres)
     inputtimeaxis = sp.arange(0.0, (1.0 / inputfreq) * len(pleth_fullres), 1.0 / inputfreq) + inputstart
+    if inputtimeaxis[0] > 0.0 or inputtimeaxis[-1] < slicetimeaxis[-1]:
+        print('getphysiofile: error - plethysmogram waveform does not cover the fmri time range')
+        sys.exit()
     if debug:
         print('pleth_fullres: len=', len(pleth_fullres), 'vals=', pleth_fullres)
         print('inputfreq =', inputfreq)
@@ -622,18 +625,23 @@ def getphysiofile(cardiacfile, colnum, colname,
                                                                            thresh=envthresh,
                                                                            nyquist=inputfreq / 2.0,
                                                                            debug=debug)
+    infodict['plethsamplerate'] = inputfreq
+    infodict['numplethpts_fullres'] = len(pleth_fullres)
+
     tide_io.writevec(pleth_fullres, outputroot + '_rawpleth_native.txt')
     tide_io.writevec(cleanpleth_fullres, outputroot + '_pleth_native.txt')
     tide_io.writevec(plethenv_fullres, outputroot + '_cardenvelopefromfile_native.txt')
     timings.append(['Cardiac signal from physiology data cleaned', time.time(), None, None])
 
     # resample to slice time resolution and save
-    pleth_sliceres = tide_resample.doresample(inputtimeaxis, cleanpleth_fullres, slicetimeaxis, method='cubic',
+    pleth_sliceres = tide_resample.doresample(inputtimeaxis, cleanpleth_fullres, slicetimeaxis, method='univariate',
                                               padlen=0)
+    infodict['numplethpts_sliceres'] = len(pleth_sliceres)
 
     # resample to standard resolution and save
     pleth_stdres = tide_math.madnormalize(
         tide_resample.arbresample(cleanpleth_fullres, inputfreq, stdfreq, decimate=True, debug=True))
+    infodict['numplethpts_stdres'] = len(pleth_stdres)
 
     timings.append(
         ['Cardiac signal from physiology data resampled to slice resolution and saved', time.time(), None, None])
@@ -1176,6 +1184,7 @@ def happy_main(thearguments):
     badpointlist = np.array(thebadcardpts)
 
     infodict['slicesamplerate'] = slicesamplerate
+    infodict['numcardpts_sliceres'] = timepoints * numsteps
     infodict['numsteps'] = numsteps
 
     # find key components of cardiac waveform
@@ -1194,6 +1203,7 @@ def happy_main(thearguments):
                                                                            debug=False))
 
     tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(stdfreq) + 'Hz.txt')
+    infodict['numcardpts_stdres'] = len(cardfromfmri_stdres)
     filtcardfromfmri_stdres, normcardfromfmri_stdres, cardfromfmrienv_stdres = cleancardiac(stdfreq, cardfromfmri_stdres,
                                                                                             cutoff=envcutoff,
                                                                                             nyquist=slicesamplerate / 2.0,
@@ -1250,8 +1260,24 @@ def happy_main(thearguments):
             tide_io.writevec(dl_e_waveform, outputroot + '_normcardfromfmri_dlfiltered_E_sqi_' + str(stdfreq) + 'Hz.txt')
 
             tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
+
+            # downsample to sliceres from stdres
+            #cardfromfmri_sliceres = tide_math.madnormalize(
+            #    tide_resample.arbresample(dlfilteredcard, stdfreq, slicesamplerate, decimate=True, debug=False))
+            stdtimeaxis = (1.0 / stdfreq) * sp.linspace(0.0, len(dlfilteredcard), num=(len(dlfilteredcard)), endpoint=False)
+            arb_lowerstop = 0.0
+            arb_lowerpass = 0.0
+            arb_upperpass = slicesamplerate / 2.0
+            arb_upperstop = slicesamplerate / 2.0
+            theaafilter = tide_filt.noncausalfilter(filtertype='arb')
+            theaafilter.setarb(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
+
             cardfromfmri_sliceres = tide_math.madnormalize(
-                tide_resample.arbresample(dlfilteredcard, stdfreq, slicesamplerate, decimate=True, debug=False))
+                tide_resample.doresample(stdtimeaxis,
+                                         theaafilter.apply(stdfreq, dlfilteredcard),
+                                         slicetimeaxis,
+                                         method='univariate',
+                                         padlen=0))
             tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_dlfiltered_sliceres.txt')
             infodict['used_dlreconstruction_filter'] = True
             peakfreq_dlfiltered = getcardcoeffs(cardfromfmri_sliceres, slicesamplerate,
@@ -1407,7 +1433,7 @@ def happy_main(thearguments):
     upsampledslicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
     interpphase = tide_math.phasemod(
         tide_resample.doresample(slicetimeaxis, instantaneous_phase, upsampledslicetimeaxis,
-                                 method='cubic', padlen=0),
+                                 method='univariate', padlen=0),
         centric=centric)
     tide_io.writevec(interpphase, outputroot + '_interpinstphase.txt')
 
@@ -1417,7 +1443,6 @@ def happy_main(thearguments):
         nodeline = 'Processed on ' + platform.node()
         tide_util.proctiminginfo(timings, outputfile=outputroot + '_runtimings.txt', extraheader=nodeline)
         tide_util.logmem('final', file=memfile)
-
         sys.exit()
 
     # find the phase values for all timepoints in all slices
@@ -1425,7 +1450,7 @@ def happy_main(thearguments):
     for theslice in range(numslices):
         thetimes = sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False) + slicetimes[theslice]
         phasevals[theslice, :] = tide_math.phasemod(
-            tide_resample.doresample(slicetimeaxis, instantaneous_phase, thetimes, method='cubic', padlen=0),
+            tide_resample.doresample(slicetimeaxis, instantaneous_phase, thetimes, method='univariate', padlen=0),
             centric=centric)
         if debug:
             tide_io.writevec(thetimes, outputroot + '_times_' + str(theslice).zfill(2) + '.txt')

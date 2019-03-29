@@ -1,19 +1,21 @@
 #!/bin/csh -f
 
-happyx \
-    ses-060_bold_trunc.nii.gz \
-    ses-060_bold_trunc.json \
-    ../dst/happyx_firstpass \
-    --mklthreads=4 \
-    ../dst/happyx_firstpass 
+#happyx \
+#    ses-060_bold_trunc.nii.gz \
+#    ses-060_bold_trunc.json \
+#    ../dst/happyx_firstpass \
+#    --mklthreads=4 \
+#    ../dst/happyx_firstpass 
 
 happyx \
     ses-060_bold_trunc.nii.gz \
     ses-060_bold_trunc.json \
     ../dst/happyx_secondpass \
     --dodlfilter \
+    --model=model_revised \
     --mklthreads=4 \
     --cardcalconly --estmask=../dst/happyx_firstpass_vesselmask.nii.gz
+
 
 #happyx \
 #    ses-060_bold_trunc.nii.gz \
