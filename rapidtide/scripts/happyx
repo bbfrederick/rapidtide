@@ -1030,7 +1030,7 @@ def happy_main(thearguments):
 
     # set up cardiac filter
     arb_lower = minhr / 60.0
-    arb_upper = maxhr / 60.0
+    arb_upper = 1000.0
     thecardbandfilter = tide_filt.noncausalfilter()
     thecardbandfilter.settype('arb')
     arb_lowerstop = arb_lower * 0.9
