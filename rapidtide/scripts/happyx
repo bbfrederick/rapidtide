@@ -743,7 +743,7 @@ def happy_main(thearguments):
     numskip = 0
     motskip = 0
     dodlfilter = False
-    modelname = 'model_cnn_w128_l10_fn10_fl5_d0.3_e10_t4.0_relu_normaligned'
+    modelname = 'model_revised'
     motionhp = None
     motionlp = None
     motfilt_pos = False
@@ -1240,6 +1240,7 @@ def happy_main(thearguments):
             thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
             #thedlfilter.loadmodel('model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu')
             thedlfilter.loadmodel(modelname)
+            infodict['dlfiltermodel'] = modelname
             normdlfilteredcard = thedlfilter.apply(normcardfromfmri_stdres)
             tide_io.writevec(normdlfilteredcard, outputroot + '_normcardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
             dlfilteredcard = thedlfilter.apply(cardfromfmri_stdres)
@@ -1376,7 +1377,7 @@ def happy_main(thearguments):
         timings.append(['Cardiac parameters extracted from physiology data', time.time(), None, None])
 
         if not projectwithraw:
-            cardiacwaveform = pleth_sliceres
+            cardiacwaveform = np.array(pleth_sliceres)
             badpointlist = 1.0 - (1.0 - thebadplethpts_sliceres) * (1.0 - badpointlist)
 
         if doplot:
@@ -1564,7 +1565,7 @@ def happy_main(thearguments):
     histinput = app2d[validlocs, :].reshape((len(validlocs), destpoints))
     tide_stats.makeandsavehistogram(histinput, histlen, 0, outputroot + '_histogram')
 
-    # make find vessel threshholds
+    # find vessel threshholds
     tide_util.logmem('before making vessel masks', file=memfile)
     hardvesselthresh = tide_stats.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
     softvesselthresh = softvesselfrac * hardvesselthresh
