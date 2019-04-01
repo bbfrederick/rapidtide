@@ -821,7 +821,8 @@ def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False)
         thenotchfilter = noncausalfilter()
         for harmonic in range(1, maxharmonic + 1):
             notchfreq = harmonic * stopfreq
-            print('removing harmonic at', notchfreq)
+            if debug:
+                print('removing harmonic at', notchfreq)
             notchwidth = np.max([notchpct * harmonic * stopfreq * 0.01, freqstep])
             if debug:
                 print('\tFs:', Fs)
