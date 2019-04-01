@@ -1444,7 +1444,7 @@ def happy_main(thearguments):
     fmri_offsets = offsets_byslice.reshape(numspatiallocs)
 
     # save the information file
-    tide_io.writedict(infodict, outputroot + '_info.txt')
+    tide_io.writedicttojson(infodict, outputroot + '_info.json')
 
     # interpolate the instantaneous phase
     upsampledslicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
