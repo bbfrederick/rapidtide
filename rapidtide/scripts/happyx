@@ -196,8 +196,10 @@ def usage():
     print("    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to")
     print("                                     voxels in MASKNAME and weighted by the mask intensity (overrides")
     print("                                     normal variance mask.)")
-    print("    --minhr=MINHR                  - highpass filter cardiac data to MINHR BPM (default is 40)")
-    print("    --maxhr=MAXHR                  - lowpass filter cardiac data to MAXHR BPM (default is 180)")
+    print("    --minhr=MINHR                  - limit lower cardiac frequency search range to MINHR BPM (default is 40)")
+    print("    --maxhr=MAXHR                  - limit upper cardiac frequency search range to MAXHR BPM (default is 180)")
+    print("    --minhrfilt=MINHR              - highpass filter cardiac waveform estimate to MINHR BPM (default is 40)")
+    print("    --maxhrfilt=MAXHR              - lowpass filter cardiac waveform estimate to MAXHR BPM (default is 1000)")
     print(
         "    --envcutoff=CUTOFF             - lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4)")
     print("    --notchwidth=WIDTH             - Set the width of the notch filter, in percent of the notch frequency")
@@ -721,6 +723,8 @@ def happy_main(thearguments):
     notchpct = 1.5
     minhr = 40.0
     maxhr = 180.0
+    minhrfilt = 40.0
+    maxhrfilt = 1000.0
     softvesselfrac = 0.4
     infodict = {}
     stdfreq = 25.0
@@ -790,6 +794,8 @@ def happy_main(thearguments):
                                                        "cardiacstart=",
                                                        "maxhr=",
                                                        "minhr=",
+                                                       "maxhrfilt=",
+                                                       "minhrfilt=",
                                                        "envcutoff=",
                                                        "envthresh=",
                                                        "notchwidth=",
@@ -954,12 +960,20 @@ def happy_main(thearguments):
             print('will set lowest value of cardiac envelope band to', envthresh, 'x the maximum value')
         elif o == "--minhr":
             newval = float(a)
-            print('will set bottom of cardiac band to', newval, 'BPM from', minhr, 'BPM')
+            print('will set bottom of cardiac search range to', newval, 'BPM from', minhr, 'BPM')
             minhr = newval
         elif o == "--maxhr":
             newval = float(a)
-            print('will set top of cardiac band to', newval, 'BPM from', maxhr, 'BPM')
+            print('will set top of cardiac search range to', newval, 'BPM from', maxhr, 'BPM')
             maxhr = newval
+        elif o == "--minhrfilt":
+            newval = float(a)
+            print('will set bottom of cardiac band to', newval, 'BPM from', minhrfilt, 'BPM when estimating waveform')
+            minhrfilt = newval
+        elif o == "--maxhrfilt":
+            newval = float(a)
+            print('will set top of cardiac band to', newval, 'BPM from', maxhrfilt, 'BPM when estimating waveform')
+            maxhrfilt = newval
         elif o == "--forcehr":
             forcedhr = float(a) / 60.0
             print('force heart rate detector to', forcedhr * 60.0, 'BPM')
@@ -1029,8 +1043,8 @@ def happy_main(thearguments):
         mkl.set_num_threads(mklthreads)
 
     # set up cardiac filter
-    arb_lower = minhr / 60.0
-    arb_upper = 1000.0
+    arb_lower = minhrfilt / 60.0
+    arb_upper = maxhrfilt / 60.0
     thecardbandfilter = tide_filt.noncausalfilter()
     thecardbandfilter.settype('arb')
     arb_lowerstop = arb_lower * 0.9
@@ -1196,6 +1210,7 @@ def happy_main(thearguments):
     infodict['cardiacfreq_bold'] = peakfreq_bold
     timings.append(['Cardiac signal from image data analyzed', time.time(), None, None])
 
+    # resample to standard frequency
     cardfromfmri_stdres = tide_math.madnormalize(tide_resample.arbresample(cardfromfmri_sliceres,
                                                                            slicesamplerate,
                                                                            stdfreq,
@@ -1204,6 +1219,8 @@ def happy_main(thearguments):
 
     tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(stdfreq) + 'Hz.txt')
     infodict['numcardpts_stdres'] = len(cardfromfmri_stdres)
+
+    # normalize the signal to remove envelope effects
     filtcardfromfmri_stdres, normcardfromfmri_stdres, cardfromfmrienv_stdres = cleancardiac(stdfreq, cardfromfmri_stdres,
                                                                                             cutoff=envcutoff,
                                                                                             nyquist=slicesamplerate / 2.0,
@@ -1230,6 +1247,7 @@ def happy_main(thearguments):
 
     timings.append(['Cardiac signal from image data resampled and saved', time.time(), None, None])
 
+    # apply the deep learning filter if we're going to do that
     if dodlfilter:
         if dlfilterexists:
             if mpfix:
@@ -1238,12 +1256,12 @@ def happy_main(thearguments):
             modelpath = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
                                      'models')
             thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
-            #thedlfilter.loadmodel('model_cnn_w128_l16_fn10_fl5_d0.3_e10_t10.0_relu')
             thedlfilter.loadmodel(modelname)
             infodict['dlfiltermodel'] = modelname
             normdlfilteredcard = thedlfilter.apply(normcardfromfmri_stdres)
             tide_io.writevec(normdlfilteredcard, outputroot + '_normcardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
             dlfilteredcard = thedlfilter.apply(cardfromfmri_stdres)
+            tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
 
             # calculate quality metrics
             dl_s_mean, dl_s_std, dl_s_waveform, \
@@ -1259,8 +1277,6 @@ def happy_main(thearguments):
             tide_io.writevec(dl_s_waveform, outputroot + '_normcardfromfmri_dlfiltered_S_sqi_' + str(stdfreq) + 'Hz.txt')
             tide_io.writevec(dl_k_waveform, outputroot + '_normcardfromfmri_dlfiltered_K_sqi_' + str(stdfreq) + 'Hz.txt')
             tide_io.writevec(dl_e_waveform, outputroot + '_normcardfromfmri_dlfiltered_E_sqi_' + str(stdfreq) + 'Hz.txt')
-
-            tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(stdfreq) + 'Hz.txt')
 
             # downsample to sliceres from stdres
             #cardfromfmri_sliceres = tide_math.madnormalize(
@@ -1306,19 +1322,19 @@ def happy_main(thearguments):
                                                      timings, infodict, outputroot,
                                                      debug=False)
 
-        # check the match between the bold and physio cardiac signals
-        maxval, maxdelay = checkcardmatch(pleth_sliceres, raw_cardfromfmri_sliceres, slicesamplerate, debug=debug)
-        print('Input cardiac waveform delay is', maxdelay, 'relative to fMRI data')
-        print('Correlation coefficient between cardiac regressors:', maxval)
-        infodict['corrcoeff_raw2pleth'] = maxval
-        infodict['delay_raw2pleth'] = maxdelay
-
         if dodlfilter and dlfilterexists:
             maxval, maxdelay = checkcardmatch(pleth_sliceres, cardfromfmri_sliceres, slicesamplerate, debug=debug)
             print('Input cardiac waveform delay is', maxdelay, 'relative to filtered fMRI data')
             print('Correlation coefficient between cardiac regressors:', maxval)
             infodict['corrcoeff_filt2pleth'] = maxval
             infodict['delay_filt2pleth'] = maxdelay
+
+        # check the match between the bold and physio cardiac signals
+        maxval, maxdelay = checkcardmatch(pleth_sliceres, raw_cardfromfmri_sliceres, slicesamplerate, debug=debug)
+        print('Input cardiac waveform delay is', maxdelay, 'relative to fMRI data')
+        print('Correlation coefficient between cardiac regressors:', maxval)
+        infodict['corrcoeff_raw2pleth'] = maxval
+        infodict['delay_raw2pleth'] = maxdelay
 
         # align the pleth signal with the cardiac signal derived from the data
         if aligncardiac:
