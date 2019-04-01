@@ -544,8 +544,18 @@ def writedicttojson(thedict, thefilename):
         The name of the json file (with extension)
 
     """
+    thisdict = {}
+    for key in thedict:
+        if isinstance(thedict[key], np.integer):
+            thisdict[key] = int(thedict[key])
+        elif isinstance(thedict[key], np.floating):
+            thisdict[key] = float(thedict[key])
+        elif isinstance(thedict[key], np.ndarray):
+            thisdict[key] = thedict[key].tolist()
+        else:
+            thisdict[key] = thedict[key]
     with open(thefilename, 'wb') as fp:
-        fp.write(json.dumps(thedict, sort_keys=True, indent=4, separators=(',', ':')).encode("utf-8"))
+        fp.write(json.dumps(thisdict, sort_keys=True, indent=4, separators=(',', ':')).encode("utf-8"))
 
 
 def readdictfromjson(inputfilename):
@@ -815,7 +825,6 @@ def writedict(thedict, outputfile, lineend=''):
     Returns
     -------
 
-
     """
     if lineend == 'mac':
         thelineending = '\r'
@@ -832,6 +841,36 @@ def writedict(thedict, outputfile, lineend=''):
     with open(outputfile, openmode) as FILE:
         for key, value in sorted(thedict.items()):
             FILE.writelines(str(key) + ':\t' + str(value) + thelineending)
+
+
+def readdict(inputfilename):
+    r"""Read key value pairs out of a text file
+
+    Parameters
+    ----------
+    inputfilename : str
+        The name of the json file (with extension)
+
+    Returns
+    -------
+    thedict : dict
+        The key value pairs from the json file
+
+    """
+    if os.path.exists(inputfilename):
+        thedict = {}
+        with open(inputfilename, 'r') as f:
+            for line in f:
+                values = line.split()
+                key = values[0][:-1]
+                thevalues = values[1:]
+                if len(thevalues) == 1:
+                    thevalues = thevalues[0]
+                thedict[key] = thevalues
+        return thedict
+    else:
+        print('specified file does not exist')
+        return {}
 
 
 def writevec(thevec, outputfile, lineend=''):
