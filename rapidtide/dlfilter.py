@@ -270,7 +270,7 @@ class dlfilter:
             # save the weights to hdf
             self.model.save_weights(os.path.join(self.modelname, 'model_weights.h5'))
 
-    def loadmodel(self, modelname, usehdf=True):
+    def loadmodel(self, modelname, usehdf=True, verbose=False):
         # read in the data
         print('loading', modelname)
 
@@ -282,7 +282,8 @@ class dlfilter:
                 loaded_model_json = json_file.read()
             self.model = model_from_json(loaded_model_json)
             self.model.load_weights(os.path.join(self.modelname, 'model_weights.h5'))
-        self.model.summary()
+        if verbose:
+            self.model.summary()
 
         # now load additional information
         self.infodict = tide_io.readdictfromjson(os.path.join(self.modelpath, modelname, 'model_meta.json'))

@@ -6,6 +6,7 @@ happyx \
     ../dst/happyx_firstpass \
     --dodlfilter \
     --mklthreads=4 \
+    --saveinfoasjson \
     --model=model_revised
 
 happyx \
@@ -14,6 +15,7 @@ happyx \
     ../dst/happyx_secondpass \
     --dodlfilter \
     --mklthreads=4 \
+    --saveinfoasjson \
     --model=model_revised \
     --cardcalconly --estmask=../dst/happyx_firstpass_vesselmask.nii.gz
 

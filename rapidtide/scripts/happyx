@@ -246,6 +246,9 @@ def usage():
     print("    --nophasefilt                  - Disable the phase trend filter (probably not a good idea)")
     print("    --nocardiacalign               - Disable alignment of pleth signal to fmri derived cardiac signal.")
     print("                                     to blood vessels")
+    print("    --saveinfoasjson               - Save the info file in json format rather than text.  Will eventually")
+    print("                                     become the default, but for now I'm just trying it out.")
+
 
     return ()
 
@@ -339,7 +342,8 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, minhr=40.0, maxhr=180.0, smo
         initpeakfreq = maxhr
     if initpeakfreq < minhr:
         initpeakfreq = minhr
-    print('initpeakfreq:', initpeakfreq, 'BPM')
+    if debug:
+        print('initpeakfreq:', initpeakfreq, 'BPM')
     freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(cardiacwaveform)) * cardiacwaveform,
                                             Fs=slicesamplerate,
                                             mode='complex')
@@ -356,9 +360,11 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, minhr=40.0, maxhr=180.0, smo
         plot(freqaxis, ampspec, 'r')
         show()
     peakfreq = freqaxis[np.argmax(ampspec)]
-    print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
+    if debug:
+        print('cardiac fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
     normfac = np.sqrt(2.0) * tide_math.rms(cardiacwaveform)
-    print('normfac:', normfac)
+    if debug:
+        print('normfac:', normfac)
     return peakfreq
 
 
@@ -757,6 +763,7 @@ def happy_main(thearguments):
     mpfix = False
     aligncardiac = True
     projectwithraw = False
+    saveinfoasjson = False
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
@@ -830,6 +837,7 @@ def happy_main(thearguments):
                                                        "model=",
                                                        "usesuperdangerousworkaround",
                                                        "savemotionglmfilt",
+                                                       "saveinfoasjson",
                                                        "nophasefilt",
                                                        "projectwithraw",
                                                        "nomask",
@@ -986,6 +994,9 @@ def happy_main(thearguments):
         elif o == "--normalize":
             fmrimod = 'norm'
             print('will normalize fmri before gridding')
+        elif o == "--saveinfoasjson":
+            saveinfoasjson = True
+            print('will save info file in json format')
         elif o == "--nodemean":
             fmrimod = 'none'
             print('will not demean fmri before gridding')
@@ -1444,7 +1455,10 @@ def happy_main(thearguments):
     fmri_offsets = offsets_byslice.reshape(numspatiallocs)
 
     # save the information file
-    tide_io.writedicttojson(infodict, outputroot + '_info.json')
+    if saveinfoasjson:
+        tide_io.writedicttojson(infodict, outputroot + '_info.json')
+    else:
+        tide_io.writedict(infodict, outputroot + '_info.txt')
 
     # interpolate the instantaneous phase
     upsampledslicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps * upsamplefac), endpoint=False)
