@@ -424,6 +424,8 @@ def usage():
     print("                                     less than 1 sets the number of worker processes to")
     print("                                     n_cpus - 1 (default).  Setting NPROCS enables --multiproc.")
     print("    --debug                        - Enable additional information output")
+    print("    --saveoptionsasjson            - Save the options file in json format rather than text.  Will eventually")
+    print("                                     become the default, but for now I'm just trying it out.")
     print("")
     print("Experimental options (not fully tested, may not work):")
     print("    --cleanrefined                 - perform additional processing on refined regressor to remove spurious")
@@ -528,6 +530,7 @@ def main():
     optiondict['saveglmfiltered'] = True
     optiondict['saveprewhiten'] = False
     optiondict['savecorrtimes'] = False
+    optiondict['saveoptionsasjson'] = False
 
     optiondict['interptype'] = 'univariate'
     optiondict['useglobalref'] = False
@@ -654,6 +657,7 @@ def main():
                                                                                                           'weightedavg',
                                                                                                           'avg',
                                                                                                           'psdfilter',
+                                                                                                          'saveoptionsasjson',
                                                                                                           'dispersioncalc',
                                                                                                           'noglm',
                                                                                                           'nosharedmem',
@@ -820,6 +824,9 @@ def main():
                 print('will use n_cpus - 1 processes for calculation')
             else:
                 print('will use', optiondict['nprocs'], 'processes for calculation')
+        elif o == '--saveoptionsasjson':
+            optiondict['saveoptionsasjson'] = True
+            print('saving options file as json rather than text')
         elif o == '--savemotionglmfilt':
             optiondict['savemotionfiltered'] = True
             print('saveing motion filtered data')
@@ -2271,7 +2278,10 @@ def main():
 
     # Post refinement step 4 - save out all of the important arrays to nifti files
     # write out the options used
-    tide_io.writedict(optiondict, outputname + '_options.txt')
+    if optiondict['saveoptionsasjson']:
+        tide_io.writedicttojson(optiondict, outputname + '_options.json')
+    else:
+        tide_io.writedict(optiondict, outputname + '_options.txt')
 
     if fileiscifti:
         outsuffix3d = '.dscalar'
