@@ -337,6 +337,8 @@ for i in range(0, numfiles):
             else:
                 linelabels.append(legendlist[i % len(legendlist)])
         samplerates.append(thissamplerate + 0.0)
+        if debug:
+            print('timecourse:', j, ', len:', len(xvecs[-1]), ', timerange:', xvecs[-1][0], xvecs[-1][-1])
         numvecs += 1
 
 thestartpoint = tide_util.valtoindex(xvecs[0], thestarttime)
