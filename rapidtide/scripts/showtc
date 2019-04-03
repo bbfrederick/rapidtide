@@ -445,9 +445,6 @@ for i in range(0, numvecs):
         ax.tick_params(axis='x', labelsize=thexlabelfontsize, which='both')
     if showyax:
         ax.tick_params(axis='y', labelsize=theylabelfontsize, which='both')
-    # box(on=None)
-    # ax.xaxis.set_visible(showxax)
-    # ax.yaxis.set_visible(showyax)
 
     if separate:
         fig.subplots_adjust(hspace=0)
