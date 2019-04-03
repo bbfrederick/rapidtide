@@ -673,15 +673,16 @@ def readextmask(thefilename, nim_hdr, xsize, ysize, numslices):
 
 def checkcardmatch(reference, candidate, samplerate, debug=False):
     thecardfilt = tide_filt.noncausalfilter(filtertype='cardiac')
+    trimlength = np.min([len(reference), len(candidate)])
     thexcorr = tide_corr.fastcorrelate(
         tide_math.corrnormalize(thecardfilt.apply(samplerate, reference),
                                 prewindow=True,
                                 detrendorder=3,
-                                windowfunc='hamming'),
+                                windowfunc='hamming')[:trimlength],
         tide_math.corrnormalize(thecardfilt.apply(samplerate, candidate),
                                 prewindow=True,
                                 detrendorder=3,
-                                windowfunc='hamming'),
+                                windowfunc='hamming')[:trimlength],
         usefft=True)
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / samplerate
@@ -690,8 +691,9 @@ def checkcardmatch(reference, candidate, samplerate, debug=False):
     trimstart = tide_util.valtoindex(xcorr_x, -2.0 * searchrange)
     trimend = tide_util.valtoindex(xcorr_x, 2.0 * searchrange)
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
-        xcorr_x[trimstart:trimend], thexcorr[trimstart:trimend], -searchrange, searchrange, 1000.0,
+        xcorr_x[trimstart:trimend], thexcorr[trimstart:trimend], -searchrange, searchrange, 10.0,
         refine=True,
+        zerooutbadfit=False,
         useguess=False,
         fastgauss=False,
         displayplots=False)
