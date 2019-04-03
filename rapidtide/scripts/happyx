@@ -197,7 +197,7 @@ def usage():
     print("                                     voxels in MASKNAME and weighted by the mask intensity (overrides")
     print("                                     normal variance mask.)")
     print("    --minhr=MINHR                  - limit lower cardiac frequency search range to MINHR BPM (default is 40)")
-    print("    --maxhr=MAXHR                  - limit upper cardiac frequency search range to MAXHR BPM (default is 180)")
+    print("    --maxhr=MAXHR                  - limit upper cardiac frequency search range to MAXHR BPM (default is 140)")
     print("    --minhrfilt=MINHR              - highpass filter cardiac waveform estimate to MINHR BPM (default is 40)")
     print("    --maxhrfilt=MAXHR              - lowpass filter cardiac waveform estimate to MAXHR BPM (default is 1000)")
     print(
@@ -332,7 +332,7 @@ def getfundamental(inputdata, Fs, fundfreq):
     return thefundfilter.apply(Fs, inputdata)
 
 
-def getcardcoeffs(cardiacwaveform, slicesamplerate, minhr=40.0, maxhr=180.0, smoothlen=101, debug=False):
+def getcardcoeffs(cardiacwaveform, slicesamplerate, minhr=40.0, maxhr=140.0, smoothlen=101, debug=False):
     if len(cardiacwaveform) > 1024:
         thex, they = welch(cardiacwaveform, slicesamplerate, nperseg=1024)
     else:
@@ -728,7 +728,7 @@ def happy_main(thearguments):
     doglm = False
     notchpct = 1.5
     minhr = 40.0
-    maxhr = 180.0
+    maxhr = 140.0
     minhrfilt = 40.0
     maxhrfilt = 1000.0
     softvesselfrac = 0.4
