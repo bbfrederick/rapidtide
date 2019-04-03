@@ -1,1 +1,0 @@
-model_cnn_w61_l10_fn10_fl5_e100_t4.0_relu_normaligned: Prediction Error: 0.4210786348787361 Raw Error: 0.7674030149606774
