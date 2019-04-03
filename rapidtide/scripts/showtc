@@ -346,23 +346,24 @@ theendtime = xvecs[0][theendpoint]
 if debug:
     print('full range (pts):',thestartpoint, theendpoint)
     print('full range (time):',thestarttime, theendtime)
-currentxmax = -1e38
-currentxmin = 1e38
+overallxmax = -1e38
+overallxmin = 1e38
 for thevec in xvecs:
-    currentxmax = np.max([np.max(thevec), currentxmax])
-    currentxmin = np.min([np.min(thevec), currentxmin])
-xrange = (np.min([currentxmin, theendtime]), np.max([currentxmax, thestarttime]))
+    overallxmax = np.max([np.max(thevec), overallxmax])
+    overallxmin = np.min([np.min(thevec), overallxmin])
+#xrange = (np.min([overallxmin, theendtime]), np.max([overallxmax, thestarttime]))
+xrange = (np.max([overallxmin, thestarttime]), np.min([overallxmax, theendtime]))
 ymins = []
 ymaxs = []
 for thevec in yvecs:
     ymins.append(np.min(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
     ymaxs.append(np.max(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
-currentymax = -1e38
-currentymin = 1e38
+overallymax = -1e38
+overallymin = 1e38
 for thevec in yvecs:
-    currentymax = np.max([np.max(thevec), currentymax])
-    currentymin = np.min([np.min(thevec), currentymin])
-yrange = (currentymin, currentymax)
+    overallymax = np.max([np.max(thevec), overallymax])
+    overallymin = np.min([np.min(thevec), overallymin])
+yrange = (overallymin, overallymax)
 if debug:
     print('xrange:', xrange)
     print('yrange:', yrange)
@@ -373,12 +374,12 @@ if debug:
 if not separate:
     for i in range(0, numvecs):
         yvecs[i] += (numvecs - i - 1) * voffset
-    currentymax = -1e38
-    currentymin = 1e38
+    overallymax = -1e38
+    overallymin = 1e38
     for thevec in yvecs:
-        currentymax = np.max([np.max(thevec), currentymax])
-        currentymin = np.min([np.min(thevec), currentymin])
-    yrange = (currentymin, currentymax)
+        overallymax = np.max([np.max(thevec), overallymax])
+        overallymin = np.min([np.min(thevec), overallymin])
+    yrange = (overallymin, overallymax)
 
     if dowaterfall:
         xstep = (xrange[1] - xrange[0]) / numvecs
