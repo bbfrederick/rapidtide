@@ -1,0 +1,3 @@
+#!/bin/csh -f
+
+ccorrica cctest ../dst/ccorrtest 0.1 -L
