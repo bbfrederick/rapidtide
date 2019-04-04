@@ -20,6 +20,8 @@
 #       $Id: showtc,v 1.16 2016/07/11 14:50:43 frederic Exp $
 #
 from __future__ import print_function
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import sys
 import os
 import getopt
@@ -34,6 +36,7 @@ import numpy as np
 from scipy import arange, fftpack, linspace
 
 from matplotlib.pyplot import figure, plot, show, savefig, setp
+
 
 
 def phase(mcv):

@@ -50,6 +50,8 @@ from scipy.stats import kurtosis, skew
 from skimage.filters import threshold_triangle  # , apply_hysteresis_threshold
 from statsmodels.robust import mad
 
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 try:
     import mkl
