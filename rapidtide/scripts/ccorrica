@@ -246,13 +246,12 @@ out3d_hdr = nib.Nifti1Image(outputcorrmax, outputaffine).header
 out3d_hdr['pixdim'][4] = sampletime
 out3d_sizes = out3d_hdr['pixdim']
 tide_io.savetonifti(outputcorrmax, out3d_hdr, out3d_sizes, outputroot + '_corrmax')
-tide_io.writenpvecs(outputcorrmax, outputroot + '_corrmax.txt')
+tide_io.writenpvecs(outputcorrmax.reshape(numcomponents, numcomponents), outputroot + '_corrmax.txt')
 tide_io.savetonifti(outputcorrlag, out3d_hdr, out3d_sizes, outputroot + '_corrlag')
-tide_io.writenpvecs(outputcorrlag, outputroot + '_corrlag.txt')
+tide_io.writenpvecs(outputcorrlag.reshape(numcomponents, numcomponents), outputroot + '_corrlag.txt')
 tide_io.savetonifti(outputcorrwidth, out3d_hdr, out3d_sizes, outputroot + '_corrwidth')
-tide_io.writenpvecs(outputcorrwidth, outputroot + '_corrwidth.txt')
+tide_io.writenpvecs(outputcorrwidth.reshape(numcomponents, numcomponents), outputroot + '_corrwidth.txt')
 tide_io.savetonifti(outputcorrmask, out3d_hdr, out3d_sizes, outputroot + '_corrmask')
-tide_io.writenpvecs(outputcorrmask, outputroot + '_corrmask.txt')
-
+tide_io.writenpvecs(outputcorrmask.reshape(numcomponents, numcomponents), outputroot + '_corrmask.txt')
 
 tide_io.writenpvecs(reformdata, outputroot + '_reformdata.txt')
