@@ -23,7 +23,7 @@ from __future__ import print_function
 import sys
 import getopt
 import rapidtide.io as tide_io
-from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show, savefig
+from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show, savefig, bar
 
 
 def usage():
@@ -38,6 +38,7 @@ def usage():
     print("\t-y\tuse YLABEL on the y axis")
     print("\t-t\tuse TITLE at the top of the graph")
     print("\t-o\tsave plot to FILENAME instead of displaying to screen")
+    print("\t-b\tplot bars rather than lines")
     return ()
 
 
@@ -53,6 +54,7 @@ usexlabel = False
 useylabel = False
 usetitle = False
 uselegend = False
+dobar = False
 thelegendlabel = ''
 thetitle = ''
 thexlabel = ''
@@ -65,7 +67,7 @@ textfilename = sys.argv[1]
 
 # now check options
 try:
-    opts, args = getopt.getopt(sys.argv[2:], "o:x:y:l:t:", ["help"])
+    opts, args = getopt.getopt(sys.argv[2:], "o:x:y:l:t:b", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -a not recognized"
@@ -77,6 +79,9 @@ for o, a in opts:
         usexlabel = True
         thexlabel = a
         print("labelling x axis with ", thexlabel)
+    elif o == "-b":
+        dobar = True
+        print("will use bars rather than lines")
     elif o == "-y":
         useylabel = True
         theylabel = a
@@ -98,7 +103,10 @@ for o, a in opts:
 indata = tide_io.readvecs(textfilename)
 xvecs = indata[0, :]
 yvecs = indata[1, :]
-plot(xvecs, yvecs, 'r')
+if dobar:
+    bar(xvecs, yvecs, width=(0.8 * (xvecs[1] - xvecs[0])), color='g')
+else:
+    plot(xvecs, yvecs, 'r')
 if uselegend:
     legend(thelegendlabel, loc=1)
 if usetitle:
