@@ -689,7 +689,7 @@ def readextmask(thefilename, nim_hdr, xsize, ysize, numslices):
     return extmask_data.reshape(xsize * ysize, numslices)
 
 
-def checkcardmatch(reference, candidate, samplerate, debug=False):
+def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
     thecardfilt = tide_filt.noncausalfilter(filtertype='cardiac')
     trimlength = np.min([len(reference), len(candidate)])
     thexcorr = tide_corr.fastcorrelate(
@@ -709,8 +709,8 @@ def checkcardmatch(reference, candidate, samplerate, debug=False):
     trimstart = tide_util.valtoindex(xcorr_x, -2.0 * searchrange)
     trimend = tide_util.valtoindex(xcorr_x, 2.0 * searchrange)
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
-        xcorr_x[trimstart:trimend], thexcorr[trimstart:trimend], -searchrange, searchrange, 10.0,
-        refine=True,
+        xcorr_x[trimstart:trimend], thexcorr[trimstart:trimend], -searchrange, searchrange, 3.0,
+        refine=refine,
         zerooutbadfit=False,
         useguess=False,
         fastgauss=False,
@@ -718,7 +718,7 @@ def checkcardmatch(reference, candidate, samplerate, debug=False):
     if debug:
         print('CORRELATION: maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend:',
               maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend)
-    return maxval, maxdelay
+    return maxval, maxdelay, failreason
 
 
 def happy_main(thearguments):
@@ -1341,12 +1341,13 @@ def happy_main(thearguments):
             infodict['cardiacfreq_dlfiltered'] = peakfreq_dlfiltered
 
             # check the match between the raw and filtered cardiac signals
-            maxval, maxdelay = checkcardmatch(raw_cardfromfmri_sliceres, cardfromfmri_sliceres, slicesamplerate,
+            maxval, maxdelay, failreason = checkcardmatch(raw_cardfromfmri_sliceres, cardfromfmri_sliceres, slicesamplerate,
                                               debug=debug)
             print('Filtered cardiac fmri waveform delay is', maxdelay, 'relative to raw fMRI data')
             print('Correlation coefficient between cardiac regressors:', maxval)
-            infodict['corrcoeff_raw2filt'] = maxval
-            infodict['delay_raw2filt'] = maxdelay
+            infodict['corrcoeff_raw2filt'] = maxval + 0
+            infodict['delay_raw2filt'] = maxdelay + 0
+            infodict['failreason_raw2filt'] = failreason + 0
 
             timings.append(['Deep learning filter applied', time.time(), None, None])
         else:
@@ -1362,18 +1363,20 @@ def happy_main(thearguments):
                                                      debug=False)
 
         if dodlfilter and dlfilterexists:
-            maxval, maxdelay = checkcardmatch(pleth_sliceres, cardfromfmri_sliceres, slicesamplerate, debug=debug)
+            maxval, maxdelay, failreason = checkcardmatch(pleth_sliceres, cardfromfmri_sliceres, slicesamplerate, debug=debug)
             print('Input cardiac waveform delay is', maxdelay, 'relative to filtered fMRI data')
             print('Correlation coefficient between cardiac regressors:', maxval)
-            infodict['corrcoeff_filt2pleth'] = maxval
-            infodict['delay_filt2pleth'] = maxdelay
+            infodict['corrcoeff_filt2pleth'] = maxval + 0
+            infodict['delay_filt2pleth'] = maxdelay + 0
+            infodict['failreason_filt2pleth'] = failreason + 0
 
         # check the match between the bold and physio cardiac signals
-        maxval, maxdelay = checkcardmatch(pleth_sliceres, raw_cardfromfmri_sliceres, slicesamplerate, debug=debug)
+        maxval, maxdelay, failreason = checkcardmatch(pleth_sliceres, raw_cardfromfmri_sliceres, slicesamplerate, debug=debug)
         print('Input cardiac waveform delay is', maxdelay, 'relative to fMRI data')
         print('Correlation coefficient between cardiac regressors:', maxval)
-        infodict['corrcoeff_raw2pleth'] = maxval
-        infodict['delay_raw2pleth'] = maxdelay
+        infodict['corrcoeff_raw2pleth'] = maxval + 0
+        infodict['delay_raw2pleth'] = maxdelay + 0
+        infodict['failreason_raw2pleth'] = failreason + 0
 
         # align the pleth signal with the cardiac signal derived from the data
         if aligncardiac:
@@ -1410,11 +1413,12 @@ def happy_main(thearguments):
         if dodlfilter and dlfilterexists:
             dlfilteredpleth = thedlfilter.apply(pleth_stdres)
             tide_io.writevec(dlfilteredpleth, outputroot + '_pleth_dlfiltered_' + str(stdfreq) + 'Hz.txt')
-            maxval, maxdelay = checkcardmatch(pleth_stdres, dlfilteredpleth, stdfreq, debug=debug)
+            maxval, maxdelay, failreason = checkcardmatch(pleth_stdres, dlfilteredpleth, stdfreq, debug=debug)
             print('Filtered pleth cardiac waveform delay is', maxdelay, 'relative to raw pleth data')
             print('Correlation coefficient between pleth regressors:', maxval)
-            infodict['corrcoeff_pleth2filtpleth'] = maxval
-            infodict['delay_pleth2filtpleth'] = maxdelay
+            infodict['corrcoeff_pleth2filtpleth'] = maxval + 0
+            infodict['delay_pleth2filtpleth'] = maxdelay + 0
+            infodict['failreason_pleth2filtpleth'] = failreason + 0
 
         # find bad points in plethysmogram
         thebadplethpts_sliceres = findbadpts(pleth_sliceres, 'pleth_sliceres', outputroot, slicesamplerate, infodict,
