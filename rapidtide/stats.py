@@ -393,7 +393,6 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
     """
     thehist = makehistogram(indata, histlen, binsize=binsize, therange=therange)
     thestore = np.zeros((2, len(thehist[0])), dtype='float64')
-    #thestore[0, :] = thehist[1][-histlen:]
     thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
     thestore[1, :] = thehist[0][-histlen:]
     # get starting values for the peak, ignoring first and last point of histogram
