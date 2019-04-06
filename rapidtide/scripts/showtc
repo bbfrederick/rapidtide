@@ -106,7 +106,8 @@ legendset = False
 legendlist = []
 separate = False
 linky = True
-thelinewidth = 1.0
+thelinewidth = [1.0]
+numlinewidths = len(thelinewidth)
 showxax = True
 showyax = True
 thestartpoint = 0
@@ -199,7 +200,11 @@ for o, a in opts:
         theendtime = float(a)
         print('End time set to:', theendtime)
     elif o == '--linewidth':
-        thelinewidth = float(a)
+        thelinewidth = []
+        inwidths = a.split(',')
+        numlinewidths = len(inwidths)
+        for i in range(numlinewidths):
+            thelinewidth.append(float(inwidths[i]))
         print('Linewidth set to:', thelinewidth)
     elif o == '--colorlist':
         for thiscolor in a.split(','):
@@ -433,7 +438,7 @@ for i in range(0, numvecs):
     if separate:
         ax = axlist[i]
     ax.plot(xvecs[i], yvecs[i],
-            color=colorlist[i], label=linelabels[i], linewidth=thelinewidth)
+            color=colorlist[i], label=linelabels[i], linewidth=thelinewidth[i % numlinewidths])
     if dolegend:
         ax.legend(fontsize=thelegendfontsize, loc=legendloc)
     ax.set_xlim(xrange)
