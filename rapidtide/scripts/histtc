@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+#       $Author: frederic $
+#       $Date: 2016/06/14 12:04:50 $
+#       $Id: histnifti,v 1.8 2016/06/14 12:04:50 frederic Exp $
+#
+from __future__ import print_function
+import rapidtide.io as tide_io
+import rapidtide.stats as tide_stats
+import sys
+import numpy as np
+import getopt
+
+def usage():
+    print('usage: histtc inputfile outputroot [--numbins=BINS]')
+    print('')
+    print('required arguments:')
+    print('	inputfile	      - the name of the input text file')
+    print('	outputroot	      - the root of the output text file')
+    print('optional arguments:')
+    print(' --numbins=BINS    - Number of histogram bins (default is 101)')
+
+    print('')
+    return()
+
+# set default variable values
+histlen=101
+
+# get the command line parameters
+if len(sys.argv) != 3:
+    usage()
+    exit()
+
+# handle required args first
+inputfilename=sys.argv[1]
+outputroot=sys.argv[2]
+
+# now check options
+try:
+    opts, args = getopt.getopt(sys.argv[2:], "x", ["numbins", "help"])
+except getopt.GetoptError as err:
+    # print help information and exit:
+    print(str(err))  # will print something like "option -a not recognized"
+    usage()
+    sys.exit(2)
+
+for o, a in opts:
+    if o == "--numbins":
+        histlen = int(a)
+        print("using", histlen, "histogram bins")
+    else:
+        assert False, "unhandled option"
+
+inputdata = tide_io.readvec(inputfilename)
+
+maxval = np.max(inputdata)
+minval = np.min(inputdata)
+therange = [minval, maxval]
+print('therange:', therange)
+
+tide_stats.makeandsavehistogram(inputdata, histlen, 0, outputroot, therange=therange)
