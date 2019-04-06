@@ -57,15 +57,15 @@ def usage():
 
 # set default variable values
 debug = False
-thefilter = tide_filt.noncausalfilter()
 filtertype = None
 padtime = 30.0
+thefilter = tide_filt.noncausalfilter(padtime=padtime)
 detrendorder = 0
 dotranspose = False
 
 # get the command line parameters
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, "F:VLRC",["help", "debug", "samplerate=", "sampletime=", "padlen="])
+    opts, args = getopt.gnu_getopt(sys.argv, "F:VLRC",["help", "debug", "samplerate=", "sampletime=", "padtime="])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like 'option -a not recognized'
@@ -89,8 +89,9 @@ for o, a in opts:
         samplerate = 1.0 / float(a)
         linkchar = '='
         print('Samplerate set to ', samplerate)
-    elif o == '--patdtime':
+    elif o == '--padtime':
         padtime = float(a)
+        thefilter.setpadtime(padtime)
         linkchar = '='
         print('Pad time set to ', padtime)
     elif o == "-V":

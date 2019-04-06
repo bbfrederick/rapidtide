@@ -1,34 +1,4 @@
 #!/bin/csh -f
-rapidtide2x \
-	fmri.nii.gz \
-	../dst/dgsr_nofitfilt2 \
-        --limitoutput \
-        -s 25.0 \
-        -L \
-	-r -20,20 \
-	-f 2 \
-        --refinepasses=3 \
-        --despecklepasses=4 \
-        --accheck \
-        --nprocs=-1 \
-        --nofitfilt \
-        --timerange=10,260 \
-        --detrendorder=3
-
-rapidtide2x \
-	fmri.nii.gz \
-	../dst/dgsr_nofitfilt2x \
-        --limitoutput \
-        -s 25.0 \
-        -L \
-	-r -20,20 \
-	-f 2 \
-        --refinepasses=3 \
-        --despecklepasses=4 \
-        --accheck \
-        --nprocs=-1 \
-        --nofitfilt \
-        --detrendorder=3
 
 rapidtide2 \
 	fmri.nii.gz \
@@ -42,6 +12,7 @@ rapidtide2 \
         --despecklepasses=4 \
         --accheck \
         --nprocs=-1 \
+        --saveoptionsasjson \
         --detrendorder=3
 
 rapidtide2x \
@@ -56,56 +27,7 @@ rapidtide2x \
         --despecklepasses=4 \
         --accheck \
         --nprocs=-1 \
+        --saveoptionsasjson \
         --detrendorder=3
 
-#rapidtide2 \
-#	fmri.nii.gz \
-#	../dst/dgsr_rapidtide2_multiproc_cubic \
-#        --limitoutput \
-#        --tmask=tmask.txt \
-#        -s 25.0 \
-#        -L \
-#	-r -20,20 \
-#	-f 2 \
-#        --refinepasses=3 \
-#        --despecklepasses=4 \
-#        --accheck \
-#        --nprocs=-1 \
-#        --detrendorder=3
-#
-#diffmaps ../dst/dgsr_rapidtide2x_multiproc_cubic ../dst/dgsr_rapidtide2_multiproc_cubic ../dst/diff
-
-#rapidtide2x \
-	#fmri.nii.gz \
-	#../dst/dgsr_lfox \
-        #--limitoutput \
-        #--lagminthresh=0.25 \
-        #--refinepasses=3 \
-        #--despecklepasses=4 \
-        #-s 100.0 \
-        #-L \
-	#-r -20,20 \
-	#-f 2 \
-        #--multiproc 
-#rapidtide2 \
-	#fmri.nii.gz \
-	#../dst/dgsr_lfo_nods \
-        #--limitoutput \
-        #--lagminthresh=0.25 \
-        #--refinepasses=3 \
-        #-s 100.0 \
-        #-L \
-	#-r -20,20 \
-	#-f 2 \
-        #--multiproc 
-#rapidtide2x \
-	#fmri.nii.gz \
-	#../dst/dgsr_lfox_nods \
-        #--limitoutput \
-        #--lagminthresh=0.25 \
-        #--refinepasses=3 \
-        #-s 100.0 \
-        #-L \
-	#-r -20,20 \
-	#-f 2 \
-        #--multiproc 
+diffmaps ../dst/dgsr_2x ../dst/dgsr_2 ../dst/diff
