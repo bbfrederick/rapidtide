@@ -605,6 +605,25 @@ def readfmriprepconfounds(inputfilename):
     return confounddict
 
 
+def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, debug=False):
+    if columns is None:
+        columns = []
+        for i in range(data.shape[1]):
+            columns.append("col_" + str(i).zfill(2))
+        else:
+            if len(columns) != data.shape[1]:
+                print('number of column names does not match number of columns in data')
+                sys.exit()
+    df = pd.DataFrame(data=data, columns=columns)
+    df.to_csv(outputfileroot + '.tsv.gz', sep='\t', compression='gzip')
+    headerdict = {}
+    headerdict['SamplingFrequency'] = samplerate
+    headerdict['StartTime'] = starttime
+    headerdict['Columns'] = columns
+    with open(outputfileroot + '.json', 'wb') as fp:
+        fp.write(json.dumps(headerdict, sort_keys=True, indent=4, separators=(',', ':')).encode("utf-8"))
+
+
 def readbidstsv(inputfilename, debug=False):
     r"""Read time series out of a BIDS tsv file
 
