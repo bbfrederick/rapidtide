@@ -796,7 +796,7 @@ def happy_main(thearguments):
     projectwithraw = False
     saveinfoasjson = False
     savetcsastsv = True
-    outputlevel = 0
+    outputlevel = 1
     verbose = False
 
     # start the clock!
