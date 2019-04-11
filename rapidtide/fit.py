@@ -617,15 +617,15 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     j = 0
     while (maxindex + i <= upperlimit) and (thexcorr_y[maxindex + i] > searchfrac * maxval_init) and (i < searchbins):
         i += 1
-    i -= 1
+    if (maxindex + i > upperlimit) or (i > searchbins):
+        i -= 1
     while (maxindex - j >= lowerlimit) and (thexcorr_y[maxindex - j] > searchfrac * maxval_init) and (j < searchbins):
         j += 1
-    j -= 1
+    if (maxindex -j < lowerlimit) or (j > searchbins):
+        j -= 1
     # This is calculated from first principles, but it's always big by a factor or ~1.4. 
     #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
     maxsigma_init = np.float64(((i + j + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac)))) / np.sqrt(2.0))
-    fitstart = lowerlimit
-    fitend = upperlimit
 
     # now check the values for errors and refine if necessary
     fitend = min(maxindex + i + 1, upperlimit)
