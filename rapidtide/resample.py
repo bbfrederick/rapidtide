@@ -33,6 +33,10 @@ import rapidtide.util as tide_util
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 
+# this is here until numpy deals with their fft issue
+import warnings
+warnings.simplefilter(action='ignore', category=RuntimeWarning)
+
 # ---------------------------------------- Global constants -------------------------------------------
 donotbeaggressive = True
 
