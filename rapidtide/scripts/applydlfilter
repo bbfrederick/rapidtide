@@ -3,13 +3,8 @@
 from __future__ import print_function, division
 import getopt
 import matplotlib.pyplot as plt
-import numpy as np
-import os
 import sys
-import glob
-from scipy import fftpack
 import rapidtide.io as tide_io
-from statsmodels.robust.scale import mad
 import rapidtide.dlfilter as dlfilter
 
 
@@ -33,7 +28,7 @@ fmrifilename = sys.argv[1]
 display = True
 predfilename = sys.argv[2]
 
-modelname = 'model'
+modelname = 'model_serdar2'
 filesarelists = False
 
 # now scan for optional arguments
@@ -80,7 +75,7 @@ else:
 
 
 # load the filter
-thedlfilter = dlfilter.dlfilter()
+thedlfilter = dlfilter.dlfilter(verbose=True)
 thedlfilter.loadmodel(modelname)
 model = thedlfilter.model
 window_size = thedlfilter.window_size

@@ -1,0 +1,6 @@
+#!/bin/csh -f
+
+applydlfilter \
+    ../dst/happyx_secondpass_cardfromfmri_25.0Hz.txt \
+    ../dst/applydlfilter_output_25.0Hz.txt \
+    --model=../../models/model_serdar2
