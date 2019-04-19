@@ -6,6 +6,44 @@ import matplotlib.pyplot as plt
 import sys
 import rapidtide.io as tide_io
 import rapidtide.dlfilter as dlfilter
+import rapidtide.filter as tide_filt
+import rapidtide.correlate as tide_corr
+import rapidtide.miscmath as tide_math
+import rapidtide.util as tide_util
+import rapidtide.fit as tide_fit
+import numpy as np
+
+
+def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
+    thecardfilt = tide_filt.noncausalfilter(filtertype='cardiac')
+    trimlength = np.min([len(reference), len(candidate)])
+    thexcorr = tide_corr.fastcorrelate(
+        tide_math.corrnormalize(thecardfilt.apply(samplerate, reference),
+                                prewindow=True,
+                                detrendorder=3,
+                                windowfunc='hamming')[:trimlength],
+        tide_math.corrnormalize(thecardfilt.apply(samplerate, candidate),
+                                prewindow=True,
+                                detrendorder=3,
+                                windowfunc='hamming')[:trimlength],
+        usefft=True)
+    xcorrlen = len(thexcorr)
+    sampletime = 1.0 / samplerate
+    xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
+    searchrange = 5.0
+    trimstart = tide_util.valtoindex(xcorr_x, -2.0 * searchrange)
+    trimend = tide_util.valtoindex(xcorr_x, 2.0 * searchrange)
+    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
+        xcorr_x[trimstart:trimend], thexcorr[trimstart:trimend], -searchrange, searchrange, 3.0,
+        refine=refine,
+        zerooutbadfit=False,
+        useguess=False,
+        fastgauss=False,
+        displayplots=False)
+    if debug:
+        print('CORRELATION: maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend:',
+              maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend)
+    return maxval, maxdelay, failreason
 
 
 def usage():
@@ -25,7 +63,8 @@ if len(sys.argv) < 3:
     usage()
     sys.exit()
 fmrifilename = sys.argv[1]
-display = True
+display = False
+verbose = False
 predfilename = sys.argv[2]
 
 modelname = 'model_serdar2'
@@ -43,13 +82,16 @@ except getopt.GetoptError as err:
 for o, a in opts:
     if o == "--model":
         modelname = a
-        print('will use', modelname)
+        if verbose:
+            print('will use', modelname)
     elif o == "--nodisplay":
         display = False
-        print('disabling display')
+        if verbose:
+            print('disabling display')
     elif o == "--filesarelists":
         filesarelists = True
-        print('will treat specified files as lists')
+        if verbose:
+            print('will treat specified files as lists')
     else:
         assert False, "unhandled option"
 
@@ -59,13 +101,15 @@ if filesarelists:
         inputlist = f.readlines()
         for line in inputlist:
             fmrifilenamelist.append(line.strip())
-            print(fmrifilenamelist[-1])
+            if verbose:
+                print(fmrifilenamelist[-1])
     predfilenamelist = []
     with open(predfilename, 'r') as f:
         inputlist = f.readlines()
         for line in inputlist:
             predfilenamelist.append(line.strip())
-            print(predfilenamelist[-1])
+            if verbose:
+                print(predfilenamelist[-1])
     if len(fmrifilenamelist) != len(predfilenamelist):
         print('list lengths do not match - exiting')
         sys.exit()
@@ -75,7 +119,7 @@ else:
 
 
 # load the filter
-thedlfilter = dlfilter.dlfilter(verbose=True)
+thedlfilter = dlfilter.dlfilter(verbose=False)
 thedlfilter.loadmodel(modelname)
 model = thedlfilter.model
 window_size = thedlfilter.window_size
@@ -91,14 +135,20 @@ if usebadpts:
 
 for idx, fmrifilename in enumerate(fmrifilenamelist):
     # read in the data
-    print('reading in', fmrifilename)
+    if verbose:
+        print('reading in', fmrifilename)
     fmridata = tide_io.readvec(fmrifilename)
 
-    print('filtering...')
+    if verbose:
+        print('filtering...')
     predicteddata = thedlfilter.apply(fmridata, badpts=badpts)
 
-    print('writing to', predfilenamelist[idx])
+    if verbose:
+        print('writing to', predfilenamelist[idx])
     tide_io.writevec(predicteddata, predfilenamelist[idx])
+
+    maxval, maxdelay, failreason = checkcardmatch(fmridata, predicteddata, 25.0, debug=False)
+    print(fmrifilename, 'max correlation input to output:', maxval)
 
     if display:
         plt.figure()
