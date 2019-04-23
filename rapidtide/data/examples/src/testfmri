@@ -1,8 +1,23 @@
 #!/bin/csh -f
 
-rapidtide2 \
+#rapidtide2 \
+	#fmri.nii.gz \
+	#../dst/dgsr_2 \
+        #--limitoutput \
+        #-s 25.0 \
+        #-L \
+	#-r -20,20 \
+	#-f 2 \
+        #--refinepasses=3 \
+        #--despecklepasses=4 \
+        #--accheck \
+        #--nprocs=-1 \
+        #--saveoptionsasjson \
+        #--detrendorder=3
+
+rapidtide2x \
 	fmri.nii.gz \
-	../dst/dgsr_2 \
+	../dst/dgsr_nomask \
         --limitoutput \
         -s 25.0 \
         -L \
@@ -17,12 +32,13 @@ rapidtide2 \
 
 rapidtide2x \
 	fmri.nii.gz \
-	../dst/dgsr_2x \
+	../dst/dgsr_cerebellar \
         --limitoutput \
         -s 25.0 \
         -L \
 	-r -20,20 \
 	-f 2 \
+        --globalmeaninclude=cerebellum_mask.nii.gz \
         --refinepasses=3 \
         --despecklepasses=4 \
         --accheck \
@@ -30,4 +46,4 @@ rapidtide2x \
         --saveoptionsasjson \
         --detrendorder=3
 
-diffmaps ../dst/dgsr_2x ../dst/dgsr_2 ../dst/diff
+diffmaps ../dst/dgsr_nomask ../dst/dgsr_cerebellar ../dst/diff

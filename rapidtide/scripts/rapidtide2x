@@ -212,7 +212,7 @@ def usage():
         "[--refineprenorm=TYPE]",
         "[--passes=PASSES]",
         "[--refinepasses=PASSES]",
-        "[--excludemask=MASK]", "[--includemask=MASK]",
+        "[--excluderefine=MASK]", "[--includerefine=MASK]", "[--includemean=MASK]", "[--excludemean=MASK]"
         "[--lagminthresh=MIN]", "[--lagmaxthresh=MAX]", "[--ampthresh=AMP]", "[--sigmathresh=SIGMA]",
         "[--corrmask=MASK]",
         "[--corrmaskthresh=PCT]",
@@ -289,6 +289,10 @@ def usage():
     print("                                     GAUSSSIGMA in mm")
     print("    -M                             - Generate a global mean regressor and use that as the ")
     print("                                     reference regressor")
+    print("    --globalmeaninclude=MASK       - Only use voxels in NAME for global regressor generation")
+    print("                                     generation")
+    print("    --globalmeanexclude=MASK       - Do not use voxels in NAME for global regressor ")
+    print("                                     generation")
     print("    -m                             - Mean scale regressors during global mean estimation")
     print("    --slicetimes=FILE              - Apply offset times from FILE to each slice in the dataset")
     print("    --numskip=SKIP                 - SKIP tr's were previously deleted during preprocessing")
@@ -364,10 +368,8 @@ def usage():
     print("     --refinepasses=PASSES           (default is 1 pass - no refinement).")
     print("                                     NB: refinepasses is the wrong name for this option -")
     print("                                     --refinepasses is deprecated, use --passes from now on.")
-    print("    --includemask=MASK             - Only use voxels in NAME for global regressor ")
-    print("                                     generation and regressor refinement")
-    print("    --excludemask=MASK             - Do not use voxels in NAME for global regressor ")
-    print("                                     generation and regressor refinement")
+    print("    --refineinclude=MASK           - Only use voxels in MASK for regressor refinement")
+    print("    --refineexclude=MASK           - Do not use voxels in MASK for regressor refinement ")
     print("    --lagminthresh=MIN             - For refinement, exclude voxels with delays less ")
     print("                                     than MIN (default is 0.5s)")
     print("    --lagmaxthresh=MAX             - For refinement, exclude voxels with delays greater ")
@@ -565,8 +567,10 @@ def main():
     optiondict['ampthresh'] = 0.3
     optiondict['passes'] = 1
     optiondict['refineoffset'] = False
-    optiondict['excludemaskname'] = None
-    optiondict['includemaskname'] = None
+    optiondict['globalmeanexcludename'] = None
+    optiondict['globalmeanincludename'] = None
+    optiondict['refineexcludename'] = None
+    optiondict['refineincludename'] = None
     optiondict['refinetype'] = 'unweighted_average'
     optiondict['estimatePCAdims'] = False
     optiondict['filterbeforePCA'] = True
@@ -647,8 +651,10 @@ def main():
                                                                                                           'motpos',
                                                                                                           'motderiv',
                                                                                                           'motdelayderiv',
-                                                                                                          'includemask=',
-                                                                                                          'excludemask=',
+                                                                                                          'globalmeaninclude=',
+                                                                                                          'globalmeanexclude=',
+                                                                                                          'refineinclude=',
+                                                                                                          'refineexclude=',
                                                                                                           'refineoffset',
                                                                                                           'nofitfilt',
                                                                                                           'cleanrefined',
@@ -1140,18 +1146,26 @@ def main():
                 optiondict['passes'] = 2
             linkchar = '='
             print('Using widththresh of ', optiondict['sigmathresh'])
-        elif o == '--excludemask':
-            optiondict['excludemaskname'] = a
+        elif o == '--globalmeaninclude':
+            optiondict['globalmeanincludename'] = a
             linkchar = '='
-            print('Voxels in ', optiondict['excludemaskname'], ' will not be used to define or refine regressors')
+            print('Only voxels in ', optiondict['globalmeanincludename'], ' will be used to define the initial mean regressor')
+        elif o == '--globalmeanexclude':
+            optiondict['globalmeanexcludename'] = a
+            linkchar = '='
+            print('Voxels in ', optiondict['globalmeanexcludename'], ' will not be used to define the initial mean regressor')
+        elif o == '--refineinclude':
+            optiondict['refineincludename'] = a
+            linkchar = '='
+            print('Only voxels in ', optiondict['refineincludename'], ' will be used to refine the probe regressor')
+        elif o == '--refineexclude':
+            optiondict['refineexcludename'] = a
+            linkchar = '='
+            print('Voxels in ', optiondict['refineexcludename'], ' will not be used to refine the probe regressor')
         elif o == '--corrmask':
             optiondict['corrmaskname'] = a
             linkchar = '='
             print('Using ', optiondict['corrmaskname'], ' as mask file - corrmaskthresh will be ignored')
-        elif o == '--includemask':
-            optiondict['includemaskname'] = a
-            linkchar = '='
-            print('Only voxels in ', optiondict['includemaskname'], ' will be used to define or refine regressors')
         elif o == '--refineprenorm':
             optiondict['refineprenorm'] = a
             if (
@@ -1193,7 +1207,7 @@ def main():
             usage()
             sys.exit()
         else:
-            assert False, 'unhandled option'
+            assert False, 'unhandled option: ' + o
         formattedcmdline.append('\t' + o + linkchar + a + ' \\')
     formattedcmdline[len(formattedcmdline) - 1] = formattedcmdline[len(formattedcmdline) - 1][:-2]
 
@@ -1349,40 +1363,74 @@ def main():
 
     # read in the optional masks
     tide_util.logmem('before setting masks', file=memfile)
-    internalincludemask = None
-    internalexcludemask = None
-    if optiondict['includemaskname'] is not None:
+    internalglobalmeanincludemask = None
+    internalglobalmeanexcludemask = None
+    internalrefineincludemask = None
+    internalrefineexcludemask = None
+    if optiondict['globalmeanincludename'] is not None:
         if optiondict['textio']:
-            theincludemask = tide_io.readvecs(optiondict['includemaskname']).astype('int16')
+            theglobalmeanincludemask = tide_io.readvecs(optiondict['globalmeanincludename']).astype('int16')
             theshape = np.shape(nim_data)
             theincludexsize = theshape[0]
             if not theincludexsize == xsize:
                 print('Dimensions of include mask do not match the fmri data - exiting')
                 sys.exit()
         else:
-            nimincludemask, theincludemask, nimincludemask_hdr, theincludemaskdims, theincludmasksizes = tide_io.readfromnifti(
-                optiondict['includemaskname'])
+            nimincludemask, theglobalmeanincludemask, nimincludemask_hdr, theincludemaskdims, theincludmasksizes = tide_io.readfromnifti(
+                optiondict['globalmeanincludename'])
             if not tide_io.checkspacematch(nimincludemask_hdr, nim_hdr):
                 print('Dimensions of include mask do not match the fmri data - exiting')
                 sys.exit()
-        internalincludemask = theincludemask.reshape(numspatiallocs)
-    if optiondict['excludemaskname'] is not None:
+        internalglobalmeanincludemask = theglobalmeanincludemask.reshape(numspatiallocs)
+    if optiondict['globalmeanexcludename'] is not None:
         if optiondict['textio']:
-            theexcludemask = tide_io.readvecs(optiondict['excludemaskname']).astype('int16')
-            theexcludemask = 1.0 - theexcludemask
+            theglobalmeanexcludemask = tide_io.readvecs(optiondict['globalmeanexcludename']).astype('int16')
+            theglobalmeanexcludemask = 1.0 - theglobalmeanexcludemask
             theshape = np.shape(nim_data)
             theexcludexsize = theshape[0]
             if not theexcludexsize == xsize:
                 print('Dimensions of exclude mask do not match the fmri data - exiting')
                 sys.exit()
         else:
-            nimexcludemask, theexcludemask, nimexcludemask_hdr, theexcludemaskdims, theexcludmasksizes = tide_io.readfromnifti(
-                optiondict['excludemaskname'])
-            theexcludemask = 1.0 - theexcludemask
+            nimexcludemask, theglobalmeanexcludemask, nimexcludemask_hdr, theexcludemaskdims, theexcludmasksizes = tide_io.readfromnifti(
+                optiondict['globalmeanexcludename'])
+            theglobalmeanexcludemask = 1.0 - theglobalmeanexcludemask
             if not tide_io.checkspacematch(nimexcludemask_hdr, nim_hdr):
                 print('Dimensions of exclude mask do not match the fmri data - exiting')
                 sys.exit()
-        internalexcludemask = theexcludemask.reshape(numspatiallocs)
+        internalglobalmeanexcludemask = theglobalmeanexcludemask.reshape(numspatiallocs)
+    if optiondict['refineincludename'] is not None:
+        if optiondict['textio']:
+            therefineincludemask = tide_io.readvecs(optiondict['refineincludename']).astype('int16')
+            theshape = np.shape(nim_data)
+            theincludexsize = theshape[0]
+            if not theincludexsize == xsize:
+                print('Dimensions of include mask do not match the fmri data - exiting')
+                sys.exit()
+        else:
+            nimincludemask, therefineincludemask, nimincludemask_hdr, theincludemaskdims, theincludmasksizes = tide_io.readfromnifti(
+                optiondict['refineincludename'])
+            if not tide_io.checkspacematch(nimincludemask_hdr, nim_hdr):
+                print('Dimensions of include mask do not match the fmri data - exiting')
+                sys.exit()
+        internalrefineincludemask = therefineincludemask.reshape(numspatiallocs)
+    if optiondict['refineexcludename'] is not None:
+        if optiondict['textio']:
+            therefineexcludemask = tide_io.readvecs(optiondict['refineexcludename']).astype('int16')
+            therefineexcludemask = 1.0 - therefineexcludemask
+            theshape = np.shape(nim_data)
+            theexcludexsize = theshape[0]
+            if not theexcludexsize == xsize:
+                print('Dimensions of exclude mask do not match the fmri data - exiting')
+                sys.exit()
+        else:
+            nimexcludemask, therefineexcludemask, nimexcludemask_hdr, theexcludemaskdims, theexcludmasksizes = tide_io.readfromnifti(
+                optiondict['refineexcludename'])
+            therefineexcludemask = 1.0 - therefineexcludemask
+            if not tide_io.checkspacematch(nimexcludemask_hdr, nim_hdr):
+                print('Dimensions of exclude mask do not match the fmri data - exiting')
+                sys.exit()
+        internalrefineexcludemask = therefineexcludemask.reshape(numspatiallocs)
     tide_util.logmem('after setting masks', file=memfile)
 
     # find the threshold value for the image data
@@ -1427,18 +1475,30 @@ def main():
     print('validvoxels shape =', numvalidspatiallocs)
     fmri_data_valid = fmri_data[validvoxels, :] + 0.0
     print('original size =', np.shape(fmri_data), ', trimmed size =', np.shape(fmri_data_valid))
-    if internalincludemask is not None:
-        internalincludemask_valid = 1.0 * internalincludemask[validvoxels]
-        del internalincludemask
-        print('internalincludemask_valid has size:', internalincludemask_valid.size)
+    if internalglobalmeanincludemask is not None:
+        internalglobalmeanincludemask_valid = 1.0 * internalglobalmeanincludemask[validvoxels]
+        del internalglobalmeanincludemask
+        print('internalglobalmeanincludemask_valid has size:', internalglobalmeanincludemask_valid.size)
     else:
-        internalincludemask_valid = None
-    if internalexcludemask is not None:
-        internalexcludemask_valid = 1.0 * internalexcludemask[validvoxels]
-        del internalexcludemask
-        print('internalexcludemask_valid has size:', internalexcludemask_valid.size)
+        internalglobalmeanincludemask_valid = None
+    if internalglobalmeanexcludemask is not None:
+        internalglobalmeanexcludemask_valid = 1.0 * internalglobalmeanexcludemask[validvoxels]
+        del internalglobalmeanexcludemask
+        print('internalglobalmeanexcludemask_valid has size:', internalglobalmeanexcludemask_valid.size)
     else:
-        internalexcludemask_valid = None
+        internalglobalmeanexcludemask_valid = None
+    if internalrefineincludemask is not None:
+        internalrefineincludemask_valid = 1.0 * internalrefineincludemask[validvoxels]
+        del internalrefineincludemask
+        print('internalrefineincludemask_valid has size:', internalrefineincludemask_valid.size)
+    else:
+        internalrefineincludemask_valid = None
+    if internalrefineexcludemask is not None:
+        internalrefineexcludemask_valid = 1.0 * internalrefineexcludemask[validvoxels]
+        del internalrefineexcludemask
+        print('internalrefineexcludemask_valid has size:', internalrefineexcludemask_valid.size)
+    else:
+        internalrefineexcludemask_valid = None
     tide_util.logmem('after selecting valid voxels', file=memfile)
 
     # move fmri_data_valid into shared memory
@@ -1502,8 +1562,8 @@ def main():
         inputfreq = 1.0 / fmritr
         inputperiod = 1.0 * fmritr
         inputstarttime = 0.0
-        inputvec = getglobalsignal(fmri_data_valid, optiondict, includemask=internalincludemask_valid,
-                                   excludemask=internalexcludemask_valid)
+        inputvec = getglobalsignal(fmri_data_valid, optiondict, includemask=internalglobalmeanincludemask_valid,
+                                   excludemask=internalglobalmeanexcludemask_valid)
         optiondict['preprocskip'] = 0
     else:
         if inputfreq is None:
@@ -2047,8 +2107,8 @@ def main():
                 theprefilter,
                 optiondict,
                 padtrs=numpadtrs,
-                includemask=internalincludemask_valid,
-                excludemask=internalexcludemask_valid,
+                includemask=internalrefineincludemask_valid,
+                excludemask=internalrefineexcludemask_valid,
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype)
             normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
