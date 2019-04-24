@@ -808,6 +808,35 @@ def readvec(inputfilename):
                 inputvec[numvals - 1] = np.float64(line)
     return 1.0 * inputvec[0:numvals]
 
+def readtc(inputfilename, colnum=None, colname=None, debug=False):
+    # check file type
+    filebase, extension = os.path.splitext(inputfilename)
+    inputfreq = None
+    inputstart = None
+    if debug:
+        print('filebase:', filebase)
+        print('extension:', extension)
+    if extension == '.json':
+        if (colnum is None) and (colname is None):
+            print('You must specify a column name or number to read a bidstsv file')
+            sys.exit()
+        if (colnum is not None) and (colname is not None):
+            print('You must specify a column name or number, but not both, to read a bidstsv file')
+            sys.exit()
+        inputfreq, inputstart, timecourse = readcolfrombidstsv(inputfilename, columnname=colname,
+                                                                          columnnum=colnum, debug=debug)
+    else:
+        timecourse = np.transpose(tide_io.readvecs(inputfilename))
+        if debug:
+            print(timecourse.shape)
+        if len(timecourse.shape) != 1:
+            if (colnum is None) or (colname is not None):
+                print('You must specify a column number (not a name) to read a column from a multicolumn file')
+                sys.exit()
+            timecourse = timecourse[:, colnum]
+
+    return timecourse, inputfreq, inputstart
+
 
 def readlabels(inputfilename):
     r"""
