@@ -308,7 +308,7 @@ def fisher(r):
 
 
 # --------------------------- histogram functions -------------------------------------------------
-def gethistprops(indata, histlen, refine=False, therange=None):
+def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False):
     """
 
     Parameters
@@ -317,6 +317,7 @@ def gethistprops(indata, histlen, refine=False, therange=None):
     histlen
     refine
     therange
+    pickleftpeak
 
     Returns
     -------
@@ -330,7 +331,17 @@ def gethistprops(indata, histlen, refine=False, therange=None):
     thestore[0, :] = thehist[1][-histlen:]
     thestore[1, :] = thehist[0][-histlen:]
     # get starting values for the peak, ignoring first and last point of histogram
-    peakindex = np.argmax(thestore[1, 1:-2])
+    if pickleft:
+        peakindex = 1
+        finished = False
+        while i < len(thestore[1, :] - 2) and not finished:
+            i += 1
+            if thestore[1, i] > thestore[1, peakindex]:
+                peakindex = i
+            if (peakindex - i > 3) or (thestore[1, i] < 0.75 * thestore[1, peakindex]):
+                finished = True
+    else:
+        peakindex = np.argmax(thestore[1, 1:-2])
     peaklag = thestore[0, peakindex + 1]
     peakheight = thestore[1, peakindex + 1]
     numbins = 1

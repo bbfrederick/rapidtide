@@ -207,6 +207,7 @@ def usage():
         "[--searchfrac=SEARCHFRAC]",
         "[-N NREPS]",
         "[--motionfile=MOTFILE]",
+        "[--pickleft]",
         "[--numskip=SKIP]",
         "[--refineweighting=TYPE]",
         "[--refineprenorm=TYPE]",
@@ -380,6 +381,7 @@ def usage():
     print("                                     than SIGMA (default is 100s)")
     print("    --refineoffset                 - Adjust offset time during refinement to bring peak ")
     print("                                     delay to zero")
+    print("    --pickleft                     - When setting refineoffset, always select the leftmost histogram peak")
     print("    --refineupperlag               - Only use positive lags for regressor refinement")
     print("    --refinelowerlag               - Only use negative lags for regressor refinement")
     print("    --pca                          - Use pca to derive refined regressor (default is ")
@@ -567,6 +569,7 @@ def main():
     optiondict['ampthresh'] = 0.3
     optiondict['passes'] = 1
     optiondict['refineoffset'] = False
+    optiondict['pickleft'] = False
     optiondict['globalmeanexcludename'] = None
     optiondict['globalmeanincludename'] = None
     optiondict['refineexcludename'] = None
@@ -656,6 +659,7 @@ def main():
                                                                                                           'refineinclude=',
                                                                                                           'refineexclude=',
                                                                                                           'refineoffset',
+                                                                                                          'pickleft',
                                                                                                           'nofitfilt',
                                                                                                           'cleanrefined',
                                                                                                           'pca',
@@ -1113,6 +1117,9 @@ def main():
             if optiondict['passes'] == 1:
                 optiondict['passes'] = 2
             print('Will refine offset time during subsequent passes')
+        elif o == '--pickleft':
+            optiondict['pickleft'] = True
+            print('Will select the leftmost delay peak when setting refine offset')
         elif o == '--lagminthresh':
             optiondict['lagminthresh'] = float(a)
             if optiondict['passes'] == 1:
@@ -2083,7 +2090,8 @@ def main():
             timings.append(['Regressor refinement start, pass ' + str(thepass), time.time(), None, None])
             if optiondict['refineoffset']:
                 peaklag, peakheight, peakwidth = tide_stats.gethistprops(lagtimes[np.where(lagmask > 0)],
-                                                                         optiondict['histlen'])
+                                                                         optiondict['histlen'],
+                                                                         pickleft=optiondict['pickleft'])
                 optiondict['offsettime'] = peaklag
                 optiondict['offsettime_total'] += peaklag
                 print('offset time set to ', optiondict['offsettime'], ', total is ', optiondict['offsettime_total'])
