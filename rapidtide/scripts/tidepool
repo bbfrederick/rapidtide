@@ -487,9 +487,13 @@ class overlay:
         self.lut_state = lut_state
         self.theLUT = None
         self.setLUT(self.lut_state)
-        self.isMNI = False
+        self.space = 'unspecified'
         if (self.header['sform_code'] == 4) or (self.header['qform_code'] == 4):
-            self.isMNI = True
+            if ((self.xdim == 61) and (self.ydim == 73) and (self.zdim == 61)) or \
+                ((self.xdim == 91) and (self.ydim == 109) and (self.zdim == 91)):
+                self.space = "MNI152"
+            else:
+                self.space = "MNI152Asym2009c"
         if self.header['sform_code'] != 0:
             self.affine = self.header.get_sform()
         elif self.header['qform_code'] != 0:
@@ -639,7 +643,7 @@ class overlay:
         print('    ydim:             ', self.ydim)
         print('    zdim:             ', self.zdim)
         print('    tdim:             ', self.tdim)
-        print('    isMNI:            ', self.isMNI)
+        print('    space:            ', self.space)
         print('    toffset:          ', self.toffset)
         print('    tr:               ', self.tr)
         print('    min:              ', self.minval)
@@ -948,6 +952,18 @@ def set_refinemask():
     updateHistogram()
 
 
+def set_meanmask():
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone
+    print('Mean regressor seed mask')
+    ui.setMask_Button.setText('Mean mask')
+    for themap in loadedfuncmaps:
+        overlays[themap].setFuncMask(overlays['meanmask'].data)
+    atlasaveragingdone = False
+    updateAveragingMode()
+    updateOrthoImages()
+    updateHistogram()
+
+
 def set_nomask():
     global overlays, loadedfuncmaps, ui, atlasaveragingdone
     print('disabling functional mask')
@@ -1220,7 +1236,7 @@ def loadfuncmaps(thefileroot, theoverlays, thefuncmaps):
     return loadedfuncmaps
 
 
-def loadanatomics(thefileroot, theoverlays, anatname, MNIcoords, xsize, ysize, zsize):
+def loadanatomics(thefileroot, theoverlays, anatname, coordinatespace, xsize, ysize, zsize):
     try:
         fsldir = os.environ['FSLDIR']
     except KeyError:
@@ -1254,7 +1270,7 @@ def loadanatomics(thefileroot, theoverlays, anatname, MNIcoords, xsize, ysize, z
         print('using ', thefileroot + 'highres.nii.gz', ' as background')
         # allloadedmaps.append('anatomic')
         return True
-    elif MNIcoords:
+    elif coordinatespace == 'MNI152':
         mniname = ''
         if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
             print('using 2mm MNI anatomic name')
@@ -1297,7 +1313,7 @@ def loadfuncmasks(thefileroot, theoverlays, thefuncmasks):
     return loadedfuncmasks
 
 
-def loadgeommask(thefileroot, theoverlays, geommaskname, MNIcoords, xsize, ysize, zsize):
+def loadgeommask(thefileroot, theoverlays, geommaskname, coordinatespace, xsize, ysize, zsize):
     referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
                                 'reference')
     if geommaskname != '':
@@ -1307,7 +1323,7 @@ def loadgeommask(thefileroot, theoverlays, geommaskname, MNIcoords, xsize, ysize
             print('using ', geommaskname, ' as geometric mask')
             # allloadedmaps.append('geommask')
             return True
-    elif MNIcoords:
+    elif coordinatespace == 'MNI152':
         try:
             fsldir = os.environ['FSLDIR']
         except KeyError:
@@ -1360,7 +1376,7 @@ def main():
     forceoffset = False
     usecorrout = False
     userise = False
-    MNIcoords = False
+    coordinatespace = 'unspecified'
     buttonisdown = False
     harvestcolormaps = False
     xdim = 0
@@ -1544,7 +1560,9 @@ def main():
     sel_lagmask = QtGui.QAction('Valid fit', win)
     sel_lagmask.triggered.connect(set_lagmask)
     sel_refinemask = QtGui.QAction('Voxels used in refine', win)
+    sel_meanmask = QtGui.QAction('Voxels used in mean regressor calculation', win)
     sel_refinemask.triggered.connect(set_refinemask)
+    sel_meanmask.triggered.connect(set_meanmask)
     sel_0p05 = QtGui.QAction('p<0.05', win)
     sel_0p05.triggered.connect(set_0p05)
     sel_0p01 = QtGui.QAction('p<0.01', win)
@@ -1582,8 +1600,8 @@ def main():
             overlays[themap].setTR(trval)
         if forceoffset:
             overlays[themap].settoffset(offsettime)
-        if overlays[themap].isMNI:
-            MNIcoords = True
+        if overlays[themap].space == "MNI152":
+            coordinatespace = 'MNI152'
 
     # report results of load
     print('loaded functional maps: ', loadedfuncmaps)
@@ -1604,18 +1622,18 @@ def main():
     tr = overlays[focusmap].tr
 
     # then load the anatomics
-    if loadanatomics(datafileroot, overlays, anatname, MNIcoords, xsize, ysize, zsize):
+    if loadanatomics(datafileroot, overlays, anatname, coordinatespace, xsize, ysize, zsize):
         allloadedmaps.append('anatomic')
 
     # then the functional masks
-    funcmasks = ['lagmask', 'refinemask', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
+    funcmasks = ['lagmask', 'refinemask', 'meanmask', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask', 'p_lt_0p001_mask']
     loadedfuncmasks = loadfuncmasks(datafileroot, overlays, funcmasks)
 
     # then the geometric masks
-    if loadgeommask(datafileroot, overlays, geommaskname, MNIcoords, xsize, ysize, zsize):
+    if loadgeommask(datafileroot, overlays, geommaskname, coordinatespace, xsize, ysize, zsize):
         allloadedmaps.append('geommask')
 
-    if MNIcoords:
+    if coordinatespace == 'MNI152':
         global atlasname, atlaslabels
         # atlasname = 'ASPECTS'
         atlasshortname = 'ATT'
@@ -1708,6 +1726,11 @@ def main():
                 'label': 'Geometric mask',
                 'funcmask': None},
         'refinemask':
+            {
+                'colormap': gray_state,
+                'label': 'Refine mask',
+                'funcmask': None},
+        'meanmask':
             {
                 'colormap': gray_state,
                 'label': 'Refine mask',
@@ -1889,6 +1912,9 @@ def main():
             numspecial += 1
         if 'refinemask' in loadedfuncmasks:
             popMenu.addAction(sel_refinemask)
+            numspecial += 1
+        if 'meanmask' in loadedfuncmasks:
+            popMenu.addAction(sel_meanmask)
             numspecial += 1
         if numspecial > 0:
             popMenu.addSeparator()
