@@ -176,7 +176,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
                 globalmean = globalmean + indata[vox, :]
     print()
     print('used ', numvoxelsused, ' voxels to calculate global mean signal')
-    return tide_math.stdnormalize(globalmean)
+    return tide_math.stdnormalize(globalmean), themask
 
 
 def usage():
@@ -1569,8 +1569,19 @@ def main():
         inputfreq = 1.0 / fmritr
         inputperiod = 1.0 * fmritr
         inputstarttime = 0.0
-        inputvec = getglobalsignal(fmri_data_valid, optiondict, includemask=internalglobalmeanincludemask_valid,
-                                   excludemask=internalglobalmeanexcludemask_valid)
+        inputvec, meanmask = getglobalsignal(fmri_data_valid, optiondict,
+                                             includemask=internalglobalmeanincludemask_valid,
+                                             excludemask=internalglobalmeanexcludemask_valid)
+        fullmeanmask = np.zeros((numspatiallocs), dtype=rt_floattype)
+        fullmeanmask[validvoxels] = meanmask[:]
+        theheader = nim_hdr
+        if fileiscifti:
+            theheader['intent_code'] = 3006
+        else:
+            theheader['dim'][0] = 3
+            theheader['dim'][4] = 1
+        tide_io.savetonifti(fullmeanmask.reshape((xsize, ysize, numslices)), theheader, thesizes,
+                            outputname + '_meanmask' + '')
         optiondict['preprocskip'] = 0
     else:
         if inputfreq is None:
