@@ -332,13 +332,18 @@ def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False):
     thestore[1, :] = thehist[0][-histlen:]
     # get starting values for the peak, ignoring first and last point of histogram
     if pickleft:
+        overallmax = np.max(thestore[1, 1:-2])
         peakindex = 1
+        i = 1
+        started = False
         finished = False
         while i < len(thestore[1, :] - 2) and not finished:
+            if thestore[1, i] > 0.5 * overallmax:
+                started = True
             i += 1
             if thestore[1, i] > thestore[1, peakindex]:
                 peakindex = i
-            if (peakindex - i > 3) or (thestore[1, i] < 0.75 * thestore[1, peakindex]):
+            if started and (thestore[1, i] < 0.75 * thestore[1, peakindex]):
                 finished = True
     else:
         peakindex = np.argmax(thestore[1, 1:-2])
