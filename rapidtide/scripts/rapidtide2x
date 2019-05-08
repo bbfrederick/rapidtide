@@ -1180,25 +1180,60 @@ def main():
             linkchar = '='
             print('Using widththresh of ', optiondict['sigmathresh'])
         elif o == '--globalmeaninclude':
-            optiondict['globalmeanincludename'] = a
+            optiondict['globalmeanincludename'], optiondict['globalmeanincludevals'] = tide_io.parsefilespec(a)
             linkchar = '='
-            print('Only voxels in ', optiondict['globalmeanincludename'], ' will be used to define the initial mean regressor')
+            if optiondict['globalmeanincludevals'] is not None:
+                print('Using voxels where',
+                      optiondict['globalmeanincludename'],
+                      ' = ',
+                      optiondict['globalmeanincludevals'],
+                      ' for inclusion in global mean')
+            else:
+                print('Using ', optiondict['globalmeanincludename'], ' as include mask for global mean calculation')
         elif o == '--globalmeanexclude':
-            optiondict['globalmeanexcludename'] = a
+            optiondict['globalmeanexcludename'], optiondict['globalmeanexcludevals'] = tide_io.parsefilespec(a)
             linkchar = '='
-            print('Voxels in ', optiondict['globalmeanexcludename'], ' will not be used to define the initial mean regressor')
+            if optiondict['globalmeanexcludevals'] is not None:
+                print('Using voxels where',
+                      optiondict['globalmeanexcludename'],
+                      ' = ',
+                      optiondict['globalmeanexcludevals'],
+                      ' for exclusion from global mean')
+            else:
+                print('Using ', optiondict['globalmeanexcludename'], ' as exclude mask for global mean calculation')
         elif o == '--refineinclude':
-            optiondict['refineincludename'] = a
+            optiondict['refineincludename'], optiondict['refineincludevals'] = tide_io.parsefilespec(a)
             linkchar = '='
-            print('Only voxels in ', optiondict['refineincludename'], ' will be used to refine the probe regressor')
+            if optiondict['refineincludevals'] is not None:
+                print('Using voxels where',
+                      optiondict['refineincludename'],
+                      ' = ',
+                      optiondict['refineincludevals'],
+                      ' for inclusion in refine mask')
+            else:
+                print('Using ', optiondict['refineincludename'], ' as include mask for probe regressor refinement')
         elif o == '--refineexclude':
-            optiondict['refineexcludename'] = a
+            optiondict['refineexcludename'], optiondict['refineexcludevals'] = tide_io.parsefilespec(a)
             linkchar = '='
-            print('Voxels in ', optiondict['refineexcludename'], ' will not be used to refine the probe regressor')
+            if optiondict['refineiexcludevals'] is not None:
+                print('Using voxels where',
+                      optiondict['refineexcludename'],
+                      ' = ',
+                      optiondict['refineexcludevals'],
+                      ' for exclusion from refine mask')
+            else:
+                print('Using ', optiondict['refineexcludename'], ' as exclude mask for probe regressor refinement')
         elif o == '--corrmask':
-            optiondict['corrmaskname'] = a
+            optiondict['corrmaskname'], optiondict['corrmaskvallist'] = tide_io.parsefilespec(a)
             linkchar = '='
-            print('Using ', optiondict['corrmaskname'], ' as mask file - corrmaskthresh will be ignored')
+            if optiondict['corrmaskvallist'] is not None:
+                print('Using voxels where',
+                      optiondict['corrmaskname'],
+                      ' = ',
+                      optiondict['corrmaskvallist'],
+                      '- corrmaskthresh will be ignored')
+            else:
+                print('Using ', optiondict['corrmaskname'], ' as mask file - corrmaskthresh will be ignored')
         elif o == '--refineprenorm':
             optiondict['refineprenorm'] = a
             if (

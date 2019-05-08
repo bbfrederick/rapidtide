@@ -714,6 +714,15 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
             return samplerate, starttime, data[columnnum, :]
 
 
+def parsefilespec(filespec):
+    inputlist = filespec.split(':')
+    thefilename = inputlist[0]
+    if len(inputlist) > 1:
+        return thefilename, colspectolist(inputlist[1])
+    else:
+        return thefilename, None
+
+
 def colspectolist(colspec):
     collist = []
     theranges = colspec.split(',')
