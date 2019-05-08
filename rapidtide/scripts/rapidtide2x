@@ -147,6 +147,27 @@ def allocshared(theshape, thetype):
     return outarray, outarray_shared, theshape
 
 
+def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, maskname='the'):
+    if istext:
+        maskarray = tide_io.readvecs(maskfilename).astype('int16')
+        theshape = np.shape(maskarray)
+        theincludexsize = theshape[0]
+        if not theincludexsize == xsize:
+            print('Dimensions of ' + maskname + ' mask do not match the fmri data - exiting')
+            sys.exit()
+    else:
+        themask, maskarray, mask_hdr, maskdims, masksizes = tide_io.readfromnifti(maskfilename)
+        if not tide_io.checkspacematch(mask_hdr, nim_hdr):
+            print('Dimensions of ' + maskname + ' mask do not match the fmri data - exiting')
+            sys.exit()
+    if valslist is not None:
+        tempmask = (0 * maskarray).astype('int16')
+        for theval in valslist:
+            tempmask[np.where(maskarray == theval)] += 1
+        maskarray = np.where(tempmask > 0, 1, 0)
+    return maskarray
+
+
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     # mask to interesting voxels
     if optiondict['globalmaskmethod'] == 'mean':
@@ -469,6 +490,10 @@ def main():
     optiondict['preprocskip'] = 0  # number of trs skipped in preprocessing
     optiondict['meanscaleglobal'] = False
     optiondict['globalmaskmethod'] = 'mean'
+    optiondict['globalmeanexcludename'] = None
+    optiondict['globalmeanexcludemaskvals'] = None    # list of integer values to use in the mask
+    optiondict['globalmeanincludename'] = None
+    optiondict['globalmeanincludemaskvals'] = None    # list of integer values to use in the mask
 
     # correlation options
     optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
@@ -480,6 +505,7 @@ def main():
     optiondict['tmaskname'] = None  # file name for tmask regressor
     optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict['corrmaskname'] = None  # name of correlation mask
+    optiondict['corrmaskvals'] = None  # list of integer values in the correlation mask file to use in the mask
     optiondict[
         'check_autocorrelation'] = True  # check for periodic components that corrupt the autocorrelation
     optiondict[
@@ -570,10 +596,10 @@ def main():
     optiondict['passes'] = 1
     optiondict['refineoffset'] = False
     optiondict['pickleft'] = False
-    optiondict['globalmeanexcludename'] = None
-    optiondict['globalmeanincludename'] = None
     optiondict['refineexcludename'] = None
+    optiondict['refineexcludemaskvals'] = None        # list of integer values to use in the mask
     optiondict['refineincludename'] = None
+    optiondict['refineincludemaskvals'] = None        # list of integer values to use in the mask
     optiondict['refinetype'] = 'unweighted_average'
     optiondict['estimatePCAdims'] = False
     optiondict['filterbeforePCA'] = True
@@ -1374,69 +1400,30 @@ def main():
     internalglobalmeanexcludemask = None
     internalrefineincludemask = None
     internalrefineexcludemask = None
+
     if optiondict['globalmeanincludename'] is not None:
-        if optiondict['textio']:
-            theglobalmeanincludemask = tide_io.readvecs(optiondict['globalmeanincludename']).astype('int16')
-            theshape = np.shape(nim_data)
-            theincludexsize = theshape[0]
-            if not theincludexsize == xsize:
-                print('Dimensions of include mask do not match the fmri data - exiting')
-                sys.exit()
-        else:
-            nimincludemask, theglobalmeanincludemask, nimincludemask_hdr, theincludemaskdims, theincludmasksizes = tide_io.readfromnifti(
-                optiondict['globalmeanincludename'])
-            if not tide_io.checkspacematch(nimincludemask_hdr, nim_hdr):
-                print('Dimensions of include mask do not match the fmri data - exiting')
-                sys.exit()
+        theglobalmeanincludemask = readamask(optiondict['globalmeanincludename'], nim_hdr, xsize,
+                                             istext=optiondict['textio'],
+                                             valslist=optiondict['globalmeanincludemaskvals'],
+                                             maskname='global mean include')
         internalglobalmeanincludemask = theglobalmeanincludemask.reshape(numspatiallocs)
     if optiondict['globalmeanexcludename'] is not None:
-        if optiondict['textio']:
-            theglobalmeanexcludemask = tide_io.readvecs(optiondict['globalmeanexcludename']).astype('int16')
-            theglobalmeanexcludemask = 1.0 - theglobalmeanexcludemask
-            theshape = np.shape(nim_data)
-            theexcludexsize = theshape[0]
-            if not theexcludexsize == xsize:
-                print('Dimensions of exclude mask do not match the fmri data - exiting')
-                sys.exit()
-        else:
-            nimexcludemask, theglobalmeanexcludemask, nimexcludemask_hdr, theexcludemaskdims, theexcludmasksizes = tide_io.readfromnifti(
-                optiondict['globalmeanexcludename'])
-            theglobalmeanexcludemask = 1.0 - theglobalmeanexcludemask
-            if not tide_io.checkspacematch(nimexcludemask_hdr, nim_hdr):
-                print('Dimensions of exclude mask do not match the fmri data - exiting')
-                sys.exit()
+        theglobalmeanexcludemask = readamask(optiondict['globalmeanexcludename'], nim_hdr, xsize,
+                                             istext=optiondict['textio'],
+                                             valslist=optiondict['globalmeanexcludemaskvals'],
+                                             maskname='global mean exclude')
         internalglobalmeanexcludemask = theglobalmeanexcludemask.reshape(numspatiallocs)
     if optiondict['refineincludename'] is not None:
-        if optiondict['textio']:
-            therefineincludemask = tide_io.readvecs(optiondict['refineincludename']).astype('int16')
-            theshape = np.shape(nim_data)
-            theincludexsize = theshape[0]
-            if not theincludexsize == xsize:
-                print('Dimensions of include mask do not match the fmri data - exiting')
-                sys.exit()
-        else:
-            nimincludemask, therefineincludemask, nimincludemask_hdr, theincludemaskdims, theincludmasksizes = tide_io.readfromnifti(
-                optiondict['refineincludename'])
-            if not tide_io.checkspacematch(nimincludemask_hdr, nim_hdr):
-                print('Dimensions of include mask do not match the fmri data - exiting')
-                sys.exit()
+        therefineincludemask = readamask(optiondict['refineincludename'], nim_hdr, xsize,
+                                             istext=optiondict['textio'],
+                                             valslist=optiondict['refineincludemaskvals'],
+                                             maskname='refine include')
         internalrefineincludemask = therefineincludemask.reshape(numspatiallocs)
     if optiondict['refineexcludename'] is not None:
-        if optiondict['textio']:
-            therefineexcludemask = tide_io.readvecs(optiondict['refineexcludename']).astype('int16')
-            therefineexcludemask = 1.0 - therefineexcludemask
-            theshape = np.shape(nim_data)
-            theexcludexsize = theshape[0]
-            if not theexcludexsize == xsize:
-                print('Dimensions of exclude mask do not match the fmri data - exiting')
-                sys.exit()
-        else:
-            nimexcludemask, therefineexcludemask, nimexcludemask_hdr, theexcludemaskdims, theexcludmasksizes = tide_io.readfromnifti(
-                optiondict['refineexcludename'])
-            therefineexcludemask = 1.0 - therefineexcludemask
-            if not tide_io.checkspacematch(nimexcludemask_hdr, nim_hdr):
-                print('Dimensions of exclude mask do not match the fmri data - exiting')
-                sys.exit()
+        therefineexcludemask = readamask(optiondict['refineexcludename'], nim_hdr, xsize,
+                                             istext=optiondict['textio'],
+                                             valslist=optiondict['refineexcludemaskvals'],
+                                             maskname='refine exclude')
         internalrefineexcludemask = therefineexcludemask.reshape(numspatiallocs)
     tide_util.logmem('after setting masks', file=memfile)
 
@@ -1444,20 +1431,12 @@ def main():
     tide_util.logmem('before selecting valid voxels', file=memfile)
     threshval = tide_stats.getfracvals(fmri_data[:, optiondict['addedskip']:], [0.98])[0] / 25.0
     if optiondict['corrmaskname'] is not None:
-        if optiondict['textio']:
-            corrmask = tide_io.readvecs(optiondict['corrmaskname']).astype('int16')
-            theshape = np.shape(nim_data)
-            corrxsize = theshape[0]
-            if not corrxsize == xsize:
-                print('Dimensions of correlation mask do not match the fmri data - exiting')
-                sys.exit()
-        else:
-            nimcorrmask, thecorrmask, nimcorrmask_hdr, corrmaskdims, theincludmasksizes = tide_io.readfromnifti(
-                optiondict['corrmaskname'])
-            if not tide_io.checkspacematch(nimcorrmask_hdr, nim_hdr):
-                print('Dimensions of correlation mask do not match the fmri data - exiting')
-                sys.exit()
-            corrmask = np.uint16(np.where(thecorrmask > 0, 1, 0).reshape(numspatiallocs))
+        thecorrmask = readamask(optiondict['corrmaskname'], nim_hdr, xsize,
+                                             istext=optiondict['textio'],
+                                             valslist=optiondict['corrmaskvals'],
+                                             maskname='correlation')
+
+        corrmask = np.uint16(np.where(thecorrmask > 0, 1, 0).reshape(numspatiallocs))
     else:
         corrmask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
                                                  threshpct=optiondict['corrmaskthreshpct']))
