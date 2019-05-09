@@ -184,7 +184,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     if includemask is not None:
         themask = themask * includemask
     if excludemask is not None:
-        themask = themask * excludemask
+        themask = themask * (1 - excludemask)
 
     # add up all the voxels
     globalmean = rt_floatset(indata[0, :])

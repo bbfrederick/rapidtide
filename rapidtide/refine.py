@@ -25,6 +25,7 @@
 from __future__ import print_function, division
 
 import gc
+import sys
 
 import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
@@ -186,7 +187,7 @@ def refineregressor(fmridata,
     if includemask is not None:
         locationmask = locationmask * includemask
     if excludemask is not None:
-        locationmask = locationmask * excludemask
+        locationmask = locationmask * (1 - excludemask)
     print('location mask created')
 
     # first generate the refine mask
