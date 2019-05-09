@@ -723,7 +723,7 @@ def parsefilespec(filespec):
         return thefilename, None
 
 
-def colspectolist(colspec):
+def colspectolist(colspec, debug=False):
     collist = []
     theranges = colspec.split(',')
     def safeint(s):
@@ -734,7 +734,8 @@ def colspectolist(colspec):
             print('COLSPECTOLIST:', s, 'is not a legal integer - exiting')
             return None
     for thisrange in theranges:
-        print('processing range', thisrange)
+        if debug:
+            print('processing range', thisrange)
         theendpoints = thisrange.split('-')
         if len(theendpoints) == 1:
             collist.append(safeint(theendpoints[0]))
