@@ -147,7 +147,9 @@ def allocshared(theshape, thetype):
     return outarray, outarray_shared, theshape
 
 
-def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, maskname='the'):
+def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, maskname='the', verbose=False):
+    if verbose:
+        print('readamask called with filename:', maskfilename, 'vals:', valslist)
     if istext:
         maskarray = tide_io.readvecs(maskfilename).astype('int16')
         theshape = np.shape(maskarray)
@@ -163,7 +165,9 @@ def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, masknam
     if valslist is not None:
         tempmask = (0 * maskarray).astype('int16')
         for theval in valslist:
-            tempmask[np.where(maskarray == theval)] += 1
+            if verbose:
+                print('looking for voxels matching', theval)
+            tempmask[np.where(np.fabs(maskarray - theval) < 0.1)] += 1
         maskarray = np.where(tempmask > 0, 1, 0)
     return maskarray
 
@@ -311,10 +315,12 @@ def usage():
     print("                                     GAUSSSIGMA in mm")
     print("    -M                             - Generate a global mean regressor and use that as the ")
     print("                                     reference regressor")
-    print("    --globalmeaninclude=MASK       - Only use voxels in NAME for global regressor generation")
-    print("                                     generation")
-    print("    --globalmeanexclude=MASK       - Do not use voxels in NAME for global regressor ")
-    print("                                     generation")
+    print("    --globalmeaninclude=MASK[:VALSPEC]")
+    print("                                   - Only use voxels in NAME for global regressor generation (if VALSPEC is")
+    print("                                     given, only voxels with integral values listed in VALSPEC are used.)")
+    print("    --globalmeanexclude=MASK[:VALSPEC]")
+    print("                                   - Do not use voxels in NAME for global regressor generation (if VALSPEC is")
+    print("                                     given, only voxels with integral values listed in VALSPEC are used.)")
     print("    -m                             - Mean scale regressors during global mean estimation")
     print("    --slicetimes=FILE              - Apply offset times from FILE to each slice in the dataset")
     print("    --numskip=SKIP                 - SKIP tr's were previously deleted during preprocessing")
@@ -390,8 +396,10 @@ def usage():
     print("     --refinepasses=PASSES           (default is 1 pass - no refinement).")
     print("                                     NB: refinepasses is the wrong name for this option -")
     print("                                     --refinepasses is deprecated, use --passes from now on.")
-    print("    --refineinclude=MASK           - Only use voxels in MASK for regressor refinement")
-    print("    --refineexclude=MASK           - Do not use voxels in MASK for regressor refinement ")
+    print("    --refineinclude=MASK[:VALSPEC] - Only use nonzero voxels in MASK for regressor refinement (if VALSPEC is")
+    print("                                     given, only voxels with integral values listed in VALSPEC are used.)")
+    print("    --refineexclude=MASK[:VALSPEC] - Do not use nonzero voxels in MASK for regressor refinement (if VALSPEC is")
+    print("                                     given, only voxels with integral values listed in VALSPEC are used.)")
     print("    --lagminthresh=MIN             - For refinement, exclude voxels with delays less ")
     print("                                     than MIN (default is 0.5s)")
     print("    --lagmaxthresh=MAX             - For refinement, exclude voxels with delays greater ")
@@ -491,9 +499,9 @@ def main():
     optiondict['meanscaleglobal'] = False
     optiondict['globalmaskmethod'] = 'mean'
     optiondict['globalmeanexcludename'] = None
-    optiondict['globalmeanexcludemaskvals'] = None    # list of integer values to use in the mask
+    optiondict['globalmeanexcludevals'] = None    # list of integer values to use in the mask
     optiondict['globalmeanincludename'] = None
-    optiondict['globalmeanincludemaskvals'] = None    # list of integer values to use in the mask
+    optiondict['globalmeanincludevals'] = None    # list of integer values to use in the mask
 
     # correlation options
     optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
@@ -597,9 +605,9 @@ def main():
     optiondict['refineoffset'] = False
     optiondict['pickleft'] = False
     optiondict['refineexcludename'] = None
-    optiondict['refineexcludemaskvals'] = None        # list of integer values to use in the mask
+    optiondict['refineexcludevals'] = None        # list of integer values to use in the mask
     optiondict['refineincludename'] = None
-    optiondict['refineincludemaskvals'] = None        # list of integer values to use in the mask
+    optiondict['refineincludevals'] = None        # list of integer values to use in the mask
     optiondict['refinetype'] = 'unweighted_average'
     optiondict['estimatePCAdims'] = False
     optiondict['filterbeforePCA'] = True
@@ -1215,7 +1223,7 @@ def main():
         elif o == '--refineexclude':
             optiondict['refineexcludename'], optiondict['refineexcludevals'] = tide_io.parsefilespec(a)
             linkchar = '='
-            if optiondict['refineiexcludevals'] is not None:
+            if optiondict['refineexcludevals'] is not None:
                 print('Using voxels where',
                       optiondict['refineexcludename'],
                       ' = ',
@@ -1437,34 +1445,60 @@ def main():
     internalrefineexcludemask = None
 
     if optiondict['globalmeanincludename'] is not None:
+        print('constructing global mean include mask')
         theglobalmeanincludemask = readamask(optiondict['globalmeanincludename'], nim_hdr, xsize,
                                              istext=optiondict['textio'],
-                                             valslist=optiondict['globalmeanincludemaskvals'],
+                                             valslist=optiondict['globalmeanincludevals'],
                                              maskname='global mean include')
         internalglobalmeanincludemask = theglobalmeanincludemask.reshape(numspatiallocs)
+        if tide_stats.getmasksize(internalglobalmeanincludemask) == 0:
+            print('ERROR: there are no voxels in the global mean include mask - exiting')
+            sys.exit()
+
     if optiondict['globalmeanexcludename'] is not None:
+        print('constructing global mean exclude mask')
         theglobalmeanexcludemask = readamask(optiondict['globalmeanexcludename'], nim_hdr, xsize,
                                              istext=optiondict['textio'],
-                                             valslist=optiondict['globalmeanexcludemaskvals'],
+                                             valslist=optiondict['globalmeanexcludevals'],
                                              maskname='global mean exclude')
         internalglobalmeanexcludemask = theglobalmeanexcludemask.reshape(numspatiallocs)
+        if tide_stats.getmasksize(internalglobalmeanexcludemask) == numspatiallocs:
+            print('ERROR: the global mean exclude mask does not leave any voxels - exiting')
+            sys.exit()
+
+    if (internalglobalmeanincludemask is not None) and (internalglobalmeanexcludemask is not None):
+        if tide_stats.getmasksize(internalglobalmeanincludemask * (1 - internalglobalmeanexcludemask)) == 0:
+            print('ERROR: the global mean include and exclude masks not leave any voxels between them - exiting')
+            sys.exit()
+
     if optiondict['refineincludename'] is not None:
+        print('constructing refine include mask')
         therefineincludemask = readamask(optiondict['refineincludename'], nim_hdr, xsize,
                                              istext=optiondict['textio'],
-                                             valslist=optiondict['refineincludemaskvals'],
+                                             valslist=optiondict['refineincludevals'],
                                              maskname='refine include')
         internalrefineincludemask = therefineincludemask.reshape(numspatiallocs)
+        if tide_stats.getmasksize(internalrefineincludemask) == 0:
+            print('ERROR: there are no voxels in the refine include mask - exiting')
+            sys.exit()
+
     if optiondict['refineexcludename'] is not None:
+        print('constructing refine exclude mask')
         therefineexcludemask = readamask(optiondict['refineexcludename'], nim_hdr, xsize,
                                              istext=optiondict['textio'],
-                                             valslist=optiondict['refineexcludemaskvals'],
+                                             valslist=optiondict['refineexcludevals'],
                                              maskname='refine exclude')
         internalrefineexcludemask = therefineexcludemask.reshape(numspatiallocs)
+        if tide_stats.getmasksize(internalrefineexcludemask) == numspatiallocs:
+            print('ERROR: the refine exclude mask does not leave any voxels - exiting')
+            sys.exit()
+
     tide_util.logmem('after setting masks', file=memfile)
 
-    # find the threshold value for the image data
+    # read or make a mask of where to calculate the correlations
     tide_util.logmem('before selecting valid voxels', file=memfile)
     threshval = tide_stats.getfracvals(fmri_data[:, optiondict['addedskip']:], [0.98])[0] / 25.0
+    print('constructing correlation mask')
     if optiondict['corrmaskname'] is not None:
         thecorrmask = readamask(optiondict['corrmaskname'], nim_hdr, xsize,
                                              istext=optiondict['textio'],
@@ -1475,6 +1509,23 @@ def main():
     else:
         corrmask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
                                                  threshpct=optiondict['corrmaskthreshpct']))
+    if tide_stats.getmasksize(corrmask) == 0:
+        print('ERROR: there are no voxels in the correlation mask - exiting')
+        sys.exit()
+    if internalrefineincludemask is not None:
+        if internalrefineexcludemask is not None:
+            if tide_stats.getmasksize(corrmask * internalrefineincludemask * (1 - internalrefineexcludemask)) == 0:
+                print('ERROR: the refine include and exclude masks not leave any voxels in the corrmask - exiting')
+                sys.exit()
+        else:
+            if tide_stats.getmasksize(corrmask * internalrefineincludemask) == 0:
+                print('ERROR: the refine include mask does not leave any voxels in the corrmask - exiting')
+                sys.exit()
+    else:
+        if internalrefineexcludemask is not None:
+            if tide_stats.getmasksize(corrmask * (1 - internalrefineexcludemask)) == 0:
+                print('ERROR: the refine exclude mask does not leave any voxels in the corrmask - exiting')
+                sys.exit()
 
     if optiondict['nothresh']:
         corrmask *= 0
