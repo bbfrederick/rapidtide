@@ -33,6 +33,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
+import rapidtide.stats as tide_stats
 
 from sklearn.decomposition import FastICA, PCA
 import numpy as np
@@ -194,6 +195,14 @@ def refineregressor(fmridata,
     lagfails = np.sum(1 - delaymask)
     sigmafails = np.sum(1 - sigmamask)
     refinemask = locationmask * ampmask * delaymask * sigmamask
+    if tide_stats.getmasksize(refinemask) == 0:
+        if (includemask is None) and (excludemask is None):
+            print('ERROR: no voxels in the refine mask - relax ampthresh, delaythresh, or sigmathresh - exiting')
+            sys.exit()
+        else:
+            print('ERROR: no voxels in the refine mask - change include/exclude masks or relax ampthresh, delaythresh, or sigmathresh - exiting')
+            sys.exit()
+
     if optiondict['shiftall']:
         shiftmask = locationmask
     else:
