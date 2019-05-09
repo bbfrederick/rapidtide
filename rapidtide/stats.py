@@ -642,3 +642,20 @@ def makemask(image, threshpct=25.0, verbose=False, nozero=False):
     return themask
 
 
+def getmasksize(themask):
+    """
+
+    Parameters
+    ----------
+    image: array-like
+        The mask data to check.
+
+    Returns
+    -------
+    numvoxels: int
+        The number of nonzero voxels in themask
+
+    """
+    return len(np.where(themask > 0)[0])
+
+
