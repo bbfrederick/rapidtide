@@ -172,7 +172,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=find_packages(exclude=['contrib', 'docs']),
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
@@ -211,6 +211,8 @@ setup(
     package_data={
         'reference': ['reference/*.txt',
                       'reference/*.nii.gz',
+                      ],
+        'testdata': ['tests/data/*.txt',
                       ],
     },
 
