@@ -528,9 +528,20 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
 
 @conditionaljit2()
 def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
-                     edgebufferfrac=0.0, threshval=0.0, uthreshval=30.0,
-                     debug=False, tweaklims=True, zerooutbadfit=True, refine=False, maxguess=0.0, useguess=False,
-                     searchfrac=0.5, fastgauss=False, lagmod=1000.0, enforcethresh=True, displayplots=False):
+                     edgebufferfrac=0.0,
+                     threshval=0.0,
+                     uthreshval=30.0,
+                     debug=False,
+                     tweaklims=True,
+                     zerooutbadfit=True,
+                     refine=False,
+                     maxguess=0.0,
+                     useguess=False,
+                     searchfrac=0.5,
+                     fastgauss=False,
+                     lagmod=1000.0,
+                     enforcethresh=True,
+                     displayplots=False):
     """
 
     Parameters
@@ -630,12 +641,14 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     # now check the values for errors and refine if necessary
     fitend = min(maxindex + i + 1, upperlimit)
     fitstart = max(1, maxindex - j)
-    if not ((lagmin + binwidth) <= maxlag_init <= (lagmax - binwidth)):
+
+    if not (lagmin <= maxlag_init <= lagmax):
         failreason += FML_HITEDGE
-        if lagmin + binwidth <= maxlag_init:
-            maxlag_init = lagmin + binwidth
+        if maxlag_init <= lagmin:
+            maxlag_init = lagmin
         else:
-            maxlag_init = lagmax - binwidth
+            maxlag_init = lagmax
+
     if i + j + 1 < 3:
         failreason += FML_BADSEARCHWINDOW
         maxsigma_init = np.float64((3.0 * binwidth / (2.0 * np.sqrt(-np.log(searchfrac)))) / np.sqrt(2.0))
@@ -881,7 +894,7 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         rangeextension = (lagmax - lagmin) * 0.75
     if not ((lagmin - rangeextension - binwidth) <= maxlag_init <= (lagmax + rangeextension + binwidth)):
         failreason |= (FML_INITFAIL | FML_BADLAG)
-        if (lagmin - rangeextension - binwidth) <= maxlag_init:
+        if maxlag_init <= (lagmin - rangeextension - binwidth) :
             maxlag_init = lagmin - rangeextension - binwidth
         else:
             maxlag_init = lagmax + rangeextension + binwidth
