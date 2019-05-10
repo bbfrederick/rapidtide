@@ -1,1 +1,0 @@
-/Users/frederic/anaconda/bin/happy bold.nii.gz slicetime.txt hoot --forcehr=78

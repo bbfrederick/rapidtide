@@ -1,5 +1,67 @@
 # History of changes
 
+## Version 1.8 (5/10/19)
+* (fit.py): The following fixes to both variants of findmaxlag_gauss affect rapidtide2, rapidtide2x, showxcorr, showxcorrx, happy, and happyx.
+* (fit.py): CRITICAL FIX - edge behavior in both versions of findmaxlag_gauss was very broken.
+* (fit.py): Fixed a rare failure in findmaxlag_gauss when the correlation peak is very narrow.
+* (fit.py): Constrain initial gaussian fit values to be rational.
+* (fit.py): Always return rational (if wrong) values when zerooutbadfit is False.
+* (fit.py): Fixed a rare problem where no peaks were found in autocorrcheck, causing crash.
+* (fit.py): Fixed a pernicious bug that sometimes caused mayhem when --nofitfilt was set.
+* (rapidtide2, rapidtide2x): There is now sanity checking on lagmin and lagmax input using -r.
+* (rapidtide2x): Masking logic has been completely redone, with numerous bugfixes, error checks, and new capabilities.
+* (rapidtide2x): Added option to refine offset on leftmost lag peak (--pickleft).  This helps a lot with people with vascular pathology.
+* (rapidtide2x): Added ability to save options file in json.
+* (rapidtide2x): Fixed a bug when timerange was used in conjunction with glm filtering.
+* (rapidtide2x): Added fixes to crash where there were bad significance estimates.
+* (showtc): Allow multiple linewidths.
+* (showtc): Added ability to set x and y axis labels.
+* (showtc): Added DPI option to set resolution of file output.
+* (showxy): Changed Bland-Altman plot to use open circles.
+* (showhist): Add bar histograms.
+* (showhist): Added the option to set binsize to makehistogram.
+* (happy, happyx): All changes in happyx have now been synced to happy - at this moment, they are identical.  New changes will be tested in happyx.
+* (happy, happyx): Fixed starttime and endtime selection.
+* (happy, happyx): Lowered maximum heart rate to 140 by default.
+* (happy, happyx): Output of info as json is optional, not default.
+* (happy, happyx): Save info file as json rather than text.
+* (happy, happyx): writedictasjson now supports numpy objects, added readdict function.
+* (happy, happyx): Cardiac filter and search range are now specified independently.
+* (happy, happyx): Removed lowerpass from cardiac estimation.
+* (happy, happyx): Retrained and optimized model after revising happy paper.
+* (happy, happyx): Use explicit copies to avoid variable changing out from under me.
+* (happy, happyx): Added pleth/filtpleth correlation.
+* (happy, happyx): Turn off variance masking by default, correlate raw and filtered waveforms.
+* (happy, happyx): Numerous tweaks to resampling to perform better in edge cases.
+* (happy, happyx): Fixed problem reading json physio files.
+* (happy, happyx): Added ability to force the use of raw cardiac waveform for phase projection.
+* (happy, happyx): Allow varmasking by volume or slice, filter prior to cardiac correlation.
+* (happy, happyx): Resolved problem with definition of notch filter width.
+* (happy, happyx): Corrected a type coercion error for estimation masks.
+* (happy, happyx): Reduced verbosity of notch filter.
+* (happy, happyx): Altered estimation mask logic.
+* (happy, happyx): Added sanity checks to lag range.
+* (happy, happyx): Now properly handle uncompressed bids tsv files.
+* (happy, happyx): Variance and projection masks are separate, can set variance thresh percent.
+* (happy, happyx): Changes in response to paper review.
+* (happy, happyx): Filter cardiac waveform to slice samplerate Nyquist frequency when upsampling.
+* (happy, happyx): Also added choice of centric or noncentric phase reconstruction..
+* (happy, happyx): Fixed implementation of Hilbert transform phase analysis.
+* (happy, happyx): Made robust to missing anatomics, started adding ants support.
+* (happy, happyx): harmonic notch filter notch pct was not properly scaled.
+* (happy, happyx): Now align pleth regressor with cardfromfmri.
+* (happy, happyx): Fixed convolution gridding.
+* (happy, happyx): Changed default gridding kernel to 3.0 wide Kaiser-Bessel.
+* (happy, happyx): Reordered usage to functionally separate flags.
+* (happy, happyx): Implemented workaround for strange interaction of tensorflow and MKL.
+* (happy, happyx): Lots of little bugs fixed, print statements cleaned up.
+* (tidepool): Added support for files in MNI152NLin2009cAsym space (fmriprep output).
+* (tidepool): Fixed a crash when no atlas exists.
+* (ccorrica): Modernized ccorrica to use new library calls.
+* (atlasaverage, filttc, histtc, aligntcs, highresmotion):  Added to the distro.
+* (tests): Numerous maintenance fixes.  test_findmaxlag is much more sophisticated now.
+* (whole project): Code cleanup, reformatting.
+
 ## Version 1.7 (12/5/18)
 * (whole project) Stopped pretending happy doesn't exist - adding to the changelog and will start writing docs.
 * (whole project) Tried to generate some workflows.
