@@ -2,7 +2,7 @@
 Utility functions for testing rapidtide.
 """
 
-from os.path import abspath, dirname, join, sep
+import os
 
 import numpy as np
 
@@ -13,7 +13,8 @@ def get_test_data_path():
     data are kept in tests folder in "data".
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
     """
-    return abspath(join(dirname(__file__), 'data') + sep)
+    thisdir, thisfile = os.path.split(os.path.join(os.path.realpath(__file__)))
+    return os.path.join(thisdir, 'data') + os.path.sep
 
 
 def mse(vec1, vec2):
