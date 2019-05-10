@@ -493,7 +493,7 @@ class overlay:
                 ((self.xdim == 91) and (self.ydim == 109) and (self.zdim == 91)):
                 self.space = "MNI152"
             else:
-                self.space = "MNI152Asym2009c"
+                self.space = "MNI152NLin2009cAsym"
         if self.header['sform_code'] != 0:
             self.affine = self.header.get_sform()
         elif self.header['qform_code'] != 0:
@@ -1287,6 +1287,23 @@ def loadanatomics(thefileroot, theoverlays, anatname, coordinatespace, xsize, ys
         else:
             print('xsize, ysize, zsize=', xsize, ysize, zsize)
             print('MNI template brain ', mniname, ' not loaded')
+    elif coordinatespace == 'MNI152NLin2009cAsym':
+        mniname = ''
+        if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
+            print('using 2mm MNI anatomic name')
+            if fsldir is not None:
+                mniname = os.path.join(referencedir, 'mni_icbm152_nlin_asym_09c_2mm.nii.gz')
+        elif xsize == 1.0 and ysize == 1.0 and zsize == 1.0:
+            print('using 1mm MNI anatomic name')
+            mniname = os.path.join(referencedir, 'mni_icbm152_nlin_asym_09c_1mm.nii.gz')
+        if os.path.isfile(mniname):
+            theoverlays['anatomic'] = overlay('anatomic', mniname, 'MNI152NLin2009cAsym')
+            print('using ', mniname, ' as background')
+            # allloadedmaps.append('anatomic')
+            return True
+        else:
+            print('xsize, ysize, zsize=', xsize, ysize, zsize)
+            print('MNI template brain ', mniname, ' not loaded')
     elif os.path.isfile(thefileroot + 'mean.nii.gz'):
         thepath, thebase = os.path.split(thefileroot)
         theoverlays['anatomic'] = overlay('anatomic', thefileroot + 'mean.nii.gz', thebase)
@@ -1602,6 +1619,8 @@ def main():
             overlays[themap].settoffset(offsettime)
         if overlays[themap].space == "MNI152":
             coordinatespace = 'MNI152'
+        elif overlays[themap].space == "MNI152NLin2009cAsym":
+            coordinatespace = 'MNI152NLin2009cAsym'
 
     # report results of load
     print('loaded functional maps: ', loadedfuncmaps)
@@ -1633,7 +1652,7 @@ def main():
     if loadgeommask(datafileroot, overlays, geommaskname, coordinatespace, xsize, ysize, zsize):
         allloadedmaps.append('geommask')
 
-    if coordinatespace == 'MNI152':
+    if (coordinatespace == 'MNI152') or (coordinatespace == 'MNI152NLin2009cAsym'):
         global atlasname, atlaslabels
         # atlasname = 'ASPECTS'
         atlasshortname = 'ATT'
@@ -1643,12 +1662,18 @@ def main():
         atlaslabels = tide_io.readlabels(os.path.join(referencedir, atlasname + '_regions.txt'))
         print(atlaslabels)
         atlasniftiname = None
-        if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
-            atlasniftiname = os.path.join(referencedir, atlasname + '_2mm.nii.gz')
-            atlasmaskniftiname = os.path.join(referencedir, atlasname + '_2mm_mask.nii.gz')
-        if xsize == 3.0 and ysize == 3.0 and zsize == 3.0:
-            atlasniftiname = os.path.join(referencedir, atlasname + '_3mm.nii.gz')
-            atlasmaskniftiname = os.path.join(referencedir, atlasname + '_3mm_mask.nii.gz')
+        if coordinatespace == 'MNI152':
+            if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
+                atlasniftiname = os.path.join(referencedir, atlasname + '_2mm.nii.gz')
+                atlasmaskniftiname = os.path.join(referencedir, atlasname + '_2mm_mask.nii.gz')
+            if xsize == 3.0 and ysize == 3.0 and zsize == 3.0:
+                atlasniftiname = os.path.join(referencedir, atlasname + '_3mm.nii.gz')
+                atlasmaskniftiname = os.path.join(referencedir, atlasname + '_3mm_mask.nii.gz')
+        else:
+            pass
+            '''if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
+                atlasniftiname = os.path.join(referencedir, atlasname + '_nlin_asym_09c_2mm.nii.gz')
+                atlasmaskniftiname = os.path.join(referencedir, atlasname + '_nlin_asym_09c_2mm_mask.nii.gz')'''
         if atlasniftiname is not None:
             if os.path.isfile(atlasniftiname):
                 overlays['atlas'] = overlay('atlas', atlasniftiname, atlasname, report=True)
@@ -1657,6 +1682,7 @@ def main():
                 dispmaps.append('atlas')
             else:
                 print(atlasname + ' template: ', atlasniftiname, ' does not exist!')
+
     try:
         test = overlays['atlas']
         print('there is an atlas')
