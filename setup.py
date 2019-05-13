@@ -213,7 +213,10 @@ setup(
         'reference': ['reference/*.txt',
                       'reference/*.nii.gz',
                       ],
-        'testdata': ['tests/data/*.txt',
+        'testdata': ['tests/testdata/*.txt',
+                      ],
+        'testtargets': ['tests/testtargets/*.txt',
+                      'tests/testtargets/*.nii.gz',
                       ],
     },
 

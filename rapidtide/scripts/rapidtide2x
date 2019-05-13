@@ -479,7 +479,7 @@ def usage():
     return ()
 
 
-def main():
+def rapidtide_main(thearguments):
     # set default variable values
     optiondict = {}
 
@@ -646,24 +646,24 @@ def main():
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
-    print(sys.argv[0], 'version:', optiondict['release_version'], optiondict['git_tag'])
+    print(thearguments, 'version:', optiondict['release_version'], optiondict['git_tag'])
     tide_util.checkimports(optiondict)
 
     # get the command line parameters
     filename = None
     inputfreq = None
     inputstarttime = None
-    if len(sys.argv) < 3:
+    if len(thearguments) < 3:
         usage()
         sys.exit()
     # handle required args first
-    fmrifilename = sys.argv[1]
-    outputname = sys.argv[2]
+    fmrifilename = thearguments[1]
+    outputname = thearguments[2]
     optparsestart = 3
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(sys.argv[optparsestart:], 'abcdf:gh:i:mo:ps:r:t:vBCF:ILMN:O:PRSTVZ:', ['help',
+        opts, args = getopt.getopt(thearguments[optparsestart:], 'abcdf:gh:i:mo:ps:r:t:vBCF:ILMN:O:PRSTVZ:', ['help',
                                                                                                           'nowindow',
                                                                                                           'windowfunc=',
                                                                                                           'datatstep=',
@@ -748,9 +748,9 @@ def main():
         usage()
         sys.exit(2)
 
-    formattedcmdline = [sys.argv[0] + ' \\']
+    formattedcmdline = [thearguments[0] + ' \\']
     for thearg in range(1, optparsestart):
-        formattedcmdline.append('\t' + sys.argv[thearg] + ' \\')
+        formattedcmdline.append('\t' + thearguments[thearg] + ' \\')
 
     for o, a in opts:
         linkchar = ' '
@@ -1334,7 +1334,7 @@ def main():
 
     # write out the command used
     tide_io.writevec(formattedcmdline, outputname + '_formattedcommandline.txt')
-    tide_io.writevec([' '.join(sys.argv)], outputname + '_commandline.txt')
+    tide_io.writevec([' '.join(thearguments)], outputname + '_commandline.txt')
 
     # add additional information to option structure for debugging
     optiondict['fmrifilename'] = fmrifilename
@@ -2659,4 +2659,12 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+
+    # grab the command line arguments then pass them off.
+    nargs = len(sys.argv)
+    if nargs < 3:
+        usage()
+        exit()
+
+    rapidtide_main(sys.argv)
+
