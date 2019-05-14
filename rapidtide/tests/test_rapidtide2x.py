@@ -5,12 +5,12 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt 
 from scipy import arange
-import subprocess
 import os
 
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import rapidtide.util as tide_util
+import rapidtide.workflows.rapidtide2x as rapidtide2x_workflow
 from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path
 
 
@@ -19,12 +19,17 @@ def test_rapidtide2x(debug=False):
     if recalculate:
         # create outputdir if it doesn't exist
         try:
-            os.makedirs(get_test_temp_path())
+            if debug:
+                os.makedirs(get_test_temp_path())
+            print(get_test_temp_path(), 'created')
         except OSError:
-            pass
+            if debug:
+                print(get_test_temp_path(), 'exists')
+            else:
+                pass
     
         # and launch the processing
-        theargs = []
+        theargs = ['rapidtide2x']
         theargs += [os.path.join(get_examples_path(), 'fmri.nii.gz')]
         theargs += [os.path.join(get_test_temp_path(), 'rapidtide2x_testoutput')]
         theargs += ['--limitoutput']
@@ -40,8 +45,7 @@ def test_rapidtide2x(debug=False):
         theargs += ['--saveoptionsasjson']
         theargs += ['--detrendorder=3']
         theargs += ['--pickleft']
-        rapidtidecmd = [tide_util.findexecutable('rapidtide2x')] + theargs
-        subprocess.call(rapidtidecmd)
+        rapidtide2x_workflow.rapidtide_main(theargs)
     
     diffmaps = tide_util.comparerapidtideruns(os.path.join(get_test_temp_path(), 'rapidtide2x_testoutput'), os.path.join(get_test_target_path(), 'rapidtide2x_target'))
 
