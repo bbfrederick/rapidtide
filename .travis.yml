@@ -1,55 +1,28 @@
-language: c
-sudo: required
-
-matrix:
-  include:
-
-    # Here you can add or remove specific builds, and Python versions. You
-    # should currently be able to use Python 2.6, 2.7, or 3.3 or later. The
-    # NUMPY and SCIPY versions are set here as an example, but you can
-    # add/remove environment variables, and use them below during the install.
-
-    - python: 2.7
-      env: NUMPY=1.9 SCIPY=0.15 SKLEARN=0.20 CONDANAME=Miniconda2-latest-Linux-x86_64.sh
-
-    - python: 3.6
-      env: NUMPY=1.15.2 SCIPY=1.1.0 SKLEARN=0.21 CONDANAME=Miniconda3-4.5.12-Linux-x86.sh
-
-    - python: 3.7
-      env: NUMPY=1.15.2 SCIPY=1.1.0 SKLEARN=0.21 COVERAGE=1 CONDANAME=Miniconda3-latest-Linux-x86_64.sh
-
-before_install:
-
-  # Here we just install Miniconda, which you shouldn't have to change.
-
-  - wget http://repo.continuum.io/miniconda/${CONDANAME} -O miniconda.sh
-  - bash miniconda.sh -b -p "$HOME"/miniconda
-  - source "$HOME"/miniconda/etc/profile.d/conda.sh
-  - conda config --set always_yes yes --set changeps1 no --set auto_update_conda false
+language: python
+python:
+  - "2.7"
+  - "3.5"
+  - "3.6"
+  - "3.7"
 
 install:
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - conda create -q -n test-env python=$TRAVIS_PYTHON_VERSION
+  - source activate test-env
 
-  # Below, include the dependencies you want to install with conda, optionally
-  # specifying versions used in the matrix above. If you split this into
-  # multiple conda install commands, you should always include numpy=$NUMPY as
-  # the first package to install (for every conda install command) otherwise
-  # numpy may be automatically upgraded.
+  - conda install -c condaforge numpy scipy scikit-learn codecov pytest-cov matplotlib nibabel statsmodels ffftw numba pytest pip 
 
-  - conda install numpy=$NUMPY scipy=$SCIPY scikit-learn-$SKLEARN codecov pytest-cov matplotlib nibabel statsmodels ffftw numba pytest pip 
-
-  # You can also install some dependencies with pip if not available in conda
-
-  # - pip install ...
+  # now install rapidtide
   - python setup.py install
 
 script:
-  - |
-    if [ "${COVERAGE}" == "1" ]; then
-        TEST_ARGS="--cov-report term-missing --cov=rapidtide";
-    else
-        TEST_ARGS="";
-    fi
-    pytest ${TEST_ARGS} rapidtide;
+  - pytest -cov-report term0-missing --cov=rapidtide rapidtide;
 
 after_success:
   - codecov
