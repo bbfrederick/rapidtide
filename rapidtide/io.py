@@ -1,4 +1,5 @@
 #/usr/bin/env python
+# -*- coding: latin-1 -*-
 #
 #   Copyright 2016 Blaise Frederick
 #
