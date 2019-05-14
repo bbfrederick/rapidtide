@@ -31,13 +31,15 @@ def test_rapidtide2x(debug=False):
         # and launch the processing
         theargs = ['rapidtide2x']
         theargs += [os.path.join(get_examples_path(), 'fmri.nii.gz')]
-        theargs += [os.path.join(get_test_temp_path(), 'rapidtide2x_testoutput')]
+        theargs += [os.path.join(get_test_temp_path(), 'rapidtide2x_phase2output')]
+        theargs += ['--regressor=' + os.path.join(get_test_data_path(), 'rapidtide2x_phase1target_reference_fmrires.txt')]
+        theargs += ['--regressortstep=1.5']
         theargs += ['--limitoutput']
         theargs += ['-s', '25.0']
         theargs += ['-L']
         theargs += ['-r', '-20,20']
         theargs += ['-f', '2']
-        theargs += ['--refinepasses=3']
+        theargs += ['--passes=3']
         theargs += ['--refineoffset']
         theargs += ['--despecklepasses=4']
         theargs += ['--accheck']
@@ -45,9 +47,10 @@ def test_rapidtide2x(debug=False):
         theargs += ['--saveoptionsasjson']
         theargs += ['--detrendorder=3']
         theargs += ['--pickleft']
+        theargs += ['--noglm']
         rapidtide2x_workflow.rapidtide_main(theargs)
     
-    diffmaps = tide_util.comparerapidtideruns(os.path.join(get_test_temp_path(), 'rapidtide2x_testoutput'), os.path.join(get_test_target_path(), 'rapidtide2x_target'))
+    diffmaps = tide_util.comparerapidtideruns(os.path.join(get_test_temp_path(), 'rapidtide2x_phase2output'), os.path.join(get_test_target_path(), 'rapidtide2x_phase2target'))
 
     for mapname, maps in diffmaps.items():
         print('checking', mapname)
