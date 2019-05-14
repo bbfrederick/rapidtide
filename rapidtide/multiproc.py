@@ -27,7 +27,10 @@ from __future__ import print_function, division
 
 import multiprocessing as mp
 import threading as thread
-import queue as thrQueue
+try:
+    import queue as thrQueue
+except ImportError:
+    import Queue as thrQueue
 
 import rapidtide.util as tide_util
 
