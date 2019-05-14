@@ -218,6 +218,8 @@ setup(
         'testtargets': ['tests/testtargets/*.txt',
                       'tests/testtargets/*.nii.gz',
                       ],
+        'tmpdata': ['tests/tmp/*.txt',
+                      ],
     },
 
     # To provide executable scripts, use entry points in preference to the
