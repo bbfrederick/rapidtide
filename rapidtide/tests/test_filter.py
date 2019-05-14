@@ -107,11 +107,11 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
     for thefilter in allfilters:
         response = spectralfilterprops(thefilter)
         print('    Evaluating', thefilter['name'], 'transfer function')
-        print('\tpassbandripple:', response['passbandripple')
-        print('\tlowerstopmax:', 'lowerstopmax')
-        print('\tlowerstopmean:', 'lowerstopmean')
-        print('\tupperstopmax:', 'upperstopmax')
-        print('\tupperstopmean:', 'upperstopmean')
+        print('\tpassbandripple:', response['passbandripple'])
+        print('\tlowerstopmax:', 'lowerstopmax'])
+        print('\tlowerstopmean:', 'lowerstopmean'])
+        print('\tupperstopmax:', 'upperstopmax'])
+        print('\tupperstopmean:', 'upperstopmean]')
         assert response['passbandripple'] < 0.45
         assert response['lowerstopmax'] < 1e4
         assert response['lowerstopmean'] < 1e4
