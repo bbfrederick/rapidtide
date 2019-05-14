@@ -9,19 +9,19 @@ matrix:
     # add/remove environment variables, and use them below during the install.
 
     - python: 2.7
-      env: NUMPY=1.9 SCIPY=0.15 SKLEARN=0.20
+      env: NUMPY=1.9 SCIPY=0.15 SKLEARN=0.20 CONDANAME=Miniconda2-latest-Linux-x86_64.sh
 
     - python: 3.6
-      env: NUMPY=1.15.2 SCIPY=1.1.0 SKLEARN=0.21
+      env: NUMPY=1.15.2 SCIPY=1.1.0 SKLEARN=0.21 CONDANAME=Miniconda3-4.5.12-Linux-x86.sh
 
     - python: 3.7
-      env: NUMPY=1.15.2 SCIPY=1.1.0 SKLEARN=0.21 COVERAGE=1
+      env: NUMPY=1.15.2 SCIPY=1.1.0 SKLEARN=0.21 COVERAGE=1 CONDANAME=Miniconda3-latest-Linux-x86_64.sh
 
 before_install:
 
   # Here we just install Miniconda, which you shouldn't have to change.
 
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - wget http://repo.continuum.io/miniconda/${CONDANAME} -O miniconda.sh
   - bash miniconda.sh -b -p "$HOME"/miniconda
   - source "$HOME"/miniconda/etc/profile.d/conda.sh
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda false
