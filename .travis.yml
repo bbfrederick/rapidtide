@@ -22,10 +22,9 @@ before_install:
   # Here we just install Miniconda, which you shouldn't have to change.
 
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=${HOME}/miniconda/bin:$PATH
-  - ./miniconda/bin/conda update --yes conda
+  - bash miniconda.sh -b -p "$HOME"/miniconda
+  - source "$HOME"/miniconda/etc/profile.d/conda.sh
+  - conda config --set always_yes yes --set changeps1 no --set auto_update_conda false
 
 install:
 
@@ -41,13 +40,11 @@ install:
   # the first package to install (for every conda install command) otherwise
   # numpy may be automatically upgraded.
 
-  - ./miniconda/bin/conda install --yes numpy=$NUMPY scipy=$SCIPY scikit-learn-$SKLEARN matplotlib nibabel statsmodels ffftw numba pytest pip 
+  - conda install numpy=$NUMPY scipy=$SCIPY scikit-learn-$SKLEARN codecov pytest-cov matplotlib nibabel statsmodels ffftw numba pytest pip 
 
   # You can also install some dependencies with pip if not available in conda
 
   # - pip install ...
-  - pip install "pytest>=3.4" pytest-cov codecov
-
   - python setup.py install
 
 script:
