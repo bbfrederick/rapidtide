@@ -29,12 +29,6 @@ before_install:
 
 install:
 
-  # We just set up a conda environment with the right Python version. This
-  # should not need changing.
-
-  - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
-  - source activate test
-
   # Below, include the dependencies you want to install with conda, optionally
   # specifying versions used in the matrix above. If you split this into
   # multiple conda install commands, you should always include numpy=$NUMPY as
