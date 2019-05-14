@@ -22,7 +22,7 @@ install:
   - python setup.py install
 
 script:
-  - pytest --cov-report term0-missing --cov=rapidtide rapidtide;
+  - pytest --cov-report term-missing --cov=rapidtide rapidtide;
 
 after_success:
   - codecov
