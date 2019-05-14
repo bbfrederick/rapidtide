@@ -1,34 +1,52 @@
-dist: xenial
 language: python
-cache: pip
-python:
-  - "2.7"
-  - "3.5"
-  - "3.7"
 
 matrix:
   include:
-    - python: 3.7
-      env:
-        - COVERAGE=1
 
-# Setup anaconda
+    # Here you can add or remove specific builds, and Python versions. You
+    # should currently be able to use Python 2.6, 2.7, or 3.3 or later. The
+    # NUMPY and SCIPY versions are set here as an example, but you can
+    # add/remove environment variables, and use them below during the install.
+
+    - python: 2.7
+      env: NUMPY=1.9 SCIPY=0.15 SKLEARN=0.20
+
+    - python: 3.6
+      env: NUMPY=1.8 SCIPY=0.14 SKLEARN=0.21
+
+    - python: 3.7
+      env: NUMPY=1.8 SCIPY=0.14 SKLEARN=0.21
+
 before_install:
-  - python -m pip install --upgrade pip
-  - pip install "pytest>=3.4" pytest-cov codecov
-  - pip install -r requirements.txt
+
+  # Here we just install Miniconda, which you shouldn't have to change.
+
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes conda
 
 install:
-  - python setup.py install
+
+  # We just set up a conda environment with the right Python version. This
+  # should not need changing.
+
+  - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
+  - source activate test
+
+  # Below, include the dependencies you want to install with conda, optionally
+  # specifying versions used in the matrix above. If you split this into
+  # multiple conda install commands, you should always include numpy=$NUMPY as
+  # the first package to install (for every conda install command) otherwise
+  # numpy may be automatically upgraded.
+
+  - conda install --yes numpy=$NUMPY scipy=$SCIPY scikit-learn-$SKLEARN matplotlib nibabel statsmodels ffftw numba pytest pip 
+
+  # You can also install some dependencies with pip if not available in conda
+
+  # - pip install ...
 
 script:
-  - |
-    if [ "${COVERAGE}" == "1" ]; then
-        TEST_ARGS="--cov-report term-missing --cov=rapidtide";
-    else
-        TEST_ARGS="";
-    fi
-    pytest ${TEST_ARGS} rapidtide;
 
-after_success:
-  - codecov
+  - pytest  # will run all tests in the package
