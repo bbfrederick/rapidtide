@@ -21,7 +21,6 @@ before_install:
 
 install:
   - python setup.py install
-  - travis_wait mvn install
 
 script:
   - |
@@ -30,7 +29,7 @@ script:
     else
         TEST_ARGS="";
     fi
-    py.test ${TEST_ARGS} rapidtide;
+    pytest ${TEST_ARGS} rapidtide;
 
 after_success:
   - codecov
