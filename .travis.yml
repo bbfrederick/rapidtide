@@ -12,10 +12,10 @@ matrix:
       env: NUMPY=1.9 SCIPY=0.15 SKLEARN=0.20
 
     - python: 3.6
-      env: NUMPY=1.8 SCIPY=0.14 SKLEARN=0.21
+      env: NUMPY=1.15.2 SCIPY=1.1.0 SKLEARN=0.21
 
     - python: 3.7
-      env: NUMPY=1.8 SCIPY=0.14 SKLEARN=0.21 COVERAGE=1
+      env: NUMPY=1.15.2 SCIPY=1.1.0 SKLEARN=0.21 COVERAGE=1
 
 before_install:
 
@@ -25,7 +25,7 @@ before_install:
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=${HOME}/miniconda/bin:$PATH
-  - conda update --yes conda
+  - ./miniconda/bin/conda update --yes conda
 
 install:
 
@@ -41,7 +41,7 @@ install:
   # the first package to install (for every conda install command) otherwise
   # numpy may be automatically upgraded.
 
-  - conda install --yes numpy=$NUMPY scipy=$SCIPY scikit-learn-$SKLEARN matplotlib nibabel statsmodels ffftw numba pytest pip 
+  - ./miniconda/bin/conda install --yes numpy=$NUMPY scipy=$SCIPY scikit-learn-$SKLEARN matplotlib nibabel statsmodels ffftw numba pytest pip 
 
   # You can also install some dependencies with pip if not available in conda
 
