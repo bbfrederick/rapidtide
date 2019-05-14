@@ -38,7 +38,6 @@ def test_rapidtide2x_phase1(debug=False):
         theargs += ['-f', '2']
         theargs += ['--despecklepasses=4']
         theargs += ['--accheck']
-        theargs += ['--nprocs=2']
         theargs += ['--saveoptionsasjson']
         theargs += ['--detrendorder=3']
         theargs += ['--pickleft']
