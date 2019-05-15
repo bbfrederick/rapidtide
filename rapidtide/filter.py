@@ -169,6 +169,7 @@ def ssmooth(xsize, ysize, zsize, sigma, inputdata):
 
 
 # - butterworth filters
+@conditionaljit()
 def dolpfiltfilt(Fs, upperpass, inputdata, order, padlen=20, debug=False):
     r"""Performs a bidirectional (zero phase) Butterworth lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -205,9 +206,10 @@ def dolpfiltfilt(Fs, upperpass, inputdata, order, padlen=20, debug=False):
     if debug:
         print('dolpfiltfilt - Fs, upperpass, len(inputdata), order:', Fs, upperpass, len(inputdata), order)
     [b, a] = signal.butter(order, 2.0 * upperpass / Fs)
-    return unpadvec(signal.filtfilt(b, a, padvec(inputdata, padlen=padlen)).real, padlen=padlen)
+    return unpadvec(signal.filtfilt(b, a, padvec(inputdata, padlen=padlen)).real, padlen=padlen).astype(np.float64)
 
 
+@conditionaljit()
 def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, debug=False):
     r"""Performs a bidirectional (zero phase) Butterworth highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -251,6 +253,7 @@ def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, debug=False):
     return unpadvec(signal.filtfilt(b, a, padvec(inputdata, padlen=padlen)).real, padlen=padlen)
 
 
+@conditionaljit()
 def dobpfiltfilt(Fs, lowerpass, upperpass, inputdata, order, padlen=20, debug=False):
     r"""Performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -360,6 +363,7 @@ def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
     return transferfunc
 
 
+@conditionaljit()
 def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, debug=False):
     r"""Performs an FFT brickwall lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -398,6 +402,7 @@ def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, debug=False):
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
+@conditionaljit()
 def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, debug=False):
     r"""Performs an FFT brickwall highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -436,6 +441,7 @@ def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, debug=False):
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
+@conditionaljit()
 def dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=20, debug=False):
     r"""Performs an FFT brickwall bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -480,6 +486,7 @@ def dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=20, debug=False):
 
 
 # - fft trapezoidal filters
+@conditionaljit()
 def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
     r"""Generates a trapezoidal lowpass transfer function.
 
@@ -527,6 +534,7 @@ def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
     return transferfunc
 
 
+@conditionaljit()
 def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, debug=False):
     r"""Performs an FFT filter with a trapezoidal lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
@@ -569,6 +577,7 @@ def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, debug=False)
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
+@conditionaljit()
 def dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=20, debug=False):
     r"""Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
@@ -611,6 +620,7 @@ def dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=20, debug=False)
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
+@conditionaljit()
 def dobptrapfftfilt(Fs, lowerstop, lowerpass, upperpass, upperstop, inputdata, padlen=20,
                     debug=False):
     r"""Performs an FFT filter with a trapezoidal bandpass transfer
@@ -931,35 +941,36 @@ def arb_pass(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
     if lowerpass <= 0.0:
         # set up for lowpass
         if usebutterworth:
-            return dolpfiltfilt(Fs, upperpass, inputdata, butterorder, padlen=padlen, debug=debug).astype(np.float64)
+            retvec = dolpfiltfilt(Fs, upperpass, inputdata, butterorder, padlen=padlen, debug=debug)
+            return retvec
         else:
             if usetrapfftfilt:
-                return dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=padlen, debug=debug).astype(np.float64)
+                return dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=padlen, debug=debug)
             else:
                 return dolpfftfilt(Fs, upperpass, inputdata, padlen=padlen, debug=debug).astype(np.float64)
     elif (upperpass >= Fs / 2.0) or (upperpass <= 0.0):
         # set up for highpass
         if usebutterworth:
-            return dohpfiltfilt(Fs, lowerpass, inputdata, butterorder, padlen=padlen, debug=debug).astype(np.float64)
+            return dohpfiltfilt(Fs, lowerpass, inputdata, butterorder, padlen=padlen, debug=debug)
         else:
             if usetrapfftfilt:
-                return dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=padlen, debug=debug).astype(np.float64)
+                return dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=padlen, debug=debug)
             else:
-                return dohpfftfilt(Fs, lowerpass, inputdata, padlen=padlen, debug=debug).astype(np.float64)
+                return dohpfftfilt(Fs, lowerpass, inputdata, padlen=padlen, debug=debug)
     else:
         # set up for bandpass
         if usebutterworth:
             return (dohpfiltfilt(Fs, lowerpass,
                                  dolpfiltfilt(Fs, upperpass, inputdata, butterorder, padlen=padlen,
                                               debug=debug),
-                                 butterorder, padlen=padlen, debug=debug).astype(np.float64))
+                                 butterorder, padlen=padlen, debug=debug))
         else:
             if usetrapfftfilt:
                 return (
                     dobptrapfftfilt(Fs, lowerstop, lowerpass, upperpass, upperstop, inputdata,
                                     padlen=padlen, debug=debug).astype(np.float64))
             else:
-                return dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=padlen, debug=debug).astype(np.float64)
+                return dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=padlen, debug=debug)
 
 
 @conditionaljit()
