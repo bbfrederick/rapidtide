@@ -1,0 +1,43 @@
+Processed on bbf-tbmbp.mclean.harvard.edu
+Clock time	Program time	Duration	Description
+20190515T143239      0.00	      0.00	Start
+20190515T143239      0.00	      0.00	Argument parsing done
+20190515T143240      0.57	      0.57	Finish reading fmrifile
+20190515T143240      1.05	      0.48	End 3D smoothing
+20190515T143241      1.85	      0.79	Start moving fmri_data to shared memory
+20190515T143244      4.37	      2.52	End moving fmri_data to shared memory
+20190515T143244      4.37	      0.01	Start of reference prep
+20190515T143244      4.41	      0.04	End of reference prep
+20190515T143244      4.85	      0.44	Significance estimation start, pass 1
+20190515T143252     12.16	      7.31	Significance estimation end, pass 1 (1367.95 repetitions/second)
+20190515T143252     12.16	      0.00	Correlation calculation start, pass 1
+20190515T143312     33.04	     20.88	Correlation calculation end, pass 1 (2013.65 voxels/second)
+20190515T143312     33.04	      0.00	Time lag estimation start, pass 1
+20190515T143325     45.32	     12.28	Time lag estimation end, pass 1 (3315.69 voxels/second)
+20190515T143325     45.32	      0.00	Correlation despeckle start, pass 1
+20190515T143331     51.15	      5.82	Correlation despeckle end, pass 1 (471.25 voxels/second)
+20190515T143331     51.15	      0.00	Regressor refinement start, pass 1
+20190515T143354     74.95	     23.80	Regressor refinement end, pass 1 (1766.07 voxels/second)
+20190515T143354     74.97	      0.02	Significance estimation start, pass 2
+20190515T143401     81.63	      6.66	Significance estimation end, pass 2 (1501.72 repetitions/second)
+20190515T143401     81.63	      0.00	Correlation calculation start, pass 2
+20190515T143421    101.82	     20.19	Correlation calculation end, pass 2 (2082.35 voxels/second)
+20190515T143421    101.82	      0.00	Time lag estimation start, pass 2
+20190515T143434    114.61	     12.80	Time lag estimation end, pass 2 (3176.27 voxels/second)
+20190515T143434    114.61	      0.00	Correlation despeckle start, pass 2
+20190515T143440    120.31	      5.70	Correlation despeckle end, pass 2 (484.40 voxels/second)
+20190515T143440    120.31	      0.00	Regressor refinement start, pass 2
+20190515T143503    143.52	     23.21	Regressor refinement end, pass 2 (1811.23 voxels/second)
+20190515T143503    143.55	      0.02	Significance estimation start, pass 3
+20190515T143509    150.09	      6.54	Significance estimation end, pass 3 (1529.02 repetitions/second)
+20190515T143509    150.09	      0.00	Correlation calculation start, pass 3
+20190515T143530    170.19	     20.10	Correlation calculation end, pass 3 (2091.77 voxels/second)
+20190515T143530    170.19	      0.00	Time lag estimation start, pass 3
+20190515T143542    182.40	     12.21	Time lag estimation end, pass 3 (3329.29 voxels/second)
+20190515T143542    182.40	      0.00	Correlation despeckle start, pass 3
+20190515T143548    188.57	      6.17	Correlation despeckle end, pass 3 (449.44 voxels/second)
+20190515T143549    189.69	      1.12	Start saving histograms
+20190515T143549    189.70	      0.02	Finished saving histograms
+20190515T143549    189.71	      0.00	Start saving maps
+20190515T143551    191.43	      1.72	Finished saving maps
+20190515T143551    191.43	      0.00	Done

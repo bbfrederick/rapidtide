@@ -47,6 +47,7 @@ def test_rapidtide2x(debug=False):
         theargs += ['--saveoptionsasjson']
         theargs += ['--detrendorder=3']
         theargs += ['--pickleft']
+        theargs += ['--corrmask=' + os.path.join(get_examples_path(), 'quartermask.nii.gz')]
         theargs += ['--noglm']
         rapidtide2x_workflow.rapidtide_main(theargs)
     

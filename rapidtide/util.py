@@ -498,3 +498,33 @@ def comparerapidtideruns(root1, root2):
             print('mask dimensions don\'t match - aborting')
             sys.exit()
     return results
+
+def comparehappyruns(root1, root2):
+    results = {}
+    for map in ['app']:
+        filename1 = root1 + '_' + map + '.nii.gz'
+        maskname1 = root1 + '_mask.nii.gz'
+        filename2 = root2 + '_' + map + '.nii.gz'
+        maskname2 = root2 + '_mask.nii.gz'
+        masknim1, maskdata1, maskhdr1, themaskdims1, themasksizes1 = tide_io.readfromnifti(maskname1)
+        masknim2, maskdata2, maskhdr2, themaskdims2, themasksizes2 = tide_io.readfromnifti(maskname2)
+        if tide_io.checkspacematch(maskhdr1, maskhdr2):
+            mask = maskdata1 * maskdata2
+            if os.path.isfile(filename1) and os.path.isfile(filename2):
+                # files exist - read them in and process them
+                nim1, data1, hdr1, thedims1, thesizes1 = tide_io.readfromnifti(filename1)
+                nim2, data2, hdr2, thedims2, thesizes2 = tide_io.readfromnifti(filename2)
+                if tide_io.checkspacematch(hdr1, hdr2) and tide_io.checkspacematch(hdr1, maskhdr1):
+                    # files match in size
+                    results[map] = {}
+                    results[map]['mindiff'], results[map]['maxdiff'], results[map]['meandiff'], results[map]['mse'], \
+                        results[map]['relmindiff'], results[map]['relmaxdiff'], results[map]['relmeandiff'], results[map]['relmse'] = comparemap(data1, data2, mask=mask)
+                else:
+                    print('mask dimensions don\'t match - aborting')
+                    sys.exit()
+            else:
+                print('map', map, 'does not exist - skipping')
+        else:
+            print('mask dimensions don\'t match - aborting')
+            sys.exit()
+    return results

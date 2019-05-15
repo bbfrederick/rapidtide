@@ -1,0 +1,23 @@
+Processed on bbf-tbmbp.mclean.harvard.edu
+Clock time	Program time	Duration	Description
+20190515T143034      0.00	      0.00	Start
+20190515T143034      0.56	      0.56	Argument parsing done
+20190515T143035      1.18	      0.62	Finish reading fmrifile
+20190515T143035      1.65	      0.47	End 3D smoothing
+20190515T143036      2.74	      1.09	Start of reference prep
+20190515T143037      3.33	      0.59	End of reference prep
+20190515T143037      3.58	      0.25	Significance estimation start, pass 1
+20190515T143049     14.97	     11.39	Significance estimation end, pass 1 (877.87 repetitions/second)
+20190515T143049     14.97	      0.00	Correlation calculation start, pass 1
+20190515T143121     47.18	     32.21	Correlation calculation end, pass 1 (1305.12 voxels/second)
+20190515T143121     47.18	      0.00	Time lag estimation start, pass 1
+20190515T143136     62.46	     15.28	Time lag estimation end, pass 1 (2665.68 voxels/second)
+20190515T143136     62.46	      0.00	Correlation despeckle start, pass 1
+20190515T143143     69.64	      7.18	Correlation despeckle end, pass 1 (385.03 voxels/second)
+20190515T143143     69.64	      0.00	GLM filtering start
+20190515T143158     84.18	     14.54	GLM filtering end, pass 1 (2630.53 voxels/second)
+20190515T143158     84.18	      0.00	Start saving histograms
+20190515T143158     84.20	      0.02	Finished saving histograms
+20190515T143158     84.20	      0.00	Start saving maps
+20190515T143206     92.18	      7.98	Finished saving maps
+20190515T143206     92.18	      0.00	Done
