@@ -931,35 +931,35 @@ def arb_pass(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
     if lowerpass <= 0.0:
         # set up for lowpass
         if usebutterworth:
-            return dolpfiltfilt(Fs, upperpass, inputdata, butterorder, padlen=padlen, debug=debug)
+            return dolpfiltfilt(Fs, upperpass, inputdata, butterorder, padlen=padlen, debug=debug).astype(np.float64)
         else:
             if usetrapfftfilt:
-                return dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=padlen, debug=debug)
+                return dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=padlen, debug=debug).astype(np.float64)
             else:
-                return dolpfftfilt(Fs, upperpass, inputdata, padlen=padlen, debug=debug)
+                return dolpfftfilt(Fs, upperpass, inputdata, padlen=padlen, debug=debug).astype(np.float64)
     elif (upperpass >= Fs / 2.0) or (upperpass <= 0.0):
         # set up for highpass
         if usebutterworth:
-            return dohpfiltfilt(Fs, lowerpass, inputdata, butterorder, padlen=padlen, debug=debug)
+            return dohpfiltfilt(Fs, lowerpass, inputdata, butterorder, padlen=padlen, debug=debug).astype(np.float64)
         else:
             if usetrapfftfilt:
-                return dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=padlen, debug=debug)
+                return dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=padlen, debug=debug).astype(np.float64)
             else:
-                return dohpfftfilt(Fs, lowerpass, inputdata, padlen=padlen, debug=debug)
+                return dohpfftfilt(Fs, lowerpass, inputdata, padlen=padlen, debug=debug).astype(np.float64)
     else:
         # set up for bandpass
         if usebutterworth:
             return (dohpfiltfilt(Fs, lowerpass,
                                  dolpfiltfilt(Fs, upperpass, inputdata, butterorder, padlen=padlen,
                                               debug=debug),
-                                 butterorder, padlen=padlen, debug=debug))
+                                 butterorder, padlen=padlen, debug=debug).astype(np.float64))
         else:
             if usetrapfftfilt:
                 return (
                     dobptrapfftfilt(Fs, lowerstop, lowerpass, upperpass, upperstop, inputdata,
-                                    padlen=padlen, debug=debug))
+                                    padlen=padlen, debug=debug).astype(np.float64))
             else:
-                return dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=padlen, debug=debug)
+                return dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=padlen, debug=debug).astype(np.float64)
 
 
 @conditionaljit()

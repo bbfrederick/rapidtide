@@ -264,7 +264,7 @@ def madnormalize(vector):
 
     """
     demedianed = vector - np.median(vector)
-    sigmad = mad(demedianed)
+    sigmad = mad(demedianed).astype(np.float64)
     if sigmad > 0.0:
         return demedianed / sigmad
     else:
