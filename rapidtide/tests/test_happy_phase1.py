@@ -27,6 +27,10 @@ def test_happy_phase1(debug=False):
         theargs += [os.path.join(get_test_temp_path(), 'happy_phase1output')]
         theargs += ['--dodlfilter']
         theargs += ['--saveinfoasjson']
+        theargs += ['--glm']
+        theargs += ['--numskip=0']
+        theargs += ['--gridbins=3.0']
+        theargs += ['--gridkernel=kaiser']
         theargs += ['--model=model_revised']
         theargs += ['--estmask=' + os.path.join(get_test_target_path(), 'happy_phase1target_vesselmask.nii.gz')]
         happy_workflow.happy_main(theargs)
