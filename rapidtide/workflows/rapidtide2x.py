@@ -578,7 +578,7 @@ def rapidtide_main(thearguments):
 
     # significance estimation options
     optiondict['numestreps'] = 10000  # the number of sham correlations to perform to estimate significance
-    optiondict['nohistzero'] = False  # if False, there is a spike at R=0 in the significance histogra
+    optiondict['nohistzero'] = False  # if False, there is a spike at R=0 in the significance histogram
     optiondict['ampthreshfromsig'] = True
     optiondict['sighistlen'] = 100
     optiondict['dosighistfit'] = True
@@ -1915,7 +1915,7 @@ def rapidtide_main(thearguments):
 
         # Step -1 - check the regressor for periodic components in the passband
         dolagmod = True
-        doreferencenotch = False
+        doreferencenotch = True
         if optiondict['check_autocorrelation']:
             print('checking reference regressor autocorrelation properties')
             optiondict['lagmod'] = 1000.0
@@ -1974,7 +1974,7 @@ def rapidtide_main(thearguments):
                         acfixfilter = tide_filt.noncausalfilter(debug=optiondict['debug'])
                         acfixfilter.settype('arb_stop')
                         acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
-                        cleaned_referencetc = tide_math.stdnormalize(acfixfilter.apply(fmrifreq, referencetc))
+                        cleaned_referencetc = acfixfilter.apply(fmrifreq, referencetc)
                         cleaned_nonosreferencetc = tide_math.stdnormalize(acfixfilter.apply(fmrifreq, nonosreferencetc))
                         tide_io.writenpvecs(cleaned_referencetc,
                                             outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
