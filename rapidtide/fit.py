@@ -394,7 +394,6 @@ def trendgen(thexvals, thefitcoffs, demean):
     return thefit
 
 
-@conditionaljit()
 def detrend(inputdata, order=1, demean=False):
     """
 
