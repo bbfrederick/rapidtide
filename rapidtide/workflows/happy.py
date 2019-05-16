@@ -48,7 +48,7 @@ import rapidtide.glmpass as tide_glmpass
 
 from scipy.signal import welch, savgol_filter
 from scipy.stats import kurtosis, skew
-from skimage.filters import threshold_triangle  # , apply_hysteresis_threshold
+#from skimage.filters import threshold_triangle  # , apply_hysteresis_threshold
 from statsmodels.robust import mad
 
 import warnings
@@ -456,15 +456,15 @@ def findbadpts(thewaveform, nameroot, outputroot, samplerate, infodict,
                mingap=2.0,
                outputlevel=0,
                debug=True):
-    if thetype == 'triangle' or thetype == 'mad':
+    #if thetype == 'triangle' or thetype == 'mad':
+    if thetype == 'mad':
         absdev = np.fabs(thewaveform - np.median(thewaveform))
-        if thetype == 'triangle':
-            thresh = threshold_triangle(np.reshape(absdev, (len(absdev), 1)))
-        else:
-            medianval = np.median(thewaveform)
-            sigma = mad(thewaveform, center=medianval)
-            numsigma = np.sqrt(1.0 / (1.0 - retainthresh))
-            thresh = numsigma * sigma
+        #if thetype == 'triangle':
+        #    thresh = threshold_triangle(np.reshape(absdev, (len(absdev), 1)))
+        medianval = np.median(thewaveform)
+        sigma = mad(thewaveform, center=medianval)
+        numsigma = np.sqrt(1.0 / (1.0 - retainthresh))
+        thresh = numsigma * sigma
         thebadpts = np.where(absdev >= thresh, 1.0, 0.0)
         print('bad point threshhold set to', thresh, 'using the', thetype, 'method for', nameroot)
     elif thetype == 'fracval':
