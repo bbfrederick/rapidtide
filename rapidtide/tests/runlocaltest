@@ -1,0 +1,3 @@
+#!/bin/csh -f
+
+pytest -W ignore --cov-report term-missing --cov=rapidtide

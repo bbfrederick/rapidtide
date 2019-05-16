@@ -1,0 +1,7 @@
+#!/bin/csh -f
+cp tmp/rapidtide2x_phase2output_MTT.nii.gz testtargets/rapidtide2x_phase2target_MTT.nii.gz
+cp tmp/rapidtide2x_phase2output_lagmask.nii.gz testtargets/rapidtide2x_phase2target_lagmask.nii.gz
+cp tmp/rapidtide2x_phase2output_lagsigma.nii.gz testtargets/rapidtide2x_phase2target_lagsigma.nii.gz
+cp tmp/rapidtide2x_phase2output_lagstrengths.nii.gz testtargets/rapidtide2x_phase2target_lagstrengths.nii.gz
+cp tmp/rapidtide2x_phase2output_lagtimes.nii.gz testtargets/rapidtide2x_phase2target_lagtimes.nii.gz
+
