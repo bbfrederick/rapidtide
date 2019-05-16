@@ -68,7 +68,7 @@ if nibabelexists:
             sys.exit()
         nim = nib.load(inputfilename)
         nim_data = nim.get_data()
-        nim_hdr = nim.get_header()
+        nim_hdr = nim.header.copy()
         thedims = nim_hdr['dim'].copy()
         thesizes = nim_hdr['pixdim'].copy()
         return nim, nim_data, nim_hdr, thedims, thesizes
@@ -253,9 +253,9 @@ if nibabelexists:
 
         """
         nim = nib.load(niftifilename)
-        hdr = nim.get_header()
-        thedims = hdr['dim']
-        thesizes = hdr['pixdim']
+        hdr = nim.header.copy()
+        thedims = hdr['dim'].copy()
+        thesizes = hdr['pixdim'].copy()
         if hdr.get_xyzt_units()[1] == 'msec':
             tr = thesizes[4] / 1000.0
         else:
@@ -837,7 +837,7 @@ def readtc(inputfilename, colnum=None, colname=None, debug=False):
         inputfreq, inputstart, timecourse = readcolfrombidstsv(inputfilename, columnname=colname,
                                                                           columnnum=colnum, debug=debug)
     else:
-        timecourse = np.transpose(tide_io.readvecs(inputfilename))
+        timecourse = np.transpose(readvecs(inputfilename))
         if debug:
             print(timecourse.shape)
         if len(timecourse.shape) != 1:
