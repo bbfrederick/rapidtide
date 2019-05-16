@@ -201,17 +201,16 @@ def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False
     -------
 
     """
+    # check to make sure there are nonzero values first
+    if len(np.where(vallist != 0.0)[0]) == 0:
+        print('no nonzero values - skipping percentile calculation')
+        return None, 0, 0
     thehistogram = makehistogram(np.abs(vallist), histlen, therange=[0.0, 1.0])
     if dosighistfit:
         histfit = fitjsbpdf(thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero)
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles) / 2.0
         print('thepercentiles adapted for two tailed distribution:', thepercentiles)
-    if nozero:
-        # check to make sure there are nonzero values first
-        if len(np.where(vallist != 0.0)[0]) == 0:
-            print('no nonzero values - skipping percentile calculation')
-            return None, 0, 0
     pcts_data = getfracvals(vallist, thepercentiles, numbins=int(np.sqrt(len(vallist)) * 5.0), nozero=nozero)
     if dosighistfit:
         pcts_fit = getfracvalsfromfit(histfit, thepercentiles, numbins=histlen, displayplots=displayplots)
