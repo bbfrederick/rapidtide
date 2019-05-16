@@ -450,9 +450,10 @@ if matrixoutput:
                 prewindow=prewindow, detrendorder=0, display=False)
 
     outputaffine = np.eye(4)
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
     init_img = nib.Nifti1Image(corrpertime, outputaffine)
-    init_hdr = init_img.get_header()
-    init_sizes = init_hdr['pixdim']
+    init_hdr = init_img.header.copy()
+    init_sizes = init_hdr['pixdim'].copy()
     init_sizes[4] = sampletime
     init_hdr['toffset'] = times[0]
     tide_io.savetonifti(corrpertime, init_hdr, init_sizes, outfilename + '_pearsonR')

@@ -95,11 +95,7 @@ def main():
     output_x = r_[0.0:1.0 * (numoutputtrs - 1)] * outputtr - outputstarttime
     output_y = output_x * 0.0
 
-    input_img = nib.load(inputfilename)
-    input_data = input_img.get_data()
-    input_hdr = input_img.get_header()
-    thedims = input_hdr['dim']
-    thesizes = input_hdr['pixdim']
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
     tr = thesizes[4]
     print("tr from header =", tr)
 
@@ -130,7 +126,7 @@ def main():
     # now do the ones with other numbers of time points
     inputaffine = input_img.get_affine()
     resampled_img = nib.Nifti1Image(resampledtcs, inputaffine)
-    resampled_hdr = resampled_img.get_header()
+    resampled_hdr = resampled_img.header.copy()
     resampled_hdr['pixdim'][4] = outputtr
     resampled_img.to_filename(outputfilename)
 

@@ -27,8 +27,6 @@ import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 
 from matplotlib.pyplot import *
-import nibabel as nib
-
 
 def usage():
     print(
@@ -99,31 +97,12 @@ for o, a in opts:
 
 # read in data
 print("reading in data arrays")
-datafile_img = nib.load(datafilename)
-datafile_data = datafile_img.get_data()
-datafile_hdr = datafile_img.get_header()
-datafiledims = datafile_hdr['dim']
-datafilesizes = datafile_hdr['pixdim']
-
+datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide_io.readfromnifti(datafilename)
 if usedmask:
-    datamask_img = nib.load(datamaskname)
-    datamask_data = datamask_img.get_data()
-    datamask_hdr = datamask_img.get_header()
-    datamaskdims = datamask_hdr['dim']
-    datamasksizes = datamask_hdr['pixdim']
-
-templatefile_img = nib.load(templatefilename)
-templatefile_data = templatefile_img.get_data()
-templatefile_hdr = templatefile_img.get_header()
-templatefiledims = templatefile_hdr['dim']
-templatefilesizes = templatefile_hdr['pixdim']
-
+    datamask_img, datamask_data, datamask_hdr, datamaskdims, datamasksizes = tide_io.readfromnifti(datamaskname)
+templatefile_img, templatefile_data, templatefile_hdr, templatefiledims, templatefilesizes = tide_io.readfromnifti(templatefilename)
 if usetmask:
-    templatemask_img = nib.load(templatemaskname)
-    templatemask_data = templatemask_img.get_data()
-    templatemask_hdr = templatemask_img.get_header()
-    templatemaskdims = templatemask_hdr['dim']
-    templatemasksizes = templatemask_hdr['pixdim']
+    templatemask_img, templatemask_data, templatemask_hdr, templatemaskdims, templatemasksizes = tide_io.readfromnifti(templatemaskname)
 
 xsize = datafiledims[1]
 ysize = datafiledims[2]
