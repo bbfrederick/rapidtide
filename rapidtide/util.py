@@ -440,20 +440,58 @@ def proctiminginfo(thetimings, outputfile='', extraheader=None):
 
 
 # --------------------------- testing functions -------------------------------------------------
-def comparemap(map1, map2, mask=None):
+def comparemap(map1, map2, mask=None, debug=False):
+    ndims = len(map1.shape)
+    if debug:
+        print('map has', ndims, 'axes')
     if map1.shape != map2.shape:
         print('comparemap: maps do not have the same shape - aborting')
         sys.exit()
-    if mask is not None:
-        if map1.shape != mask.shape:
-            print('comparemap: mask does not have the same shape as the maps - aborting')
-            sys.exit()
-    else:  
-        mask = map1 * 0 + 1
+    if ndims == 1:
+        if debug:
+            print('dealing with ndims == 1 case')
+        map1valid = map1
+        map2valid = map2
+    else:
+        if mask is  None:
+            map1valid = map1
+            map2valid = map2
+        else:
+            if debug:
+                print('mask is not None')
+            ndims_mask = len(mask.shape)
+            if debug:
+                print('mask has', ndims_mask, 'axes')
+            if ndims_mask == ndims:
+                if debug:
+                    print('dealing with ndims == ndims_mask case')
+                if map1.shape != mask.shape:
+                    print('comparemap: mask does not have the same shape as the maps - aborting')
+                    sys.exit()
+                validvoxels = np.where(mask > 0)[0]
+                map1valid = map1[validvoxels, :]
+                map2valid = map2[validvoxels, :]
+            elif ndims_mask == ndims - 1:
+                # need to make expanded mask
+                if debug:
+                    print('dealing with ndims == ndims_mask + 1 case')
+                    print('shape of map:', map1.shape)
+                    print('shape of mask:', mask.shape)
+                numvox = 1
+                for i in range(ndims - 1):
+                    numvox *= mask.shape[i]
+                reshapemask = mask.reshape(numvox)
+                reshapemap1 = map1.reshape(numvox, -1)
+                reshapemap2 = map2.reshape(numvox, -1)
+                validvoxels = np.where(reshapemask > 0)[0]
+                map1valid = reshapemap1[validvoxels, :]
+                map2valid = reshapemap2[validvoxels, :]
+            else:
+                print('mask is not compatible with map')
+                sys.exit()
 
-    validvoxels = np.where(mask > 0)[0]
-    map1valid = map1[validvoxels]
-    map2valid = map2[validvoxels]
+
+    # at this point, map2valid and map1valid are the same dimensions
     diff = map2valid - map1valid
     reldiff = np.where(map1valid != 0.0, diff / map1valid, 0.0)
     maxdiff = np.max(diff)
@@ -499,8 +537,11 @@ def comparerapidtideruns(root1, root2):
             sys.exit()
     return results
 
-def comparehappyruns(root1, root2):
+
+def comparehappyruns(root1, root2, debug=False):
     results = {}
+    if debug:
+        print('comparehappyruns rootnames:', root1, root2)
     for map in ['app']:
         filename1 = root1 + '_' + map + '.nii.gz'
         maskname1 = root1 + '_mask.nii.gz'
@@ -518,7 +559,9 @@ def comparehappyruns(root1, root2):
                     # files match in size
                     results[map] = {}
                     results[map]['mindiff'], results[map]['maxdiff'], results[map]['meandiff'], results[map]['mse'], \
-                        results[map]['relmindiff'], results[map]['relmaxdiff'], results[map]['relmeandiff'], results[map]['relmse'] = comparemap(data1, data2, mask=mask)
+                    results[map]['relmindiff'], results[map]['relmaxdiff'], results[map]['relmeandiff'], \
+                    results[map]['relmse'] \
+                        = comparemap(data1, data2, mask=mask, debug=debug)
                 else:
                     print('mask dimensions don\'t match - aborting')
                     sys.exit()
@@ -527,4 +570,27 @@ def comparehappyruns(root1, root2):
         else:
             print('mask dimensions don\'t match - aborting')
             sys.exit()
+        if debug:
+            print('done processing', map)
+    for timecourse in ['cardfromfmri_25.0Hz.txt', 'cardfromfmri_dlfiltered_25.0Hz.txt', 'cardfromfmrienv_25.0Hz.txt']:
+        filename1 = root1 + '_' + timecourse
+        filename2 = root2 + '_' + timecourse
+        if os.path.isfile(filename1) and os.path.isfile(filename2):
+            data1 = np.transpose(tide_io.readvecs(filename1))
+            data2 = np.transpose(tide_io.readvecs(filename2))
+            if len(data1) == len(data2):
+                # files match in size
+                results[timecourse] = {}
+                results[timecourse]['mindiff'], results[timecourse]['maxdiff'], results[timecourse]['meandiff'], \
+                results[timecourse]['mse'], results[timecourse]['relmindiff'], results[timecourse]['relmaxdiff'], \
+                results[timecourse]['relmeandiff'], results[timecourse]['relmse'] \
+                    = comparemap(data1, data2, debug=debug)
+            else:
+                print('timecourse lengths don\'t match - aborting')
+                sys.exit()
+        else:
+            print('timecourse', timecourse, 'does not exist - skipping')
+        if debug:
+            print('done processing', timecourse)
+
     return results
