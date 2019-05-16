@@ -10,7 +10,7 @@ import pylab as plt
 from rapidtide.io import writenpvecs
 from rapidtide.filter import noncausalfilter
 from rapidtide.correlate import shorttermcorr_1D, shorttermcorr_2D
-from rapidtide.tests.utils import get_test_data_path
+from rapidtide.tests.utils import get_test_target_path, get_test_temp_path, create_dir
 
 
 def test_stcorrelate(debug=False):
@@ -20,7 +20,11 @@ def test_stcorrelate(debug=False):
     windowtime = 30.0
     stepsize = 5.0
     corrweighting = 'none'
-    outfilename = op.join(get_test_data_path(), 'stcorrtest')
+    outfilename = op.join(get_test_temp_path(), 'stcorrtest')
+
+    # create outputdir if it doesn't exist
+    create_dir(get_test_temp_path())
+
     prewindow = True
     dodetrend = True
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr

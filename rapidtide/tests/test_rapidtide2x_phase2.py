@@ -11,22 +11,14 @@ import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import rapidtide.util as tide_util
 import rapidtide.workflows.rapidtide2x as rapidtide2x_workflow
-from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path
+from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path, create_dir
 
 
 def test_rapidtide2x(debug=False):
     recalculate = True
     if recalculate:
         # create outputdir if it doesn't exist
-        try:
-            if debug:
-                os.makedirs(get_test_temp_path())
-            print(get_test_temp_path(), 'created')
-        except OSError:
-            if debug:
-                print(get_test_temp_path(), 'exists')
-            else:
-                pass
+        create_dir(get_test_temp_path())
     
         # and launch the processing
         theargs = ['rapidtide2x']

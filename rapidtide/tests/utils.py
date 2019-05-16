@@ -60,6 +60,19 @@ def get_examples_path():
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
     """
     return os.path.realpath(os.path.join(get_rapidtide_root(), 'data', 'examples', 'src')) + os.path.sep
+ 
+
+def create_dir(thedir, debug=False):
+    # create a directory if it doesn't exist
+    try:
+        os.makedirs(thedir)
+        if debug:
+            print(thedir, 'created')
+    except OSError:
+        if debug:
+            print(thedir, 'exists')
+        else:
+            pass
 
 
 def mse(vec1, vec2):
