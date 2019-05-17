@@ -176,6 +176,7 @@ def usage():
         "    --model=MODELNAME              - Use model MODELNAME for dl filter (default is model_revised - from the revised NeuroImage paper.)")
     print("    --glm                          - Generate voxelwise aliased synthetic cardiac regressors and filter")
     print("                                     them out")
+    print("    --temporalglm                  - Perform temporal rather than spatial GLM")
     print("")
     print("Performance:")
     print(
@@ -768,7 +769,6 @@ def happy_main(thearguments):
     mklthreads = 1
     spatialglmdenoise = True
     savecardiacnoise = True
-    usecongrid = True
     forcedhr = None
     usemaskcardfromfmri = True
     censorbadpts = True
@@ -843,10 +843,10 @@ def happy_main(thearguments):
                                                            "nodetrend",
                                                            "motionfile=",
                                                            "glm",
+                                                           "temporalglm",
                                                            "debug",
                                                            "motionhp=",
                                                            "motionlp=",
-                                                           "normalize",
                                                            "nodemean",
                                                            "cardcalconly",
                                                            "outputbins=",
@@ -896,6 +896,9 @@ def happy_main(thearguments):
         elif o == "--glm":
             doglm = True
             print('will generate and remove aliased voxelwise cardiac regressors')
+        elif o == "--temporalglm":
+            spatialglmdenoise = False
+            print('will do a temporal rather than spatial glm')
         elif o == "--disablenotch":
             notchpct = -1.0
             print('Disabling subharmonic notch filter')
@@ -1026,9 +1029,6 @@ def happy_main(thearguments):
         elif o == "--motionlp":
             motionlp = float(a)
             print('will lowpass motion regressors at', motionlp, 'Hz prior to regression')
-        elif o == "--normalize":
-            fmrimod = 'norm'
-            print('will normalize fmri before gridding')
         elif o == "--savetcsastsv":
             savetcsastsv = True
             print('will save timecourses in BIDS tsv format')
@@ -1570,21 +1570,22 @@ def happy_main(thearguments):
         outphases = sp.linspace(-np.pi, np.pi, num=destpoints, endpoint=False)
     else:
         outphases = sp.linspace(0.0, 2.0 * np.pi, num=destpoints, endpoint=False)
-    outphasestep = outphases[1] - outphases[0]
     phasestep = outphases[1] - outphases[0]
     congridwidth = congridbins * phasestep
 
-    if fmrimod == 'norm':
-        fmri_data_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
-    elif fmrimod == 'demean':
+    #######################################################################################################
+    #
+    # now do the phase projection
+    #
+    #
+    if fmrimod == 'demean':
         fmri_data_byslice = demeandata.reshape((xsize * ysize, numslices, timepoints))
     else:
         fmri_data_byslice = fmri_data.reshape((xsize * ysize, numslices, timepoints))
 
-    # now do the phase projection
     timings.append(['Phase projection to image started', time.time(), None, None])
     print('starting phase projection')
-    proclist = range(timepoints)
+    proclist = range(timepoints)       # proclist is the list of all timepoints to be projected
     if censorbadpts:
         censorlist = np.zeros(timepoints, dtype='int')
         censorlist[np.where(badpointlist > 0.0)[0] // numsteps] = 1
@@ -1613,35 +1614,22 @@ def happy_main(thearguments):
         validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
         indexlist = range(0, len(phasevals[theslice, :]))
         if len(validlocs) > 0:
-            if usecongrid:
-                for t in proclist:
-                    filteredmr = -fmri_data_byslice[validlocs, theslice, t]
-                    thevals, theweights, theindices = tide_resample.congrid(outphases,
-                                                                            phasevals[theslice, t],
-                                                                            1.0,
-                                                                            congridbins,
-                                                                            kernel=gridkernel,
-                                                                            cyclic=True)
-                    for i in range(len(theindices)):
-                        weight_byslice[validlocs, theslice, theindices[i]] += theweights[i]
-                        rawapp_byslice[validlocs, theslice, theindices[i]] += theweights[i] * filteredmr
-                for d in range(destpoints):
-                    if weight_byslice[validlocs[0], theslice, d] == 0.0:
-                        weight_byslice[validlocs, theslice, d] = 1.0
-                rawapp_byslice[validlocs, theslice, :] = \
-                    np.nan_to_num(rawapp_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :])
-            else:
-                destinds = ((phasevals[theslice, :] + np.pi + 0.5 * outphasestep) // outphasestep).astype(int)
-                for t in proclist:
-                    if detrendorder > 0:
-                        filteredmr = -tide_fit.detrend(fmri_data_byslice[validlocs, theslice, t], order=detrendorder,
-                                                       demean=False)
-                    else:
-                        filteredmr = -fmri_data_byslice[validlocs, theslice, t]
-                    weight_byslice[validlocs, theslice, destinds[t]] += 1
-                    rawapp_byslice[validlocs, theslice, destinds[t]] += filteredmr
-                rawapp_byslice[validlocs, theslice, :] = \
-                    np.nan_to_num(rawapp_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :])
+            for t in proclist:
+                filteredmr = -fmri_data_byslice[validlocs, theslice, t]
+                thevals, theweights, theindices = tide_resample.congrid(outphases,
+                                                                        phasevals[theslice, t],
+                                                                        1.0,
+                                                                        congridbins,
+                                                                        kernel=gridkernel,
+                                                                        cyclic=True)
+                for i in range(len(theindices)):
+                    weight_byslice[validlocs, theslice, theindices[i]] += theweights[i]
+                    rawapp_byslice[validlocs, theslice, theindices[i]] += theweights[i] * filteredmr
+            for d in range(destpoints):
+                if weight_byslice[validlocs[0], theslice, d] == 0.0:
+                    weight_byslice[validlocs, theslice, d] = 1.0
+            rawapp_byslice[validlocs, theslice, :] = \
+                np.nan_to_num(rawapp_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :])
         else:
             rawapp_byslice[:, theslice, :] = 0.0
 
@@ -1714,23 +1702,28 @@ def happy_main(thearguments):
         print('generating cardiac regressors')
         cardiacnoise = fmri_data * 0.0
         cardiacnoise_byslice = cardiacnoise.reshape((xsize * ysize, numslices, timepoints))
+        phaseindices = (cardiacnoise * 0.0).astype(np.int16)
+        phaseindices_byslice = phaseindices.reshape((xsize * ysize, numslices, timepoints))
         for theslice in range(numslices):
             print('calculating cardiac noise for slice', theslice)
             validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
             for t in range(timepoints):
-                phaseindex = int(np.round((phasevals[theslice, t] - outphases[0]) / phasestep, 0))
-                cardiacnoise_byslice[validlocs, theslice, t] = rawapp_byslice[validlocs, theslice, phaseindex]
+                phaseindices_byslice[validlocs, theslice, t] = \
+                    tide_util.valtoindex(outphases, phasevals[theslice, t])
+                cardiacnoise_byslice[validlocs, theslice, t] = \
+                    rawapp_byslice[validlocs, theslice, phaseindices_byslice[validlocs, theslice, t]]
         theheader = nim_hdr
         timings.append(['Cardiac signal generated', time.time(), None, None])
         if savecardiacnoise:
             tide_io.savetonifti(cardiacnoise.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes,
                                 outputroot + '_cardiacnoise')
+            tide_io.savetonifti(phaseindices.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes,
+                                outputroot + '_phaseindices')
             timings.append(['Cardiac signal saved', time.time(), None, None])
 
         # now remove them
         tide_util.logmem('before cardiac removal', file=memfile)
         print('removing cardiac signal with GLM')
-        nprocs = 4
         filtereddata = 0.0 * fmri_data
         datatoremove = 0.0 * fmri_data
         validlocs = np.where(mask > 0)[0]
@@ -1755,11 +1748,13 @@ def happy_main(thearguments):
                                  datatoremove[validlocs, :],
                                  filtereddata[validlocs, :],
                                  reportstep=(timepoints // 100),
-                                 mp_chunksize=100,
+                                 mp_chunksize=10,
                                  procbyvoxel=False,
                                  nprocs=nprocs
                                  )
-            timings.append(['Cardiac signal regression finished', time.time(), None, None])
+            datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[None, :])
+            filtereddata = fmri_data - datatoremove
+            timings.append(['Cardiac signal regression finished', time.time(), timepoints, 'timepoints'])
             tide_io.writevec(fitcoffs, outputroot + '_fitcoff.txt')
             tide_io.writevec(meanvals, outputroot + '_fitmean.txt')
             tide_io.writevec(rvals, outputroot + '_fitR.txt')
@@ -1784,7 +1779,7 @@ def happy_main(thearguments):
                                  procbyvoxel=True,
                                  nprocs=nprocs
                                  )
-            timings.append(['Cardiac signal regression finished', time.time(), None, None])
+            timings.append(['Cardiac signal regression finished', time.time(), numspatiallocs, 'voxels'])
             theheader = nim_hdr
             theheader['dim'][4] = 1
             tide_io.savetonifti(fitcoffs.reshape((xsize, ysize, numslices)), theheader, thesizes,
