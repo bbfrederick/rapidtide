@@ -142,7 +142,7 @@ def glmpass(numprocitems,
                 if (vox % reportstep == 0 or vox == numprocitems - 1) and showprogressbar:
                     tide_util.progressbar(vox + 1, numprocitems, label='Percent complete')
                 thedata = fmri_data[vox, addedskip:].copy()
-                if themask[vox] > 0:
+                if (themask is None) or (themask[vox] > 0):
                     dummy, \
                     meanvalue[vox],\
                     rvalue[vox], \
@@ -162,7 +162,7 @@ def glmpass(numprocitems,
                 if (timepoint % reportstep == 0 or timepoint == numprocitems - 1) and showprogressbar:
                     tide_util.progressbar(timepoint + 1, numprocitems, label='Percent complete')
                 thedata = fmri_data[:, addedskip + timepoint].copy()
-                if themask[timepoint] > 0:
+                if (themask is None) or (themask[timepoint] > 0):
                     dummy, \
                     meanvalue[timepoint], \
                     rvalue[timepoint], \
@@ -177,6 +177,8 @@ def glmpass(numprocitems,
                                         rt_floatset=rt_floatset,
                                         rt_floattype=rt_floattype)
                     itemstotal += 1
+        if showprogressbar:
+            print()
     return itemstotal
 
 

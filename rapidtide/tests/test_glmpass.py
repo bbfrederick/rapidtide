@@ -29,9 +29,9 @@ def gen2d(xsize=150, xcycles=11, tsize=200, tcycles=13, mean=10.0):
 
 def test_glmpass(debug=True, display=False):
     xsize = 150
-    xcycles = 11
+    xcycles = 7 
     tsize = 200
-    tcycles = 13
+    tcycles = 23
     mean = 100.0
     noiselevel = 5.0
 
@@ -98,6 +98,27 @@ def test_glmpass(debug=True, display=False):
     if debug:
         print('proc by time, multi proc:', mse(datatoremove, targetarray))
     assert mse(datatoremove, targetarray) < 1e-3
+
+    # no mask
+    tide_glmpass.glmpass(tsize, testarray, None, xwaveforms,
+                         meanvals_t, rvals_t, r2vals_t, fitcoffs_t, fitNorm_t,
+                         datatoremove,
+                         filtereddata,
+                         showprogressbar=False,
+                         mp_chunksize=10,
+                         procbyvoxel=False,
+                         nprocs=1
+                         )
+    if display:
+        plt.figure()
+        plt.imshow(datatoremove)
+        plt.show()
+        plt.imshow(filtereddata)
+        plt.show()
+    if debug:
+        print('proc by time, single proc, no mask:', mse(datatoremove, targetarray))
+    assert mse(datatoremove, targetarray) < 1e-3
+
     
     # run along spatial direction
     # no multiproc
