@@ -35,21 +35,21 @@ import rapidtide.util as tide_util
 
 
 def _procOneItemGLM(vox,
-                     lagtc,
-                     inittc,
+                     theevs,
+                     thedata,
                      rt_floatset=np.float64,
                      rt_floattype='float64'):
-    thefit, R = tide_fit.mlregress(lagtc, inittc)
+    thefit, R = tide_fit.mlregress(theevs, thedata)
     fitcoff = rt_floatset(thefit[0, 1])
-    datatoremove = rt_floatset(fitcoff * lagtc)
+    datatoremove = rt_floatset(fitcoff * theevs)
     return vox, rt_floatset(thefit[0, 0]), rt_floatset(R), rt_floatset(R * R), fitcoff, \
-           rt_floatset(thefit[0, 1] / thefit[0, 0]), datatoremove, rt_floatset(inittc - datatoremove)
+           rt_floatset(thefit[0, 1] / thefit[0, 0]), datatoremove, rt_floatset(thedata - datatoremove)
 
 
 def glmpass(numprocitems,
             fmri_data,
             threshval,
-            lagtc,
+            theevs,
             meanvalue,
             rvalue,
             r2value,
@@ -69,7 +69,10 @@ def glmpass(numprocitems,
     if threshval is None:
         themask = None
     else:
-        themask = np.where(np.mean(fmri_data, axis=1) > threshval, 1, 0)
+        if procbyvoxel:
+            themask = np.where(np.mean(fmri_data, axis=1) > threshval, 1, 0)
+        else:
+            themask = np.where(np.mean(fmri_data, axis=0) > threshval, 1, 0)
     if nprocs > 1:
         # define the consumer function here so it inherits most of the arguments
         def GLM_consumer(inQ, outQ):
@@ -85,13 +88,13 @@ def glmpass(numprocitems,
                     # process and send the data
                     if procbyvoxel:
                         outQ.put(_procOneItemGLM(val,
-                                                  lagtc[val, :],
+                                                  theevs[val, :],
                                                   fmri_data[val, addedskip:],
                                                   rt_floatset=rt_floatset,
                                                   rt_floattype=rt_floattype))
                     else:
                         outQ.put(_procOneItemGLM(val,
-                                                  lagtc[:, val],
+                                                  theevs[:, val],
                                                   fmri_data[:, addedskip + val],
                                                   rt_floatset=rt_floatset,
                                                   rt_floattype=rt_floattype))
@@ -138,7 +141,7 @@ def glmpass(numprocitems,
             for vox in range(0, numprocitems):
                 if (vox % reportstep == 0 or vox == numprocitems - 1) and showprogressbar:
                     tide_util.progressbar(vox + 1, numprocitems, label='Percent complete')
-                inittc = fmri_data[vox, addedskip:].copy()
+                thedata = fmri_data[vox, addedskip:].copy()
                 if themask[vox] > 0:
                     dummy, \
                     meanvalue[vox],\
@@ -149,8 +152,8 @@ def glmpass(numprocitems,
                     datatoremove[vox, :], \
                     filtereddata[vox, :] = \
                         _procOneItemGLM(vox,
-                                         lagtc[vox, :],
-                                         inittc,
+                                         theevs[vox, :],
+                                         thedata,
                                          rt_floatset=rt_floatset,
                                          rt_floattype=rt_floattype)
                     itemstotal += 1
@@ -158,7 +161,7 @@ def glmpass(numprocitems,
             for timepoint in range(0, numprocitems):
                 if (timepoint % reportstep == 0 or timepoint == numprocitems - 1) and showprogressbar:
                     tide_util.progressbar(timepoint + 1, numprocitems, label='Percent complete')
-                inittc = fmri_data[:, addedskip + timepoint].copy()
+                thedata = fmri_data[:, addedskip + timepoint].copy()
                 if themask[timepoint] > 0:
                     dummy, \
                     meanvalue[timepoint], \
@@ -169,8 +172,8 @@ def glmpass(numprocitems,
                     datatoremove[:, timepoint], \
                     filtereddata[:, timepoint] = \
                         _procOneItemGLM(timepoint,
-                                        lagtc[:, timepoint],
-                                        inittc,
+                                        theevs[:, timepoint],
+                                        thedata,
                                         rt_floatset=rt_floatset,
                                         rt_floattype=rt_floattype)
                     itemstotal += 1
@@ -178,7 +181,7 @@ def glmpass(numprocitems,
 
 
 def motionregress(themotionfilename,
-                  thedata,
+                  thedataarray,
                   tr,
                   orthogonalize=True,
                   motstart=0,
@@ -219,7 +222,7 @@ def motionregress(themotionfilename,
         motionregressors = tide_fit.gram_schmidt(motionregressors)
 
     print('start motion filtering')
-    filtereddata = confoundglm(thedata, motionregressors, debug=debug)
+    filtereddata = confoundglm(thedataarray, motionregressors, debug=debug)
     print()
     print('motion filtering complete')
     return motionregressors, filtereddata
