@@ -1746,7 +1746,7 @@ def rapidtide_main(thearguments):
     warnings.filterwarnings('ignore', 'Casting*')
 
     if optiondict['fakerun']:
-        sys.exit()
+        os._exit(1)
 
     # write out the resampled reference regressors
     if optiondict['detrendorder'] > 0:
