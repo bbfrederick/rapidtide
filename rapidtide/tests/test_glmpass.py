@@ -87,7 +87,7 @@ def test_glmpass(debug=True, display=False):
                          showprogressbar=False,
                          mp_chunksize=10,
                          procbyvoxel=False,
-                         nprocs=-1
+                         nprocs=2
                          )
     if display:
         plt.figure()
@@ -149,7 +149,7 @@ def test_glmpass(debug=True, display=False):
                          showprogressbar=False,
                          mp_chunksize=10,
                          procbyvoxel=True,
-                         nprocs=-1
+                         nprocs=2
                          )
     if display:
         plt.figure()
