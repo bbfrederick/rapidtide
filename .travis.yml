@@ -1,14 +1,10 @@
-language: python
+language: c
 
-matrix:
-  include:
-    - python: 2.7
-      env: PYVER=2
-    - python: 3.6
-      env: COVERAGE=1 PYVER=3
-    - python: 3.7
-      env: PYVER=3
-
+env:
+  # Build and test package on all supported python version
+  - BUILD_TARGET=3.7 PYVER=3
+  - BUILD_TARGET=3.6 PYVER=3 COVERAGE=1
+  - BUILD_TARGET=2.7 PYVER=2
 
 install:
   - wget https://repo.continuum.io/miniconda/Miniconda${PYVER}-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -18,7 +14,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n test-env python=$TRAVIS_PYTHON_VERSION
+  - conda create -q -n test-env python=$BUILD_TARGET
   - source activate test-env
 
   - conda install -c conda-forge numpy scipy atlas scikit-learn codecov pytest-cov matplotlib nibabel statsmodels pyfftw numba pytest pip 
