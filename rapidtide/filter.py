@@ -672,11 +672,6 @@ def dobptrapfftfilt(Fs, lowerstop, lowerpass, upperpass, upperstop, inputdata, p
               " Fstopu=", upperstop)
     transferfunc = getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug) * (
             1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug))
-    if debug:
-        freqs = np.arange(0.0, Fs, Fs / np.shape(transferfunc)[0])
-        pl.plot(freqs, transferfunc)
-        pl.show()
-        sys.exit()
     inputdata_trans *= transferfunc
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
