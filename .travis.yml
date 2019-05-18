@@ -1,21 +1,13 @@
 language: python
-python:
-  - 2.7
-  - 3.6
-  - 3.7
 
 matrix:
   include:
     - python: 2.7
-      env:
-        - PYVER=2
+      env: PYVER=2
     - python: 3.6
-      env:
-        - COVERAGE=1
-        - PYVER=3
+      env: COVERAGE=1 PYVER=3
     - python: 3.7
-      env:
-        - PYVER=3
+      env: PYVER=3
 
 
 install:
