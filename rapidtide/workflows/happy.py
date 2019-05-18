@@ -281,7 +281,7 @@ def getfundamental(inputdata, Fs, fundfreq):
     return thefundfilter.apply(Fs, inputdata)
 
 
-def getcardcoeffs(cardiacwaveform, slicesamplerate, minhr=40.0, maxhr=140.0, smoothlen=101, debug=False):
+def getcardcoeffs(cardiacwaveform, slicesamplerate, minhr=40.0, maxhr=140.0, smoothlen=101, debug=False, display=False):
     if len(cardiacwaveform) > 1024:
         thex, they = welch(cardiacwaveform, slicesamplerate, nperseg=1024)
     else:
@@ -304,7 +304,7 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, minhr=40.0, maxhr=140.0, smo
 
     # find the max
     ampspec = savgolsmooth(np.abs(spectrum), smoothlen=smoothlen)
-    if debug:
+    if display:
         figure()
         plot(freqaxis, ampspec, 'r')
         show()
