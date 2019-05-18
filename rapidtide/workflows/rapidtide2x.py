@@ -759,6 +759,7 @@ def rapidtide_main(thearguments):
             optiondict['usewindowfunc'] = False
             print('disable precorrelation windowing')
         elif o == '--windowfunc':
+            optiondict['usewindowfunc'] = True
             thewindow = a
             if (thewindow != 'hamming') and (thewindow != 'hann') and (thewindow != 'blackmanharris') and (
                     thewindow != 'None'):
