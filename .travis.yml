@@ -1,16 +1,25 @@
 language: python
 python:
+  - 2.7
   - 3.6
+  - 3.7
 
 matrix:
   include:
+    - python: 2.7
+      env:
+        - PYVER=2
     - python: 3.6
       env:
         - COVERAGE=1
+        - PYVER=3
+    - python: 3.7
+      env:
+        - PYVER=3
 
 
 install:
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - wget https://repo.continuum.io/miniconda/Miniconda${PYVER}-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
