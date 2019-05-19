@@ -1540,7 +1540,7 @@ def rapidtide_main(thearguments):
         else:
             theheader['dim'][0] = 3
             theheader['dim'][4] = 1
-        tide_io.savetonifti(corrmask.reshape(xsize, ysize, numslices), theheader, thesizes, outputname + '_corrmask')
+        tide_io.savetonifti(corrmask.reshape(xsize, ysize, numslices), theheader, outputname + '_corrmask')
 
     if optiondict['verbose']:
         print('image threshval =', threshval)
@@ -1622,7 +1622,7 @@ def rapidtide_main(thearguments):
                 tide_io.writenpvecs(outfmriarray.reshape((numspatiallocs, validtimepoints)),
                                 outputname + '_motionfiltered' + '' + '.txt')
             else:
-                tide_io.savetonifti(outfmriarray.reshape((xsize, ysize, numslices, validtimepoints)), nim_hdr, thesizes,
+                tide_io.savetonifti(outfmriarray.reshape((xsize, ysize, numslices, validtimepoints)), nim_hdr,
                                 outputname + '_motionfiltered' + '')
 
 
@@ -1647,7 +1647,7 @@ def rapidtide_main(thearguments):
         else:
             theheader['dim'][0] = 3
             theheader['dim'][4] = 1
-        tide_io.savetonifti(fullmeanmask.reshape((xsize, ysize, numslices)), theheader, thesizes,
+        tide_io.savetonifti(fullmeanmask.reshape((xsize, ysize, numslices)), theheader,
                             outputname + '_meanmask' + '')
         optiondict['preprocskip'] = 0
     else:
@@ -2156,7 +2156,7 @@ def rapidtide_main(thearguments):
                 else:
                     theheader['dim'][0] = 3
                     theheader['dim'][4] = 1
-                tide_io.savetonifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)).reshape(nativespaceshape), theheader, thesizes,
+                tide_io.savetonifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)).reshape(nativespaceshape), theheader,
                                  outputname + '_despecklemask_pass' + str(thepass))
             print('\n\n', voxelsprocessed_fc_ds, 'voxels despeckled in', optiondict['despeckle_passes'], 'passes')
             timings.append(
@@ -2462,7 +2462,7 @@ def rapidtide_main(thearguments):
             tide_io.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
                                 outputname + '_' + mapname + outsuffix3d + '.txt')
         else:
-            tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
+            tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader,
                                 outputname + '_' + mapname + outsuffix3d)
 
     if optiondict['doglmfilt']:
@@ -2478,7 +2478,7 @@ def rapidtide_main(thearguments):
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
                                     outputname + '_' + mapsuffix + outsuffix3d + '.txt')
             else:
-                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
+                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader,
                                     outputname + '_' + mapsuffix + outsuffix3d)
         del rvalue
         del r2value
@@ -2497,7 +2497,7 @@ def rapidtide_main(thearguments):
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
                                     outputname + '_' + mapsuffix + outsuffix3d + '.txt')
             else:
-                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
+                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader,
                                     outputname + '_' + mapsuffix + outsuffix3d)
         del meanvalue
 
@@ -2513,7 +2513,7 @@ def rapidtide_main(thearguments):
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
                                     outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d + '.txt')
             else:
-                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
+                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader,
                                     outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d)
 
     if optiondict['passes'] > 1:
@@ -2523,7 +2523,7 @@ def rapidtide_main(thearguments):
             tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
                                 outputname + '_lagregressor' + outsuffix4d + '.txt')
         else:
-            tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, thesizes,
+            tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader,
                                 outputname + '_refinemask' + outsuffix3d)
         del refinemask
 
@@ -2549,7 +2549,7 @@ def rapidtide_main(thearguments):
         tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
                             outputname + '_gaussout' + outsuffix4d + '.txt')
     else:
-        tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes,
+        tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader,
                             outputname + '_gaussout' + outsuffix4d)
     del gaussout
     outcorrarray[:, :] = 0.0
@@ -2558,7 +2558,7 @@ def rapidtide_main(thearguments):
         tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
                             outputname + '_windowout' + outsuffix4d + '.txt')
     else:
-        tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes,
+        tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader,
                             outputname + '_windowout' + outsuffix4d)
     del windowout
     outcorrarray[:, :] = 0.0
@@ -2567,7 +2567,7 @@ def rapidtide_main(thearguments):
         tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
                             outputname + '_corrout' + outsuffix4d + '.txt')
     else:
-        tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, thesizes,
+        tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader,
                             outputname + '_corrout' + outsuffix4d)
     del corrout
 
@@ -2584,7 +2584,7 @@ def rapidtide_main(thearguments):
             tide_io.writenpvecs(outarmodelarray.reshape(nativearmodelshape),
                                 outputname + '_arN' + outsuffix4d + '.txt')
         else:
-            tide_io.savetonifti(outarmodelarray.reshape(nativearmodelshape), theheader, thesizes,
+            tide_io.savetonifti(outarmodelarray.reshape(nativearmodelshape), theheader,
                                 outputname + '_arN' + outsuffix4d)
         del arcoffs
 
@@ -2603,7 +2603,7 @@ def rapidtide_main(thearguments):
             tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
                                 outputname + '_lagregressor' + outsuffix4d + '.txt')
         else:
-            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader,
                                 outputname + '_lagregressor' + outsuffix4d)
         del lagtc
 
@@ -2614,7 +2614,7 @@ def rapidtide_main(thearguments):
                 tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
                                     outputname + '_shiftedtcs' + outsuffix4d + '.txt')
             else:
-                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader,
                                     outputname + '_shiftedtcs' + outsuffix4d)
         del shiftedtcs
 
@@ -2625,7 +2625,7 @@ def rapidtide_main(thearguments):
                 tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
                                 outputname + '_datatoremove' + outsuffix4d + '.txt')
             else:
-                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader,
                                 outputname + '_datatoremove' + outsuffix4d)
         del datatoremove
         outfmriarray[validvoxels, :] = filtereddata[:, :]
@@ -2633,7 +2633,7 @@ def rapidtide_main(thearguments):
             tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
                                 outputname + '_filtereddata' + outsuffix4d + '.txt')
         else:
-            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader,
                                 outputname + '_filtereddata' + outsuffix4d)
         del filtereddata
 
@@ -2643,7 +2643,7 @@ def rapidtide_main(thearguments):
             tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
                                 outputname + '_prewhiteneddata' + outsuffix4d + '.txt')
         else:
-            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, thesizes,
+            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader,
                                 outputname + '_prewhiteneddata' + outsuffix4d)
         del prewhiteneddata
 

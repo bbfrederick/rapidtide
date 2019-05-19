@@ -178,4 +178,4 @@ else:
         regionval = summarize(thevoxels, method=summarymethod)
         outputvoxels[np.where(templatevoxels == theregion)] = regionval
     template_hdr['dim'][4] = numregions
-    tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, templatesizes, outputfile)
+    tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, outputfile)

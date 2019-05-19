@@ -456,11 +456,11 @@ if matrixoutput:
     init_sizes = init_hdr['pixdim'].copy()
     init_sizes[4] = sampletime
     init_hdr['toffset'] = times[0]
-    tide_io.savetonifti(corrpertime, init_hdr, init_sizes, outfilename + '_pearsonR')
-    tide_io.savetonifti(ppertime, init_hdr, init_sizes, outfilename + '_corrp')
-    tide_io.savetonifti(Rvals, init_hdr, init_sizes, outfilename + '_maxxcorr')
-    tide_io.savetonifti(delayvals, init_hdr, init_sizes, outfilename + '_delayvals')
-    tide_io.savetonifti(valid, init_hdr, init_sizes, outfilename + '_valid')
+    tide_io.savetonifti(corrpertime, init_hdr, outfilename + '_pearsonR')
+    tide_io.savetonifti(ppertime, init_hdr, outfilename + '_corrp')
+    tide_io.savetonifti(Rvals, init_hdr, outfilename + '_maxxcorr')
+    tide_io.savetonifti(delayvals, init_hdr, outfilename + '_delayvals')
+    tide_io.savetonifti(valid, init_hdr, outfilename + '_valid')
     rows = []
     cols = []
     for i in range(numcomponents):

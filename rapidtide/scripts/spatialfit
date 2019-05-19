@@ -188,12 +188,12 @@ print("slope mean, std:", np.mean(lincoffs), np.std(lincoffs))
 print("offset mean, std:", np.mean(offsets), np.std(offsets))
 
 print("writing nifti series")
-tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, 
                     outputrootname + '_fit')
-tide_io.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+tide_io.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, 
                     outputrootname + '_residuals')
-tide_io.savetonifti(normalized.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+tide_io.savetonifti(normalized.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, 
                     outputrootname + '_normalized')
 newtemplate = np.where(newmask > 0, newtemplate / newmask, 0.0)
-tide_io.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr, templatefilesizes,
+tide_io.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr,
                     outputrootname + '_newtemplate')

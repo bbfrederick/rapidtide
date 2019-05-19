@@ -85,20 +85,9 @@ print('the range is ',therange)
 print('now cycling over all voxels')
 for spatialloc in range(0,numspatiallocs):
     sorteddata[spatialloc,:]=sort(corr_data[spatialloc,:])
-    #temphist = tide_stats.makehistogram(corr_data[spatialloc,:], histlen, therange)
-    #outputhists[spatialloc,:] = temphist[0]
-    #histfit = tide_stats.fitpdf(temphist, histlen, 0, corr_data[spatialloc,:])
-    #pcts_data[spatialloc,:] = tide_stats.getfracvals(corr_data[spatialloc,:], \
-    #    thepercentiles, numbins=int(np.sqrt(len(corr_data[spatialloc,:])) * 5.0), nozero=True)
-    #pcts_fit[spatialloc,:] = tide_stats.getfracvalsfromfit(histfit, thepercentiles, numbins=100000)
     if spatialloc % 100 == 0:
         progressbar(spatialloc + 1, numspatiallocs, label='Percent complete')
     
 # now do the ones with other numbers of time points
 theheader=input_hdr
-tide_io.savetonifti(sorteddata.reshape((xsize,ysize,numslices,numtrials)), theheader, thesizes, outputroot + '_sorted')
-#theheader['dim'][4] = histlen
-#tide_io.savetonifti(outputhists.reshape((xsize,ysize,numslices,histlen)), theheader, thesizes, outputroot + '_hists')
-#theheader['dim'][4] = 1
-#for i in range(0, len(thepercentiles)):
-#    tide_io.savetonifti(pcts_data[:,i].reshape((xsize,ysize,numslices)), theheader, thesizes, outputroot + '_p_lt_' + thepvalnames[i] + '_mask')
+tide_io.savetonifti(sorteddata.reshape((xsize,ysize,numslices,numtrials)), theheader, outputroot + '_sorted')

@@ -108,7 +108,7 @@ if nibabelexists:
         return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
 
-    def savetonifti(thearray, theheader, thepixdim, thename):
+    def savetonifti(thearray, theheader, thename):
         r""" Save a data array out to a nifti file
 
         Parameters

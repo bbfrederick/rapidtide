@@ -1073,7 +1073,7 @@ def happy_main(thearguments):
     theheader['dim'][4] = 1
     timings.append(['Mask created', time.time(), None, None])
     if outputlevel > 0:
-        tide_io.savetonifti(mask.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_mask')
+        tide_io.savetonifti(mask.reshape((xsize, ysize, numslices)), theheader, outputroot + '_mask')
     timings.append(['Mask saved', time.time(), None, None])
     mask_byslice = mask.reshape((xsize * ysize, numslices))
 
@@ -1102,7 +1102,7 @@ def happy_main(thearguments):
         timings.append(['Motion filtering end', time.time(), numspatiallocs, 'voxels'])
         tide_io.writenpvecs(motionregressors, outputroot + '_orthogonalizedmotion.txt')
         if savemotionglmfilt:
-            tide_io.savetonifti(fmri_data.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes,
+            tide_io.savetonifti(fmri_data.reshape((xsize, ysize, numslices, timepoints)), theheader,
                                 outputroot + '_motionfiltered')
             timings.append(['Motion filtered data saved', time.time(), numspatiallocs, 'voxels'])
 
@@ -1136,7 +1136,7 @@ def happy_main(thearguments):
             var_byslice = np.std(normdata_byslice, axis=2)
         elif varmasktype == 'mad':
             var_byslice = mad(normdata_byslice, axis=2)
-        tide_io.savetonifti(var_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes, outputroot + '_var')
+        tide_io.savetonifti(var_byslice.reshape((xsize, ysize, numslices)), theheader, outputroot + '_var')
         if varmaskbyslice:
             for theslice in range(numslices):
                 estmask_byslice[:, theslice] *= tide_stats.makemask(var_byslice[:, theslice],
@@ -1146,7 +1146,7 @@ def happy_main(thearguments):
             estmask_byslice *= tide_stats.makemask(var_byslice,
                                                    threshpct=varmaskthreshpct,
                                                    nozero=True).astype('float64')
-        tide_io.savetonifti(estmask_byslice.reshape((xsize, ysize, numslices)), theheader, thesizes,
+        tide_io.savetonifti(estmask_byslice.reshape((xsize, ysize, numslices)), theheader,
                             outputroot + '_varmask')
         print('using variance estimation mask with threshold', varmaskthreshpct)
 
@@ -1572,9 +1572,9 @@ def happy_main(thearguments):
     theheader['dim'][4] = destpoints
     theheader['toffset'] = -np.pi
     theheader['pixdim'][4] = 2.0 * np.pi / destpoints
-    tide_io.savetonifti(app, theheader, thesizes, outputroot + '_app')
+    tide_io.savetonifti(app, theheader, outputroot + '_app')
     if outputlevel > 0:
-        tide_io.savetonifti(rawapp, theheader, thesizes, outputroot + '_rawapp')
+        tide_io.savetonifti(rawapp, theheader, outputroot + '_rawapp')
     timings.append(['Phase projected data saved', time.time(), None, None])
 
     # make and save a voxel intensity histogram
@@ -1595,7 +1595,7 @@ def happy_main(thearguments):
     maskedapp2d = np.array(app2d)
     maskedapp2d[np.where(vesselmask.reshape(numspatiallocs) == 0)[0], :] = 0.0
     if outputlevel > 0:
-        tide_io.savetonifti(maskedapp2d.reshape((xsize, ysize, numslices, destpoints)), theheader, thesizes,
+        tide_io.savetonifti(maskedapp2d.reshape((xsize, ysize, numslices, destpoints)), theheader,
                             outputroot + '_maskedapp')
     del maskedapp2d
     timings.append(['Vessel masked phase projected data saved', time.time(), None, None])
@@ -1609,17 +1609,17 @@ def happy_main(thearguments):
     veins = np.where(risediff > 0, 1, 0)
     theheader = nim_hdr
     theheader['dim'][4] = 1
-    tide_io.savetonifti(vesselmask, theheader, thesizes, outputroot + '_vesselmask')
+    tide_io.savetonifti(vesselmask, theheader, outputroot + '_vesselmask')
     if outputlevel > 0:
-        tide_io.savetonifti(minphase, theheader, thesizes, outputroot + '_minphase')
-        tide_io.savetonifti(maxphase, theheader, thesizes, outputroot + '_maxphase')
-    tide_io.savetonifti(arteries, theheader, thesizes, outputroot + '_arteries')
-    tide_io.savetonifti(veins, theheader, thesizes, outputroot + '_veins')
+        tide_io.savetonifti(minphase, theheader, outputroot + '_minphase')
+        tide_io.savetonifti(maxphase, theheader, outputroot + '_maxphase')
+    tide_io.savetonifti(arteries, theheader, outputroot + '_arteries')
+    tide_io.savetonifti(veins, theheader, outputroot + '_veins')
     timings.append(['Masks saved', time.time(), None, None])
 
     # save a vessel image
     vesselmap = np.max(app, axis=3)
-    tide_io.savetonifti(vesselmap, theheader, thesizes, outputroot + '_vesselmap')
+    tide_io.savetonifti(vesselmap, theheader, outputroot + '_vesselmap')
 
     # now generate aliased cardiac signals and regress them out of the data
     if doglm:
@@ -1642,9 +1642,9 @@ def happy_main(thearguments):
         theheader = nim_hdr
         timings.append(['Cardiac signal generated', time.time(), None, None])
         if savecardiacnoise:
-            tide_io.savetonifti(cardiacnoise.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes,
+            tide_io.savetonifti(cardiacnoise.reshape((xsize, ysize, numslices, timepoints)), theheader,
                                 outputroot + '_cardiacnoise')
-            tide_io.savetonifti(phaseindices.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes,
+            tide_io.savetonifti(phaseindices.reshape((xsize, ysize, numslices, timepoints)), theheader,
                                 outputroot + '_phaseindices')
             timings.append(['Cardiac signal saved', time.time(), None, None])
 
@@ -1709,17 +1709,17 @@ def happy_main(thearguments):
             timings.append(['Cardiac signal regression finished', time.time(), numspatiallocs, 'voxels'])
             theheader = nim_hdr
             theheader['dim'][4] = 1
-            tide_io.savetonifti(fitcoffs.reshape((xsize, ysize, numslices)), theheader, thesizes,
+            tide_io.savetonifti(fitcoffs.reshape((xsize, ysize, numslices)), theheader,
                                 outputroot + '_fitamp')
-            tide_io.savetonifti(meanvals.reshape((xsize, ysize, numslices)), theheader, thesizes,
+            tide_io.savetonifti(meanvals.reshape((xsize, ysize, numslices)), theheader,
                                 outputroot + '_fitamp')
-            tide_io.savetonifti(rvals.reshape((xsize, ysize, numslices)), theheader, thesizes,
+            tide_io.savetonifti(rvals.reshape((xsize, ysize, numslices)), theheader,
                                 outputroot + '_fitR')
 
         theheader = nim_hdr
-        tide_io.savetonifti(filtereddata.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes,
+        tide_io.savetonifti(filtereddata.reshape((xsize, ysize, numslices, timepoints)), theheader,
                             outputroot + '_filtereddata')
-        tide_io.savetonifti(datatoremove.reshape((xsize, ysize, numslices, timepoints)), theheader, thesizes,
+        tide_io.savetonifti(datatoremove.reshape((xsize, ysize, numslices, timepoints)), theheader,
                             outputroot + '_datatoremove')
         timings.append(['Cardiac signal regression files written', time.time(), None, None])
 

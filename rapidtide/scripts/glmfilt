@@ -154,10 +154,10 @@ def main():
     print("fitting complete: about to save the fit data")
     theheader = nim_header
     theheader['dim'][4] = 1
-    tide_io.savetonifti(meandata, theheader, thesizes_in, outputroot + "_mean")
+    tide_io.savetonifti(meandata, theheader, outputroot + "_mean")
     for j in range(0, numregressors):
-        tide_io.savetonifti(fitdata[:, :, :, j], theheader, thesizes_in, outputroot + "_fit" + str(j))
-    tide_io.savetonifti(Rdata, theheader, thesizes_in, outputroot + "_R")
+        tide_io.savetonifti(fitdata[:, :, :, j], theheader, outputroot + "_fit" + str(j))
+    tide_io.savetonifti(Rdata, theheader, outputroot + "_R")
     Rdata = None
 
     print()
@@ -179,16 +179,12 @@ def main():
     # now save the things with full timecourses
     theheader = nim_header
     theheader['dim'][4] = timepoints - numskip
-    # for j in range(0, numregressors):
-    # tide_io.savetonifti(datatoremove[:, :, :, :, j], theheader, thesizes_in,
-    # outputroot + "_toremove" + str(j))
-    # datatoremove = None
-    tide_io.savetonifti(totaltoremove, theheader, thesizes_in, outputroot + "_totaltoremove")
+    tide_io.savetonifti(totaltoremove, theheader, outputroot + "_totaltoremove")
     filtereddata = trimmeddata - totaltoremove
     totaltoremove = None
-    tide_io.savetonifti(trimmeddata, theheader, thesizes_in, outputroot + "_trimmed")
+    tide_io.savetonifti(trimmeddata, theheader, outputroot + "_trimmed")
     trimmeddata = None
-    tide_io.savetonifti(filtereddata, theheader, thesizes_in, outputroot + "_filtered")
+    tide_io.savetonifti(filtereddata, theheader, outputroot + "_filtered")
 
 
 if __name__ == "__main__":

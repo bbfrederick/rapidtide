@@ -245,7 +245,7 @@ else:
     print("offset mean, std:", np.mean(offsets), np.std(offsets))
 
 print("writing nifti series")
-tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr,
                     outputrootname + '_fit')
-tide_io.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, datafilesizes,
+tide_io.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr,
                     outputrootname + '_residuals')

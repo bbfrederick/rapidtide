@@ -242,7 +242,7 @@ else:
     theheader['dim'][4] = coefficients.shape[1]
     tempout = np.zeros((numspatiallocs, coefficients.shape[1]), dtype='float')
     tempout[proclocs, :] = coefficients[:, :]
-    tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, coefficients.shape[1])), datafile_hdr, datafilesizes,
+    tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, coefficients.shape[1])), datafile_hdr,
                         outputrootname + '_coefficients')
 
     # save the dimensionality reduced data
@@ -253,4 +253,4 @@ else:
     tempout = np.zeros((numspatiallocs, invtransformeddata.shape[1]), dtype='float')
     tempout[proclocs, :] = invtransformeddata[:, :]
     tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, invtransformeddata.shape[1])), datafile_hdr,
-                        datafilesizes, outputrootname + '_fit')
+                        outputrootname + '_fit')
