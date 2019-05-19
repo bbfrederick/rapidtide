@@ -14,6 +14,9 @@ from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_
 
 def test_io(debug=True, display=False):
 
+    # create outputdir if it doesn't exist
+    create_dir(get_test_temp_path())
+
     # test checkifnifti
     assert tide_io.checkifnifti('test.nii') == True
     assert tide_io.checkifnifti('test.nii.gz') == True
@@ -37,6 +40,36 @@ def test_io(debug=True, display=False):
     tr, timepoints = tide_io.fmritimeinfo(os.path.join(get_examples_path(), 'fmri.nii.gz'))
     assert np.fabs(tr - 1.5) < fmritimeinfothresh
     assert timepoints == 260
+
+    # test niftifile reading
+    sizethresh = 1e-3
+    happy_img, happy_data, happy_hdr, happydims, happysizes = tide_io.readfromnifti(os.path.join(get_examples_path(), 'happyfmri.nii.gz'))
+    fmri_img, fmri_data, fmri_hdr, fmridims, fmrisizes = tide_io.readfromnifti(os.path.join(get_examples_path(), 'fmri.nii.gz'))
+    targetdims = [4, 65, 89, 64, 110, 1, 1, 1]
+    targetsizes = [-1.00, 2.39583, 2.395830, 2.4, 1.16, 0.00, 0.00, 0.00]
+    if debug:
+        print('happydims:', happydims)
+        print('targetdims:', targetdims)
+        print('happysizes:', happysizes)
+        print('targetsizes:', targetsizes)
+    for i in range(len(targetdims)):
+        assert targetdims[i] == happydims[i]
+    assert mse(np.array(targetsizes), np.array(happysizes)) < sizethresh
+
+    # test file writing
+    datathresh = 1e-3
+    tide_io.savetonifti(fmri_data, fmri_hdr, os.path.join(get_test_temp_path(), 'fmri_copy.nii.gz'))
+    fmricopy_img, fmricopy_data, fmricopy_hdr, fmricopydims, fmricopysizes = tide_io.readfromnifti(os.path.join(get_test_temp_path(), 'fmri_copy.nii.gz'))
+    assert tide_io.checkspacematch(fmri_hdr, fmricopy_hdr)
+    assert tide_io.checktimematch(fmridims, fmridims)
+    assert mse(fmri_data, fmricopy_data) < datathresh
+
+    # test file header comparisons
+    assert tide_io.checkspacematch(happy_hdr, happy_hdr)
+    assert not tide_io.checkspacematch(happy_hdr, fmri_hdr)
+    assert tide_io.checktimematch(happydims, happydims)
+    assert not tide_io.checktimematch(happydims, fmridims)
+
 
 def main():
     test_io(debug=True, display=True)
