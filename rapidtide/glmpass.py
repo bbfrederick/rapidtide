@@ -108,7 +108,7 @@ def glmpass(numprocitems,
                                                 inputshape, themask,
                                                 nprocs=nprocs,
                                                 procbyvoxel=procbyvoxel,
-                                                showprogressbar=True,
+                                                showprogressbar=showprogressbar,
                                                 chunksize=mp_chunksize)
 
         # unpack the data

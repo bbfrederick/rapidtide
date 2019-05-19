@@ -58,6 +58,46 @@ def test_glmpass(debug=True, display=False):
     fitcoffs_x = np.zeros(xsize, dtype=np.float64)
     fitNorm_x = np.zeros(xsize, dtype=np.float64)
 
+    # run along spatial direction
+    # no multiproc
+    tide_glmpass.glmpass(xsize, testarray, threshval, twaveforms,
+                         meanvals_x, rvals_x, r2vals_x, fitcoffs_x, fitNorm_x,
+                         datatoremove,
+                         filtereddata,
+                         showprogressbar=False,
+                         procbyvoxel=True,
+                         nprocs=1
+                         )
+    if display:
+        plt.figure()
+        plt.imshow(datatoremove)
+        plt.show()
+        plt.imshow(filtereddata)
+        plt.show()
+    if debug:
+        print('proc by space, single proc:', mse(datatoremove, targetarray))
+    assert mse(datatoremove, targetarray) < 1e-3
+
+    # multiproc
+    tide_glmpass.glmpass(xsize, testarray, threshval, twaveforms,
+                         meanvals_x, rvals_x, r2vals_x, fitcoffs_x, fitNorm_x,
+                         datatoremove,
+                         filtereddata,
+                         showprogressbar=False,
+                         procbyvoxel=True,
+                         nprocs=2
+                         )
+    if display:
+        plt.figure()
+        plt.imshow(datatoremove)
+        plt.show()
+        plt.imshow(filtereddata)
+        plt.show()
+    if debug:
+        print('proc by space, multi proc:', mse(datatoremove, targetarray))
+    assert mse(datatoremove, targetarray) < 1e-3
+
+
     # run along time direction
     # no multiproc
     tide_glmpass.glmpass(tsize, testarray, threshval, xwaveforms,
@@ -65,7 +105,6 @@ def test_glmpass(debug=True, display=False):
                          datatoremove,
                          filtereddata,
                          showprogressbar=False,
-                         mp_chunksize=10,
                          procbyvoxel=False,
                          nprocs=1
                          )
@@ -85,7 +124,6 @@ def test_glmpass(debug=True, display=False):
                          datatoremove,
                          filtereddata,
                          showprogressbar=False,
-                         mp_chunksize=10,
                          procbyvoxel=False,
                          nprocs=2
                          )
@@ -105,7 +143,6 @@ def test_glmpass(debug=True, display=False):
                          datatoremove,
                          filtereddata,
                          showprogressbar=False,
-                         mp_chunksize=10,
                          procbyvoxel=False,
                          nprocs=1
                          )
@@ -117,48 +154,6 @@ def test_glmpass(debug=True, display=False):
         plt.show()
     if debug:
         print('proc by time, single proc, no mask:', mse(datatoremove, targetarray))
-    assert mse(datatoremove, targetarray) < 1e-3
-
-    
-    # run along spatial direction
-    # no multiproc
-    tide_glmpass.glmpass(xsize, testarray, threshval, twaveforms,
-                         meanvals_x, rvals_x, r2vals_x, fitcoffs_x, fitNorm_x,
-                         datatoremove,
-                         filtereddata,
-                         showprogressbar=False,
-                         mp_chunksize=10,
-                         procbyvoxel=True,
-                         nprocs=1
-                         )
-    if display:
-        plt.figure()
-        plt.imshow(datatoremove)
-        plt.show()
-        plt.imshow(filtereddata)
-        plt.show()
-    if debug:
-        print('proc by space, single proc:', mse(datatoremove, targetarray))
-    assert mse(datatoremove, targetarray) < 1e-3
-    
-    # multiproc
-    tide_glmpass.glmpass(xsize, testarray, threshval, twaveforms,
-                         meanvals_x, rvals_x, r2vals_x, fitcoffs_x, fitNorm_x,
-                         datatoremove,
-                         filtereddata,
-                         showprogressbar=False,
-                         mp_chunksize=10,
-                         procbyvoxel=True,
-                         nprocs=2
-                         )
-    if display:
-        plt.figure()
-        plt.imshow(datatoremove)
-        plt.show()
-        plt.imshow(filtereddata)
-        plt.show()
-    if debug:
-        print('proc by space, multi proc:', mse(datatoremove, targetarray))
     assert mse(datatoremove, targetarray) < 1e-3
     
 
