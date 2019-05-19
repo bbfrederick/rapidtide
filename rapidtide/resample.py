@@ -127,7 +127,8 @@ congridyvals['width'] = 3.0
 
 def congrid(xaxis, loc, val, width, kernel='kaiser', cyclic=True, debug=False):
     """
-    Perform a convolution gridding operation with a Kaiser-Bessel or Gaussian kernel of width 'width'
+    Perform a convolution gridding operation with a Kaiser-Bessel or Gaussian kernel of width 'width'.  Grid
+    parameters are cached for performance.
 
     Parameters
     ----------
@@ -141,6 +142,8 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', cyclic=True, debug=False):
         The width of the gridding kernel in target bins
     kernel: {'old', 'gauss', 'kaiser'}, optional
         The type of convolution gridding kernel.  Default is 'kaiser'.
+    cyclic: bool, optional
+        When True, gridding wraps around the endpoints of xaxis.  Default is True.
     debug: bool, optional
         When True, output additional information about the gridding process
 
@@ -162,10 +165,13 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', cyclic=True, debug=False):
 
     if (congridyvals['kernel'] != kernel) or (congridyvals['width'] != width):
         if congridyvals['kernel'] != kernel:
-            print(congridyvals['kernel'], '!=', kernel)
+            if debug:
+                print(congridyvals['kernel'], '!=', kernel)
         if congridyvals['width'] != width:
-            print(congridyvals['width'],'!=', width)
-        print('(re)initializing congridyvals')
+            if debug:
+                print(congridyvals['width'],'!=', width)
+        if debug:
+            print('(re)initializing congridyvals')
         congridyvals = {}
         congridyvals['kernel'] = kernel
         congridyvals['width'] = width * 1.0

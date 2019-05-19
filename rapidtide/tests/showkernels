@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+# -*- coding: latin-1 -*-
+from __future__ import print_function, division
+
+import numpy as np
+import scipy as sp
+
+from rapidtide.resample import congrid
+import rapidtide.fit as tide_fit
+
+import matplotlib.pyplot as plt
+
+
+def main():
+    # make the source axis
+    starttime = -5.0
+    endtime = 5.0
+    sourcelen = 1001
+    sourceaxis = sp.linspace(starttime, endtime, num=sourcelen, endpoint=True)
+
+    optsigma = np.array([0.4241, 0.4927, 0.4839, 0.5063, 0.5516, 0.5695, 0.5682, 0.5974])
+    optbeta  = np.array([1.9980, 2.3934, 3.3800, 4.2054, 4.9107, 5.7567, 6.6291, 7.4302])
+    widths   = np.array([1.5,    2.0,    2.5,    3.0,    3.5,    4.0,    4.5,    5.0])
+
+    plt.figure()
+    legendlist = []
+    kernelplots = []
+    for i, sigma in enumerate(optsigma):
+        kernelplots.append(tide_fit.gauss_eval(sourceaxis, np.array([1.0, 0.0, sigma])))
+        legendlist.append(' '.join(['gauss', str(sigma)]))
+        plt.plot(sourceaxis, kernelplots[-1])
+    plt.legend(legendlist)
+    plt.show()
+    legendlist = []
+    kernelplots = []
+    for i, beta in enumerate(optbeta):
+        kernelplots.append(tide_fit.kaiserbessel_eval(sourceaxis, np.array([beta, widths[i] / 2.0])))
+        legendlist.append(' '.join(['kaiser', str(beta)]))
+        plt.plot(sourceaxis, kernelplots[-1])
+    plt.legend(legendlist)
+    plt.show()
+
+if __name__ == '__main__':
+    main()

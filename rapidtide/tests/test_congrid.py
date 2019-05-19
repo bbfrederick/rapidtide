@@ -6,87 +6,119 @@ import numpy as np
 import scipy as sp
 
 from rapidtide.resample import congrid
-from rapidtide.filter import dolpfiltfilt
 from rapidtide.tests.utils import mse
 
 import matplotlib.pyplot as plt
 
 
-def funcvalue2(x, frequency=0.01, phase=0.0, amplitude=1.5):
+def funcvalue2(x, frequency=1.0, phase=0.0, amplitude=1.5):
     return amplitude * np.sin(2.0 * np.pi * frequency * x + phase)
 
 
 def test_congrid(debug=False, display=False):
-    # make the source waveform
-    tr = 1.0
+    # make the source axis
+    starttime = 0.0
+    endtime = 1.0
     sourcelen = 1000
-    sourceaxis = sp.linspace(0.0, tr * sourcelen, num=sourcelen, endpoint=False)
+    sourceaxis = sp.linspace(starttime, endtime, num=sourcelen, endpoint=False)
     if debug:
         print('sourceaxis range:', sourceaxis[0], sourceaxis[-1])
 
-    timecoursein = np.float64(sourceaxis * 0.0)
-    for i in range(len(sourceaxis)):
-        timecoursein[i] = funcvalue2(sourceaxis[i])
-
     # now make the destination
-    gridlen = 150
-    gridaxis = sp.linspace(0.0, tr * sourcelen, num=gridlen, endpoint=False)
+    gridlen = 32
+    gridaxis = sp.linspace(starttime, endtime, num=gridlen, endpoint=False)
     if debug:
         print('gridaxis range:', gridaxis[0], gridaxis[-1])
-    weights = np.zeros((gridlen), dtype=float)
-    griddeddata = np.zeros((gridlen), dtype=float)
 
-    # define the gridding
-    congridbins = 1.5
+    cycles=1.0
+    if debug:
+        outputlines = []
+    if debug:
+        cyclist = [1.0, 2.0, 3.0]
+        kernellist = ['gauss', 'kaiser']
+        binslist = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+    else:
+        cyclist = [1.0]
+        kernellist = ['gauss', 'kaiser']
+        binslist = [1.5, 2.0, 2.5, 3.0]
 
-    for gridkernel in ['gauss']:
-        print('about to grid')
+    for cycles in cyclist:
+        timecoursein = np.float64(sourceaxis * 0.0)
+        for i in range(len(sourceaxis)):
+            timecoursein[i] = funcvalue2(sourceaxis[i], frequency=cycles)
 
-        numsamples = 5000
+
+        # define the gridding
+        congridbins = 1.5
+        gridkernel = 'gauss'
+
+        # initialize the test points
+        numsamples = 200
+        testvals = np.zeros((numsamples), dtype=np.float)
         for i in range(numsamples):
-            t = np.random.uniform() * tr * sourcelen
-            thevals, theweights, theindices = congrid(gridaxis,
-                                                    t,
-                                                    funcvalue2(t),
-                                                    congridbins,
-                                                    kernel=gridkernel,
-                                                    debug=True)
-            for i in range(len(theindices)):
-                weights[theindices[i]] += theweights[i]
-                griddeddata[theindices[i]] += thevals[i]
+            testvals[i] = np.random.uniform() * (endtime - starttime) + starttime
 
-        griddeddata = np.where(weights > 0.0, griddeddata / weights, 0.0)
 
-        target = np.float64(gridaxis * 0.0)
-        for i in range(len(gridaxis)):
-            target[i] = funcvalue2(gridaxis[i])
+        weights = np.zeros((gridlen), dtype=float)
+        griddeddata = np.zeros((gridlen), dtype=float)
 
-        print('gridding done')
-        print('debug:', debug)
 
-        # plot if we are doing that
-        if display:
-            offset = 0.0
-            legend = []
-            plt.plot(sourceaxis, timecoursein)
-            legend.append('Original')
-            offset += 1.0
-            plt.plot(gridaxis, target + offset)
-            legend.append('Target')
-            offset += 1.0
-            plt.plot(gridaxis, griddeddata + offset)
-            legend.append('Gridded')
-            plt.plot(gridaxis, weights)
-            legend.append('Weights')
-            plt.legend(legend)
-            plt.show()
+        for gridkernel in kernellist:
+            for congridbins in binslist:
+                print('about to grid')
 
-        # do the tests
-        msethresh = 1e-3
-        themse = mse(target, griddeddata)
-        if debug:
-            print('mse:', themse)
-        assert themse < msethresh
+                # reinitialize grid outputs
+                weights *= 0.0
+                griddeddata *= 0.0
+
+                for i in range(numsamples):
+                    thevals, theweights, theindices = congrid(gridaxis,
+                                                            testvals[i],
+                                                            funcvalue2(testvals[i], frequency=cycles),
+                                                            congridbins,
+                                                            kernel=gridkernel,
+                                                            debug=False)
+                    for i in range(len(theindices)):
+                        weights[theindices[i]] += theweights[i]
+                        griddeddata[theindices[i]] += thevals[i]
+
+                griddeddata = np.where(weights > 0.0, griddeddata / weights, 0.0)
+
+                target = np.float64(gridaxis * 0.0)
+                for i in range(len(gridaxis)):
+                    target[i] = funcvalue2(gridaxis[i], frequency=cycles)
+
+                print('gridding done')
+                print('debug:', debug)
+
+                # plot if we are doing that
+                if display:
+                    offset = 0.0
+                    legend = []
+                    plt.plot(sourceaxis, timecoursein)
+                    legend.append('Original')
+                    #offset += 1.0
+                    plt.plot(gridaxis, target + offset)
+                    legend.append('Target')
+                    #offset += 1.0
+                    plt.plot(gridaxis, griddeddata + offset)
+                    legend.append('Gridded')
+                    plt.plot(gridaxis, weights)
+                    legend.append('Weights')
+                    plt.legend(legend)
+                    plt.show()
+
+                # do the tests
+                msethresh = 1e-2
+                themse = mse(target, griddeddata)
+                if debug:
+                    print('mse for', cycles, 'cycles:', gridkernel, str(congridbins), ':', themse)
+                    outputlines.append(' '.join(['mse for', str(cycles), 'cycles:', gridkernel, str(congridbins), ':', str(themse)]))
+                if not debug:
+                    assert themse < msethresh
+    if debug:
+        for theline in outputlines:
+            print(theline)
 
 def main():
     test_congrid(debug=True, display=True)

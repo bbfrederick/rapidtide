@@ -211,7 +211,8 @@ def kaiserbessel_eval(x, p):
     -------
 
     """
-    return np.where(np.fabs(x) <= p[1], sps.i0(p[0] * np.sqrt(1.0 - np.square((x / p[1])))) / p[1], 0.0)
+    normfac = sps.i0(p[0] * np.sqrt(1.0 - np.square((0.0 / p[1])))) / p[1]
+    return np.where(np.fabs(x) <= p[1], sps.i0(p[0] * np.sqrt(1.0 - np.square((x / p[1])))) / p[1] / normfac, 0.0)
 
 
 @conditionaljit()
