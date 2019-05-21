@@ -553,6 +553,10 @@ def comparehappyruns(root1, root2, debug=False):
             mask = maskdata1 * maskdata2
             if os.path.isfile(filename1) and os.path.isfile(filename2):
                 # files exist - read them in and process them
+                if debug:
+                    print('comparing maps:')
+                    print('\t', filename1)
+                    print('\t', filename2)
                 nim1, data1, hdr1, thedims1, thesizes1 = tide_io.readfromnifti(filename1)
                 nim2, data2, hdr2, thedims2, thesizes2 = tide_io.readfromnifti(filename2)
                 if tide_io.checkspacematch(hdr1, hdr2) and tide_io.checkspacematch(hdr1, maskhdr1):
@@ -576,6 +580,10 @@ def comparehappyruns(root1, root2, debug=False):
         filename1 = root1 + '_' + timecourse
         filename2 = root2 + '_' + timecourse
         if os.path.isfile(filename1) and os.path.isfile(filename2):
+            if debug:
+                print('comparing timecourses:')
+                print('\t', filename1)
+                print('\t', filename2)
             data1 = np.transpose(tide_io.readvecs(filename1))
             data2 = np.transpose(tide_io.readvecs(filename2))
             if len(data1) == len(data2):
