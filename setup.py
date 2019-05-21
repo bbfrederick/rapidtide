@@ -218,7 +218,7 @@ setup(
         'testtargets': ['tests/testtargets/*.txt',
                       'tests/testtargets/*.nii.gz',
                       ],
-        'tmpdata': ['tests/tmp/*.txt',
+        'tmpdata': ['tests/tmp/.placeholder.txt',
                       ],
     },
 

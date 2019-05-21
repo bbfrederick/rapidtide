@@ -4,4 +4,5 @@ recursive-include rapidtide/scripts *
 recursive-include rapidtide/data/reference *.nii.gz *.txt
 recursive-include rapidtide/tests/testdata *.nii.gz *.txt
 recursive-include rapidtide/tests/testtargets *.nii.gz *.txt
+recursive-include rapidtide/tests/tmp .placeholder.txt
 recursive-include rapidtide/data/models *
