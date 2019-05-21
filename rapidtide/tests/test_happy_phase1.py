@@ -29,7 +29,7 @@ def test_happy_phase1(debug=False):
         theargs += ['--saveinfoasjson']
         theargs += ['--glm']
         theargs += ['--numskip=0']
-        theargs += ['--gridbins=3.0']
+        theargs += ['--gridbins=2.0']
         theargs += ['--gridkernel=kaiser']
         theargs += ['--model=model_revised']
         theargs += ['--estmask=' + os.path.join(get_test_target_path(), 'happy_phase1target_vesselmask.nii.gz')]
