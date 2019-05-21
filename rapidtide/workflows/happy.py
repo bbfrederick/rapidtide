@@ -101,9 +101,9 @@ def usage():
         "                                     secret and inadvisable '--usesuperdangerousworkaround' flag.  Good luck!")
     print(
         "    --model=MODELNAME              - Use model MODELNAME for dl filter (default is model_revised - from the revised NeuroImage paper.)")
-    print("    --glm                          - Generate voxelwise aliased synthetic cardiac regressors and filter")
-    print("                                     them out")
-    print("    --temporalglm                  - Perform temporal rather than spatial GLM")
+#    print("    --glm                          - Generate voxelwise aliased synthetic cardiac regressors and filter")
+#    print("                                     them out")
+#    print("    --temporalglm                  - Perform temporal rather than spatial GLM")
     print("")
     print("Performance:")
     print(
@@ -185,6 +185,7 @@ def usage():
     print("    --disablenotch                 - Disable subharmonic notch filter")
     print("    --nomask                       - Disable data masking for calculating cardiac waveform")
     print("    --nocensor                     - Bad points will not be excluded from analytic phase projection")
+    print("    --noappsmooth                  - Disable smoothing app file in the phase direction")
     print("    --nophasefilt                  - Disable the phase trend filter (probably not a good idea)")
     print("    --nocardiacalign               - Disable alignment of pleth signal to fmri derived cardiac signal.")
     print("                                     to blood vessels")
@@ -724,6 +725,7 @@ def happy_main(thearguments):
     savetcsastsv = True
     outputlevel = 1
     verbose = False
+    smoothapp = True
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
@@ -789,6 +791,7 @@ def happy_main(thearguments):
                                                            "numskip=",
                                                            "motskip=",
                                                            "nocensor",
+                                                           "noappsmooth",
                                                            "nomadnorm",
                                                            "dodlfilter",
                                                            "noncentric",
@@ -863,6 +866,9 @@ def happy_main(thearguments):
         elif o == "--cardcalconly":
             cardcalconly = True
             print('will stop processing after calculating cardiac waveforms')
+        elif o == "--noappsmooth":
+            smoothapp = False
+            print('will not smooth projection along phase direction')
         elif o == "--nocensor":
             usemaskcardfromfmri = False
             print('will not censor bad points')
@@ -1535,6 +1541,12 @@ def happy_main(thearguments):
 
     if not verbose:
         print('phase projecting...')
+
+    # make a lowpass filter for the projected data. Limit frequency to 3 cycles per 2pi (1/6th Fs)
+    phaseFs = 1.0 / phasestep
+    phaseFc = phaseFs / 6.0
+    appsmoothingfilter = tide_filt.noncausalfilter('arb', cyclic=True, padtime=0.0)
+    appsmoothingfilter.setarb(0.0, 0.0, phaseFc, phaseFc)
     for theslice in range(numslices):
         if verbose:
             print('phase projecting for slice', theslice)
@@ -1560,6 +1572,10 @@ def happy_main(thearguments):
         else:
             rawapp_byslice[:, theslice, :] = 0.0
 
+        # smooth the projected data along the time dimension
+        if smoothapp:
+            for loc in validlocs:
+                rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(phaseFs, rawapp_byslice[loc, theslice, :])
         slicemin = np.min(rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
         app_byslice[validlocs, theslice, :] = rawapp_byslice[validlocs, theslice, :] - slicemin
     if not verbose:
@@ -1602,11 +1618,18 @@ def happy_main(thearguments):
 
     # save multiple versions of the hard vessel mask
     vesselmask = np.where(np.max(app, axis=3) > hardvesselthresh, 1, 0)
+    '''meanval = np.mean(app, axis=3)
+    medianval = np.median(app, axis=3)
+    maxval = np.max(app, axis=3)
+    directionality = (meanval - maxval / 2.0)
+    direction = np.where(directionality < 0.0, -1, 1)'''
     minphase = np.argmin(app, axis=3) * 2.0 * np.pi / destpoints - np.pi
     maxphase = np.argmax(app, axis=3) * 2.0 * np.pi / destpoints - np.pi
     risediff = (maxphase - minphase) * vesselmask
     arteries = np.where(risediff < 0, 1, 0)
     veins = np.where(risediff > 0, 1, 0)
+    '''arteries = np.where(direction < 0, 1, 0) * vesselmask
+    veins = np.where(direction > 0, 1, 0) * vesselmask'''
     theheader = nim_hdr
     theheader['dim'][4] = 1
     tide_io.savetonifti(vesselmask, theheader, outputroot + '_vesselmask')
@@ -1615,6 +1638,7 @@ def happy_main(thearguments):
         tide_io.savetonifti(maxphase, theheader, outputroot + '_maxphase')
     tide_io.savetonifti(arteries, theheader, outputroot + '_arteries')
     tide_io.savetonifti(veins, theheader, outputroot + '_veins')
+    #tide_io.savetonifti(directionality, theheader, outputroot + '_directionality')
     timings.append(['Masks saved', time.time(), None, None])
 
     # save a vessel image
