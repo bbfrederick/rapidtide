@@ -75,8 +75,8 @@ def create_dir(thedir, debug=False):
             pass
 
 
-def mse(vec1, vec2):
+def mse(ndarr1, ndarr2):
     """
     Compute mean-squared error.
     """
-    return np.mean(np.square(vec2 - vec1))
+    return np.mean(np.square(ndarr2 - ndarr1))
