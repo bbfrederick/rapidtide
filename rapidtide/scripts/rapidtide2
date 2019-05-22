@@ -513,6 +513,7 @@ def main():
     optiondict['ampthreshfromsig'] = True
     optiondict['sighistlen'] = 100
     optiondict['dosighistfit'] = True
+    optiondict['permutationmethod'] = 'shuffle'
 
     optiondict['histlen'] = 250
     optiondict['oversampfactor'] = -1
