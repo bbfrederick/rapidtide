@@ -40,6 +40,7 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
+# preprocess and correlate a test timecourse with an already preprocessed reference timecourse
 def onecorrelation(thetc,
                    oversampfreq,
                    corrorigin,
