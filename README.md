@@ -217,6 +217,15 @@ Multimodal Cerebral Circulation Imaging
 	Society of Cerebral Blood Flow and Metabolism. 2016. doi:
 	10.1177/0271678X16631755. PubMed PMID: 26873885.
 
+
+Cardiac waveform extraction and refinement
+-----------------------------------------------------------------------
+1) Aslan S, Hocke L, Schwarz N, Frederick B. (2019) Extraction of the cardiac
+        waveform from simultaneous multislice fMRI data using slice
+        sorted averaging and a deep learning reconstruction filter. 
+        NeuroImage 198, 303–316 (2019).
+
+
 Physiological noise identification and removal using time delay methods
 -----------------------------------------------------------------------
 
