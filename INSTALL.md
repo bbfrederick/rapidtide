@@ -15,6 +15,19 @@ The following optional dependencies will be used if present
 * numba for faster performance
 * pyfftw, also for faster performance
 
+If you want to use the deep learning filter in happy, you'll need Keras and some sort of backend.  If you want to be able to train filters, you'll probably want GPU support.  This is currently an annoying, not trivial thing to set up, especially on a Mac, which is where I do things, because Apple and Nvidia aren't friends at the moment.
+If you are on a linux box (or maybe Windows - haven't tested), WITH an Nvidia GPU, install:
+* keras
+* tensorflow-gpu
+(This assumes you have all the necessary CUDA libraries.  Making this all work together properly is a version dependant moving target.  Ask The Google the best way to do it this week - anything I say here will probably be obsolete by the time you read this.)
+
+If you are on linux (or Windows) WITHOUT an Nvidia GPU, install:
+* keras
+* tensorflow (and make sure it doesn't sneakily try to install the GPU version - that won't work)
+
+If you are on a Mac, you almost certainly have a non-Nvidia GPU, so you should use plaidml-keras (it installs Keras and uses PlaidML as the backend rather than tensorflow).  You will have to run a conviguration step in plaidML to tell it what GPU to use and how.  I use the "metal" option with the AMD GPU in my laptop - that seems to be the most stable.  So install:
+* plaidml-keras (I have you'll have to do this from pypi - I haven't seen a conda version of this).
+ 
 If you want to use tidepool for image display, you will also need to install the following:
 * pyqt4 or pyqt5
 * pyqtgraph
@@ -29,8 +42,27 @@ conda config --add channels conda-forge
 
 Then install the dependencies (including some good optional ones:
 ```bash
-conda install nibabel pyqtgraph pyfftw
+conda install nibabel pyqtgraph pyfftw 
 ```
+
+For the deep learning filter in happy, also do:
+```bash
+conda install keras tensorflow-gpu
+```
+(for Linux or Windows WITH Nvidia GPU)
+
+or
+```bash
+conda install keras tensorflow
+```
+(for Linux or Windows WITHOUT Nvidia GPU)
+
+or
+```bash
+pip install plaidml-keras
+```
+(on a Mac)
+
 
 Done.
 
