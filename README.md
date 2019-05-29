@@ -86,6 +86,15 @@ Ok, I'm sold.  What's in here?
         information (significance threshholds, processing timing
         information, a list of values of configurable options).
 
+- **happy** - This is a companion to rapidtide that focusses on cardiac signals.  
+        happy does three things - it attempts to determine the cardiac waveform
+        over the time course of an fMRI dataset using slice selective averaging
+        of fully unprocessed fMRI data.  It also tries to clean up this initial
+        estimate using a deep learning filter to infer what the simultaneously 
+        recorded plethysmogram would be.  Finally, it uses either the derived or
+        a supplied plethysmogram signal to perform construct a cardiac pulsation
+        map over a single cycle of the cardiac waveform, a la Voss.
+
 - **showxcorr** - Like rapidtide2, but for single time courses.  Takes two
         text files as input, calculates and displays the time lagged cross
         correlation between them, fits the maximum time lag, and estimates
@@ -119,7 +128,7 @@ Ok, I'm sold.  What's in here?
 	figure out the root name and pull in all of the other associated
 	maps.  Works in native or standard space.
 
-- **tide_funcs.py** - This is the library of the various helper routines
+- **correlate.py, corrfit.py, dlfilter.py, filter.py, fit.py, io.py, miscmath.py, multiproc.py, refine.py, resample.py, stats.py, util.py ** - These are the libraries of the various helper routines
 	that are used by pretty much every program in here for
 	correlation, resampling, filtering, normalization, significance
 	estimation, file I/O, etc.
