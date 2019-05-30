@@ -147,7 +147,7 @@ This code base is being developed and supported by a grant from the US NIH ([1R0
 References
 ==========
 Links to PDFs of all papers mentioned here can be found on the OMG website:
-http://www.nirs-fmri.net/publications
+https://www.nirs-fmri.net/home/publications
 
 Multimodal Cerebral Circulation Imaging
 ---------------------------------------

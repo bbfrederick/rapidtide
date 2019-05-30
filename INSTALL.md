@@ -25,8 +25,8 @@ If you are on linux (or Windows) WITHOUT an Nvidia GPU, install:
 * keras
 * tensorflow (and make sure it doesn't sneakily try to install the GPU version - that won't work)
 
-If you are on a Mac, you almost certainly have a non-Nvidia GPU, so you should use plaidml-keras (it installs Keras and uses PlaidML as the backend rather than tensorflow).  You will have to run a conviguration step in plaidML to tell it what GPU to use and how.  I use the "metal" option with the AMD GPU in my laptop - that seems to be the most stable.  So install:
-* plaidml-keras (I have you'll have to do this from pypi - I haven't seen a conda version of this).
+If you are on a Mac, you almost certainly have a non-Nvidia GPU, so you should use plaidml-keras (it installs Keras and uses PlaidML as the backend rather than tensorflow).  You will have to run a configuration step in plaidML to tell it what GPU to use and how.  I use the "metal" option with the AMD GPU in my laptop - that seems to be the most stable.  So install:
+* plaidml-keras (I think you have you have to do this from pypi - I haven't seen a conda version of this).
  
 If you want to use tidepool for image display, you will also need to install the following:
 * pyqt4 or pyqt5
