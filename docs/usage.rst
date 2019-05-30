@@ -550,7 +550,7 @@ The base command you'd use would be:
 
 	::
 
-		happy inputfmrifile slicetimefile outputfile --cardestonly
+		happy inputfmrifile slicetimefile outputfile --cardcalconly --dodlfilter
 
 
 
