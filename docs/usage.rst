@@ -393,7 +393,7 @@ Description:
      
 Inputs:
 ^^^^^^^
-	Happy needs a 4D BOLD fMRI data file (space by time) as input.  This can be Nifti1 or Nifti2.  If you have a simultaneously recorded cardiac waveform, it will happily use it, otherwise it will try to construct (and refine) one.
+	Happy needs a 4D BOLD fMRI data file (space by time) as input.  This can be Nifti1 or Nifti2.  If you have a simultaneously recorded cardiac waveform, it will happily use it, otherwise it will try to construct (and refine) one. NOTE: the 4D input dataset needs to be completely unpreprocessed - gradient distortion correction and motion correction can destroy the relationship between slice number and actual acquisition time, and slice time correction does not behave as expected for aliased signals (which the cardiac component in fMRI most certainly is), and in any case we need the slice time offsets to construct our waveform.
 
      
 Outputs:
@@ -416,8 +416,12 @@ The following files are produced, assuming XXX is the outputname:
 		XXX_cardfromfmri_sliceres_badpts.txt                  - Points in the above waveform that are probably bad due to motion.
 		XXX_cardfromfmri_sliceres_censored.txt                - The estimated waveform with the bad points zeroed out.
 		XXX_cardfromfmri_25.0Hz.txt                           - The estimated cardiac waveform resampled to 25.0 Hz
+		XXX_cardfromfmri_dlfiltered_25.0Hz.txt                - The above, after passing through the deep learning filter.
+		XXX_cardfromfmri_dlfiltered_sliceres.txt              - The above, resample back to sliceres.
+
 		XXX_cardfromfmrienv_25.0Hz.txt                        - The envelope function of the estimated cardiac waveform.
 		XXX_normcardfromfmri_25.0Hz.txt                       - Estimated cardiac waveform divided by the envelope function.
+		XXX_normcardfromfmri_dlfiltered_25.0Hz.txt
 		XXX_cardfromfmri_25.0Hz_badpts.txt
 		XXX_overall_sliceres_badpts.txt
 		XXX_cardiacfundamental.txt
@@ -432,7 +436,7 @@ The following files are produced, assuming XXX is the outputname:
 		XXX_histogram.txt
 
                 Images
-		XXX_app.nii.gz
+		XXX_app.nii.gz                                        - The cardiac waveform over one cycle in each voxel. 
 		XXX_rawapp.nii.gz
 		XXX_mask.nii.gz
 		XXX_maskedapp.nii.gz
@@ -567,7 +571,15 @@ The base command you'd use would be:
 	::
 
 		happy inputfmrifile slicetimefile outputroot --cardcalconly --dodlfilter
+		
+This won't get you the best cardiac waveform however.  You really should use a vessel mask to do the averaging only over "important" voxels.  Fortunately, you can get this from happy!  So a better way to do this is to run:
 
+        ::
+	
+	        happy inputfmrifile slicetimefile firstpassoutput --dodlfilter
+		happy inputfmrifile slicetimefile secondpassoutput --cardcalconly --dodlfilter --estmask=firstpassoutput_vesselmask.nii.gz
+		
+This uses the vessel mask produced by the first pass to limit the cardiac waveform calculation to vessel voxels in the second pass, giving a better initial cardiac estimate, which in turn gives a better filtered output.  The 25Hz plethysmogram will be found in secondpassoutput_cardfromfmri_dlfiletered_25.0Hz.txt
 
 
 rapidtide2std
