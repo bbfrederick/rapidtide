@@ -406,18 +406,18 @@ The following files are produced, assuming XXX is the outputname:
 
 		Informational/diagnostic files
 		XXX_commandline.txt                                   - The command line used to run happy
-		XXX_info.txt                                          - Various useful internal variables
+		XXX_info.txt (or XXX_info.json)                       - Various useful internal variables
 		XXX_memusage.csv                                      - Memory statistics for the program at various
 		XXX_runtimings.txt                                    - Detailed timing information
 
 
 		Waveforms
-		XXX_cardfromfmri_sliceres.txt
-		XXX_cardfromfmri_sliceres_badpts.txt
-		XXX_cardfromfmri_sliceres_censored.txt
-		XXX_cardfromfmri_25.0Hz.txt
-		XXX_normcardfromfmri_25.0Hz.txt
-		XXX_cardfromfmrienv_25.0Hz.txt
+		XXX_cardfromfmri_sliceres.txt                         - The estimated cardiac waveform.  Sample rate is (1/TR) * number of slices / multiband factor.
+		XXX_cardfromfmri_sliceres_badpts.txt                  - Points in the above waveform that are probably bad due to motion.
+		XXX_cardfromfmri_sliceres_censored.txt                - The estimated waveform with the bad points zeroed out.
+		XXX_cardfromfmri_25.0Hz.txt                           - The estimated cardiac waveform resampled to 25.0 Hz
+		XXX_cardfromfmrienv_25.0Hz.txt                        - The envelope function of the estimated cardiac waveform.
+		XXX_normcardfromfmri_25.0Hz.txt                       - Estimated cardiac waveform divided by the envelope function.
 		XXX_cardfromfmri_25.0Hz_badpts.txt
 		XXX_overall_sliceres_badpts.txt
 		XXX_cardiacfundamental.txt
@@ -449,16 +449,16 @@ Usage:
 
 	::
 
-		happyx - Hypersampling by Analytic Phase Projection - Yay!
+		happy - Hypersampling by Analytic Phase Projection - Yay!
 
-		usage:  happyx  fmrifile slicetimefile outputroot
+		usage:  happy  fmrifile slicetimefile outputroot
 
 		required arguments:
-		    fmrifile:                 nifti file containing BOLD fmri data
-		    slicetimefile:            text file containing the offset time in seconds of each slice relative
-					      to the start of the TR, one value per line, OR the BIDS sidecar JSON file
-					      for the fmrifile (contains the SliceTiming field
-		    outputroot:               base name for all output files
+		    fmrifile:                      - NIFTI file containing BOLD fmri data
+		    slicetimefile:                 - Text file containing the offset time in seconds of each slice relative
+						     to the start of the TR, one value per line, OR the BIDS sidecar JSON file
+						     for the fmrifile (contains the SliceTiming field
+		    outputroot:                    - Base name for all output files
 
 		optional arguments:
 
@@ -471,8 +471,7 @@ Usage:
 						     with MKL which I can't seem to be able to fix.  If the dl filter bombs
 						     complaining about multiple openmp libraries, try rerunning with the
 						     secret and inadvisable '--usesuperdangerousworkaround' flag.  Good luck!
-		    --glm                          - Generate voxelwise aliased synthetic cardiac regressors and filter
-						     them out
+		    --model=MODELNAME              - Use model MODELNAME for dl filter (default is model_revised - from the revised NeuroImage paper.)
 
 		Performance:
 		    --mklthreads=NTHREADS          - Use NTHREADS MKL threads to accelerate processing (defaults to 1 - more
@@ -481,8 +480,8 @@ Usage:
 						     own risk.)
 
 		Preprocessing:
-		    --numskip=SKIP                 - SKIP tr's at the beginning of the fmri file (default is 0).
-		    --motskip=SKIP                 - SKIP tr's at the beginning of the motion regressor file (default is 0).
+		    --numskip=SKIP                 - Skip SKIP tr's at the beginning of the fmri file (default is 0).
+		    --motskip=SKIP                 - Skip SKIP tr's at the beginning of the motion regressor file (default is 0).
 		    --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.
 						     (with timepoints rows) and regress them, their derivatives, 
 						     and delayed derivatives out of the data prior to analysis.
@@ -490,15 +489,20 @@ Usage:
 						     specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For
 						     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9
 						     for X, Y, Z, RotX, RotY, RotZ, respectively
-		    --motionhp=HPFREQ              - highpass filter motion regressors to HPFREQ Hz prior to regression
-		    --motionlp=LPFREQ              - lowpass filter motion regressors to HPFREQ Hz prior to regression
+		    --motionhp=HPFREQ              - Highpass filter motion regressors to HPFREQ Hz prior to regression
+		    --motionlp=LPFREQ              - Lowpass filter motion regressors to HPFREQ Hz prior to regression
 
 		Cardiac estimation tuning:
+		    --varmaskthreshpct=PCT         - Only include voxels with MAD over time in the PCTth percentile and higher in
+						     the generation of the cardiac waveform (default is no variance masking.)
 		    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to
-						     voxels in MASKNAME and weighted by the mask intensity.
-		    --minhr=MINHR                  - highpass filter cardiac data to MINHR BPM (default is 40)
-		    --maxhr=MAXHR                  - lowpass filter cardiac data to MAXHR BPM (default is 180)
-		    --envcutoff=CUTOFF             - lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4)
+						     voxels in MASKNAME and weighted by the mask intensity (overrides
+						     normal variance mask.)
+		    --minhr=MINHR                  - Limit lower cardiac frequency search range to MINHR BPM (default is 40)
+		    --maxhr=MAXHR                  - Limit upper cardiac frequency search range to MAXHR BPM (default is 140)
+		    --minhrfilt=MINHR              - Highpass filter cardiac waveform estimate to MINHR BPM (default is 40)
+		    --maxhrfilt=MAXHR              - Lowpass filter cardiac waveform estimate to MAXHR BPM (default is 1000)
+		    --envcutoff=CUTOFF             - Lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4)
 		    --notchwidth=WIDTH             - Set the width of the notch filter, in percent of the notch frequency
 						     (default is 1.5)
 
@@ -519,22 +523,34 @@ Usage:
 		    --forcehr=BPM                  - Force heart rate fundamental detector to be centered at BPM
 						     (overrides peak frequencies found from spectrum).  Useful
 						     if there is structured noise that confuses the peak finder.
+
 		Phase projection tuning:
-		    --outputbins=BINS              - number of output phase bins (default is 32)
-		    --gridbins=BINS                - width of the gridding kernel in output phase bins (default is 3.0)
-		    --gridkernel=KERNEL            - convolution gridding kernel.  Options are 'old', 'gauss', and 'kaiser'
+		    --outputbins=BINS              - Number of output phase bins (default is 32)
+		    --gridbins=BINS                - Width of the gridding kernel in output phase bins (default is 3.0)
+		    --gridkernel=KERNEL            - Convolution gridding kernel.  Options are 'old', 'gauss', and 'kaiser'
 						     (default is 'kaiser')
+		    --projmask=MASKNAME            - Phase projection will be restricted to voxels in MASKNAME
+						     (overrides normal intensity mask.)
+		    --projectwithraw               - Use fmri derived cardiac waveform as phase source for projection, even
+						     if a plethysmogram is supplied
 
 		Debugging arguments (probably not of interest to users):
-		    --debug                        - turn on debugging information
-		    --nodetrend                    - disable data detrending
-		    --noorthog                     - disable orthogonalization of motion confound regressors
-		    --normalize                    - normalize fmri data
-		    --nodemean                     - do not demean fmri data
-		    --disablenotch                 - disable subharmonic notch filter
-		    --nomask                       - disable data masking for calculating cardiac waveform
+		    --debug                        - Turn on debugging information
+		    --nodetrend                    - Disable data detrending
+		    --noorthog                     - Disable orthogonalization of motion confound regressors
+		    --normalize                    - Normalize fmri data
+		    --nodemean                     - Do not demean fmri data
+		    --disablenotch                 - Disable subharmonic notch filter
+		    --nomask                       - Disable data masking for calculating cardiac waveform
 		    --nocensor                     - Bad points will not be excluded from analytic phase projection
+		    --noappsmooth                  - Disable smoothing app file in the phase direction
 		    --nophasefilt                  - Disable the phase trend filter (probably not a good idea)
+		    --nocardiacalign               - Disable alignment of pleth signal to fmri derived cardiac signal.
+						     to blood vessels
+		    --saveinfoasjson               - Save the info file in json format rather than text.  Will eventually
+		    --trimcorrelations             - Some physiological timecourses don't cover the entire length of the
+						     fMRI experiment.  Use this option to trim other waveforms to match 
+						     when calculating correlations.
 
 
 		        
@@ -550,7 +566,7 @@ The base command you'd use would be:
 
 	::
 
-		happy inputfmrifile slicetimefile outputfile --cardcalconly --dodlfilter
+		happy inputfmrifile slicetimefile outputroot --cardcalconly --dodlfilter
 
 
 
