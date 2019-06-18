@@ -70,9 +70,15 @@ def glmpass(numprocitems,
         themask = None
     else:
         if procbyvoxel:
-            themask = np.where(np.mean(fmri_data, axis=1) > threshval, 1, 0)
+            meanim = np.mean(fmri_data, axis=1)
+            stdim = np.std(fmri_data, axis=1)
         else:
-            themask = np.where(np.mean(fmri_data, axis=0) > threshval, 1, 0)
+            meanim = np.mean(fmri_data, axis=0)
+            stdim = np.std(fmri_data, axis=0)
+        if np.mean(stdim) < np.mean(meanim):
+            themask = np.where(meanim > threshval, 1, 0)
+        else:
+            themask = np.where(stdim > threshval, 1, 0)
     if nprocs > 1:
         # define the consumer function here so it inherits most of the arguments
         def GLM_consumer(inQ, outQ):

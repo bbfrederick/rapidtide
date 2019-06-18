@@ -634,8 +634,8 @@ def makemask(image, threshpct=25.0, verbose=False, nozero=False):
         An int16 mask with dimensions matching the input. 1 for voxels to preserve, 0 elsewhere
 
     """
-    fracval = getfracvals(image, [0.98], nozero=nozero)[0]
-    threshval = (threshpct / 100.0) * fracval
+    pct2, pct98 = getfracvals(image, [0.02, 0.98], nozero=nozero)
+    threshval = pct2 + (threshpct / 100.0) * (pct98 - pct2)
     if verbose:
         print('fracval:', fracval, ' threshpct:', threshpct, ' mask threshhold:', threshval)
     themask = np.where(image > threshval, np.int16(1), np.int16(0))
