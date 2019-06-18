@@ -26,6 +26,7 @@ def test_nullcorr(debug=False, display=False):
     #sourcedata = lfofilter.apply(Fs, np.random.rand(sourcelen))
     sourcedata = tide_io.readvecs(os.path.join(get_test_data_path(), 'fmri_globalmean.txt'))[0]
     sourcelen = len(sourcedata)
+    numpasses = 3
 
     if display:
         plt.figure()
@@ -82,32 +83,34 @@ def test_nullcorr(debug=False, display=False):
     if debug:
         print(optiondict)
 
-    corrlist = tide_nullcorr.getNullDistributionDatax(sourcedata,
-                                                      xcorr_x,
-                                                      lfofilter,
-                                                      Fs,
-                                                      corrzero,
-                                                      lagmininpts,
-                                                      lagmaxinpts,
-                                                      optiondict)
+    for nullfunction in [tide_nullcorr.getNullDistributionDatax, tide_nullcorr.getNullDistributionData]:
+        for i in range(numpasses):
+            corrlist = nullfunction(sourcedata,
+                                    xcorr_x,
+                                    lfofilter,
+                                    Fs,
+                                    corrzero,
+                                    lagmininpts,
+                                    lagmaxinpts,
+                                    optiondict)
+    
+            tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), 'corrdistdata.txt'))
+    
+            # calculate percentiles for the crosscorrelation from the distribution data
+            histlen = 250
+            thepercentiles = [0.95, 0.99, 0.995]
+    
+            pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
+            if debug:
+                tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
+                tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
 
-    tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), 'corrdistdata.txt'))
+            tide_stats.makeandsavehistogram(corrlist, histlen, 0,
+                                            os.path.join(get_test_temp_path(), 'correlationhist'),
+                                            displaytitle='Null correlation histogram',
+                                            displayplots=display, refine=False)
 
-    # calculate percentiles for the crosscorrelation from the distribution data
-    histlen = 250
-    thepercentiles = [0.95, 0.99, 0.995]
-
-    pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
-    if debug:
-        tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
-        tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
-
-    tide_stats.makeandsavehistogram(corrlist, histlen, 0,
-                                    os.path.join(get_test_temp_path(), 'correlationhist'),
-                                    displaytitle='Null correlation histogram',
-                                    displayplots=display, refine=False)
-
-    assert True
+            assert True
 
 
 if __name__ == '__main__':
