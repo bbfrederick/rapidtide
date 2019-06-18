@@ -1,6 +1,7 @@
 matplotlib
 nibabel
 numpy
+pandas
 scipy
 scikit-learn<0.21; python_version == '2.7'
 scikit-learn; python_version > '2.7'
