@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: latin-1 -*-
 #
 #   Copyright 2016 Blaise Frederick
 #
@@ -110,6 +111,7 @@ def usage():
     print("\t-B\tmake a Bland-Altman plot of x vs y")
     print("\t-f\tscale all font sizes by FAC (default is 1.0)")
     print("\t-r\tsave plots at DPI dots per inch (default is 1000)")
+
     return ()
 
 # set default variable values
@@ -127,6 +129,7 @@ yrange = None
 verbose = False
 saveres = 1000
 legendloc = 1
+colornames = []
 
 # now check options
 try:
@@ -238,7 +241,12 @@ for i in range(0, numfiles):
     yvecs.append(1.0 * indata[1, :])
 
 numvecs = len(xvecs)
-colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
+#colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
+if len(colornames) > 0:
+    colorlist = [colornames[i % len(colornames)] for i in range(numvecs)]
+else:
+    colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
+
 for i in range(0, numfiles):
     if usebarplot:
         bar(xvecs[i], yvecs[i], width=1.5, color='lightgray', align='center', edgecolor=None)
