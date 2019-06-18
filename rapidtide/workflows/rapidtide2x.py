@@ -580,8 +580,9 @@ def rapidtide_main(thearguments):
     optiondict['numestreps'] = 10000  # the number of sham correlations to perform to estimate significance
     optiondict['nohistzero'] = False  # if False, there is a spike at R=0 in the significance histogram
     optiondict['ampthreshfromsig'] = True
-    optiondict['sighistlen'] = 100
+    optiondict['sighistlen'] = 1000
     optiondict['dosighistfit'] = True
+    optiondict['permutationmethod'] = 'shuffle'
 
     optiondict['histlen'] = 250
     optiondict['oversampfactor'] = -1
@@ -637,6 +638,7 @@ def rapidtide_main(thearguments):
     optiondict['showprogressbar'] = True
     optiondict['savecorrmask'] = True
     optiondict['savedespecklemasks'] = True
+    optiondict['checkpoint'] = False                    # save checkpoint information for tracking program state
 
     # package options
     optiondict['memprofilerexists'] = memprofilerexists
@@ -647,7 +649,7 @@ def rapidtide_main(thearguments):
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
-    print(thearguments, 'version:', optiondict['release_version'], optiondict['git_tag'])
+    #print(thearguments, 'version:', optiondict['release_version'], optiondict['git_tag'])
     tide_util.checkimports(optiondict)
 
     # get the command line parameters
@@ -741,6 +743,7 @@ def rapidtide_main(thearguments):
                                                                                                           'phat',
                                                                                                           'wiener',
                                                                                                           'weiner',
+                                                                                                          'checkpoint',
                                                                                                           'maxfittype=',
                                                                                                           'AR='])
     except getopt.GetoptError as err:
@@ -758,6 +761,9 @@ def rapidtide_main(thearguments):
         if o == '--nowindow':
             optiondict['usewindowfunc'] = False
             print('disable precorrelation windowing')
+        elif o == '--checkpoint':
+            optiondict['checkpoint'] = True
+            print('Enabled run checkpoints')
         elif o == '--windowfunc':
             optiondict['usewindowfunc'] = True
             thewindow = a
@@ -1377,12 +1383,16 @@ def rapidtide_main(thearguments):
             timepoints = nim_data.shape[4]
             numspatiallocs = nim_data.shape[5]
             slicesize = numspatiallocs
+            outsuffix3d = '.dscalar'
+            outsuffix4d = '.dtseries'
         else:
             print('input file is NIFTI')
             fileiscifti = False
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
             slicesize = numspatiallocs / int(numslices)
+            outsuffix3d = ''
+            outsuffix4d = ''
         xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
     tide_util.logmem('after reading in fmri data', file=memfile)
 
@@ -1509,8 +1519,15 @@ def rapidtide_main(thearguments):
 
         corrmask = np.uint16(np.where(thecorrmask > 0, 1, 0).reshape(numspatiallocs))
     else:
-        corrmask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, optiondict['addedskip']:], axis=1),
-                                                 threshpct=optiondict['corrmaskthreshpct']))
+        # check to see if the data has been demeaned
+        meanim = np.mean(fmri_data[:, optiondict['addedskip']:], axis=1)
+        stdim = np.std(fmri_data[:, optiondict['addedskip']:], axis=1)
+        if np.mean(stdim) < np.mean(meanim):
+            print('generating correlation mask from mean image')
+            corrmask = np.uint16(tide_stats.makemask(meanim, threshpct=optiondict['corrmaskthreshpct']))
+        else:
+            print('generating correlation mask from std image')
+            corrmask = np.uint16(tide_stats.makemask(stdim, threshpct=optiondict['corrmaskthreshpct']))
     if tide_stats.getmasksize(corrmask) == 0:
         print('ERROR: there are no voxels in the correlation mask - exiting')
         sys.exit()
@@ -1908,10 +1925,6 @@ def rapidtide_main(thearguments):
                                               prewindow=optiondict['usewindowfunc'],
                                               detrendorder=optiondict['detrendorder'],
                                               windowfunc=optiondict['windowfunc'])
-        nonosreferencetc = tide_math.corrnormalize(resampnonosref_y,
-                                                   prewindow=optiondict['usewindowfunc'],
-                                                   detrendorder=optiondict['detrendorder'],
-                                                   windowfunc=optiondict['windowfunc'])
         oversampfreq = optiondict['oversampfactor'] / fmritr
 
         # Step -1 - check the regressor for periodic components in the passband
@@ -1923,7 +1936,7 @@ def rapidtide_main(thearguments):
             lagindpad = corrorigin - 2 * np.max((lagmininpts, lagmaxinpts))
             acmininpts = lagmininpts + lagindpad
             acmaxinpts = lagmaxinpts + lagindpad
-            thexcorr, dummy = tide_corrpass.onecorrelation(referencetc,
+            thexcorr, dummy = tide_corrpass.onecorrelation(resampref_y,
                                                            oversampfreq,
                                                            corrorigin,
                                                            acmininpts,
@@ -1975,20 +1988,36 @@ def rapidtide_main(thearguments):
                         acfixfilter = tide_filt.noncausalfilter(debug=optiondict['debug'])
                         acfixfilter.settype('arb_stop')
                         acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
-                        cleaned_referencetc = acfixfilter.apply(fmrifreq, referencetc)
-                        cleaned_nonosreferencetc = tide_math.stdnormalize(acfixfilter.apply(fmrifreq, nonosreferencetc))
+                        cleaned_resampref_y = tide_math.corrnormalize(acfixfilter.apply(fmrifreq, resampref_y),
+                                                                      prewindow=False,
+                                                                      detrendorder=optiondict['detrendorder'])
+                        cleaned_referencetc = tide_math.corrnormalize(cleaned_resampref_y,
+                                                                      prewindow=optiondict['usewindowfunc'],
+                                                                      detrendorder=optiondict['detrendorder'],
+                                                                      windowfunc=optiondict['windowfunc'])
+                        cleaned_nonosreferencetc = tide_math.stdnormalize(acfixfilter.apply(fmrifreq, resampnonosref_y))
+                        tide_io.writenpvecs(cleaned_nonosreferencetc,
+                                            outputname + '_cleanedreference_fmrires_pass' + str(thepass) + '.txt')
                         tide_io.writenpvecs(cleaned_referencetc,
                                             outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
+                        tide_io.writenpvecs(cleaned_resampref_y,
+                                            outputname + '_cleanedresampref_y_pass' + str(thepass) + '.txt')
                 else:
+                    cleaned_resampref_y = 1.0 * tide_math.corrnormalize(resampref_y,
+                                                                        prewindow=False,
+                                                                        detrendorder=optiondict['detrendorder'])
                     cleaned_referencetc = 1.0 * referencetc
-                    cleaned_nonosreferencetc = 1.0 * nonosreferencetc
             else:
                 print('no sidelobes found in range')
+                cleaned_resampref_y = 1.0 * tide_math.corrnormalize(resampref_y,
+                                                                    prewindow=False,
+                                                                    detrendorder=optiondict['detrendorder'])
                 cleaned_referencetc = 1.0 * referencetc
-                cleaned_nonosreferencetc = 1.0 * nonosreferencetc
         else:
+            cleaned_resampref_y = 1.0 * tide_math.corrnormalize(resampref_y,
+                                                                prewindow=False,
+                                                                detrendorder=optiondict['detrendorder'])
             cleaned_referencetc = 1.0 * referencetc
-            cleaned_nonosreferencetc = 1.0 * nonosreferencetc
 
         # Step 0 - estimate significance
         if optiondict['numestreps'] > 0:
@@ -2002,7 +2031,20 @@ def rapidtide_main(thearguments):
             else:
                 tide_util.logmem('before getnulldistristributiondata', file=memfile)
                 getNullDistributionData_func = tide_nullcorr.getNullDistributionDatax
-            corrdistdata = getNullDistributionData_func(cleaned_referencetc,
+            if optiondict['checkpoint']:
+                tide_io.writenpvecs(cleaned_referencetc,
+                                    outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
+                tide_io.writenpvecs(cleaned_resampref_y,
+                                    outputname + '_cleanedresampref_y_pass' + str(thepass) + '.txt')
+
+                plot(cleaned_resampref_y)
+                plot(cleaned_referencetc)
+                show()
+                if optiondict['saveoptionsasjson']:
+                    tide_io.writedicttojson(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.json')
+                else:
+                    tide_io.writedict(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.txt')
+            corrdistdata = getNullDistributionData_func(cleaned_resampref_y,
                                                         corrscale,
                                                         theprefilter,
                                                         oversampfreq,
@@ -2016,7 +2058,6 @@ def rapidtide_main(thearguments):
             tide_io.writenpvecs(corrdistdata, outputname + '_corrdistdata_pass' + str(thepass) + '.txt')
 
             # calculate percentiles for the crosscorrelation from the distribution data
-            optiondict['sighistlen'] = 1000
             thepercentiles = np.array([0.95, 0.99, 0.995, 0.999])
             thepvalnames = []
             for thispercentile in thepercentiles:
@@ -2076,6 +2117,17 @@ def rapidtide_main(thearguments):
                                         outputname + '_globallaghist_pass' + str(thepass),
                                         displaytitle='lagtime histogram', displayplots=optiondict['displayplots'],
                                         therange=(corrscale[0], corrscale[-1]), refine=False)
+
+        if optiondict['checkpoint']:
+            outcorrarray[:, :] = 0.0
+            outcorrarray[validvoxels, :] = corrout[:, :]
+            if optiondict['textio']:
+                tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
+                                    outputname + '_corrout_prefit_pass' + str(thepass) + outsuffix4d + '.txt')
+            else:
+                tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader,
+                                    outputname + '_corrout_prefit_pass' + str(thepass)+ outsuffix4d)
+
         timings.append(['Correlation calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
         # Step 2 - correlation fitting and time lag estimation
@@ -2090,18 +2142,10 @@ def rapidtide_main(thearguments):
         voxelsprocessed_fc = fitcorr_func(genlagtc,
                                           initial_fmri_x,
                                           lagtc,
-                                          slicesize,
                                           corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
-                                          lagmask,
-                                          failimage,
-                                          lagtimes,
-                                          lagstrengths,
-                                          lagsigma,
                                           corrout,
-                                          meanval,
-                                          gaussout,
-                                          windowout,
-                                          R2,
+                                          lagmask, failimage, lagtimes, lagstrengths, lagsigma,
+                                          meanval, gaussout, windowout, R2,
                                           optiondict,
                                           rt_floatset=rt_floatset,
                                           rt_floattype=rt_floattype
@@ -2128,18 +2172,10 @@ def rapidtide_main(thearguments):
                     voxelsprocessed_fc_ds += fitcorr_func(genlagtc,
                                                           initial_fmri_x,
                                                           lagtc,
-                                                          slicesize,
                                                           corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
-                                                          lagmask,
-                                                          failimage,
-                                                          lagtimes,
-                                                          lagstrengths,
-                                                          lagsigma,
                                                           corrout,
-                                                          meanval,
-                                                          gaussout,
-                                                          windowout,
-                                                          R2,
+                                                          lagmask, failimage, lagtimes, lagstrengths, lagsigma,
+                                                          meanval, gaussout, windowout, R2,
                                                           optiondict,
                                                           initiallags=initlags,
                                                           rt_floatset=rt_floatset,
@@ -2202,18 +2238,27 @@ def rapidtide_main(thearguments):
 
             if optiondict['detrendorder'] > 0:
                 resampnonosref_y = tide_fit.detrend(
-                    tide_resample.doresample(initial_fmri_x, normoutputdata, initial_fmri_x,
+                    tide_resample.doresample(initial_fmri_x,
+                                             normoutputdata,
+                                             initial_fmri_x,
                                              method=optiondict['interptype']),
                     order=optiondict['detrendorder'],
                     demean=optiondict['dodemean'])
-                resampref_y = tide_fit.detrend(tide_resample.doresample(initial_fmri_x, normoutputdata, os_fmri_x,
-                                                                        method=optiondict['interptype']),
-                                               order=optiondict['detrendorder'],
-                                               demean=optiondict['dodemean'])
+                resampref_y = tide_fit.detrend(
+                    tide_resample.doresample(initial_fmri_x,
+                                             normoutputdata,
+                                             os_fmri_x,
+                                             method=optiondict['interptype']),
+                    order=optiondict['detrendorder'],
+                    demean=optiondict['dodemean'])
             else:
-                resampnonosref_y = tide_resample.doresample(initial_fmri_x, normoutputdata, initial_fmri_x,
+                resampnonosref_y = tide_resample.doresample(initial_fmri_x,
+                                                            normoutputdata,
+                                                            initial_fmri_x,
                                                             method=optiondict['interptype'])
-                resampref_y = tide_resample.doresample(initial_fmri_x, normoutputdata, os_fmri_x,
+                resampref_y = tide_resample.doresample(initial_fmri_x,
+                                                       normoutputdata,
+                                                       os_fmri_x,
                                                        method=optiondict['interptype'])
             if optiondict['usetmask']:
                 resampnonosref_y *= tmask_y
@@ -2428,13 +2473,6 @@ def rapidtide_main(thearguments):
         tide_io.writedicttojson(optiondict, outputname + '_options.json')
     else:
         tide_io.writedict(optiondict, outputname + '_options.txt')
-
-    if fileiscifti:
-        outsuffix3d = '.dscalar'
-        outsuffix4d = '.dtseries'
-    else:
-        outsuffix3d = ''
-        outsuffix4d = ''
 
     # do ones with one time point first
     timings.append(['Start saving maps', time.time(), None, None])
