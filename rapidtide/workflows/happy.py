@@ -223,7 +223,8 @@ def physiofromimage(normdata_byslice,
                     nprocs=1,
                     debug=False,
                     verbose=False,
-                    usemask=True):
+                    usemask=True,
+                    multiplicative=True):
     # find out what timepoints we have, and their spacing
     numsteps, minstep, sliceoffsets = tide_io.sliceinfo(slicetimes, tr)
     print(len(slicetimes), 'slice times with', numsteps, 'unique values - diff is', minstep)
@@ -231,6 +232,7 @@ def physiofromimage(normdata_byslice,
     # make slice means
     print('making slice means...')
     hirestc = np.zeros((timepoints * numsteps), dtype=np.float64)
+    cycleaverage = np.zeros((numsteps), dtype=np.float64)
     sliceavs = np.zeros((numslices, timepoints), dtype=np.float64)
     if not verbose:
         print('averaging slices...')
@@ -252,6 +254,13 @@ def physiofromimage(normdata_byslice,
                     axis=0)
             for t in range(timepoints):
                 hirestc[numsteps * t + sliceoffsets[theslice]] += sliceavs[theslice, t]
+    for i in range(numsteps):
+        cycleaverage[i] = np.mean(hirestc[i:-1:numsteps])
+    for t in range(len(hirestc)):
+        if multiplicative:
+            hirestc[t] /= (cycleaverage[t % numsteps] + 1.0)
+    else:
+        hirestc[t] -= cycleaverage[t % numsteps]
     if not verbose:
         print('done')
     slicesamplerate = 1.0 * numsteps / tr
@@ -265,7 +274,7 @@ def physiofromimage(normdata_byslice,
     hirescardtc = -1.0 * tide_math.madnormalize(cardprefilter.apply(slicesamplerate, filthirestc))
     hiresresptc = -1.0 * tide_math.madnormalize(respprefilter.apply(slicesamplerate, filthirestc))
 
-    return tide_math.madnormalize(hirescardtc), tide_math.madnormalize(hiresresptc), slicesamplerate, numsteps
+    return tide_math.madnormalize(hirescardtc), tide_math.madnormalize(hiresresptc), slicesamplerate, numsteps, cycleaverage
 
 
 def savgolsmooth(data, smoothlen=101, polyorder=3):
@@ -629,6 +638,30 @@ def readextmask(thefilename, nim_hdr, xsize, ysize, numslices):
 
 
 def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
+    """
+
+    Parameters
+    ----------
+    reference: 1D numpy array
+        The cardiac waveform to compare to
+    candidate: 1D numpy array
+        The cardiac waveform to be assessed
+    samplerate: float
+        The sample rate of the data in Hz
+    refine: bool, optional
+        Whether to refine the peak fit.  Default is True.
+    debug: bool, optional
+        Output additional information for debugging
+
+    Returns
+    -------
+    maxval: float
+        The maximum value of the crosscorrelation function
+    maxdelay: float
+        The time, in seconds, where the maximum crosscorrelation occurs.
+    failreason: flag
+        Reason why the fit failed (0 if no failure)
+    """
     thecardfilt = tide_filt.noncausalfilter(filtertype='cardiac')
     trimlength = np.min([len(reference), len(candidate)])
     thexcorr = tide_corr.fastcorrelate(
@@ -1160,7 +1193,7 @@ def happy_main(thearguments):
     print('estimating cardiac signal from fmri data')
     tide_util.logmem('before cardiacfromimage', file=memfile)
     cardfromfmri_sliceres, respfromfmri_sliceres, \
-    slicesamplerate, numsteps = physiofromimage(normdata_byslice, estmask_byslice, numslices, timepoints, tr,
+    slicesamplerate, numsteps, cycleaverage = physiofromimage(normdata_byslice, estmask_byslice, numslices, timepoints, tr,
                                                 slicetimes, thecardbandfilter, therespbandfilter,
                                                 madnorm=domadnorm,
                                                 nprocs=nprocs,
@@ -1170,6 +1203,7 @@ def happy_main(thearguments):
                                                 verbose=verbose)
     timings.append(['Cardiac signal generated from image data', time.time(), None, None])
     slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
+    tide_io.writevec(cycleaverage, outputroot + '_cycleaverage.txt')
     tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_sliceres.txt')
     # stash away a copy of the waveform if we need it later
     raw_cardfromfmri_sliceres = np.array(cardfromfmri_sliceres)
