@@ -69,27 +69,6 @@ def onecorrfitx(correlationfunc,
     if not fixdelay:
         if thefitter.findmaxtype == 'gauss':
             maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(correlationfunc)
-
-            '''maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss_rev(
-                corr_x,
-                thetc,
-                lagmin, lagmax, widthlimit,
-                absmaxsigma=absmaxsigma,
-                edgebufferfrac=edgebufferfrac,
-                threshval=thethreshval,
-                uthreshval=uthreshval,
-                debug=debug,
-                refine=refine,
-                bipolar=bipolar,
-                maxguess=maxguess,
-                useguess=useguess,
-                searchfrac=searchfrac,
-                fastgauss=fastgauss,
-                enforcethresh=enforcethresh,
-                zerooutbadfit=zerooutbadfit,
-                lagmod=lagmod,
-                hardlimit=hardlimit,
-                displayplots=displayplots)'''
         else:
             '''maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_quad(
                 corr_x,
@@ -269,7 +248,7 @@ def fitcorrx(lagtcgenerator,
                                                    thefitter,
                                                    disablethresholds=False,
                                                    despeckle_thresh=despeckle_thresh,
-                                                   initiallag=initiallags,
+                                                   initiallag=thislag,
                                                    fixdelay=fixdelay,
                                                    fixeddelayvalue=0.0,
                                                    rt_floatset=rt_floatset,
@@ -297,18 +276,18 @@ def fitcorrx(lagtcgenerator,
             R2[voxel[0]] = voxel[8]
             lagmask[voxel[0]] = voxel[9]
             failimage[voxel[0]] = voxel[10] & 0x3f
-        if (FML_BADAMPLOW | FML_BADAMPHIGH) & voxel[10]:
-            ampfails += 1
-        if FML_BADSEARCHWINDOW & voxel[10]:
-            windowfails += 1
-        if FML_BADWIDTH & voxel[10]:
-            widthfails += 1
-        if FML_BADLAG & voxel[10]:
-            lagfails += 1
-        if FML_HITEDGE & voxel[10]:
-            edgefails += 1
-        if (FML_FITFAIL | FML_INITFAIL) & voxel[10]:
-            fitfails += 1
+            if (FML_BADAMPLOW | FML_BADAMPHIGH) & voxel[10]:
+                ampfails += 1
+            if FML_BADSEARCHWINDOW & voxel[10]:
+                windowfails += 1
+            if FML_BADWIDTH & voxel[10]:
+                widthfails += 1
+            if FML_BADLAG & voxel[10]:
+                lagfails += 1
+            if FML_HITEDGE & voxel[10]:
+                edgefails += 1
+            if (FML_FITFAIL | FML_INITFAIL) & voxel[10]:
+                fitfails += 1
         del data_out
     else:
         for vox in range(0, inputshape[0]):
