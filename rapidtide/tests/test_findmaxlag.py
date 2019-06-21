@@ -60,7 +60,7 @@ def test_findmaxlag(display=False, debug=False):
     absmaxsigma = 1000.0
 
     # initialize the correlation fitter
-    thefitter = tide_cfit.correlation_fitter(timeaxis=xvecs, lagmin=lagmin, lagmax=lagmax, widthlimit=widthlimit, absmaxsigma=absmaxsigma, refine=True, debug=debug, searchfrac=searchfrac, zerooutbadfit=False)
+    thefitter = tide_cfit.correlation_fitter(corrtimeaxis=xvecs, lagmin=lagmin, lagmax=lagmax, absmaxsigma=absmaxsigma, refine=True, debug=debug, searchfrac=searchfrac, zerooutbadfit=False)
 
     for i in range(len(testlags)):
         yvecs = tide_fit.gauss_eval(xvecs, np.array([testmaxval, testlags[i],
