@@ -338,13 +338,13 @@ def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False):
         started = False
         finished = False
         while i < len(thestore[1, :] - 2) and not finished:
-            if thestore[1, i] > 0.5 * overallmax:
+            if thestore[1, i] > 0.33 * overallmax:
                 started = True
-            i += 1
             if thestore[1, i] > thestore[1, peakindex]:
                 peakindex = i
             if started and (thestore[1, i] < 0.75 * thestore[1, peakindex]):
                 finished = True
+            i += 1
     else:
         peakindex = np.argmax(thestore[1, 1:-2])
     peaklag = thestore[0, peakindex + 1]
