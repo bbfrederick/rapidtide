@@ -35,35 +35,176 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 
 
-def onecorrfitx(thetc,
-                corr_x,
-                optiondict,
+def onecorrfitx(correlationfunc,
+                thefitter,
                 disablethresholds=False,
-                displayplots=False,
                 initiallag=None,
                 despeckle_thresh=5.0,
-                widthlimit=100.0,
                 lthreshval=0.0,
-                uthreshval=1.0,
                 fixdelay=False,
-                findmaxtype='gauss',
-                lagmin=-30.0,
-                lagmax=30.0,
-                absmaxsigma=100.0,
-                debug=False,
-                edgebufferfrac=0.0,
-                refine=True,
-                bipolar=False,
-                searchfrac=0.5,
-                fastgauss=False,
-                enforcethresh=True,
-                lagmod=1000.0,
-                hardlimit=True,
-                zerooutbadfit=True,
+                fixeddelayvalue=0.0,
                 rt_floatset=np.float64,
-                rt_floattype='float64'
-                ):
-    '''despeckle_thresh = optiondict['despeckle_thresh']
+                rt_floattype='float64'):
+
+    if initiallag is not None:
+        thefitter.setguess(True, maxguess=initiallag)
+        widthlimit = despeckle_thresh
+    else:
+        thefitter.setguess(False)
+
+    if disablethresholds:
+        thefitter.setlthresh(0.0)
+    else:
+        thefitter.setlthresh(lthreshval)
+
+    flipfac = None
+    if thefitter.bipolar:
+        if max(thetc) < -1.0 * min(thetc):
+            flipfac = rt_floatset(-1.0)
+        else:
+            flipfac = rt_floatset(1.0)
+    else:
+        flipfac = rt_floatset(1.0)
+
+    if not fixdelay:
+        if thefitter.findmaxtype == 'gauss':
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(correlationfunc)
+
+            '''maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss_rev(
+                corr_x,
+                thetc,
+                lagmin, lagmax, widthlimit,
+                absmaxsigma=absmaxsigma,
+                edgebufferfrac=edgebufferfrac,
+                threshval=thethreshval,
+                uthreshval=uthreshval,
+                debug=debug,
+                refine=refine,
+                bipolar=bipolar,
+                maxguess=maxguess,
+                useguess=useguess,
+                searchfrac=searchfrac,
+                fastgauss=fastgauss,
+                enforcethresh=enforcethresh,
+                zerooutbadfit=zerooutbadfit,
+                lagmod=lagmod,
+                hardlimit=hardlimit,
+                displayplots=displayplots)'''
+        else:
+            '''maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_quad(
+                corr_x,
+                flipfac * thetc,
+                lagmin, lagmax, widthlimit,
+                edgebufferfrac=edgebufferfrac,
+                threshval=lthreshval,
+                uthreshval=uthreshval,
+                debug=debug,
+                refine=refine,
+                maxguess=maxguess,
+                useguess=useguess,
+                fastgauss=fastgauss,
+                enforcethresh=enforcethresh,
+                zerooutbadfit=zerooutbadfit,
+                lagmod=lagmod,
+                displayplots=displayplots)'''
+            maxval *= flipfac
+    else:
+        # do something different
+        failreason = np.int16(0)
+        maxlag = rt_floatset(fixeddelayvalue)
+        maxindex = np.int16(bisect.bisect_left(thefitter.corrtimeaxis, fixeddelayvalue))
+        maxval = rt_floatset(flipfac * thetc[maxindex])
+        maxsigma = rt_floatset(1.0)
+        maskval = np.uint16(1)
+
+    return maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason
+
+
+def _procOneVoxelFitcorrx(vox,
+                          corr_y,
+                          lagtcgenerator,
+                          timeaxis,
+                          thefitter,
+                          disablethresholds=False,
+                          despeckle_thresh=5.0,
+                          initiallag=None,
+                          fixdelay=False,
+                          fixeddelayvalue=0.0,
+                          rt_floatset=np.float64,
+                          rt_floattype='float64'):
+    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = onecorrfitx(corr_y,
+                                                                                              thefitter,
+                                                                                              disablethresholds=disablethresholds,
+                                                                                              despeckle_thresh=despeckle_thresh,
+                                                                                              fixdelay=fixdelay,
+                                                                                              fixeddelayvalue=fixeddelayvalue,
+                                                                                              initiallag=initiallag,
+                                                                                              rt_floatset=rt_floatset,
+                                                                                              rt_floattype=rt_floattype)
+
+    if maxval > 0.3:
+        displayplots = False
+
+    # question - should maxlag be added or subtracted?  As of 10/18, it is subtracted
+    #  potential answer - tried adding, results are terrible.
+    thelagtc = rt_floatset(lagtcgenerator.yfromx(timeaxis - maxlag))
+
+    # now tuck everything away in the appropriate output array
+    volumetotalinc = 0
+    thewindowout = rt_floatset(0.0 * corr_y)
+    thewindowout[peakstart:peakend + 1] = 1.0
+    if (maskval == 0) and thefitter.zerooutbadfit:
+        thetime = rt_floatset(0.0)
+        thestrength = rt_floatset(0.0)
+        thesigma = rt_floatset(0.0)
+        thegaussout = 0.0 * corr_y
+        theR2 = rt_floatset(0.0)
+    else:
+        volumetotalinc = 1
+        thetime = rt_floatset(np.fmod(maxlag, thefitter.lagmod))
+        thestrength = rt_floatset(maxval)
+        thesigma = rt_floatset(maxsigma)
+        thegaussout = rt_floatset(0.0 * corr_y)
+        thewindowout = rt_floatset(0.0 * corr_y)
+        if (not fixdelay) and (maxsigma != 0.0):
+            thegaussout = rt_floatset(tide_fit.gauss_eval(thefitter.corrtimeaxis, [maxval, maxlag, maxsigma]))
+        else:
+            thegaussout = rt_floatset(0.0)
+            thewindowout = rt_floatset(0.0)
+        theR2 = rt_floatset(thestrength * thestrength)
+
+    return vox, volumetotalinc, thelagtc, thetime, thestrength, thesigma, thegaussout, \
+           thewindowout, theR2, maskval, failreason
+
+
+def fitcorrx(lagtcgenerator,
+            timeaxis,
+            lagtc,
+            corrtimescale,
+            thefitter,
+            corrout,
+            lagmask,
+            failimage,
+            lagtimes,
+            lagstrengths,
+            lagsigma,
+            gaussout,
+            windowout,
+            R2,
+            nprocs=1,
+            fixdelay=False,
+            showprogressbar=True,
+            chunksize=1000,
+            despeckle_thresh=5.0,
+            initiallags=None,
+            rt_floatset=np.float64,
+            rt_floattype='float64'):
+    '''nprocs = optiondict['nprocs']
+    showprogressbar = optiondict['showprogressbar']
+    chunksize = optiondict['mp_chunksize']
+    lagmod = optiondict['lagmod']
+    fixdelay = optiondict['fixdelay']
+    despeckle_thresh = optiondict['despeckle_thresh']
     widthlimit = optiondict['widthlimit']
     lthreshval = optiondict['lthreshval']
     bipolar = optiondict['bipolar']
@@ -84,198 +225,7 @@ def onecorrfitx(thetc,
     lagmod = optiondict['lagmod']
     hardlimit = optiondict['hardlimit']'''
 
-    if initiallag is not None:
-        maxguess = initiallag
-        useguess = True
-        widthlimit = despeckle_thresh
-    else:
-        maxguess = 0.0
-        useguess = False
-
-    if disablethresholds:
-        thethreshval = 0.0
-    else:
-        thethreshval = lthreshval
-
-    flipfac = None
-    if bipolar:
-        if max(thetc) < -1.0 * min(thetc):
-            flipfac = rt_floatset(-1.0)
-        else:
-            flipfac = rt_floatset(1.0)
-    else:
-        flipfac = rt_floatset(1.0)
-
-    if not fixdelay:
-        if findmaxtype == 'gauss':
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss_rev(
-                corr_x,
-                thetc,
-                lagmin, lagmax, widthlimit,
-                absmaxsigma=absmaxsigma,
-                edgebufferfrac=edgebufferfrac,
-                threshval=thethreshval,
-                uthreshval=uthreshval,
-                debug=debug,
-                refine=refine,
-                bipolar=bipolar,
-                maxguess=maxguess,
-                useguess=useguess,
-                searchfrac=searchfrac,
-                fastgauss=fastgauss,
-                enforcethresh=enforcethresh,
-                zerooutbadfit=zerooutbadfit,
-                lagmod=lagmod,
-                hardlimit=hardlimit,
-                displayplots=displayplots)
-        else:
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_quad(
-                corr_x,
-                flipfac * thetc,
-                lagmin, lagmax, widthlimit,
-                edgebufferfrac=edgebufferfrac,
-                threshval=lthreshval,
-                uthreshval=uthreshval,
-                debug=debug,
-                refine=refine,
-                maxguess=maxguess,
-                useguess=useguess,
-                fastgauss=fastgauss,
-                enforcethresh=enforcethresh,
-                zerooutbadfit=zerooutbadfit,
-                lagmod=lagmod,
-                displayplots=displayplots)
-            maxval *= flipfac
-    else:
-        # do something different
-        failreason = np.int16(0)
-        maxlag = rt_floatset(fixeddelayvalue)
-        maxindex = np.int16(bisect.bisect_left(corr_x, fixeddelayvalue))
-        maxval = rt_floatset(flipfac * thetc[maxindex])
-        maxsigma = rt_floatset(1.0)
-        maskval = np.uint16(1)
-
-    return maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason
-
-
-def _procOneVoxelFitcorrx(vox,
-                          corr_y,
-                          corr_x,
-                          lagtcgenerator,
-                          timeaxis,
-                          optiondict,
-                          disablethresholds=False,
-                          despeckle_thresh=5.0,
-                          widthlimit=100.0,
-                          lthreshval=0.0,
-                          uthreshval=1.0,
-                          findmaxtype='gauss',
-                          lagmin=-30.0,
-                          lagmax=30.0,
-                          absmaxsigma=100.0,
-                          debug=False,
-                          edgebufferfrac=0.0,
-                          refine=True,
-                          bipolar=False,
-                          searchfrac=0.5,
-                          fastgauss=False,
-                          enforcethresh=True,
-                          hardlimit=True,
-                          zerooutbadfit=True,
-                          displayplots=False,
-                          initiallag=None,
-                          lagmod=1000.0,
-                          fixdelay=False,
-                          rt_floatset=np.float64,
-                          rt_floattype='float64'):
-    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = onecorrfitx(corr_y,
-                                                                                              corr_x,
-                                                                                              optiondict,
-                                                                                              disablethresholds=disablethresholds,
-                                                                                              despeckle_thresh=despeckle_thresh,
-                                                                                              widthlimit=widthlimit,
-                                                                                              lthreshval=lthreshval,
-                                                                                              uthreshval=uthreshval,
-                                                                                              fixdelay=fixdelay,
-                                                                                              findmaxtype=findmaxtype,
-                                                                                              lagmin=lagmin,
-                                                                                              lagmax=lagmax,
-                                                                                              absmaxsigma=absmaxsigma,
-                                                                                              debug=debug,
-                                                                                              edgebufferfrac=edgebufferfrac,
-                                                                                              refine=refine,
-                                                                                              bipolar=bipolar,
-                                                                                              searchfrac=searchfrac,
-                                                                                              fastgauss=fastgauss,
-                                                                                              enforcethresh=enforcethresh,
-                                                                                              lagmod=lagmod,
-                                                                                              hardlimit=hardlimit,
-                                                                                              zerooutbadfit=zerooutbadfit,
-                                                                                              displayplots=displayplots,
-                                                                                              initiallag=initiallag,
-                                                                                              rt_floatset=rt_floatset,
-                                                                                              rt_floattype=rt_floattype)
-
-    if maxval > 0.3:
-        displayplots = False
-
-    # question - should maxlag be added or subtracted?  As of 10/18, it is subtracted
-    #  potential answer - tried adding, results are terrible.
-    thelagtc = rt_floatset(lagtcgenerator.yfromx(timeaxis - maxlag))
-
-    # now tuck everything away in the appropriate output array
-    volumetotalinc = 0
-    thewindowout = rt_floatset(0.0 * corr_y)
-    thewindowout[peakstart:peakend + 1] = 1.0
-    if (maskval == 0) and zerooutbadfit:
-        thetime = rt_floatset(0.0)
-        thestrength = rt_floatset(0.0)
-        thesigma = rt_floatset(0.0)
-        thegaussout = 0.0 * corr_y
-        theR2 = rt_floatset(0.0)
-    else:
-        volumetotalinc = 1
-        thetime = rt_floatset(np.fmod(maxlag, lagmod))
-        thestrength = rt_floatset(maxval)
-        thesigma = rt_floatset(maxsigma)
-        thegaussout = rt_floatset(0.0 * corr_y)
-        thewindowout = rt_floatset(0.0 * corr_y)
-        if (not fixdelay) and (maxsigma != 0.0):
-            thegaussout = rt_floatset(tide_fit.gauss_eval(corr_x, [maxval, maxlag, maxsigma]))
-        else:
-            thegaussout = rt_floatset(0.0)
-            thewindowout = rt_floatset(0.0)
-        theR2 = rt_floatset(thestrength * thestrength)
-
-    return vox, volumetotalinc, thelagtc, thetime, thestrength, thesigma, thegaussout, \
-           thewindowout, theR2, maskval, failreason
-
-
-def fitcorrx(lagtcgenerator,
-            timeaxis,
-            lagtc,
-            corr_x,
-            corrout,
-            lagmask,
-            failimage,
-            lagtimes,
-            lagstrengths,
-            lagsigma,
-            meanval,
-            gaussout,
-            windowout,
-            R2,
-            optiondict,
-            zerooutbadfit=True,
-            initiallags=None,
-            rt_floatset=np.float64,
-            rt_floattype='float64'):
-    nprocs = optiondict['nprocs']
-    showprogressbar = optiondict['showprogressbar']
-    chunksize = optiondict['mp_chunksize']
-    lagmod = optiondict['lagmod'],
-    fixdelay = optiondict['fixdelay'],
-
+    thefitter.setcorrtimeaxis(corrtimescale)
     displayplots = False
     inputshape = np.shape(corrout)
     if initiallags is None:
@@ -313,18 +263,17 @@ def fitcorrx(lagtcgenerator,
                     else:
                         thislag = initiallags[val]
                     outQ.put(_procOneVoxelFitcorrx(val,
-                                                  corrout[val, :],
-                                                  corr_x,
-                                                  lagtcgenerator,
-                                                  timeaxis,
-                                                  optiondict,
-                                                  zerooutbadfit=zerooutbadfit,
-                                                  displayplots=displayplots,
-                                                  initiallag=thislag,
-                                                  lagmod=lagmod,
-                                                  fixdelay=fixdelay,
-                                                  rt_floatset=rt_floatset,
-                                                  rt_floattype=rt_floattype))
+                                                   corrout[val, :],
+                                                   lagtcgenerator,
+                                                   timeaxis,
+                                                   thefitter,
+                                                   disablethresholds=False,
+                                                   despeckle_thresh=despeckle_thresh,
+                                                   initiallag=initiallags,
+                                                   fixdelay=fixdelay,
+                                                   fixeddelayvalue=0.0,
+                                                   rt_floatset=rt_floatset,
+                                                   rt_floattype=rt_floattype))
                 except Exception as e:
                     print("error!", e)
                     break
@@ -387,18 +336,16 @@ def fitcorrx(lagtcgenerator,
                 lagmask[vox], \
                 failreason = \
                     _procOneVoxelFitcorrx(vox,
-                                         corrout[vox, :],
-                                         corr_x,
-                                         lagtcgenerator,
-                                         timeaxis,
-                                         optiondict,
-                                         zerooutbadfit=zerooutbadfit,
-                                         displayplots=displayplots,
-                                         initiallag=thislag,
-                                         lagmod=lagmod,
-                                         fixdelay=fixdelay,
-                                         rt_floatset=rt_floatset,
-                                         rt_floattype=rt_floattype)
+                                          corrout[vox, :],
+                                          lagtcgenerator,
+                                          timeaxis,
+                                          thefitter,
+                                          disablethresholds=False,
+                                          despeckle_thresh=despeckle_thresh,
+                                          initiallag=thislag,
+                                          fixdelay=fixdelay,
+                                          rt_floatset=rt_floatset,
+                                          rt_floattype=rt_floattype)
                 volumetotal += volumetotalinc
                 if (FML_BADAMPLOW | FML_BADAMPHIGH) & failreason:
                     ampfails += 1

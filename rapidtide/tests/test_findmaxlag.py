@@ -10,6 +10,7 @@ from scipy import arange
 
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
+import rapidtide.correlation_fitter as tide_cfit
 from rapidtide.tests.utils import get_test_data_path
 
 
@@ -48,6 +49,8 @@ def test_findmaxlag(display=False, debug=False):
     fml_failreasons = np.zeros(len(testlags), dtype=np.int)
     fmlr_maxlags = np.zeros(len(testlags), dtype=np.float)
     fmlr_failreasons = np.zeros(len(testlags), dtype=np.int)
+    fmlc_maxlags = np.zeros(len(testlags), dtype=np.float)
+    fmlc_failreasons = np.zeros(len(testlags), dtype=np.int)
 
     testmaxval = 0.8
     testmaxsigma = 5.0
@@ -56,10 +59,16 @@ def test_findmaxlag(display=False, debug=False):
     widthlimit = 1000.0
     absmaxsigma = 1000.0
 
+    # initialize the correlation fitter
+    thefitter = tide_cfit.correlation_fitter(timeaxis=xvecs, lagmin=lagmin, lagmax=lagmax, widthlimit=widthlimit, absmaxsigma=absmaxsigma, refine=True, debug=debug, searchfrac=searchfrac, zerooutbadfit=False)
+
     for i in range(len(testlags)):
         yvecs = tide_fit.gauss_eval(xvecs, np.array([testmaxval, testlags[i],
                                                      testmaxsigma]))
 
+        print()
+        print()
+        print()
         (maxindex, fml_maxlags[i], maxval, maxsigma, maskval,
          fml_failreasons[i], peakstart, peakend) = tide_fit.findmaxlag_gauss(
              xvecs,
@@ -71,6 +80,9 @@ def test_findmaxlag(display=False, debug=False):
              searchfrac=searchfrac,
              zerooutbadfit=False)
 
+        print()
+        print()
+        print()
         (maxindexr, fmlr_maxlags[i], maxvalr, maxsigmar, maskvalr,
          fmlr_failreasons[i], peakstartr, peakendr) = tide_fit.findmaxlag_gauss_rev(
              xvecs,
@@ -83,6 +95,13 @@ def test_findmaxlag(display=False, debug=False):
              searchfrac=searchfrac,
              zerooutbadfit=False)
 
+        print()
+        print()
+        print()
+        (maxindexc, fmlc_maxlags[i], maxvalc, maxsigmac, maskvalc, fmlc_failreasons[i], peakstartc, peakendc) = thefitter.fit(yvecs)
+        print(maxindexc, fmlc_maxlags[i], maxvalc, maxsigmac, maskvalc, fmlc_failreasons[i], peakstartc, peakendc)
+
+
     if debug:
         print('findmaxlag_gauss results over lag range')
         for i in range(len(testlags)):
@@ -94,13 +113,15 @@ def test_findmaxlag(display=False, debug=False):
 
     assert eval_fml_lag(lagmin, lagmax, testlags, fml_maxlags)
     assert eval_fml_lag(lagmin, lagmax, testlags, fmlr_maxlags)
+    assert eval_fml_lag(lagmin, lagmax, testlags, fmlc_maxlags)
 
     if display:
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(testlags, fml_maxlags, 'r')
         ax.plot(testlags, fmlr_maxlags, 'g')
-        ax.legend(['findmaxlag_gauss', 'findmaxlag_gauss_rev'])
+        ax.plot(testlags, fmlc_maxlags, 'b')
+        ax.legend(['findmaxlag_gauss', 'findmaxlag_gauss_rev', 'cfit'])
         #ax.set_xlim((lagmin, lagmax))
         plt.show()
 
