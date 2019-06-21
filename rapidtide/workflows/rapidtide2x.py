@@ -51,9 +51,10 @@ import rapidtide.util as tide_util
 
 import rapidtide.nullcorrpass as tide_nullcorr
 import rapidtide.corrpass as tide_corrpass
-import rapidtide.corrfit as tide_corrfit
+import rapidtide.corrfitx as tide_corrfit
 import rapidtide.refine as tide_refine
 import rapidtide.glmpass as tide_glmpass
+import rapidtide.correlation_fitter as tide_cfit
 import rapidtide.wiener as tide_wiener
 
 try:
@@ -1915,6 +1916,23 @@ def rapidtide_main(thearguments):
         print('edgebufferfrac set to ', optiondict['edgebufferfrac'])
 
     fft_fmri_data = None
+
+    # intitialize the correlation fitter
+    thefitter = tide_cfit.correlation_fitter(lagmod=optiondict['lagmod'],
+                                             lthreshval=optiondict['lthreshval'],
+                                             uthreshval=optiondict['uthreshval'],
+                                             bipolar=optiondict['bipolar'],
+                                             lagmin=optiondict['lagmin'],
+                                             lagmax=optiondict['lagmax'],
+                                             absmaxsigma=optiondict['absmaxsigma'],
+                                             debug=optiondict['debug'],
+                                             findmaxtype=optiondict['findmaxtype'],
+                                             refine=optiondict['gaussrefine'],
+                                             searchfrac=optiondict['searchfrac'],
+                                             fastgauss=optiondict['fastgauss'],
+                                             enforcethresh=optiondict['enforcethresh'],
+                                             hardlimit=optiondict['hardlimit'])
+
     for thepass in range(1, optiondict['passes'] + 1):
         # initialize the pass
         if optiondict['passes'] > 1:
@@ -1948,13 +1966,16 @@ def rapidtide_main(thearguments):
                                                            windowfunc=optiondict['windowfunc'],
                                                            corrweighting=optiondict['corrweighting'])
 
+            thefitter.setcorrtimeaxis(thexcorr)
             maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
-                tide_corrfit.onecorrfitx(thexcorr, corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts],
-                                        optiondict,
-                                        zerooutbadfit=optiondict['zerooutbadfit'],
-                                        rt_floatset=rt_floatset,
-                                        rt_floattype=rt_floattype
-                                        )
+                tide_corrfit.onecorrfitx(corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts],
+                                         thefitter,
+                                         despeckle_thresh=optiondict['despeckle_thresh'],
+                                         lthreshval=optiondict['lthreshval'],
+                                         fixdelay=optiondict['fixdelay'],
+                                         rt_floatset=rt_floatset,
+                                         rt_floattype=rt_floattype
+                                         )
             outputarray = np.asarray([corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts], thexcorr])
             tide_io.writenpvecs(outputarray, outputname + '_referenceautocorr_pass' + str(thepass) + '.txt')
             thelagthresh = np.max((abs(optiondict['lagmin']), abs(optiondict['lagmax'])))
@@ -2069,19 +2090,20 @@ def rapidtide_main(thearguments):
                                                                         nozero=optiondict['nohistzero'],
                                                                         dosighistfit=optiondict['dosighistfit'])
             if optiondict['ampthreshfromsig']:
-                if pcts is None:
+                if pcts is not None:
                     print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
                     optiondict['ampthresh'] = pcts[2]
+                    tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
+                    if optiondict['dosighistfit']:
+                        tide_stats.printthresholds(pcts_fit, thepercentiles,
+                                                   'Crosscorrelation significance thresholds from fit:')
+                        tide_stats.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
+                                                        outputname + '_nullcorrelationhist_pass' + str(thepass),
+                                                        displaytitle='Null correlation histogram, pass' + str(thepass),
+                                                        displayplots=optiondict['displayplots'], refine=False)
                 else:
                     print('leaving ampthresh unchanged')
-            tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
-            if optiondict['dosighistfit']:
-                tide_stats.printthresholds(pcts_fit, thepercentiles,
-                                           'Crosscorrelation significance thresholds from fit:')
-                tide_stats.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
-                                                outputname + '_nullcorrelationhist_pass' + str(thepass),
-                                                displaytitle='Null correlation histogram, pass' + str(thepass),
-                                                displayplots=optiondict['displayplots'], refine=False)
+
             del corrdistdata
             timings.append(['Significance estimation end, pass ' + str(thepass), time.time(), optiondict['numestreps'],
                             'repetitions'])
@@ -2143,13 +2165,19 @@ def rapidtide_main(thearguments):
                                           initial_fmri_x,
                                           lagtc,
                                           corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
+                                          thefitter,
                                           corrout,
                                           lagmask, failimage, lagtimes, lagstrengths, lagsigma,
-                                          meanval, gaussout, windowout, R2,
-                                          optiondict,
+                                          gaussout, windowout, R2,
+                                          nprocs=optiondict['nprocs'],
+                                          fixdelay=optiondict['fixdelay'],
+                                          showprogressbar=optiondict['showprogressbar'],
+                                          chunksize=optiondict['mp_chunksize'],
+                                          despeckle_thresh=optiondict['despeckle_thresh'],
                                           rt_floatset=rt_floatset,
                                           rt_floattype=rt_floattype
                                           )
+
         timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
 
         # Step 2b - Correlation time despeckle
@@ -2160,6 +2188,7 @@ def rapidtide_main(thearguments):
 
             # find lags that are very different from their neighbors, and refit starting at the median lag for the point
             voxelsprocessed_fc_ds = 0
+            despecklingdone = False
             for despecklepass in range(optiondict['despeckle_passes']):
                 print('\n\nCorrelation despeckling subpass ' + str(despecklepass + 1))
                 outmaparray *= 0.0
@@ -2169,19 +2198,29 @@ def rapidtide_main(thearguments):
                     np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, -1000000.0)[
                         validvoxels]
                 if len(initlags) > 0:
-                    voxelsprocessed_fc_ds += fitcorr_func(genlagtc,
-                                                          initial_fmri_x,
-                                                          lagtc,
-                                                          corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
-                                                          corrout,
-                                                          lagmask, failimage, lagtimes, lagstrengths, lagsigma,
-                                                          meanval, gaussout, windowout, R2,
-                                                          optiondict,
-                                                          initiallags=initlags,
-                                                          rt_floatset=rt_floatset,
-                                                          rt_floattype=rt_floattype
-                                                          )
+                    if len(np.where(initlags != -1000000.0)[0]) > 0:
+                        voxelsprocessed_fc_ds += fitcorr_func(genlagtc,
+                                                              initial_fmri_x,
+                                                              lagtc,
+                                                              corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
+                                                              thefitter,
+                                                              corrout,
+                                                              lagmask, failimage, lagtimes, lagstrengths, lagsigma,
+                                                              gaussout, windowout, R2,
+                                                              nprocs=optiondict['nprocs'],
+                                                              fixdelay=optiondict['fixdelay'],
+                                                              showprogressbar=optiondict['showprogressbar'],
+                                                              chunksize=optiondict['mp_chunksize'],
+                                                              despeckle_thresh=optiondict['despeckle_thresh'],
+                                                              initiallags=initlags,
+                                                              rt_floatset=rt_floatset,
+                                                              rt_floattype=rt_floattype
+                                                              )
+                    else:
+                        despecklingdone = True
                 else:
+                    despecklingdone = True
+                if despecklingdone:
                     print('Nothing left to do! Terminating despeckling')
                     break
 
