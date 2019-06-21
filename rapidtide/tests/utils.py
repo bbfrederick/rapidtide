@@ -50,8 +50,7 @@ def get_test_temp_path():
     Returns the path to test temporary directory, terminated with separator.
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
     """
-    #return os.path.realpath(os.path.join(get_rapidtide_root(), 'tests', 'tmp')) + os.path.sep
-    return os.path.realpath(os.path.join(os.getcwd(), 'tmp')) + os.path.sep
+    return os.path.realpath(os.path.join(get_rapidtide_root(), 'tests', 'tmp')) + os.path.sep
 
 
 def get_examples_path():
