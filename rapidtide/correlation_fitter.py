@@ -30,10 +30,79 @@ import sys
 
 import rapidtide.util as tide_util
 import rapidtide.fit as tide_fit
+import rapidtide.miscmath as tide_math
+import rapidtide.correlate as tide_corr
 
-# ---------------------------------------- Global constants -------------------------------------------
-defaultbutterorder = 6
-MAXLINES = 10000000
+
+class correlator:
+    oversampfreq = 0.0
+    corrorigin = 0
+    lagmininpts = 0
+    lagmaxinpts = 0
+    ncprefilter = None
+    referencetc = None
+    usewindowfunc = True
+    detrendorder = 1
+    windowfunc = 'hamming'
+    corrweighting = 'none'
+    reftc = None
+
+    def __init__(self,
+                 Fs=0.0,
+                 corrorigin=0,
+                 lagmininpts=0,
+                 lagmaxinpts=0,
+                 ncprefilter=None,
+                 referencetc=None,
+                 usewindowfunc=True,
+                 detrendorder=1,
+                 windowfunc='hamming',
+                 corrweighting='none'):
+        self.Fs = Fs
+        self.corrorigin = corrorigin
+        self.lagmininpts = lagmininpts
+        self.lagmaxinpts = lagmaxinpts
+        self.ncprefilter = ncprefilter
+        self.referencetc = referencetc
+        self.usewindowfunc = usewindowfunc
+        self.detrendorder = detrendorder
+        self.windowfunc = windowfunc
+        self.corrweighting = corrweighting
+        if self.referencetc is not None:
+            self.setreftc(self.referencetc)
+
+    def preptc(self, thetc):
+        # prepare timecourse by filtering, normalizing, detrending, and applying a window function
+        return tide_math.corrnormalize(self.ncprefilter.apply(self.Fs, thetc),
+                                       prewindow=self.usewindowfunc,
+                                       detrendorder=self.detrendorder,
+                                       windowfunc=self.windowfunc)
+
+
+    def setreftc(self, reftc):
+        self.reftc = self.preptc(reftc)
+
+
+    def setlimits(self, corrorigin, lagmininpts, lagmaxinpts):
+        self.corrorigin = corrorigin
+        self.lagmininpts = lagmininpts
+        self.lagmaxinpts = lagmaxinpts
+
+
+    def run(self, thetc):
+        if len(thetc) != len(self.reftc):
+            print('timecourses are of different sizes - exiting')
+            sys.exit()
+
+        preppedtc = self.preptc(thetc)
+
+        # now actually do the correlation
+        thexcorr = tide_corr.fastcorrelate(preppedtc, self.reftc, usefft=True, weighting=self.corrweighting)
+
+        # find the global maximum value
+        theglobalmax = np.argmax(thexcorr)
+
+        return thexcorr[self.corrorigin - self.lagmininpts:self.corrorigin + self.lagmaxinpts], theglobalmax
 
 
 class correlation_fitter:

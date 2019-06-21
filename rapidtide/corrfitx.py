@@ -178,34 +178,8 @@ def fitcorrx(lagtcgenerator,
             initiallags=None,
             rt_floatset=np.float64,
             rt_floattype='float64'):
-    '''nprocs = optiondict['nprocs']
-    showprogressbar = optiondict['showprogressbar']
-    chunksize = optiondict['mp_chunksize']
-    lagmod = optiondict['lagmod']
-    fixdelay = optiondict['fixdelay']
-    despeckle_thresh = optiondict['despeckle_thresh']
-    widthlimit = optiondict['widthlimit']
-    lthreshval = optiondict['lthreshval']
-    bipolar = optiondict['bipolar']
-    fixdelay = optiondict['fixdelay']
-    findmaxtype = optiondict['findmaxtype']
-    lagmin = optiondict['lagmin']
-    lagmax = optiondict['lagmax']
-    absmaxsigma = optiondict['absmaxsigma']
-    debug = optiondict['debug']
-    edgebufferfrac = optiondict['edgebufferfrac']
-    uthreshval = optiondict['uthreshval']
-    debug = optiondict['debug']
-    refine = optiondict['gaussrefine']
-    bipolar = optiondict['bipolar']
-    searchfrac = optiondict['searchfrac']
-    fastgauss = optiondict['fastgauss']
-    enforcethresh = optiondict['enforcethresh']
-    lagmod = optiondict['lagmod']
-    hardlimit = optiondict['hardlimit']'''
 
     thefitter.setcorrtimeaxis(corrtimescale)
-    displayplots = False
     inputshape = np.shape(corrout)
     if initiallags is None:
         themask = None

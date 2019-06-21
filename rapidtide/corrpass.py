@@ -69,6 +69,11 @@ def onecorrelation(thetc,
 
     return thexcorr[corrorigin - lagmininpts:corrorigin + lagmaxinpts], theglobalmax
 
+def onecorrelationnew(thecorrelator,
+                   thetc):
+    return thecorrelator.run(thetc)
+
+
 
 def _procOneVoxelCorrelation(vox,
                              thetc,

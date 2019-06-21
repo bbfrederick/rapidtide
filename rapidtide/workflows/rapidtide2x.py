@@ -1917,6 +1917,16 @@ def rapidtide_main(thearguments):
 
     fft_fmri_data = None
 
+    oversampfreq = optiondict['oversampfactor'] / fmritr
+
+    # initialize the correlator
+    thecorrelator = tide_cfit.correlator(Fs=oversampfreq,
+                                         ncprefilter=theprefilter,
+                                         usewindowfunc=optiondict['usewindowfunc'],
+                                         detrendorder=optiondict['detrendorder'],
+                                         windowfunc=optiondict['windowfunc'],
+                                         corrweighting=optiondict['corrweighting'])
+
     # intitialize the correlation fitter
     thefitter = tide_cfit.correlation_fitter(lagmod=optiondict['lagmod'],
                                              lthreshval=optiondict['lthreshval'],
@@ -1943,7 +1953,6 @@ def rapidtide_main(thearguments):
                                               prewindow=optiondict['usewindowfunc'],
                                               detrendorder=optiondict['detrendorder'],
                                               windowfunc=optiondict['windowfunc'])
-        oversampfreq = optiondict['oversampfactor'] / fmritr
 
         # Step -1 - check the regressor for periodic components in the passband
         dolagmod = True
@@ -1954,7 +1963,9 @@ def rapidtide_main(thearguments):
             lagindpad = corrorigin - 2 * np.max((lagmininpts, lagmaxinpts))
             acmininpts = lagmininpts + lagindpad
             acmaxinpts = lagmaxinpts + lagindpad
-            thexcorr, dummy = tide_corrpass.onecorrelation(resampref_y,
+            thecorrelator.setreftc(referencetc)
+            thecorrelator.setlimits(corrorigin, acmininpts, acmaxinpts)
+            '''thexcorr, dummy = tide_corrpass.onecorrelation(resampref_y,
                                                            oversampfreq,
                                                            corrorigin,
                                                            acmininpts,
@@ -1964,7 +1975,8 @@ def rapidtide_main(thearguments):
                                                            usewindowfunc=optiondict['usewindowfunc'],
                                                            detrendorder=optiondict['detrendorder'],
                                                            windowfunc=optiondict['windowfunc'],
-                                                           corrweighting=optiondict['corrweighting'])
+                                                           corrweighting=optiondict['corrweighting'])'''
+            thexcorr, dummy = tide_corrpass.onecorrelationnew(thecorrelator, resampref_y)
 
             thefitter.setcorrtimeaxis(thexcorr)
             maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
@@ -2072,7 +2084,7 @@ def rapidtide_main(thearguments):
                                                         corrorigin,
                                                         lagmininpts,
                                                         lagmaxinpts,
-                                                        optiondict,
+                                                        thefitter,
                                                         rt_floatset=rt_floatset,
                                                         rt_floattype=rt_floattype
                                                         )

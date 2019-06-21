@@ -43,7 +43,7 @@ def _procOneNullCorrelationx(iteration,
                              corrorigin,
                              negbins,
                              posbins,
-                             optiondict,
+                             thefitter,
                              rt_floatset=np.float64,
                              rt_floattype='float64'):
     # make a shuffled copy of the regressors
