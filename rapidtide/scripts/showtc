@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: latin-1 -*-
 #
 #   Copyright 2016 Blaise Frederick
 #
@@ -66,10 +67,10 @@ def usage():
     print("    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)")
     print(
         "    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)")
-    print("    --colorlist=C1,C2,..     - cycle through the list of colors specified by CN")
+    print("    --colors=C1,C2,..        - cycle through the list of colors specified by CN")
     print("    --linewidth=LW           - set linewidth to LW points (default is 1)")
     print("    --fontscalefac=FAC       - scale all font sizes by FAC (default is 1.0)")
-    print("    --legendlist=L1,L2,..    - cycle through the list of legends specified by LN")
+    print("    --legends=L1,L2,..       - cycle through the list of legends specified by LN")
     print("    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen")
     print("    --saveres=DPI            - write figure to file at DPI dots per inch (default is 1000)")
     print("    --title=TITLE            - use TITLE as the overall title of the graph")
@@ -103,7 +104,7 @@ colornames = []
 outputfile = None
 thetitle = None
 legendset = False
-legendlist = []
+legends = []
 separate = False
 linky = True
 thelinewidth = [1.0]
@@ -131,7 +132,7 @@ try:
                                     "fontscalefac=",
                                     "legendloc=",
                                     "starttime=", "endtime=",
-                                    "samplerate=", "colorlist=", "linewidth=", "legendlist=", "title=",
+                                    "samplerate=", "colors=", "linewidth=", "legends=", "title=",
                                     "separatelinked", "separate", "sampletime=", "tofile=", "saveres="])
 except getopt.GetoptError as err:
     # print help information and exit:
@@ -172,10 +173,10 @@ for o, a in opts:
     elif o == '--tofile':
         outputfile = a
         print('Writing output to file', outputfile)
-    elif o == '--legendlist':
+    elif o == '--legends':
         legendset = True
         for thislegend in a.split(','):
-            legendlist.append(thislegend)
+            legends.append(thislegend)
         print('Colors used:', colornames)
     elif o == '--fontscalefac':
         fontscalefac = float(a)
@@ -206,7 +207,7 @@ for o, a in opts:
         for i in range(numlinewidths):
             thelinewidth.append(float(inwidths[i]))
         print('Linewidth set to:', thelinewidth)
-    elif o == '--colorlist':
+    elif o == '--colors':
         for thiscolor in a.split(','):
             colornames.append(thiscolor)
         print('Colors used:', colornames)
@@ -341,9 +342,9 @@ for i in range(0, numfiles):
                 linelabels.append(textfilename[i][0])
         else:
             if invecs.shape[0] > 1:
-                linelabels.append(legendlist[i % len(legendlist)] + '_column' + str(j).zfill(2))
+                linelabels.append(legends[i % len(legends)] + '_column' + str(j).zfill(2))
             else:
-                linelabels.append(legendlist[i % len(legendlist)])
+                linelabels.append(legends[i % len(legends)])
         samplerates.append(thissamplerate + 0.0)
         if debug:
             print('timecourse:', j, ', len:', len(xvecs[-1]), ', timerange:', xvecs[-1][0], xvecs[-1][-1])
@@ -361,7 +362,6 @@ overallxmin = 1e38
 for thevec in xvecs:
     overallxmax = np.max([np.max(thevec), overallxmax])
     overallxmin = np.min([np.min(thevec), overallxmin])
-#xrange = (np.min([overallxmin, theendtime]), np.max([overallxmax, thestarttime]))
 xrange = (np.max([overallxmin, thestarttime]), np.min([overallxmax, theendtime]))
 ymins = []
 ymaxs = []
@@ -474,8 +474,12 @@ for i in range(0, numvecs):
             xlabel = 'Time (s)'
     if showxax:
         ax.set_xlabel(xlabel, fontsize=thexlabelfontsize, fontweight='bold')
+    else:
+        ax.xaxis.set_visible(False)
     if showyax:
         ax.set_ylabel(ylabel, fontsize=theylabelfontsize, fontweight='bold')
+    else:
+        ax.yaxis.set_visible(False)
 
 # fig.tight_layout()
 
