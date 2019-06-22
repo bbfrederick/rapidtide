@@ -34,64 +34,63 @@ import rapidtide.corrpass as tide_corrpass
 import rapidtide.corrfitx as tide_corrfit
 
 
-# note: sourcetimecourse has been filtered, but NOT windowed
+# note: rawtimecourse has been filtered, but NOT windowed
 def _procOneNullCorrelationx(iteration,
-                             sourcetimecourse,
-                             filterfunc,
+                             rawtimecourse,
                              Fs,
-                             corrscale,
-                             corrorigin,
-                             negbins,
-                             posbins,
+                             thecorrelator,
                              thefitter,
+                             despeckle_thresh=5.0,
+                             fixdelay=False,
+                             fixeddelayvalue=0.0,
+                             permutationmethod='shuffle',
+                             disablethresholds=False,
                              rt_floatset=np.float64,
                              rt_floattype='float64'):
+
     # make a shuffled copy of the regressors
-    if optiondict['permutationmethod'] == 'shuffle':
-        permutedtc = np.random.permutation(sourcetimecourse)
+    if permutationmethod == 'shuffle':
+        permutedtc = np.random.permutation(rawtimecourse)
     else:
-        permutedtc = np.random.permutation(sourcetimecourse)
+        permutedtc = np.random.permutation(rawtimecourse)
 
     # apply the appropriate filter
-    permutedtc = filterfunc.apply(Fs, permutedtc)
+    permutedtc = thecorrelator.ncprefilter.apply(Fs, permutedtc)
 
-    normalizedsourcetc = tide_math.corrnormalize(sourcetimecourse,
-                                              prewindow=optiondict['usewindowfunc'],
-                                              detrendorder=optiondict['detrendorder'],
-                                              windowfunc=optiondict['windowfunc'])
+    normalizedsourcetc = tide_math.corrnormalize(rawtimecourse,
+                                              prewindow=thecorrelator.usewindowfunc,
+                                              detrendorder=thecorrelator.detrendorder,
+                                              windowfunc=thecorrelator.windowfunc)
 
     # crosscorrelate with original
-    thexcorr, dummy = tide_corrpass.onecorrelation(permutedtc, Fs, corrorigin, negbins, posbins,
-                                                   filterfunc,
-                                                   normalizedsourcetc,
-                                                   usewindowfunc=optiondict['usewindowfunc'],
-                                                   detrendorder=optiondict['detrendorder'],
-                                                   windowfunc=optiondict['windowfunc'],
-                                                   corrweighting=optiondict['corrweighting'])
+    thexcorr, dummy = tide_corrpass.onecorrelation(thecorrelator, permutedtc)
 
     # fit the correlation
-    thefitter.setcorrtimeaxis(corrscale[corrorigin - negbins:corrorigin + posbins])
     maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = \
         tide_corrfit.onecorrfitx(thexcorr,
-                                 thefitter,
-                                 disablethresholds=True,
-                                 despeckle_thresh=optiondict['despeckle_thresh'],
-                                 fixdelay=optiondict['fixdelay'],
-                                 fixeddelayvalue=optiondict['fixeddelayvalue'],
-                                 rt_floatset=rt_floatset,
-                                 rt_floattype=rt_floattype)
+                thefitter,
+                disablethresholds=disablethresholds,
+                despeckle_thresh=despeckle_thresh,
+                fixdelay=fixdelay,
+                fixeddelayvalue=fixeddelayvalue,
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype)
 
     return maxval
 
 
-def getNullDistributionDatax(sourcetimecourse,
-                             corrscale,
-                             filterfunc,
+def getNullDistributionDatax(rawtimecourse,
                              Fs,
-                             corrorigin,
-                             negbins,
-                             posbins,
+                             thecorrelator,
                              thefitter,
+                             despeckle_thresh=5.0,
+                             fixdelay=False,
+                             fixeddelayvalue=0.0,
+                             numestreps=0,
+                             nprocs=1,
+                             showprogressbar=True,
+                             chunksize=1000,
+                             permutationmethod='shuffle',
                              rt_floatset=np.float64,
                              rt_floattype='float64'):
     r"""Calculate a set of null correlations to determine the distribution of correlation values.  This can
@@ -99,9 +98,9 @@ def getNullDistributionDatax(sourcetimecourse,
 
     Parameters
     ----------
-    sourcetimecourse : 1D numpy array
+    rawtimecourse : 1D numpy array
         The test regressor.  This should be filtered to the desired bandwidth, but NOT windowed.
-        :param sourcetimecourse:
+        :param rawtimecourse:
 
     corrscale: 1D numpy array
         The time axis of the cross correlation function.
@@ -110,7 +109,7 @@ def getNullDistributionDatax(sourcetimecourse,
         This is a preconfigured noncausalfilter function which is used to filter data to the desired bandwidth
 
     Fs: float
-        The sample frequency of sourcetimecourse, in Hz
+        The sample frequency of rawtimecourse, in Hz
 
     corrorigin: int
         The bin number in the correlation timescale corresponding to 0.0 seconds delay
@@ -121,13 +120,10 @@ def getNullDistributionDatax(sourcetimecourse,
     posbins: int
         The upper edge of the search range for correlation peaks, in number of bins above corrorigin
 
-    optiondict: dict
-        The rapidtide option dictionary containing a number of additional parameters
-
     """
 
-    inputshape = np.asarray([optiondict['numestreps']])
-    if optiondict['nprocs'] > 1:
+    inputshape = np.asarray([numestreps])
+    if nprocs > 1:
         # define the consumer function here so it inherits most of the arguments
         def nullCorrelation_consumer(inQ, outQ):
             while True:
@@ -140,10 +136,17 @@ def getNullDistributionDatax(sourcetimecourse,
                         break
 
                     # process and send the data
-                    outQ.put(_procOneNullCorrelationx(val, sourcetimecourse, filterfunc, Fs, corrscale, corrorigin,
-                                                     negbins, posbins, thefitter,
-                                                     rt_floatset=rt_floatset,
-                                                     rt_floattype=rt_floattype))
+                    outQ.put(_procOneNullCorrelationx(val,
+                                                      rawtimecourse,
+                                                      Fs,
+                                                      thecorrelator,
+                                                      thefitter,
+                                                      despeckle_thresh=despeckle_thresh,
+                                                      fixdelay=fixdelay,
+                                                      fixeddelayvalue=fixeddelayvalue,
+                                                      permutationmethod=permutationmethod,
+                                                      rt_floatset=rt_floatset,
+                                                      rt_floattype=rt_floattype))
 
                 except Exception as e:
                     print("error!", e)
@@ -151,29 +154,36 @@ def getNullDistributionDatax(sourcetimecourse,
 
         data_out = tide_multiproc.run_multiproc(nullCorrelation_consumer,
                                                 inputshape, None,
-                                                nprocs=optiondict['nprocs'],
-                                                showprogressbar=True,
-                                                chunksize=optiondict['mp_chunksize'])
+                                                nprocs=nprocs,
+                                                showprogressbar=showprogressbar,
+                                                chunksize=chunksize)
 
         # unpack the data
         corrlist = np.asarray(data_out, dtype=rt_floattype)
     else:
-        corrlist = np.zeros((optiondict['numestreps']), dtype=rt_floattype)
+        corrlist = np.zeros((numestreps), dtype=rt_floattype)
 
-        for i in range(0, optiondict['numestreps']):
+        for i in range(0, numestreps):
             # make a shuffled copy of the regressors
-            permutedtc = np.random.permutation(sourcetimecourse)
+            permutedtc = np.random.permutation(rawtimecourse)
 
             # crosscorrelate with original, fit, and return the maximum value, and add it to the list
-            thexcorr = _procOneNullCorrelationx(i, sourcetimecourse, filterfunc, Fs, corrscale, corrorigin,
-                                               negbins, posbins, thefitter,
-                                               rt_floatset=rt_floatset,
-                                               rt_floattype=rt_floattype)
+            thexcorr = _procOneNullCorrelationx(i,
+                                                rawtimecourse,
+                                                Fs,
+                                                thecorrelator,
+                                                thefitter,
+                                                despeckle_thresh=despeckle_thresh,
+                                                fixdelay=fixdelay,
+                                                fixeddelayvalue=fixeddelayvalue,
+                                                permutationmethod=permutationmethod,
+                                                rt_floatset=rt_floatset,
+                                                rt_floattype=rt_floattype)
             corrlist[i] = thexcorr
 
             # progress
-            if optiondict['showprogressbar']:
-                tide_util.progressbar(i + 1, optiondict['numestreps'], label='Percent complete')
+            if showprogressbar:
+                tide_util.progressbar(i + 1, numestreps, label='Percent complete')
 
         # jump to line after progress bar
         print()
