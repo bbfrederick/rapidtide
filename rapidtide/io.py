@@ -719,12 +719,15 @@ def parsefilespec(filespec):
     inputlist = filespec.split(':')
     thefilename = inputlist[0]
     if len(inputlist) > 1:
-        return thefilename, colspectolist(inputlist[1])
+        return thefilename, inputlist[1]
     else:
         return thefilename, None
 
 
 def colspectolist(colspec, debug=False):
+    if colspec is None:
+        print('COLSPECTOLIST: no range specification - exiting')
+        return None
     collist = []
     theranges = colspec.split(',')
     def safeint(s):
@@ -745,10 +748,10 @@ def colspectolist(colspec, debug=False):
             end = safeint(theendpoints[1])
             if start < 0:
                 print('COLSPECTOLIST:',start, 'must be greater than zero')
-                return(None)
+                return None
             if end < start:
                 print('COLSPECTOLIST:',end, 'must be greater than or equal to', start)
-                return(None)
+                return None
             for i in range(start, end + 1):
                 collist.append(i)
         else:
