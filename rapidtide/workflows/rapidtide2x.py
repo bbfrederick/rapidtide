@@ -117,13 +117,6 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
     return maskvector
 
 
-def prewhiten(indata, arcoffs):
-    pwdata = 1.0 * indata
-    for i in range(0, len(arcoffs)):
-        pwdata[(i + 1):] = pwdata[(i + 1):] + arcoffs[i] * indata[:(-1 - i)]
-    return pwdata
-
-
 def numpy2shared(inarray, thetype):
     thesize = inarray.size
     theshape = inarray.shape
@@ -224,7 +217,6 @@ def usage():
         "[-T]",
         "[-p]",
         "[-P]",
-        "[-A ORDER]",
         "[-B]",
         "[-h HISTLEN]",
         "[-i INTERPTYPE]",
@@ -475,9 +467,6 @@ def usage():
     print("                                     in analysis.  If there are 2 or more columns, each line of MASKFILE")
     print("                                     contains the time (first column) and duration (second column) of an")
     print("                                     epoch to include.)")
-    print("    -p                             - Prewhiten and refit data")
-    print("    -P                             - Save prewhitened data (turns prewhitening on)")
-    print("    -A, --AR                       - Set AR model order to ORDER (default is 1)")
     return ()
 
 
@@ -548,8 +537,6 @@ def rapidtide_main(thearguments):
     optiondict['preservefiltering'] = False
     optiondict[
         'glmsourcefile'] = None  # name of the file from which to regress delayed regressors (if not the original data)
-    optiondict['doprewhiten'] = False  # prewhiten the data (I have no idea if this works)
-    optiondict['armodelorder'] = 1  # AR model order for prewhitening the data (I have no idea if this works)
     optiondict['dodeconv'] = False  # do Wiener deconvolution to find voxel transfer function
     optiondict['motionfilename'] = None  # by default do no motion regression
     optiondict['mot_pos'] = False  # do not do position
@@ -568,7 +555,6 @@ def rapidtide_main(thearguments):
     optiondict['savelagregressors'] = True
     optiondict['savedatatoremove'] = True
     optiondict['saveglmfiltered'] = True
-    optiondict['saveprewhiten'] = False
     optiondict['savecorrtimes'] = False
     optiondict['saveoptionsasjson'] = False
 
@@ -667,7 +653,7 @@ def rapidtide_main(thearguments):
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(thearguments[optparsestart:], 'abcdf:gh:i:mo:ps:r:t:vBCF:ILMN:O:PRSTVZ:', ['help',
+        opts, args = getopt.getopt(thearguments[optparsestart:], 'abcdf:gh:i:mo:s:r:t:vBCF:ILMN:O:RSTVZ:', ['help',
                                                                                                           'nowindow',
                                                                                                           'windowfunc=',
                                                                                                           'datatstep=',
@@ -745,8 +731,7 @@ def rapidtide_main(thearguments):
                                                                                                           'wiener',
                                                                                                           'weiner',
                                                                                                           'checkpoint',
-                                                                                                          'maxfittype=',
-                                                                                                          'AR='])
+                                                                                                          'maxfittype='])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like 'option -a not recognized'
@@ -942,13 +927,6 @@ def rapidtide_main(thearguments):
                 [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqlimits()[2])])
             print('prefiltering to ', optiondict['arb_lower'], optiondict['arb_upper'],
                   '(stops at ', optiondict['arb_lowerstop'], optiondict['arb_upperstop'], ')')
-        elif o == '-p':
-            optiondict['doprewhiten'] = True
-            print('prewhitening data')
-        elif o == '-P':
-            optiondict['doprewhiten'] = True
-            optiondict['saveprewhiten'] = True
-            print('saving prewhitened data')
         elif o == '-d':
             optiondict['displayplots'] = True
             print('displaying all plots')
@@ -1059,13 +1037,6 @@ def rapidtide_main(thearguments):
         elif o == '-c':
             optiondict['isgrayordinate'] = True
             print('Input fMRI file is a converted CIFTI file')
-        elif o == '--AR':
-            optiondict['armodelorder'] = int(a)
-            if optiondict['armodelorder'] < 1:
-                print('AR model order must be an integer greater than 0')
-                sys.exit()
-            linkchar = '='
-            print('AR model order set to ', optiondict['armodelorder'])
         elif o == '-O':
             optiondict['oversampfactor'] = int(a)
             if 0 <= optiondict['oversampfactor'] < 1:
@@ -1829,18 +1800,13 @@ def rapidtide_main(thearguments):
     tide_util.logmem('before main array allocation', file=memfile)
     if optiondict['textio']:
         nativespaceshape = xsize
-        nativearmodelshape = (xsize, optiondict['armodelorder'])
     else:
         if fileiscifti:
             nativespaceshape = (1, 1, 1, 1, numspatiallocs)
-            nativearmodelshape = (1, 1, 1, optiondict['armodelorder'], numspatiallocs)
         else:
             nativespaceshape = (xsize, ysize, numslices)
-            nativearmodelshape = (xsize, ysize, numslices, optiondict['armodelorder'])
     internalspaceshape = numspatiallocs
-    internalarmodelshape = (numspatiallocs, optiondict['armodelorder'])
     internalvalidspaceshape = numvalidspatiallocs
-    internalvalidarmodelshape = (numvalidspatiallocs, optiondict['armodelorder'])
     meanval = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     lagtimes = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     lagstrengths = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
@@ -1849,7 +1815,6 @@ def rapidtide_main(thearguments):
     failimage = np.zeros(internalvalidspaceshape, dtype='uint16')
     R2 = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
-    outarmodelarray = np.zeros(internalarmodelshape, dtype=rt_floattype)
     tide_util.logmem('after main array allocation', file=memfile)
 
     corroutlen = np.shape(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])[0]
@@ -1965,18 +1930,7 @@ def rapidtide_main(thearguments):
             acmaxinpts = lagmaxinpts + lagindpad
             thecorrelator.setreftc(referencetc)
             thecorrelator.setlimits(corrorigin, acmininpts, acmaxinpts)
-            '''thexcorr, dummy = tide_corrpass.onecorrelation(resampref_y,
-                                                           oversampfreq,
-                                                           corrorigin,
-                                                           acmininpts,
-                                                           acmaxinpts,
-                                                           theprefilter,
-                                                           referencetc,
-                                                           usewindowfunc=optiondict['usewindowfunc'],
-                                                           detrendorder=optiondict['detrendorder'],
-                                                           windowfunc=optiondict['windowfunc'],
-                                                           corrweighting=optiondict['corrweighting'])'''
-            thexcorr, dummy = tide_corrpass.onecorrelationnew(thecorrelator, resampref_y)
+            thexcorr, dummy = tide_corrpass.onecorrelation(thecorrelator, resampref_y)
 
             thefitter.setcorrtimeaxis(thexcorr)
             maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
@@ -2077,17 +2031,20 @@ def rapidtide_main(thearguments):
                     tide_io.writedicttojson(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.json')
                 else:
                     tide_io.writedict(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.txt')
+            thecorrelator.setlimits(corrorigin, lagmininpts, lagmininpts)
             corrdistdata = getNullDistributionData_func(cleaned_resampref_y,
-                                                        corrscale,
-                                                        theprefilter,
-                                                        oversampfreq,
-                                                        corrorigin,
-                                                        lagmininpts,
-                                                        lagmaxinpts,
-                                                        thefitter,
-                                                        rt_floatset=rt_floatset,
-                                                        rt_floattype=rt_floattype
-                                                        )
+                                                         oversampfreq,
+                                                         thecorrelator,
+                                                         thefitter,
+                                                         numestreps=optiondict['numestreps'],
+                                                         nprocs=optiondict['nprocs'],
+                                                         showprogressbar=optiondict['showprogressbar'],
+                                                         chunksize=optiondict['mp_chunksize'],
+                                                         permutationmethod=optiondict['permutationmethod'],
+                                                         fixdelay=optiondict['fixdelay'],
+                                                         fixeddelayvalue=optiondict['fixeddelayvalue'],
+                                                         rt_floatset=np.float64,
+                                                         rt_floattype='float64')
             tide_io.writenpvecs(corrdistdata, outputname + '_corrdistdata_pass' + str(thepass) + '.txt')
 
             # calculate percentiles for the crosscorrelation from the distribution data
@@ -2128,7 +2085,8 @@ def rapidtide_main(thearguments):
         else:
             tide_util.logmem('before correlationpass', file=memfile)
             correlationpass_func = tide_corrpass.correlationpass
-        voxelsprocessed_cp, theglobalmaxlist = correlationpass_func(fmri_data_valid[:,
+
+        '''voxelsprocessed_cp, theglobalmaxlist = correlationpass_func(fmri_data_valid[:,
                                                                     optiondict['addedskip']:],
                                                                     fft_fmri_data,
                                                                     cleaned_referencetc,
@@ -2144,7 +2102,25 @@ def rapidtide_main(thearguments):
                                                                     optiondict,
                                                                     rt_floatset=rt_floatset,
                                                                     rt_floattype=rt_floattype
-                                                                    )
+                                                                    )'''
+        voxelsprocessed_cp, theglobalmaxlist = correlationpass_func(fmri_data_valid[:,optiondict['addedskip']:],
+                                                               cleaned_referencetc,
+                                                               thecorrelator,
+                                                               initial_fmri_x,
+                                                               os_fmri_x,
+                                                               corrorigin,
+                                                               lagmininpts,
+                                                               lagmaxinpts,
+                                                               corrout,
+                                                               meanval,
+                                                               nprocs=optiondict['nprocs'],
+                                                               oversampfactor=optiondict['oversampfactor'],
+                                                               interptype=optiondict['interptype'],
+                                                               showprogressbar=optiondict['showprogressbar'],
+                                                               chunksize=optiondict['mp_chunksize'],
+                                                               rt_floatset=rt_floatset,
+                                                               rt_floattype=rt_floattype)
+
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
@@ -2357,12 +2333,9 @@ def rapidtide_main(thearguments):
         timings.append(['Wiener deconvolution end', time.time(), voxelsprocessed_wiener, 'voxels'])
 
     # Post refinement step 1 - GLM fitting to remove moving signal
-    if optiondict['doglmfilt'] or optiondict['doprewhiten']:
+    if optiondict['doglmfilt']:
         timings.append(['GLM filtering start', time.time(), None, None])
-        if optiondict['doglmfilt']:
-            print('\n\nGLM filtering')
-        if optiondict['doprewhiten']:
-            print('\n\nPrewhitening')
+        print('\n\nGLM filtering')
         reportstep = 1000
         if optiondict['dogaussianfilter'] or (optiondict['glmsourcefile'] is not None):
             if optiondict['glmsourcefile'] is not None:
@@ -2406,9 +2379,6 @@ def rapidtide_main(thearguments):
         else:
             datatoremove = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
             filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-        if optiondict['doprewhiten']:
-            prewhiteneddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-            arcoffs = np.zeros(internalvalidarmodelshape, dtype=rt_outfloattype)
 
         if optiondict['memprofile']:
             memcheckpoint('about to start glm noise removal...')
@@ -2449,26 +2419,7 @@ def rapidtide_main(thearguments):
             memcheckpoint('...done')
         else:
             tide_util.logmem('after glm filter', file=memfile)
-        if optiondict['doprewhiten']:
-            arcoff_ref = pacf_yw(resampref_y, nlags=optiondict['armodelorder'])[1:]
-            print('\nAR coefficient(s) for reference waveform: ', arcoff_ref)
-            resampref_y_pw = rt_floatset(prewhiten(resampref_y, arcoff_ref))
-        else:
-            resampref_y_pw = rt_floatset(resampref_y)
-        if optiondict['usewindowfunc']:
-            referencetc_pw = tide_math.stdnormalize(
-                tide_filt.windowfunction(np.shape(resampref_y_pw)[0], type=optiondict['windowfunc']) * tide_fit.detrend(
-                    tide_math.stdnormalize(resampref_y_pw), order=optiondict['detrendorder'])) / \
-                             np.shape(resampref_y_pw)[0]
-        else:
-            referencetc_pw = tide_math.stdnormalize(tide_fit.detrend(tide_math.stdnormalize(resampref_y_pw),
-                                                                     order=optiondict['detrendorder'])) / np.shape(resampref_y_pw)[0]
         print('')
-        if optiondict['displayplots']:
-            fig = figure()
-            ax = fig.add_subplot(111)
-            ax.set_title('initial and prewhitened reference')
-            plot(os_fmri_x, referencetc, os_fmri_x, referencetc_pw)
     else:
         # get the original data to calculate the mean
         print('rereading', fmrifilename, ' for GLM filter, please wait')
@@ -2479,28 +2430,8 @@ def rapidtide_main(thearguments):
         fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
         meanvalue = np.mean(fmri_data, axis=1)
 
-    # Post refinement step 2 - prewhitening
-    if optiondict['doprewhiten']:
-        print('Step 3 - reprocessing prewhitened data')
-        timings.append(['Step 3 start', time.time(), None, None])
-        dummy, dummy = tide_corrpass.correlationpass(prewhiteneddata,
-                                                     fft_fmri_data,
-                                                     referencetc_pw,
-                                                     initial_fmri_x,
-                                                     os_fmri_x,
-                                                     fmritr,
-                                                     corrorigin,
-                                                     lagmininpts,
-                                                     lagmaxinpts,
-                                                     corrout,
-                                                     meanval,
-                                                     theprefilter,
-                                                     optiondict,
-                                                     rt_floatset = rt_floatset,
-                                                     rt_floattype = rt_floattype
-                                                     )
 
-    # Post refinement step 3 - make and save interesting histograms
+    # Post refinement step 2 - make and save interesting histograms
     timings.append(['Start saving histograms', time.time(), None, None])
     tide_stats.makeandsavehistogram(lagtimes[np.where(lagmask > 0)], optiondict['histlen'], 0, outputname + '_laghist',
                                     displaytitle='lagtime histogram', displayplots=optiondict['displayplots'],
@@ -2518,7 +2449,7 @@ def rapidtide_main(thearguments):
                                         displayplots=optiondict['displayplots'])
     timings.append(['Finished saving histograms', time.time(), None, None])
 
-    # Post refinement step 4 - save out all of the important arrays to nifti files
+    # Post refinement step 3 - save out all of the important arrays to nifti files
     # write out the options used
     if optiondict['saveoptionsasjson']:
         tide_io.writedicttojson(optiondict, outputname + '_options.json')
@@ -2660,23 +2591,6 @@ def rapidtide_main(thearguments):
                             outputname + '_corrout' + outsuffix4d)
     del corrout
 
-    if optiondict['saveprewhiten']:
-        if not optiondict['textio']:
-            theheader = nim.header
-            theheader['toffset'] = 0.0
-            if fileiscifti:
-                theheader['intent_code'] = 3002
-            else:
-                theheader['dim'][4] = optiondict['armodelorder']
-        outarmodelarray[validvoxels, :] = arcoffs[:, :]
-        if optiondict['textio']:
-            tide_io.writenpvecs(outarmodelarray.reshape(nativearmodelshape),
-                                outputname + '_arN' + outsuffix4d + '.txt')
-        else:
-            tide_io.savetonifti(outarmodelarray.reshape(nativearmodelshape), theheader,
-                                outputname + '_arN' + outsuffix4d)
-        del arcoffs
-
     if not optiondict['textio']:
         theheader = nim_hdr
         theheader['pixdim'][4] = fmritr
@@ -2725,16 +2639,6 @@ def rapidtide_main(thearguments):
             tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader,
                                 outputname + '_filtereddata' + outsuffix4d)
         del filtereddata
-
-    if optiondict['saveprewhiten']:
-        outfmriarray[validvoxels, :] = prewhiteneddata[:, :]
-        if optiondict['textio']:
-            tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
-                                outputname + '_prewhiteneddata' + outsuffix4d + '.txt')
-        else:
-            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader,
-                                outputname + '_prewhiteneddata' + outsuffix4d)
-        del prewhiteneddata
 
     timings.append(['Finished saving maps', time.time(), None, None])
     memfile.close()
