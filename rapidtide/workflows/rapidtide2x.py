@@ -199,6 +199,14 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     return tide_math.stdnormalize(globalmean), themask
 
 
+def addmemprofiling(thefunc, memprofile, memfile, themessage):
+    if memprofile:
+        return profile(thefunc, precision=2)
+    else:
+        tide_util.logmem(themessage, file=memfile)
+        return thefunc
+
+
 def usage():
     print("usage: ", os.path.basename(sys.argv[0]), " datafilename outputname ")
     print(' '.join([
@@ -1573,11 +1581,10 @@ def rapidtide_main(thearguments):
     if optiondict['sharedmem']:
         print('moving fmri data to shared memory')
         timings.append(['Start moving fmri_data to shared memory', time.time(), None, None])
-        if optiondict['memprofile']:
-            numpy2shared_func = profile(numpy2shared, precision=2)
-        else:
-            tide_util.logmem('before fmri data move', file=memfile)
-            numpy2shared_func = numpy2shared
+        numpy2shared_func = addmemprofiling(numpy2shared,
+                                            optiondict['memprofile'],
+                                            memfile,
+                                            'before fmri data move')
         fmri_data_valid, fmri_data_valid_shared, fmri_data_valid_shared_shape = numpy2shared_func(fmri_data_valid,
                                                                                                   rt_floatset)
         timings.append(['End moving fmri_data to shared memory', time.time(), None, None])
@@ -2017,11 +2024,10 @@ def rapidtide_main(thearguments):
             if optiondict['verbose']:
                 print('calling getNullDistributionData with args:', oversampfreq, fmritr, corrorigin, lagmininpts,
                       lagmaxinpts)
-            if optiondict['memprofile']:
-                getNullDistributionData_func = profile(tide_nullcorr.getNullDistributionDatax, precision=2)
-            else:
-                tide_util.logmem('before getnulldistristributiondata', file=memfile)
-                getNullDistributionData_func = tide_nullcorr.getNullDistributionDatax
+            getNullDistributionData_func = addmemprofiling(tide_nullcorr.getNullDistributionDatax,
+                                                           optiondict['memprofile'],
+                                                           memfile,
+                                                           'before getnulldistristributiondata')
             if optiondict['checkpoint']:
                 tide_io.writenpvecs(cleaned_referencetc,
                                     outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
@@ -2085,11 +2091,10 @@ def rapidtide_main(thearguments):
         # Step 1 - Correlation step
         print('\n\nCorrelation calculation, pass ' + str(thepass))
         timings.append(['Correlation calculation start, pass ' + str(thepass), time.time(), None, None])
-        if optiondict['memprofile']:
-            correlationpass_func = profile(tide_corrpass.correlationpass, precision=2)
-        else:
-            tide_util.logmem('before correlationpass', file=memfile)
-            correlationpass_func = tide_corrpass.correlationpass
+        correlationpass_func = addmemprofiling(tide_corrpass.correlationpass,
+                                               optiondict['memprofile'],
+                                               memfile,
+                                               'before correlationpass')
 
         thecorrelator.setlimits(corrorigin, lagmininpts, lagmaxinpts)
         voxelsprocessed_cp, theglobalmaxlist = correlationpass_func(fmri_data_valid[:,optiondict['addedskip']:],
@@ -2132,12 +2137,10 @@ def rapidtide_main(thearguments):
         # Step 2 - correlation fitting and time lag estimation
         print('\n\nTime lag estimation pass ' + str(thepass))
         timings.append(['Time lag estimation start, pass ' + str(thepass), time.time(), None, None])
-
-        if optiondict['memprofile']:
-            fitcorr_func = profile(tide_corrfit.fitcorrx, precision=2)
-        else:
-            tide_util.logmem('before fitcorr', file=memfile)
-            fitcorr_func = tide_corrfit.fitcorrx
+        fitcorr_func = addmemprofiling(tide_corrfit.fitcorrx,
+                                       optiondict['memprofile'],
+                                       memfile,
+                                       'before fitcorr')
         thefitter.setcorrtimeaxis(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
         voxelsprocessed_fc = fitcorr_func(genlagtc,
                                           initial_fmri_x,
@@ -2228,11 +2231,10 @@ def rapidtide_main(thearguments):
                 print('offset time set to ', optiondict['offsettime'], ', total is ', optiondict['offsettime_total'])
 
             # regenerate regressor for next pass
-            if optiondict['memprofile']:
-                refineregressor_func = profile(tide_refine.refineregressor, precision=2)
-            else:
-                tide_util.logmem('before refineregressor', file=memfile)
-                refineregressor_func = tide_refine.refineregressor
+            refineregressor_func = addmemprofiling(tide_refine.refineregressor,
+                                                   optiondict['memprofile'],
+                                                   memfile,
+                                                   'before refineregressor')
             voxelsprocessed_rr, outputdata, refinemask = refineregressor_func(
                 fmri_data_valid[:, :],
                 fmritr,
@@ -2304,11 +2306,10 @@ def rapidtide_main(thearguments):
         wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         wpeak = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
 
-        if optiondict['memprofile']:
-            wienerpass_func = profile(tide_wiener.wienerpass, precision=2)
-        else:
-            tide_util.logmem('before wienerpass', file=memfile)
-            wienerpass_func = tide_wiener.wienerpass
+        wienerpass_func = addmemprofiling(tide_wiener.wienerpass,
+                                          optiondict['memprofile'],
+                                          memfile,
+                                          'before wienerpass')
         voxelsprocessed_wiener = wienerpass_func(numspatiallocs,
                                                  reportstep,
                                                  fmri_data_valid,
@@ -2347,11 +2348,10 @@ def rapidtide_main(thearguments):
             if optiondict['sharedmem']:
                 print('moving fmri data to shared memory')
                 timings.append(['Start moving fmri_data to shared memory', time.time(), None, None])
-                if optiondict['memprofile']:
-                    numpy2shared_func = profile(numpy2shared, precision=2)
-                else:
-                    tide_util.logmem('before movetoshared (glm)', file=memfile)
-                    numpy2shared_func = numpy2shared
+                numpy2shared_func = addmemprofiling(numpy2shared,
+                                                    optiondict['memprofile'],
+                                                    memfile,
+                                                    'before movetoshared (glm)')
                 fmri_data_valid, fmri_data_valid_shared, fmri_data_valid_shared_shape = numpy2shared_func(
                     fmri_data_valid, rt_floatset)
                 timings.append(['End moving fmri_data to shared memory', time.time(), None, None])
@@ -2378,11 +2378,10 @@ def rapidtide_main(thearguments):
         if optiondict['preservefiltering']:
             for i in range(len(validvoxels)):
                 fmri_data_valid[i] = theprefilter.apply(optiondict['fmrifreq'], fmri_data_valid[i])
-        if optiondict['memprofile']:
-            glmpass_func = profile(tide_glmpass.glmpass, precision=2)
-        else:
-            tide_util.logmem('before glmpass', file=memfile)
-            glmpass_func = tide_glmpass.glmpass
+        glmpass_func = addmemprofiling(tide_glmpass.glmpass,
+                                       optiondict['memprofile'],
+                                       memfile,
+                                       'before glmpass')
         voxelsprocessed_glm = glmpass_func(numvalidspatiallocs,
                                            fmri_data_valid,
                                            threshval,
