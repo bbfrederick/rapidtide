@@ -265,7 +265,11 @@ class correlation_fitter:
             print("Correlation time axis is not defined - exiting")
             sys.exit()
         if len(self.corrtimeaxis) != len(corrfunc):
-            print("Correlation time axis and values do not match in length - exiting")
+            print('Correlation time axis and values do not match in length (',
+                   len(self.corrtimeaxis),
+                  '!=',
+                  len(corrfunc),
+                  '- exiting')
             sys.exit()
         # set initial parameters
         # absmaxsigma is in seconds
