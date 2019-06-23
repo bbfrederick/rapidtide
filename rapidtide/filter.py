@@ -1405,6 +1405,16 @@ class noncausalfilter:
             sys.exit()
 
 
+# --------------------------- FFT helper functions ---------------------------------------------
+def polarfft(inputdata):
+    complexxform = fftpack.fft(inputdata)
+    return np.abs(complexxform), np.angle(complexxform)
+
+
+def ifftfrompolar(r, theta):
+    complexxform = r * exp( 1j * theta)
+    return fftpack.ifft(complexxform).real
+
 # --------------------------- Window functions -------------------------------------------------
 BHwindows = {}
 
@@ -1542,123 +1552,3 @@ def windowfunction(length, type='hamming', debug=False):
     else:
         print('illegal window function')
         sys.exit()
-
-
-"""
-#### taken from filtfilt from scipy.org Cookbook http://www.scipy.org/Cookbook/FiltFilt
-def lfilter_zi(b, a):
-    # compute the zi state from the filter parameters. see [Gust96].
-
-    # Based on:
-    # [Gust96] Fredrik Gustafsson, Determining the initial states in forward-backward
-    # filtering, IEEE Transactions on Signal Processing, pp. 988--992, April 1996,
-    # Volume 44, Issue 4
-
-    n = max(len(a), len(b))
-
-    zin = (np.eye(n - 1) - np.hstack((-a[1:n, np.newaxis],
-                                      np.vstack((np.eye(n - 2), np.zeros(n - 2, dtype='float64'))))))
-
-    zid = b[1:n] - a[1:n] * b[0]
-
-    zi_matrix = np.linalg.inv(zin) * (np.matrix(zid).transpose())
-    zi_return = []
-
-    # convert the result into a regular array (not a matrix)
-    for i in range(len(zi_matrix)):
-        zi_return.append(np.float64(zi_matrix[i][0]))
-
-    return np.array(zi_return)
-
-
-#### adapted from filtfilt from scipy.org Cookbook http://www.scipy.org/Cookbook/FiltFilt
-def fastfiltfiltinit(b, a, x):
-    # For now only accepting 1d arrays
-    ntaps = max(len(a), len(b))
-    edge = ntaps * 10
-
-    if x.ndim != 1:
-        raise ValueError("filtfilt is only accepting 1 dimension arrays.")
-
-    # x must be bigger than edge
-    if x.size < edge:
-        raise ValueError("Input vector needs to be bigger than 3 * max(len(a),len(b).")
-
-    if len(a) < ntaps:
-        a = np.r_[a, np.zeros(len(b) - len(a), dtype='float64')]
-
-    if len(b) < ntaps:
-        b = np.r_[b, np.zeros(len(a) - len(b), dtype='float64')]
-
-    zi = signal.lfilter_zi(b, a)
-
-    return b, a, zi, edge
-
-
-#### adapted from filtfilt from scipy.org Cookbook http://www.scipy.org/Cookbook/FiltFilt
-def fastfiltfilt(b, a, zi, edge, x):
-    # Grow the signal to have edges for stabilizing
-    # the filter with inverted replicas of the signal
-    s = np.r_[2 * x[0] - x[edge:1:-1], x, 2 * x[-1] - x[-1:-edge:-1]]
-    # in the case of one go we only need one of the extrems
-    # both are needed for filtfilt
-
-    (y, zf) = signal.lfilter(b, a, s, -1, zi * s[0])
-
-    (y, zf) = signal.lfilter(b, a, np.flipud(y), -1, zi * y[-1])
-
-    return np.flipud(y[edge - 1:-edge + 1])
-
-
-def doprecalcfiltfilt(b, a, inputdata):
-    return signal.filtfilt(b, a, inputdata).real
-
-
-def dolpfastfiltfiltinit(Fs, cutofffreq, inputdata, order):
-    [b, a] = signal.butter(order, cutofffreq / Fs)
-    return fastfiltfiltinit(b, a, inputdata)
-
-
-def dohpfastfiltfiltinit(Fs, cutofffreq, inputdata, order):
-    [b, a] = signal.butter(order, cutofffreq / Fs, 'highpass')
-    return fastfiltfiltinit(b, a, inputdata)
-
-
-def dobpfastfiltfiltinit(Fs, cutofffreq_low, cutofffreq_high, inputdata, order):
-    [b, a] = signal.butter(order, [cutofffreq_low / Fs, cutofffreq_high / Fs], 'bandpass')
-    return fastfiltfiltinit(b, a, inputdata)
-
-def specsplit(Fs, inputdata, bandwidth, usebutterworth=False):
-    lowestfreq = Fs / (2.0 * np.shape(inputdata)[0])
-    highestfreq = Fs / 2.0
-    if lowestfreq < 0.01:
-        lowestfreq = 0.01
-    if highestfreq > 5.0:
-        highestfreq = 5.00
-    freqfac = highestfreq / lowestfreq
-    print("spectral range=", lowestfreq, " to ", highestfreq, ", factor of ", freqfac)
-    lowerlim = lowestfreq
-    upperlim = lowerlim * bandwidth
-    numbands = 1
-    while upperlim < highestfreq:
-        lowerlim = lowerlim * bandwidth
-        upperlim = upperlim * bandwidth
-        numbands += 1
-    print("dividing into ", numbands, " bands")
-    lowerlim = lowestfreq
-    upperlim = lowerlim * bandwidth
-    alldata = np.zeros((np.shape(inputdata), numbands), dtype='float64')
-    bandcenters = np.zeros(numbands, dtype='float')
-    print(alldata.shape)
-    for theband in range(0, numbands):
-        print("filtering from ", lowerlim, " to ", upperlim)
-        if usebutterworth:
-            alldata[:, theband] = dobpfiltfilt(Fs, lowerlim, upperlim, inputdata, 2)
-        else:
-            alldata[:, theband] = dobpfftfilt(Fs, lowerlim, upperlim, inputdata)
-        bandcenters[theband] = np.sqrt(upperlim * lowerlim)
-        lowerlim = lowerlim * bandwidth
-        upperlim = upperlim * bandwidth
-    return bandcenters, lowestfreq, upperlim, alldata
-
-"""
