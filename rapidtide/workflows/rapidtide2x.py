@@ -1936,10 +1936,9 @@ def rapidtide_main(thearguments):
             thecorrelator.setreftc(referencetc)
             thecorrelator.setlimits(corrorigin, acmininpts, acmaxinpts)
             thexcorr, dummy = tide_corrpass.onecorrelation(thecorrelator, resampref_y)
-
-            thefitter.setcorrtimeaxis(thexcorr)
+            thefitter.setcorrtimeaxis(corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts])
             maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
-                tide_corrfit.onecorrfitx(corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts],
+                tide_corrfit.onecorrfitx(thexcorr,
                                          thefitter,
                                          despeckle_thresh=optiondict['despeckle_thresh'],
                                          lthreshval=optiondict['lthreshval'],
@@ -2036,7 +2035,8 @@ def rapidtide_main(thearguments):
                     tide_io.writedicttojson(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.json')
                 else:
                     tide_io.writedict(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.txt')
-            thecorrelator.setlimits(corrorigin, lagmininpts, lagmininpts)
+            thecorrelator.setlimits(corrorigin, lagmininpts, lagmaxinpts)
+            thefitter.setcorrtimeaxis(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
             corrdistdata = getNullDistributionData_func(cleaned_resampref_y,
                                                          oversampfreq,
                                                          thecorrelator,
@@ -2091,23 +2091,7 @@ def rapidtide_main(thearguments):
             tide_util.logmem('before correlationpass', file=memfile)
             correlationpass_func = tide_corrpass.correlationpass
 
-        '''voxelsprocessed_cp, theglobalmaxlist = correlationpass_func(fmri_data_valid[:,
-                                                                    optiondict['addedskip']:],
-                                                                    fft_fmri_data,
-                                                                    cleaned_referencetc,
-                                                                    initial_fmri_x,
-                                                                    os_fmri_x,
-                                                                    fmritr,
-                                                                    corrorigin,
-                                                                    lagmininpts,
-                                                                    lagmaxinpts,
-                                                                    corrout,
-                                                                    meanval,
-                                                                    theprefilter,
-                                                                    optiondict,
-                                                                    rt_floatset=rt_floatset,
-                                                                    rt_floattype=rt_floattype
-                                                                    )'''
+        thecorrelator.setlimits(corrorigin, lagmininpts, lagmaxinpts)
         voxelsprocessed_cp, theglobalmaxlist = correlationpass_func(fmri_data_valid[:,optiondict['addedskip']:],
                                                                cleaned_referencetc,
                                                                thecorrelator,
@@ -2154,6 +2138,7 @@ def rapidtide_main(thearguments):
         else:
             tide_util.logmem('before fitcorr', file=memfile)
             fitcorr_func = tide_corrfit.fitcorrx
+        thefitter.setcorrtimeaxis(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
         voxelsprocessed_fc = fitcorr_func(genlagtc,
                                           initial_fmri_x,
                                           lagtc,
