@@ -1412,7 +1412,7 @@ def polarfft(inputdata):
 
 
 def ifftfrompolar(r, theta):
-    complexxform = r * exp( 1j * theta)
+    complexxform = r * np.exp( 1j * theta)
     return fftpack.ifft(complexxform).real
 
 # --------------------------- Window functions -------------------------------------------------
