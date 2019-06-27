@@ -308,7 +308,9 @@ def usage():
     print("    -R                             - Filter data and regressors to respiratory band")
     print("    -C                             - Filter data and regressors to cardiac band")
     print("    -N                             - Estimate significance threshold by running NREPS null ")
-    print("                                 correlations (default is 10000, set to 0 to disable)")
+    print("                                     correlations (default is 10000, set to 0 to disable)")
+    print("    --permutationmethod=METHOD     - Method for permuting the regressor for significance estimation.  Default")
+    print("                                     is shuffle")
     print("    --skipsighistfit               - Do not fit significance histogram with a Johnson SB function")
     print("    --windowfunc=FUNC              - Use FUNC window funcion prior to correlation.  Options are")
     print("                                     hamming (default), hann, blackmanharris, and None")
@@ -553,7 +555,6 @@ def rapidtide_main(thearguments):
     optiondict['savemotionfiltered'] = False  # save motion filtered file for debugging
 
     # filter options
-    optiondict['trapezoidalfftfilter'] = True
     optiondict['usebutterworthfilter'] = False
     optiondict['filtorder'] = 6
     optiondict['padseconds'] = 30.0  # the number of seconds of padding to add to each end of a filtered timecourse
@@ -573,11 +574,11 @@ def rapidtide_main(thearguments):
 
     # significance estimation options
     optiondict['numestreps'] = 10000  # the number of sham correlations to perform to estimate significance
+    optiondict['permutationmethod'] = 'shuffle'
     optiondict['nohistzero'] = False  # if False, there is a spike at R=0 in the significance histogram
     optiondict['ampthreshfromsig'] = True
     optiondict['sighistlen'] = 1000
     optiondict['dosighistfit'] = True
-    optiondict['permutationmethod'] = 'shuffle'
 
     optiondict['histlen'] = 250
     optiondict['oversampfactor'] = -1
@@ -705,6 +706,7 @@ def rapidtide_main(thearguments):
                                                                                                           'nosharedmem',
                                                                                                           'multiproc',
                                                                                                           'mklthreads=',
+                                                                                                          'permutationmethod=',
                                                                                                           'nprocs=',
                                                                                                           'debug',
                                                                                                           'nonumba',
@@ -758,6 +760,14 @@ def rapidtide_main(thearguments):
         elif o == '--checkpoint':
             optiondict['checkpoint'] = True
             print('Enabled run checkpoints')
+        elif o == '--permutationmethod':
+            themethod = a
+            if (themethod != 'shuffle') and (themethod != 'phaserandom'):
+                print('illegal permutation method', themethod)
+                sys.exit()
+            optiondict['permutationmethod'] = themethod
+            linkchar = '='
+            print('Will use', optiondict['permutationmethod'], 'as the permutation method for calculating null correlation threshold')
         elif o == '--windowfunc':
             optiondict['usewindowfunc'] = True
             thewindow = a
@@ -1665,7 +1675,6 @@ def rapidtide_main(thearguments):
     optiondict['inputstarttime'] = inputstarttime
     print('regressor start time, end time, and step', inputstarttime, inputstarttime + numreference * inputperiod,
           inputperiod)
-
     if optiondict['verbose']:
         print('input vector length', len(inputvec), 'input freq', inputfreq, 'input start time', inputstarttime)
 
@@ -1690,12 +1699,12 @@ def rapidtide_main(thearguments):
         print(np.shape(os_fmri_x)[0])
         print(np.shape(initial_fmri_x)[0])
 
-    # Clip the data
+    ''''# Clip the data
     if not optiondict['useglobalref'] and False:
         clipstart = bisect.bisect_left(reference_x, os_fmri_x[0] - 2.0 * optiondict['lagmin'])
         clipend = bisect.bisect_left(reference_x, os_fmri_x[-1] + 2.0 * optiondict['lagmax'])
         print('clip indices=', clipstart, clipend, reference_x[clipstart], reference_x[clipend], os_fmri_x[0],
-              os_fmri_x[-1])
+              os_fmri_x[-1])'''
 
     # generate the comparison regressor from the input timecourse
     # correct the output time points
@@ -1732,14 +1741,8 @@ def rapidtide_main(thearguments):
 
     # filter the input data for antialiasing
     if optiondict['antialias']:
-        if optiondict['trapezoidalfftfilter']:
-            print('applying trapezoidal antialiasing filter')
-            reference_y_filt = tide_filt.dolptrapfftfilt(inputfreq, 0.25 * fmrifreq, 0.5 * fmrifreq, reference_y,
-                                                         padlen=int(inputfreq * optiondict['padseconds']),
-                                                         debug=optiondict['debug'])
-        else:
-            print('applying brickwall antialiasing filter')
-            reference_y_filt = tide_filt.dolpfftfilt(inputfreq, 0.5 * fmrifreq, reference_y,
+        print('applying trapezoidal antialiasing filter')
+        reference_y_filt = tide_filt.dolptrapfftfilt(inputfreq, 0.25 * fmrifreq, 0.5 * fmrifreq, reference_y,
                                                      padlen=int(inputfreq * optiondict['padseconds']),
                                                      debug=optiondict['debug'])
         reference_y = rt_floatset(reference_y_filt.real)
@@ -1749,7 +1752,7 @@ def rapidtide_main(thearguments):
     if optiondict['fakerun']:
         return
 
-    # write out the resampled reference regressors
+    # generate the resampled reference regressors
     if optiondict['detrendorder'] > 0:
         resampnonosref_y = tide_fit.detrend(
             tide_resample.doresample(reference_x, reference_y, initial_fmri_x, method=optiondict['interptype']),
@@ -2042,6 +2045,7 @@ def rapidtide_main(thearguments):
                 else:
                     tide_io.writedict(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.txt')
             thecorrelator.setlimits(corrorigin, lagmininpts, lagmaxinpts)
+            thecorrelator.setreftc(cleaned_resampref_y)
             thefitter.setcorrtimeaxis(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
             corrdistdata = getNullDistributionData_func(cleaned_resampref_y,
                                                          oversampfreq,

@@ -29,14 +29,16 @@ import numpy as np
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 import rapidtide.miscmath as tide_math
+import rapidtide.filter as tide_filt
 
-import rapidtide.corrpass as tide_corrpass
+import rapidtide.corrpassx as tide_corrpass
 import rapidtide.corrfitx as tide_corrfit
+import sys
 
 
 # note: rawtimecourse has been filtered, but NOT windowed
-def _procOneNullCorrelationx(iteration,
-                             rawtimecourse,
+def _procOneNullCorrelationx(rawtimecourse,
+                             rawtcfft_r, rawtcfft_ang,
                              Fs,
                              thecorrelator,
                              thefitter,
@@ -51,8 +53,11 @@ def _procOneNullCorrelationx(iteration,
     # make a shuffled copy of the regressors
     if permutationmethod == 'shuffle':
         permutedtc = np.random.permutation(rawtimecourse)
+    elif permutationmethod == 'phaserandom':
+        permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.uniform(low=-np.pi, high=np.pi, size=len(rawtcfft_r)))
     else:
-        permutedtc = np.random.permutation(rawtimecourse)
+        print('illegal shuffling method')
+        sys.exit()
 
     # apply the appropriate filter
     permutedtc = thecorrelator.ncprefilter.apply(Fs, permutedtc)
@@ -123,6 +128,7 @@ def getNullDistributionDatax(rawtimecourse,
     """
 
     inputshape = np.asarray([numestreps])
+    rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(rawtimecourse)
     if nprocs > 1:
         # define the consumer function here so it inherits most of the arguments
         def nullCorrelation_consumer(inQ, outQ):
@@ -136,8 +142,8 @@ def getNullDistributionDatax(rawtimecourse,
                         break
 
                     # process and send the data
-                    outQ.put(_procOneNullCorrelationx(val,
-                                                      rawtimecourse,
+                    outQ.put(_procOneNullCorrelationx(rawtimecourse,
+                                                      rawtcfft_r, rawtcfft_ang,
                                                       Fs,
                                                       thecorrelator,
                                                       thefitter,
@@ -168,8 +174,8 @@ def getNullDistributionDatax(rawtimecourse,
             permutedtc = np.random.permutation(rawtimecourse)
 
             # crosscorrelate with original, fit, and return the maximum value, and add it to the list
-            thexcorr = _procOneNullCorrelationx(i,
-                                                rawtimecourse,
+            thexcorr = _procOneNullCorrelationx(rawtimecourse,
+                                                rawtcfft_r, rawtcfft_ang,
                                                 Fs,
                                                 thecorrelator,
                                                 thefitter,
