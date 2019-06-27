@@ -30,7 +30,7 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 
 import rapidtide.corrpass as tide_corrpass
-import rapidtide.corrfitx as tide_corrfit
+import rapidtide.corrfit as tide_corrfit
 
 
 def _procOneNullCorrelation(iteration, sourcetimecourse, filterfunc, Fs, corrscale, corrorigin, negbins,

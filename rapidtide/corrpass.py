@@ -40,46 +40,82 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-# preprocess and correlate a test timecourse with an already preprocessed reference timecourse
-def onecorrelation(thecorrelator, thetc):
-    return thecorrelator.run(thetc)
+def onecorrelation(thetc,
+                   oversampfreq,
+                   corrorigin,
+                   lagmininpts,
+                   lagmaxinpts,
+                   ncprefilter,
+                   referencetc,
+                   usewindowfunc=True,
+                   detrendorder=1,
+                   windowfunc='hamming',
+                   corrweighting='none'):
+    thetc_classfilter = ncprefilter.apply(oversampfreq, thetc)
+    thetc = thetc_classfilter
+
+    # prepare timecourse by normalizing, detrending, and applying a window function 
+    preppedtc = tide_math.corrnormalize(thetc,
+                                        prewindow=usewindowfunc,
+                                        detrendorder=detrendorder,
+                                        windowfunc=windowfunc)
+
+    # now actually do the correlation
+    thexcorr = tide_corr.fastcorrelate(preppedtc, referencetc, usefft=True, weighting=corrweighting)
+
+    # find the global maximum value
+    theglobalmax = np.argmax(thexcorr)
+
+    return thexcorr[corrorigin - lagmininpts:corrorigin + lagmaxinpts], theglobalmax
 
 
 def _procOneVoxelCorrelation(vox,
                              thetc,
-                             thecorrelator,
+                             optiondict,
                              fmri_x,
                              fmritc,
                              os_fmri_x,
-                             oversampfactor=1,
-                             interptype='univariate',
+                             oversampfreq,
+                             corrorigin,
+                             lagmininpts,
+                             lagmaxinpts,
+                             ncprefilter,
+                             referencetc,
                              rt_floatset=np.float64,
                              rt_floattype='float64'
                              ):
-    if oversampfactor >= 1:
-        thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
+    if optiondict['oversampfactor'] >= 1:
+        thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=optiondict['interptype'])
     else:
         thetc[:] = fmritc
-    thexcorr, theglobalmax = onecorrelation(thecorrelator, thetc)
+    thexcorr, theglobalmax = onecorrelation(thetc,
+                                            oversampfreq,
+                                            corrorigin,
+                                            lagmininpts,
+                                            lagmaxinpts,
+                                            ncprefilter,
+                                            referencetc,
+                                            usewindowfunc=optiondict['usewindowfunc'],
+                                            detrendorder=optiondict['detrendorder'],
+                                            windowfunc=optiondict['windowfunc'],
+                                            corrweighting=optiondict['corrweighting'])
 
     return vox, np.mean(thetc), thexcorr, theglobalmax
 
 
 def correlationpass(fmridata,
+                    fmrifftdata,
                     referencetc,
-                    thecorrelator,
                     fmri_x,
                     os_fmri_x,
+                    tr,
                     corrorigin,
                     lagmininpts,
                     lagmaxinpts,
                     corrout,
                     meanval,
-                    nprocs=1,
-                    oversampfactor=1,
-                    interptype='univariate',
-                    showprogressbar=True,
-                    chunksize=1000,
+                    ncprefilter,
+                    optiondict,
                     rt_floatset=np.float64,
                     rt_floattype='float64'):
     """
@@ -87,8 +123,8 @@ def correlationpass(fmridata,
     Parameters
     ----------
     fmridata
+    fmrifftdata
     referencetc
-    thecorrelator
     fmri_x
     os_fmri_x
     tr
@@ -97,11 +133,8 @@ def correlationpass(fmridata,
     lagmaxinpts
     corrout
     meanval
-    nprocs
-    oversampfactor
-    interptype
-    showprogressbar
-    chunksize
+    ncprefilter
+    optiondict
     rt_floatset
     rt_floattype
 
@@ -109,15 +142,13 @@ def correlationpass(fmridata,
     -------
 
     """
-    thecorrelator.setreftc(referencetc)
-    thecorrelator.setlimits(corrorigin, lagmininpts, lagmaxinpts)
-
+    oversampfreq = optiondict['oversampfactor'] / tr
     inputshape = np.shape(fmridata)
     volumetotal = 0
     reportstep = 1000
     thetc = np.zeros(np.shape(os_fmri_x), dtype=rt_floattype)
     theglobalmaxlist = []
-    if nprocs > 1:
+    if optiondict['nprocs'] > 1:
         # define the consumer function here so it inherits most of the arguments
         def correlation_consumer(inQ, outQ):
             while True:
@@ -132,12 +163,16 @@ def correlationpass(fmridata,
                     # process and send the data
                     outQ.put(_procOneVoxelCorrelation(val,
                                                       thetc,
-                                                      thecorrelator,
+                                                      optiondict,
                                                       fmri_x,
                                                       fmridata[val, :],
                                                       os_fmri_x,
-                                                      oversampfactor=oversampfactor,
-                                                      interptype=interptype,
+                                                      oversampfreq,
+                                                      corrorigin,
+                                                      lagmininpts,
+                                                      lagmaxinpts,
+                                                      ncprefilter,
+                                                      referencetc,
                                                       rt_floatset=rt_floatset,
                                                       rt_floattype=rt_floattype))
 
@@ -147,9 +182,9 @@ def correlationpass(fmridata,
 
         data_out = tide_multiproc.run_multiproc(correlation_consumer,
                                                 inputshape, None,
-                                                nprocs=nprocs,
+                                                nprocs=optiondict['nprocs'],
                                                 showprogressbar=True,
-                                                chunksize=chunksize)
+                                                chunksize=optiondict['mp_chunksize'])
 
         # unpack the data
         volumetotal = 0
@@ -162,16 +197,20 @@ def correlationpass(fmridata,
         del data_out
     else:
         for vox in range(0, inputshape[0]):
-            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and showprogressbar:
+            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
                 tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
             dummy, meanval[vox], corrout[vox, :], theglobalmax = _procOneVoxelCorrelation(vox,
                                                                                           thetc,
-                                                                                          thecorrelator,
+                                                                                          optiondict,
                                                                                           fmri_x,
                                                                                           fmridata[vox, :],
                                                                                           os_fmri_x,
-                                                                                          oversampfactor=oversampfactor,
-                                                                                          interptype=interptype,
+                                                                                          oversampfreq,
+                                                                                          corrorigin,
+                                                                                          lagmininpts,
+                                                                                          lagmaxinpts,
+                                                                                          ncprefilter,
+                                                                                          referencetc,
                                                                                           rt_floatset=rt_floatset,
                                                                                           rt_floattype=rt_floattype
                                                                                           )

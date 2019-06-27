@@ -50,7 +50,7 @@ import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 
 import rapidtide.nullcorrpassx as tide_nullcorr
-import rapidtide.corrpass as tide_corrpass
+import rapidtide.corrpassx as tide_corrpass
 import rapidtide.corrfitx as tide_corrfit
 import rapidtide.refine as tide_refine
 import rapidtide.glmpass as tide_glmpass
