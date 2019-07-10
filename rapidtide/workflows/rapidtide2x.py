@@ -54,7 +54,7 @@ import rapidtide.corrpassx as tide_corrpass
 import rapidtide.corrfitx as tide_corrfit
 import rapidtide.refine as tide_refine
 import rapidtide.glmpass as tide_glmpass
-import rapidtide.correlation_fitter as tide_cfit
+import rapidtide.helper_classes as tide_classes
 import rapidtide.wiener as tide_wiener
 
 try:
@@ -1900,7 +1900,7 @@ def rapidtide_main(thearguments):
     oversampfreq = optiondict['oversampfactor'] / fmritr
 
     # initialize the correlator
-    thecorrelator = tide_cfit.correlator(Fs=oversampfreq,
+    thecorrelator = tide_classes.correlator(Fs=oversampfreq,
                                          ncprefilter=theprefilter,
                                          usewindowfunc=optiondict['usewindowfunc'],
                                          detrendorder=optiondict['detrendorder'],
@@ -1908,7 +1908,7 @@ def rapidtide_main(thearguments):
                                          corrweighting=optiondict['corrweighting'])
 
     # intitialize the correlation fitter
-    thefitter = tide_cfit.correlation_fitter(lagmod=optiondict['lagmod'],
+    thefitter = tide_classes.correlation_fitter(lagmod=optiondict['lagmod'],
                                              lthreshval=optiondict['lthreshval'],
                                              uthreshval=optiondict['uthreshval'],
                                              bipolar=optiondict['bipolar'],

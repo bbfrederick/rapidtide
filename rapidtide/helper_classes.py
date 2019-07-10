@@ -34,6 +34,106 @@ import rapidtide.miscmath as tide_math
 import rapidtide.correlate as tide_corr
 
 
+class fmridata:
+    thedata = None
+    theshape = None
+    xsize = None
+    ysize = None
+    numslices = None
+    realtimepoints = None
+    timepoints = None
+    slicesize = None
+    numvox = None
+    numskip = 0
+
+    def __init__(self,
+                 thedata,
+                 numskip=0):
+        self.thedata = thedata + 0.0
+        self.getsizes()
+        self.setnumskip(numskip)
+
+
+    def getsizes(self):
+            self.theshape = self.thedata.shape
+            self.xsize = self.theshape[0]
+            self.ysize = self.theshape[1]
+            self.numslices = self.theshape[2]
+            try:
+                self.realtimepoints = self.theshape[3]
+            except KeyError:
+                self.realtimepoints = 1
+            self.slicesize = self.xsize * self.ysize
+            self.numvox = self.slicesize * self.numslices
+
+    def setnumskip(self, numskip):
+        self.numskip = numskip
+        self.timepoints = self.realtimepoints - self.numskip
+
+
+    def byslice(self):
+        return self.thedata[:, :, :, self.numskip:].reshape((self.slicesize, self.numslices, self.timepoints))
+
+
+    def byvol(self):
+        return self.thedata[:, :, :, self.numskip:].reshape((self.numvox, self.timepoints))
+
+
+    def byvox(self):
+        return self.thedata[:, :, :, self.numskip:]
+
+
+
+class proberegressor:
+    inputtimeaxis = None
+    inputvec = None
+    inputfreq = None
+    inputstart = 0.0
+    inputoffset = 0.0
+    targettimeaxis = None
+    targetvec = None
+    targetfreq = None
+    targetstart = 0.0
+    targetoffset = 0.0
+
+    def __init__(self,
+                 inputvec,
+                 inputfreq,
+                 targetperiod,
+                 targetpoints,
+                 targetstartpoint,
+                 targetoversample=1,
+                 inputstart=0.0,
+                 inputoffset=0.0,
+                 targetstart=0.0,
+                 targetoffset=0.0,
+
+                 ):
+        self.inputoffset = inputoffset
+        self.setinputvec(inputvec, inputfreq, inputstart=inputstart)
+        self.targetperiod = targetperiod
+        self.makeinputtimeaxis(self)
+        self.targetoversample = targetoversample
+        self.targetpoints = targetpoints
+        self.targetstartpoint = targetstartpoint
+
+    def setinputvec(self, inputvec, inputfreq, inputstart=0.0):
+        self.inputvec = inputvec
+        self.inputfreq = inputfreq
+        self.inputstart = inputstart
+
+    def makeinputtimeaxis(self):
+        self.inputtimeaxis = np.linspace(0.0, len(self.inputvec)) / self.inputfreq - (self.inputstarttime + self.inputoffset)
+
+    def maketargettimeaxis(self):
+        self.targettimeaxis = np.linspace(self.targetperiod * self.targetstartpoint,
+                                     self.targetperiod * self.targetstartpoint + self.targetperiod * self.targetpoints,
+                                     num=self.targetpoints,
+                                     endpoint=True)
+        os_fmri_x = np.arange(0.0, (validtimepoints - optiondict['addedskip']) * self.targetoversample - (
+                self.targetoversample - 1)) * self.targetoversample * self.targetperiod + skiptime
+
+
 class correlator:
     oversampfreq = 0.0
     corrorigin = 0
