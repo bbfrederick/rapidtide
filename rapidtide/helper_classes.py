@@ -48,8 +48,16 @@ class fmridata:
 
     def __init__(self,
                  thedata,
+                 zerodata=False,
+                 copydata=False,
                  numskip=0):
-        self.thedata = thedata + 0.0
+        if zerodata:
+            self.thedata = thedata * 0.0
+        else:
+            if copydata:
+                self.thedata = thedata + 0.0
+            else:
+                self.thedata = thedata
         self.getsizes()
         self.setnumskip(numskip)
 
