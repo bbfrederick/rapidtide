@@ -17,7 +17,7 @@ install:
   - conda create -q -n test-env python=$BUILD_TARGET
   - source activate test-env
 
-  - conda install -c conda-forge numpy scipy atlas scikit-learn codecov pytest-cov matplotlib nibabel statsmodels pyfftw numba pytest pip 
+  - conda install -c conda-forge numpy scipy scikit-learn codecov pytest-cov matplotlib nibabel statsmodels pyfftw numba pytest pip 
 
   # this supposedly fixes a multiprocessing crash
   - sudo rm -rf /dev/shm
