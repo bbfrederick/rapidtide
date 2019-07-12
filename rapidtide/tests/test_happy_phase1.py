@@ -24,7 +24,7 @@ def test_happy_phase1(debug=False):
         theargs = ['happy']
         theargs += [os.path.join(get_examples_path(), 'happyfmri.nii.gz')]
         theargs += [os.path.join(get_examples_path(), 'happyfmri.json')]
-        theargs += [os.path.join(get_test_temp_path(), 'happy_phase1output')]
+        theargs += [os.path.join(get_test_temp_path(), 'happy_output')]
         theargs += ['--dodlfilter']
         theargs += ['--saveinfoasjson']
         theargs += ['--glm']
@@ -32,10 +32,9 @@ def test_happy_phase1(debug=False):
         theargs += ['--gridbins=2.0']
         theargs += ['--gridkernel=kaiser']
         theargs += ['--model=model_revised']
-        theargs += ['--estmask=' + os.path.join(get_test_target_path(), 'happy_phase1target_vesselmask.nii.gz')]
         happy_workflow.happy_main(theargs)
     
-    diffmaps = tide_util.comparehappyruns(os.path.join(get_test_temp_path(), 'happy_phase1output'), os.path.join(get_test_target_path(), 'happy_phase1target'), debug=debug)
+    diffmaps = tide_util.comparehappyruns(os.path.join(get_test_temp_path(), 'happy_output'), os.path.join(get_test_target_path(), 'happy_target'), debug=debug)
 
     for mapname, maps in diffmaps.items():
         print('checking', mapname)
