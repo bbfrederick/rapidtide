@@ -10,7 +10,7 @@ from scipy import arange
 
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
-import rapidtide.correlation_fitter as tide_cfit
+import rapidtide.helper_classes as tide_classes
 from rapidtide.tests.utils import get_test_data_path
 
 
@@ -60,7 +60,7 @@ def test_findmaxlag(display=False, debug=False):
     absmaxsigma = 1000.0
 
     # initialize the correlation fitter
-    thefitter = tide_cfit.correlation_fitter(corrtimeaxis=xvecs, lagmin=lagmin, lagmax=lagmax, absmaxsigma=absmaxsigma, refine=True, debug=debug, searchfrac=searchfrac, zerooutbadfit=False)
+    thefitter = tide_classes.correlation_fitter(corrtimeaxis=xvecs, lagmin=lagmin, lagmax=lagmax, absmaxsigma=absmaxsigma, refine=True, debug=debug, searchfrac=searchfrac, zerooutbadfit=False)
 
     for i in range(len(testlags)):
         yvecs = tide_fit.gauss_eval(xvecs, np.array([testmaxval, testlags[i],
@@ -121,7 +121,7 @@ def test_findmaxlag(display=False, debug=False):
         ax.plot(testlags, fml_maxlags, 'r')
         ax.plot(testlags, fmlr_maxlags, 'g')
         ax.plot(testlags, fmlc_maxlags, 'b')
-        ax.legend(['findmaxlag_gauss', 'findmaxlag_gauss_rev', 'cfit'])
+        ax.legend(['findmaxlag_gauss', 'findmaxlag_gauss_rev', 'classes'])
         #ax.set_xlim((lagmin, lagmax))
         plt.show()
 
