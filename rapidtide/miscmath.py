@@ -252,7 +252,7 @@ def znormalize(vector):
 
 
 @conditionaljit()
-def madnormalize(vector):
+def madnormalize(vector, returnnormfac=False):
     """
 
     Parameters
@@ -266,9 +266,15 @@ def madnormalize(vector):
     demedianed = vector - np.median(vector)
     sigmad = mad(demedianed).astype(np.float64)
     if sigmad > 0.0:
-        return demedianed / sigmad
+        if returnnormfac:
+            return demedianed / sigmad, sigmad
+        else:
+            return demedianed / sigmad
     else:
-        return demedianed
+        if returnnormfac:
+            return demedianed, sigmad
+        else:
+            return demedianed
 
 
 @conditionaljit()
