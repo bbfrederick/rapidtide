@@ -22,9 +22,9 @@
 #
 from __future__ import print_function, division
 
-# import matplotlib
-# matplotlib.use('TkAgg')
-from matplotlib.pyplot import plot, show, figure
+#import matplotlib
+#matplotlib.use('pdf')
+from matplotlib.pyplot import plot, scatter, show, figure
 
 import time
 import sys
@@ -49,7 +49,6 @@ import rapidtide.helper_classes as tide_classes
 
 from scipy.signal import welch, savgol_filter
 from scipy.stats import kurtosis, skew
-#from skimage.filters import threshold_triangle  # , apply_hysteresis_threshold
 from statsmodels.robust import mad
 
 import warnings
@@ -235,6 +234,7 @@ def physiofromimage(normdata_byslice,
     hirestc = np.zeros((timepoints * numsteps), dtype=np.float64)
     cycleaverage = np.zeros((numsteps), dtype=np.float64)
     sliceavs = np.zeros((numslices, timepoints), dtype=np.float64)
+    slicenorms = np.zeros((numslices), dtype=np.float64)
     if not verbose:
         print('averaging slices...')
     for theslice in range(numslices):
@@ -246,13 +246,14 @@ def physiofromimage(normdata_byslice,
             validvoxels = np.where(mask_byslice[:, theslice] >= 0)[0]
         if len(validvoxels) > 0:
             if madnorm:
-                sliceavs[theslice, :] = tide_math.madnormalize(np.mean(
+                sliceavs[theslice, :], slicenorms[theslice] = tide_math.madnormalize(np.mean(
                     normdata_byslice[validvoxels, theslice, :] * mask_byslice[validvoxels, theslice, np.newaxis],
-                    axis=0))
+                    axis=0), returnnormfac=True)
             else:
                 sliceavs[theslice, :] = np.mean(
                     normdata_byslice[validvoxels, theslice, :] * mask_byslice[validvoxels, theslice, np.newaxis],
                     axis=0)
+                slicenorms[theslice] = 1.0
             for t in range(timepoints):
                 hirestc[numsteps * t + sliceoffsets[theslice]] += sliceavs[theslice, t]
     for i in range(numsteps):
@@ -260,8 +261,8 @@ def physiofromimage(normdata_byslice,
     for t in range(len(hirestc)):
         if multiplicative:
             hirestc[t] /= (cycleaverage[t % numsteps] + 1.0)
-    else:
-        hirestc[t] -= cycleaverage[t % numsteps]
+        else:
+            hirestc[t] -= cycleaverage[t % numsteps]
     if not verbose:
         print('done')
     slicesamplerate = 1.0 * numsteps / tr
@@ -272,10 +273,15 @@ def physiofromimage(normdata_byslice,
     filthirestc = tide_filt.harmonicnotchfilter(hirestc, slicesamplerate, 1.0 / tr, notchpct=notchpct, debug=debug)
 
     # now get the cardiac and respiratory waveforms
-    hirescardtc = -1.0 * tide_math.madnormalize(cardprefilter.apply(slicesamplerate, filthirestc))
-    hiresresptc = -1.0 * tide_math.madnormalize(respprefilter.apply(slicesamplerate, filthirestc))
+    hirescardtc, cardnormfac = tide_math.madnormalize(cardprefilter.apply(slicesamplerate, filthirestc), returnnormfac=True)
+    hirescardtc *= -1.0
+    cardnormfac *= np.mean(slicenorms)
 
-    return tide_math.madnormalize(hirescardtc), tide_math.madnormalize(hiresresptc), slicesamplerate, numsteps, cycleaverage
+    hiresresptc, respnormfac = tide_math.madnormalize(respprefilter.apply(slicesamplerate, filthirestc), returnnormfac=True)
+    hiresresptc *= -1.0
+    respnormfac *= np.mean(slicenorms)
+
+    return hirescardtc, cardnormfac, hiresresptc, respnormfac, slicesamplerate, numsteps, cycleaverage, slicenorms
 
 
 def savgolsmooth(data, smoothlen=101, polyorder=3):
@@ -386,7 +392,7 @@ def cleancardiac(Fs, plethwaveform, cutoff=0.4, thresh=0.2, nyquist=None, debug=
     # return the filtered waveform, the normalized waveform, and the envelope
     if debug:
         print('leaving cleancardiac')
-    return filtplethwaveform, normpleth, envelope
+    return filtplethwaveform, normpleth, envelope, envmean
 
 
 def findbadpts(thewaveform, nameroot, outputroot, samplerate, infodict,
@@ -604,7 +610,7 @@ def getphysiofile(cardiacfile, colnum, colname,
     timings.append(['Cardiac signal from physiology data read in', time.time(), None, None])
 
     # filter and amplitude correct the waveform to remove gain fluctuations
-    cleanpleth_fullres, normpleth_fullres, plethenv_fullres = cleancardiac(inputfreq, pleth_fullres,
+    cleanpleth_fullres, normpleth_fullres, plethenv_fullres, envmean = cleancardiac(inputfreq, pleth_fullres,
                                                                            cutoff=envcutoff,
                                                                            thresh=envthresh,
                                                                            nyquist=inputfreq / 2.0,
@@ -704,10 +710,10 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
     return maxval, maxdelay, failreason
 
 
-def cardiaccycleaverage(sourcephases, destinationphases, waveform, proclist, congridbins, gridkernel, centric):
+def cardiaccycleaverage(sourcephases, destinationphases, waveform, procpoints, congridbins, gridkernel, centric):
     rawapp_bypoint = np.zeros(len(destinationphases), dtype=np.float64)
     weight_bypoint = np.zeros(len(destinationphases), dtype=np.float64)
-    for t in proclist:
+    for t in procpoints:
         thevals, theweights, theindices = tide_resample.congrid(destinationphases,
                                                                 tide_math.phasemod(sourcephases[t],
                                                                                    centric=centric),
@@ -720,6 +726,18 @@ def cardiaccycleaverage(sourcephases, destinationphases, waveform, proclist, con
             rawapp_bypoint[theindices[i]] += theweights[i] * waveform[t]
     rawapp_bypoint = np.nan_to_num(rawapp_bypoint / weight_bypoint)
     return rawapp_bypoint - np.min(rawapp_bypoint)
+
+
+def findphasecuts(phases):
+    max_peaks = []
+    min_peaks = []
+    thisval = phases[0]
+    for i in range(1, len(phases)):
+        if thisval - phases[i] > np.pi:
+            max_peaks.append([i - 1, thisval])
+            min_peaks.append([i, phases[i]])
+        thisval = phases[i]
+    return max_peaks, min_peaks
 
 
 def happy_main(thearguments):
@@ -1239,8 +1257,10 @@ def happy_main(thearguments):
         # now get an estimate of the cardiac signal
         print('estimating cardiac signal from fmri data')
         tide_util.logmem('before cardiacfromimage', file=memfile)
-        cardfromfmri_sliceres, respfromfmri_sliceres, \
-        slicesamplerate, numsteps, cycleaverage = physiofromimage(normdata_byslice, estmask_byslice, numslices, timepoints, tr,
+        cardfromfmri_sliceres, cardfromfmri_normfac,\
+        respfromfmri_sliceres, respfromfmri_normfac, \
+        slicesamplerate, numsteps, cycleaverage, slicenorms \
+            = physiofromimage(normdata_byslice, estmask_byslice, numslices, timepoints, tr,
                                                     slicetimes, thecardbandfilter, therespbandfilter,
                                                     madnorm=domadnorm,
                                                     nprocs=nprocs,
@@ -1249,6 +1269,7 @@ def happy_main(thearguments):
                                                     debug=debug,
                                                     verbose=verbose)
         timings.append(['Cardiac signal generated from image data' + passstring, time.time(), None, None])
+        infodict['cardfromfmri_normfac'] = cardfromfmri_normfac
         slicetimeaxis = sp.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
         if (numpasses > 1) and (thispass == 1) and outputlevel > 1:
             tide_io.writevec(cycleaverage, outputroot + '_cycleaverage.txt')
@@ -1266,6 +1287,7 @@ def happy_main(thearguments):
         infodict['slicesamplerate'] = slicesamplerate
         infodict['numcardpts_sliceres'] = timepoints * numsteps
         infodict['numsteps'] = numsteps
+        infodict['slicenorms'] = slicenorms
 
         # find key components of cardiac waveform
         print('extracting harmonic components')
@@ -1290,7 +1312,7 @@ def happy_main(thearguments):
         infodict['numcardpts_stdres'] = len(cardfromfmri_stdres)
 
         # normalize the signal to remove envelope effects
-        filtcardfromfmri_stdres, normcardfromfmri_stdres, cardfromfmrienv_stdres = cleancardiac(stdfreq,
+        filtcardfromfmri_stdres, normcardfromfmri_stdres, cardfromfmrienv_stdres, envmean = cleancardiac(stdfreq,
                                                                                                 cardfromfmri_stdres,
                                                                                                 cutoff=envcutoff,
                                                                                                 nyquist=slicesamplerate / 2.0,
@@ -1406,7 +1428,7 @@ def happy_main(thearguments):
                 tide_io.writevec(pleth_stdres, outputroot + '_pleth_' + str(stdfreq) + 'Hz.txt')
 
             # now clean up cardiac signal
-            filtpleth_stdres, normpleth_stdres, plethenv_stdres = cleancardiac(stdfreq, pleth_stdres, cutoff=envcutoff,
+            filtpleth_stdres, normpleth_stdres, plethenv_stdres, envmean = cleancardiac(stdfreq, pleth_stdres, cutoff=envcutoff,
                                                                                thresh=envthresh)
             if (numpasses > 1) and (thispass == 1):
                 tide_io.writevec(normpleth_stdres, outputroot + '_normpleth_' + str(stdfreq) + 'Hz.txt')
@@ -1556,7 +1578,6 @@ def happy_main(thearguments):
         else:
             outphases = sp.linspace(0.0, 2.0 * np.pi, num=destpoints, endpoint=False)
         phasestep = outphases[1] - outphases[0]
-        congridwidth = congridbins * phasestep
 
         #######################################################################################################
         #
@@ -1568,15 +1589,56 @@ def happy_main(thearguments):
 
         timings.append(['Phase projection to image started' + passstring, time.time(), None, None])
         print('starting phase projection')
-        proclist = range(timepoints)       # proclist is the list of all timepoints to be projected
+        proctrs = range(timepoints)                 # proctrs is the list of all fmri trs to be projected
+        procpoints = range(timepoints * numsteps)   # procpoints is the list of all sliceres datapoints to be projected
         if censorbadpts:
-            censorlist = np.zeros(timepoints, dtype='int')
-            censorlist[np.where(badpointlist > 0.0)[0] // numsteps] = 1
-            proclist = np.where(censorlist < 1)[0]
+            censortrs = np.zeros(timepoints, dtype='int')
+            censorpoints = np.zeros(timepoints * numsteps, dtype='int')
+            censortrs[np.where(badpointlist > 0.0)[0] // numsteps] = 1
+            censorpoints[np.where(badpointlist > 0.0)[0]] = 1
+            proctrs = np.where(censortrs < 1)[0]
+            procpoints = np.where(censorpoints < 1)[0]
 
-        app_bypoint = cardiaccycleaverage(instantaneous_phase, outphases, cardfromfmri_sliceres, proclist, congridbins, gridkernel, centric)
+        # do phase averaging
+        app_bypoint = cardiaccycleaverage(instantaneous_phase, outphases, cardfromfmri_sliceres, procpoints, congridbins, gridkernel, centric)
         if (numpasses > 1) and (thispass == 1):
             tide_io.writevec(app_bypoint, outputroot + '_cardcyclefromfmri.txt')
+
+        '''# now do time averaging
+        lookaheadval = int(slicesamplerate / 4.0)
+        print('lookaheadval = ', lookaheadval)
+        max_peaks, min_peaks = tide_fit.peakdetect(tide_math.phasemod(instantaneous_phase, centric=centric), lookahead=lookaheadval)
+        # start on a maximum
+        if max_peaks[0][0] > min_peaks[0][0]:
+            min_peaks =  min_peaks[1:]
+        # work only with pairs
+        if len(max_peaks) > len(min_peaks):
+            max_peaks = max_peaks[:-1]
+
+        #max_peaks, min_peaks = findphasecuts(tide_math.phasemod(instantaneous_phase, centric=centric))
+        zerophaselocs = []
+        for idx, peak in enumerate(max_peaks):
+            phasediff = min_peaks[idx][1] - (max_peaks[idx][1] - 2.0 * np.pi)
+            timediff = min_peaks[idx][0] - max_peaks[idx][0]
+            zerophaselocs.append(1.0 * min_peaks[idx][0] - min_peaks[idx][1] * timediff / phasediff)
+            print(idx, max_peaks[idx], min_peaks[idx], phasediff, timediff, zerophaselocs[-1])
+        instantaneous_time = instantaneous_phase * 0.0
+
+        whichpeak = 0
+        for t in procpoints:
+            if whichpeak < len(zerophaselocs) - 1:
+                if t > zerophaselocs[whichpeak + 1]:
+                    whichpeak += 1
+            if t > zerophaselocs[whichpeak]:
+                instantaneous_time[t] = (t - zerophaselocs[whichpeak]) / slicesamplerate
+            print(t, whichpeak, zerophaselocs[whichpeak], instantaneous_time[t])
+        stepsize = 0.025
+        maxtime = int(np.max(instantaneous_time) * 1.1 // stepsize) * stepsize
+        outtimes = sp.linspace(0.0, maxtime, num=(maxtime / stepsize), endpoint=False)
+        atp_bypoint = cardiaccycleaverage(instantaneous_time, outtimes, cardfromfmri_sliceres, procpoints,
+                                          congridbins, gridkernel, False)
+        if (numpasses > 1) and (thispass == 1):
+            tide_io.writevec(atp_bypoint, outputroot + '_cardpulsefromfmri.txt')'''
 
         if not verbose:
             print('phase projecting...')
@@ -1592,7 +1654,7 @@ def happy_main(thearguments):
             validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
             indexlist = range(0, len(phasevals[theslice, :]))
             if len(validlocs) > 0:
-                for t in proclist:
+                for t in proctrs:
                     filteredmr = -fmri_data_byslice[validlocs, theslice, t]
                     thevals, theweights, theindices = tide_resample.congrid(outphases,
                                                                             phasevals[theslice, t],
