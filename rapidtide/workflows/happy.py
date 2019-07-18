@@ -710,7 +710,14 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
     return maxval, maxdelay, failreason
 
 
-def cardiaccycleaverage(sourcephases, destinationphases, waveform, procpoints, congridbins, gridkernel, centric):
+def cardiaccycleaverage(sourcephases,
+                        destinationphases,
+                        waveform,
+                        procpoints,
+                        congridbins,
+                        gridkernel,
+                        centric,
+                        cyclic=True):
     rawapp_bypoint = np.zeros(len(destinationphases), dtype=np.float64)
     weight_bypoint = np.zeros(len(destinationphases), dtype=np.float64)
     for t in procpoints:
@@ -720,7 +727,7 @@ def cardiaccycleaverage(sourcephases, destinationphases, waveform, procpoints, c
                                                                 1.0,
                                                                 congridbins,
                                                                 kernel=gridkernel,
-                                                                cyclic=True)
+                                                                cyclic=cyclic)
         for i in range(len(theindices)):
             weight_bypoint[theindices[i]] += theweights[i]
             rawapp_bypoint[theindices[i]] += theweights[i] * waveform[t]
@@ -1600,14 +1607,22 @@ def happy_main(thearguments):
             procpoints = np.where(censorpoints < 1)[0]
 
         # do phase averaging
-        app_bypoint = cardiaccycleaverage(instantaneous_phase, outphases, cardfromfmri_sliceres, procpoints, congridbins, gridkernel, centric)
+        app_bypoint = cardiaccycleaverage(instantaneous_phase,
+                                          outphases,
+                                          cardfromfmri_sliceres,
+                                          procpoints,
+                                          congridbins,
+                                          gridkernel,
+                                          centric,
+                                          cyclic=True)
         if (numpasses > 1) and (thispass == 1):
             tide_io.writevec(app_bypoint, outputroot + '_cardcyclefromfmri.txt')
 
-        '''# now do time averaging
+        # now do time averaging
         lookaheadval = int(slicesamplerate / 4.0)
         print('lookaheadval = ', lookaheadval)
-        max_peaks, min_peaks = tide_fit.peakdetect(tide_math.phasemod(instantaneous_phase, centric=centric), lookahead=lookaheadval)
+        wrappedphase = tide_math.phasemod(instantaneous_phase, centric=centric)
+        max_peaks, min_peaks = tide_fit.peakdetect(wrappedphase, lookahead=lookaheadval)
         # start on a maximum
         if max_peaks[0][0] > min_peaks[0][0]:
             min_peaks =  min_peaks[1:]
@@ -1618,10 +1633,18 @@ def happy_main(thearguments):
         #max_peaks, min_peaks = findphasecuts(tide_math.phasemod(instantaneous_phase, centric=centric))
         zerophaselocs = []
         for idx, peak in enumerate(max_peaks):
-            phasediff = min_peaks[idx][1] - (max_peaks[idx][1] - 2.0 * np.pi)
-            timediff = min_peaks[idx][0] - max_peaks[idx][0]
-            zerophaselocs.append(1.0 * min_peaks[idx][0] - min_peaks[idx][1] * timediff / phasediff)
-            print(idx, max_peaks[idx], min_peaks[idx], phasediff, timediff, zerophaselocs[-1])
+            minloc = min_peaks[idx][0]
+            maxloc = max_peaks[idx][0]
+            minval = min_peaks[idx][1]
+            maxval = max_peaks[idx][1]
+            if minloc > 0:
+                if wrappedphase[minloc - 1] < wrappedphase[minloc]:
+                    minloc -= 1
+                    minval = wrappedphase[minloc]
+            phasediff = minval - (maxval - 2.0 * np.pi)
+            timediff = minloc - maxloc
+            zerophaselocs.append(1.0 * minloc - (minval - outphases[0])* timediff / phasediff)
+            #print(idx, [maxloc, maxval], [minloc, minval], phasediff, timediff, zerophaselocs[-1])
         instantaneous_time = instantaneous_phase * 0.0
 
         whichpeak = 0
@@ -1631,14 +1654,20 @@ def happy_main(thearguments):
                     whichpeak += 1
             if t > zerophaselocs[whichpeak]:
                 instantaneous_time[t] = (t - zerophaselocs[whichpeak]) / slicesamplerate
-            print(t, whichpeak, zerophaselocs[whichpeak], instantaneous_time[t])
+            #print(t, whichpeak, zerophaselocs[whichpeak], instantaneous_time[t])
         stepsize = 0.025
-        maxtime = int(np.max(instantaneous_time) * 1.1 // stepsize) * stepsize
+        maxtime = np.ceil(int(np.max(instantaneous_time) // stepsize)) * stepsize
         outtimes = sp.linspace(0.0, maxtime, num=(maxtime / stepsize), endpoint=False)
-        atp_bypoint = cardiaccycleaverage(instantaneous_time, outtimes, cardfromfmri_sliceres, procpoints,
-                                          congridbins, gridkernel, False)
+        atp_bypoint = cardiaccycleaverage(instantaneous_time,
+                                          outtimes,
+                                          cardfromfmri_sliceres,
+                                          procpoints,
+                                          congridbins,
+                                          gridkernel,
+                                          False,
+                                          cyclic=True)
         if (numpasses > 1) and (thispass == 1):
-            tide_io.writevec(atp_bypoint, outputroot + '_cardpulsefromfmri.txt')'''
+            tide_io.writevec(atp_bypoint, outputroot + '_cardpulsefromfmri.txt')
 
         if not verbose:
             print('phase projecting...')
