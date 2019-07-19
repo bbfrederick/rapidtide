@@ -175,6 +175,9 @@ def usage():
     print("                                     (overrides normal intensity mask.)")
     print("    --projectwithraw               - Use fMRI derived cardiac waveform as phase source for projection, even")
     print("                                     if a plethysmogram is supplied")
+    print("    --fliparteries                 - Attempt to detect arterial signals and flip over the timecourses after")
+    print("                                     phase projection (since relative arterial blood susceptibility is")
+    print("                                     inverted relative to venous blood).")
     print("")
     print("Debugging arguments (probably not of interest to users):")
     print("    --debug                        - Turn on debugging information")
@@ -731,8 +734,15 @@ def cardiaccycleaverage(sourcephases,
         for i in range(len(theindices)):
             weight_bypoint[theindices[i]] += theweights[i]
             rawapp_bypoint[theindices[i]] += theweights[i] * waveform[t]
-    rawapp_bypoint = np.nan_to_num(rawapp_bypoint / weight_bypoint)
+    rawapp_bypoint = np.where(weight_bypoint > np.max(weight_bypoint) / 50.0,
+                                                      np.nan_to_num(rawapp_bypoint / weight_bypoint),
+                                                      0.0)
     return rawapp_bypoint - np.min(rawapp_bypoint)
+
+
+def circularderivs(timecourse):
+    firstderiv = np.diff(timecourse, append=[timecourse[0]])
+    return np.max(firstderiv), np.argmax(firstderiv), np.min(firstderiv), np.argmin(firstderiv)
 
 
 def findphasecuts(phases):
@@ -808,6 +818,7 @@ def happy_main(thearguments):
     verbose = False
     smoothapp = True
     unnormvesselmap = True
+    fliparteries = False
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
@@ -884,6 +895,7 @@ def happy_main(thearguments):
                                                            "nophasefilt",
                                                            "projectwithraw",
                                                            "trimcorrelations",
+                                                           "fliparteries",
                                                            "nomask",
                                                            "noorthog",
                                                            "nocardiacalign",
@@ -934,6 +946,9 @@ def happy_main(thearguments):
             print('Decreased output level to', outputlevel)
         elif o == "--savemotionglmfilt":
             savemotionglmfilt = True
+        elif o == "--fliparteries":
+            fliparteries = True
+            print("Will detect and invert arterial timecourses.")
         elif o == "--nomask":
             censorbadpts = False
         elif o == "--nophasefilt":
@@ -1577,6 +1592,8 @@ def happy_main(thearguments):
         normapp_byslice = normapp.reshape((xsize * ysize, numslices, destpoints))
         weights = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
         weight_byslice = weights.reshape((xsize * ysize, numslices, destpoints))
+        derivatives = np.zeros((xsize, ysize, numslices, 4), dtype=np.float64)
+        derivatives_byslice = derivatives.reshape((xsize * ysize, numslices, 4))
 
         timings.append(['Output arrays allocated' + passstring, time.time(), None, None])
 
@@ -1656,7 +1673,7 @@ def happy_main(thearguments):
                 instantaneous_time[t] = (t - zerophaselocs[whichpeak]) / slicesamplerate
             #print(t, whichpeak, zerophaselocs[whichpeak], instantaneous_time[t])
         stepsize = 0.025
-        maxtime = np.ceil(int(np.max(instantaneous_time) // stepsize)) * stepsize
+        maxtime = np.ceil(int(1.02 * tide_stats.getfracval(instantaneous_time, 0.98, 200) // stepsize)) * stepsize
         outtimes = sp.linspace(0.0, maxtime, num=(maxtime / stepsize), endpoint=False)
         atp_bypoint = cardiaccycleaverage(instantaneous_time,
                                           outtimes,
@@ -1706,8 +1723,14 @@ def happy_main(thearguments):
             if smoothapp:
                 for loc in validlocs:
                     rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(phaseFs, rawapp_byslice[loc, theslice, :])
-            slicemin = np.min(rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
-            app_byslice[validlocs, theslice, :] = rawapp_byslice[validlocs, theslice, :] - slicemin
+                    derivatives_byslice[loc, theslice, :] = circularderivs(rawapp_byslice[loc, theslice, :])
+            appflips_byslice = np.where(-derivatives_byslice[:, :, 2] > derivatives_byslice[:, :, 0], -1.0, 1.0)
+            if fliparteries:
+                corrected_rawapp_byslice = rawapp_byslice * appflips_byslice[:, :, None]
+            else:
+                corrected_rawapp_byslice = rawapp_byslice
+            slicemin = np.min(corrected_rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
+            app_byslice[validlocs, theslice, :] = corrected_rawapp_byslice[validlocs, theslice, :] - slicemin
             normapp_byslice[validlocs, theslice, :] = np.nan_to_num(app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None])
         if not verbose:
             print('done')
@@ -1728,7 +1751,7 @@ def happy_main(thearguments):
 
         # make and save a voxel intensity histogram
         if unnormvesselmap:
-            app2d = normapp.reshape((numspatiallocs, destpoints))
+            app2d = app.reshape((numspatiallocs, destpoints))
         else:
             app2d = normapp.reshape((numspatiallocs, destpoints))
         validlocs = np.where(mask > 0)[0]
@@ -1758,7 +1781,7 @@ def happy_main(thearguments):
 
         # save multiple versions of the hard vessel mask
         if unnormvesselmap:
-            vesselmask = np.where(np.max(normapp, axis=3) > hardvesselthresh, 1, 0)
+            vesselmask = np.where(np.max(app, axis=3) > hardvesselthresh, 1, 0)
             minphase = np.argmin(app, axis=3) * 2.0 * np.pi / destpoints - np.pi
             maxphase = np.argmax(app, axis=3) * 2.0 * np.pi / destpoints - np.pi
         else:
@@ -1766,8 +1789,8 @@ def happy_main(thearguments):
             minphase = np.argmin(normapp, axis=3) * 2.0 * np.pi / destpoints - np.pi
             maxphase = np.argmax(normapp, axis=3) * 2.0 * np.pi / destpoints - np.pi
         risediff = (maxphase - minphase) * vesselmask
-        arteries = np.where(risediff < 0, 1, 0)
-        veins = np.where(risediff > 0, 1, 0)
+        arteries = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmask, 0)
+        veins = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmask, 0)
         theheader = nim_hdr
         theheader['dim'][4] = 1
         if (numpasses > 1) and (thispass == 1):
@@ -1789,6 +1812,12 @@ def happy_main(thearguments):
     else:
         vesselmap = np.max(normapp, axis=3)
     tide_io.savetonifti(vesselmap, theheader, outputroot + '_vesselmap')
+    tide_io.savetonifti(np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmap, 0.0),
+                        theheader,
+                        outputroot + '_arterymap')
+    tide_io.savetonifti(np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmap, 0.0),
+                        theheader,
+                        outputroot + '_veinmap')
 
     # now generate aliased cardiac signals and regress them out of the data
     if doglm:
