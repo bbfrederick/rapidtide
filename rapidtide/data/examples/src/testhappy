@@ -1,24 +1,25 @@
 #!/bin/csh -f
 
-happyx \
+happy \
     happyfmri.nii.gz \
     happyfmri.json \
-    ../dst/happyx_firstpass \
+    ../dst/happy_flip \
+    --mklthreads=4 \
+    --dodlfilter \
+    --mklthreads=4 \
+    --saveinfoasjson \
+    --fliparteries \
+    --model=model_revised
+
+happy \
+    happyfmri.nii.gz \
+    happyfmri.json \
+    ../dst/happy_noflip \
+    --mklthreads=4 \
     --dodlfilter \
     --mklthreads=4 \
     --saveinfoasjson \
     --model=model_revised
-
-happyx \
-    happyfmri.nii.gz \
-    happyfmri.json \
-    ../dst/happyx_secondpass \
-    --dodlfilter \
-    --mklthreads=4 \
-    --saveinfoasjson \
-    --model=model_revised \
-    --cardcalconly --estmask=../dst/happyx_firstpass_vesselmask.nii.gz
-
 
 #happyx \
 #    ses-060_bold_trunc.nii.gz \
