@@ -819,6 +819,7 @@ def happy_main(thearguments):
     smoothapp = True
     unnormvesselmap = True
     fliparteries = False
+    pulsereconstepsize = 0.01
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
@@ -1672,9 +1673,8 @@ def happy_main(thearguments):
             if t > zerophaselocs[whichpeak]:
                 instantaneous_time[t] = (t - zerophaselocs[whichpeak]) / slicesamplerate
             #print(t, whichpeak, zerophaselocs[whichpeak], instantaneous_time[t])
-        stepsize = 0.025
-        maxtime = np.ceil(int(1.02 * tide_stats.getfracval(instantaneous_time, 0.98, 200) // stepsize)) * stepsize
-        outtimes = sp.linspace(0.0, maxtime, num=(maxtime / stepsize), endpoint=False)
+        maxtime = np.ceil(int(1.02 * tide_stats.getfracval(instantaneous_time, 0.98, 200) // pulsereconstepsize)) * pulsereconstepsize
+        outtimes = sp.linspace(0.0, maxtime, num=(maxtime / pulsereconstepsize), endpoint=False)
         atp_bypoint = cardiaccycleaverage(instantaneous_time,
                                           outtimes,
                                           cardfromfmri_sliceres,
