@@ -188,7 +188,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy', 'scipy', 'pandas', 'scikit-learn', 'nibabel',
+    install_requires=['numpy>=1.16', 'scipy', 'pandas', 'scikit-learn', 'nibabel',
                       'matplotlib', 'statsmodels'],
 
     # List additional groups of dependencies here (e.g. development
