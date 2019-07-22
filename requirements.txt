@@ -1,6 +1,7 @@
 matplotlib
 nibabel
-numpy>=1.16
+mumpy==1.16; python_version < '3.0'
+mumpy>=1.16; python_version >= '3.0'
 pandas
 scipy
 scikit-learn<0.21; python_version == '2.7'
