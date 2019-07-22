@@ -189,7 +189,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=["numpy>=1.16; python_version>='3.0'",
-                        "numpy==1.16; python_version<'3.0'",
+                        "numpy>=1.16,<1.17; python_version<'3.0'",
                         'scipy',
                         'pandas',
                         'scikit-learn',

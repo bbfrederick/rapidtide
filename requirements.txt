@@ -1,6 +1,6 @@
 matplotlib
 nibabel
-mumpy==1.16; python_version < '3.0'
+mumpy>=1.16,<1.17; python_version < '3.0'
 mumpy>=1.16; python_version >= '3.0'
 pandas
 scipy
