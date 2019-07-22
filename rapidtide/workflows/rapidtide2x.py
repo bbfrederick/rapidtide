@@ -57,6 +57,8 @@ import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
 import rapidtide.wiener as tide_wiener
 
+import copy
+
 try:
     import mkl
 
@@ -1546,7 +1548,7 @@ def rapidtide_main(thearguments):
         corrmask += 1
         threshval = -10000000.0
     if optiondict['savecorrmask']:
-        theheader = nim_hdr
+        theheader = copy.deepcopy(nim_hdr)
         if fileiscifti:
             theheader['intent_code'] = 3006
         else:
@@ -1652,7 +1654,7 @@ def rapidtide_main(thearguments):
                                              excludemask=internalglobalmeanexcludemask_valid)
         fullmeanmask = np.zeros((numspatiallocs), dtype=rt_floattype)
         fullmeanmask[validvoxels] = meanmask[:]
-        theheader = nim_hdr
+        theheader = copy.deepcopy(nim_hdr)
         if fileiscifti:
             theheader['intent_code'] = 3006
         else:
@@ -2210,7 +2212,7 @@ def rapidtide_main(thearguments):
                     break
 
             if optiondict['savedespecklemasks']:
-                theheader = nim_hdr
+                theheader = copy.deepcopy(nim_hdr)
                 if fileiscifti:
                     theheader['intent_code'] = 3006
                 else:
@@ -2452,7 +2454,7 @@ def rapidtide_main(thearguments):
     # do ones with one time point first
     timings.append(['Start saving maps', time.time(), None, None])
     if not optiondict['textio']:
-        theheader = nim_hdr
+        theheader = copy.deepcopy(nim_hdr)
         if fileiscifti:
             theheader['intent_code'] = 3006
         else:
@@ -2549,7 +2551,7 @@ def rapidtide_main(thearguments):
 
     # now do the ones with other numbers of time points
     if not optiondict['textio']:
-        theheader = nim_hdr
+        theheader = copy.deepcopy(nim_hdr)
         if fileiscifti:
             theheader['intent_code'] = 3002
         else:
@@ -2585,7 +2587,7 @@ def rapidtide_main(thearguments):
     del corrout
 
     if not optiondict['textio']:
-        theheader = nim_hdr
+        theheader = copy.deepcopy(nim_hdr)
         theheader['pixdim'][4] = fmritr
         theheader['toffset'] = 0.0
         if fileiscifti:

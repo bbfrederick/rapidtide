@@ -50,6 +50,7 @@ import rapidtide.helper_classes as tide_classes
 from scipy.signal import welch, savgol_filter
 from scipy.stats import kurtosis, skew
 from statsmodels.robust import mad
+import copy
 
 import warnings
 
@@ -1204,7 +1205,7 @@ def happy_main(thearguments):
     mask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, :], axis=1),
                                          threshpct=maskthreshpct))
     validvoxels = np.where(mask > 0)[0]
-    theheader = nim_hdr
+    theheader = copy.deepcopy(nim_hdr)
     theheader['dim'][4] = 1
     timings.append(['Mask created', time.time(), None, None])
     if outputlevel > 0:
@@ -1738,7 +1739,7 @@ def happy_main(thearguments):
         print('phase projection done')
 
         # save the analytic phase projection image
-        theheader = nim_hdr
+        theheader = copy.deepcopy(nim_hdr)
         theheader['dim'][4] = destpoints
         theheader['toffset'] = -np.pi
         theheader['pixdim'][4] = 2.0 * np.pi / destpoints
@@ -1791,7 +1792,7 @@ def happy_main(thearguments):
         risediff = (maxphase - minphase) * vesselmask
         arteries = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmask, 0)
         veins = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmask, 0)
-        theheader = nim_hdr
+        theheader = copy.deepcopy(nim_hdr)
         theheader['dim'][4] = 1
         if (numpasses > 1) and (thispass == 1):
             tide_io.savetonifti(vesselmask, theheader, outputroot + '_vesselmask')
@@ -1837,7 +1838,7 @@ def happy_main(thearguments):
                     tide_util.valtoindex(outphases, phasevals[theslice, t])
                 cardiacnoise_byslice[validlocs, theslice, t] = \
                     rawapp_byslice[validlocs, theslice, phaseindices_byslice[validlocs, theslice, t]]
-        theheader = nim_hdr
+        theheader = copy.deepcopy(nim_hdr)
         timings.append(['Cardiac signal generated', time.time(), None, None])
         if savecardiacnoise:
             tide_io.savetonifti(cardiacnoise.reshape((xsize, ysize, numslices, timepoints)), theheader,
@@ -1907,7 +1908,7 @@ def happy_main(thearguments):
             datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
             filtereddata = fmri_data - datatoremove
             timings.append(['Cardiac signal regression finished', time.time(), numspatiallocs, 'voxels'])
-            theheader = nim_hdr
+            theheader = copy.deepcopy(nim_hdr)
             theheader['dim'][4] = 1
             tide_io.savetonifti(fitcoffs.reshape((xsize, ysize, numslices)), theheader,
                                 outputroot + '_fitamp')
@@ -1916,7 +1917,7 @@ def happy_main(thearguments):
             tide_io.savetonifti(rvals.reshape((xsize, ysize, numslices)), theheader,
                                 outputroot + '_fitR')
 
-        theheader = nim_hdr
+        theheader = copy.deepcopy(nim_hdr)
         tide_io.savetonifti(filtereddata.reshape((xsize, ysize, numslices, timepoints)), theheader,
                             outputroot + '_filtereddata')
         tide_io.savetonifti(datatoremove.reshape((xsize, ysize, numslices, timepoints)), theheader,
