@@ -20,8 +20,8 @@ install:
   - conda install -c conda-forge numpy scipy scikit-learn codecov pytest-cov matplotlib nibabel statsmodels pyfftw numba pytest pip 
 
   # this supposedly fixes a multiprocessing crash
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
+  #- sudo rm -rf /dev/shm
+  #- sudo ln -s /run/shm /dev/shm
 
 
   # now install rapidtide
