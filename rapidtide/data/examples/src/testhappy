@@ -9,7 +9,8 @@ happy \
     --mklthreads=4 \
     --saveinfoasjson \
     --fliparteries \
-    --model=model_revised
+    --model=model_revised \
+    --glm
 
 happy \
     happyfmri.nii.gz \
