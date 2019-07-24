@@ -9,6 +9,7 @@ import rapidtide.correlate as tide_corr
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
 import rapidtide.nullcorrpass as tide_nullcorr
+import rapidtide.nullcorrpassx as tide_nullcorrx
 
 import matplotlib.pyplot as plt
 from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path, create_dir
@@ -54,7 +55,7 @@ def test_nullcorr(debug=False, display=False):
 
     optiondict = {
         'numestreps':        10000,
-        'showprogressbar':   False,
+        'showprogressbar':   debug,
         'usewindowfunc':     True,
         'detrendorder':      3,
         'windowfunc':        'hamming',
@@ -83,16 +84,19 @@ def test_nullcorr(debug=False, display=False):
     if debug:
         print(optiondict)
 
-    for nullfunction in [tide_nullcorr.getNullDistributionDatax, tide_nullcorr.getNullDistributionData]:
+    for nullfunction in [tide_nullcorrx.getNullDistributionDatax, tide_nullcorr.getNullDistributionData]:
         for i in range(numpasses):
-            corrlist = nullfunction(sourcedata,
-                                    xcorr_x,
-                                    lfofilter,
-                                    Fs,
-                                    corrzero,
-                                    lagmininpts,
-                                    lagmaxinpts,
-                                    optiondict)
+            if nullfunction == tide_nullcorr.getNullDistributionData:
+                corrlist = nullfunction(sourcedata,
+                                        xcorr_x,
+                                        lfofilter,
+                                        Fs,
+                                        corrzero,
+                                        lagmininpts,
+                                        lagmaxinpts,
+                                        optiondict)
+            else:
+                break
     
             tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), 'corrdistdata.txt'))
     
