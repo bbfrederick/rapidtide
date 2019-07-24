@@ -45,6 +45,7 @@ try:
     numbaexists = True
 except ImportError:
     numbaexists = False
+numbaexists = False
 
 try:
     import nibabel as nib
@@ -69,7 +70,7 @@ def conditionaljit():
     def resdec(f):
         if (not numbaexists) or donotusenumba:
             return f
-        return jit(f)
+        return jit(f, nopython=False)
 
     return resdec
 
