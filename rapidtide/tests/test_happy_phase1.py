@@ -32,6 +32,7 @@ def test_happy_phase1(debug=False):
         theargs += ['--gridbins=2.0']
         theargs += ['--gridkernel=kaiser']
         theargs += ['--model=model_revised']
+        print(' '.join(theargs))
         happy_workflow.happy_main(theargs)
     
     diffmaps = tide_util.comparehappyruns(os.path.join(get_test_temp_path(), 'happy_output'), os.path.join(get_test_target_path(), 'happy_target'), debug=debug)

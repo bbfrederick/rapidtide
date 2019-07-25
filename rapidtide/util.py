@@ -543,7 +543,7 @@ def comparehappyruns(root1, root2, debug=False):
     results = {}
     if debug:
         print('comparehappyruns rootnames:', root1, root2)
-    for map in ['app']:
+    for map in ['app', 'mask', 'vesselmask']:
         filename1 = root1 + '_' + map + '.nii.gz'
         maskname1 = root1 + '_mask.nii.gz'
         filename2 = root2 + '_' + map + '.nii.gz'
