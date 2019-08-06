@@ -61,10 +61,11 @@ Python version compatibility
 -----------------------------
 I've now switched over to using python 3 as my daily driver, so I know that
 everything works there.  However, I know that a lot of people can't or won't
-switch from python 2x, so I make every effort to write code that works in both,
-and I test in both.  I don't expect to switch over to any python 3 only
-constructions anytime soon.  As of the latest version, rapidtide2 does finally
-seem to run a little faster in python 3 than 2 if that matters to you.
+switch from python 2x, so I've made every effort to write code that works in both,
+and I have been testing in both.
+
+That said, the writing is on the wall, and since I depend on a number of packages that have dropped or are dropping 2.x support, I'm going with the flow and sunsetting 2.x support.  The next release will be the last to support 2.x.
+
 
 What’s included in this package?
 --------------------------------
