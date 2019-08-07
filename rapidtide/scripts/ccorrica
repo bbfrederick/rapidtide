@@ -30,6 +30,7 @@ import rapidtide.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.correlate as tide_corr
+import rapidtide.resample as tide_resample
 from scipy.stats.stats import pearsonr
 import numpy as np
 import nibabel as nib
@@ -63,6 +64,9 @@ def usage():
     print("    -L                 - filter data and regressors to LFO band")
     print("    -R                 - filter data and regressors to respiratory band")
     print("    -C                 - filter data and regressors to cardiac band")
+    print("    -O OVERSAMPFAC     - oversample timecourses by the integer factor OVERSAMPFAC prior to")
+    print("                         performing correlations.  Setting OVERSAMPFAC to -1 chooses the minimum ")
+    print("                         factor that results in resampling to at least 2Hz.")
     return ()
 
 
@@ -75,6 +79,7 @@ detrendorder = 1
 dopartial = False
 verbose = False
 summarymode = False
+oversampfactor = 1
 
 debug = False
 
@@ -91,7 +96,7 @@ Fs = 1.0 / sampletime
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "r:VLRCF:",
+    opts, args = getopt.getopt(sys.argv[4:], "r:VLRCF:O:",
                                ["phat", "liang", "eckart", "nodetrend", "nowindow", "windowfunc=", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
@@ -167,6 +172,10 @@ for o, a in opts:
         theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
         if verbose:
             print('prefiltering to ', arb_lower, arb_upper, "(stops at ", arb_lowerstop, arb_upperstop, ")")
+    elif o == "-O":
+        oversampfactor = int(a)
+        if verbose:
+            print('oversample factor set to ', oversampfactor)
     else:
         assert False, "unhandled option"
 
@@ -174,8 +183,22 @@ tcdata = tide_io.readvecs(datafilename)
 thedims = tcdata.shape
 tclen = thedims[1]
 numcomponents = thedims[0]
+
+# check to see if we need to adjust the oversample factor
+if oversampfactor < 0:
+    oversampfactor = int(np.max([np.ceil(sampletime // 0.5), 1]))
+    print('oversample factor set to', oversampfactor)
+
 reformdata = np.reshape(tcdata, (numcomponents, tclen))
-print("data array shape is ", reformdata.shape)
+if oversampfactor == 1:
+    print("data array shape is ", reformdata.shape)
+else:
+    resampdata = np.zeros((numcomponents, tclen * oversampfactor), dtype=np.float)
+    for component in range(0, numcomponents):
+        resampdata[component, :] = tide_resample.upsample(reformdata[component, :], Fs, Fs * oversampfactor, intfac=True)
+    reformdata = resampdata
+    Fs *= oversampfactor
+    tclen *=oversampfactor
 
 for component in range(0, numcomponents):
     reformdata[component, :] = tide_math.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]),
