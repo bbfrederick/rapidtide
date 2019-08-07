@@ -68,11 +68,12 @@ def _procOneNullCorrelationx(rawtimecourse,
                                               windowfunc=thecorrelator.windowfunc)
 
     # crosscorrelate with original
-    thexcorr, dummy = tide_corrpass.onecorrelation(thecorrelator, permutedtc)
+    thexcorr_y, thexcorr_x, dummy = tide_corrpass.onecorrelation(thecorrelator, permutedtc)
 
     # fit the correlation
+    thefitter.setcorrtimeaxis(thexcorr_x)
     maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = \
-        tide_corrfit.onecorrfitx(thexcorr,
+        tide_corrfit.onecorrfitx(thexcorr_y,
                 thefitter,
                 disablethresholds=disablethresholds,
                 despeckle_thresh=despeckle_thresh,

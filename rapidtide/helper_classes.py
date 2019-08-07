@@ -154,6 +154,7 @@ class correlator:
     windowfunc = 'hamming'
     corrweighting = 'none'
     reftc = None
+    timeaxis = None
 
     def __init__(self,
                  Fs=0.0,
@@ -197,6 +198,10 @@ class correlator:
         self.lagmaxinpts = lagmaxinpts
 
 
+    def trim(self, vector):
+        return vector[self.corrorigin - self.lagmininpts:self.corrorigin + self.lagmaxinpts]
+
+
     def run(self, thetc):
         if len(thetc) != len(self.reftc):
             print('timecourses are of different sizes - exiting')
@@ -205,12 +210,18 @@ class correlator:
         preppedtc = self.preptc(thetc)
 
         # now actually do the correlation
-        thexcorr = tide_corr.fastcorrelate(preppedtc, self.reftc, usefft=True, weighting=self.corrweighting)
+        self.thexcorr = tide_corr.fastcorrelate(preppedtc, self.reftc, usefft=True, weighting=self.corrweighting)
+
+        # make the time axis
+        self.numpoints = len(self.thexcorr)
+        self.timeaxis = np.arange(0.0, self.numpoints) * (1.0 / self.Fs) \
+                        - ((self.numpoints + 1) * (1.0 / self.Fs)) / 2.0
 
         # find the global maximum value
-        theglobalmax = np.argmax(thexcorr)
+        theglobalmax = np.argmax(self.thexcorr)
 
-        return thexcorr[self.corrorigin - self.lagmininpts:self.corrorigin + self.lagmaxinpts], theglobalmax
+        #return thexcorr[self.corrorigin - self.lagmininpts:self.corrorigin + self.lagmaxinpts], theglobalmax
+        return self.trim(self.thexcorr), self.trim(self.timeaxis), theglobalmax
 
 
 class correlation_fitter:

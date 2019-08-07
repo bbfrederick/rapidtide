@@ -60,9 +60,9 @@ def _procOneVoxelCorrelation(vox,
         thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
     else:
         thetc[:] = fmritc
-    thexcorr, theglobalmax = onecorrelation(thecorrelator, thetc)
+    thexcorr_y, thexcorr_x, theglobalmax = onecorrelation(thecorrelator, thetc)
 
-    return vox, np.mean(thetc), thexcorr, theglobalmax
+    return vox, np.mean(thetc), thexcorr_y, thexcorr_x, theglobalmax
 
 
 def correlationpass(fmridata,
@@ -157,14 +157,15 @@ def correlationpass(fmridata,
             # corrmask[voxel[0]] = 1
             meanval[voxel[0]] = voxel[1]
             corrout[voxel[0], :] = voxel[2]
-            theglobalmaxlist.append(voxel[3] + 0)
+            thecorrscale = voxel[3]
+            theglobalmaxlist.append(voxel[4] + 0)
             volumetotal += 1
         del data_out
     else:
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and showprogressbar:
                 tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            dummy, meanval[vox], corrout[vox, :], theglobalmax = _procOneVoxelCorrelation(vox,
+            dummy, meanval[vox], corrout[vox, :], thecorrscale, theglobalmax = _procOneVoxelCorrelation(vox,
                                                                                           thetc,
                                                                                           thecorrelator,
                                                                                           fmri_x,
@@ -183,4 +184,4 @@ def correlationpass(fmridata,
     collected = gc.collect()
     print("Garbage collector: collected %d objects." % collected)
 
-    return volumetotal, theglobalmaxlist
+    return volumetotal, theglobalmaxlist, thecorrscale
