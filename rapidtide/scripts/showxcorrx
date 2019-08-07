@@ -38,7 +38,8 @@ import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.correlate as tide_corr
-import rapidtide.nullcorrpass as tide_nullcorr
+import rapidtide.nullcorrpassx as tide_nullcorr
+import rapidtide.helper_classes as tide_classes
 
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
@@ -47,50 +48,6 @@ from numpy import r_, argmax, zeros, shape, reshape, eye, sqrt
 from numpy.random import shuffle, permutation
 
 from matplotlib.pyplot import plot, legend, show, figure
-
-
-def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, detrendorder, searchstart, searchend,
-                            windowfunc='hamming', corrweighting='none', numreps=1000):
-    print('estimating significance distribution using ', numreps, ' repetitions')
-    corrlist = zeros(numreps, dtype='float')
-    corrlist_pear = zeros(numreps, dtype='float')
-    xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
-
-    filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata),
-                                             prewindow=prewindow,
-                                             detrendorder=detrendorder,
-                                             windowfunc=windowfunc)
-    for i in range(0, numreps):
-        # make a shuffled copy of the regressors
-        shuffleddata = permutation(indata)
-
-        # filter it
-        filteredshuffleddata = np.nan_to_num(
-            tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata),
-                                    prewindow=prewindow,
-                                    detrendorder=detrendorder,
-                                    windowfunc=windowfunc))
-
-        # crosscorrelate with original
-        theshuffledxcorr = tide_corr.fastcorrelate(filteredindata, filteredshuffleddata, usefft=dofftcorr,
-                                                   weighting=corrweighting)
-
-        # find and tabulate correlation coefficient at optimal lag
-        theshuffledxcorr_trim = theshuffledxcorr[searchstart:searchend + 1]
-        maxdelay = xcorr_x_trim[argmax(theshuffledxcorr_trim)]
-        corrlist[i] = theshuffledxcorr_trim[argmax(theshuffledxcorr_trim)]
-
-        # find and tabulate correlation coefficient at 0 lag
-        corrlist_pear[i] = pearsonr(filteredindata, filteredshuffleddata)[0]
-
-        # progress
-        # tide_util.progressbar(i + 1, numreps, label='Percent complete')
-
-    # jump to line after progress bar
-    print()
-
-    # return the distribution data
-    return corrlist, corrlist_pear
 
 
 def printthresholds(pcts, thepercentiles, labeltext):
@@ -465,7 +422,7 @@ def showxcorrx_main(inputargs):
     sampletime = 1.0 / Fs
     xcorr_x = r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     halfwindow = int(searchrange * Fs)
-    corrzero = xcorrlen // 2
+    corrzero = xcorrlen // 2 + 1
     searchstart = corrzero - halfwindow
     searchend = corrzero + halfwindow
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
@@ -496,10 +453,6 @@ def showxcorrx_main(inputargs):
     # set the significance threshold
     if estimate_significance:
         # generate a list of correlations from shuffled data
-        '''corrlist, corrlist_pear = getNullDistributionData(trimdata1, xcorr_x, theprefilter,
-                                                          prewindow, detrendorder, searchstart, searchend,
-                                                          corrweighting=corrweighting, numreps=numreps,
-                                                          windowfunc=windowfunc)'''
         optiondict = {
             'numestreps':        numreps,
             'showprogressbar':   False,
@@ -510,7 +463,6 @@ def showxcorrx_main(inputargs):
             'nprocs':            1,
             'widthlimit':        1000.0,
             'bipolar':           False,
-            'fixdelay':          False,
             'findmaxtype':       'gauss',
             'lagmin':            -searchrange,
             'lagmax':            searchrange,
@@ -525,20 +477,55 @@ def showxcorrx_main(inputargs):
             'lagmod':            1000.0,
             'searchfrac':        0.5,
             'permutationmethod': 'shuffle',
+            'mp_chunksize':      1000,
             'hardlimit':         True
         }
 
         if debug:
             print(optiondict)
 
+        # initialize the correlator
+        thecorrelator = tide_classes.correlator(Fs=Fs,
+                                                ncprefilter=theprefilter,
+                                                usewindowfunc=optiondict['usewindowfunc'],
+                                                detrendorder=optiondict['detrendorder'],
+                                                windowfunc=optiondict['windowfunc'],
+                                                corrweighting=optiondict['corrweighting'])
+
+        # intitialize the correlation fitter
+        thefitter = tide_classes.correlation_fitter(lagmod=optiondict['lagmod'],
+                                                    lthreshval=optiondict['lthreshval'],
+                                                    uthreshval=optiondict['uthreshval'],
+                                                    bipolar=optiondict['bipolar'],
+                                                    lagmin=optiondict['lagmin'],
+                                                    lagmax=optiondict['lagmax'],
+                                                    absmaxsigma=optiondict['absmaxsigma'],
+                                                    debug=optiondict['debug'],
+                                                    findmaxtype=optiondict['findmaxtype'],
+                                                    refine=optiondict['gaussrefine'],
+                                                    searchfrac=optiondict['searchfrac'],
+                                                    fastgauss=optiondict['fastgauss'],
+                                                    enforcethresh=optiondict['enforcethresh'],
+                                                    hardlimit=optiondict['hardlimit'])
+        thecorrelator.setreftc(tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
+                                prewindow=False,
+                                detrendorder=detrendorder))
+        thecorrelator.setlimits(corrzero,
+                                int((-optiondict['lagmin'] / sampletime) - 0.5),
+                                int((optiondict['lagmax'] / sampletime) + 0.5))
+        thefitter.setcorrtimeaxis(xcorr_x[searchstart:searchend + 1])
         corrlist = tide_nullcorr.getNullDistributionDatax(trimdata1,
-                                                          xcorr_x,
-                                                          theprefilter,
-                                                          Fs,
-                                                          corrzero,
-                                                          searchstart,
-                                                          searchend,
-                                                          optiondict)
+                                                    Fs,
+                                                    thecorrelator,
+                                                    thefitter,
+                                                    numestreps=optiondict['numestreps'],
+                                                    nprocs=optiondict['nprocs'],
+                                                    showprogressbar=optiondict['showprogressbar'],
+                                                    chunksize=optiondict['mp_chunksize'],
+                                                    permutationmethod=optiondict['permutationmethod'],
+                                                    fixdelay=False,
+                                                    rt_floatset=np.float64,
+                                                    rt_floattype='float64')
 
         # calculate percentiles for the crosscorrelation from the distribution data
         histlen = 100
@@ -548,6 +535,20 @@ def showxcorrx_main(inputargs):
         if debug:
             tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
             tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
+
+        corrlist_pear = tide_nullcorr.getNullDistributionDatax(trimdata1,
+                                                    Fs,
+                                                    thecorrelator,
+                                                    thefitter,
+                                                    numestreps=optiondict['numestreps'],
+                                                    nprocs=optiondict['nprocs'],
+                                                    showprogressbar=optiondict['showprogressbar'],
+                                                    chunksize=optiondict['mp_chunksize'],
+                                                    permutationmethod=optiondict['permutationmethod'],
+                                                    fixdelay=True,
+                                                    fixeddelayvalue=0.0,
+                                                    rt_floatset=np.float64,
+                                                    rt_floattype='float64')
 
         # calculate significance for the pearson correlation
         pearpcts, pearpcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist_pear, histlen, thepercentiles)

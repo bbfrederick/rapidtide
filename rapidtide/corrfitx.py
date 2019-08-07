@@ -92,9 +92,11 @@ def onecorrfitx(correlationfunc,
         failreason = np.int16(0)
         maxlag = rt_floatset(fixeddelayvalue)
         maxindex = np.int16(bisect.bisect_left(thefitter.corrtimeaxis, fixeddelayvalue))
-        maxval = rt_floatset(flipfac * thetc[maxindex])
+        maxval = rt_floatset(flipfac * correlationfunc[maxindex])
         maxsigma = rt_floatset(1.0)
         maskval = np.uint16(1)
+        peakstart = maxindex
+        peakend = maxindex
 
     return maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason
 

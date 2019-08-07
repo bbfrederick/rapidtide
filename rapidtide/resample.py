@@ -450,7 +450,7 @@ def arbresample(inputdata, init_freq, final_freq,
         return resampled
 
 
-def upsample(inputdata, Fs_init, Fs_higher, method='univariate', debug=False):
+def upsample(inputdata, Fs_init, Fs_higher, method='univariate', intfac=False, debug=False):
     starttime = time.time()
     if Fs_higher <= Fs_init:
         print('upsample: target frequency must be higher than initial frequency')
@@ -461,6 +461,10 @@ def upsample(inputdata, Fs_init, Fs_higher, method='univariate', debug=False):
     endpoint = orig_x[-1] - orig_x[0]
     ts_higher = 1.0 / Fs_higher
     numresamppts = int(endpoint // ts_higher + 1)
+    if intfac:
+        numresamppts = int(Fs_higher // Fs_init) * len(inputdata)
+    else:
+        numresamppts = int(endpoint // ts_higher + 1)
     upsampled_x = np.arange(0.0, ts_higher * numresamppts, ts_higher)
     upsampled_y = doresample(orig_x, inputdata, upsampled_x, method=method)
     initfilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
