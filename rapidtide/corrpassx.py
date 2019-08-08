@@ -60,7 +60,7 @@ def _procOneVoxelCorrelation(vox,
         thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
     else:
         thetc[:] = fmritc
-    thexcorr_y, thexcorr_x, theglobalmax = onecorrelation(thecorrelator, thetc)
+    thexcorr_y, thexcorr_x, theglobalmax = thecorrelator.run(thetc)
 
     return vox, np.mean(thetc), thexcorr_y, thexcorr_x, theglobalmax
 
@@ -110,7 +110,7 @@ def correlationpass(fmridata,
 
     """
     thecorrelator.setreftc(referencetc)
-    thecorrelator.setlimits(corrorigin, lagmininpts, lagmaxinpts)
+    thecorrelator.setlimits(lagmininpts, lagmaxinpts)
 
     inputshape = np.shape(fmridata)
     volumetotal = 0

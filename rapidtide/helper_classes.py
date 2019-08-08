@@ -143,18 +143,13 @@ class proberegressor:
 
 
 class correlator:
-    oversampfreq = 0.0
-    corrorigin = 0
-    lagmininpts = 0
-    lagmaxinpts = 0
-    ncprefilter = None
-    referencetc = None
-    usewindowfunc = True
-    detrendorder = 1
-    windowfunc = 'hamming'
-    corrweighting = 'none'
     reftc = None
+    prepreftc = None
+    testtc = None
+    preptesttc = None
     timeaxis = None
+    corrlen = 0
+    datavalid = False
 
     def __init__(self,
                  Fs=0.0,
@@ -162,7 +157,7 @@ class correlator:
                  lagmininpts=0,
                  lagmaxinpts=0,
                  ncprefilter=None,
-                 referencetc=None,
+                 reftc=None,
                  usewindowfunc=True,
                  detrendorder=1,
                  windowfunc='hamming',
@@ -172,13 +167,14 @@ class correlator:
         self.lagmininpts = lagmininpts
         self.lagmaxinpts = lagmaxinpts
         self.ncprefilter = ncprefilter
-        self.referencetc = referencetc
+        self.reftc = reftc
         self.usewindowfunc = usewindowfunc
         self.detrendorder = detrendorder
         self.windowfunc = windowfunc
         self.corrweighting = corrweighting
-        if self.referencetc is not None:
-            self.setreftc(self.referencetc)
+        if self.reftc is not None:
+            self.setreftc(self.reftc)
+
 
     def preptc(self, thetc):
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function
@@ -189,11 +185,13 @@ class correlator:
 
 
     def setreftc(self, reftc):
-        self.reftc = self.preptc(reftc)
+        self.reftc = reftc
+        self.prepreftc = self.preptc(self.reftc)
+        self.corrlen = len(self.reftc) * 2 - 1
+        self.datavalid = False
 
 
-    def setlimits(self, corrorigin, lagmininpts, lagmaxinpts):
-        self.corrorigin = corrorigin
+    def setlimits(self, lagmininpts, lagmaxinpts):
         self.lagmininpts = lagmininpts
         self.lagmaxinpts = lagmaxinpts
 
@@ -202,40 +200,46 @@ class correlator:
         return vector[self.corrorigin - self.lagmininpts:self.corrorigin + self.lagmaxinpts]
 
 
-    def run(self, thetc):
+    def getcorrelation(self, trim=True):
+        if self.datavalid:
+            if trim:
+                return self.trim(self.thexcorr), self.trim(self.timeaxis), self.theglobalmax
+            else:
+                return self.thexcorr, self.timeaxis, self.theglobalmax
+        else:
+            print('must run correlation before fetching data')
+            return None, None, None
+
+
+    def run(self, thetc, trim=True):
         if len(thetc) != len(self.reftc):
             print('timecourses are of different sizes - exiting')
             sys.exit()
 
-        preppedtc = self.preptc(thetc)
+        self.testtc = thetc
+        self.preptesttc = self.preptc(self.testtc)
 
         # now actually do the correlation
-        self.thexcorr = tide_corr.fastcorrelate(preppedtc, self.reftc, usefft=True, weighting=self.corrweighting)
+        self.thexcorr = tide_corr.fastcorrelate(self.preptesttc, self.prepreftc, usefft=True, weighting=self.corrweighting)
+        self.corrlen = len(self.thexcorr)
+        self.corrorigin = self.corrlen // 2 + 1
 
         # make the time axis
         self.numpoints = len(self.thexcorr)
         self.timeaxis = np.arange(0.0, self.numpoints) * (1.0 / self.Fs) \
-                        - ((self.numpoints + 1) * (1.0 / self.Fs)) / 2.0
+                        - ((self.numpoints - 1) * (1.0 / self.Fs)) / 2.0
 
         # find the global maximum value
-        theglobalmax = np.argmax(self.thexcorr)
+        self.theglobalmax = np.argmax(self.thexcorr)
+        self.datavalid = True
 
-        #return thexcorr[self.corrorigin - self.lagmininpts:self.corrorigin + self.lagmaxinpts], theglobalmax
-        return self.trim(self.thexcorr), self.trim(self.timeaxis), theglobalmax
+        if trim:
+            return self.trim(self.thexcorr), self.trim(self.timeaxis), self.theglobalmax
+        else:
+            return self.thexcorr, self.timeaxis, self.theglobalmax
 
 
 class correlation_fitter:
-    lagmin = -30.0
-    lagmax = 30.0
-    absmaxsigma = 1000.0
-    hardlimit = True
-    bipolar = False
-    lthreshval = 0.0
-    uthreshval = 1.0
-    debug = False
-    zerooutbadfit = True
-    findmaxtype = 'gauss'
-    lagmod = 1000.0
     corrtimeaxis = None
 
     def __init__(self,
