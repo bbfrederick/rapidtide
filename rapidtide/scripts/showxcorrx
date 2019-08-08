@@ -43,9 +43,6 @@ import rapidtide.helper_classes as tide_classes
 
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
-from scipy import sin, arange, pi, randn
-from numpy import r_, argmax, zeros, shape, reshape, eye, sqrt
-from numpy.random import shuffle, permutation
 
 from matplotlib.pyplot import plot, legend, show, figure
 
@@ -138,21 +135,22 @@ def showxcorrx_main(inputargs):
     dopartial = False
     duration = 1000000.0
     starttime = 0.0
-    doplot = False
     thelabel = ""
     trimdata = False
     verbose = False
     summarymode = False
     outputfile = None
-    dofftcorr = True
     labelline = False
-    estimate_significance = False
     writecorrlists = False
-    flipregressor = False
+    flipfac = 1.0
     savecorrelation = False
     calccepstraldelay = False
     debug = False
     numreps = 0
+    permutationmethod = 'shuffle'
+    findmaxtype = 'gauss'
+    showprogressbar = False
+
 
     nargs = len(inputargs)
     if nargs < 4:
@@ -192,6 +190,8 @@ def showxcorrx_main(inputargs):
                                     "windowfunc=",
                                     "cepstral",
                                     "savecorr=",
+                                    "progressbar",
+                                    "phaserandomize",
                                     "debug",
                                     "help"])
     except getopt.GetoptError as err:
@@ -209,6 +209,14 @@ def showxcorrx_main(inputargs):
             trimdata = True
             if verbose:
                 print('trimming data to match')
+        elif o == "--phaserandomize":
+            permutationmethod = 'phaserandom'
+            if verbose:
+                print('will show progress bar during null correlation calculation')
+        elif o == "--progressbar":
+            showprogressbar = True
+            if verbose:
+                print('will show progress bar during null correlation calculation')
         elif o == "--cepstral":
             calccepstraldelay = True
             if verbose:
@@ -230,7 +238,7 @@ def showxcorrx_main(inputargs):
             if verbose:
                 print('turning on debugging')
         elif o == "-f":
-            flipregressor = True
+            flipfac *= -1.0
             if verbose:
                 print('negating second regressor')
         elif o == "-a":
@@ -274,7 +282,6 @@ def showxcorrx_main(inputargs):
                 print('label set to', thelabel)
         elif o == "-N":
             numreps = int(a)
-            estimate_significance = True
             if verbose:
                 print('estimating significance threshold with ', numreps, ' trials')
         elif o == "-r":
@@ -340,6 +347,11 @@ def showxcorrx_main(inputargs):
         dumpfiltered = False
     showpearson = True
 
+    if windowfunc == 'None':
+        usewindowfunc = False
+    else:
+        usewindowfunc = True
+
     startpoint1 = max([int(starttime * Fs), 0])
     if debug:
         print('startpoint set to ', startpoint1)
@@ -367,8 +379,7 @@ def showxcorrx_main(inputargs):
                                             prewindow=prewindow,
                                             detrendorder=detrendorder,
                                             windowfunc=windowfunc)
-    if flipregressor:
-        filtereddata2 *= -1.0
+    filtereddata2 *= flipfac
     if dumpfiltered:
         tide_io.writenpvecs(filtereddata1, "filtereddata1.txt")
         tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
@@ -386,8 +397,20 @@ def showxcorrx_main(inputargs):
         if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
             thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
-    thexcorr = tide_corr.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr, weighting=corrweighting,
-                                       displayplots=debug)
+    # initialize the correlator
+    thecorrelator = tide_classes.correlator(Fs=Fs,
+                                            ncprefilter=theprefilter,
+                                            usewindowfunc=prewindow,
+                                            detrendorder=detrendorder,
+                                            windowfunc=windowfunc,
+                                            corrweighting=corrweighting)
+    thecorrelator.setreftc(trimdata2 * flipfac)
+
+    # do the correlation
+    thexcorr, xcorr_x, globalmax = thecorrelator.run(trimdata1, trim=False)
+    thecorrelator.setlimits(int((searchrange * Fs) - 0.5), int((searchrange * Fs) + 0.5))
+    thexcorr_trim, xcorr_x_trim, globalmax = thecorrelator.getcorrelation(trim=True)
+
     if calccepstraldelay:
         cepdelay = tide_corr.cepstraldelay(filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display)
         cepcoff = tide_corr.delayedcorr(filtereddata1, filtereddata2, cepdelay, 1.0 / Fs)
@@ -418,114 +441,47 @@ def showxcorrx_main(inputargs):
                                 windowfunc=windowfunc),
         Fs)
 
-    xcorrlen = len(thexcorr)
-    sampletime = 1.0 / Fs
-    xcorr_x = r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
-    halfwindow = int(searchrange * Fs)
-    corrzero = xcorrlen // 2 + 1
-    searchstart = corrzero - halfwindow
-    searchend = corrzero + halfwindow
-    xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
-    thexcorr_trim = thexcorr[searchstart:searchend + 1]
+    # intitialize the correlation fitter
+    thefitter = tide_classes.correlation_fitter(corrtimeaxis=xcorr_x_trim,
+                                                lagmin=-searchrange,
+                                                lagmax=searchrange,
+                                                debug=debug,
+                                                findmaxtype=findmaxtype,
+                                                zerooutbadfit=False,
+                                                refine=True,
+                                                useguess=False,
+                                                fastgauss=False
+                                                )
+
     if debug:
-        print('searching for peak correlation over range ', searchstart, searchend)
-    maxdelay = xcorr_x_trim[argmax(thexcorr_trim)]
+        print('searching for peak correlation over range ',
+              thecorrelator.corrorigin - thecorrelator.lagmininpts,
+              thecorrelator.corrorigin + thecorrelator.lagmaxinpts)
+    maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
     if debug:
         print('maxdelay before refinement', maxdelay)
-    dofindmaxlag = True
-    if dofindmaxlag:
-        maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
-            xcorr_x_trim, thexcorr_trim, -searchrange, searchrange, 1000.0,
-            refine=True,
-            useguess=False,
-            fastgauss=False,
-            displayplots=False)
-        if debug:
-            print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
-        R = maxval
+
+    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(thexcorr_trim)
+    if debug:
+        print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
+    R = maxval
     if debug:
         print('maxdelay after refinement', maxdelay)
         if failreason > 0:
             print('failreason =', failreason)
-    else:
-        R = thexcorr_trim[argmax(thexcorr_trim)]
 
     # set the significance threshold
-    if estimate_significance:
+    if numreps > 0:
         # generate a list of correlations from shuffled data
-        optiondict = {
-            'numestreps':        numreps,
-            'showprogressbar':   False,
-            'usewindowfunc':     windowfunc,
-            'detrendorder':      detrendorder,
-            'windowfunc':        windowfunc,
-            'corrweighting':     corrweighting,
-            'nprocs':            1,
-            'widthlimit':        1000.0,
-            'bipolar':           False,
-            'findmaxtype':       'gauss',
-            'lagmin':            -searchrange,
-            'lagmax':            searchrange,
-            'absmaxsigma':       1000.0,
-            'edgebufferfrac':    0.0,
-            'lthreshval':        0.0,
-            'uthreshval':        1.0,
-            'debug':             debug,
-            'gaussrefine':       True,
-            'fastgauss':         False,
-            'enforcethresh':     True,
-            'lagmod':            1000.0,
-            'searchfrac':        0.5,
-            'permutationmethod': 'shuffle',
-            'mp_chunksize':      1000,
-            'hardlimit':         True
-        }
-
-        if debug:
-            print(optiondict)
-
-        # initialize the correlator
-        thecorrelator = tide_classes.correlator(Fs=Fs,
-                                                ncprefilter=theprefilter,
-                                                usewindowfunc=optiondict['usewindowfunc'],
-                                                detrendorder=optiondict['detrendorder'],
-                                                windowfunc=optiondict['windowfunc'],
-                                                corrweighting=optiondict['corrweighting'])
-
-        # intitialize the correlation fitter
-        thefitter = tide_classes.correlation_fitter(lagmod=optiondict['lagmod'],
-                                                    lthreshval=optiondict['lthreshval'],
-                                                    uthreshval=optiondict['uthreshval'],
-                                                    bipolar=optiondict['bipolar'],
-                                                    lagmin=optiondict['lagmin'],
-                                                    lagmax=optiondict['lagmax'],
-                                                    absmaxsigma=optiondict['absmaxsigma'],
-                                                    debug=optiondict['debug'],
-                                                    findmaxtype=optiondict['findmaxtype'],
-                                                    refine=optiondict['gaussrefine'],
-                                                    searchfrac=optiondict['searchfrac'],
-                                                    fastgauss=optiondict['fastgauss'],
-                                                    enforcethresh=optiondict['enforcethresh'],
-                                                    hardlimit=optiondict['hardlimit'])
-        thecorrelator.setreftc(tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
-                                prewindow=False,
-                                detrendorder=detrendorder))
-        thecorrelator.setlimits(corrzero,
-                                int((-optiondict['lagmin'] / sampletime) - 0.5),
-                                int((optiondict['lagmax'] / sampletime) + 0.5))
-        thefitter.setcorrtimeaxis(xcorr_x[searchstart:searchend + 1])
-        corrlist = tide_nullcorr.getNullDistributionDatax(trimdata1,
+        corrlist = tide_nullcorr.getNullDistributionDatax(filtereddata2,
                                                     Fs,
                                                     thecorrelator,
                                                     thefitter,
-                                                    numestreps=optiondict['numestreps'],
-                                                    nprocs=optiondict['nprocs'],
-                                                    showprogressbar=optiondict['showprogressbar'],
-                                                    chunksize=optiondict['mp_chunksize'],
-                                                    permutationmethod=optiondict['permutationmethod'],
-                                                    fixdelay=False,
-                                                    rt_floatset=np.float64,
-                                                    rt_floattype='float64')
+                                                    numestreps=numreps,
+                                                    despeckle_thresh=1000.0,
+                                                    showprogressbar=showprogressbar,
+                                                    permutationmethod=permutationmethod,
+                                                    fixdelay=False)
 
         # calculate percentiles for the crosscorrelation from the distribution data
         histlen = 100
@@ -536,19 +492,15 @@ def showxcorrx_main(inputargs):
             tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
             tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
 
-        corrlist_pear = tide_nullcorr.getNullDistributionDatax(trimdata1,
+        corrlist_pear = tide_nullcorr.getNullDistributionDatax(filtereddata2,
                                                     Fs,
                                                     thecorrelator,
                                                     thefitter,
-                                                    numestreps=optiondict['numestreps'],
-                                                    nprocs=optiondict['nprocs'],
-                                                    showprogressbar=optiondict['showprogressbar'],
-                                                    chunksize=optiondict['mp_chunksize'],
-                                                    permutationmethod=optiondict['permutationmethod'],
-                                                    fixdelay=True,
-                                                    fixeddelayvalue=0.0,
-                                                    rt_floatset=np.float64,
-                                                    rt_floattype='float64')
+                                                    numestreps=numreps,
+                                                    despeckle_thresh=1000.0,
+                                                    showprogressbar=showprogressbar,
+                                                    permutationmethod=permutationmethod,
+                                                    fixdelay=True)
 
         # calculate significance for the pearson correlation
         pearpcts, pearpcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist_pear, histlen, thepercentiles)
@@ -566,7 +518,7 @@ def showxcorrx_main(inputargs):
         print(thepxcorr)
 
     if summarymode:
-        if estimate_significance:
+        if numreps > 0:
             thelabelitems = ['pearson_R',       'pearson_R(p=0.05)',  'xcorr_R', 'xcorr_R(p=0.05)', 'xcorr_maxdelay']
             thedataitems =  [ str(thepxcorr[0]), str(pearpcts_fit[0]), str(R),    str(pcts_fit[0]),  str(-maxdelay)]
         else:
@@ -588,7 +540,7 @@ def showxcorrx_main(inputargs):
         # report the pearson correlation
         if showpearson:
             print('Pearson_R:\t', thepxcorr[0])
-            if estimate_significance:
+            if numreps > 0:
                 for idx, percentile in enumerate(thepercentiles):
                     print('    pear_p(', "{:.3f}".format(1.0 - percentile), '):\t', pearpcts[idx])
             print("")
@@ -597,7 +549,7 @@ def showxcorrx_main(inputargs):
         else:
             print("Crosscorrelation_Rmax:\t", R)
             print("Crosscorrelation_maxdelay:\t", -maxdelay)
-            if estimate_significance:
+            if numreps > 0:
                 for idx, percentile in enumerate(thepercentiles):
                     print('    xc_p(', "{:.3f}".format(1.0 - percentile), '):\t', pcts[idx])
             print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
@@ -612,7 +564,7 @@ def showxcorrx_main(inputargs):
             plot(f, Cxy)
             fig = figure()
             plot(f, np.sqrt(np.abs(Pxy)) / np.max(np.sqrt(np.abs(Pxy))))
-            plot(f, np.angle(Pxy) / (2.0 * pi * f))
+            plot(f, np.angle(Pxy) / (2.0 * sp.pi * f))
         show()
 
     if savecorrelation:
