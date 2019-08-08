@@ -6,11 +6,9 @@ happy \
     ../dst/happy_flip \
     --mklthreads=4 \
     --dodlfilter \
-    --mklthreads=4 \
     --saveinfoasjson \
-    --fliparteries \
     --model=model_revised \
-    --glm
+    --fliparteries
 
 happy \
     happyfmri.nii.gz \
@@ -18,7 +16,6 @@ happy \
     ../dst/happy_noflip \
     --mklthreads=4 \
     --dodlfilter \
-    --mklthreads=4 \
     --saveinfoasjson \
     --model=model_revised
 
