@@ -1796,22 +1796,37 @@ def rapidtide_main(thearguments):
     if optiondict['verbose']:
         print('corrtr=', corrtr)
 
-    numccorrlags = 2 * optiondict['oversampfactor'] * (validtimepoints - optiondict['addedskip']) - 1
-    corrscale = np.arange(0.0, numccorrlags) * corrtr - (numccorrlags * corrtr) / 2.0 + (optiondict[
-                                                                                             'oversampfactor'] - 0.5) * corrtr
-    corrorigin = numccorrlags // 2 + 1
+    # initialize the correlator
+    oversampfreq = optiondict['oversampfactor'] / fmritr
+    thecorrelator = tide_classes.correlator(Fs=oversampfreq,
+                                         ncprefilter=theprefilter,
+                                         usewindowfunc=optiondict['usewindowfunc'],
+                                         detrendorder=optiondict['detrendorder'],
+                                         windowfunc=optiondict['windowfunc'],
+                                         corrweighting=optiondict['corrweighting'])
+    thecorrelator.setreftc(np.zeros((optiondict['oversampfactor'] * (validtimepoints - optiondict['addedskip'])),
+                                    dtype=np.float))
+    numccorrlags = thecorrelator.corrlen
+    corrorigin = thecorrelator.corrorigin
+    dummy, corrscale, dummy = thecorrelator.getcorrelation(trim=False)
+
     lagmininpts = int((-optiondict['lagmin'] / corrtr) - 0.5)
     lagmaxinpts = int((optiondict['lagmax'] / corrtr) + 0.5)
-    if (corrorigin + lagmaxinpts) - (corrorigin - lagmininpts) < 3:
+
+    if (lagmaxinpts + lagmininpts) < 3:
         print('correlation search range is too narrow - decrease lagmin, increase lagmax, or increase oversample factor')
         sys.exit(1)
+
+    thecorrelator.setlimits(lagmininpts, lagmaxinpts)
+    dummy, trimmedcorrscale, dummy = thecorrelator.getcorrelation()
+
     if optiondict['verbose']:
         print('corrorigin at point ', corrorigin, corrscale[corrorigin])
         print('corr range from ', corrorigin - lagmininpts, '(', corrscale[
             corrorigin - lagmininpts], ') to ', corrorigin + lagmaxinpts, '(', corrscale[corrorigin + lagmaxinpts], ')')
 
     if optiondict['savecorrtimes']:
-        tide_io.writenpvecs(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts], outputname + '_corrtimes.txt')
+        tide_io.writenpvecs(trimmedcorrscale, outputname + '_corrtimes.txt')
 
     # allocate all of the data arrays
     tide_util.logmem('before main array allocation', file=memfile)
@@ -1834,7 +1849,7 @@ def rapidtide_main(thearguments):
     outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
     tide_util.logmem('after main array allocation', file=memfile)
 
-    corroutlen = np.shape(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])[0]
+    corroutlen = np.shape(trimmedcorrscale)[0]
     if optiondict['textio']:
         nativecorrshape = (xsize, corroutlen)
     else:
@@ -1899,16 +1914,6 @@ def rapidtide_main(thearguments):
 
     fft_fmri_data = None
 
-    oversampfreq = optiondict['oversampfactor'] / fmritr
-
-    # initialize the correlator
-    thecorrelator = tide_classes.correlator(Fs=oversampfreq,
-                                         ncprefilter=theprefilter,
-                                         usewindowfunc=optiondict['usewindowfunc'],
-                                         detrendorder=optiondict['detrendorder'],
-                                         windowfunc=optiondict['windowfunc'],
-                                         corrweighting=optiondict['corrweighting'])
-
     # intitialize the correlation fitter
     thefitter = tide_classes.correlation_fitter(lagmod=optiondict['lagmod'],
                                              lthreshval=optiondict['lthreshval'],
@@ -1947,9 +1952,8 @@ def rapidtide_main(thearguments):
             acmaxinpts = lagmaxinpts + lagindpad
             thecorrelator.setreftc(referencetc)
             thecorrelator.setlimits(acmininpts, acmaxinpts)
-            thexcorr, trimmedcorrscale, dummy = thecorrelator.run(resampref_y)
-            #corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts]
-            thefitter.setcorrtimeaxis(trimmedcorrscale)
+            thexcorr, accheckcorrscale, dummy = thecorrelator.run(resampref_y)
+            thefitter.setcorrtimeaxis(accheckcorrscale)
             maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
                 tide_corrfit.onecorrfitx(thexcorr,
                                          thefitter,
@@ -1959,14 +1963,15 @@ def rapidtide_main(thearguments):
                                          rt_floatset=rt_floatset,
                                          rt_floattype=rt_floattype
                                          )
-            outputarray = np.asarray([corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts], thexcorr])
+            outputarray = np.asarray([accheckcorrscale, thexcorr])
             tide_io.writenpvecs(outputarray, outputname + '_referenceautocorr_pass' + str(thepass) + '.txt')
             thelagthresh = np.max((abs(optiondict['lagmin']), abs(optiondict['lagmax'])))
             theampthresh = 0.1
             print('searching for sidelobes with amplitude >', theampthresh, 'with abs(lag) <', thelagthresh, 's')
             sidelobetime, sidelobeamp = tide_corr.autocorrcheck(
-                corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts],
-                thexcorr, acampthresh=theampthresh,
+                accheckcorrscale,
+                thexcorr,
+                acampthresh=theampthresh,
                 aclagthresh=thelagthresh,
                 prewindow=optiondict['usewindowfunc'],
                 detrendorder=optiondict['detrendorder'])
@@ -2049,7 +2054,8 @@ def rapidtide_main(thearguments):
                     tide_io.writedict(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.txt')
             thecorrelator.setlimits(lagmininpts, lagmaxinpts)
             thecorrelator.setreftc(cleaned_resampref_y)
-            thefitter.setcorrtimeaxis(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
+            dummy, trimmedcorrscale, dummy = thecorrelator.getcorrelation()
+            thefitter.setcorrtimeaxis(trimmedcorrscale)
             corrdistdata = getNullDistributionData_func(cleaned_resampref_y,
                                                          oversampfreq,
                                                          thecorrelator,
@@ -2148,9 +2154,7 @@ def rapidtide_main(thearguments):
                                        optiondict['memprofile'],
                                        memfile,
                                        'before fitcorr')
-        #thefitter.setcorrtimeaxis(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
         thefitter.setcorrtimeaxis(trimmedcorrscale)
-        #corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts]
         voxelsprocessed_fc = fitcorr_func(genlagtc,
                                           initial_fmri_x,
                                           lagtc,
