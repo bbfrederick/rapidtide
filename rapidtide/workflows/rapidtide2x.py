@@ -1946,9 +1946,10 @@ def rapidtide_main(thearguments):
             acmininpts = lagmininpts + lagindpad
             acmaxinpts = lagmaxinpts + lagindpad
             thecorrelator.setreftc(referencetc)
-            thecorrelator.setlimits(corrorigin, acmininpts, acmaxinpts)
-            thexcorr, dummy = tide_corrpass.onecorrelation(thecorrelator, resampref_y)
-            thefitter.setcorrtimeaxis(corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts])
+            thecorrelator.setlimits(acmininpts, acmaxinpts)
+            thexcorr, trimmedcorrscale, dummy = thecorrelator.run(resampref_y)
+            #corrscale[corrorigin - acmininpts:corrorigin + acmaxinpts]
+            thefitter.setcorrtimeaxis(trimmedcorrscale)
             maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
                 tide_corrfit.onecorrfitx(thexcorr,
                                          thefitter,
@@ -2046,7 +2047,7 @@ def rapidtide_main(thearguments):
                     tide_io.writedicttojson(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.json')
                 else:
                     tide_io.writedict(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.txt')
-            thecorrelator.setlimits(corrorigin, lagmininpts, lagmaxinpts)
+            thecorrelator.setlimits(lagmininpts, lagmaxinpts)
             thecorrelator.setreftc(cleaned_resampref_y)
             thefitter.setcorrtimeaxis(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
             corrdistdata = getNullDistributionData_func(cleaned_resampref_y,
@@ -2102,8 +2103,8 @@ def rapidtide_main(thearguments):
                                                memfile,
                                                'before correlationpass')
 
-        thecorrelator.setlimits(corrorigin, lagmininpts, lagmaxinpts)
-        voxelsprocessed_cp, theglobalmaxlist = correlationpass_func(fmri_data_valid[:,optiondict['addedskip']:],
+        thecorrelator.setlimits(lagmininpts, lagmaxinpts)
+        voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = correlationpass_func(fmri_data_valid[:,optiondict['addedskip']:],
                                                                cleaned_referencetc,
                                                                thecorrelator,
                                                                initial_fmri_x,
@@ -2147,11 +2148,13 @@ def rapidtide_main(thearguments):
                                        optiondict['memprofile'],
                                        memfile,
                                        'before fitcorr')
-        thefitter.setcorrtimeaxis(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
+        #thefitter.setcorrtimeaxis(corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts])
+        thefitter.setcorrtimeaxis(trimmedcorrscale)
+        #corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts]
         voxelsprocessed_fc = fitcorr_func(genlagtc,
                                           initial_fmri_x,
                                           lagtc,
-                                          corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
+                                          trimmedcorrscale,
                                           thefitter,
                                           corrout,
                                           lagmask, failimage, lagtimes, lagstrengths, lagsigma,
@@ -2189,7 +2192,7 @@ def rapidtide_main(thearguments):
                         voxelsprocessed_fc_ds += fitcorr_func(genlagtc,
                                                               initial_fmri_x,
                                                               lagtc,
-                                                              corrscale[corrorigin - lagmininpts:corrorigin + lagmaxinpts],
+                                                              trimmedcorrscale,
                                                               thefitter,
                                                               corrout,
                                                               lagmask, failimage, lagtimes, lagstrengths, lagsigma,
