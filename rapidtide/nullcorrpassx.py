@@ -37,7 +37,7 @@ import sys
 
 
 # note: rawtimecourse has been filtered, but NOT windowed
-def _procOneNullCorrelationx(rawtimecourse,
+def _procOneNullCorrelationx(normalizedreftc,
                              rawtcfft_r, rawtcfft_ang,
                              Fs,
                              thecorrelator,
@@ -52,35 +52,32 @@ def _procOneNullCorrelationx(rawtimecourse,
 
     # make a shuffled copy of the regressors
     if permutationmethod == 'shuffle':
-        permutedtc = np.random.permutation(rawtimecourse)
+        permutedtc = np.random.permutation(normalizedreftc)
     elif permutationmethod == 'phaserandom':
-        permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.uniform(low=-np.pi, high=np.pi, size=len(rawtcfft_r)))
+        #permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.uniform(low=-np.pi, high=np.pi, size=len(rawtcfft_r)))
+        permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.permutation(rawtcfft_ang))
     else:
         print('illegal shuffling method')
         sys.exit()
 
     # apply the appropriate filter
-    permutedtc = thecorrelator.ncprefilter.apply(Fs, permutedtc)
-
-    normalizedsourcetc = tide_math.corrnormalize(rawtimecourse,
-                                              prewindow=thecorrelator.usewindowfunc,
-                                              detrendorder=thecorrelator.detrendorder,
-                                              windowfunc=thecorrelator.windowfunc)
+    #permutedtc = thecorrelator.ncprefilter.apply(Fs, permutedtc)
 
     # crosscorrelate with original
-    thexcorr_y, thexcorr_x, dummy = tide_corrpass.onecorrelation(thecorrelator, permutedtc)
+    thexcorr_y, thexcorr_x, dummy = thecorrelator.run(permutedtc)
 
     # fit the correlation
     thefitter.setcorrtimeaxis(thexcorr_x)
-    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = \
-        tide_corrfit.onecorrfitx(thexcorr_y,
-                thefitter,
-                disablethresholds=disablethresholds,
-                despeckle_thresh=despeckle_thresh,
-                fixdelay=fixdelay,
-                fixeddelayvalue=fixeddelayvalue,
-                rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype)
+    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = thefitter.fit(thexcorr_y)
+
+    #    '''tide_corrfit.onecorrfitx(thexcorr_y,
+    #            thefitter,
+    #            disablethresholds=disablethresholds,
+    #            despeckle_thresh=despeckle_thresh,
+    #           fixdelay=fixdelay,
+    #            fixeddelayvalue=fixeddelayvalue,
+    #            rt_floatset=rt_floatset,
+    #            rt_floattype=rt_floattype)'''
 
     return maxval
 
@@ -129,7 +126,11 @@ def getNullDistributionDatax(rawtimecourse,
     """
 
     inputshape = np.asarray([numestreps])
-    rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(rawtimecourse)
+    normalizedreftc = thecorrelator.ncprefilter.apply(Fs, tide_math.corrnormalize(thecorrelator.reftc,
+                                                                                  prewindow=False,
+                                                                                  detrendorder=thecorrelator.detrendorder)
+                                                      )
+    rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(normalizedreftc)
     if nprocs > 1:
         # define the consumer function here so it inherits most of the arguments
         def nullCorrelation_consumer(inQ, outQ):
@@ -143,7 +144,7 @@ def getNullDistributionDatax(rawtimecourse,
                         break
 
                     # process and send the data
-                    outQ.put(_procOneNullCorrelationx(rawtimecourse,
+                    outQ.put(_procOneNullCorrelationx(normalizedreftc,
                                                       rawtcfft_r, rawtcfft_ang,
                                                       Fs,
                                                       thecorrelator,
@@ -172,10 +173,17 @@ def getNullDistributionDatax(rawtimecourse,
 
         for i in range(0, numestreps):
             # make a shuffled copy of the regressors
-            permutedtc = np.random.permutation(rawtimecourse)
+            if permutationmethod == 'shuffle':
+                permutedtc = np.random.permutation(normalizedreftc)
+            elif permutationmethod == 'phaserandom':
+                # permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.uniform(low=-np.pi, high=np.pi, size=len(rawtcfft_r)))
+                permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.permutation(rawtcfft_ang))
+            else:
+                print('illegal shuffling method')
+                sys.exit()
 
             # crosscorrelate with original, fit, and return the maximum value, and add it to the list
-            thexcorr = _procOneNullCorrelationx(rawtimecourse,
+            thexcorr = _procOneNullCorrelationx(normalizedreftc,
                                                 rawtcfft_r, rawtcfft_ang,
                                                 Fs,
                                                 thecorrelator,
