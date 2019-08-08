@@ -150,6 +150,8 @@ class correlator:
     timeaxis = None
     corrlen = 0
     datavalid = False
+    timeaxisvalid = False
+    corrorigin = 0
 
     def __init__(self,
                  Fs=0.0,
@@ -185,9 +187,15 @@ class correlator:
 
 
     def setreftc(self, reftc):
-        self.reftc = reftc
+        self.reftc = reftc + 0.0
         self.prepreftc = self.preptc(self.reftc)
         self.corrlen = len(self.reftc) * 2 - 1
+        self.corrorigin = self.corrlen // 2 + 1
+
+        # make the time axis
+        self.timeaxis = np.arange(0.0, self.corrlen) * (1.0 / self.Fs) \
+                        - ((self.corrlen - 1) * (1.0 / self.Fs)) / 2.0
+        self.timeaxisvalid = True
         self.datavalid = False
 
 
@@ -207,8 +215,14 @@ class correlator:
             else:
                 return self.thexcorr, self.timeaxis, self.theglobalmax
         else:
-            print('must run correlation before fetching data')
-            return None, None, None
+            if self.timeaxisvalid:
+                if trim:
+                    return None, self.trim(self.timeaxis), None
+                else:
+                    return None, self.timeaxis, None
+            else:
+                print('must run correlation before fetching data')
+                return None, None, None
 
 
     def run(self, thetc, trim=True):
@@ -223,11 +237,6 @@ class correlator:
         self.thexcorr = tide_corr.fastcorrelate(self.preptesttc, self.prepreftc, usefft=True, weighting=self.corrweighting)
         self.corrlen = len(self.thexcorr)
         self.corrorigin = self.corrlen // 2 + 1
-
-        # make the time axis
-        self.numpoints = len(self.thexcorr)
-        self.timeaxis = np.arange(0.0, self.numpoints) * (1.0 / self.Fs) \
-                        - ((self.numpoints - 1) * (1.0 / self.Fs)) / 2.0
 
         # find the global maximum value
         self.theglobalmax = np.argmax(self.thexcorr)
@@ -303,7 +312,7 @@ class correlation_fitter:
         setrange(lagmin, lagmax):
             Specify the search range for lag peaks, in seconds
         """
-        self.corrtimeaxis = corrtimeaxis
+        self.setcorrtimeaxis(corrtimeaxis)
         self.lagmin = lagmin
         self.lagmax = lagmax
         self.absmaxsigma = absmaxsigma
@@ -366,7 +375,10 @@ class correlation_fitter:
 
 
     def setcorrtimeaxis(self, corrtimeaxis):
-        self.corrtimeaxis = corrtimeaxis
+        if corrtimeaxis is not None:
+            self.corrtimeaxis = corrtimeaxis + 0.0
+        else:
+            self.corrtimeaxis = corrtimeaxis
 
 
     def setguess(self, useguess, maxguess=0.0):
