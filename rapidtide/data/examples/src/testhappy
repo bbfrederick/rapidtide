@@ -8,7 +8,8 @@ happy \
     --dodlfilter \
     --saveinfoasjson \
     --model=model_revised \
-    --fliparteries
+    --glm \
+    --fliparteries 
 
 happy \
     happyfmri.nii.gz \
@@ -17,7 +18,8 @@ happy \
     --mklthreads=4 \
     --dodlfilter \
     --saveinfoasjson \
-    --model=model_revised
+    --model=model_revised \
+    --glm 
 
 #happyx \
 #    ses-060_bold_trunc.nii.gz \
