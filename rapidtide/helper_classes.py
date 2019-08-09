@@ -394,6 +394,33 @@ class correlation_fitter:
         self.uthreshval = uthreshval
 
 
+    def diagnosefail(self, failreason):
+        # define error values
+        FML_BADAMPLOW = np.uint16(0x01)
+        FML_BADAMPHIGH = np.uint16(0x02)
+        FML_BADSEARCHWINDOW = np.uint16(0x04)
+        FML_BADWIDTH = np.uint16(0x08)
+        FML_BADLAG = np.uint16(0x10)
+        FML_HITEDGE = np.uint16(0x20)
+        FML_FITFAIL = np.uint16(0x40)
+        FML_INITFAIL = np.uint16(0x80)
+        if failreason.astype(np.uint16) & FML_BADAMPLOW:
+            print('Fit amplitude too low')
+        if failreason.astype(np.uint16) & FML_BADAMPHIGH:
+            print('Fit amplitude too high')
+        if failreason.astype(np.uint16) & FML_BADSEARCHWINDOW:
+            print('Bad search window')
+        if failreason.astype(np.uint16) & FML_BADWIDTH:
+            print('Bad fit width')
+        if failreason.astype(np.uint16) & FML_BADLAG:
+            print('Lag out of range')
+        if failreason.astype(np.uint16) & FML_HITEDGE:
+            print('Hit edge of search window')
+        if failreason.astype(np.uint16) & FML_FITFAIL:
+            print('Refinement failed')
+        if failreason.astype(np.uint16) & FML_INITFAIL:
+            print('Initialization failed')
+
     def fit(self, corrfunc):
         # check to make sure xcorr_x and xcorr_y match
         if self.corrtimeaxis is None:
@@ -459,8 +486,13 @@ class correlation_fitter:
         peakend = maxindex + 0
         while peakend < (len(self.corrtimeaxis) - 2) and thegrad[peakend + 1] < 0.0 and peakpoints[peakend + 1] == 1:
             peakend += 1
+        if (peakend - maxindex < 2) and (peakend < len(self.corrtimeaxis) - 2):
+            peakend += 1
         while peakstart > 1 and thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
             peakstart -= 1
+        if (maxindex - peakstart < 2) and (peakstart > 1):
+            peakend -= 1
+
         # This is calculated from first principles, but it's always big by a factor or ~1.4.
         #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
         maxsigma_init = np.float64(
@@ -517,8 +549,14 @@ class correlation_fitter:
 
         # refine if necessary
         if self.refine:
-            data = corrfunc[peakstart:peakend]
-            X = self.corrtimeaxis[peakstart:peakend]
+            X = self.corrtimeaxis[peakstart:peakend + 1]
+            data = corrfunc[peakstart:peakend + 1]
+            if self.debug:
+                print('peakstart, peakend', peakstart, peakend)
+                for i in range(len(data)):
+                    print(X[i], data[i], thegrad[i], )
+                pl.figure()
+                pl.plot(X, data)
             if self.fastgauss:
                 # do a non-iterative fit over the top of the peak
                 # 6/12/2015  This is just broken.  Gives quantized maxima
@@ -563,13 +601,13 @@ class correlation_fitter:
             if maxsigma > self.absmaxsigma:
                 failreason |= (FML_FITFAIL + FML_BADWIDTH)
                 if self.debug:
-                    print('bad width after refinement')
+                    print('bad width after refinement:', maxsigma, '>', self.absmaxsigma)
                 maxsigma = self.absmaxsigma
                 fitfail = True
             if not (0.0 < maxsigma):
                 failreason |= (FML_FITFAIL + FML_BADSEARCHWINDOW)
                 if self.debug:
-                    print('bad width after refinement')
+                    print('bad width after refinement:', maxsigma, '<=', 0.0)
                 maxsigma = 0.0
                 fitfail = True
             if fitfail:
