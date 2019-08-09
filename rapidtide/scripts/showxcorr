@@ -117,6 +117,7 @@ def usage():
     print("                    return the partial correlation")
     print("    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS ")
     print("                    repetition")
+    print("    -Y            - turn on debugging")
     print("")
     return ()
 
@@ -165,7 +166,7 @@ numpoints = len(inputdata1)
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:w", ["help"])
+    opts, args = getopt.getopt(sys.argv[4:], "fN:r:z:aATtVLRCF:dl:s:D:wY", ["help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -177,6 +178,11 @@ for o, a in opts:
         display = False
         if verbose:
             print('disable display')
+    elif o == "-Y":
+        debug = True
+        dumpfiltered = True
+        if verbose:
+            print('turning on debugging')
     elif o == "-T":
         trimdata = True
         if verbose:
