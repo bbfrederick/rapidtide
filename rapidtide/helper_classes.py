@@ -484,11 +484,11 @@ class correlation_fitter:
         peakpoints[-1] = 0
         peakstart = maxindex + 0
         peakend = maxindex + 0
-        while peakend < (len(self.corrtimeaxis) - 2) and thegrad[peakend + 1] < 0.0 and peakpoints[peakend + 1] == 1:
+        while peakend < (len(self.corrtimeaxis) - 3) and thegrad[peakend + 1] < 0.0 and peakpoints[peakend + 1] == 1:
             peakend += 1
         if (peakend - maxindex < 2) and (peakend < len(self.corrtimeaxis) - 2):
             peakend += 1
-        while peakstart > 1 and thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
+        while peakstart > 2 and thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
             peakstart -= 1
         if (maxindex - peakstart < 2) and (peakstart > 1):
             peakend -= 1
