@@ -86,6 +86,7 @@ def usage(inputargs):
     print("optional arguments:")
     print("    --nodetrend        - do not detrend the data before correlation")
     print("    --nowindow         - do not prewindow data before corrlation")
+    print("    --norefine         - do not refine correlation fit")
     print("    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)")
     print("    --cepstral         - check time delay using Choudhary's cepstral technique ")
     print("    --phat             - perform phase alignment transform (PHAT) rather than ")
@@ -150,6 +151,7 @@ def showxcorrx_main(inputargs):
     permutationmethod = 'shuffle'
     findmaxtype = 'gauss'
     showprogressbar = False
+    dorefine = True
 
 
     nargs = len(inputargs)
@@ -191,6 +193,7 @@ def showxcorrx_main(inputargs):
                                     "cepstral",
                                     "savecorr=",
                                     "progressbar",
+                                    "norefine",
                                     "phaserandomize",
                                     "debug",
                                     "help"])
@@ -258,6 +261,10 @@ def showxcorrx_main(inputargs):
             corroutputfile = a
             if verbose:
                 print('saving correlation function to', corroutputfile)
+        elif o == "--norefine":
+            dorefine = False
+            if verbose:
+                print('disabling fit refinement')
         elif o == "--nowindow":
             prewindow = False
             if verbose:
@@ -408,6 +415,9 @@ def showxcorrx_main(inputargs):
 
     # do the correlation
     thexcorr, xcorr_x, globalmax = thecorrelator.run(trimdata1, trim=False)
+    if dumpfiltered:
+        tide_io.writenpvecs(thecorrelator.preptesttc, "correlator_filtereddata1.txt")
+        tide_io.writenpvecs(thecorrelator.prepreftc, "correlator_filtereddata2.txt")
     thecorrelator.setlimits(int((searchrange * Fs) - 0.5), int((searchrange * Fs) + 0.5))
     thexcorr_trim, xcorr_x_trim, globalmax = thecorrelator.getcorrelation(trim=True)
 
@@ -442,13 +452,13 @@ def showxcorrx_main(inputargs):
         Fs)
 
     # intitialize the correlation fitter
-    thefitter = tide_classes.correlation_fitter(corrtimeaxis=xcorr_x_trim,
+    thefitter = tide_classes.correlation_fitter(corrtimeaxis=xcorr_x,
                                                 lagmin=-searchrange,
                                                 lagmax=searchrange,
                                                 debug=debug,
                                                 findmaxtype=findmaxtype,
                                                 zerooutbadfit=False,
-                                                refine=True,
+                                                refine=dorefine,
                                                 useguess=False,
                                                 fastgauss=False
                                                 )
@@ -461,14 +471,15 @@ def showxcorrx_main(inputargs):
     if debug:
         print('maxdelay before refinement', maxdelay)
 
-    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(thexcorr_trim)
+    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(thexcorr)
+    if failreason > 0:
+        print('showxcorrx: FIT FAILED with reason', failreason)
+        thefitter.diagnosefail(failreason)
     if debug:
         print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
     R = maxval
     if debug:
         print('maxdelay after refinement', maxdelay)
-        if failreason > 0:
-            print('failreason =', failreason)
 
     # set the significance threshold
     if numreps > 0:
