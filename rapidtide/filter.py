@@ -1130,6 +1130,24 @@ def getarbpassfunc(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
                         (1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)))
 
 
+class plethfilter:
+    def __init_(self, Fs, Fl, Fh, order=4, attenuation=20):
+        self.Fs = Fs
+        self.Fh = Fh
+        self.Fl = Fl
+        self.attenuation = attenuation
+        self.order = order
+        self.b, self.a = scipy.signal.cheby2(self.order,
+                                             self.attenuation,
+                                             [self.Fl / self.Fn, self.Fh / self.Fn],
+                                             btype='bandpass',
+                                             analog=False,
+                                             output='ba')
+
+    def apply(data):
+        return scipy.signal.filtfilt(self.b, self.a, data, axis=-1, padtype='odd', padlen=None)
+
+
 class noncausalfilter:
     def __init__(self, filtertype='none', usebutterworth=False, butterworthorder=6, usetrapfftfilt=True,
                  correctfreq=True, padtime=30.0, cyclic=False, debug=False):
