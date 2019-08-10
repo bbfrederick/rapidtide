@@ -543,6 +543,8 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                      fastgauss=False,
                      lagmod=1000.0,
                      enforcethresh=True,
+                     absmaxsigma=1000.0,
+                     absminsigma=0.1,
                      displayplots=False):
     """
 
@@ -704,6 +706,18 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                         maxval = np.float64(maxval_init)
                         maxlag = np.float64(maxlag_init)
                         maxsigma = np.float64(maxsigma_init)
+                if not absminsigma <= maxsigma <= absmaxsigma:
+                    if zerooutbadfit:
+                        maxval = np.float64(0.0)
+                        maxlag = np.float64(0.0)
+                        maxsigma = np.float64(0.0)
+                        maskval = np.int16(0)
+                    else:
+                        if maxsigma > absmaxsigma:
+                            maxsigma = absmaxsigma
+                        else:
+                            maxsigma = absminsigma
+
         else:
             maxval = np.float64(maxval_init)
             maxlag = np.float64(np.fmod(maxlag_init, lagmod))
