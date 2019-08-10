@@ -474,7 +474,7 @@ def showxcorrx_main(inputargs):
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(thexcorr)
     if failreason > 0:
         print('showxcorrx: FIT FAILED with reason', failreason)
-        thefitter.diagnosefail(failreason)
+        print(thefitter.diagnosefail(failreason))
     if debug:
         print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
     R = maxval
