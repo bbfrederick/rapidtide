@@ -250,6 +250,14 @@ class correlator:
 
 class correlation_fitter:
     corrtimeaxis = None
+    FML_BADAMPLOW = np.uint16(0x01)
+    FML_BADAMPHIGH = np.uint16(0x02)
+    FML_BADSEARCHWINDOW = np.uint16(0x04)
+    FML_BADWIDTHLOW = np.uint16(0x08)
+    FML_BADWIDTHHIGH = np.uint16(0x10)
+    FML_BADLAG = np.uint16(0x20)
+    FML_FITFAIL = np.uint16(0x40)
+    FML_INITFAIL = np.uint16(0x80)
 
     def __init__(self,
                  corrtimeaxis=None,
@@ -396,30 +404,27 @@ class correlation_fitter:
 
     def diagnosefail(self, failreason):
         # define error values
-        FML_BADAMPLOW = np.uint16(0x01)
-        FML_BADAMPHIGH = np.uint16(0x02)
-        FML_BADSEARCHWINDOW = np.uint16(0x04)
-        FML_BADWIDTH = np.uint16(0x08)
-        FML_BADLAG = np.uint16(0x10)
-        FML_HITEDGE = np.uint16(0x20)
-        FML_FITFAIL = np.uint16(0x40)
-        FML_INITFAIL = np.uint16(0x80)
-        if failreason.astype(np.uint16) & FML_BADAMPLOW:
-            print('Fit amplitude too low')
-        if failreason.astype(np.uint16) & FML_BADAMPHIGH:
-            print('Fit amplitude too high')
-        if failreason.astype(np.uint16) & FML_BADSEARCHWINDOW:
-            print('Bad search window')
-        if failreason.astype(np.uint16) & FML_BADWIDTH:
-            print('Bad fit width')
-        if failreason.astype(np.uint16) & FML_BADLAG:
-            print('Lag out of range')
-        if failreason.astype(np.uint16) & FML_HITEDGE:
-            print('Hit edge of search window')
-        if failreason.astype(np.uint16) & FML_FITFAIL:
-            print('Refinement failed')
-        if failreason.astype(np.uint16) & FML_INITFAIL:
-            print('Initialization failed')
+        reasons = []
+        if failreason.astype(np.uint16) & self.FML_BADAMPLOW:
+            reasons.append('Fit amplitude too low')
+        if failreason.astype(np.uint16) & self.FML_BADAMPHIGH:
+            reasons.append('Fit amplitude too high')
+        if failreason.astype(np.uint16) & self.FML_BADSEARCHWINDOW:
+            reasons.append('Bad search window')
+        if failreason.astype(np.uint16) & self.FML_BADWIDTHLOW:
+            reasons.append('Bad fit width - value too low')
+        if failreason.astype(np.uint16) & self.FML_BADWIDTHHIGH:
+            reasons.append('Bad fit width - value too high')
+        if failreason.astype(np.uint16) & self.FML_BADLAG:
+            reasons.append('Lag out of range')
+        if failreason.astype(np.uint16) & self.FML_FITFAIL:
+            reasons.append('Refinement failed')
+        if failreason.astype(np.uint16) & self.FML_INITFAIL:
+            reasons.append('Initialization failed')
+        if len(reasons) > 0:
+            return ', '.join(reasons)
+        else:
+            return 'No error'
 
     def fit(self, corrfunc):
         # check to make sure xcorr_x and xcorr_y match
@@ -438,23 +443,9 @@ class correlation_fitter:
         # maxsigma is in Hz
         # maxlag is in seconds
         warnings.filterwarnings("ignore", "Number*")
-        maxlag = np.float64(0.0)
-        maxval = np.float64(0.0)
-        maxsigma = np.float64(0.0)
+        failreason = np.uint(0)
         maskval = np.uint16(1)  # start out assuming the fit will succeed
-        numlagbins = len(corrfunc)
         binwidth = self.corrtimeaxis[1] - self.corrtimeaxis[0]
-
-        # define error values
-        failreason = np.uint16(0)
-        FML_BADAMPLOW = np.uint16(0x01)
-        FML_BADAMPHIGH = np.uint16(0x02)
-        FML_BADSEARCHWINDOW = np.uint16(0x04)
-        FML_BADWIDTH = np.uint16(0x08)
-        FML_BADLAG = np.uint16(0x10)
-        FML_HITEDGE = np.uint16(0x20)
-        FML_FITFAIL = np.uint16(0x40)
-        FML_INITFAIL = np.uint16(0x80)
 
         # set the search range
         lowerlim = 0
@@ -482,16 +473,18 @@ class correlation_fitter:
                               0)  # mask for places where correlaion exceeds serchfrac*maxval_init
         peakpoints[0] = 0
         peakpoints[-1] = 0
-        peakstart = maxindex + 0
-        peakend = maxindex + 0
-        while peakend < (len(self.corrtimeaxis) - 3) and thegrad[peakend + 1] < 0.0 and peakpoints[peakend + 1] == 1:
+        peakstart = np.max([1, maxindex - 1])
+        peakend = np.min([len(self.corrtimeaxis) - 2, maxindex + 1])
+        while thegrad[peakend + 1] <= 0.0 and peakpoints[peakend + 1] == 1:
             peakend += 1
-        if (peakend - maxindex < 2) and (peakend < len(self.corrtimeaxis) - 2):
-            peakend += 1
-        while peakstart > 2 and thegrad[peakstart - 1] > 0.0 and peakpoints[peakstart - 1] == 1:
+        while thegrad[peakstart - 1] >= 0.0 and peakpoints[peakstart - 1] == 1:
             peakstart -= 1
-        if (maxindex - peakstart < 2) and (peakstart > 1):
-            peakend -= 1
+
+        # deal with flat peak top
+        while peakend < (len(self.corrtimeaxis) - 3) and corrfunc[peakend] == corrfunc[peakend - 1]:
+            peakend += 1
+        while peakstart > 2 and corrfunc[peakstart] == corrfunc[peakstart + 1]:
+            peakstart -= 1
 
         # This is calculated from first principles, but it's always big by a factor or ~1.4.
         #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
@@ -506,7 +499,7 @@ class correlation_fitter:
         else:
             rangeextension = (self.lagmax - self.lagmin) * 0.75
         if not ((self.lagmin - rangeextension - binwidth) <= maxlag_init <= (self.lagmax + rangeextension + binwidth)):
-            failreason |= (FML_INITFAIL | FML_BADLAG)
+            failreason |= (self.FML_INITFAIL | self.FML_BADLAG)
             if maxlag_init <= (self.lagmin - rangeextension - binwidth):
                 maxlag_init = self.lagmin - rangeextension - binwidth
             else:
@@ -514,27 +507,27 @@ class correlation_fitter:
             if self.debug:
                 print('bad initial')
         if maxsigma_init > self.absmaxsigma:
-            failreason |= (FML_INITFAIL | FML_BADWIDTH)
+            failreason |= (self.FML_INITFAIL | self.FML_BADWIDTHHIGH)
             maxsigma_init = self.absmaxsigma
             if self.debug:
                 print('bad initial width - too high')
         if peakend - peakstart < 2:
-            failreason |= (FML_INITFAIL | FML_BADSEARCHWINDOW)
+            failreason |= (self.FML_INITFAIL | self.FML_BADSEARCHWINDOW)
             maxsigma_init = np.float64(
                 ((2 + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac)))) / np.sqrt(2.0))
             if self.debug:
                 print('bad initial width - too low')
         if not (self.lthreshval <= maxval_init <= self.uthreshval) and self.enforcethresh:
-            failreason |= (FML_INITFAIL | FML_BADAMPLOW)
+            failreason |= (self.FML_INITFAIL | self.FML_BADAMPLOW)
             if self.debug:
                 print('bad initial amp:', maxval_init, 'is less than', self.lthreshval)
         if (maxval_init < 0.0):
-            failreason |= (FML_INITFAIL | FML_BADAMPLOW)
+            failreason |= (self.FML_INITFAIL | self.FML_BADAMPLOW)
             maxval_init = 0.0
             if self.debug:
                 print('bad initial amp:', maxval_init, 'is less than 0.0')
         if (maxval_init > 1.0):
-            failreason |= (FML_INITFAIL | FML_BADAMPHIGH)
+            failreason |= (self.FML_INITFAIL | self.FML_BADAMPHIGH)
             maxval_init = 1.0
             if self.debug:
                 print('bad initial amp:', maxval_init, 'is greater than 1.0')
@@ -551,12 +544,14 @@ class correlation_fitter:
         if self.refine:
             X = self.corrtimeaxis[peakstart:peakend + 1]
             data = corrfunc[peakstart:peakend + 1]
-            if self.debug:
+            '''if self.debug:
                 print('peakstart, peakend', peakstart, peakend)
-                for i in range(len(data)):
-                    print(X[i], data[i], thegrad[i], )
+                #for i in range(len(data)):
+                #    print(X[i], data[i], thegrad[i], )
                 pl.figure()
-                pl.plot(X, data)
+                pl.plot(X, data, 'b')
+                pl.plot(X,peakpoints[peakstart:peakend + 1], 'r')
+                pl.plot(X, thegrad[peakstart:peakend + 1], 'g')'''
             if self.fastgauss:
                 # do a non-iterative fit over the top of the peak
                 # 6/12/2015  This is just broken.  Gives quantized maxima
@@ -585,12 +580,12 @@ class correlation_fitter:
             fitfail = False
             failreason = np.uint16(0)
             if not (0.0 <= np.fabs(maxval) <= 1.0):
-                failreason |= (FML_FITFAIL + FML_BADAMPLOW)
+                failreason |= (self.FML_FITFAIL + self.FML_BADAMPLOW)
                 if self.debug:
                     print('bad amp after refinement')
                 fitfail = True
             if (self.lagmin > maxlag) or (maxlag > self.lagmax):
-                failreason |= (FML_FITFAIL + FML_BADLAG)
+                failreason |= (self.FML_FITFAIL + self.FML_BADLAG)
                 if self.debug:
                     print('bad lag after refinement')
                 if self.lagmin > maxlag:
@@ -599,13 +594,13 @@ class correlation_fitter:
                     maxlag = self.lagmax
                 fitfail = True
             if maxsigma > self.absmaxsigma:
-                failreason |= (FML_FITFAIL + FML_BADWIDTH)
+                failreason |= (self.FML_FITFAIL + self.FML_BADWIDTHHIGH)
                 if self.debug:
                     print('bad width after refinement:', maxsigma, '>', self.absmaxsigma)
                 maxsigma = self.absmaxsigma
                 fitfail = True
             if not (0.0 < maxsigma):
-                failreason |= (FML_FITFAIL + FML_BADSEARCHWINDOW)
+                failreason |= (self.FML_FITFAIL + self.FML_BADSEARCHWINDOW + self.FML_BADWIDTHLOW)
                 if self.debug:
                     print('bad width after refinement:', maxsigma, '<=', 0.0)
                 maxsigma = 0.0
