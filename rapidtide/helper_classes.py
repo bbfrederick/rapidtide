@@ -264,6 +264,7 @@ class correlation_fitter:
                  lagmin=-30.0,
                  lagmax=30.0,
                  absmaxsigma=1000.0,
+                 absminsigma=0.25,
                  hardlimit=True,
                  bipolar=False,
                  lthreshval=0.0,
@@ -324,6 +325,7 @@ class correlation_fitter:
         self.lagmin = lagmin
         self.lagmax = lagmax
         self.absmaxsigma = absmaxsigma
+        self.absminsigma = absminsigma
         self.hardlimit = hardlimit
         self.bipolar = bipolar
         self.lthreshval = lthreshval
@@ -599,11 +601,11 @@ class correlation_fitter:
                     print('bad width after refinement:', maxsigma, '>', self.absmaxsigma)
                 maxsigma = self.absmaxsigma
                 fitfail = True
-            if not (0.0 < maxsigma):
+            if maxsigma < self.absminsigma:
                 failreason |= (self.FML_FITFAIL + self.FML_BADWIDTHLOW)
                 if self.debug:
                     print('bad width after refinement:', maxsigma, '<=', 0.0)
-                maxsigma = 0.0
+                maxsigma = self.absminsigma
                 fitfail = True
             if (np.abs(maxval) > 1.0):
                 failreason |= (self.FML_FITFAIL | self.FML_BADAMPHIGH)
