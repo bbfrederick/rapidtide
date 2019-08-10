@@ -152,6 +152,7 @@ def showxcorrx_main(inputargs):
     findmaxtype = 'gauss'
     showprogressbar = False
     dorefine = True
+    zerooutbadfit = False
 
 
     nargs = len(inputargs)
@@ -457,7 +458,7 @@ def showxcorrx_main(inputargs):
                                                 lagmax=searchrange,
                                                 debug=debug,
                                                 findmaxtype=findmaxtype,
-                                                zerooutbadfit=False,
+                                                zerooutbadfit=zerooutbadfit,
                                                 refine=dorefine,
                                                 useguess=False,
                                                 fastgauss=False
