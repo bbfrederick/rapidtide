@@ -28,25 +28,25 @@ import getopt
 
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
-from scipy import arange, linspace
-from numpy import max, floor
+import scipy as sp
+import numpy as np
 import matplotlib.pyplot as plt
 
 
 def usage():
     print("resamp1tc - resample a timeseries file")
     print("")
-    print("usage: resamp1tc infilename insamplerate outputfile outsamplerate [--nodisplay]")
+    print("usage: resamp1tc infilename[:COLNUM] insamplerate outputfile outsamplerate [--nodisplay]")
     print("")
     print("required arguments:")
-    print("	inputfile	- the name of the input text file")
-    print("	insamplerate	- the sample rate of the input file in Hz")
-    print("	outputfile	- the name of the output text file")
-    print("	outsamplerate	- the sample rate of the output file in Hz")
+    print("\tinputfile[:COLNUM] - text file containing a timeseries.  Select column COLNUM if multicolumn file")
+    print("\tinsamplerate       - the sample rate of the input file in Hz")
+    print("\toutputfile         - the name of the output text file")
+    print("\toutsamplerate      - the sample rate of the output file in Hz")
     print("")
     print(" options:")
-    print("     --nodisplay     - do not plot the data (for noninteractive use)")
-    print("     --noantialias   - disable antialiasing filter when downloading)")
+    print("\t--nodisplay        - do not plot the data (for noninteractive use)")
+    print("\t--noantialias      - disable antialiasing filter when downloading)")
     print("")
     return ()
 
@@ -86,11 +86,18 @@ def main():
 
     intimestep = 1.0 / insamplerate
     outtimestep = 1.0 / outsamplerate
-    inputdata = tide_io.readvec(filename)
+    infilename, colspec = tide_io.parsefilespec(filename)
+
+    inputdata = np.transpose(tide_io.readvecs(infilename, colspec=colspec))
+    if np.shape(inputdata)[1] > 1:
+        print('specify only one column for input file 1')
+        sys.exit()
+    else:
+        inputdata = inputdata[:, 0]
 
     outputdata = tide_resample.arbresample(inputdata, insamplerate, outsamplerate, decimate=False, antialias=antialias)
-    in_t = intimestep * linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True)
-    out_t = outtimestep * linspace(0.0, len(outputdata), len(outputdata), endpoint=True)
+    in_t = intimestep * sp.linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True)
+    out_t = outtimestep * sp.linspace(0.0, len(outputdata), len(outputdata), endpoint=True)
     if len(out_t) < len(outputdata):
         outputdata = outputdata[0:len(out_t)]
 
