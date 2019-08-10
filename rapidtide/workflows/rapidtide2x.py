@@ -542,6 +542,7 @@ def rapidtide_main(thearguments):
     optiondict['findmaxtype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
     optiondict['acwidth'] = 0.0  # width of the reference autocorrelation function
     optiondict['absmaxsigma'] = 100.0  # width of the reference autocorrelation function
+    optiondict['absminsigma'] = 0.25  # width of the reference autocorrelation function
     #     move delay peaks back to the correct position if they hit a sidelobe
 
     # postprocessing options
@@ -1922,6 +1923,7 @@ def rapidtide_main(thearguments):
                                              lagmin=optiondict['lagmin'],
                                              lagmax=optiondict['lagmax'],
                                              absmaxsigma=optiondict['absmaxsigma'],
+                                             absminsigma=optiondict['absminsigma'],
                                              debug=optiondict['debug'],
                                              findmaxtype=optiondict['findmaxtype'],
                                              refine=optiondict['gaussrefine'],
