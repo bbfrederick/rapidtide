@@ -35,6 +35,7 @@ script:
         TEST_ARGS="";
     fi
     pytest -W ignore ${TEST_ARGS} rapidtide;
+  - codecov
 
 after_success:
   - codecov
