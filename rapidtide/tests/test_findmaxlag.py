@@ -13,38 +13,35 @@ import rapidtide.fit as tide_fit
 import rapidtide.helper_classes as tide_classes
 from rapidtide.tests.utils import get_test_data_path
 
+def dumplists(results, targets, failflags):
+    print('assertion failed - dumping lists')
+    if (len(results) != len(targets)) or (len(results) != len(failflags)):
+        print('array lengths do not match')
+        sys.exit()
+    print('results', 'targets')
+    for i in range(len(results)):
+        print(results[i], targets[i], failflags[i])
 
-def eval_fml_lag(lagmin, lagmax, testlags, foundlags, tolerance=0.0001):
-    for i in range(len(testlags)):
-        if testlags[i] < lagmin:
-            if foundlags[i] != lagmin:
-                print(foundlags[i], ' != ', lagmin, 'for input', testlags[i])
+
+def eval_fml_result(absmin, absmax, testvalues, foundvalues, failflags, tolerance=0.0001):
+    for i in range(len(testvalues)):
+        if testvalues[i] < absmin:
+            if foundvalues[i] != absmin:
+                print(foundvalues[i], ' != ', absmin, 'for input', testvalues[i])
+                dumplists(foundvalues, testvalues, failflags)
                 return False
-        elif testlags[i] > lagmax:
-            if foundlags[i] != lagmax:
-                print(foundlags[i], ' != ', lagmax, 'for input', testlags[i])
+        elif testvalues[i] > absmax:
+            if foundvalues[i] != absmax:
+                print(foundvalues[i], ' != ', absmax, 'for input', testvalues[i])
+                dumplists(foundvalues, testvalues, failflags)
                 return False
         else:
-            if np.fabs(foundlags[i] - testlags[i]) > tolerance:
-                print(foundlags[i], ' != ', testlags[i])
-                return False
-    return True
-
-
-def eval_fml_sigma(sigmamin, sigmamax, testsigmas, foundsigmas, tolerance=0.0001):
-    for i in range(len(testsigmas)):
-        if testsigmas[i] < sigmamin:
-            if foundsigmas[i] != sigmamin:
-                print(foundsigmas[i], ' != ', sigmamin, 'for input', testsigmas[i])
-                return False
-        elif testsigmas[i] > sigmamax:
-            if foundsigmas[i] != sigmamax:
-                print(foundsigmas[i], ' != ', sigmamax, 'for input', testsigmas[i])
-                return False
-        else:
-            if np.fabs(foundsigmas[i] - testsigmas[i]) > tolerance:
-                print(foundsigmas[i], ' != ', testsigmas[i])
-                return False
+            if np.fabs(foundvalues[i] - testvalues[i]) > tolerance:
+                if failflags[i] == 0:
+                    print('error found at index', i, failflags[i])
+                    print(foundvalues[i], ' != ', testvalues[i])
+                    dumplists(foundvalues, testvalues, failflags)
+                    return False
     return True
 
 
@@ -64,19 +61,25 @@ def test_findmaxlag(display=False, debug=False):
     lagmax = 20.0
     widthlimit = 1000.0
     absmaxsigma = 1000.0
-    absminsigma = 0.10
+    absminsigma = 0.1
+    absmaxval = 1.0
+    absminval = 0.0
 
     # test over the lag range
-    testlags = np.linspace(-25.0,25.0, 50, endpoint=True)
-    fml_maxlags = np.zeros(len(testlags), dtype=np.float)
-    fml_lfailreasons = np.zeros(len(testlags), dtype=np.int)
-    #fmlr_maxlags = np.zeros(len(testlags), dtype=np.float)
-    #fmlr_lfailreasons = np.zeros(len(testlags), dtype=np.int)
-    fmlc_maxlags = np.zeros(len(testlags), dtype=np.float)
-    fmlc_lfailreasons = np.zeros(len(testlags), dtype=np.int)
-
     testmaxval = 0.8
     testmaxsigma = 5.0
+    testlags = np.linspace(-25.0,25.0, 50, endpoint=True)
+    testsigmas = np.full((len(testlags)), testmaxsigma, dtype=np.float)
+    testvals = np.full((len(testlags)), testmaxval, dtype=np.float)
+
+    fml_maxlags = np.zeros(len(testlags), dtype=np.float)
+    fml_maxsigmas = np.zeros(len(testlags), dtype=np.float)
+    fml_maxvals = np.zeros(len(testlags), dtype=np.float)
+    fml_lfailreasons = np.zeros(len(testlags), dtype=np.uint16)
+    fmlc_maxlags = np.zeros(len(testlags), dtype=np.float)
+    fmlc_maxsigmas = np.zeros(len(testlags), dtype=np.float)
+    fmlc_maxvals = np.zeros(len(testlags), dtype=np.float)
+    fmlc_lfailreasons = np.zeros(len(testlags), dtype=np.uint16)
 
     # initialize the correlation fitter
     thefitter = tide_classes.correlation_fitter(corrtimeaxis=xvecs,
@@ -89,13 +92,13 @@ def test_findmaxlag(display=False, debug=False):
                                                 zerooutbadfit=False)
 
     for i in range(len(testlags)):
-        yvecs = tide_fit.gauss_eval(xvecs, np.array([testmaxval, testlags[i],
-                                                     testmaxsigma]))
+        yvecs = tide_fit.gauss_eval(xvecs, np.array([testvals[i], testlags[i],
+                                                     testsigmas[i]]))
 
         print()
         print()
         print()
-        (maxindex, fml_maxlags[i], maxval, maxsigma, maskval,
+        (maxindex, fml_maxlags[i], fml_maxvals[i], fml_maxsigmas[i], maskval,
          fml_lfailreasons[i], peakstart, peakend) = tide_fit.findmaxlag_gauss(
              xvecs,
              yvecs,
@@ -108,26 +111,11 @@ def test_findmaxlag(display=False, debug=False):
              absminsigma=absminsigma,
              zerooutbadfit=False)
 
-        #print()
-        #print()
-        #print()
-        #(maxindexr, fmlr_maxlags[i], maxvalr, maxsigmar, maskvalr,
-        # fmlr_lfailreasons[i], peakstartr, peakendr) = tide_fit.findmaxlag_gauss_rev(
-        #     xvecs,
-        #     yvecs,
-        #     lagmin, lagmax, widthlimit,
-        #     absmaxsigma=absmaxsigma,
-        #     tweaklims=False,
-        #     refine=True,
-        #     debug=debug,
-        #     searchfrac=searchfrac,
-        #     zerooutbadfit=False)
-
         print()
         print()
         print()
-        (maxindexc, fmlc_maxlags[i], maxvalc, maxsigmac, maskvalc, fmlc_lfailreasons[i], peakstartc, peakendc) = thefitter.fit(yvecs)
-        print(maxindexc, fmlc_maxlags[i], maxvalc, maxsigmac, maskvalc, fmlc_lfailreasons[i], peakstartc, peakendc)
+        (maxindexc, fmlc_maxlags[i], fmlc_maxvals[i], fmlc_maxsigmas[i], maskvalc, fmlc_lfailreasons[i], peakstartc, peakendc) = thefitter.fit(yvecs)
+        print(maxindexc, fmlc_maxlags[i], fmlc_maxvals[i], fmlc_maxsigmas[i], maskvalc, fmlc_lfailreasons[i], peakstartc, peakendc)
 
 
     if debug:
@@ -135,45 +123,47 @@ def test_findmaxlag(display=False, debug=False):
         for i in range(len(testlags)):
             print(testlags[i], fml_maxlags[i], fml_lfailreasons[i])
 
-        #print('\nfindmaxlag_gauss_rev results over lag range')
-        #for i in range(len(testlags)):
-        #    print(testlags[i], fmlr_maxlags[i], fmlr_lfailreasons[i])
+    assert eval_fml_result(lagmin, lagmax, testlags, fml_maxlags, fml_lfailreasons)
+    assert eval_fml_result(absminval, absmaxval, testvals, fml_maxvals, fml_lfailreasons)
+    assert eval_fml_result(absminsigma, absmaxsigma, testsigmas, fml_maxsigmas, fml_lfailreasons)
 
-    assert eval_fml_lag(lagmin, lagmax, testlags, fml_maxlags)
-    #assert eval_fml_lag(lagmin, lagmax, testlags, fmlr_maxlags)
-    assert eval_fml_lag(lagmin, lagmax, testlags, fmlc_maxlags)
+    assert eval_fml_result(lagmin, lagmax, testlags, fmlc_maxlags, fmlc_lfailreasons)
+    assert eval_fml_result(absminval, absmaxval, testvals, fmlc_maxvals, fmlc_lfailreasons)
+    assert eval_fml_result(absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_lfailreasons)
 
     if display:
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(testlags, fml_maxlags, 'r')
-        #ax.plot(testlags, fmlr_maxlags, 'g')
         ax.plot(testlags, fmlc_maxlags, 'b')
         ax.legend(['findmaxlag_gauss', 'classes'])
-        #ax.set_xlim((lagmin, lagmax))
         plt.show()
 
     # now test over range of sigmas
     testlag = 5.0
     testsigmas = np.asarray([0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0])
+    testlags = np.full((len(testsigmas)), testlag, dtype=np.float)
+    testvals = np.full((len(testsigmas)), testmaxval, dtype=np.float)
+
+    fml_maxlags = np.zeros(len(testsigmas), dtype=np.float)
     fml_maxsigmas = np.zeros(len(testsigmas), dtype=np.float)
-    fml_wfailreasons = np.zeros(len(testsigmas), dtype=np.int)
-    #fmlr_maxsigmas = np.zeros(len(testsigmas), dtype=np.float)
-    #fmlr_wfailreasons = np.zeros(len(testsigmas), dtype=np.int)
+    fml_maxvals = np.zeros(len(testsigmas), dtype=np.float)
+    fml_wfailreasons = np.zeros(len(testsigmas), dtype=np.uint16)
+    fmlc_maxlags = np.zeros(len(testsigmas), dtype=np.float)
     fmlc_maxsigmas = np.zeros(len(testsigmas), dtype=np.float)
-    fmlc_wfailreasons = np.zeros(len(testsigmas), dtype=np.int)
+    fmlc_maxvals = np.zeros(len(testsigmas), dtype=np.float)
+    fmlc_wfailreasons = np.zeros(len(testsigmas), dtype=np.uint16)
     peakstartc = np.zeros(len(testsigmas), dtype=np.int)
     peakendc = np.zeros(len(testsigmas), dtype=np.int)
 
     for i in range(len(testsigmas)):
-        testmaxval = 0.8
-        yvecs = tide_fit.gauss_eval(xvecs, np.array([testmaxval, testlag,
+        yvecs = tide_fit.gauss_eval(xvecs, np.array([testvals[i], testlags[i],
                                                      testsigmas[i]]))
 
         print()
         print()
         print()
-        (maxindex, maxlag, maxval, fml_maxsigmas[i], maskval,
+        (maxindex, fml_maxlags[i], fml_maxvals[i], fml_maxsigmas[i], maskval,
          fml_wfailreasons[i], peakstart, peakend) = tide_fit.findmaxlag_gauss(
              xvecs,
              yvecs,
@@ -186,53 +176,37 @@ def test_findmaxlag(display=False, debug=False):
              absminsigma=absminsigma,
              zerooutbadfit=False)
 
-        #print()
-        #print()
-        #print()
-        #(maxindexr, maxlagr, maxvalr, fmlr_maxsigmas[i], maskvalr,
-        # fmlr_wfailreasons[i], peakstartr, peakendr) = tide_fit.findmaxlag_gauss_rev(
-        #     xvecs,
-        #     yvecs,
-        #     lagmin, lagmax, widthlimit,
-        #     absmaxsigma=absmaxsigma,
-        #     tweaklims=False,
-        #     refine=True,
-        #     debug=debug,
-        #     searchfrac=searchfrac,
-        #     zerooutbadfit=False)
-
         print()
         print()
         print()
-        (maxindexc, maxlagc, maxvalc, fmlc_maxsigmas[i], maskvalc, fmlc_wfailreasons[i], peakstartc[i], peakendc[i]) = thefitter.fit(yvecs)
-        print(maxindexc, fmlc_maxlags[i], maxvalc, maxsigmac, maskvalc, fmlc_lfailreasons[i], peakstartc[i], peakendc[i])
+        (maxindexc, fmlc_maxlags[i], fmlc_maxvals[i], fmlc_maxsigmas[i], maskvalc, fmlc_wfailreasons[i], peakstartc[i], peakendc[i]) = thefitter.fit(yvecs)
+        print(maxindexc, fmlc_maxlags[i], fmlc_maxvals[i], fmlc_maxsigmas[i], maskvalc, fmlc_wfailreasons[i], peakstartc[i], peakendc[i])
 
 
     if debug:
         print('findmaxlag_gauss results over sigma range')
         for i in range(len(testsigmas)):
-            print(testsigmas[i], fml_maxsigmas[i], maxval, maxlag, fml_wfailreasons[i])
-
-        #print('\nfindmaxlag_gauss_rev results over lag range')
-        #for i in range(len(testsigmas)):
-        #    print(testsigmas[i], fmlr_maxsigmas[i], maxvalr, maxlagr, fmlr_wfailreasons[i])
+            print(testsigmas[i], fml_maxsigmas[i], fmlc_maxlags[i], fmlc_maxvals[i], fml_wfailreasons[i])
 
         print('\nfitter class results over lag range')
         for i in range(len(testsigmas)):
-            print(testsigmas[i], fmlc_maxsigmas[i], maxvalc, maxlagc, peakstartc[i], peakendc[i], thefitter.diagnosefail(fmlc_wfailreasons[i]))
+            print(testsigmas[i], fmlc_maxsigmas[i], fmlc_maxlags[i], fmlc_maxvals[i], peakstartc[i], peakendc[i], fmlc_wfailreasons[i], thefitter.diagnosefail(fmlc_wfailreasons[i]))
 
     if display:
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.loglog(testsigmas, fml_maxsigmas, 'r')
-        #ax.loglog(testsigmas, fmlr_maxsigmas, 'g')
         ax.loglog(testsigmas, fmlc_maxsigmas, 'b')
         ax.legend(['findmaxlag_gauss', 'classes'])
         plt.show()
 
-    assert eval_fml_sigma(absminsigma, absmaxsigma, testsigmas, fml_maxsigmas)
-    #assert eval_fml_sigma(absminsigma, absmaxsigma, testsigmas, fmlr_maxsigmas)
-    assert eval_fml_sigma(absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas)
+    assert eval_fml_result(lagmin, lagmax, testlags, fml_maxlags, fml_wfailreasons)
+    #assert eval_fml_result(absminval, absmaxval, testvals, fml_maxvals, fml_wfailreasons)
+    assert eval_fml_result(absminsigma, absmaxsigma, testsigmas, fml_maxsigmas, fml_wfailreasons)
+
+    assert eval_fml_result(lagmin, lagmax, testlags, fmlc_maxlags, fmlc_wfailreasons)
+    assert eval_fml_result(absminval, absmaxval, testvals, fmlc_maxvals, fmlc_wfailreasons)
+    assert eval_fml_result(absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_wfailreasons)
 
 def main():
     test_findmaxlag(display=True, debug=True)
