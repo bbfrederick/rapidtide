@@ -604,7 +604,7 @@ class correlation_fitter:
             if maxsigma < self.absminsigma:
                 failreason |= (self.FML_FITFAIL + self.FML_BADWIDTHLOW)
                 if self.debug:
-                    print('bad width after refinement:', maxsigma, '<=', 0.0)
+                    print('bad width after refinement:', maxsigma, '<', self.absminsigma)
                 maxsigma = self.absminsigma
                 fitfail = True
             if (np.abs(maxval) > 1.0):
