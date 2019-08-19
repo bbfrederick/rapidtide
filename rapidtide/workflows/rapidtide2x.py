@@ -1181,7 +1181,10 @@ def rapidtide_main(thearguments):
             if optiondict['passes'] == 1:
                 optiondict['passes'] = 2
             linkchar = '='
-            print('Using ampthresh of ', optiondict['ampthresh'])
+            if optiondict['ampthresh'] < 0.0:
+                print('Setting ampthresh to the', -100.0 * optiondict['ampthresh'], 'th percentile')
+            else:
+                print('Using ampthresh of ', optiondict['ampthresh'])
         elif o == '--sigmathresh':
             optiondict['sigmathresh'] = float(a)
             if optiondict['passes'] == 1:
