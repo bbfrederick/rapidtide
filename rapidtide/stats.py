@@ -477,7 +477,7 @@ def makepmask(rvals, pval, sighistfit, onesided=True):
 
 
 # Find the image intensity value which thefrac of the non-zero voxels in the image exceed
-def getfracval(datamat, thefrac, numbins=200):
+def getfracval(datamat, thefrac, numbins=200, nozero=False):
     """
 
     Parameters
@@ -490,18 +490,7 @@ def getfracval(datamat, thefrac, numbins=200):
     -------
 
     """
-    return getfracvals(datamat, [thefrac], numbins=numbins)[0]
-    '''
-    themax = datamat.max()
-    themin = datamat.min()
-    (meanhist, bins) = np.histogram(datamat, bins=numbins, range=(themin, themax))
-    cummeanhist = np.cumsum(meanhist)
-    target = cummeanhist[numbins - 1] * thefrac
-    for i in range(0, numbins):
-        if cummeanhist[i] >= target:
-            return bins[i]
-    return 0.0
-    '''
+    return getfracvals(datamat, [thefrac], numbins=numbins, nozero=nozero)[0]
 
 
 def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False):
