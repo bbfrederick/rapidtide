@@ -760,6 +760,35 @@ def colspectolist(colspec, debug=False):
     return sorted(collist)
 
 
+def readcolfromtextfile(inputfilename):
+    r"""
+
+    Parameters
+    ----------
+    inputfilename
+    colspec
+
+    Returns
+    -------
+    """
+    splitname = inputfilename.split(':')
+    if len(splitname) == 1:
+        colspec = None
+    elif len(splitname) == 2:
+        inputfilename = splitname[0]
+        colspec = splitname[1]
+    else:
+        print('Badly formed file specification', inputfilename, '- exiting')
+        sys.exit()
+
+    inputdata = np.transpose(tide_io.readvecs(inputfilename, colspec=colspec))
+    if np.shape(inputdata)[1] > 1:
+        print('specify only one column for input file 1')
+        sys.exit()
+    else:
+        return inputdata[:, 0]
+
+
 def readvecs(inputfilename, colspec=None):
     r"""
 
