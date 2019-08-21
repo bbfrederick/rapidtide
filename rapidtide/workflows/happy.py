@@ -754,7 +754,11 @@ def cardiaccycleaverage(sourcephases,
     rawapp_bypoint = np.where(weight_bypoint > np.max(weight_bypoint) / 50.0,
                                                       np.nan_to_num(rawapp_bypoint / weight_bypoint),
                                                       0.0)
-    return rawapp_bypoint - np.min(rawapp_bypoint)
+    minval = np.min(rawapp_bypoint[np.where(weight_bypoint > np.max(weight_bypoint) / 50.0)])
+    rawapp_bypoint = np.where(weight_bypoint > np.max(weight_bypoint) / 50.0,
+                                                      rawapp_bypoint - minval,
+                                                      0.0)
+    return rawapp_bypoint
 
 
 def circularderivs(timecourse):
@@ -1632,7 +1636,7 @@ def happy_main(thearguments):
                     tide_io.writevec(phasevals[theslice, :], outputroot + '_phasevals_' + str(theslice).zfill(2) + '.txt')
         timings.append(['Slice phases determined for all timepoints' + passstring, time.time(), None, None])
 
-        # construct a destination array
+        # construct the destination arrays
         tide_util.logmem('before making destination arrays', file=memfile)
         app = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
         app_byslice = app.reshape((xsize * ysize, numslices, destpoints))
@@ -1783,8 +1787,8 @@ def happy_main(thearguments):
                 corrected_rawapp_byslice = rawapp_byslice * appflips_byslice[:, :, None]
             else:
                 corrected_rawapp_byslice = rawapp_byslice
-            slicemin = np.min(corrected_rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
-            app_byslice[validlocs, theslice, :] = corrected_rawapp_byslice[validlocs, theslice, :] - slicemin
+            timecoursemin = np.min(corrected_rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
+            app_byslice[validlocs, theslice, :] = corrected_rawapp_byslice[validlocs, theslice, :] - timecoursemin
             normapp_byslice[validlocs, theslice, :] = np.nan_to_num(app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None])
         if not verbose:
             print('done')
