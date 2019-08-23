@@ -1640,6 +1640,8 @@ def happy_main(thearguments):
         tide_util.logmem('before making destination arrays', file=memfile)
         app = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
         app_byslice = app.reshape((xsize * ysize, numslices, destpoints))
+        cine = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
+        cine_byslice = cine.reshape((xsize * ysize, numslices, destpoints))
         rawapp = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
         rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, destpoints))
         normapp = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
@@ -1662,7 +1664,7 @@ def happy_main(thearguments):
         # now do the phase projection
         #
         #
-        fmri_data_byslice = demeandata.reshape((xsize * ysize, numslices, timepoints))
+        demeandata_byslice = demeandata.reshape((xsize * ysize, numslices, timepoints))
         means_byslice = means.reshape((xsize * ysize, numslices))
 
         timings.append(['Phase projection to image started' + passstring, time.time(), None, None])
@@ -1752,6 +1754,7 @@ def happy_main(thearguments):
         appsmoothingfilter.setarb(0.0, 0.0, phaseFc, phaseFc)
 
         # now project the data
+        fmri_data_byslice = input_data.byslice()
         for theslice in range(numslices):
             if verbose:
                 print('phase projecting for slice', theslice)
@@ -1759,7 +1762,8 @@ def happy_main(thearguments):
             indexlist = range(0, len(phasevals[theslice, :]))
             if len(validlocs) > 0:
                 for t in proctrs:
-                    filteredmr = -fmri_data_byslice[validlocs, theslice, t]
+                    filteredmr = -demeandata_byslice[validlocs, theslice, t]
+                    cinemr = fmri_data_byslice[validlocs, theslice, t]
                     thevals, theweights, theindices = tide_resample.congrid(outphases,
                                                                             phasevals[theslice, t],
                                                                             1.0,
@@ -1769,13 +1773,17 @@ def happy_main(thearguments):
                     for i in range(len(theindices)):
                         weight_byslice[validlocs, theslice, theindices[i]] += theweights[i]
                         rawapp_byslice[validlocs, theslice, theindices[i]] += theweights[i] * filteredmr
+                        cine_byslice[validlocs, theslice, theindices[i]] += theweights[i] * cinemr
                 for d in range(destpoints):
                     if weight_byslice[validlocs[0], theslice, d] == 0.0:
                         weight_byslice[validlocs, theslice, d] = 1.0
                 rawapp_byslice[validlocs, theslice, :] = \
                     np.nan_to_num(rawapp_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :])
+                cine_byslice[validlocs, theslice, :] = \
+                    np.nan_to_num(cine_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :])
             else:
                 rawapp_byslice[:, theslice, :] = 0.0
+                cine_byslice[:, theslice, :] = 0.0
 
             # smooth the projected data along the time dimension
             if smoothapp:
@@ -1803,6 +1811,7 @@ def happy_main(thearguments):
         if thispass == numpasses - 1:
             tide_io.savetonifti(app, theheader, outputroot + '_app')
             tide_io.savetonifti(normapp, theheader, outputroot + '_normapp')
+            tide_io.savetonifti(cine, theheader, outputroot + '_cine')
             if outputlevel > 0:
                 tide_io.savetonifti(rawapp, theheader, outputroot + '_rawapp')
         timings.append(['Phase projected data saved' + passstring, time.time(), None, None])
