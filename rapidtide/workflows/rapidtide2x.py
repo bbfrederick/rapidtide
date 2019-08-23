@@ -1705,13 +1705,6 @@ def rapidtide_main(thearguments):
         print(np.shape(os_fmri_x)[0])
         print(np.shape(initial_fmri_x)[0])
 
-    ''''# Clip the data
-    if not optiondict['useglobalref'] and False:
-        clipstart = bisect.bisect_left(reference_x, os_fmri_x[0] - 2.0 * optiondict['lagmin'])
-        clipend = bisect.bisect_left(reference_x, os_fmri_x[-1] + 2.0 * optiondict['lagmax'])
-        print('clip indices=', clipstart, clipend, reference_x[clipstart], reference_x[clipend], os_fmri_x[0],
-              os_fmri_x[-1])'''
-
     # generate the comparison regressor from the input timecourse
     # correct the output time points
     # check for extrapolation
