@@ -182,6 +182,7 @@ def usage():
     #print("    --arteriesonly                 - Restrict cardiac waveform estimation to putative arteries only.")
     print("")
     print("Debugging arguments (probably not of interest to users):")
+    print("    --noprogressbar                - Disable progress bars - useful if saving output to files")
     print("    --debug                        - Turn on debugging information")
     print("    --increaseoutputlevel          - Increase the output level to output more intermediate files (default=1)")
     print("    --decreaseoutputlevel          - Decrease the output level to output fewer intermediate files (default=1)")
@@ -354,7 +355,7 @@ def getcardcoeffs(cardiacwaveform, slicesamplerate, minhr=40.0, maxhr=140.0, smo
     return peakfreq
 
 
-def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings):
+def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showprogressbar=False):
     print('normalizing voxels...')
     normdata = fmri_data * 0.0
     demeandata = fmri_data * 0.0
@@ -365,7 +366,7 @@ def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings):
     if detrendorder > 0:
         print('detrending to order', detrendorder, '...')
         for idx, thevox in enumerate(validvoxels):
-            if (idx % reportstep == 0) or (idx == len(validvoxels) - 1):
+            if ((idx % reportstep == 0) or (idx == len(validvoxels) - 1)) and showprogressbar:
                 tide_util.progressbar(idx + 1, len(validvoxels), label='Percent complete')
             fmri_data[thevox, :] = tide_fit.detrend(fmri_data[thevox, :], order=detrendorder, demean=False)
         timings.append(['Detrending finished', time.time(), numspatiallocs, 'voxels'])
@@ -843,6 +844,7 @@ def happy_main(thearguments):
     pulsereconstepsize = 0.01
     arteriesonly = False
     saveintermediate = False
+    showprogressbar = True
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
@@ -913,6 +915,7 @@ def happy_main(thearguments):
                                                            "dodlfilter",
                                                            "noncentric",
                                                            "model=",
+                                                           "noprogressbar",
                                                            "usesuperdangerousworkaround",
                                                            "saveintermediate",
                                                            "savemotionglmfilt",
@@ -1002,6 +1005,9 @@ def happy_main(thearguments):
             linkchar = '='
             modelname = a
             print('Will use', modelname, 'for the deep learning filter;')
+        elif o == '--noprogressbar':
+            showprogressbar = False
+            print('Will disable progress bars')
         elif o == "--cardcalconly":
             cardcalconly = True
             print('Will stop processing after calculating cardiac waveforms')
@@ -1278,7 +1284,7 @@ def happy_main(thearguments):
 
     # normalize the input data
     tide_util.logmem('before normalization', file=memfile)
-    normdata, demeandata, means = normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings)
+    normdata, demeandata, means = normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showprogressbar=showprogressbar)
     normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
 
@@ -1756,6 +1762,8 @@ def happy_main(thearguments):
         # now project the data
         fmri_data_byslice = input_data.byslice()
         for theslice in range(numslices):
+            if showprogressbar:
+                tide_util.progressbar(theslice + 1, numslices, label='Percent complete')
             if verbose:
                 print('phase projecting for slice', theslice)
             validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
@@ -1799,7 +1807,7 @@ def happy_main(thearguments):
             app_byslice[validlocs, theslice, :] = corrected_rawapp_byslice[validlocs, theslice, :] - timecoursemin
             normapp_byslice[validlocs, theslice, :] = np.nan_to_num(app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None])
         if not verbose:
-            print('done')
+            print(' done')
         timings.append(['Phase projection to image completed' + passstring, time.time(), None, None])
         print('phase projection done')
 
