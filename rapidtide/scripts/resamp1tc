@@ -46,7 +46,7 @@ def usage():
     print("")
     print(" options:")
     print("\t--nodisplay        - do not plot the data (for noninteractive use)")
-    print("\t--noantialias      - disable antialiasing filter when downloading)")
+    print("\t--noantialias      - disable antialiasing filter when downsampling)")
     print("")
     return ()
 
