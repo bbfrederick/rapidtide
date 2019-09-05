@@ -22,7 +22,6 @@ def test_fastcorrelate(display=False):
         plt.figure()
         plt.ylim([-1.0, 3.0])
         plt.plot(fastcorrelate_result + 1.0)
-        plt.hold(True)
         plt.plot(stdcorrelate_result)
         print('maximum occurs at offset', np.argmax(stdcorrelate_result) - midpoint + 1)
         plt.legend(['Fast correlate', 'Standard correlate'])

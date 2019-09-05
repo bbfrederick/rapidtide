@@ -29,7 +29,6 @@ def test_fastresampler(debug=False):
     if debug:
         plt.figure()
         plt.ylim([-1.0, 2.0 * len(shiftlist) + 1.0])
-        plt.hold(True)
         plt.plot(timecoursein)
         legend = ['Original']
         offset = 0.0
