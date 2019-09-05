@@ -581,10 +581,21 @@ class correlation_fitter:
             # check for errors in fit
             fitfail = False
             failreason = np.uint16(0)
-            if not (0.0 <= np.fabs(maxval) <= 1.0):
+            if self.bipolar:
+                lowestcorrcoeff = -1.0
+            else:
+                lowestcorrcoeff = 0.0
+            if maxval < lowestcorrcoeff:
                 failreason |= (self.FML_FITFAIL + self.FML_BADAMPLOW)
+                maxval = lowestcorrcoeff
                 if self.debug:
-                    print('bad amp after refinement')
+                    print('bad fit amp: maxval is lower than lower limit')
+                fitfail = True
+            if (np.abs(maxval) > 1.0):
+                failreason |= (self.FML_FITFAIL | self.FML_BADAMPHIGH)
+                maxval = 1.0 * np.sign(maxval)
+                if self.debug:
+                    print('bad fit amp: magnitude of', maxval, 'is greater than 1.0')
                 fitfail = True
             if (self.lagmin > maxlag) or (maxlag > self.lagmax):
                 failreason |= (self.FML_FITFAIL + self.FML_BADLAG)
@@ -606,12 +617,6 @@ class correlation_fitter:
                 if self.debug:
                     print('bad width after refinement:', maxsigma, '<', self.absminsigma)
                 maxsigma = self.absminsigma
-                fitfail = True
-            if (np.abs(maxval) > 1.0):
-                failreason |= (self.FML_FITFAIL | self.FML_BADAMPHIGH)
-                maxval = 1.0 * np.sign(maxval)
-                if self.debug:
-                    print('bad fit amp: magnitude of', maxval, 'is greater than 1.0')
                 fitfail = True
             if fitfail:
                 if self.debug:
