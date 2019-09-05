@@ -1193,7 +1193,8 @@ def rapidtide_main(thearguments):
             print('Using widththresh of ', optiondict['sigmathresh'])
         elif o == '--globalmeaninclude':
             optiondict['globalmeanincludename'], colspec = tide_io.parsefilespec(a)
-            optiondict['globalmeanincludevals'] = tide_io.colspectolist(colspec)
+            if colspec is not None:
+                optiondict['globalmeanincludevals'] = tide_io.colspectolist(colspec)
             linkchar = '='
             if optiondict['globalmeanincludevals'] is not None:
                 print('Using voxels where',
@@ -1205,7 +1206,8 @@ def rapidtide_main(thearguments):
                 print('Using ', optiondict['globalmeanincludename'], ' as include mask for global mean calculation')
         elif o == '--globalmeanexclude':
             optiondict['globalmeanexcludename'], colspec = tide_io.parsefilespec(a)
-            optiondict['globalmeanexcludevals'] = tide_io.colspectolist(colspec)
+            if colspec is not None:
+                optiondict['globalmeanexcludevals'] = tide_io.colspectolist(colspec)
             linkchar = '='
             if optiondict['globalmeanexcludevals'] is not None:
                 print('Using voxels where',
@@ -1217,7 +1219,8 @@ def rapidtide_main(thearguments):
                 print('Using ', optiondict['globalmeanexcludename'], ' as exclude mask for global mean calculation')
         elif o == '--refineinclude':
             optiondict['refineincludename'], colspec = tide_io.parsefilespec(a)
-            optiondict['refineincludevals'] = tide_io.colspectolist(colspec)
+            if colspec is not None:
+                optiondict['refineincludevals'] = tide_io.colspectolist(colspec)
             linkchar = '='
             if optiondict['refineincludevals'] is not None:
                 print('Using voxels where',
@@ -1229,7 +1232,8 @@ def rapidtide_main(thearguments):
                 print('Using ', optiondict['refineincludename'], ' as include mask for probe regressor refinement')
         elif o == '--refineexclude':
             optiondict['refineexcludename'], colspec = tide_io.parsefilespec(a)
-            optiondict['refineexcludevals'] = tide_io.colspectolist(colspec)
+            if colspec is not None:
+                optiondict['refineexcludevals'] = tide_io.colspectolist(colspec)
             linkchar = '='
             if optiondict['refineexcludevals'] is not None:
                 print('Using voxels where',
@@ -1241,7 +1245,8 @@ def rapidtide_main(thearguments):
                 print('Using ', optiondict['refineexcludename'], ' as exclude mask for probe regressor refinement')
         elif o == '--corrmask':
             optiondict['corrmaskname'], colspec = tide_io.parsefilespec(a)
-            optiondict['corrmaskvallist'] = tide_io.colspectolist(colspec)
+            if colspec is not None:
+                optiondict['corrmaskvallist'] = tide_io.colspectolist(colspec)
             linkchar = '='
             if optiondict['corrmaskvallist'] is not None:
                 print('Using voxels where',
