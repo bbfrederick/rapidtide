@@ -59,7 +59,7 @@ def onecorrfitx(correlationfunc,
 
     flipfac = None
     if thefitter.bipolar:
-        if max(thetc) < -1.0 * min(thetc):
+        if max(correlationfunc) < -1.0 * min(correlationfunc):
             flipfac = rt_floatset(-1.0)
         else:
             flipfac = rt_floatset(1.0)
