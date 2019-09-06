@@ -242,7 +242,7 @@ if onefilename is not None:
     sys.exit(0)
 
 theoutputdir = os.path.join(os.path.abspath('.'), outputdir)
-thefileroot = glob.glob(os.path.join(fileroot + '*corrout.nii.gz'))[0]
+thefileroot = glob.glob(os.path.join(fileroot + '*app.nii.gz'))[0]
 
 thefmrimaps = ['arterymap', 'mask',  'cine', 'normapp', 'veinmap', 'vesselmap', 'vesselmask']
 thefmrimaps += ['app', 'arteries', 'rawapp', 'veins']
