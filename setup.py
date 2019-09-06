@@ -58,6 +58,7 @@ if addtidepool:
 script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/rapidtide2x',
                'rapidtide/scripts/rapidtide2std',
+               'rapidtide/scripts/happy2std',
                'rapidtide/scripts/showxcorr',
                'rapidtide/scripts/aligntcs',
                'rapidtide/scripts/plethquality',
