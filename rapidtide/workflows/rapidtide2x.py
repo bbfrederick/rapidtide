@@ -609,6 +609,7 @@ def rapidtide_main(thearguments):
     optiondict['refineexcludevals'] = None        # list of integer values to use in the mask
     optiondict['refineincludename'] = None
     optiondict['refineincludevals'] = None        # list of integer values to use in the mask
+    optiondict['corrmaskvallist'] = None
     optiondict['refinetype'] = 'unweighted_average'
     optiondict['estimatePCAdims'] = False
     optiondict['filterbeforePCA'] = True
