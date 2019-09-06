@@ -71,8 +71,13 @@ def makefslcmd(theinputfile, reftarget, xform, outputname, warpfile=None):
     return thecommand
 
 
-def transformmaps(thepath, subjroot, warpfuncfile, thefmrimaps=None, theanatmaps=None, preponly=False):
-    print('entering transformmaps with', thepath, subjroot, warpfuncfile)
+def transformmaps(thepath, subjroot, reftarget, xformfuncmat, warpfuncfile, thefmrimaps=None, theanatmaps=None, preponly=False):
+    print('entering transformmaps with:')
+    print(thepath)
+    print(subjroot)
+    print(reftarget)
+    print(xformfuncmat)
+    print(warpfuncfile)
     if thefmrimaps is not None:
         for themap in thefmrimaps:
             inputname = os.path.abspath(os.path.join(thepath, subjroot + '_' + themap + '.nii.gz'))
@@ -250,5 +255,6 @@ thepath, thebase = os.path.split(absname)
 theprevpath, theprevbase = os.path.split(thepath)
 subjroot = thebase[:-15]
 
-transformmaps(thepath, subjroot, warpfuncfile, thefmrimaps=thefmrimaps, theanatmaps=theanatmaps, preponly=preponly)
+transformmaps(thepath, subjroot, reftarget, xformfuncmat, warpfuncfile,
+              thefmrimaps=thefmrimaps, theanatmaps=theanatmaps, preponly=preponly)
 
