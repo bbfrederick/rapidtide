@@ -125,7 +125,7 @@ def usage():
     print('                         information needed for registration to standard space can be found')
     print('')
     print("optional arguments:")
-    print("    --all              - also transform the corrout file (warning - file may be huge)")
+    print("    --all              - also transform extra maps (warning - file may be huge)")
     print("    --hires            - transform to match the high resolution anatomic image rather than the standard")
     print("    --linear           - only do linear transformation, even if warpfile exists")
     print("    --onefile=FILE     - align a single file, specified by name without extension (ignore INPUTFILEROOT)")
@@ -166,7 +166,7 @@ if nargs < 4:
 for o, a in opts:
     linkchar = ' '
     if o == "--all":
-        do4Dmaps = True
+        doall = True
         print('will also transofrm corrout map')
     elif o == '--onefile':
         onefilename = a
@@ -244,8 +244,9 @@ if onefilename is not None:
 theoutputdir = os.path.join(os.path.abspath('.'), outputdir)
 thefileroot = glob.glob(os.path.join(fileroot + '*app.nii.gz'))[0]
 
-thefmrimaps = ['arterymap', 'mask',  'cine', 'normapp', 'veinmap', 'vesselmap', 'vesselmask']
-thefmrimaps += ['app', 'arteries', 'rawapp', 'veins']
+thefmrimaps = ['arterymap', 'mask',  'normapp', 'veinmap', 'vesselmap', 'vesselmask']
+if doall:
+    thefmrimaps += ['app', 'arteries', 'rawapp', 'veins', 'cine']
 
 absname = os.path.abspath(thefileroot)
 thepath, thebase = os.path.split(absname)
