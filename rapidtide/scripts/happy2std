@@ -141,7 +141,7 @@ def usage():
 ##########################################################################################
 
 # option control
-do4Dmaps = False
+doall = False
 aligntohires = False
 forcelinear = False
 onefilename = None
