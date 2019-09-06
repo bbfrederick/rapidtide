@@ -71,7 +71,8 @@ def makefslcmd(theinputfile, reftarget, xform, outputname, warpfile=None):
     return thecommand
 
 
-def transformmaps(thepath, subjroot, thefmrimaps=None, theanatmaps=None, preponly=False):
+def transformmaps(thepath, subjroot, warpfuncfile, thefmrimaps=None, theanatmaps=None, preponly=False):
+    print('entering transformmaps with', thepath, subjroot, warpfuncfile)
     if thefmrimaps is not None:
         for themap in thefmrimaps:
             inputname = os.path.abspath(os.path.join(thepath, subjroot + '_' + themap + '.nii.gz'))
@@ -108,9 +109,9 @@ def transformmaps(thepath, subjroot, thefmrimaps=None, theanatmaps=None, preponl
 
 
 def usage():
-    print('rapidtide2std:  register rapidtide output maps to standard space')
+    print('happy2std:  register happy output maps to standard space')
     print('')
-    print('usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]')
+    print('usage: happy2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]')
     print('')
     print('required arguments:')
     print('    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore')
@@ -243,11 +244,11 @@ thefmrimaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'lagmask', 'refine
 
 if do4Dmaps:
     thefmrimaps.append('corrout')
-    
+
 absname = os.path.abspath(thefileroot)
 thepath, thebase = os.path.split(absname)
 theprevpath, theprevbase = os.path.split(thepath)
 subjroot = thebase[:-15]
 
-transformmaps(thepath, subjroot, thefmrimaps=thefmrimaps, theanatmaps=theanatmaps, preponly=preponly)
+transformmaps(thepath, subjroot, warpfuncfile, thefmrimaps=thefmrimaps, theanatmaps=theanatmaps, preponly=preponly)
 
