@@ -250,7 +250,7 @@ thefmrimaps += ['app', 'arteries', 'rawapp', 'veins']
 absname = os.path.abspath(thefileroot)
 thepath, thebase = os.path.split(absname)
 theprevpath, theprevbase = os.path.split(thepath)
-subjroot = thebase[:-10]
+subjroot = thebase[:-11]
 
 transformmaps(thepath, subjroot, reftarget, xformfuncmat, warpfuncfile,
               thefmrimaps=thefmrimaps, theanatmaps=theanatmaps, preponly=preponly)
