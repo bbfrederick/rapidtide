@@ -1212,6 +1212,9 @@ def happy_main(thearguments):
     infodict['notchpct'] = notchpct
     timings.append(['Argument parsing done', time.time(), None, None])
 
+    # save program version
+    infodict['version'] = tide_util.version()
+
     # read in the image data
     tide_util.logmem('before reading in fmri data', file=memfile)
     nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
@@ -1650,6 +1653,8 @@ def happy_main(thearguments):
         cine_byslice = cine.reshape((xsize * ysize, numslices, destpoints))
         rawapp = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
         rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, destpoints))
+        corrected_rawapp = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
+        corrected_rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, destpoints))
         normapp = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
         normapp_byslice = normapp.reshape((xsize * ysize, numslices, destpoints))
         weights = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
@@ -1799,10 +1804,12 @@ def happy_main(thearguments):
                     rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(phaseFs, rawapp_byslice[loc, theslice, :])
                     derivatives_byslice[loc, theslice, :] = circularderivs(rawapp_byslice[loc, theslice, :])
             appflips_byslice = np.where(-derivatives_byslice[:, :, 2] > derivatives_byslice[:, :, 0], -1.0, 1.0)
+            timecoursemean = np.mean(rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
             if fliparteries:
-                corrected_rawapp_byslice = rawapp_byslice * appflips_byslice[:, :, None]
+                corrected_rawapp_byslice[validlocs, theslice, :] = (rawapp_byslice[validlocs, theslice, :] - timecoursemean) \
+                                                                  * appflips_byslice[validlocs, theslice, None] + timecoursemean
             else:
-                corrected_rawapp_byslice = rawapp_byslice
+                corrected_rawapp_byslice[validlocs, theslice, :] = rawapp_byslice[validlocs, theslice, :]
             timecoursemin = np.min(corrected_rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
             app_byslice[validlocs, theslice, :] = corrected_rawapp_byslice[validlocs, theslice, :] - timecoursemin
             normapp_byslice[validlocs, theslice, :] = np.nan_to_num(app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None])
