@@ -8,7 +8,6 @@ happy \
     --dodlfilter \
     --saveinfoasjson \
     --model=model_revised \
-    --glm \
     --fliparteries 
 
 happy \

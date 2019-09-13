@@ -1,26 +1,39 @@
 #!/bin/csh -f
 
-rapidtide2 \
-	fmri.nii.gz \
-	../dst/dgsr_2 \
-        --limitoutput \
-        -s 25.0 \
-        -L \
-	-r -20,20 \
-	-f 2 \
-        --refinepasses=3 \
-        --despecklepasses=4 \
-        --accheck \
-        --nprocs=-1 \
-        --saveoptionsasjson \
-        --detrendorder=3
+#rapidtide2 \
+	#fmri.nii.gz \
+	#../dst/dgsr_2 \
+        #--limitoutput \
+        #-s 25.0 \
+        #-L \
+	#-r -20,20 \
+	#-f 2 \
+        #--refinepasses=3 \
+        #--despecklepasses=4 \
+        #--accheck \
+        #--nprocs=-1 \
+        #--detrendorder=3
 
 rapidtide2x \
 	fmri.nii.gz \
-	../dst/dgsr \
+	../dst/dgsr_artery \
         --limitoutput \
         -s 25.0 \
-        -N 10000 \
+        -L \
+	-r -10,5 \
+	-f 2 \
+        --passes=1 \
+        --nprocs=-1 \
+        --saveoptionsasjson \
+        --nofitfilt \
+        --detrendorder=3 \
+        -I
+
+rapidtide2x \
+	fmri.nii.gz \
+	../dst/dgsr_2x \
+        --limitoutput \
+        -s 25.0 \
         -L \
 	-r -20,20 \
 	-f 2 \
@@ -34,11 +47,10 @@ rapidtide2x \
         --detrendorder=3
 
 rapidtide2x \
-	fmri_demeaned.nii.gz \
-	../dst/dgsr_demeaned \
+	fmri.nii.gz \
+	../dst/dgsr_2x_pct \
         --limitoutput \
         -s 25.0 \
-        -N 0 \
         -L \
 	-r -20,20 \
 	-f 2 \
@@ -49,23 +61,25 @@ rapidtide2x \
         --saveoptionsasjson \
         --pickleft \
         --nofitfilt \
+        --ampthresh=-0.9 \
         --detrendorder=3
 
 #rapidtide2x \
-#	fmri.nii.gz \
-#	../dst/dgsr_cerebellar \
-#        --limitoutput \
-#        -s 25.0 \
-#        -L \
-#	-r -20,20 \
-#	-f 2 \
-#        --globalmeaninclude=cerebellum_mask.nii.gz \
-#        --refinepasses=3 \
-#        --despecklepasses=4 \
-#        --accheck \
-#        --nprocs=-1 \
-#        --saveoptionsasjson \
-#        --pickleft \
-#        --detrendorder=3
+	#fmri_demeaned.nii.gz \
+	#../dst/dgsr_demeaned \
+        #--limitoutput \
+        #-s 25.0 \
+        #-N 0 \
+        #-L \
+	#-r -20,20 \
+	#-f 2 \
+        #--passes=3 \
+        #--refineoffset \
+        #--despecklepasses=4 \
+        #--nprocs=-1 \
+        #--saveoptionsasjson \
+        #--pickleft \
+        #--nofitfilt \
+        #--detrendorder=3
 
 #diffmaps ../dst/dgsr_nomask ../dst/dgsr_cerebellar ../dst/diff
