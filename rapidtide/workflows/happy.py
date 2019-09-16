@@ -1215,6 +1215,9 @@ def happy_main(thearguments):
     # save program version
     infodict['version'] = tide_util.version()
 
+    # record the machine we ran on
+    infodict['hostname'] = platform.node()
+
     # read in the image data
     tide_util.logmem('before reading in fmri data', file=memfile)
     nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
