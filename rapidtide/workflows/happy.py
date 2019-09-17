@@ -872,6 +872,14 @@ def happy_main(thearguments):
     infodict['slicetimename'] = slicetimename
     infodict['outputroot'] = outputroot
 
+    # save program version
+    infodict['version'] = tide_util.version()
+
+    # record the machine we ran on
+    infodict['hostname'] = platform.node()
+
+    print('running version', infodict['version'], 'on host', infodict['hostname'])
+
     optparsestart = 4
 
     # now scan for optional arguments
@@ -1211,12 +1219,6 @@ def happy_main(thearguments):
     infodict['filterminbpm'] = arb_lower * 60.0
     infodict['notchpct'] = notchpct
     timings.append(['Argument parsing done', time.time(), None, None])
-
-    # save program version
-    infodict['version'] = tide_util.version()
-
-    # record the machine we ran on
-    infodict['hostname'] = platform.node()
 
     # read in the image data
     tide_util.logmem('before reading in fmri data', file=memfile)
