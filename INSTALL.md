@@ -95,11 +95,11 @@ Execute any of the commands to run rapidtide on the sample data:
 
 ```bash
 # run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
-rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/examples/dst/dgsr -L -r -15,15 --refinepasses=3
+rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/dgsr -L -r -15,15 --refinepasses=3
 
 # run rapidtide2 to perform static global signal regression (sGSR) on an fMRI file[1] 
 # (this is just global mean regression):
-rapidtide2 rapidtide/data/examples/srd/fmri.nii.gz rapidtide/data/examples/dst/sgsr -L -Z 0.0
+rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/sgsr -L -Z 0.0
 
 # b) run tidepool to look at the results from a):
 tidepool
