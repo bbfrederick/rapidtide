@@ -1,8 +1,7 @@
-Rapidtide
-=========
+# Rapidtide
 Rapidtide is a suite of python programs used to perform rapid time delay
 analysis on functional imaging data to find time lagged correlations
-between the voxelwise time series and other time series.
+between the voxelwise time series and other time series, both in the LFO band (rapditide2) and now in the cardiac band (happy).
 
 Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
 
@@ -13,10 +12,9 @@ Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.814990.svg)](https://doi.org/10.5281/zenodo.814990)
 [![Funded by NIH](https://img.shields.io/badge/NIH-R01--NS097512--01A1-yellowgreen.svg)](http://grantome.com/grant/NIH/R01-NS097512-01A1)
 
-NOTE
-====
+#NOTE
 This is an evolving code base.  I'm constantly tinkering with it.  That said,
-now that I've released this to the world, I'm being somewhat more responsible
+now that I've sent this off into to the world, I'm being somewhat more responsible
 about locking down stable release points.  In between releases, however, I'll
 be messing with things, although for the most part this will be restricted
 to the "x" version of programs (e.g. the bleeding edge version of rapidtide2 is
@@ -28,8 +26,7 @@ more modern and started adding automated testing, so as time goes by hopefully
 the "in between" releases will be somewhat more reliable.  Check back often for
 exciting new features and bug fixes!
 
-Why do I want to know about time lagged correlations?
-=====================================================
+#Why do I want to know about time lagged correlations?
 This comes out of work by our group (The Opto-Magnetic group at McLean
 Hospital - http://www.nirs-fmri.net) looking at the correlations between
 neuroimaging data (fMRI) and NIRS data recorded simultaneously, either
@@ -51,6 +48,8 @@ You can also track exogenously applied waveforms, such as hypercarbic
 and/or hyperoxic gas challenges to really boost your signal to noise.  So
 there are lots of times when you might want to do this type of correlation
 analysis.
+
+More recently, inspired by Henning Voss' paper on hypersampling of cardiac signals in fMRI, we developed a method to extract and clean cardiac waveforms from fMRI data, even when the fMRI TR is far too long to properly sample cardiac waveforms.  This cardiac waveform can then be to track the pulsatile cardiac pressure wave through the brain in somewhat the same way that we track the LFO signals.  Among other things, this allows you to get cardiac waveforms during scans even when either 1) you didn't use a plethysmograph, or 2) you did, but the recording was of poor quality, which happens more than you might think.
 
 [*] "random" in this context means "determined by something we don't have
 any information about" - maybe EtCO2 variation, or sympathetic nervous
@@ -148,10 +147,10 @@ References
 ==========
 Links to PDFs of all papers mentioned here can be found on the OMG website:
 https://www.nirs-fmri.net/home/publications
+## General overview of systemic low frequency oscillations in fMRI data
+1) Tong Y, Hocke LM, Frederick BB. (2019) Low Frequency Systemic Hemodynamic “Noise” in Resting State BOLD fMRI: Characteristics, Causes, Implications, Mitigation Strategies, and Applications.  Front. Neurosci., 14 August 2019 | https://doi.org/10.3389/fnins.2019.00787
 
-Multimodal Cerebral Circulation Imaging
----------------------------------------
-
+## Multimodal Cerebral Circulation Imaging
 1) Tong Y, Frederick BD. (2010) Time lag dependent multimodal processing
 	of concurrent fMRI and near-infrared spectroscopy (NIRS) data
 	suggests a global circulatory origin for low-frequency
@@ -218,17 +217,14 @@ Multimodal Cerebral Circulation Imaging
 	10.1177/0271678X16631755. PubMed PMID: 26873885.
 
 
-Cardiac waveform extraction and refinement
------------------------------------------------------------------------
+## Cardiac waveform extraction and refinement
 1) Aslan S, Hocke L, Schwarz N, Frederick B. (2019) Extraction of the cardiac
         waveform from simultaneous multislice fMRI data using slice
         sorted averaging and a deep learning reconstruction filter. 
         NeuroImage 198, 303–316 (2019).
 
 
-Physiological noise identification and removal using time delay methods
------------------------------------------------------------------------
-
+## Physiological noise identification and removal using time delay methods
 1) Tong Y, Lindsey KP, Frederick BD. (2011b) Partitioning of
 	physiological noise signals in the brain with concurrent
 	near-infrared spectroscopy (NIRS) and fMRI. J Cereb Blood Flow
