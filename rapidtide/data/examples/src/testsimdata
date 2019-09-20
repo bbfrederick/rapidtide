@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+samplerate=`cat sim_samplerate.txt`
+
+simdata fmri.nii.gz sim_mean.nii.gz ../dst/simdata_lfo simdata_slicetimes.txt --lfopctfile=lfopct.nii.gz --lfolagfile=lfolags.nii.gz --lforegressor=lforegressor.txt --lfosamprate=12.5
