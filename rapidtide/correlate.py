@@ -358,6 +358,38 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
     return timestep * np.argmax(residual_cepstrum.real[0:len(residual_cepstrum) // 2])
 
 
+def aliasedcorrelate(hiressignal, hires_Fs, lowressignal, lowres_Fs, timerange, hiresstarttime=0.0, lowresstarttime=0.0, padvalue=30.0):
+    """
+
+    Parameters
+    ----------
+    hiressignal: 1D array
+        The unaliased waveform to match
+    hires_Fs: float
+        The sample rate of the unaliased waveform
+    lowressignal: 1D array
+        The aliased waveform to match
+    lowres_Fs: float
+        The sample rate of the aliased waveform
+    timerange: 1D array
+        The delays for which to calculate the correlation function
+
+    Returns
+    -------
+    corrfunc: 1D array
+        The correlation function evaluated at timepoints of timerange
+    """
+    highresaxis = np.arange(0.0, len(hiressignal)) * (1.0 / hires_Fs) - hiresstarttime
+    lowresaxis = np.arange(0.0, len(lowressignal)) * (1.0 / lowres_Fs) - lowresstarttime
+    tcgenerator = tide_resample.fastresampler(highresaxis, hiressignal, padvalue=padvalue)
+    targetsignal = tide_math.corrnormalize(lowressignal)
+    corrfunc = timerange * 0.0
+    for i in range(len(timerange)):
+        aliasedhiressignal = tide_math.corrnormalize(tcgenerator.yfromx(lowresaxis + timerange[i]))
+        corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
+    return corrfunc
+
+
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
 def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=False):
     """
