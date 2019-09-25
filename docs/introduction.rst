@@ -1,7 +1,6 @@
-Introduction
-============
-Why do I want to know about time lagged correlations?
------------------------------------------------------
+# Introduction
+
+## Why do I want to know about time lagged correlations?
 This comes out of work by our group (The Opto-Magnetic group at McLean
 Hospital - http://www.nirs-fmri.net) looking at the correlations between
 neuroimaging data (fMRI) and NIRS data recorded simultaneously, either in the
@@ -32,8 +31,7 @@ even some seed based analyses.
 any information about" - maybe EtCO2 variation, or sympathetic nervous
 system activity - so not really random.
 
-Yes, but correlation analysis is easy - why use this package?
--------------------------------------------------------------
+## Yes, but correlation analysis is easy - why use this package?
 The simple answer is "correlation analysis is easy, but using a prewritten
 package that handles file I/O, filtering, resampling, windowing, and the
 rest for you is even easier".  A slightly more complex answer is that
@@ -44,21 +42,17 @@ my code accordingly.  So rather than repeat my boring mistakes, why not
 make new, interesting mistakes?  Explore your own, unique chunk of
 wrongspace...
 
-Why are you releasing your code?
---------------------------------
+## Why are you releasing your code?
 For a number of reasons.
-    - I want people to use it!  I think if it were easier for people to do time delay analysis, they’d be more likely to do it.  I don’t have enough time or people in my group to do every experiment that I think would be interesting, so I’m hoping other people will, so I can read their papers and learn interesting things.
 
-    - It’s the right way to do science – I can say lots of things, but if nobody can replicate my results, nobody will believe it (we’ve gotten that a lot, because some of the implications of what we’ve seen in resting state data can be a little uncomfortable).  We’ve reached a stage in fMRI where getting from data to results involves a huge amount of processing, so part of confirming results involves being able to see how the data were processed. If you had to do everything from scratch, you’d never even try to confirm anybody’s results.
-
-    - In any complicated processing scheme, it’s quite possible (or in my case, likely) to make dumb mistakes, either coding errors or conceptual errors, and I almost certainly have made some (although hopefully the worst ones have been dealt with at this point).  More users and more eyes on the code make it more likely that they will be found.  As much as I’m queasy about somebody potentially finding a mistake in my code, I’d rather that they did so, so I can fix it[‡].
-
-    - It’s giving back to the community.  I benefit from the generosity of a lot of authors who have made the open source tools I use for work and play, so I figure I can pony up too.
+* I want people to use it!  I think if it were easier for people to do time delay analysis, they’d be more likely to do it.  I don’t have enough time or people in my group to do every experiment that I think would be interesting, so I’m hoping other people will, so I can read their papers and learn interesting things.
+* It’s the right way to do science – I can say lots of things, but if nobody can replicate my results, nobody will believe it (we’ve gotten that a lot, because some of the implications of what we’ve seen in resting state data can be a little uncomfortable).  We’ve reached a stage in fMRI where getting from data to results involves a huge amount of processing, so part of confirming results involves being able to see how the data were processed. If you had to do everything from scratch, you’d never even try to confirm anybody’s results.
+* In any complicated processing scheme, it’s quite possible (or in my case, likely) to make dumb mistakes, either coding errors or conceptual errors, and I almost certainly have made some (although hopefully the worst ones have been dealt with at this point).  More users and more eyes on the code make it more likely that they will be found.  As much as I’m queasy about somebody potentially finding a mistake in my code, I’d rather that they did so, so I can fix it[‡]. 
+* It’s giving back to the community.  I benefit from the generosity of a lot of authors who have made the open source tools I use for work and play, so I figure I can pony up too.
 
 [‡] or better yet, you, empowered user, can fix it, and push back a fix that benefits everybody...
 
-Python version compatibility
------------------------------
+## Python version compatibility
 I've now switched over to using python 3 as my daily driver, so I know that
 everything works there.  However, I know that a lot of people can't or won't
 switch from python 2x, so I've made every effort to write code that works in both,
@@ -67,8 +61,7 @@ and I have been testing in both.
 That said, the writing is on the wall, and since I depend on a number of packages that have dropped or are dropping 2.x support, I'm going with the flow and sunsetting 2.x support.  The next release will be the last to support 2.x.
 
 
-What’s included in this package?
---------------------------------
+## What’s included in this package?
 I’ve included a number of tools to get you going – I’ll add in a number of
 other utilities as I get them closer to the point that I can release them
 without people laughing at my code.  For the time being, I’m including the
