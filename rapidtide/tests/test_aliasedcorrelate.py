@@ -19,7 +19,7 @@ from __future__ import print_function, division
 import numpy as np
 import pylab as plt
 
-from rapidtide.correlate import aliasedcorrelate
+from rapidtide.correlate import aliasedcorrelate, aliasedcorrelator
 
 
 def test_aliasedcorrelate(display=False):
@@ -41,6 +41,10 @@ def test_aliasedcorrelate(display=False):
         sighi += theinfo[0] * np.sin(theinfo[1] * hiaxis)
         siglo += theinfo[0] * np.sin(theinfo[1] * loaxis)
     aliasedcorrelate_result = aliasedcorrelate(sighi, Fs_hi, siglo, Fs_lo, timerange, padvalue=width)
+
+    thecorrelator = aliasedcorrelator(sighi, Fs_hi, Fs_lo, timerange, padvalue=width)
+    aliasedcorrelate_result2 = thecorrelator.apply(siglo, 0.0)
+    
     if display:
         plt.figure()
         #plt.ylim([-1.0, 3.0])
@@ -50,6 +54,7 @@ def test_aliasedcorrelate(display=False):
 
         plt.figure()
         plt.plot(timerange, aliasedcorrelate_result, 'k')
+        plt.plot(timerange, aliasedcorrelate_result2, 'r')
         print('maximum occurs at offset', timerange[np.argmax(aliasedcorrelate_result)])
 
         plt.show()

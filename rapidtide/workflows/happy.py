@@ -182,6 +182,7 @@ def usage():
     #print("    --arteriesonly                 - Restrict cardiac waveform estimation to putative arteries only.")
     print("")
     print("Debugging arguments (probably not of interest to users):")
+    print("    --aliasedcorrelation           - Attempt to calculate absolute delay using an aliased correlation (experimental).")
     print("    --noprogressbar                - Disable progress bars - useful if saving output to files")
     print("    --debug                        - Turn on debugging information")
     print("    --increaseoutputlevel          - Increase the output level to output more intermediate files (default=1)")
@@ -845,7 +846,9 @@ def happy_main(thearguments):
     arteriesonly = False
     saveintermediate = False
     showprogressbar = True
-
+    doaliasedcorrelation = False
+    aliasedcorrelationwidth = 1.25
+    aliasedcorrelationpts = 101
     # start the clock!
     timings = [['Start', time.time(), None, None]]
 
@@ -940,6 +943,7 @@ def happy_main(thearguments):
                                                            "nomotderivdelayed",
                                                            "increaseoutputlevel",
                                                            "decreaseoutputlevel",
+                                                           "aliasedcorrelation",
                                                            "help"])
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -961,6 +965,9 @@ def happy_main(thearguments):
         elif o == "--saveintermediate":
             saveintermediate = True
             print('Will save some data from intermediate passes')
+        elif o == "--aliasedcorrelation":
+            doaliasedcorrelation = True
+            print('Will get absolute cardiac delay using aliased correlation function')
         elif o == "--arteriesonly":
             arteriesonly = True
             print('Will only use arterial blood for generating cardiac waveform')
@@ -1639,14 +1646,15 @@ def happy_main(thearguments):
 
         # find the phase values for all timepoints in all slices
         phasevals = np.zeros((numslices, timepoints), dtype=np.float64)
+        thetimes = []
         for theslice in range(numslices):
-            thetimes = sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False) + slicetimes[theslice]
+            thetimes.append(sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False) + slicetimes[theslice])
             phasevals[theslice, :] = tide_math.phasemod(
-                tide_resample.doresample(slicetimeaxis, instantaneous_phase, thetimes, method='univariate', padlen=0),
+                tide_resample.doresample(slicetimeaxis, instantaneous_phase, thetimes[-1], method='univariate', padlen=0),
                 centric=centric)
             if debug:
                 if thispass == numpasses - 1:
-                    tide_io.writevec(thetimes, outputroot + '_times_' + str(theslice).zfill(2) + '.txt')
+                    tide_io.writevec(thetimes[-1], outputroot + '_times_' + str(theslice).zfill(2) + '.txt')
                     tide_io.writevec(phasevals[theslice, :], outputroot + '_phasevals_' + str(theslice).zfill(2) + '.txt')
         timings.append(['Slice phases determined for all timepoints' + passstring, time.time(), None, None])
 
@@ -1769,6 +1777,21 @@ def happy_main(thearguments):
         appsmoothingfilter = tide_filt.noncausalfilter('arb', cyclic=True, padtime=0.0)
         appsmoothingfilter.setarb(0.0, 0.0, phaseFc, phaseFc)
 
+        # setup for aliased correlation if we're going to do it
+        if doaliasedcorrelation and (thispass == numpasses - 1):
+            if cardiacfilename:
+                signal_stdres = pleth_stdres
+            else:
+                signal_stdres = dlfilteredcard
+            corrsearchvals = np.linspace(0.0, aliasedcorrelationwidth, num=aliasedcorrelationpts) - aliasedcorrelationwidth / 2.0
+            thecorrelator = tide_corr.aliasedcorrelator(signal_stdres, stdfreq, mrsamplerate, corrsearchvals, padvalue=aliasedcorrelationwidth)
+            thecorrfunc = np.zeros((xsize, ysize, numslices, aliasedcorrelationpts), dtype=np.float64)
+            thecorrfunc_byslice = thecorrfunc.reshape((xsize * ysize, numslices, aliasedcorrelationpts))
+            wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float)
+            wavedelay_byslice = wavedelay.reshape((xsize * ysize, numslices))
+            waveamp = np.zeros((xsize, ysize, numslices), dtype=np.float)
+            waveamp_byslice = waveamp.reshape((xsize * ysize, numslices))
+
         # now project the data
         fmri_data_byslice = input_data.byslice()
         for theslice in range(numslices):
@@ -1777,7 +1800,14 @@ def happy_main(thearguments):
             if verbose:
                 print('phase projecting for slice', theslice)
             validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
-            indexlist = range(0, len(phasevals[theslice, :]))
+            #indexlist = range(0, len(phasevals[theslice, :]))
+            if doaliasedcorrelation and (thispass == numpasses - 1):
+                for theloc in validlocs:
+                    thecorrfunc_byslice[theloc, theslice, :] = thecorrelator.apply(-demeandata_byslice[theloc,theslice, :], -thetimes[theslice][0])
+                    maxloc = np.argmax(np.abs(thecorrfunc_byslice[theloc, theslice, :]))
+                    wavedelay_byslice[theloc, theslice] = corrsearchvals[maxloc]
+                    waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[theloc, theslice, maxloc]
+
             if len(validlocs) > 0:
                 for t in proctrs:
                     filteredmr = -demeandata_byslice[validlocs, theslice, t]
@@ -1835,6 +1865,16 @@ def happy_main(thearguments):
             if outputlevel > 0:
                 tide_io.savetonifti(rawapp, theheader, outputroot + '_rawapp')
         timings.append(['Phase projected data saved' + passstring, time.time(), None, None])
+
+        if doaliasedcorrelation and thispass == numpasses - 1:
+            theheader = copy.deepcopy(nim_hdr)
+            theheader['dim'][4] = aliasedcorrelationpts
+            theheader['toffset'] = 0.0
+            theheader['pixdim'][4] = corrsearchvals[1] - corrsearchvals[0]
+            tide_io.savetonifti(thecorrfunc, theheader, outputroot + '_corrfunc')
+            theheader['dim'][4] = 1
+            tide_io.savetonifti(wavedelay,   theheader, outputroot + '_wavedelay')
+            tide_io.savetonifti(waveamp,     theheader, outputroot + '_waveamp')
 
         # make and save a voxel intensity histogram
         if unnormvesselmap:

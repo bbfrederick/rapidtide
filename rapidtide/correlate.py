@@ -358,6 +358,66 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
     return timestep * np.argmax(residual_cepstrum.real[0:len(residual_cepstrum) // 2])
 
 
+class aliasedcorrelator:
+
+    def __init__(self, hiressignal, hires_Fs, lores_Fs, timerange, hiresstarttime=0.0, loresstarttime=0.0, padvalue=30.0):
+        """
+
+        Parameters
+        ----------
+        hiressignal: 1D array
+            The unaliased waveform to match
+        hires_Fs: float
+            The sample rate of the unaliased waveform
+        lores_Fs: float
+            The sample rate of the aliased waveform
+        timerange: 1D array
+            The delays for which to calculate the correlation function
+
+        """
+        self.hiressignal = hiressignal
+        self.hires_Fs = hires_Fs
+        self.hiresstarttime = hiresstarttime
+        self.lores_Fs = lores_Fs
+        self.timerange = timerange
+        self.loresstarttime = loresstarttime
+        self.highresaxis = np.arange(0.0, len(self.hiressignal)) * (1.0 / self.hires_Fs) - self.hiresstarttime
+        self.padvalue = padvalue
+        self.tcgenerator = tide_resample.fastresampler(self.highresaxis, self.hiressignal, padvalue=self.padvalue)
+        self.aliasedsignals = {}
+
+    def apply(self, loressignal, extraoffset):
+        """
+
+        Parameters
+        ----------
+        loressignal: 1D array
+            The aliased waveform to match
+        extraoffset: float
+            Additional offset to apply to hiressignal (e.g. for slice offset)
+
+        Returns
+        -------
+        corrfunc: 1D array
+            The correlation function evaluated at timepoints of timerange
+        """
+        loresaxis = np.arange(0.0, len(loressignal)) * (1.0 / self.lores_Fs) - self.loresstarttime
+        targetsignal = tide_math.corrnormalize(loressignal)
+        corrfunc = self.timerange * 0.0
+        for i in range(len(self.timerange)):
+            theoffset = self.timerange[i] + extraoffset
+            offsetkey = "{:.3f}".format(theoffset)
+            try:
+                aliasedhiressignal = self.aliasedsignals[offsetkey]
+                #print(offsetkey, ' - cache hit')
+            except KeyError:
+                #print(offsetkey, ' - cache miss')
+                self.aliasedsignals[offsetkey] = tide_math.corrnormalize(self.tcgenerator.yfromx(loresaxis + theoffset))
+                aliasedhiressignal = self.aliasedsignals[offsetkey]
+            corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
+        return corrfunc
+
+
 def aliasedcorrelate(hiressignal, hires_Fs, lowressignal, lowres_Fs, timerange, hiresstarttime=0.0, lowresstarttime=0.0, padvalue=30.0):
     """
 

@@ -8,17 +8,17 @@ happy \
     --dodlfilter \
     --saveinfoasjson \
     --model=model_revised \
-    --fliparteries 
+    --fliparteries --aliasedcorrelation
 
-happy \
-    happyfmri.nii.gz \
-    happyfmri.json \
-    ../dst/happy_noflip \
-    --mklthreads=4 \
-    --dodlfilter \
-    --saveinfoasjson \
-    --model=model_revised \
-    --glm 
+#happy \
+#    happyfmri.nii.gz \
+#    happyfmri.json \
+#    ../dst/happy_noflip \
+#    --mklthreads=4 \
+#    --dodlfilter \
+#    --saveinfoasjson \
+#    --model=model_revised \
+#    --glm 
 
 #happyx \
 #    ses-060_bold_trunc.nii.gz \
