@@ -153,7 +153,8 @@ def showxcorrx_main(inputargs):
     showprogressbar = False
     dorefine = True
     zerooutbadfit = False
-
+    absmaxsigma = 1000.0
+    absminsigma = 0.25
 
     nargs = len(inputargs)
     if nargs < 4:
@@ -456,6 +457,8 @@ def showxcorrx_main(inputargs):
     thefitter = tide_classes.correlation_fitter(corrtimeaxis=xcorr_x,
                                                 lagmin=-searchrange,
                                                 lagmax=searchrange,
+                                                absmaxsigma=absmaxsigma,
+                                                absminsigma=absminsigma,
                                                 debug=debug,
                                                 findmaxtype=findmaxtype,
                                                 zerooutbadfit=zerooutbadfit,
