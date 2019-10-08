@@ -56,7 +56,7 @@ def usage():
     print("")
     print("required arguments:")
     print("	infile:      a text file containing triplets of start time, duration, and value")
-    print("	timestep:    the time step of the output time coures in seconds")
+    print("	timestep:    the time step of the output time course in seconds")
     print("	numpoints:   the number of output time points")
     print("	outfile:     the name of the output time course file")
     print("")
