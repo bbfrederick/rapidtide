@@ -1801,13 +1801,6 @@ def happy_main(thearguments):
                 print('phase projecting for slice', theslice)
             validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
             #indexlist = range(0, len(phasevals[theslice, :]))
-            if doaliasedcorrelation and (thispass == numpasses - 1):
-                for theloc in validlocs:
-                    thecorrfunc_byslice[theloc, theslice, :] = thecorrelator.apply(-demeandata_byslice[theloc,theslice, :], -thetimes[theslice][0])
-                    maxloc = np.argmax(np.abs(thecorrfunc_byslice[theloc, theslice, :]))
-                    wavedelay_byslice[theloc, theslice] = corrsearchvals[maxloc]
-                    waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[theloc, theslice, maxloc]
-
             if len(validlocs) > 0:
                 for t in proctrs:
                     filteredmr = -demeandata_byslice[validlocs, theslice, t]
@@ -1843,8 +1836,21 @@ def happy_main(thearguments):
             if fliparteries:
                 corrected_rawapp_byslice[validlocs, theslice, :] = (rawapp_byslice[validlocs, theslice, :] - timecoursemean) \
                                                                   * appflips_byslice[validlocs, theslice, None] + timecoursemean
+                if doaliasedcorrelation and (thispass == numpasses - 1):
+                    for theloc in validlocs:
+                        thecorrfunc_byslice[theloc, theslice, :] = thecorrelator.apply(
+                            -appflips_byslice[theloc, theslice] * demeandata_byslice[theloc, theslice, :], -thetimes[theslice][0])
+                        maxloc = np.argmax(thecorrfunc_byslice[theloc, theslice, :])
+                        wavedelay_byslice[theloc, theslice] = corrsearchvals[maxloc]
+                        waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[theloc, theslice, maxloc]
             else:
                 corrected_rawapp_byslice[validlocs, theslice, :] = rawapp_byslice[validlocs, theslice, :]
+                if doaliasedcorrelation and (thispass == numpasses - 1):
+                    for theloc in validlocs:
+                        thecorrfunc_byslice[theloc, theslice, :] = thecorrelator.apply(-demeandata_byslice[theloc,theslice, :], -thetimes[theslice][0])
+                        maxloc = np.argmax(np.abs(thecorrfunc_byslice[theloc, theslice, :]))
+                        wavedelay_byslice[theloc, theslice] = corrsearchvals[maxloc]
+                        waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[theloc, theslice, maxloc]
             timecoursemin = np.min(corrected_rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
             app_byslice[validlocs, theslice, :] = corrected_rawapp_byslice[validlocs, theslice, :] - timecoursemin
             normapp_byslice[validlocs, theslice, :] = np.nan_to_num(app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None])
