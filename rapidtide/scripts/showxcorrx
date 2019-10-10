@@ -152,9 +152,9 @@ def showxcorrx_main(inputargs):
     findmaxtype = 'gauss'
     showprogressbar = False
     dorefine = True
-    zerooutbadfit = False
     absmaxsigma = 1000.0
     absminsigma = 0.25
+    zerooutbadfit = False
 
     nargs = len(inputargs)
     if nargs < 4:
