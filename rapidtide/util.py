@@ -27,6 +27,7 @@ import sys
 import bisect
 import os
 import resource
+import matplotlib.pyplot as plt
 
 import rapidtide.io as tide_io
 
@@ -438,6 +439,26 @@ def proctiminginfo(thetimings, outputfile='', extraheader=None):
         lasteventtime = float(theevent[1])
     if outputfile != '':
         tide_io.writevec(theinfolist, outputfile)
+
+
+# timecourse functions
+def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
+    theshape = np.shape(inputdata)
+    for idx in range(0, theshape[1]):
+        starttime = inputdata[0, idx]
+        endtime = starttime + inputdata[1, idx]
+        if (starttime <= timeaxis[-1]) and (endtime >= 0.0) and (endtime > starttime):
+            startindex = np.max((bisect.bisect_left(timeaxis, starttime), 0))
+            endindex = np.min((bisect.bisect_right(timeaxis, endtime), len(outputvector)))
+            outputvector[startindex:endindex] = inputdata[2, idx]
+            print(starttime, startindex, endtime, endindex)
+    if debug:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('temporal output vector')
+        plt.plot(timeaxis, outputvector)
+        plt.show()
+    return outputvector
 
 
 # --------------------------- testing functions -------------------------------------------------

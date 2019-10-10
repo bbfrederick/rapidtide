@@ -22,61 +22,37 @@
 #
 from __future__ import print_function, division
 
-import sys
 import bisect
 import numpy as np
 from matplotlib.pyplot import figure, plot, show
 import rapidtide.io as tide_io
-
-
-def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
-    theshape = np.shape(inputdata)
-    for idx in range(0, theshape[1]):
-        starttime = inputdata[0, idx]
-        endtime = starttime + inputdata[1, idx]
-        if (starttime <= timeaxis[-1]) and (endtime >= 0.0) and (endtime > starttime):
-            startindex = np.max((bisect.bisect_left(timeaxis, starttime), 0))
-            endindex = np.min((bisect.bisect_right(timeaxis, endtime), len(outputvector)))
-            outputvector[startindex:endindex] = inputdata[2, idx]
-            print(starttime, startindex, endtime, endindex)
-    if debug:
-        fig = figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('temporal output vector')
-        plot(timeaxis, outputvector)
-        show()
-    return outputvector
-
-
-def usage():
-    print("tcfrom3col - convert a 3 column fsl style regressor into a one column timecourse")
-    print("")
-    print(
-        "usage: tcfrom3col infile timestep numpoints outfile")
-    print("")
-    print("required arguments:")
-    print("	infile:      a text file containing triplets of start time, duration, and value")
-    print("	timestep:    the time step of the output time course in seconds")
-    print("	numpoints:   the number of output time points")
-    print("	outfile:     the name of the output time course file")
-    print("")
-    return ()
+import rapidtide.util as tide_util
+import argparse
 
 
 # get the command line parameters
-debug = False
-nargs = len(sys.argv)
-if nargs != 5:
-    usage()
-    exit()
-infilename = sys.argv[1]
-timestep = float(sys.argv[2])
-numpoints = int(sys.argv[3])
-outfilename = sys.argv[4]
+parser = argparse.ArgumentParser(description='Plots the data in text files.')
+parser.add_argument('infilename',
+                    help='the name of the input three column file')
+parser.add_argument('timestep',
+                    type=float,
+                    help='the time step of the output time course in seconds')
+parser.add_argument('numpoints',
+                    type=int,
+                    help='the number of output time points')
+parser.add_argument('outfilename',
+                    help='the name of the output time course file')
+parser.add_argument('--debug',
+                    action='store_true',
+                    help='turn on additional debugging output')
+args = parser.parse_args()
+
+if args.debug:
+    print(args)
 
 # now make the vector
-inputdata = tide_io.readvecs(infilename)
-timeaxis = np.arange(0.0, numpoints * timestep, timestep)
+inputdata = tide_io.readvecs(args.infilename)
+timeaxis = np.arange(0.0, args.numpoints * args.timestep, args.timestep)
 outputdata = 0.0 * timeaxis
-outputdata = maketcfrom3col(inputdata, timeaxis, outputdata, debug=debug)
-tide_io.writenpvecs(outputdata, outfilename)
+outputdata = tide_util.maketcfrom3col(inputdata, timeaxis, outputdata, debug=args.debug)
+tide_io.writenpvecs(outputdata, args.outfilename)
