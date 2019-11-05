@@ -1,0 +1,398 @@
+#!/usr/bin/env python
+from os.path import expanduser, join as pjoin
+import os
+import argparse
+from argparse import RawTextHelpFormatter
+import sys
+from pathlib import Path
+import subprocess
+import glob
+
+def niftisplit(filename):
+    firstsplit = os.path.splitext(filename)
+    secondsplit = os.path.splitext(firstsplit[0])
+    if secondsplit[1] is not None:
+        return secondsplit[0], secondsplit[1] + firstsplit[1]
+    else:
+        return firstsplit[0], firstsplit[1]
+
+
+def runcmd(thecmd, fake=False, debug=False):
+    if debug:
+        print(thecmd)
+    if fake:
+        print(' '.join(thecmd))
+        print()
+    else:
+        subprocess.call(thecmd)
+
+
+def n4correct(inputfile, outputdir, fake=False, debug=False):
+    thename, theext = niftisplit(inputfile)
+    n4cmd = []
+    n4cmd += ['N4BiasFieldCorrection']
+    n4cmd += ['-d', '3']
+    n4cmd += ['-i', inputfile]
+    n4cmd += ['-o', pjoin(outputdir, thename + '_n4' + theext)]
+    runcmd(n4cmd, fake=fake, debug=debug)
+
+
+def antsapply(inputname, targetname, outputroot, transforms, fake=False, debug=False):
+    applyxfmcmd = []
+    applyxfmcmd += ['antsApplyTransforms']
+    applyxfmcmd += ['--default-value', '0']
+    applyxfmcmd += ['-d', '3']
+    applyxfmcmd += ['-i', inputname]
+    applyxfmcmd += ['-o', outputroot]
+    applyxfmcmd += ['-r', targetname]
+    for thetransform in transforms:
+        applyxfmcmd += ['--transform', thetransform]
+    runcmd(applyxfmcmd, fake=fake, debug=debug)
+
+
+def antsalign(targetname, sourcename, outputroot, transformtype='b', splinesize=26, threads=4, fake=False, debug=False):
+    aligncmd = []
+    aligncmd += ['antsRegistrationSyNQuick.sh']
+    aligncmd += ['-d', '3']
+    aligncmd += ['-f', targetname]
+    aligncmd += ['-m', sourcename]
+    aligncmd += ['-o', outputroot]
+    aligncmd += ['-t', transformtype]
+    aligncmd += ['-s', str(splinesize)]
+    aligncmd += ['-n', str(threads)]
+    runcmd(aligncmd, fake=fake, debug=debug)
+
+
+def fslsplit(inputfile, outputroot, fake=False, debug=False):
+    splitcmd = []
+    splitcmd += ['fslsplit']
+    splitcmd += [inputfile]
+    splitcmd += [outputroot]
+    splitcmd += ['-t']
+    runcmd(splitcmd, fake=fake, debug=debug)
+    
+
+def fslmerge(inputlist, outputroot, fake=False, debug=False):
+    mergecmd = []
+    mergecmd += ['fslmerge']
+    mergecmd += ['-t']
+    mergecmd += [outputroot]
+    mergecmd += inputlist
+    runcmd(mergecmd, fake=fake, debug=debug)
+    
+
+def dohappywarp(sourceimage,
+                transformtype='b',
+                scalefac=20.0,
+                threads=1,
+                splinesize=10,
+                rescaleonly=False,
+                fake=False,
+                finaltarget=None,
+                redofinalalignment=False,
+                debug=False):
+    if debug:
+        print('arguments to dohappywarp:')
+        print('\tsourceimage:', sourceimage)
+        print('\ttransformtype:', transformtype)
+        print('\tscalefac:', scalefac)
+        print('\tthreads:', threads)
+        print('\tsplinesize:', splinesize)
+        print('\trescaleonly:', rescaleonly)
+        print('\tfinaltarget:', finaltarget)
+        print('\tredofinalalignment:', redofinalalignment)
+        print('\tfake:', fake)
+     
+    refimage = 'cinemean.nii.gz'
+    filtcycles = 5
+    sourcedir, sourcefile = os.path.split(sourceimage)
+    workdir = os.path.join(sourcedir, 'warptemp')
+    try:
+        os.makedirs(workdir)
+    except FileExistsError:
+        pass
+    reffullname = os.path.join(workdir, refimage)
+    if debug:
+        print('reffullname:', reffullname)
+
+    splitroot = os.path.join(workdir, 'splithappy_')
+    alignroot = os.path.join(workdir, 'alignhappy_')
+
+    fslmathscmd = ['fslmaths']
+    fslmathscmd += [sourceimage]
+    fslmathscmd += ['-Tmean']
+    fslmathscmd += [reffullname]
+    runcmd(fslmathscmd, fake=fake)
+
+    n4correct(reffullname, workdir, fake=fake)
+    correctedreffullname = reffullname.replace('.nii.gz', '_n4.nii.gz')
+ 
+    if finaltarget is not None and (not rescaleonly or redofinalalignment):
+        antsalign(finaltarget,
+                    correctedreffullname,
+                    os.path.join(workdir, 'tofinal_'),
+                    transformtype='b',
+                    threads=threads,
+                    fake=fake)
+
+    if not rescaleonly:
+        fslsplit(sourceimage, splitroot, fake=fake)
+
+        # intensity correct the split files
+        initfiles = glob.glob(splitroot + '[0123456789]*.nii.gz')
+        initfiles.sort()
+        for initfile in initfiles:
+            n4correct(initfile, workdir, fake=fake)
+
+        initfiles = glob.glob(splitroot + '*_n4.nii.gz')
+        initfiles.sort()
+        numtimepoints = len(initfiles)
+
+        # find the alignment of every timepoint to the mean
+        for initfile in initfiles:
+            thenumber = initfile[len(splitroot):len(splitroot) + 4]
+            theoutput = initfile.replace(splitroot, alignroot).replace('.nii.gz','_')
+            if debug:
+                print('thenumber:', thenumber)
+                print('initfile:', initfile)
+                print('theoutput:', theoutput)
+            antsalign(correctedreffullname,
+                        initfile,
+                        theoutput,
+                        transformtype=transformtype,
+                        threads=threads,
+                        splinesize=splinesize,
+                        fake=fake)
+
+        # concatenate the warp files n times prior to filtering
+        filterinput = os.path.join(workdir, 'filterinput.nii.gz')
+        filelist = glob.glob(alignroot + '[0123456789]*_1InverseWarp.nii.gz')
+        filelist.sort()
+        filtcycles = 5
+        filelist = filelist * filtcycles
+        fslmerge(filelist, filterinput, fake=fake)
+    
+        # now filter
+        filteroutput = os.path.join(workdir, 'filteroutput.nii.gz')
+        filtercmd = []
+        filtercmd += ['fslmaths']
+        filtercmd += [filterinput]
+        filtercmd += ['-bptf', '-1.0', '4.0']
+        filtercmd += [filteroutput]
+        runcmd(filtercmd, fake=fake)
+
+    # extract a single cycle
+    extractedfile = os.path.join(workdir, 'filteredinversewarp.nii.gz')
+    filteroutput = os.path.join(workdir, 'filteroutput.nii.gz')
+    initfiles = glob.glob(splitroot + '*_n4.nii.gz')
+    initfiles.sort()
+    numtimepoints = len(initfiles)
+    roicmd = []
+    roicmd += ['fslroi']
+    roicmd += [filteroutput]
+    roicmd += [extractedfile]
+    roicmd += [str(int((filtcycles // 2) * numtimepoints))]
+    roicmd += [str(numtimepoints)]
+    runcmd(roicmd, fake=fake)
+    
+    # scale the warp file
+    extractedscaledfile = os.path.join(workdir, 'filteredinversewarp_scaled.nii.gz')
+    scalecmd = []
+    scalecmd += ['fslmaths']
+    scalecmd += [extractedfile]
+    scalecmd += ['-mul', str(scalefac)]
+    scalecmd += [extractedscaledfile]
+    runcmd(scalecmd, fake=fake)
+
+    # split the filtered warps into timepoints
+    splitunscaledwarproot = os.path.join(workdir, 'filtered_InverseWarp_')
+    splitscaledwarproot = os.path.join(workdir, 'filtered_InverseWarp_scaled_')
+    fslsplit(extractedfile, splitunscaledwarproot, fake=fake)
+    fslsplit(extractedscaledfile, splitscaledwarproot, fake=fake)
+
+    # now apply the warp files to the mean
+    splitroot = os.path.join(workdir, 'filtered_InverseWarp_')
+    alignedroot = os.path.join(workdir, 'filtered_InverseWarped_')
+
+    warpfiles = glob.glob(splitroot + '[0123456789]*.nii.gz')
+    warpfiles.sort()
+    targetname = correctedreffullname
+
+    for warpfile in warpfiles:
+        thenumber = warpfile[len(splitroot):len(splitroot) + 4]
+        theoutput = warpfile.replace(splitroot, alignedroot)
+        translist = [warpfile]
+        if finaltarget is not None:
+            translist = [os.path.join(workdir, 'tofinal_1Warp.nii.gz'),
+                            os.path.join(workdir, 'tofinal_0GenericAffine.mat')] + translist
+        antsapply(targetname, targetname, theoutput, translist, fake=fake)
+        antsapply(targetname, targetname,
+                    theoutput.replace('InverseWarped_', 'InverseWarped_scaled_'),
+                    [warpfile.replace('InverseWarp_', 'InverseWarp_scaled_')],
+                    fake=fake)
+
+    # merge the warped files
+    print('out of transform loop')
+    mergedoutput = os.path.join(sourcedir, 'inversewarped.nii.gz')
+    mergedoutputscaled = os.path.join(sourcedir, 'inversewarpedscaled.nii.gz')
+    filespec = alignedroot + '[0123456789]*.nii.gz'
+    print(filespec)
+    filelist = glob.glob(filespec)
+    filelist.sort()
+    fslmerge(filelist, mergedoutput, fake=fake)
+    filespec = alignedroot + 'scaled_*.nii.gz'
+    print(filespec)
+    filelist = glob.glob(filespec)
+    filelist.sort()
+    fslmerge(filelist, mergedoutputscaled, fake=fake)
+
+
+if __name__ == "__main__":
+
+    class FullPaths(argparse.Action):
+        """Expand user- and relative-paths"""
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            if values == "":
+                setattr(namespace, self.dest, "__EMPTY__")
+            else:
+                setattr(
+                    namespace, self.dest, os.path.abspath(os.path.expanduser(values))
+                )
+
+    def is_dir(dirname):
+        """Checks if a path is an actual directory"""
+        if not os.path.isdir(dirname):
+            msg = "{0} is not a directory".format(dirname)
+            raise argparse.ArgumentTypeError(msg)
+        else:
+            return dirname
+
+    def is_file(filename):
+        """Checks if a file exists"""
+        if not os.path.exists(filename):
+            msg = "{0} does not exist".format(filename)
+            raise argparse.ArgumentTypeError(msg)
+        else:
+            return filename
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Align an anatomic image with the preprocessed T1 in an fmriprep derivatives directory.\n"
+            "fmriprep does not align other anatomic images to the T1 by default.  This fixes that.\n"
+            ),
+        formatter_class=RawTextHelpFormatter,
+        )
+
+    required = parser.add_argument_group("required arguments")
+
+    required.add_argument(
+        "--sourceimage",
+        help="cine output file from happy, in nifti format",
+        required=True,
+        action=FullPaths,
+        type=is_file,
+        )
+
+    '''
+    required.add_argument(
+        "--destdir",
+        help="Destination for all derived files",
+        required=True,
+        action=FullPaths,
+        type=is_dir,
+        )
+
+    required.add_argument(
+        "--subject",
+        help="BIDS subject specifier (no 'sub-')",
+        required=True,
+        default=None,
+        )
+
+    required.add_argument(
+        "--suffix",
+        help="The suffix of the anatomic image, up to but not including the '.nii.gz'",
+        required=True,
+        default=None,
+        )
+    '''
+
+    parser.add_argument(
+        "--scalefac",
+        help="scale factor to exaggerate motion",
+        type=float,
+        default=20.0,
+        )
+
+    parser.add_argument(
+        "--threads",
+        help="number of threads to use for registration",
+        type=int,
+        default=1,
+        )
+
+    parser.add_argument(
+        "--finaltarget",
+        help="align all output images to this image in the final step",
+        action=FullPaths,
+        type=is_file,
+        default=None,
+        )
+
+    parser.add_argument(
+        "--splinesize",
+        help="spline size in voxels",
+        type=int,
+        default=10,
+        )
+
+    parser.add_argument(
+        "--transformtype",
+        help="Transform type.  Options are\n"
+        "\tr: rigid\n"
+        "\ta: rigid + affine\n"
+        "\ts: rigid + affine + deformable syn\n"
+        "\tb: rigid + affine + deformable b-spline syn\n",
+        default='b',
+        )
+
+    parser.add_argument(
+        "--rescaleonly",
+        help="only perform the warp scaling (assumes a previous full run).",
+        action="store_true",
+        )
+
+    parser.add_argument(
+        "--redofinalalignment",
+        help="recalculate the transformation between epi and anatomic",
+        action="store_true",
+        )
+
+    parser.add_argument(
+        "--fake",
+        help="Print what operations will be performed, but don't do them.",
+        action="store_true",
+        )
+
+    parser.add_argument(
+        "--debug",
+        help="ouput additionnal debugging information",
+        action="store_true",
+        )
+
+    args = parser.parse_args()
+    if args.debug:
+        print(args)
+
+
+    dohappywarp(args.sourceimage,
+                transformtype=args.transformtype,
+                splinesize=args.splinesize,
+                scalefac=args.scalefac,
+                threads=args.threads,
+                rescaleonly=args.rescaleonly,
+                fake=args.fake,
+                finaltarget=args.finaltarget,
+                redofinalalignment=args.redofinalalignment,
+                debug=args.debug)
