@@ -28,7 +28,6 @@ import nibabel as nib
 
 from .parser_funcs import (is_valid_file, invert_float, is_float)
 
-
 def _get_parser():
     """
     Argument parser for rapidtide2
