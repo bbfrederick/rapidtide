@@ -48,7 +48,8 @@ modules_list = ['rapidtide/miscmath',
                 'rapidtide/glmpass',
                 'rapidtide/dlfilter',
                 'rapidtide/wiener',
-                'rapidtide/refine']
+                'rapidtide/refine',
+                'rapidtide/workflows/parser_funcs']
 
 if addtidepool:
     modules_list.append('rapidtide/tidepoolTemplate_qt4')
@@ -84,6 +85,7 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/linfit',
                'rapidtide/scripts/happy',
                'rapidtide/scripts/happyx',
+               'rapidtide/scripts/happywarp',
                'rapidtide/scripts/applydlfilter',
                'rapidtide/scripts/threeD',
                'rapidtide/scripts/tcfrom3col',
