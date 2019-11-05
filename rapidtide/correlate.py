@@ -27,6 +27,7 @@ from scipy import fftpack, signal
 from numpy.fft import rfftn, irfftn
 import pylab as pl
 import sys
+from sklearn.metrics import mutual_info_score, normalized_mutual_info_score, adjusted_mutual_info_score
 
 import rapidtide.util as tide_util
 import rapidtide.resample as tide_resample
@@ -287,6 +288,13 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
            np.asarray(Rvals, dtype='float64'), \
            np.asarray(delayvals, dtype='float64'), \
            np.asarray(valid, dtype='float64')
+
+
+# from https://stackoverflow.com/questions/20491028/optimal-way-to-compute-pairwise-mutual-information-using-numpy/20505476#20505476
+def calc_MI(x, y, bins):
+    c_xy = np.histogram2d(x, y, bins)[0]
+    mi = mutual_info_score(None, None, contingency=c_xy)
+    return mi
 
 
 def delayedcorr(data1, data2, delayval, timestep):
