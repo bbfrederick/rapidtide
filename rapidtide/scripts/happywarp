@@ -7,14 +7,9 @@ import sys
 from pathlib import Path
 import subprocess
 import glob
-
-def niftisplit(filename):
-    firstsplit = os.path.splitext(filename)
-    secondsplit = os.path.splitext(firstsplit[0])
-    if secondsplit[1] is not None:
-        return secondsplit[0], secondsplit[1] + firstsplit[1]
-    else:
-        return firstsplit[0], firstsplit[1]
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
+import copy
 
 
 def runcmd(thecmd, fake=False, debug=False):
@@ -28,7 +23,7 @@ def runcmd(thecmd, fake=False, debug=False):
 
 
 def n4correct(inputfile, outputdir, fake=False, debug=False):
-    thename, theext = niftisplit(inputfile)
+    thename, theext = tide_io.niftisplitext(inputfile)
     n4cmd = []
     n4cmd += ['N4BiasFieldCorrection']
     n4cmd += ['-d', '3']
@@ -63,23 +58,36 @@ def antsalign(targetname, sourcename, outputroot, transformtype='b', splinesize=
     runcmd(aligncmd, fake=fake, debug=debug)
 
 
-def fslsplit(inputfile, outputroot, fake=False, debug=False):
-    splitcmd = []
-    splitcmd += ['fslsplit']
-    splitcmd += [inputfile]
-    splitcmd += [outputroot]
-    splitcmd += ['-t']
-    runcmd(splitcmd, fake=fake, debug=debug)
-    
+def filterintime(filelist, extractedfile, workdir, filtcycles, dumpinput=False):
+    numpoints = len(filelist)
+    filelist = filelist * filtcycles
+    filterinput = os.path.join(workdir, 'filterinput')
+    filterdata, filter_hdr = tide_io.niftimerge(filelist, filterinput, returndata=True, writetodisk=dumpinput)
+    outdata = filterdata * 0.0
+    thedims = filterdata.shape
+    print(thedims)
+    numvoxels = thedims[0] * thedims[1] * thedims[2]
+    thefilter = tide_filt.noncausalfilter(filtertype='arb')
+    hcutoff = 1.0 / 2.0
+    lcutoff = 1.0 / 32.0
+    thefilter.setarb(lcutoff, lcutoff, hcutoff, hcutoff)
 
-def fslmerge(inputlist, outputroot, fake=False, debug=False):
-    mergecmd = []
-    mergecmd += ['fslmerge']
-    mergecmd += ['-t']
-    mergecmd += [outputroot]
-    mergecmd += inputlist
-    runcmd(mergecmd, fake=fake, debug=debug)
-    
+    filterdata_byvoxel = filterdata.reshape((numvoxels, thedims[3], thedims[4]))
+    outdata_byvoxel = outdata.reshape((numvoxels, thedims[3], thedims[4]))
+    for direction in range(thedims[4]):
+        print('filtering direction', direction)
+        for voxel in range(numvoxels):
+            filteredtc = thefilter.apply(1.0, filterdata_byvoxel[voxel, :, direction])
+            outdata_byvoxel[voxel, :, direction] = filteredtc + 0.0
+
+    tide_io.savetonifti(outdata[:, :, :, :, :], filter_hdr, 'filteroutdata')
+
+    theheader = copy.deepcopy(filter_hdr)
+    theheader['dim'][4] = numpoints
+    startpt = int((filtcycles // 2) * numpoints)
+    endpt = startpt + numpoints
+    tide_io.savetonifti(outdata[:, :, :, startpt:endpt, :], theheader, extractedfile)
+
 
 def dohappywarp(sourceimage,
                 transformtype='b',
@@ -115,18 +123,18 @@ def dohappywarp(sourceimage,
     if debug:
         print('reffullname:', reffullname)
 
-    splitroot = os.path.join(workdir, 'splithappy_')
-    alignroot = os.path.join(workdir, 'alignhappy_')
-
+    # make a mean image
     fslmathscmd = ['fslmaths']
     fslmathscmd += [sourceimage]
     fslmathscmd += ['-Tmean']
     fslmathscmd += [reffullname]
     runcmd(fslmathscmd, fake=fake)
 
+    # intensity correct the mean image
     n4correct(reffullname, workdir, fake=fake)
     correctedreffullname = reffullname.replace('.nii.gz', '_n4.nii.gz')
  
+    # if there is a target image, align the mean image with it
     if finaltarget is not None and (not rescaleonly or redofinalalignment):
         antsalign(finaltarget,
                     correctedreffullname,
@@ -136,67 +144,52 @@ def dohappywarp(sourceimage,
                     fake=fake)
 
     if not rescaleonly:
-        fslsplit(sourceimage, splitroot, fake=fake)
+        # split the cine file
+        splitroot = os.path.join(workdir, 'cineframe_')
+        tide_io.niftisplit(sourceimage, splitroot)
 
         # intensity correct the split files
-        initfiles = glob.glob(splitroot + '[0123456789]*.nii.gz')
-        initfiles.sort()
-        for initfile in initfiles:
-            n4correct(initfile, workdir, fake=fake)
+        filespec = splitroot + '[0123456789][0123456789][0123456789][0123456789].nii.gz'
+        print(filespec)
+        framefiles = glob.glob(filespec)
+        print('framefiles:', framefiles)
+        framefiles.sort()
+        for framefile in framefiles:
+            n4correct(framefile, workdir, fake=fake)
 
-        initfiles = glob.glob(splitroot + '*_n4.nii.gz')
-        initfiles.sort()
-        numtimepoints = len(initfiles)
+        # make a sorted list of the intensity corrected cine frames
+        correctedframefiles = glob.glob(splitroot + '*_n4.nii.gz')
+        correctedframefiles.sort()
+        numtimepoints = len(correctedframefiles)
 
-        # find the alignment of every timepoint to the mean
-        for initfile in initfiles:
-            thenumber = initfile[len(splitroot):len(splitroot) + 4]
-            theoutput = initfile.replace(splitroot, alignroot).replace('.nii.gz','_')
-            if debug:
-                print('thenumber:', thenumber)
-                print('initfile:', initfile)
-                print('theoutput:', theoutput)
-            antsalign(correctedreffullname,
-                        initfile,
-                        theoutput,
-                        transformtype=transformtype,
-                        threads=threads,
-                        splinesize=splinesize,
-                        fake=fake)
+        # find the alignment of every the mean image to every frame
+        doinitalign = True
+        alignroot = os.path.join(workdir, 'alignedtomean_')
+        if doinitalign:
+            for correctedframefile in correctedframefiles:
+                thenumber = correctedframefile[len(splitroot):len(splitroot) + 4]
+                theoutput = correctedframefile.replace(splitroot, alignroot).replace('.nii.gz','_')
+                if debug:
+                    print('thenumber:', thenumber)
+                    print('initfile:', correctedframefile)
+                    print('theoutput:', theoutput)
+                antsalign(correctedframefile,
+                            correctedreffullname,
+                            theoutput,
+                            transformtype=transformtype,
+                            threads=threads,
+                            splinesize=splinesize,
+                            fake=fake)
 
-        # concatenate the warp files n times prior to filtering
-        filterinput = os.path.join(workdir, 'filterinput.nii.gz')
-        filelist = glob.glob(alignroot + '[0123456789]*_1InverseWarp.nii.gz')
-        filelist.sort()
-        filtcycles = 5
-        filelist = filelist * filtcycles
-        fslmerge(filelist, filterinput, fake=fake)
-    
-        # now filter
-        filteroutput = os.path.join(workdir, 'filteroutput.nii.gz')
-        filtercmd = []
-        filtercmd += ['fslmaths']
-        filtercmd += [filterinput]
-        filtercmd += ['-bptf', '-1.0', '4.0']
-        filtercmd += [filteroutput]
-        runcmd(filtercmd, fake=fake)
+    # lowpass filter the warp data in time
+    alignroot = os.path.join(workdir, 'alignedtomean_')
+    extractedfile = os.path.join(workdir, 'filteredWarp')
+    filelist = glob.glob(alignroot + '[0123456789]*_1Warp.nii.gz')
+    filelist.sort()
+    filterintime(filelist, extractedfile, workdir, filtcycles, dumpinput=True)
 
-    # extract a single cycle
-    extractedfile = os.path.join(workdir, 'filteredinversewarp.nii.gz')
-    filteroutput = os.path.join(workdir, 'filteroutput.nii.gz')
-    initfiles = glob.glob(splitroot + '*_n4.nii.gz')
-    initfiles.sort()
-    numtimepoints = len(initfiles)
-    roicmd = []
-    roicmd += ['fslroi']
-    roicmd += [filteroutput]
-    roicmd += [extractedfile]
-    roicmd += [str(int((filtcycles // 2) * numtimepoints))]
-    roicmd += [str(numtimepoints)]
-    runcmd(roicmd, fake=fake)
-    
     # scale the warp file
-    extractedscaledfile = os.path.join(workdir, 'filteredinversewarp_scaled.nii.gz')
+    extractedscaledfile = os.path.join(workdir, 'filteredWarp_scaled.nii.gz')
     scalecmd = []
     scalecmd += ['fslmaths']
     scalecmd += [extractedfile]
@@ -205,21 +198,20 @@ def dohappywarp(sourceimage,
     runcmd(scalecmd, fake=fake)
 
     # split the filtered warps into timepoints
-    splitunscaledwarproot = os.path.join(workdir, 'filtered_InverseWarp_')
-    splitscaledwarproot = os.path.join(workdir, 'filtered_InverseWarp_scaled_')
-    fslsplit(extractedfile, splitunscaledwarproot, fake=fake)
-    fslsplit(extractedscaledfile, splitscaledwarproot, fake=fake)
+    splitunscaledwarproot = os.path.join(workdir, 'filtered_Warp_')
+    splitscaledwarproot = os.path.join(workdir, 'filtered_Warp_scaled_')
+    tide_io.niftisplit(extractedfile, splitunscaledwarproot)
+    tide_io.niftisplit(extractedscaledfile, splitscaledwarproot)
 
     # now apply the warp files to the mean
-    splitroot = os.path.join(workdir, 'filtered_InverseWarp_')
-    alignedroot = os.path.join(workdir, 'filtered_InverseWarped_')
+    splitroot = os.path.join(workdir, 'filtered_Warp_')
+    alignedroot = os.path.join(workdir, 'filtered_Warped_')
 
     warpfiles = glob.glob(splitroot + '[0123456789]*.nii.gz')
     warpfiles.sort()
     targetname = correctedreffullname
 
     for warpfile in warpfiles:
-        thenumber = warpfile[len(splitroot):len(splitroot) + 4]
         theoutput = warpfile.replace(splitroot, alignedroot)
         translist = [warpfile]
         if finaltarget is not None:
@@ -227,24 +219,24 @@ def dohappywarp(sourceimage,
                             os.path.join(workdir, 'tofinal_0GenericAffine.mat')] + translist
         antsapply(targetname, targetname, theoutput, translist, fake=fake)
         antsapply(targetname, targetname,
-                    theoutput.replace('InverseWarped_', 'InverseWarped_scaled_'),
-                    [warpfile.replace('InverseWarp_', 'InverseWarp_scaled_')],
+                    theoutput.replace('Warped_', 'Warped_scaled_'),
+                    [warpfile.replace('Warp_', 'Warp_scaled_')],
                     fake=fake)
 
     # merge the warped files
     print('out of transform loop')
-    mergedoutput = os.path.join(sourcedir, 'inversewarped.nii.gz')
-    mergedoutputscaled = os.path.join(sourcedir, 'inversewarpedscaled.nii.gz')
+    mergedoutput = os.path.join(sourcedir, 'warpedcine')
+    mergedoutputscaled = os.path.join(sourcedir, 'warpedcinescaled')
     filespec = alignedroot + '[0123456789]*.nii.gz'
     print(filespec)
     filelist = glob.glob(filespec)
     filelist.sort()
-    fslmerge(filelist, mergedoutput, fake=fake)
+    tide_io.niftimerge(filelist, mergedoutput)
     filespec = alignedroot + 'scaled_*.nii.gz'
     print(filespec)
     filelist = glob.glob(filespec)
     filelist.sort()
-    fslmerge(filelist, mergedoutputscaled, fake=fake)
+    tide_io.niftimerge(filelist, mergedoutputscaled)
 
 
 if __name__ == "__main__":
@@ -284,39 +276,11 @@ if __name__ == "__main__":
         formatter_class=RawTextHelpFormatter,
         )
 
-    required = parser.add_argument_group("required arguments")
-
-    required.add_argument(
-        "--sourceimage",
-        help="cine output file from happy, in nifti format",
-        required=True,
+    parser.add_argument("sourceimage",
+        help="cine output file from happy, in tide_io.nifti format",
         action=FullPaths,
         type=is_file,
         )
-
-    '''
-    required.add_argument(
-        "--destdir",
-        help="Destination for all derived files",
-        required=True,
-        action=FullPaths,
-        type=is_dir,
-        )
-
-    required.add_argument(
-        "--subject",
-        help="BIDS subject specifier (no 'sub-')",
-        required=True,
-        default=None,
-        )
-
-    required.add_argument(
-        "--suffix",
-        help="The suffix of the anatomic image, up to but not including the '.nii.gz'",
-        required=True,
-        default=None,
-        )
-    '''
 
     parser.add_argument(
         "--scalefac",
