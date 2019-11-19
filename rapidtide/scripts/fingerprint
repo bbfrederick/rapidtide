@@ -42,7 +42,7 @@ def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, fitorder
     elif  whichtemplate == 'sigma':
         thetemplatename = os.path.join(referencedir, 'HCP1200_sigma_2mm.nii.gz')
     else:
-        print('illegal tamplate:', whichtemplate)
+        print('illegal template:', whichtemplate)
         sys.exit()
 
     if whichatlas == 'ASPECTS':
@@ -73,7 +73,8 @@ def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, fitorder
     newcols = pd.DataFrame(np.asarray(thecoffs))
     atlaslabels = pd.concat([atlaslabels, newcols], axis=1)
     atlaslabels.to_csv(outputroot + '_fits.tsv', sep='\t')
-    print(atlaslabels)
+    if debug:
+        print(atlaslabels)
 
     # save the data
     tide_io.savetonifti(thefitmap, themap_hdr, outputroot + '_fit')
