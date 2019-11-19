@@ -21,6 +21,8 @@ from __future__ import print_function, division
 from os.path import expanduser, join as pjoin
 import os
 import sys
+import pandas as pd
+import numpy as np
 
 import argparse
 from argparse import RawTextHelpFormatter
@@ -28,7 +30,7 @@ from argparse import RawTextHelpFormatter
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 
-def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, themaskname=None, debug=False):
+def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, fitorder, themaskname=None, debug=False):
     # read the data
     referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
                                 'reference')
@@ -45,8 +47,10 @@ def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, themaskn
 
     if whichatlas == 'ASPECTS':
         theatlasname = os.path.join(referencedir, 'ASPECTS_2mm.nii.gz')
+        theatlasregionsname = os.path.join(referencedir, 'ASPECTS_regions.txt')
     elif whichatlas == 'ATT':
         theatlasname = os.path.join(referencedir, 'ATTbasedFlowTerritories_split_2mm.nii.gz')
+        theatlasregionsname = os.path.join(referencedir, 'ATTbasedFlowTerritories_split_regions.txt')
     else:
         print('illegal atlas:', whichatlas)
         sys.exit()
@@ -54,6 +58,7 @@ def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, themaskn
     thetemplate, thetemplate_data, thetemplate_hdr, thetemplatedims, thetemplatesizes = tide_io.readfromnifti(
         thetemplatename)
     atlas, atlas_data, atlas_hdr, atlasdims, atlassizes = tide_io.readfromnifti(theatlasname)
+    atlaslabels = pd.read_csv(theatlasregionsname, delimiter='\t', header=None, names=['Region'])
     themap, themap_data, themap_hdr, themapdims, thetemplatesizes = tide_io.readfromnifti(themapname)
     if themaskname is None:
         themask_data = None
@@ -62,29 +67,19 @@ def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, themaskn
 
     # do the fit
     thefitmap, thecoffs = tide_fit.territorydecomp(themap_data, thetemplate_data, atlas_data.astype(int),
-                                                   inputmask=themask_data, fitorder=2, debug=True)
+                                                   inputmask=themask_data, fitorder=fitorder, debug=True)
 
     # present the data
-    for i, coffs in enumerate(thecoffs):
-        print(i, coffs)
+    newcols = pd.DataFrame(np.asarray(thecoffs))
+    atlaslabels = pd.concat([atlaslabels, newcols], axis=1)
+    atlaslabels.to_csv(outputroot + '_fits.tsv', sep='\t')
+    print(atlaslabels)
 
     # save the data
     tide_io.savetonifti(thefitmap, themap_hdr, outputroot + '_fit')
     tide_io.savetonifti(themap_data - thefitmap, themap_hdr, outputroot + '_fitdiff')
 
 if __name__ == '__main__':
-
-    # setup info
-    '''lagtemplatename = '/Users/frederic/code/rapidtide/rapidtide/data/reference/HCP1200_lag_2mm.nii.gz'
-    strengthtemplatename = '/Users/frederic/code/rapidtide/rapidtide/data/reference/HCP1200_strength_2mm.nii.gz'
-    atlasname = '/Users/frederic/code/rapidtide/rapidtide/data/reference/ASPECTS_2mm.nii.gz'
-
-    lagmapname = '/Users/frederic/code/rapidtide/rapidtide/data/examples/src/sub-0052_MNI152NLin6Asym_cerebellargray_lagtimes.nii.gz'
-    lagstrengthsname = '/Users/frederic/code/rapidtide/rapidtide/data/examples/src/sub-0052_MNI152NLin6Asym_cerebellargray_lagstrengths.nii.gz'
-    lagmaskname = '/Users/frederic/code/rapidtide/rapidtide/data/examples/src/sub-0052_MNI152NLin6Asym_cerebellargray_lagmask.nii.gz'
-
-    outputroot = 'test'
-    '''
 
     class FullPaths(argparse.Action):
         """Expand user- and relative-paths"""
@@ -148,17 +143,24 @@ if __name__ == '__main__':
         )
 
     parser.add_argument(
+        "--fitorder",
+        help="order of polynomial fit to template\n",
+        type=int,
+        default=1,
+        )
+
+    parser.add_argument(
         "--template",
         help="Template.  Options are\n"
-        "\tlag:      rigid\n"
-        "\tstrength: rigid + affine\n"
-        "\tsigma:    rigid + affine + deformable syn\n",
+        "\tlag:      time lag in seconds\n"
+        "\tstrength: correlation coefficient\n"
+        "\tsigma:    correlation peak width in seconds\n",
         default='lag',
         )
 
     parser.add_argument(
         "--debug",
-        help="ouput additionnal debugging information",
+        help="output additionnal debugging information",
         action="store_true",
         )
 
@@ -166,4 +168,4 @@ if __name__ == '__main__':
     if args.debug:
         print(args)
 
-    fingerprint_main(args.inputfile, args.template, args.atlas, args.outputroot, themaskname=args.maskname, debug=args.debug)
+    fingerprint_main(args.inputfile, args.template, args.atlas, args.outputroot, args.fitorder, themaskname=args.maskname, debug=args.debug)
