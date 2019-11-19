@@ -528,6 +528,40 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
         return 0.0, 0.0, 0.0, 0
 
 
+def territorydecomp(inputmap, template, atlas, inputmask=None, fitorder=1, debug=False):
+    """
+
+     Parameters
+     ----------
+     inputmap
+     atlas
+     inputmask
+     fitorder
+     debug
+
+     Returns
+     -------
+
+     """
+    if inputmask is None:
+        inputmask = inputmap * 0.0 + 1.0
+
+    tempmask = np.where(inputmask > 0.0, 1, 0)
+
+    fitmap = inputmap * 0.0
+
+    thecoffs = []
+    for i in range(1, np.max(atlas) + 1):
+        if debug:
+            print('fitting territory', i)
+        territoryvoxels = np.where(atlas * tempmask == i)
+        maskedvoxels = np.where(atlas == i)
+        thecoffs.append(np.polyfit(template[maskedvoxels], inputmap[maskedvoxels], fitorder))
+        fitmap[territoryvoxels] = trendgen(template[territoryvoxels], thecoffs[-1], False)\
+
+    return fitmap, thecoffs
+
+
 @conditionaljit2()
 def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
                      edgebufferfrac=0.0,
