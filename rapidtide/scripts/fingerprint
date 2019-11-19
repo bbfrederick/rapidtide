@@ -1,0 +1,169 @@
+#!/usr/bin/env python
+# -*- coding: latin-1 -*-
+#
+#   Copyright 2016-2019 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+from __future__ import print_function, division
+
+from os.path import expanduser, join as pjoin
+import os
+import sys
+
+import argparse
+from argparse import RawTextHelpFormatter
+
+import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
+
+def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, themaskname=None, debug=False):
+    # read the data
+    referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
+                                'reference')
+
+    if whichtemplate == 'lag':
+        thetemplatename = os.path.join(referencedir, 'HCP1200_lag_2mm.nii.gz')
+    elif  whichtemplate == 'strength':
+        thetemplatename = os.path.join(referencedir, 'HCP1200_strength_2mm.nii.gz')
+    elif  whichtemplate == 'sigma':
+        thetemplatename = os.path.join(referencedir, 'HCP1200_sigma_2mm.nii.gz')
+    else:
+        print('illegal tamplate:', whichtemplate)
+        sys.exit()
+
+    if whichatlas == 'ASPECTS':
+        theatlasname = os.path.join(referencedir, 'ASPECTS_2mm.nii.gz')
+    elif whichatlas == 'ATT':
+        theatlasname = os.path.join(referencedir, 'ATTbasedFlowTerritories_split_2mm.nii.gz')
+    else:
+        print('illegal atlas:', whichatlas)
+        sys.exit()
+
+    thetemplate, thetemplate_data, thetemplate_hdr, thetemplatedims, thetemplatesizes = tide_io.readfromnifti(
+        thetemplatename)
+    atlas, atlas_data, atlas_hdr, atlasdims, atlassizes = tide_io.readfromnifti(theatlasname)
+    themap, themap_data, themap_hdr, themapdims, thetemplatesizes = tide_io.readfromnifti(themapname)
+    if themaskname is None:
+        themask_data = None
+    else:
+        themask, themask_data, themask_hdr, themaskdims, thetemplatesizes = tide_io.readfromnifti(themaskname)
+
+    # do the fit
+    thefitmap, thecoffs = tide_fit.territorydecomp(themap_data, thetemplate_data, atlas_data.astype(int),
+                                                   inputmask=themask_data, fitorder=2, debug=True)
+
+    # present the data
+    for i, coffs in enumerate(thecoffs):
+        print(i, coffs)
+
+    # save the data
+    tide_io.savetonifti(thefitmap, themap_hdr, outputroot + '_fit')
+    tide_io.savetonifti(themap_data - thefitmap, themap_hdr, outputroot + '_fitdiff')
+
+if __name__ == '__main__':
+
+    # setup info
+    '''lagtemplatename = '/Users/frederic/code/rapidtide/rapidtide/data/reference/HCP1200_lag_2mm.nii.gz'
+    strengthtemplatename = '/Users/frederic/code/rapidtide/rapidtide/data/reference/HCP1200_strength_2mm.nii.gz'
+    atlasname = '/Users/frederic/code/rapidtide/rapidtide/data/reference/ASPECTS_2mm.nii.gz'
+
+    lagmapname = '/Users/frederic/code/rapidtide/rapidtide/data/examples/src/sub-0052_MNI152NLin6Asym_cerebellargray_lagtimes.nii.gz'
+    lagstrengthsname = '/Users/frederic/code/rapidtide/rapidtide/data/examples/src/sub-0052_MNI152NLin6Asym_cerebellargray_lagstrengths.nii.gz'
+    lagmaskname = '/Users/frederic/code/rapidtide/rapidtide/data/examples/src/sub-0052_MNI152NLin6Asym_cerebellargray_lagmask.nii.gz'
+
+    outputroot = 'test'
+    '''
+
+    class FullPaths(argparse.Action):
+        """Expand user- and relative-paths"""
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            if values == "":
+                setattr(namespace, self.dest, "__EMPTY__")
+            else:
+                setattr(
+                    namespace, self.dest, os.path.abspath(os.path.expanduser(values))
+                )
+
+    def is_dir(dirname):
+        """Checks if a path is an actual directory"""
+        if not os.path.isdir(dirname):
+            msg = "{0} is not a directory".format(dirname)
+            raise argparse.ArgumentTypeError(msg)
+        else:
+            return dirname
+
+    def is_file(filename):
+        """Checks if a file exists"""
+        if not os.path.exists(filename):
+            msg = "{0} does not exist".format(filename)
+            raise argparse.ArgumentTypeError(msg)
+        else:
+            return filename
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Fit a rapidtide output map to a canonical delay map, by vascular territory.\n"
+             ),
+        formatter_class=RawTextHelpFormatter,
+        )
+
+    parser.add_argument("inputfile",
+        help="rapidtide output map to decompose by vascular territory",
+        action=FullPaths,
+        type=is_file,
+        )
+
+    parser.add_argument("outputroot",
+        help="name root for output files",
+        action=FullPaths,
+        type=str,
+        )
+
+    parser.add_argument(
+        "--maskname",
+        help="mask defining voxels with valid values",
+        type=is_file,
+        default=None,
+        )
+
+    parser.add_argument(
+        "--atlas",
+        help="Atlas.  Options are\n"
+        "\tASPECTS:  ASPECTS territory atlas\n"
+        "\tATT:      Arterial transit time flow territories\n",
+        default='ASPECTS',
+        )
+
+    parser.add_argument(
+        "--template",
+        help="Template.  Options are\n"
+        "\tlag:      rigid\n"
+        "\tstrength: rigid + affine\n"
+        "\tsigma:    rigid + affine + deformable syn\n",
+        default='lag',
+        )
+
+    parser.add_argument(
+        "--debug",
+        help="ouput additionnal debugging information",
+        action="store_true",
+        )
+
+    args = parser.parse_args()
+    if args.debug:
+        print(args)
+
+    fingerprint_main(args.inputfile, args.template, args.atlas, args.outputroot, themaskname=args.maskname, debug=args.debug)

@@ -26,6 +26,7 @@ import sys
 import os
 import pandas as pd
 import json
+import copy
 
 # ---------------------------------------- Global constants -------------------------------------------
 MAXLINES = 10000000
@@ -192,6 +193,98 @@ if nibabelexists:
             return True
         else:
             return False
+
+
+    def niftisplitext(filename):
+        r"""Split nifti filename into name base and extensionn.
+
+        Parameters
+        ----------
+        filename : str
+            The file name
+
+        Returns
+        -------
+        name : str
+            Base name of the nifti file.
+
+        ext : str
+            Extension of the nifti file.
+
+        """
+        firstsplit = os.path.splitext(filename)
+        secondsplit = os.path.splitext(firstsplit[0])
+        if secondsplit[1] is not None:
+            return secondsplit[0], secondsplit[1] + firstsplit[1]
+        else:
+            return firstsplit[0], firstsplit[1]
+
+
+    def niftisplit(inputfile, outputroot, axis=3):
+        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
+        theheader = copy.deepcopy(infile_hdr)
+        numpoints = infiledims[axis + 1]
+        print(infiledims)
+        theheader['dim'][axis + 1] = 1
+        for i in range(numpoints):
+            if infiledims[0] == 5:
+                if axis == 0:
+                    thisslice = infile_data[i:i + 1, :, :, :, :]
+                elif axis == 1:
+                    thisslice = infile_data[:, i:i + 1, :, :, :]
+                elif axis == 2:
+                    thisslice = infile_data[:, :, i:i + 1, :, :]
+                elif axis == 3:
+                    thisslice = infile_data[:, :, :, i:i + 1, :]
+                elif axis == 4:
+                    thisslice = infile_data[:, :, :, :, i:i + 1]
+                else:
+                    print('illegal axis')
+                    sys.exit()
+            elif infiledims[0] == 4:
+                if axis == 0:
+                    thisslice = infile_data[i:i + 1, :, :, :]
+                elif axis == 1:
+                    thisslice = infile_data[:, i:i + 1, :, :]
+                elif axis == 2:
+                    thisslice = infile_data[:, :, i:i + 1, :]
+                elif axis == 3:
+                    thisslice = infile_data[:, :, :, i:i + 1]
+                else:
+                    print('illegal axis')
+                    sys.exit()
+            savetonifti(thisslice, theheader, outputroot + str(i).zfill(4))
+
+
+    def niftimerge(inputlist, outputname, writetodisk=True, axis=3, returndata=False, debug=False):
+        inputdata = []
+        for thefile in inputlist:
+            if debug:
+                print('reading', thefile)
+            infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(thefile)
+            if infiledims[0] == 3:
+                inputdata.append(infile_data.reshape((infiledims[1], infiledims[2], infiledims[3], 1)) + 0.0)
+            else:
+                inputdata.append(infile_data + 0.0)
+        theheader = copy.deepcopy(infile_hdr)
+        theheader['dim'][axis + 1] = len(inputdata)
+        output_data = np.concatenate(inputdata, axis=axis)
+        if writetodisk:
+            savetonifti(output_data, theheader, outputname)
+        if returndata:
+            return output_data, infile_hdr
+
+
+    def niftiroi(inputfile, outputfile, startpt, numpoints):
+        print(inputfile, outputfile, startpt, numpoints)
+        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
+        theheader = copy.deepcopy(infile_hdr)
+        theheader['dim'][4] = numpoints
+        if infiledims[0] == 5:
+            output_data = infile_data[:, :, :, startpt:startpt + numpoints, :]
+        else:
+            output_data = infile_data[:, :, :, startpt:startpt + numpoints]
+        savetonifti(output_data, theheader, outputfile)
 
 
     def checkiftext(filename):
@@ -781,7 +874,7 @@ def readcolfromtextfile(inputfilename):
         print('Badly formed file specification', inputfilename, '- exiting')
         sys.exit()
 
-    inputdata = np.transpose(tide_io.readvecs(inputfilename, colspec=colspec))
+    inputdata = np.transpose(readvecs(inputfilename, colspec=colspec))
     if np.shape(inputdata)[1] > 1:
         print('specify only one column for input file 1')
         sys.exit()
