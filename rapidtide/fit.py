@@ -528,7 +528,7 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
         return 0.0, 0.0, 0.0, 0
 
 
-def territorydecomp(inputmap, template, atlas, inputmask=None, nooffset=False, fitorder=1, debug=False):
+def territorydecomp(inputmap, template, atlas, inputmask=None, intercept=True, fitorder=1, debug=False):
     """
 
      Parameters
@@ -551,15 +551,23 @@ def territorydecomp(inputmap, template, atlas, inputmask=None, nooffset=False, f
     fitmap = inputmap * 0.0
 
     thecoffs = []
+    theRs = []
     for i in range(1, np.max(atlas) + 1):
         if debug:
             print('fitting territory', i)
         maskedvoxels = np.where(atlas * tempmask == i)
         territoryvoxels = np.where(atlas == i)
-        thecoffs.append(np.polyfit(template[maskedvoxels], inputmap[maskedvoxels], fitorder))
-        fitmap[territoryvoxels] = trendgen(template[territoryvoxels], thecoffs[-1], not nooffset)
+        evs = []
+        for order in range(1, fitorder + 1):
+            evs.append(np.power(template[maskedvoxels], order))
+        thefit, R = mlregress(evs, inputmap[maskedvoxels], intercept=intercept)
+        thecoffs.append(np.asarray(thefit[0]).reshape((-1)))
+        theRs.append(R)
+        print(thecoffs[-1], R)
+        fitmap[territoryvoxels] = mlproject(thecoffs[-1], evs, intercept)
+        #fitmap[territoryvoxels] = trendgen(template[territoryvoxels], thecoffs[-1], intercept)
 
-    return fitmap, thecoffs
+    return fitmap, thecoffs, theRs
 
 
 @conditionaljit2()
@@ -1258,6 +1266,19 @@ def gram_schmidt(theregressors, debug=False):
     if debug:
         print('gram_schmidt, output dimensions:', outputbasis.shape)
     return outputbasis
+
+
+def mlproject(thefit, theevs, intercept):
+    thedest = theevs[0] * 0.0
+    print('lengths:', len(thefit), len(theevs))
+    if intercept:
+        thedest[:] = thefit[0]
+        startpt = 1
+    else:
+        startpt = 0
+    for i in range(len(thefit) - 1):
+        thedest += thefit[i + startpt] * theevs[i]
+    return thedest
 
 
 ### I don't remember where this came from.  Need to check license

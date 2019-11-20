@@ -30,7 +30,7 @@ from argparse import RawTextHelpFormatter
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 
-def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, fitorder, themaskname=None, nooffset=False, debug=False):
+def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, fitorder, themaskname=None, intercept=True, debug=False):
     # read the data
     referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
                                 'reference')
@@ -66,16 +66,21 @@ def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, fitorder
         themask, themask_data, themask_hdr, themaskdims, thetemplatesizes = tide_io.readfromnifti(themaskname)
 
     # do the fit
-    thefitmap, thecoffs = tide_fit.territorydecomp(themap_data, thetemplate_data, atlas_data.astype(int),
+    thefitmap, thecoffs, theRs = tide_fit.territorydecomp(themap_data, thetemplate_data, atlas_data.astype(int),
                                                    inputmask=themask_data,
                                                    fitorder=fitorder,
-                                                   nooffset=nooffset,
+                                                   intercept=intercept,
                                                    debug=True)
 
     # present the data
+    atlaslabels['R'] = theRs
     newcols = pd.DataFrame(np.asarray(thecoffs))
     columnnames = []
-    for i in reversed(range(fitorder + 1)):
+    if intercept:
+        startpt = 0
+    else:
+        startpt = 1
+    for i in range(startpt, fitorder + 1):
         columnnames += str(i)
     newcols.columns = columnnames
     atlaslabels = pd.concat([atlaslabels, newcols], axis=1)
@@ -160,7 +165,7 @@ if __name__ == '__main__':
         )
 
     parser.add_argument(
-        "--nooffset",
+        "--nointercept",
         help="do not use the zeroth order component when fitting",
         action="store_true",
         )
@@ -185,6 +190,6 @@ if __name__ == '__main__':
         print(args)
 
     fingerprint_main(args.inputfile, args.template, args.atlas, args.outputroot, args.fitorder,
-                     nooffset=args.nooffset,
+                     intercept=not(args.nointercept),
                      themaskname=args.maskname,
                      debug=args.debug)
