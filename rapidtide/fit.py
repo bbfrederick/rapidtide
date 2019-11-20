@@ -528,7 +528,7 @@ def findrisetimefunc(thexvals, theyvals, initguess=None, debug=False,
         return 0.0, 0.0, 0.0, 0
 
 
-def territorydecomp(inputmap, template, atlas, inputmask=None, fitorder=1, debug=False):
+def territorydecomp(inputmap, template, atlas, inputmask=None, nooffset=False, fitorder=1, debug=False):
     """
 
      Parameters
@@ -557,7 +557,7 @@ def territorydecomp(inputmap, template, atlas, inputmask=None, fitorder=1, debug
         maskedvoxels = np.where(atlas * tempmask == i)
         territoryvoxels = np.where(atlas == i)
         thecoffs.append(np.polyfit(template[maskedvoxels], inputmap[maskedvoxels], fitorder))
-        fitmap[territoryvoxels] = trendgen(template[territoryvoxels], thecoffs[-1], False)
+        fitmap[territoryvoxels] = trendgen(template[territoryvoxels], thecoffs[-1], not nooffset)
 
     return fitmap, thecoffs
 

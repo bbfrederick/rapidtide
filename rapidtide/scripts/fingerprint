@@ -30,7 +30,7 @@ from argparse import RawTextHelpFormatter
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 
-def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, fitorder, themaskname=None, debug=False):
+def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, fitorder, themaskname=None, nooffset=False, debug=False):
     # read the data
     referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
                                 'reference')
@@ -67,10 +67,17 @@ def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, fitorder
 
     # do the fit
     thefitmap, thecoffs = tide_fit.territorydecomp(themap_data, thetemplate_data, atlas_data.astype(int),
-                                                   inputmask=themask_data, fitorder=fitorder, debug=True)
+                                                   inputmask=themask_data,
+                                                   fitorder=fitorder,
+                                                   nooffset=nooffset,
+                                                   debug=True)
 
     # present the data
     newcols = pd.DataFrame(np.asarray(thecoffs))
+    columnnames = []
+    for i in reversed(range(fitorder + 1)):
+        columnnames += str(i)
+    newcols.columns = columnnames
     atlaslabels = pd.concat([atlaslabels, newcols], axis=1)
     atlaslabels.to_csv(outputroot + '_fits.tsv', sep='\t')
     if debug:
@@ -78,7 +85,9 @@ def fingerprint_main(themapname, whichtemplate, whichatlas, outputroot, fitorder
 
     # save the data
     tide_io.savetonifti(thefitmap, themap_hdr, outputroot + '_fit')
-    tide_io.savetonifti(themap_data - thefitmap, themap_hdr, outputroot + '_fitdiff')
+    diffmap = themap_data - thefitmap
+    diffmap[np.where(atlas_data < 1)] = 0.0
+    tide_io.savetonifti(diffmap, themap_hdr, outputroot + '_fitdiff')
 
 if __name__ == '__main__':
 
@@ -151,6 +160,12 @@ if __name__ == '__main__':
         )
 
     parser.add_argument(
+        "--nooffset",
+        help="do not use the zeroth order component when fitting",
+        action="store_true",
+        )
+
+    parser.add_argument(
         "--template",
         help="Template.  Options are\n"
         "\tlag:      time lag in seconds\n"
@@ -169,4 +184,7 @@ if __name__ == '__main__':
     if args.debug:
         print(args)
 
-    fingerprint_main(args.inputfile, args.template, args.atlas, args.outputroot, args.fitorder, themaskname=args.maskname, debug=args.debug)
+    fingerprint_main(args.inputfile, args.template, args.atlas, args.outputroot, args.fitorder,
+                     nooffset=args.nooffset,
+                     themaskname=args.maskname,
+                     debug=args.debug)
