@@ -554,10 +554,10 @@ def territorydecomp(inputmap, template, atlas, inputmask=None, fitorder=1, debug
     for i in range(1, np.max(atlas) + 1):
         if debug:
             print('fitting territory', i)
-        territoryvoxels = np.where(atlas * tempmask == i)
-        maskedvoxels = np.where(atlas == i)
+        maskedvoxels = np.where(atlas * tempmask == i)
+        territoryvoxels = np.where(atlas == i)
         thecoffs.append(np.polyfit(template[maskedvoxels], inputmap[maskedvoxels], fitorder))
-        fitmap[territoryvoxels] = trendgen(template[territoryvoxels], thecoffs[-1], False)\
+        fitmap[territoryvoxels] = trendgen(template[territoryvoxels], thecoffs[-1], False)
 
     return fitmap, thecoffs
 
