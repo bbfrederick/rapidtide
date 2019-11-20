@@ -563,9 +563,7 @@ def territorydecomp(inputmap, template, atlas, inputmask=None, intercept=True, f
         thefit, R = mlregress(evs, inputmap[maskedvoxels], intercept=intercept)
         thecoffs.append(np.asarray(thefit[0]).reshape((-1)))
         theRs.append(R)
-        print(thecoffs[-1], R)
         fitmap[territoryvoxels] = mlproject(thecoffs[-1], evs, intercept)
-        #fitmap[territoryvoxels] = trendgen(template[territoryvoxels], thecoffs[-1], intercept)
 
     return fitmap, thecoffs, theRs
 
@@ -1270,7 +1268,6 @@ def gram_schmidt(theregressors, debug=False):
 
 def mlproject(thefit, theevs, intercept):
     thedest = theevs[0] * 0.0
-    print('lengths:', len(thefit), len(theevs))
     if intercept:
         thedest[:] = thefit[0]
         startpt = 1
