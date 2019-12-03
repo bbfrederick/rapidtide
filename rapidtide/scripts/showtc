@@ -35,6 +35,7 @@ import rapidtide.fit as tide_fit
 import rapidtide.util as tide_util
 import numpy as np
 from scipy import arange, fftpack, linspace
+import argparse
 
 from matplotlib.pyplot import figure, plot, show, savefig, setp
 
@@ -43,6 +44,93 @@ from matplotlib.pyplot import figure, plot, show, savefig, setp
 def phase(mcv):
     return np.arctan2(mcv.imag, mcv.real)
 
+def parsearglist():
+    parser = argparse.ArgumentParser(description='Plots the data in text files.')
+    parser.add_argument('textfilename',
+                        help='A comma separated list of input files, with optional column specifications')
+    parser.add_argument('--nolegend',
+                        dest='dolegend',
+                        action='store_true',
+                        help='turn off legend label')
+    parser.add_argument('--transpose',
+                        action='store_false',
+                        dest='dotranspose',
+                        help='swap rows and columns in the input files')
+    parser.add_argument('--linewidth',
+                        dest='linewidth',
+                        type='float',
+                        help='set linewidth to LINEWIDTH')
+    parser.add_argument('--debug',
+                        action='store_false',
+                        help='output additional debugging information')
+    #parser.add_argument('pspec',
+    #                    action='store_const',
+    #                    specmode
+
+    ''' "phase",  "waterfall", "voffset=", "noxax",
+    "noyax",
+    "debug",
+    "xlabel=",
+    "ylabel=",
+    "fontscalefac=",
+    "legendloc=",
+    "starttime=", "endtime=",
+    "samplerate=", "colors=", "linewidth=", "legends=", "title=",
+    "separatelinked", "separate", "sampletime=", "tofile=", "saveres="]
+    parser.add_argument('timestep',
+                        type=float,
+                        help='the time step of the output time course in seconds')
+    parser.add_argument('numpoints',
+                        type=int,
+                        help='the number of output time points')
+    parser.add_argument('outfilename',
+                        help='the name of the output time course file')
+    parser.add_argument('--debug',
+                        action='store_true',
+                        help='turn on additional debugging output')
+
+    print(
+        "    --pspec                  - show the power spectra magnitudes of the input data instead of the timecourses")
+    print("    --phase                  - show the power spectra phases of the input data instead of the timecourses")
+    print("    --waterfall              - plot multiple timecourses as a waterfall")
+    print(
+        "    --voffset=VOFFSET        - plot multiple timecourses as with VOFFSET between them (use negative VOFFSET to set automatically)")
+    print("    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)")
+    print(
+        "    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)")
+    print("    --colors=C1,C2,..        - cycle through the list of colors specified by CN")
+    print("    --linewidth=LW           - set linewidth to LW points (default is 1)")
+    print("    --fontscalefac=FAC       - scale all font sizes by FAC (default is 1.0)")
+    print("    --legends=L1,L2,..       - cycle through the list of legends specified by LN")
+    print("    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen")
+    print("    --saveres=DPI            - write figure to file at DPI dots per inch (default is 1000)")
+    print("    --title=TITLE            - use TITLE as the overall title of the graph")
+    print("    --separate               - use a separate subplot for each timecourse")
+    print("    --separatelinked         - use a separate subplot for each timecourse, but use a common y scaling")
+    print("    --noxax                  - don't show x axis")
+    print("    --noyax                  - don't show y axis")
+    print("    --starttime=START        - start plot at START seconds")
+    print("    --endtime=END            - end plot at END seconds")
+    print("    --legendloc=LOC          - Integer from 0 to 10 inclusive specifying legend location.  Legal values are:")
+    print("                               0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right,")
+    print("                               5: right, 6: center left, 7: center right, 8: lower center, 9: upper center,")
+    print("                               10: center.  Default is 2.")
+    print("    --debug                  - print debugging information")
+
+    parser.add_argument('timestep',
+                        type=float,
+                        help='the time step of the output time course in seconds')
+    parser.add_argument('numpoints',
+                        type=int,
+                        help='the number of output time points')
+    parser.add_argument('outfilename',
+                        help='the name of the output time course file')
+    parser.add_argument('--debug',
+                        action='store_true',
+                        help='turn on additional debugging output')'''
+    args = parser.parse_args()
+
+    return args
 
 def usage():
     print("showtc - plots the data in text files")
@@ -120,6 +208,7 @@ legendloc = 2
 saveres = 1000
 ylabel = ''
 xlabel = ''
+savespec = True
 
 # get the command line parameters
 try:
@@ -318,6 +407,8 @@ for i in range(0, numfiles):
                freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(invec)) * invec, Fs = thissamplerate, mode=specmode)
             else:
                freqaxis, spectrum = tide_filt.spectrum(invec, Fs = thissamplerate, mode=specmode)
+            if savespec:
+                tide_io.writenpvecs(np.transpose(np.stack([freqaxis, spectrum], axis=1)), "thespectrum.txt")
             xvecs.append(freqaxis)
             yvecs.append(spectrum)
         else:
