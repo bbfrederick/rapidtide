@@ -562,6 +562,7 @@ def rapidtide_main(thearguments):
     optiondict['filtorder'] = 6
     optiondict['padseconds'] = 30.0  # the number of seconds of padding to add to each end of a filtered timecourse
     optiondict['filtertype'] = None
+    optiondict['respdelete'] = False
 
     # output options
     optiondict['savelagregressors'] = True
@@ -744,6 +745,7 @@ def rapidtide_main(thearguments):
                                                                                                           'phat',
                                                                                                           'wiener',
                                                                                                           'weiner',
+                                                                                                          'respdelete',
                                                                                                           'checkpoint',
                                                                                                           'maxfittype='])
     except getopt.GetoptError as err:
@@ -805,6 +807,9 @@ def rapidtide_main(thearguments):
             optiondict['cleanrefined'] = True
             optiondict['shiftall'] = True
             print('Will attempt to clean refined regressor')
+        elif o == '--respdelete':
+            optiondict['respdelete'] = True
+            print('Will attempt to track and delete respiratory waveforms in the passband')
         elif o == '--wiener':
             optiondict['dodeconv'] = True
             print('Will perform Wiener deconvolution')
@@ -1948,6 +1953,16 @@ def rapidtide_main(thearguments):
         # Step -1 - check the regressor for periodic components in the passband
         dolagmod = True
         doreferencenotch = True
+        if optiondict['respdelete']:
+            resptracker = tide_classes.freqtrack(nperseg=64)
+            thetimes, thefreqs = resptracker.track(resampref_y, 1.0 / oversamptr)
+            tide_io.writevec(thefreqs, outputname + '_peakfreaks_pass' + str(thepass) + '.txt')
+            resampref_y = resptracker.clean(resampref_y, 1.0 / oversamptr, thetimes, thefreqs)
+            tide_io.writevec(resampref_y, outputname + '_respfilt_pass' + str(thepass) + '.txt')
+            referencetc = tide_math.corrnormalize(resampref_y,
+                                                  prewindow=optiondict['usewindowfunc'],
+                                                  detrendorder=optiondict['detrendorder'],
+                                                  windowfunc=optiondict['windowfunc'])
         if optiondict['check_autocorrelation']:
             print('checking reference regressor autocorrelation properties')
             optiondict['lagmod'] = 1000.0
