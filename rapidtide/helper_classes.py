@@ -645,3 +645,99 @@ class correlation_fitter:
             pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
             pl.show()
         return maxindex, maxlag, flipfac * maxval, maxsigma, maskval, failreason, peakstart, peakend
+
+
+class freqtrack:
+    freqs = None
+    times = None
+
+    def __init__(self,
+                 lowerlim=0.1,
+                 upperlim=0.6,
+                 nperseg=32,
+                 Q=10.0,
+                 debug=False):
+        self.lowerlim = lowerlim
+        self.upperlim = upperlim
+        self.nperseg = nperseg
+        self.Q = Q
+        self.debug = debug
+        self.nfft = self.nperseg
+
+
+    def track(self, x, fs):
+
+        self.freqs, self.times, thespectrogram = sp.signal.spectrogram(np.concatenate([np.zeros(int(self.nperseg // 2)), x, np.zeros(int(self.nperseg // 2))], axis=0),
+                                                             fs=fs,
+                                                             detrend='constant',
+                                                             scaling='spectrum',
+                                                             nfft=None,
+                                                             window=np.hamming(self.nfft),
+                                                             noverlap=(self.nperseg - 1))
+        lowerliminpts = tide_util.valtoindex(self.freqs, self.lowerlim)
+        upperliminpts = tide_util.valtoindex(self.freqs, self.upperlim)
+
+        if self.debug:
+            print(self.times.shape, self.freqs.shape, thespectrogram.shape)
+            print(self.times)
+
+        # intitialize the peak fitter
+        thefitter = correlation_fitter(corrtimeaxis=self.freqs,
+                                       lagmin=self.lowerlim,
+                                       lagmax=self.upperlim,
+                                       absmaxsigma=10.0,
+                                       absminsigma=0.1,
+                                       debug=self.debug,
+                                       findmaxtype='gauss',
+                                       zerooutbadfit=False,
+                                       refine=True,
+                                       useguess=False,
+                                       fastgauss=False
+                                       )
+
+        peakfreqs = np.zeros((thespectrogram.shape[1] - 1), dtype=float)
+        for i in range(0, thespectrogram.shape[1] - 1):
+            maxindex, peakfreqs[i], maxval, maxsigma, maskval, failreason, peakstart, peakend  = thefitter.fit(thespectrogram[:, i])
+            if not (lowerliminpts <= maxindex <= upperliminpts):
+                peakfreqs[i] = -1.0
+
+        return self.times[:-1], peakfreqs
+
+    def clean(self, x, fs, times, peakfreqs, numharmonics=2):
+        nyquistfreq = 0.5 * fs
+        y = x * 0.0
+        halfwidth = int(self.nperseg // 2)
+        padx = np.concatenate([np.zeros(halfwidth), x, np.zeros(halfwidth)], axis=0)
+        pady = np.concatenate([np.zeros(halfwidth), y, np.zeros(halfwidth)], axis=0)
+        padweight = padx * 0.0
+        if self.debug:
+            print(fs, len(times), len(peakfreqs))
+        for i in range(0, len(times)):
+            centerindex = int(times[i] * fs)
+            xstart = centerindex - halfwidth
+            xend = centerindex + halfwidth
+            if peakfreqs[i] > 0.0:
+                filtsignal = padx[xstart:xend]
+                numharmonics = np.min([numharmonics, int((nyquistfreq // peakfreqs[i]) - 1)])
+                if self.debug:
+                    print('numharmonics:', numharmonics, nyquistfreq // peakfreqs[i])
+                for j in range(numharmonics + 1):
+                    workingfreq = (j + 1) * peakfreqs[i]
+                    if self.debug:
+                        print('workingfreq:', workingfreq)
+                    ws = [workingfreq * 0.95,  workingfreq * 1.05]
+                    wp = [workingfreq * 0.9, workingfreq * 1.1]
+                    gpass = 1.0
+                    gstop = 40.0
+                    b, a = sp.signal.iirdesign(wp, ws, gpass, gstop, ftype='cheby2', fs=fs)
+                    if self.debug:
+                        print(i, j, times[i], centerindex, halfwidth, xstart, xend, xend - xstart, wp, ws, len(a), len(b))
+                    filtsignal = sp.signal.filtfilt(b, a, sp.signal.filtfilt(b, a, filtsignal))
+                pady[xstart:xend] += filtsignal
+            else:
+                pady[xstart:xend] += padx[xstart:xend]
+            padweight[xstart:xend] += 1.0
+        return (pady / padweight)[halfwidth:-halfwidth]
+
+
+
