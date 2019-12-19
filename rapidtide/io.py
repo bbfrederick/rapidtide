@@ -68,7 +68,7 @@ if nibabelexists:
             print('nifti file', inputfile, 'does not exist')
             sys.exit()
         nim = nib.load(inputfilename)
-        nim_data = nim.get_data()
+        nim_data = nim.get_fdata()
         nim_hdr = nim.header.copy()
         thedims = nim_hdr['dim'].copy()
         thesizes = nim_hdr['pixdim'].copy()
