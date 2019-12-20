@@ -381,7 +381,14 @@ for i in range(0, numfiles):
     if len(textfilename[i]) == 2:
         collist = []
         for column in (textfilename[i][1]).split(','):
-            collist.append(int(column))
+            if colnames is None:
+                collist.append(int(column))
+            else:
+                if colnames.index(column) > 0:
+                    collist.append(colnames.index(column))
+                else:
+                    print('no column named', column)
+                    sys.exit()
     else:
         collist = range(0, invecs.shape[0])
         # for j in range(0, invecs.shape[0]):
