@@ -752,22 +752,24 @@ def readbidstsv(inputfilename, debug=False):
             try:
                 samplerate = float(d['SamplingFrequency'])
             except:
-                print('no samplerate found in json')
-                return [None, None, None, None]
+                print('no samplerate found in json, setting to 1.0')
+                samplerate = 1.0
             try:
                 starttime = float(d['StartTime'])
             except:
-                print('no starttime found in json')
-                return [None, None, None, None]
+                print('no starttime found in json, setting to 0.0')
+                starttime = 0.0
             try:
                 columns = d['Columns']
             except:
-                print('no columns found in json')
-                return [None, None, None, None]
+                print('no columns found in json, will take labels from the tsv file')
+                columns = None
         if os.path.exists(thefileroot + '.tsv.gz'):
             df = pd.read_csv(thefileroot + '.tsv.gz', compression='gzip', header=0, sep='\t', quotechar='"')
         else:
             df = pd.read_csv(thefileroot + '.tsv', header=0, sep='\t', quotechar='"')
+        if columns is None:
+            columns = list(df.columns.values)
         return samplerate, starttime, columns, np.transpose(df.as_matrix())
     else:
         print('file pair does not exist')
