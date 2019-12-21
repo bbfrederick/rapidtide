@@ -699,6 +699,18 @@ def readfmriprepconfounds(inputfilename):
     return confounddict
 
 
+def readoptionsfile(inputfileroot):
+    if os.path.isfile(inputfileroot + '.json'):
+        # options saved as json
+        return readdictfromjson(inputfileroot + '.json')
+    elif os.path.isfile(inputfileroot + '.txt'):
+        # options saved as text
+        return readdict(inputfileroot + '.txt')
+    else:
+        print('no valid options file found')
+        return{}
+
+
 def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, debug=False):
     if columns is None:
         columns = []
