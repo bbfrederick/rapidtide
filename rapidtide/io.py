@@ -702,13 +702,58 @@ def readfmriprepconfounds(inputfilename):
 def readoptionsfile(inputfileroot):
     if os.path.isfile(inputfileroot + '.json'):
         # options saved as json
-        return readdictfromjson(inputfileroot + '.json')
+        thedict = readdictfromjson(inputfileroot + '.json')
     elif os.path.isfile(inputfileroot + '.txt'):
         # options saved as text
-        return readdict(inputfileroot + '.txt')
+        thedict = readdict(inputfileroot + '.txt')
     else:
         print('no valid options file found')
         return{}
+
+    # correct behavior for older options files
+    try:
+        test = thedict['lowerpass']
+    except KeyError:
+        print('no filter limits found in options file - filling in defaults')
+        if thedict['filtertype'] == 'none':
+            thedict['lowerstop'] = 0.0
+            thedict['lowerpass'] = 0.0
+            thedict['upperpass'] = -1.0
+            thedict['upperstop'] = -1.0
+        elif thedict['filtertype'] == 'vlf':
+            thedict['lowerstop'] = 0.0
+            thedict['lowerpass'] = 0.0
+            thedict['upperpass'] = 0.009
+            thedict['upperstop'] = 0.010
+        elif thedict['filtertype'] == 'lfo':
+            thedict['lowerstop'] = 0.009
+            thedict['lowerpass'] = 0.010
+            thedict['upperpass'] = 0.15
+            thedict['upperstop'] = 0.20
+        elif thedict['filtertype'] == 'resp':
+            thedict['lowerstop'] = 0.15
+            thedict['lowerpass'] = 0.20
+            thedict['upperpass'] = 0.4
+            thedict['upperstop'] = 0.5
+        elif thedict['filtertype'] == 'card':
+            thedict['lowerstop'] = 0.4
+            thedict['lowerpass'] = 0.5
+            thedict['upperpass'] = 2.5
+            thedict['upperstop'] = 3.0
+        elif thedict['filtertype'] == 'arb':
+            thedict['lowerstop'] = thedict['arb_lowerstop']
+            thedict['lowerpass'] = thedict['arb_lower']
+            thedict['upperpass'] = thedict['arb_upper']
+            thedict['upperstop'] = thedict['arb_upperstop']
+        else:
+            print('cannot determine filtering')
+            thedict['lowerstop'] = 0.0
+            thedict['lowerpass'] = 0.0
+            thedict['upperpass'] = -1.0
+            thedict['upperstop'] = -1.0
+    return thedict
+
+
 
 
 def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, debug=False):
