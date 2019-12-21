@@ -563,6 +563,10 @@ def rapidtide_main(thearguments):
     optiondict['padseconds'] = 30.0  # the number of seconds of padding to add to each end of a filtered timecourse
     optiondict['filtertype'] = None
     optiondict['respdelete'] = False
+    optiondict['lowerstop'] = None
+    optiondict['lowerpass'] = None
+    optiondict['upperpass'] = None
+    optiondict['upperstop'] = None
 
     # output options
     optiondict['savelagregressors'] = True
@@ -1743,6 +1747,7 @@ def rapidtide_main(thearguments):
 
     # band limit the regressor if that is needed
     print('filtering to ', theprefilter.gettype(), ' band')
+    optiondict['lowerstop'], optiondict['lowerpass'], optiondict['upperpass'], optiondict['upperstop'] = theprefilter.getfreqlimits()
     reference_y_classfilter = theprefilter.apply(inputfreq, reference_y)
     reference_y = reference_y_classfilter
 
