@@ -764,11 +764,48 @@ def updateRegressor():
     regressor_ax.plot(regressors[focusregressor].timeaxis, regressors[focusregressor].timedata,
                       stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=2), clear=True)
 
+# found this routine at https://github.com/abhilb/pyqtgraphutils/blob/master/pyqtgraphutils.py
+class RectangleItem(pg.GraphicsObject):
+    def __init__(self, topLeft, size, color=(0, 128, 0, 128)):
+        pg.GraphicsObject.__init__(self)
+        self.topLeft = topLeft
+        self.size = size
+        self.color = color
+        self.generatePicture()
+
+    def generatePicture(self):
+        self.picture = QtGui.QPicture()
+        p = QtGui.QPainter(self.picture)
+        p.setPen(pg.mkPen(self.color))
+        p.setBrush(pg.mkBrush(self.color))
+        tl = QtCore.QPointF(self.topLeft[0], self.topLeft[1])
+        size = QtCore.QSizeF(self.size[0], self.size[1])
+        p.drawRect(QtCore.QRectF(tl, size))
+        p.end()
+
+    def paint(self, p, *args):
+        p.drawPicture(0, 0, self.picture)
+
+    def boundingRect(self):
+        return QtCore.QRectF(self.picture.boundingRect())
+
 def updateRegressorSpectrum():
-    global regressorspectrum_ax, regressors, focusregressor, focussubj, liveplots
+    global regressorspectrum_ax, regressors, focusregressor, focussubj, liveplots, regressorfilterlimits
     regressorspectrum_ax.plot(regressors[focusregressor].specaxis, regressors[focusregressor].specdata,
                               stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=2), clear=True)
     regressorspectrum_ax.setXRange(0.0, 0.5 * regressors[focusregressor].displaysamplerate, padding=0)
+    spectop = 1.25 * np.max(regressors[focusregressor].specdata)
+    regressorspectrum_ax.setYRange(0.0, spectop, padding=0)
+    lowerlim = regressorfilterlimits[0]
+    if regressorfilterlimits[1] == -1:
+        upperlim = regressors[focusregressor].specaxis[-1]
+    else:
+        upperlim = regressorfilterlimits[1]
+    bottomleft = [lowerlim, 0.0]
+    size = [upperlim - lowerlim, spectop]
+    print('bottomleft, size:', bottomleft, size)
+    therectangle = RectangleItem(bottomleft, size)
+    regressorspectrum_ax.addItem(therectangle)
 
 def calcAtlasStats():
     global overlays, focussubj, datafileroot, atlasname, atlaslabels, atlasstats, averagingmode
@@ -1474,7 +1511,7 @@ def main():
     global focusmap, bgmap
     global maps
     global roi
-    global overlays, regressors, focussubj, loadedfuncmaps, atlasstats, averagingmode
+    global overlays, regressors, regressorfilterlimits, focussubj, loadedfuncmaps, atlasstats, averagingmode
     global mainwin, orthoimages, overlaybuttons, panetomap
     global img_colorbar
     global lg_imgsize, scalefacx, scalefacy, scalefacz
@@ -1723,6 +1760,8 @@ def main():
     # load the regressors
     regressors = {}
     therunoptions = tide_io.readoptionsfile(datafileroot + 'options')
+    regressorfilterlimits = (float(therunoptions['lowerpass']), float(therunoptions['upperpass']))
+    print('regressor filter limits:', regressorfilterlimits)
     fmrifreq = float(therunoptions['fmrifreq'])
     inputfreq = float(therunoptions['inputfreq'])
     oversampfactor = int(therunoptions['oversampfactor'])
