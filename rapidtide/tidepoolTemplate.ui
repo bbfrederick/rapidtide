@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1118</width>
-    <height>728</height>
+    <width>1129</width>
+    <height>909</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+    <horstretch>1</horstretch>
+    <verstretch>1</verstretch>
+   </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
@@ -18,15 +24,21 @@
   </property>
   <property name="maximumSize">
    <size>
-    <width>1118</width>
+    <width>1400</width>
     <height>16777215</height>
+   </size>
+  </property>
+  <property name="sizeIncrement">
+   <size>
+    <width>1</width>
+    <height>1</height>
    </size>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QGroupBox" name="histogram_groupBox_2">
+   <widget class="QGroupBox" name="logOutput_groupBox">
     <property name="geometry">
      <rect>
       <x>440</x>
@@ -122,14 +134,14 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>20</y>
+       <y>25</y>
        <width>1091</width>
-       <height>291</height>
+       <height>286</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="largeimage_horizontalLayout">
       <property name="sizeConstraint">
-       <enum>QLayout::SetMinAndMaxSize</enum>
+       <enum>QLayout::SetNoConstraint</enum>
       </property>
       <property name="topMargin">
        <number>0</number>
@@ -1061,7 +1073,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="groupBox">
+   <widget class="QGroupBox" name="mainimagedata_groupBox">
     <property name="geometry">
      <rect>
       <x>830</x>
@@ -1352,13 +1364,220 @@
      </property>
     </widget>
    </widget>
+   <widget class="QGroupBox" name="regressor_groupBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>690</y>
+      <width>1101</width>
+      <height>181</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>100</width>
+      <height>100</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>1500</width>
+      <height>1000</height>
+     </size>
+    </property>
+    <property name="title">
+     <string>Probe regressor</string>
+    </property>
+    <widget class="GraphicsLayoutWidget" name="regressorspectrum_graphicsView">
+     <property name="geometry">
+      <rect>
+       <x>490</x>
+       <y>23</y>
+       <width>472</width>
+       <height>131</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>100</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>1000</width>
+       <height>1000</height>
+      </size>
+     </property>
+     <property name="sizeIncrement">
+      <size>
+       <width>1</width>
+       <height>1</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="GraphicsLayoutWidget" name="regressortimecourse_graphicsView">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>23</y>
+       <width>472</width>
+       <height>131</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>100</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>1000</width>
+       <height>1000</height>
+      </size>
+     </property>
+     <property name="sizeIncrement">
+      <size>
+       <width>1</width>
+       <height>1</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="QGroupBox" name="processingstage_groupBox">
+     <property name="geometry">
+      <rect>
+       <x>979</x>
+       <y>14</y>
+       <width>120</width>
+       <height>151</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Processing stage</string>
+     </property>
+     <widget class="QWidget" name="verticalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>25</y>
+        <width>101</width>
+        <height>106</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QRadioButton" name="prefilt_radioButton">
+         <property name="text">
+          <string>Prefilt</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="pass1_radioButton">
+         <property name="text">
+          <string>Pass 1</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="pass2_radioButton">
+         <property name="text">
+          <string>Pass 2</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="pass3_radioButton">
+         <property name="text">
+          <string>Pass 3</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="pass4_radioButton">
+         <property name="text">
+          <string>Pass 4</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QLabel" name="label_5">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>155</y>
+       <width>161</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Timecourse (seconds)</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_12">
+     <property name="geometry">
+      <rect>
+       <x>660</x>
+       <y>155</y>
+       <width>131</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Power spectrum (Hz)</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1118</width>
+     <width>1129</width>
      <height>22</height>
     </rect>
    </property>
