@@ -45,12 +45,13 @@ try:
     import plaidml.keras
 
     plaidml.keras.install_backend("plaidml")
+    print('using plaidml keras')
 except ImportError:
-    pass
+    print('falling back to standard keras')
 
 from keras.models import Sequential
 from keras.optimizers import RMSprop
-from keras.layers import Bidirectional, Convolution1D, SeparableConvolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
+from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
     TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
 from keras.callbacks import TerminateOnNaN, ModelCheckpoint
 from keras.models import load_model
@@ -611,6 +612,7 @@ class convautoencoder(dlfilter):
 
 
 
+'''
 class sepcnn(dlfilter):
     def __init__(self, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
         self.num_filters = num_filters
@@ -670,6 +672,7 @@ class sepcnn(dlfilter):
         self.model.add(SeparableConvolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding='same'))
         self.model.compile(optimizer=RMSprop(),
                            loss='mse')
+'''
 
 
 class lstm(dlfilter):
