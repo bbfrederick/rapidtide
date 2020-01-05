@@ -4,7 +4,7 @@
 ## Required dependencies
 The processing programs in rapidtide require the following to be installed first:
 
-* Python 2.x or 3.x (I no longer support or test running in 2.x, but it does still work)
+* Python 3.x (I no longer support or test running in 2.x, but it does still work for the time being.  But I use dependencies like nibabel that have dropped 2.x support, so this is not going to last long.)
 * numpy>=1.16
 * scipy
 * pandas
@@ -15,7 +15,7 @@ The processing programs in rapidtide require the following to be installed first
 
 If you want to use tidepool for image display, you will also need to install the following:
 
-* pyqt4 or pyqt5
+* pyqt5
 * pyqtgraph
 
 
@@ -24,6 +24,7 @@ The following optional dependencies will be used if present:
 
 * numba (for faster performance)
 * pyfftw (also for faster performance)
+* mkl and mkl-service (again, faster performance)
 
 If you want to use the deep learning filter in happy, you'll need Keras and some sort of backend.  If you want to be able to train filters, you'll probably want GPU support.  This is currently an annoying, non-trivial thing to set up, especially on a Mac, which is where I do things, because Apple and Nvidia aren't friends at the moment.
 If you are on a linux box (or maybe Windows - haven't tested), WITH an Nvidia GPU, install:
