@@ -90,8 +90,11 @@ script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/applydlfilter',
                'rapidtide/scripts/threeD',
                'rapidtide/scripts/tcfrom3col',
+               'rapidtide/scripts/rapidtide_dispatcher',
                # 'rapidtide/scripts/endtidalproc',
-               'rapidtide/scripts/showhist']
+               'rapidtide/scripts/showhist',
+               'rapidtide/scripts/rapidtide_dispatcher']
+
 if addtidepool:
     script_list.append('rapidtide/scripts/tidepool')
 
