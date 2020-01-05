@@ -24,13 +24,63 @@
 from __future__ import print_function, division
 
 import sys
+import os
 import subprocess
 
 
 def main():
     # get the command line parameters
+    execdir = sys.path[0]
+    validcommands = [
+        'aligntcs',
+        'applydlfilter',
+        'atlasaverage',
+        'atlastool',
+        'ccorrica',
+        'endtidalproc',
+        'filttc',
+        'fingerprint',
+        'glmfilt',
+        'happy',
+        'happy2std',
+        'happywarp',
+        'happyx',
+        'histnifti',
+        'histtc',
+        'linfit',
+        'pixelcomp',
+        'plethquality',
+        'rapidtide2',
+        'rapidtide2std',
+        'rapidtide2x',
+        'rapidtide_dispatcher',
+        'resamp1tc',
+        'resamplenifti',
+        'showhist',
+        'showstxcorr',
+        'showtc',
+        'showxcorr',
+        'showxcorrx',
+        'showxy',
+        'simdata',
+        'spatialdecomp',
+        'spatialfit',
+        'spectrogram',
+        'tcfrom3col',
+        'temporaldecomp',
+        'testhrv',
+        'threeD',
+        'tidepool']
+
     thecommand = sys.argv[1:]
-    subprocess.call(thecommand)
+    if thecommand[0] in validcommands:
+        # the script exists, now check if it is installed
+        if os.path.isfile(os.path.join(execdir, thecommand[0])):
+            subprocess.call(thecommand)
+        else:
+            print(thecommand[0], 'is a rapidtide script, but is not installed')
+    else:
+        print(thecommand[0], 'is not a script in the rapidtide package')
     
 
 if __name__ == '__main__':
