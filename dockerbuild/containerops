@@ -1,0 +1,22 @@
+#!/bin/csh -f
+
+docker build . -t rapidtide
+
+docker run -it rapidtide bash
+
+docker run --volume=/Users/frederic:/data rapidtide \
+    rapidtide2x
+        /data/code/rapidtide/rapidtide/data/examples/src/fmri.nii.gz
+        /data/code/rapidtide/rapidtide/data/examples/dst/dockertest
+        -L
+
+docker run --volume=/Users/frederic:/data rapidtide \
+    happy \
+        /data/code/rapidtide/rapidtide/data/examples/src/happyfmri.nii.gz \
+        /data/code/rapidtide/rapidtide/data/examples/src/happyfmri.json \
+        /data/code/rapidtide/rapidtide/data/examples/dst/happy_flip \
+        --mklthreads=4 \
+        --dodlfilter \
+        --saveinfoasjson \
+        --model=model_revised \
+        --fliparteries

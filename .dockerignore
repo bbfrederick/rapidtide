@@ -1,3 +1,153 @@
-build
-dist
-rapidtide/data/examples/dst
+# regenerating old entries
+
+# notes to self
+#newrelease_todo
+rapidtide/_gittag.py
+changecalls
+
+# any generated test data
+rapidtide/data/examples/dst/*
+rapidtide/tests/tmp/*
+
+# some local test data
+rapidtide/data/examples/src/*.jpg
+rapidtide/data/examples/src/*corrfunc*
+rapidtide/data/examples/src/*trimmed*
+rapidtide/data/examples/src/sub-01*
+rapidtide/data/examples/src/testhappyx
+rapidtide/experimental/batch/*
+rapidtide/experimental/__pycache__
+rapidtide/experimental/.*
+rapidtide/experimental/the*txt
+rapidtide/experimental/model_*
+test.nii.gz
+*junk*
+
+# local executables
+wiener_deconv*
+testwiener
+wavedecomp
+getphase.py
+
+# PyCharm files
+.idea
+
+# any local safety copies
+*.safe
+*/*.safe
+*/*/*.safe
+
+docs/generated/
+docs/auto_examples/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# swap files
+.*.swp
+*/.*.swp
+*/*/.*.swp
+*/*/*/.*.swp
+
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
