@@ -29,6 +29,9 @@ testwiener
 wavedecomp
 getphase.py
 
+# git files
+.git
+
 # PyCharm files
 .idea
 
