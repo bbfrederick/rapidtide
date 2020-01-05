@@ -20,3 +20,10 @@ docker run --volume=/Users/frederic:/data rapidtide \
         --saveinfoasjson \
         --model=model_revised \
         --fliparteries
+
+# allow network connections in Xquartz Security settings
+xhost +
+
+# Allow your local user access via xhost: xhost +SI:localuser:rapidtide and create a similar user with docker run option: --user=$(id -u):$(id -g)
+docker run --volume=/Users/frederic:/data -it -e DISPLAY=192.168.7.146:0 -v /tmp/.X11-unix:/tmp/.X11-unix -u rapidtide rapidtide \
+    tidepool
