@@ -27,7 +27,7 @@ rapidtide2x \
         --saveoptionsasjson \
         --nofitfilt \
         --detrendorder=3 \
-        -I
+        -I --noglm
 
 rapidtide2x \
 	fmri.nii.gz \

@@ -3,6 +3,16 @@
 happy \
     happyfmri.nii.gz \
     happyfmri.json \
+    ../dst/happy_noflip \
+    --mklthreads=4 \
+    --dodlfilter \
+    --saveinfoasjson \
+    --model=model_revised \
+    --aliasedcorrelation
+
+happy \
+    happyfmri.nii.gz \
+    happyfmri.json \
     ../dst/happy_flip \
     --mklthreads=4 \
     --dodlfilter \
