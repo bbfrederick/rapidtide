@@ -1,6 +1,6 @@
 + Fix the version numbers in files:
 
-    vi setup.py docs/conf.py rapidtide/version.py
+    vi setup.py docs/conf.py rapidtide/version.py VERSION
 
     setup.py
         search for version=
