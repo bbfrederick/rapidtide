@@ -417,20 +417,26 @@ class xyztlocation(QtGui.QWidget):
         self.tpos = (self.tpos + 1) % self.tdim
         self.updateTValues()
 
+    def stopMovie(self):
+        self.movierunning = False
+        self.movieTimer.stop()
+        if self.runMovieButton is not None:
+            self.runMovieButton.setText('Start Movie')
+
+    def startMovie(self):
+        self.movierunning = True
+        if self.runMovieButton is not None:
+            self.runMovieButton.setText('Stop Movie')
+        self.movieTimer.start(int(self.frametime))
+
     def runMovieToggle(self, event):
         print('entering runMovieToggle')
         if self.movierunning:
             print('movie is running - turning off')
-            self.movierunning = False
-            self.movieTimer.stop()
-            if self.runMovieButton is not None:
-                self.runMovieButton.setText('Start Movie')
+            self.stopMovie()
         else:
             print('movie is not running - turning on')
-            self.movierunning = True
-            if self.runMovieButton is not None:
-                self.runMovieButton.setText('Stop Movie')
-            self.movieTimer.start(int(self.frametime))
+            self.startMovie()
         print('leaving runMovieToggle')
 
     def setFrametime(self, frametime):
@@ -1148,6 +1154,7 @@ def overlay_radioButton_clicked(which, enabled):
     global currentloc, atlasaveragingdone
     if enabled:
         overlaybuttons[which].setChecked(True)
+        currentloc.stopMovie()
         if panetomap[which] != '':
             if atlasaveragingdone and (panetomap[which] != 'atlas'):
                 focusmap = panetomap[which] + '_atlasstat'
@@ -1505,7 +1512,7 @@ def loadgeommask(thefileroot, theoverlays, geommaskname, coordinatespace, xsize,
 
 def main():
     global vLine
-    global movieTimer, frametime
+    #global movieTimer, frametime
     global ui, win
     global movierunning
     global focusmap, bgmap
