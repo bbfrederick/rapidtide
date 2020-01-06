@@ -17,9 +17,9 @@ RUN apt-get install -y --no-install-recommends \
                     libtool \
                     gnupg \
                     pkg-config \
+                    xterm \
                     libgl1-mesa-glx \
                     libx11-xcb1 \
-                    firefox \
                     git
 #RUN apt-get install --reinstall libxcb-xinerama0
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -72,6 +72,7 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
     LC_ALL="C.UTF-8" \
     PYTHONNOUSERSITE=1
 
+
 # Installing precomputed python packages
 RUN df -h
 RUN conda config --add channels conda-forge
@@ -102,11 +103,6 @@ RUN conda install -y python=3.7.1 \
 RUN df -h
 
 
-# Unless otherwise specified each process should only use one thread
-# will handle parallelization
-#ENV MKL_NUM_THREADS=1 
-
-
 # Create a shared $HOME directory
 RUN useradd -m -s /bin/bash -G users rapidtide
 WORKDIR /home/rapidtide
@@ -117,9 +113,6 @@ ENV HOME="/home/rapidtide"
 RUN python -c "from matplotlib import font_manager" && \
     sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
 
-# fix qt
-#ENV QT_GRAPHICSSYSTEM="native" 
-#RUN apt-get install libxkbcommon-x11-dev
 
 # Installing rapidtide
 COPY . /src/rapidtide
@@ -132,8 +125,7 @@ ENV IS_DOCKER_8395080871=1
 
 RUN ldconfig
 WORKDIR /tmp/
-#ENTRYPOINT ["/usr/local/miniconda/bin/rapidtide_dispatcher"]
-CMD ["/usr/bin/firefox"]
+ENTRYPOINT ["/usr/local/miniconda/bin/rapidtide_dispatcher"]
 
 
 ARG BUILD_DATE
