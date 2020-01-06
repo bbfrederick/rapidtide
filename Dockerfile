@@ -127,6 +127,7 @@ RUN ldconfig
 WORKDIR /tmp/
 ENTRYPOINT ["/usr/local/miniconda/bin/rapidtide_dispatcher"]
 
+USER rapidtide
 
 ARG BUILD_DATE
 ARG VCS_REF
