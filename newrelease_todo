@@ -18,12 +18,12 @@
 
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging):
 
-    git tag -a v1.8.0 -m "v1.8.0"
+    git tag -a v1.9.0 -m "v1.9.0"
  
 
 + Push the tag to github:
 
-    git push origin v1.8.0
+    git push origin v1.9.0
 
 
 + Edit the release notes on github
