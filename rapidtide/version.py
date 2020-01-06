@@ -3,7 +3,7 @@ from os.path import join as pjoin
 
 # Format expected by setup.py and doc/source/conf.py: string of form "X.Y.Z"
 _version_major = 1
-_version_minor = 8
+_version_minor = 9
 _version_micro = 0  # use '' for first of series, number for 1 and above
 _version_extra = ''
 # _version_extra = ''  # Uncomment this for full releases
@@ -62,4 +62,4 @@ MINOR = _version_minor
 MICRO = _version_micro
 VERSION = __version__
 PACKAGE_DATA = {'rapidtide': [pjoin('data', '*')]}
-REQUIRES = ['numpy', 'scipy', 'pandas', 'scikit-learn', 'nibabel', 'matplotlib', 'statsmodels']
+REQUIRES = ['numpy', 'scipy', 'pandas', 'scikit-image', 'scikit-learn', 'nibabel', 'matplotlib', 'pyfftw', 'pyqtgraph', 'statsmodels']

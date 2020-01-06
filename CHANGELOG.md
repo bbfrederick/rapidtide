@@ -1,5 +1,82 @@
 # History of changes
 
+## Version 1.9 (1/6/20)
+* (all): Now compatible with nibabel 3.x
+* (all): Significantly expanded test suite.  Code coverage is now at 47%.
+* (documentation): Added instructions for installing the deep learning filter code
+* (documentation): Numerous tweaks and fixes
+* (docker): There is now a containerized version of the rapidtide package, which avoids a lot of installation woes
+* (rapidtide2x, showxcorrx): Completely replaced correlation and fitting routines with faster, more robust (and more rigorously tested) versions
+* (rapidtide2x, showxcorrx): Enhancements to the permutation methods
+* (rapidtide2x, showxcorrx): Revised internals to guarantee xcorr scale matches values
+* (rapidtide2x, showxcorrx): Improved fitter performance in edge cases (thin peaks, symmetric around max)
+* (rapidtide2x, showxcorrx): Changed limits to avoid crash when peak is at edge of range
+* (rapidtide2x, showxcorrx): Fixed some (but apparantly not all) dumb errors in calls to null correlation calculations.
+* (rapidtide2x): Implemented workaround for unknown crasher in GLM filtering when nprocs != 1
+* (rapidtide2x): Added experimental respiration processing
+* (rapidtide2x): Fixed an uncaught bug in bipolar processing.
+* (rapidtide2x): Setting ampthresh to a negative number between 0 and 1 sets the percentile of voxels to use for refinement
+* (rapidtide2x): Support for new minimum sigma limit in correlation fit
+* (rapidtide2x): Fixed a bug that caused fit fails on very narrow peaks, added diagnostic info
+* (rapidtide2x): Putting in scaffolding to support phase randomization for null correlation calculation.
+* (rapidtide2x): Properly specify correlation limits in null correlation and accheck
+* (rapidtide2x): Slight modifications to pickleft routine to avoid a rare bug
+* (rapidtide2x): Masks should now be properly generated for zero mean and non-positive definite data.
+* (rapidtide2x): Tweaked the autocorrelation correction
+* (rapidtide2x): Added an error check to avoid crashing when no significance tests are nonzero
+* (rapidtide2x): Added upper and lower sigma limits to peak fitting uss to match new class
+* (showxcorrx): Updated to match rapidtide2x fitting
+* (showxcorrx): Enhanced error reporting
+* (showxcorrx): Added width range tests
+* (showxcorrx): Added norefine option, output more debugging info
+* (showxcorrx): Set validity limits for gaussian fit
+* (happy, rapidtide2x): Fixed a bug in output nifti header parameters (copy headers by value, not reference!)
+* (happy): New multipass architecture allows much better results - initial passes set estimation masks and find potential arterial voxels.
+* (happy): Aliased correlation integrated into happy as experimental feature
+* (happy): Fixed a conceptual error in how I normalized projected timecourses
+* (happy): Added brain cine output
+* (happy): If estmask is supplied, us it.  If not, generate a vessel mask and repeat final steps.
+* (happy): Added option to detect and invert arterial signals, improved time output.
+* (happy): Shorten pulse recon step size to 10 ms
+* (happy): Better envelope handling, fixed bug in timecourse phase projection.
+* (happy): Some changes to improve performance with long TRs
+* (happy): Added happy paper reference
+* (happy): Increased gridbins (used in phase projection): default to 2 after testing showed lower noise than 1.5 bins
+* (happy): Added ability to pad cyclically rather than reflecting around the ends
+* (happy): Added ability to smooth projection in the phase direction (on by default)
+* (happy): Significant improvements to GLM processing (spatial and temporal versions, aliased temporal correlation)
+* (happy): Added "checkpoint" option to dump more intermediate data for debugging.
+* (happy): Added more progress bars, and the ability to turn them off.
+* (happy): Print out version info at runtime.
+* (tidepool): Major update with new functionality
+* (tidepool): The probe regressor, it's spectrum, and how it was filtered are now shown in the main window
+* (tidepool): Properly disable atlas buttons when no atlas is loaded, avoiding crashes
+* (tidepool): Removed support for pyqt4
+* (tidepool): Some UI tweaks
+* (tidepool): Added some infrastructure for future support for loading multiple runs
+* (tidepool): New atlases to suport fmriprep default coordinates
+* (tidepool): Numerous bug fixes
+* (ccorrica): Added the ability to oversample the data prior to crosscorrelation
+* (showtc): Added ability to select a column from a multicolumn file as input.
+* (showtc): Can now select a column  from multicolumn input text files for each vector.
+* (showtc): Changed the specification of colors and legends. Internal code cleanup.
+* (happy2std): New tool to align happy maps
+* (happywarp): Improvements in filtering
+* (aligntcs): You can now specify single columns out of multicolumn files
+* (showxy): Initial support for specifying color names
+* (spectrogram): Cleanup, added some configuration options
+* (simdata): Some reformatting, updates, and improvements
+* (simdata): Put some data in the example directory to use with simdata
+* (fingerprint): New addition to the library to decompose delay maps using vascular territory templates
+* (fingerprint): Added canonical HCP template maps to the distribution
+* (helper_classes): Added freqtrack class
+* (correlate.py): Added rudimentary mutual information calculation
+* (correlate.py): Multiple aliased correlation methods added, depending on demeaning.
+* (io.py): Fixed support for named columns in BIDS tsvs
+* (io.py): Relaxed requirements for required fields in BIDS jsons
+* (io.py): Added a few convenience routines for dealing with NIFTI files
+* (io.py): Fixed import of parser_funcs
+
 ## Version 1.8 (5/10/19)
 * (fit.py): The following fixes to both variants of findmaxlag_gauss affect rapidtide2, rapidtide2x, showxcorr, showxcorrx, happy, and happyx.
 * (fit.py): CRITICAL FIX - edge behavior in both versions of findmaxlag_gauss was very broken.
