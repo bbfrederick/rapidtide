@@ -146,7 +146,7 @@ Execute any of the commands to run rapidtide on the sample data:
 a) Run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
 ::
 
-    rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/dgsr -L -r -15,15 --refinepasses=3
+    rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/dgsr -L -r -15,15 --passes=3
 
 
 b) Run rapidtide2 to perform static global signal regression (sGSR) on an fMRI file[1] (this is just global mean regression):
@@ -172,6 +172,7 @@ d) Look at the refined regressors produced during dGSR: (the "dgsr_pass1" regres
 Docker installation
 ===================
 As of 1.9.0, there is now a Docker container with a full rapidtide installation.  To use this, 
+
 first make sure you have docker installed and properly configured, then run the following:
 ::
 
@@ -179,14 +180,27 @@ first make sure you have docker installed and properly configured, then run the 
         --volume=DIRECTORY_WHERE_YOUR_DATA_IS:/data_in,OUTPUTDIRECTORY:/data_out \
         fredericklab/rapidtide:latest \
             rapidtide2x \
-                /data_in/fmri.nii.gz \
-                /data_out/outputtest \
-                -L
+                /data_in/YOURNIFTIFILE.nii.gz \
+                /data_out/outputname \
+                -L -r -15,15 --passes=3
 
 The first time you run this, it will download the docker container from dockerhub.  
 It's around 2GB, so it may take some time, but it caches the file locally, so subsequent runs will be fast, 
 unless the container updates.  To use a particular version, replace fredericklab/rapidtide:latest 
 with fredericklab/rapidtide:VERSIONNUMBER (currently 1.9.0).
+
+NOTE: If you want to run this on the test data, like the examples above for the bare metal installation, the example data is
+in the Docker container in the /src/rapidtide/rapidtide/data/examples/src directory.  So to run the first example, you could just do:
+::
+
+        docker run \
+        --volume=OUTPUTDIRECTORY:/data_out \
+        fredericklab/rapidtide:latest \
+            rapidtide2x \
+                /src/rapidtide/rapidtide/data/examples/src/fmri.nii.gz \
+                /data_out/dgsr \
+                -L -r -15,15 --passes=3
+
 
 You can replace the rapidtide2x blah blah blah command with any program in the package - after the fredericklab/rapidtide:latest, 
 just specify the command and arguments as you usually would.  If you're running a program that displays anything, 
