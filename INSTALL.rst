@@ -83,11 +83,13 @@ After installing Anaconda python, install the remaining dependencies
 
    conda install nibabel pyqtgraph pyfftw 
 
+
 For the deep learning filter in happy, also do:
 
 ::
 
    conda install keras tensorflow-gpu
+
 
 (for Linux or Windows WITH Nvidia GPU)
 
@@ -97,6 +99,7 @@ or:
 
    conda install keras tensorflow
 
+
 (for Linux or Windows WITHOUT Nvidia GPU)
 
 or
@@ -104,6 +107,7 @@ or
 ::
 
    pip install plaidml-keras
+
 
 (on a Mac)
 
@@ -118,6 +122,7 @@ directory, and type the following:
 ::
 
    python setup.py install
+
 
 to install all of the tools in the package. You should be able to run
 them from the command line then (after rehashing). NOTE: I haven’t
@@ -135,6 +140,7 @@ package directory and do a git pull first:
 
    git pull
    python setup.py install
+
 
 Usage
 -----
