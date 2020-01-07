@@ -31,6 +31,7 @@ Contents
 
    introduction.rst
    whats_new.rst
+   installation.rst
    usage.rst
    api.rst
    auto_examples/index

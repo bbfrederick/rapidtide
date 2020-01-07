@@ -1,0 +1,1 @@
+.. mdinclude:: ../INSTALL.rst
