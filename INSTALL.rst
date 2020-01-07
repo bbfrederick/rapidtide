@@ -184,7 +184,36 @@ first make sure you have docker installed and properly configured, then run the 
                 /data_out/outputtest \
                 -L
 
-The first time you run this, it will download the docker container from dockerhub.  It's around 2GB, so it may take some time, but it caches the file locally, so subsequent runs will be fast, unless the container updates.  To use a particular version, replace fredericklab/rapidtide:latest with fredericklab/rapidtide:VERSIONNUMBER (currently 1.9.0).
+The first time you run this, it will download the docker container from dockerhub.  
+It's around 2GB, so it may take some time, but it caches the file locally, so subsequent runs will be fast, 
+unless the container updates.  To use a particular version, replace fredericklab/rapidtide:latest 
+with fredericklab/rapidtide:VERSIONNUMBER (currently 1.9.0).
+
+You can replace the rapidtide2x blah blah blah command with any program in the package - after the fredericklab/rapidtide:latest, 
+just specify the command and arguments as you usually would.  If you're running a program that displays anything, 
+you'll have to add a few extra arguments to the docker call.  Docker is a little weird about X forwarding - the easiest thing to 
+do is find the IP address of the machine you're running on (lets call it MYIPADDRESS), and do the following:
+
+::
+
+    xhost + 
+
+This disables x security - this is probably not the right thing to do, but I don't have a better solution at this time, and it works.
+
+Then run the command (the example here is tidepool)
+
+::
+
+    docker run \
+        --network host\
+         --volume=DIRECTORY_WHERE_YOUR_DATA_IS:/data_in,OUTPUTDIRECTORY:/data_out \
+        -it \
+        -e DISPLAY=MYIPADDRESS:0 \
+        -v /tmp/.X11-unix:/tmp/.X11-unix \
+        -u rapidtide 
+        fredericklab/rapidtide:latest \
+            tidepool
+
 
 
 References
