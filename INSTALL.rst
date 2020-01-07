@@ -75,3 +75,197 @@ new to Python, you should probably just start at 3.
 
 After installing Anaconda python, install the remaining dependencies
 (including some good optional ones:
+
+::
+
+   conda install nibabel pyqtgraph pyfftw 
+
+For the deep learning filter in happy, also do:
+
+::
+
+   conda install keras tensorflow-gpu
+
+(for Linux or Windows WITH Nvidia GPU)
+
+or:
+
+::
+
+   conda install keras tensorflow
+
+(for Linux or Windows WITHOUT Nvidia GPU)
+
+or
+
+::
+
+   pip install plaidml-keras
+
+(on a Mac)
+
+Done.
+
+Installing rapidtide
+--------------------
+
+Once you have installed the prerequisites, cd into the package
+directory, and type the following:
+
+::
+
+   python setup.py install
+
+to install all of the tools in the package. You should be able to run
+them from the command line then (after rehashing). NOTE: I haven’t
+figured out how to install pyqt4 automatically yet, so you have install
+it and pyqtgraph manually. If you do that, tidepool should work,
+otherwise it won’t.
+
+Updating
+--------
+
+If you’ve previously installed rapidtide and want to update, cd into the
+package directory and do a git pull first:
+
+::
+
+   git pull
+   python setup.py install
+
++----------+
+| # Usage  |
++----------+
+| Execute  |
+| any of   |
+| the      |
+| commands |
+| to run   |
+| r        |
+| apidtide |
+| on the   |
+| sample   |
+| data:    |
++----------+
+| \```bash |
+| # a) run |
+| ra       |
+| pidtide2 |
+| to       |
+| perform  |
+| dynamic  |
+| global   |
+| signal   |
+| re       |
+| gression |
+| (dGSR)   |
+| on an    |
+| fMRI     |
+| file[1]: |
+| ra       |
+| pidtide2 |
+| rapidti  |
+| de/data/ |
+| examples |
+| /src/fmr |
+| i.nii.gz |
+| rapidtid |
+| e/data/e |
+| xamples/ |
+| dst/dgsr |
+| -L -r    |
+| -15,15   |
+| –refine  |
+| passes=3 |
++----------+
+| # run    |
+| ra       |
+| pidtide2 |
+| to       |
+| perform  |
+| static   |
+| global   |
+| signal   |
+| re       |
+| gression |
+| (sGSR)   |
+| on an    |
+| fMRI     |
+| file[1]  |
+| # (this  |
+| is just  |
+| global   |
+| mean     |
+| regr     |
+| ession): |
+| ra       |
+| pidtide2 |
+| rapidti  |
+| de/data/ |
+| examples |
+| /src/fmr |
+| i.nii.gz |
+| rapidtid |
+| e/data/e |
+| xamples/ |
+| dst/sgsr |
+| -L -Z    |
+| 0.0      |
++----------+
+| # b) run |
+| tidepool |
+| to look  |
+| at the   |
+| results  |
+| from a): |
+| tidepool |
+| (then    |
+| select   |
+| the file |
+| rapidtid |
+| e/data/e |
+| xamples/ |
+| dst/dgsr |
+| _lagtime |
+| s.nii.gz |
+| to load  |
+| the      |
+| maps)    |
++----------+
+| # c)     |
+| look at  |
+| the      |
+| refined  |
+| re       |
+| gressors |
+| produced |
+| during   |
+| dGSR: #  |
+| (the     |
+| “dgs     |
+| r_pass1” |
+| r        |
+| egressor |
+| is the   |
+| initial  |
+| global   |
+| mean     |
+| before   |
+| ref      |
+| inement) |
+| showtc   |
+| rapidtid |
+| e/data/e |
+| xamples/ |
+| dst/dgsr |
+| _referen |
+| ce_fmrir |
+| es_pass[ |
+| 123].txt |
+| \``\`    |
++----------+
+
+#References 1) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B
+(2016). Correcting resting state fMRI-BOLD signals for blood arrival
+time enhances functional connectivity analysis. Front. Hum. Neurosci.,
+28 June 2016 \| http://dx.doi.org/10.3389/fnhum.2016.00311
