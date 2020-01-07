@@ -261,10 +261,8 @@ Multimodal Cerebral Circulation Imaging
 9)  Donahue M, Strother M, Lindsey K, Hocke L, Tong Y, Frederick B.
     (2015) Time delay processing of hypercapnic fMRI allows quantitative
     parameterization of cerebrovascular reactivity and blood flow
-    delays. Journal of Cerebral Blood Flow & Metabolism.
-
-    2015. PubMed PMID: 26661192. Epub October 19, 2015. doi: 10.1177/
-          0271678X15608643.
+    delays. Journal of Cerebral Blood Flow & Metabolism.  2015. PubMed 
+    PMID: 26661192. Epub October 19, 2015. doi: 10.1177/0271678X15608643.
 
 10) Hocke L, Cayetano K, Tong Y, Frederick B. (2015) An optimized
     multimodal fMRI/NIRS probe for ultra-high resolution mapping.
