@@ -62,8 +62,8 @@ doing PPI, or even some seed based analyses.
 have any information about” - maybe EtCO2 variation, or sympathetic
 nervous system activity - so not really random.
 
-Yes, but correlation analysis is easy - why use this package?
--------------------------------------------------------------
+Correlation analysis is easy - why use this package?
+----------------------------------------------------
 
 The simple answer is “correlation analysis is easy, but using a
 prewritten package that handles file I/O, filtering, resampling,
