@@ -58,25 +58,6 @@ As an aside, some of these tools are just generally useful for looking
 at correlations between timecourses from other sources – for example
 doing PPI, or even some seed based analyses.
 
-What does "happy" have to do with any of this?
-----------------------------------------------
-
-More recently, inspired by Henning Voss’ paper on hypersampling of
-cardiac signals in fMRI, we developed a method to extract and clean
-cardiac waveforms from fMRI data, even when the fMRI TR is far too long
-to properly sample cardiac waveforms. This cardiac waveform can then be
-to track the pulsatile cardiac pressure wave through the brain in
-somewhat the same way that we track the LFO signals. Among other things,
-this allows you to get cardiac waveforms during scans even when either
-1) you didn’t use a plethysmograph, or 2) you did, but the recording was
-of poor quality, which happens more than you might think.
-
-As to why happy is part of rapidtide, that's partially for practical reasons (the
-libraries in rapidtide have an awful lot of code that is reused in happy), and
-partially thematically - rapidtide has evolved from a "let's look at low
-frequency signals in fMRI data" package to a "let's look at everything in
-fMRI data EXCEPT neuronal activation", so happy fits right in...
-
 [*] “random” in this context means “determined by something we don’t
 have any information about” - maybe EtCO2 variation, or sympathetic
 nervous system activity - so not really random.
@@ -94,8 +75,30 @@ years, and corrected my code accordingly. So rather than repeat my
 boring mistakes, why not make new, interesting mistakes? Explore your
 own, unique chunk of wrongspace…
 
+Happy
+=====
+
+More recently, inspired by Henning Voss’ paper on hypersampling of
+cardiac signals in fMRI, we developed a method to extract and clean
+cardiac waveforms from fMRI data, even when the fMRI TR is far too long
+to properly sample cardiac waveforms. This cardiac waveform can then be
+to track the pulsatile cardiac pressure wave through the brain in
+somewhat the same way that we track the LFO signals. Among other things,
+this allows you to get cardiac waveforms during scans even when either
+1) you didn’t use a plethysmograph, or 2) you did, but the recording was
+of poor quality, which happens more than you might think.
+
+What does "happy" have to do with any of this?
+----------------------------------------------
+
+As to why happy is part of rapidtide, that's partially for practical reasons (the
+libraries in rapidtide have an awful lot of code that is reused in happy), and
+partially thematically - rapidtide has evolved from a "let's look at low
+frequency signals in fMRI data" package to a "let's look at everything in
+fMRI data EXCEPT neuronal activation", so happy fits right in...
+
 Python version compatibility
-----------------------------
+============================
 I switched over a while ago to using python 3 as my daily driver, so I know
 that everything works there. However, I know that a lot of people can’t
 or won’t switch from python 2x, so I’ve made every effort to write code
@@ -111,7 +114,7 @@ a fully configured python 3 environment, so there's really no need to do a 2.x
 installation anymore
 
 Ok, I’m sold. What’s in here?
------------------------------
+=============================
 
 -  **rapidtide2** - This is the heart of the package - this is the
    workhorse program that will determine the time lagged correlations
