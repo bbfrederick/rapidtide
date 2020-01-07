@@ -54,9 +54,10 @@ GPU, install:
    week - anything I say here will probably be obsolete by the time you
    read this.)
 
-If you are on linux (or Windows) WITHOUT an Nvidia GPU, install: \*
-keras \* tensorflow (and make sure it doesn’t sneakily try to install
-the GPU version - that won’t work)
+If you are on linux (or Windows) WITHOUT an Nvidia GPU, install:
+
+- keras
+- tensorflow (and make sure it doesn’t sneakily try to install the GPU version - that won’t work)
 
 If you are on a Mac, you almost certainly have a non-Nvidia GPU, so you
 should install
