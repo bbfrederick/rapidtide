@@ -186,7 +186,9 @@ first make sure you have docker installed and properly configured, then run the 
 The first time you run this, it will download the docker container from dockerhub.  It's around 2GB, so it may take some time, but it caches the file locally, so subsequent runs will be fast, unless the container updates.  To use a particular version, replace fredericklab/rapidtide:latest with fredericklab/rapidtide:VERSIONNUMBER (currently 1.9.0).
 
 
-#References 1) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B
+References
+==========
+1) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B
 (2016). Correcting resting state fMRI-BOLD signals for blood arrival
 time enhances functional connectivity analysis. Front. Hum. Neurosci.,
 28 June 2016 \| http://dx.doi.org/10.3389/fnhum.2016.00311
