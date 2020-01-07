@@ -3,7 +3,6 @@ Introduction
 
 Why do I want to know about time lagged correlations?
 -----------------------------------------------------
-
 This comes out of work by our group (The Opto-Magnetic group at McLean
 Hospital - http://www.nirs-fmri.net) looking at the correlations between
 neuroimaging data (fMRI) and NIRS data recorded simultaneously, either
@@ -38,7 +37,6 @@ nervous system activity - so not really random.
 
 Yes, but correlation analysis is easy - why use this package?
 -------------------------------------------------------------
-
 The simple answer is “correlation analysis is easy, but using a
 prewritten package that handles file I/O, filtering, resampling,
 windowing, and the rest for you is even easier”. A slightly more complex
@@ -51,7 +49,6 @@ own, unique chunk of wrongspace…
 
 Why are you releasing your code?
 --------------------------------
-
 For a number of reasons.
 
 -  I want people to use it! I think if it were easier for people to do
@@ -73,7 +70,7 @@ For a number of reasons.
    hopefully the worst ones have been dealt with at this point). More
    users and more eyes on the code make it more likely that they will be
    found. As much as I’m queasy about somebody potentially finding a
-   mistake in my code, I’d rather that they did so, so I can fix it[‡].
+   mistake in my code, I’d rather that they did so, so I can fix it [‡].
 -  It’s giving back to the community. I benefit from the generosity of a
    lot of authors who have made the open source tools I use for work and
    play, so I figure I can pony up too.
@@ -83,8 +80,7 @@ that benefits everybody…
 
 Python version compatibility
 ----------------------------
-
-I’ve now switched over to using python 3 as my daily driver, so I know
+I switched over a while ago to using python 3 as my daily driver, so I know
 that everything works there. However, I know that a lot of people can’t
 or won’t switch from python 2x, so I’ve made every effort to write code
 that works in both, and I have been testing in both.
@@ -94,9 +90,13 @@ packages that have dropped or are dropping 2.x support, I’m going with
 the flow and sunsetting 2.x support. The next release will be the last
 to support 2.x.
 
+Breaking news!  As of version 1.9.0 I'm also releasing the code in a docker
+container (fredericklab/rapidtide), which has everything nicely installed in
+a fully configured python 3 environment, so there's really no need to do a 2.x
+installation anymore
+
 What’s included in this package?
 --------------------------------
-
 I’ve included a number of tools to get you going – I’ll add in a number
 of other utilities as I get them closer to the point that I can release
 them without people laughing at my code. For the time being, I’m
