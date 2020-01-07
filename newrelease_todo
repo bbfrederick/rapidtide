@@ -1,6 +1,6 @@
 + Fix the version numbers in files:
 
-    vi setup.py docs/conf.py rapidtide/version.py VERSION
+    vi setup.py docs/conf.py rapidtide/version.py VERSION INSTALL.rst
 
     setup.py
         search for version=
@@ -10,6 +10,12 @@
 
     rapidtide/version.py
         search for "_version_major =", "_version_minor =", and "_version_micro ="
+
+    VERSION
+        Contains just the version number
+
+    INSTALL.rst
+        search for '(currently'
 
 
 + Edit CHANGELOG.md

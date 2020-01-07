@@ -187,9 +187,7 @@ first make sure you have docker installed and properly configured, then run the 
 The first time you run this, it will download the docker container from dockerhub.  
 It's around 2GB, so it may take some time, but it caches the file locally, so subsequent runs will be fast, 
 unless the container updates.  To use a particular version, replace fredericklab/rapidtide:latest 
-with fredericklab/rapidtide:VERSIONNUMBER (currently 
-:: include ./VERSION
-).
+with fredericklab/rapidtide:VERSIONNUMBER (currently 1.9.0).
 
 NOTE: If you want to run this on the test data, like the examples above for the bare metal installation, the example data is
 in the Docker container in the /src/rapidtide/rapidtide/data/examples/src directory.  So to run the first example, you could just do:
