@@ -176,24 +176,44 @@ As of 1.9.0, there is now a Docker container with a full rapidtide installation.
 first make sure you have docker installed and properly configured, then run the following:
 ::
 
+    docker pull fredericklab/rapidtide:VERSIONNUMBER
+
+
+This it will download the docker container from dockerhub.
+It's around 2GB, so it may take some time, but it caches the file locally, so you won't have to do this again
+unless the container updates.  To use a particular version, replace VERSIONNUMBER with the version of the
+with container you want (currently the newest version is 1.9.0).
+
+If you like to live on the edge, just use:
+::
+
+    docker pull fredericklab/rapidtide:latest
+
+
+This will use the most recent version on dockerhub.  
+
+Now that the file is downloaded, you can run and rapidtide command in the Docker container.  For example, to run a simple 
+rapidtide2x analysis, you would use the following command (you can do this all in one step - it will just integrate the
+first pull into the run time if the version you request hasn't already been downloaded).
+
+Docker runs completely in it's own selfcontained environment.  If you want to be able to interact with disks outside of
+container, you map the volume to a mount point in the container using the --volume=EXTERNALDIR:MOUNTPOINT[,ANOTHERDIR:ANOTHERMOUNTPOINT]
+option to docker.
+::
+
     docker run \
-        --volume=DIRECTORY_WHERE_YOUR_DATA_IS:/data_in,OUTPUTDIRECTORY:/data_out \
-        fredericklab/rapidtide:latest \
+        --volume=INPUTDIRECTORY:/data_in,OUTPUTDIRECTORY:/data_out \
+        fredericklab/rapidtide:VERSIONNUMBER \
             rapidtide2x \
                 /data_in/YOURNIFTIFILE.nii.gz \
                 /data_out/outputname \
                 -L -r -15,15 --passes=3
 
-The first time you run this, it will download the docker container from dockerhub.  
-It's around 2GB, so it may take some time, but it caches the file locally, so subsequent runs will be fast, 
-unless the container updates.  To use a particular version, replace fredericklab/rapidtide:latest 
-with fredericklab/rapidtide:VERSIONNUMBER (currently 1.9.0).
-
 NOTE: If you want to run this on the test data, like the examples above for the bare metal installation, the example data is
 in the Docker container in the /src/rapidtide/rapidtide/data/examples/src directory.  So to run the first example, you could just do:
 ::
 
-        docker run \
+    docker run \
         --volume=OUTPUTDIRECTORY:/data_out \
         fredericklab/rapidtide:latest \
             rapidtide2x \
@@ -225,7 +245,7 @@ Then run the command (the example here is tidepool)
 
     docker run \
         --network host\
-         --volume=DIRECTORY_WHERE_YOUR_DATA_IS:/data_in,OUTPUTDIRECTORY:/data_out \
+        --volume=INPUTDIRECTORY:/data_in,OUTPUTDIRECTORY:/data_out \
         -it \
         -e DISPLAY=MYIPADDRESS:0 \
         -v /tmp/.X11-unix:/tmp/.X11-unix \
@@ -233,6 +253,50 @@ Then run the command (the example here is tidepool)
         fredericklab/rapidtide:latest \
             tidepool
 
+
+Singularity installation
+========================
+
+Many times you can't use Docker, because of security concerns.  Singularity, from LBL, offers containerized computing
+that runs entirely in user space, so the amount of mischief you can get up to is significantly less.  Singularity
+containers can be created from Docker containers as follows (stealing from the fMRIprep documentation):
+::
+
+    singularity build /my_images/rapidtide-VERSIONNUMBER.simg docker://fredericklab/rapidtide:VERSIONNUMBER
+
+
+Running the container is similar to Docker.  The "-B" option is used to bind filesystems to mountpoints in the container. 
+For example, to run the simple rapidtide2x analysis above, type the following:
+::
+
+    singularity run \
+        --cleanenv \
+        -B INPUTDIRECTORY:/data_in -B OUTPUTDIRECTORY:/data_out \
+        rapidtide-VERSIONNUMBER.simg \
+            rapidtide2x \
+                /data_in/YOURNIFTIFILE.nii.gz \
+                /data_out/outputname \
+                -L -r -15,15 --passes=3
+
+
+To run a GUI application, you need to disable x security on your host (see comment about this above):
+
+::
+
+    xhost + 
+
+then set the display variable to import to the container:
+::
+
+    setenv SINGULARITY_DISPLAY MYIPADDRESS:0   (if you are using csh)
+
+or
+
+::
+
+    export SINGULARITY_DISPLAY="MYIPADDRESS:0" (if you are using sh/bash)
+
+then just run the gui command with the command given above.
 
 
 References
