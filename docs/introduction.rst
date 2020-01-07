@@ -1,4 +1,5 @@
-# Introduction
+Introduction
+============
 
 ## Why do I want to know about time lagged correlations?
 This comes out of work by our group (The Opto-Magnetic group at McLean

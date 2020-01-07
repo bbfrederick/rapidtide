@@ -29,12 +29,12 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   introduction
-   usage
-   api
+   introduction.rst
+   whats_new.rst
+   usage.rst
+   api.rst
    auto_examples/index
-   contributing
-   whats_new
+   contributing.rst
 
 Indices and tables
 ==================
