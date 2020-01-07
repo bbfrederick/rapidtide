@@ -97,6 +97,38 @@ partially thematically - rapidtide has evolved from a "let's look at low
 frequency signals in fMRI data" package to a "let's look at everything in
 fMRI data EXCEPT neuronal activation", so happy fits right in...
 
+Why are you releasing your code?
+================================
+
+For a number of reasons.
+
+-  I want people to use it! I think if it were easier for people to do
+   time delay analysis, they’d be more likely to do it. I don’t have
+   enough time or people in my group to do every experiment that I think
+   would be interesting, so I’m hoping other people will, so I can read
+   their papers and learn interesting things.
+-  It’s the right way to do science – I can say lots of things, but if
+   nobody can replicate my results, nobody will believe it (we’ve gotten
+   that a lot, because some of the implications of what we’ve seen in
+   resting state data can be a little uncomfortable). We’ve reached a
+   stage in fMRI where getting from data to results involves a huge
+   amount of processing, so part of confirming results involves being
+   able to see how the data were processed. If you had to do everything
+   from scratch, you’d never even try to confirm anybody’s results.
+-  In any complicated processing scheme, it’s quite possible (or in my
+   case, likely) to make dumb mistakes, either coding errors or
+   conceptual errors, and I almost certainly have made some (although
+   hopefully the worst ones have been dealt with at this point). More
+   users and more eyes on the code make it more likely that they will be
+   found. As much as I’m queasy about somebody potentially finding a
+   mistake in my code, I’d rather that they did so, so I can fix it[‡].
+-  It’s giving back to the community. I benefit from the generosity of a
+   lot of authors who have made the open source tools I use for work and
+   play, so I figure I can pony up too.
+
+[‡] or better yet, you, empowered user, can fix it, and push back a fix
+that benefits everybody…
+
 Python version compatibility
 ============================
 I switched over a while ago to using python 3 as my daily driver, so I know
