@@ -133,137 +133,36 @@ package directory and do a git pull first:
    git pull
    python setup.py install
 
-+----------+
-| # Usage  |
-+----------+
-| Execute  |
-| any of   |
-| the      |
-| commands |
-| to run   |
-| r        |
-| apidtide |
-| on the   |
-| sample   |
-| data:    |
-+----------+
-| \```bash |
-| # a) run |
-| ra       |
-| pidtide2 |
-| to       |
-| perform  |
-| dynamic  |
-| global   |
-| signal   |
-| re       |
-| gression |
-| (dGSR)   |
-| on an    |
-| fMRI     |
-| file[1]: |
-| ra       |
-| pidtide2 |
-| rapidti  |
-| de/data/ |
-| examples |
-| /src/fmr |
-| i.nii.gz |
-| rapidtid |
-| e/data/e |
-| xamples/ |
-| dst/dgsr |
-| -L -r    |
-| -15,15   |
-| –refine  |
-| passes=3 |
-+----------+
-| # run    |
-| ra       |
-| pidtide2 |
-| to       |
-| perform  |
-| static   |
-| global   |
-| signal   |
-| re       |
-| gression |
-| (sGSR)   |
-| on an    |
-| fMRI     |
-| file[1]  |
-| # (this  |
-| is just  |
-| global   |
-| mean     |
-| regr     |
-| ession): |
-| ra       |
-| pidtide2 |
-| rapidti  |
-| de/data/ |
-| examples |
-| /src/fmr |
-| i.nii.gz |
-| rapidtid |
-| e/data/e |
-| xamples/ |
-| dst/sgsr |
-| -L -Z    |
-| 0.0      |
-+----------+
-| # b) run |
-| tidepool |
-| to look  |
-| at the   |
-| results  |
-| from a): |
-| tidepool |
-| (then    |
-| select   |
-| the file |
-| rapidtid |
-| e/data/e |
-| xamples/ |
-| dst/dgsr |
-| _lagtime |
-| s.nii.gz |
-| to load  |
-| the      |
-| maps)    |
-+----------+
-| # c)     |
-| look at  |
-| the      |
-| refined  |
-| re       |
-| gressors |
-| produced |
-| during   |
-| dGSR: #  |
-| (the     |
-| “dgs     |
-| r_pass1” |
-| r        |
-| egressor |
-| is the   |
-| initial  |
-| global   |
-| mean     |
-| before   |
-| ref      |
-| inement) |
-| showtc   |
-| rapidtid |
-| e/data/e |
-| xamples/ |
-| dst/dgsr |
-| _referen |
-| ce_fmrir |
-| es_pass[ |
-| 123].txt |
-| \``\`    |
-+----------+
+Usage
+-----
+Execute any of the commands to run rapidtide on the sample data:
+
+a) Run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
+::
+
+    rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/dgsr -L -r -15,15 --refinepasses=3
+
+
+b) Run rapidtide2 to perform static global signal regression (sGSR) on an fMRI file[1].
+(this is just global mean regression):
+::
+
+    rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/sgsr -L -Z 0.0
+
+
+c) run tidepool to look at the results from a):
+::
+
+    tidepool
+
+
+(then select the file rapidtide/data/examples/dst/dgsr_lagtimes.nii.gz to load the maps)
+
+d) Look at the refined regressors produced during dGSR: (the "dgsr_pass1" regressor is the initial global mean before refinement) in its own window.
+::
+
+    showtc rapidtide/data/examples/dst/dgsr_reference_fmrires_pass[123].txt
+
 
 #References 1) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B
 (2016). Correcting resting state fMRI-BOLD signals for blood arrival
