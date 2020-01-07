@@ -78,7 +78,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'rapidtide'
-copyright = '2016-2018, Blaise Frederick'
+copyright = '2016-2020, Blaise Frederick'
 author = 'Blaise Frederick'
 
 # The version info for the project you're documenting, acts as replacement for
