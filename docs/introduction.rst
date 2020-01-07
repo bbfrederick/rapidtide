@@ -87,8 +87,7 @@ that works in both, and I have been testing in both.
 
 That said, the writing is on the wall, and since I depend on a number of
 packages that have dropped or are dropping 2.x support, I’m going with
-the flow and sunsetting 2.x support. The next release will be the last
-to support 2.x.
+the flow and sunsetting 2.x support. This is the last to support 2.x.
 
 Breaking news!  As of version 1.9.0 I'm also releasing the code in a docker
 container (fredericklab/rapidtide), which has everything nicely installed in
