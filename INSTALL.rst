@@ -1,7 +1,12 @@
+Installation
+============
+
+
 Bare metal installation
 =======================
 This gives you the maximum flexibility if you want to look at the code and/or modify things.  It may seem a little daunting at first,
 but it's not that bad.  And if you want a simpler path, skip down to the Docker installation instructions
+
 Required dependencies
 ---------------------
 
