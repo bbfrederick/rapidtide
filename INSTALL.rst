@@ -171,18 +171,19 @@ d) Look at the refined regressors produced during dGSR: (the "dgsr_pass1" regres
 
 Docker installation
 ===================
-As of 1.9.0, there is now a Docker container with a full rapidtide installation.  To install this, 
+As of 1.9.0, there is now a Docker container with a full rapidtide installation.  To use this, 
 first make sure you have docker installed and properly configured, then run the following:
 ::
 
-    docker run --volume=DIRECTORY_WHERE_YOUR_DATA_IS:/data_in,OUTPUTDIRECTORY:/data_out fredericklab/rapidtide:latest \
-    rapidtide2x \
-        /data_in/fmri.nii.gz \
-        /data_out/outputtest \
-        -L
+    docker run \
+        --volume=DIRECTORY_WHERE_YOUR_DATA_IS:/data_in,OUTPUTDIRECTORY:/data_out \
+        fredericklab/rapidtide:latest \
+            rapidtide2x \
+                /data_in/fmri.nii.gz \
+                /data_out/outputtest \
+                -L
 
-
-
+The first time you run this, it will download the docker container from dockerhub.  It's around 2GB, so it may take some time, but it caches the file locally, so subsequent runs will be fast, unless the container updates.  To use a particular version, replace fredericklab/rapidtide:latest with fredericklab/rapidtide:VERSIONNUMBER (currently 1.9.0).
 
 
 #References 1) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B
