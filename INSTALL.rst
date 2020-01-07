@@ -271,7 +271,7 @@ For example, to run the simple rapidtide2x analysis above, type the following:
 
     singularity run \
         --cleanenv \
-        -B INPUTDIRECTORY:/data_in -B OUTPUTDIRECTORY:/data_out \
+        -B INPUTDIRECTORY:/data_in,OUTPUTDIRECTORY:/data_out \
         rapidtide-VERSIONNUMBER.simg \
             rapidtide2x \
                 /data_in/YOURNIFTIFILE.nii.gz \
