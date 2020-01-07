@@ -12,7 +12,7 @@ Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
 NIH|
 
 NOTE
-====
+----
 
 This is an evolving code base. I’m constantly tinkering with it. That
 said, now that I’ve sent this off into to the world, I’m being somewhat
@@ -29,7 +29,7 @@ releases will be somewhat more reliable. Check back often for exciting
 new features and bug fixes!
 
 Why do I want to know about time lagged correlations?
-=====================================================
+-----------------------------------------------------
 
 This comes out of work by our group (The Opto-Magnetic group at McLean
 Hospital - http://www.nirs-fmri.net) looking at the correlations between
@@ -69,7 +69,7 @@ have any information about” - maybe EtCO2 variation, or sympathetic
 nervous system activity - so not really random.
 
 Yes, but correlation analysis is easy - why use this package?
-=============================================================
+-------------------------------------------------------------
 
 The simple answer is “correlation analysis is easy, but using a
 prewritten package that handles file I/O, filtering, resampling,
@@ -81,8 +81,24 @@ years, and corrected my code accordingly. So rather than repeat my
 boring mistakes, why not make new, interesting mistakes? Explore your
 own, unique chunk of wrongspace…
 
+Python version compatibility
+----------------------------
+I switched over a while ago to using python 3 as my daily driver, so I know
+that everything works there. However, I know that a lot of people can’t
+or won’t switch from python 2x, so I’ve made every effort to write code
+that works in both, and I have been testing in both.
+
+That said, the writing is on the wall, and since I depend on a number of
+packages that have dropped or are dropping 2.x support, I’m going with
+the flow and sunsetting 2.x support. This is the last to support 2.x.
+
+Breaking news!  As of version 1.9.0 I'm also releasing the code in a docker
+container (fredericklab/rapidtide), which has everything nicely installed in
+a fully configured python 3 environment, so there's really no need to do a 2.x
+installation anymore
+
 Ok, I’m sold. What’s in here?
-=============================
+-----------------------------
 
 -  **rapidtide2** - This is the heart of the package - this is the
    workhorse program that will determine the time lagged correlations
