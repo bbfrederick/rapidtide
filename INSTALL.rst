@@ -149,13 +149,13 @@ b) Run rapidtide2 to perform static global signal regression (sGSR) on an fMRI f
     rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/sgsr -L -Z 0.0
 
 
-c) run tidepool to look at the results from a):
+c) Run tidepool to look at all the interesting maps and timecourses from a):
 ::
 
     tidepool
 
 
-(then select the file rapidtide/data/examples/dst/dgsr_lagtimes.nii.gz to load all the interesting maps and timecourses):
+(then select the file rapidtide/data/examples/dst/dgsr_lagtimes.nii.gz to load the dataset):
 
 d) Look at the refined regressors produced during dGSR: (the "dgsr_pass1" regressor is the initial global mean before refinement) in their own window.
 ::
