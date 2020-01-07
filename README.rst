@@ -54,6 +54,13 @@ hypercarbic and/or hyperoxic gas challenges to really boost your signal
 to noise. So there are lots of times when you might want to do this type
 of correlation analysis.
 
+As an aside, some of these tools are just generally useful for looking
+at correlations between timecourses from other sources – for example
+doing PPI, or even some seed based analyses.
+
+What does "happy" have to do with any of this?
+----------------------------------------------
+
 More recently, inspired by Henning Voss’ paper on hypersampling of
 cardiac signals in fMRI, we developed a method to extract and clean
 cardiac waveforms from fMRI data, even when the fMRI TR is far too long
@@ -63,6 +70,12 @@ somewhat the same way that we track the LFO signals. Among other things,
 this allows you to get cardiac waveforms during scans even when either
 1) you didn’t use a plethysmograph, or 2) you did, but the recording was
 of poor quality, which happens more than you might think.
+
+As to why happy is part of rapidtide, that's partially for practical reasons (the
+libraries in rapidtide have an awful lot of code that is reused in happy), and
+partially thematically - rapidtide has evolved from a "let's look at low
+frequency signals in fMRI data" package to a "let's look at everything in
+fMRI data EXCEPT neuronal activation", so happy fits right in...
 
 [*] “random” in this context means “determined by something we don’t
 have any information about” - maybe EtCO2 variation, or sympathetic
