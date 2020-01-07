@@ -199,6 +199,8 @@ do is find the IP address of the machine you're running on (lets call it MYIPADD
     xhost + 
 
 This disables x security - this is probably not the right thing to do, but I don't have a better solution at this time, and it works.
+If you're on a mac using Xquartz, prior to this you'll also have to have gone into the security preferences, checked "Allow connections from network hosts".log out and log back in again (you only need to do this once - it will stay that way until you change it.)
+
 
 Then run the command (the example here is tidepool)
 
