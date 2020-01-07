@@ -1,6 +1,7 @@
-Installation
-============
-
+Bare metal installation
+=======================
+This gives you the maximum flexibility if you want to look at the code and/or modify things.  It may seem a little daunting at first,
+but it's not that bad.  And if you want a simpler path, skip down to the Docker installation instructions
 Required dependencies
 ---------------------
 
@@ -161,6 +162,22 @@ d) Look at the refined regressors produced during dGSR: (the "dgsr_pass1" regres
 ::
 
     showtc rapidtide/data/examples/dst/dgsr_reference_fmrires_pass[123].txt
+
+
+Docker installation
+===================
+As of 1.9.0, there is now a Docker container with a full rapidtide installation.  To install this, 
+first make sure you have docker installed and properly configured, then run the following:
+::
+
+    docker run --volume=DIRECTORY_WHERE_YOUR_DATA_IS:/data_in,OUTPUTDIRECTORY:/data_out fredericklab/rapidtide:latest \
+    rapidtide2x \
+        /data_in/fmri.nii.gz \
+        /data_out/outputtest \
+        -L
+
+
+
 
 
 #References 1) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B
