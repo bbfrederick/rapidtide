@@ -31,5 +31,5 @@ docker tag $IMAGE:latest $USERNAME/$IMAGE:latest
 docker tag $IMAGE:latest $USERNAME/$IMAGE:$version
 
 # push it
-#docker push $USERNAME/$IMAGE:latest
-#docker push $USERNAME/$IMAGE:$version
+docker push $USERNAME/$IMAGE:latest
+docker push $USERNAME/$IMAGE:$version
