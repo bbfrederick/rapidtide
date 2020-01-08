@@ -202,6 +202,8 @@ Ok, I’m sold. What’s in here?
    rapidtide in native space then transform afterwards to MNI152 space.
    NB: this will only work if you have a working FSL installation.
 
+-  **happy2std** - Guess.
+
 -  **showtc** - A very simple command line utility that takes timecourses from text
    files and plots the data in it in a matplotlib window. That’s it. A
    good tool for quickly seeing what’s in a file. Has a number of options to
