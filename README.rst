@@ -166,7 +166,7 @@ Ok, I’m sold. What’s in here?
    files with useful information (significance threshholds, processing
    timing information, a list of values of configurable options).
 
-- **rapidtide2x** - This is the most modern and updated version of rapidtide.
+-  **rapidtide2x** - This is the most modern and updated version of rapidtide.
    This is where all the development effort is going (new features, reimplementation of core routines,
    interface changes.)  I port any major bugfixes
    back to rapidtide2, but this will become the new rapidtide2 in the 2.0 release.  This 
@@ -175,7 +175,7 @@ Ok, I’m sold. What’s in here?
    However, if you are downloading things between releases, this is not guaranteed to be
    that stable...
 
--  | **happy** - This is a companion to rapidtide that focusses on
+-  **happy** - This is a companion to rapidtide that focusses on
      cardiac signals.
    | happy does three things - it attempts to determine the cardiac
      waveform over the time course of an fMRI dataset using slice
