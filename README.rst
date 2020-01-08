@@ -175,16 +175,15 @@ Ok, I’m sold. What’s in here?
    However, if you are downloading things between releases, this is not guaranteed to be
    that stable...
 
--  **happy** - This is a companion to rapidtide that focusses on
-     cardiac signals.
-   | happy does three things - it attempts to determine the cardiac
-     waveform over the time course of an fMRI dataset using slice
-     selective averaging of fully unprocessed fMRI data. It also 
-     cleans up this initial estimate using a deep learning filter to
-     infer what the simultaneously recorded plethysmogram would be.
-     Finally, it uses either the derived or a supplied plethysmogram
-     signal to construct a cardiac pulsation map over a single
-     cycle of the cardiac waveform, a la Voss.
+-  **happy** - This is a companion to rapidtide that focusses on cardiac signals.
+   happy does three things - it attempts to determine the cardiac
+   waveform over the time course of an fMRI dataset using slice
+   selective averaging of fully unprocessed fMRI data. It also 
+   cleans up this initial estimate using a deep learning filter to
+   infer what the simultaneously recorded plethysmogram would be.
+   Finally, it uses either the derived or a supplied plethysmogram
+   signal to construct a cardiac pulsation map over a single
+   cycle of the cardiac waveform, a la Voss.
 
 -  **showxcorr** - Like rapidtide2, but for single time courses. Takes
    two text files as input, calculates and displays the time lagged
