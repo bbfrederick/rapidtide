@@ -768,7 +768,7 @@ def updateHistogram():
 def updateRegressor():
     global regressor_ax, regressors, focusregressor, focussubj, liveplots
     regressor_ax.plot(regressors[focusregressor].timeaxis, regressors[focusregressor].timedata,
-                      stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=2), clear=True)
+                      stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=1), clear=True)
 
 # found this routine at https://github.com/abhilb/pyqtgraphutils/blob/master/pyqtgraphutils.py
 class RectangleItem(pg.GraphicsObject):
@@ -798,7 +798,7 @@ class RectangleItem(pg.GraphicsObject):
 def updateRegressorSpectrum():
     global regressorspectrum_ax, regressors, focusregressor, focussubj, liveplots, regressorfilterlimits
     regressorspectrum_ax.plot(regressors[focusregressor].specaxis, regressors[focusregressor].specdata,
-                              stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=2), clear=True)
+                              stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=1), clear=True)
     regressorspectrum_ax.setXRange(0.0, 0.5 * regressors[focusregressor].displaysamplerate, padding=0)
     spectop = 1.25 * np.max(regressors[focusregressor].specdata)
     regressorspectrum_ax.setYRange(0.0, spectop, padding=0)
@@ -1910,7 +1910,7 @@ def main():
         # ui.report_pushButton.setDisabled(True)
     print('done')
 
-    win.setWindowTitle('TiDePool - ' + datafileroot)
+    win.setWindowTitle('TiDePool - ' + datafileroot[:-1])
 
     # read in the significance distribution
     if os.path.isfile(datafileroot + 'sigfit.txt'):
