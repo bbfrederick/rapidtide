@@ -1,6 +1,9 @@
 Rapidtide
 =========
 
+What is this package?
+---------------------
+
 Rapidtide is a suite of python programs used to perform rapid time delay
 analysis on functional imaging data to find time lagged correlations
 between the voxelwise time series and other time series, both in the LFO
@@ -10,23 +13,6 @@ Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
 
 |License| |Documentation Status| |Travis-CI| |Coverage| |DOI| |Funded by
 NIH|
-
-NOTE
-----
-
-This is an evolving code base. I’m constantly tinkering with it. That
-said, now that I’ve sent this off into to the world, I’m being somewhat
-more responsible about locking down stable release points. In between
-releases, however, I’ll be messing with things, although for the most
-part this will be restricted to the “x” version of programs (e.g. the
-bleeding edge version of rapidtide2 is rapidtide2x - use the former if
-you want stability, the latter if you want the newest and and most
-exciting features). **It’s very possible I could break something while
-doing this, so check back for status updates if you download the code in
-between releases**. I’ve finally become a little more modern and started
-adding automated testing, so as time goes by hopefully the “in between”
-releases will be somewhat more reliable. Check back often for exciting
-new features and bug fixes!
 
 Why do I want to know about time lagged correlations?
 -----------------------------------------------------
@@ -129,6 +115,23 @@ For a number of reasons.
 [‡] or better yet, you, empowered user, can fix it, and push back a fix
 that benefits everybody…
 
+Stability, etc.
+===============
+This is an evolving code base. I’m constantly tinkering with it. That
+said, now that I’ve sent this off into to the world, I’m being somewhat
+more responsible about locking down stable release points. In between
+releases, however, I’ll be messing with things, although for the most
+part this will be restricted to the “x” version of programs (e.g. the
+bleeding edge version of rapidtide2 is rapidtide2x - use the former if
+you want stability, the latter if you want the newest and and most
+exciting features). **It’s very possible I could break something while
+doing this, so check back frequently for status updates if you download the code in
+between releases**. I’ve finally become a little more modern and started
+adding automated testing, so as time goes by hopefully the “in between”
+releases will be somewhat more reliable.  That said, my tests routinely fail, even
+when things actually work.  Probably should deal with that. Check back often for exciting
+new features and bug fixes!
+
 Python version compatibility
 ============================
 I switched over a while ago to using python 3 as my daily driver, so I know
@@ -163,15 +166,24 @@ Ok, I’m sold. What’s in here?
    files with useful information (significance threshholds, processing
    timing information, a list of values of configurable options).
 
+- **rapidtide2x** - This is the most modern and updated version of rapidtide.
+   This is where all the development effort is going (new features, reimplementation of core routines,
+   interface changes.)  I port any major bugfixes
+   back to rapidtide2, but this will become the new rapidtide2 in the 2.0 release.  This 
+   will also come with some incompatible calling changes and modifications
+   to filter ranges (I'll have a long explanation for why in the 2.0 release notes).
+   However, if you are downloading things between releases, this is not guaranteed to be
+   that stable...
+
 -  | **happy** - This is a companion to rapidtide that focusses on
      cardiac signals.
    | happy does three things - it attempts to determine the cardiac
      waveform over the time course of an fMRI dataset using slice
-     selective averaging of fully unprocessed fMRI data. It also tries
-     to clean up this initial estimate using a deep learning filter to
+     selective averaging of fully unprocessed fMRI data. It also 
+     cleans up this initial estimate using a deep learning filter to
      infer what the simultaneously recorded plethysmogram would be.
      Finally, it uses either the derived or a supplied plethysmogram
-     signal to perform construct a cardiac pulsation map over a single
+     signal to construct a cardiac pulsation map over a single
      cycle of the cardiac waveform, a la Voss.
 
 -  **showxcorr** - Like rapidtide2, but for single time courses. Takes
@@ -179,6 +191,12 @@ Ok, I’m sold. What’s in here?
    cross correlation between them, fits the maximum time lag, and
    estimates the significance of the correlation. It has a range of
    filtering, windowing, and correlation options.
+
+-  **showxcorrx** - The bleeding edge version of showxcorr.  This has a lot
+   of new options and defaults; it's not really drop in compatible, so I'm
+   keeping it separate at the moment to avoid breaking existing workflows.
+   With the 2.0 release, this will become showxcorr, and the current showxcorr
+   will become showxcorr_legacy.
 
 -  **rapidtide2std** - This is a utility for registering rapidtide
    output maps to standard coordinates. It’s usually much faster to run

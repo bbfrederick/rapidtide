@@ -5,9 +5,10 @@
 
 Rapidtide
 ==========
-Rapidtide is a suite of python programs used to perform time delay analysis on
-functional imaging data to find time lagged correlations between the voxelwise
-time series and other time series.
+Rapidtide is a suite of python programs used to perform rapid time delay
+analysis on functional imaging data to find time lagged correlations
+between the voxelwise time series and other time series, both in the LFO
+band (rapditide2) and now in the cardiac band (happy).
 
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
