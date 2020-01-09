@@ -411,7 +411,7 @@ for i in range(0, numfiles):
                 nperseg = None
 
             if useHamming:
-               freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(invec)) * invec, Fs = thissamplerate, mode=specmode)
+               freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(invec)) * invec, Fs=thissamplerate, mode=specmode)
             else:
                freqaxis, spectrum = tide_filt.spectrum(invec, Fs = thissamplerate, mode=specmode)
             if savespec:
