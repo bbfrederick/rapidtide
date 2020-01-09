@@ -28,6 +28,10 @@ def parsearglist():
     parser = argparse.ArgumentParser(description='Finds the dominant frequency in a cardiac or respiratory waveform.')
     parser.add_argument('textfilename',
                         help='A text input files, with optional column specification')
+    parser.add_argument('--display',
+                        dest='display',
+                        action='store_false',
+                        help='display the fit spectrum')
     parser.add_argument('--samplerate',
                         dest='samplerate',
                         type=float,
@@ -75,11 +79,12 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
 
     # find the max
     ampspec = savgolsmooth(np.abs(spectrum), smoothlen=smoothlen)
+    peakfreq = freqaxis[np.argmax(ampspec)]
     if display:
         figure()
-        plot(freqaxis, ampspec, 'r')
+        plot(freqaxis, ampspec, 'k')
+        plot([peakfreq, peakfreq], [np.min(ampspec), np.max(ampspec)], 'r-'i, lw=2)
         show()
-    peakfreq = freqaxis[np.argmax(ampspec)]
     if debug:
         print('the fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
     normfac = np.sqrt(2.0) * tide_math.rms(thewaveform)
@@ -98,7 +103,7 @@ def main():
         thissamplerate = theargs.samplerate
         thisstartoffset = 0.0
         colnames = None
-    peakfreq = getwavefreq(invec, thissamplerate, minpermin=theargs.lowestbpm, maxpermin=theargs.highestbpm)
+    peakfreq = getwavefreq(invec, thissamplerate, minpermin=theargs.lowestbpm, maxpermin=theargs.highestbpm, display=theargs.display)
     print(textfileinfo[0] + ':\t' + "%.2f" % peakfreq + ' Hz, ' + "%.2f" % (peakfreq * 60.0) + ' per minute, period is ' + "%.2f" % (1.0 / peakfreq), 'seconds')
 
 
