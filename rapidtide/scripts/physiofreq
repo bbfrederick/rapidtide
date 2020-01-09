@@ -22,6 +22,7 @@ from scipy.signal import welch, savgol_filter
 import matplotlib.pyplot as plt
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 import rapidtide.miscmath as tide_math
 
 def parsearglist():
