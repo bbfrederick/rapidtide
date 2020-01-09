@@ -82,7 +82,7 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
         print('initpeakfreq:', initpeakfreq, 'BPM')
 
     # calculate the power spectrum
-    normwave = tide_filt.hamming(len(waveform)) * tide_fit.detrend(waveform, order=1, demean=True)
+    normwave = tide_filt.hamming(len(thewaveform)) * tide_fit.detrend(thewaveform, order=1, demean=True)
     freqaxis, spectrum = tide_filt.spectrum(normwave, Fs=thesamplerate, mode='power')
 
     # Constrain fit to valid range
