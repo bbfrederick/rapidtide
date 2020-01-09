@@ -25,7 +25,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.miscmath as tide_math
 
 def parsearglist():
-    parser = argparse.ArgumentParser(description='Plots the data in text files.')
+    parser = argparse.ArgumentParser(description='Finds the dominant frequency in a cardiac or respiratory waveform.')
     parser.add_argument('textfilename',
                         help='A text input files, with optional column specification')
     parser.add_argument('--samplerate',
