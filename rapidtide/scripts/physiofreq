@@ -70,7 +70,7 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
     if display:
         plt.figure()
         plt.plot(thex, they, 'k')
-        plt.plot([initpeakfreq, initpeakfreq], [np.min(they), np.max(they)], 'r-', lw=2)
+        plt.plot([initpeakfreq / 60.0, initpeakfreq / 60.0], [np.min(they), np.max(they)], 'r-', lw=2)
         plt.show()
     if initpeakfreq > maxpermin:
         initpeakfreq = maxpermin
@@ -78,10 +78,13 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
         initpeakfreq = minpermin
     if debug:
         print('initpeakfreq:', initpeakfreq, 'BPM')
+
+    # calculate the power spectrum
     freqaxis, spectrum = tide_filt.spectrum(tide_math.corrnormalize(thewaveform),
                                             Fs=thesamplerate,
                                             mode='power')
-    # remove any spikes at zero frequency
+    
+    # Constrain fit to valid range
     binsize = freqaxis[1] - freqaxis[0]
     minbin = int(minpermin // (60.0 * binsize))
     maxbin = int(maxpermin // (60.0 * binsize))
