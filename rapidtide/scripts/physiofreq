@@ -73,7 +73,7 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
         initpeakfreq = minpermin
     if debug:
         print('initpeakfreq:', initpeakfreq, 'BPM')
-    freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(thewaveform)) * thewaveform,
+    freqaxis, spectrum = tide_filt.spectrum(tide_math.corrnormalize(thewaveform),
                                             Fs=thesamplerate,
                                             mode='complex')
     # remove any spikes at zero frequency
