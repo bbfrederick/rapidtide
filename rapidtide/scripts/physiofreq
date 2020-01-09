@@ -75,7 +75,7 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
         print('initpeakfreq:', initpeakfreq, 'BPM')
     freqaxis, spectrum = tide_filt.spectrum(tide_math.corrnormalize(thewaveform),
                                             Fs=thesamplerate,
-                                            mode='complex')
+                                            mode='power')
     # remove any spikes at zero frequency
     minbin = int(minpermin // (60.0 * (freqaxis[1] - freqaxis[0])))
     maxbin = int(maxpermin // (60.0 * (freqaxis[1] - freqaxis[0])))
@@ -84,14 +84,15 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
 
     # find the max
     if smooth:
-        ampspec = savgolsmooth(np.abs(spectrum), smoothlen=smoothlen)
+        ampspec = savgolsmooth(spectrum, smoothlen=smoothlen)
     else:
-        ampspec = np.abs(spectrum)
+        ampspec = spectrum
     peakfreq = freqaxis[np.argmax(ampspec)]
     if display:
         plt.figure()
         plt.plot(freqaxis, ampspec, 'k')
         plt.plot([peakfreq, peakfreq], [np.min(ampspec), np.max(ampspec)], 'r-', lw=2)
+        plt.xlim([0.0, maxpermin / 60.0])
         plt.show()
     if debug:
         print('the fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
