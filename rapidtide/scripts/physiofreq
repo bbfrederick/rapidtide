@@ -47,6 +47,11 @@ def parsearglist():
                         type=float,
                         default=20.0,
                         help='Highest allowable frequency in cycles per minute')
+    parser.add_argument('--disablesmoothing',
+                        dest='nosmooth',
+                        action='store_true',
+                        help='Do not apply Savitsky-Golay filter to spectrum')
+
 
     args = parser.parse_args()
 
@@ -56,7 +61,7 @@ def savgolsmooth(data, smoothlen=101, polyorder=3):
     return savgol_filter(data, smoothlen, polyorder)
 
 
-def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smoothlen=101, debug=False, display=False):
+def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smoothe=True, smoothlen=101, debug=False, display=False):
     if len(thewaveform) > 1024:
         thex, they = welch(thewaveform, thesamplerate, nperseg=1024)
     else:
@@ -78,7 +83,10 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
     spectrum[maxbin:] = 0.0
 
     # find the max
-    ampspec = savgolsmooth(np.abs(spectrum), smoothlen=smoothlen)
+    if smooth:
+        ampspec = savgolsmooth(np.abs(spectrum), smoothlen=smoothlen)
+    else:
+        ampspec = np.abs(spectrum)
     peakfreq = freqaxis[np.argmax(ampspec)]
     if display:
         plt.figure()
@@ -103,7 +111,10 @@ def main():
         thissamplerate = theargs.samplerate
         thisstartoffset = 0.0
         colnames = None
-    peakfreq = getwavefreq(invec, thissamplerate, minpermin=theargs.lowestbpm, maxpermin=theargs.highestbpm, display=theargs.display)
+    peakfreq = getwavefreq(invec, thissamplerate,
+                           minpermin=theargs.lowestbpm, maxpermin=theargs.highestbpm,
+                           smooth=(not theargs.nosmooth),
+                           display=theargs.display)
     print(textfileinfo[0] + ':\t' + "%.2f" % peakfreq + ' Hz, ' + "%.2f" % (peakfreq * 60.0) + ' per minute, period is ' + "%.2f" % (1.0 / peakfreq), 'seconds')
 
 
