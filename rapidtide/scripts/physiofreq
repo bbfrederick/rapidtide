@@ -67,6 +67,11 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
     else:
         thex, they = welch(thewaveform, thesamplerate)
     initpeakfreq = np.round(thex[np.argmax(they)] * 60.0, 2)
+    if display:
+        plt.figure()
+        plt.plot(thex, they, 'k')
+        plt.plot([initpeakfreq, initpeakfreq], [np.min(they), np.max(they)], 'r-', lw=2)
+        plt.show()
     if initpeakfreq > maxpermin:
         initpeakfreq = maxpermin
     if initpeakfreq < minpermin:
@@ -77,8 +82,9 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
                                             Fs=thesamplerate,
                                             mode='power')
     # remove any spikes at zero frequency
-    minbin = int(minpermin // (60.0 * (freqaxis[1] - freqaxis[0])))
-    maxbin = int(maxpermin // (60.0 * (freqaxis[1] - freqaxis[0])))
+    binsize = freqaxis[1] - freqaxis[0]
+    minbin = int(minpermin // (60.0 * binsize))
+    maxbin = int(maxpermin // (60.0 * binsize))
     spectrum[:minbin] = 0.0
     spectrum[maxbin:] = 0.0
 
@@ -92,7 +98,7 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
         plt.figure()
         plt.plot(freqaxis, ampspec, 'k')
         plt.plot([peakfreq, peakfreq], [np.min(ampspec), np.max(ampspec)], 'r-', lw=2)
-        plt.xlim([0.0, maxpermin / 60.0])
+        plt.xlim([0.0, 1.1 * maxpermin / 60.0])
         plt.show()
     if debug:
         print('the fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
