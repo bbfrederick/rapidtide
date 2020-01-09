@@ -30,7 +30,7 @@ def parsearglist():
                         help='A text input files, with optional column specification')
     parser.add_argument('--display',
                         dest='display',
-                        action='store_false',
+                        action='store_true',
                         help='display the fit spectrum')
     parser.add_argument('--samplerate',
                         dest='samplerate',
@@ -81,10 +81,10 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
     ampspec = savgolsmooth(np.abs(spectrum), smoothlen=smoothlen)
     peakfreq = freqaxis[np.argmax(ampspec)]
     if display:
-        figure()
-        plot(freqaxis, ampspec, 'k')
-        plot([peakfreq, peakfreq], [np.min(ampspec), np.max(ampspec)], 'r-', lw=2)
-        show()
+        plt.figure()
+        plt.plot(freqaxis, ampspec, 'k')
+        plt.plot([peakfreq, peakfreq], [np.min(ampspec), np.max(ampspec)], 'r-', lw=2)
+        plt.show()
     if debug:
         print('the fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
     normfac = np.sqrt(2.0) * tide_math.rms(thewaveform)
