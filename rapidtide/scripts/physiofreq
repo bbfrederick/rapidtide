@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+# -*- coding: latin-1 -*-
+#
+#   Copyright 2020 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+import argparse
+
+def parsearglist():
+    parser = argparse.ArgumentParser(description='Plots the data in text files.')
+    parser.add_argument('textfilename',
+                        help='A text input files, with optional column specification')
+    parser.add_argument('--nolegend',
+                        dest='dolegend',
+                        action='store_true',
+                        help='turn off legend label')
+    parser.add_argument('--transpose',
+                        action='store_false',
+                        dest='dotranspose',
+                        help='swap rows and columns in the input files')
+    args = parser.parse_args()
+
+    return args
+
+def getcardcoeffs(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smoothlen=101, debug=False, display=False):
+    if len(thewaveform) > 1024:
+        thex, they = welch(thewaveform, thesamplerate, nperseg=1024)
+    else:
+        thex, they = welch(thewaveform, thesamplerate)
+    initpeakfreq = np.round(thex[np.argmax(they)] * 60.0, 2)
+    if initpeakfreq > maxpermin:
+        initpeakfreq = maxpermin
+    if initpeakfreq < minpermin:
+        initpeakfreq = minpermin
+    if debug:
+        print('initpeakfreq:', initpeakfreq, 'BPM')
+    freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(thewaveform)) * thewaveform,
+                                            Fs=thesamplerate,
+                                            mode='complex')
+    # remove any spikes at zero frequency
+    minbin = int(minpermin // (60.0 * (freqaxis[1] - freqaxis[0])))
+    maxbin = int(maxpermin // (60.0 * (freqaxis[1] - freqaxis[0])))
+    spectrum[:minbin] = 0.0
+    spectrum[maxbin:] = 0.0
+
+    # find the max
+    ampspec = savgolsmooth(np.abs(spectrum), smoothlen=smoothlen)
+    if display:
+        figure()
+        plot(freqaxis, ampspec, 'r')
+        show()
+    peakfreq = freqaxis[np.argmax(ampspec)]
+    if debug:
+        print('the fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
+    normfac = np.sqrt(2.0) * tide_math.rms(thewaveform)
+    if debug:
+        print('normfac:', normfac)
+    return peakfreq
+
+def main():
+    theargs = parsearglist()
+    print(theargs)
+
+if __name__ == '__main__':
+    main()
