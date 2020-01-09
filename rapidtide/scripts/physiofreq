@@ -15,25 +15,44 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
+import os
 import argparse
+import numpy as np
+from scipy.signal import welch, savgol_filter
+import matplotlib.pyplot as plt
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
+import rapidtide.miscmath as tide_math
 
 def parsearglist():
     parser = argparse.ArgumentParser(description='Plots the data in text files.')
     parser.add_argument('textfilename',
                         help='A text input files, with optional column specification')
-    parser.add_argument('--nolegend',
-                        dest='dolegend',
-                        action='store_true',
-                        help='turn off legend label')
-    parser.add_argument('--transpose',
-                        action='store_false',
-                        dest='dotranspose',
-                        help='swap rows and columns in the input files')
+    parser.add_argument('--samplerate',
+                        dest='samplerate',
+                        type=float,
+                        default=1.0,
+                        help='sample rate of the waveform in Hz')
+    parser.add_argument('--lowestbpm',
+                        dest='lowestbpm',
+                        type=float,
+                        default=6.0,
+                        help='Lowest allowable frequency in cycles per minute')
+    parser.add_argument('--highestbpm',
+                        dest='highestbpm',
+                        type=float,
+                        default=20.0,
+                        help='Highest allowable frequency in cycles per minute')
+
     args = parser.parse_args()
 
     return args
 
-def getcardcoeffs(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smoothlen=101, debug=False, display=False):
+def savgolsmooth(data, smoothlen=101, polyorder=3):
+    return savgol_filter(data, smoothlen, polyorder)
+
+
+def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smoothlen=101, debug=False, display=False):
     if len(thewaveform) > 1024:
         thex, they = welch(thewaveform, thesamplerate, nperseg=1024)
     else:
@@ -70,7 +89,18 @@ def getcardcoeffs(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, s
 
 def main():
     theargs = parsearglist()
-    print(theargs)
+    textfileinfo = theargs.textfilename.split(':')
+    filebase, extension = os.path.splitext(textfileinfo[0])
+    if extension == '.json':
+        thissamplerate, thisstartoffset, colnames, invec = tide_io.readbidstsv(textfileinfo[0])
+    else:
+        invec = tide_io.readvecs(textfileinfo[0])[0]
+        thissamplerate = theargs.samplerate
+        thisstartoffset = 0.0
+        colnames = None
+    peakfreq = getwavefreq(invec, thissamplerate, minpermin=theargs.lowestbpm, maxpermin=theargs.highestbpm)
+    print(textfileinfo[0] + ':\t' + "%.2f" % peakfreq + ' Hz, ' + "%.2f" % (peakfreq * 60.0) + ' per minute, period is ' + "%.2f" % (1.0 / peakfreq), 'seconds')
+
 
 if __name__ == '__main__':
     main()
