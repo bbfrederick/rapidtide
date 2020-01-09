@@ -62,6 +62,8 @@ def savgolsmooth(data, smoothlen=101, polyorder=3):
 
 
 def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smooth=True, smoothlen=101, debug=False, display=False):
+    if thewaveform.shape[1] % 2 == 1:
+        thewaveform = thewaveform[j, :-1]
     if len(thewaveform) > 1024:
         thex, they = welch(thewaveform, thesamplerate, nperseg=1024)
     else:
