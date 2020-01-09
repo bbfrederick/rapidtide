@@ -83,7 +83,7 @@ def getwavefreq(thewaveform, thesamplerate, minpermin=40.0, maxpermin=140.0, smo
     if display:
         figure()
         plot(freqaxis, ampspec, 'k')
-        plot([peakfreq, peakfreq], [np.min(ampspec), np.max(ampspec)], 'r-'i, lw=2)
+        plot([peakfreq, peakfreq], [np.min(ampspec), np.max(ampspec)], 'r-', lw=2)
         show()
     if debug:
         print('the fundamental frequency is', np.round(peakfreq * 60.0, 2), 'BPM')
