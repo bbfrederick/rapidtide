@@ -403,7 +403,7 @@ for i in range(0, numfiles):
             if detrendorder > 0:
                 invec = tide_fit.detrend(invec, order=detrendorder, demean=True)
             elif demean:
-                invec = invec = np.mean(invec)
+                invec = invec - np.mean(invec)
 
             if len(invec) >= 1024:
                 nperseg = 1024
