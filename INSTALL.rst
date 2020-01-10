@@ -249,7 +249,7 @@ Then run the command (the example here is tidepool)
         -it \
         -e DISPLAY=MYIPADDRESS:0 \
         -v /tmp/.X11-unix:/tmp/.X11-unix \
-        -u rapidtide 
+        -u rapidtide \
         fredericklab/rapidtide:latest \
             tidepool
 
