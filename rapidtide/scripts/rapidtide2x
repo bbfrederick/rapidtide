@@ -28,12 +28,5 @@ import sys
 import rapidtide.workflows.rapidtide2x as rapidtide2x_workflow
 
 if __name__ == '__main__':
-
-    # grab the command line arguments then pass them off.
-    nargs = len(sys.argv)
-    if nargs < 3:
-        rapidtide2x_workflow.usage()
-        exit()
-
-    rapidtide2x_workflow.rapidtide_main(sys.argv)
+    rapidtide2x_workflow.rapidtide_main()
 

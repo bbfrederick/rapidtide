@@ -482,7 +482,12 @@ def usage():
     return ()
 
 
-def rapidtide_main(thearguments):
+def process_args():
+    nargs = len(sys.argv)
+    if nargs < 3:
+        usage()
+        exit()
+
     # set default variable values
     optiondict = {}
 
@@ -653,24 +658,23 @@ def rapidtide_main(thearguments):
     theprefilter.setbutter(optiondict['usebutterworthfilter'], optiondict['filtorder'])
 
     # start the clock!
-    timings = [['Start', time.time(), None, None]]
     tide_util.checkimports(optiondict)
 
     # get the command line parameters
     filename = None
-    inputfreq = None
-    inputstarttime = None
-    if len(thearguments) < 3:
+    optiondict['inputfreq'] = None
+    optiondict['inputstarttime'] = None
+    if len(sys.argv) < 3:
         usage()
         sys.exit()
     # handle required args first
-    fmrifilename = thearguments[1]
-    outputname = thearguments[2]
+    fmrifilename = sys.argv[1]
+    outputname = sys.argv[2]
     optparsestart = 3
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(thearguments[optparsestart:], 'abcdf:gh:i:mo:s:r:t:vBCF:ILMN:O:RSTVZ:', ['help',
+        opts, args = getopt.getopt(sys.argv[optparsestart:], 'abcdf:gh:i:mo:s:r:t:vBCF:ILMN:O:RSTVZ:', ['help',
                                                                                                           'nowindow',
                                                                                                           'windowfunc=',
                                                                                                           'datatstep=',
@@ -757,9 +761,9 @@ def rapidtide_main(thearguments):
         usage()
         sys.exit(2)
 
-    formattedcmdline = [thearguments[0] + ' \\']
+    formattedcmdline = [sys.argv[0] + ' \\']
     for thearg in range(1, optparsestart):
-        formattedcmdline.append('\t' + thearguments[thearg] + ' \\')
+        formattedcmdline.append('\t' + sys.argv[thearg] + ' \\')
 
     for o, a in opts:
         linkchar = ' '
@@ -920,19 +924,19 @@ def rapidtide_main(thearguments):
             theprefilter.settype('lfo')
             optiondict['filtertype'] = 'lfo'
             optiondict['despeckle_thresh'] = np.max(
-                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqlimits()[2])])
+                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqs()[2])])
             print('prefiltering to lfo band')
         elif o == '-R':
             theprefilter.settype('resp')
             optiondict['filtertype'] = 'resp'
             optiondict['despeckle_thresh'] = np.max(
-                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqlimits()[2])])
+                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqs()[2])])
             print('prefiltering to respiratory band')
         elif o == '-C':
             theprefilter.settype('cardiac')
             optiondict['filtertype'] = 'cardiac'
             optiondict['despeckle_thresh'] = np.max(
-                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqlimits()[2])])
+                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqs()[2])])
             print('prefiltering to cardiac band')
         elif o == '-F':
             arbvec = a.split(',')
@@ -954,7 +958,7 @@ def rapidtide_main(thearguments):
             theprefilter.setfreqs(optiondict['arb_lowerstop'], optiondict['arb_lower'],
                                 optiondict['arb_upper'], optiondict['arb_upperstop'])
             optiondict['despeckle_thresh'] = np.max(
-                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqlimits()[2])])
+                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqs()[2])])
             print('prefiltering to ', optiondict['arb_lower'], optiondict['arb_upper'],
                   '(stops at ', optiondict['arb_lowerstop'], optiondict['arb_upperstop'], ')')
         elif o == '-d':
@@ -1123,17 +1127,17 @@ def rapidtide_main(thearguments):
             linkchar = '='
             print('Will use regressor file', a)
         elif o == '--regressorfreq':
-            inputfreq = float(a)
+            optiondict['inputfreq'] = float(a)
             linkchar = '='
             print('Setting regressor sample frequency to ', inputfreq)
         elif o == '--regressortstep':
-            inputfreq = 1.0 / float(a)
+            optiondict['inputfreq'] = 1.0 / float(a)
             linkchar = '='
             print('Setting regressor sample time step to ', float(a))
         elif o == '--regressorstart':
-            inputstarttime = float(a)
+            optiondict['inputstarttime'] = float(a)
             linkchar = '='
-            print('Setting regressor start time to ', inputstarttime)
+            print('Setting regressor start time to ', optiondict['inputstarttime'])
         elif o == '--slicetimes':
             optiondict['slicetimes'] = tide_io.readvecs(a)
             linkchar = '='
@@ -1310,6 +1314,26 @@ def rapidtide_main(thearguments):
         formattedcmdline.append('\t' + o + linkchar + a + ' \\')
     formattedcmdline[len(formattedcmdline) - 1] = formattedcmdline[len(formattedcmdline) - 1][:-2]
 
+    # write out the command used
+    tide_io.writevec(formattedcmdline, outputname + '_formattedcommandline.txt')
+    tide_io.writevec([' '.join(sys.argv)], outputname + '_commandline.txt')
+
+    # add additional information to option structure for debugging
+    optiondict['fmrifilename'] = fmrifilename
+    optiondict['outputname'] = outputname
+    optiondict['regressorfile'] = filename
+    optiondict['realtr'] = realtr
+
+    return optiondict
+
+def rapidtide_main():
+    timings = [['Start', time.time(), None, None]]
+    optiondict = process_args()
+
+    fmrifilename = optiondict['fmrifilename']
+    outputname = optiondict['outputname']
+    filename = optiondict['regressorfile']
+
     optiondict['dispersioncalc_lower'] = optiondict['lagmin']
     optiondict['dispersioncalc_upper'] = optiondict['lagmax']
     optiondict['dispersioncalc_step'] = np.max(
@@ -1354,15 +1378,6 @@ def rapidtide_main(thearguments):
     # set the number of MKL threads to use
     if mklexists:
         mkl.set_num_threads(optiondict['mklthreads'])
-
-    # write out the command used
-    tide_io.writevec(formattedcmdline, outputname + '_formattedcommandline.txt')
-    tide_io.writevec([' '.join(thearguments)], outputname + '_commandline.txt')
-
-    # add additional information to option structure for debugging
-    optiondict['fmrifilename'] = fmrifilename
-    optiondict['outputname'] = outputname
-    optiondict['regressorfile'] = filename
 
     # open up the memory usage file
     if not optiondict['memprofile']:
@@ -1416,7 +1431,7 @@ def rapidtide_main(thearguments):
         fmritr = 0.72  # this is wrong and is a hack until I can parse CIFTI XML
     else:
         if optiondict['textio']:
-            if realtr <= 0.0:
+            if optiondict['realtr'] <= 0.0:
                 print('for text file data input, you must use the -t option to set the timestep')
                 sys.exit()
         else:
@@ -1424,8 +1439,8 @@ def rapidtide_main(thearguments):
                 fmritr = thesizes[4] / 1000.0
             else:
                 fmritr = thesizes[4]
-    if realtr > 0.0:
-        fmritr = realtr
+    if optiondict['realtr'] > 0.0:
+        fmritr = optiondict['realtr']
 
     # check to see if we need to adjust the oversample factor
     if optiondict['oversampfactor'] < 0:
@@ -1682,10 +1697,10 @@ def rapidtide_main(thearguments):
                             outputname + '_meanmask' + '')
         optiondict['preprocskip'] = 0
     else:
-        if inputfreq is None:
+        if optiondict['inputfreq'] is None:
             print('no regressor frequency specified - defaulting to 1/tr')
             inputfreq = 1.0 / fmritr
-        if inputstarttime is None:
+        if optiondict['inputstarttime'] is None:
             print('no regressor start time specified - defaulting to 0.0')
             inputstarttime = 0.0
         inputperiod = 1.0 / inputfreq
@@ -1746,7 +1761,7 @@ def rapidtide_main(thearguments):
 
     # band limit the regressor if that is needed
     print('filtering to ', theprefilter.gettype(), ' band')
-    optiondict['lowerstop'], optiondict['lowerpass'], optiondict['upperpass'], optiondict['upperstop'] = theprefilter.getfreqlimits()
+    optiondict['lowerstop'], optiondict['lowerpass'], optiondict['upperpass'], optiondict['upperstop'] = theprefilter.getfreqs()
     reference_y_classfilter = theprefilter.apply(inputfreq, reference_y)
     reference_y = reference_y_classfilter
 
@@ -2679,12 +2694,5 @@ def rapidtide_main(thearguments):
 
 
 if __name__ == '__main__':
-
-    # grab the command line arguments then pass them off.
-    nargs = len(sys.argv)
-    if nargs < 3:
-        usage()
-        exit()
-
-    rapidtide_main(sys.argv)
+    rapidtide_main()
 
