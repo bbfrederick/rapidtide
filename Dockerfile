@@ -1,5 +1,5 @@
 # Use Ubuntu 16.04 LTS
-FROM ubuntu:bionic-20191202
+FROM ubuntu:18.04
 
 # Pre-cache neurodebian key
 COPY ./dockerbuild/neurodebian.gpg /usr/local/etc/neurodebian.gpg
