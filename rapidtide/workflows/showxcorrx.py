@@ -399,7 +399,7 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
             arb_lowerstop = float(arbvec[2])
             arb_upperstop = float(arbvec[3])
         theprefilter.settype('arb')
-        theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+        theprefilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
     else:
         theprefilter.settype(filtertype)
 

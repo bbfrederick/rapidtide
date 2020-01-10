@@ -833,7 +833,7 @@ def setnotchfilter(thefilter, thefreq, notchwidth=1.0):
         width of the notch in Hz
     """
     thefilter.settype('arb_stop')
-    thefilter.setarb(
+    thefilter.setfreqs(
         thefreq - notchwidth / 2.0,
         thefreq - notchwidth / 2.0,
         thefreq + notchwidth / 2.0,
@@ -1191,7 +1191,7 @@ class noncausalfilter:
             Return the current end pad time.
         settrapfft(useit)
             Set to use trapezoidal FFT filter.  If false use brickwall.
-        setarb(lowerstop, lowerpass, upperpass, upperstop)
+        setfreqs(lowerstop, lowerpass, upperpass, upperstop)
             Set the frequency parameters of the 'arb' and 'arb_stop' filter.
         """
         self.filtertype = filtertype
@@ -1288,7 +1288,7 @@ class noncausalfilter:
     def settrapfft(self, useit):
         self.usetrapfftfilt = useit
 
-    def setarb(self, lowerstop, lowerpass, upperpass, upperstop):
+    def setfreqs(self, lowerstop, lowerpass, upperpass, upperstop):
         if not (lowerstop <= lowerpass < upperpass):
             print('noncausalfilter error: lowerpass (', lowerpass,') must be between lowerstop and upperpass (', lowerstop, upperpass, ')')
             sys.exit()
@@ -1303,6 +1303,11 @@ class noncausalfilter:
         self.lowerpass = 1.0 * self.arb_lowerpass
         self.upperpass = 1.0 * self.arb_upperpass
         self.upperstop = 1.0 * self.arb_upperstop
+
+
+    def getfreqs(self):
+        return self.lowerstop, self.lowerpass, self.upperpass, self.upperstop
+
 
     def apply(self, Fs, data):
         r"""Apply the filter to a dataset.

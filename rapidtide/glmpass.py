@@ -223,7 +223,7 @@ def motionregress(themotionfilename,
             motionlp = np.min([0.5 / tr, motionlp])
         if motionhp is None:
             motionhp = 0.0
-        mothpfilt.setarb(0.9 * motionhp, motionhp, motionlp, np.min([0.5 / tr, motionlp * 1.1]))
+        mothpfilt.setfreqs(0.9 * motionhp, motionhp, motionlp, np.min([0.5 / tr, motionlp * 1.1]))
         for i in range(motionregressors.shape[0]):
             motionregressors[i, :] = mothpfilt.apply(1.0 / tr, motionregressors[i, :])
     if orthogonalize:

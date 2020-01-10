@@ -132,7 +132,7 @@ for o, a in opts:
             arb_upper = float(arbvec[1])
             arb_lowerstop = float(arbvec[2])
             arb_upperstop = float(arbvec[3])
-        thefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+        thefilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
         if debug:
             print('filtering to ', arb_lower, arb_upper, "(stops at ", arb_lowerstop, arb_upperstop, ")")
     elif o in ('-h', '--help'):

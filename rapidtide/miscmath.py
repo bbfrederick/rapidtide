@@ -418,7 +418,7 @@ def envdetect(Fs, inputdata, cutoff=0.25):
     demeaned = inputdata - np.mean(inputdata)
     sigabs = abs(demeaned)
     theenvbpf = tide_filt.noncausalfilter(filtertype='arb')
-    theenvbpf.setarb(0.0, 0.0, cutoff, 1.1 * cutoff)
+    theenvbpf.setfreqs(0.0, 0.0, cutoff, 1.1 * cutoff)
     return theenvbpf.apply(Fs, sigabs)
 
 

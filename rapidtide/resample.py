@@ -364,7 +364,7 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False)
     if antialias and (init_freq > final_freq):
         aafilterfreq = final_freq / 2.0
         aafilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False)
-        aafilter.setarb(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
+        aafilter.setfreqs(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
         pad_y = aafilter.apply(init_freq, pad_y)
 
     if method == 'cubic':
@@ -469,7 +469,7 @@ def upsample(inputdata, Fs_init, Fs_higher, method='univariate', intfac=False, d
     upsampled_y = doresample(orig_x, inputdata, upsampled_x, method=method)
     initfilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
     stopfreq = np.min([1.1 * Fs_init / 2.0, Fs_higher / 2.0])
-    initfilter.setarb(0.0, 0.0, Fs_init / 2.0, stopfreq)
+    initfilter.setfreqs(0.0, 0.0, Fs_init / 2.0, stopfreq)
     upsampled_y = initfilter.apply(Fs_higher, upsampled_y)
     if debug:
         print('upsampling took', time.time() - starttime, 'seconds')
@@ -515,7 +515,7 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
         starttime = time.time()
         aafilterfreq = np.min([final_freq, init_freq]) / 2.0
         aafilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
-        aafilter.setarb(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
+        aafilter.setfreqs(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
         antialias_y = aafilter.apply(intermed_freq, intermed_y)
         if debug:
             print('antialiasing took', time.time() - starttime, 'seconds')

@@ -951,7 +951,7 @@ def rapidtide_main(thearguments):
                 optiondict['arb_upperstop'] = float(arbvec[3])
             theprefilter.settype('arb')
             optiondict['filtertype'] = 'arb'
-            theprefilter.setarb(optiondict['arb_lowerstop'], optiondict['arb_lower'],
+            theprefilter.setfreqs(optiondict['arb_lowerstop'], optiondict['arb_lower'],
                                 optiondict['arb_upper'], optiondict['arb_upperstop'])
             optiondict['despeckle_thresh'] = np.max(
                 [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqlimits()[2])])
@@ -2019,7 +2019,7 @@ def rapidtide_main(thearguments):
                         acstopfreq = 1.0 / sidelobetime
                         acfixfilter = tide_filt.noncausalfilter(debug=optiondict['debug'])
                         acfixfilter.settype('arb_stop')
-                        acfixfilter.setarb(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
+                        acfixfilter.setfreqs(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
                         cleaned_resampref_y = tide_math.corrnormalize(acfixfilter.apply(fmrifreq, resampref_y),
                                                                       prewindow=False,
                                                                       detrendorder=optiondict['detrendorder'])

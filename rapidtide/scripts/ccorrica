@@ -169,7 +169,7 @@ for o, a in opts:
             arb_lowerstop = float(arbvec[2])
             arb_upperstop = float(arbvec[3])
         theprefilter.settype('arb')
-        theprefilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+        theprefilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
         if verbose:
             print('prefiltering to ', arb_lower, arb_upper, "(stops at ", arb_lowerstop, arb_upperstop, ")")
     elif o == "-O":

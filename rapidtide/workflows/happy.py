@@ -316,7 +316,7 @@ def getfundamental(inputdata, Fs, fundfreq):
     arb_lowerstop = 0.9 * arb_lower
     arb_upperstop = 1.1 * arb_upper
     thefundfilter = tide_filt.noncausalfilter(filtertype='arb')
-    thefundfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+    thefundfilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
     return thefundfilter.apply(Fs, inputdata)
 
 
@@ -406,7 +406,7 @@ def cleancardiac(Fs, plethwaveform, cutoff=0.4, thresh=0.2, nyquist=None, debug=
         if nyquist < arb_upper:
             arb_upper = nyquist
             arb_upperstop = nyquist
-    plethfilter.setarb(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
+    plethfilter.setfreqs(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
     filtplethwaveform = tide_math.madnormalize(plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform)))
     print('normalizing')
     normpleth = tide_math.madnormalize(envmean * filtplethwaveform / envelope)
@@ -1219,7 +1219,7 @@ def happy_main(thearguments):
     thecardbandfilter.settype('arb')
     arb_lowerstop = arb_lower * 0.9
     arb_upperstop = arb_upper * 1.1
-    thecardbandfilter.setarb(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+    thecardbandfilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
     therespbandfilter = tide_filt.noncausalfilter()
     therespbandfilter.settype('resp')
     infodict['filtermaxbpm'] = arb_upper * 60.0
@@ -1458,7 +1458,7 @@ def happy_main(thearguments):
                 arb_upperpass = slicesamplerate / 2.0
                 arb_upperstop = slicesamplerate / 2.0
                 theaafilter = tide_filt.noncausalfilter(filtertype='arb')
-                theaafilter.setarb(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
+                theaafilter.setfreqs(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
 
                 cardfromfmri_sliceres = tide_math.madnormalize(
                     tide_resample.doresample(stdtimeaxis,
@@ -1775,7 +1775,7 @@ def happy_main(thearguments):
         phaseFs = 1.0 / phasestep
         phaseFc = phaseFs / 6.0
         appsmoothingfilter = tide_filt.noncausalfilter('arb', cyclic=True, padtime=0.0)
-        appsmoothingfilter.setarb(0.0, 0.0, phaseFc, phaseFc)
+        appsmoothingfilter.setfreqs(0.0, 0.0, phaseFc, phaseFc)
 
         # setup for aliased correlation if we're going to do it
         if doaliasedcorrelation and (thispass == numpasses - 1):
