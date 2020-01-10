@@ -804,19 +804,19 @@ def main():
             theprefilter.settype('lfo')
             optiondict['filtertype'] = 'lfo'
             optiondict['despeckle_thresh'] = np.max(
-                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqlimits()[2])])
+                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqs()[2])])
             print('prefiltering to lfo band')
         elif o == '-R':
             theprefilter.settype('resp')
             optiondict['filtertype'] = 'resp'
             optiondict['despeckle_thresh'] = np.max(
-                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqlimits()[2])])
+                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqs()[2])])
             print('prefiltering to respiratory band')
         elif o == '-C':
             theprefilter.settype('cardiac')
             optiondict['filtertype'] = 'cardiac'
             optiondict['despeckle_thresh'] = np.max(
-                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqlimits()[2])])
+                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqs()[2])])
             print('prefiltering to cardiac band')
         elif o == '-F':
             arbvec = a.split(',')
@@ -838,7 +838,7 @@ def main():
             theprefilter.setfreqs(optiondict['arb_lowerstop'], optiondict['arb_lower'],
                                 optiondict['arb_upper'], optiondict['arb_upperstop'])
             optiondict['despeckle_thresh'] = np.max(
-                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqlimits()[2])])
+                [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqs()[2])])
             print('prefiltering to ', optiondict['arb_lower'], optiondict['arb_upper'],
                   '(stops at ', optiondict['arb_lowerstop'], optiondict['arb_upperstop'], ')')
         elif o == '-p':

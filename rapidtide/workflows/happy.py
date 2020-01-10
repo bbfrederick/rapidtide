@@ -398,7 +398,7 @@ def cleancardiac(Fs, plethwaveform, cutoff=0.4, thresh=0.2, nyquist=None, debug=
     envelope = np.where(envelope >= envlowerlim, envelope, envlowerlim)
 
     # now high pass the plethysmogram to eliminate baseline
-    arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop = plethfilter.getfreqlimits()
+    arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop = plethfilter.getfreqs()
     plethfilter.settype('arb')
     arb_upper = 10.0
     arb_upperstop = arb_upper * 1.1

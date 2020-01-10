@@ -1178,7 +1178,7 @@ class noncausalfilter:
             'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'.
         gettype()
             Return the current filter type.
-        getfreqlimits()
+        getfreqs()
             Return the current frequency limits.
         setbutter(useit, order=self.butterworthorder)
             Set options for Butterworth filter (set useit to True to make Butterworth the active filter type, set order
@@ -1263,9 +1263,6 @@ class noncausalfilter:
     def gettype(self):
         return self.filtertype
 
-    def getfreqlimits(self):
-        return self.lowerstop, self.lowerpass, self.upperpass, self.upperstop
-
     def setbutter(self, useit, order=3):
         self.usebutterworth = useit
         self.butterworthorder = order
@@ -1273,14 +1270,14 @@ class noncausalfilter:
     def setpadtime(self, padtime):
         self.padtime = padtime
 
-    def setcyclic(self, cyclic):
-        self.cyclic = cyclic
-
     def setdebug(self, debug):
         self.debug = debug
 
     def getpadtime(self):
         return self.padtime
+
+    def setcyclic(self, cyclic):
+        self.cyclic = cyclic
 
     def getcyclic(self):
         return self.cyclic
@@ -1304,10 +1301,8 @@ class noncausalfilter:
         self.upperpass = 1.0 * self.arb_upperpass
         self.upperstop = 1.0 * self.arb_upperstop
 
-
     def getfreqs(self):
         return self.lowerstop, self.lowerpass, self.upperpass, self.upperstop
-
 
     def apply(self, Fs, data):
         r"""Apply the filter to a dataset.

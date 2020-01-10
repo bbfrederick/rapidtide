@@ -27,7 +27,7 @@ from rapidtide.io import writevec
 
 
 def spectralfilterprops(thefilter, debug=False):
-    lowerstop, lowerpass, upperpass, upperstop = thefilter['filter'].getfreqlimits()
+    lowerstop, lowerpass, upperpass, upperstop = thefilter['filter'].getfreqs()
     lowerstopindex = valtoindex(thefilter['frequencies'], lowerstop)
     lowerpassindex = valtoindex(thefilter['frequencies'], lowerpass)
     upperpassindex = valtoindex(thefilter['frequencies'], upperpass)
@@ -136,7 +136,7 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
     # construct all the filters
     for filtertype in ['lfo', 'resp', 'cardiac']:
         testfilter = noncausalfilter(filtertype=filtertype)
-        lstest, lptest, uptest, ustest = testfilter.getfreqlimits()
+        lstest, lptest, uptest, ustest = testfilter.getfreqs()
         if lptest < nyquist:
             allfilters.append(
                 {
