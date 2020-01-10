@@ -129,10 +129,10 @@ def _get_parser():
                           action='store',
                           nargs='+',
                           type=lambda x: is_float(parser, x),
-                          metavar=('LOWERFREQ UPPERFREQ',
+                          metavar=('LOWERPASS UPPERPASS',
                                    'LOWERSTOP UPPERSTOP'),
-                          help=('Filter data and regressors from LOWERFREQ to '
-                                'UPPERFREQ. LOWERSTOP and UPPERSTOP can also '
+                          help=('Filter data and regressors to retain LOWERPASS to '
+                                'UPPERPASS. LOWERSTOP and UPPERSTOP can also '
                                 'be specified, or will be calculated '
                                 'automatically'),
                           default=None)
