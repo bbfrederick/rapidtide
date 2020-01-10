@@ -25,7 +25,7 @@ def invert_float(parser, arg):
             parser.error('Value {0} is not a float or "auto"'.format(arg))
 
     if arg != 'auto':
-        arg = 1. / arg
+        arg = 1.0 / arg
     return arg
 
 
@@ -48,7 +48,7 @@ def is_range(parser, arg):
     """
     if arg is not None and len(arg) != 2:
         parser.error('Argument must be min/max pair.')
-    elif arg is not None and arg[0] > arg[1]:
+    elif arg is not None and float(arg[0]) > float(arg[1]):
         parser.error('Argument min must be lower than max.')
 
     return arg
