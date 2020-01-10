@@ -30,14 +30,14 @@ from .parser_funcs import (is_valid_file, invert_float, is_float)
 
 def _get_parser():
     """
-    Argument parser for rapidtide2
+    Argument parser for rapidtide
     """
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser('rapidtideX - perform time delay analysis on a data file')
 
     # Required arguments
     parser.add_argument('in_file',
                         type=lambda x: is_valid_file(parser, x),
-                        help='The input data file (BOLD fmri file or NIRS)')
+                        help='The input data file (BOLD fmri file or NIRS text file)')
     parser.add_argument('prefix',
                         help='The root name for the output files')
 
@@ -725,26 +725,33 @@ def rapidtide_workflow(in_file, prefix, venousrefine=False, nirs=False,
                        tmaskname=None, doprewhiten=False, saveprewhiten=False,
                        armodelorder=1, offsettime_total=None,
                        ampthreshfromsig=False, nohistzero=False,
-                       fixdelay=False, usebutterworthfilter=False):
+                       fixdelay=False, usebutterworthfilter=False, permutationmethod='shuffle'):
     """
     Run the full rapidtide workflow.
     """
     pass
 
 
-def _main(argv=None):
+def rapidtide_main():
     """
     Compile arguments for rapidtide workflow.
     """
-    args = vars(_get_parser().parse_args(argv))
+    print('getting parser')
+    theparser = _get_parser()
+    print('parsing')
+    thenamespace = theparser.parse_args()
+    print('getting vars dict')
+    args = vars(thenamespace)
+    #args = vars(_get_parser().parse_args(argv))
+    print(args)
 
     # Additional argument parsing not handled by argparse
     if args['arbvec'] is not None:
         if len(args['arbvec']) == 2:
-            args['arbvec'].append(args['arbvec'][0] * 0.9)
-            args['arbvec'].append(args['arbvec'][1] * 1.1)
+            args['arbvec'].append(args['arbvec'][0] * 0.95)
+            args['arbvec'].append(args['arbvec'][1] * 1.05)
         elif len(args['arbvec']) != 4:
-            raise ValueError("Argument '--arb' (or '-F') must be either two "
+            raise ValueError("Argument '--arb' must be either two "
                              "or four floats.")
 
     if args['offsettime'] is not None:
@@ -821,4 +828,6 @@ def _main(argv=None):
 
 
 if __name__ == '__main__':
-    _main()
+
+    # grab the command line arguments then pass them off.
+    rapidtide_main()
