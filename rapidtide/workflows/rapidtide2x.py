@@ -654,7 +654,6 @@ def rapidtide_main(thearguments):
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
-    #print(thearguments, 'version:', optiondict['release_version'], optiondict['git_tag'])
     tide_util.checkimports(optiondict)
 
     # get the command line parameters
