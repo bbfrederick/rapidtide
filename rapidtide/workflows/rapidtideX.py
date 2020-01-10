@@ -86,7 +86,7 @@ def _get_parser():
                               'file, for example with NIRS data, using one '
                               'of these options is mandatory.'),
                         default='auto')
-    preproc.add_argument('-a',
+    preproc.add_argument('--noantialias',
                          dest='antialias',
                          action='store_false',
                          help='Disable antialiasing filter',
@@ -124,7 +124,7 @@ def _get_parser():
                          default=None)
 
     filttype = preproc.add_mutually_exclusive_group()
-    filttype.add_argument('-F', '--arb',
+    filttype.add_argument('--filterparams',
                           dest='arbvec',
                           action='store',
                           nargs='+',
@@ -140,36 +140,20 @@ def _get_parser():
                           dest='filtertype',
                           action='store',
                           type=str,
-                          choices=['arb', 'vlf', 'lfo', 'resp', 'cardiac'],
+                          choices=['arb', 'vlf', 'lfo', 'resp', 'cardiac', 'lfo_legacy'],
                           help=('Filter data and regressors to specific band'),
                           default='arb')
-    filttype.add_argument('-V', '--vlf',
-                          dest='filtertype',
-                          action='store_const',
-                          const='vlf',
-                          help=('Filter data and regressors to VLF band'),
-                          default='arb')
-    filttype.add_argument('-L', '--lfo',
-                          dest='filtertype',
-                          action='store_const',
-                          const='lfo',
-                          help=('Filter data and regressors to LFO band'),
-                          default='arb')
-    filttype.add_argument('-R', '--resp',
-                          dest='filtertype',
-                          action='store_const',
-                          const='resp',
-                          help=('Filter data and regressors to respiratory '
-                                'band'),
-                          default='arb')
-    filttype.add_argument('-C', '--cardiac',
-                          dest='filtertype',
-                          action='store_const',
-                          const='cardiac',
-                          help=('Filter data and regressors to cardiac band'),
-                          default='arb')
 
-    preproc.add_argument('-N', '--numnull',
+    permutationmethod = preproc.add_mutually_exclusive_group()
+    permutationmethod.add_argument('--permutationmethod',
+                          dest='permutationmethod',
+                          action='store',
+                          type=str,
+                          choices=['shuffle', 'phaserandom'],
+                          help=('Permutation method for significance testing'),
+                          default='shuffle')
+
+    preproc.add_argument('--numnull',
                          dest='numestreps',
                          action='store',
                          type=int,
@@ -191,7 +175,7 @@ def _get_parser():
                        action='store',
                        type=str,
                        choices=['hamming', 'hann', 'blackmanharris', 'None'],
-                       help=('Window funcion to use prior to correlation. '
+                       help=('Window function to use prior to correlation. '
                              'Options are hamming (default), hann, '
                              'blackmanharris, and None'),
                        default='hamming')
@@ -202,20 +186,36 @@ def _get_parser():
                        help='Disable precorrelation windowing',
                        default='hamming')
 
-    preproc.add_argument('-f', '--spatialfilt',
+    preproc.add_argument('--spatialfilt',
                          dest='gausssigma',
                          action='store',
                          type=float,
                          metavar='GAUSSSIGMA',
                          help=('Spatially filter fMRI data prior to analysis '
                                'using GAUSSSIGMA in mm'),
-                         default=0.)
-    preproc.add_argument('-M', '--globalmean',
+                         default=0.0)
+    preproc.add_argument('--globalmean',
                          dest='useglobalref',
                          action='store_true',
                          help=('Generate a global mean regressor and use that '
                                'as the reference regressor'),
                          default=False)
+    preproc.add_argument('--globalmeaninclude',
+                         dest='globalmeanincludespec',
+                         metavar='MASK[:VALSPEC]',
+                         help=('Only use voxels in NAME for global regressor '
+                               'generation (if VALSPEC is given, only voxels '
+                               'with integral values listed in VALSPEC are used)'),
+                         default=None)
+    preproc.add_argument('--globalmeanexclude',
+                         dest='globalmeanexcludespec',
+                         metavar='MASK[:VALSPEC]',
+                         help=('Do not use voxels in NAME for global regressor '
+                               'generation (if VALSPEC is given, only voxels '
+                               'with integral values listed in VALSPEC are used)'),
+                         default=None)
+
+
     preproc.add_argument('--meanscale',
                          dest='meanscaleglobal',
                          action='store_true',
