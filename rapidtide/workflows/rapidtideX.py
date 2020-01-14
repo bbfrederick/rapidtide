@@ -28,6 +28,15 @@ import nibabel as nib
 
 from .parser_funcs import (is_valid_file, invert_float, is_float)
 
+class timerangeAction(argparse.Action):
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        if nargs is not None:
+            raise ValueError("nargs not allowed")
+        super(timerangeAction, self).__init__(option_strings, dest, **kwargs)
+    def __call__(self, parser, namespace, values, option_string=None):
+        print('%r %r %r' % (namespace, values, option_string))
+        setattr(namespace, self.dest, values)
+
 def _get_parser():
     """
     Argument parser for rapidtide
@@ -136,7 +145,7 @@ def _get_parser():
                                 'be specified, or will be calculated '
                                 'automatically'),
                           default=None)
-    filttype.add_argument('--filtertype',
+    filttype.add_argument('--prefilter',
                           dest='filtertype',
                           action='store',
                           type=str,
@@ -343,7 +352,7 @@ def _get_parser():
                                 "DELAYTIME seconds for all voxels"),
                           default=None)
     # TODO: Split into lagmin and lagmax
-    fixdelay.add_argument('-r',
+    fixdelay.add_argument('--searchrange',
                           dest='lag_extrema',
                           action='store',
                           nargs=2,
@@ -828,6 +837,4 @@ def rapidtide_main():
 
 
 if __name__ == '__main__':
-
-    # grab the command line arguments then pass them off.
     rapidtide_main()
