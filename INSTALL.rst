@@ -236,7 +236,7 @@ at this time, and it works.
 
 If you're on a Mac using Xquartz, prior to this you'll also have to do three more things.
 1) In Xquartz, go into the security preferences, and make sure "Allow connections from network hosts" is checked.
-2) You also need to tell Xquartz to listen for TCP connections.  Go to a terminal window and type:
+2) Tell Xquartz to listen for TCP connections (this is not the default).  Go to a terminal window and type:
 
 ::
 
