@@ -210,7 +210,7 @@ def refineregressor(fmridata,
             print('ERROR: no voxels in the refine mask - change include/exclude masks or relax ampthresh, delaythresh, or sigmathresh - exiting')
             sys.exit()
 
-    if optiondict['shiftall']:
+    if optiondict['cleanrefined']:
         shiftmask = locationmask
     else:
         shiftmask = refinemask
@@ -314,7 +314,7 @@ def refineregressor(fmridata,
     refineweights = weights[validlist]
     weightsum = np.sum(refineweights, axis=0) / volumetotal
     averagedata = np.sum(refinevoxels, axis=0) / volumetotal
-    if optiondict['shiftall']:
+    if optiondict['cleanrefined']:
         invalidlist = np.where((1 - ampmask) > 0)[0]
         discardvoxels = shiftedtcs[invalidlist]
         discardweights = weights[invalidlist]
