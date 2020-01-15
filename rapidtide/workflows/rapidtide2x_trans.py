@@ -603,7 +603,6 @@ def process_args():
     optiondict['addedskip'] = 0
 
     # refinement options
-    optiondict['shiftall'] = True
     optiondict['cleanrefined'] = False
     optiondict['lagmaskside'] = 'both'
     optiondict['refineweighting'] = 'R2'
@@ -812,7 +811,6 @@ def process_args():
             sys.exit()
         elif o == '--cleanrefined':
             optiondict['cleanrefined'] = True
-            optiondict['shiftall'] = True
             print('Will attempt to clean refined regressor')
         elif o == '--respdelete':
             optiondict['respdelete'] = True
@@ -1205,6 +1203,7 @@ def process_args():
             linkchar = '='
             print('Using widththresh of ', optiondict['sigmathresh'])
         elif o == '--globalmeaninclude':
+
             optiondict['globalmeanincludename'], colspec = tide_io.parsefilespec(a)
             if colspec is not None:
                 optiondict['globalmeanincludevals'] = tide_io.colspectolist(colspec)
@@ -1824,7 +1823,6 @@ def rapidtide_main():
     oversampfreq = optiondict['oversampfactor'] / fmritr
     thecorrelator = tide_classes.correlator(Fs=oversampfreq,
                                          ncprefilter=theprefilter,
-                                         usewindowfunc=optiondict['usewindowfunc'],
                                          detrendorder=optiondict['detrendorder'],
                                          windowfunc=optiondict['windowfunc'],
                                          corrweighting=optiondict['corrweighting'])
