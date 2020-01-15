@@ -234,12 +234,17 @@ do is find the IP address of the machine you're running on (lets call it MYIPADD
 This disables X11 security - this is almost certainly not the best thing to do, but I don't have a better solution
 at this time, and it works.
 
-If you're on a Mac using Xquartz, prior to this you'll also have to have gone into the security preferences, 
-checked "Allow connections from network hosts", logged out and logged back in again (you only need to do this once - 
-it will stay that way until you change it.)
+If you're on a Mac using Xquartz, prior to this you'll also have to do three more things.
+1) In Xquartz, go into the security preferences, and make sure "Allow connections from network hosts" is checked.
+2) You also need to tell Xquartz to listen for TCP connections.  Go to a terminal window and type:
 
+::
 
-Then run the command (the example here is tidepool)
+    defaults write org.macosforge.xquartz.X11 nolisten_tcp 0
+
+3) Log out and log back in again (you only need to do this once - it will stay that way until you change it.)
+
+Then the following command will work:
 
 ::
 
