@@ -235,6 +235,7 @@ This disables X11 security - this is almost certainly not the best thing to do, 
 at this time, and it works.
 
 If you're on a Mac using Xquartz, prior to this you'll also have to do three more things.
+
 1) In Xquartz, go into the security preferences, and make sure "Allow connections from network hosts" is checked.
 2) Tell Xquartz to listen for TCP connections (this is not the default).  Go to a terminal window and type:
 
@@ -244,7 +245,7 @@ If you're on a Mac using Xquartz, prior to this you'll also have to do three mor
 
 3) Log out and log back in again (you only need to do this once - it will stay that way until you change it.)
 
-Then the following command will work:
+Then the following command will work (you can replace 'tidepool' with any of the rapidtide commands that put up windows):
 
 ::
 
