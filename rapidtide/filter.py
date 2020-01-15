@@ -1267,11 +1267,11 @@ class noncausalfilter:
         self.usebutterworth = useit
         self.butterworthorder = order
 
-    def setpadtime(self, padtime):
-        self.padtime = padtime
-
     def setdebug(self, debug):
         self.debug = debug
+
+    def setpadtime(self, padtime):
+        self.padtime = padtime
 
     def getpadtime(self):
         return self.padtime
