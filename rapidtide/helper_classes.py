@@ -160,7 +160,6 @@ class correlator:
                  lagmaxinpts=0,
                  ncprefilter=None,
                  reftc=None,
-                 usewindowfunc=True,
                  detrendorder=1,
                  windowfunc='hamming',
                  corrweighting='none'):
@@ -170,9 +169,12 @@ class correlator:
         self.lagmaxinpts = lagmaxinpts
         self.ncprefilter = ncprefilter
         self.reftc = reftc
-        self.usewindowfunc = usewindowfunc
         self.detrendorder = detrendorder
         self.windowfunc = windowfunc
+        if self.windowfunc is not None:
+            self.usewindowfunc = True
+        else:
+            self.usewindowfunc = False
         self.corrweighting = corrweighting
         if self.reftc is not None:
             self.setreftc(self.reftc)
