@@ -1211,20 +1211,30 @@ class noncausalfilter:
         self.padtime = padtime
         self.cyclic = cyclic
         self.debug = debug
+
+        transitionfrac = 0.025
         self.VLF_UPPERPASS = 0.009
-        self.VLF_UPPERSTOP = 0.010
-        self.LF_LOWERSTOP = self.VLF_UPPERPASS
-        self.LF_LOWERPASS = self.VLF_UPPERSTOP
+        self.VLF_UPPERSTOP = self.VLF_UPPERPASS * (1.0 + transitionfrac)
+
+        self.LF_LOWERPASS = 0.01
         self.LF_UPPERPASS = 0.15
-        self.LF_UPPERSTOP = 0.20
-        self.RESP_LOWERSTOP = self.LF_UPPERPASS
-        self.RESP_LOWERPASS = self.LF_UPPERSTOP
-        self.RESP_UPPERPASS = 0.4
-        self.RESP_UPPERSTOP = 0.5
-        self.CARD_LOWERSTOP = self.RESP_UPPERPASS
-        self.CARD_LOWERPASS = self.RESP_UPPERSTOP
-        self.CARD_UPPERPASS = 2.5
-        self.CARD_UPPERSTOP = 3.0
+        self.LF_LOWERSTOP = self.LF_LOWERPASS * (1.0 - transitionfrac)
+        self.LF_UPPERSTOP = self.LF_UPPERPASS * (1.0 + transitionfrac)
+
+        self.LF_LEGACY_LOWERPASS = 0.01
+        self.LF_LEGACY_UPPERPASS = 0.15
+        self.LF_LEGACY_LOWERSTOP = 0.009
+        self.LF_LEGACY_UPPERSTOP = 0.2
+
+        self.RESP_LOWERPASS = 0.2
+        self.RESP_UPPERPASS = 0.5
+        self.RESP_LOWERSTOP = self.RESP_LOWERPASS * (1.0 - transitionfrac)
+        self.RESP_UPPERSTOP = self.RESP_UPPERPASS * (1.0 + transitionfrac)
+
+        self.CARD_LOWERPASS = 0.66
+        self.CARD_UPPERPASS = 3.0
+        self.CARD_LOWERSTOP = self.CARD_LOWERPASS * (1.0 - transitionfrac)
+        self.CARD_UPPERSTOP = self.CARD_UPPERPASS * (1.0 + transitionfrac)
         self.settype(self.filtertype)
 
     def settype(self, thetype):
@@ -1239,6 +1249,11 @@ class noncausalfilter:
             self.lowerpass = 1.0 * self.LF_LOWERPASS
             self.upperpass = 1.0 * self.LF_UPPERPASS
             self.upperstop = 1.0 * self.LF_UPPERSTOP
+        elif self.filtertype == 'lfo_legacy' or self.filtertype == 'lfo_legacy_stop':
+            self.lowerstop = 1.0 * self.LF_LEGACY_LOWERSTOP
+            self.lowerpass = 1.0 * self.LF_LEGACY_LOWERPASS
+            self.upperpass = 1.0 * self.LF_LEGACY_UPPERPASS
+            self.upperstop = 1.0 * self.LF_LEGACY_UPPERSTOP
         elif self.filtertype == 'resp' or self.filtertype == 'resp_stop':
             self.lowerstop = 1.0 * self.RESP_LOWERSTOP
             self.lowerpass = 1.0 * self.RESP_LOWERPASS
@@ -1397,12 +1412,14 @@ class noncausalfilter:
                              usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
                              usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, cyclic=self.cyclic, debug=self.debug))
         elif self.filtertype == 'vlf' or self.filtertype == 'lfo' \
+                or self.filtertype == 'lfo_legacy' \
                 or self.filtertype == 'resp' or self.filtertype == 'cardiac':
             return (arb_pass(Fs, data,
                              self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
                              usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
                              usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, cyclic=self.cyclic, debug=self.debug))
         elif self.filtertype == 'vlf_stop' or self.filtertype == 'lfo_stop' \
+                or self.filtertype == 'lfo_legacy_stop' \
                 or self.filtertype == 'resp_stop' or self.filtertype == 'cardiac_stop':
             return (data - arb_pass(Fs, data,
                                     self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
