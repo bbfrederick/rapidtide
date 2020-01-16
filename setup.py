@@ -38,12 +38,12 @@ modules_list = ['rapidtide/miscmath',
                 'rapidtide/stats',
                 'rapidtide/util',
                 'rapidtide/multiproc',
+                'rapidtide/nullcorrpass_legacy',
                 'rapidtide/nullcorrpass',
-                'rapidtide/nullcorrpassx',
+                'rapidtide/corrpass_legacy',
                 'rapidtide/corrpass',
-                'rapidtide/corrpassx',
+                'rapidtide/corrfit_legacy',
                 'rapidtide/corrfit',
-                'rapidtide/corrfitx',
                 'rapidtide/helper_classes',
                 'rapidtide/glmpass',
                 'rapidtide/dlfilter',
@@ -57,7 +57,6 @@ if addtidepool:
 
 script_list = ['rapidtide/scripts/rapidtide2',
                'rapidtide/scripts/rapidtide2x',
-               'rapidtide/scripts/rapidtide2x_trans',
                'rapidtide/scripts/rapidtideX',
                'rapidtide/scripts/rapidtide2std',
                'rapidtide/scripts/happy2std',
@@ -195,8 +194,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=["numpy>=1.16; python_version>='3.0'",
-                        "numpy>=1.16,<1.17; python_version<'3.0'",
+    install_requires=["numpy>=1.16",
                         'scipy',
                         'pandas',
                         'scikit-image',
