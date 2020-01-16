@@ -2393,7 +2393,7 @@ def rapidtide_main():
         print('')
     else:
         # get the original data to calculate the mean
-        print('rereading', fmrifilename, ' for GLM filter, please wait')
+        print('rereading', fmrifilename, ' to calculate mean value, please wait')
         if optiondict['textio']:
             nim_data = tide_io.readvecs(fmrifilename)
         else:
