@@ -1,4 +1,4 @@
-# Use Ubuntu 16.04 LTS
+# Use Ubuntu 18.04 LTS
 FROM ubuntu:18.04
 
 # Pre-cache neurodebian key
@@ -13,6 +13,7 @@ RUN apt-get install -y --no-install-recommends \
                     ca-certificates \
                     xvfb \
                     build-essential \
+                    lsb_release \
                     autoconf \
                     libtool \
                     gnupg \
@@ -21,7 +22,6 @@ RUN apt-get install -y --no-install-recommends \
                     libgl1-mesa-glx \
                     libx11-xcb1 \
                     git
-#RUN apt-get install --reinstall libxcb-xinerama0
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 #ENV FSL_DIR="/usr/share/fsl/5.0" \
