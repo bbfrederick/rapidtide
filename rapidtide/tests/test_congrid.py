@@ -123,10 +123,14 @@ def test_congrid(debug=False, display=False):
                     plt.show()
 
                 # do the tests
-                msethresh = 1e-2
+                msethresh = 1.5e-2
                 themse = mse(target, griddeddata)
                 if debug:
-                    print('mse for', cycles, 'cycles:', gridkernel, str(congridbins), ':', themse)
+                    if themse >= msethresh:
+                        extra = 'FAIL'
+                    else:
+                        extra = ''
+                    print('mse for', cycles, 'cycles:', gridkernel, str(congridbins), ':', themse, extra)
                     outputlines.append(' '.join(['mse for', str(cycles), 'cycles:', gridkernel, str(congridbins), ':', str(themse)]))
                 if not debug:
                     assert themse < msethresh
