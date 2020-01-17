@@ -19,6 +19,7 @@ from __future__ import print_function, division
 import matplotlib.pyplot as plt
 import numpy as np
 import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
 
 
 def test_proberegressor(debug=False, display=False):
@@ -29,6 +30,7 @@ def test_proberegressor(debug=False, display=False):
     oversampfactor = 2
     invertregressor = False
     detrendorder = 3
+    preprocskip = 0
 
     filename = "testdata/lforegressor.txt"
     inputfreq = 1.0 / fmritr
@@ -44,7 +46,7 @@ def test_proberegressor(debug=False, display=False):
     reference_x = np.arange(0.0, numreference) * inputperiod - (inputstarttime + offsettime)
     initial_fmri_x = np.arange(0.0, validtimepoints - addedskip) * fmritr + skiptime
     os_fmri_x = np.arange(0.0, (validtimepoints - addedskip) * oversampfactor - (
-            oversampfactor - 1)) * oversamptr + skiptime
+            oversampfactor - 1)) * (fmritr / oversampfactor) + skiptime
 
     # invert the regressor if necessary
     if invertregressor:

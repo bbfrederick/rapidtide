@@ -114,7 +114,7 @@ def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
         plt.plot(testwaves[-1]['timeaxis'], testwaves[-1]['waveform'])
         plt.legend([testwaves[-1]['name']])
         plt.show()
-    writevec(testwaves[-1]['waveform'], 'stepped.txt')
+    #writevec(testwaves[-1]['waveform'], 'stepped.txt')
     return testwaves
 
 
