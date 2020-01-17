@@ -117,6 +117,18 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
     return maskvector
 
 
+class indicatespecifiedAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
+        setattr(namespace, self.dest+'_nondefault', True)
+
+def setifnotset(thedict, thekey, theval):
+    try:
+        test = thedict[thekey + '_nondefault']
+    except KeyError:
+        print('overriding ' + thekey)
+        thedict[thekey] = theval
+
 class timerangeAction(argparse.Action):
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         if nargs is not None:
@@ -621,7 +633,7 @@ def _get_parser():
                           default=None)
     fixdelay.add_argument('--searchrange',
                           dest='lag_extrema',
-                          action='store',
+                          action=indicatespecifiedAction,
                           nargs=2,
                           type=float,
                           metavar=('LAGMIN', 'LAGMAX'),
@@ -661,7 +673,7 @@ def _get_parser():
                           default='gauss')
     corr_fit.add_argument('--despecklepasses',
                           dest='despeckle_passes',
-                          action='store',
+                          action=indicatespecifiedAction,
                           type=int,
                           metavar='PASSES',
                           help=('Detect and refit suspect correlations to '
@@ -1028,6 +1040,8 @@ def process_args():
     except SystemExit:
         _get_parser().print_help()
         raise
+    print()
+    print('before postprocessing')
     print(args)
 
     # some tunable parameters for internal debugging
@@ -1104,8 +1118,14 @@ def process_args():
 
 
     # Additional argument parsing not handled by argparse
-    args['lagmin'] = args['lag_extrema'][0]
-    args['lagmax'] = args['lag_extrema'][1]
+    try:
+        test = args['lag_extrema_nondefault']
+        args['lagmin_nondefault'] = True
+        args['lagmax_nondefault'] = True
+        args['lagmin'] = args['lag_extrema'][0]
+        args['lagmax'] = args['lag_extrema'][1]
+    except KeyError:
+        pass
     args['startpoint'] = args['timerange'][0]
     args['endpoint'] = args['timerange'][1]
 
@@ -1134,7 +1154,7 @@ def process_args():
     else:
         args['ampthreshfromsig'] = False
 
-    if args['despeckle_thresh'] != 5 and args['despeckle_passes'] == 0:
+    if args['despeckle_thresh'] != 5.0 and args['despeckle_passes'] == 0:
         args['despeckle_passes'] = 1
 
     if args['zerooutbadfit']:
@@ -1232,21 +1252,25 @@ def process_args():
         args['lagmaskthresh'] = 0.1
 
     if args['delaymapping']:
-        args['despecklepasses'] = 4
-        args['lagmin'] = -10.0
-        args['lagmax'] = 30.0
+        setifnotset(args, 'despeckle_passes', 4)
+        setifnotset(args, 'lagmin', -10.0)
+        setifnotset(args, 'lagmax', 30.0)
         args['passes'] = 3
         args['refineoffset'] = True
         args['pickleft'] = True
         args['doglmfilt'] = False
 
     if args['denoising']:
-        args['despecklepasses'] = 0
-        args['lagmin'] = -15.0
-        args['lagmax'] = 15.0
+        asetifnotset(args, 'despeckle_passes', 0)
+        setifnotset(args, 'lagmin', -15.0)
+        setifnotset(args, 'lagmax', 15.0)
         args['passes'] = 3
         args['refineoffset'] = True
         args['doglmfilt'] = True
+
+    print()
+    print('after postprocessing')
+    print(args)
 
     # start the clock!
     tide_util.checkimports(args)
