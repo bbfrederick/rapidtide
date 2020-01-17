@@ -1212,7 +1212,7 @@ class noncausalfilter:
         self.cyclic = cyclic
         self.debug = debug
 
-        transitionfrac = 0.025
+        transitionfrac = 0.05
         self.VLF_UPPERPASS = 0.009
         self.VLF_UPPERSTOP = self.VLF_UPPERPASS * (1.0 + transitionfrac)
 
