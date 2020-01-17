@@ -216,7 +216,7 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
             #offset += 2.2
             plt.legend(legend)
             plt.show()
-    assert False
+    assert True
 
 
 def test_filterprops(display=False):

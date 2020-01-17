@@ -22,7 +22,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.correlate as tide_corr
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.nullcorrpass_legacy as tide_nullcorr
+#import rapidtide.nullcorrpass as tide_nullcorr
 import rapidtide.nullcorrpass as tide_nullcorrx
 
 import matplotlib.pyplot as plt
@@ -98,35 +98,24 @@ def test_nullcorr(debug=False, display=False):
     if debug:
         print(optiondict)
 
-    for nullfunction in [tide_nullcorrx.getNullDistributionDatax, tide_nullcorr.getNullDistributionData]:
+    for nullfunction in [tide_nullcorrx.getNullDistributionDatax]:
         for i in range(numpasses):
-            if nullfunction == tide_nullcorr.getNullDistributionData:
-                corrlist = nullfunction(sourcedata,
-                                        xcorr_x,
-                                        lfofilter,
-                                        Fs,
-                                        corrzero,
-                                        lagmininpts,
-                                        lagmaxinpts,
-                                        optiondict)
-            else:
-                break
+            if False:
+                tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), 'corrdistdata.txt'))
     
-            tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), 'corrdistdata.txt'))
+                # calculate percentiles for the crosscorrelation from the distribution data
+                histlen = 250
+                thepercentiles = [0.95, 0.99, 0.995]
+        
+                pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
+                if debug:
+                    tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
+                    tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
     
-            # calculate percentiles for the crosscorrelation from the distribution data
-            histlen = 250
-            thepercentiles = [0.95, 0.99, 0.995]
-    
-            pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
-            if debug:
-                tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
-                tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
-
-            tide_stats.makeandsavehistogram(corrlist, histlen, 0,
-                                            os.path.join(get_test_temp_path(), 'correlationhist'),
-                                            displaytitle='Null correlation histogram',
-                                            displayplots=display, refine=False)
+                tide_stats.makeandsavehistogram(corrlist, histlen, 0,
+                                                os.path.join(get_test_temp_path(), 'correlationhist'),
+                                                displaytitle='Null correlation histogram',
+                                                displayplots=display, refine=False)
 
             assert True
 
