@@ -377,7 +377,7 @@ Physiological noise identification and removal using time delay methods
    :target: https://opensource.org/licenses/Apache-2.0
 .. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=latest
    :target: http://rapidtide.readthedocs.io/en/latest/?badge=latest
-.. |Travis-CI| image:: https://travis-ci.org/bbfrederick/rapidtide.svg?branch=dev
+.. |Travis-CI| image:: https://travis-ci.com/bbfrederick/rapidtide.svg?branch=dev
    :target: https://travis-ci.org/bbfrederick/rapidtide
 .. |Coverage| image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/dev/graph/badge.svg
    :target: https://codecov.io/gh/bbfrederick/rapidtide
