@@ -26,10 +26,11 @@ from rapidtide.filter import noncausalfilter
 
 def spectralfilterprops(thefilter, debug=False):
     lowerstop, lowerpass, upperpass, upperstop = thefilter['filter'].getfreqs()
-    lowerstopindex = valtoindex(thefilter['frequencies'], lowerstop)
-    lowerpassindex = valtoindex(thefilter['frequencies'], lowerpass)
-    upperpassindex = valtoindex(thefilter['frequencies'], upperpass)
-    upperstopindex = np.min([valtoindex(thefilter['frequencies'], upperstop), len(thefilter['frequencies']) - 1])
+    freqspace = thefilter['frequencies'][1] - thefilter['frequencies'][0]
+    lowerstopindex = int(np.floor(lowerstop / freqspace))
+    lowerpassindex = int(np.ceil(lowerpass / freqspace))
+    upperpassindex = int(np.floor(upperpass / freqspace))
+    upperstopindex = int(np.min([np.ceil(upperstop / freqspace), len(thefilter['frequencies']) - 1]))
     if debug:
         print('target freqs:', lowerstop, lowerpass, upperpass, upperstop)
         print('actual freqs:', thefilter['frequencies'][lowerstopindex],
