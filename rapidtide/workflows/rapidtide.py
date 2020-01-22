@@ -1034,15 +1034,16 @@ def process_args():
     """
     Compile arguments for rapidtide workflow.
     """
-    #args = vars(_get_parser().parse_args())
     try:
         args = vars(_get_parser().parse_args())
     except SystemExit:
         _get_parser().print_help()
         raise
-    print()
-    print('before postprocessing')
-    print(args)
+
+    if args['debug']:
+        print()
+        print('before postprocessing')
+        print(args)
 
     # some tunable parameters for internal debugging
     args['addedskip'] = 0
@@ -1268,9 +1269,10 @@ def process_args():
         args['refineoffset'] = True
         args['doglmfilt'] = True
 
-    print()
-    print('after postprocessing')
-    print(args)
+    if args['debug']:
+        print()
+        print('after postprocessing')
+        print(args)
 
     # start the clock!
     tide_util.checkimports(args)
