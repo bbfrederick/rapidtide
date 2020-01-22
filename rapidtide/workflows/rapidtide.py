@@ -263,19 +263,20 @@ def _get_parser():
     analysis_type.add_argument('--denoising',
                         dest='denoising',
                         action='store_true',
-                        help=('This is a macro that sets --passes=3, '
-                              '--lagmaxthresh=6.0, --ampthresh=0.5, and '
-                              '--refineupperlag to bias refinement towards '
-                              'voxels in the draining vasculature for an '
-                              'fMRI scan. '),
+                        help=('Preset for hemodynamic denoising - this is a macro that '
+                              'sets lagmin=-15.0, lagmax=15.0, passes=3, despeckle_passes=0,'
+                              'refineoffset=True, doglmfilt=True.'
+                              'Any of these options can be overridden with the appropriate'
+                              'additional arguments'),
                         default=False)
     analysis_type.add_argument('--delaymapping',
                         dest='delaymapping',
                         action='store_true',
-                        help=('This is a NIRS analysis - this is a macro that '
-                              'sets --nothresh, --preservefiltering, '
-                              '--refineprenorm=var, --ampthresh=0.7, and '
-                              '--lagminthresh=0.1. '),
+                        help=('Preset for delay mapping analysis - this is a macro that '
+                              'sets lagmin=-10.0, lagmax=30.0, passes=3, despeckle_passes=4,'
+                              'refineoffset=True, pickleft=True, doglmfilt=False.'
+                              'Any of these options can be overridden with the appropriate'
+                              'additional arguments'),
                         default=False)
 
     # Macros
