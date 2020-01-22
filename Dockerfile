@@ -13,9 +13,9 @@ RUN apt-get install -y --no-install-recommends \
                     ca-certificates \
                     xvfb \
                     build-essential \
-                    lsb_release \
                     autoconf \
                     libtool \
+                    lsb-core \
                     gnupg \
                     pkg-config \
                     xterm \
@@ -32,7 +32,8 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 #    FREESURFER_HOME="/opt/freesurfer"
 
 # Installing Neurodebian packages (FSL)
-RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> /etc/apt/sources.list.d/neurodebian.sources.list && \
+RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> \
+    /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /usr/local/etc/neurodebian.gpg && \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
 
