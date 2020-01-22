@@ -6,7 +6,7 @@ set -ex
 # docker hub username
 USERNAME=fredericklab
 # image name
-IMAGE=rapidtide
+IMAGE=rapidtide_dev
 
 # ensure we're up to date
 git pull
@@ -16,9 +16,9 @@ version=`cat VERSION`
 echo "version: $version"
 
 # run build
-docker build . -t rapidtide \
+docker build . -t $IMAGE \
     --build-arg VERSION=$version \
-    --build-arg BUILD_DATE=`date +"%Y%m%dT%k%M%S"` \
+    --build-arg BUILD_DATE=`date +"%Y%m%dT%H%M%S"` \
     --build-arg VCS_REF=`git rev-parse HEAD`
 
 # tag it
