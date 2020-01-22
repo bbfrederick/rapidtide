@@ -25,8 +25,8 @@
 
 from __future__ import print_function, division
 import sys
-import rapidtide.workflows.rapidtideX as rapidtideX_workflow
+import rapidtide.workflows.rapidtide as rapidtide_workflow
 
 if __name__ == '__main__':
-    rapidtideX_workflow.rapidtide_main()
+    rapidtide_workflow.rapidtide_main()
 

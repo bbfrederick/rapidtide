@@ -53,7 +53,7 @@ if addtidepool:
     modules_list.append('rapidtide/OrthoImageItem')
 
 script_list = ['rapidtide/scripts/rapidtide2x',
-               'rapidtide/scripts/rapidtideX',
+               'rapidtide/scripts/rapidtide',
                'rapidtide/scripts/rapidtide2std',
                'rapidtide/scripts/happy2std',
                'rapidtide/scripts/showxcorr',

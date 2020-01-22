@@ -249,7 +249,7 @@ def _get_parser():
     """
     Argument parser for rapidtide
     """
-    parser = argparse.ArgumentParser('rapidtideX - perform time delay analysis on a data file', usage=argparse.SUPPRESS)
+    parser = argparse.ArgumentParser('rapidtide - perform time delay analysis on a data file', usage=argparse.SUPPRESS)
 
     # Required arguments
     parser.add_argument('in_file',
