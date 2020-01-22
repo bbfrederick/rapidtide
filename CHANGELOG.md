@@ -1,6 +1,14 @@
 # History of changes
 
-## Version 1.9 (1/6/20)
+## Version 2.0 (1/22/20)
+* (rapidtide): rapidtide2 and rapidtide2x have been replaced by a single version, rapidtide.
+* (rapidtide): The getopt argument parser has been completely replace with an argparse version.  The way you specify a number of options has changed.
+* (rapidtide): I've reevaluated defaults to reflect typical usage.  You can still do any analysis you were doing before, but it may now require changes to scripts and workflows to get the old default behavior.
+* (rapidtide): Regressor and data filtering has been changed significantly.  While the nominal filter passbands are the same, the transitions to the stopbands have been tightened up quite a bit.  This is most noticable in the LFO band.  The pasband is still from 0.01-0.15Hz with a trapezoidal rolloff, but the upper stopband now starts at 0.1575Hz instead of 0.20Hz.  The wide transition band was letting in a significant amount of respiratory signal for subjects with low respiratory rates (about half of my subjects seem to breath slower than the nominal minimum rate of 12 breaths/minute).
+* (rapidtide): The -V, -L, -R and -C filter band specifiers have been retired.  Filter bands are now specified with '--filterband XXX', where XXX is vlf, lfo, lfo_legacy, resp, cardiac, or none.  'lfo' is selected by default (LFO band with sharp transition bands). To skip filtering, use '--filterband none'.  '--filterband lfo_legacy' will filter to the LFO band with the old, wide transition bands.
+* (rapidtide): To specify an arbitrary filter, use '--filterfreqs LOWERPASS UPPERPASS [LOWERSTOP UPPERSTOP]'.  If you don't specify the stop bands, the stop frequencies are set to 5% below and above LOWERPASS and UPPERPASS, respectively.
+
+# Version 1.9 (1/6/20)
 * (all): Now compatible with nibabel 3.x
 * (all): Significantly expanded test suite.  Code coverage is now at 47%.
 * (documentation): Added instructions for installing the deep learning filter code
