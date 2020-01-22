@@ -22,8 +22,8 @@ import rapidtide.filter as tide_filt
 import rapidtide.correlate as tide_corr
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
-#import rapidtide.nullcorrpass as tide_nullcorr
 import rapidtide.nullcorrpass as tide_nullcorrx
+import rapidtide.helper_classes as tide_classes
 
 import matplotlib.pyplot as plt
 from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path, create_dir
@@ -81,6 +81,7 @@ def test_nullcorr(debug=False, display=False):
         'findmaxtype':       'gauss',
         'lagmin':            lagmin,
         'lagmax':            lagmax,
+        'absminsigma':       0.25,
         'absmaxsigma':       25.0,
         'edgebufferfrac':    0.0,
         'lthreshval':        0.0,
@@ -94,30 +95,76 @@ def test_nullcorr(debug=False, display=False):
         'permutationmethod': 'shuffle',
         'hardlimit':         True
     }
+    theprefilter = tide_filt.noncausalfilter('lfo')
+    thecorrelator = tide_classes.correlator(Fs=Fs,
+                                         ncprefilter=theprefilter,
+                                         detrendorder=optiondict['detrendorder'],
+                                         windowfunc=optiondict['windowfunc'],
+                                         corrweighting=optiondict['corrweighting'])
+
+    thefitter = tide_classes.correlation_fitter(lagmod=optiondict['lagmod'],
+                                             lthreshval=optiondict['lthreshval'],
+                                             uthreshval=optiondict['uthreshval'],
+                                             bipolar=optiondict['bipolar'],
+                                             lagmin=optiondict['lagmin'],
+                                             lagmax=optiondict['lagmax'],
+                                             absmaxsigma=optiondict['absmaxsigma'],
+                                             absminsigma=optiondict['absminsigma'],
+                                             debug=optiondict['debug'],
+                                             findmaxtype=optiondict['findmaxtype'],
+                                             refine=optiondict['gaussrefine'],
+                                             searchfrac=optiondict['searchfrac'],
+                                             fastgauss=optiondict['fastgauss'],
+                                             enforcethresh=optiondict['enforcethresh'],
+                                             hardlimit=optiondict['hardlimit'])
 
     if debug:
         print(optiondict)
 
-    for nullfunction in [tide_nullcorrx.getNullDistributionDatax]:
-        for i in range(numpasses):
-            if False:
-                tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), 'corrdistdata.txt'))
-    
-                # calculate percentiles for the crosscorrelation from the distribution data
-                histlen = 250
-                thepercentiles = [0.95, 0.99, 0.995]
-        
-                pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
-                if debug:
-                    tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
-                    tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
-    
-                tide_stats.makeandsavehistogram(corrlist, histlen, 0,
-                                                os.path.join(get_test_temp_path(), 'correlationhist'),
-                                                displaytitle='Null correlation histogram',
-                                                displayplots=display, refine=False)
+    thecorrelator.setlimits(lagmininpts, lagmaxinpts)
+    thecorrelator.setreftc(sourcedata)
+    dummy, trimmedcorrscale, dummy = thecorrelator.getcorrelation()
+    thefitter.setcorrtimeaxis(trimmedcorrscale)
+    histograms = []
+    for i in range(numpasses):
+        corrlist = tide_nullcorrx.getNullDistributionDatax(sourcedata,
+                                 Fs,
+                                 thecorrelator,
+                                 thefitter,
+                                 despeckle_thresh=5.0,
+                                 fixdelay=False,
+                                 fixeddelayvalue=0.0,
+                                 numestreps=optiondict['numestreps'],
+                                 nprocs=1,
+                                 showprogressbar=optiondict['showprogressbar'],
+                                 chunksize=1000,
+                                 permutationmethod=optiondict['permutationmethod'])
+        tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), 'corrdistdata.txt'))
 
-            assert True
+        # calculate percentiles for the crosscorrelation from the distribution data
+        histlen = 250
+        thepercentiles = [0.95, 0.99, 0.995]
+
+        pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
+        if debug:
+            tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
+            tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
+
+        thehist = tide_stats.makehistogram(np.abs(corrlist), histlen, therange=[0.0, 1.0])
+        histograms.append(thehist)
+        thestore = np.zeros((2, len(thehist[0])), dtype='float64')
+        thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
+        thestore[1, :] = thehist[0][-histlen:]
+        if display:
+            plt.figure()
+            plt.plot(thestore[0, :], thestore[1, :])
+            plt.show()
+
+        #tide_stats.makeandsavehistogram(corrlist, histlen, 0,
+                                        #os.path.join(get_test_temp_path(), 'correlationhist'),
+                                        #displaytitle='Null correlation histogram',
+                                        #displayplots=display, refine=False)
+        assert True
 
 
 if __name__ == '__main__':
