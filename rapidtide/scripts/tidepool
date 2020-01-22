@@ -809,7 +809,6 @@ def updateRegressorSpectrum():
         upperlim = regressorfilterlimits[1]
     bottomleft = [lowerlim, 0.0]
     size = [upperlim - lowerlim, spectop]
-    print('bottomleft, size:', bottomleft, size)
     therectangle = RectangleItem(bottomleft, size)
     regressorspectrum_ax.addItem(therectangle)
 
