@@ -264,18 +264,18 @@ def _get_parser():
                         dest='denoising',
                         action='store_true',
                         help=('Preset for hemodynamic denoising - this is a macro that '
-                              'sets lagmin=-15.0, lagmax=15.0, passes=3, despeckle_passes=0,'
-                              'refineoffset=True, doglmfilt=True.'
-                              'Any of these options can be overridden with the appropriate'
+                              'sets lagmin=-15.0, lagmax=15.0, passes=3, despeckle_passes=0, '
+                              'refineoffset=True, doglmfilt=True. '
+                              'Any of these options can be overridden with the appropriate '
                               'additional arguments'),
                         default=False)
     analysis_type.add_argument('--delaymapping',
                         dest='delaymapping',
                         action='store_true',
                         help=('Preset for delay mapping analysis - this is a macro that '
-                              'sets lagmin=-10.0, lagmax=30.0, passes=3, despeckle_passes=4,'
-                              'refineoffset=True, pickleft=True, doglmfilt=False.'
-                              'Any of these options can be overridden with the appropriate'
+                              'sets lagmin=-10.0, lagmax=30.0, passes=3, despeckle_passes=4, '
+                              'refineoffset=True, pickleft=True, doglmfilt=False. '
+                              'Any of these options can be overridden with the appropriate '
                               'additional arguments'),
                         default=False)
 
@@ -796,6 +796,7 @@ def _get_parser():
                         help=('Only use negative lags for regressor '
                               'refinement. '),
                         default='both')
+
     reg_ref.add_argument('--refinetype',
                          dest='refinetype',
                          action='store',
