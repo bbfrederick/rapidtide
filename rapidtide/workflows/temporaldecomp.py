@@ -33,7 +33,7 @@ from sklearn.decomposition import FastICA, PCA, SparsePCA
 
 def _get_parser():
     """
-    Argument parser for rapidtide
+    Argument parser for temporaldecomp
     """
     parser = argparse.ArgumentParser('temporaldecomp - perform PCA or ICA decomposition on a data file in the time dimension', usage=argparse.SUPPRESS)
 
