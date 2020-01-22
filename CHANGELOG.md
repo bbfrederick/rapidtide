@@ -4,11 +4,13 @@
 * (all): Python 2.x is no longer supported.
 * (rapidtide): rapidtide2 and rapidtide2x have been replaced by a single version, rapidtide (which is basically rapidtide2x v1.9.0 with a different argument parser and default option values).
 * (rapidtide): The getopt argument parser has been completely rewritten using argparse.  The way you specify a number of options has changed.
-* (rapidtide): I've reevaluated defaults to reflect typical usage.  You can still do any analysis you were doing before, but it may now require changes to scripts and workflows to get the old default behavior.  For most cases you can get good analyses with a minimum set of command line options now.
+* (rapidtide): Any option that takes additional values (numbers, file names, etc.) is now specified as '--option VALUE [VALUE [VALUE...]]' rather than as '--option=VALUE[,VALUE[,VALUE...]]'.
+* (rapidtide): After a lot of use over the years, I've reset a lot of defaults to reflect typical usage.  You can still do any analysis you were doing before, but it may now require changes to scripts and workflows to get the old default behavior.  For most cases you can get good analyses with a minimum set of command line options now.
 * (rapidtide): There are two new macros, --denoise and --delaymapping, which will set defaults to good values for those use cases in most healthy controls.  Any of the preset values for these macros can be overridden with command line options.
 * (rapidtide): Regressor and data filtering has been changed significantly.  While the nominal filter passbands are the same, the transitions to the stopbands have been tightened up quite a bit.  This is most noticable in the LFO band.  The pasband is still from 0.01-0.15Hz with a trapezoidal rolloff, but the upper stopband now starts at 0.1575Hz instead of 0.20Hz.  The wide transition band was letting in a significant amount of respiratory signal for subjects with low respiratory rates (about half of my subjects seem to breath slower than the nominal adult minimum rate of 12 breaths/minute).
 * (rapidtide): The -V, -L, -R and -C filter band specifiers have been retired.  Filter bands are now specified with '--filterband XXX', where XXX is vlf, lfo, lfo_legacy, resp, cardiac, or none.  'lfo' is selected by default (LFO band with sharp transition bands). To skip filtering, use '--filterband none'.  '--filterband lfo_legacy' will filter to the LFO band with the old, wide transition bands.
 * (rapidtide): To specify an arbitrary filter, use '--filterfreqs LOWERPASS UPPERPASS [LOWERSTOP UPPERSTOP]'.  If you don't specify the stop bands, the stop frequencies are set to 5% below and above LOWERPASS and UPPERPASS, respectively.
+* (rapidtide): The method for specifying the lag search range has changed.  '-r LAGMIN,LAGMAX' has been removed.  You now use '--searchrange LAGMIN LAGMAX'
 
 # Version 1.9 (1/6/20)
 * (all): Now compatible with nibabel 3.x
