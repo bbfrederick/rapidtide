@@ -431,6 +431,7 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
         ax = fig.add_subplot(111)
         ax.set_title(displaytitle)
         pl.plot(thestore[0, :(-1 - endtrim)], thestore[1, :(-1 - endtrim)])
+        pl.show()
 
 
 def symmetrize(a, antisymmetric=False, zerodiagonal=False):
