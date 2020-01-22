@@ -82,6 +82,8 @@ RUN conda clean --all
 RUN df -h
 RUN conda install -y python=3.7.1 \
                      pip=19.3.1 \
+                     conda=4.8.1 \
+                     conda-build \
                      scipy=1.4.1 \
                      numpy=1.17.3 \
                      mkl=2019.4 \
