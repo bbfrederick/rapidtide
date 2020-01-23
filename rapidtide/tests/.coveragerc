@@ -1,0 +1,10 @@
+[run]
+ branch = True
+ source = .
+ omit =
+  .coveragerc
+  xtest_*
+  ../__init__.py
+  ../workflows/rapidtide2x.py
+  ../OrthoImageItem.py
+  ../tidepoolTemplate_qt5.py
