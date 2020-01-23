@@ -27,7 +27,7 @@ import sys
 import os
 import getopt
 import matplotlib
-#matplotlib.use('TkAgg')
+#matplotlib.use('Qt5Agg')
 import matplotlib.cm as cm
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt

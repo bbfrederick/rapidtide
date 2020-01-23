@@ -26,7 +26,7 @@ import scipy as sp
 from scipy import fftpack, signal
 from numpy.fft import rfftn, irfftn
 import matplotlib as mpl
-mpl.use('TkAgg')
+mpl.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 import sys

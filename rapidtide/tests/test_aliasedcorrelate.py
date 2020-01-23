@@ -18,7 +18,7 @@ from __future__ import print_function, division
 
 import numpy as np
 import matplotlib as mpl
-mpl.use('TkAgg')
+mpl.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 from rapidtide.correlate import aliasedcorrelate, aliasedcorrelator

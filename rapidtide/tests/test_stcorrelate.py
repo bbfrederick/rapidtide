@@ -20,7 +20,7 @@ import os.path as op
 
 import numpy as np
 import matplotlib as mpl
-mpl.use('TkAgg')
+mpl.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 from rapidtide.io import writenpvecs
