@@ -14,6 +14,7 @@
 * (rapidtide): The method for specifying the lag search range has changed.  '-r LAGMIN,LAGMAX' has been removed.  You now use '--searchrange LAGMIN LAGMAX'
 * (rapidtide): The method for specifying bipolar correlation search has changed.  '-B' is replaced by '--bipolar'.
 * (rapidtide): The method for specifying a fixed delay (no correlation lag search) has changed.  '-Z DELAYVAL' is replaced by '--fixdelay DELAYVAL'.
+* (rapidtide): Options file is saved in json by default now.
 * (physiofreq): New program to get the average frequency of a physiological waveform.
 * (tidepool): Some cosmetic fixes.
 * (glmfilt, linfit, temporaldecomp, spatialdecomp): Argument parsers were rewritten, main routines were moved into workflows.
