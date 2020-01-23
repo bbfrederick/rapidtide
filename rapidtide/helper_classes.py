@@ -229,7 +229,7 @@ class correlator:
 
     def run(self, thetc, trim=True):
         if len(thetc) != len(self.reftc):
-            print('timecourses are of different sizes - exiting')
+            print('timecourses are of different sizes:', len(thetc), '!=', len(self.reftc), '- exiting')
             sys.exit()
 
         self.testtc = thetc
@@ -281,6 +281,7 @@ class correlation_fitter:
                  fastgauss=False,
                  lagmod=1000.0,
                  enforcethresh=True,
+                 allowhighfitamps=True,
                  displayplots=False):
 
         r"""
@@ -342,6 +343,7 @@ class correlation_fitter:
         self.fastgauss = fastgauss
         self.lagmod = lagmod
         self.enforcethresh = enforcethresh
+        self.allowhighfitamps = allowhighfitamps
         self.displayplots = displayplots
 
 
@@ -594,11 +596,12 @@ class correlation_fitter:
                     print('bad fit amp: maxval is lower than lower limit')
                 fitfail = True
             if (np.abs(maxval) > 1.0):
-                failreason |= (self.FML_FITFAIL | self.FML_BADAMPHIGH)
+                if not self.allowhighfitamps:
+                    failreason |= (self.FML_FITFAIL | self.FML_BADAMPHIGH)
+                    if self.debug:
+                        print('bad fit amp: magnitude of', maxval, 'is greater than 1.0')
+                    fitfail = True
                 maxval = 1.0 * np.sign(maxval)
-                if self.debug:
-                    print('bad fit amp: magnitude of', maxval, 'is greater than 1.0')
-                fitfail = True
             if (self.lagmin > maxlag) or (maxlag > self.lagmax):
                 failreason |= (self.FML_FITFAIL + self.FML_BADLAG)
                 if self.debug:
