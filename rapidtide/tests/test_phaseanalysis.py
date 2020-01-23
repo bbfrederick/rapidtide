@@ -35,46 +35,45 @@ import rapidtide.resample as tide_resample
 import rapidtide.correlate as tide_corr
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.glmpass as tide_glmpass
-from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path
-
+from rapidtide.tests.utils import mse
 
 import matplotlib.pyplot as plt
 
-
-def eval_phaseanalysis(inname=None, outname=None, display=False):
+def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, display=False):
     # read in some data
-    testwaveform = tide_io.readvec(inname + '.txt')
+    phases = sp.linspace(0.0, numpoints * phasestep, num=numpoints, endpoint=False)
+    testwaveform = amplitude * np.cos(phases)
+    if display:
+        plt.figure()
+        plt.plot(phases)
+        plt.show()
+
+        plt.figure()
+        plt.plot(testwaveform)
+        plt.show()
 
     # now calculate the phase waveform
     instantaneous_phase, amplitude_envelope = tide_fit.phaseanalysis(testwaveform)
-    tide_io.writevec(amplitude_envelope, outname + '_ampenv.txt')
-    tide_io.writevec(instantaneous_phase, outname + '_instphase_unwrapped.txt')
     filtered_phase = tide_math.trendfilt(instantaneous_phase, order=3, ndevs=2.0)
-    tide_io.writevec(filtered_phase, outname + '_filtered_instphase_unwrapped.txt')
     initialphase = instantaneous_phase[0]
 
     if display:
         plt.figure()
         plt.plot(instantaneous_phase)
         plt.plot(filtered_phase)
+        plt.plot(phases)
         plt.show()
 
-    return True
+    return mse(phases, instantaneous_phase), mse(phases, filtered_phase)
 
 
 def test_phaseanalysis(debug=False, display=False):
-    # create outputdir if it doesn't exist
-    try:
-        if debug:
-            os.makedirs(get_test_temp_path())
-        print(get_test_temp_path(), 'created')
-    except OSError:
-        if debug:
-            print(get_test_temp_path(), 'exists')
-        else:
-            pass
+    msethresh = 1e-3
+    instantaneous_mse, filtered_mse = eval_phaseanalysis(phasestep=0.1, amplitude=3.0, numpoints=1000, display=display)
+    print(instantaneous_mse, filtered_mse)
+    assert instantaneous_mse < msethresh
+    assert filtered_mse < msethresh
     
-    eval_phaseanalysis(inname=os.path.join(get_test_data_path(), 'phasetest'), outname=os.path.join(get_test_temp_path(), 'phasetest'), display=display)
 
 def main():
     test_phaseanalysis(debug=True, display=True)
