@@ -2,6 +2,7 @@
 
 ## Version 2.0 (1/22/20)
 * (all): Python 2.x is no longer supported.
+* (documentation): General updates and cleanups.
 * (rapidtide): rapidtide2 and rapidtide2x have been replaced by a single version, rapidtide (which is basically rapidtide2x v1.9.0 with a different argument parser and default option values).
 * (rapidtide): The getopt argument parser has been completely rewritten using argparse.  The way you specify a number of options has changed.
 * (rapidtide): Any option that takes additional values (numbers, file names, etc.) is now specified as '--option VALUE [VALUE [VALUE...]]' rather than as '--option=VALUE[,VALUE[,VALUE...]]'.
@@ -11,6 +12,10 @@
 * (rapidtide): The -V, -L, -R and -C filter band specifiers have been retired.  Filter bands are now specified with '--filterband XXX', where XXX is vlf, lfo, lfo_legacy, resp, cardiac, or none.  'lfo' is selected by default (LFO band with sharp transition bands). To skip filtering, use '--filterband none'.  '--filterband lfo_legacy' will filter to the LFO band with the old, wide transition bands.
 * (rapidtide): To specify an arbitrary filter, use '--filterfreqs LOWERPASS UPPERPASS [LOWERSTOP UPPERSTOP]'.  If you don't specify the stop bands, the stop frequencies are set to 5% below and above LOWERPASS and UPPERPASS, respectively.
 * (rapidtide): The method for specifying the lag search range has changed.  '-r LAGMIN,LAGMAX' has been removed.  You now use '--searchrange LAGMIN LAGMAX'
+* (physiofreq): New program to get the average frequency of a physiological waveform.
+* (tidepool): Some cosmetic fixes.
+* (glmfilt, temporaldecomp, spatialdecomp): Argument parsers were rewritten, main routines were moved into workflows.
+* (docker container): Fixed some build errors, now pushes container to dockerhub.
 
 # Version 1.9 (1/6/20)
 * (all): Now compatible with nibabel 3.x
