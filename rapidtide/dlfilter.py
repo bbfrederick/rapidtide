@@ -21,7 +21,7 @@ Created on Sat Jul 28 23:01:07 2018
 @author: neuro
 """
 import matplotlib as mpl
-mpl.use('Agg')
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 import os

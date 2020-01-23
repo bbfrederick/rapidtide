@@ -24,7 +24,7 @@ from __future__ import print_function
 
 import numpy as np
 import matplotlib as mpl
-mpl.use('Agg')
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
 import rapidtide.miscmath as tide_math

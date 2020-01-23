@@ -16,7 +16,7 @@
 #   limitations under the License.
 import numpy as np
 import matplotlib as mpl
-mpl.use('Agg')
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
 from rapidtide.resample import doresample, fastresampler
