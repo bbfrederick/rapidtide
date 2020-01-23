@@ -20,6 +20,7 @@ RUN apt-get install -y --no-install-recommends \
                     xterm \
                     libgl1-mesa-glx \
                     libx11-xcb1 \
+                    lsb-release \
                     git
 #RUN apt-get install --reinstall libxcb-xinerama0
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
