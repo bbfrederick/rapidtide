@@ -89,28 +89,15 @@ def _get_parser():
     return parser
 
 
-# set default variable values
-decomptype = 'pca'
-pcacomponents = 0.5
-icacomponents = None
-varnorm = True
-demean = True
-sigma = 0.0
-
-
-def temporaldecomp_workflow(datafile,
-                           outputroot,
-                           datamaskname=None,
-                           decomptype='pca',
-                           pcacomponents=0.5,
-                           icacomponents=None,
-                           varnorm=True,
-                           demean=True,
-                           sigma=0.0):
-    max_iter = 250
-    n_init = 100
-    batch_size = 1000
-    minibatch = True
+def temporaldecomp(datafile,
+                   outputroot,
+                   datamaskname=None,
+                   decomptype='pca',
+                   pcacomponents=0.5,
+                   icacomponents=None,
+                   varnorm=True,
+                   demean=True,
+                   sigma=0.0):
 
     # save the command line
     tide_io.writevec([' '.join(sys.argv)], outputroot + '_commandline.txt')
@@ -133,9 +120,6 @@ def temporaldecomp_workflow(datafile,
         if not (tide_io.checktimematch(datafiledims, datamaskdims) or datamaskdims[4] == 1):
             print('input mask time dimension does not match image')
             exit()
-
-    # save the command line
-    tide_io.writevec([' '.join(sys.argv)], outputroot + '_commandline.txt')
 
     # smooth the data
     if sigma > 0.0:
@@ -233,7 +217,6 @@ def temporaldecomp_workflow(datafile,
         tide_io.writenpvecs(np.transpose(thesingvals), outputroot + '_singvals.txt')
 
         # save the coefficients
-        # save the coefficients
         print("writing out the coefficients")
         coefficients = thetransform
         print('coefficients shape:', coefficients.shape)
@@ -255,7 +238,7 @@ def temporaldecomp_workflow(datafile,
                             outputroot + '_fit')
 
 
-def main():
+def getparameters():
     try:
         args = vars(_get_parser().parse_args())
     except SystemExit:
@@ -275,15 +258,21 @@ def main():
         args['pcacomponents'] = int(a)
         args['icacomponents'] = pcacomponents
 
-    temporaldecomp_workflow(args['datafile'],
-                           args['outputroot'],
-                           datamaskname=args['datamaskname'],
-                           decomptype=args['decomptype'],
-                           pcacomponents=args['pcacomponents'],
-                           icacomponents=args['icacomponents'],
-                           varnorm=args['varnorm'],
-                           demean=args['demean'],
-                           sigma=args['sigma'])
+    return args
+
+
+def main():
+    args = getparameters()
+
+    temporaldecomp(args['datafile'],
+                   args['outputroot'],
+                   datamaskname=args['datamaskname'],
+                   decomptype=args['decomptype'],
+                   pcacomponents=args['pcacomponents'],
+                   icacomponents=args['icacomponents'],
+                   varnorm=args['varnorm'],
+                   demean=args['demean'],
+                   sigma=args['sigma'])
 
 
 if __name__ == '__main__':
