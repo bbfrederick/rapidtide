@@ -21,7 +21,7 @@
 #       $Id: glmfilt,v 1.25 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function, division
-import sys
+
 import argparse
 from .parser_funcs import (is_valid_file, invert_float, is_float)
 
@@ -31,20 +31,20 @@ import rapidtide.fit as tide_fit
 
 def _get_parser():
     """
-    Argument parser for temporaldecomp
+    Argument parser for glmfilt
     """
     parser = argparse.ArgumentParser('glmfilt - Fits and removes the effect of voxel specific and/or global regressors', usage=argparse.SUPPRESS)
 
     # Required arguments
     parser.add_argument('inputfile',
                         type=lambda x: is_valid_file(parser, x),
-                        help='The name of the 3 or 4 dimensional nifti file to fit')
+                        help='The name of the 3 or 4 dimensional nifti file to fit.')
     parser.add_argument('numskip',
                         type=int,
-                        help='The number of points to skip at the beginning of the timecourse when fitting')
+                        help='The number of points to skip at the beginning of the timecourse when fitting.')
     parser.add_argument('outputroot',
                         type=str,
-                        help='The number of points to skip at the beginning of the timecourse when fitting')
+                        help='The root name for all output files.')
     parser.add_argument('--evfile',
                         dest='evfile',
                         type=lambda x: is_valid_file(parser, x),
@@ -201,8 +201,6 @@ def main():
     except SystemExit:
         _get_parser().print_help()
         raise
-
-    print(args)
 
     glmfilt(args['inputfile'],
             args['numskip'],
