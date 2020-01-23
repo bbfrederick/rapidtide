@@ -22,6 +22,8 @@ import scipy as sp
 from rapidtide.resample import congrid
 from rapidtide.tests.utils import mse
 
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 

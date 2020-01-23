@@ -15,7 +15,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import numpy as np
-import pylab as plt
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 from rapidtide.resample import doresample, fastresampler
 from rapidtide.tests.utils import mse

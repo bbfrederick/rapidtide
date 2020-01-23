@@ -25,7 +25,10 @@ import numpy as np
 import scipy as sp
 from scipy import fftpack, signal
 from numpy.fft import rfftn, irfftn
-import pylab as pl
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
+
 import sys
 from sklearn.metrics import mutual_info_score, normalized_mutual_info_score, adjusted_mutual_info_score
 
@@ -145,11 +148,11 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
                                                                              thexcorr[fitstart:fitend + 1])
 
                 if displayplots:
-                    pl.plot(corrscale[fitstart:fitend + 1], thexcorr[fitstart:fitend + 1], 'k',
+                    plt.plot(corrscale[fitstart:fitend + 1], thexcorr[fitstart:fitend + 1], 'k',
                             corrscale[fitstart:fitend + 1],
                             tide_fit.gauss_eval(corrscale[fitstart:fitend + 1], [sidelobeamp, sidelobetime, sidelobewidth]),
                             'r')
-                    pl.show()
+                    plt.show()
                 return sidelobetime, sidelobeamp
     return None, None
 
@@ -282,7 +285,7 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
         else:
             valid.append(0)
     if display:
-        pl.imshow(xcorrpertime)
+        plt.imshow(xcorrpertime)
     return np.asarray(times, dtype='float64'), \
            np.asarray(xcorrpertime, dtype='float64'), \
            np.asarray(Rvals, dtype='float64'), \
@@ -338,31 +341,31 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
     residual_cepstrum = additive_cepstrum - difference_cepstrum
     if displayplots:
         tvec = timestep * np.arange(0.0, len(data1))
-        fig = pl.figure()
+        fig = plt.figure()
         ax1 = fig.add_subplot(211)
         ax1.set_title('cepstrum 1')
         ax1.set_xlabel('quefrency in seconds')
-        pl.plot(tvec, ceps1.real, tvec, ceps1.imag)
+        plt.plot(tvec, ceps1.real, tvec, ceps1.imag)
         ax2 = fig.add_subplot(212)
         ax2.set_title('cepstrum 2')
         ax2.set_xlabel('quefrency in seconds')
-        pl.plot(tvec, ceps2.real, tvec, ceps2.imag)
-        pl.show()
+        plt.plot(tvec, ceps2.real, tvec, ceps2.imag)
+        plt.show()
 
-        fig = pl.figure()
+        fig = plt.figure()
         ax1 = fig.add_subplot(311)
         ax1.set_title('additive_cepstrum')
         ax1.set_xlabel('quefrency in seconds')
-        pl.plot(tvec, additive_cepstrum.real)
+        plt.plot(tvec, additive_cepstrum.real)
         ax2 = fig.add_subplot(312)
         ax2.set_title('difference_cepstrum')
         ax2.set_xlabel('quefrency in seconds')
-        pl.plot(tvec, difference_cepstrum)
+        plt.plot(tvec, difference_cepstrum)
         ax3 = fig.add_subplot(313)
         ax3.set_title('residual_cepstrum')
         ax3.set_xlabel('quefrency in seconds')
-        pl.plot(tvec, residual_cepstrum.real)
-        pl.show()
+        plt.plot(tvec, residual_cepstrum.real)
+        plt.show()
     return timestep * np.argmax(residual_cepstrum.real[0:len(residual_cepstrum) // 2])
 
 
@@ -637,11 +640,11 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
 
     if displayplots:
         xvec = range(0, len(denom))
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title('reciprocal weighting function')
-        pl.plot(xvec, abs(denom))
-        pl.show()
+        plt.plot(xvec, abs(denom))
+        plt.show()
 
     # now apply it while preserving the max
     theorigmax = np.max(np.absolute(denom))

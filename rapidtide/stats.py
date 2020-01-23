@@ -23,7 +23,10 @@ from __future__ import print_function, division
 
 import numpy as np
 import scipy as sp
-import pylab as pl
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
+
 
 from scipy.stats import johnsonsb
 
@@ -157,13 +160,13 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     johnsonsbvals[0] = zeroterm
 
     if displayplots:
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title('fitjsbpdf: histogram')
-        pl.plot(thestore[0, :], thestore[1, :], 'b',
+        plt.plot(thestore[0, :], thestore[1, :], 'b',
                 thestore[0, :], johnsonsbvals, 'r')
-        pl.legend(['histogram', 'fit to johnsonsb'])
-        pl.show()
+        plt.legend(['histogram', 'fit to johnsonsb'])
+        plt.show()
     return np.append(params, np.array([zeroterm]))
 
 
@@ -427,11 +430,11 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
     tide_io.writenpvecs(np.array([peaklag]), outname + '_peak.txt')
     tide_io.writenpvecs(thestore, outname + '.txt')
     if displayplots:
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title(displaytitle)
-        pl.plot(thestore[0, :(-1 - endtrim)], thestore[1, :(-1 - endtrim)])
-        pl.show()
+        plt.plot(thestore[0, :(-1 - endtrim)], thestore[1, :(-1 - endtrim)])
+        plt.show()
 
 
 def symmetrize(a, antisymmetric=False, zerodiagonal=False):
@@ -517,11 +520,11 @@ def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False
         cummeanhist = cummeanhist - cummeanhist[0]
     thevals = []
     if displayplots:
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title('cumulative mean sum of histogram')
-        pl.plot(bins[-numbins:], cummeanhist[-numbins:])
-        pl.show()
+        plt.plot(bins[-numbins:], cummeanhist[-numbins:])
+        plt.show()
     for thisfrac in thefracs:
         target = cummeanhist[numbins - 1] * thisfrac
         thevals.append(0.0)
@@ -558,14 +561,14 @@ def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
                                                                     histfit[3])
     thevals = []
     if displayplots:
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(211)
         ax.set_title('probability histogram')
-        pl.plot(bins[-numbins:], meanhist[-numbins:])
+        plt.plot(bins[-numbins:], meanhist[-numbins:])
         ax = fig.add_subplot(212)
         ax.set_title('cumulative mean sum of histogram')
-        pl.plot(bins[-numbins:], cummeanhist[-numbins:])
-        pl.show()
+        plt.plot(bins[-numbins:], cummeanhist[-numbins:])
+        plt.show()
     for thisfrac in thefracs:
         target = cummeanhist[numbins - 1] * thisfrac
         thevals.append(0.0)
@@ -597,11 +600,11 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
         themin = 0.001
         themax = 0.999
         bins = np.arange(themin, themax, (themax - themin) / numbins)
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title('probability histogram')
-        pl.plot(bins, johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3]))
-        pl.show()
+        plt.plot(bins, johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3]))
+        plt.show()
     # thevals = johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3])
     thevals = thedist.ppf(thefracs)
     return thevals

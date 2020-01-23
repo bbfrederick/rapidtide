@@ -23,7 +23,9 @@
 from __future__ import print_function
 
 import numpy as np
-import pylab as plt
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_res

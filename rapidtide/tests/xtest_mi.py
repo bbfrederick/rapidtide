@@ -17,7 +17,10 @@
 from __future__ import print_function, division
 
 import numpy as np
-import pylab as plt
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
+
 import rapidtide.io as tide_io
 
 from rapidtide.correlate import calc_MI

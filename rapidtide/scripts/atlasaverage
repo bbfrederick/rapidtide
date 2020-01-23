@@ -29,7 +29,6 @@ import rapidtide.miscmath as tide_math
 from sklearn.cluster import KMeans, MiniBatchKMeans
 
 import numpy as np
-from pylab import *
 
 def summarize(thevoxels, method='mean'):
     theshape = thevoxels.shape

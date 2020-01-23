@@ -22,7 +22,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.correlate as tide_corr
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.nullcorrpass as tide_nullcorrx
+import rapidtide.nullcorrpass as tide_nullcorr
 import rapidtide.helper_classes as tide_classes
 
 import matplotlib.pyplot as plt
@@ -126,45 +126,46 @@ def test_nullcorr(debug=False, display=False):
     dummy, trimmedcorrscale, dummy = thecorrelator.getcorrelation()
     thefitter.setcorrtimeaxis(trimmedcorrscale)
     histograms = []
-    for i in range(numpasses):
-        corrlist = tide_nullcorrx.getNullDistributionDatax(sourcedata,
-                                 Fs,
-                                 thecorrelator,
-                                 thefitter,
-                                 despeckle_thresh=5.0,
-                                 fixdelay=False,
-                                 fixeddelayvalue=0.0,
-                                 numestreps=optiondict['numestreps'],
-                                 nprocs=1,
-                                 showprogressbar=optiondict['showprogressbar'],
-                                 chunksize=1000,
-                                 permutationmethod=optiondict['permutationmethod'])
-        tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), 'corrdistdata.txt'))
-
-        # calculate percentiles for the crosscorrelation from the distribution data
-        histlen = 250
-        thepercentiles = [0.95, 0.99, 0.995]
-
-        pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
-        if debug:
-            tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
-            tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
-
-        thehist = tide_stats.makehistogram(np.abs(corrlist), histlen, therange=[0.0, 1.0])
-        histograms.append(thehist)
-        thestore = np.zeros((2, len(thehist[0])), dtype='float64')
-        thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
-        thestore[1, :] = thehist[0][-histlen:]
-        if display:
-            plt.figure()
-            plt.plot(thestore[0, :], thestore[1, :])
-            plt.show()
-
-        #tide_stats.makeandsavehistogram(corrlist, histlen, 0,
-                                        #os.path.join(get_test_temp_path(), 'correlationhist'),
-                                        #displaytitle='Null correlation histogram',
-                                        #displayplots=display, refine=False)
-        assert True
+    for thenprocs in [1, -1]:
+        for i in range(numpasses):
+            corrlist = tide_nullcorr.getNullDistributionDatax(sourcedata,
+                                     Fs,
+                                     thecorrelator,
+                                     thefitter,
+                                     despeckle_thresh=5.0,
+                                     fixdelay=False,
+                                     fixeddelayvalue=0.0,
+                                     numestreps=optiondict['numestreps'],
+                                     nprocs=thenprocs,
+                                     showprogressbar=optiondict['showprogressbar'],
+                                     chunksize=1000,
+                                     permutationmethod=optiondict['permutationmethod'])
+            tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), 'corrdistdata.txt'))
+    
+            # calculate percentiles for the crosscorrelation from the distribution data
+            histlen = 250
+            thepercentiles = [0.95, 0.99, 0.995]
+    
+            pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
+            if debug:
+                tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
+                tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
+    
+            thehist = tide_stats.makehistogram(np.abs(corrlist), histlen, therange=[0.0, 1.0])
+            histograms.append(thehist)
+            thestore = np.zeros((2, len(thehist[0])), dtype='float64')
+            thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
+            thestore[1, :] = thehist[0][-histlen:]
+            if display:
+                plt.figure()
+                plt.plot(thestore[0, :], thestore[1, :])
+                plt.show()
+    
+            #tide_stats.makeandsavehistogram(corrlist, histlen, 0,
+                                            #os.path.join(get_test_temp_path(), 'correlationhist'),
+                                            #displaytitle='Null correlation histogram',
+                                            #displayplots=display, refine=False)
+            assert True
 
 
 if __name__ == '__main__':
