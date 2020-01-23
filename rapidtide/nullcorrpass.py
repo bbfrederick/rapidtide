@@ -31,10 +31,7 @@ import rapidtide.util as tide_util
 import rapidtide.miscmath as tide_math
 import rapidtide.filter as tide_filt
 
-import rapidtide.corrpass as tide_corrpass
-import rapidtide.corrfit as tide_corrfit
 import sys
-
 
 # note: rawtimecourse has been filtered, but NOT windowed
 def _procOneNullCorrelationx(normalizedreftc,
@@ -69,15 +66,6 @@ def _procOneNullCorrelationx(normalizedreftc,
     # fit the correlation
     thefitter.setcorrtimeaxis(thexcorr_x)
     maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = thefitter.fit(thexcorr_y)
-
-    #    '''tide_corrfit.onecorrfitx(thexcorr_y,
-    #            thefitter,
-    #            disablethresholds=disablethresholds,
-    #            despeckle_thresh=despeckle_thresh,
-    #           fixdelay=fixdelay,
-    #            fixeddelayvalue=fixeddelayvalue,
-    #            rt_floatset=rt_floatset,
-    #            rt_floattype=rt_floattype)'''
 
     return maxval
 
