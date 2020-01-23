@@ -624,7 +624,7 @@ def _get_parser():
     corr_fit = parser.add_argument_group('Correlation fitting options')
 
     fixdelay = corr_fit.add_mutually_exclusive_group()
-    fixdelay.add_argument('-Z',
+    fixdelay.add_argument('--fixdelay',
                           dest='fixeddelayvalue',
                           action='store',
                           type=float,
