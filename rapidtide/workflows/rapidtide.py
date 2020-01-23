@@ -353,6 +353,13 @@ def _get_parser():
                          default=0.0)
 
     filt_opts = parser.add_argument_group('Filtering options')
+    filt_opts.add_argument('--filterband',
+                          dest='filterband',
+                          action='store',
+                          type=str,
+                          choices=['vlf', 'lfo', 'resp', 'cardiac', 'lfo_legacy'],
+                          help=('Filter data and regressors to specific band. '),
+                          default='lfo')
     filt_opts.add_argument('--filterfreqs',
                           dest='arbvec',
                           action='store',
@@ -365,13 +372,6 @@ def _get_parser():
                                 'be specified, or will be calculated '
                                 'automatically. '),
                           default=None)
-    filt_opts.add_argument('--filterband',
-                          dest='filterband',
-                          action='store',
-                          type=str,
-                          choices=['vlf', 'lfo', 'resp', 'cardiac', 'lfo_legacy'],
-                          help=('Filter data and regressors to specific band. '),
-                          default='lfo')
     filt_opts.add_argument('--filtertype',
                           dest='filtertype',
                           action='store',
