@@ -33,7 +33,9 @@ def _get_parser():
     """
     Argument parser for glmfilt
     """
-    parser = argparse.ArgumentParser('glmfilt - Fits and removes the effect of voxel specific and/or global regressors', usage=argparse.SUPPRESS)
+    parser = argparse.ArgumentParser(prog='glmfilt',
+                                     description='Fits and removes the effect of voxel specific and/or global regressors.',
+                                     usage='%(prog)s inputfile numskip outputroot --evfile FILE [FILE [FILE...]]')
 
     # Required arguments
     parser.add_argument('inputfile',

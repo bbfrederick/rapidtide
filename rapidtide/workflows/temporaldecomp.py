@@ -35,7 +35,9 @@ def _get_parser():
     """
     Argument parser for temporaldecomp
     """
-    parser = argparse.ArgumentParser('temporaldecomp - perform PCA or ICA decomposition on a data file in the time dimension', usage=argparse.SUPPRESS)
+    parser = argparse.ArgumentParser(prog='temporaldecomp',
+                                     description='Perform PCA or ICA decomposition on a data file in the time dimension.',
+                                     usage='%(prog)s datafile outputroot [options]')
 
     # Required arguments
     parser.add_argument('datafile',

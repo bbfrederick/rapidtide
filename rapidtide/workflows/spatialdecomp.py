@@ -35,7 +35,10 @@ def _get_parser():
     """
     Argument parser for spatialdecomp
     """
-    parser = argparse.ArgumentParser('spatialdecomp -  - perform PCA or ICA decomposition on a data file in the spatial dimension', usage=argparse.SUPPRESS)
+    parser = argparse.ArgumentParser(prog='spatialdecomp',
+                                     description='Perform PCA or ICA decomposition on a data file in the spatial dimension.',
+                                     usage='%(prog)s datafile outputroot [options]')
+
 
     # Required arguments
     parser.add_argument('datafile',

@@ -51,7 +51,9 @@ def _get_parser():
     """
     Argument parser for linfit
     """
-    parser = argparse.ArgumentParser('linfit - Fits a template image to an input image', usage=argparse.SUPPRESS)
+    parser = argparse.ArgumentParser(prog='linfit',
+                                     description='Fit a spatial template to a 3D or 4D NIFTI file.',
+                                     usage='%(prog)s datafile datamask templatefile templatmask outputroot [options]')
 
     # Required arguments
     parser.add_argument('datafile',
