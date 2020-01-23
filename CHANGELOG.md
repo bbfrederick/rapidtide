@@ -1,9 +1,9 @@
 # History of changes
 
 ## Version 2.0 (1/22/20)
-* (all): Python 2.x is no longer supported.
+* (all): Python 2.x is no longer supported.  To be fair, I've done nothing to break 2.x compatibility, so it probably still works, but I'm expending no effort to keep it working.
 * (documentation): General updates and cleanups.
-* (rapidtide): rapidtide2 and rapidtide2x have been replaced by a single version, rapidtide (which is basically rapidtide2x v1.9.0 with a different argument parser and default option values).
+* (rapidtide): rapidtide2 and rapidtide2x have been merged and replaced by rapidtide (which is basically rapidtide2x v1.9.0 with a different argument parser and default option values).
 * (rapidtide): The getopt argument parser has been completely rewritten using argparse.  The way you specify a number of options has changed.
 * (rapidtide): Any option that takes additional values (numbers, file names, etc.) is now specified as '--option VALUE [VALUE [VALUE...]]' rather than as '--option=VALUE[,VALUE[,VALUE...]]'.
 * (rapidtide): After a lot of use over the years, I've reset a lot of defaults to reflect typical usage.  You can still do any analysis you were doing before, but it may now require changes to scripts and workflows to get the old default behavior.  For most cases you can get good analyses with a minimum set of command line options now.
@@ -17,6 +17,7 @@
 * (rapidtide): Options file is saved in json by default now.
 * (physiofreq): New program to get the average frequency of a physiological waveform.
 * (tidepool): Some cosmetic fixes.
+* (showtc): Converted to argparse, some cleanup in option specification.
 * (glmfilt, linfit, temporaldecomp, spatialdecomp): Argument parsers were rewritten, main routines were moved into workflows.
 * (docker container): Fixed some build errors, now pushes container to dockerhub.
 
