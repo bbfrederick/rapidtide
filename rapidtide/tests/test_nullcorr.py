@@ -41,7 +41,7 @@ def test_nullcorr(debug=False, display=False):
     #sourcedata = lfofilter.apply(Fs, np.random.rand(sourcelen))
     sourcedata = tide_io.readvecs(os.path.join(get_test_data_path(), 'fmri_globalmean.txt'))[0]
     sourcelen = len(sourcedata)
-    numpasses = 3
+    numpasses = 1
 
     if display:
         plt.figure()

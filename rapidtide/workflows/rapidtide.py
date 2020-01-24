@@ -250,7 +250,7 @@ def _get_parser():
     Argument parser for rapidtide
     """
     parser = argparse.ArgumentParser(prog='rapidtide',
-                                     description='Pperform a RIPTiDe time delay analysis on a dataset.',
+                                     description='Perform a RIPTiDe time delay analysis on a dataset.',
                                      usage='%(prog)s in_file outputname [options]')
 
     # Required arguments
@@ -1034,15 +1034,25 @@ def rapidtide_workflow(in_file, outputname, venousrefine=False, nirs=False,
     pass
 
 
-def process_args():
+def process_args(inputargs=None):
     """
     Compile arguments for rapidtide workflow.
     """
-    try:
-        args = vars(_get_parser().parse_args())
-    except SystemExit:
-        _get_parser().print_help()
-        raise
+    if inputargs is None:
+        print('processing command line arguments')
+        try:
+            args = vars(_get_parser().parse_args())
+        except SystemExit:
+            _get_parser().print_help()
+            raise
+    else:
+        print('processing passed argument list:')
+        print(inputargs)
+        try:
+            args = vars(_get_parser().parse_args(inputargs))
+        except SystemExit:
+            _get_parser().print_help()
+            raise
 
     if args['debug']:
         print()
