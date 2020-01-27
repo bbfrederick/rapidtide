@@ -263,6 +263,7 @@ def usage():
         "[--skipsighistfit]",
         "[--accheck]", "[--acfix]"
                        "[--numskip=SKIP]",
+        "[--addedskip=SKIP]",
         "[--slicetimes=FILE]",
         "[--glmsourcefile=FILE]",
         "[--regressorfreq=FREQ]", "[--regressortstep=TSTEP]" "[--regressor=FILENAME]", "[--regressorstart=STARTTIME]",
@@ -331,6 +332,8 @@ def usage():
     print("    --slicetimes=FILE              - Apply offset times from FILE to each slice in the dataset")
     print("    --numskip=SKIP                 - SKIP tr's were previously deleted during preprocessing")
     print("                                     (default is 0)")
+    print("    --addedskip=SKIP               - delete an additional SKIP tr's from the data and regressor prior to")
+    print("                                     doing rapidtide analysis (default is 0)")
     print("    --nothresh                     - Disable voxel intensity threshold (especially useful")
     print("                                     for NIRS data)")
     print("    --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.")
@@ -729,6 +732,7 @@ def process_args():
                                                                                                           'preservefiltering',
                                                                                                           'globalmaskmethod=',
                                                                                                           'numskip=',
+                                                                                                          'addedskip=',
                                                                                                           'nirs',
                                                                                                           'venousrefine',
                                                                                                           'nothresh',
@@ -1101,6 +1105,10 @@ def process_args():
             optiondict['preprocskip'] = int(a)
             linkchar = '='
             print('Setting preprocessing trs skipped to ', optiondict['preprocskip'])
+        elif o == '--addedskip':
+            optiondict['addedskip'] = int(a)
+            linkchar = '='
+            print('Skipping an additional', optiondict['addedskip'],'trs')
         elif o == '--venousrefine':
             optiondict['lagmaskside'] = 'upper'
             optiondict['lagminthresh'] = 2.5
