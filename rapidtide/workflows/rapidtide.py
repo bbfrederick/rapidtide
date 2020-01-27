@@ -2266,7 +2266,7 @@ def rapidtide_main():
                                                    memfile,
                                                    'before refineregressor')
             voxelsprocessed_rr, outputdata, refinemask = refineregressor_func(
-                fmri_data_valid[:, :],
+                fmri_data_valid[:,optiondict['addedskip']:],
                 fmritr,
                 shiftedtcs,
                 weights,
