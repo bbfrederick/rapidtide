@@ -767,8 +767,9 @@ def updateHistogram():
 
 def updateRegressor():
     global regressor_ax, regressors, focusregressor, focussubj, liveplots
-    regressor_ax.plot(regressors[focusregressor].timeaxis, regressors[focusregressor].timedata,
-                      stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=1), clear=True)
+    if focusregressor is not None:
+        regressor_ax.plot(regressors[focusregressor].timeaxis, regressors[focusregressor].timedata,
+                          stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=1), clear=True)
 
 # found this routine at https://github.com/abhilb/pyqtgraphutils/blob/master/pyqtgraphutils.py
 class RectangleItem(pg.GraphicsObject):
@@ -797,20 +798,21 @@ class RectangleItem(pg.GraphicsObject):
 
 def updateRegressorSpectrum():
     global regressorspectrum_ax, regressors, focusregressor, focussubj, liveplots, regressorfilterlimits
-    regressorspectrum_ax.plot(regressors[focusregressor].specaxis, regressors[focusregressor].specdata,
-                              stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=1), clear=True)
-    regressorspectrum_ax.setXRange(0.0, 0.5 * regressors[focusregressor].displaysamplerate, padding=0)
-    spectop = 1.25 * np.max(regressors[focusregressor].specdata)
-    regressorspectrum_ax.setYRange(0.0, spectop, padding=0)
-    lowerlim = regressorfilterlimits[0]
-    if regressorfilterlimits[1] == -1:
-        upperlim = regressors[focusregressor].specaxis[-1]
-    else:
-        upperlim = regressorfilterlimits[1]
-    bottomleft = [lowerlim, 0.0]
-    size = [upperlim - lowerlim, spectop]
-    therectangle = RectangleItem(bottomleft, size)
-    regressorspectrum_ax.addItem(therectangle)
+    if focusregressor is not None:
+        regressorspectrum_ax.plot(regressors[focusregressor].specaxis, regressors[focusregressor].specdata,
+                                  stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=1), clear=True)
+        regressorspectrum_ax.setXRange(0.0, 0.5 * regressors[focusregressor].displaysamplerate, padding=0)
+        spectop = 1.25 * np.max(regressors[focusregressor].specdata)
+        regressorspectrum_ax.setYRange(0.0, spectop, padding=0)
+        lowerlim = regressorfilterlimits[0]
+        if regressorfilterlimits[1] == -1:
+            upperlim = regressors[focusregressor].specaxis[-1]
+        else:
+            upperlim = regressorfilterlimits[1]
+        bottomleft = [lowerlim, 0.0]
+        size = [upperlim - lowerlim, spectop]
+        therectangle = RectangleItem(bottomleft, size)
+        regressorspectrum_ax.addItem(therectangle)
 
 def calcAtlasStats():
     global overlays, focussubj, datafileroot, atlasname, atlaslabels, atlasstats, averagingmode
@@ -1766,11 +1768,23 @@ def main():
     # load the regressors
     regressors = {}
     therunoptions = tide_io.readoptionsfile(datafileroot + 'options')
-    regressorfilterlimits = (float(therunoptions['lowerpass']), float(therunoptions['upperpass']))
+    try:
+        regressorfilterlimits = (float(therunoptions['lowerpass']), float(therunoptions['upperpass']))
+    except KeyError:
+        regressorfilterlimits = (0.0, 100.0)
     print('regressor filter limits:', regressorfilterlimits)
-    fmrifreq = float(therunoptions['fmrifreq'])
-    inputfreq = float(therunoptions['inputfreq'])
-    oversampfactor = int(therunoptions['oversampfactor'])
+    try:
+        fmrifreq = float(therunoptions['fmrifreq'])
+    except KeyError:
+        fmrifreq = 1.0
+    try:
+        inputfreq = float(therunoptions['inputfreq'])
+    except KeyError:
+        inputfreq = 1.0
+    try:
+        oversampfactor = int(therunoptions['oversampfactor'])
+    except KeyError:
+        oversampfactor = 1
     regressorspecs = [['prefilt', 'reference_origres_prefilt.txt', inputfreq, inputfreq],
                        ['pass1', 'reference_resampres_pass1.txt', fmrifreq * oversampfactor, fmrifreq],
                        ['pass2', 'reference_resampres_pass2.txt', fmrifreq * oversampfactor, fmrifreq],
