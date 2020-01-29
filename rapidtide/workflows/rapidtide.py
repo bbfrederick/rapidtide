@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: latin-1 -*-
 #
 #   Copyright 2016-2019 Blaise Frederick
 #
@@ -23,13 +24,15 @@
 #
 from __future__ import print_function, division
 
-import time
+import bisect
 import multiprocessing as mp
 import platform
-import warnings
 import sys
+import time
+import warnings
 
 import numpy as np
+from matplotlib.pyplot import figure, plot, show
 from scipy import ndimage
 
 import rapidtide.correlate as tide_corr
@@ -51,8 +54,6 @@ import rapidtide.helper_classes as tide_classes
 import rapidtide.wiener as tide_wiener
 
 import copy
-
-from rapidtide.workflows.rapidtide_parser import process_args
 
 try:
     import mkl
@@ -76,9 +77,6 @@ def conditionalprofile():
         return f
 
     return resdec
-
-
-global rt_floatset, rt_floattype
 
 
 @conditionalprofile()
@@ -112,29 +110,6 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
         plot(timeaxis, maskvector)
         show()
     return maskvector
-
-
-def processmaskspec(maskspec, spectext1, spectext2):
-    thename, colspec = tide_io.parsefilespec(maskspec)
-    if colspec is not None:
-        thevals = tide_io.colspectolist(colspec)
-    else:
-        thevals = None
-    if thevals is not None:
-        print(spectext1,
-              thename,
-              ' = ',
-              thevals,
-              spectext2)
-    return thename, thevals
-
-
-def addmemprofiling(thefunc, memprofile, memfile, themessage):
-    if memprofile:
-        return profile(thefunc, precision=2)
-    else:
-        tide_util.logmem(themessage, file=memfile)
-        return thefunc
 
 
 def numpy2shared(inarray, thetype):
@@ -202,6 +177,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
         themask = themask * (1 - excludemask)
 
     # add up all the voxels
+    global rt_floatset, rt_floattype
     globalmean = rt_floatset(indata[0, :])
     thesize = np.shape(themask)
     numvoxelsused = 0
@@ -219,23 +195,22 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     return tide_math.stdnormalize(globalmean), themask
 
 
-def rapidtide_main():
+def addmemprofiling(thefunc, memprofile, memfile, themessage):
+    if memprofile:
+        return profile(thefunc, precision=2)
+    else:
+        tide_util.logmem(themessage, file=memfile)
+        return thefunc
+
+
+def rapidtide_main(argparsingfunc):
     timings = [['Start', time.time(), None, None]]
-    optiondict, theprefilter = process_args()
+    optiondict, theprefilter = argparsingfunc()
 
     fmrifilename = optiondict['in_file']
     outputname = optiondict['outputname']
     filename = optiondict['regressorfile']
 
-    if optiondict['saveoptionsasjson']:
-        tide_io.writedicttojson(optiondict, outputname + '_options_initial.json')
-    else:
-        tide_io.writedict(optiondict, outputname + '_options_initial.txt')
-
-    optiondict['dispersioncalc_lower'] = optiondict['lagmin']
-    optiondict['dispersioncalc_upper'] = optiondict['lagmax']
-    optiondict['dispersioncalc_step'] = np.max(
-        [(optiondict['dispersioncalc_upper'] - optiondict['dispersioncalc_lower']) / 25, 0.50])
     timings.append(['Argument parsing done', time.time(), None, None])
 
     # don't use shared memory if there is only one process
@@ -1588,5 +1563,8 @@ def rapidtide_main():
     nodeline = 'Processed on ' + platform.node()
     tide_util.proctiminginfo(timings, outputfile=outputname + '_runtimings.txt', extraheader=nodeline)
 
+
 if __name__ == '__main__':
-    rapidtide_main()
+    from rapidtide.workflows.rapidtide_parser import process_args
+
+    rapidtide_main(process_args)

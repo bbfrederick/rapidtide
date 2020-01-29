@@ -335,7 +335,6 @@ def process_args():
     optiondict['textio'] = False
 
     # preprocessing options
-    optiondict['dogaussianfilter'] = False  # apply a spatial filter to the fmri data prior to analysis
     optiondict['gausssigma'] = 0.0  # the width of the spatial filter kernel in mm
     optiondict['antialias'] = True  # apply an antialiasing filter to any regressors prior to filtering
     optiondict['invertregressor'] = False  # invert the initial regressor during startup
@@ -356,7 +355,6 @@ def process_args():
     optiondict['usewindowfunc'] = True  # apply a window prior to correlation
     optiondict['windowfunc'] = 'hamming'  # the particular window function to use for correlation
     optiondict['corrweighting'] = 'none'  # use a standard unweighted crosscorrelation for calculate time delays
-    optiondict['usetmask'] = False  # premultiply the regressor with the tmask timecourse
     optiondict['tmaskname'] = None  # file name for tmask regressor
     optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict['corrmaskname'] = None  # name of correlation mask
@@ -506,7 +504,7 @@ def process_args():
         usage()
         sys.exit()
     # handle required args first
-    optiondict['fmrifilename'] = sys.argv[1]
+    optiondict['in_file'] = sys.argv[1]
     optiondict['outputname'] = sys.argv[2]
     optparsestart = 3
 
@@ -862,7 +860,6 @@ def process_args():
             print(optiondict['mot_delayderiv'], 'set to', optiondict['mot_delayderiv'])
         elif o == '-f':
             optiondict['gausssigma'] = float(a)
-            optiondict['dogaussianfilter'] = True
             print('Will prefilter fMRI data with a gaussian kernel of ', optiondict['gausssigma'], ' mm')
         elif o == '--timerange':
             limitvec = a.split(',')
@@ -1134,7 +1131,6 @@ def process_args():
                 sys.exit()
             linkchar = '='
         elif o == '--tmask':
-            optiondict['usetmask'] = True
             optiondict['tmaskname'] = a
             linkchar = '='
             print('Will multiply regressor by timecourse in ', optiondict['tmaskname'])
@@ -1157,11 +1153,20 @@ def process_args():
         formattedcmdline.append('\t' + o + linkchar + a + ' \\')
     formattedcmdline[len(formattedcmdline) - 1] = formattedcmdline[len(formattedcmdline) - 1][:-2]
 
+    # store the filter limits
+    optiondict['lowerpass'], optiondict['upperpass'], optiondict['lowerstop'], optiondict['upperstop'] = theprefilter.getfreqs()
+
     # write out the command used
     tide_io.writevec(formattedcmdline, optiondict['outputname'] + '_formattedcommandline.txt')
     tide_io.writevec([' '.join(sys.argv)], optiondict['outputname'] + '_commandline.txt')
 
     # add additional information to option structure for debugging
     optiondict['realtr'] = realtr
+
+    optiondict['dispersioncalc_lower'] = optiondict['lagmin']
+    optiondict['dispersioncalc_upper'] = optiondict['lagmax']
+    optiondict['dispersioncalc_step'] = np.max(
+        [(optiondict['dispersioncalc_upper'] - optiondict['dispersioncalc_lower']) / 25,
+         optiondict['dispersioncalc_step']])
 
     return optiondict, theprefilter
