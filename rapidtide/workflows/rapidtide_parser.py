@@ -26,6 +26,8 @@ from __future__ import print_function, division
 import argparse
 import sys
 
+import numpy as np
+
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
@@ -93,7 +95,7 @@ def _get_parser():
                         action='store_true',
                         help=('Preset for delay mapping analysis - this is a macro that '
                               'sets lagmin=-10.0, lagmax=30.0, passes=3, despeckle_passes=4, '
-                              'refineoffset=True, pickleft=True, doglmfilt=False. '
+                              'refineoffset=True, pickleft=True, limitoutput=True, doglmfilt=False. '
                               'Any of these options can be overridden with the appropriate '
                               'additional arguments'),
                         default=False)
@@ -199,7 +201,7 @@ def _get_parser():
                           help=('Filter data and regressors using a trapezoidal FFT filter (default), brickwall, or butterworth bandpass.'),
                           default='trapezoidal')
     filt_opts.add_argument('--butterorder',
-                         dest='butterorder',
+                         dest='filtorder',
                          action='store',
                          type=int,
                          metavar='ORDER',
@@ -507,8 +509,9 @@ def _get_parser():
                           metavar='PASSES',
                           help=('Detect and refit suspect correlations to '
                                 'disambiguate peak locations in PASSES '
-                                'passes. '),
-                          default=0)
+                                'passes.  Default is to perform 4 passes. '
+                                'Set to 0 to disable. '),
+                          default=4)
     corr_fit.add_argument('--despecklethresh',
                           dest='despeckle_thresh',
                           action='store',
@@ -566,7 +569,7 @@ def _get_parser():
                          type=float,
                          help=('For refinement, exclude voxels with delays '
                                'less than MIN (default is 0.25s). '),
-                         default=0.25)
+                         default=0.5)
     reg_ref.add_argument('--lagmaxthresh',
                          dest='lagmaxthresh',
                          action='store',
@@ -580,7 +583,7 @@ def _get_parser():
                          action='store',
                          metavar='AMP',
                          type=float,
-                         help=('or refinement, exclude voxels with '
+                         help=('For refinement, exclude voxels with '
                                'correlation coefficients less than AMP '
                                '(default is 0.3). '),
                          default=-1.0)
@@ -880,6 +883,7 @@ def process_args(inputargs=None):
     # refinement options
     args['estimatePCAdims'] = False
     args['filterbeforePCA'] = True
+    args['dispersioncalc_step'] = 0.50
 
     # autocorrelation processing
     args['check_autocorrelation'] = True
@@ -915,7 +919,8 @@ def process_args(inputargs=None):
         args['usebutterworthfilter'] = True
     else:
         args['usebutterworthfilter'] = False
-    theprefilter.setbutter(args['usebutterworthfilter'], args['butterorder'])
+    theprefilter.setbutter(args['usebutterworthfilter'], args['filtorder'])
+    args['lowerpass'], args['upperpass'], args['lowerstop'], args['upperstop'] = theprefilter.getfreqs()
 
 
     # Additional argument parsing not handled by argparse
@@ -1025,14 +1030,6 @@ def process_args(inputargs=None):
     else:
         args['motionfilename'] = None
 
-    if args['limitoutput']:
-        args['savedatatoremove'] = False
-        args['savelagregressors'] = False
-    else:
-        args['savedatatoremove'] = True
-        args['savelagregressors'] = True
-
-
     if args['venousrefine']:
         print('WARNING: Using "venousrefine" macro. Overriding any affected '
               'arguments.')
@@ -1059,15 +1056,33 @@ def process_args(inputargs=None):
         args['passes'] = 3
         args['refineoffset'] = True
         args['pickleft'] = True
-        args['doglmfilt'] = False
+        args['limitoutput'] = True
+        setifnotset(args, 'doglmfilt', False)
 
     if args['denoising']:
-        asetifnotset(args, 'despeckle_passes', 0)
+        setifnotset(args, 'despeckle_passes', 0)
         setifnotset(args, 'lagmin', -15.0)
         setifnotset(args, 'lagmax', 15.0)
         args['passes'] = 3
         args['refineoffset'] = True
         args['doglmfilt'] = True
+
+
+    # process limitoutput
+    if args['limitoutput']:
+        args['savedatatoremove'] = False
+        args['savelagregressors'] = False
+    else:
+        args['savedatatoremove'] = True
+        args['savelagregressors'] = True
+
+
+    # dispersion calculation
+    args['dispersioncalc_lower'] = args['lagmin']
+    args['dispersioncalc_upper'] = args['lagmax']
+    args['dispersioncalc_step'] = np.max(
+        [(args['dispersioncalc_upper'] - args['dispersioncalc_lower']) / 25,
+         args['dispersioncalc_step']])
 
     if args['debug']:
         print()
