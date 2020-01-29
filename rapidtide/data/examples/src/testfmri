@@ -1,65 +1,22 @@
 #!/bin/csh -f
 
-#rapidtide2 \
-	#fmri.nii.gz \
-	#../dst/dgsr_2 \
-        #--limitoutput \
-        #-s 25.0 \
-        #-L \
-	#-r -20,20 \
-	#-f 2 \
-        #--refinepasses=3 \
-        #--despecklepasses=4 \
-        #--accheck \
-        #--nprocs=-1 \
-        #--detrendorder=3
-
-#rapidtide2x \
-	#fmri.nii.gz \
-	#../dst/dgsr_artery \
-        #--limitoutput \
-        #-s 25.0 \
-        #-L \
-	#-r -10,5 \
-	#-f 2 \
-        #--passes=1 \
-        #--nprocs=-1 \
-        #--saveoptionsasjson \
-        #--nofitfilt \
-        #--detrendorder=3 \
-        #-I --noglm
-
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr_X \
+	../dst/dgsr \
         --delaymapping \
+        --sigmalimit 25.0 \
+        --ampthresh 0.3 \
         --nprocs=-1 \
 	--spatialfilt 2 
-
-rapidtide2x \
-	fmri.nii.gz \
-	../dst/dgsr_2x_trans \
-        --limitoutput \
-        -s 25.0 \
-        -L \
-	-r -20,20 \
-	-f 2 \
-        --passes=3 \
-        --refineoffset \
-        --despecklepasses=4 \
-        --nprocs=-1 \
-        --saveoptionsasjson \
-        --pickleft \
-        --nofitfilt \
-        --detrendorder=3
 
 rapidtide2x \
 	fmri.nii.gz \
 	../dst/dgsr_2x \
         --limitoutput \
         -s 25.0 \
+        --ampthresh=0.3 \
         -L \
-	-r -20,20 \
+	-r -10,30 \
 	-f 2 \
         --passes=3 \
         --refineoffset \
@@ -67,43 +24,7 @@ rapidtide2x \
         --nprocs=-1 \
         --saveoptionsasjson \
         --pickleft \
-        --nofitfilt \
+        --noglm \
         --detrendorder=3
 
-rapidtide2x \
-	fmri.nii.gz \
-	../dst/dgsr_2x_pct \
-        --limitoutput \
-        -s 25.0 \
-        -L \
-	-r -20,20 \
-	-f 2 \
-        --passes=3 \
-        --refineoffset \
-        --despecklepasses=4 \
-        --nprocs=-1 \
-        --saveoptionsasjson \
-        --pickleft \
-        --nofitfilt \
-        --ampthresh=-0.9 \
-        --detrendorder=3
-
-#rapidtide2x \
-	#fmri_demeaned.nii.gz \
-	#../dst/dgsr_demeaned \
-        #--limitoutput \
-        #-s 25.0 \
-        #-N 0 \
-        #-L \
-	#-r -20,20 \
-	#-f 2 \
-        #--passes=3 \
-        #--refineoffset \
-        #--despecklepasses=4 \
-        #--nprocs=-1 \
-        #--saveoptionsasjson \
-        #--pickleft \
-        #--nofitfilt \
-        #--detrendorder=3
-
-#diffmaps ../dst/dgsr_nomask ../dst/dgsr_cerebellar ../dst/diff
+diffmaps ../dst/dgsr_2x ../dst/dgsr ../dst/diff
