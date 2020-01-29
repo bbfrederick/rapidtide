@@ -29,4 +29,9 @@ import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide2x_parser as rapidtide_parser
 
 if __name__ == '__main__':
+    print("*******************************************************************************************************")
+    print("*******************************************************************************************************")
+    print("WARNING: rapidtide2x is now deprecated.  Convert your calling options and use 'rapidtide' going forward")
+    print("*******************************************************************************************************")
+    print("*******************************************************************************************************")
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args)
