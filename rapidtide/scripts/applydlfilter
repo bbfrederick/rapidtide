@@ -18,10 +18,11 @@
 
 from __future__ import print_function, division
 import getopt
+import os
 import matplotlib.pyplot as plt
 import sys
 import rapidtide.io as tide_io
-import rapidtide.dlfilter as dlfilter
+import rapidtide.dlfilter as tide_dlfilt
 import rapidtide.filter as tide_filt
 import rapidtide.correlate as tide_corr
 import rapidtide.miscmath as tide_math
@@ -83,7 +84,7 @@ display = False
 verbose = False
 predfilename = sys.argv[2]
 
-modelname = 'model_serdar2'
+modelname = 'model_revised'
 filesarelists = False
 
 # now scan for optional arguments
@@ -135,7 +136,10 @@ else:
 
 
 # load the filter
-thedlfilter = dlfilter.dlfilter(verbose=False)
+modelpath = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide',
+                         'data',
+                         'models')
+thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
 thedlfilter.loadmodel(modelname)
 model = thedlfilter.model
 window_size = thedlfilter.window_size
