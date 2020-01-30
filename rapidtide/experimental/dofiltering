@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source activate tensorflowgpu
+#source activate tensorflowgpu
 
 /cm/shared/anaconda3/bin/applydlfilter \
     /home/frederic/code/rapidtide/rapidtide/experimental/cardfiles \
