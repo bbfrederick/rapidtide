@@ -15,8 +15,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import numpy as np
-import matplotlib as mpl
-#mpl.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 from rapidtide.resample import doresample, fastresampler

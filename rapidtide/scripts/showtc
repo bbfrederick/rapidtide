@@ -29,7 +29,6 @@ import argparse
 from rapidtide.workflows.parser_funcs import (is_valid_file, invert_float, is_float)
 
 import matplotlib
-matplotlib.use('Qt5Agg')
 import matplotlib.cm as cm
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt

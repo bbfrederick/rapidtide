@@ -23,8 +23,6 @@
 from __future__ import print_function
 
 import numpy as np
-import matplotlib as mpl
-#mpl.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 import rapidtide.miscmath as tide_math
