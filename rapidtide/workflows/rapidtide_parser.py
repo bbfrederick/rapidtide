@@ -920,7 +920,7 @@ def process_args(inputargs=None):
     else:
         args['usebutterworthfilter'] = False
     theprefilter.setbutter(args['usebutterworthfilter'], args['filtorder'])
-    args['lowerpass'], args['upperpass'], args['lowerstop'], args['upperstop'] = theprefilter.getfreqs()
+    args['lowerstop'], args['lowerpass'], args['upperpass'], args['upperstop'] = theprefilter.getfreqs()
 
 
     # Additional argument parsing not handled by argparse
