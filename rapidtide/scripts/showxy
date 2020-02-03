@@ -114,159 +114,165 @@ def usage():
 
     return ()
 
-# set default variable values
-usebarplot = False
-usexlabel = False
-useylabel = False
-usetitle = False
-uselegend = True
-usepoints = False
-outputfile = None
-blandaltman = False
-fontscalefac = 1.0
-xrange = None
-yrange = None
-verbose = False
-saveres = 1000
-legendloc = 1
-colornames = []
 
-# now check options
-try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], "r:X:Y:f:o:pbi:x:y:l:t:B", ["help"])
-except getopt.GetoptError as err:
-    # print help information and exit:
-    print(str(err))  # will print something like "option -a not recognized"
-    usage()
-    sys.exit(2)
+def main():
+    # set default variable values
+    usebarplot = False
+    usexlabel = False
+    useylabel = False
+    usetitle = False
+    uselegend = True
+    usepoints = False
+    outputfile = None
+    blandaltman = False
+    fontscalefac = 1.0
+    xrange = None
+    yrange = None
+    verbose = False
+    saveres = 1000
+    legendloc = 1
+    colornames = []
 
-if verbose:
-    print('opts:', opts)
-    print('args:', args)
+    # now check options
+    try:
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "r:X:Y:f:o:pbi:x:y:l:t:B", ["help"])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(str(err))  # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
 
-# make sure there is at least one filename argument
-nargs = len(args)
-if nargs < 1:
-    print('not enough arguments in', args)
-    usage()
-    sys.exit(1)
-
-# handle filename args
-argvec = sys.argv[1].split(',')
-
-numfiles = 0
-textfilename = []
-thelegend = []
-for i in range(len(args)):
-    numfiles += 1
-    thesplit = args[i].split(',')
-    textfilename.append(thesplit[0])
-    if len(thesplit) > 1:
-        thelegend.append(thesplit[1])
-    else:
-        thelegend.append(thesplit[0])
     if verbose:
-        print('input file number ', numfiles, ' is ', textfilename[-1], ', label is', thelegend[-1])
+        print('opts:', opts)
+        print('args:', args)
 
-for o, a in opts:
-    if o == "-x":
-        usexlabel = True
-        thexlabel = a
-        if verbose:
-            print("labelling x axis with ", thexlabel)
-    elif o == "-y":
-        useylabel = True
-        theylabel = a
-        if verbose:
-            print("labelling y axis with ", theylabel)
-    elif o == "-X":
-        xrange = stringtorange(a)
-        if verbose:
-            print("setting yrange to", xrange[0], xrange[1])
-    elif o == "-Y":
-        yrange = stringtorange(a)
-        if verbose:
-            print("setting yrange to", yrange[0], yrange[1])
-    elif o == "-f":
-        fontscalefac = float(a)
-        if verbose:
-            print("will scale fonts by", fontscalefac)
-    elif o == "-o":
-        outputfile = a
-        if verbose:
-            print("saving plot to ", outputfile)
-    elif o == '-r':
-        saveres = int(a)
-        print('writing output to file at', saveres, 'dpi')
-    elif o == "-t":
-        usetitle = True
-        thetitle = a
-        if verbose:
-            print("using title ", thetitle)
-    elif o == '-i':
-        argvec = a.split(',')
-        if not (0 < len(argvec) <= 2):
-            usage()
-            sys.exit()
-        textfilename.append(argvec[0])
-        if len(argvec) == 2:
-            thelegend.append(argvec[1])
-            uselegend = True
-        else:
-            thelegend.append(argvec[0])
+    # make sure there is at least one filename argument
+    nargs = len(args)
+    if nargs < 1:
+        print('not enough arguments in', args)
+        usage()
+        sys.exit(1)
+
+    # handle filename args
+    argvec = sys.argv[1].split(',')
+
+    numfiles = 0
+    textfilename = []
+    thelegend = []
+    for i in range(len(args)):
         numfiles += 1
+        thesplit = args[i].split(',')
+        textfilename.append(thesplit[0])
+        if len(thesplit) > 1:
+            thelegend.append(thesplit[1])
+        else:
+            thelegend.append(thesplit[0])
         if verbose:
             print('input file number ', numfiles, ' is ', textfilename[-1], ', label is', thelegend[-1])
-    elif o == '-p':
-        usepoints = True
-    elif o == '-b':
-        usebarplot = True
-        if verbose:
-            print("doing bar plot")
-    elif o == '-B':
-        blandaltman = True
-        uselegend = False
-        if verbose:
-            print("doing bland-altman plot")
-    else:
-        assert False, "unhandled option"
 
-xvecs = []
-yvecs = []
-for i in range(0, numfiles):
-    if verbose:
-        print('reading data from', textfilename[i])
-    indata = tide_io.readvecs(textfilename[i])
-    xvecs.append(1.0 * indata[0, :])
-    yvecs.append(1.0 * indata[1, :])
-
-numvecs = len(xvecs)
-#colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
-if len(colornames) > 0:
-    colorlist = [colornames[i % len(colornames)] for i in range(numvecs)]
-else:
-    colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
-
-for i in range(0, numfiles):
-    if usebarplot:
-        bar(xvecs[i], yvecs[i], width=1.5, color='lightgray', align='center', edgecolor=None)
-    elif blandaltman:
-        bland_altman_plot(xvecs[i], yvecs[i], identifier=textfilename[i], fontscalefac=fontscalefac, xrange=xrange, yrange=yrange)
-    else:
-        if usepoints:
-            plot(xvecs[i], yvecs[i], color=colorlist[i], marker='.', linestyle='None')
+    for o, a in opts:
+        if o == "-x":
+            usexlabel = True
+            thexlabel = a
+            if verbose:
+                print("labelling x axis with ", thexlabel)
+        elif o == "-y":
+            useylabel = True
+            theylabel = a
+            if verbose:
+                print("labelling y axis with ", theylabel)
+        elif o == "-X":
+            xrange = stringtorange(a)
+            if verbose:
+                print("setting yrange to", xrange[0], xrange[1])
+        elif o == "-Y":
+            yrange = stringtorange(a)
+            if verbose:
+                print("setting yrange to", yrange[0], yrange[1])
+        elif o == "-f":
+            fontscalefac = float(a)
+            if verbose:
+                print("will scale fonts by", fontscalefac)
+        elif o == "-o":
+            outputfile = a
+            if verbose:
+                print("saving plot to ", outputfile)
+        elif o == '-r':
+            saveres = int(a)
+            print('writing output to file at', saveres, 'dpi')
+        elif o == "-t":
+            usetitle = True
+            thetitle = a
+            if verbose:
+                print("using title ", thetitle)
+        elif o == '-i':
+            argvec = a.split(',')
+            if not (0 < len(argvec) <= 2):
+                usage()
+                sys.exit()
+            textfilename.append(argvec[0])
+            if len(argvec) == 2:
+                thelegend.append(argvec[1])
+                uselegend = True
+            else:
+                thelegend.append(argvec[0])
+            numfiles += 1
+            if verbose:
+                print('input file number ', numfiles, ' is ', textfilename[-1], ', label is', thelegend[-1])
+        elif o == '-p':
+            usepoints = True
+        elif o == '-b':
+            usebarplot = True
+            if verbose:
+                print("doing bar plot")
+        elif o == '-B':
+            blandaltman = True
+            uselegend = False
+            if verbose:
+                print("doing bland-altman plot")
         else:
-            plot(xvecs[i], yvecs[i], color=colorlist[i])
-if uselegend:
-    legend(thelegend, loc=legendloc)
-if usetitle:
-    title(thetitle, fontsize=fontscalefac * 18, fontweight='bold')
-if usexlabel:
-    xlabel(thexlabel, fontsize=fontscalefac * 16, fontweight='bold')
-if useylabel:
-    ylabel(theylabel, fontsize=fontscalefac * 16, fontweight='bold')
+            assert False, "unhandled option"
 
-if outputfile is None:
-    show()
-else:
-    savefig(outputfile, bbox_inches='tight', dpi=saveres)
+    xvecs = []
+    yvecs = []
+    for i in range(0, numfiles):
+        if verbose:
+            print('reading data from', textfilename[i])
+        indata = tide_io.readvecs(textfilename[i])
+        xvecs.append(1.0 * indata[0, :])
+        yvecs.append(1.0 * indata[1, :])
+
+    numvecs = len(xvecs)
+    #colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
+    if len(colornames) > 0:
+        colorlist = [colornames[i % len(colornames)] for i in range(numvecs)]
+    else:
+        colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
+
+    for i in range(0, numfiles):
+        if usebarplot:
+            bar(xvecs[i], yvecs[i], width=1.5, color='lightgray', align='center', edgecolor=None)
+        elif blandaltman:
+            bland_altman_plot(xvecs[i], yvecs[i], identifier=textfilename[i], fontscalefac=fontscalefac, xrange=xrange, yrange=yrange)
+        else:
+            if usepoints:
+                plot(xvecs[i], yvecs[i], color=colorlist[i], marker='.', linestyle='None')
+            else:
+                plot(xvecs[i], yvecs[i], color=colorlist[i])
+    if uselegend:
+        legend(thelegend, loc=legendloc)
+    if usetitle:
+        title(thetitle, fontsize=fontscalefac * 18, fontweight='bold')
+    if usexlabel:
+        xlabel(thexlabel, fontsize=fontscalefac * 16, fontweight='bold')
+    if useylabel:
+        ylabel(theylabel, fontsize=fontscalefac * 16, fontweight='bold')
+
+    if outputfile is None:
+        show()
+    else:
+        savefig(outputfile, bbox_inches='tight', dpi=saveres)
+
+if __name__ == '__main__':
+    main()
+
