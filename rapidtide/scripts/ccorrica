@@ -69,213 +69,217 @@ def usage():
     print("                         factor that results in resampling to at least 2Hz.")
     return ()
 
+def main():
+    # get the command line parameters
+    searchrange = 15.0
+    corrweighting = 'none'
+    prewindow = True
+    windowfunc = 'hamming'
+    detrendorder = 1
+    dopartial = False
+    verbose = False
+    summarymode = False
+    oversampfactor = 1
 
-# get the command line parameters
-searchrange = 15.0
-corrweighting = 'none'
-prewindow = True
-windowfunc = 'hamming'
-detrendorder = 1
-dopartial = False
-verbose = False
-summarymode = False
-oversampfactor = 1
+    debug = False
 
-debug = False
+    theprefilter = tide_filt.noncausalfilter()
 
-theprefilter = tide_filt.noncausalfilter()
+    nargs = len(sys.argv)
+    if nargs < 4:
+        usage()
+        exit()
+    datafilename = sys.argv[1]
+    outputroot = sys.argv[2]
+    sampletime = float(sys.argv[3])
+    Fs = 1.0 / sampletime
 
-nargs = len(sys.argv)
-if nargs < 4:
-    usage()
-    exit()
-datafilename = sys.argv[1]
-outputroot = sys.argv[2]
-sampletime = float(sys.argv[3])
-Fs = 1.0 / sampletime
+    # now scan for optional arguments
+    try:
+        opts, args = getopt.getopt(sys.argv[4:], "r:VLRCF:O:",
+                                   ["phat", "liang", "eckart", "nodetrend", "nowindow", "windowfunc=", "help"])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(str(err))  # will print something like "option -x not recognized"
+        usage()
+        sys.exit(2)
 
-# now scan for optional arguments
-try:
-    opts, args = getopt.getopt(sys.argv[4:], "r:VLRCF:O:",
-                               ["phat", "liang", "eckart", "nodetrend", "nowindow", "windowfunc=", "help"])
-except getopt.GetoptError as err:
-    # print help information and exit:
-    print(str(err))  # will print something like "option -x not recognized"
-    usage()
-    sys.exit(2)
+    for o, a in opts:
+        if o == "--liang":
+            corrweighting = 'Liang'
+            if verbose:
+                print('doing Liang weighted correlation')
+        elif o == "--eckart":
+            corrweighting = 'Eckart'
+            if verbose:
+                print('doing Eckart weighted correlation')
+        elif o == "--phat":
+            corrweighting = 'PHAT'
+            if verbose:
+                print('doing phase alignment transform')
+        elif o == "--nodetrend":
+            detrendorder = 0
+            if verbose:
+                print('disabling detrending')
+        elif o == "--nowindow":
+            prewindow = False
+            if verbose:
+                print('disabling prewindowing')
+        elif o == "--windowfunc":
+            windowfunc = a
+            if (windowfunc != 'hamming') and (windowfunc != 'blackmanharris') and (windowfunc != 'hann') and (
+                    windowfunc != 'None'):
+                print('illegal window function')
+                sys.exit()
+            if verbose:
+                print('using window function:', windowfunc)
+        elif o == "-r":
+            searchrange = float(a)
+            if verbose:
+                print('peak search restricted to +/-', searchrange, ' seconds')
+        elif o == "-V":
+            theprefilter.settype('vlf')
+            if verbose:
+                print('prefiltering to vlf band')
+        elif o == "-L":
+            theprefilter.settype('lfo')
+            if verbose:
+                print('prefiltering to lfo band')
+        elif o == "-R":
+            theprefilter.settype('resp')
+            if verbose:
+                print('prefiltering to respiratory band')
+        elif o == "-C":
+            theprefilter.settype('cardiac')
+            if verbose:
+                print('prefiltering to cardiac band')
+        elif o == "-F":
+            arbvec = a.split(',')
+            if len(arbvec) != 2 and len(arbvec) != 4:
+                usage()
+                sys.exit()
+            if len(arbvec) == 2:
+                arb_lower = float(arbvec[0])
+                arb_upper = float(arbvec[1])
+                arb_lowerstop = 0.9 * float(arbvec[0])
+                arb_upperstop = 1.1 * float(arbvec[1])
+            if len(arbvec) == 4:
+                arb_lower = float(arbvec[0])
+                arb_upper = float(arbvec[1])
+                arb_lowerstop = float(arbvec[2])
+                arb_upperstop = float(arbvec[3])
+            theprefilter.settype('arb')
+            theprefilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+            if verbose:
+                print('prefiltering to ', arb_lower, arb_upper, "(stops at ", arb_lowerstop, arb_upperstop, ")")
+        elif o == "-O":
+            oversampfactor = int(a)
+            if verbose:
+                print('oversample factor set to ', oversampfactor)
+        else:
+            assert False, "unhandled option"
 
-for o, a in opts:
-    if o == "--liang":
-        corrweighting = 'Liang'
-        if verbose:
-            print('doing Liang weighted correlation')
-    elif o == "--eckart":
-        corrweighting = 'Eckart'
-        if verbose:
-            print('doing Eckart weighted correlation')
-    elif o == "--phat":
-        corrweighting = 'PHAT'
-        if verbose:
-            print('doing phase alignment transform')
-    elif o == "--nodetrend":
-        detrendorder = 0
-        if verbose:
-            print('disabling detrending')
-    elif o == "--nowindow":
-        prewindow = False
-        if verbose:
-            print('disabling prewindowing')
-    elif o == "--windowfunc":
-        windowfunc = a
-        if (windowfunc != 'hamming') and (windowfunc != 'blackmanharris') and (windowfunc != 'hann') and (
-                windowfunc != 'None'):
-            print('illegal window function')
-            sys.exit()
-        if verbose:
-            print('using window function:', windowfunc)
-    elif o == "-r":
-        searchrange = float(a)
-        if verbose:
-            print('peak search restricted to +/-', searchrange, ' seconds')
-    elif o == "-V":
-        theprefilter.settype('vlf')
-        if verbose:
-            print('prefiltering to vlf band')
-    elif o == "-L":
-        theprefilter.settype('lfo')
-        if verbose:
-            print('prefiltering to lfo band')
-    elif o == "-R":
-        theprefilter.settype('resp')
-        if verbose:
-            print('prefiltering to respiratory band')
-    elif o == "-C":
-        theprefilter.settype('cardiac')
-        if verbose:
-            print('prefiltering to cardiac band')
-    elif o == "-F":
-        arbvec = a.split(',')
-        if len(arbvec) != 2 and len(arbvec) != 4:
-            usage()
-            sys.exit()
-        if len(arbvec) == 2:
-            arb_lower = float(arbvec[0])
-            arb_upper = float(arbvec[1])
-            arb_lowerstop = 0.9 * float(arbvec[0])
-            arb_upperstop = 1.1 * float(arbvec[1])
-        if len(arbvec) == 4:
-            arb_lower = float(arbvec[0])
-            arb_upper = float(arbvec[1])
-            arb_lowerstop = float(arbvec[2])
-            arb_upperstop = float(arbvec[3])
-        theprefilter.settype('arb')
-        theprefilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-        if verbose:
-            print('prefiltering to ', arb_lower, arb_upper, "(stops at ", arb_lowerstop, arb_upperstop, ")")
-    elif o == "-O":
-        oversampfactor = int(a)
-        if verbose:
-            print('oversample factor set to ', oversampfactor)
+    tcdata = tide_io.readvecs(datafilename)
+    thedims = tcdata.shape
+    tclen = thedims[1]
+    numcomponents = thedims[0]
+
+    # check to see if we need to adjust the oversample factor
+    if oversampfactor < 0:
+        oversampfactor = int(np.max([np.ceil(sampletime // 0.5), 1]))
+        print('oversample factor set to', oversampfactor)
+
+    reformdata = np.reshape(tcdata, (numcomponents, tclen))
+    if oversampfactor == 1:
+        print("data array shape is ", reformdata.shape)
     else:
-        assert False, "unhandled option"
+        resampdata = np.zeros((numcomponents, tclen * oversampfactor), dtype=np.float)
+        for component in range(0, numcomponents):
+            resampdata[component, :] = tide_resample.upsample(reformdata[component, :], Fs, Fs * oversampfactor, intfac=True)
+        reformdata = resampdata
+        Fs *= oversampfactor
+        tclen *=oversampfactor
 
-tcdata = tide_io.readvecs(datafilename)
-thedims = tcdata.shape
-tclen = thedims[1]
-numcomponents = thedims[0]
-
-# check to see if we need to adjust the oversample factor
-if oversampfactor < 0:
-    oversampfactor = int(np.max([np.ceil(sampletime // 0.5), 1]))
-    print('oversample factor set to', oversampfactor)
-
-reformdata = np.reshape(tcdata, (numcomponents, tclen))
-if oversampfactor == 1:
-    print("data array shape is ", reformdata.shape)
-else:
-    resampdata = np.zeros((numcomponents, tclen * oversampfactor), dtype=np.float)
     for component in range(0, numcomponents):
-        resampdata[component, :] = tide_resample.upsample(reformdata[component, :], Fs, Fs * oversampfactor, intfac=True)
-    reformdata = resampdata
-    Fs *= oversampfactor
-    tclen *=oversampfactor
-
-for component in range(0, numcomponents):
-    reformdata[component, :] = tide_math.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]),
-                                        prewindow=prewindow,
-                                        detrendorder=detrendorder,
-                                        windowfunc=windowfunc)
+        reformdata[component, :] = tide_math.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]),
+                                            prewindow=prewindow,
+                                            detrendorder=detrendorder,
+                                            windowfunc=windowfunc)
 
 
-xcorrlen = 2 * tclen - 1
-sampletime = 1.0 / Fs
-xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
-searchrange = 15.0
-widthlimit = 15.0
+    xcorrlen = 2 * tclen - 1
+    sampletime = 1.0 / Fs
+    xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
+    searchrange = 15.0
+    widthlimit = 15.0
 
-halfwindow = int(searchrange * Fs)
-corrzero = xcorrlen // 2
-searchstart = corrzero - halfwindow
-searchend = corrzero + halfwindow
-corrwin = searchend - searchstart
+    halfwindow = int(searchrange * Fs)
+    corrzero = xcorrlen // 2
+    searchstart = corrzero - halfwindow
+    searchend = corrzero + halfwindow
+    corrwin = searchend - searchstart
 
-outputdata = np.zeros((numcomponents, numcomponents, 1, xcorrlen), dtype='float')
-outputpdata = np.zeros((numcomponents, numcomponents, 1, tclen), dtype='float')
-outputcorrmax = np.zeros((numcomponents, numcomponents, 1, 1), dtype='float')
-outputcorrlag = np.zeros((numcomponents, numcomponents, 1, 1), dtype='float')
-outputcorrwidth = np.zeros((numcomponents, numcomponents, 1, 1), dtype='float')
-outputcorrmask = np.zeros((numcomponents, numcomponents, 1, 1), dtype='float')
-for component1 in range(0, numcomponents):
-    print('correlating with component', component1)
-    for component2 in range(0, numcomponents):
-        thexcorr = tide_corr.fastcorrelate(reformdata[component1, :], reformdata[component2, :],
-                                           usefft=True,
-                                           weighting=corrweighting,
-                                           displayplots=debug)
-        thepxcorr = pearsonr(reformdata[component1, :] / tclen, reformdata[component2, :])
-        outputdata[component1, component2, 0, :] = thexcorr
-        outputpdata[component1, component2, 0, :] = thepxcorr[0]
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
-            xcorr_x[searchstart:searchend], thexcorr[searchstart:searchend],
-            -searchrange, searchrange, widthlimit,
-            refine=True,
-            useguess=False,
-            fastgauss=False,
-            displayplots=False)
-        outputcorrmax[component1, component2, 0, 0] = maxval
-        outputcorrlag[component1, component2, 0, 0] = maxlag
-        outputcorrwidth[component1, component2, 0, 0] = maxsigma
-        outputcorrmask[component1, component2, 0, 0] = maskval
+    outputdata = np.zeros((numcomponents, numcomponents, 1, xcorrlen), dtype='float')
+    outputpdata = np.zeros((numcomponents, numcomponents, 1, tclen), dtype='float')
+    outputcorrmax = np.zeros((numcomponents, numcomponents, 1, 1), dtype='float')
+    outputcorrlag = np.zeros((numcomponents, numcomponents, 1, 1), dtype='float')
+    outputcorrwidth = np.zeros((numcomponents, numcomponents, 1, 1), dtype='float')
+    outputcorrmask = np.zeros((numcomponents, numcomponents, 1, 1), dtype='float')
+    for component1 in range(0, numcomponents):
+        print('correlating with component', component1)
+        for component2 in range(0, numcomponents):
+            thexcorr = tide_corr.fastcorrelate(reformdata[component1, :], reformdata[component2, :],
+                                               usefft=True,
+                                               weighting=corrweighting,
+                                               displayplots=debug)
+            thepxcorr = pearsonr(reformdata[component1, :] / tclen, reformdata[component2, :])
+            outputdata[component1, component2, 0, :] = thexcorr
+            outputpdata[component1, component2, 0, :] = thepxcorr[0]
+            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
+                xcorr_x[searchstart:searchend], thexcorr[searchstart:searchend],
+                -searchrange, searchrange, widthlimit,
+                refine=True,
+                useguess=False,
+                fastgauss=False,
+                displayplots=False)
+            outputcorrmax[component1, component2, 0, 0] = maxval
+            outputcorrlag[component1, component2, 0, 0] = maxlag
+            outputcorrwidth[component1, component2, 0, 0] = maxsigma
+            outputcorrmask[component1, component2, 0, 0] = maskval
 
-# symmetrize the matrices
-outputcorrmax[:, :, 0, 0] = tide_stats.symmetrize(outputcorrmax[:, :, 0, 0], zerodiagonal=True)
-outputcorrlag[:, :, 0, 0] = tide_stats.symmetrize(outputcorrlag[:, :, 0, 0], antisymmetric=True)
-outputcorrwidth[:, :, 0, 0] = tide_stats.symmetrize(outputcorrwidth[:, :, 0, 0])
-outputcorrmask[:, :, 0, 0] = tide_stats.symmetrize(outputcorrmask[:, :, 0, 0], zerodiagonal=True)
+    # symmetrize the matrices
+    outputcorrmax[:, :, 0, 0] = tide_stats.symmetrize(outputcorrmax[:, :, 0, 0], zerodiagonal=True)
+    outputcorrlag[:, :, 0, 0] = tide_stats.symmetrize(outputcorrlag[:, :, 0, 0], antisymmetric=True)
+    outputcorrwidth[:, :, 0, 0] = tide_stats.symmetrize(outputcorrwidth[:, :, 0, 0])
+    outputcorrmask[:, :, 0, 0] = tide_stats.symmetrize(outputcorrmask[:, :, 0, 0], zerodiagonal=True)
 
-# show()
-outputaffine = np.eye(4)
-out4d_hdr = nib.Nifti1Image(outputdata[:, :, :, searchstart:searchend], outputaffine).header
-out4d_hdr['pixdim'][4] = sampletime
-out4d_sizes = out4d_hdr['pixdim']
-tide_io.savetonifti(outputdata[:, :, :, searchstart:searchend], out4d_hdr, outputroot + '_xcorr')
+    # show()
+    outputaffine = np.eye(4)
+    out4d_hdr = nib.Nifti1Image(outputdata[:, :, :, searchstart:searchend], outputaffine).header
+    out4d_hdr['pixdim'][4] = sampletime
+    out4d_sizes = out4d_hdr['pixdim']
+    tide_io.savetonifti(outputdata[:, :, :, searchstart:searchend], out4d_hdr, outputroot + '_xcorr')
 
-outputaffine = np.eye(4)
-out4d_hdr = nib.Nifti1Image(outputpdata, outputaffine).header
-out4d_hdr['pixdim'][4] = sampletime
-out4d_sizes = out4d_hdr['pixdim']
-tide_io.savetonifti(outputpdata, out4d_hdr, outputroot + '_pxcorr')
+    outputaffine = np.eye(4)
+    out4d_hdr = nib.Nifti1Image(outputpdata, outputaffine).header
+    out4d_hdr['pixdim'][4] = sampletime
+    out4d_sizes = out4d_hdr['pixdim']
+    tide_io.savetonifti(outputpdata, out4d_hdr, outputroot + '_pxcorr')
 
-out3d_hdr = nib.Nifti1Image(outputcorrmax, outputaffine).header
-out3d_hdr['pixdim'][4] = sampletime
-out3d_sizes = out3d_hdr['pixdim']
-tide_io.savetonifti(outputcorrmax, out3d_hdr, outputroot + '_corrmax')
-tide_io.writenpvecs(outputcorrmax.reshape(numcomponents, numcomponents), outputroot + '_corrmax.txt')
-tide_io.savetonifti(outputcorrlag, out3d_hdr, outputroot + '_corrlag')
-tide_io.writenpvecs(outputcorrlag.reshape(numcomponents, numcomponents), outputroot + '_corrlag.txt')
-tide_io.savetonifti(outputcorrwidth, out3d_hdr, outputroot + '_corrwidth')
-tide_io.writenpvecs(outputcorrwidth.reshape(numcomponents, numcomponents), outputroot + '_corrwidth.txt')
-tide_io.savetonifti(outputcorrmask, out3d_hdr, outputroot + '_corrmask')
-tide_io.writenpvecs(outputcorrmask.reshape(numcomponents, numcomponents), outputroot + '_corrmask.txt')
+    out3d_hdr = nib.Nifti1Image(outputcorrmax, outputaffine).header
+    out3d_hdr['pixdim'][4] = sampletime
+    out3d_sizes = out3d_hdr['pixdim']
+    tide_io.savetonifti(outputcorrmax, out3d_hdr, outputroot + '_corrmax')
+    tide_io.writenpvecs(outputcorrmax.reshape(numcomponents, numcomponents), outputroot + '_corrmax.txt')
+    tide_io.savetonifti(outputcorrlag, out3d_hdr, outputroot + '_corrlag')
+    tide_io.writenpvecs(outputcorrlag.reshape(numcomponents, numcomponents), outputroot + '_corrlag.txt')
+    tide_io.savetonifti(outputcorrwidth, out3d_hdr, outputroot + '_corrwidth')
+    tide_io.writenpvecs(outputcorrwidth.reshape(numcomponents, numcomponents), outputroot + '_corrwidth.txt')
+    tide_io.savetonifti(outputcorrmask, out3d_hdr, outputroot + '_corrmask')
+    tide_io.writenpvecs(outputcorrmask.reshape(numcomponents, numcomponents), outputroot + '_corrmask.txt')
 
-tide_io.writenpvecs(reformdata, outputroot + '_reformdata.txt')
+    tide_io.writenpvecs(reformdata, outputroot + '_reformdata.txt')
+
+
+if __name__ == '__main__':
+    main()

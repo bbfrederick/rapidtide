@@ -39,39 +39,45 @@ def usage():
     print('')
     return()
 
-# set default variable values
-histlen=101
 
-# get the command line parameters
-if len(sys.argv) != 3:
-    usage()
-    exit()
+def main():
+    # set default variable values
+    histlen=101
 
-# handle required args first
-inputfilename=sys.argv[1]
-outputroot=sys.argv[2]
+    # get the command line parameters
+    if len(sys.argv) != 3:
+        usage()
+        exit()
 
-# now check options
-try:
-    opts, args = getopt.getopt(sys.argv[2:], "x", ["numbins", "help"])
-except getopt.GetoptError as err:
-    # print help information and exit:
-    print(str(err))  # will print something like "option -a not recognized"
-    usage()
-    sys.exit(2)
+    # handle required args first
+    inputfilename=sys.argv[1]
+    outputroot=sys.argv[2]
 
-for o, a in opts:
-    if o == "--numbins":
-        histlen = int(a)
-        print("using", histlen, "histogram bins")
-    else:
-        assert False, "unhandled option"
+    # now check options
+    try:
+        opts, args = getopt.getopt(sys.argv[2:], "x", ["numbins", "help"])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(str(err))  # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
 
-inputdata = tide_io.readvec(inputfilename)
+    for o, a in opts:
+        if o == "--numbins":
+            histlen = int(a)
+            print("using", histlen, "histogram bins")
+        else:
+            assert False, "unhandled option"
 
-maxval = np.max(inputdata)
-minval = np.min(inputdata)
-therange = [minval, maxval]
-print('therange:', therange)
+    inputdata = tide_io.readvec(inputfilename)
 
-tide_stats.makeandsavehistogram(inputdata, histlen, 0, outputroot, therange=therange)
+    maxval = np.max(inputdata)
+    minval = np.min(inputdata)
+    therange = [minval, maxval]
+    print('therange:', therange)
+
+    tide_stats.makeandsavehistogram(inputdata, histlen, 0, outputroot, therange=therange)
+
+
+if __name__ == '__main__':
+    main()

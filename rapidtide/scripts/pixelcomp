@@ -59,97 +59,102 @@ def usage():
     return ()
 
 
-# set default variable values
-display = True
-fastfilter = True
-linfitonly = False
-order = 3
+def main():
+    # set default variable values
+    display = True
+    fastfilter = True
+    linfitonly = False
+    order = 3
 
-# get the command line parameters
-if len(sys.argv) < 6:
-    usage()
-    exit()
+    # get the command line parameters
+    if len(sys.argv) < 6:
+        usage()
+        exit()
 
-# handle required args first
-inputfilename1 = sys.argv[1]
-maskfilename1 = sys.argv[2]
-inputfilename2 = sys.argv[3]
-maskfilename2 = sys.argv[4]
-outputfilename = sys.argv[5]
+    # handle required args first
+    inputfilename1 = sys.argv[1]
+    maskfilename1 = sys.argv[2]
+    inputfilename2 = sys.argv[3]
+    maskfilename2 = sys.argv[4]
+    outputfilename = sys.argv[5]
 
-# now scan for optional arguments
-try:
-    opts, args = getopt.getopt(sys.argv[6:], "ld", ["nodisplay", "help"])
-except getopt.GetoptError as err:
-    # print help information and exit:
-    print(str(err))  # will print something like "option -x not recognized"
-    usage()
-    sys.exit(2)
+    # now scan for optional arguments
+    try:
+        opts, args = getopt.getopt(sys.argv[6:], "ld", ["nodisplay", "help"])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(str(err))  # will print something like "option -x not recognized"
+        usage()
+        sys.exit(2)
 
-for o, a in opts:
-    if o == "-l":
-        linfitonly = True
-    elif o == "-d" or o == "--nodisplay":
-        display = False
-    else:
-        assert False, "unhandled option"
+    for o, a in opts:
+        if o == "-l":
+            linfitonly = True
+        elif o == "-d" or o == "--nodisplay":
+            display = False
+        else:
+            assert False, "unhandled option"
 
-input1_img, input1_data, input1_hdr, thedims1, thesizes1 = tide_io.readfromnifti(inputfilename1)
-mask1_img, mask1_data, mask1_hdr, themaskdims1, themasksizes1 = tide_io.readfromnifti(maskfilename1)
+    input1_img, input1_data, input1_hdr, thedims1, thesizes1 = tide_io.readfromnifti(inputfilename1)
+    mask1_img, mask1_data, mask1_hdr, themaskdims1, themasksizes1 = tide_io.readfromnifti(maskfilename1)
 
-if not tide_io.checkspacedimmatch(thedims1, themaskdims1):
-    print('input image 1 dimensions do not match mask')
-    exit()
+    if not tide_io.checkspacedimmatch(thedims1, themaskdims1):
+        print('input image 1 dimensions do not match mask')
+        exit()
 
-input2_img, input2_data, input2_hdr, thedims2, thesizes2 = tide_io.readfromnifti(inputfilename2)
-mask2_img, mask2_data, mask2_hdr, themaskdims2, themasksizes2 = tide_io.readfromnifti(maskfilename2)
+    input2_img, input2_data, input2_hdr, thedims2, thesizes2 = tide_io.readfromnifti(inputfilename2)
+    mask2_img, mask2_data, mask2_hdr, themaskdims2, themasksizes2 = tide_io.readfromnifti(maskfilename2)
 
-if not tide_io.checkspacedimmatch(thedims2, themaskdims2):
-    print('input image 2 dimensions do not match mask')
-    exit()
+    if not tide_io.checkspacedimmatch(thedims2, themaskdims2):
+        print('input image 2 dimensions do not match mask')
+        exit()
 
-if not tide_io.checkspacedimmatch(thedims1, thedims2):
-    print('input images 1 and 2 dimensions do not match')
-    exit()
+    if not tide_io.checkspacedimmatch(thedims1, thedims2):
+        print('input images 1 and 2 dimensions do not match')
+        exit()
 
-totalmask = mask1_data * mask2_data
-nonzeropoints = np.where(totalmask > 0)
-pairlist = []
-for i in range(0, len(nonzeropoints[0])):
-    pairlist.append([
-        input1_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]],
-        input2_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]]
-        ])
+    totalmask = mask1_data * mask2_data
+    nonzeropoints = np.where(totalmask > 0)
+    pairlist = []
+    for i in range(0, len(nonzeropoints[0])):
+        pairlist.append([
+            input1_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]],
+            input2_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]]
+            ])
 
-thearray = np.asarray(pairlist)
+    thearray = np.asarray(pairlist)
 
-# construct a 2d histogram
-numbins = 100
-H, xedges, yedges = np.histogram2d(thearray[:, 0], thearray[:, 1], bins=numbins, normed=True)
-extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
-plt.figure()
-cset = plt.contour(H, extent=extent)
-# plt.plot(thearray[:,0], thearray[:,1], 'k.')
-if display:
-    plt.show()
-else:
-    plt.savefig(outputfilename + '_contourplot.png', bbox_inches='tight')
-
-# now fit the line
-fitorder = 1
-thecoffs = np.polyfit(np.array(pairlist[0]), np.array(pairlist[1]), fitorder)
-print('thecoffs=', thecoffs)
-with open(outputfilename + '_linfit', 'w') as file:
-    file.writelines(str(thecoffs))
-
-if not linfitonly:
-    with open(outputfilename, 'w') as file:
-        for pair in pairlist:
-            file.writelines(str(pair[0]) + '\t' + str(pair[1]) + '\n')
+    # construct a 2d histogram
+    numbins = 100
+    H, xedges, yedges = np.histogram2d(thearray[:, 0], thearray[:, 1], bins=numbins, normed=True)
+    extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
     plt.figure()
-    bland_altman_plot(thearray[:, 0], thearray[:, 1])
-    plt.title('Bland-Altman Plot')
+    cset = plt.contour(H, extent=extent)
+    # plt.plot(thearray[:,0], thearray[:,1], 'k.')
     if display:
         plt.show()
     else:
-        plt.savefig(outputfilename + '_blandaltman.png', bbox_inches='tight')
+        plt.savefig(outputfilename + '_contourplot.png', bbox_inches='tight')
+
+    # now fit the line
+    fitorder = 1
+    thecoffs = np.polyfit(np.array(pairlist[0]), np.array(pairlist[1]), fitorder)
+    print('thecoffs=', thecoffs)
+    with open(outputfilename + '_linfit', 'w') as file:
+        file.writelines(str(thecoffs))
+
+    if not linfitonly:
+        with open(outputfilename, 'w') as file:
+            for pair in pairlist:
+                file.writelines(str(pair[0]) + '\t' + str(pair[1]) + '\n')
+        plt.figure()
+        bland_altman_plot(thearray[:, 0], thearray[:, 1])
+        plt.title('Bland-Altman Plot')
+        if display:
+            plt.show()
+        else:
+            plt.savefig(outputfilename + '_blandaltman.png', bbox_inches='tight')
+
+
+if __name__ == '__main__':
+    main()

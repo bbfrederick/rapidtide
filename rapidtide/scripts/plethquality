@@ -82,41 +82,47 @@ def usage():
     print("optional arguments:")
     print("    --nodisp                  - do not plot quality waveform")
 
-# handle required args first
-if len(sys.argv) < 4:
-    usage()
-    sys.exit()
-inputfile = sys.argv[1]
-outputfile = sys.argv[2]
-Fs = float(sys.argv[3])
 
-display = True
+def main():
+    # handle required args first
+    if len(sys.argv) < 4:
+        usage()
+        sys.exit()
+    inputfile = sys.argv[1]
+    outputfile = sys.argv[2]
+    Fs = float(sys.argv[3])
 
-# now scan for optional arguments
-try:
-    opts, args = getopt.getopt(sys.argv[4:], "", ["nodisp", "help"])
-except getopt.GetoptError as err:
-    # print(help information and exit:
-    print(str(err))  # will print something like "option -a not recognized"
-    usage()
-    sys.exit(2)
+    display = True
 
-for o, a in opts:
-    if o == "--nodisp":
-        display = False
-    else:
-        assert False, "unhandled option"
+    # now scan for optional arguments
+    try:
+        opts, args = getopt.getopt(sys.argv[4:], "", ["nodisp", "help"])
+    except getopt.GetoptError as err:
+        # print(help information and exit:
+        print(str(err))  # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
+
+    for o, a in opts:
+        if o == "--nodisp":
+            display = False
+        else:
+            assert False, "unhandled option"
 
 
-# read in the data
-plethdata = tide_io.readvec(inputfile)
+    # read in the data
+    plethdata = tide_io.readvec(inputfile)
 
-# calculate the quality score
-s_mean, s_std, quality = plethquality(plethdata, Fs)
-print(inputfile, s_mean, '+/-', s_std)
-tide_io.writevec(quality, outputfile)
+    # calculate the quality score
+    s_mean, s_std, quality = plethquality(plethdata, Fs)
+    print(inputfile, s_mean, '+/-', s_std)
+    tide_io.writevec(quality, outputfile)
 
-if display:
-    plt.figure()
-    plt.plot(quality)
-    plt.show()
+    if display:
+        plt.figure()
+        plt.plot(quality)
+        plt.show()
+
+
+if __name__ == '__main__':
+    main()

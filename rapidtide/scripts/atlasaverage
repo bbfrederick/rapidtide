@@ -74,107 +74,112 @@ def usage():
     return ()
 
 
-# get the command line parameters
-if len(sys.argv) < 4:
-    usage()
-    exit()
-
-# handle required args first
-inputfilename = sys.argv[1]
-templatefile = sys.argv[2]
-outputfile = sys.argv[3]
-
-normmethod = 'none'
-summarymethod = 'mean'
-
-# now scan for optional arguments
-try:
-    opts, args = getopt.getopt(sys.argv[4:], "h", ["nonorm", "pctnorm", "varnorm", "stdnorm", "ppnorm", "help"])
-except getopt.GetoptError as err:
-    # print help information and exit:
-    print(str(err))  # will print something like "option -x not recognized"
-    usage()
-    sys.exit(2)
-
-for o, a in opts:
-    if o == "--nonorm":
-        normmethod = 'none'
-    elif o == "--pctnorm":
-        normmethod = 'pctnorm'
-    elif o == "--stdnorm":
-        normmethod = 'stdnorm'
-    elif o == "--varnorm":
-        normmethod = 'varnorm'
-    elif o == "--ppnorm":
-        normmethod = 'ppnorm'
-    elif o == "-h" or o == '--help':
+def main():
+    # get the command line parameters
+    if len(sys.argv) < 4:
         usage()
         exit()
-    else:
-        assert False, "unhandled option"
 
-if normmethod == 'none':
-    print('will not normalize timecourses')
-elif normmethod == 'pctnorm':
-    print('will normalize timecourses to percentage of mean')
-elif normmethod == 'stdnorm':
-    print('will normalize timecourses to standard deviation of 1.0')
-elif normmethod == 'varnorm':
-    print('will normalize timecourses to variance of 1.0')
-elif normmethod == 'ppnorm':
-    print('will normalize timecourses to p-p deviation of 1.0')
+    # handle required args first
+    inputfilename = sys.argv[1]
+    templatefile = sys.argv[2]
+    outputfile = sys.argv[3]
 
-print('loading fmri data')
-input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
-print('loading template data')
-template_img, template_data, template_hdr, templatedims, templatesizes = tide_io.readfromnifti(templatefile)
+    normmethod = 'none'
+    summarymethod = 'mean'
 
-print('checking dimensions')
-if not tide_io.checkspacematch(input_hdr, template_hdr):
-    print('template file does not match spatial coverage of input fmri file')
-    sys.exit()
+    # now scan for optional arguments
+    try:
+        opts, args = getopt.getopt(sys.argv[4:], "h", ["nonorm", "pctnorm", "varnorm", "stdnorm", "ppnorm", "help"])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(str(err))  # will print something like "option -x not recognized"
+        usage()
+        sys.exit(2)
 
-print('reshaping')
-xsize = thedims[1]
-ysize = thedims[2]
-numslices = thedims[3]
-numtimepoints = thedims[4]
-numvoxels = int(xsize) * int(ysize) * int(numslices)
-templatevoxels = np.reshape(template_data, numvoxels).astype(int)
-inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
-numregions = np.max(templatevoxels)
-timecourses = np.zeros((numregions, numtimepoints), dtype='float')
-
-if numtimepoints > 1:
-    for theregion in range(1, numregions + 1):
-        thevoxels = inputvoxels[np.where(templatevoxels == theregion), :]
-        print('extracting', thevoxels.shape[1], 'voxels from region', theregion, 'of', numregions)
-        if thevoxels.shape[1] > 0:
-            #regiontimecourse = np.nan_to_num(np.mean(thevoxels, axis=1))
-            regiontimecourse = summarize(thevoxels, method=summarymethod)
-        else:
-            regiontimecourse = timecourses[0, :] * 0.0
-        if normmethod == 'none':
-            timecourses[theregion - 1, :] = regiontimecourse - np.mean(regiontimecourse)
-        elif normmethod == 'pctnorm':
-            timecourses[theregion - 1, :] = tide_math.pcnormalize(regiontimecourse)
-        elif normmethod == 'varnorm':
-            timecourses[theregion - 1, :] = tide_math.varnormalize(regiontimecourse)
-        elif normmethod == 'stdnorm':
-            timecourses[theregion - 1, :] = tide_math.stdnormalize(regiontimecourse)
-        elif normmethod == 'ppnorm':
-            timecourses[theregion - 1, :] = tide_math.ppnormalize(regiontimecourse)
-        else:
-            print('illegal normalization method')
+    for o, a in opts:
+        if o == "--nonorm":
+            normmethod = 'none'
+        elif o == "--pctnorm":
+            normmethod = 'pctnorm'
+        elif o == "--stdnorm":
+            normmethod = 'stdnorm'
+        elif o == "--varnorm":
+            normmethod = 'varnorm'
+        elif o == "--ppnorm":
+            normmethod = 'ppnorm'
+        elif o == "-h" or o == '--help':
             usage()
-            sys.exit()
-    tide_io.writenpvecs(timecourses, outputfile)
-else:
-    outputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
-    for theregion in range(1, numregions + 1):
-        thevoxels = inputvoxels[np.where(templatevoxels == theregion)]
-        #regionval = np.nan_to_num(np.mean(thevoxels))
-        regionval = summarize(thevoxels, method=summarymethod)
-        outputvoxels[np.where(templatevoxels == theregion)] = regionval
-    template_hdr['dim'][4] = numregions
-    tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, outputfile)
+            exit()
+        else:
+            assert False, "unhandled option"
+
+    if normmethod == 'none':
+        print('will not normalize timecourses')
+    elif normmethod == 'pctnorm':
+        print('will normalize timecourses to percentage of mean')
+    elif normmethod == 'stdnorm':
+        print('will normalize timecourses to standard deviation of 1.0')
+    elif normmethod == 'varnorm':
+        print('will normalize timecourses to variance of 1.0')
+    elif normmethod == 'ppnorm':
+        print('will normalize timecourses to p-p deviation of 1.0')
+
+    print('loading fmri data')
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
+    print('loading template data')
+    template_img, template_data, template_hdr, templatedims, templatesizes = tide_io.readfromnifti(templatefile)
+
+    print('checking dimensions')
+    if not tide_io.checkspacematch(input_hdr, template_hdr):
+        print('template file does not match spatial coverage of input fmri file')
+        sys.exit()
+
+    print('reshaping')
+    xsize = thedims[1]
+    ysize = thedims[2]
+    numslices = thedims[3]
+    numtimepoints = thedims[4]
+    numvoxels = int(xsize) * int(ysize) * int(numslices)
+    templatevoxels = np.reshape(template_data, numvoxels).astype(int)
+    inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
+    numregions = np.max(templatevoxels)
+    timecourses = np.zeros((numregions, numtimepoints), dtype='float')
+
+    if numtimepoints > 1:
+        for theregion in range(1, numregions + 1):
+            thevoxels = inputvoxels[np.where(templatevoxels == theregion), :]
+            print('extracting', thevoxels.shape[1], 'voxels from region', theregion, 'of', numregions)
+            if thevoxels.shape[1] > 0:
+                #regiontimecourse = np.nan_to_num(np.mean(thevoxels, axis=1))
+                regiontimecourse = summarize(thevoxels, method=summarymethod)
+            else:
+                regiontimecourse = timecourses[0, :] * 0.0
+            if normmethod == 'none':
+                timecourses[theregion - 1, :] = regiontimecourse - np.mean(regiontimecourse)
+            elif normmethod == 'pctnorm':
+                timecourses[theregion - 1, :] = tide_math.pcnormalize(regiontimecourse)
+            elif normmethod == 'varnorm':
+                timecourses[theregion - 1, :] = tide_math.varnormalize(regiontimecourse)
+            elif normmethod == 'stdnorm':
+                timecourses[theregion - 1, :] = tide_math.stdnormalize(regiontimecourse)
+            elif normmethod == 'ppnorm':
+                timecourses[theregion - 1, :] = tide_math.ppnormalize(regiontimecourse)
+            else:
+                print('illegal normalization method')
+                usage()
+                sys.exit()
+        tide_io.writenpvecs(timecourses, outputfile)
+    else:
+        outputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
+        for theregion in range(1, numregions + 1):
+            thevoxels = inputvoxels[np.where(templatevoxels == theregion)]
+            #regionval = np.nan_to_num(np.mean(thevoxels))
+            regionval = summarize(thevoxels, method=summarymethod)
+            outputvoxels[np.where(templatevoxels == theregion)] = regionval
+        template_hdr['dim'][4] = numregions
+        tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, outputfile)
+
+
+if __name__ == '__main__':
+    main()

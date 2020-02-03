@@ -44,156 +44,160 @@ def usage():
     print("")
     return ()
 
+def main():
+    # set default variable values
+    usedmask = False
+    usetmask = False
+    order = 1
 
-# set default variable values
-usedmask = False
-usetmask = False
-order = 1
+    # parse command line arguments
+    try:
+        opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "tmask=", "order="])
+    except getopt.GetoptError as err:
+        # print(help information and exit:
+        print(str(err))  # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
 
-# parse command line arguments
-try:
-    opts, args = getopt.gnu_getopt(sys.argv, 'h', ["help", "dmask=", "tmask=", "order="])
-except getopt.GetoptError as err:
-    # print(help information and exit:
-    print(str(err))  # will print something like "option -a not recognized"
-    usage()
-    sys.exit(2)
-
-# handle required args first
-if len(args) != 4:
-    print('spatial fit has 3 required arguments - ', len(args) - 1, 'found')
-    usage()
-    sys.exit()
-
-datafilename = args[1]
-templatefilename = args[2]
-outputrootname = args[3]
-
-print(datafilename, templatefilename, outputrootname)
-
-for o, a in opts:
-    if o == "--dmask":
-        usedmask = True
-        datamaskname = a
-        print('using', datamaskname, 'as data mask')
-    elif o == "--tmask":
-        usetmask = True
-        templatemaskname = a
-        print('using', templatemaskname, 'as template mask')
-    elif o == "--order":
-        order = int(a)
-        if not (0 <= order <= 4):
-            print('order should be between 0 and 4')
-            sys.exit()
-        if order == 1:
-            print('fitting to 1st order')
-        else:
-            print('fitting to', order, 'th order')
-    elif o in ("-h", "--help"):
+    # handle required args first
+    if len(args) != 4:
+        print('spatial fit has 3 required arguments - ', len(args) - 1, 'found')
         usage()
         sys.exit()
+
+    datafilename = args[1]
+    templatefilename = args[2]
+    outputrootname = args[3]
+
+    print(datafilename, templatefilename, outputrootname)
+
+    for o, a in opts:
+        if o == "--dmask":
+            usedmask = True
+            datamaskname = a
+            print('using', datamaskname, 'as data mask')
+        elif o == "--tmask":
+            usetmask = True
+            templatemaskname = a
+            print('using', templatemaskname, 'as template mask')
+        elif o == "--order":
+            order = int(a)
+            if not (0 <= order <= 4):
+                print('order should be between 0 and 4')
+                sys.exit()
+            if order == 1:
+                print('fitting to 1st order')
+            else:
+                print('fitting to', order, 'th order')
+        elif o in ("-h", "--help"):
+            usage()
+            sys.exit()
+        else:
+            assert False, "unhandled option"
+
+    # read in data
+    print("reading in data arrays")
+    datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide_io.readfromnifti(datafilename)
+    if usedmask:
+        datamask_img, datamask_data, datamask_hdr, datamaskdims, datamasksizes = tide_io.readfromnifti(datamaskname)
+    templatefile_img, templatefile_data, templatefile_hdr, templatefiledims, templatefilesizes = tide_io.readfromnifti(templatefilename)
+    if usetmask:
+        templatemask_img, templatemask_data, templatemask_hdr, templatemaskdims, templatemasksizes = tide_io.readfromnifti(templatemaskname)
+
+    xsize = datafiledims[1]
+    ysize = datafiledims[2]
+    numslices = datafiledims[3]
+    timepoints = datafiledims[4]
+
+    # check dimensions
+    print("checking dimensions")
+    if not tide_io.checkspacedimmatch(datafiledims, templatefiledims):
+        print(templatefiledims, 'template file spatial dimensions do not match image')
+        exit()
+    if not templatefiledims[4] == 1:
+        print('template file time dimension is not equal to 1')
+        exit()
+
+    if usedmask:
+        if not tide_io.checkspacedimmatch(datafiledims, datamaskdims):
+            print('input mask spatial dimensions do not match image')
+            exit()
+        if not tide_io.checktimematch(datafiledims, datamaskdims):
+            print('input mask time dimension does not match image')
+            exit()
+
+    if usetmask:
+        if not tide_io.checkspacedimmatch(datafiledims, templatemaskdims):
+            print('template mask spatial dimensions do not match image')
+            exit()
+        if not templatemaskdims[4] == 1:
+            print('template mask time dimension is not equal to 1')
+            exit()
+
+    # allocating arrays
+    print("allocating arrays")
+    numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+    rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
+    if usedmask:
+        rs_datamask = datamask_data.reshape((numspatiallocs, timepoints))
     else:
-        assert False, "unhandled option"
+        rs_datamask = np.ones((numspatiallocs, timepoints), dtype='float')
+    bin_datamask = np.where(rs_datamask > 0.9, 1.0, 0.0)
 
-# read in data
-print("reading in data arrays")
-datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide_io.readfromnifti(datafilename)
-if usedmask:
-    datamask_img, datamask_data, datamask_hdr, datamaskdims, datamasksizes = tide_io.readfromnifti(datamaskname)
-templatefile_img, templatefile_data, templatefile_hdr, templatefiledims, templatefilesizes = tide_io.readfromnifti(templatefilename)
-if usetmask:
-    templatemask_img, templatemask_data, templatemask_hdr, templatemaskdims, templatemasksizes = tide_io.readfromnifti(templatemaskname)
+    rs_templatefile = templatefile_data.reshape((numspatiallocs))
+    if usetmask:
+        rs_templatemask = templatemask_data.reshape((numspatiallocs))
+    else:
+        rs_templatemask = np.ones((numspatiallocs, timepoints), dtype='float')
 
-xsize = datafiledims[1]
-ysize = datafiledims[2]
-numslices = datafiledims[3]
-timepoints = datafiledims[4]
+    bin_templatemask = np.where(rs_templatemask > 0.1, 1.0, 0.0)
 
-# check dimensions
-print("checking dimensions")
-if not tide_io.checkspacedimmatch(datafiledims, templatefiledims):
-    print(templatefiledims, 'template file spatial dimensions do not match image')
-    exit()
-if not templatefiledims[4] == 1:
-    print('template file time dimension is not equal to 1')
-    exit()
+    fitdata = np.zeros((numspatiallocs, timepoints), dtype='float')
+    residuals = np.zeros((numspatiallocs, timepoints), dtype='float')
+    normalized = np.zeros((numspatiallocs, timepoints), dtype='float')
+    newtemplate = np.zeros((numspatiallocs), dtype='float')
+    newmask = np.zeros((numspatiallocs), dtype='float')
+    lincoffs = np.zeros((timepoints), dtype='float')
+    offsets = np.zeros((timepoints), dtype='float')
+    rvals = np.zeros((timepoints), dtype='float')
 
-if usedmask:
-    if not tide_io.checkspacedimmatch(datafiledims, datamaskdims):
-        print('input mask spatial dimensions do not match image')
-        exit()
-    if not tide_io.checktimematch(datafiledims, datamaskdims):
-        print('input mask time dimension does not match image')
-        exit()
+    # mask everything
+    print('masking data and template')
+    maskeddata = rs_datafile * bin_datamask
+    maskedtemplate = rs_templatefile * bin_templatemask
 
-if usetmask:
-    if not tide_io.checkspacedimmatch(datafiledims, templatemaskdims):
-        print('template mask spatial dimensions do not match image')
-        exit()
-    if not templatemaskdims[4] == 1:
-        print('template mask time dimension is not equal to 1')
-        exit()
+    # cycle over all images
+    print("now cycling over all images")
+    for thetime in range(0, timepoints):
+        thefit, R = tide_fit.mlregress(maskedtemplate, maskeddata[:, thetime])
+        lincoffs[thetime] = thefit[0, 1]
+        offsets[thetime] = thefit[0, 0]
+        rvals[thetime] = R
+        fitdata[:, thetime] = lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
+        newtemplate += np.nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask[:, thetime]
+        newmask += rs_datamask[:, thetime] * bin_templatemask
+        normalized[:, thetime] = (rs_datafile[:, thetime] - offsets[thetime]) / lincoffs[thetime]
+    residuals = rs_datafile - fitdata
 
-# allocating arrays
-print("allocating arrays")
-numspatiallocs = int(xsize) * int(ysize) * int(numslices)
-rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
-if usedmask:
-    rs_datamask = datamask_data.reshape((numspatiallocs, timepoints))
-else:
-    rs_datamask = np.ones((numspatiallocs, timepoints), dtype='float')
-bin_datamask = np.where(rs_datamask > 0.9, 1.0, 0.0)
+    # write out the data files
+    print("writing time series")
+    tide_io.writenpvecs(lincoffs, outputrootname + '_lincoffs.txt')
+    tide_io.writenpvecs(offsets, outputrootname + '_offsets.txt')
+    tide_io.writenpvecs(rvals, outputrootname + '_rvals.txt')
+    print("slope mean, std:", np.mean(lincoffs), np.std(lincoffs))
+    print("offset mean, std:", np.mean(offsets), np.std(offsets))
 
-rs_templatefile = templatefile_data.reshape((numspatiallocs))
-if usetmask:
-    rs_templatemask = templatemask_data.reshape((numspatiallocs))
-else:
-    rs_templatemask = np.ones((numspatiallocs, timepoints), dtype='float')
+    print("writing nifti series")
+    tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr,
+                        outputrootname + '_fit')
+    tide_io.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr,
+                        outputrootname + '_residuals')
+    tide_io.savetonifti(normalized.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr,
+                        outputrootname + '_normalized')
+    newtemplate = np.where(newmask > 0, newtemplate / newmask, 0.0)
+    tide_io.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr,
+                        outputrootname + '_newtemplate')
 
-bin_templatemask = np.where(rs_templatemask > 0.1, 1.0, 0.0)
 
-fitdata = np.zeros((numspatiallocs, timepoints), dtype='float')
-residuals = np.zeros((numspatiallocs, timepoints), dtype='float')
-normalized = np.zeros((numspatiallocs, timepoints), dtype='float')
-newtemplate = np.zeros((numspatiallocs), dtype='float')
-newmask = np.zeros((numspatiallocs), dtype='float')
-lincoffs = np.zeros((timepoints), dtype='float')
-offsets = np.zeros((timepoints), dtype='float')
-rvals = np.zeros((timepoints), dtype='float')
-
-# mask everything
-print('masking data and template')
-maskeddata = rs_datafile * bin_datamask
-maskedtemplate = rs_templatefile * bin_templatemask
-
-# cycle over all images
-print("now cycling over all images")
-for thetime in range(0, timepoints):
-    thefit, R = tide_fit.mlregress(maskedtemplate, maskeddata[:, thetime])
-    lincoffs[thetime] = thefit[0, 1]
-    offsets[thetime] = thefit[0, 0]
-    rvals[thetime] = R
-    fitdata[:, thetime] = lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
-    newtemplate += np.nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask[:, thetime]
-    newmask += rs_datamask[:, thetime] * bin_templatemask
-    normalized[:, thetime] = (rs_datafile[:, thetime] - offsets[thetime]) / lincoffs[thetime]
-residuals = rs_datafile - fitdata
-
-# write out the data files
-print("writing time series")
-tide_io.writenpvecs(lincoffs, outputrootname + '_lincoffs.txt')
-tide_io.writenpvecs(offsets, outputrootname + '_offsets.txt')
-tide_io.writenpvecs(rvals, outputrootname + '_rvals.txt')
-print("slope mean, std:", np.mean(lincoffs), np.std(lincoffs))
-print("offset mean, std:", np.mean(offsets), np.std(offsets))
-
-print("writing nifti series")
-tide_io.savetonifti(fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, 
-                    outputrootname + '_fit')
-tide_io.savetonifti(residuals.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, 
-                    outputrootname + '_residuals')
-tide_io.savetonifti(normalized.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, 
-                    outputrootname + '_normalized')
-newtemplate = np.where(newmask > 0, newtemplate / newmask, 0.0)
-tide_io.savetonifti(newtemplate.reshape((xsize, ysize, numslices)), templatefile_hdr,
-                    outputrootname + '_newtemplate')
+if __name__ == '__main__':
+    main()

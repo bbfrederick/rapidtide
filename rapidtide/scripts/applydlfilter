@@ -75,103 +75,108 @@ def usage():
     print("	--filesarelists           - input files contain lists of filenames, rather than data")
     print("	--nodisplay               - disables display")
 
-# handle required args first
-if len(sys.argv) < 3:
-    usage()
-    sys.exit()
-fmrifilename = sys.argv[1]
-display = False
-verbose = False
-predfilename = sys.argv[2]
 
-modelname = 'model_revised'
-filesarelists = False
-
-# now scan for optional arguments
-try:
-    opts, args = getopt.getopt(sys.argv[3:], "x", ["model=", "nodisplay", "filesarelists", "help"])
-except getopt.GetoptError as err:
-    # print(help information and exit:
-    print(str(err))  # will print something like "option -a not recognized"
-    usage()
-    sys.exit(2)
-
-for o, a in opts:
-    if o == "--model":
-        modelname = a
-        if verbose:
-            print('will use', modelname)
-    elif o == "--nodisplay":
-        display = False
-        if verbose:
-            print('disabling display')
-    elif o == "--filesarelists":
-        filesarelists = True
-        if verbose:
-            print('will treat specified files as lists')
-    else:
-        assert False, "unhandled option"
-
-if filesarelists:
-    fmrifilenamelist = []
-    with open(fmrifilename, 'r') as f:
-        inputlist = f.readlines()
-        for line in inputlist:
-            fmrifilenamelist.append(line.strip())
-            if verbose:
-                print(fmrifilenamelist[-1])
-    predfilenamelist = []
-    with open(predfilename, 'r') as f:
-        inputlist = f.readlines()
-        for line in inputlist:
-            predfilenamelist.append(line.strip())
-            if verbose:
-                print(predfilenamelist[-1])
-    if len(fmrifilenamelist) != len(predfilenamelist):
-        print('list lengths do not match - exiting')
+def main():
+    # handle required args first
+    if len(sys.argv) < 3:
+        usage()
         sys.exit()
-else:
-    fmrifilenamelist = [fmrifilename]
-    predfilenamelist = [predfilename]
+    fmrifilename = sys.argv[1]
+    display = False
+    verbose = False
+    predfilename = sys.argv[2]
 
+    modelname = 'model_revised'
+    filesarelists = False
 
-# load the filter
-modelpath = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide',
-                         'data',
-                         'models')
-thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
-thedlfilter.loadmodel(modelname)
-model = thedlfilter.model
-window_size = thedlfilter.window_size
-usebadpts = thedlfilter.usebadpts
-
-badpts = None
-if usebadpts:
+    # now scan for optional arguments
     try:
-        badpts = tide_io.readvec(fmrifilename.replace('.txt', '_badpts.txt'))
-    except:
-        print('bad points file', fmrifilename.replace('.txt', '_badpts.txt'), 'not found!')
-        sys.exit() 
+        opts, args = getopt.getopt(sys.argv[3:], "x", ["model=", "nodisplay", "filesarelists", "help"])
+    except getopt.GetoptError as err:
+        # print(help information and exit:
+        print(str(err))  # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
 
-for idx, fmrifilename in enumerate(fmrifilenamelist):
-    # read in the data
-    if verbose:
-        print('reading in', fmrifilename)
-    fmridata = tide_io.readvec(fmrifilename)
+    for o, a in opts:
+        if o == "--model":
+            modelname = a
+            if verbose:
+                print('will use', modelname)
+        elif o == "--nodisplay":
+            display = False
+            if verbose:
+                print('disabling display')
+        elif o == "--filesarelists":
+            filesarelists = True
+            if verbose:
+                print('will treat specified files as lists')
+        else:
+            assert False, "unhandled option"
 
-    if verbose:
-        print('filtering...')
-    predicteddata = thedlfilter.apply(fmridata, badpts=badpts)
+    if filesarelists:
+        fmrifilenamelist = []
+        with open(fmrifilename, 'r') as f:
+            inputlist = f.readlines()
+            for line in inputlist:
+                fmrifilenamelist.append(line.strip())
+                if verbose:
+                    print(fmrifilenamelist[-1])
+        predfilenamelist = []
+        with open(predfilename, 'r') as f:
+            inputlist = f.readlines()
+            for line in inputlist:
+                predfilenamelist.append(line.strip())
+                if verbose:
+                    print(predfilenamelist[-1])
+        if len(fmrifilenamelist) != len(predfilenamelist):
+            print('list lengths do not match - exiting')
+            sys.exit()
+    else:
+        fmrifilenamelist = [fmrifilename]
+        predfilenamelist = [predfilename]
 
-    if verbose:
-        print('writing to', predfilenamelist[idx])
-    tide_io.writevec(predicteddata, predfilenamelist[idx])
 
-    maxval, maxdelay, failreason = checkcardmatch(fmridata, predicteddata, 25.0, debug=False)
-    print(fmrifilename, 'max correlation input to output:', maxval)
+    # load the filter
+    modelpath = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide',
+                             'data',
+                             'models')
+    thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
+    thedlfilter.loadmodel(modelname)
+    model = thedlfilter.model
+    window_size = thedlfilter.window_size
+    usebadpts = thedlfilter.usebadpts
 
-    if display:
-        plt.figure()
-        plt.plot(fmridata)
-        plt.plot(predicteddata)
-        plt.show()
+    badpts = None
+    if usebadpts:
+        try:
+            badpts = tide_io.readvec(fmrifilename.replace('.txt', '_badpts.txt'))
+        except:
+            print('bad points file', fmrifilename.replace('.txt', '_badpts.txt'), 'not found!')
+            sys.exit()
+
+    for idx, fmrifilename in enumerate(fmrifilenamelist):
+        # read in the data
+        if verbose:
+            print('reading in', fmrifilename)
+        fmridata = tide_io.readvec(fmrifilename)
+
+        if verbose:
+            print('filtering...')
+        predicteddata = thedlfilter.apply(fmridata, badpts=badpts)
+
+        if verbose:
+            print('writing to', predfilenamelist[idx])
+        tide_io.writevec(predicteddata, predfilenamelist[idx])
+
+        maxval, maxdelay, failreason = checkcardmatch(fmridata, predicteddata, 25.0, debug=False)
+        print(fmrifilename, 'max correlation input to output:', maxval)
+
+        if display:
+            plt.figure()
+            plt.plot(fmridata)
+            plt.plot(predicteddata)
+            plt.show()
+
+if __name__ == '__main__':
+    main()
