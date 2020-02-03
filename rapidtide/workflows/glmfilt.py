@@ -23,7 +23,7 @@
 from __future__ import print_function, division
 
 import argparse
-from .parser_funcs import (is_valid_file, invert_float, is_float)
+from .parser_funcs import is_valid_file
 
 import numpy as np
 import rapidtide.io as tide_io

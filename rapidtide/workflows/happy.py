@@ -22,8 +22,6 @@
 #
 from __future__ import print_function, division
 
-#import matplotlib
-#matplotlib.use('pdf')
 from matplotlib.pyplot import plot, scatter, show, figure
 
 import time
@@ -33,7 +31,6 @@ import platform
 
 import numpy as np
 import scipy as sp
-# import gc
 import getopt
 import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
