@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+import rapidtide.io as tide_io
+import pprint
+
+therunoptions = tide_io.readoptionsfile('../dst/dgsr_options')
+
+pp = pprint.PrettyPrinter(indent=4)
+
+pp.pprint(therunoptions)
