@@ -25,7 +25,7 @@ from __future__ import print_function, division
 import argparse
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
-from .parser_funcs import (is_valid_file, invert_float, is_float)
+from .parser_funcs import is_valid_file, is_float
 
 from matplotlib.pyplot import *
 from sklearn.decomposition import FastICA, PCA, SparsePCA
@@ -57,14 +57,14 @@ def _get_parser():
                         default=None)
     parser.add_argument('--ncomp',
                         dest='ncomp',
-                        type=float,
+                        type=lambda x: is_float(parser, x),
                         action='store',
                         metavar='NCOMPS',
                         help=('The number of PCA/ICA components to return (default is to estimate the number).'),
                         default=-1.0)
     parser.add_argument('--smooth',
                         dest='sigma',
-                        type=float,
+                        type=lambda x: is_float(parser, x),
                         action='store',
                         metavar='SIGMA',
                         help=('Spatially smooth the input data with a SIGMA mm kernel.'),
