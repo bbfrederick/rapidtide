@@ -23,11 +23,8 @@
 from __future__ import print_function
 import sys
 import getopt
-import matplotlib
-import platform
 import rapidtide.io as tide_io
 import matplotlib.cm as cm
-from scipy import arange
 from scipy.stats import linregress
 import numpy as np
 

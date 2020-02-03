@@ -15,7 +15,6 @@
 #   limitations under the License.
 
 import heartpy as hp
-import sys
 from matplotlib.pyplot import figure, plot, show, savefig, setp
 
 
