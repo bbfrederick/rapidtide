@@ -21,103 +21,89 @@
 #       $Id: showhist,v 1.5 2016/07/11 14:50:43 frederic Exp $
 #
 from __future__ import print_function
-import sys
-import getopt
+
 import rapidtide.io as tide_io
 from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show, savefig, bar
+import argparse
 
 
-def usage():
-    print("usage: showhist textfilename")
-    print("	plots xy histogram data in text file")
-    print("")
-    print("required arguments:")
-    print("	textfilename	- a text file containing one timepoint per line")
-    print("")
-    print("optional arguments:")
-    print("\t-x\tuse XLABEL on the x axis")
-    print("\t-y\tuse YLABEL on the y axis")
-    print("\t-t\tuse TITLE at the top of the graph")
-    print("\t-o\tsave plot to FILENAME instead of displaying to screen")
-    print("\t-b\tplot bars rather than lines")
-    return ()
+def _getparser():
+    # get the command line parameters
+    parser = argparse.ArgumentParser(prog='showxy',
+                                     description='Plots xy histogram data in text file.',
+                                     usage='%(prog)s texfilename [options]')
+    parser.add_argument('infilename',
+                        help='a text file containing histogram data')
+    parser.add_argument('--xlabel',
+                        dest='thexlabel',
+                        type=str,
+                        metavar='XLABEL',
+                        help='use XLABEL on the x axis',
+                        default=None)
+    parser.add_argument('--ylabel',
+                        dest='theylabel',
+                        type=str,
+                        metavar='YLABEL',
+                        help='use YLABEL on the x axis',
+                        default=None)
+    parser.add_argument('--title',
+                        dest='thetitle',
+                        type=str,
+                        metavar='TITLE',
+                        help='use TITLE at the top of the graph',
+                        default=None)
+    parser.add_argument('--outputfile',
+                        dest='outputfile',
+                        type=str,
+                        metavar='FILENAME',
+                        help='save plot to FILENAME rather then displaying on the screen',
+                        default=None)
+    parser.add_argument('--dobars',
+                        dest='dobars',
+                        action='store_true',
+                        help='plot bars rather than lines',
+                        default=False)
+    parser.add_argument('--debug',
+                        dest='debug',
+                        action='store_true',
+                        help='plot bars rather than lines',
+                        default=False)
+
+    args = parser.parse_args()
+
+    if args.debug:
+        print(args)
+
+    return parser
 
 
-# get the command line parameters
-nargs = len(sys.argv)
-if nargs < 2:
-    usage()
-    exit()
+def main():
+    # get the command line parameters
+    theparser = _getparser()
+    args = theparser.parse_args()
 
-# set default variable values
-dolegend = True
-usexlabel = False
-useylabel = False
-usetitle = False
-uselegend = False
-dobar = False
-thelegendlabel = ''
-thetitle = ''
-thexlabel = ''
-theylabel = ''
-outputfile = None
-
-
-# handle required args first
-textfilename = sys.argv[1]
-
-# now check options
-try:
-    opts, args = getopt.getopt(sys.argv[2:], "o:x:y:l:t:b", ["help"])
-except getopt.GetoptError as err:
-    # print help information and exit:
-    print(str(err))  # will print something like "option -a not recognized"
-    usage()
-    sys.exit(2)
-
-for o, a in opts:
-    if o == "-x":
-        usexlabel = True
-        thexlabel = a
-        print("labelling x axis with ", thexlabel)
-    elif o == "-b":
-        dobar = True
-        print("will use bars rather than lines")
-    elif o == "-y":
-        useylabel = True
-        theylabel = a
-        print("labelling y axis with ", theylabel)
-    elif o == "-l":
-        uselegend = True
-        thelegendlabel = a
-        print("using legend ", thelegendlabel)
-    elif o == "-o":
-        outputfile = a
-        print("saving plot to ", outputfile)
-    elif o == "-t":
-        usetitle = True
-        thetitle = a
-        print("using title ", thetitle)
+    indata = tide_io.readvecs(args.infilename)
+    xvecs = indata[0, :]
+    yvecs = indata[1, :]
+    if args.dobars:
+        bar(xvecs, yvecs, width=(0.8 * (xvecs[1] - xvecs[0])), color='g')
     else:
-        assert False, "unhandled option"
+        plot(xvecs, yvecs, 'r')
 
-indata = tide_io.readvecs(textfilename)
-xvecs = indata[0, :]
-yvecs = indata[1, :]
-if dobar:
-    bar(xvecs, yvecs, width=(0.8 * (xvecs[1] - xvecs[0])), color='g')
-else:
-    plot(xvecs, yvecs, 'r')
-if uselegend:
-    legend(thelegendlabel, loc=1)
-if usetitle:
-    title(thetitle)
-if usexlabel:
-    xlabel(thexlabel, fontsize=16, fontweight='bold')
-if useylabel:
-    ylabel(theylabel, fontsize=16, fontweight='bold')
+    if args.thetitle is not None:
+        title(args.thetitle)
 
-if outputfile is None:
-    show()
-else:
-    savefig(outputfile, bbox_inches='tight')
+    if args.thexlabel is not None:
+        xlabel(args.thexlabel, fontsize=16, fontweight='bold')
+
+    if args.theylabel is not None:
+        ylabel(args.theylabel, fontsize=16, fontweight='bold')
+
+    if args.outputfile is None:
+        show()
+    else:
+        savefig(args.outputfile, bbox_inches='tight')
+
+if __name__ == '__main__':
+    main()
+
