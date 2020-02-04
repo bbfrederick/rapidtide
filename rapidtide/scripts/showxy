@@ -22,11 +22,12 @@
 #
 from __future__ import print_function
 import sys
-import getopt
 import rapidtide.io as tide_io
 import matplotlib.cm as cm
 from scipy.stats import linregress
 import numpy as np
+import argparse
+
 
 from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show, bar, savefig, scatter, axhline, xlim, ylim, annotate
  
@@ -88,187 +89,185 @@ def stringtorange(thestring):
     return (themin, themax)
 
 
-def usage():
-    print("usage: showxy textfilename[,LINELABEL] [-x XLABEL] [-y YLABEL] [-t TITLE] [-o FILENAME] [-i FILENAME[,LINELABEL]] [-r DPI]")
-    print("\tplots xy data in text file")
-    print("")
-    print("required arguments:")
-    print("\ttextfilename	- a text file containing one timepoint per line")
-    print("")
-    print("optional arguments:")
-    print("\t-x\tuse XLABEL on the x axis")
-    print("\t-y\tuse YLABEL on the y axis")
-    print("\t-X\tset x axis range to XMIN, XMAX")
-    print("\t-Y\tset y axis range to YMIN, YMAX")
-    print("\t-t\tuse TITLE at the top of the graph")
-    print("\t-i\tadd FILENAME to the plot, with label LINELABEL")
-    print("\t-p\tplot as individual points (do not connect points)")
-    print("\t-o\tsave plot to FILENAME instead of displaying to screen")
-    print("\t-b\tmake a bar plot x vs y")
-    print("\t-B\tmake a Bland-Altman plot of x vs y")
-    print("\t-f\tscale all font sizes by FAC (default is 1.0)")
-    print("\t-r\tsave plots at DPI dots per inch (default is 1000)")
+def _get_parser():
+    # get the command line parameters
+    parser = argparse.ArgumentParser(prog='showxy',
+                                     description='Plots xy data in text files.',
+                                     usage='%(prog)s texfilename [textfilename]... [options]')
+    parser.add_argument('textfilenames',
+                        type=str,
+                        nargs='+',
+                        help='One or more text files containing whitespace separated x y data, one point per line.')
 
-    return ()
+    parser.add_argument('--xlabel',
+                        dest='thexlabel',
+                        type=str,
+                        metavar='XLABEL',
+                        help='Use XLABEL on the x axis.',
+                        default=None)
+    parser.add_argument('--ylabel',
+                        dest='theylabel',
+                        type=str,
+                        metavar='YLABEL',
+                        help='Use YLABEL on the y axis.',
+                        default=None)
+    parser.add_argument('--xrange',
+                        dest='xrange',
+                        nargs=2,
+                        type=float,
+                        metavar=('XMIN', 'XMAX'),
+                        help=('Limit x display range to XMIN to XMAX. '),
+                        default=None)
+    parser.add_argument('--yrange',
+                        dest='yrange',
+                        nargs=2,
+                        type=float,
+                        metavar=('YMIN', 'YMAX'),
+                        help=('Limit y display range to YMIN to YMAX. '),
+                        default=None)
+    parser.add_argument('--title',
+                        dest='thetitle',
+                        type=str,
+                        metavar='TITLE',
+                        help='Use TITLE at the top of the graph.',
+                        default=None)
+    parser.add_argument('--outputfile',
+                        dest='outputfile',
+                        type=str,
+                        metavar='FILENAME',
+                        help='Save plot to FILENAME rather than displaying on the screen.',
+                        default=None)
+    parser.add_argument('--fontscalefac',
+                        dest='fontscalefac',
+                        metavar='FAC',
+                        type=float,
+                        action='store',
+                        help='Scaling factor for annotation fonts (default is 1.0).',
+                        default=1.0)
+    parser.add_argument('--saveres',
+                        dest='saveres',
+                        metavar='DPI',
+                        type=str,
+                        action='store',
+                        help='Write figure to file at DPI dots per inch (default is 1000).',
+                        default=1000)
+    '''parser.add_argument('--legends',
+                        dest='legends',
+                        metavar='LEGEND[,LEGEND[,LEGEND...]]',
+                        type=str,
+                        action='store',
+                        help='Comma separated list of legends for each timecourse.',
+                        default=None)'''
+    parser.add_argument('--legendloc',
+                        dest='legendloc',
+                        metavar='LOC',
+                        type=int,
+                        action='store',
+                        help=('Integer from 0 to 10 inclusive specifying legend location.  Legal values are: '
+                              '0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right, '
+                              '5: right, 6: center left, 7: center right, 8: lower center, 9: upper center, '
+                              '10: center.  Default is 2.'),
+                        default=2)
+    parser.add_argument('--colors',
+                        dest='colors',
+                        metavar='COLOR[,COLOR[,COLOR...]]',
+                        type=str,
+                        action='store',
+                        help='Comma separated list of colors for each timecourse.',
+                        default=None)
+    parser.add_argument('--blandaltman',
+                        dest='blandaltman',
+                        action='store_true',
+                        help='Make a Bland-Altman plot.',
+                        default=False)
+    parser.add_argument('--usepoints',
+                        dest='usepoints',
+                        action='store_true',
+                        help='Plot as individual values (do not connect points)',
+                        default=False)
+    parser.add_argument('--dobars',
+                        dest='dobars',
+                        action='store_true',
+                        help='Plot bars rather than lines.',
+                        default=False)
+    parser.add_argument('--debug',
+                        dest='debug',
+                        action='store_true',
+                        help='Print additional internal information.',
+                        default=False)
+
+    return parser
 
 
 def main():
-    # set default variable values
-    usebarplot = False
-    usexlabel = False
-    useylabel = False
-    usetitle = False
-    uselegend = True
-    usepoints = False
-    outputfile = None
-    blandaltman = False
-    fontscalefac = 1.0
-    xrange = None
-    yrange = None
-    verbose = False
-    saveres = 1000
-    legendloc = 1
-    colornames = []
-
-    # now check options
+    # get the command line parameters
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "r:X:Y:f:o:pbi:x:y:l:t:B", ["help"])
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
-        usage()
-        sys.exit(2)
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
+    if args.debug:
+        print(args)
 
-    if verbose:
-        print('opts:', opts)
-        print('args:', args)
-
-    # make sure there is at least one filename argument
-    nargs = len(args)
-    if nargs < 1:
-        print('not enough arguments in', args)
-        usage()
-        sys.exit(1)
-
-    # handle filename args
-    argvec = sys.argv[1].split(',')
-
-    numfiles = 0
+    # process the file list
     textfilename = []
-    thelegend = []
-    for i in range(len(args)):
-        numfiles += 1
-        thesplit = args[i].split(',')
-        textfilename.append(thesplit[0])
-        if len(thesplit) > 1:
-            thelegend.append(thesplit[1])
-        else:
-            thelegend.append(thesplit[0])
-        if verbose:
-            print('input file number ', numfiles, ' is ', textfilename[-1], ', label is', thelegend[-1])
+    for thefile in args.textfilenames:
+        textfilename.append(thefile)
 
-    for o, a in opts:
-        if o == "-x":
-            usexlabel = True
-            thexlabel = a
-            if verbose:
-                print("labelling x axis with ", thexlabel)
-        elif o == "-y":
-            useylabel = True
-            theylabel = a
-            if verbose:
-                print("labelling y axis with ", theylabel)
-        elif o == "-X":
-            xrange = stringtorange(a)
-            if verbose:
-                print("setting yrange to", xrange[0], xrange[1])
-        elif o == "-Y":
-            yrange = stringtorange(a)
-            if verbose:
-                print("setting yrange to", yrange[0], yrange[1])
-        elif o == "-f":
-            fontscalefac = float(a)
-            if verbose:
-                print("will scale fonts by", fontscalefac)
-        elif o == "-o":
-            outputfile = a
-            if verbose:
-                print("saving plot to ", outputfile)
-        elif o == '-r':
-            saveres = int(a)
-            print('writing output to file at', saveres, 'dpi')
-        elif o == "-t":
-            usetitle = True
-            thetitle = a
-            if verbose:
-                print("using title ", thetitle)
-        elif o == '-i':
-            argvec = a.split(',')
-            if not (0 < len(argvec) <= 2):
-                usage()
-                sys.exit()
-            textfilename.append(argvec[0])
-            if len(argvec) == 2:
-                thelegend.append(argvec[1])
-                uselegend = True
-            else:
-                thelegend.append(argvec[0])
-            numfiles += 1
-            if verbose:
-                print('input file number ', numfiles, ' is ', textfilename[-1], ', label is', thelegend[-1])
-        elif o == '-p':
-            usepoints = True
-        elif o == '-b':
-            usebarplot = True
-            if verbose:
-                print("doing bar plot")
-        elif o == '-B':
-            blandaltman = True
-            uselegend = False
-            if verbose:
-                print("doing bland-altman plot")
-        else:
-            assert False, "unhandled option"
+    # set various cosmetic aspects of the plots
+    if args.colors is not None:
+        colornames = args.colors.split(',')
+    else:
+        colornames = []
 
     xvecs = []
     yvecs = []
-    for i in range(0, numfiles):
-        if verbose:
+    for i in range(0, len(textfilename)):
+        if args.debug:
             print('reading data from', textfilename[i])
         indata = tide_io.readvecs(textfilename[i])
         xvecs.append(1.0 * indata[0, :])
         yvecs.append(1.0 * indata[1, :])
 
     numvecs = len(xvecs)
-    #colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
     if len(colornames) > 0:
         colorlist = [colornames[i % len(colornames)] for i in range(numvecs)]
     else:
         colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
 
-    for i in range(0, numfiles):
-        if usebarplot:
+    for i in range(0, len(textfilename)):
+        if args.dobars:
             bar(xvecs[i], yvecs[i], width=1.5, color='lightgray', align='center', edgecolor=None)
-        elif blandaltman:
-            bland_altman_plot(xvecs[i], yvecs[i], identifier=textfilename[i], fontscalefac=fontscalefac, xrange=xrange, yrange=yrange)
+            if args.xrange is not None:
+                xlim(args.xrange)
+            if args.yrange is not None:
+                ylim(args.yrange)
+
+        elif args.blandaltman:
+            bland_altman_plot(xvecs[i], yvecs[i], identifier=textfilename[i], fontscalefac=args.fontscalefac, xrange=args.xrange, yrange=args.yrange)
         else:
-            if usepoints:
+            if args.usepoints:
                 plot(xvecs[i], yvecs[i], color=colorlist[i], marker='.', linestyle='None')
             else:
                 plot(xvecs[i], yvecs[i], color=colorlist[i])
-    if uselegend:
-        legend(thelegend, loc=legendloc)
-    if usetitle:
-        title(thetitle, fontsize=fontscalefac * 18, fontweight='bold')
-    if usexlabel:
-        xlabel(thexlabel, fontsize=fontscalefac * 16, fontweight='bold')
-    if useylabel:
-        ylabel(theylabel, fontsize=fontscalefac * 16, fontweight='bold')
+            if args.xrange is not None:
+                xlim(args.xrange)
+            if args.yrange is not None:
+                ylim(args.yrange)
 
-    if outputfile is None:
+    #if legends is not None:
+    #    legend(args.thelegend, loc=args.legendloc)
+    if args.thetitle is not None:
+        title(args.thetitle, fontsize=args.fontscalefac * 18, fontweight='bold')
+    if args.thexlabel is not None:
+        xlabel(args.thexlabel, fontsize=args.fontscalefac * 16, fontweight='bold')
+    if args.theylabel is not None:
+        ylabel(args.theylabel, fontsize=args.fontscalefac * 16, fontweight='bold')
+
+    if args.outputfile is None:
         show()
     else:
-        savefig(outputfile, bbox_inches='tight', dpi=saveres)
+        savefig(args.outputfile, bbox_inches='tight', dpi=args.saveres)
 
 if __name__ == '__main__':
     main()
