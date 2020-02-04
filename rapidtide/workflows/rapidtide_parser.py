@@ -34,7 +34,7 @@ import rapidtide.util as tide_util
 
 import nibabel as nib
 
-from .parser_funcs import (is_valid_file, invert_float, is_float)
+from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float
 
 class indicatespecifiedAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
