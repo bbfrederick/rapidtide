@@ -48,8 +48,6 @@ def _get_parser():
                                      description='Plots the data in text files.',
                                      usage='%(prog)s texfilename[:col1,col2...,coln] [textfilename]... [options]')
 
-
-
     parser.add_argument('textfilenames',
                         type=str,
                         nargs='+',
