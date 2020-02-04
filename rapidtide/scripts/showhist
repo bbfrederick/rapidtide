@@ -27,7 +27,7 @@ from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show, savefig
 import argparse
 
 
-def _getparser():
+def _get_parser():
     # get the command line parameters
     parser = argparse.ArgumentParser(prog='showxy',
                                      description='Plots xy histogram data in text file.',
@@ -38,49 +38,50 @@ def _getparser():
                         dest='thexlabel',
                         type=str,
                         metavar='XLABEL',
-                        help='use XLABEL on the x axis',
+                        help='Use XLABEL on the x axis.',
                         default=None)
     parser.add_argument('--ylabel',
                         dest='theylabel',
                         type=str,
                         metavar='YLABEL',
-                        help='use YLABEL on the x axis',
+                        help='Use YLABEL on the y axis.',
                         default=None)
     parser.add_argument('--title',
                         dest='thetitle',
                         type=str,
                         metavar='TITLE',
-                        help='use TITLE at the top of the graph',
+                        help='Use TITLE at the top of the graph.',
                         default=None)
     parser.add_argument('--outputfile',
                         dest='outputfile',
                         type=str,
                         metavar='FILENAME',
-                        help='save plot to FILENAME rather then displaying on the screen',
+                        help='Save plot to FILENAME rather than displaying on the screen.',
                         default=None)
     parser.add_argument('--dobars',
                         dest='dobars',
                         action='store_true',
-                        help='plot bars rather than lines',
+                        help='Plot bars rather than lines.',
                         default=False)
     parser.add_argument('--debug',
                         dest='debug',
                         action='store_true',
-                        help='plot bars rather than lines',
+                        help='Print additional internal information.',
                         default=False)
-
-    args = parser.parse_args()
-
-    if args.debug:
-        print(args)
 
     return parser
 
 
 def main():
     # get the command line parameters
-    theparser = _getparser()
-    args = theparser.parse_args()
+    try:
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
+    if args.debug:
+        print(args)
+
 
     indata = tide_io.readvecs(args.infilename)
     xvecs = indata[0, :]
