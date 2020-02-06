@@ -362,6 +362,85 @@ class dlfilter:
         return initscale * predicteddata / weightarray
 
 
+class multiscalecnn(dlfilter):
+    #from keras.layers import Conv1D, Dense, Dropout, Input, Concatenate, GlobalMaxPooling1D
+    #from keras.models import Model
+    # this base model is one branch of the main model
+    # it takes a time series as an input, performs 1-D convolution, and returns it as an output ready for concatenation
+    def __init__(self, num_filters=10, kernel_sizes=[4, 8, 12], input_lens=[64, 128, 192], input_width=1, dilation_rate=1, *args, **kwargs):
+        self.num_filters = num_filters
+        self.kernel_sizes = kernel_sizes
+        self.input_lens = input_lens
+        self.input_width = input_width
+        self.dilation_rate = dilation_rate
+        self.infodict['nettype'] = 'multscalecnn'
+        self.infodict['num_filters'] = self.num_filters
+        self.infodict['kernel_sizes'] = self.kernel_sizes
+        self.infodict['input_lens'] = self.input_lens
+        self.infodict['input_width'] = self.input_width
+        super(multiscalecnn, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        self.modelname = '_'.join(['model',
+                                   'multiscalecnn',
+                                   'w' + str(self.window_size),
+                                   'l' + str(self.num_layers),
+                                   'fn' + str(self.num_filters),
+                                   'fl' + str(self.kernel_size),
+                                   'e' + str(self.num_epochs),
+                                   't' + str(self.excludethresh),
+                                   's' + str(self.step),
+                                   'd' + str(self.dilation_rate),
+                                   self.activation])
+        if self.usebadpts:
+            self.modelname += '_usebadpts'
+        if self.excludebysubject:
+            self.modelname += '_excludebysubject'
+        if self.namesuffix is not None:
+            self.modelname += '_' + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+    def makesubnet(self, inputlen, kernelsize):
+        # the input is a time series of length input_len and width input_width
+        input_seq = Input(shape=(inputlen, self.input_width))
+
+        # 1-D convolution and global max-pooling
+        convolved = Conv1D(self.num_filters, kernelsize, padding="same", activation="tanh")(input_seq)
+        processed = GlobalMaxPool1D()(convolved)
+
+        # dense layer with dropout regularization
+        compressed = Dense(50, activation="tanh")(processed)
+        compressed = Dropout(0.3)(compressed)
+        basemodel = Model(inputs=input_seq, outputs=compressed)
+        return basemodel
+
+
+    def makenet(self):
+
+        # the inputs to the branches are the original time series, and its down-sampled versions
+        input_smallseq = Input(shape=(self.inputs_lens[0], self.input_width))
+        input_medseq = Input(shape=(self.inputs_lens[1], self.input_width))
+        input_origseq = Input(shape=(self.inputs_lens[2], self.input_width))
+
+        # the more down-sampled the time series, the shorter the corresponding filter
+        base_net_small = makesubnet(self.inputs_lens[0], self.kernel_sizes[0])
+        base_net_med = makesubnet(self.inputs_lens[1], self.kernel_sizes[1])
+        base_net_original = makesubnet(self.inputs_lens[2], self.kernel_sizes[2])
+        embedding_small = base_net_small(input_smallseq)
+        embedding_med = base_net_med(input_medseq)
+        embedding_original = base_net_original(input_origseq)
+
+        # concatenate all the outputs
+        merged = Concatenate()([embedding_small, embedding_med, embedding_original])
+        out = Dense(1, activation='sigmoid')(merged)
+        self.model = Model(inputs=[input_smallseq, input_medseq, input_origseq], outputs=out)
+        self.model.compile(optimizer=RMSprop(), loss='mse')
+
+
 class cnn(dlfilter):
     def __init__(self, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
         self.num_filters = num_filters
