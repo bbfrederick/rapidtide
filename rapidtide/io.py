@@ -941,7 +941,7 @@ def readcolfromtextfile(inputfilename):
         return inputdata[:, 0]
 
 
-def readvecs(inputfilename, colspec=None):
+def readvecs(inputfilename, colspec=None, numskip=0):
     r"""
 
     Parameters
@@ -968,7 +968,7 @@ def readvecs(inputfilename, colspec=None):
         numvecs = len(collist)
     inputvec = np.zeros((numvecs, MAXLINES), dtype='float64')
     numvals = 0
-    for line in lines:
+    for line in lines[numskip:]:
         if len(line) > 1:
             numvals += 1
             thetokens = line.split()
@@ -979,7 +979,7 @@ def readvecs(inputfilename, colspec=None):
     return 1.0 * inputvec[:, 0:numvals]
 
 
-def readvec(inputfilename):
+def readvec(inputfilename, numskip=0):
     r"""Read an array of floats in from a text file.
 
     Parameters
@@ -997,7 +997,7 @@ def readvec(inputfilename):
     numvals = 0
     with open(inputfilename, 'r') as thefile:
         lines = thefile.readlines()
-        for line in lines:
+        for line in lines[numskip:]:
             if len(line) > 1:
                 numvals += 1
                 inputvec[numvals - 1] = np.float64(line)

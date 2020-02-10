@@ -209,8 +209,12 @@ def _get_parser():
                         type=float,
                         help='Finish plotting at END seconds.',
                         default=1000000.0)
-
-
+    parser.add_argument('--numskip',
+                        dest='numskip',
+                        metavar='NUM',
+                        type=int,
+                        help='Skip NUM lines at the beginning of each file (to get past header lines).',
+                        default=0)
     parser.add_argument('--debug',
                         dest='debug',
                         action='store_true',
@@ -334,7 +338,7 @@ def showtc(args):
         if extension == '.json':
             thissamplerate, thisstartoffset, colnames, invecs = tide_io.readbidstsv(textfilename[i][0])
         else:
-            invecs = tide_io.readvecs(textfilename[i][0])
+            invecs = tide_io.readvecs(textfilename[i][0], numskip=args['numskip'])
             thissamplerate = samplerate
             thisstartoffset = 0.0
             colnames = None
@@ -403,10 +407,11 @@ def showtc(args):
                 else:
                     linelabels.append(textfilename[i][0])
             else:
-                if invecs.shape[0] > 1:
+                linelabels.append(legends[i % len(legends)])
+                '''if invecs.shape[0] > 1:
                     linelabels.append(legends[i % len(legends)] + '_column' + str(j).zfill(2))
                 else:
-                    linelabels.append(legends[i % len(legends)])
+                    linelabels.append(legends[i % len(legends)])'''
             samplerates.append(thissamplerate + 0.0)
             if debug:
                 print('timecourse:', j, ', len:', len(xvecs[-1]), ', timerange:', xvecs[-1][0], xvecs[-1][-1])
