@@ -248,6 +248,12 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     if laglimit is None:
         laglimit = windowtime / 2.0
 
+    dt = np.diff(time)[0]  # In days...
+    fs = 1.0 / dt
+    nfft = nperseg
+    noverlap = (nperseg - 1)
+
+
     dataseg1 = tide_math.corrnormalize(data1[0:2 * halfwindow], prewindow=prewindow, detrendorder=detrendorder, windowfunc=windowfunc)
     dataseg2 = tide_math.corrnormalize(data2[0:2 * halfwindow], prewindow=prewindow, detrendorder=detrendorder, windowfunc=windowfunc)
     thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
@@ -457,6 +463,53 @@ def aliasedcorrelate(hiressignal, hires_Fs, lowressignal, lowres_Fs, timerange, 
         aliasedhiressignal = tide_math.corrnormalize(tcgenerator.yfromx(lowresaxis + timerange[i]))
         corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
     return corrfunc
+
+
+
+def faststcorrelate(input1, input2, windowtype='hann', nperseg=32, weighting='none', displayplots=False):
+    nfft = nperseg
+    noverlap = (nperseg - 1)
+    onesided = False
+    boundary = 'even'
+    freqs, times, thestft1 = signal.stft(input1,
+                                 fs=1.0,
+                                 window=windowtype,
+                                 nperseg=nperseg,
+                                 noverlap=noverlap,
+                                 nfft=nfft,
+                                 detrend='linear',
+                                 return_onesided=onesided,
+                                 boundary=boundary,
+                                 padded=True,
+                                 axis=-1)
+
+    freqs, times, thestft2 = signal.stft(input2,
+                                 fs=1.0,
+                                 window=windowtype,
+                                 nperseg=nperseg,
+                                 noverlap=noverlap,
+                                 nfft=nfft,
+                                 detrend='linear',
+                                 return_onesided=onesided,
+                                 boundary=boundary,
+                                 padded=True,
+                                 axis=-1)
+
+
+    acorrfft1 = thestft1 * np.conj(thestft1)
+    acorrfft2 = thestft2 * np.conj(thestft2)
+    acorr1 = np.roll(fftpack.ifft(acorrfft1, axis=0).real, nperseg // 2, axis=0)[nperseg // 2, :]
+    acorr2 = np.roll(fftpack.ifft(acorrfft2, axis=0).real, nperseg // 2, axis=0)[nperseg // 2, :]
+    normfacs = np.sqrt(acorr1 * acorr2)
+    product = thestft1 * np.conj(thestft2)
+    stcorr = np.roll(fftpack.ifft(product, axis=0).real, nperseg // 2, axis=0)
+    for i in range(len(normfacs)):
+        stcorr[:, i] /= normfacs[i]
+
+    timestep = times[1] - times[0]
+    corrtimes = sp.linspace(-timestep * (nperseg // 2), timestep * (nperseg // 2), num=nperseg, endpoint=False)
+
+    return corrtimes, times, stcorr
 
 
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
