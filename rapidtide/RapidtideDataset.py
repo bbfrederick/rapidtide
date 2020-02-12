@@ -358,12 +358,14 @@ class RapidtideDataset:
                     zsize = self.overlays[themap].zsize
                     tr = self.overlays[themap].tr
                 else:
-                    if xdim != self.overlays[themap].xdim or ydim != self.overlays[themap].ydim or zdim != self.overlays[
-                        themap].zdim:
+                    if xdim != self.overlays[themap].xdim or \
+                            ydim != self.overlays[themap].ydim or \
+                            zdim != self.overlays[themap].zdim:
                         print('overlay dimensions do not match!')
                         sys.exit()
-                    if xsize != self.overlays[themap].xsize or ysize != self.overlays[themap].ysize or zsize != self.overlays[
-                        themap].zsize:
+                    if xsize != self.overlays[themap].xsize or \
+                            ysize != self.overlays[themap].ysize \
+                            or zsize != self.overlays[themap].zsize:
                         print('overlay voxel sizes do not match!')
                         sys.exit()
                 self.loadedfuncmaps.append(themap)
