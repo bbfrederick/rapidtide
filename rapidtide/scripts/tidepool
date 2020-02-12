@@ -968,85 +968,6 @@ def pass4_radioButton_clicked(enabled):
     updateRegressorSpectrum()
 
 
-'''def loadanatomics(thefileroot, theoverlays, anatname, coordinatespace, xsize, ysize, zsize):
-    try:
-        fsldir = os.environ['FSLDIR']
-    except KeyError:
-        fsldir = None
-
-    referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
-                                'reference')
-
-    if anatname != '':
-        print('using user input anatomic name')
-        if os.path.isfile(anatname):
-            thepath, thebase = os.path.split(anatname)
-            theoverlays['anatomic'] = overlay('anatomic', anatname, thebase)
-            print('using ', anatname, ' as background')
-            # allloadedmaps.append('anatomic')
-            return True
-        else:
-            print('specified file does not exist!')
-            return False
-    elif os.path.isfile(thefileroot + 'highres_head.nii.gz'):
-        print('using hires_head anatomic name')
-        thepath, thebase = os.path.split(thefileroot)
-        theoverlays['anatomic'] = overlay('anatomic', thefileroot + 'highres_head.nii.gz', thebase)
-        print('using ', thefileroot + 'highres_head.nii.gz', ' as background')
-        # allloadedmaps.append('anatomic')
-        return True
-    elif os.path.isfile(thefileroot + 'highres.nii.gz'):
-        print('using hires anatomic name')
-        thepath, thebase = os.path.split(thefileroot)
-        theoverlays['anatomic'] = overlay('anatomic', thefileroot + 'highres.nii.gz', thebase)
-        print('using ', thefileroot + 'highres.nii.gz', ' as background')
-        # allloadedmaps.append('anatomic')
-        return True
-    elif coordinatespace == 'MNI152':
-        mniname = ''
-        if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
-            print('using 2mm MNI anatomic name')
-            if fsldir is not None:
-                mniname = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm.nii.gz')
-        elif xsize == 3.0 and ysize == 3.0 and zsize == 3.0:
-            print('using 3mm MNI anatomic name')
-            mniname = os.path.join(referencedir, 'MNI152_T1_3mm.nii.gz')
-        if os.path.isfile(mniname):
-            theoverlays['anatomic'] = overlay('anatomic', mniname, 'MNI152')
-            print('using ', mniname, ' as background')
-            # allloadedmaps.append('anatomic')
-            return True
-        else:
-            print('xsize, ysize, zsize=', xsize, ysize, zsize)
-            print('MNI template brain ', mniname, ' not loaded')
-    elif coordinatespace == 'MNI152NLin2009cAsym':
-        mniname = ''
-        if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
-            print('using 2mm MNI anatomic name')
-            if fsldir is not None:
-                mniname = os.path.join(referencedir, 'mni_icbm152_nlin_asym_09c_2mm.nii.gz')
-        elif xsize == 1.0 and ysize == 1.0 and zsize == 1.0:
-            print('using 1mm MNI anatomic name')
-            mniname = os.path.join(referencedir, 'mni_icbm152_nlin_asym_09c_1mm.nii.gz')
-        if os.path.isfile(mniname):
-            theoverlays['anatomic'] = overlay('anatomic', mniname, 'MNI152NLin2009cAsym')
-            print('using ', mniname, ' as background')
-            # allloadedmaps.append('anatomic')
-            return True
-        else:
-            print('xsize, ysize, zsize=', xsize, ysize, zsize)
-            print('MNI template brain ', mniname, ' not loaded')
-    elif os.path.isfile(thefileroot + 'mean.nii.gz'):
-        thepath, thebase = os.path.split(thefileroot)
-        theoverlays['anatomic'] = overlay('anatomic', thefileroot + 'mean.nii.gz', thebase)
-        print('using ', thefileroot + 'mean.nii.gz', ' as background')
-        # allloadedmaps.append('anatomic')
-        return True
-    else:
-        print('no anatomic image loaded')
-        return False'''
-
-
 def main():
     global vLine
     #global movieTimer, frametime
@@ -1386,10 +1307,10 @@ def main():
         bgmap = None
 
     # set up the timecourse plot window
-    xpos = xdim / 2
+    xpos = currentdataset.xdim / 2
+    ypos = currentdataset.ydim / 2
+    zpos = currentdataset.zdim / 2
     timeaxis = np.r_[0.0:overlays[currentdataset.focusmap].tdim] * overlays[currentdataset.focusmap].tr + overlays[currentdataset.focusmap].toffset
-    ypos = ydim / 2
-    zpos = zdim / 2
     tpos = 0
 
     # set position and scale of images
@@ -1643,7 +1564,9 @@ def main():
     global currentloc
     currentloc = \
         xyztlocation(xpos, ypos, zpos, tpos, xdim, ydim, zdim, tdim,
-                     overlays[currentdataset.focusmap].toffset, overlays[currentdataset.focusmap].tr, overlays[currentdataset.focusmap].affine,
+                     overlays[currentdataset.focusmap].toffset,
+                     overlays[currentdataset.focusmap].tr,
+                     overlays[currentdataset.focusmap].affine,
                      XPosSpinBox=ui.pixnumX_doubleSpinBox,
                      YPosSpinBox=ui.pixnumY_doubleSpinBox,
                      ZPosSpinBox=ui.pixnumZ_doubleSpinBox,
