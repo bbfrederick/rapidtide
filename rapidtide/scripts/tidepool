@@ -388,6 +388,15 @@ def updateHistogram():
     global hist_ax, overlays, focussubj, currentdataset
     hist_ax.plot(overlays[currentdataset.focusmap].histx, overlays[currentdataset.focusmap].histy,
                  title='Histogram', stepMode=True, fillLevel=0, brush=(0, 0, 255, 80), clear=True)
+
+    histtop = 1.25 * np.max(overlays[currentdataset.focusmap].histy)
+    hist_ax.setYRange(0.0, histtop, padding=0)
+    pct25 = overlays[currentdataset.focusmap].quartiles[0]
+    pct50 = overlays[currentdataset.focusmap].quartiles[1]
+    pct75 = overlays[currentdataset.focusmap].quartiles[2]
+    hist_ax.addLine(x=pct25, pen='g')
+    hist_ax.addLine(x=pct50, pen='g')
+    hist_ax.addLine(x=pct75, pen='g')
     updateDispLimits()
 
 
@@ -523,6 +532,7 @@ def updateAveragingMode():
     global averagingmode, focusmap
     global atlasaveragingdone
     global overlays, focussubj
+    global currentdataset
     print('in updateAveragingMode')
     if ('atlas' in overlays) and (not atlasaveragingdone):
         calcAtlasStats()
@@ -530,9 +540,9 @@ def updateAveragingMode():
     if ('atlas' in overlays):
         updateAtlasStats()
     if averagingmode is not None:
-        focusmap = focusmap.replace('_atlasstat', '') + '_atlasstat'
+        currentdataset.focusmap = currentdataset.focusmap.replace('_atlasstat', '') + '_atlasstat'
     else:
-        focusmap = focusmap.replace('_atlasstat', '')
+        currentdataset.focusmap = currentdataset.focusmap.replace('_atlasstat', '')
     resetDispLimits()
     resetDispSmart()
     print('averaging mode set to ', averagingmode)
@@ -1015,37 +1025,57 @@ def main():
     zpos = 0
     tpos = 0
 
-    anatname = ''
-    geommaskname = ''
-    datafileroot = ''
-
-    # get the command line parameters
-    # if len(sys.argv) < 2:
-    #    usage()
-    #    sys.exit()
-
-    offsettime = 0.0
     theparser = argparse.ArgumentParser(description='A program to display the results of a time delay analysis')
-    theparser.add_argument('-o', help='Set lag offset', dest='offsettime', type=float)
-    theparser.add_argument('-r', help='enable risetime display', dest='userise', action='store_true')
-    theparser.add_argument('-n', help='enable movie mode', dest='usecorrout', action='store_true')
-    theparser.add_argument('-t', help='Set correlation TR', dest='trval', type=float)
-    theparser.add_argument('-d', help='Use this dataset (skip initial selection step)', dest='datafileroot')
-    theparser.add_argument('-a', help='Set anatomic mask image', dest='anatname')
-    theparser.add_argument('-m', help='Set geometric mask image', dest='geomaskname')
+    theparser.add_argument('-o', help='Set lag offset', dest='offsettime', type=float, default=None)
+    theparser.add_argument('-r', help='enable risetime display', dest='userise', action='store_true', default=False)
+    theparser.add_argument('-n', help='enable movie mode', dest='usecorrout', action='store_true', default=False)
+    theparser.add_argument('-t', help='Set correlation TR', dest='trval', type=float, default=None)
+    theparser.add_argument('-d', help='Use this dataset (skip initial selection step)', dest='datafileroot', default=None)
+    theparser.add_argument('-a', help='Set anatomic mask image', dest='anatname', default=None)
+    theparser.add_argument('-m', help='Set geometric mask image', dest='geommaskname', default=None)
     args = theparser.parse_args()
+
+    anatname = args.anatname
+    if anatname is not None:
+        print('using ', anatname, ' as the anatomic background image')
+    else:
+        anatname = ''
+
+    geommaskname = args.geommaskname
+    if geommaskname is not None:
+        print('using ', geommaskname, ' as the geometric mask')
+    else:
+        geommaskname = ''
+
+    datafileroot = args.datafileroot
+    if datafileroot is not None:
+        print('using ', datafileroot, ' as the root file name ')
+    else:
+        datafileroot = ''
+
     if args.offsettime is not None:
         forceoffset = True
-        offsetime = args.offsettime
+        offsettime = args.offsettime
         print('forcing offset time to ', offsettime)
-    if args.userise is not None:
+    else:
+        forceoffset = False
+        offsettime = 0.0
+
+    if args.trval is not None:
+        trval = args.trval
+        print('forcing correlation TR to ', trval)
+
+    userise = args.userise
+    if args.userise:
         print('enabling risetime display')
+
+    usecorrout = args.usecorrout
     if args.usecorrout:
-        usecorrout = True
         print('enabling movie mode')
+
     theparser.print_help()
 
-    # now scan for optional arguments
+    '''# now scan for optional arguments
     try:
         opts, args = getopt.getopt(sys.argv[1:], "rd:a:m:nht:o:", ["help"])
     except getopt.GetoptError as err:
@@ -1083,6 +1113,9 @@ def main():
             print('using ', geommaskname, ' as the geometric mask')
         else:
             assert False, "unhandled option"
+            '''
+
+    # make the main window
     app = QtGui.QApplication([])
     print("setting up output window")
     win = QtGui.QMainWindow()
@@ -1221,6 +1254,7 @@ def main():
 
     # read in all the datasets
     thesubjects = []
+
     thesubjects.append(RapidtideDataset('main',
                                         datafileroot,
                                         anatname=anatname,
@@ -1510,11 +1544,6 @@ def main():
                      bgmap=overlays[bgmap])
     print('done loading panes')
 
-    # set up the histogram window
-    print('about to set up the histogram')
-    global hist_ax
-    histwin = ui.histogram_graphicsView
-    hist_ax = histwin.addPlot()
     ui.resetDispLimits_Button.clicked.connect(resetDispLimits)
     ui.resetDispSmart_Button.clicked.connect(resetDispSmart)
     ui.saveDisp_Button.clicked.connect(mainwin.saveDisp)
@@ -1522,21 +1551,27 @@ def main():
     ui.dispmax_doubleSpinBox.valueChanged.connect(getMaxDispLimit)
     print('done setting up histogram window')
 
-    # set up the timecourse window
+    # set up the histogram window
+    print('about to set up the histogram')
+    global hist_ax
+    histwin = ui.histogram_graphicsView
+    hist_ax = histwin.addPlot()
+
+    # set up the regressor timecourse window
     print('about to set up the timecourse')
     global regressor_ax
     regressorwin = ui.regressortimecourse_graphicsView
     regressor_ax = regressorwin.addPlot()
     updateRegressor()
 
-    # set up the spectrum window
+    # set up the regressor spectrum window
     print('about to set up the spectrum')
     global regressorspectrum_ax
     regressorspectrumwin = ui.regressorspectrum_graphicsView
     regressorspectrum_ax = regressorspectrumwin.addPlot()
     updateRegressorSpectrum()
 
-
+    # set up the mask selection popup window
     print('loadedfuncmasks', currentdataset.loadedfuncmasks)
     if len(currentdataset.loadedfuncmasks) > 0:
         popMenu.addSeparator()

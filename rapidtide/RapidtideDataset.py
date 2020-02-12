@@ -137,9 +137,11 @@ class overlay:
         self.robustmin, self.robustmax = tide_stats.getfracvals(self.maskeddata, [0.02, 0.98], nozero=True)
         self.dispmin = self.robustmin
         self.dispmax = self.robustmax
-        self.histy, self.histx = np.histogram(self.maskeddata[np.where(self.maskeddata != 0.0)],
+        themaskeddata = self.maskeddata[np.where(self.maskeddata != 0.0)]
+        self.histy, self.histx = np.histogram(themaskeddata,
                                               bins=np.linspace(self.minval, self.maxval, 200))
-        # print(self.name,':',self.minval, self.maxval, self.robustmin, self.robustmax)
+        self.quartiles = [np.percentile(themaskeddata, 25), np.percentile(themaskeddata, 50), np.percentile(themaskeddata, 75)]
+        print(self.name,':',self.minval, self.maxval, self.robustmin, self.robustmax, self.quartiles)
 
     def setData(self, data, isaMask=False):
         self.data = data.copy()
