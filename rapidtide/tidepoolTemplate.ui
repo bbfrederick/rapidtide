@@ -1483,7 +1483,7 @@
         <x>10</x>
         <y>25</y>
         <width>101</width>
-        <height>106</height>
+        <height>115</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -1494,6 +1494,16 @@
          </property>
          <property name="checked">
           <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="postfilt_radioButton">
+         <property name="text">
+          <string>Postfilt</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -1621,7 +1631,7 @@
   </property>
  </designerdata>
  <buttongroups>
-  <buttongroup name="colormap_buttonGroup"/>
   <buttongroup name="stats_buttonGroup"/>
+  <buttongroup name="colormap_buttonGroup"/>
  </buttongroups>
 </ui>

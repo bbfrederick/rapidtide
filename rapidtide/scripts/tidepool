@@ -1299,6 +1299,13 @@ def prefilt_radioButton_clicked(enabled):
     updateRegressorSpectrum()
 
 
+def postfilt_radioButton_clicked(enabled):
+    global focusregressor
+    focusregressor = 'postfilt'
+    updateRegressor()
+    updateRegressorSpectrum()
+
+
 def pass1_radioButton_clicked(enabled):
     global focusregressor
     focusregressor = 'pass1'
@@ -1785,6 +1792,7 @@ def main():
     except KeyError:
         oversampfactor = 1
     regressorspecs = [['prefilt', 'reference_origres_prefilt.txt', inputfreq, inputfreq],
+                       ['postfilt', 'reference_origres.txt', inputfreq, inputfreq],
                        ['pass1', 'reference_resampres_pass1.txt', fmrifreq * oversampfactor, fmrifreq],
                        ['pass2', 'reference_resampres_pass2.txt', fmrifreq * oversampfactor, fmrifreq],
                        ['pass3', 'reference_resampres_pass3.txt', fmrifreq * oversampfactor, fmrifreq],
@@ -1799,6 +1807,14 @@ def main():
     else:
         ui.prefilt_radioButton.setDisabled(True)
         ui.prefilt_radioButton.hide()
+
+    if 'postfilt' in regressors.keys():
+        ui.postfilt_radioButton.clicked.connect(postfilt_radioButton_clicked)
+        ui.postfilt_radioButton.setDisabled(False)
+        ui.postfilt_radioButton.show()
+    else:
+        ui.postfilt_radioButton.setDisabled(True)
+        ui.postfilt_radioButton.hide()
 
     if 'pass1' in regressors.keys():
         ui.pass1_radioButton.clicked.connect(pass1_radioButton_clicked)
