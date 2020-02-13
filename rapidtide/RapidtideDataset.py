@@ -132,15 +132,15 @@ class overlay:
                        lut_state=self.lut_state)
 
     def updateStats(self):
-        self.minval = self.maskeddata.min()
-        self.maxval = self.maskeddata.max()
-        self.robustmin, self.robustmax = tide_stats.getfracvals(self.maskeddata, [0.02, 0.98], nozero=True)
+        calcmaskeddata = self.data[np.where(self.mask != 0)]
+        self.minval = calcmaskeddata.min()
+        self.maxval = calcmaskeddata.max()
+        self.robustmin, self.pct25, self.pct50, self.pct75, self.robustmax = tide_stats.getfracvals(calcmaskeddata, [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
         self.dispmin = self.robustmin
         self.dispmax = self.robustmax
-        themaskeddata = self.maskeddata[np.where(self.maskeddata != 0.0)]
-        self.histy, self.histx = np.histogram(themaskeddata,
+        self.histy, self.histx = np.histogram(calcmaskeddata,
                                               bins=np.linspace(self.minval, self.maxval, 200))
-        self.quartiles = [np.percentile(themaskeddata, 25), np.percentile(themaskeddata, 50), np.percentile(themaskeddata, 75)]
+        self.quartiles = [self.pct25, self.pct50, self.pct75]
         print(self.name,':',self.minval, self.maxval, self.robustmin, self.robustmax, self.quartiles)
 
     def setData(self, data, isaMask=False):
