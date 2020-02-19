@@ -1015,7 +1015,6 @@ def main():
     buttonisdown = False
     harvestcolormaps = False
     focussubj = -1
-    subjects = []
     xdim = 0
     ydim = 0
     zdim = 0
@@ -1079,46 +1078,6 @@ def main():
 
     theparser.print_help()
 
-    '''# now scan for optional arguments
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "rd:a:m:nht:o:", ["help"])
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
-        usage()
-        sys.exit(2)
-
-    for o, a in opts:
-        linkchar = ' '
-        if o == "-o":
-            forceoffset = True
-            offsettime = float(a)
-            print('forcing offset time to ', offsettime)
-        elif o == "-r":
-            userise = True
-            print('enabling risetime')
-        elif o == "-n":
-            usecorrout = True
-            print('enabling corrout')
-        elif o == "-t":
-            forcetr = True
-            trval = float(a)
-            print('forcing correlation TR to ', trval)
-        elif o == "-h":
-            harvestcolormaps = True
-        elif o == "-d":
-            datafileroot = a
-            print('using ', datafileroot, ' as the root file name ')
-        elif o == "-a":
-            anatname = a
-            print('using ', anatname, ' as the anatomic background image')
-        elif o == "-m":
-            geommaskname = a
-            print('using ', geommaskname, ' as the geometric mask')
-        else:
-            assert False, "unhandled option"
-            '''
-
     # make the main window
     app = QtGui.QApplication([])
     print("setting up output window")
@@ -1152,217 +1111,6 @@ def main():
         colorbar[:, i] = i * (1.0 / 255.0)
     # img_colorbar.setImage(colorbar.astype(np.float64), levels=[0.0, 1.0])
     img_colorbar.setImage(colorbar, levels=[0.0, 1.0])
-
-    # set up the timecourse plot window
-    if usetime:
-        tcwin = ui.timecourse_graphicsView
-        global timecourse_ax
-        timecourse_ax = tcwin.addPlot()
-        timecourse_ax.setZValue(10)
-        vLine = pg.InfiniteLine(angle=90, movable=False, pen='g')
-        vLine.setZValue(20)
-        timecourse_ax.addItem(vLine)
-        timecourse_ax.setTitle('Timecourse')
-        timecourse_ax.enableAutoRange()
-
-    # wire up the atlas averaging checkboxes
-    ui.raw_radioButton.setDisabled(True)
-    ui.mean_radioButton.setDisabled(True)
-    ui.median_radioButton.setDisabled(True)
-    ui.robustmean_radioButton.setDisabled(True)
-    ui.std_radioButton.setDisabled(True)
-    ui.MAD_radioButton.setDisabled(True)
-
-    '''ui.raw_radioButton.hide()
-    ui.mean_radioButton.hide()
-    ui.median_radioButton.hide()
-    ui.robustmean_radioButton.hide()
-    ui.std_radioButton.hide()
-    ui.MAD_radioButton.hide()'''
-
-    ui.raw_radioButton.clicked.connect(raw_radioButton_clicked)
-    ui.mean_radioButton.clicked.connect(mean_radioButton_clicked)
-    ui.median_radioButton.clicked.connect(median_radioButton_clicked)
-    ui.robustmean_radioButton.clicked.connect(robustmean_radioButton_clicked)
-    ui.std_radioButton.clicked.connect(std_radioButton_clicked)
-    ui.MAD_radioButton.clicked.connect(MAD_radioButton_clicked)
-
-    # wire up the colormap radio buttons
-    ui.gray_radioButton.clicked.connect(gray_radioButton_clicked)
-    ui.thermal_radioButton.clicked.connect(thermal_radioButton_clicked)
-    ui.GYR_radioButton.clicked.connect(GYR_radioButton_clicked)
-    ui.viridis_radioButton.clicked.connect(viridis_radioButton_clicked)
-    ui.jet_radioButton.clicked.connect(jet_radioButton_clicked)
-    ui.rainbow_radioButton.clicked.connect(rainbow_radioButton_clicked)
-
-    overlaybuttons = [ui.overlay_radioButton_01,
-                      ui.overlay_radioButton_02,
-                      ui.overlay_radioButton_03,
-                      ui.overlay_radioButton_04,
-                      ui.overlay_radioButton_05,
-                      ui.overlay_radioButton_06,
-                      ui.overlay_radioButton_07,
-                      ui.overlay_radioButton_08]
-    overlaybuttons[0].clicked.connect(overlay_radioButton_01_clicked)
-    overlaybuttons[1].clicked.connect(overlay_radioButton_02_clicked)
-    overlaybuttons[2].clicked.connect(overlay_radioButton_03_clicked)
-    overlaybuttons[3].clicked.connect(overlay_radioButton_04_clicked)
-    overlaybuttons[4].clicked.connect(overlay_radioButton_05_clicked)
-    overlaybuttons[5].clicked.connect(overlay_radioButton_06_clicked)
-    overlaybuttons[6].clicked.connect(overlay_radioButton_07_clicked)
-    overlaybuttons[7].clicked.connect(overlay_radioButton_08_clicked)
-    for button in overlaybuttons:
-        button.setDisabled(True)
-        button.hide()
-
-    overlayGraphicsViews = [ui.overlay_graphicsView_01,
-                            ui.overlay_graphicsView_02,
-                            ui.overlay_graphicsView_03,
-                            ui.overlay_graphicsView_04,
-                            ui.overlay_graphicsView_05,
-                            ui.overlay_graphicsView_06,
-                            ui.overlay_graphicsView_07,
-                            ui.overlay_graphicsView_08]
-
-    for theview in overlayGraphicsViews:
-        theview.hide()
-
-    # define things for the popup mask menu
-    popMenu = QtGui.QMenu(win)
-    sel_nomask = QtGui.QAction('No mask', win)
-    sel_nomask.triggered.connect(set_nomask)
-    sel_lagmask = QtGui.QAction('Valid fit', win)
-    sel_lagmask.triggered.connect(set_lagmask)
-    sel_refinemask = QtGui.QAction('Voxels used in refine', win)
-    sel_meanmask = QtGui.QAction('Voxels used in mean regressor calculation', win)
-    sel_refinemask.triggered.connect(set_refinemask)
-    sel_meanmask.triggered.connect(set_meanmask)
-    sel_0p05 = QtGui.QAction('p<0.05', win)
-    sel_0p05.triggered.connect(set_0p05)
-    sel_0p01 = QtGui.QAction('p<0.01', win)
-    sel_0p01.triggered.connect(set_0p01)
-    sel_0p005 = QtGui.QAction('p<0.005', win)
-    sel_0p005.triggered.connect(set_0p005)
-    sel_0p001 = QtGui.QAction('p<0.001', win)
-    sel_0p001.triggered.connect(set_0p001)
-    popMenu.addAction(sel_nomask)
-    numspecial = 0
-
-    def on_context_menu(point):
-        # show context menu
-        popMenu.exec_(ui.setMask_Button.mapToGlobal(point))
-
-    ui.setMask_Button.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-    ui.setMask_Button.customContextMenuRequested.connect(on_context_menu)
-
-
-    # read in all the datasets
-    thesubjects = []
-
-    thesubjects.append(RapidtideDataset('main',
-                                        datafileroot,
-                                        anatname=anatname,
-                                        geommaskname=geommaskname,
-                                        userise=userise,
-                                        usecorrout=usecorrout,
-                                        forcetr=forcetr,
-                                        forceoffset=forceoffset,
-                                        offsettime=offsettime,
-                                        verbose=True))
-    currentdataset = thesubjects[-1]
-    print('loading datasets...')
-
-    regressors = currentdataset.getregressors()
-    overlays = currentdataset.getoverlays()
-
-    # wire up the colormap radio buttons
-    if 'prefilt' in regressors.keys():
-        ui.prefilt_radioButton.clicked.connect(prefilt_radioButton_clicked)
-        ui.prefilt_radioButton.setDisabled(False)
-        ui.prefilt_radioButton.show()
-    else:
-        ui.prefilt_radioButton.setDisabled(True)
-        ui.prefilt_radioButton.hide()
-
-    if 'postfilt' in regressors.keys():
-        ui.postfilt_radioButton.clicked.connect(postfilt_radioButton_clicked)
-        ui.postfilt_radioButton.setDisabled(False)
-        ui.postfilt_radioButton.show()
-    else:
-        ui.postfilt_radioButton.setDisabled(True)
-        ui.postfilt_radioButton.hide()
-
-    if 'pass1' in regressors.keys():
-        ui.pass1_radioButton.clicked.connect(pass1_radioButton_clicked)
-        ui.pass1_radioButton.setDisabled(False)
-        ui.pass1_radioButton.show()
-    else:
-        ui.pass1_radioButton.setDisabled(True)
-        ui.pass1_radioButton.hide()
-
-    if 'pass2' in regressors.keys():
-        ui.pass2_radioButton.clicked.connect(pass2_radioButton_clicked)
-        ui.pass2_radioButton.setDisabled(False)
-        ui.pass2_radioButton.show()
-    else:
-        ui.pass2_radioButton.setDisabled(True)
-        ui.pass2_radioButton.hide()
-
-    if 'pass3' in regressors.keys():
-        ui.pass3_radioButton.clicked.connect(pass3_radioButton_clicked)
-        ui.pass3_radioButton.setDisabled(False)
-        ui.pass3_radioButton.show()
-    else:
-        ui.pass3_radioButton.setDisabled(True)
-        ui.pass3_radioButton.hide()
-
-    if 'pass4' in regressors.keys():
-        ui.pass4_radioButton.clicked.connect(pass4_radioButton_clicked)
-        ui.pass4_radioButton.setDisabled(False)
-        ui.pass4_radioButton.show()
-    else:
-        ui.pass4_radioButton.setDisabled(True)
-        ui.pass4_radioButton.hide()
-
-    win.setWindowTitle('TiDePool - ' + datafileroot[:-1])
-
-    # read in the significance distribution
-    if os.path.isfile(datafileroot + 'sigfit.txt'):
-        sighistfitname = datafileroot + 'sigfit.txt'
-    else:
-        sighistfitname = None
-
-    #  This is currently very broken, so it's disabled
-    # if sighistfitname is not None:
-    #    thepcts = np.array([0.95, 0.99, 0.995, 0.999])
-    #    thervals = tide_stats.rfromp(sighistfitname, thepcts)
-    #    tide_stats.printthresholds(thepcts, thervals, 'Crosscorrelation significance thresholds from data:')
-
-    # set the background image
-    if 'anatomic' in overlays:
-        bgmap = 'anatomic'
-    else:
-        bgmap = None
-
-    # set up the timecourse plot window
-    xpos = currentdataset.xdim / 2
-    ypos = currentdataset.ydim / 2
-    zpos = currentdataset.zdim / 2
-    timeaxis = np.r_[0.0:overlays[currentdataset.focusmap].tdim] * overlays[currentdataset.focusmap].tr + overlays[currentdataset.focusmap].toffset
-    tpos = 0
-
-    # set position and scale of images
-    lg_imgsize = 256.0
-    sm_imgsize = 32.0
-    xfov = xdim * xsize
-    yfov = ydim * ysize
-    zfov = zdim * zsize
-    # print('fovs=',xfov,yfov,zfov)
-    maxfov = np.max([xfov, yfov, zfov])
-    # print('maxfov=',maxfov)
-    scalefacx = (lg_imgsize / maxfov) * xsize
-    scalefacy = (lg_imgsize / maxfov) * ysize
-    scalefacz = (lg_imgsize / maxfov) * zsize
 
     # configure the gradient scale
     imageadj = pg.GradientWidget(orientation='right', allowAdd=True)
@@ -1477,6 +1225,211 @@ def main():
                 'label': 'GLM fit coefficient',
                 'funcmask': 'p_lt_0p050_mask'}}
 
+
+    # set up the timecourse plot window
+    if usetime:
+        tcwin = ui.timecourse_graphicsView
+        global timecourse_ax
+        timecourse_ax = tcwin.addPlot()
+        timecourse_ax.setZValue(10)
+        vLine = pg.InfiniteLine(angle=90, movable=False, pen='g')
+        vLine.setZValue(20)
+        timecourse_ax.addItem(vLine)
+        timecourse_ax.setTitle('Timecourse')
+        timecourse_ax.enableAutoRange()
+
+    # wire up the atlas averaging checkboxes
+    ui.raw_radioButton.setDisabled(True)
+    ui.mean_radioButton.setDisabled(True)
+    ui.median_radioButton.setDisabled(True)
+    ui.robustmean_radioButton.setDisabled(True)
+    ui.std_radioButton.setDisabled(True)
+    ui.MAD_radioButton.setDisabled(True)
+
+    '''ui.raw_radioButton.hide()
+    ui.mean_radioButton.hide()
+    ui.median_radioButton.hide()
+    ui.robustmean_radioButton.hide()
+    ui.std_radioButton.hide()
+    ui.MAD_radioButton.hide()'''
+
+    ui.raw_radioButton.clicked.connect(raw_radioButton_clicked)
+    ui.mean_radioButton.clicked.connect(mean_radioButton_clicked)
+    ui.median_radioButton.clicked.connect(median_radioButton_clicked)
+    ui.robustmean_radioButton.clicked.connect(robustmean_radioButton_clicked)
+    ui.std_radioButton.clicked.connect(std_radioButton_clicked)
+    ui.MAD_radioButton.clicked.connect(MAD_radioButton_clicked)
+
+    # wire up the colormap radio buttons
+    ui.gray_radioButton.clicked.connect(gray_radioButton_clicked)
+    ui.thermal_radioButton.clicked.connect(thermal_radioButton_clicked)
+    ui.GYR_radioButton.clicked.connect(GYR_radioButton_clicked)
+    ui.viridis_radioButton.clicked.connect(viridis_radioButton_clicked)
+    ui.jet_radioButton.clicked.connect(jet_radioButton_clicked)
+    ui.rainbow_radioButton.clicked.connect(rainbow_radioButton_clicked)
+
+    overlaybuttons = [ui.overlay_radioButton_01,
+                      ui.overlay_radioButton_02,
+                      ui.overlay_radioButton_03,
+                      ui.overlay_radioButton_04,
+                      ui.overlay_radioButton_05,
+                      ui.overlay_radioButton_06,
+                      ui.overlay_radioButton_07,
+                      ui.overlay_radioButton_08]
+    overlaybuttons[0].clicked.connect(overlay_radioButton_01_clicked)
+    overlaybuttons[1].clicked.connect(overlay_radioButton_02_clicked)
+    overlaybuttons[2].clicked.connect(overlay_radioButton_03_clicked)
+    overlaybuttons[3].clicked.connect(overlay_radioButton_04_clicked)
+    overlaybuttons[4].clicked.connect(overlay_radioButton_05_clicked)
+    overlaybuttons[5].clicked.connect(overlay_radioButton_06_clicked)
+    overlaybuttons[6].clicked.connect(overlay_radioButton_07_clicked)
+    overlaybuttons[7].clicked.connect(overlay_radioButton_08_clicked)
+    for button in overlaybuttons:
+        button.setDisabled(True)
+        button.hide()
+
+    overlayGraphicsViews = [ui.overlay_graphicsView_01,
+                            ui.overlay_graphicsView_02,
+                            ui.overlay_graphicsView_03,
+                            ui.overlay_graphicsView_04,
+                            ui.overlay_graphicsView_05,
+                            ui.overlay_graphicsView_06,
+                            ui.overlay_graphicsView_07,
+                            ui.overlay_graphicsView_08]
+
+    for theview in overlayGraphicsViews:
+        theview.hide()
+
+    # define things for the popup mask menu
+    popMenu = QtGui.QMenu(win)
+    sel_nomask = QtGui.QAction('No mask', win)
+    sel_nomask.triggered.connect(set_nomask)
+    sel_lagmask = QtGui.QAction('Valid fit', win)
+    sel_lagmask.triggered.connect(set_lagmask)
+    sel_refinemask = QtGui.QAction('Voxels used in refine', win)
+    sel_meanmask = QtGui.QAction('Voxels used in mean regressor calculation', win)
+    sel_refinemask.triggered.connect(set_refinemask)
+    sel_meanmask.triggered.connect(set_meanmask)
+    sel_0p05 = QtGui.QAction('p<0.05', win)
+    sel_0p05.triggered.connect(set_0p05)
+    sel_0p01 = QtGui.QAction('p<0.01', win)
+    sel_0p01.triggered.connect(set_0p01)
+    sel_0p005 = QtGui.QAction('p<0.005', win)
+    sel_0p005.triggered.connect(set_0p005)
+    sel_0p001 = QtGui.QAction('p<0.001', win)
+    sel_0p001.triggered.connect(set_0p001)
+    popMenu.addAction(sel_nomask)
+    numspecial = 0
+
+    def on_context_menu(point):
+        # show context menu
+        popMenu.exec_(ui.setMask_Button.mapToGlobal(point))
+
+    ui.setMask_Button.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    ui.setMask_Button.customContextMenuRequested.connect(on_context_menu)
+
+
+    # wire up the regressor selection radio buttons
+    regressorbuttons = [ui.prefilt_radioButton,
+                        ui.postfilt_radioButton,
+                        ui.pass1_radioButton,
+                        ui.pass2_radioButton,
+                        ui.pass3_radioButton,
+                        ui.pass4_radioButton,
+                        ]
+
+    ui.prefilt_radioButton.clicked.connect(prefilt_radioButton_clicked)
+    ui.postfilt_radioButton.clicked.connect(postfilt_radioButton_clicked)
+    ui.pass1_radioButton.clicked.connect(pass1_radioButton_clicked)
+    ui.pass2_radioButton.clicked.connect(pass2_radioButton_clicked)
+    ui.pass3_radioButton.clicked.connect(pass3_radioButton_clicked)
+    ui.pass4_radioButton.clicked.connect(pass4_radioButton_clicked)
+
+    for thebutton in regressorbuttons:
+        thebutton.setDisabled(True)
+        thebutton.hide()
+
+
+    # read in all the datasets
+    thesubjects = []
+
+    thesubjects.append(RapidtideDataset('main',
+                                        datafileroot,
+                                        anatname=anatname,
+                                        geommaskname=geommaskname,
+                                        userise=userise,
+                                        usecorrout=usecorrout,
+                                        forcetr=forcetr,
+                                        forceoffset=forceoffset,
+                                        offsettime=offsettime,
+                                        verbose=True))
+    currentdataset = thesubjects[-1]
+    print('loading datasets...')
+
+    regressors = currentdataset.getregressors()
+    overlays = currentdataset.getoverlays()
+
+    # activate the appropriate regressor radio buttons
+    if 'prefilt' in regressors.keys():
+        ui.prefilt_radioButton.setDisabled(False)
+        ui.prefilt_radioButton.show()
+    if 'postfilt' in regressors.keys():
+        ui.postfilt_radioButton.setDisabled(False)
+        ui.postfilt_radioButton.show()
+    if 'pass1' in regressors.keys():
+        ui.pass1_radioButton.setDisabled(False)
+        ui.pass1_radioButton.show()
+    if 'pass2' in regressors.keys():
+        ui.pass2_radioButton.setDisabled(False)
+        ui.pass2_radioButton.show()
+    if 'pass3' in regressors.keys():
+        ui.pass3_radioButton.setDisabled(False)
+        ui.pass3_radioButton.show()
+    if 'pass4' in regressors.keys():
+        ui.pass4_radioButton.setDisabled(False)
+        ui.pass4_radioButton.show()
+
+    win.setWindowTitle('TiDePool - ' + datafileroot[:-1])
+
+    # read in the significance distribution
+    if os.path.isfile(datafileroot + 'sigfit.txt'):
+        sighistfitname = datafileroot + 'sigfit.txt'
+    else:
+        sighistfitname = None
+
+    #  This is currently very broken, so it's disabled
+    # if sighistfitname is not None:
+    #    thepcts = np.array([0.95, 0.99, 0.995, 0.999])
+    #    thervals = tide_stats.rfromp(sighistfitname, thepcts)
+    #    tide_stats.printthresholds(thepcts, thervals, 'Crosscorrelation significance thresholds from data:')
+
+    # set the background image
+    if 'anatomic' in overlays:
+        bgmap = 'anatomic'
+    else:
+        bgmap = None
+
+    # set up the timecourse plot window
+    xpos = currentdataset.xdim / 2
+    ypos = currentdataset.ydim / 2
+    zpos = currentdataset.zdim / 2
+    timeaxis = np.r_[0.0:overlays[currentdataset.focusmap].tdim] * overlays[currentdataset.focusmap].tr + overlays[currentdataset.focusmap].toffset
+    tpos = 0
+
+    # set position and scale of images
+    lg_imgsize = 256.0
+    sm_imgsize = 32.0
+    xfov = currentdataset.xdim * currentdataset.xsize
+    yfov = currentdataset.ydim * currentdataset.ysize
+    zfov = currentdataset.zdim * currentdataset.zsize
+    # print('fovs=',xfov,yfov,zfov)
+    maxfov = np.max([xfov, yfov, zfov])
+    # print('maxfov=',maxfov)
+    scalefacx = (lg_imgsize / maxfov) * currentdataset.xsize
+    scalefacy = (lg_imgsize / maxfov) * currentdataset.ysize
+    scalefacz = (lg_imgsize / maxfov) * currentdataset.zsize
+
+
     print('setting overlay defaults')
     for themap in currentdataset.allloadedmaps + currentdataset.loadedfuncmasks:
         overlays[themap].setLUT(defaultdict[themap]['colormap'])
@@ -1548,11 +1501,14 @@ def main():
                      bgmap=overlays[bgmap])
     print('done loading panes')
 
+
+    # wire up the displat range controls
     ui.resetDispLimits_Button.clicked.connect(resetDispLimits)
     ui.resetDispSmart_Button.clicked.connect(resetDispSmart)
     ui.saveDisp_Button.clicked.connect(mainwin.saveDisp)
     ui.dispmin_doubleSpinBox.valueChanged.connect(getMinDispLimit)
     ui.dispmax_doubleSpinBox.valueChanged.connect(getMaxDispLimit)
+
     print('done setting up histogram window')
 
     # set up the histogram window
