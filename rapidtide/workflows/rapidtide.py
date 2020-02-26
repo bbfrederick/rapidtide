@@ -340,7 +340,7 @@ def rapidtide_main(argparsingfunc):
         reportstep = 10
         for i in range(validstart, validend + 1):
             if (i % reportstep == 0 or i == validend) and optiondict['showprogressbar']:
-                tide_util.progressbar(i - validstart + 1, timepoints, label='Percent complete')
+                tide_util.progressbar(i - validstart + 1, validend - validstart + 1, label='Percent complete')
             nim_data[:, :, :, i] = tide_filt.ssmooth(xdim, ydim, slicethickness, optiondict['gausssigma'],
                                                      nim_data[:, :, :, i])
         timings.append(['End 3D smoothing', time.time(), None, None])
@@ -415,10 +415,10 @@ def rapidtide_main(argparsingfunc):
     tide_util.logmem('before selecting valid voxels', file=memfile)
     threshval = tide_stats.getfracvals(fmri_data[:, optiondict['addedskip']:], [0.98])[0] / 25.0
     print('constructing correlation mask')
-    if optiondict['corrmaskname'] is not None:
-        thecorrmask = readamask(optiondict['corrmaskname'], nim_hdr, xsize,
+    if optiondict['corrmaskincludename'] is not None:
+        thecorrmask = readamask(optiondict['corrmaskincludename'], nim_hdr, xsize,
                                              istext=optiondict['textio'],
-                                             valslist=optiondict['corrmaskvals'],
+                                             valslist=optiondict['corrmaskincludevals'],
                                              maskname='correlation')
 
         corrmask = np.uint16(np.where(thecorrmask > 0, 1, 0).reshape(numspatiallocs))
