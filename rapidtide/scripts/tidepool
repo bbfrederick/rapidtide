@@ -928,11 +928,9 @@ def printfocusvals():
         if key != 'mnibrainmask':
             # print('key=', key)
             if overlays[key].report:
-                # print('gettting ', key, ' value at ', currentloc.xpos, currentloc.ypos, currentloc.zpos, currentloc.tpos)
                 overlays[key].setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos)
                 overlays[key].setTpos(currentloc.tpos)
                 focusval = overlays[key].getFocusVal()
-                # print('focusval =', focusval)
                 if key != 'atlas':
                     outstring = str(overlays[key].label.ljust(28)) + str(':') + str(focusval)
                     logstatus(ui.logOutput, outstring)
@@ -1558,7 +1556,11 @@ def main():
     # initialize the location picker
     global currentloc
     currentloc = \
-        xyztlocation(xpos, ypos, zpos, tpos, xdim, ydim, zdim, tdim,
+        xyztlocation(xpos, ypos, zpos, tpos,
+                     currentdataset.xdim,
+                     currentdataset.ydim,
+                     currentdataset.zdim,
+                     currentdataset.tdim,
                      overlays[currentdataset.focusmap].toffset,
                      overlays[currentdataset.focusmap].tr,
                      overlays[currentdataset.focusmap].affine,
