@@ -369,6 +369,16 @@ def _get_parser():
                          help=('Disable voxel intensity threshold (especially '
                                'useful for NIRS data). '),
                          default=False)
+    preproc.add_argument('--timerange',
+                         dest='timerange',
+                         action='store',
+                         nargs=2,
+                         type=int,
+                         metavar=('START', 'END'),
+                         help=('Limit analysis to data between timepoints '
+                               'START and END in the fmri file. If END is set to -1 '
+                               'analysis will go to the last timepoint.'),
+                         default=(-1, -1))
 
     # Correlation options
     corr = parser.add_argument_group('Correlation options')
@@ -442,12 +452,11 @@ def _get_parser():
                                   '(default is 1.0). '),
                             default=1.0)
     mask_group.add_argument('--corrmask',
-                            dest='corrmaskname',
-                            action='store',
-                            type=lambda x: is_valid_file(parser, x),
-                            metavar='FILE',
-                            help=('Only do correlations in voxels in FILE '
-                                  '(if set, corrmaskthresh is ignored). '),
+                            dest='corrmaskincludespec',
+                            metavar='MASK[:VALSPEC]',
+                            help=('Only do correlations in nonzero voxels in NAME '
+                                  '(if VALSPEC is given, only voxels '
+                                  'with integral values listed in VALSPEC are used). '),
                             default=None)
 
     # Correlation fitting options
@@ -658,15 +667,6 @@ def _get_parser():
                         help=('Change the histogram length to HISTLEN '
                               '(default is 100). '),
                         default=100)
-    output.add_argument('--timerange',
-                        dest='timerange',
-                        action='store',
-                        nargs=2,
-                        type=int,
-                        metavar=('START', 'END'),
-                        help=('Limit analysis to data between timepoints '
-                              'START and END in the fmri file. '),
-                        default=(-1, 10000000))
     output.add_argument('--glmsourcefile',
                         dest='glmsourcefile',
                         action='store',
@@ -933,7 +933,10 @@ def process_args(inputargs=None):
     except KeyError:
         pass
     args['startpoint'] = args['timerange'][0]
-    args['endpoint'] = args['timerange'][1]
+    if args['timerange'][1] == -1:
+        args['endpoint'] = 10000000
+    else:
+        args['endpoint'] = args['timerange'][1]
 
 
     if args['offsettime'] is not None:
@@ -994,10 +997,15 @@ def process_args(inputargs=None):
         args['inputfreq'] = 1. / fmri_tr
 
     # mask processing
+    if args['corrmaskincludespec'] is not None:
+        args['corrmaskincludename'], args['corrmaskincludevals'] = processmaskspec(args['corrmaskincludespec'],
+                                                                                       'Including voxels where ',                                                                                     'in correlation calculations.')
+    else:
+        args['corrmaskincludename'] = None
+
     if args['globalmeanincludespec'] is not None:
         args['globalmeanincludename'], args['globalmeanincludevals'] = processmaskspec(args['globalmeanincludespec'],
-                                                                                       'Including voxels where ',
-                                                                                       'in global mean.')
+                                                                                       'Including voxels where ',                                                                                      'in global mean.')
     else:
         args['globalmeanincludename'] = None
 
