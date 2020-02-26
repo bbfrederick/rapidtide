@@ -413,7 +413,7 @@ def rapidtide_main(argparsingfunc):
 
     # read or make a mask of where to calculate the correlations
     tide_util.logmem('before selecting valid voxels', file=memfile)
-    threshval = tide_stats.getfracvals(fmri_data[:, optiondict['addedskip']:], [0.98])[0] / 25.0
+    threshval = tide_stats.getfracvals(fmri_data[:, :], [0.98])[0] / 25.0
     print('constructing correlation mask')
     if optiondict['corrmaskincludename'] is not None:
         thecorrmask = readamask(optiondict['corrmaskincludename'], nim_hdr, xsize,
@@ -424,8 +424,8 @@ def rapidtide_main(argparsingfunc):
         corrmask = np.uint16(np.where(thecorrmask > 0, 1, 0).reshape(numspatiallocs))
     else:
         # check to see if the data has been demeaned
-        meanim = np.mean(fmri_data[:, optiondict['addedskip']:], axis=1)
-        stdim = np.std(fmri_data[:, optiondict['addedskip']:], axis=1)
+        meanim = np.mean(fmri_data, axis=1)
+        stdim = np.std(fmri_data, axis=1)
         if np.mean(stdim) < np.mean(meanim):
             print('generating correlation mask from mean image')
             corrmask = np.uint16(tide_stats.makemask(meanim, threshpct=optiondict['corrmaskthreshpct']))
@@ -598,10 +598,10 @@ def rapidtide_main(argparsingfunc):
     # generate the time axes
     fmrifreq = 1.0 / fmritr
     optiondict['fmrifreq'] = fmrifreq
-    skiptime = fmritr * (optiondict['preprocskip'] + optiondict['addedskip'])
+    skiptime = fmritr * (optiondict['preprocskip'])
     print('first fMRI point is at ', skiptime, ' seconds relative to time origin')
-    initial_fmri_x = np.arange(0.0, validtimepoints - optiondict['addedskip']) * fmritr + skiptime
-    os_fmri_x = np.arange(0.0, (validtimepoints - optiondict['addedskip']) * optiondict['oversampfactor'] - (
+    initial_fmri_x = np.arange(0.0, validtimepoints) * fmritr + skiptime
+    os_fmri_x = np.arange(0.0, validtimepoints * optiondict['oversampfactor'] - (
             optiondict['oversampfactor'] - 1)) * oversamptr + skiptime
 
     if optiondict['verbose']:
@@ -704,7 +704,7 @@ def rapidtide_main(argparsingfunc):
                                          detrendorder=optiondict['detrendorder'],
                                          windowfunc=optiondict['windowfunc'],
                                          corrweighting=optiondict['corrweighting'])
-    thecorrelator.setreftc(np.zeros((optiondict['oversampfactor'] * (validtimepoints - optiondict['addedskip'])),
+    thecorrelator.setreftc(np.zeros((optiondict['oversampfactor'] * validtimepoints),
                                     dtype=np.float))
     numccorrlags = thecorrelator.corrlen
     corrorigin = thecorrelator.corrorigin
@@ -1019,7 +1019,7 @@ def rapidtide_main(argparsingfunc):
                                                'before correlationpass')
 
         thecorrelator.setlimits(lagmininpts, lagmaxinpts)
-        voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = correlationpass_func(fmri_data_valid[:,optiondict['addedskip']:],
+        voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = correlationpass_func(fmri_data_valid[:, :],
                                                                cleaned_referencetc,
                                                                thecorrelator,
                                                                initial_fmri_x,
@@ -1158,7 +1158,7 @@ def rapidtide_main(argparsingfunc):
                                                    memfile,
                                                    'before refineregressor')
             voxelsprocessed_rr, outputdata, refinemask = refineregressor_func(
-                fmri_data_valid[:,optiondict['addedskip']:],
+                fmri_data_valid,
                 fmritr,
                 shiftedtcs,
                 weights,
@@ -1318,7 +1318,7 @@ def rapidtide_main(argparsingfunc):
                                            reportstep=reportstep,
                                            nprocs=optiondict['nprocs'],
                                            showprogressbar=optiondict['showprogressbar'],
-                                           addedskip=optiondict['addedskip'],
+                                           addedskip=0,
                                            mp_chunksize=optiondict['mp_chunksize'],
                                            rt_floatset=rt_floatset,
                                            rt_floattype=rt_floattype

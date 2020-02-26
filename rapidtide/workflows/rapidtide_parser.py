@@ -354,15 +354,6 @@ def _get_parser():
                          help=('SKIP TRs were previously deleted during '
                                'preprocessing (default is 0). '),
                          default=0)
-    preproc.add_argument('--addedskip',
-                         dest='addedskip',
-                         action='store',
-                         type=int,
-                         metavar='SKIP',
-                         help=('Delete an additional SKIP trs from the data '
-                               'and regressor prior to doing rapidtide analysis '
-                               '(default is 0).'),
-                         default=0)
     preproc.add_argument('--nothresh',
                          dest='nothresh',
                          action='store_true',
