@@ -310,7 +310,7 @@ def showtc(args):
     dowaterfall = args['dowaterfall']
     debug = args['debug']
 
-    savespec = True
+    savespec = False
     detrendorder = 1
     demean = False
     useHamming = True
