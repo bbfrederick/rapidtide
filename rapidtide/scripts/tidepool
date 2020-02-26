@@ -50,8 +50,8 @@ from statsmodels.robust.scale import mad
 
 from nibabel.affines import apply_affine
 
-atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
-           'ATT': {'atlasname': 'ATTbasedFlowTerritories_split'}}
+#atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
+#           'ATT': {'atlasname': 'ATTbasedFlowTerritories_split'}}
 
 
 def selectFile():
@@ -461,7 +461,7 @@ def updateRegressorSpectrum():
         regressorspectrum_ax.addItem(therectangle)
 
 def calcAtlasStats():
-    global overlays, focussubj, datafileroot, atlasname, atlaslabels, atlasstats, averagingmode, currentdataset
+    global overlays, focussubj, datafileroot, atlasstats, averagingmode, currentdataset
     global atlasaveragingdone
     print('in calcAtlasStats')
     if 'atlas' in overlays:
@@ -469,7 +469,7 @@ def calcAtlasStats():
         print('performing atlas averaging')
         for idx, themap in enumerate(currentdataset.loadedfuncmaps):
             atlasstats[themap] = {}
-            for regnum, region in enumerate(atlaslabels):
+            for regnum, region in enumerate(currentdataset.atlaslabels):
                 print('calculating stats for region', regnum + 1, '(', region, ')')
                 atlasstats[themap][region] = {}
                 maskedregion = np.where((overlays['atlas'].data == (regnum + 1)) & (overlays[themap].mask > 0))
@@ -488,29 +488,29 @@ def calcAtlasStats():
         for thestat in ['mean', 'std', 'robustmean', 'median', 'MAD']:
             d = {}
             cols = []
-            d['Region'] = np.asarray(atlaslabels)
+            d['Region'] = np.asarray(currentdataset.atlaslabels)
             cols.append('Region')
             for idx, themap in enumerate(currentdataset.loadedfuncmaps):
                 templist = []
-                for regnum, region in enumerate(atlaslabels):
-                    templist.append(atlasstats[themap][atlaslabels[regnum]][thestat])
+                for regnum, region in enumerate(currentdataset.atlaslabels):
+                    templist.append(atlasstats[themap][currentdataset.atlaslabels[regnum]][thestat])
                 d[themap] = np.asarray(templist)
                 cols.append(themap)
             df = pd.DataFrame(data=d)
             df = df[cols]
-            df.to_csv(datafileroot + atlasname + '_' + thestat + '.txt', sep='\t', index=False)
+            df.to_csv(datafileroot + currentdataset.atlasname + '_' + thestat + '.txt', sep='\t', index=False)
         atlasaveragingdone = True
     else:
         print('cannot perform average - no atlas map found')
 
 
 def updateAtlasStats():
-    global overlays, focussubj, datafileroot, atlasname, atlaslabels, atlasstats, averagingmode
+    global overlays, focussubj, datafileroot, atlasstats, averagingmode, currentdataset
     print('in updateAtlasStats')
     if 'atlas' in overlays and (averagingmode is not None):
         for idx, themap in enumerate(currentdataset.loadedfuncmaps):
             print('loading', averagingmode, 'into', themap + '_atlasstat')
-            for regnum, region in enumerate(atlaslabels):
+            for regnum, region in enumerate(currentdataset.atlaslabels):
                 if themap is not 'atlas':
                     overlays[themap + '_atlasstat'].data[np.where(overlays['atlas'].data == (regnum + 1))] = \
                     atlasstats[themap][region][averagingmode]
@@ -920,7 +920,7 @@ def updateOrthoImages():
 
 
 def printfocusvals():
-    global ui, overlays, focussubj, atlasname, atlaslabels
+    global ui, overlays, focussubj, currentdataset
     global currentloc
     logstatus(ui.logOutput, 'Print focus vals\n\n')
     for key in overlays:
@@ -935,7 +935,7 @@ def printfocusvals():
                     outstring = str(overlays[key].label.ljust(28)) + str(':') + str(focusval)
                     logstatus(ui.logOutput, outstring)
                 else:
-                    outstring = str(overlays[key].label.ljust(28)) + str(':') + str(atlaslabels[int(focusval) - 1])
+                    outstring = str(overlays[key].label.ljust(28)) + str(':') + str(currentdataset.atlaslabels[int(focusval) - 1])
                     logstatus(ui.logOutput, outstring)
 
 def prefilt_radioButton_clicked(enabled):

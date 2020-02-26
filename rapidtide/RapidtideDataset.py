@@ -30,6 +30,9 @@ import rapidtide.miscmath as tide_math
 import numpy as np
 import pyqtgraph as pg
 
+atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
+           'ATT': {'atlasname': 'ATTbasedFlowTerritories_split'}}
+
 class timecourse:
     "Store a timecourse and some information about it"
 
@@ -288,6 +291,8 @@ class RapidtideDataset:
     allloadedmaps = None
     loadedfuncmasks = None
     loadedfuncmaps = None
+    atlaslabels = None
+    atlasname = None
     xdim = 0
     ydim = 0
     zdim = 0
@@ -320,6 +325,8 @@ class RapidtideDataset:
         self.forceoffset = forceoffset
         self.coordinatespace = coordinatespace
         self.offsettime = offsettime
+        self.referencedir = os.path.join(os.path.split(os.path.split(__file__)[0])[0], 'rapidtide', 'data',
+                                    'reference')
         self.setupregressors()
         self.setupoverlays()
 
@@ -388,8 +395,6 @@ class RapidtideDataset:
 
 
     def _loadgeommask(self):
-        referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
-                                    'reference')
         if self.geommaskname != '':
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
@@ -407,10 +412,10 @@ class RapidtideDataset:
                 if fsldir is not None:
                     self.geommaskname = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm_brain_mask.nii.gz')
             elif self.xsize == 3.0 and self.ysize == 3.0 and self.zsize == 3.0:
-                self.geommaskname = os.path.join(referencedir, 'MNI152_T1_3mm_brain_mask_bin.nii.gz')
+                self.geommaskname = os.path.join(self.referencedir, 'MNI152_T1_3mm_brain_mask_bin.nii.gz')
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
-                self.theoverlays['geommask'] = overlay('geommask', self.geommaskname, thebase, isaMask=True)
+                self.overlays['geommask'] = overlay('geommask', self.geommaskname, thebase, isaMask=True)
                 print('using ', self.geommaskname, ' as background')
                 # allloadedmaps.append('geommask')
                 return True
@@ -426,9 +431,6 @@ class RapidtideDataset:
             fsldir = os.environ['FSLDIR']
         except KeyError:
             fsldir = None
-
-        referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide', 'data',
-                                    'reference')
 
         if self.anatname != '':
             print('using user input anatomic name')
@@ -463,7 +465,7 @@ class RapidtideDataset:
                     mniname = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm.nii.gz')
             elif self.xsize == 3.0 and self.ysize == 3.0 and self.zsize == 3.0:
                 print('using 3mm MNI anatomic name')
-                mniname = os.path.join(referencedir, 'MNI152_T1_3mm.nii.gz')
+                mniname = os.path.join(self.referencedir, 'MNI152_T1_3mm.nii.gz')
             if os.path.isfile(mniname):
                 self.overlays['anatomic'] = overlay('anatomic', mniname, 'MNI152')
                 print('using ', mniname, ' as background')
@@ -477,10 +479,10 @@ class RapidtideDataset:
             if self.xsize == 2.0 and self.ysize == 2.0 and self.zsize == 2.0:
                 print('using 2mm MNI anatomic name')
                 if fsldir is not None:
-                    mniname = os.path.join(referencedir, 'mni_icbm152_nlin_asym_09c_2mm.nii.gz')
+                    mniname = os.path.join(self.referencedir, 'mni_icbm152_nlin_asym_09c_2mm.nii.gz')
             elif self.xsize == 1.0 and self.ysize == 1.0 and self.zsize == 1.0:
                 print('using 1mm MNI anatomic name')
-                mniname = os.path.join(referencedir, 'mni_icbm152_nlin_asym_09c_1mm.nii.gz')
+                mniname = os.path.join(self.referencedir, 'mni_icbm152_nlin_asym_09c_1mm.nii.gz')
             if os.path.isfile(mniname):
                 self.overlays['anatomic'] = overlay('anatomic', mniname, 'MNI152NLin2009cAsym')
                 print('using ', mniname, ' as background')
@@ -587,14 +589,10 @@ class RapidtideDataset:
         if self._loadgeommask():
             self.allloadedmaps.append('geommask')
 
-        if (self.coordinatespace == 'MNI152') or (self.coordinatespace == 'MNI152NLin2009cAsym'):
-            global atlasname, atlaslabels
+        if (self.coordinatespace == 'MNI152') or (self.coordinatespace == 'MNI152NLin6')or (self.coordinatespace == 'MNI152NLin2009cAsym'):
             # atlasname = 'ASPECTS'
             self.atlasshortname = 'ATT'
-            self.atlasname = self.atlases[self.atlasshortname]['atlasname']
-            self.referencedir = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide',
-                                        'data',
-                                        'reference')
+            self.atlasname = atlases[self.atlasshortname]['atlasname']
             self.atlaslabels = tide_io.readlabels(os.path.join(self.referencedir, self.atlasname + '_regions.txt'))
             print(self.atlaslabels)
             self.atlasniftiname = None
@@ -612,8 +610,8 @@ class RapidtideDataset:
                     atlasmaskniftiname = os.path.join(referencedir, atlasname + '_nlin_asym_09c_2mm_mask.nii.gz')'''
             if self.atlasniftiname is not None:
                 if os.path.isfile(self.atlasniftiname):
-                    self.overlays['atlas'] = self.overlay('atlas', self.atlasniftiname, self.atlasname, report=True)
-                    self.overlays['atlasmask'] = self.overlay('atlasmask', self.atlasmaskniftiname, self.atlasname, report=True)
+                    self.overlays['atlas'] = overlay('atlas', self.atlasniftiname, self.atlasname, report=True)
+                    self.overlays['atlasmask'] = overlay('atlasmask', self.atlasmaskniftiname, self.atlasname, report=True)
                     self.allloadedmaps.append('atlas')
                     self.dispmaps.append('atlas')
                 else:
