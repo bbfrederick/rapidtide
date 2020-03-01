@@ -50,18 +50,11 @@ from statsmodels.robust.scale import mad
 
 from nibabel.affines import apply_affine
 
-#atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
-#           'ATT': {'atlasname': 'ATTbasedFlowTerritories_split'}}
-
 
 def selectFile():
     global datafileroot
     mydialog = QtGui.QFileDialog()
     options = mydialog.Options()
-    '''if qtbinding == 'pyqt4':
-        lagfilename = mydialog.getOpenFileName(options=options, filter="Lag time files (*_lagtimes.nii.gz)")
-    else:
-        lagfilename = mydialog.getOpenFileName(options=options, filter="Lag time files (*_lagtimes.nii.gz)")[0]'''
     lagfilename = mydialog.getOpenFileName(options=options, filter="Lag time files (*_lagtimes.nii.gz)")[0]
     datafileroot = str(lagfilename[:-15])
 
@@ -97,7 +90,7 @@ class xyztlocation(QtGui.QWidget):
         self.tpos = tpos
         self.setTInfo(tdim, tr, toffset)
 
-        self.frametime = 50
+        self.frametime = 25
         self.movierunning = False
         self.movieTimer.timeout.connect(self.updateMovie)
 
@@ -134,7 +127,7 @@ class xyztlocation(QtGui.QWidget):
         tmin = np.min([tllcoord, tulcoord])
         tmax = np.max([tllcoord, tulcoord])
         self.setupSpinBox(self.TCoordSpinBox, self.getTcoord, tmin, tmax, (tmax - tmin) / self.tdim, self.tcoord)
-        self.setupTimeSlider(self.TimeSlider, self.readTimeSlider, 0, self.tdim - 1, self.tpos)
+        self.setupTimeSlider(self.TimeSlider, self.getTimeSlider, 0, self.tdim - 1, self.tpos)
         self.setupRunMovieButton(self.runMovieButton, self.runMovieToggle)
 
     def setupRunMovieButton(self, thebutton, thehandler):
@@ -181,6 +174,8 @@ class xyztlocation(QtGui.QWidget):
             self.TPosSpinBox.setValue(self.tpos)
         if self.TCoordSpinBox is not None:
             self.TCoordSpinBox.setValue(self.tcoord)
+        if self.TimeSlider is not None:
+            self.TimeSlider.setValue((self.tpos))
         # print('done resetting T spinbox values')
         self.updatedT.emit()
 
@@ -286,14 +281,15 @@ class xyztlocation(QtGui.QWidget):
             self.tpos = self.real2tr(self.tcoord)
             self.updateTValues()
 
-    def readTimeSlider(self):
+    def getTimeSlider(self):
         self.tpos = self.TimeSlider.value()
         self.tcoord = self.tr2real(self.tpos)
         self.updateTValues()
 
     def updateMovie(self):
         print('entering updateMovie')
-        self.tpos = (self.tpos + 1) % self.tdim
+        #self.tpos = (self.tpos + 1) % self.tdim
+        self.setTpos((self.tpos + 1) % self.tdim)
         self.updateTValues()
 
     def stopMovie(self):
@@ -326,20 +322,6 @@ class xyztlocation(QtGui.QWidget):
             self.movieTimer.start(int(self.frametime))
 
 
-def usage():
-    print("usage: tidepool [-d DATASET] [-t TR] [-o TOFFSET] [-n] [-a ANAT] [-m MASK]")
-    print("")
-    print("options:")
-    print("    -d DATASET    - specify the root of the rapidtide data (skip opening dialog box)")
-    print("    -t TR         - force TR of the correlation plot to TR")
-    print("    -o TOFFSET    - force offset of first correlation point to TOFFSET")
-    print("    -n            - enable movie mode")
-    print("    -r            - enable risetime mode")
-    print("    -a ANAT       - use ANAT (a nifti file) as the background anatomic image")
-    print("    -m MASK       - use MASK as the geometric mask")
-    print("")
-
-
 def logstatus(thetextbox, thetext):
     thetextbox.moveCursor(QtGui.QTextCursor.End)
     thetextbox.insertPlainText(thetext + '\n')
@@ -348,19 +330,19 @@ def logstatus(thetextbox, thetext):
 
 
 def getMinDispLimit():
-    global ui, overlays, focussubj, currentdataset
+    global ui, overlays, currentdataset
     overlays[currentdataset.focusmap].dispmin = ui.dispmin_doubleSpinBox.value()
     updateDispLimits()
 
 
 def getMaxDispLimit():
-    global ui, overlays, focussubj, currentdataset
+    global ui, overlays, currentdataset
     overlays[currentdataset.focusmap].dispmax = ui.dispmax_doubleSpinBox.value()
     updateDispLimits()
 
 
 def updateDispLimits():
-    global ui, overlays, focussubj, currentdataset
+    global ui, overlays, currentdataset
     ui.dispmin_doubleSpinBox.setRange(overlays[currentdataset.focusmap].minval, overlays[currentdataset.focusmap].maxval)
     ui.dispmax_doubleSpinBox.setRange(overlays[currentdataset.focusmap].minval, overlays[currentdataset.focusmap].maxval)
     ui.dispmin_doubleSpinBox.setSingleStep((overlays[currentdataset.focusmap].maxval - overlays[currentdataset.focusmap].minval) / 100.0)
@@ -371,21 +353,21 @@ def updateDispLimits():
 
 
 def resetDispLimits():
-    global overlays, focussubj, currentdataset
+    global overlays, currentdataset
     overlays[currentdataset.focusmap].dispmin = overlays[currentdataset.focusmap].minval
     overlays[currentdataset.focusmap].dispmax = overlays[currentdataset.focusmap].maxval
     updateDispLimits()
 
 
 def resetDispSmart():
-    global overlays, focussubj, currentdataset
+    global overlays, currentdataset
     overlays[currentdataset.focusmap].dispmin = overlays[currentdataset.focusmap].robustmin
     overlays[currentdataset.focusmap].dispmax = overlays[currentdataset.focusmap].robustmax
     updateDispLimits()
 
 
 def updateHistogram():
-    global hist_ax, overlays, focussubj, currentdataset
+    global hist_ax, overlays, currentdataset
     hist_ax.plot(overlays[currentdataset.focusmap].histx, overlays[currentdataset.focusmap].histy,
                  title='Histogram', stepMode=True, fillLevel=0, brush=(0, 0, 255, 80), clear=True)
 
@@ -431,7 +413,7 @@ class RectangleItem(pg.GraphicsObject):
 
 
 def updateRegressor():
-    global regressor_ax, focussubj, liveplots, currentdataset
+    global regressor_ax, liveplots, currentdataset
     focusregressor = currentdataset.focusregressor
     regressors = currentdataset.getregressors()
     if currentdataset.focusregressor is not None:
@@ -440,7 +422,7 @@ def updateRegressor():
 
 
 def updateRegressorSpectrum():
-    global regressorspectrum_ax, focussubj, liveplots, currentdataset
+    global regressorspectrum_ax, liveplots, currentdataset
     focusregressor = currentdataset.focusregressor
     regressorfilterlimits = currentdataset.regressorfilterlimits
     regressors = currentdataset.getregressors()
@@ -461,7 +443,7 @@ def updateRegressorSpectrum():
         regressorspectrum_ax.addItem(therectangle)
 
 def calcAtlasStats():
-    global overlays, focussubj, datafileroot, atlasstats, averagingmode, currentdataset
+    global overlays, datafileroot, atlasstats, averagingmode, currentdataset
     global atlasaveragingdone
     print('in calcAtlasStats')
     if 'atlas' in overlays:
@@ -505,7 +487,7 @@ def calcAtlasStats():
 
 
 def updateAtlasStats():
-    global overlays, focussubj, datafileroot, atlasstats, averagingmode, currentdataset
+    global overlays, datafileroot, atlasstats, averagingmode, currentdataset
     print('in updateAtlasStats')
     if 'atlas' in overlays and (averagingmode is not None):
         for idx, themap in enumerate(currentdataset.loadedfuncmaps):
@@ -535,7 +517,7 @@ def doAtlasAveraging(state):
 def updateAveragingMode():
     global averagingmode, focusmap
     global atlasaveragingdone
-    global overlays, focussubj
+    global overlays
     global currentdataset
     print('in updateAveragingMode')
     if ('atlas' in overlays) and (not atlasaveragingdone):
@@ -604,7 +586,7 @@ def MAD_radioButton_clicked(enabled):
 
 
 def gray_radioButton_clicked(enabled):
-    global imageadj, overlays, focussubj, currentdataset
+    global imageadj, overlays, currentdataset
     if enabled:
         overlays[currentdataset.focusmap].setLUT(gray_state)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
@@ -613,7 +595,7 @@ def gray_radioButton_clicked(enabled):
 
 
 def thermal_radioButton_clicked(enabled):
-    global imageadj, overlays, focussubj, currentdataset
+    global imageadj, overlays, currentdataset
     if enabled:
         overlays[currentdataset.focusmap].setLUT(thermal_state)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
@@ -622,7 +604,7 @@ def thermal_radioButton_clicked(enabled):
 
 
 def GYR_radioButton_clicked(enabled):
-    global imageadj, overlays, focussubj, currentdataset
+    global imageadj, overlays, currentdataset
     if enabled:
         overlays[currentdataset.focusmap].setLUT(g2y2r_state)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
@@ -631,7 +613,7 @@ def GYR_radioButton_clicked(enabled):
 
 
 def viridis_radioButton_clicked(enabled):
-    global imageadj, overlays, focussubj, currentdataset
+    global imageadj, overlays, currentdataset
     if enabled:
         overlays[currentdataset.focusmap].setLUT(viridis_state)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
@@ -640,7 +622,7 @@ def viridis_radioButton_clicked(enabled):
 
 
 def jet_radioButton_clicked(enabled):
-    global imageadj, overlays, focussubj, currentdataset
+    global imageadj, overlays, currentdataset
     if enabled:
         overlays[currentdataset.focusmap].setLUT(cyclic_state)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
@@ -649,7 +631,7 @@ def jet_radioButton_clicked(enabled):
 
 
 def rainbow_radioButton_clicked(enabled):
-    global imageadj, overlays, focussubj, currentdataset
+    global imageadj, overlays, currentdataset
     if enabled:
         overlays[currentdataset.focusmap].setLUT(spectrum_state)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
@@ -658,7 +640,7 @@ def rainbow_radioButton_clicked(enabled):
 
 
 def set_atlasmask():
-    global overlays, focussubj, loadedfuncmaps, ui, currentdataset
+    global overlays, loadedfuncmaps, ui, currentdataset
     print('Using all defined atlas regions as functional mask')
     ui.setMask_Button.setText('Valid mask')
     for themap in currentdataset.loadedfuncmaps:
@@ -668,7 +650,7 @@ def set_atlasmask():
 
 
 def set_lagmask():
-    global overlays, focussubj, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     print('Using valid fit points as functional mask')
     ui.setMask_Button.setText('Valid mask')
     for themap in currentdataset.loadedfuncmaps:
@@ -680,7 +662,7 @@ def set_lagmask():
 
 
 def set_refinemask():
-    global overlays, focussubj, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     print('Voxel refinement mask')
     ui.setMask_Button.setText('Refine mask')
     for themap in currentdataset.loadedfuncmaps:
@@ -692,7 +674,7 @@ def set_refinemask():
 
 
 def set_meanmask():
-    global overlays, focussubj, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     print('Mean regressor seed mask')
     ui.setMask_Button.setText('Mean mask')
     for themap in currentdataset.loadedfuncmaps:
@@ -704,7 +686,7 @@ def set_meanmask():
 
 
 def set_nomask():
-    global overlays, focussubj, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     print('disabling functional mask')
     ui.setMask_Button.setText('No Mask')
     for themap in currentdataset.loadedfuncmaps:
@@ -716,7 +698,7 @@ def set_nomask():
 
 
 def set_0p05():
-    global overlays, focussubj, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     print('setting functional mask to p<0.05')
     ui.setMask_Button.setText('p<0.05')
     # overlays['jit_mask'] = tide_stats.makepmask(overlays['lagstrengths'], 0.05, sighistfit, onesided=True)
@@ -730,7 +712,7 @@ def set_0p05():
 
 
 def set_0p01():
-    global overlays, focussubj, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     print('setting functional mask to p<0.01')
     ui.setMask_Button.setText('p<0.01')
     for themap in currentdataset.loadedfuncmaps:
@@ -742,7 +724,7 @@ def set_0p01():
 
 
 def set_0p005():
-    global overlays, focussubj, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     print('setting functional mask to p<0.005')
     ui.setMask_Button.setText('p<0.005')
     for themap in currentdataset.loadedfuncmaps:
@@ -754,7 +736,7 @@ def set_0p005():
 
 
 def set_0p001():
-    global overlays, focussubj, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     print('setting functional mask to p<0.001')
     ui.setMask_Button.setText('p<0.001')
     for themap in currentdataset.loadedfuncmaps:
@@ -798,7 +780,7 @@ def overlay_radioButton_08_clicked(enabled):
 
 
 def overlay_radioButton_clicked(which, enabled):
-    global imageadj, overlays, focussubj, currentdataset, panetomap, ui, overlaybuttons
+    global imageadj, overlays, currentdataset, panetomap, ui, overlaybuttons
     global currentloc, atlasaveragingdone
     if enabled:
         overlaybuttons[which].setChecked(True)
@@ -830,7 +812,7 @@ def overlay_radioButton_clicked(which, enabled):
 
 
 def updateTimepoint(event):
-    global data, overlays, focussubj, timecourse_ax, tr, tpos, timeaxis
+    global data, overlays, timecourse_ax, tr, tpos, timeaxis
     global currentdataset
     global vLine
     pos = event.pos()  ## using signal proxy turns original arguments into a tuple
@@ -845,7 +827,7 @@ def updateTimepoint(event):
 
 def updateLUT():
     global img_colorbar
-    global overlays, focussubj, currentdataset
+    global overlays, currentdataset
     global harvestcolormaps
     theLUT = overlays[currentdataset.focusmap].theLUT
     img_colorbar.setLookupTable(theLUT)
@@ -859,7 +841,7 @@ def updateTimecoursePlot():
     global timeaxis
     global currentdataset
     global xpos, ypos, zpos
-    global overlays, focussubj, timecourse_ax
+    global overlays, timecourse_ax
     if overlays[currentdataset.focusmap].tdim > 1:
         selected = overlays[currentdataset.focusmap].data[xpos, ypos, zpos, :]
         timecourse_ax.plot(timeaxis, selected, clear=True)
@@ -904,7 +886,7 @@ def updateOrthoImages():
     global currentloc
     global updateTimecoursePlot
     global xdim, ydim, zdim
-    global overlays, focussubj
+    global overlays
     global imagadj
 
     for thismap in panetomap:
@@ -920,7 +902,7 @@ def updateOrthoImages():
 
 
 def printfocusvals():
-    global ui, overlays, focussubj, currentdataset
+    global ui, overlays, currentdataset
     global currentloc
     logstatus(ui.logOutput, 'Print focus vals\n\n')
     for key in overlays:
@@ -982,13 +964,12 @@ def pass4_radioButton_clicked(enabled):
 
 def main():
     global vLine
-    #global movieTimer, frametime
     global ui, win
     global movierunning
     global focusmap, bgmap
     global maps
     global roi
-    global overlays, regressors, regressorfilterlimits, focussubj, loadedfuncmaps, atlasstats, averagingmode
+    global overlays, regressors, regressorfilterlimits, loadedfuncmaps, atlasstats, averagingmode
     global mainwin, orthoimages, overlaybuttons, panetomap
     global img_colorbar
     global lg_imgsize, scalefacx, scalefacy, scalefacz
@@ -1006,13 +987,8 @@ def main():
     averagingmode = None
     atlasaveragingdone = False
     forcetr = False
-    forceoffset = False
-    usecorrout = False
-    userise = False
-    coordinatespace = 'unspecified'
     buttonisdown = False
     harvestcolormaps = False
-    focussubj = -1
     xdim = 0
     ydim = 0
     zdim = 0
@@ -1027,13 +1003,37 @@ def main():
     tpos = 0
 
     theparser = argparse.ArgumentParser(description='A program to display the results of a time delay analysis')
-    theparser.add_argument('-o', help='Set lag offset', dest='offsettime', type=float, default=None)
-    theparser.add_argument('-r', help='enable risetime display', dest='userise', action='store_true', default=False)
-    theparser.add_argument('-n', help='enable movie mode', dest='usecorrout', action='store_true', default=False)
-    theparser.add_argument('-t', help='Set correlation TR', dest='trval', type=float, default=None)
-    theparser.add_argument('-d', help='Use this dataset (skip initial selection step)', dest='datafileroot', default=None)
-    theparser.add_argument('-a', help='Set anatomic mask image', dest='anatname', default=None)
-    theparser.add_argument('-m', help='Set geometric mask image', dest='geommaskname', default=None)
+    theparser.add_argument('-o',
+                           help='Set lag offset',
+                           dest='offsettime',
+                           type=float,
+                           default=None)
+    theparser.add_argument('-r',
+                           help='enable risetime display',
+                           dest='userise',
+                           action='store_true',
+                           default=False)
+    theparser.add_argument('-n',
+                           help='enable movie mode',
+                           dest='usecorrout',
+                           action='store_true',
+                           default=False)
+    theparser.add_argument('-t',
+                           help='Set correlation TR',
+                           dest='trval',
+                           type=float,
+                           default=None)
+    theparser.add_argument('-d',
+                           help='Use this dataset (skip initial selection step)',
+                           dest='datafileroot',
+                           default=None)
+    theparser.add_argument('-a',
+                           help='Set anatomic mask image',
+                           dest='anatname',
+                           default=None)
+    theparser.add_argument('-m', help='Set geometric mask image',
+                           dest='geommaskname',
+                           default=None)
     args = theparser.parse_args()
 
     anatname = args.anatname
@@ -1420,9 +1420,7 @@ def main():
     xfov = currentdataset.xdim * currentdataset.xsize
     yfov = currentdataset.ydim * currentdataset.ysize
     zfov = currentdataset.zdim * currentdataset.zsize
-    # print('fovs=',xfov,yfov,zfov)
     maxfov = np.max([xfov, yfov, zfov])
-    # print('maxfov=',maxfov)
     scalefacx = (lg_imgsize / maxfov) * currentdataset.xsize
     scalefacy = (lg_imgsize / maxfov) * currentdataset.ysize
     scalefacz = (lg_imgsize / maxfov) * currentdataset.zsize
@@ -1500,7 +1498,7 @@ def main():
     print('done loading panes')
 
 
-    # wire up the displat range controls
+    # wire up the display range controls
     ui.resetDispLimits_Button.clicked.connect(resetDispLimits)
     ui.resetDispSmart_Button.clicked.connect(resetDispSmart)
     ui.saveDisp_Button.clicked.connect(mainwin.saveDisp)
@@ -1512,6 +1510,11 @@ def main():
     # set up the histogram window
     print('about to set up the histogram')
     global hist_ax
+    histtitle = ui.histogram_groupBox.title()
+    print('current histtitle', histtitle)
+    ui.histogram_groupBox.setWindowTitle('blah')
+    histtitle = ui.histogram_groupBox.title()
+    print('current histtitle', histtitle)
     histwin = ui.histogram_graphicsView
     hist_ax = histwin.addPlot()
 

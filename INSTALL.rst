@@ -77,7 +77,15 @@ https://www.continuum.io. Rapidtide works with Python 2 or 3. If you are
 new to Python, you should probably just start at 3.
 
 After installing Anaconda python, install the remaining dependencies
-(including some good optional ones:
+(including some good optional ones).  To do this most easily, you should have
+conda-forge as one of your source channels.  To add conda-forge, type:
+
+::
+
+   conda config --add channels conda-forge
+
+
+Then install the additional dependencies:
 
 ::
 
