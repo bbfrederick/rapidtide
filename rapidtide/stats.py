@@ -26,7 +26,7 @@ import scipy as sp
 import matplotlib.pyplot as plt
 
 
-from scipy.stats import johnsonsb
+from scipy.stats import johnsonsb, kurtosis, kurtosistest
 
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
@@ -307,6 +307,21 @@ def fisher(r):
 
     """
     return 0.5 * np.log((1 + r) / (1 - r))
+
+
+def kurtosisstats(timecourse):
+    """
+
+    Parameters
+    ----------
+    timecourse: array
+        The timecourse to test
+
+    :return:
+
+    """
+    testres = kurtosistest(timecourse)
+    return kurtosis(timecourse), testres[0], testres[1]
 
 
 # --------------------------- histogram functions -------------------------------------------------

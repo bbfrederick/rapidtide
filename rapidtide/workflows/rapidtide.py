@@ -689,6 +689,9 @@ def rapidtide_main(argparsingfunc):
         nonosrefname = '_reference_fmrires.txt'
         osrefname = '_reference_resampres.txt'
 
+    optiondict['kurtosis_reference_pass1'], \
+        optiondict['kurtosisz_reference_pass1'], \
+        optiondict['kurtosisp_reference_pass1'] = tide_stats.kurtosisstats(resampref_y)
     tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
     tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
     timings.append(['End of reference prep', time.time(), None, None])
@@ -1213,6 +1216,9 @@ def rapidtide_main(argparsingfunc):
             genlagtc = tide_resample.fastresampler(initial_fmri_x, normoutputdata, padvalue=padvalue)
             nonosrefname = '_reference_fmrires_pass' + str(thepass + 1) + '.txt'
             osrefname = '_reference_resampres_pass' + str(thepass + 1) + '.txt'
+            optiondict['kurtosis_reference_pass' + str(thepass + 1)], \
+                optiondict['kurtosisz_reference_pass' + str(thepass + 1)], \
+                optiondict['kurtosisp_reference_pass' + str(thepass + 1)] = tide_stats.kurtosisstats(resampref_y)
             tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
             tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
             timings.append(
