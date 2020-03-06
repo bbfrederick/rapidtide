@@ -821,8 +821,10 @@ def process_args(inputargs=None):
     """
     if inputargs is None:
         print('processing command line arguments')
+        # write out the command used
         try:
             args = vars(_get_parser().parse_args())
+            argstowrite = sys.argv
         except SystemExit:
             _get_parser().print_help()
             raise
@@ -831,9 +833,33 @@ def process_args(inputargs=None):
         print(inputargs)
         try:
             args = vars(_get_parser().parse_args(inputargs))
+            argstowrite = inputargs
         except SystemExit:
             _get_parser().print_help()
             raise
+
+    # save the raw and formatted command lines
+    thecommandline = ' '.join(argstowrite)
+    tide_io.writevec([thecommandline], args['outputname'] + '_commandline.txt')
+    formattedcommandline = []
+    for thetoken in argstowrite[0:3]:
+        formattedcommandline.append(thetoken)
+    for thetoken in argstowrite[3:]:
+        if thetoken[0:2] == '--':
+            formattedcommandline.append(thetoken)
+        else:
+            formattedcommandline[-1] += ' ' + thetoken
+    for i in range(len(formattedcommandline)):
+        if i > 0:
+            prefix = '    '
+        else:
+            prefix = ''
+        if i < len(formattedcommandline) - 1:
+            suffix = ' \\'
+        else:
+            suffix = ''
+        formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
+    tide_io.writevec(formattedcommandline, args['outputname'] + '_formattedcommandline.txt')
 
     if args['debug']:
         print()
