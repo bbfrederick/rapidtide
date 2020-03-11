@@ -417,8 +417,16 @@ def updateRegressor():
     focusregressor = currentdataset.focusregressor
     regressors = currentdataset.getregressors()
     if currentdataset.focusregressor is not None:
-        regressor_ax.plot(regressors[focusregressor].timeaxis, regressors[focusregressor].timedata,
+        theplot = regressor_ax.plot(regressors[focusregressor].timeaxis, regressors[focusregressor].timedata,
                           stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=1), clear=True)
+        thelabel = "kurtosis: {0:.2f}, (z={0:.2f}, p<{0:.2f})".format(regressors[focusregressor].kurtosis,
+                                                                      regressors[focusregressor].kurtosis_z,
+                                                                      regressors[focusregressor].kurtosis_p)
+        text = pg.TextItem(text=thelabel,
+                           anchor=(0.0, 2.0),
+                           angle=0,
+                           fill=(0, 0, 0, 100))
+        regressor_ax.addItem(text)
 
 
 def updateRegressorSpectrum():

@@ -43,6 +43,7 @@ class timecourse:
         self.namebase = namebase
         self.samplerate = samplerate
         self.displaysamplerate = displaysamplerate
+
         if label is None:
             self.label = name
         else:
@@ -57,11 +58,17 @@ class timecourse:
         self.length = len(self.timedata)
         self.timeaxis = np.linspace(0.0, self.length, num=self.length, endpoint=False) / self.samplerate
         self.specaxis, self.specdata = tide_filt.spectrum(tide_math.corrnormalize(self.timedata), self.samplerate)
+        self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(self.timedata)
+
         if self.verbose:
             print('timecourse data range:', np.min(self.timedata), np.max(self.timedata))
             print('sample rate:', self.samplerate)
             print('timecourse length:', self.length)
             print('timeaxis length:', len(self.timeaxis))
+            print('kurtosis:', self.kurtosis)
+            print('kurtosis_z:', self.kurtosis_z)
+            print('kurtosis_p:', self.kurtosis_p)
+
             print()
 
     def summarize(self):
@@ -72,6 +79,9 @@ class timecourse:
         print('    namebase:         ', self.namebase)
         print('    samplerate:       ', self.samplerate)
         print('    length:           ', self.length)
+        print('    kurtosis:         ', self.kurtosis)
+        print('    kurtosis_z:       ', self.kurtosis_z)
+        print('    kurtosis_p:       ', self.kurtosis_p)
 
 
 class overlay:
