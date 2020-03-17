@@ -241,6 +241,32 @@ NIH (`1R01 NS097512 <http://grantome.com/grant/NIH/R01-NS097512-02>`__).
 References
 ==========
 
+Rapidtide would not be possible without many additional open source packages.
+These include:
+
+nibabel:
+--------
+
+1) doi://10.5281/zenodo.591597
+
+
+scikit-learn:
+-------------
+
+1) Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B.,
+    Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V.,
+    Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M.,
+    and Duchesnay, E., Scikit-learn: Machine Learning in Python.
+    Journal of Machine Learning Research, 2011. 12: p. 2825-2830.
+
+
+pandas:
+-------
+
+1) McKinney, W., pandas: a foundational Python library for data analysis
+    and statistics. Python for High Performance and Scientific Computing, 2011. 14.
+
+
 Links to PDFs of all papers mentioned here can be found on the OMG
 website: https://www.nirs-fmri.net/home/publications
 
