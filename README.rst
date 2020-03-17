@@ -244,11 +244,38 @@ Additional packages used
 Rapidtide would not be possible without many additional open source packages.
 These include:
 
+numpy:
+------
+
+1) Stéfan van der Walt, S. Chris Colbert and Gaël Varoquaux. The NumPy Array:
+   A Structure for Efficient Numerical Computation, Computing in Science
+   & Engineering, 13, 22-30 (2011) \| https:10.1109/MCSE.2011.37
+
+scipy:
+------
+
+1) Pauli Virtanen, Ralf Gommers, Travis E. Oliphant, Matt Haberland, Tyler Reddy,
+   David Cournapeau, Evgeni Burovski, Pearu Peterson, Warren Weckesser,
+   Jonathan Bright, Stéfan J. van der Walt, Matthew Brett, Joshua Wilson,
+   K. Jarrod Millman, Nikolay Mayorov, Andrew R. J. Nelson, Eric Jones,
+   Robert Kern, Eric Larson, CJ Carey, İlhan Polat, Yu Feng, Eric W. Moore,
+   Jake VanderPlas, Denis Laxalde, Josef Perktold, Robert Cimrman,
+   Ian Henriksen, E.A. Quintero, Charles R Harris, Anne M. Archibald,
+   Antônio H. Ribeiro, Fabian Pedregosa, Paul van Mulbregt,
+   and SciPy 1.0 Contributors. (2020) SciPy 1.0: Fundamental Algorithms for
+   Scientific Computing in Python. Nature Methods, 17, 261–272 (2020) \|
+   https://doi.org/10.1038/s41592-019-0686-2
+
+matplotlib:
+-----------
+
+1) John D. Hunter. Matplotlib: A 2D Graphics Environment, Computing in Science
+   & Engineering, 9, 90-95 (2007) \| https://10.1109/MCSE.2007.55
+
 nibabel:
 --------
 
-1) _10.5281/zenodo.591597: https://10.5281/zenodo.591597
-
+1) https://github.com/nipy/nibabel \| https://10.5281/zenodo.591597
 
 scikit-learn:
 -------------
@@ -257,7 +284,7 @@ scikit-learn:
    Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V.,
    Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M.,
    and Duchesnay, E., Scikit-learn: Machine Learning in Python.
-   Journal of Machine Learning Research, 2011. 12: p. 2825-2830.
+   Journal of Machine Learning Research, 2011. 12: p. 2825-2830. \| https://scikit-learn.org
 
 pandas:
 -------
