@@ -53,7 +53,7 @@ def usage():
     print("	outputfile	  - the name of the output text file")
     print("")
     print("optional arguments:")
-    print("	-l		  - perform linear fit only")
+    print("	-l		          - perform linear fit only")
     print("	-d, --nodisplay   - save graphs to file only - do not display")
     print("")
     return ()
