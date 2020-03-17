@@ -934,6 +934,69 @@ Usage:
 			outfile:     the name of the output time course file
 
 
+pixelcomp
+---------
+
+Description:
+^^^^^^^^^^^^
+	A program to compare voxel values in two 3D NIFTI files.
+        You give pixelcomp two files, each with their own mask.
+        Any voxel that has a nonzero mask in both files gets added
+        to a list of xy pairs, with the value from the first file being x,
+        and the value from the second file being y.  Pixelcomp then:
+        1) Makes and displays a 2D histogram of all the xy values. 2) Does a linear
+        fit to x and y, and outputs the coefficients (slope and offset)
+        to a XXX_linfit.txt file. 3) Writes all the xy pairs to a tab
+        separated text file, and 4) Makes a Bland-Altman plot of x vs y
+
+Inputs:
+^^^^^^^
+	Two 3D NIFTI image files, the accompanying mask files, and the root name for the output files.
+
+Outputs:
+^^^^^^^^
+	None
+
+Usage:
+^^^^^^
+
+	::
+
+		showtc - plots the data in text files
+
+		usage: showtc texfilename[:col1,col2...,coln] [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate=Fs] [--sampletime=Ts]
+
+		required arguments:
+		    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line
+				       A list of comma separated numbers following the filename and preceded by a colon is used to select columns to plot
+
+		optional arguments:
+		    --nolegend               - turn off legend label
+		    --pspec                  - show the power spectra magnitudes of the input data instead of the timecourses
+		    --phase                  - show the power spectra phases of the input data instead of the timecourses
+		    --transpose              - swap rows and columns in the input files
+		    --waterfall              - plot multiple timecourses as a waterfall
+		    --voffset=VOFFSET        - plot multiple timecourses as with VOFFSET between them (use negative VOFFSET to set automatically)
+		    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)
+		    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)
+		    --colorlist=C1,C2,..     - cycle through the list of colors specified by CN
+		    --linewidth=LW           - set linewidth to LW points (default is 1)
+		    --fontscalefac=FAC       - scale all font sizes by FAC (default is 1.0)
+		    --legendlist=L1,L2,..    - cycle through the list of legends specified by LN
+		    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen
+		    --title=TITLE            - use TITLE as the overall title of the graph
+		    --separate               - use a separate subplot for each timecourse
+		    --separatelinked         - use a separate subplot for each timecourse, but use a common y scaling
+		    --noxax                  - don't show x axis
+		    --noyax                  - don't show y axis
+		    --starttime=START        - start plot at START seconds
+		    --endtime=END            - end plot at END seconds
+		    --legendloc=LOC          - Integer from 0 to 10 inclusive specifying legend location.  Legal values are:
+					       0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right,
+					       5: right, 6: center left, 7: center right, 8: lower center, 9: upper center,
+					       10: center.  Default is 2.
+		    --debug                  - print debugging information
+
 glmfilt
 ---------
 
