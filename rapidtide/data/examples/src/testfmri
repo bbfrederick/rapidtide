@@ -6,7 +6,8 @@ rapidtide \
         --delaymapping \
         --sigmalimit 25.0 \
         --ampthresh 0.3 \
-        --nprocs=-1 \
+        --nprocs -1 \
+        --pickleftthresh 0.3 \
 	--spatialfilt 2 
 
 rapidtide2x \
@@ -22,6 +23,7 @@ rapidtide2x \
         --refineoffset \
         --despecklepasses=4 \
         --nprocs=-1 \
+        --pickleftthresh=0.3 \
         --saveoptionsasjson \
         --pickleft \
         --noglm \
