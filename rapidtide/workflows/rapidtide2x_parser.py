@@ -253,6 +253,8 @@ def usage():
     print("    --refineoffset                 - Adjust offset time during refinement to bring peak ")
     print("                                     delay to zero")
     print("    --pickleft                     - When setting refineoffset, always select the leftmost histogram peak")
+    print("    --pickleftthresh=THRESH        - Set the threshold value (fraction of maximum) to decide something is a ")
+    print("                                     peak in a histogram.  Default is 0.33.")
     print("    --refineupperlag               - Only use positive lags for regressor refinement")
     print("    --refinelowerlag               - Only use negative lags for regressor refinement")
     print("    --pca                          - Use pca to derive refined regressor (default is ")
@@ -356,6 +358,11 @@ def process_args():
     optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict['corrmaskname'] = None  # name of correlation mask
     optiondict['corrmaskvals'] = None  # list of integer values in the correlation mask file to use in the mask
+    optiondict['corrmaskexcludename'] = None
+    optiondict['corrmaskexcludevals'] = None    # list of integer values to use in the mask
+    optiondict['corrmaskincludename'] = None
+    optiondict['corrmaskincludevals'] = None    # list of integer values to use in the mask
+
     optiondict[
         'check_autocorrelation'] = True  # check for periodic components that corrupt the autocorrelation
     optiondict[
@@ -447,6 +454,7 @@ def process_args():
     optiondict['passes'] = 1
     optiondict['refineoffset'] = False
     optiondict['pickleft'] = False
+    optiondict['pickleftthresh'] = 0.33
     optiondict['refineexcludename'] = None
     optiondict['refineexcludevals'] = None        # list of integer values to use in the mask
     optiondict['refineincludename'] = None
@@ -537,6 +545,7 @@ def process_args():
                                                                                                           'refineexclude=',
                                                                                                           'refineoffset',
                                                                                                           'pickleft',
+                                                                                                          'pickleftthresh=',
                                                                                                           'nofitfilt',
                                                                                                           'cleanrefined',
                                                                                                           'pca',
@@ -998,6 +1007,9 @@ def process_args():
         elif o == '--pickleft':
             optiondict['pickleft'] = True
             print('Will select the leftmost delay peak when setting refine offset')
+        elif o == '--pickleftthresh':
+            optiondict['pickleftthresh'] = float(a)
+            print('Threshhold value for leftmost peak height set to', optiondict['pickleftthresh'])
         elif o == '--lagminthresh':
             optiondict['lagminthresh'] = float(a)
             if optiondict['passes'] == 1:
