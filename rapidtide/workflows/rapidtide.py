@@ -1150,7 +1150,8 @@ def rapidtide_main(argparsingfunc):
             if optiondict['refineoffset']:
                 peaklag, peakheight, peakwidth = tide_stats.gethistprops(lagtimes[np.where(lagmask > 0)],
                                                                          optiondict['histlen'],
-                                                                         pickleft=optiondict['pickleft'])
+                                                                         pickleft=optiondict['pickleft'],
+                                                                         peakthresh=optiondict['pickleftthresh'])
                 optiondict['offsettime'] = peaklag
                 optiondict['offsettime_total'] += peaklag
                 print('offset time set to ', optiondict['offsettime'], ', total is ', optiondict['offsettime_total'])

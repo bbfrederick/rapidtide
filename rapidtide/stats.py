@@ -325,7 +325,7 @@ def kurtosisstats(timecourse):
 
 
 # --------------------------- histogram functions -------------------------------------------------
-def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False):
+def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False, peakthresh=0.33):
     """
 
     Parameters
@@ -355,7 +355,7 @@ def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False):
         started = False
         finished = False
         while i < len(thestore[1, :] - 2) and not finished:
-            if thestore[1, i] > 0.33 * overallmax:
+            if thestore[1, i] > peakthresh * overallmax:
                 started = True
             if thestore[1, i] > thestore[1, peakindex]:
                 peakindex = i

@@ -49,21 +49,6 @@ def setifnotset(thedict, thekey, theval):
         thedict[thekey] = theval
 
 
-def processmaskspec(maskspec, spectext1, spectext2):
-    thename, colspec = tide_io.parsefilespec(maskspec)
-    if colspec is not None:
-        thevals = tide_io.colspectolist(colspec)
-    else:
-        thevals = None
-    if thevals is not None:
-        print(spectext1,
-              thename,
-              ' = ',
-              thevals,
-              spectext2)
-    return thename, thevals
-
-
 def _get_parser():
     """
     Argument parser for rapidtide
@@ -607,10 +592,18 @@ def _get_parser():
                                'shifted timecourses prior to refinement. '),
                          default=False)
     reg_ref.add_argument('--pickleft',
-                        dest='pickleft',
-                        action='store_true',
-                        help=('Will select the leftmost delay peak when setting the refine offset. '),
-                        default=False)
+                         dest='pickleft',
+                         action='store_true',
+                         help=('Will select the leftmost delay peak when setting the refine offset. '),
+                         default=False)
+    reg_ref.add_argument('--pickleftthresh',
+                         dest='pickleftthresh',
+                         action='store',
+                         metavar='THRESH',
+                         type=float,
+                         help=('Threshhold value (fraction of maximum) in a histogram '
+                               'to be considered the start of a peak.  Default is 0.33.'),
+                         default=0.33)
 
     refine = reg_ref.add_mutually_exclusive_group()
     refine.add_argument('--refineupperlag',
@@ -1015,33 +1008,33 @@ def process_args(inputargs=None):
 
     # mask processing
     if args['corrmaskincludespec'] is not None:
-        args['corrmaskincludename'], args['corrmaskincludevals'] = processmaskspec(args['corrmaskincludespec'],
+        args['corrmaskincludename'], args['corrmaskincludevals'] = tide_io.processnamespec(args['corrmaskincludespec'],
                                                                                        'Including voxels where ',                                                                                     'in correlation calculations.')
     else:
         args['corrmaskincludename'] = None
 
     if args['globalmeanincludespec'] is not None:
-        args['globalmeanincludename'], args['globalmeanincludevals'] = processmaskspec(args['globalmeanincludespec'],
+        args['globalmeanincludename'], args['globalmeanincludevals'] = tide_io.processnamespec(args['globalmeanincludespec'],
                                                                                        'Including voxels where ',                                                                                      'in global mean.')
     else:
         args['globalmeanincludename'] = None
 
     if args['globalmeanexcludespec'] is not None:
-        args['globalmeanexcludename'], args['globalmeanexcludevals'] = processmaskspec(args['globalmeanexcludespec'],
+        args['globalmeanexcludename'], args['globalmeanexcludevals'] = tide_io.processnamespec(args['globalmeanexcludespec'],
                                                                                        'Excluding voxels where ',
                                                                                        'from global mean.')
     else:
         args['globalmeanexcludename'] = None
 
     if args['refineincludespec'] is not None:
-        args['refineincludename'], args['refineincludevals'] = processmaskspec(args['refineincludespec'],
+        args['refineincludename'], args['refineincludevals'] = tide_io.processnamespec(args['refineincludespec'],
                                                                                        'Including voxels where ',
                                                                                        'in refinement.')
     else:
         args['refineincludename'] = None
 
     if args['refineexcludespec'] is not None:
-        args['refineexcludename'], args['refineexcludevals'] = processmaskspec(args['refineexcludespec'],
+        args['refineexcludename'], args['refineexcludevals'] = tide_io.processnamespec(args['refineexcludespec'],
                                                                                        'Excluding voxels where ',
                                                                                        'from refinement.')
     else:
@@ -1049,7 +1042,7 @@ def process_args(inputargs=None):
 
     # motion processing
     if args['motionfilespec'] is not None:
-        args['motionfilename'], args['motionfilevals'] = processmaskspec(args['motionfilespec'],
+        args['motionfilename'], args['motionfilevals'] = tide_io.processnamespec(args['motionfilespec'],
                                                                          'Using columns in ',
                                                                          'as motion regressors.')
     else:
