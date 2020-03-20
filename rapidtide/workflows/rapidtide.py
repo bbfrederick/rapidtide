@@ -801,7 +801,7 @@ def rapidtide_main(argparsingfunc):
         outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
 
     # prepare for fast resampling
-    padvalue = max((-optiondict['lagmin'], optiondict['lagmax'])) + 30.0
+    padvalue = max((-optiondict['lagmin'], optiondict['lagmax'])) + 30.0 + np.abs(optiondict['offsettime'])
     # print('setting up fast resampling with padvalue =',padvalue)
     numpadtrs = int(padvalue // fmritr)
     padvalue = fmritr * numpadtrs
