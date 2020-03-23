@@ -287,6 +287,8 @@ def startendcheck(timepoints, startpoint, endpoint):
     else:
         realstart = startpoint
         print('startpoint set to ', startpoint)
+    if endpoint == -1:
+        endpoint = 100000000
     if endpoint > timepoints - 1:
         realend = timepoints - 1
         print('endppoint set to maximum, (', timepoints - 1, ')')
