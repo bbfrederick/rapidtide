@@ -1033,7 +1033,7 @@ def rapidtide_main():
             optiondict['startpoint'] = int(limitvec[0])
             optiondict['endpoint'] = int(limitvec[1])
             if optiondict['endpoint'] == -1:
-                optiondict['endpoint'] = 100000000
+                optiondict['endpoint'] = 100000000 
             linkchar = '='
             print('Analysis will be performed only on data from point ', optiondict['startpoint'], ' to ',
                   optiondict['endpoint'], '.')
