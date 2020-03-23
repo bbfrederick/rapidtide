@@ -84,6 +84,52 @@ def printthresholds(pcts, thepercentiles, labeltext):
         print('\tp <', 1.0 - thepercentiles[i], ': ', pcts[i])
 
 
+def _get_parser():
+    parser = argparse.ArgumentParser(prog='showstxcorr',
+                                     description='Plots the data in text files.',
+                                     usage='%(prog)s texfilename[:col1,col2...,coln] [textfilename]... [options]')
+
+    parser.add_argument('textfilenames',
+                        type=str,
+                        nargs='2',
+                        help='One or more input files, with optional column specifications')
+
+    parser.add_argument('--outname',
+                        dest='outname',
+                        metavar='FILENAME',
+                        type=str,
+                        action='store',
+                        help='The root name of the output files.',
+                        default=None)
+
+    sampling = parser.add_mutually_exclusive_group()
+    sampling.add_argument('--samplerate',
+                        dest='samplerate',
+                        action='store',
+                        metavar='FREQ',
+                        type=lambda x: is_float(parser, x),
+                        help=('Set the sample rate of the data file to FREQ. '
+                              'If neither samplerate or sampletime is specified, sample rate is 1.0.'),
+                        default='auto')
+    sampling.add_argument('--sampletime',
+                        dest='samplerate',
+                        action='store',
+                        metavar='TSTEP',
+                        type=lambda x: invert_float(parser, x),
+                        help=('Set the sample rate of the data file to 1.0/TSTEP. '
+                              'If neither samplerate or sampletime is specified, sample rate is 1.0.'),
+                        default='auto')
+    parser.add_argument('--outname',
+                        dest='outname',
+                        metavar='FILENAME',
+                        type=str,
+                        action='store',
+                        help='The root name of the output files.',
+                        default=None)
+
+
+    return parser
+
 def usage():
     print("")
     print("showstxcorr - calculate and display the short term crosscorrelation between two timeseries")
