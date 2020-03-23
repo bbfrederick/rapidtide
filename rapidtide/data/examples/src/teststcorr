@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+import rapidtide.correlate as tide_corr
+import rapidtide.io as tide_io
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+input1 = tide_io.readvec('lf_HbO')
+input2 = tide_io.readvec('lt_HbO')
+corrtimes, wintimes, stcorr = tide_corr.faststcorrelate(input1, input2, nperseg=128)
+
+spec_img = stcorr
+print(spec_img.shape)
+fig = plt.figure()
+ax = plt.gca()
+im = ax.pcolormesh(spec_img)
+plt.show()
+
+fig = plt.figure()
+ax = plt.gca()
+print(len(stcorr[:, 10]), len(corrtimes))
+plt.plot(corrtimes, stcorr[:, 10])
+plt.plot(corrtimes, stcorr[:, 100])
+plt.plot(corrtimes, stcorr[:, 1000])
+plt.plot(corrtimes, stcorr[:, 10000])
+plt.show()
