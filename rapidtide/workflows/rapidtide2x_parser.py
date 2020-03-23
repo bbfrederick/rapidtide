@@ -165,8 +165,13 @@ def usage():
     print("                                     given, only voxels with integral values listed in VALSPEC are used.)")
     print("    -m                             - Mean scale regressors during global mean estimation")
     print("    --slicetimes=FILE              - Apply offset times from FILE to each slice in the dataset")
-    print("    --numskip=SKIP                 - SKIP tr's were previously deleted during preprocessing")
-    print("                                     (default is 0)")
+    print("    --numskip=SKIP                 - SKIP tr's were previously deleted during preprocessing (e.g. if you ")
+    print("                                     have done your preprocessing in FSL and set dummypoints to a ")
+    print("                                     nonzero value.) Default is 0.")
+    print("    --timerange=START,END          - Limit analysis to data between timepoints START ")
+    print("                                     and END in the fmri file. If END is set to -1, ")
+    print("                                     analysis will go to the last timepoint.  Negative values ")
+    print("                                     of START will be set to 0. Default is to use all timepoints.")
     print("    --nothresh                     - Disable voxel intensity threshold (especially useful")
     print("                                     for NIRS data)")
     print("    --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.")
@@ -273,8 +278,6 @@ def usage():
     print("    -T                             - Save a table of lagtimes used")
     print("    -h HISTLEN                     - Change the histogram length to HISTLEN (default is")
     print("                                     100)")
-    print("    --timerange=START,END          - Limit analysis to data between timepoints START ")
-    print("                                     and END in the fmri file")
     print("    --glmsourcefile=FILE           - Regress delayed regressors out of FILE instead of the ")
     print("                                     initial fmri file used to estimate delays")
     print("    --noglm                        - Turn off GLM filtering to remove delayed regressor ")
@@ -869,9 +872,11 @@ def process_args():
             limitvec = a.split(',')
             optiondict['startpoint'] = int(limitvec[0])
             optiondict['endpoint'] = int(limitvec[1])
+            if optiondict['endpoint'] == -1:
+                optiondict['endpoint'] = 100000000
             linkchar = '='
             print('Analysis will be performed only on data from point ', optiondict['startpoint'], ' to ',
-                  optiondict['endpoint'])
+                  optiondict['endpoint'], '.')
         elif o == '-r':
             lagvec = a.split(',')
             if not optiondict['fixdelay']:

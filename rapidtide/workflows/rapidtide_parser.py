@@ -337,14 +337,9 @@ def _get_parser():
                          type=int,
                          metavar='SKIP',
                          help=('SKIP TRs were previously deleted during '
-                               'preprocessing (default is 0). '),
+                               'preprocessing (e.g. if you have done your preprocessing '
+                               'in FSL and set dummypoints to a nonzero value.) Default is 0. '),
                          default=0)
-    preproc.add_argument('--nothresh',
-                         dest='nothresh',
-                         action='store_true',
-                         help=('Disable voxel intensity threshold (especially '
-                               'useful for NIRS data). '),
-                         default=False)
     preproc.add_argument('--timerange',
                          dest='timerange',
                          action='store',
@@ -352,9 +347,16 @@ def _get_parser():
                          type=int,
                          metavar=('START', 'END'),
                          help=('Limit analysis to data between timepoints '
-                               'START and END in the fmri file. If END is set to -1 '
-                               'analysis will go to the last timepoint.'),
+                               'START and END in the fmri file. If END is set to -1, '
+                               'analysis will go to the last timepoint.  Negative values '
+                               'of START will be set to 0. Default is to use all timepoints.'),
                          default=(-1, -1))
+    preproc.add_argument('--nothresh',
+                         dest='nothresh',
+                         action='store_true',
+                         help=('Disable voxel intensity threshold (especially '
+                               'useful for NIRS data). '),
+                         default=False)
 
     # Correlation options
     corr = parser.add_argument_group('Correlation options')
@@ -944,7 +946,7 @@ def process_args(inputargs=None):
         pass
     args['startpoint'] = args['timerange'][0]
     if args['timerange'][1] == -1:
-        args['endpoint'] = 10000000
+        args['endpoint'] = 100000000
     else:
         args['endpoint'] = args['timerange'][1]
 
