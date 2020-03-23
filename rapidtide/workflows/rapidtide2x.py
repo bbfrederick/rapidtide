@@ -1466,11 +1466,8 @@ def rapidtide_main():
         print()
 
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
-    if (validstart == 0) and (validend == timepoints):
-        fmri_data = nim_data.reshape((numspatiallocs, timepoints))
-    else:
-        fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend]
-        validtimepoints = validend - validstart + 1
+    fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
+    validtimepoints = validend - validstart + 1
 
     # read in the optional masks
     tide_util.logmem('before setting masks', file=memfile)
