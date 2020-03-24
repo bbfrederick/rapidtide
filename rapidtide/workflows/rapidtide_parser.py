@@ -634,12 +634,12 @@ def _get_parser():
 
     # Output options
     output = parser.add_argument_group('Output options')
-    output.add_argument('--limitoutput',
+    output.add_argument('--nolimitoutput',
                         dest='limitoutput',
                         action='store_true',
-                        help=("Don't save some of the large and rarely used "
+                        help=("Save some of the large and rarely used "
                               "files. "),
-                        default=False)
+                        default=True)
     output.add_argument('--savelags',
                         dest='savecorrtimes',
                         action='store_true',
