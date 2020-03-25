@@ -1148,8 +1148,8 @@ class plethfilter:
 
 
 class noncausalfilter:
-    def __init__(self, filtertype='none', usebutterworth=False, butterworthorder=6, usetrapfftfilt=True,
-                 correctfreq=True, padtime=30.0, cyclic=False, debug=False):
+    def __init__(self, filtertype='none', transitionfrac=0.05, usebutterworth=False, butterworthorder=6,
+                 usetrapfftfilt=True, correctfreq=True, padtime=30.0, cyclic=False, debug=False):
         r"""A zero time delay filter for one dimensional signals, especially physiological ones.
 
         Parameters
@@ -1196,6 +1196,7 @@ class noncausalfilter:
         """
         self.filtertype = filtertype
         self.species = 'human'
+        self.transitionfrac = transitionfrac
         self.arb_lowerpass = 0.05
         self.arb_lowerstop = 0.9 * self.arb_lowerpass
         self.arb_upperpass = 0.20
@@ -1212,14 +1213,13 @@ class noncausalfilter:
         self.cyclic = cyclic
         self.debug = debug
 
-        transitionfrac = 0.05
         self.VLF_UPPERPASS = 0.009
-        self.VLF_UPPERSTOP = self.VLF_UPPERPASS * (1.0 + transitionfrac)
+        self.VLF_UPPERSTOP = self.VLF_UPPERPASS * (1.0 + self.transitionfrac)
 
         self.LF_LOWERPASS = 0.01
         self.LF_UPPERPASS = 0.15
-        self.LF_LOWERSTOP = self.LF_LOWERPASS * (1.0 - transitionfrac)
-        self.LF_UPPERSTOP = self.LF_UPPERPASS * (1.0 + transitionfrac)
+        self.LF_LOWERSTOP = self.LF_LOWERPASS * (1.0 - self.transitionfrac)
+        self.LF_UPPERSTOP = self.LF_UPPERPASS * (1.0 + self.transitionfrac)
 
         self.LF_LEGACY_LOWERPASS = 0.01
         self.LF_LEGACY_UPPERPASS = 0.15
@@ -1228,13 +1228,13 @@ class noncausalfilter:
 
         self.RESP_LOWERPASS = 0.2
         self.RESP_UPPERPASS = 0.5
-        self.RESP_LOWERSTOP = self.RESP_LOWERPASS * (1.0 - transitionfrac)
-        self.RESP_UPPERSTOP = self.RESP_UPPERPASS * (1.0 + transitionfrac)
+        self.RESP_LOWERSTOP = self.RESP_LOWERPASS * (1.0 - self.transitionfrac)
+        self.RESP_UPPERSTOP = self.RESP_UPPERPASS * (1.0 + self.transitionfrac)
 
         self.CARD_LOWERPASS = 0.66
         self.CARD_UPPERPASS = 3.0
-        self.CARD_LOWERSTOP = self.CARD_LOWERPASS * (1.0 - transitionfrac)
-        self.CARD_UPPERSTOP = self.CARD_UPPERPASS * (1.0 + transitionfrac)
+        self.CARD_LOWERSTOP = self.CARD_LOWERPASS * (1.0 - self.transitionfrac)
+        self.CARD_UPPERSTOP = self.CARD_UPPERPASS * (1.0 + self.transitionfrac)
         self.settype(self.filtertype)
 
     def settype(self, thetype):
