@@ -61,7 +61,6 @@ def glmpass(numprocitems,
             nprocs=1,
             procbyvoxel=True,
             showprogressbar=True,
-            addedskip=0,
             mp_chunksize=1000,
             rt_floatset=np.float64,
             rt_floattype='float64'):
@@ -95,13 +94,13 @@ def glmpass(numprocitems,
                     if procbyvoxel:
                         outQ.put(_procOneItemGLM(val,
                                                   theevs[val, :],
-                                                  fmri_data[val, addedskip:],
+                                                  fmri_data[val, :],
                                                   rt_floatset=rt_floatset,
                                                   rt_floattype=rt_floattype))
                     else:
                         outQ.put(_procOneItemGLM(val,
                                                   theevs[:, val],
-                                                  fmri_data[:, addedskip + val],
+                                                  fmri_data[:, val],
                                                   rt_floatset=rt_floatset,
                                                   rt_floattype=rt_floattype))
 
@@ -147,7 +146,7 @@ def glmpass(numprocitems,
             for vox in range(0, numprocitems):
                 if (vox % reportstep == 0 or vox == numprocitems - 1) and showprogressbar:
                     tide_util.progressbar(vox + 1, numprocitems, label='Percent complete')
-                thedata = fmri_data[vox, addedskip:].copy()
+                thedata = fmri_data[vox, :].copy()
                 if (themask is None) or (themask[vox] > 0):
                     dummy, \
                     meanvalue[vox],\
@@ -167,7 +166,7 @@ def glmpass(numprocitems,
             for timepoint in range(0, numprocitems):
                 if (timepoint % reportstep == 0 or timepoint == numprocitems - 1) and showprogressbar:
                     tide_util.progressbar(timepoint + 1, numprocitems, label='Percent complete')
-                thedata = fmri_data[:, addedskip + timepoint].copy()
+                thedata = fmri_data[:, timepoint].copy()
                 if (themask is None) or (themask[timepoint] > 0):
                     dummy, \
                     meanvalue[timepoint], \

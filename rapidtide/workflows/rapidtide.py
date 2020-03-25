@@ -1322,7 +1322,6 @@ def rapidtide_main(argparsingfunc):
                                            reportstep=reportstep,
                                            nprocs=optiondict['nprocs'],
                                            showprogressbar=optiondict['showprogressbar'],
-                                           addedskip=0,
                                            mp_chunksize=optiondict['mp_chunksize'],
                                            rt_floatset=rt_floatset,
                                            rt_floattype=rt_floattype

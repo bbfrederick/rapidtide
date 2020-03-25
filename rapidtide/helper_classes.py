@@ -138,7 +138,7 @@ class proberegressor:
                                      self.targetperiod * self.targetstartpoint + self.targetperiod * self.targetpoints,
                                      num=self.targetpoints,
                                      endpoint=True)
-        os_fmri_x = np.arange(0.0, (validtimepoints - optiondict['addedskip']) * self.targetoversample - (
+        os_fmri_x = np.arange(0.0, validtimepoints * self.targetoversample - (
                 self.targetoversample - 1)) * self.targetoversample * self.targetperiod + skiptime
 
 

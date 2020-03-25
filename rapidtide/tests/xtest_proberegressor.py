@@ -26,7 +26,6 @@ def test_proberegressor(debug=False, display=False):
     fmritr = 1.5
     offsettime = 0.0
     inputstarttime = 0.0
-    addedskip = 0
     oversampfactor = 2
     invertregressor = False
     detrendorder = 3
@@ -42,10 +41,10 @@ def test_proberegressor(debug=False, display=False):
     validend = numreference
     validtimepoints = validend - validstart + 1
 
-    skiptime = fmritr * (preprocskip + addedskip)
+    skiptime = fmritr * (preprocskip)
     reference_x = np.arange(0.0, numreference) * inputperiod - (inputstarttime + offsettime)
-    initial_fmri_x = np.arange(0.0, validtimepoints - addedskip) * fmritr + skiptime
-    os_fmri_x = np.arange(0.0, (validtimepoints - addedskip) * oversampfactor - (
+    initial_fmri_x = np.arange(0.0, validtimepoints) * fmritr + skiptime
+    os_fmri_x = np.arange(0.0, (validtimepoints) * oversampfactor - (
             oversampfactor - 1)) * (fmritr / oversampfactor) + skiptime
 
     # invert the regressor if necessary

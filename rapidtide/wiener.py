@@ -76,8 +76,7 @@ def wienerpass(numspatiallocs,
                     # process and send the data
                     outQ.put(_procOneVoxelWiener(val,
                                                  lagtc[val, :],
-                                                 fmri_data[val,
-                                                 optiondict['addedskip']:],
+                                                 fmri_data[val, :],
                                                  rt_floatset=rt_floatset,
                                                  rt_floattype=rt_floattype))
 
@@ -107,7 +106,7 @@ def wienerpass(numspatiallocs,
         for vox in range(0, numspatiallocs):
             if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict['showprogressbar']:
                 tide_util.progressbar(vox + 1, numspatiallocs, label='Percent complete')
-            inittc = fmri_data[vox, optiondict['addedskip']:].copy()
+            inittc = fmri_data[vox, :].copy()
             if np.mean(inittc) >= threshval:
                 dummy, meanvalue[vox], rvalue[vox], r2value[vox], fitcoff[vox], fitNorm[vox], datatoremove[vox], \
                 filtereddata[vox] = _procOneVoxelWiener(vox,
