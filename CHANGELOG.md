@@ -1,11 +1,11 @@
 # History of changes
 
-## Version 2.0 (1/29/20)
-* (all): Python 2.x is no longer supported.  To be fair, I've done nothing to break 2.x compatibility, so it probably still works, but I'm expending no effort to keep it working.
+## Version 2.0 (3/20/20)
+* (all): Python 2.x is no longer supported.  To be fair, I've done nothing to break 2.x compatibility on purpose, so it probably still works, but I'm expending no effort to keep it working.
 * (documentation): General updates and cleanups.
-* (rapidtide2, rapidtide2x): rapidtide2 and rapidtide2x have been deprecated and replaced by rapidtide (which is basically rapidtide2x v1.9.0 with a different argument parser and default option values).
+* (rapidtide2): rapidtide2 has been eliminated.  If you used it before, you can use rapidtide2x as a dropin replacement (but you really should start moving to using rapidtide, the new version that is actively being developed).
+* (rapidtide2x): rapidtide2x has been deprecated and replaced by rapidtide (which is basically rapidtide2x v1.9.0 with a different argument parser and default option values).
 * (rapidtide2x): Added deprecation warning.
-* (rapidtide, rapidtide2x): Added a new command line option "--addesskip" to allow you to skip some points at the beginning of the data if needed (and if you didn't trim them out in preprocessing).
 * (rapidtide): The getopt argument parser has been completely rewritten using argparse.  The way you specify many (most?) options has changed.
 * (rapidtide): Any option that takes additional values (numbers, file names, etc.) is now specified as '--option VALUE [VALUE [VALUE...]]' rather than as '--option=VALUE[,VALUE[,VALUE...]]'.
 * (rapidtide): After a lot of use over the years, I've reset a lot of defaults to reflect typical usage.  You can still do any analysis you were doing before, but it may now require changes to scripts and workflows to get the old default behavior.  For most cases you can get good analyses with a minimum set of command line options now.
@@ -17,6 +17,7 @@
 * (rapidtide): The method for specifying bipolar correlation search has changed.  '-B' is replaced by '--bipolar'.
 * (rapidtide): The method for specifying a fixed delay (no correlation lag search) has changed.  '-Z DELAYVAL' is replaced by '--fixdelay DELAYVAL'.
 * (rapidtide): Options file is saved in json by default now.
+* (rapidtide,rapidtide2x): The 'timerange' option is now handled properly.  This can be used to restrict processing to a portion of the datafile.  This is useful to get past initial transients if you didn't remove them in preprocessing, or to see if parameters change over the course of a long acquisition.
 * (physiofreq): New program to get the average frequency of a physiological waveform.
 * (tidepool): Now properly handles missing timecourses properly.  Some cosmetic fixes.
 * (showtc): Converted to argparse, some cleanup in option specification.
