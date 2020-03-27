@@ -83,12 +83,21 @@ def _get_parser():
         help='Disable deep learning cardiac waveform filter.  ',
         default=True)
     processing_steps.add_argument(
+        '--usesuperdangerousworkaround',
+        dest='mpfix',
+        action='store_true',
+        help=('Some versions of tensorflow seem to have some weird conflict with MKL which'
+              'I don\'t seem to be able to fix.  If the dl filter bombs complaining about '
+              'multiple openmp libraries, try rerunning with the secret and inadvisable '
+              '\'--usesuperdangerousworkaround\' flag.  Good luck! '),
+        default=False)
+    processing_steps.add_argument(
         '--model',
         dest='modelname',
         metavar='MODELNAME',
         help=('Use model MODELNAME for dl filter (default is model_revised - '
               'from the revised NeuroImage paper. '),
-        default=None)
+        default='model_revised')
 
     # Performance
     performance_opts = parser.add_argument_group('Performance')
@@ -204,7 +213,7 @@ def _get_parser():
         default=0.4)
     cardiac_est_tuning.add_argument(
         '--notchwidth',
-        dest='envcutoff',
+        dest='notchpct',
         action='store',
         metavar='WIDTH',
         type=lambda x: is_float(parser, x),
@@ -215,7 +224,7 @@ def _get_parser():
     external_cardiac_opts = parser.add_argument_group('External cardiac waveform options')
     external_cardiac_opts.add_argument(
         '--cardiacfile',
-        dest='cardiacfile',
+        dest='cardiacfilename',
         metavar='FILE[:COL]',
         help=('Read the cardiac waveform from file FILE.  If COL is an integer, '
               'and FILE is a text file, use the COL\'th column.  If FILE is a BIDS '
@@ -254,12 +263,12 @@ def _get_parser():
         default=1.0)
     external_cardiac_opts.add_argument(
         '--stdfreq',
-        dest='inputstart',
+        dest='stdfreq',
         metavar='FREQ',
         action='store',
         type=float,
-        help=('The time delay in seconds into the cardiac file, corresponding '
-              'to the first TR of the fMRI file (default is 0.0) '),
+        help=('Frequency to which the cardiac signals are resampled for output. '
+              'Default is 25. '),
         default=25.0)
     external_cardiac_opts.add_argument(
         '--forcehr',
@@ -276,13 +285,13 @@ def _get_parser():
     output_proc = parser.add_argument_group('Output processing')
     output_proc.add_argument(
         '--spatialglm',
-        dest='spatialglm',
+        dest='dospatialglm',
         action='store_true',
         help='Generate framewise cardiac signal maps and filter them out of the input data. ',
         default=False)
     output_proc.add_argument(
         '--temporalglm',
-        dest='temporalglm',
+        dest='dotemporalglm',
         action='store_true',
         help='Generate voxelwise aliased synthetic cardiac regressors and filter them out of the input data. ',
         default=False)
@@ -291,7 +300,7 @@ def _get_parser():
     phase_proj_tuning = parser.add_argument_group('Phase projection tuning')
     phase_proj_tuning.add_argument(
         '--outputbins',
-        dest='outputbins',
+        dest='destpoints',
         metavar='BINS',
         action='store',
         type=lambda x: is_int(parser, x),
@@ -299,7 +308,7 @@ def _get_parser():
         default=32)
     phase_proj_tuning.add_argument(
         '--gridbins',
-        dest='gridbins',
+        dest='congridbins',
         metavar='BINS',
         action='store',
         type=lambda x: is_float(parser, x),
@@ -350,7 +359,7 @@ def _get_parser():
         default=False)
     debug_opts.add_argument(
         '--aliasedcorrelation',
-        dest='aliasedcorrelation',
+        dest='doaliasedcorrelation',
         action='store_true',
         help='Attempt to calculate absolute delay using an aliased correlation (experimental).',
         default=False)
@@ -452,7 +461,7 @@ def process_args(inputargs=None):
         print('processing command line arguments')
         # write out the command used
         try:
-            args = vars(_get_parser().parse_args())
+            args = _get_parser().parse_args()
             argstowrite = sys.argv
         except SystemExit:
             _get_parser().print_help()
@@ -461,7 +470,7 @@ def process_args(inputargs=None):
         print('processing passed argument list:')
         print(inputargs)
         try:
-            args = vars(_get_parser().parse_args(inputargs))
+            args = _get_parser().parse_args(inputargs)
             argstowrite = inputargs
         except SystemExit:
             _get_parser().print_help()
@@ -469,7 +478,7 @@ def process_args(inputargs=None):
 
     # save the raw and formatted command lines
     thecommandline = ' '.join(argstowrite)
-    tide_io.writevec([thecommandline], args['outputroot'] + '_commandline.txt')
+    tide_io.writevec([thecommandline], args.outputroot + '_commandline.txt')
     formattedcommandline = []
     for thetoken in argstowrite[0:3]:
         formattedcommandline.append(thetoken)
@@ -488,31 +497,47 @@ def process_args(inputargs=None):
         else:
             suffix = ''
         formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
-    tide_io.writevec(formattedcommandline, args['outputroot'] + '_formattedcommandline.txt')
+    tide_io.writevec(formattedcommandline, args.outputroot + '_formattedcommandline.txt')
 
-    if args['debug']:
+    if args.debug:
         print()
         print('before postprocessing')
         print(args)
 
 
-    # some tunable parameters for internal debugging
-    args['outputlevel'] = 1
+    # some tunable parameters
+    args.outputlevel = 1
+    args.maskthreshpct = 10.0
+    args.domadnorm = True
+    args.nprocs = 1
+    args.verbose = False
+    args.smoothlen = 101
+    args.envthresh = 0.2
+    args.upsamplefac = 100
+    args.centric = True
+    args.pulsereconstepsize = 0.01
+    args.aliasedcorrelationwidth = 1.25
+    args.aliasedcorrelationpts = 101
+    args.unnormvesselmap = True
+    args.histlen = 100
+    args.softvesselfrac = 0.4
+    args.savecardiacnoise = True
+
 
     # Additional argument parsing not handled by argparse
     # deal with notch filter logic
-    if args['disablenotch']:
-        args['notchpct'] = None
+    if args.disablenotch:
+        args.notchpct = None
 
     # determine the outputlevel
-    args['outputlevel'] = np.max([0, args['outputlevel'] + args['inc_outputlevel'] - args['dec_outputlevel']])
+    args.outputlevel = np.max([0, args.outputlevel + args.inc_outputlevel - args.dec_outputlevel])
 
-    if args['debug']:
+    if args.debug:
         print()
         print('after postprocessing')
         print(args)
 
     # start the clock!
-    tide_util.checkimports(args)
+    #tide_util.checkimports(args)
 
     return args
