@@ -1,0 +1,518 @@
+#!/usr/bin/env python
+#
+#   Copyright 2016-2019 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+# $Author: frederic $
+# $Date: 2016/07/11 14:50:43 $
+# $Id: rapidtide,v 1.161 2016/07/11 14:50:43 frederic Exp $
+#
+#
+#
+from __future__ import print_function, division
+
+import argparse
+import sys
+
+import numpy as np
+
+import rapidtide.io as tide_io
+import rapidtide.util as tide_util
+
+from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float, is_int
+
+class indicatespecifiedAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
+        setattr(namespace, self.dest+'_nondefault', True)
+
+def setifnotset(thedict, thekey, theval):
+    try:
+        test = thedict[thekey + '_nondefault']
+    except KeyError:
+        print('overriding ' + thekey)
+        thedict[thekey] = theval
+
+
+def _get_parser():
+    """
+    Argument parser for happy
+    """
+    parser = argparse.ArgumentParser(prog='happy_trans',
+                                     description='Hypersampling by Analytic Phase Projection - Yay!.',
+                                     usage='%(prog)s fmrifile slicetimefile outputroot [options]')
+
+    # Required arguments
+    parser.add_argument(
+        'fmrifile',
+        type=lambda x: is_valid_file(parser, x),
+        help='The input data file (BOLD fmri file or NIRS text file)')
+    parser.add_argument(
+        'slicetimefile',
+        type=lambda x: is_valid_file(parser, x),
+        help=('Text file containing the offset time in seconds of each slice relative '
+              'to the start of the TR, one value per line, OR the BIDS sidecar JSON file.'))
+    parser.add_argument(
+        'outputroot',
+        help='The root name for the output files')
+
+    # Processing steps
+    processing_steps = parser.add_argument_group('Processing steps')
+    processing_steps.add_argument(
+        '--cardcalconly',
+        dest='cardcalconly',
+        action='store_true',
+        help='Stop after all cardiac regressor calculation steps (before phase projection). ',
+        default=False)
+    processing_steps.add_argument(
+        '--skipdlfilter',
+        dest='dodlfilter',
+        action='store_false',
+        help='Disable deep learning cardiac waveform filter.  ',
+        default=True)
+    processing_steps.add_argument(
+        '--model',
+        dest='modelname',
+        metavar='MODELNAME',
+        help=('Use model MODELNAME for dl filter (default is model_revised - '
+              'from the revised NeuroImage paper. '),
+        default=None)
+
+    # Performance
+    performance_opts = parser.add_argument_group('Performance')
+    performance_opts.add_argument(
+        '--mklthreads',
+        dest='mklthreads',
+        action='store',
+        metavar='NTHREADS',
+        type=lambda x: is_int(parser, x),
+        help=('Use NTHREADS MKL threads to accelerate processing (defaults to 1 - more '
+              'threads up to the number of cores can accelerate processing a lot, but '
+              'can really kill you on clusters unless you\'re very careful.  Use at your own risk'),
+        default=1)
+
+    # Preprocessing
+    preprocessing_opts = parser.add_argument_group('Preprocessing')
+    preprocessing_opts.add_argument(
+        '--numskip',
+        dest='numskip',
+        action='store',
+        metavar='SKIP',
+        type=lambda x: is_int(parser, x),
+        help=('Skip SKIP tr\'s at the beginning of the fMRI file (default is 0). '),
+        default=0)
+    preprocessing_opts.add_argument(
+        '--motskip',
+        dest='motskip',
+        action='store',
+        metavar='SKIP',
+        type=lambda x: is_int(parser, x),
+        help=('Skip SKIP tr\'s at the beginning of the motion regressor file (default is 0). '),
+        default=0)
+    preprocessing_opts.add_argument(
+        '--motionfile',
+        dest='motionfilename',
+        metavar='MOTFILE[:COLSPEC]',
+        help=('Read 6 columns of motion regressors out of MOTFILE text file '
+              '(with timepoints rows) and regress them, their derivatives, '
+              'and delayed derivatives out of the data prior to analysis. '
+              'If COLSPEC is present, use the comma separated list of ranges to '
+              'specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For '
+              'example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9 '
+              'for X, Y, Z, RotX, RotY, RotZ, respectively.' ),
+        default=None)
+    preprocessing_opts.add_argument(
+        '--motionhp',
+        dest='motionhp',
+        action='store',
+        metavar='HPFREQ',
+        type=lambda x: is_float(parser, x),
+        help=('Highpass filter motion regressors to HPFREQ Hz prior to regression. '),
+        default=None)
+    preprocessing_opts.add_argument(
+        '--motionlp',
+        dest='motionlp',
+        action='store',
+        metavar='LPFREQ',
+        type=lambda x: is_float(parser, x),
+        help=('Lowpass filter motion regressors to LPFREQ Hz prior to regression. '),
+        default=None)
+
+    # Cardiac estimation tuning
+    cardiac_est_tuning = parser.add_argument_group('Cardiac estimation tuning')
+    cardiac_est_tuning.add_argument(
+        '--estmask',
+        dest='estmaskname',
+        action='store',
+        metavar='MASKNAME',
+        help=('Generation of cardiac waveform from data will be restricted to '
+              'voxels in MASKNAME and weighted by the mask intensity.  If this is '
+              'selected, happy will only make a single pass through the data (the '
+              'initial vessel mask generation pass will be skipped).'),
+        default=None)
+    cardiac_est_tuning.add_argument(
+        '--minhr',
+        dest='minhr',
+        action='store',
+        metavar='MINHR',
+        type=lambda x: is_float(parser, x),
+        help=('Limit lower cardiac frequency search range to MINHR BPM (default is 40). '),
+        default=40.0)
+    cardiac_est_tuning.add_argument(
+        '--maxhr',
+        dest='maxhr',
+        action='store',
+        metavar='MAXHR',
+        type=lambda x: is_float(parser, x),
+        help=('Limit upper cardiac frequency search range to MAXHR BPM (default is 140). '),
+        default=140.0)
+    cardiac_est_tuning.add_argument(
+        '--minhrfilt',
+        dest='minhrfilt',
+        action='store',
+        metavar='MINHR',
+        type=lambda x: is_float(parser, x),
+        help=('Highpass filter cardiac waveform estimate to MINHR BPM (default is 40). '),
+        default=40.0)
+    cardiac_est_tuning.add_argument(
+        '--maxhrfilt',
+        dest='maxhrfilt',
+        action='store',
+        metavar='MAXHR',
+        type=lambda x: is_float(parser, x),
+        help=('Lowpass filter cardiac waveform estimate to MAXHR BPM (default is 1000). '),
+        default=1000.0)
+    cardiac_est_tuning.add_argument(
+        '--envcutoff',
+        dest='envcutoff',
+        action='store',
+        metavar='CUTOFF',
+        type=lambda x: is_float(parser, x),
+        help=('Lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4 Hz). '),
+        default=0.4)
+    cardiac_est_tuning.add_argument(
+        '--notchwidth',
+        dest='envcutoff',
+        action='store',
+        metavar='WIDTH',
+        type=lambda x: is_float(parser, x),
+        help=('Set the width of the notch filter, in percent of the notch frequency (default is 1.5). '),
+        default=1.5)
+
+    # External cardiac waveform options
+    external_cardiac_opts = parser.add_argument_group('External cardiac waveform options')
+    external_cardiac_opts.add_argument(
+        '--cardiacfile',
+        dest='cardiacfile',
+        metavar='FILE[:COL]',
+        help=('Read the cardiac waveform from file FILE.  If COL is an integer, '
+              'and FILE is a text file, use the COL\'th column.  If FILE is a BIDS '
+              'format json file, use column named COL. If no file is specified, '
+              'estimate the cardiac signal from the fMRI data.' ),
+        default=None)
+    cardiac_freq = external_cardiac_opts.add_mutually_exclusive_group()
+    cardiac_freq.add_argument(
+        '--cardiacfreq',
+        dest='inputfreq',
+        action='store',
+        metavar='FREQ',
+        type=lambda x: is_float(parser, x),
+        help=('Cardiac waveform in cardiacfile has sample frequency FREQ '
+              '(default is 32Hz). NB: --cardiacfreq and --cardiactstep '
+              'are two ways to specify the same thing. '),
+        default='auto')
+    cardiac_freq.add_argument(
+        '--cardiactstep',
+        dest='inputfreq',
+        action='store',
+        metavar='TSTEP',
+        type=lambda x: invert_float(parser, x),
+        help=('Cardiac waveform in cardiacfile has time step TSTEP '
+              '(default is 1/32 sec). NB: --cardiacfreq and --cardiactstep '
+              'are two ways to specify the same thing. '),
+        default='auto')
+    external_cardiac_opts.add_argument(
+        '--cardiacstart',
+        dest='inputstart',
+        metavar='START',
+        action='store',
+        type=float,
+        help=('The time delay in seconds into the cardiac file, corresponding '
+              'to the first TR of the fMRI file (default is 0.0) '),
+        default=1.0)
+    external_cardiac_opts.add_argument(
+        '--stdfreq',
+        dest='inputstart',
+        metavar='FREQ',
+        action='store',
+        type=float,
+        help=('The time delay in seconds into the cardiac file, corresponding '
+              'to the first TR of the fMRI file (default is 0.0) '),
+        default=25.0)
+    external_cardiac_opts.add_argument(
+        '--forcehr',
+        dest='forcedhr',
+        metavar='BPM',
+        action='store',
+        type=lambda x: is_float(parser, x) / 60.0,
+        help=('Force heart rate fundamental detector to be centered at BPM '
+              '(overrides peak frequencies found from spectrum).  Useful'
+              'if there is structured noise that confuses the peak finder. '),
+        default=None)
+
+    # Output processing
+    output_proc = parser.add_argument_group('Output processing')
+    output_proc.add_argument(
+        '--spatialglm',
+        dest='spatialglm',
+        action='store_true',
+        help='Generate framewise cardiac signal maps and filter them out of the input data. ',
+        default=False)
+    output_proc.add_argument(
+        '--temporalglm',
+        dest='temporalglm',
+        action='store_true',
+        help='Generate voxelwise aliased synthetic cardiac regressors and filter them out of the input data. ',
+        default=False)
+
+    # Phase projection tuning
+    phase_proj_tuning = parser.add_argument_group('Phase projection tuning')
+    phase_proj_tuning.add_argument(
+        '--outputbins',
+        dest='outputbins',
+        metavar='BINS',
+        action='store',
+        type=lambda x: is_int(parser, x),
+        help=('Number of output phase bins (default is 32). '),
+        default=32)
+    phase_proj_tuning.add_argument(
+        '--gridbins',
+        dest='gridbins',
+        metavar='BINS',
+        action='store',
+        type=lambda x: is_float(parser, x),
+        help=('Width of the gridding kernel in output phase bins (default is 3.0). '),
+        default=3.0)
+    phase_proj_tuning.add_argument(
+        '--gridkernel',
+        dest='gridkernel',
+        action='store',
+        type=str,
+        choices=['old', 'gauss', 'kaiser'],
+        help=('Convolution gridding kernel. Default is kaiser'),
+        default='kaiser')
+    phase_proj_tuning.add_argument(
+        '--projmask',
+        dest='projmaskname',
+        metavar='MASKNAME',
+        help=('Phase projection will be restricted to voxels in MASKNAME '
+              '(overrides normal intensity mask.) '),
+        default=None)
+    phase_proj_tuning.add_argument(
+        '--projectwithraw',
+        dest='projectwithraw',
+        action='store_true',
+        help='Use fMRI derived cardiac waveform as phase source for projection, even if a plethysmogram is supplied.',
+        default=False)
+    phase_proj_tuning.add_argument(
+        '--fliparteries',
+        dest='fliparteries',
+        action='store_true',
+        help=('Attempt to detect arterial signals and flip over the timecourses after phase projection '
+              '(since relative arterial blood susceptibility is inverted relative to venous blood).'),
+        default=False)
+    phase_proj_tuning.add_argument(
+        '--arteriesonly',
+        dest='arteriesonly',
+        action='store_true',
+        help=('Restrict cardiac waveform estimation to putative arteries only.'),
+        default=False)
+
+    # Debugging options
+    debug_opts = parser.add_argument_group('Debugging options (probably not of interest to users)')
+    debug_opts.add_argument(
+        '--debug',
+        dest='debug',
+        action='store_true',
+        help='Turn on debugging information.',
+        default=False)
+    debug_opts.add_argument(
+        '--aliasedcorrelation',
+        dest='aliasedcorrelation',
+        action='store_true',
+        help='Attempt to calculate absolute delay using an aliased correlation (experimental).',
+        default=False)
+    debug_opts.add_argument(
+        '--noprogressbar',
+        dest='showprogressbar',
+        action='store_false',
+        help='Will disable showing progress bars (helpful if stdout is going to a file). ',
+        default=True)
+    debug_opts.add_argument(
+        '--nodetrend',
+        dest='detrendorder',
+        action='store',
+        type=lambda x: is_int(parser, 0),
+        help='Disable data detrending. ',
+        default=3)
+    debug_opts.add_argument(
+        '--noorthog',
+        dest='orthogonalize',
+        action='store_false',
+        help='Disable orthogonalization of motion confound regressors. ',
+        default=True)
+    debug_opts.add_argument(
+        '--disablenotch',
+        dest='disablenotch',
+        action='store_true',
+        help='Disable subharmonic notch filter. ',
+        default=False)
+    debug_opts.add_argument(
+        '--nomask',
+        dest='usemaskcardfromfmri',
+        action='store_false',
+        help='Disable data masking for calculating cardiac waveform. ',
+        default=True)
+    debug_opts.add_argument(
+        '--nocensor',
+        dest='censorbadpts',
+        action='store_false',
+        help='Bad points will not be excluded from analytic phase projection. ',
+        default=True)
+    debug_opts.add_argument(
+        '--noappsmooth',
+        dest='smoothapp',
+        action='store_false',
+        help='Disable smoothing app file in the phase direction. ',
+        default=True)
+    debug_opts.add_argument(
+        '--nophasefilt',
+        dest='filtphase',
+        action='store_false',
+        help='Disable the phase trend filter (probably not a good idea). ',
+        default=True)
+    debug_opts.add_argument(
+        '--nocardiacalign',
+        dest='aligncardiac',
+        action='store_false',
+        help='Disable alignment of pleth signal to fMRI derived cardiac signal. ',
+        default=True)
+    debug_opts.add_argument(
+        '--saveinfoastext',
+        dest='saveinfoasjson',
+        action='store_false',
+        help='Save the info file in text format rather than json. ',
+        default=True)
+    debug_opts.add_argument(
+        '--trimcorrelations',
+        dest='trimcorrelations',
+        action='store_true',
+        help=('Some physiological timecourses don\'t cover the entire length of the fMRI '
+              'experiment.  Use this option to trim other waveforms to match when calculating correlations. '),
+        default=False)
+    debug_opts.add_argument(
+        '--saveintermediate',
+        dest='saveintermediate',
+        action='store_true',
+        help='Save some data from intermediate passes to help debugging. ',
+        default=False)
+    debug_opts.add_argument(
+        '--increaseoutputlevel',
+        dest='inc_outputlevel',
+        action='count',
+        help='Increase the number of intermediate output files. ',
+        default=0)
+    debug_opts.add_argument(
+        '--decreaseoutputlevel',
+        dest='dec_outputlevel',
+        action='count',
+        help='Decrease the number of intermediate output files. ',
+        default=0)
+
+    return parser
+
+
+def process_args(inputargs=None):
+    """
+    Compile arguments for rapidtide workflow.
+    """
+    if inputargs is None:
+        print('processing command line arguments')
+        # write out the command used
+        try:
+            args = vars(_get_parser().parse_args())
+            argstowrite = sys.argv
+        except SystemExit:
+            _get_parser().print_help()
+            raise
+    else:
+        print('processing passed argument list:')
+        print(inputargs)
+        try:
+            args = vars(_get_parser().parse_args(inputargs))
+            argstowrite = inputargs
+        except SystemExit:
+            _get_parser().print_help()
+            raise
+
+    # save the raw and formatted command lines
+    thecommandline = ' '.join(argstowrite)
+    tide_io.writevec([thecommandline], args['outputroot'] + '_commandline.txt')
+    formattedcommandline = []
+    for thetoken in argstowrite[0:3]:
+        formattedcommandline.append(thetoken)
+    for thetoken in argstowrite[3:]:
+        if thetoken[0:2] == '--':
+            formattedcommandline.append(thetoken)
+        else:
+            formattedcommandline[-1] += ' ' + thetoken
+    for i in range(len(formattedcommandline)):
+        if i > 0:
+            prefix = '    '
+        else:
+            prefix = ''
+        if i < len(formattedcommandline) - 1:
+            suffix = ' \\'
+        else:
+            suffix = ''
+        formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
+    tide_io.writevec(formattedcommandline, args['outputroot'] + '_formattedcommandline.txt')
+
+    if args['debug']:
+        print()
+        print('before postprocessing')
+        print(args)
+
+
+    # some tunable parameters for internal debugging
+    args['outputlevel'] = 1
+
+    # Additional argument parsing not handled by argparse
+    # deal with notch filter logic
+    if args['disablenotch']:
+        args['notchpct'] = None
+
+    # determine the outputlevel
+    args['outputlevel'] = np.max([0, args['outputlevel'] + args['inc_outputlevel'] - args['dec_outputlevel']])
+
+    if args['debug']:
+        print()
+        print('after postprocessing')
+        print(args)
+
+    # start the clock!
+    tide_util.checkimports(args)
+
+    return args
