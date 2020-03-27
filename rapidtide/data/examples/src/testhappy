@@ -1,24 +1,35 @@
 #!/bin/csh -f
 
-happy \
+happy_trans \
     happyfmri.nii.gz \
     happyfmri.json \
     ../dst/happy_noflip \
-    --mklthreads=8 \
+    --mklthreads 8 \
     --dodlfilter \
-    --saveinfoasjson \
-    --model=model_revised \
+    --model model_revised \
     --aliasedcorrelation \
-    --glm
+    --spatialglm \
+    --temporalglm
 
-happy \
-    happyfmri.nii.gz \
-    happyfmri.json \
-    ../dst/happy_flip \
-    --mklthreads=8 \
-    --dodlfilter \
-    --saveinfoasjson \
-    --model=model_revised \
-    --fliparteries \
-    --aliasedcorrelation \
-    --glm
+#happy \
+#    happyfmri.nii.gz \
+#    happyfmri.json \
+#    ../dst/happy_noflip \
+#    --mklthreads=8 \
+#    --dodlfilter \
+#    --saveinfoasjson \
+#    --model=model_revised \
+#    --aliasedcorrelation \
+#    --spatialglm --temporalglm
+#
+#happy \
+#    happyfmri.nii.gz \
+#    happyfmri.json \
+#    ../dst/happy_flip \
+#    --mklthreads=8 \
+#    --dodlfilter \
+#    --saveinfoasjson \
+#    --model=model_revised \
+#    --fliparteries \
+#    --aliasedcorrelation \
+#    --glm
