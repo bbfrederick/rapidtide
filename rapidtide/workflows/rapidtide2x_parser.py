@@ -1006,27 +1006,35 @@ def process_args():
             print('Will use alternative fast gauss refinement (does not work well)')
         elif o == '--refineoffset':
             optiondict['refineoffset'] = True
-            if optiondict['passes'] == 1:
-                optiondict['passes'] = 2
             print('Will refine offset time during subsequent passes')
+            if optiondict['passes'] == 1:
+                print(
+                    'WARNING: setting this value implies you are doing refinement; make sure if you want to do that, passes > 1')
         elif o == '--pickleft':
             optiondict['pickleft'] = True
             print('Will select the leftmost delay peak when setting refine offset')
+            if optiondict['passes'] == 1:
+                print('WARNING: setting this value implies you are doing refinement; make sure if you want to do that, passes > 1')
         elif o == '--pickleftthresh':
             optiondict['pickleftthresh'] = float(a)
             print('Threshhold value for leftmost peak height set to', optiondict['pickleftthresh'])
+            if optiondict['passes'] == 1:
+                print(
+                    'WARNING: setting this value implies you are doing refinement; make sure if you want to do that, passes > 1')
         elif o == '--lagminthresh':
             optiondict['lagminthresh'] = float(a)
-            if optiondict['passes'] == 1:
-                optiondict['passes'] = 2
-            linkchar = '='
             print('Using lagminthresh of ', optiondict['lagminthresh'])
+            if optiondict['passes'] == 1:
+                print(
+                    'WARNING: setting this value implies you are doing refinement; make sure if you want to do that, passes > 1')
+            linkchar = '='
         elif o == '--lagmaxthresh':
             optiondict['lagmaxthresh'] = float(a)
-            if optiondict['passes'] == 1:
-                optiondict['passes'] = 2
-            linkchar = '='
             print('Using lagmaxthresh of ', optiondict['lagmaxthresh'])
+            if optiondict['passes'] == 1:
+                print(
+                    'WARNING: setting this value implies you are doing refinement; make sure if you want to do that, passes > 1')
+            linkchar = '='
         elif o == '--skipsighistfit':
             optiondict['dosighistfit'] = False
             print('will not fit significance histogram with a Johnson SB function')
@@ -1038,19 +1046,21 @@ def process_args():
         elif o == '--ampthresh':
             optiondict['ampthresh'] = float(a)
             optiondict['ampthreshfromsig'] = False
-            if optiondict['passes'] == 1:
-                optiondict['passes'] = 2
-            linkchar = '='
             if optiondict['ampthresh'] < 0.0:
                 print('Setting ampthresh to the', -100.0 * optiondict['ampthresh'], 'th percentile')
             else:
                 print('Using ampthresh of ', optiondict['ampthresh'])
+            if optiondict['passes'] == 1:
+                print(
+                    'WARNING: setting this value implies you are doing refinement; make sure if you want to do that, passes > 1')
+            linkchar = '='
         elif o == '--sigmathresh':
             optiondict['sigmathresh'] = float(a)
-            if optiondict['passes'] == 1:
-                optiondict['passes'] = 2
-            linkchar = '='
             print('Using widththresh of ', optiondict['sigmathresh'])
+            if optiondict['passes'] == 1:
+                print(
+                    'WARNING: setting this value implies you are doing refinement; make sure if you want to do that, passes > 1')
+            linkchar = '='
         elif o == '--globalmeaninclude':
 
             optiondict['globalmeanincludename'], colspec = tide_io.parsefilespec(a)
