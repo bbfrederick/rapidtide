@@ -99,9 +99,10 @@ def usage():
         "                                     secret and inadvisable '--usesuperdangerousworkaround' flag.  Good luck!")
     print(
         "    --model=MODELNAME              - Use model MODELNAME for dl filter (default is model_revised - from the revised NeuroImage paper.)")
-#    print("    --glm                          - Generate voxelwise aliased synthetic cardiac regressors and filter")
-#    print("                                     them out")
-#    print("    --temporalglm                  - Perform temporal rather than spatial GLM")
+    print("    --spatialglm                   - Generate voxelwise aliased synthetic cardiac regressors and filter")
+    print("                                     them out")
+    print("    --temporalglm                  - Generate synthetic cardiac signal maps for each timepoint and filter")
+    print("                                     them out")
     print("")
     print("Performance:")
     print(
@@ -796,7 +797,8 @@ def happy_main(thearguments):
     colname = None
     inputfreq = 32.0
     inputstart = 0.0
-    doglm = False
+    dospatialglm = False
+    dotemporalglm = False
     notchpct = 1.5
     minhr = 40.0
     maxhr = 140.0
@@ -807,7 +809,6 @@ def happy_main(thearguments):
     stdfreq = 25.0
     nprocs = 1
     mklthreads = 1
-    spatialglmdenoise = True
     savecardiacnoise = True
     forcedhr = None
     usemaskcardfromfmri = True
@@ -898,7 +899,7 @@ def happy_main(thearguments):
                                                            "disablenotch",
                                                            "nodetrend",
                                                            "motionfile=",
-                                                           "glm",
+                                                           "spatialglm",
                                                            "temporalglm",
                                                            "debug",
                                                            "motionhp=",
@@ -968,14 +969,14 @@ def happy_main(thearguments):
         elif o == "--arteriesonly":
             arteriesonly = True
             print('Will only use arterial blood for generating cardiac waveform')
-        elif o == "--glm":
-            doglm = True
-            print('Will generate and remove aliased voxelwise cardiac regressors')
+        elif o == "--spatialglm":
+            dospatialglm = True
+            print('Will generate and remove cardiac signal maps for each timepoint')
         elif o == "--temporalglm":
-            spatialglmdenoise = False
-            print('Will do a temporal rather than spatial glm')
+            dotemporalglm = True
+            print('Will generate and remove cardiac timecourses from each voxel')
         elif o == "--disablenotch":
-            notchpct = -1.0
+            notchpct = None
             print('Disabling subharmonic notch filter')
         elif o == "--nodetrend":
             detrendorder = 0
@@ -996,8 +997,6 @@ def happy_main(thearguments):
         elif o == "--fliparteries":
             fliparteries = True
             print("Will detect and invert arterial timecourses.")
-        elif o == "--nomask":
-            censorbadpts = False
         elif o == "--nophasefilt":
             filtphase = False
             print('Disabling phase trend filter')
@@ -1026,8 +1025,10 @@ def happy_main(thearguments):
         elif o == "--noappsmooth":
             smoothapp = False
             print('Will not smooth projection along phase direction')
-        elif o == "--nocensor":
+        elif o == "--nomask":
             usemaskcardfromfmri = False
+        elif o == "--nocensor":
+            censorbadpts = False
             print('Will not censor bad points')
         elif o == "--projectwithraw":
             projectwithraw = True
@@ -1204,8 +1205,8 @@ def happy_main(thearguments):
     if mklexists:
         mkl.set_num_threads(mklthreads)
 
-    # if doglm is set, make sure we are generating app matrix
-    if doglm and cardcalconly:
+    # if we are going to do a glm, make sure we are generating app matrix
+    if (dotemporalglm or dospatialglm) and cardcalconly:
         print('doing glm fit requires phase projection - setting cardcalconly to False')
         cardcalconly = False
 
@@ -1300,7 +1301,7 @@ def happy_main(thearguments):
     normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
 
-    # read in estimation mask if present. Otherwise, make variance mask if selected, otherwise use intensity mask.
+    # read in estimation mask if present. Otherwise, otherwise use intensity mask.
     infodict['estmaskname'] = estmaskname
     if debug:
         print(estmaskname)
@@ -1949,7 +1950,7 @@ def happy_main(thearguments):
                         outputroot + '_veinmap')
 
     # now generate aliased cardiac signals and regress them out of the data
-    if doglm:
+    if (dotemporalglm or dospatialglm):
         # generate the signals
         timings.append(['Cardiac signal regression started', time.time(), None, None])
         tide_util.logmem('before cardiac regression', file=memfile)
@@ -1979,17 +1980,17 @@ def happy_main(thearguments):
         tide_util.logmem('before cardiac removal', file=memfile)
         print('removing cardiac signal with GLM')
         filtereddata = 0.0 * fmri_data
-        datatoremove = 0.0 * fmri_data
         validlocs = np.where(mask > 0)[0]
         numvalidspatiallocs = len(validlocs)
         threshval = 0.0
-        if spatialglmdenoise:
+        if dospatialglm:
             meanvals = np.zeros(timepoints, dtype=np.float64)
             rvals = np.zeros(timepoints, dtype=np.float64)
             r2vals = np.zeros(timepoints, dtype=np.float64)
             fitcoffs = np.zeros(timepoints, dtype=np.float64)
             fitNorm = np.zeros(timepoints, dtype=np.float64)
-            print('running glm on', timepoints, 'timepoints')
+            datatoremove = 0.0 * fmri_data
+            print('running spatial glm on', timepoints, 'timepoints')
             tide_glmpass.glmpass(timepoints,
                                  fmri_data[validlocs, :],
                                  threshval,
@@ -2006,19 +2007,28 @@ def happy_main(thearguments):
                                  procbyvoxel=False,
                                  nprocs=nprocs
                                  )
-            datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[None, :])
+            print(datatoremove.shape, cardiacnoise.shape, fitcoffs.shape)
+            datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
             filtereddata = fmri_data - datatoremove
-            timings.append(['Cardiac signal regression finished', time.time(), timepoints, 'timepoints'])
+            timings.append(['Cardiac signal spatial regression finished', time.time(), timepoints, 'timepoints'])
             tide_io.writevec(fitcoffs, outputroot + '_fitcoff.txt')
             tide_io.writevec(meanvals, outputroot + '_fitmean.txt')
             tide_io.writevec(rvals, outputroot + '_fitR.txt')
-        else:
+            theheader = copy.deepcopy(nim_hdr)
+            tide_io.savetonifti(filtereddata.reshape((xsize, ysize, numslices, timepoints)), theheader,
+                                outputroot + '_temporalfiltereddata')
+            tide_io.savetonifti(datatoremove.reshape((xsize, ysize, numslices, timepoints)), theheader,
+                                outputroot + '_temporaldatatoremove')
+            timings.append(['Cardiac signal spatial regression files written', time.time(), None, None])
+
+        if dotemporalglm:
             meanvals = np.zeros(numspatiallocs, dtype=np.float64)
             rvals = np.zeros(numspatiallocs, dtype=np.float64)
             r2vals = np.zeros(numspatiallocs, dtype=np.float64)
             fitcoffs = np.zeros(numspatiallocs, dtype=np.float64)
             fitNorm = np.zeros(numspatiallocs, dtype=np.float64)
-            print('running glm on', numvalidspatiallocs, 'voxels')
+            datatoremove = 0.0 * fmri_data
+            print('running temporal glm on', numvalidspatiallocs, 'voxels')
             tide_glmpass.glmpass(numvalidspatiallocs,
                                  fmri_data[validlocs, :],
                                  threshval,
@@ -2034,8 +2044,8 @@ def happy_main(thearguments):
                                  nprocs=nprocs
                                  )
             datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
-            filtereddata = fmri_data - datatoremove
-            timings.append(['Cardiac signal regression finished', time.time(), numspatiallocs, 'voxels'])
+            filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove
+            timings.append(['Cardiac signal temporal regression finished', time.time(), numspatiallocs, 'voxels'])
             theheader = copy.deepcopy(nim_hdr)
             theheader['dim'][4] = 1
             tide_io.savetonifti(fitcoffs.reshape((xsize, ysize, numslices)), theheader,
@@ -2045,12 +2055,12 @@ def happy_main(thearguments):
             tide_io.savetonifti(rvals.reshape((xsize, ysize, numslices)), theheader,
                                 outputroot + '_fitR')
 
-        theheader = copy.deepcopy(nim_hdr)
-        tide_io.savetonifti(filtereddata.reshape((xsize, ysize, numslices, timepoints)), theheader,
-                            outputroot + '_filtereddata')
-        tide_io.savetonifti(datatoremove.reshape((xsize, ysize, numslices, timepoints)), theheader,
-                            outputroot + '_datatoremove')
-        timings.append(['Cardiac signal regression files written', time.time(), None, None])
+            theheader = copy.deepcopy(nim_hdr)
+            tide_io.savetonifti(filtereddata.reshape((xsize, ysize, numslices, timepoints)), theheader,
+                                outputroot + '_temporalfiltereddata')
+            tide_io.savetonifti(datatoremove.reshape((xsize, ysize, numslices, timepoints)), theheader,
+                                outputroot + '_temporaldatatoremove')
+            timings.append(['Cardiac signal temporal regression files written', time.time(), None, None])
 
     timings.append(['Done', time.time(), None, None])
 
