@@ -373,8 +373,8 @@ def _get_parser():
                       action='store',
                       type=lambda x: is_valid_file(parser, x),
                       metavar='FILE',
-                      help=('Read probe regressor from file FILE (if none '
-                            'specified, generate and use global regressor). '),
+                      help=('Read the initial probe regressor from file FILE (if not '
+                            'specified, generate and use the global regressor). '),
                       default=None)
 
     reg_group = corr.add_mutually_exclusive_group()
@@ -416,7 +416,7 @@ def _get_parser():
                           type=str,
                           choices=['none', 'phat', 'liang', 'eckart'],
                           help=('Method to use for cross-correlation '
-                                'weighting. Default is none. '),
+                                'weighting. Default is  none. '),
                           default='none')
 
     mask_group = corr.add_mutually_exclusive_group()
@@ -962,7 +962,7 @@ def process_args(inputargs=None):
                     (args['sigmathresh'] != 100.) or
                     (args['refineoffset']))
     if reg_ref_used and args['passes'] == 1:
-        args['passes'] = 2
+        print('WARNING: One or more arguments have been set that are only relevant if performing refinement.  If you want to do refinement, set passes > 1.')
 
     if args['numestreps'] == 0:
         args['ampthreshfromsig'] = False
