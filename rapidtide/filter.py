@@ -866,7 +866,7 @@ def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False)
     print('notch filtering...')
     filteredtc = timecourse + 0.0
     maxpass = Fs / 2.0
-    if notchpct > 0.0:
+    if notchpct is not None:
         stopfreq = Ffundamental
         freqstep = 0.5 * Fs / len(filteredtc)
         maxharmonic = int(maxpass // stopfreq)
