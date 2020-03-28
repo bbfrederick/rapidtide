@@ -613,7 +613,7 @@ def getphysiofile(cardiacfile, colnum, colname,
         pleth_fullres = np.transpose(tide_io.readvecs(cardiacfile))
         print(pleth_fullres.shape)
         if len(pleth_fullres.shape) != 1:
-            pleth_fullres = pleth_fullres[:, colnum]
+            pleth_fullres = pleth_fullres[:, colnum].flatten()
     if debug:
         print('inputfreq:', inputfreq)
         print('inputstart:', inputstart)
@@ -1209,6 +1209,67 @@ def happy_main(thearguments):
     if (dotemporalglm or dospatialglm) and cardcalconly:
         print('doing glm fit requires phase projection - setting cardcalconly to False')
         cardcalconly = False
+
+    # save important configuration options
+    infodict['aliasedcorrelationpts'] = aliasedcorrelationpts
+    infodict['aliasedcorrelationwidth'] = aliasedcorrelationwidth
+    infodict['aligncardiac'] = aligncardiac
+    infodict['arteriesonly'] = arteriesonly
+    infodict['cardcalconly'] = cardcalconly
+    infodict['cardiacfilename'] = cardiacfilename
+    infodict['censorbadpts'] = censorbadpts
+    infodict['centric'] = centric
+    infodict['colname'] = colname
+    infodict['colnum'] = colnum
+    infodict['congridbins'] = congridbins
+    infodict['debug'] = debug
+    infodict['destpoints'] = destpoints
+    infodict['detrendorder'] = detrendorder
+    infodict['doaliasedcorrelation'] = doaliasedcorrelation
+    infodict['dodlfilter'] = dodlfilter
+    infodict['domadnorm'] = domadnorm
+    infodict['dospatialglm'] = dospatialglm
+    infodict['dotemporalglm'] = dotemporalglm
+    infodict['envcutoff'] = envcutoff
+    infodict['envthresh'] = envthresh
+    infodict['filtphase'] = filtphase
+    infodict['fliparteries'] = fliparteries
+    infodict['forcedhr'] = forcedhr
+    infodict['gridkernel'] = gridkernel
+    infodict['histlen'] = histlen
+    infodict['inputfreq'] = inputfreq
+    infodict['inputstart'] = inputstart
+    infodict['maskthreshpct'] = maskthreshpct
+    infodict['maxhr'] = maxhr
+    infodict['maxhrfilt'] = maxhrfilt
+    infodict['minhr'] = minhr
+    infodict['minhrfilt'] = minhrfilt
+    infodict['mklthreads'] = mklthreads
+    infodict['modelname'] = modelname
+    infodict['motionfilename'] = motionfilename
+    infodict['motionhp'] = motionhp
+    infodict['motionlp'] = motionlp
+    infodict['motskip'] = motskip
+    infodict['mpfix'] = mpfix
+    infodict['nprocs'] = nprocs
+    infodict['numskip'] = numskip
+    infodict['orthogonalize'] = orthogonalize
+    infodict['outputlevel'] = outputlevel
+    infodict['projectwithraw'] = projectwithraw
+    infodict['projmaskname'] = projmaskname
+    infodict['pulsereconstepsize'] = pulsereconstepsize
+    infodict['savecardiacnoise'] = savecardiacnoise
+    infodict['saveinfoasjson'] = saveinfoasjson
+    infodict['saveintermediate'] = saveintermediate
+    infodict['showprogressbar'] = showprogressbar
+    infodict['smoothapp'] = smoothapp
+    infodict['smoothlen'] = smoothlen
+    infodict['softvesselfrac'] = softvesselfrac
+    infodict['stdfreq'] = stdfreq
+    infodict['unnormvesselmap'] = unnormvesselmap
+    infodict['upsamplefac'] = upsamplefac
+    infodict['usemaskcardfromfmri'] = usemaskcardfromfmri
+    infodict['verbose'] = verbose
 
     # set up cardiac filter
     arb_lower = minhrfilt / 60.0
