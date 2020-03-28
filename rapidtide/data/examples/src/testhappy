@@ -3,33 +3,50 @@
 happy_trans \
     happyfmri.nii.gz \
     happyfmri.json \
-    ../dst/happy_noflip \
+    ../dst/happy_transtest \
     --mklthreads 8 \
-    --dodlfilter \
     --model model_revised \
+    --outputbins 40 \
+    --gridbins 3.5 \
+    --stdfreq 20.0 \
+    --estmask happytestvesselmask.nii.gz \
+    --minhr 46 \
+    --maxhr 131.2 \
+    --minhrfilt 45.5 \
+    --maxhrfilt 800.0 \
+    --envcutoff 0.45 \
+    --notchwidth 1.25 \
+    --cardiacfile happytestpleth.txt \
+    --cardiacfreq 20.0 \
+    --cardiacstart 0.0 \
     --aliasedcorrelation \
-    --spatialglm \
-    --temporalglm
+    --increaseoutputlevel \
+    --increaseoutputlevel \
+    --decreaseoutputlevel \
+    --saveinfoastext
 
-#happy \
-#    happyfmri.nii.gz \
-#    happyfmri.json \
-#    ../dst/happy_noflip \
-#    --mklthreads=8 \
-#    --dodlfilter \
-#    --saveinfoasjson \
-#    --model=model_revised \
-#    --aliasedcorrelation \
-#    --spatialglm --temporalglm
-#
-#happy \
-#    happyfmri.nii.gz \
-#    happyfmri.json \
-#    ../dst/happy_flip \
-#    --mklthreads=8 \
-#    --dodlfilter \
-#    --saveinfoasjson \
-#    --model=model_revised \
-#    --fliparteries \
-#    --aliasedcorrelation \
-#    --glm
+
+happy \
+    happyfmri.nii.gz \
+    happyfmri.json \
+    ../dst/happy_normaltest \
+    --mklthreads=8 \
+    --model=model_revised \
+    --outputbins=40 \
+    --gridbins=3.5 \
+    --stdfreq=20.0 \
+    --estmask=happytestvesselmask.nii.gz \
+    --minhr=46 \
+    --maxhr=131.2 \
+    --minhrfilt=45.5 \
+    --maxhrfilt=800.0 \
+    --envcutoff=0.45 \
+    --notchwidth=1.25 \
+    --cardiacfile=happytestpleth.txt \
+    --cardiacfreq=20.0 \
+    --cardiacstart=0.0 \
+    --aliasedcorrelation \
+    --increaseoutputlevel \
+    --increaseoutputlevel \
+    --decreaseoutputlevel \
+    --dodlfilter

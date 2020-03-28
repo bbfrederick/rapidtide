@@ -56,11 +56,11 @@ def _get_parser():
 
     # Required arguments
     parser.add_argument(
-        'fmrifile',
+        'fmrifilename',
         type=lambda x: is_valid_file(parser, x),
         help='The input data file (BOLD fmri file or NIRS text file)')
     parser.add_argument(
-        'slicetimefile',
+        'slicetimename',
         type=lambda x: is_valid_file(parser, x),
         help=('Text file containing the offset time in seconds of each slice relative '
               'to the start of the TR, one value per line, OR the BIDS sidecar JSON file.'))
@@ -425,13 +425,6 @@ def _get_parser():
         help='Save the info file in text format rather than json. ',
         default=True)
     debug_opts.add_argument(
-        '--trimcorrelations',
-        dest='trimcorrelations',
-        action='store_true',
-        help=('Some physiological timecourses don\'t cover the entire length of the fMRI '
-              'experiment.  Use this option to trim other waveforms to match when calculating correlations. '),
-        default=False)
-    debug_opts.add_argument(
         '--saveintermediate',
         dest='saveintermediate',
         action='store_true',
@@ -522,6 +515,8 @@ def process_args(inputargs=None):
     args.histlen = 100
     args.softvesselfrac = 0.4
     args.savecardiacnoise = True
+    args.colnum = None
+    args.colname = None
 
 
     # Additional argument parsing not handled by argparse
@@ -536,6 +531,15 @@ def process_args(inputargs=None):
         print()
         print('after postprocessing')
         print(args)
+
+    if args.cardiacfilename is not None:
+        args.cardiacfilename, thecolnum = tide_io.processnamespec(args.cardiacfilename,
+                                                                         'Using column in ',
+                                                                         'as cardiac timecourse.')
+        if thecolnum is not None:
+            args.colnum = thecolnum[0]
+        else:
+            args.colnum = None
 
     # start the clock!
     #tide_util.checkimports(args)
