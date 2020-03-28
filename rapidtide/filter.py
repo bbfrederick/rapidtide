@@ -561,7 +561,7 @@ def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
     if debug:
         print('getlptrapfftfunc - Fs, upperpass, upperstop:', Fs, upperpass, upperstop)
         print('getlptrapfftfunc - passbin, transitionlength, cutoffbin, len(inputdata):',
-              passbin, transitionlength, cutoffbin, len(inputdata))
+              passbin, transitionlength, cutoffbin, inputdata.shape)
     if transitionlength > 0:
         transitionvector = np.arange(1.0 * transitionlength) / transitionlength
         transferfunc[passbin:cutoffbin] = 1.0 - transitionvector
