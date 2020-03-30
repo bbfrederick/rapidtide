@@ -568,10 +568,12 @@ def rapidtide_main(argparsingfunc):
                             outputname + '_meanmask' + '')
         optiondict['preprocskip'] = 0
     else:
-        if optiondict['inputfreq'] is None:
+        inputfreq = optiondict['inputfreq']
+        inputstarttime = optiondict['inputstarttime']
+        if inputfreq is None:
             print('no regressor frequency specified - defaulting to 1/tr')
             inputfreq = 1.0 / fmritr
-        if optiondict['inputstarttime'] is None:
+        if inputstarttime is None:
             print('no regressor start time specified - defaulting to 0.0')
             inputstarttime = 0.0
         inputperiod = 1.0 / inputfreq
