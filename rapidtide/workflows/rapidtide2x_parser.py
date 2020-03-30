@@ -973,7 +973,7 @@ def process_args():
         elif o == '--regressorfreq':
             optiondict['inputfreq'] = float(a)
             linkchar = '='
-            print('Setting regressor sample frequency to ', inputfreq)
+            print('Setting regressor sample frequency to ', float(a))
         elif o == '--regressortstep':
             optiondict['inputfreq'] = 1.0 / float(a)
             linkchar = '='
