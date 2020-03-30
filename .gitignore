@@ -15,11 +15,11 @@ rapidtide/data/examples/src/*corrfunc*
 rapidtide/data/examples/src/*trimmed*
 rapidtide/data/examples/src/sub-01*
 rapidtide/data/examples/src/testhappyx
-rapidtide/experimental/batch/*
+#rapidtide/experimental/batch/*
 rapidtide/experimental/__pycache__
-rapidtide/experimental/.*
-rapidtide/experimental/the*txt
-rapidtide/experimental/model_*
+#rapidtide/experimental/.*
+#rapidtide/experimental/the*txt
+#rapidtide/experimental/model_*
 test.nii.gz
 *junk*
 
