@@ -940,10 +940,10 @@ def process_args(inputargs=None):
         test = args['lag_extrema_nondefault']
         args['lagmin_nondefault'] = True
         args['lagmax_nondefault'] = True
-        args['lagmin'] = args['lag_extrema'][0]
-        args['lagmax'] = args['lag_extrema'][1]
     except KeyError:
         pass
+    args['lagmin'] = args['lag_extrema'][0]
+    args['lagmax'] = args['lag_extrema'][1]
     args['startpoint'] = args['timerange'][0]
     if args['timerange'][1] == -1:
         args['endpoint'] = 100000000
