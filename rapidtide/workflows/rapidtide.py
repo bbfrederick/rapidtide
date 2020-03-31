@@ -655,19 +655,30 @@ def rapidtide_main(argparsingfunc):
         return
 
     # generate the resampled reference regressors
+    oversampfreq = optiondict['oversampfactor'] / fmritr
     if optiondict['detrendorder'] > 0:
         resampnonosref_y = tide_fit.detrend(
-            tide_resample.doresample(reference_x, reference_y, initial_fmri_x, method=optiondict['interptype']),
+            tide_resample.doresample(reference_x, reference_y, initial_fmri_x,
+                                     padlen=int(inputfreq * optiondict['padseconds']),
+                                     method=optiondict['interptype']),
             order=optiondict['detrendorder'],
             demean=optiondict['dodemean'])
+        # int(inputfreq * optiondict['padseconds'])
         resampref_y = tide_fit.detrend(
-            tide_resample.doresample(reference_x, reference_y, os_fmri_x, method=optiondict['interptype']),
+            tide_resample.doresample(reference_x, reference_y, os_fmri_x,
+                                     padlen=int(oversampfreq * optiondict['padseconds']),
+                                     method=optiondict['interptype']),
             order=optiondict['detrendorder'],
             demean=optiondict['dodemean'])
+        # int(oversampfreq * optiondict['padseconds'])
     else:
         resampnonosref_y = tide_resample.doresample(reference_x, reference_y, initial_fmri_x,
+                                                    padlen=int(inputfreq * optiondict['padseconds']),
                                                     method=optiondict['interptype'])
-        resampref_y = tide_resample.doresample(reference_x, reference_y, os_fmri_x, method=optiondict['interptype'])
+        resampref_y = tide_resample.doresample(reference_x, reference_y, os_fmri_x,
+                                               padlen=int(oversampfreq * optiondict['padseconds']),
+                                               method=optiondict['interptype'])
+    print(len(os_fmri_x,), len(resampref_y), len(initial_fmri_x,), len(resampnonosref_y))
 
     # prepare the temporal mask
     if optiondict['tmaskname'] is not None:
@@ -700,7 +711,6 @@ def rapidtide_main(argparsingfunc):
         print('corrtr=', corrtr)
 
     # initialize the correlator
-    oversampfreq = optiondict['oversampfactor'] / fmritr
     thecorrelator = tide_classes.correlator(Fs=oversampfreq,
                                          ncprefilter=theprefilter,
                                          detrendorder=optiondict['detrendorder'],

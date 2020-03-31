@@ -329,7 +329,7 @@ class fastresampler:
         return out_y
 
 
-def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False):
+def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False, debug=False):
     """
     Resample data from one spacing to another.  By default, does not apply any antialiasing filter.
 
@@ -351,12 +351,16 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False)
         pad_x = np.concatenate((np.arange(orig_x[0] - padlen * tstep, orig_x[0], tstep),
                                 orig_x,
                                 np.arange(orig_x[-1] + tstep, orig_x[-1] + tstep * (padlen + 1), tstep)))
+        pad_y = tide_filt.padvec(orig_y, padlen=padlen)
     else:
         pad_x = orig_x
-    if padlen > 0:
+        pad_y = orig_y
+    if debug:
         print('padlen=', padlen)
         print('tstep=', tstep)
+        print('lens:', len(pad_x), len(pad_y))
         print(pad_x)
+        print(pad_y)
 
     # antialias and ringstop filter
     init_freq = len(pad_x) / (pad_x[-1] - pad_x[0])
@@ -369,15 +373,18 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False)
 
     if method == 'cubic':
         cj = signal.cspline1d(pad_y)
-        return tide_filt.unpadvec(
-            np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
+        #return tide_filt.unpadvec(
+        #   np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
+        return signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])
     elif method == 'quadratic':
         qj = signal.qspline1d(pad_y)
-        return tide_filt.unpadvec(
-            np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
+        #return tide_filt.unpadvec(
+        #    np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
+        return signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])
     elif method == 'univariate':
         interpolator = sp.interpolate.UnivariateSpline(pad_x, pad_y, k=3, s=0)  # s=0 interpolates
-        return tide_filt.unpadvec(np.float64(interpolator(new_x)), padlen=padlen)
+        #return tide_filt.unpadvec(np.float64(interpolator(new_x)), padlen=padlen)
+        return np.float64(interpolator(new_x))
     else:
         print('invalid interpolation method')
         return None
