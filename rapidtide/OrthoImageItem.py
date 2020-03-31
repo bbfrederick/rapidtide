@@ -28,14 +28,7 @@ A widget for orthographically displaying 3 and 4 dimensional data
 
 from __future__ import print_function, division
 
-#qtbinding = 'pyqt4'
 from pyqtgraph.Qt import QtGui, QtCore
-#try:
-#    from PyQt5.QtWidgets import *
-#    qtbinding = 'pyqt5'
-#except:
-#    qtbinding = 'pyqt4'
-
 from PyQt5.QtWidgets import *
 import pyqtgraph as pg
 import numpy as np
@@ -101,11 +94,13 @@ def newViewWindow(view, xdim, ydim, left, top, impixpervoxx, impixpervoxy, imgsi
 class OrthoImageItem(QtGui.QWidget):
     updated = QtCore.pyqtSignal()
 
-    def __init__(self, map, view, enableMouse=False, button=None, imgsize=64, arrangement=0, bgmap=None, verbose=False):
+    def __init__(self, map, axview, corview, sagview, enableMouse=False, button=None, imgsize=64, arrangement=0, bgmap=None, verbose=False):
         QtGui.QWidget.__init__(self)
         self.map = map
         self.bgmap = bgmap
-        self.view = view
+        self.axview = axview
+        self.corview = corview
+        self.sagview = sagview
         self.button = button
         self.verbose = verbose
         self.enableMouse = enableMouse
@@ -143,24 +138,33 @@ class OrthoImageItem(QtGui.QWidget):
         self.buttonisdown = False
 
         self.arrangement = arrangement
-        self.view.setBackground(None)
-        self.view.setRange(padding=0.0)
-        self.view.ci.layout.setContentsMargins(0, 0, 0, 0)
-        self.view.ci.layout.setSpacing(5)
+        self.axview.setBackground(None)
+        self.axview.setRange(padding=0.0)
+        self.axview.ci.layout.setContentsMargins(0, 0, 0, 0)
+        self.axview.ci.layout.setSpacing(5)
+        self.corview.setBackground(None)
+        self.corview.setRange(padding=0.0)
+        self.corview.ci.layout.setContentsMargins(0, 0, 0, 0)
+        self.corview.ci.layout.setSpacing(5)
+        self.sagview.setBackground(None)
+        self.sagview.setRange(padding=0.0)
+        self.sagview.ci.layout.setContentsMargins(0, 0, 0, 0)
+        self.sagview.ci.layout.setSpacing(5)
+
         self.axviewwin, self.axviewbgwin, self.axviewvLine, self.axviewhLine, self.axviewbox = \
-            newViewWindow(self.view,
+            newViewWindow(self.axview,
                           self.xdim, self.ydim,
                           self.offsetx, self.offsety,
                           self.impixpervoxx, self.impixpervoxy,
                           self.imgsize, enableMouse=self.enableMouse)
         self.corviewwin, self.corviewbgwin, self.corviewvLine, self.corviewhLine, self.corviewbox = \
-            newViewWindow(self.view,
+            newViewWindow(self.corview,
                           self.xdim, self.zdim,
                           self.offsetx, self.offsetz,
                           self.impixpervoxx, self.impixpervoxz,
                           self.imgsize, enableMouse=self.enableMouse)
         self.sagviewwin, self.sagviewbgwin, self.sagviewvLine, self.sagviewhLine, self.sagviewbox = \
-            newViewWindow(self.view,
+            newViewWindow(self.sagview,
                           self.ydim, self.zdim,
                           self.offsety, self.offsetz,
                           self.impixpervoxy, self.impixpervoxz,
@@ -287,7 +291,9 @@ class OrthoImageItem(QtGui.QWidget):
             self.button.setText(self.map.label)
             self.button.setDisabled(False)
             self.button.show()
-        self.view.show()
+        self.axview.show()
+        self.corview.show()
+        self.sagview.show()
 
 
     def applyLUT(self, theimage, mask, theLUT, dispmin, dispmax):

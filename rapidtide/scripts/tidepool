@@ -33,7 +33,6 @@ from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
 
-import rapidtide.tidepoolTemplate_qt5 as uiTemplate
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
@@ -349,6 +348,7 @@ def updateDispLimits():
     ui.dispmax_doubleSpinBox.setSingleStep((overlays[currentdataset.focusmap].maxval - overlays[currentdataset.focusmap].minval) / 100.0)
     ui.dispmin_doubleSpinBox.setValue(overlays[currentdataset.focusmap].dispmin)
     ui.dispmax_doubleSpinBox.setValue(overlays[currentdataset.focusmap].dispmax)
+    print('calling updateOrthoImages from updateDispLimits')
     updateOrthoImages()
 
 
@@ -426,7 +426,7 @@ def updateRegressor():
                            anchor=(0.0, 2.0),
                            angle=0,
                            fill=(0, 0, 0, 100))
-        regressor_ax.addItem(text)
+        #regressor_ax.addItem(text)
 
 
 def updateRegressorSpectrum():
@@ -540,6 +540,7 @@ def updateAveragingMode():
     resetDispLimits()
     resetDispSmart()
     print('averaging mode set to ', averagingmode)
+    print('calling updateOrthoImages from updateAveragingMode')
     updateOrthoImages()
     updateHistogram()
     updateLUT()
@@ -830,6 +831,7 @@ def updateTimepoint(event):
         if timeaxis[0] <= tval <= timeaxis[-1]:
             tpos = int((tval - overlays[currentdataset.focusmap].toffset) / overlays[currentdataset.focusmap].tr)
             vLine.setValue(mousePoint.x())
+            print('calling updateOrthoImages from updateTimepoint')
             updateOrthoImages()
 
 
@@ -841,6 +843,7 @@ def updateLUT():
     img_colorbar.setLookupTable(theLUT)
     if harvestcolormaps:
         print(imageadj.saveState())
+    print('calling updateOrthoImages from updateLUT')
     updateOrthoImages()
 
 
@@ -869,19 +872,22 @@ def mapwithLUT(theimage, themask, theLUT, dispmin, dispmax):
 def updateTFromControls():
     global mainwin, currentloc
     mainwin.setTpos(currentloc.tpos, emitsignal=False)
+    print('calling updateOrthoImages from updateTFromControls')
     updateOrthoImages()
 
 
 def updateXYZFromControls():
     global mainwin, currentloc
     mainwin.setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos, emitsignal=False)
+    print('calling updateOrthoImages from updateXYZFromControls')
     updateOrthoImages()
 
 
 def updateXYZFromMainWin():
     global mainwin, currentloc
     currentloc.setXYZpos(mainwin.xpos, mainwin.ypos, mainwin.zpos)
-    updateOrthoImages()
+    #print('calling updateOrthoImages from updateXYZFromMainWin')
+    #updateOrthoImages()
 
 
 def updateOrthoImages():
@@ -912,7 +918,7 @@ def updateOrthoImages():
 def printfocusvals():
     global ui, overlays, currentdataset
     global currentloc
-    logstatus(ui.logOutput, 'Print focus vals\n\n')
+    logstatus(ui.logOutput, '\n\nValues at location ' + '{0},{1},{2}'.format(currentloc.xpos, currentloc.ypos,currentloc.zpos))
     for key in overlays:
         # print(key, overlays[key].report)
         if key != 'mnibrainmask':
@@ -922,10 +928,10 @@ def printfocusvals():
                 overlays[key].setTpos(currentloc.tpos)
                 focusval = overlays[key].getFocusVal()
                 if key != 'atlas':
-                    outstring = str(overlays[key].label.ljust(28)) + str(':') + str(focusval)
+                    outstring = '\t' + str(overlays[key].label.ljust(26)) + str(':') + '{:.3f}'.format(round(focusval, 3))
                     logstatus(ui.logOutput, outstring)
                 else:
-                    outstring = str(overlays[key].label.ljust(28)) + str(':') + str(currentdataset.atlaslabels[int(focusval) - 1])
+                    outstring = '\t' + str(overlays[key].label.ljust(26)) + str(':') + str(currentdataset.atlaslabels[int(focusval) - 1])
                     logstatus(ui.logOutput, outstring)
 
 def prefilt_radioButton_clicked(enabled):
@@ -1011,38 +1017,49 @@ def main():
     tpos = 0
 
     theparser = argparse.ArgumentParser(description='A program to display the results of a time delay analysis')
-    theparser.add_argument('-o',
+    theparser.add_argument('--offsettime',
                            help='Set lag offset',
                            dest='offsettime',
                            type=float,
                            default=None)
-    theparser.add_argument('-r',
+    theparser.add_argument('--risetime',
                            help='enable risetime display',
                            dest='userise',
                            action='store_true',
                            default=False)
-    theparser.add_argument('-n',
+    theparser.add_argument('--moviemode',
                            help='enable movie mode',
                            dest='usecorrout',
                            action='store_true',
                            default=False)
-    theparser.add_argument('-t',
+    theparser.add_argument('--settr',
                            help='Set correlation TR',
                            dest='trval',
                            type=float,
                            default=None)
-    theparser.add_argument('-d',
+    theparser.add_argument('--dataset',
                            help='Use this dataset (skip initial selection step)',
                            dest='datafileroot',
                            default=None)
-    theparser.add_argument('-a',
+    theparser.add_argument('--anatname',
                            help='Set anatomic mask image',
                            dest='anatname',
                            default=None)
-    theparser.add_argument('-m', help='Set geometric mask image',
+    theparser.add_argument('--maskname',
+                           help='Set geometric mask image',
                            dest='geommaskname',
                            default=None)
+    theparser.add_argument('--compact',
+                           help='Use the alternate compact layout',
+                           dest='compact',
+                           action='store_true',
+                           default=False)
     args = theparser.parse_args()
+
+    if args.compact:
+        import rapidtide.tidepoolTemplate_alt as uiTemplate
+    else:
+        import rapidtide.tidepoolTemplate_qt5 as uiTemplate
 
     anatname = args.anatname
     if anatname is not None:
@@ -1078,7 +1095,6 @@ def main():
     if args.userise:
         print('enabling risetime display')
 
-    usecorrout = args.usecorrout
     if args.usecorrout:
         print('enabling movie mode')
 
@@ -1364,7 +1380,7 @@ def main():
                                         anatname=anatname,
                                         geommaskname=geommaskname,
                                         userise=userise,
-                                        usecorrout=usecorrout,
+                                        usecorrout=args.usecorrout,
                                         forcetr=forcetr,
                                         forceoffset=forceoffset,
                                         offsettime=offsettime,
@@ -1479,19 +1495,27 @@ def main():
 
     def loadpane(themap, thepane, view, button, panemap, orthoimages, bgmap=None):
         if bgmap is None:
-            orthoimages[themap.name] = OrthoImageItem(themap, view[thepane], button=button[thepane],
+            orthoimages[themap.name] = OrthoImageItem(themap,
+                                                      view[thepane], view[thepane], view[thepane],
+                                                      button=button[thepane],
                                                       imgsize=sm_imgsize)
         else:
-            orthoimages[themap.name] = OrthoImageItem(themap, view[thepane], button=button[thepane], bgmap=bgmap,
+            orthoimages[themap.name] = OrthoImageItem(themap,
+                                                      view[thepane], view[thepane], view[thepane],
+                                                      button=button[thepane], bgmap=bgmap,
                                                       imgsize=sm_imgsize)
         panemap[thepane] = themap.name
 
     print('focusmap is:', currentdataset.focusmap, 'bgmap is:', bgmap)
     if bgmap is None:
-        mainwin = OrthoImageItem(overlays[currentdataset.focusmap], ui.main_graphicsView, imgsize=lg_imgsize,
+        mainwin = OrthoImageItem(overlays[currentdataset.focusmap],
+                                 ui.main_graphicsView_ax, ui.main_graphicsView_cor, ui.main_graphicsView_sag,
+                                 imgsize=lg_imgsize,
                                  enableMouse=True)
     else:
-        mainwin = OrthoImageItem(overlays[currentdataset.focusmap], ui.main_graphicsView, bgmap=overlays[bgmap], imgsize=lg_imgsize,
+        mainwin = OrthoImageItem(overlays[currentdataset.focusmap],
+                                 ui.main_graphicsView_ax, ui.main_graphicsView_cor, ui.main_graphicsView_sag,
+                                 bgmap=overlays[bgmap], imgsize=lg_imgsize,
                                  enableMouse=True)
     mainwin.updated.connect(updateXYZFromMainWin)
 
