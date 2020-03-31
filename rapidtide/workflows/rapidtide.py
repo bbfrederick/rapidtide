@@ -692,12 +692,8 @@ def rapidtide_main(argparsingfunc):
         thefit, R = tide_fit.mlregress(tmaskos_y, resampref_y)
         resampref_y -= thefit[0, 1] * tmaskos_y
 
-    if optiondict['passes'] > 1:
-        nonosrefname = '_reference_fmrires_pass1.txt'
-        osrefname = '_reference_resampres_pass1.txt'
-    else:
-        nonosrefname = '_reference_fmrires.txt'
-        osrefname = '_reference_resampres.txt'
+    nonosrefname = '_reference_fmrires_pass1.txt'
+    osrefname = '_reference_resampres_pass1.txt'
 
     optiondict['kurtosis_reference_pass1'], \
         optiondict['kurtosisz_reference_pass1'], \
