@@ -886,8 +886,6 @@ def updateXYZFromControls():
 def updateXYZFromMainWin():
     global mainwin, currentloc
     currentloc.setXYZpos(mainwin.xpos, mainwin.ypos, mainwin.zpos)
-    #print('calling updateOrthoImages from updateXYZFromMainWin')
-    #updateOrthoImages()
 
 
 def updateOrthoImages():
