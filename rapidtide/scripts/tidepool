@@ -37,8 +37,8 @@ import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.miscmath as tide_math
+import rapidtide.util as tide_util
 import sys
-import getopt
 import argparse
 from rapidtide.OrthoImageItem import OrthoImageItem
 from rapidtide.RapidtideDataset import RapidtideDataset
@@ -150,7 +150,7 @@ class xyztlocation(QtGui.QWidget):
             thespinbox.setKeyboardTracking(False)
             thespinbox.valueChanged.connect(thehandler)
 
-    def updateXYZValues(self):
+    def updateXYZValues(self, emitsignal=True):
         # print('resetting XYZ spinbox values')
         if self.XPosSpinBox is not None:
             self.XPosSpinBox.setValue(self.xpos)
@@ -165,7 +165,8 @@ class xyztlocation(QtGui.QWidget):
         if self.ZCoordSpinBox is not None:
             self.ZCoordSpinBox.setValue(self.zcoord)
         # print('done resetting XYZ spinbox values')
-        self.updatedXYZ.emit()
+        if emitsignal:
+            self.updatedXYZ.emit()
 
     def updateTValues(self):
         # print('resetting T spinbox values')
@@ -191,19 +192,19 @@ class xyztlocation(QtGui.QWidget):
     def vox2real(self, xpos, ypos, zpos):
         return apply_affine(self.affine, [xpos, ypos, zpos])
 
-    def setXYZpos(self, xpos, ypos, zpos):
+    def setXYZpos(self, xpos, ypos, zpos, emitsignal=True):
         self.xpos = xpos
         self.ypos = ypos
         self.zpos = zpos
         self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
-        self.updateXYZValues()
+        self.updateXYZValues(emitsignal=emitsignal)
 
-    def setXYZcoord(self, xcoord, ycoord, zcoord):
+    def setXYZcoord(self, xcoord, ycoord, zcoord, emitsignal=True):
         self.xcoord = xcoord
         self.ycoord = ycoord
         self.zcoord = zcoord
         self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
-        self.updateXYZValues()
+        self.updateXYZValues(emitsignal=emitsignal)
 
     def setTpos(self, tpos):
         if self.tpos != tpos:
@@ -223,7 +224,7 @@ class xyztlocation(QtGui.QWidget):
         if self.xpos != newx:
             self.xpos = newx
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
-            self.updateXYZValues()
+            self.updateXYZValues(emitsignal=False)
 
     def getYpos(self, event):
         # print('entering getYpos')
@@ -231,7 +232,7 @@ class xyztlocation(QtGui.QWidget):
         if self.ypos != newy:
             self.ypos = newy
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
-            self.updateXYZValues()
+            self.updateXYZValues(emitsignal=False)
 
     def getZpos(self, event):
         # print('entering getZpos')
@@ -239,7 +240,7 @@ class xyztlocation(QtGui.QWidget):
         if self.zpos != newz:
             self.zpos = newz
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
-            self.updateXYZValues()
+            self.updateXYZValues(emitsignal=False)
 
     def getTpos(self, event):
         # print('entering getTpos')
@@ -257,21 +258,21 @@ class xyztlocation(QtGui.QWidget):
         if self.xcoord != newxcoord:
             self.xcoord = newxcoord
             self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
-            self.updateXYZValues()
+            self.updateXYZValues(emitsignal=True)
 
     def getYcoord(self, event):
         newycoord = self.YCoordSpinBox.value()
         if self.ycoord != newycoord:
             self.ycoord = newycoord
             self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
-            self.updateXYZValues()
+            self.updateXYZValues(emitsignal=True)
 
     def getZcoord(self, event):
         newzcoord = self.ZCoordSpinBox.value()
         if self.zcoord != newzcoord:
             self.zcoord = newzcoord
             self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
-            self.updateXYZValues()
+            self.updateXYZValues(emitsignal=True)
 
     def getTcoord(self, event):
         newtcoord = self.TCoordSpinBox.value()
@@ -364,6 +365,24 @@ def resetDispSmart():
     overlays[currentdataset.focusmap].dispmin = overlays[currentdataset.focusmap].robustmin
     overlays[currentdataset.focusmap].dispmax = overlays[currentdataset.focusmap].robustmax
     updateDispLimits()
+
+
+def updateCorrelationFunc():
+    global overlays, timeaxis, currentloc
+    global corrfunc_ax, corrfuncCurve, corrfuncTLine, corrfuncCurvePoint, corrfuncCaption
+
+    if corrfunc_ax is not None:
+        corrvals = overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
+        maxval = overlays['lagstrengths'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
+        maxtime = overlays['lagtimes'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
+        corrfunc_ax.setYRange(-0.5, 1.0, padding=0)
+
+        # update the plot
+        corrfuncCurve.setData(timeaxis, corrvals)
+        thecaption = "R={0:.2f}, lag={1:.2f}".format(maxval, maxtime)
+        corrfuncCaption.setText(thecaption)
+        corrfuncTLine.setPos(timeaxis[currentloc.tpos])
+        corrfuncCurvePoint.setPos(float(tide_util.valtoindex(timeaxis, maxtime)) / (len(timeaxis) - 1))
 
 
 def updateHistogram():
@@ -821,18 +840,19 @@ def overlay_radioButton_clicked(which, enabled):
 
 
 def updateTimepoint(event):
-    global data, overlays, timecourse_ax, tr, tpos, timeaxis
+    global data, overlays, corrfunc_ax, tr, tpos, timeaxis, currentloc, ui
     global currentdataset
     global vLine
+    print('arrived in updateTimepoint')
     pos = event.pos()  ## using signal proxy turns original arguments into a tuple
-    if overlays[currentdataset.focusmap].tdim > 1:
-        mousePoint = timecourse_ax.vb.mapToView(pos)
-        tval = mousePoint.x()
-        if timeaxis[0] <= tval <= timeaxis[-1]:
-            tpos = int((tval - overlays[currentdataset.focusmap].toffset) / overlays[currentdataset.focusmap].tr)
-            vLine.setValue(mousePoint.x())
-            print('calling updateOrthoImages from updateTimepoint')
-            updateOrthoImages()
+    mousePoint = corrfunc_ax.vb.mapToView(pos)
+    tval = mousePoint.x()
+    if timeaxis[0] <= tval <= timeaxis[-1]:
+        currentloc.tpos = tide_util.valtoindex(timeaxis, tval)
+        print('calling updateOrthoImages from updateCorrelationFunc')
+        ui.TimeSlider.setValue(currentloc.tpos)
+        updateCorrelationFunc()
+        updateOrthoImages()
 
 
 def updateLUT():
@@ -873,6 +893,7 @@ def updateTFromControls():
     global mainwin, currentloc
     mainwin.setTpos(currentloc.tpos, emitsignal=False)
     print('calling updateOrthoImages from updateTFromControls')
+    updateCorrelationFunc()
     updateOrthoImages()
 
 
@@ -880,12 +901,13 @@ def updateXYZFromControls():
     global mainwin, currentloc
     mainwin.setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos, emitsignal=False)
     print('calling updateOrthoImages from updateXYZFromControls')
+    updateCorrelationFunc()
     updateOrthoImages()
 
 
 def updateXYZFromMainWin():
     global mainwin, currentloc
-    currentloc.setXYZpos(mainwin.xpos, mainwin.ypos, mainwin.zpos)
+    currentloc.setXYZpos(mainwin.xpos, mainwin.ypos, mainwin.zpos, emitsignal=False)
 
 
 def updateOrthoImages():
@@ -906,11 +928,11 @@ def updateOrthoImages():
             orthoimages[thismap].setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos)
             orthoimages[thismap].setTpos(currentloc.tpos)
     mainwin.setMap(overlays[currentdataset.focusmap])
+    mainwin.setTpos(currentloc.tpos)
     mainwin.updateAllViews()
 
     printfocusvals()
-    # ui.time_Slider.setValue(tpos)
-    # updateTimecoursePlot()
+    ui.TimeSlider.setValue(currentloc.tpos)
 
 
 def printfocusvals():
@@ -1029,7 +1051,7 @@ def main():
                            help='enable movie mode',
                            dest='usecorrout',
                            action='store_true',
-                           default=False)
+                           default=True)
     theparser.add_argument('--settr',
                            help='Set correlation TR',
                            dest='trval',
@@ -1430,10 +1452,11 @@ def main():
         bgmap = None
 
     # set up the timecourse plot window
-    xpos = currentdataset.xdim / 2
-    ypos = currentdataset.ydim / 2
-    zpos = currentdataset.zdim / 2
-    timeaxis = np.r_[0.0:overlays[currentdataset.focusmap].tdim] * overlays[currentdataset.focusmap].tr + overlays[currentdataset.focusmap].toffset
+    xpos = int(currentdataset.xdim) // 2
+    ypos = int(currentdataset.ydim) // 2
+    zpos = int(currentdataset.zdim) // 2
+    #timeaxis = np.r_[0.0:overlays[currentdataset.focusmap].tdim] * overlays[currentdataset.focusmap].tr + overlays[currentdataset.focusmap].toffset
+    timeaxis = np.r_[0.0:overlays['corrout'].tdim] * overlays['corrout'].tr + overlays['corrout'].toffset
     tpos = 0
 
     # set position and scale of images
@@ -1548,6 +1571,35 @@ def main():
     histwin = ui.histogram_graphicsView
     hist_ax = histwin.addPlot()
 
+    # set up the correlation function window
+    print('about to set up the correlation function window')
+    global corrfunc_ax, corrfuncCurve, corrfuncTLine, corrfuncCurvePoint, corrfuncCaption
+    try:
+        print('setting up correlation window')
+        corrfunctitle = ui.corrfunc_groupBox.title()
+        print('current corrfunctitle', corrfunctitle)
+        ui.corrfunc_groupBox.setWindowTitle('blah')
+        corrfunctitle = ui.corrfunc_groupBox.title()
+        print('current corrfunctitle', corrfunctitle)
+        corrfuncwin = ui.corrfunc_graphicsView
+        corrfunc_ax = corrfuncwin.addPlot()
+        corrfuncCurve = corrfunc_ax.plot(timeaxis, 0.0 * timeaxis,
+                                        title='Correlation function',
+                                        stepMode=False,
+                                        fillLevel=0,
+                                        pen=pg.mkPen('w', width=1),
+                                        clear=True,
+                                        clickable=True)
+        corrfuncTLine = corrfunc_ax.addLine(x=timeaxis[0], pen='g')
+        corrfuncCurvePoint = pg.CurvePoint(corrfuncCurve)
+        corrfuncCaption = pg.TextItem('placeholder', anchor=(0.5, 1.0))
+        corrfuncCaption.setParentItem(corrfuncCurvePoint)
+        arrow2 = pg.ArrowItem(angle=90)
+        arrow2.setParentItem(corrfuncCurvePoint)
+        corrfuncCurve.scene().sigMouseClicked.connect(updateTimepoint)
+    except:
+        corrfunc_ax = None
+
     # set up the regressor timecourse window
     print('about to set up the timecourse')
     global regressor_ax
@@ -1609,6 +1661,7 @@ def main():
                      runMovieButton=ui.runMovieButton)
     currentloc.updatedXYZ.connect(updateXYZFromControls)
     currentloc.updatedT.connect(updateTFromControls)
+    updateCorrelationFunc()
     updateHistogram()
 
     updateLUT()
@@ -1621,7 +1674,6 @@ def main():
 
     # have to do this after the windows are created
     imageadj.sigGradientChanged.connect(updateLUT)
-    # timecourse_ax.scene().sigMouseClicked.connect(updateTimepoint)
 
     updateOrthoImages()
     updateTimecoursePlot()
