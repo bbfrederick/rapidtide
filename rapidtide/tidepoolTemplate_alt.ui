@@ -413,7 +413,7 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>128</width>
+         <width>256</width>
          <height>128</height>
         </size>
        </property>
@@ -450,8 +450,8 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>128</width>
-         <height>128</height>
+         <width>256</width>
+         <height>256</height>
         </size>
        </property>
        <property name="maximumSize">
@@ -487,8 +487,8 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>128</width>
-         <height>128</height>
+         <width>256</width>
+         <height>256</height>
         </size>
        </property>
        <property name="maximumSize">
@@ -644,7 +644,7 @@
          </brush>
         </colorrole>
         <colorrole role="PlaceholderText">
-         <brush brushstyle="SolidPattern">
+         <brush brushstyle="NoBrush">
           <color alpha="128">
            <red>255</red>
            <green>255</green>
@@ -682,11 +682,11 @@
          </brush>
         </colorrole>
         <colorrole role="PlaceholderText">
-         <brush brushstyle="SolidPattern">
+         <brush brushstyle="NoBrush">
           <color alpha="128">
-           <red>0</red>
-           <green>0</green>
-           <blue>0</blue>
+           <red>255</red>
+           <green>255</green>
+           <blue>255</blue>
           </color>
          </brush>
         </colorrole>
@@ -720,11 +720,11 @@
          </brush>
         </colorrole>
         <colorrole role="PlaceholderText">
-         <brush brushstyle="SolidPattern">
+         <brush brushstyle="NoBrush">
           <color alpha="128">
-           <red>0</red>
-           <green>0</green>
-           <blue>0</blue>
+           <red>255</red>
+           <green>255</green>
+           <blue>255</blue>
           </color>
          </brush>
         </colorrole>
@@ -1152,10 +1152,10 @@
    <widget class="QGroupBox" name="histogram_groupBox">
     <property name="geometry">
      <rect>
-      <x>970</x>
-      <y>5</y>
-      <width>391</width>
-      <height>231</height>
+      <x>790</x>
+      <y>225</y>
+      <width>571</width>
+      <height>186</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -1172,7 +1172,7 @@
     </property>
     <property name="maximumSize">
      <size>
-      <width>500</width>
+      <width>800</width>
       <height>1000</height>
      </size>
     </property>
@@ -1184,8 +1184,8 @@
       <rect>
        <x>10</x>
        <y>25</y>
-       <width>371</width>
-       <height>191</height>
+       <width>551</width>
+       <height>151</height>
       </rect>
      </property>
      <property name="sizePolicy">
@@ -1214,7 +1214,7 @@
       <x>790</x>
       <y>5</y>
       <width>181</width>
-      <height>231</height>
+      <height>221</height>
      </rect>
     </property>
     <property name="title">
@@ -1732,10 +1732,10 @@
    <widget class="QGroupBox" name="logOutput_groupBox">
     <property name="geometry">
      <rect>
-      <x>790</x>
-      <y>235</y>
-      <width>571</width>
-      <height>361</height>
+      <x>980</x>
+      <y>5</y>
+      <width>381</width>
+      <height>216</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -1764,8 +1764,8 @@
       <rect>
        <x>10</x>
        <y>25</y>
-       <width>551</width>
-       <height>326</height>
+       <width>361</width>
+       <height>181</height>
       </rect>
      </property>
      <property name="font">
@@ -1775,12 +1775,72 @@
      </property>
     </widget>
    </widget>
+   <widget class="QGroupBox" name="corrfunc_groupBox">
+    <property name="geometry">
+     <rect>
+      <x>790</x>
+      <y>405</y>
+      <width>571</width>
+      <height>186</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>100</width>
+      <height>100</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>800</width>
+      <height>1000</height>
+     </size>
+    </property>
+    <property name="title">
+     <string>Correlation Function</string>
+    </property>
+    <widget class="GraphicsLayoutWidget" name="corrfunc_graphicsView">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>25</y>
+       <width>551</width>
+       <height>151</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>100</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>1000</width>
+       <height>1000</height>
+      </size>
+     </property>
+    </widget>
+   </widget>
    <zorder>overlays_groupBox</zorder>
    <zorder>imageData_groupBox</zorder>
    <zorder>histogram_groupBox</zorder>
    <zorder>mainimagedata_groupBox</zorder>
    <zorder>regressor_groupBox</zorder>
    <zorder>logOutput_groupBox</zorder>
+   <zorder>corrfunc_groupBox</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1831,7 +1891,7 @@
   </property>
  </designerdata>
  <buttongroups>
-  <buttongroup name="stats_buttonGroup"/>
   <buttongroup name="colormap_buttonGroup"/>
+  <buttongroup name="stats_buttonGroup"/>
  </buttongroups>
 </ui>
