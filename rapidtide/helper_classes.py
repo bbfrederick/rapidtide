@@ -30,6 +30,7 @@ import sys
 
 import rapidtide.util as tide_util
 import rapidtide.fit as tide_fit
+import rapidtide.filter as tide_filt
 import rapidtide.miscmath as tide_math
 import rapidtide.correlate as tide_corr
 
@@ -161,6 +162,7 @@ class correlator:
                  ncprefilter=None,
                  reftc=None,
                  detrendorder=1,
+                 hpfreq=None,
                  windowfunc='hamming',
                  corrweighting='none'):
         self.Fs = Fs
@@ -169,6 +171,7 @@ class correlator:
         self.lagmaxinpts = lagmaxinpts
         self.ncprefilter = ncprefilter
         self.reftc = reftc
+        self.hpfreq = hpfreq
         self.detrendorder = detrendorder
         self.windowfunc = windowfunc
         if self.windowfunc is not None:
@@ -178,19 +181,30 @@ class correlator:
         self.corrweighting = corrweighting
         if self.reftc is not None:
             self.setreftc(self.reftc)
+        if self.hpfreq is not None:
+            self.hpfilt = tide_filt.noncausalfilter('arb')
+            self.hpfilt.setfreqs(self.hpfreq, self.hpfreq, self.Fs, self.Fs)
 
 
-    def preptc(self, thetc):
+    def preptc(self, thetc, hpfreq=None):
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function
-        return tide_math.corrnormalize(self.ncprefilter.apply(self.Fs, thetc),
-                                       prewindow=self.usewindowfunc,
-                                       detrendorder=self.detrendorder,
-                                       windowfunc=self.windowfunc)
+        if hpfreq is None:
+            return tide_math.corrnormalize(self.ncprefilter.apply(self.Fs, thetc),
+                                           prewindow=self.usewindowfunc,
+                                           detrendorder=self.detrendorder,
+                                           windowfunc=self.windowfunc)
+        else:
+            return self.hpfilt.apply(self.Fs,
+                                tide_math.corrnormalize(self.ncprefilter.apply(self.Fs, thetc),
+                                                        prewindow=self.usewindowfunc,
+                                                        detrendorder=self.detrendorder,
+                                                        windowfunc=self.windowfunc)
+                                )
 
 
     def setreftc(self, reftc):
         self.reftc = reftc + 0.0
-        self.prepreftc = self.preptc(self.reftc)
+        self.prepreftc = self.preptc(self.reftc, hpfreq=self.hpfreq)
         self.corrlen = len(self.reftc) * 2 - 1
         self.corrorigin = self.corrlen // 2 + 1
 

@@ -708,10 +708,11 @@ def rapidtide_main(argparsingfunc):
 
     # initialize the correlator
     thecorrelator = tide_classes.correlator(Fs=oversampfreq,
-                                         ncprefilter=theprefilter,
-                                         detrendorder=optiondict['detrendorder'],
-                                         windowfunc=optiondict['windowfunc'],
-                                         corrweighting=optiondict['corrweighting'])
+                                            ncprefilter=theprefilter,
+                                            detrendorder=optiondict['detrendorder'],
+                                            windowfunc=optiondict['windowfunc'],
+                                            corrweighting=optiondict['corrweighting'],
+                                            hpfreq=optiondict['correlator_hpfreq'])
     thecorrelator.setreftc(np.zeros((optiondict['oversampfactor'] * validtimepoints),
                                     dtype=np.float))
     numccorrlags = thecorrelator.corrlen

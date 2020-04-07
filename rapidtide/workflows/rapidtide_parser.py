@@ -778,6 +778,13 @@ def _get_parser():
                               action='store_true',
                               help=('Attempt to detect and remove respiratory signal that strays into the LFO band.'),
                               default=False)
+    experimental.add_argument('--correlatorhpfreq',
+                              dest='correlator_hpfreq',
+                              action='store',
+                              metavar='HPFREQ',
+                              type=float,
+                              help=('High pass filter the correlation function to get rid of baseline problems. '),
+                              default=None)
     experimental.add_argument('--cleanrefined',
                               dest='cleanrefined',
                               action='store_true',

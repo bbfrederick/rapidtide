@@ -1187,4 +1187,7 @@ def process_args():
         [(optiondict['dispersioncalc_upper'] - optiondict['dispersioncalc_lower']) / 25,
          optiondict['dispersioncalc_step']])
 
+    # define variables for compatiblity with new features of rapidtide
+    optiondict['correlator_hpfreq'] = None
+
     return optiondict, theprefilter
