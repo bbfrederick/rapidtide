@@ -100,7 +100,7 @@ class overlay:
         self.namebase = namebase
         if self.verbose:
             print('reading map ', self.name, ' from ', self.filename, '...')
-        self.readImageData(self.filename, isaMask=isaMask)
+        self.readImageData(isaMask=isaMask)
         self.mask = None
         self.maskeddata = None
         self.setFuncMask(funcmask, maskdata=False)
@@ -163,7 +163,7 @@ class overlay:
             self.data[np.where(self.data > 0.5)] = 1.0
         self.updateStats()
 
-    def readImageData(self, data, isaMask=False):
+    def readImageData(self, isaMask=False):
         self.nim, self.data, self.header, self.dims, self.sizes = tide_io.readfromnifti(self.filename)
         if isaMask:
             self.data[np.where(self.data < 0.5)] = 0.0
