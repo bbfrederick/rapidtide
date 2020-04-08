@@ -423,6 +423,7 @@ def process_args():
     optiondict['saveglmfiltered'] = True
     optiondict['savecorrtimes'] = False
     optiondict['saveoptionsasjson'] = False
+    optiondict['saveintermediatemaps'] = False
 
     optiondict['interptype'] = 'univariate'
     optiondict['useglobalref'] = False

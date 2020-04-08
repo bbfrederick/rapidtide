@@ -203,6 +203,21 @@ def addmemprofiling(thefunc, memprofile, memfile, themessage):
         return thefunc
 
 
+def saveamap(mapname, outmaparray, validvoxels, nativespaceshape, theheader, outputname, outsuffix3d, memfile, optiondict):
+    if optiondict['memprofile']:
+        memcheckpoint('about to write ' + mapname)
+    else:
+        tide_util.logmem('about to write ' + mapname, file=memfile)
+    outmaparray[:] = 0.0
+    outmaparray[validvoxels] = eval(mapname)[:]
+    if optiondict['textio']:
+        tide_io.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
+                            outputname + '_' + mapname + outsuffix3d + '.txt')
+    else:
+        tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader,
+                            outputname + '_' + mapname + outsuffix3d)
+
+
 def rapidtide_main(argparsingfunc):
     timings = [['Start', time.time(), None, None]]
     optiondict, theprefilter = argparsingfunc()
@@ -895,8 +910,8 @@ def rapidtide_main(argparsingfunc):
                 detrendorder=optiondict['detrendorder'])
             optiondict['acwidth'] = acwidth + 0.0
             optiondict['absmaxsigma'] = acwidth * 10.0
+            passsuffix = '_pass' + str(thepass + 1)
             if sidelobetime is not None:
-                passsuffix = '_pass' + str(thepass + 1)
                 optiondict['acsidelobelag' + passsuffix] = sidelobetime
                 optiondict['despeckle_thresh'] = np.max([optiondict['despeckle_thresh'], sidelobetime / 2.0])
                 optiondict['acsidelobeamp' + passsuffix] = sidelobeamp
@@ -1228,8 +1243,24 @@ def rapidtide_main(argparsingfunc):
                 optiondict['kurtosisp_reference_pass' + str(thepass + 1)] = tide_stats.kurtosisstats(resampref_y)
             tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
             tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
+
             timings.append(
                 ['Regressor refinement end, pass ' + str(thepass), time.time(), voxelsprocessed_rr, 'voxels'])
+        if optiondict['saveintermediatemaps']:
+            for mapname in ['lagtimes', 'lagstrengths', 'lagsigma', 'lagmask']:
+                if optiondict['memprofile']:
+                    memcheckpoint('about to write ' + mapname)
+                else:
+                    tide_util.logmem('about to write ' + mapname, file=memfile)
+                outmaparray[:] = 0.0
+                outmaparray[validvoxels] = eval(mapname)[:]
+                if optiondict['textio']:
+                    tide_io.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
+                                        outputname + '_' + mapname + passsuffix + '.txt')
+                else:
+                    tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader,
+                                        outputname + '_' + mapname + passsuffix)
+
 
     # Post refinement step 0 - Wiener deconvolution
     if optiondict['dodeconv']:

@@ -674,6 +674,11 @@ def _get_parser():
                         action='store_true',
                         help="Don't reread data prior to performing GLM. ",
                         default=False)
+    output.add_argument('--saveintermediatemaps',
+                        dest='saveintermediatemaps',
+                        action='store_true',
+                        help='Save lag times, strengths, widths, and mask for each pass. ',
+                        default=False)
 
     # Miscellaneous options
     misc = parser.add_argument_group('Miscellaneous options')
