@@ -1,5 +1,10 @@
 # History of changes
 
+## Version 1.9.1 (4/8/20)
+* (all): Documentation improvements
+* (docker): Fixed an incompatibility in versions between pyfftw and scipy (thank you to Niranjana Shashikumar for reporting the bug and providing the solution!)
+* (tidepool): Various fixes and improvements backported from the development version.
+
 ## Version 1.9 (1/6/20)
 * (all): Now compatible with nibabel 3.x
 * (all): Significantly expanded test suite.  Code coverage is now at 47%.
