@@ -324,7 +324,7 @@ def valtoindex(thearray, thevalue, evenspacing=True):
         limval = np.max([thearray[0], np.min([thearray[-1], thevalue])])
         return int(np.round((limval - thearray[0]) / (thearray[1] - thearray[0]), 0))
     else:
-        return (np.abs(thearray - thevalue)).argmin()
+        return int((np.abs(thearray - thevalue)).argmin())
 
 
 def progressbar(thisval, end_val, label='Percent', barsize=60):

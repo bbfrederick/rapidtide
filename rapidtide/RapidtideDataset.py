@@ -205,7 +205,7 @@ class overlay:
 
     def setTpos(self, tpos):
         if tpos > self.tdim - 1:
-            self.tpos = self.tdim - 1
+            self.tpos = int(self.tdim - 1)
         else:
             self.tpos = int(tpos)
 
