@@ -180,7 +180,7 @@ class xyztlocation(QtGui.QWidget):
         self.updatedT.emit()
 
     def real2tr(self, time):
-        return np.round((time - self.toffset) / self.tr, 0)
+        return int(np.round((time - self.toffset) / self.tr, 0))
 
     def tr2real(self, tpos):
         return self.toffset + self.tr * tpos
@@ -349,8 +349,7 @@ def updateDispLimits():
     ui.dispmax_doubleSpinBox.setSingleStep((overlays[currentdataset.focusmap].maxval - overlays[currentdataset.focusmap].minval) / 100.0)
     ui.dispmin_doubleSpinBox.setValue(overlays[currentdataset.focusmap].dispmin)
     ui.dispmax_doubleSpinBox.setValue(overlays[currentdataset.focusmap].dispmax)
-    print('calling updateOrthoImages from updateDispLimits')
-    updateOrthoImages()
+    updateUI(callingfunc='updateDispLimits', orthoimages=True)
 
 
 def resetDispLimits():
@@ -381,6 +380,8 @@ def updateCorrelationFunc():
         corrfuncCurve.setData(timeaxis, corrvals)
         thecaption = "R={0:.2f}, lag={1:.2f}".format(maxval, maxtime)
         corrfuncCaption.setText(thecaption)
+        print('current tpos:', currentloc.tpos)
+        print('setting line location:', timeaxis[currentloc.tpos])
         corrfuncTLine.setPos(timeaxis[currentloc.tpos])
         corrfuncCurvePoint.setPos(float(tide_util.valtoindex(timeaxis, maxtime)) / (len(timeaxis) - 1))
 
@@ -559,10 +560,7 @@ def updateAveragingMode():
     resetDispLimits()
     resetDispSmart()
     print('averaging mode set to ', averagingmode)
-    print('calling updateOrthoImages from updateAveragingMode')
-    updateOrthoImages()
-    updateHistogram()
-    updateLUT()
+    updateUI(callingfunc='updateAverageingMode()', orthoimages=True, histogram=True, LUT=True)
 
 
 def raw_radioButton_clicked(enabled):
@@ -673,8 +671,7 @@ def set_atlasmask():
     ui.setMask_Button.setText('Valid mask')
     for themap in currentdataset.loadedfuncmaps:
         overlays[themap].setFuncMask(overlays['atlasmask'].data)
-    updateOrthoImages()
-    updateHistogram()
+    updateUI(callingfunc='set_atlasmask', orthoimages=True, histogram=True)
 
 
 def set_lagmask():
@@ -685,8 +682,7 @@ def set_lagmask():
         overlays[themap].setFuncMask(overlays['lagmask'].data)
     atlasaveragingdone = False
     updateAveragingMode()
-    updateOrthoImages()
-    updateHistogram()
+    updateUI(callingfunc='set_lagmask()', orthoimages=True, histogram=True)
 
 
 def set_refinemask():
@@ -697,8 +693,7 @@ def set_refinemask():
         overlays[themap].setFuncMask(overlays['refinemask'].data)
     atlasaveragingdone = False
     updateAveragingMode()
-    updateOrthoImages()
-    updateHistogram()
+    updateUI(callingfunc='set_refinemask', orthoimages=True, histogram=True)
 
 
 def set_meanmask():
@@ -709,8 +704,7 @@ def set_meanmask():
         overlays[themap].setFuncMask(overlays['meanmask'].data)
     atlasaveragingdone = False
     updateAveragingMode()
-    updateOrthoImages()
-    updateHistogram()
+    updateUI(callingfunc='set_meanmask', orthoimages=True, histogram=True)
 
 
 def set_nomask():
@@ -721,8 +715,7 @@ def set_nomask():
         overlays[themap].setFuncMask(None)
     atlasaveragingdone = False
     updateAveragingMode()
-    updateOrthoImages()
-    updateHistogram()
+    updateUI(callingfunc='set_nomask', orthoimages=True, histogram=True)
 
 
 def set_0p05():
@@ -735,8 +728,7 @@ def set_0p05():
         # overlays[themap].setFuncMask(overlays['jit_mask'].data)
     atlasaveragingdone = False
     updateAveragingMode()
-    updateOrthoImages()
-    updateHistogram()
+    updateUI(callingfunc='set_0p05', orthoimages=True, histogram=True)
 
 
 def set_0p01():
@@ -747,8 +739,7 @@ def set_0p01():
         overlays[themap].setFuncMask(overlays['p_lt_0p010_mask'].data)
     atlasaveragingdone = False
     updateAveragingMode()
-    updateOrthoImages()
-    updateHistogram()
+    updateUI(callingfunc='set_0p01', orthoimages=True, histogram=True)
 
 
 def set_0p005():
@@ -759,8 +750,7 @@ def set_0p005():
         overlays[themap].setFuncMask(overlays['p_lt_0p005_mask'].data)
     atlasaveragingdone = False
     updateAveragingMode()
-    updateOrthoImages()
-    updateHistogram()
+    updateUI(callingfunc='set_0p005', orthoimages=True, histogram=True)
 
 
 def set_0p001():
@@ -771,8 +761,7 @@ def set_0p001():
         overlays[themap].setFuncMask(overlays['p_lt_0p001_mask'].data)
     atlasaveragingdone = False
     updateAveragingMode()
-    updateOrthoImages()
-    updateHistogram()
+    updateUI(callingfunc='set_0p001', orthoimages=True, histogram=True)
 
 
 def overlay_radioButton_01_clicked(enabled):
@@ -835,8 +824,7 @@ def overlay_radioButton_clicked(which, enabled):
             print('setting t position limits to ', 0, overlays[currentdataset.focusmap].tdim - 1)
             currentloc.setTInfo(overlays[currentdataset.focusmap].tdim, overlays[currentdataset.focusmap].tr, overlays[currentdataset.focusmap].toffset)
 
-            updateHistogram()
-            updateLUT()
+            updateUI(callingfunc='overlay_radioButton_clicked', histogram=True, LUT=True)
 
 
 def updateTimepoint(event):
@@ -848,11 +836,9 @@ def updateTimepoint(event):
     mousePoint = corrfunc_ax.vb.mapToView(pos)
     tval = mousePoint.x()
     if timeaxis[0] <= tval <= timeaxis[-1]:
-        currentloc.tpos = tide_util.valtoindex(timeaxis, tval)
-        print('calling updateOrthoImages from updateCorrelationFunc')
+        currentloc.tpos = int(tide_util.valtoindex(timeaxis, tval))
         ui.TimeSlider.setValue(currentloc.tpos)
-        updateCorrelationFunc()
-        updateOrthoImages()
+        updateUI(callingfunc='updateTimepoint', orthoimages=True, correlationfunc=True)
 
 
 def updateLUT():
@@ -863,19 +849,17 @@ def updateLUT():
     img_colorbar.setLookupTable(theLUT)
     if harvestcolormaps:
         print(imageadj.saveState())
-    print('calling updateOrthoImages from updateLUT')
-    updateOrthoImages()
 
 
-def updateTimecoursePlot():
+'''def updateTimecoursePlot():
     global roisize
     global timeaxis
     global currentdataset
     global xpos, ypos, zpos
     global overlays, timecourse_ax
-    if overlays[currentdataset.focusmap].tdim > 1:
+    if overlays['corrout'].tdim > 1:
         selected = overlays[currentdataset.focusmap].data[xpos, ypos, zpos, :]
-        timecourse_ax.plot(timeaxis, selected, clear=True)
+        timecourse_ax.plot(timeaxis, selected, clear=True)'''
 
 
 def mapwithLUT(theimage, themask, theLUT, dispmin, dispmax):
@@ -892,22 +876,39 @@ def mapwithLUT(theimage, themask, theLUT, dispmin, dispmax):
 def updateTFromControls():
     global mainwin, currentloc
     mainwin.setTpos(currentloc.tpos, emitsignal=False)
-    print('calling updateOrthoImages from updateTFromControls')
-    updateCorrelationFunc()
-    updateOrthoImages()
+    updateUI(callingfunc='updateTFromControls', orthoimages=True, correlationfunc=True)
 
 
 def updateXYZFromControls():
     global mainwin, currentloc
     mainwin.setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos, emitsignal=False)
-    print('calling updateOrthoImages from updateXYZFromControls')
-    updateCorrelationFunc()
-    updateOrthoImages()
+    updateUI(callingfunc='updateXYZFromControls', orthoimages=True, correlationfunc=True)
 
 
 def updateXYZFromMainWin():
     global mainwin, currentloc
     currentloc.setXYZpos(mainwin.xpos, mainwin.ypos, mainwin.zpos, emitsignal=False)
+    updateUI(callingfunc='updateXYZFromMainWin', correlationfunc=True)
+
+
+def updateUI(orthoimages=False, histogram=False, LUT=False, correlationfunc=False, callingfunc=None):
+    if callingfunc is None:
+        print('updateUI called with:')
+    else:
+        print('updateUI called from', callingfunc, ' with:')
+    print('\torthoimages=', orthoimages)
+    print('\thistogram=', histogram)
+    print('\tLUT=', LUT)
+    print('\tcorrelationfunc=', correlationfunc)
+    if histogram:
+        updateHistogram()
+    if LUT:
+        updateLUT()
+        orthoimages = True
+    if correlationfunc:
+        updateCorrelationFunc()
+    if orthoimages:
+        updateOrthoImages()
 
 
 def updateOrthoImages():
@@ -918,7 +919,7 @@ def updateOrthoImages():
     global ui
     global mainwin, orthoimages
     global currentloc
-    global updateTimecoursePlot
+    #global updateTimecoursePlot
     global xdim, ydim, zdim
     global overlays
     global imagadj
@@ -1269,7 +1270,7 @@ def main():
 
 
     # set up the timecourse plot window
-    if usetime:
+    '''if usetime:
         tcwin = ui.timecourse_graphicsView
         global timecourse_ax
         timecourse_ax = tcwin.addPlot()
@@ -1278,7 +1279,7 @@ def main():
         vLine.setZValue(20)
         timecourse_ax.addItem(vLine)
         timecourse_ax.setTitle('Timecourse')
-        timecourse_ax.enableAutoRange()
+        timecourse_ax.enableAutoRange()'''
 
     # wire up the atlas averaging checkboxes
     ui.raw_radioButton.setDisabled(True)
@@ -1455,8 +1456,9 @@ def main():
     xpos = int(currentdataset.xdim) // 2
     ypos = int(currentdataset.ydim) // 2
     zpos = int(currentdataset.zdim) // 2
-    #timeaxis = np.r_[0.0:overlays[currentdataset.focusmap].tdim] * overlays[currentdataset.focusmap].tr + overlays[currentdataset.focusmap].toffset
-    timeaxis = np.r_[0.0:overlays['corrout'].tdim] * overlays['corrout'].tr + overlays['corrout'].toffset
+    timeaxis = np.linspace(0.0, overlays['corrout'].tdim * overlays['corrout'].tr,
+                            num=overlays['corrout'].tdim,
+                            endpoint=False) + overlays['corrout'].toffset
     tpos = 0
 
     # set position and scale of images
@@ -1675,8 +1677,9 @@ def main():
     # have to do this after the windows are created
     imageadj.sigGradientChanged.connect(updateLUT)
 
-    updateOrthoImages()
-    updateTimecoursePlot()
+    updateUI(callingfunc='main thread', orthoimages=True)
+    #updateOrthoImages()
+    #updateTimecoursePlot()
 
     QtGui.QApplication.instance().exec_()
 
