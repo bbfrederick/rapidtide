@@ -15,13 +15,14 @@ RUN apt-get install -y --no-install-recommends \
                     build-essential \
                     autoconf \
                     libtool \
-                    lsb-core \
                     gnupg \
                     pkg-config \
                     xterm \
                     libgl1-mesa-glx \
                     libx11-xcb1 \
+                    lsb-release \
                     git
+#RUN apt-get install --reinstall libxcb-xinerama0
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 #ENV FSL_DIR="/usr/share/fsl/5.0" \
@@ -32,8 +33,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 #    FREESURFER_HOME="/opt/freesurfer"
 
 # Installing Neurodebian packages (FSL)
-RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> \
-    /etc/apt/sources.list.d/neurodebian.sources.list && \
+RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /usr/local/etc/neurodebian.gpg && \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
 
@@ -61,9 +61,9 @@ RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca
 
 
 # Installing and setting up miniconda
-RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh && \
-    bash Miniconda3-4.5.11-Linux-x86_64.sh -b -p /usr/local/miniconda && \
-    rm Miniconda3-4.5.11-Linux-x86_64.sh
+RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-4.7.12.1-Linux-x86_64.sh && \
+    bash Miniconda3-4.7.12.1-Linux-x86_64.sh -b -p /usr/local/miniconda && \
+    rm Miniconda3-4.7.12.1-Linux-x86_64.sh
 
 
 # Set CPATH for packages relying on compiled libs (e.g. indexed_gzip)
@@ -80,10 +80,8 @@ RUN conda config --add channels conda-forge
 RUN df -h
 RUN conda clean --all
 RUN df -h
-RUN conda install -y python=3.7.1 \
+RUN conda install -y python=3.7.4 \
                      pip=19.3.1 \
-                     conda=4.8.1 \
-                     conda-build \
                      scipy=1.4.1 \
                      numpy=1.17.3 \
                      mkl=2019.4 \
