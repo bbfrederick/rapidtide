@@ -94,7 +94,7 @@ RUN conda install -y python=3.7.1 \
                      keras=2.3.1 \
                      tensorflow=1.13.1 \
                      pyqtgraph=0.10.0 \
-                     pyfftw=0.11.1 \
+                     pyfftw=0.12.0 \
                      pandas=0.25.3 \
                      numba=0.46.0; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
