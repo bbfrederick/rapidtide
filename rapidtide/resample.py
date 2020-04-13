@@ -345,7 +345,6 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False,
     -------
 
     """
-    pad_y = tide_filt.padvec(orig_y, padlen=padlen)
     tstep = orig_x[1] - orig_x[0]
     if padlen > 0:
         pad_x = np.concatenate((np.arange(orig_x[0] - padlen * tstep, orig_x[0], tstep),
@@ -355,6 +354,7 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False,
     else:
         pad_x = orig_x
         pad_y = orig_y
+
     if debug:
         print('padlen=', padlen)
         print('tstep=', tstep)

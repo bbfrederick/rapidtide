@@ -675,14 +675,16 @@ def rapidtide_main(argparsingfunc):
         resampnonosref_y = tide_fit.detrend(
             tide_resample.doresample(reference_x, reference_y, initial_fmri_x,
                                      padlen=int(inputfreq * optiondict['padseconds']),
-                                     method=optiondict['interptype']),
+                                     method=optiondict['interptype'],
+                                     debug=optiondict['debug']),
             order=optiondict['detrendorder'],
             demean=optiondict['dodemean'])
         # int(inputfreq * optiondict['padseconds'])
         resampref_y = tide_fit.detrend(
             tide_resample.doresample(reference_x, reference_y, os_fmri_x,
                                      padlen=int(oversampfreq * optiondict['padseconds']),
-                                     method=optiondict['interptype']),
+                                     method=optiondict['interptype'],
+                                     debug=optiondict['debug']),
             order=optiondict['detrendorder'],
             demean=optiondict['dodemean'])
         # int(oversampfreq * optiondict['padseconds'])
