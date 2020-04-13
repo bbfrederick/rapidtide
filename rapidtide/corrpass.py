@@ -148,7 +148,7 @@ def correlationpass(fmridata,
         data_out = tide_multiproc.run_multiproc(correlation_consumer,
                                                 inputshape, None,
                                                 nprocs=nprocs,
-                                                showprogressbar=True,
+                                                showprogressbar=showprogressbar,
                                                 chunksize=chunksize)
 
         # unpack the data
