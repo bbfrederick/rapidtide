@@ -479,26 +479,16 @@ def _get_parser():
                           help=('Do not zero out peak fit values if fit '
                                 'fails. '),
                           default=True)
-    corr_fit.add_argument('--maxfittype',
-                          dest='findmaxtype',
+    corr_fit.add_argument('--corrfittype',
+                          dest='corrfittype',
                           action='store',
                           type=str,
-                          choices=['gauss', 'quad'],
+                          choices=['gauss', 'fastgauss', 'quad', 'none'],
                           help=("Method for fitting the correlation peak "
                                 "(default is 'gauss'). 'quad' uses a "
                                 "quadratic fit.  Faster but not as well "
                                 "tested. "),
                           default='gauss')
-    corr_fit.add_argument('--corrrefinetype',
-                          dest='refinetype',
-                          action='store',
-                          type=str,
-                          choices=['gauss', 'fastgauss', 'quad'],
-                          help=("Method for fitting the correlation peak "
-                                "(default is 'gauss'). 'quad' uses a "
-                                "quadratic fit.  Faster but not as well "
-                                "tested. "),
-                          default=None)
 
     corr_fit.add_argument('--despecklepasses',
                           dest='despeckle_passes',
@@ -889,7 +879,6 @@ def process_args(inputargs=None):
     args['edgebufferfrac'] = 0.0  # what fraction of the correlation window to avoid on either end when fitting
     args['enforcethresh'] = True  # only do fits in voxels that exceed threshhold
     args['lagmod']  = 1000.0  # if set to the location of the first autocorrelation sidelobe, this will fold back sidelobes
-    args['fastgauss'] = False  # use a non-iterative gaussian peak fit (DOES NOT WORK)
     args['lthreshval'] = 0.0  # zero out peaks with correlations lower than this value
     args['uthreshval'] = 1.0  # zero out peaks with correlations higher than this value
     args['absmaxsigma'] = 100.0  # width of the reference autocorrelation function
@@ -898,8 +887,6 @@ def process_args(inputargs=None):
     # correlation fitting
     args['hardlimit'] = True  # Peak value must be within specified range.  If false, allow max outside if maximum
                               # correlation value is that one end of the range.
-    args['gaussrefine'] = True  # fit gaussian after initial guess at parameters
-    args['findmaxtype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
     args['searchfrac'] = 0.5  # The fraction of the main peak over which points are included in the peak
     args['mp_chunksize'] = 50000
 

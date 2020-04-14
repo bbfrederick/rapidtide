@@ -93,7 +93,6 @@ def usage():
         "[--tmask=MASKFILE]",
         "[--limitoutput]",
         "[--motionfile=FILENAME[:COLSPEC]",
-        "[--nogaussrefine]",
         "[--softlimit]",
         "[--timerange=START,END]",
         "[--skipsighistfit]",
@@ -103,7 +102,7 @@ def usage():
         "[--glmsourcefile=FILE]",
         "[--regressorfreq=FREQ]", "[--regressortstep=TSTEP]" "[--regressor=FILENAME]", "[--regressorstart=STARTTIME]",
         "[--usesp]",
-        "[--maxfittype=FITTYPE]",
+        "[--corrfittype=FITTYPE]",
         "[--mklthreads=NTHREADS]",
         "[--nprocs=NPROCS]",
         "[--nirs]",
@@ -222,15 +221,15 @@ def usage():
     print("    --searchfrac=FRAC              - When peak fitting, include points with amplitude > FRAC * the")
     print("                                     maximum amplitude.")
     print("                                     (default value is 0.5)")
-    print("    --maxfittype=FITTYPE           - Method for fitting the correlation peak (default is 'gauss'). ")
-    print("                                     'quad' uses a quadratic fit.  Faster but not as well tested")
+    print("    --corrfittype=FITTYPE          - Method for fitting the correlation peak (default is 'gauss'). ")
+    print("                                     'quad' uses a quadratic fit.  Faster but not as well tested. ")
+    print("                                     Other options are 'fastgauss', and 'none'.")
     print("    --despecklepasses=PASSES       - detect and refit suspect correlations to disambiguate peak")
     print("                                     locations in PASSES passes")
     print("    --despecklethresh=VAL          - refit correlation if median discontinuity magnitude exceeds")
     print("                                     VAL (default is 5s)")
     print("    --softlimit                    - Allow peaks outside of range if the maximum correlation is")
     print("                                     at an edge of the range.")
-    print("    --nogaussrefine                - Use initial guess at peak parameters - do not perform fit to Gaussian.")
     print("")
     print("Regressor refinement options:")
     print("    --refineprenorm=TYPE           - Apply TYPE prenormalization to each timecourse prior ")
@@ -379,8 +378,6 @@ def process_args():
     optiondict['hardlimit'] = True  # Peak value must be within specified range.  If false, allow max outside if maximum
     # correlation value is that one end of the range.
     optiondict['bipolar'] = False  # find peak with highest magnitude, regardless of sign
-    optiondict['gaussrefine'] = True  # fit gaussian after initial guess at parameters
-    optiondict['fastgauss'] = False  # use a non-iterative gaussian peak fit (DOES NOT WORK)
     optiondict['lthreshval'] = 0.0  # zero out peaks with correlations lower than this value
     optiondict['uthreshval'] = 1.0  # zero out peaks with correlations higher than this value
     optiondict['edgebufferfrac'] = 0.0  # what fraction of the correlation window to avoid on either end when fitting
@@ -388,8 +385,7 @@ def process_args():
     optiondict['zerooutbadfit'] = True  # if true zero out all fit parameters if the fit fails
     optiondict['searchfrac'] = 0.5  # The fraction of the main peak over which points are included in the peak
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
-    optiondict['findmaxtype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
-    optiondict['refinetype'] = None
+    optiondict['corrfittype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
     optiondict['acwidth'] = 0.0  # width of the reference autocorrelation function
     optiondict['absmaxsigma'] = 100.0  # width of the reference autocorrelation function
     optiondict['absminsigma'] = 0.25  # width of the reference autocorrelation function
@@ -589,9 +585,7 @@ def process_args():
                                                                                                           'timerange=',
                                                                                                           'refineupperlag',
                                                                                                           'refinelowerlag',
-                                                                                                          'fastgauss',
                                                                                                           'memprofile',
-                                                                                                          'nogaussrefine',
                                                                                                           'usesp',
                                                                                                           'liang',
                                                                                                           'eckart',
@@ -600,7 +594,7 @@ def process_args():
                                                                                                           'weiner',
                                                                                                           'respdelete',
                                                                                                           'checkpoint',
-                                                                                                          'maxfittype='])
+                                                                                                          'corrfittype='])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like 'option -a not recognized'
@@ -1000,12 +994,6 @@ def process_args():
             optiondict['lagmaskside'] = 'lower'
             print('Will only use lags between ', -optiondict['lagminthresh'], ' and ', -optiondict['lagmaxthresh'],
                   ' in refinement')
-        elif o == '--nogaussrefine':
-            optiondict['gaussrefine'] = False
-            print('Will not use gaussian correlation peak refinement')
-        elif o == '--fastgauss':
-            optiondict['fastgauss'] = True
-            print('Will use alternative fast gauss refinement (does not work well)')
         elif o == '--refineoffset':
             optiondict['refineoffset'] = True
             print('Will refine offset time during subsequent passes')
@@ -1161,10 +1149,10 @@ def process_args():
             optiondict['passes'] = int(a)
             linkchar = '='
             print('Will do ', optiondict['passes'], ' processing passes')
-        elif o == '--maxfittype':
-            optiondict['findmaxtype'] = a
+        elif o == '--corrfittype':
+            optiondict['corrfittype'] = a
             linkchar = '='
-            print('Will do ', optiondict['findmaxtype'], ' peak fitting')
+            print('Correlation peak fitting method is ', optiondict['corrfittype'])
         elif o in ('-h', '--help'):
             usage()
             sys.exit()

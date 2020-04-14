@@ -266,6 +266,7 @@ class correlator:
 
 class correlation_fitter:
     corrtimeaxis = None
+    FML_NOERROR = np.uint16(0x00)
     FML_BADAMPLOW = np.uint16(0x01)
     FML_BADAMPHIGH = np.uint16(0x02)
     FML_BADSEARCHWINDOW = np.uint16(0x04)
@@ -286,18 +287,15 @@ class correlation_fitter:
                  lthreshval=0.0,
                  uthreshval=1.0,
                  debug=False,
-                 findmaxtype='gauss',
                  zerooutbadfit=True,
-                 refine=False,
                  maxguess=0.0,
                  useguess=False,
                  searchfrac=0.5,
-                 fastgauss=False,
                  lagmod=1000.0,
                  enforcethresh=True,
                  allowhighfitamps=True,
                  displayplots=False,
-                 refinetype=None):
+                 corrfittype='gauss'):
 
         r"""
 
@@ -318,11 +316,9 @@ class correlation_fitter:
         uthreshval
         debug
         zerooutbadfit
-        refine
         maxguess
         useguess
         searchfrac
-        fastgauss
         lagmod
         enforcethresh
         displayplots
@@ -349,28 +345,15 @@ class correlation_fitter:
         self.lthreshval = lthreshval
         self.uthreshval = uthreshval
         self.debug=debug
-        self.findmaxtype=findmaxtype
+        self.corrfittype=corrfittype
         self.zerooutbadfit = zerooutbadfit
-        self.refine = refine
         self.maxguess = maxguess
         self.useguess = useguess
         self.searchfrac = searchfrac
-        self.fastgauss = fastgauss
         self.lagmod = lagmod
         self.enforcethresh = enforcethresh
         self.allowhighfitamps = allowhighfitamps
         self.displayplots = displayplots
-        if not self.refine:
-            self.refinetype = None
-        else:
-            if refinetype is not None:
-                self.refinetype = refinetype
-            else:
-                if self.findmaxtype == 'gauss':
-                    if self.fastgauss:
-                        self.refinetype = 'fastgauss'
-                    else:
-                        self.refinetype = 'gauss'
 
 
     def _maxindex_noedge(self, corrfunc):
@@ -475,7 +458,7 @@ class correlation_fitter:
         # maxsigma is in Hz
         # maxlag is in seconds
         warnings.filterwarnings("ignore", "Number*")
-        failreason = np.uint(0)
+        failreason = self.FML_NOERROR
         maskval = np.uint16(1)  # start out assuming the fit will succeed
         binwidth = self.corrtimeaxis[1] - self.corrtimeaxis[0]
 
@@ -563,7 +546,7 @@ class correlation_fitter:
             maxval_init = 1.0
             if self.debug:
                 print('bad initial amp:', maxval_init, 'is greater than 1.0')
-        if failreason > 0 and self.zerooutbadfit:
+        if failreason != self.FML_NOERROR and self.zerooutbadfit:
             maxval = np.float64(0.0)
             maxlag = np.float64(0.0)
             maxsigma = np.float64(0.0)
@@ -573,8 +556,8 @@ class correlation_fitter:
             maxsigma = np.float64(maxsigma_init)
 
         # refine if necessary
-        if self.refinetype is not None:
-            if self.refinetype == 'gauss':
+        if self.corrfittype != 'none':
+            if self.corrfittype == 'gauss':
                 X = self.corrtimeaxis[peakstart:peakend + 1]
                 data = corrfunc[peakstart:peakend + 1]
                 # do a least squares fit over the top of the peak
@@ -593,7 +576,7 @@ class correlation_fitter:
                     maxsigma = np.float64(0.0)
                 if self.debug:
                     print('fit output array:', [maxval, maxlag, maxsigma])
-            elif self.refinetype == 'fastgauss':
+            elif self.corrfittype == 'fastgauss':
                 X = self.corrtimeaxis[peakstart:peakend + 1]
                 data = corrfunc[peakstart:peakend + 1]
                 # do a non-iterative fit over the top of the peak
@@ -601,7 +584,7 @@ class correlation_fitter:
                 maxlag = np.float64(1.0 * np.sum(X * data) / np.sum(data))
                 maxsigma = np.float64(np.sqrt(np.abs(np.sum((X - maxlag) ** 2 * data) / np.sum(data))))
                 maxval = np.float64(data.max())
-            elif self.refinetype == 'quad':
+            elif self.corrfittype == 'quad':
                 alpha = corrfunc[maxindex - 1]
                 beta = corrfunc[maxindex]
                 gamma = corrfunc[maxindex + 1]
@@ -619,7 +602,7 @@ class correlation_fitter:
 
             # check for errors in fit
             fitfail = False
-            failreason = np.uint16(0)
+            failreason = self.FML_NOERROR
             if self.bipolar:
                 lowestcorrcoeff = -1.0
             else:
@@ -665,19 +648,19 @@ class correlation_fitter:
                     maxval = np.float64(0.0)
                     maxlag = np.float64(0.0)
                     maxsigma = np.float64(0.0)
-                maskval = np.int16(0)
+                maskval = np.uint16(0)
             # print(maxlag_init, maxlag, maxval_init, maxval, maxsigma_init, maxsigma, maskval, failreason, fitfail)
         else:
             maxval = np.float64(maxval_init)
             maxlag = np.float64(np.fmod(maxlag_init, self.lagmod))
             maxsigma = np.float64(maxsigma_init)
-            if failreason > 0:
+            if failreason != self.FML_NOERROR:
                 maskval = np.uint16(0)
 
         if self.debug or self.displayplots:
             print("init to final: maxval", maxval_init, maxval, ", maxlag:", maxlag_init, maxlag, ", width:", maxsigma_init,
                   maxsigma)
-        if self.displayplots and self.refine and (maskval != 0.0):
+        if self.displayplots and (self.corrfittype != 'none') and (maskval != 0.0):
             fig = pl.figure()
             ax = fig.add_subplot(111)
             ax.set_title('Data and fit')
@@ -728,11 +711,9 @@ class freqtrack:
                                        absmaxsigma=10.0,
                                        absminsigma=0.1,
                                        debug=self.debug,
-                                       findmaxtype='gauss',
+                                       corrfittype='quad',
                                        zerooutbadfit=False,
-                                       refine=True,
-                                       useguess=False,
-                                       fastgauss=False
+                                       useguess=False
                                        )
 
         peakfreqs = np.zeros((thespectrogram.shape[1] - 1), dtype=float)
