@@ -296,7 +296,8 @@ class correlation_fitter:
                  lagmod=1000.0,
                  enforcethresh=True,
                  allowhighfitamps=True,
-                 displayplots=False):
+                 displayplots=False,
+                 refinetype=None):
 
         r"""
 
@@ -359,6 +360,17 @@ class correlation_fitter:
         self.enforcethresh = enforcethresh
         self.allowhighfitamps = allowhighfitamps
         self.displayplots = displayplots
+        if not self.refine:
+            self.refinetype = None
+        else:
+            if refinetype is not None:
+                self.refinetype = refinetype
+            else:
+                if self.findmaxtype == 'gauss':
+                    if self.fastgauss:
+                        self.refinetype = 'fastgauss'
+                    else:
+                        self.refinetype = 'gauss'
 
 
     def _maxindex_noedge(self, corrfunc):
@@ -561,24 +573,10 @@ class correlation_fitter:
             maxsigma = np.float64(maxsigma_init)
 
         # refine if necessary
-        if self.refine:
-            X = self.corrtimeaxis[peakstart:peakend + 1]
-            data = corrfunc[peakstart:peakend + 1]
-            '''if self.debug:
-                print('peakstart, peakend', peakstart, peakend)
-                #for i in range(len(data)):
-                #    print(X[i], data[i], thegrad[i], )
-                pl.figure()
-                pl.plot(X, data, 'b')
-                pl.plot(X,peakpoints[peakstart:peakend + 1], 'r')
-                pl.plot(X, thegrad[peakstart:peakend + 1], 'g')'''
-            if self.fastgauss:
-                # do a non-iterative fit over the top of the peak
-                # 6/12/2015  This is just broken.  Gives quantized maxima
-                maxlag = np.float64(1.0 * sum(X * data) / sum(data))
-                maxsigma = np.float64(np.sqrt(np.abs(np.sum((X - maxlag) ** 2 * data) / np.sum(data))))
-                maxval = np.float64(data.max())
-            else:
+        if self.refinetype is not None:
+            if self.refinetype == 'gauss':
+                X = self.corrtimeaxis[peakstart:peakend + 1]
+                data = corrfunc[peakstart:peakend + 1]
                 # do a least squares fit over the top of the peak
                 # p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
                 p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype='float64')
@@ -595,6 +593,29 @@ class correlation_fitter:
                     maxsigma = np.float64(0.0)
                 if self.debug:
                     print('fit output array:', [maxval, maxlag, maxsigma])
+            elif self.refinetype == 'fastgauss':
+                X = self.corrtimeaxis[peakstart:peakend + 1]
+                data = corrfunc[peakstart:peakend + 1]
+                # do a non-iterative fit over the top of the peak
+                # 6/12/2015  This is just broken.  Gives quantized maxima
+                maxlag = np.float64(1.0 * np.sum(X * data) / np.sum(data))
+                maxsigma = np.float64(np.sqrt(np.abs(np.sum((X - maxlag) ** 2 * data) / np.sum(data))))
+                maxval = np.float64(data.max())
+            elif self.refinetype == 'quad':
+                alpha = corrfunc[maxindex - 1]
+                beta = corrfunc[maxindex]
+                gamma = corrfunc[maxindex + 1]
+                binsize = self.corrtimeaxis[maxindex + 1] - self.corrtimeaxis[maxindex]
+                offsetbins = 0.5 * (alpha - gamma) / (alpha - 2.0 * beta + gamma)
+                maxlag = maxlag_init + offsetbins * binsize
+                maxval = beta - 0.25 * (alpha - gamma) * offsetbins
+                lr = alpha / np.square((-1.0))
+                lr2 = gamma / np.square(1.0)
+                focallength = 0.5 * (alpha - 2 * beta + gamma)
+                print(lr, lr2, focallength)
+                maxsigma = 1.0
+            else:
+                print('illegal corralation refinement type')
 
             # check for errors in fit
             fitfail = False
