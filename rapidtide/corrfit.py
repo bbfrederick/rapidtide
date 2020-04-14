@@ -66,29 +66,11 @@ def onecorrfitx(correlationfunc,
         flipfac = rt_floatset(1.0)
 
     if not fixdelay:
-        if thefitter.findmaxtype == 'gauss':
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(correlationfunc)
-        else:
-            '''maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_quad(
-                corr_x,
-                flipfac * thetc,
-                lagmin, lagmax, widthlimit,
-                edgebufferfrac=edgebufferfrac,
-                threshval=lthreshval,
-                uthreshval=uthreshval,
-                debug=debug,
-                refine=refine,
-                maxguess=maxguess,
-                useguess=useguess,
-                fastgauss=fastgauss,
-                enforcethresh=enforcethresh,
-                zerooutbadfit=zerooutbadfit,
-                lagmod=lagmod,
-                displayplots=displayplots)'''
-            maxval *= flipfac
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(correlationfunc)
+        maxval *= flipfac
     else:
         # do something different
-        failreason = np.int16(0)
+        failreason = np.uint16(0)
         maxlag = rt_floatset(fixeddelayvalue)
         maxindex = np.int16(bisect.bisect_left(thefitter.corrtimeaxis, fixeddelayvalue))
         maxval = rt_floatset(flipfac * correlationfunc[maxindex])
