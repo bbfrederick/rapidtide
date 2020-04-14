@@ -368,22 +368,35 @@ def resetDispSmart():
 
 def updateCorrelationFunc():
     global overlays, timeaxis, currentloc
-    global corrfunc_ax, corrfuncCurve, corrfuncTLine, corrfuncCurvePoint, corrfuncCaption
+    global corrfunc_ax, corrfuncCurve, corrfitCurve, corrfuncTLine, corrfuncPeakMarker, corrfuncCurvePoint, corrfuncCaption
 
     if corrfunc_ax is not None:
         corrvals = overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
+        fitvals = overlays['gaussout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
         maxval = overlays['lagstrengths'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
+        minval = np.min(overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :])
         maxtime = overlays['lagtimes'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
-        corrfunc_ax.setYRange(-0.5, 1.0, padding=0)
 
         # update the plot
         corrfuncCurve.setData(timeaxis, corrvals)
-        thecaption = "R={0:.2f}, lag={1:.2f}".format(maxval, maxtime)
+        #corrfitCurve.setData(timeaxis, fitvals)
+        if overlays['corrout'].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos] > 0:
+            thecaption = "lag={1:.2f}, R={0:.2f}".format(maxval, maxtime)
+        else:
+            maxval = np.max(overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :])
+            maxtime = float(tide_util.valtoindex(timeaxis, np.argmax(overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :])))
+            thecaption = "No valid fit"
+        corrfunc_ax.setYRange(minval - 0.1, maxval + 0.3, padding=0)
         corrfuncCaption.setText(thecaption)
         print('current tpos:', currentloc.tpos)
         print('setting line location:', timeaxis[currentloc.tpos])
         corrfuncTLine.setPos(timeaxis[currentloc.tpos])
         corrfuncCurvePoint.setPos(float(tide_util.valtoindex(timeaxis, maxtime)) / (len(timeaxis) - 1))
+        if overlays['corrout'].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos] > 0:
+            corrfuncPeakMarker.setData(x=[maxtime], y=[maxval], symbol='d')
+        else:
+            corrfuncPeakMarker.setData(x=[], y=[], symbol='d')
+
 
 
 def updateHistogram():
@@ -1252,6 +1265,16 @@ def main():
                 'colormap': thermal_state,
                 'label': 'Correlation function',
                 'funcmask': 'p_lt_0p050_mask'},
+        'gaussout':
+            {
+                'colormap': thermal_state,
+                'label': 'Gauss fit',
+                'funcmask': 'p_lt_0p050_mask'},
+        'failreason':
+            {
+                'colormap': spectrum_state,
+                'label': 'Fit failure reason',
+                'funcmask': 'p_lt_0p050_mask'},
         'anatomic':
             {
                 'colormap': gray_state,
@@ -1575,7 +1598,7 @@ def main():
 
     # set up the correlation function window
     print('about to set up the correlation function window')
-    global corrfunc_ax, corrfuncCurve, corrfuncTLine, corrfuncCurvePoint, corrfuncCaption
+    global corrfunc_ax, corrfuncCurve, corrfitCurve, corrfuncTLine, corrfuncPeakMarker, corrfuncCurvePoint, corrfuncCaption
     try:
         print('setting up correlation window')
         corrfunctitle = ui.corrfunc_groupBox.title()
@@ -1592,12 +1615,25 @@ def main():
                                         pen=pg.mkPen('w', width=1),
                                         clear=True,
                                         clickable=True)
+        '''corrfitCurve = corrfunc_ax.plot(timeaxis, 0.0 * timeaxis,
+                                        stepMode=False,
+                                        fillLevel=0,
+                                        pen=pg.mkPen('r', width=1),
+                                        clear=True,
+                                        clickable=True)'''
         corrfuncTLine = corrfunc_ax.addLine(x=timeaxis[0], pen='g')
         corrfuncCurvePoint = pg.CurvePoint(corrfuncCurve)
+        corrfuncPeakMarker = pg.ScatterPlotItem(x=[],
+                                                y=[],
+                                                pen=pg.mkPen('w', width=1),
+                                                brush='b',
+                                                size=10,
+                                                pxMode=True)
+        corrfunc_ax.addItem(corrfuncPeakMarker)
         corrfuncCaption = pg.TextItem('placeholder', anchor=(0.5, 1.0))
         corrfuncCaption.setParentItem(corrfuncCurvePoint)
-        arrow2 = pg.ArrowItem(angle=90)
-        arrow2.setParentItem(corrfuncCurvePoint)
+        #arrow2 = pg.ArrowItem(angle=90)
+        #arrow2.setParentItem(corrfuncPeakMarker)
         corrfuncCurve.scene().sigMouseClicked.connect(updateTimepoint)
     except:
         corrfunc_ax = None
