@@ -2,13 +2,14 @@
 
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr \
+	../dst/dgsr_quad \
         --delaymapping \
         --sigmalimit 25.0 \
         --ampthresh 0.3 \
         --nprocs -1 \
         --pickleft \
         --pickleftthresh 0.3 \
+        --corrrefinetype quad \
 	--spatialfilt 2 
 
 #rapidtide2x \
@@ -30,4 +31,4 @@ rapidtide \
         #--noglm \
         #--detrendorder=3
 
-diffmaps ../dst/dgsr_hpcorrelation ../dst/dgsr ../dst/diff
+diffmaps ../dst/dgsr_quad ../dst/dgsr ../dst/diff
