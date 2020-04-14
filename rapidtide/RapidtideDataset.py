@@ -557,6 +557,8 @@ class RapidtideDataset:
                         'maxamp_epoch_0']
         if self.usecorrout:
             self.funcmaps += ['corrout']
+            self.funcmaps += ['gaussout']
+            self.funcmaps += ['failreason']
         self._loadfuncmaps()
         for themap in self.loadedfuncmaps:
             if self.forcetr:
