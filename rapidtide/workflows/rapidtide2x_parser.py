@@ -389,6 +389,7 @@ def process_args():
     optiondict['searchfrac'] = 0.5  # The fraction of the main peak over which points are included in the peak
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
     optiondict['findmaxtype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
+    optiondict['refinetype'] = None
     optiondict['acwidth'] = 0.0  # width of the reference autocorrelation function
     optiondict['absmaxsigma'] = 100.0  # width of the reference autocorrelation function
     optiondict['absminsigma'] = 0.25  # width of the reference autocorrelation function

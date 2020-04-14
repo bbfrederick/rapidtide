@@ -849,6 +849,7 @@ def rapidtide_main(argparsingfunc):
                                              absminsigma=optiondict['absminsigma'],
                                              debug=optiondict['debug'],
                                              findmaxtype=optiondict['findmaxtype'],
+                                             refinetype=optiondict['refinetype'],
                                              refine=optiondict['gaussrefine'],
                                              searchfrac=optiondict['searchfrac'],
                                              fastgauss=optiondict['fastgauss'],

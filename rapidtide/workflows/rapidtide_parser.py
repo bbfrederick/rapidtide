@@ -489,6 +489,17 @@ def _get_parser():
                                 "quadratic fit.  Faster but not as well "
                                 "tested. "),
                           default='gauss')
+    corr_fit.add_argument('--corrrefinetype',
+                          dest='refinetype',
+                          action='store',
+                          type=str,
+                          choices=['gauss', 'fastgauss', 'quad'],
+                          help=("Method for fitting the correlation peak "
+                                "(default is 'gauss'). 'quad' uses a "
+                                "quadratic fit.  Faster but not as well "
+                                "tested. "),
+                          default=None)
+
     corr_fit.add_argument('--despecklepasses',
                           dest='despeckle_passes',
                           action=indicatespecifiedAction,
