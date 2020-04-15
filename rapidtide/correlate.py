@@ -375,7 +375,7 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
 
 class aliasedcorrelator:
 
-    def __init__(self, hiressignal, hires_Fs, lores_Fs, timerange, hiresstarttime=0.0, loresstarttime=0.0, padvalue=30.0):
+    def __init__(self, hiressignal, hires_Fs, lores_Fs, timerange, hiresstarttime=0.0, loresstarttime=0.0, padtime=30.0):
         """
 
         Parameters
@@ -397,8 +397,8 @@ class aliasedcorrelator:
         self.timerange = timerange
         self.loresstarttime = loresstarttime
         self.highresaxis = np.arange(0.0, len(self.hiressignal)) * (1.0 / self.hires_Fs) - self.hiresstarttime
-        self.padvalue = padvalue
-        self.tcgenerator = tide_resample.fastresampler(self.highresaxis, self.hiressignal, padvalue=self.padvalue)
+        self.padtime = padtime
+        self.tcgenerator = tide_resample.fastresampler(self.highresaxis, self.hiressignal, padtime=self.padtime)
         self.aliasedsignals = {}
 
     def apply(self, loressignal, extraoffset):
@@ -433,7 +433,7 @@ class aliasedcorrelator:
         return corrfunc
 
 
-def aliasedcorrelate(hiressignal, hires_Fs, lowressignal, lowres_Fs, timerange, hiresstarttime=0.0, lowresstarttime=0.0, padvalue=30.0):
+def aliasedcorrelate(hiressignal, hires_Fs, lowressignal, lowres_Fs, timerange, hiresstarttime=0.0, lowresstarttime=0.0, padtime=30.0):
     """
 
     Parameters
@@ -456,7 +456,7 @@ def aliasedcorrelate(hiressignal, hires_Fs, lowressignal, lowres_Fs, timerange, 
     """
     highresaxis = np.arange(0.0, len(hiressignal)) * (1.0 / hires_Fs) - hiresstarttime
     lowresaxis = np.arange(0.0, len(lowressignal)) * (1.0 / lowres_Fs) - lowresstarttime
-    tcgenerator = tide_resample.fastresampler(highresaxis, hiressignal, padvalue=padvalue)
+    tcgenerator = tide_resample.fastresampler(highresaxis, hiressignal, padtime=padtime)
     targetsignal = tide_math.corrnormalize(lowressignal)
     corrfunc = timerange * 0.0
     for i in range(len(timerange)):

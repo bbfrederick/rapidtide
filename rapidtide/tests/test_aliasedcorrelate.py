@@ -40,9 +40,9 @@ def test_aliasedcorrelate(display=False):
     for theinfo in siginfo:
         sighi += theinfo[0] * np.sin(theinfo[1] * hiaxis)
         siglo += theinfo[0] * np.sin(theinfo[1] * loaxis)
-    aliasedcorrelate_result = aliasedcorrelate(sighi, Fs_hi, siglo, Fs_lo, timerange, padvalue=width)
+    aliasedcorrelate_result = aliasedcorrelate(sighi, Fs_hi, siglo, Fs_lo, timerange, padtime=width)
 
-    thecorrelator = aliasedcorrelator(sighi, Fs_hi, Fs_lo, timerange, padvalue=width)
+    thecorrelator = aliasedcorrelator(sighi, Fs_hi, Fs_lo, timerange, padtime=width)
     aliasedcorrelate_result2 = thecorrelator.apply(siglo, 0.0)
     
     if display:

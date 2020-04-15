@@ -256,39 +256,39 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', cyclic=True, debug=False):
 
 
 class fastresampler:
-    def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100, doplot=False, debug=False,
+    def __init__(self, timeaxis, timecourse, padtime=30.0, upsampleratio=100, doplot=False, debug=False,
                  method='univariate'):
         self.upsampleratio = upsampleratio
-        self.padvalue = padvalue
+        self.padtime = padtime
         self.initstep = timeaxis[1] - timeaxis[0]
         self.initstart = timeaxis[0]
         self.initend = timeaxis[-1]
         self.hiresstep = self.initstep / np.float64(self.upsampleratio)
-        self.hires_x = np.arange(timeaxis[0] - self.padvalue, self.initstep * len(timeaxis) + self.padvalue,
+        self.hires_x = np.arange(timeaxis[0] - self.padtime, self.initstep * len(timeaxis) + self.padtime,
                                  self.hiresstep)
         self.hiresstart = self.hires_x[0]
         self.hiresend = self.hires_x[-1]
         if method == 'poly':
             self.hires_y = 0.0 * self.hires_x
-            self.hires_y[int(self.padvalue // self.hiresstep) + 1:-(int(self.padvalue // self.hiresstep) + 1)] = \
+            self.hires_y[int(self.padtime // self.hiresstep) + 1:-(int(self.padtime // self.hiresstep) + 1)] = \
                 signal.resample_poly(timecourse, np.int(self.upsampleratio * 10), 10)
         elif method == 'fourier':
             self.hires_y = 0.0 * self.hires_x
-            self.hires_y[int(self.padvalue // self.hiresstep) + 1:-(int(self.padvalue // self.hiresstep) + 1)] = \
+            self.hires_y[int(self.padtime // self.hiresstep) + 1:-(int(self.padtime // self.hiresstep) + 1)] = \
                 signal.resample(timecourse, self.upsampleratio * len(timeaxis))
         else:
             self.hires_y = doresample(timeaxis, timecourse, self.hires_x, method=method)
-        self.hires_y[:int(self.padvalue // self.hiresstep)] = self.hires_y[int(self.padvalue // self.hiresstep)]
-        self.hires_y[-int(self.padvalue // self.hiresstep):] = self.hires_y[-int(self.padvalue // self.hiresstep)]
+        self.hires_y[:int(self.padtime // self.hiresstep)] = self.hires_y[int(self.padtime // self.hiresstep)]
+        self.hires_y[-int(self.padtime // self.hiresstep):] = self.hires_y[-int(self.padtime // self.hiresstep)]
         if debug:
             print('fastresampler __init__:')
-            print('    padvalue:, ', self.padvalue)
+            print('    padtime:, ', self.padtime)
             print('    initstep, hiresstep:', self.initstep, self.hiresstep)
             print('    initial axis limits:', self.initstart, self.initend)
             print('    hires axis limits:', self.hiresstart, self.hiresend)
 
-        # self.hires_y[:int(self.padvalue // self.hiresstep)] = 0.0
-        # self.hires_y[-int(self.padvalue // self.hiresstep):] = 0.0
+        # self.hires_y[:int(self.padtime // self.hiresstep)] = 0.0
+        # self.hires_y[-int(self.padtime // self.hiresstep):] = 0.0
         if doplot:
             fig = pl.figure()
             ax = fig.add_subplot(111)
@@ -300,7 +300,7 @@ class fastresampler:
     def yfromx(self, newtimeaxis, doplot=False, debug=False):
         if debug:
             print('fastresampler: yfromx called with following parameters')
-            print('    padvalue:, ', self.padvalue)
+            print('    padtime:, ', self.padtime)
             print('    initstep, hiresstep:', self.initstep, self.hiresstep)
             print('    initial axis limits:', self.initstart, self.initend)
             print('    hires axis limits:', self.hiresstart, self.hiresend)
@@ -313,7 +313,7 @@ class fastresampler:
         except IndexError:
             print('')
             print('indexing out of bounds in fastresampler')
-            print('    padvalue:, ', self.padvalue)
+            print('    padtime:, ', self.padtime)
             print('    initstep, hiresstep:', self.initstep, self.hiresstep)
             print('    initial axis limits:', self.initstart, self.initend)
             print('    hires axis limits:', self.hiresstart, self.hiresend)

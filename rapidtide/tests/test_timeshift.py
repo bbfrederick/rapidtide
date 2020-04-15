@@ -28,7 +28,7 @@ from rapidtide.tests.utils import mse
 
 def test_timeshift(debug=False):
     tr = 1.0
-    padvalue = 300.0
+    padtime = 300.0
     testlen = 1000
     shiftdist = 30
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
@@ -58,7 +58,7 @@ def test_timeshift(debug=False):
 
         # generate the fast resampled regressor
         #tcshifted = genlaggedtc.yfromx(timeaxis - shiftdist, debug=debug)
-        tcshifted, weights, alltc, allweights = timeshift(timecoursein, 1.0 * shiftdist, int(padvalue // tr), doplot=False)
+        tcshifted, weights, alltc, allweights = timeshift(timecoursein, 1.0 * shiftdist, int(padtime // tr), doplot=False)
 
         # print out all elements
         print("len tcrolled=", len(tcrolled), "len tcshifted=", len(tcshifted))

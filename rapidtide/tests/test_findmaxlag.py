@@ -59,7 +59,7 @@ def eval_fml_result(absmin, absmax, testvalues, foundvalues, failflags, toleranc
     return True
 
 
-def test_findmaxlag(display=False, debug=False):
+def test_findmaxlag(display=False, fittype='gauss', debug=False):
     textfilename = op.join(get_test_data_path(), 'lt_rt.txt')
 
     # set default variable values
@@ -101,7 +101,8 @@ def test_findmaxlag(display=False, debug=False):
                                                 lagmax=lagmax,
                                                 absmaxsigma=absmaxsigma,
                                                 absminsigma=absminsigma,
-                                                refine=True, debug=debug,
+                                                corrfittype=fittype,
+                                                debug=debug,
                                                 searchfrac=searchfrac,
                                                 zerooutbadfit=False)
 

@@ -30,7 +30,7 @@ import scipy as sp
 import numpy as np
 
 
-def prepareband(fmridims, pctfile, lagfile, regressorfile, samprate, starttime, regressorname, padvalue=30.0):
+def prepareband(fmridims, pctfile, lagfile, regressorfile, samprate, starttime, regressorname, padtime=30.0):
     # read in the timecourse to resample
     rawvec = tide_math.stdnormalize(tide_io.readvec(regressorfile))
     regressorpts = len(rawvec)
@@ -50,7 +50,7 @@ def prepareband(fmridims, pctfile, lagfile, regressorfile, samprate, starttime, 
         print(regressorname, "lag file does not match fmri")
         exit()
 
-    generator = tide_resample.fastresampler(regressor_x, regressor_y, padvalue=padvalue, doplot=False)
+    generator = tide_resample.fastresampler(regressor_x, regressor_y, padtime=padtime, doplot=False)
     return pctdata, lagdata, generator
 
 
@@ -311,9 +311,9 @@ def simdata_main(thearguments):
     simdata = np.zeros((xsize, ysize, numslices, len(initial_fmri_x)), dtype='float')
 
     # set up fast resampling
-    padvalue = 60.0
-    numpadtrs = int(padvalue / fmritr)
-    padvalue = fmritr * numpadtrs
+    padtime = 60.0
+    numpadtrs = int(padtime / fmritr)
+    padtime = fmritr * numpadtrs
 
     # prepare the input data for interpolation
     if dolfo:
@@ -324,7 +324,7 @@ def simdata_main(thearguments):
                                                            lfosamprate,
                                                            lfostarttime,
                                                            "LFO",
-                                                           padvalue=padvalue)
+                                                           padtime=padtime)
     if doresp:
         resppctdata, resplagdata, respgenerator = prepareband(fmridims,
                                                            resppctfile,
@@ -333,7 +333,7 @@ def simdata_main(thearguments):
                                                            respsamprate,
                                                            respstarttime,
                                                            "respiratory",
-                                                           padvalue=padvalue)
+                                                           padtime=padtime)
     if docardiac:
         cardiacpctdata, cardiaclagdata, cardiacgenerator = prepareband(fmridims,
                                                            cardiacpctfile,
@@ -342,7 +342,7 @@ def simdata_main(thearguments):
                                                            cardiacsamprate,
                                                            cardiacstarttime,
                                                            "cardiac",
-                                                           padvalue=padvalue)
+                                                           padtime=padtime)
 
     # loop over space
     for k in range(0, numslices):

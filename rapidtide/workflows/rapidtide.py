@@ -824,11 +824,11 @@ def rapidtide_main(argparsingfunc):
         outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
 
     # prepare for fast resampling
-    padvalue = max((-optiondict['lagmin'], optiondict['lagmax'])) + 30.0 + np.abs(optiondict['offsettime'])
-    # print('setting up fast resampling with padvalue =',padvalue)
-    numpadtrs = int(padvalue // fmritr)
-    padvalue = fmritr * numpadtrs
-    genlagtc = tide_resample.fastresampler(reference_x, reference_y, padvalue=padvalue)
+    padtime = max((-optiondict['lagmin'], optiondict['lagmax'])) + 30.0 + np.abs(optiondict['offsettime'])
+    print('setting up fast resampling with padtime =', padtime)
+    numpadtrs = int(padtime // fmritr)
+    padtime = fmritr * numpadtrs
+    genlagtc = tide_resample.fastresampler(reference_x, reference_y, padtime=padtime)
 
     # cycle over all voxels
     refine = True
@@ -1235,7 +1235,7 @@ def rapidtide_main(argparsingfunc):
                 resampref_y -= thefit[0, 1] * tmaskos_y
 
             # reinitialize lagtc for resampling
-            genlagtc = tide_resample.fastresampler(initial_fmri_x, normoutputdata, padvalue=padvalue)
+            genlagtc = tide_resample.fastresampler(initial_fmri_x, normoutputdata, padtime=padtime)
             nonosrefname = '_reference_fmrires_pass' + str(thepass + 1) + '.txt'
             osrefname = '_reference_resampres_pass' + str(thepass + 1) + '.txt'
             optiondict['kurtosis_reference_pass' + str(thepass + 1)], \

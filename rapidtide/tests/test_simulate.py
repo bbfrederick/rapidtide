@@ -71,11 +71,11 @@ def test_simulate(display=False):
     fmriucut = fmrifreq / 2.0
 
     # set up fast resampling
-    padvalue = 60.0
-    numpadtrs = int(padvalue / fmritr)
-    padvalue = fmritr * numpadtrs
+    padtime = 60.0
+    numpadtrs = int(padtime / fmritr)
+    padtime = fmritr * numpadtrs
 
-    genlagtc = tide_res.fastresampler(nirs_x, nirs_y, padvalue=padvalue, doplot=False)
+    genlagtc = tide_res.fastresampler(nirs_x, nirs_y, padtime=padtime, doplot=False)
     initial_fmri_y = genlagtc.yfromx(initial_fmri_x)
 
     if display:

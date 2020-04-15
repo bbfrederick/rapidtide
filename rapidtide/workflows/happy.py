@@ -1843,7 +1843,7 @@ def happy_main(thearguments):
             else:
                 signal_stdres = dlfilteredcard
             corrsearchvals = np.linspace(0.0, aliasedcorrelationwidth, num=aliasedcorrelationpts) - aliasedcorrelationwidth / 2.0
-            thecorrelator = tide_corr.aliasedcorrelator(signal_stdres, stdfreq, mrsamplerate, corrsearchvals, padvalue=aliasedcorrelationwidth)
+            thecorrelator = tide_corr.aliasedcorrelator(signal_stdres, stdfreq, mrsamplerate, corrsearchvals, padtime=aliasedcorrelationwidth)
             thecorrfunc = np.zeros((xsize, ysize, numslices, aliasedcorrelationpts), dtype=np.float64)
             thecorrfunc_byslice = thecorrfunc.reshape((xsize * ysize, numslices, aliasedcorrelationpts))
             wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float)

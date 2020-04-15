@@ -23,7 +23,7 @@ from rapidtide.tests.utils import mse
 
 def test_fastresampler(debug=False):
     tr = 1.0
-    padvalue = 30.0
+    padtime = 30.0
     testlen = 1000
     shiftdist = 30
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
@@ -38,7 +38,7 @@ def test_fastresampler(debug=False):
     shiftlist = [-30, -20, -10, 0, 10, 20, 30]
 
     # generate the fast resampled regressor
-    genlaggedtc = fastresampler(timeaxis, timecoursein, padvalue=padvalue)
+    genlaggedtc = fastresampler(timeaxis, timecoursein, padtime=padtime)
 
     if debug:
         plt.figure()

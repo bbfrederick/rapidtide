@@ -1281,7 +1281,7 @@ def happy_main(argparsingfunc):
             else:
                 signal_stdres = dlfilteredcard
             corrsearchvals = np.linspace(0.0, args.aliasedcorrelationwidth, num=args.aliasedcorrelationpts) - args.aliasedcorrelationwidth / 2.0
-            thecorrelator = tide_corr.aliasedcorrelator(signal_stdres, args.stdfreq, mrsamplerate, corrsearchvals, padvalue=args.aliasedcorrelationwidth)
+            thecorrelator = tide_corr.aliasedcorrelator(signal_stdres, args.stdfreq, mrsamplerate, corrsearchvals, padtime=args.aliasedcorrelationwidth)
             thecorrfunc = np.zeros((xsize, ysize, numslices, args.aliasedcorrelationpts), dtype=np.float64)
             thecorrfunc_byslice = thecorrfunc.reshape((xsize * ysize, numslices, args.aliasedcorrelationpts))
             wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float)
