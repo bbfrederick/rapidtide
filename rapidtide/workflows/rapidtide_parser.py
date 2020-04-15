@@ -483,9 +483,9 @@ def _get_parser():
                           dest='corrfittype',
                           action='store',
                           type=str,
-                          choices=['gauss', 'fastgauss', 'quad', 'none'],
+                          choices=['gauss', 'fastgauss', 'quad', 'fastquad', 'none'],
                           help=("Method for fitting the correlation peak "
-                                "(default is 'gauss'). 'quad' uses a "
+                                "(default is 'gauss'). 'quad' and 'fastquad' use a "
                                 "quadratic fit.  Faster but not as well "
                                 "tested. "),
                           default='gauss')

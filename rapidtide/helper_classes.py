@@ -483,77 +483,81 @@ class correlation_fitter:
             print('maxindex, maxlag_init, maxval_init:', maxindex, maxlag_init, maxval_init)
 
         # then calculate the width of the peak
-        thegrad = np.gradient(corrfunc).astype('float64')  # the gradient of the correlation function
-        peakpoints = np.where(corrfunc > self.searchfrac * maxval_init, 1,
-                              0)  # mask for places where correlaion exceeds serchfrac*maxval_init
-        peakpoints[0] = 0
-        peakpoints[-1] = 0
-        peakstart = np.max([1, maxindex - 1])
-        peakend = np.min([len(self.corrtimeaxis) - 2, maxindex + 1])
-        while thegrad[peakend + 1] <= 0.0 and peakpoints[peakend + 1] == 1:
-            peakend += 1
-        while thegrad[peakstart - 1] >= 0.0 and peakpoints[peakstart - 1] == 1:
-            peakstart -= 1
-
-        # deal with flat peak top
-        while peakend < (len(self.corrtimeaxis) - 3) and corrfunc[peakend] == corrfunc[peakend - 1]:
-            peakend += 1
-        while peakstart > 2 and corrfunc[peakstart] == corrfunc[peakstart + 1]:
-            peakstart -= 1
-
-        # This is calculated from first principles, but it's always big by a factor or ~1.4.
-        #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
-        maxsigma_init = np.float64(
-            ((peakend - peakstart + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac)))) / np.sqrt(2.0))
-        if self.debug:
-            print('maxsigma_init:', maxsigma_init)
-
-        # now check the values for errors
-        if self.hardlimit:
-            rangeextension = 0.0
+        if self.corrfittype == 'fastquad':
+            peakstart = maxindex - 1
+            peakend = maxindex + 1
         else:
-            rangeextension = (self.lagmax - self.lagmin) * 0.75
-        if not ((self.lagmin - rangeextension - binwidth) <= maxlag_init <= (self.lagmax + rangeextension + binwidth)):
-            failreason |= (self.FML_INITFAIL | self.FML_BADLAG)
-            if maxlag_init <= (self.lagmin - rangeextension - binwidth):
-                maxlag_init = self.lagmin - rangeextension - binwidth
-            else:
-                maxlag_init = self.lagmax + rangeextension + binwidth
-            if self.debug:
-                print('bad initial')
-        if maxsigma_init > self.absmaxsigma:
-            failreason |= (self.FML_INITFAIL | self.FML_BADWIDTHHIGH)
-            maxsigma_init = self.absmaxsigma
-            if self.debug:
-                print('bad initial width - too high')
-        if peakend - peakstart < 2:
-            failreason |= (self.FML_INITFAIL | self.FML_BADSEARCHWINDOW)
+            thegrad = np.gradient(corrfunc).astype('float64')  # the gradient of the correlation function
+            peakpoints = np.where(corrfunc > self.searchfrac * maxval_init, 1,
+                                  0)  # mask for places where correlaion exceeds serchfrac*maxval_init
+            peakpoints[0] = 0
+            peakpoints[-1] = 0
+            peakstart = np.max([1, maxindex - 1])
+            peakend = np.min([len(self.corrtimeaxis) - 2, maxindex + 1])
+            while thegrad[peakend + 1] <= 0.0 and peakpoints[peakend + 1] == 1:
+                peakend += 1
+            while thegrad[peakstart - 1] >= 0.0 and peakpoints[peakstart - 1] == 1:
+                peakstart -= 1
+
+            # deal with flat peak top
+            while peakend < (len(self.corrtimeaxis) - 3) and corrfunc[peakend] == corrfunc[peakend - 1]:
+                peakend += 1
+            while peakstart > 2 and corrfunc[peakstart] == corrfunc[peakstart + 1]:
+                peakstart -= 1
+
+            # This is calculated from first principles, but it's always big by a factor or ~1.4.
+            #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
             maxsigma_init = np.float64(
-                ((2 + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac)))) / np.sqrt(2.0))
+                ((peakend - peakstart + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac)))) / np.sqrt(2.0))
             if self.debug:
-                print('bad initial width - too low')
-        if not (self.lthreshval <= maxval_init <= self.uthreshval) and self.enforcethresh:
-            failreason |= (self.FML_INITFAIL | self.FML_BADAMPLOW)
-            if self.debug:
-                print('bad initial amp:', maxval_init, 'is less than', self.lthreshval)
-        if (maxval_init < 0.0):
-            failreason |= (self.FML_INITFAIL | self.FML_BADAMPLOW)
-            maxval_init = 0.0
-            if self.debug:
-                print('bad initial amp:', maxval_init, 'is less than 0.0')
-        if (maxval_init > 1.0):
-            failreason |= (self.FML_INITFAIL | self.FML_BADAMPHIGH)
-            maxval_init = 1.0
-            if self.debug:
-                print('bad initial amp:', maxval_init, 'is greater than 1.0')
-        if failreason != self.FML_NOERROR and self.zerooutbadfit:
-            maxval = np.float64(0.0)
-            maxlag = np.float64(0.0)
-            maxsigma = np.float64(0.0)
-        else:
-            maxval = np.float64(maxval_init)
-            maxlag = np.float64(maxlag_init)
-            maxsigma = np.float64(maxsigma_init)
+                print('maxsigma_init:', maxsigma_init)
+
+            # now check the values for errors
+            if self.hardlimit:
+                rangeextension = 0.0
+            else:
+                rangeextension = (self.lagmax - self.lagmin) * 0.75
+            if not ((self.lagmin - rangeextension - binwidth) <= maxlag_init <= (self.lagmax + rangeextension + binwidth)):
+                failreason |= (self.FML_INITFAIL | self.FML_BADLAG)
+                if maxlag_init <= (self.lagmin - rangeextension - binwidth):
+                    maxlag_init = self.lagmin - rangeextension - binwidth
+                else:
+                    maxlag_init = self.lagmax + rangeextension + binwidth
+                if self.debug:
+                    print('bad initial')
+            if maxsigma_init > self.absmaxsigma:
+                failreason |= (self.FML_INITFAIL | self.FML_BADWIDTHHIGH)
+                maxsigma_init = self.absmaxsigma
+                if self.debug:
+                    print('bad initial width - too high')
+            if peakend - peakstart < 2:
+                failreason |= (self.FML_INITFAIL | self.FML_BADSEARCHWINDOW)
+                maxsigma_init = np.float64(
+                    ((2 + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac)))) / np.sqrt(2.0))
+                if self.debug:
+                    print('bad initial width - too low')
+            if not (self.lthreshval <= maxval_init <= self.uthreshval) and self.enforcethresh:
+                failreason |= (self.FML_INITFAIL | self.FML_BADAMPLOW)
+                if self.debug:
+                    print('bad initial amp:', maxval_init, 'is less than', self.lthreshval)
+            if (maxval_init < 0.0):
+                failreason |= (self.FML_INITFAIL | self.FML_BADAMPLOW)
+                maxval_init = 0.0
+                if self.debug:
+                    print('bad initial amp:', maxval_init, 'is less than 0.0')
+            if (maxval_init > 1.0):
+                failreason |= (self.FML_INITFAIL | self.FML_BADAMPHIGH)
+                maxval_init = 1.0
+                if self.debug:
+                    print('bad initial amp:', maxval_init, 'is greater than 1.0')
+            if failreason != self.FML_NOERROR and self.zerooutbadfit:
+                maxval = np.float64(0.0)
+                maxlag = np.float64(0.0)
+                maxsigma = np.float64(0.0)
+            else:
+                maxval = np.float64(maxval_init)
+                maxlag = np.float64(maxlag_init)
+                maxsigma = np.float64(maxsigma_init)
 
         # refine if necessary
         if self.corrfittype != 'none':
@@ -584,7 +588,7 @@ class correlation_fitter:
                 maxlag = np.float64(1.0 * np.sum(X * data) / np.sum(data))
                 maxsigma = np.float64(np.sqrt(np.abs(np.sum((X - maxlag) ** 2 * data) / np.sum(data))))
                 maxval = np.float64(data.max())
-            elif self.corrfittype == 'quad':
+            elif self.corrfittype == 'fastquad':
                 alpha = corrfunc[maxindex - 1]
                 beta = corrfunc[maxindex]
                 gamma = corrfunc[maxindex + 1]
@@ -595,8 +599,18 @@ class correlation_fitter:
                 lr = alpha / np.square((-1.0))
                 lr2 = gamma / np.square(1.0)
                 focallength = 0.5 * (alpha - 2 * beta + gamma)
-                print(lr, lr2, focallength)
+                #print(lr, lr2, focallength)
                 maxsigma = 1.0
+            elif self.corrfittype == 'quad':
+                X = self.corrtimeaxis[peakstart:peakend + 1]
+                data = corrfunc[peakstart:peakend + 1]
+                thecoffs = np.polyfit(X, data, 2)
+                a = thecoffs[0]
+                b = thecoffs[1]
+                c = thecoffs[2]
+                maxlag = -b / (2.0 * a)
+                maxval = c - np.square(b) * 0.25
+                maxsigma = a
             else:
                 print('illegal corralation refinement type')
 
@@ -711,7 +725,7 @@ class freqtrack:
                                        absmaxsigma=10.0,
                                        absminsigma=0.1,
                                        debug=self.debug,
-                                       corrfittype='quad',
+                                       corrfittype='fastquad',
                                        zerooutbadfit=False,
                                        useguess=False
                                        )
