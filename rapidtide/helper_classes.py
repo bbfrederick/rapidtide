@@ -600,8 +600,9 @@ class correlation_fitter:
                 offsetbins = 0.5 * (alpha - gamma) / (alpha - 2.0 * beta + gamma)
                 maxlag = maxlag_init + offsetbins * binsize
                 maxval = beta - 0.25 * (alpha - gamma) * offsetbins
-                lr0 =  np.square(self.corrtimeaxis[maxindex - 1] - maxlag) / (alpha - maxval)
-                maxsigma = np.fabs(lr0) / 10.0
+                a = np.square(self.corrtimeaxis[maxindex - 1] - maxlag) / (alpha - maxval)
+                maxsigma = np.sqrt(np.fabs(a) / 2.0)
+                #maxsigma = np.sqrt(-1.0 / (2.0 * a))
             elif self.corrfittype == 'quad':
                 X = self.corrtimeaxis[peakstart:peakend + 1]
                 data = corrfunc[peakstart:peakend + 1]
@@ -611,7 +612,7 @@ class correlation_fitter:
                 c = thecoffs[2]
                 maxlag = -b / (2.0 * a)
                 maxval = c - np.square(b) * 0.25
-                maxsigma = 100.0 * np.fabs(a)
+                maxsigma = np.sqrt(np.fabs(a) / 2.0)
             else:
                 print('illegal corralation refinement type')
 
