@@ -574,7 +574,7 @@ def refinepeak_quad(x, y, peakindex, stride=1):
     badfit = False
     if peakindex < stride - 1 or peakindex > len(x) - 1 - stride:
         print('cannot estimate peak location at end points')
-        return None, None, None, None, True
+        return 0.0, 0.0, 0.0, None, True
     if y[peakindex] >= y[peakindex - stride] and y[peakindex] >= y[peakindex + stride]:
         ismax = True
     elif y[peakindex] <= y[peakindex - stride] and y[peakindex] <= y[peakindex + stride]:
