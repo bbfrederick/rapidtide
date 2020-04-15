@@ -88,7 +88,7 @@ class overlay:
     "Store a data overlay and some information about it"
 
     def __init__(self, name, filename, namebase, funcmask=None, geommask=None, label=None, report=False,
-                 lut_state=gray_state, isaMask=False, verbose=False):
+                 lut_state=gray_state, display_state=True, isaMask=False, verbose=False):
         self.verbose = verbose
         self.name = name
         if label is None:
@@ -109,6 +109,7 @@ class overlay:
         self.updateStats()
         self.gradient = pg.GradientWidget(orientation='right', allowAdd=True)
         self.lut_state = lut_state
+        self.display_state = display_state
         self.theLUT = None
         self.setLUT(self.lut_state)
         self.space = 'unspecified'
@@ -258,6 +259,9 @@ class overlay:
         self.lut_state = lut_state
         self.gradient.restoreState(lut_state)
         self.theLUT = self.gradient.getLookupTable(512, alpha=True)
+
+    def setisdisplayed(self, display_state):
+        self.display_state = display_state
 
     def summarize(self):
         print()
@@ -558,7 +562,7 @@ class RapidtideDataset:
         if self.usecorrout:
             self.funcmaps += ['corrout']
             self.funcmaps += ['gaussout']
-            self.funcmaps += ['failreason']
+            self.funcmaps += ['failimage']
         self._loadfuncmaps()
         for themap in self.loadedfuncmaps:
             if self.forcetr:
