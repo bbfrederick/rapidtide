@@ -593,16 +593,7 @@ class correlation_fitter:
                 maxsigma = np.float64(np.sqrt(np.abs(np.sum((X - maxlag) ** 2 * data) / np.sum(data))))
                 maxval = np.float64(data.max())
             elif self.corrfittype == 'fastquad':
-                alpha = corrfunc[maxindex - 1]
-                beta = corrfunc[maxindex]
-                gamma = corrfunc[maxindex + 1]
-                binsize = self.corrtimeaxis[maxindex + 1] - self.corrtimeaxis[maxindex]
-                offsetbins = 0.5 * (alpha - gamma) / (alpha - 2.0 * beta + gamma)
-                maxlag = maxlag_init + offsetbins * binsize
-                maxval = beta - 0.25 * (alpha - gamma) * offsetbins
-                a = np.square(self.corrtimeaxis[maxindex - 1] - maxlag) / (alpha - maxval)
-                maxsigma = np.sqrt(np.fabs(a) / 2.0)
-                #maxsigma = np.sqrt(-1.0 / (2.0 * a))
+                maxlag, maxval, maxsigma, ismax, badfit = tide_fit.refinepeak_quad(self.corrtimeaxis, corrfunc, maxindex)
             elif self.corrfittype == 'quad':
                 X = self.corrtimeaxis[peakstart:peakend + 1]
                 data = corrfunc[peakstart:peakend + 1]

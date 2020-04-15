@@ -567,6 +567,35 @@ def territorydecomp(inputmap, template, atlas, inputmask=None, intercept=True, f
 
     return fitmap, thecoffs, theRs
 
+@conditionaljit()
+def refinepeak_quad(x, y, peakindex, stride=1):
+    # first make sure this actually is a peak
+    ismax = None
+    badfit = False
+    if peakindex < stride - 1 or peakindex > len(x) - 1 - stride:
+        print('cannot estimate peak location at end points')
+        return None, None, None, None, True
+    if y[peakindex] >= y[peakindex - stride] and y[peakindex] >= y[peakindex + stride]:
+        ismax = True
+    elif y[peakindex] <= y[peakindex - stride] and y[peakindex] <= y[peakindex + stride]:
+        ismax = False
+    else:
+        badfit = True
+    if y[peakindex] == y[peakindex - stride] and y[peakindex] == y[peakindex + stride]:
+        badfit = True
+
+    # now find all the information about the peak
+    alpha = y[peakindex - stride]
+    beta = y[peakindex]
+    gamma = y[peakindex + stride]
+    binsize = x[peakindex + stride] - x[peakindex]
+    offsetbins = 0.5 * (alpha - gamma) / (alpha - 2.0 * beta + gamma)
+    peakloc = x[peakindex] + offsetbins * binsize
+    peakval = beta - 0.25 * (alpha - gamma) * offsetbins
+    a = np.square(x[peakindex - stride] - peakloc) / (alpha - peakval)
+    peakwidth = np.sqrt(np.fabs(a) / 2.0)
+    return peakloc, peakval, peakwidth, ismax, badfit
+
 
 @conditionaljit2()
 def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
