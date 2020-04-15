@@ -488,7 +488,11 @@ class correlation_fitter:
             peakend = maxindex + 1
         else:
             thegrad = np.gradient(corrfunc).astype('float64')  # the gradient of the correlation function
-            peakpoints = np.where(corrfunc > self.searchfrac * maxval_init, 1,
+            if self.corrfittype == 'quad':
+                peakpoints = np.where(corrfunc > maxval_init - 0.05, 1,
+                                  0)  # mask for places where correlaion exceeds serchfrac*maxval_init
+            else:
+                peakpoints = np.where(corrfunc > self.searchfrac * maxval_init, 1,
                                   0)  # mask for places where correlaion exceeds serchfrac*maxval_init
             peakpoints[0] = 0
             peakpoints[-1] = 0
@@ -596,11 +600,8 @@ class correlation_fitter:
                 offsetbins = 0.5 * (alpha - gamma) / (alpha - 2.0 * beta + gamma)
                 maxlag = maxlag_init + offsetbins * binsize
                 maxval = beta - 0.25 * (alpha - gamma) * offsetbins
-                lr = alpha / np.square((-1.0))
-                lr2 = gamma / np.square(1.0)
-                focallength = 0.5 * (alpha - 2 * beta + gamma)
-                #print(lr, lr2, focallength)
-                maxsigma = 1.0
+                lr0 =  np.square(self.corrtimeaxis[maxindex - 1] - maxlag) / (alpha - maxval)
+                maxsigma = np.fabs(lr0) / 10.0
             elif self.corrfittype == 'quad':
                 X = self.corrtimeaxis[peakstart:peakend + 1]
                 data = corrfunc[peakstart:peakend + 1]
@@ -610,7 +611,7 @@ class correlation_fitter:
                 c = thecoffs[2]
                 maxlag = -b / (2.0 * a)
                 maxval = c - np.square(b) * 0.25
-                maxsigma = a
+                maxsigma = 100.0 * np.fabs(a)
             else:
                 print('illegal corralation refinement type')
 
