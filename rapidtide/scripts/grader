@@ -62,27 +62,21 @@ class KeyPressWindow(QtGui.QMainWindow):
 def incrementgrade(whichfile):
     global alldata, filelist
 
-    if alldata[filelist[whichfile]]['grade'] is None:
-        alldata[filelist[whichfile]]['grade'] = 1
-    else:
-        alldata[filelist[whichfile]]['grade'] += 1
+    alldata[filelist[whichfile]]['grade'] += 1
 
 
 def decrementgrade(whichfile):
     global alldata, filelist
 
-    if alldata[filelist[whichfile]]['grade'] is None:
-        alldata[filelist[whichfile]]['grade'] = -1
-    else:
-        alldata[filelist[whichfile]]['grade'] -= 1
+    alldata[filelist[whichfile]]['grade'] -= 1
+
 
 def writegrades():
     global alldata, filelist, numfiles, outputfile
 
     with open(outputfile, 'w') as thefile:
         for i in range(len(filelist)):
-            if alldata[filelist[i]]['grade'] is not None:
-                thefile.write('{0}, {1}\n'.format(filelist[i], alldata[filelist[i]]['grade']))
+            thefile.write('{0}, {1}\n'.format(filelist[i], alldata[filelist[i]]['grade']))
 
 
 def keyPressed(evt):
@@ -103,47 +97,6 @@ def keyPressed(evt):
         print(evt.key())
 
     updateTimecourse()
-
-
-def selectFile():
-    global datafileroot
-    mydialog = QtGui.QFileDialog()
-    options = mydialog.Options()
-    lagfilename = mydialog.getOpenFileName(options=options, filter="Lag time files (*_lagtimes.nii.gz)")[0]
-    datafileroot = str(lagfilename[:-15])
-
-
-def logstatus(thetextbox, thetext):
-    thetextbox.moveCursor(QtGui.QTextCursor.End)
-    thetextbox.insertPlainText(thetext + '\n')
-    sb = thetextbox.verticalScrollBar()
-    sb.setValue(sb.maximum())
-
-
-# found this routine at https://github.com/abhilb/pyqtgraphutils/blob/master/pyqtgraphutils.py
-class RectangleItem(pg.GraphicsObject):
-    def __init__(self, topLeft, size, color=(0, 128, 0, 128)):
-        pg.GraphicsObject.__init__(self)
-        self.topLeft = topLeft
-        self.size = size
-        self.color = color
-        self.generatePicture()
-
-    def generatePicture(self):
-        self.picture = QtGui.QPicture()
-        p = QtGui.QPainter(self.picture)
-        p.setPen(pg.mkPen(self.color))
-        p.setBrush(pg.mkBrush(self.color))
-        tl = QtCore.QPointF(self.topLeft[0], self.topLeft[1])
-        size = QtCore.QSizeF(self.size[0], self.size[1])
-        p.drawRect(QtCore.QRectF(tl, size))
-        p.end()
-
-    def paint(self, p, *args):
-        p.drawPicture(0, 0, self.picture)
-
-    def boundingRect(self):
-        return QtCore.QRectF(self.picture.boundingRect())
 
 
 def updateTimecourse():
@@ -193,10 +146,17 @@ def main():
     global filelist, outputfile, alldata, whichfile, numfiles
 
     parser = argparse.ArgumentParser(description='A program to sort through timecourses and assign grades')
-    parser.add_argument('filespec',
+    datasource = parser.add_mutually_exclusive_group()
+    datasource.add_argument('--filespec',
                         type=str,
-                        help='A regex (with path) that will select files.  Should be enclosed in quotes')
-    parser.add_argument('outputfile',
+                        help='A regex (with path) that will select files.  Should be enclosed in quotes.',
+                        default=None)
+    datasource.add_argument('--reopen',
+                           type=lambda x: is_valid_file(parser, x),
+                           help='Reopen a previously opened grader session output file.',
+                           default=None)
+
+    parser.add_argument('--outputfile',
                         type=str,
                         help='The name of the output file'
                         )
@@ -218,7 +178,16 @@ def main():
                         help=('Set the sample rate of the data file to 1.0/TSTEP. '
                               'If neither samplerate or sampletime is specified, sample rate is 1.0.'),
                         default='auto')
+
     args = parser.parse_args()
+
+    if (args.filespec is None) and (args.reopen is None):
+        print('a data source must be specified')
+        sys.exit()
+
+    if args.outputfile is None:
+        print('output file must be specified')
+        sys.exit()
 
     # set the sample rate
     if args.samplerate == 'auto':
@@ -227,23 +196,41 @@ def main():
         samplerate = args.samplerate
 
     outputfile = args.outputfile
-    filelist = glob.glob(args.filespec)
-    if len(filelist) == 0:
-        print('filespec returned no files')
+    if args.filespec is not None:
+        filelist = glob.glob(args.filespec)
+        if len(filelist) == 0:
+            print('filespec returned no files')
+            sys.exit()
+        grades = None
+    elif args.reopen is not None:
+        df = pd.read_csv(args.reopen, header=None)
+        filelist = df.iloc[:, 0].to_numpy()
+        if len(filelist) == 0:
+            print('reopen returned no files')
+            sys.exit()
+        grades = df.iloc[:, 1].to_numpy()
+    else:
+        print('either filespec or reopen must be specified')
         sys.exit()
+
     whichfile = 0
 
     print('reading data...')
     alldata = {}
     numfiles = 0
-    for thefile in filelist:
+    for idx in range(len(filelist)):
+        thefile = filelist[idx]
         alldata[thefile] = {}
         invec = tide_io.readvec(thefile)
         alldata[thefile]['timecourse'] = invec * 1.0
         alldata[thefile]['timeaxis'] = np.linspace(0.0, 1.0 * (len(invec) - 1), num=len(invec), endpoint=True) / samplerate
         alldata[thefile]['freqaxis'], alldata[thefile]['spectrum'] = \
             tide_filt.spectrum(tide_filt.hamming(len(invec)) * invec, Fs=samplerate, mode='power')
-        alldata[thefile]['grade'] = None
+        if grades is not None:
+            alldata[thefile]['grade'] = grades[idx]
+            print(filelist[idx], grades[idx])
+        else:
+            alldata[thefile]['grade'] = 0
         numfiles += 1
     print('Read in', numfiles, 'files')
 
