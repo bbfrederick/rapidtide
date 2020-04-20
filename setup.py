@@ -28,7 +28,6 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 addtidepool = True
-addgrader = True
 
 modules_list = ['rapidtide/miscmath',
                 'rapidtide/correlate',
@@ -52,9 +51,6 @@ modules_list = ['rapidtide/miscmath',
 if addtidepool:
     modules_list.append('rapidtide/tidepoolTemplate_qt5')
     modules_list.append('rapidtide/OrthoImageItem')
-
-if addgrader:
-    modules_list.append('rapidtide/graderTemplate_qt5')
 
 script_list = ['rapidtide/scripts/rapidtide2x',
                'rapidtide/scripts/rapidtide',
@@ -99,9 +95,6 @@ script_list = ['rapidtide/scripts/rapidtide2x',
 
 if addtidepool:
     script_list.append('rapidtide/scripts/tidepool')
-
-if addgrader:
-    script_list.append('rapidtide/scripts/grader')
 
 
 def update_gittag_py():
