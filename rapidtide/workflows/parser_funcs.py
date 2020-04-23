@@ -4,6 +4,20 @@ Functions for parsers.
 import os.path as op
 
 
+def is_valid_filespec(parser, arg):
+    """
+    Check if argument is existing file.
+    """
+    if arg is None:
+        parser.error('No file specified')
+
+    thesplit = arg.split(':')
+    if not op.isfile(thesplit[0]):
+        parser.error('The file {0} does not exist!'.format(thesplit[0]))
+
+    return arg
+
+
 def is_valid_file(parser, arg):
     """
     Check if argument is existing file.
