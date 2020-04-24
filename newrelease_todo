@@ -1,6 +1,6 @@
 + Fix the version numbers in files:
 
-    vi setup.py docs/conf.py rapidtide/version.py VERSION INSTALL.rst
+    vi setup.py docs/conf.py rapidtide/version.py VERSION INSTALL.rst Dockerfile
 
     setup.py
         search for version=
@@ -16,6 +16,9 @@
 
     INSTALL.rst
         search for '(currently'
+
+    Dockerfile
+        search for 'org.label-schema.schema-version='
 
 
 + Edit CHANGELOG.md
