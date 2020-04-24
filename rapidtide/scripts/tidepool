@@ -538,7 +538,7 @@ def updateAtlasStats():
         for idx, themap in enumerate(currentdataset.loadedfuncmaps):
             print('loading', averagingmode, 'into', themap + '_atlasstat')
             for regnum, region in enumerate(currentdataset.atlaslabels):
-                if themap is not 'atlas':
+                if themap != 'atlas':
                     overlays[themap + '_atlasstat'].data[np.where(overlays['atlas'].data == (regnum + 1))] = \
                     atlasstats[themap][region][averagingmode]
                 overlays[themap + '_atlasstat'].maskData()
