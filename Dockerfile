@@ -20,6 +20,7 @@ RUN apt-get install -y --no-install-recommends \
                     xterm \
                     libgl1-mesa-glx \
                     libx11-xcb1 \
+                    libqt5x11extras5 \
                     lsb-release \
                     git
 #RUN apt-get install --reinstall libxcb-xinerama0
@@ -95,6 +96,7 @@ RUN conda install -y python=3.7.4 \
                      tensorflow=1.13.1 \
                      pyqtgraph=0.10.0 \
                      pyfftw=0.12.0 \
+                     pillow=7.0.0 \
                      pandas=0.25.3 \
                      numba=0.46.0; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
