@@ -931,8 +931,10 @@ def process_args(inputargs=None):
         elif len(args['arbvec']) != 4:
             raise ValueError("Argument '--arb' must be either two "
                              "or four floats.")
+        # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
+        # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
         theprefilter = tide_filt.noncausalfilter('arb', usetrapfftfilt=inittrap)
-        theprefilter.setfreqs(*args['arbvec'])
+        theprefilter.setfreqs(args['arbvec'][2], args['arbvec'][0], args['arbvec'][1], args['arbvec'][3])
     else:
         theprefilter = tide_filt.noncausalfilter(args['filterband'], usetrapfftfilt=inittrap)
 
