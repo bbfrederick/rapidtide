@@ -151,13 +151,13 @@ def _get_parser():
                         action='store',
                         help='Write figure to file at DPI dots per inch (default is 1000).',
                         default=1000)
-    '''parser.add_argument('--legends',
+    parser.add_argument('--legends',
                         dest='legends',
                         metavar='LEGEND[,LEGEND[,LEGEND...]]',
                         type=str,
                         action='store',
                         help='Comma separated list of legends for each timecourse.',
-                        default=None)'''
+                        default=None)
     parser.add_argument('--legendloc',
                         dest='legendloc',
                         metavar='LOC',
@@ -220,6 +220,9 @@ def main():
     else:
         colornames = []
 
+    if args.legends is not None:
+        args.legends = args.legends.split(',')
+
     xvecs = []
     yvecs = []
     for i in range(0, len(textfilename)):
@@ -255,8 +258,8 @@ def main():
             if args.yrange is not None:
                 ylim(args.yrange)
 
-    #if legends is not None:
-    #    legend(args.thelegend, loc=args.legendloc)
+    if args.legends is not None:
+        legend(args.legends, loc=args.legendloc)
     if args.thetitle is not None:
         title(args.thetitle, fontsize=args.fontscalefac * 18, fontweight='bold')
     if args.thexlabel is not None:
