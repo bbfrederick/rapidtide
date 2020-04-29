@@ -307,6 +307,7 @@ class RapidtideDataset:
     loadedfuncmaps = None
     atlaslabels = None
     atlasname = None
+    useatlas = False
     xdim = 0
     ydim = 0
     zdim = 0
@@ -323,6 +324,7 @@ class RapidtideDataset:
                  geommaskname=None,
                  userise=False,
                  usecorrout=False,
+                 useatlas=False,
                  forcetr=False,
                  forceoffset=False,
                  coordinatespace='unspecified',
@@ -335,6 +337,7 @@ class RapidtideDataset:
         self.geommaskname = geommaskname
         self.userise = userise
         self.usecorrout = usecorrout
+        self.useatlas = useatlas
         self.forcetr = forcetr
         self.forceoffset = forceoffset
         self.coordinatespace = coordinatespace
@@ -605,7 +608,9 @@ class RapidtideDataset:
         if self._loadgeommask():
             self.allloadedmaps.append('geommask')
 
-        if (self.coordinatespace == 'MNI152') or (self.coordinatespace == 'MNI152NLin6')or (self.coordinatespace == 'MNI152NLin2009cAsym'):
+        if self.useatlas and ((self.coordinatespace == 'MNI152')
+                             or (self.coordinatespace == 'MNI152NLin6')
+                             or (self.coordinatespace == 'MNI152NLin2009cAsym')):
             # atlasname = 'ASPECTS'
             self.atlasshortname = 'ATT'
             self.atlasname = atlases[self.atlasshortname]['atlasname']

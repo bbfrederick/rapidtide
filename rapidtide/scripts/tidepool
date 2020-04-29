@@ -1067,6 +1067,11 @@ def main():
                            dest='userise',
                            action='store_true',
                            default=False)
+    theparser.add_argument('--useatlas',
+                           help='enable atlas processing',
+                           dest='useatlas',
+                           action='store_true',
+                           default=False)
     theparser.add_argument('--settr',
                            help='Set correlation TR',
                            dest='trval',
@@ -1131,6 +1136,7 @@ def main():
         print('enabling risetime display')
 
     usecorrout = True
+    useatlas = args.useatlas
 
     theparser.print_help()
 
@@ -1149,9 +1155,6 @@ def main():
     if datafileroot == '':
         print('No input file specified - exiting.')
         sys.exit()
-
-    # movie control
-    usetime = False
 
     # wire up the ortho image windows for mouse interaction
     vb_colorbar = pg.ViewBox(enableMouse=False)
@@ -1451,6 +1454,7 @@ def main():
                                         geommaskname=geommaskname,
                                         userise=userise,
                                         usecorrout=usecorrout,
+                                        useatlas=useatlas,
                                         forcetr=forcetr,
                                         forceoffset=forceoffset,
                                         offsettime=offsettime,
