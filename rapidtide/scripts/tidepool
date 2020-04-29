@@ -1600,11 +1600,11 @@ def main():
                 print('skipping map ', themap, '(', idx, '): out of display panes')
                 numnotloaded += 1
             else:
-                print('loading map ', themap, ' into pane ', idx)
+                print('loading map ', themap, '(', idx, ') into pane ', numloaded)
                 if bgmap is None:
-                    loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages)
+                    loadpane(overlays[themap], numloaded, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages)
                 else:
-                    loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages,
+                    loadpane(overlays[themap], numloaded, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages,
                              bgmap=overlays[bgmap])
                 numloaded += 1
         else:
