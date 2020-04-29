@@ -519,11 +519,12 @@ def calcAtlasStats():
             d['Region'] = np.asarray(currentdataset.atlaslabels)
             cols.append('Region')
             for idx, themap in enumerate(currentdataset.loadedfuncmaps):
-                templist = []
-                for regnum, region in enumerate(currentdataset.atlaslabels):
-                    templist.append(atlasstats[themap][currentdataset.atlaslabels[regnum]][thestat])
-                d[themap] = np.asarray(templist)
-                cols.append(themap)
+                if overlays[themap].display_state:
+                    templist = []
+                    for regnum, region in enumerate(currentdataset.atlaslabels):
+                        templist.append(atlasstats[themap][currentdataset.atlaslabels[regnum]][thestat])
+                    d[themap] = np.asarray(templist)
+                    cols.append(themap)
             df = pd.DataFrame(data=d)
             df = df[cols]
             df.to_csv(datafileroot + currentdataset.atlasname + '_' + thestat + '.txt', sep='\t', index=False)
