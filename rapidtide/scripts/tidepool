@@ -495,7 +495,7 @@ def calcAtlasStats():
         atlasstats = {}
         print('performing atlas averaging')
         for idx, themap in enumerate(currentdataset.loadedfuncmaps):
-            if overlays[themap].display_state:
+            if overlays[themap].display_state and (overlays[themap].tdim == 1):
                 atlasstats[themap] = {}
                 for regnum, region in enumerate(currentdataset.atlaslabels):
                     print('calculating stats for region', regnum + 1, '(', region, ')')
@@ -519,7 +519,7 @@ def calcAtlasStats():
             d['Region'] = np.asarray(currentdataset.atlaslabels)
             cols.append('Region')
             for idx, themap in enumerate(currentdataset.loadedfuncmaps):
-                if overlays[themap].display_state:
+                if overlays[themap].display_state and (overlays[themap].tdim == 1):
                     templist = []
                     for regnum, region in enumerate(currentdataset.atlaslabels):
                         templist.append(atlasstats[themap][currentdataset.atlaslabels[regnum]][thestat])
