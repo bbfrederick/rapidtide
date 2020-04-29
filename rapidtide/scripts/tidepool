@@ -495,22 +495,23 @@ def calcAtlasStats():
         atlasstats = {}
         print('performing atlas averaging')
         for idx, themap in enumerate(currentdataset.loadedfuncmaps):
-            atlasstats[themap] = {}
-            for regnum, region in enumerate(currentdataset.atlaslabels):
-                print('calculating stats for region', regnum + 1, '(', region, ')')
-                atlasstats[themap][region] = {}
-                maskedregion = np.where((overlays['atlas'].data == (regnum + 1)) & (overlays[themap].mask > 0))
-                atlasstats[themap][region]['mean'] = np.mean(overlays[themap].data[maskedregion])
-                atlasstats[themap][region]['median'] = np.median(overlays[themap].data[maskedregion])
-                atlasstats[themap][region]['robustmean'] = mad(overlays[themap].data[maskedregion])
-                atlasstats[themap][region]['std'] = np.std(overlays[themap].data[maskedregion])
-                atlasstats[themap][region]['MAD'] = mad(overlays[themap].data[maskedregion])
-            atlasstatmap = overlays[themap].duplicate(themap + '_atlasstat', overlays[themap].label)
-            atlasstatmap.funcmask = overlays['atlasmask'].data
-            atlasstatmap.data *= 0.0
-            atlasstatmap.maskData()
-            atlasstatmap.updateStats()
-            overlays[themap + '_atlasstat'] = atlasstatmap
+            if overlays[themap].display_state:
+                atlasstats[themap] = {}
+                for regnum, region in enumerate(currentdataset.atlaslabels):
+                    print('calculating stats for region', regnum + 1, '(', region, ')')
+                    atlasstats[themap][region] = {}
+                    maskedregion = np.where((overlays['atlas'].data == (regnum + 1)) & (overlays[themap].mask > 0))
+                    atlasstats[themap][region]['mean'] = np.mean(overlays[themap].data[maskedregion])
+                    atlasstats[themap][region]['median'] = np.median(overlays[themap].data[maskedregion])
+                    atlasstats[themap][region]['robustmean'] = mad(overlays[themap].data[maskedregion])
+                    atlasstats[themap][region]['std'] = np.std(overlays[themap].data[maskedregion])
+                    atlasstats[themap][region]['MAD'] = mad(overlays[themap].data[maskedregion])
+                atlasstatmap = overlays[themap].duplicate(themap + '_atlasstat', overlays[themap].label)
+                atlasstatmap.funcmask = overlays['atlasmask'].data
+                atlasstatmap.data *= 0.0
+                atlasstatmap.maskData()
+                atlasstatmap.updateStats()
+                overlays[themap + '_atlasstat'] = atlasstatmap
         print('done performing atlas averaging')
         for thestat in ['mean', 'std', 'robustmean', 'median', 'MAD']:
             d = {}
