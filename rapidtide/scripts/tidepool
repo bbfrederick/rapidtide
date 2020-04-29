@@ -1460,6 +1460,10 @@ def main():
 
     regressors = currentdataset.getregressors()
     overlays = currentdataset.getoverlays()
+    try:
+        test = overlays['corrout'].display_state
+    if KeyError:
+        usecorrout = False
 
     # activate the appropriate regressor radio buttons
     if 'prefilt' in regressors.keys():

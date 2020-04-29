@@ -2,6 +2,42 @@
 
 rapidtide \
 	fmri.nii.gz \
+	../dst/dgsr_gauss \
+        --delaymapping \
+        --sigmalimit 25.0 \
+        --ampthresh 0.3 \
+        --nprocs -1 \
+        --pickleft \
+        --pickleftthresh 0.3 \
+        --corrfittype gauss \
+	--spatialfilt 2 
+
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_fastgauss \
+        --delaymapping \
+        --sigmalimit 25.0 \
+        --ampthresh 0.3 \
+        --nprocs -1 \
+        --pickleft \
+        --pickleftthresh 0.3 \
+        --corrfittype fastgauss \
+	--spatialfilt 2 
+
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_fastquad \
+        --delaymapping \
+        --sigmalimit 25.0 \
+        --ampthresh 0.3 \
+        --nprocs -1 \
+        --pickleft \
+        --pickleftthresh 0.3 \
+        --corrfittype fastquad \
+	--spatialfilt 2 
+
+rapidtide \
+	fmri.nii.gz \
 	../dst/dgsr_quad \
         --delaymapping \
         --sigmalimit 25.0 \
@@ -9,26 +45,41 @@ rapidtide \
         --nprocs -1 \
         --pickleft \
         --pickleftthresh 0.3 \
-        --corrrefinetype quad \
+        --corrfittype quad \
 	--spatialfilt 2 
 
-#rapidtide2x \
-	#fmri.nii.gz \
-	#../dst/dgsr_2x \
-        #--limitoutput \
-        #-s 25.0 \
-        #--ampthresh=0.3 \
-        #-L \
-	#-r -10,30 \
-	#-f 2 \
-        #--passes=3 \
-        #--refineoffset \
-        #--despecklepasses=4 \
-        #--nprocs=-1 \
-        #--pickleftthresh=0.3 \
-        #--saveoptionsasjson \
-        #--pickleft \
-        #--noglm \
-        #--detrendorder=3
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_none \
+        --delaymapping \
+        --sigmalimit 25.0 \
+        --ampthresh 0.3 \
+        --nprocs -1 \
+        --pickleft \
+        --pickleftthresh 0.3 \
+        --corrfittype none \
+	--spatialfilt 2 
 
-diffmaps ../dst/dgsr_quad ../dst/dgsr ../dst/diff
+rapidtide2x \
+	fmri.nii.gz \
+	../dst/dgsr_2x_quad \
+        --corrfittype=quad \
+        --limitoutput \
+        -s 25.0 \
+        --ampthresh=0.3 \
+        -L \
+	-r -10,30 \
+	-f 2 \
+        --passes=3 \
+        --refineoffset \
+        --despecklepasses=4 \
+        --nprocs=-1 \
+        --saveoptionsasjson \
+        --pickleft \
+        --noglm \
+        --detrendorder=3
+
+diffmaps ../dst/dgsr_gauss ../dst/dgsr ../dst/diff_gauss
+diffmaps ../dst/dgsr_fastgauss ../dst/dgsr ../dst/diff_fastgauss
+diffmaps ../dst/dgsr_quad ../dst/dgsr ../dst/diff_quad
+diffmaps ../dst/dgsr_none ../dst/dgsr ../dst/diff_none
