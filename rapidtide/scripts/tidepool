@@ -1596,13 +1596,20 @@ def main():
 
     orthoimages = {}
     print('loading panes')
+    availablepanes = len(overlayGraphicsViews)
+    numnotloaded = 0
     for idx, themap in enumerate(currentdataset.dispmaps):
-        if bgmap is None:
-            loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages)
+        if idx > availablepanes - 1:
+            numnotloaded += 1
         else:
-            loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages,
-                     bgmap=overlays[bgmap])
+            if bgmap is None:
+                loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages)
+            else:
+                loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages,
+                         bgmap=overlays[bgmap])
     print('done loading panes')
+    if numnotloaded > 0:
+        print('WARNING:', numnotloaded, 'maps could not be loaded - not enough panes')
 
 
     # wire up the display range controls
