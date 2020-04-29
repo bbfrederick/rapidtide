@@ -1514,9 +1514,9 @@ def main():
                                 num=overlays['corrout'].tdim,
                                 endpoint=False) + overlays['corrout'].toffset
     else:
-        timeaxis = np.linspace(0.0, overlays[focusmap].tdim * overlays[focusmap].tr,
-                                num=overlays[focusmap].tdim,
-                                endpoint=False) + overlays[focusmap].toffset
+        timeaxis = np.linspace(0.0, overlays[currentdataset.focusmap].tdim * overlays[currentdataset.focusmap].tr,
+                                num=overlays[currentdataset.focusmap].tdim,
+                                endpoint=False) + overlays[currentdataset.focusmap].toffset
     tpos = 0
 
     # set position and scale of images
