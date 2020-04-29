@@ -1509,9 +1509,14 @@ def main():
     xpos = int(currentdataset.xdim) // 2
     ypos = int(currentdataset.ydim) // 2
     zpos = int(currentdataset.zdim) // 2
-    timeaxis = np.linspace(0.0, overlays['corrout'].tdim * overlays['corrout'].tr,
-                            num=overlays['corrout'].tdim,
-                            endpoint=False) + overlays['corrout'].toffset
+    if usecorrout:
+        timeaxis = np.linspace(0.0, overlays['corrout'].tdim * overlays['corrout'].tr,
+                                num=overlays['corrout'].tdim,
+                                endpoint=False) + overlays['corrout'].toffset
+    else:
+        timeaxis = np.linspace(0.0, overlays[focusmap].tdim * overlays[focusmap].tr,
+                                num=overlays[focusmap].tdim,
+                                endpoint=False) + overlays[focusmap].toffset
     tpos = 0
 
     # set position and scale of images
