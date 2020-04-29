@@ -1065,11 +1065,6 @@ def main():
                            dest='userise',
                            action='store_true',
                            default=False)
-    theparser.add_argument('--moviemode',
-                           help='enable movie mode',
-                           dest='usecorrout',
-                           action='store_true',
-                           default=True)
     theparser.add_argument('--settr',
                            help='Set correlation TR',
                            dest='trval',
@@ -1133,8 +1128,7 @@ def main():
     if args.userise:
         print('enabling risetime display')
 
-    if args.usecorrout:
-        print('enabling movie mode')
+    usecorrout = True
 
     theparser.print_help()
 
@@ -1390,7 +1384,10 @@ def main():
                             ui.overlay_graphicsView_07,
                             ui.overlay_graphicsView_08]
 
+    panetomap = []
+
     for theview in overlayGraphicsViews:
+        panetomap.append('')
         theview.hide()
 
     # define things for the popup mask menu
@@ -1451,7 +1448,7 @@ def main():
                                         anatname=anatname,
                                         geommaskname=geommaskname,
                                         userise=userise,
-                                        usecorrout=args.usecorrout,
+                                        usecorrout=usecorrout,
                                         forcetr=forcetr,
                                         forceoffset=forceoffset,
                                         offsettime=offsettime,
@@ -1530,8 +1527,6 @@ def main():
         overlays[themap].setLabel(defaultdict[themap]['label'])
     print('done setting overlay defaults')
 
-    panetomap = ['', '', '', '', '', '', '', '', '']
-
     print('setting geometric masks')
     if 'geommask' in overlays:
         thegeommask = overlays['geommask'].data
@@ -1598,15 +1593,22 @@ def main():
     print('loading panes')
     availablepanes = len(overlayGraphicsViews)
     numnotloaded = 0
+    numloaded = 0
     for idx, themap in enumerate(currentdataset.dispmaps):
-        if idx > availablepanes - 1:
-            numnotloaded += 1
-        else:
-            if bgmap is None:
-                loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages)
+        if overlays[themap].display_state:
+            if numloaded > availablepanes - 1:
+                print('skipping map ', themap, '(', idx, '): out of display panes')
+                numnotloaded += 1
             else:
-                loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages,
-                         bgmap=overlays[bgmap])
+                print('loading map ', themap, ' into pane ', idx)
+                if bgmap is None:
+                    loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages)
+                else:
+                    loadpane(overlays[themap], idx, overlayGraphicsViews, overlaybuttons, panetomap, orthoimages,
+                             bgmap=overlays[bgmap])
+                numloaded += 1
+        else:
+            print('not loading map ', themap, '(', idx, '): display_state is False')
     print('done loading panes')
     if numnotloaded > 0:
         print('WARNING:', numnotloaded, 'maps could not be loaded - not enough panes')
