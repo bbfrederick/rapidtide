@@ -1648,7 +1648,7 @@ def main():
     # set up the correlation function window
     print('about to set up the correlation function window')
     global corrfunc_ax, corrfuncCurve, corrfitCurve, corrfuncTLine, corrfuncPeakMarker, corrfuncCurvePoint, corrfuncCaption, corrfuncFitter
-    try:
+    if usecorrout:
         print('setting up correlation window')
         corrfunctitle = ui.corrfunc_groupBox.title()
         print('current corrfunctitle', corrfunctitle)
@@ -1683,7 +1683,7 @@ def main():
         corrfuncCaption.setParentItem(corrfuncCurvePoint)
         corrfuncCurve.scene().sigMouseClicked.connect(updateTimepoint)
         corrfuncFitter = correlation_fitter()
-    except:
+    else:
         corrfunc_ax = None
 
     # set up the regressor timecourse window
@@ -1747,7 +1747,8 @@ def main():
                      runMovieButton=ui.runMovieButton)
     currentloc.updatedXYZ.connect(updateXYZFromControls)
     currentloc.updatedT.connect(updateTFromControls)
-    updateCorrelationFunc()
+    if usecorrout:
+        updateCorrelationFunc()
     updateHistogram()
 
     updateLUT()
