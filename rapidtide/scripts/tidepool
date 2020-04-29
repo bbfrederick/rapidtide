@@ -1462,7 +1462,7 @@ def main():
     overlays = currentdataset.getoverlays()
     try:
         test = overlays['corrout'].display_state
-    if KeyError:
+    except KeyError:
         usecorrout = False
 
     # activate the appropriate regressor radio buttons
