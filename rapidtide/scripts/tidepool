@@ -1652,7 +1652,15 @@ def main():
     # set up the correlation function window
     print('about to set up the correlation function window')
     global corrfunc_ax, corrfuncCurve, corrfitCurve, corrfuncTLine, corrfuncPeakMarker, corrfuncCurvePoint, corrfuncCaption, corrfuncFitter
-    if usecorrout:
+
+    try:
+        thecorrfunc_groupBox = ui.corrfunc_groupBox
+        corrfuncwindowexists = True
+    except AttributeError:
+        print('no correlation function window - cancelling setup')
+        corrfuncwindowexists = False
+
+    if usecorrout and corrfuncwindowexists:
         print('setting up correlation window')
         corrfunctitle = ui.corrfunc_groupBox.title()
         print('current corrfunctitle', corrfunctitle)
