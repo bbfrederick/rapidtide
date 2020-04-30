@@ -579,7 +579,7 @@ def updateAveragingMode():
     resetDispLimits()
     resetDispSmart()
     print('averaging mode set to ', averagingmode)
-    updateUI(callingfunc='updateAverageingMode()', orthoimages=True, histogram=True, LUT=True)
+    updateUI(callingfunc='updateAverageingMode()', orthoimages=True, histogram=True, LUT=True, focusvals=True)
 
 
 def raw_radioButton_clicked(enabled):
@@ -857,7 +857,7 @@ def updateTimepoint(event):
     if timeaxis[0] <= tval <= timeaxis[-1]:
         currentloc.tpos = int(tide_util.valtoindex(timeaxis, tval))
         ui.TimeSlider.setValue(currentloc.tpos)
-        updateUI(callingfunc='updateTimepoint', orthoimages=True, correlationfunc=True)
+        updateUI(callingfunc='updateTimepoint', orthoimages=True, correlationfunc=True, focusvals=True)
 
 
 def updateLUT():
@@ -895,22 +895,22 @@ def mapwithLUT(theimage, themask, theLUT, dispmin, dispmax):
 def updateTFromControls():
     global mainwin, currentloc
     mainwin.setTpos(currentloc.tpos, emitsignal=False)
-    updateUI(callingfunc='updateTFromControls', orthoimages=True, correlationfunc=True)
+    updateUI(callingfunc='updateTFromControls', orthoimages=True, correlationfunc=True, focusvals=True)
 
 
 def updateXYZFromControls():
     global mainwin, currentloc
     mainwin.setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos, emitsignal=False)
-    updateUI(callingfunc='updateXYZFromControls', orthoimages=True, correlationfunc=True)
+    updateUI(callingfunc='updateXYZFromControls', orthoimages=True, correlationfunc=True, focusvals=True)
 
 
 def updateXYZFromMainWin():
     global mainwin, currentloc
     currentloc.setXYZpos(mainwin.xpos, mainwin.ypos, mainwin.zpos, emitsignal=False)
-    updateUI(callingfunc='updateXYZFromMainWin', correlationfunc=True)
+    updateUI(callingfunc='updateXYZFromMainWin', correlationfunc=True, focusvals=True)
 
 
-def updateUI(orthoimages=False, histogram=False, LUT=False, correlationfunc=False, callingfunc=None):
+def updateUI(orthoimages=False, histogram=False, LUT=False, correlationfunc=False, focusvals=False, callingfunc=None):
     if callingfunc is None:
         print('updateUI called with:')
     else:
@@ -919,6 +919,8 @@ def updateUI(orthoimages=False, histogram=False, LUT=False, correlationfunc=Fals
     print('\thistogram=', histogram)
     print('\tLUT=', LUT)
     print('\tcorrelationfunc=', correlationfunc)
+    print('\tfocusvals=', focusvals)
+
     if histogram:
         updateHistogram()
     if LUT:
@@ -928,6 +930,8 @@ def updateUI(orthoimages=False, histogram=False, LUT=False, correlationfunc=Fals
         updateCorrelationFunc()
     if orthoimages:
         updateOrthoImages()
+    if focusvals:
+        printfocusvals()
 
 
 def updateOrthoImages():
@@ -951,7 +955,6 @@ def updateOrthoImages():
     mainwin.setTpos(currentloc.tpos)
     mainwin.updateAllViews()
 
-    printfocusvals()
     ui.TimeSlider.setValue(currentloc.tpos)
 
 
@@ -1774,7 +1777,7 @@ def main():
     # have to do this after the windows are created
     imageadj.sigGradientChanged.connect(updateLUT)
 
-    updateUI(callingfunc='main thread', orthoimages=True)
+    updateUI(callingfunc='main thread', orthoimages=True, focusvals=True)
     #updateOrthoImages()
     #updateTimecoursePlot()
 
