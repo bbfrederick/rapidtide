@@ -962,11 +962,7 @@ def process_args(inputargs=None):
     else:
         args['endpoint'] = args['timerange'][1]
 
-
-    if args['offsettime'] is not None:
-        args['offsettime_total'] = -1 * args['offsettime']
-    else:
-        args['offsettime_total'] = None
+    args['offsettime_total'] = -1 * args['offsettime']
 
     reg_ref_used = ((args['lagminthresh'] != 0.5) or
                     (args['lagmaxthresh'] != 5.) or
