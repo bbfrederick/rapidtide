@@ -1785,7 +1785,6 @@
      <property name="font">
       <font>
        <family>Arial Narrow</family>
-       <pointsize>11</pointsize>
       </font>
      </property>
      <property name="text">
@@ -1807,7 +1806,6 @@
      <property name="font">
       <font>
        <family>Arial Narrow</family>
-       <pointsize>11</pointsize>
       </font>
      </property>
      <property name="text">
