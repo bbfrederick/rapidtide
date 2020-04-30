@@ -1103,7 +1103,7 @@ def main():
     if args.compact:
         import rapidtide.tidepoolTemplate_alt as uiTemplate
     else:
-        import rapidtide.tidepoolTemplate_qt5 as uiTemplate
+        import rapidtide.tidepoolTemplate as uiTemplate
 
     anatname = args.anatname
     if anatname is not None:
