@@ -456,6 +456,7 @@ def updateRegressor():
     if currentdataset.focusregressor is not None:
         theplot = regressor_ax.plot(regressors[focusregressor].timeaxis, regressors[focusregressor].timedata,
                           stepMode=False, fillLevel=0, pen=pg.mkPen('w', width=1), clear=True)
+        regressor_ax.setXRange(0.0, regressors['pass1'].timeaxis[-1])
         thelabel = "kurtosis: {0:.2f}, (z={0:.2f}, p<{0:.2f})".format(regressors[focusregressor].kurtosis,
                                                                       regressors[focusregressor].kurtosis_z,
                                                                       regressors[focusregressor].kurtosis_p)
@@ -1778,8 +1779,7 @@ def main():
     imageadj.sigGradientChanged.connect(updateLUT)
 
     updateUI(callingfunc='main thread', orthoimages=True, focusvals=True)
-    #updateOrthoImages()
-    #updateTimecoursePlot()
+    updateRegressor()
 
     QtGui.QApplication.instance().exec_()
 

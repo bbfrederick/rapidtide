@@ -36,13 +36,14 @@ atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
 class timecourse:
     "Store a timecourse and some information about it"
 
-    def __init__(self, name, filename, namebase, samplerate, displaysamplerate, label=None, report=False, verbose=False):
+    def __init__(self, name, filename, namebase, samplerate, displaysamplerate, starttime=0.0, label=None, report=False, verbose=False):
         self.verbose = verbose
         self.name = name
         self.filename = filename
         self.namebase = namebase
         self.samplerate = samplerate
         self.displaysamplerate = displaysamplerate
+        self.starttime = starttime
 
         if label is None:
             self.label = name
@@ -56,7 +57,7 @@ class timecourse:
     def readTimeData(self):
         self.timedata = tide_io.readvec(self.filename)
         self.length = len(self.timedata)
-        self.timeaxis = np.linspace(0.0, self.length, num=self.length, endpoint=False) / self.samplerate
+        self.timeaxis = (np.linspace(0.0, self.length, num=self.length, endpoint=False) / self.samplerate) - self.starttime
         self.specaxis, self.specdata = tide_filt.spectrum(tide_math.corrnormalize(self.timedata), self.samplerate)
         self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(self.timedata)
 
@@ -358,6 +359,7 @@ class RapidtideDataset:
                                                              thebase,
                                                              thisregressor[2],
                                                              thisregressor[3],
+                                                             starttime=thisregressor[4],
                                                              verbose=self.verbose)
                 if self.focusregressor is None:
                     self.focusregressor = thisregressor[0]
@@ -536,15 +538,19 @@ class RapidtideDataset:
         except KeyError:
             self.inputfreq = 1.0
         try:
+            self.inputstarttime = float(self.therunoptions['inputstarttime'])
+        except KeyError:
+            self.inputstarttime = 0.0
+        try:
             self.oversampfactor = int(self.therunoptions['oversampfactor'])
         except KeyError:
             self.oversampfactor = 1
-        self.regressorspecs = [['prefilt', 'reference_origres_prefilt.txt', self.inputfreq, self.inputfreq],
-                          ['postfilt', 'reference_origres.txt', self.inputfreq, self.inputfreq],
-                          ['pass1', 'reference_resampres_pass1.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq],
-                          ['pass2', 'reference_resampres_pass2.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq],
-                          ['pass3', 'reference_resampres_pass3.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq],
-                          ['pass4', 'reference_resampres_pass4.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq]]
+        self.regressorspecs = [['prefilt', 'reference_origres_prefilt.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
+                          ['postfilt', 'reference_origres.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
+                          ['pass1', 'reference_resampres_pass1.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                          ['pass2', 'reference_resampres_pass2.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                          ['pass3', 'reference_resampres_pass3.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                          ['pass4', 'reference_resampres_pass4.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
         self._loadregressors()
 
     def getregressors(self):
