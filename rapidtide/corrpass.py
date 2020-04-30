@@ -29,8 +29,6 @@ import gc
 
 import numpy as np
 
-import rapidtide.correlate as tide_corr
-import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
