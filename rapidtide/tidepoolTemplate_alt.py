@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'tidepoolTemplate_alt_changedfonts.ui'
+# Form implementation generated from reading ui file 'blah.ui'
 #
 # Created by: PyQt5 UI code generator 5.12.3
 #
@@ -512,7 +512,6 @@ class Ui_MainWindow(object):
         self.label_7.setGeometry(QtCore.QRect(30, 20, 56, 13))
         font = QtGui.QFont()
         font.setFamily("Arial Narrow")
-        font.setPointSize(11)
         self.label_7.setFont(font)
         self.label_7.setObjectName("label_7")
         self.coordX_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.mainimagedata_groupBox)
@@ -524,7 +523,6 @@ class Ui_MainWindow(object):
         self.label_9.setGeometry(QtCore.QRect(100, 20, 56, 13))
         font = QtGui.QFont()
         font.setFamily("Arial Narrow")
-        font.setPointSize(11)
         self.label_9.setFont(font)
         self.label_9.setObjectName("label_9")
         self.pixnumY_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.mainimagedata_groupBox)
@@ -574,14 +572,12 @@ class Ui_MainWindow(object):
         self.label_10.setGeometry(QtCore.QRect(30, 120, 56, 13))
         font = QtGui.QFont()
         font.setFamily("Arial Narrow")
-        font.setPointSize(11)
         self.label_10.setFont(font)
         self.label_10.setObjectName("label_10")
         self.label_11 = QtWidgets.QLabel(self.mainimagedata_groupBox)
         self.label_11.setGeometry(QtCore.QRect(100, 120, 56, 13))
         font = QtGui.QFont()
         font.setFamily("Arial Narrow")
-        font.setPointSize(11)
         self.label_11.setFont(font)
         self.label_11.setObjectName("label_11")
         self.runMovieButton = QtWidgets.QPushButton(self.mainimagedata_groupBox)
