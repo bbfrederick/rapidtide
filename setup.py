@@ -49,7 +49,8 @@ modules_list = ['rapidtide/miscmath',
                 'rapidtide/workflows/parser_funcs']
 
 if addtidepool:
-    modules_list.append('rapidtide/tidepoolTemplate_qt5')
+    modules_list.append('rapidtide/tidepoolTemplate')
+    modules_list.append('rapidtide/tidepoolTemplate_alt')
     modules_list.append('rapidtide/OrthoImageItem')
 
 script_list = ['rapidtide/scripts/rapidtide2x',
