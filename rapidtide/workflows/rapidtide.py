@@ -564,13 +564,19 @@ def rapidtide_main(argparsingfunc):
         print('no regressor file specified - will use the global mean regressor')
         optiondict['useglobalref'] = True
 
+    # calculate the global mean whether we intend to use it or not
+    meanfreq = 1.0 / fmritr
+    meanperiod = 1.0 * fmritr
+    meanstarttime = 0.0
+    meanvec, meanmask = getglobalsignal(fmri_data_valid, optiondict,
+                                         includemask=internalglobalmeanincludemask_valid,
+                                         excludemask=internalglobalmeanexcludemask_valid)
+
     if optiondict['useglobalref']:
-        inputfreq = 1.0 / fmritr
-        inputperiod = 1.0 * fmritr
-        inputstarttime = 0.0
-        inputvec, meanmask = getglobalsignal(fmri_data_valid, optiondict,
-                                             includemask=internalglobalmeanincludemask_valid,
-                                             excludemask=internalglobalmeanexcludemask_valid)
+        inputfreq = meanfreq
+        inputperiod = meanperiod
+        inputstarttime = meanstarttime
+        inputvec = meanvec
         fullmeanmask = np.zeros((numspatiallocs), dtype=rt_floattype)
         fullmeanmask[validvoxels] = meanmask[:]
         theheader = copy.deepcopy(nim_hdr)
