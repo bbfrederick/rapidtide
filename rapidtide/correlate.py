@@ -298,10 +298,44 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
 
 
 # from https://stackoverflow.com/questions/20491028/optimal-way-to-compute-pairwise-mutual-information-using-numpy/20505476#20505476
-def calc_MI(x, y, bins):
+def calc_MI(x, y, bins=50):
     c_xy = np.histogram2d(x, y, bins)[0]
     mi = mutual_info_score(None, None, contingency=c_xy)
     return mi
+
+
+def cross_MI(x, y, Fs=1.0, norm=True, windowfunc='hamming', bins=50, debug=False):
+    if windowfunc == 'none':
+        prewindow = False
+    else:
+        prewindow = True
+    normx = tide_math.corrnormalize(x,
+                                    prewindow=prewindow,
+                                    detrendorder=1,
+                                    windowfunc=windowfunc)
+    normy = tide_math.corrnormalize(y,
+                                    prewindow=prewindow,
+                                    detrendorder=1,
+                                    windowfunc=windowfunc)
+    thexmi_y = np.zeros((len(normx) + len(normy) - 1), dtype=np.float)
+    for i in range(-len(normy) + 1, len(normx) - 1):
+        if i < 0:
+            thexmi_y[i + len(normy)] = calc_MI(normx[:i + len(normy) + 1], normy[-i - 1:], bins=bins)
+        elif i == 0:
+            thexmi_y[i + len(normy)] = calc_MI(normx, normy, bins=bins)
+        else:
+            thexmi_y[i + len(normy)] = calc_MI(normx[i:], normy[:len(normy) - i], bins=bins)
+    if norm:
+        normfac1 = np.sqrt(calc_MI(normx, normx))
+        normfac2 = np.sqrt(calc_MI(normy, normy))
+        if debug:
+            print(normfac1, normfac2)
+        normfac = normfac1 * normfac2
+        if normfac > 0.0:
+            thexmi_y /= normfac
+    thexmi_x = sp.linspace(0.0, len(thexmi_y) / Fs, num=len(thexmi_y), endpoint=False) \
+                 - (len(normx) // 2 + len(normy) // 2) / Fs - 0.5 / Fs
+    return thexmi_x, thexmi_y
 
 
 def delayedcorr(data1, data2, delayval, timestep):
@@ -464,6 +498,40 @@ def aliasedcorrelate(hiressignal, hires_Fs, lowressignal, lowres_Fs, timerange, 
         corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
     return corrfunc
 
+
+def arbcorr(input1, Fs1, input2, Fs2,
+            start1=0.0, start2=0.0,
+            windowfunc='hamming',
+            method='univariate',
+            debug=False):
+    if Fs1 > Fs2:
+        corrFs = Fs1
+        matchedinput1 = input1
+        matchedinput2 = tide_resample.upsample(input2, Fs2, corrFs, method=method, debug=debug)
+    elif Fs2 > Fs1:
+        corrFs = Fs2
+        matchedinput1 = tide_resample.upsample(input1, Fs1, corrFs, method=method, debug=debug)
+        matchedinput2 = input2
+    else:
+        corrFs = Fs1
+        matchedinput1 = input1
+        matchedinput2 = input2
+    norm1 = tide_math.corrnormalize(matchedinput1,
+                                    prewindow=True,
+                                    detrendorder=1,
+                                    windowfunc=windowfunc)
+    norm2 = tide_math.corrnormalize(matchedinput2,
+                                    prewindow=True,
+                                    detrendorder=1,
+                                    windowfunc=windowfunc)
+    thexcorr_y = signal.fftconvolve(norm1, norm2[::-1], mode='full')
+    thexcorr_x = sp.linspace(0.0, len(thexcorr_y) / corrFs, num=len(thexcorr_y), endpoint=False) \
+        - (len(norm1) // 2 + len(norm2) // 2) / corrFs + start1 - start2
+    if debug:
+        print('len(norm1) = ', len(norm1))
+        print('len(norm2) = ', len(norm2))
+        print('len(thexcorr_y)', len(thexcorr_y))
+    return thexcorr_x, thexcorr_y
 
 
 def faststcorrelate(input1, input2, windowtype='hann', nperseg=32, weighting='none', displayplots=False):
