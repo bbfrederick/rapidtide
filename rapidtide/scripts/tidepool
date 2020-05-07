@@ -225,7 +225,7 @@ class xyztlocation(QtGui.QWidget):
         if self.xpos != newx:
             self.xpos = newx
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
-            self.updateXYZValues(emitsignal=False)
+            self.updateXYZValues(emitsignal=True)
 
     def getYpos(self, event):
         # print('entering getYpos')
@@ -233,7 +233,7 @@ class xyztlocation(QtGui.QWidget):
         if self.ypos != newy:
             self.ypos = newy
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
-            self.updateXYZValues(emitsignal=False)
+            self.updateXYZValues(emitsignal=True)
 
     def getZpos(self, event):
         # print('entering getZpos')
@@ -241,7 +241,7 @@ class xyztlocation(QtGui.QWidget):
         if self.zpos != newz:
             self.zpos = newz
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
-            self.updateXYZValues(emitsignal=False)
+            self.updateXYZValues(emitsignal=True)
 
     def getTpos(self, event):
         # print('entering getTpos')
