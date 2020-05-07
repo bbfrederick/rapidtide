@@ -535,7 +535,7 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
     # downsample
     starttime = time.time()
     final_ts = 1.0 / final_freq
-    numresamppts = np.ceil(endpoint / final_ts)
+    numresamppts = int(np.ceil(endpoint / final_ts))
     #final_x = np.arange(0.0, final_ts * numresamppts, final_ts)
     final_x = final_ts * sp.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
     resampled_y = doresample(intermed_x, antialias_y, final_x, method=method)
