@@ -39,9 +39,9 @@ def test_calc_MI(display=False):
     sqmivals = []
     cubemivals = []
     for clustersize in range(kstart, kend, 2):
-        linmivals.append(calc_MI(sig1, sig1, clustersize) / np.log(clustersize))
-        sqmivals.append(calc_MI(sig2, sig1, clustersize) / np.log(clustersize))
-        cubemivals.append(calc_MI(sig3, sig1, clustersize) / np.log(clustersize))
+        linmivals.append(calc_MI(sig1, sig1, bins=clustersize) / np.log(clustersize))
+        sqmivals.append(calc_MI(sig2, sig1, bins=clustersize) / np.log(clustersize))
+        cubemivals.append(calc_MI(sig3, sig1, bins=clustersize) / np.log(clustersize))
 
     if display:
         plt.figure()
