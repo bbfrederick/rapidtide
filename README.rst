@@ -68,7 +68,7 @@ More recently, inspired by Henning Voss’ paper on hypersampling of
 cardiac signals in fMRI, we developed a method to extract and clean
 cardiac waveforms from fMRI data, even when the fMRI TR is far too long
 to properly sample cardiac waveforms. This cardiac waveform can then be
-to track the pulsatile cardiac pressure wave through the brain in
+used to track the pulsatile cardiac pressure wave through the brain in
 somewhat the same way that we track the LFO signals. Among other things,
 this allows you to get cardiac waveforms during scans even when either
 1) you didn’t use a plethysmograph, or 2) you did, but the recording was
