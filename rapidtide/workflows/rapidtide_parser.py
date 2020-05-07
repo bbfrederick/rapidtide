@@ -157,6 +157,12 @@ def _get_parser():
                          metavar='OFFSETTIME',
                          help='Apply offset OFFSETTIME to the lag regressors. ',
                          default=0.0)
+    preproc.add_argument('--autosync',
+                         dest='autosync',
+                         action='store_true',
+                         help=('Estimate and apply the initial offsettime of an external regressor using the global "'
+                               'crosscorrelation. Overrides offsettime if present.'),
+                         default=False)
 
     filt_opts = parser.add_argument_group('Filtering options')
     filt_opts.add_argument('--filterband',

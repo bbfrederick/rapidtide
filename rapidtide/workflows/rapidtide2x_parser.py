@@ -60,6 +60,7 @@ def usage():
         "[-b]",
         "[-V]", "[-L]", "[-R]", "[-C]", "[-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]]",
         "[-o OFFSETTIME]",
+        "[--autosync]",
         "[-T]",
         "[-p]",
         "[-P]",
@@ -135,6 +136,8 @@ def usage():
     print("    -i                             - Use specified interpolation type (options are 'cubic',")
     print("                                     'quadratic', and 'univariate (default)')")
     print("    -o                             - Apply an offset OFFSETTIME to the lag regressors")
+    print("    --autosync                     - Calculate and apply offset time of an external regressor from ")
+    print("                                     the global crosscorrelation.  Overrides offsettime if specified.")
     print("    -b                             - Use butterworth filter for band splitting instead of")
     print("                                     trapezoidal FFT filter")
     print("    -F                             - Filter data and regressors from LOWERFREQ to UPPERFREQ.")
@@ -441,6 +444,7 @@ def process_args():
     optiondict['lagmax'] = 30.0
     optiondict['widthlimit'] = 100.0
     optiondict['offsettime'] = 0.0
+    optiondict['autosync'] = False
     optiondict['offsettime_total'] = 0.0
 
     # refinement options
@@ -530,6 +534,7 @@ def process_args():
                                                                                                           'corrmaskthresh=',
                                                                                                           'despecklepasses=',
                                                                                                           'despecklethresh=',
+                                                                                                          'autosync',
                                                                                                           'accheck',
                                                                                                           'acfix',
                                                                                                           'noprogressbar',
@@ -895,6 +900,9 @@ def process_args():
             optiondict['offsettime'] = float(a)
             optiondict['offsettime_total'] = -float(a)
             print('Applying a timeshift of ', optiondict['offsettime'], ' to regressor')
+        elif o == '--autosync':
+            optiondict['autosync'] = True
+            print('Will calculate and apply regressor synchronization from global correlation.  Overrides offsettime.')
         elif o == '--datafreq':
             realtr = 1.0 / float(a)
             linkchar = '='

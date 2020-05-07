@@ -32,6 +32,7 @@ import time
 import warnings
 
 import numpy as np
+import scipy as sp
 from matplotlib.pyplot import figure, plot, show
 from scipy import ndimage
 
@@ -571,7 +572,9 @@ def rapidtide_main(argparsingfunc):
     meanvec, meanmask = getglobalsignal(fmri_data_valid, optiondict,
                                          includemask=internalglobalmeanincludemask_valid,
                                          excludemask=internalglobalmeanexcludemask_valid)
+    meanaxis = sp.linspace(0, len(meanvec) * meanperiod, num=len(meanvec), endpoint=False)
 
+    # now set the regressor that we'll use
     if optiondict['useglobalref']:
         inputfreq = meanfreq
         inputperiod = meanperiod
@@ -606,6 +609,16 @@ def rapidtide_main(argparsingfunc):
           inputperiod)
     if optiondict['verbose']:
         print('input vector length', len(inputvec), 'input freq', inputfreq, 'input start time', inputstarttime)
+
+    if not optiondict['useglobalref']:
+        globalcorrx, globalcorry = tide_corr.arbcorr(meanvec, meanfreq, inputvec, inputfreq, start2=inputstarttime)
+        synctime = globalcorrx(np.argmax(globalcorry))
+        if optiondict['autosync']:
+            optiondict['offsettime'] = synctime
+            optiondict['offsettime_total'] = -synctime
+    else:
+        synctime = 0.0
+    print('synctime is', synctime)
 
     reference_x = np.arange(0.0, numreference) * inputperiod - (inputstarttime + optiondict['offsettime'])
 
