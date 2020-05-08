@@ -612,7 +612,7 @@ def rapidtide_main(argparsingfunc):
 
     if not optiondict['useglobalref']:
         globalcorrx, globalcorry = tide_corr.arbcorr(meanvec, meanfreq, inputvec, inputfreq, start2=inputstarttime)
-        synctime = globalcorrx(np.argmax(globalcorry))
+        synctime = globalcorrx[np.argmax(globalcorry)]
         if optiondict['autosync']:
             optiondict['offsettime'] = synctime
             optiondict['offsettime_total'] = -synctime
