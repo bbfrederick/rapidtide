@@ -334,7 +334,7 @@ def rapidtide_main(argparsingfunc):
 
     # check to see if we need to adjust the oversample factor
     if optiondict['oversampfactor'] < 0:
-        optiondict['oversampfactor'] = int(np.max([np.ceil(fmritr // 0.5), 1]))
+        optiondict['oversampfactor'] = int(np.max([np.ceil(fmritr / 0.5), 1]))
         print('oversample factor set to', optiondict['oversampfactor'])
 
     oversamptr = fmritr / optiondict['oversampfactor']
