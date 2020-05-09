@@ -537,6 +537,7 @@ def process_args():
                                                                                                           'autosync',
                                                                                                           'accheck',
                                                                                                           'acfix',
+                                                                                                          'padseconds',
                                                                                                           'noprogressbar',
                                                                                                           'refinepasses=',
                                                                                                           'passes=',
@@ -805,6 +806,9 @@ def process_args():
                 [optiondict['despeckle_thresh'], 0.5 / (theprefilter.getfreqs()[2])])
             print('prefiltering to ', optiondict['arb_lower'], optiondict['arb_upper'],
                   '(stops at ', optiondict['arb_lowerstop'], optiondict['arb_upperstop'], ')')
+        elif o == '--padseconds':
+            optiondict['padseconds'] = float(a)
+            print('Setting filter padding to', optiondict['padseconds'], 'seconds')
         elif o == '-d':
             optiondict['displayplots'] = True
             print('displaying all plots')
