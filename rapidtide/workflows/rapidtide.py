@@ -621,6 +621,7 @@ def rapidtide_main(argparsingfunc):
     print('synctime is', synctime)
 
     reference_x = np.arange(0.0, numreference) * inputperiod - (inputstarttime + optiondict['offsettime'])
+    print('total probe regressor offset is', inputstarttime + optiondict['offsettime'])
 
     # Print out initial information
     if optiondict['verbose']:
@@ -698,7 +699,6 @@ def rapidtide_main(argparsingfunc):
                                      debug=optiondict['debug']),
             order=optiondict['detrendorder'],
             demean=optiondict['dodemean'])
-        # int(inputfreq * optiondict['padseconds'])
         resampref_y = tide_fit.detrend(
             tide_resample.doresample(reference_x, reference_y, os_fmri_x,
                                      padlen=int(oversampfreq * optiondict['padseconds']),
@@ -706,7 +706,6 @@ def rapidtide_main(argparsingfunc):
                                      debug=optiondict['debug']),
             order=optiondict['detrendorder'],
             demean=optiondict['dodemean'])
-        # int(oversampfreq * optiondict['padseconds'])
     else:
         resampnonosref_y = tide_resample.doresample(reference_x, reference_y, initial_fmri_x,
                                                     padlen=int(inputfreq * optiondict['padseconds']),
