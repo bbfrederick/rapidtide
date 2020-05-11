@@ -17,13 +17,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from rapidtide.resample import doresample, fastresampler
+from rapidtide.resample import doresample
 from rapidtide.tests.utils import mse
 
 
-def test_fastresampler(debug=False):
+def test_doresample(debug=False):
+    if debug:
+        import matplotlib as mpl
+        print('setting backend to Qt5Agg')
+        mpl.use('Qt5Agg')
     tr = 1.0
     padtime = 30.0
+    padlen = int(padtime // tr)
     testlen = 1000
     shiftdist = 30
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
@@ -37,9 +42,6 @@ def test_fastresampler(debug=False):
 
     shiftlist = [-30, -20, -10, 0, 10, 20, 30]
 
-    # generate the fast resampled regressor
-    genlaggedtc = fastresampler(timeaxis, timecoursein, padtime=padtime)
-
     if debug:
         plt.figure()
         plt.ylim([-1.0, 2.0 * len(shiftlist) + 1.0])
@@ -52,12 +54,12 @@ def test_fastresampler(debug=False):
         tcrolled = np.float64(np.roll(timecoursein, shiftdist))
 
         # generate the fast resampled regressor
-        tcshifted = genlaggedtc.yfromx(timeaxis - shiftdist, debug=debug)
-        tcshifted = doresample(timeaxis, timecoursein, timeaxis - shiftdist, method='univariate')
+        tcshifted = doresample(timeaxis, timecoursein, timeaxis - shiftdist, method='univariate', padlen=padlen)
 
         # print out all elements
         for i in range(0, len(tcrolled)):
-            print(i, tcrolled[i], tcshifted[i], tcshifted[i] - tcrolled[i])
+            #print(i, tcrolled[i], tcshifted[i], tcshifted[i] - tcrolled[i])
+            pass
 
         # plot if we are doing that
         if debug:
@@ -66,7 +68,7 @@ def test_fastresampler(debug=False):
             legend.append('Roll ' + str(shiftdist))
             offset += 1.0
             plt.plot(tcshifted + offset)
-            legend.append('Fastresampler ' + str(shiftdist))
+            legend.append('doresample ' + str(shiftdist))
 
         # do the tests
         msethresh = 1e-6
@@ -80,7 +82,7 @@ def test_fastresampler(debug=False):
 
 
 def main():
-    test_fastresampler(debug=True)
+    test_doresample(debug=True)
 
 
 if __name__ == '__main__':
