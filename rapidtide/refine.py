@@ -120,6 +120,7 @@ def refineregressor(fmridata,
                     padtrs=60,
                     includemask=None,
                     excludemask=None,
+                    debug=False,
                     rt_floatset=np.float64,
                     rt_floattype='float64'):
     """
@@ -154,6 +155,8 @@ def refineregressor(fmridata,
         Mask of voxels to include in refinement.  Default is None (all voxels).
     excludemask : 3D array
         Mask of voxels to exclude from refinement.  Default is None (no voxels).
+    debug : bool
+        Enable additional debugging output.  Default is false
     rt_floatset : function
         Function to coerce variable types
     rt_floattype : {'float32', 'float64'}
