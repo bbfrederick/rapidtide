@@ -290,6 +290,7 @@ class fastresampler:
         # self.hires_y[:int(self.padtime // self.hiresstep)] = 0.0
         # self.hires_y[-int(self.padtime // self.hiresstep):] = 0.0
         if doplot:
+            import matplolib.pyplot as pl
             fig = pl.figure()
             ax = fig.add_subplot(111)
             ax.set_title('fastresampler initial timecourses')
@@ -364,6 +365,11 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False,
         print('lens:', len(pad_x), len(pad_y))
         print(pad_x)
         print(pad_y)
+        fig = pl.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('Original and padded vector')
+        pl.plot(orig_x, orig_y + 1.0, pad_x, pad_y)
+        pl.show()
 
     # antialias and ringstop filter
     init_freq = len(pad_x) / (pad_x[-1] - pad_x[0])
