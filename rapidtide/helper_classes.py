@@ -202,15 +202,15 @@ class correlator:
                                 )
 
 
-    def setreftc(self, reftc):
+    def setreftc(self, reftc, offset=0.0):
         self.reftc = reftc + 0.0
         self.prepreftc = self.preptc(self.reftc, hpfreq=self.hpfreq)
         self.corrlen = len(self.reftc) * 2 - 1
         self.corrorigin = self.corrlen // 2 + 1
 
         # make the time axis
-        self.timeaxis = np.arange(0.0, self.corrlen) * (1.0 / self.Fs) \
-                        - ((self.corrlen - 1) * (1.0 / self.Fs)) / 2.0
+        self.timeaxis = (np.arange(0.0, self.corrlen) * (1.0 / self.Fs) \
+                        - ((self.corrlen - 1) * (1.0 / self.Fs)) / 2.0) - offset
         self.timeaxisvalid = True
         self.datavalid = False
 
