@@ -22,12 +22,14 @@ from rapidtide.tests.utils import mse
 
 
 def test_fastresampler(debug=False):
+    if debug:
+        import matplotlib as mpl
+        print('setting backend to Qt5Agg')
+        mpl.use('Qt5Agg')
     tr = 1.0
-    padtime = 30.0
+    padtime = 50.0
     testlen = 1000
-    shiftdist = 30
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
-    #timecoursein = np.zeros((testlen), dtype='float64')
     timecoursein = np.float64(timeaxis * 0.0)
     midpoint = int(testlen // 2) + 1
     timecoursein[midpoint - 1] = np.float64(1.0)
@@ -35,7 +37,7 @@ def test_fastresampler(debug=False):
     timecoursein[midpoint + 1] = np.float64(1.0)
     timecoursein -= 0.5
 
-    shiftlist = [-30, -20, -10, 0, 10, 20, 30]
+    shiftlist = [-40, -30, -20, -10, 0, 10, 20, 30, 40]
 
     # generate the fast resampled regressor
     genlaggedtc = fastresampler(timeaxis, timecoursein, padtime=padtime)
