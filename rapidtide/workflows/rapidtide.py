@@ -605,7 +605,7 @@ def rapidtide_main(argparsingfunc):
     numreference = len(inputvec)
     optiondict['inputfreq'] = inputfreq
     optiondict['inputstarttime'] = inputstarttime
-    print('regressor start time, end time, and step', inputstarttime, inputstarttime + numreference * inputperiod,
+    print('regressor start time, end time, and step', -inputstarttime, inputstarttime + numreference * inputperiod,
           inputperiod)
     if optiondict['verbose']:
         print('input vector length', len(inputvec), 'input freq', inputfreq, 'input start time', inputstarttime)
@@ -615,7 +615,7 @@ def rapidtide_main(argparsingfunc):
         synctime = globalcorrx[np.argmax(globalcorry)]
         if optiondict['autosync']:
             optiondict['offsettime'] = synctime
-            optiondict['offsettime_total'] = -synctime
+            optiondict['offsettime_total'] = synctime
     else:
         synctime = 0.0
     print('synctime is', synctime)
@@ -748,8 +748,7 @@ def rapidtide_main(argparsingfunc):
                                             windowfunc=optiondict['windowfunc'],
                                             corrweighting=optiondict['corrweighting'],
                                             hpfreq=optiondict['correlator_hpfreq'])
-    thecorrelator.setreftc(np.zeros((optiondict['oversampfactor'] * validtimepoints),
-                                    dtype=np.float))
+    thecorrelator.setreftc(np.zeros((optiondict['oversampfactor'] * validtimepoints), dtype=np.float))
     numccorrlags = thecorrelator.corrlen
     corrorigin = thecorrelator.corrorigin
     dummy, corrscale, dummy = thecorrelator.getcorrelation(trim=False)
@@ -928,7 +927,7 @@ def rapidtide_main(argparsingfunc):
                 detrendorder=optiondict['detrendorder'])
             optiondict['acwidth'] = acwidth + 0.0
             optiondict['absmaxsigma'] = acwidth * 10.0
-            passsuffix = '_pass' + str(thepass + 1)
+            passsuffix = '_pass' + str(thepass)
             if sidelobetime is not None:
                 optiondict['acsidelobelag' + passsuffix] = sidelobetime
                 optiondict['despeckle_thresh'] = np.max([optiondict['despeckle_thresh'], sidelobetime / 2.0])
@@ -995,10 +994,6 @@ def rapidtide_main(argparsingfunc):
                                     outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
                 tide_io.writenpvecs(cleaned_resampref_y,
                                     outputname + '_cleanedresampref_y_pass' + str(thepass) + '.txt')
-
-                plot(cleaned_resampref_y)
-                plot(cleaned_referencetc)
-                show()
                 if optiondict['saveoptionsasjson']:
                     tide_io.writedicttojson(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.json')
                 else:
@@ -1265,7 +1260,7 @@ def rapidtide_main(argparsingfunc):
             timings.append(
                 ['Regressor refinement end, pass ' + str(thepass), time.time(), voxelsprocessed_rr, 'voxels'])
         if optiondict['saveintermediatemaps']:
-            for mapname in ['lagtimes', 'lagstrengths', 'lagsigma', 'lagmask']:
+            for mapname in ['lagtimes', 'lagstrengths', 'lagsigma', 'lagmask', 'refinemask']:
                 if optiondict['memprofile']:
                     memcheckpoint('about to write ' + mapname)
                 else:
