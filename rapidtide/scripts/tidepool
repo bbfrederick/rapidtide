@@ -377,7 +377,10 @@ def updateCorrelationFunc():
         maxval = overlays['lagstrengths'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
         minval = np.min(overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :])
         maxtime = overlays['lagtimes'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
-        failreason = overlays['failimage'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos]
+        try:
+            failreason = overlays['failimage'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos]
+        except KeyError:
+            failreason = -1
 
         # update the plot
         corrfuncCurve.setData(timeaxis, corrvals)
