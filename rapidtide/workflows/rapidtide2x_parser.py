@@ -140,7 +140,8 @@ def usage():
     print("                                     the global crosscorrelation.  Overrides offsettime if specified.")
     print("    -b                             - Use butterworth filter for band splitting instead of")
     print("                                     trapezoidal FFT filter")
-    print("    -F                             - Filter data and regressors from LOWERFREQ to UPPERFREQ.")
+    print("    -F  LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]")
+    print("                                   - Filter data and regressors from LOWERFREQ to UPPERFREQ.")
     print("                                     LOWERSTOP and UPPERSTOP can be specified, or will be")
     print("                                     calculated automatically")
     print("    -V                             - Filter data and regressors to VLF band")
@@ -904,7 +905,7 @@ def process_args():
             print('Setting histogram length to ', optiondict['histlen'])
         elif o == '-o':
             optiondict['offsettime'] = float(a)
-            optiondict['offsettime_total'] = -float(a)
+            optiondict['offsettime_total'] = float(a)
             print('Applying a timeshift of ', optiondict['offsettime'], ' to regressor')
         elif o == '--autosync':
             optiondict['autosync'] = True
@@ -1119,18 +1120,9 @@ def process_args():
             else:
                 print('Using ', optiondict['refineexcludename'], ' as exclude mask for probe regressor refinement')
         elif o == '--corrmask':
-            optiondict['corrmaskname'], colspec = tide_io.parsefilespec(a)
-            if colspec is not None:
-                optiondict['corrmaskvallist'] = tide_io.colspectolist(colspec)
-            linkchar = '='
-            if optiondict['corrmaskvallist'] is not None:
-                print('Using voxels where',
-                      optiondict['corrmaskname'],
-                      ' = ',
-                      optiondict['corrmaskvallist'],
-                      '- corrmaskthresh will be ignored')
-            else:
-                print('Using ', optiondict['corrmaskname'], ' as mask file - corrmaskthresh will be ignored')
+            optiondict['corrmaskname'], optiondict['corrmaskvallist'] = tide_io.processnamespec(a,
+                                                                                                'Using voxels where ',
+                                                                                                'in correlation calculations.')
         elif o == '--refineprenorm':
             optiondict['refineprenorm'] = a
             if (
