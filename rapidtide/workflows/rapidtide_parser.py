@@ -968,7 +968,7 @@ def process_args(inputargs=None):
     else:
         args['endpoint'] = args['timerange'][1]
 
-    args['offsettime_total'] = -1 * args['offsettime']
+    args['offsettime_total'] = args['offsettime'] + 0.0
 
     reg_ref_used = ((args['lagminthresh'] != 0.5) or
                     (args['lagmaxthresh'] != 5.) or
@@ -1025,20 +1025,22 @@ def process_args(inputargs=None):
     # mask processing
     if args['corrmaskincludespec'] is not None:
         args['corrmaskincludename'], args['corrmaskincludevals'] = tide_io.processnamespec(args['corrmaskincludespec'],
-                                                                                       'Including voxels where ',                                                                                     'in correlation calculations.')
+                                                                                           'Including voxels where ',
+                                                                                           'in correlation calculations.')
     else:
         args['corrmaskincludename'] = None
 
     if args['globalmeanincludespec'] is not None:
         args['globalmeanincludename'], args['globalmeanincludevals'] = tide_io.processnamespec(args['globalmeanincludespec'],
-                                                                                       'Including voxels where ',                                                                                      'in global mean.')
+                                                                                               'Including voxels where ',
+                                                                                               'in global mean.')
     else:
         args['globalmeanincludename'] = None
 
     if args['globalmeanexcludespec'] is not None:
         args['globalmeanexcludename'], args['globalmeanexcludevals'] = tide_io.processnamespec(args['globalmeanexcludespec'],
-                                                                                       'Excluding voxels where ',
-                                                                                       'from global mean.')
+                                                                                               'Excluding voxels where ',
+                                                                                               'from global mean.')
     else:
         args['globalmeanexcludename'] = None
 
