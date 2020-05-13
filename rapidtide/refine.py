@@ -114,6 +114,7 @@ def refineregressor(fmridata,
                     lagstrengths,
                     lagtimes,
                     lagsigma,
+                    lagmask,
                     R2,
                     theprefilter,
                     optiondict,
@@ -143,6 +144,8 @@ def refineregressor(fmridata,
         Time delay of maximum crosscorrelation in seconds
     lagsigma : 3D numpy float array
         Gaussian width of the crosscorrelation peak, in seconds.
+    lagmask : 3D numpy float array
+        Mask of voxels with successful correlation fits.
     R2 : 3D numpy float array
         Square of the maximum correlation coefficient in every voxel
     theprefilter : function
@@ -180,19 +183,19 @@ def refineregressor(fmridata,
         ampmask = np.where(lagstrengths >= optiondict['ampthresh'], np.int16(1), np.int16(0))
     if optiondict['lagmaskside'] == 'upper':
         delaymask = \
-            np.where(lagtimes > optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
-            np.where(lagtimes < optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
+            np.where((lagtimes - optiondict['offsettime']) > optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
+            np.where((lagtimes - optiondict['offsettime']) < optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
     elif optiondict['lagmaskside'] == 'lower':
         delaymask = \
-            np.where(lagtimes < -optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
-            np.where(lagtimes > -optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
+            np.where((lagtimes - optiondict['offsettime']) < -optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
+            np.where((lagtimes - optiondict['offsettime']) > -optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
     else:
-        abslag = abs(lagtimes)
+        abslag = abs(lagtimes) - optiondict['offsettime']
         delaymask = \
             np.where(abslag > optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
             np.where(abslag < optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
     sigmamask = np.where(lagsigma < optiondict['sigmathresh'], np.int16(1), np.int16(0))
-    locationmask = 0 * ampmask + 1
+    locationmask = lagmask + 0
     if includemask is not None:
         locationmask = locationmask * includemask
     if excludemask is not None:
@@ -201,9 +204,9 @@ def refineregressor(fmridata,
 
     # first generate the refine mask
     locationfails = np.sum(1 - locationmask)
-    ampfails = np.sum(1 - ampmask)
-    lagfails = np.sum(1 - delaymask)
-    sigmafails = np.sum(1 - sigmamask)
+    ampfails = np.sum(1 - ampmask * locationmask)
+    lagfails = np.sum(1 - delaymask * locationmask)
+    sigmafails = np.sum(1 - sigmamask * locationmask)
     refinemask = locationmask * ampmask * delaymask * sigmamask
     if tide_stats.getmasksize(refinemask) == 0:
         if (includemask is None) and (excludemask is None):
