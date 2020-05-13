@@ -203,6 +203,14 @@ def addmemprofiling(thefunc, memprofile, memfile, themessage):
         tide_util.logmem(themessage, file=memfile)
         return thefunc
 
+def checkforzeromean(thedataset):
+    themean = np.mean(thedataset)
+    thestd = np.std(thedataset)
+    if thestd > themean:
+        return True
+    else:
+        return False
+
 
 def saveamap(mapname, outmaparray, validvoxels, nativespaceshape, theheader, outputname, outsuffix3d, memfile, optiondict):
     if optiondict['memprofile']:
@@ -365,6 +373,13 @@ def rapidtide_main(argparsingfunc):
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart:validend + 1]
     validtimepoints = validend - validstart + 1
+
+    # detect zero mean data
+    optiondict['dataiszeromean'] = checkforzeromean(fmri_data)
+    if optiondict['dataiszeromean']:
+        print('WARNING: dataset is zero mean - forcing variance masking and no refine prenormalization.  Consider specifying a global mean and correlation mask.')
+        optiondict['refineprenorm'] = 'None'
+        optiondict['globalmaskmethod'] = 'variance'
 
     # read in the optional masks
     tide_util.logmem('before setting masks', file=memfile)
@@ -614,13 +629,13 @@ def rapidtide_main(argparsingfunc):
         globalcorrx, globalcorry = tide_corr.arbcorr(meanvec, meanfreq, inputvec, inputfreq, start2=inputstarttime)
         synctime = globalcorrx[np.argmax(globalcorry)]
         if optiondict['autosync']:
-            optiondict['offsettime'] = synctime
+            optiondict['offsettime'] = -synctime
             optiondict['offsettime_total'] = synctime
     else:
         synctime = 0.0
     print('synctime is', synctime)
 
-    reference_x = np.arange(0.0, numreference) * inputperiod - (inputstarttime + optiondict['offsettime'])
+    reference_x = np.arange(0.0, numreference) * inputperiod - (inputstarttime - optiondict['offsettime'])
     print('total probe regressor offset is', inputstarttime + optiondict['offsettime'])
 
     # Print out initial information
@@ -1204,6 +1219,7 @@ def rapidtide_main(argparsingfunc):
                 lagstrengths,
                 lagtimes,
                 lagsigma,
+                lagmask,
                 R2,
                 theprefilter,
                 optiondict,
@@ -1260,7 +1276,10 @@ def rapidtide_main(argparsingfunc):
             timings.append(
                 ['Regressor refinement end, pass ' + str(thepass), time.time(), voxelsprocessed_rr, 'voxels'])
         if optiondict['saveintermediatemaps']:
-            for mapname in ['lagtimes', 'lagstrengths', 'lagsigma', 'lagmask', 'refinemask']:
+            maplist = ['lagtimes', 'lagstrengths', 'lagsigma', 'lagmask']
+            if thepass < optiondict['passes']:
+                maplist.append('refinemask')
+            for mapname in maplist:
                 if optiondict['memprofile']:
                     memcheckpoint('about to write ' + mapname)
                 else:
