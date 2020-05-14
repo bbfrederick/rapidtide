@@ -364,8 +364,6 @@ def process_args():
     optiondict['corrweighting'] = 'none'  # use a standard unweighted crosscorrelation for calculate time delays
     optiondict['tmaskname'] = None  # file name for tmask regressor
     optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
-    optiondict['corrmaskname'] = None  # name of correlation mask
-    optiondict['corrmaskvals'] = None  # list of integer values in the correlation mask file to use in the mask
     optiondict['corrmaskexcludename'] = None
     optiondict['corrmaskexcludevals'] = None    # list of integer values to use in the mask
     optiondict['corrmaskincludename'] = None
@@ -1120,7 +1118,7 @@ def process_args():
             else:
                 print('Using ', optiondict['refineexcludename'], ' as exclude mask for probe regressor refinement')
         elif o == '--corrmask':
-            optiondict['corrmaskname'], optiondict['corrmaskvallist'] = tide_io.processnamespec(a,
+            optiondict['corrmaskincludename'], optiondict['corrmaskincludevals'] = tide_io.processnamespec(a,
                                                                                                 'Using voxels where ',
                                                                                                 'in correlation calculations.')
         elif o == '--refineprenorm':
