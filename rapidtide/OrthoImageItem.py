@@ -407,32 +407,50 @@ class OrthoImageItem(QtGui.QWidget):
             return self.map.maskeddata[self.xpos, self.ypos, self.zpos]
 
 
-    def saveandcomposite(self, fg_img, bg_img, name, savedir, scalefach, scalefacv):
+    def saveandcomposite(self, square_img, fg_img, bg_img, name, savedir, scalefach, scalefacv):
         if PILexists:
             print('using PIL to save ', name)
+            squarename = os.path.join(savedir, name + '_square.png')
             fgname = os.path.join(savedir, name + '_foreground.png')
             bgname = os.path.join(savedir, name + '_background.png')
             compositename = os.path.join(savedir, name + '.jpg')
+
+            # make the individual layers
+            square_img.save(squarename)
             fg_img.save(fgname)
             bg_img.save(bgname)
+            square = Image.open(squarename)
             background = Image.open(bgname)
             foreground = Image.open(fgname)
             print(foreground.getbands())
+
+            # now composite
+            #square.paste(background, None, background)
+            #square.paste(foreground, None, foreground)
+            #flipped = square.transpose(Image.FLIP_TOP_BOTTOM)
+
+            # now composite
             background.paste(foreground, None, foreground)
             flipped = background.transpose(Image.FLIP_TOP_BOTTOM)
+
+            # scale
             print('scaling')
-            basesize = 512
-            hsize = int(basesize / scalefach)
-            vsize = int(basesize / scalefacv)
+            mulfac = 8
+            hsize = int(mulfac * scalefach)
+            vsize = int(mulfac * scalefacv)
             print('scaling to ', hsize, vsize)
-            flipped = flipped.resize((hsize, vsize), Image.ANTIALIAS)
+            flipped = flipped.resize((hsize, vsize), Image.NEAREST)
+
+            # save and clean up
             print('saving to ', compositename)
             flipped.save(compositename, 'jpeg')
             print('cleaning')
             os.remove(fgname)
             os.remove(bgname)
+            os.remove(squarename)
         else:
             print('saving ', name)
+            square_img.save(os.path.join(savedir, name + '_square.png'))
             fg_img.save(os.path.join(savedir, name + '_fg.png'))
             bg_img.save(os.path.join(savedir, name + '_bg.png'))
 
@@ -444,11 +462,30 @@ class OrthoImageItem(QtGui.QWidget):
         thedir = str(mydialog.getExistingDirectory(options=options, caption="Image output directory"))
         print('thedir=', thedir)
         thename = self.map.namebase + self.map.name
-        self.saveandcomposite(self.axviewwin, self.axviewbgwin, thename + '_ax', thedir, self.impixpervoxx, self.impixpervoxy)
-        self.saveandcomposite(self.corviewwin, self.corviewbgwin, thename + '_cor', thedir, self.impixpervoxx,
-                              self.impixpervoxz)
-        self.saveandcomposite(self.sagviewwin, self.sagviewbgwin, thename + '_sag', thedir, self.impixpervoxy,
-                              self.impixpervoxz)
+
+        # make a square background
+        thesquarewin = pg.ImageItem()
+        thesquarewin.translate(0, 0)
+        maximpervox = np.max([self.impixpervoxx, self.impixpervoxy, self.impixpervoxz])
+        maxdim = np.max([self.xdim, self.ydim, self.zdim])
+        thesquarewin.scale(maximpervox, maximpervox)
+        thesquarewin.setImage(np.zeros((maxdim, maxdim), dtype=float), autoLevels=True)
+
+        self.saveandcomposite(thesquarewin,
+                              self.axviewwin, self.axviewbgwin,
+                              thename + '_ax', thedir,
+                              self.xdim * self.xsize,
+                              self.ydim * self.ysize)
+        self.saveandcomposite(thesquarewin,
+                              self.corviewwin, self.corviewbgwin,
+                              thename + '_cor', thedir,
+                              self.xdim * self.xsize,
+                              self.zdim * self.zsize)
+        self.saveandcomposite(thesquarewin,
+                              self.sagviewwin, self.sagviewbgwin,
+                              thename + '_sag', thedir,
+                              self.ydim * self.ysize,
+                              self.zdim * self.zsize)
         with open(os.path.join(thedir, thename + '_lims.txt'), 'w') as FILE:
             FILE.writelines(str(self.map.dispmin) + '\t' + str(self.map.dispmax))
             # img_colorbar.save(thedir + self.map.name + '_colorbar.png')
