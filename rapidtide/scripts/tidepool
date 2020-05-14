@@ -1096,11 +1096,11 @@ def main():
                            help='Set geometric mask image',
                            dest='geommaskname',
                            default=None)
-    theparser.add_argument('--compact',
-                           help='Use the alternate compact layout',
+    theparser.add_argument('--oldstyle',
+                           help='Use the old style layout',
                            dest='compact',
-                           action='store_true',
-                           default=False)
+                           action='store_false',
+                           default=True)
     args = theparser.parse_args()
 
     if args.compact:
