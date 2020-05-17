@@ -21,6 +21,10 @@ Created on Sat Jul 28 23:01:07 2018
 @author: neuro
 """
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+print('setting backend to Agg')
+mpl.use('Agg')
+
 import numpy as np
 import os
 import sys
