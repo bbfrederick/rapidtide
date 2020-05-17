@@ -70,7 +70,7 @@ if tfversion == -1:
         print('no backend found - exiting')
         sys.exit()
 
-print('tensorflow version:', tf.__version__, (tf.__version__)[0])
+print('tensorflow version: >>>{}<<<'.format(tf.__version__), (tf.__version__)[0])
 
 if tfversion == 2:
     print('using tensorflow v2x')
