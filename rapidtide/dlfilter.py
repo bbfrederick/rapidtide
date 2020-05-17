@@ -44,15 +44,20 @@ try:
 
     plaidml.keras.install_backend("plaidml")
     print('using plaidml keras')
+    from keras.models import Sequential
+    from keras.optimizers import RMSprop
+    from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
+        TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
+    from keras.callbacks import TerminateOnNaN, ModelCheckpoint
+    from keras.models import load_model
 except ImportError:
     print('falling back to standard keras')
-
-from keras.models import Sequential
-from keras.optimizers import RMSprop
-from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
-    TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
-from keras.callbacks import TerminateOnNaN, ModelCheckpoint
-from keras.models import load_model
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.optimizers import RMSprop
+    from tensorflow.keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
+        TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
+    from tensorflow.keras.callbacks import TerminateOnNaN, ModelCheckpoint
+    from tensorflow.keras.models import load_model
 
 
 class dlfilter:
