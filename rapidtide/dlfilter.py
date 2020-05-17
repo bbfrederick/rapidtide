@@ -58,7 +58,6 @@ except ImportError:
     print('falling back to standard tensorflow keras')
     try:
         import tensorflow.compat.v1 as tf
-
         print('using tensorflow v2x')
         tf.disable_v2_behavior()
         from tf.keras.models import Sequential
@@ -68,6 +67,7 @@ except ImportError:
         from tf.keras.callbacks import TerminateOnNaN, ModelCheckpoint
         from tf.keras.models import load_model
     except ImportError:
+        import tensorflow as tf
         print('using tensorflow v1x')
         from keras.models import Sequential
         from keras.optimizers import RMSprop
