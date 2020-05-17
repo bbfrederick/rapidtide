@@ -55,13 +55,28 @@ try:
     from keras.callbacks import TerminateOnNaN, ModelCheckpoint
     from keras.models import load_model
 except ImportError:
-    print('falling back to standard keras')
-    from keras.models import Sequential
-    from keras.optimizers import RMSprop
-    from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
-        TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
-    from keras.callbacks import TerminateOnNaN, ModelCheckpoint
-    from keras.models import load_model
+    print('falling back to standard tensorflow keras')
+    try:
+        import tensorflow.compat.v1 as tf
+
+        print('using tensorflow v2x')
+        tf.disable_v2_behavior()
+        from tf.keras.models import Sequential
+        from tf.keras.optimizers import RMSprop
+        from tf.keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
+            TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
+        from tf.keras.callbacks import TerminateOnNaN, ModelCheckpoint
+        from tf.keras.models import load_model
+    except:
+        print('using tensorflow v1x')
+        from keras.models import Sequential
+        from keras.optimizers import RMSprop
+        from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
+            TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
+        from keras.callbacks import TerminateOnNaN, ModelCheckpoint
+        from keras.models import load_model
+
+
 
 
 class dlfilter:
