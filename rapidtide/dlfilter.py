@@ -67,12 +67,12 @@ print('tensorflow version:', tf.__version__)
 if tfversion == 2:
     print('using tensorflow v2x')
     tf.disable_v2_behavior()
-    from tf.keras.models import Sequential
-    from tf.keras.optimizers import RMSprop
-    from tf.keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.optimizers import RMSprop
+    from tensorflow.keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
         TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
-    from tf.keras.callbacks import TerminateOnNaN, ModelCheckpoint
-    from tf.keras.models import load_model
+    from tensorflow.keras.callbacks import TerminateOnNaN, ModelCheckpoint
+    from tensorflow.keras.models import load_model
 elif tfversion == 1:
     import tensorflow as tf
     print('using tensorflow v1x')
