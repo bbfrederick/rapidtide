@@ -58,7 +58,10 @@ except ImportError:
     print('falling back to standard tensorflow keras')
     try:
         import tensorflow.compat.v1 as tf
-        tfversion = 2
+        if (tf.__version__)[0] == 2:
+            tfversion = 2
+        elif (tf.__version__)[0] == 1:
+            tfversion = 1
     except ImportError:
         tfversion = 1
 
