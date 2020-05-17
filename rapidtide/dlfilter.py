@@ -62,15 +62,15 @@ except ImportError:
 if tfversion == -1:
     try:
         import tensorflow.compat.v1 as tf
-        if (tf.__version__)[0] == 2:
+        if (tf.__version__)[0] == '2':
             tfversion = 2
-        elif (tf.__version__)[0] == 1:
+        elif (tf.__version__)[0] == '1':
             tfversion = 1
     except ImportError:
         print('no backend found - exiting')
         sys.exit()
 
-print('tensorflow version: >>>{}<<<'.format(tf.__version__), (tf.__version__)[0])
+print('tensorflow version: >>>{}<<<'.format(tf.__version__))
 
 if tfversion == 2:
     print('using tensorflow v2x')
