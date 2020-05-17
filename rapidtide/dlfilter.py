@@ -70,7 +70,7 @@ if tfversion == -1:
         print('no backend found - exiting')
         sys.exit()
 
-print('tensorflow version:', tf.__version__)
+print('tensorflow version:', tf.__version__, (tf.__version__)[0])
 
 if tfversion == 2:
     print('using tensorflow v2x')
@@ -91,7 +91,7 @@ elif tfversion == 1:
 elif tfversion == 0:
     pass
 else:
-    print('could not find backent - exiting')
+    print('could not find backend - exiting')
     sys.exit()
 
 class dlfilter:
