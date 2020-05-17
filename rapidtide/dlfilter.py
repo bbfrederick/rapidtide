@@ -67,7 +67,7 @@ except ImportError:
             TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
         from tf.keras.callbacks import TerminateOnNaN, ModelCheckpoint
         from tf.keras.models import load_model
-    except:
+    except ImportError:
         print('using tensorflow v1x')
         from keras.models import Sequential
         from keras.optimizers import RMSprop
