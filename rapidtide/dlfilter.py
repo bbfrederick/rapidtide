@@ -43,10 +43,12 @@ except ImportError:
 
 import rapidtide.io as tide_io
 
+tfversion = -1
 try:
     import plaidml.keras
 
     plaidml.keras.install_backend("plaidml")
+    tfversion = 0
     print('using plaidml keras')
     from keras.models import Sequential
     from keras.optimizers import RMSprop
@@ -56,6 +58,8 @@ try:
     from keras.models import load_model
 except ImportError:
     print('falling back to standard tensorflow keras')
+
+if tfversion == -1:
     try:
         import tensorflow.compat.v1 as tf
         if (tf.__version__)[0] == 2:
@@ -63,7 +67,8 @@ except ImportError:
         elif (tf.__version__)[0] == 1:
             tfversion = 1
     except ImportError:
-        tfversion = 1
+        print('no backend found - exiting')
+        sys.exit()
 
 print('tensorflow version:', tf.__version__)
 
@@ -77,15 +82,17 @@ if tfversion == 2:
     from tensorflow.keras.callbacks import TerminateOnNaN, ModelCheckpoint
     from tensorflow.keras.models import load_model
 elif tfversion == 1:
-    import tensorflow as tf
-    print('using tensorflow v1x')
     from keras.models import Sequential
     from keras.optimizers import RMSprop
     from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
         TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
     from keras.callbacks import TerminateOnNaN, ModelCheckpoint
     from keras.models import load_model
-
+elif tfversion == 0:
+    pass
+else:
+    print('could not find backent - exiting')
+    sys.exit()
 
 class dlfilter:
     """Base class for deep learning filter"""
