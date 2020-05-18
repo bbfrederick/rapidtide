@@ -82,6 +82,7 @@ if tfversion == 2:
     from tensorflow.keras.callbacks import TerminateOnNaN, ModelCheckpoint
     from tensorflow.keras.models import load_model
 elif tfversion == 1:
+    print('using tensorflow v1x')
     from keras.models import Sequential
     from keras.optimizers import RMSprop
     from keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
