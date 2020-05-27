@@ -184,7 +184,7 @@ def _get_parser():
     parser.add_argument('--saveres',
                         dest='saveres',
                         metavar='DPI',
-                        type=str,
+                        type=int,
                         action='store',
                         help='Write figure to file at DPI dots per inch (default is 1000).',
                         default=1000)
