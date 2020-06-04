@@ -802,7 +802,7 @@ def rapidtide_main(argparsingfunc):
     lagstrengths = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     lagsigma = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     lagmask = np.zeros(internalvalidspaceshape, dtype='uint16')
-    failimage = np.zeros(internalvalidspaceshape, dtype='uint16')
+    failimage = np.zeros(internalvalidspaceshape, dtype='uint32')
     R2 = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
     tide_util.logmem('after main array allocation', file=memfile)

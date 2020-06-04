@@ -266,15 +266,28 @@ class correlator:
 
 class correlation_fitter:
     corrtimeaxis = None
-    FML_NOERROR = np.uint16(0x00)
-    FML_BADAMPLOW = np.uint16(0x01)
-    FML_BADAMPHIGH = np.uint16(0x02)
-    FML_BADSEARCHWINDOW = np.uint16(0x04)
-    FML_BADWIDTHLOW = np.uint16(0x08)
-    FML_BADWIDTHHIGH = np.uint16(0x10)
-    FML_BADLAG = np.uint16(0x20)
-    FML_FITFAIL = np.uint16(0x40)
-    FML_INITFAIL = np.uint16(0x80)
+    FML_NOERROR = np.uint32(0x0000)
+
+    FML_INITAMPLOW = np.uint32(0x0001)
+    FML_INITAMPHIGH = np.uint32(0x0002)
+    FML_INITWIDTHLOW = np.uint32(0x0004)
+    FML_INITWIDTHHIGH = np.uint32(0x0008)
+    FML_INITLAGLOW = np.uint32(0x0010)
+    FML_INITLAGHIGH = np.uint32(0x0020)
+    FML_INITFAIL = FML_INITAMPLOW | FML_INITAMPHIGH \
+                   | FML_INITWIDTHLOW | FML_INITWIDTHHIGH \
+                   | FML_INITLAGLOW | FML_INITLAGHIGH
+
+    FML_FITAMPLOW = np.uint32(0x0100)
+    FML_FITAMPHIGH = np.uint32(0x0200)
+    FML_FITWIDTHLOW = np.uint32(0x0400)
+    FML_FITWIDTHHIGH = np.uint32(0x0800)
+    FML_FITLAGLOW = np.uint32(0x1000)
+    FML_FITLAGHIGH = np.uint32(0x2000)
+    FML_FITFAIL = FML_FITAMPLOW | FML_FITAMPHIGH \
+                   | FML_FITWIDTHLOW | FML_FITWIDTHHIGH \
+                   | FML_FITLAGLOW | FML_FITLAGHIGH
+
 
     def __init__(self,
                  corrtimeaxis=None,
@@ -420,22 +433,32 @@ class correlation_fitter:
     def diagnosefail(self, failreason):
         # define error values
         reasons = []
-        if failreason.astype(np.uint16) & self.FML_BADAMPLOW:
+        if failreason.astype(np.uint32) & self.FML_INITAMPLOW:
+            reasons.append('Initial amplitude too low')
+        if failreason.astype(np.uint32) & self.FML_INITAMPHIGH:
+            reasons.append('Initial amplitude too high')
+        if failreason.astype(np.uint32) & self.FML_INITWIDTHLOW:
+            reasons.append('Initial width too low')
+        if failreason.astype(np.uint32) & self.FML_INITWIDTHHIGH:
+            reasons.append('Initial width too high')
+        if failreason.astype(np.uint32) & self.FML_INITLAGLOW:
+            reasons.append('Initial Lag too low')
+        if failreason.astype(np.uint32) & self.FML_INITLAGHIGH:
+            reasons.append('Initial Lag too high')
+
+        if failreason.astype(np.uint32) & self.FML_FITAMPLOW:
             reasons.append('Fit amplitude too low')
-        if failreason.astype(np.uint16) & self.FML_BADAMPHIGH:
+        if failreason.astype(np.uint32) & self.FML_FITAMPHIGH:
             reasons.append('Fit amplitude too high')
-        if failreason.astype(np.uint16) & self.FML_BADSEARCHWINDOW:
-            reasons.append('Bad search window')
-        if failreason.astype(np.uint16) & self.FML_BADWIDTHLOW:
-            reasons.append('Bad fit width - value too low')
-        if failreason.astype(np.uint16) & self.FML_BADWIDTHHIGH:
-            reasons.append('Bad fit width - value too high')
-        if failreason.astype(np.uint16) & self.FML_BADLAG:
-            reasons.append('Lag out of range')
-        if failreason.astype(np.uint16) & self.FML_FITFAIL:
-            reasons.append('Refinement failed')
-        if failreason.astype(np.uint16) & self.FML_INITFAIL:
-            reasons.append('Initialization failed')
+        if failreason.astype(np.uint32) & self.FML_FITWIDTHLOW:
+            reasons.append('Fit width too low')
+        if failreason.astype(np.uint32) & self.FML_FITWIDTHHIGH:
+            reasons.append('Fit width too high')
+        if failreason.astype(np.uint32) & self.FML_FITLAGLOW:
+            reasons.append('Fit Lag too low')
+        if failreason.astype(np.uint32) & self.FML_FITLAGHIGH:
+            reasons.append('Fit Lag too high')
+
         if len(reasons) > 0:
             return ', '.join(reasons)
         else:
@@ -522,39 +545,40 @@ class correlation_fitter:
             else:
                 rangeextension = (self.lagmax - self.lagmin) * 0.75
             if not ((self.lagmin - rangeextension - binwidth) <= maxlag_init <= (self.lagmax + rangeextension + binwidth)):
-                failreason |= (self.FML_INITFAIL | self.FML_BADLAG)
                 if maxlag_init <= (self.lagmin - rangeextension - binwidth):
+                    failreason |= self.FML_INITLAGLOW
                     maxlag_init = self.lagmin - rangeextension - binwidth
                 else:
+                    failreason |= self.FML_INITLAGHIGH
                     maxlag_init = self.lagmax + rangeextension + binwidth
                 if self.debug:
                     print('bad initial')
             if maxsigma_init > self.absmaxsigma:
-                failreason |= (self.FML_INITFAIL | self.FML_BADWIDTHHIGH)
+                failreason |= self.FML_INITWIDTHHIGH
                 maxsigma_init = self.absmaxsigma
                 if self.debug:
                     print('bad initial width - too high')
             if peakend - peakstart < 2:
-                failreason |= (self.FML_INITFAIL | self.FML_BADSEARCHWINDOW)
+                failreason |= self.FML_INITWIDTHLOW
                 maxsigma_init = np.float64(
                     ((2 + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac)))) / np.sqrt(2.0))
                 if self.debug:
                     print('bad initial width - too low')
             if not (self.lthreshval <= maxval_init <= self.uthreshval) and self.enforcethresh:
-                failreason |= (self.FML_INITFAIL | self.FML_BADAMPLOW)
+                failreason |= self.FML_INITAMPLOW
                 if self.debug:
                     print('bad initial amp:', maxval_init, 'is less than', self.lthreshval)
             if (maxval_init < 0.0):
-                failreason |= (self.FML_INITFAIL | self.FML_BADAMPLOW)
+                failreason |= self.FML_INITAMPLOW
                 maxval_init = 0.0
                 if self.debug:
                     print('bad initial amp:', maxval_init, 'is less than 0.0')
             if (maxval_init > 1.0):
-                failreason |= (self.FML_INITFAIL | self.FML_BADAMPHIGH)
+                failreason |= self.FML_INITAMPHIGH
                 maxval_init = 1.0
                 if self.debug:
                     print('bad initial amp:', maxval_init, 'is greater than 1.0')
-            if failreason != self.FML_NOERROR and self.zerooutbadfit:
+            if (failreason != self.FML_NOERROR) and self.zerooutbadfit:
                 maxval = np.float64(0.0)
                 maxlag = np.float64(0.0)
                 maxsigma = np.float64(0.0)
@@ -609,41 +633,41 @@ class correlation_fitter:
 
             # check for errors in fit
             fitfail = False
-            failreason = self.FML_NOERROR
             if self.bipolar:
                 lowestcorrcoeff = -1.0
             else:
                 lowestcorrcoeff = 0.0
             if maxval < lowestcorrcoeff:
-                failreason |= (self.FML_FITFAIL + self.FML_BADAMPLOW)
+                failreason |= self.FML_FITAMPLOW
                 maxval = lowestcorrcoeff
                 if self.debug:
                     print('bad fit amp: maxval is lower than lower limit')
                 fitfail = True
             if (np.abs(maxval) > 1.0):
                 if not self.allowhighfitamps:
-                    failreason |= (self.FML_FITFAIL | self.FML_BADAMPHIGH)
+                    failreason |= self.FML_FITAMPHIGH
                     if self.debug:
                         print('bad fit amp: magnitude of', maxval, 'is greater than 1.0')
                     fitfail = True
                 maxval = 1.0 * np.sign(maxval)
             if (self.lagmin > maxlag) or (maxlag > self.lagmax):
-                failreason |= (self.FML_FITFAIL + self.FML_BADLAG)
                 if self.debug:
                     print('bad lag after refinement')
                 if self.lagmin > maxlag:
+                    failreason |= self.FML_FITLAGLOW
                     maxlag = self.lagmin
                 else:
+                    failreason |= self.FML_FITLAGHIGH
                     maxlag = self.lagmax
                 fitfail = True
             if maxsigma > self.absmaxsigma:
-                failreason |= (self.FML_FITFAIL + self.FML_BADWIDTHHIGH)
+                failreason |= self.FML_FITWIDTHHIGH
                 if self.debug:
                     print('bad width after refinement:', maxsigma, '>', self.absmaxsigma)
                 maxsigma = self.absmaxsigma
                 fitfail = True
             if maxsigma < self.absminsigma:
-                failreason |= (self.FML_FITFAIL + self.FML_BADWIDTHLOW)
+                failreason |= self.FML_FITWIDTHLOW
                 if self.debug:
                     print('bad width after refinement:', maxsigma, '<', self.absminsigma)
                 maxsigma = self.absminsigma

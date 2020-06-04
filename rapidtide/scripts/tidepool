@@ -965,21 +965,31 @@ def updateOrthoImages():
 def printfocusvals():
     global ui, overlays, currentdataset
     global currentloc
+    global corrfuncFitter
     logstatus(ui.logOutput, '\n\nValues at location ' + '{0},{1},{2}'.format(currentloc.xpos, currentloc.ypos,currentloc.zpos))
     for key in overlays:
         # print(key, overlays[key].report)
         if key != 'mnibrainmask':
-            # print('key=', key)
+            #print('key=', key)
             if overlays[key].report:
                 overlays[key].setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos)
                 overlays[key].setTpos(currentloc.tpos)
                 focusval = overlays[key].getFocusVal()
                 if key != 'atlas':
-                    outstring = '\t' + str(overlays[key].label.ljust(26)) + str(':') + '{:.3f}'.format(round(focusval, 3))
-                    logstatus(ui.logOutput, outstring)
+                    if key != 'failimage':
+                        outstring = '\t' + str(overlays[key].label.ljust(26)) + str(':') + \
+                                    '{:.3f}'.format(round(focusval, 3))
+                        logstatus(ui.logOutput, outstring)
+                    else:
+                        if focusval > 0.0:
+                            failstring = corrfuncFitter.diagnosefail(np.uint16(focusval))
+                            outstring = '\t' + str(overlays[key].label.ljust(26)) + str(':\n\t    ') + \
+                                        failstring.replace(', ', '\n\t    ')
+                            logstatus(ui.logOutput, outstring)
                 else:
                     outstring = '\t' + str(overlays[key].label.ljust(26)) + str(':') + str(currentdataset.atlaslabels[int(focusval) - 1])
                     logstatus(ui.logOutput, outstring)
+
 
 def prefilt_radioButton_clicked(enabled):
     global currentdataset
@@ -1304,7 +1314,7 @@ def main():
                 'colormap': spectrum_state,
                 'label': 'Fit failure reason',
                 'display': False,
-                'funcmask': 'p_lt_0p050_mask'},
+                'funcmask': None},
         'anatomic':
             {
                 'colormap': gray_state,
@@ -1563,12 +1573,13 @@ def main():
 
     print('setting functional masks')
     for theoverlay in currentdataset.loadedfuncmaps:
-        if 'p_lt_0p050_mask' in overlays and False:  # disable this BBF 2/8/18
-            overlays[theoverlay].setFuncMask(overlays['p_lt_0p050_mask'].data)
-            ui.setMask_Button.setText('p<0.05')
-        else:
-            overlays[theoverlay].setFuncMask(overlays['lagmask'].data)
-            ui.setMask_Button.setText('Valid mask')
+        if theoverlay != 'failimage':
+            if 'p_lt_0p050_mask' in overlays and False:  # disable this BBF 2/8/18
+                overlays[theoverlay].setFuncMask(overlays['p_lt_0p050_mask'].data)
+                ui.setMask_Button.setText('p<0.05')
+            else:
+                overlays[theoverlay].setFuncMask(overlays['lagmask'].data)
+                ui.setMask_Button.setText('Valid mask')
     print('done setting functional masks')
 
     if 'anatomic' in overlays:

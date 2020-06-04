@@ -70,7 +70,7 @@ def onecorrfitx(correlationfunc,
         maxval *= flipfac
     else:
         # do something different
-        failreason = np.uint16(0)
+        failreason = np.uint32(0)
         maxlag = rt_floatset(fixeddelayvalue)
         maxindex = np.int16(bisect.bisect_left(thefitter.corrtimeaxis, fixeddelayvalue))
         maxval = rt_floatset(flipfac * correlationfunc[maxindex])
@@ -169,15 +169,25 @@ def fitcorrx(lagtcgenerator,
     else:
         themask = np.where(initiallags > -1000000.0, 1, 0)
     reportstep = 1000
-    volumetotal, ampfails, lagfails, windowfails, widthfails, edgefails, fitfails = 0, 0, 0, 0, 0, 0, 0
-    FML_BADAMPLOW = np.uint16(0x01)
-    FML_BADAMPHIGH = np.uint16(0x02)
-    FML_BADSEARCHWINDOW = np.uint16(0x04)
-    FML_BADWIDTH = np.uint16(0x08)
-    FML_BADLAG = np.uint16(0x10)
-    FML_HITEDGE = np.uint16(0x20)
-    FML_FITFAIL = np.uint16(0x40)
-    FML_INITFAIL = np.uint16(0x80)
+    volumetotal, ampfails, lowlagfails, highlagfails, lowwidthfails, highwidthfails, initfails, fitfails = \
+        0, 0, 0, 0, 0, 0, 0, 0
+
+    '''FML_NOERROR = np.uint32(0x0000)
+
+    FML_INITAMPLOW = np.uint32(0x0001)
+    FML_INITAMPHIGH = np.uint32(0x0002)
+    FML_INITWIDTHLOW = np.uint32(0x0004)
+    FML_INITWIDTHHIGH = np.uint32(0x0008)
+    FML_INITLAGLOW = np.uint32(0x0010)
+    FML_INITLAGHIGH = np.uint32(0x0020)
+
+    FML_FITAMPLOW = np.uint32(0x0100)
+    FML_FITAMPHIGH = np.uint32(0x0200)
+    FML_FITWIDTHLOW = np.uint32(0x0400)
+    FML_FITWIDTHHIGH = np.uint32(0x0800)
+    FML_FITLAGLOW = np.uint32(0x1000)
+    FML_FITLAGHIGH = np.uint32(0x2000)'''
+    
     zerolagtc = rt_floatset(lagtcgenerator.yfromx(timeaxis))
     sliceoffsettime = 0.0
 
@@ -232,19 +242,22 @@ def fitcorrx(lagtcgenerator,
             windowout[voxel[0], :] = voxel[7]
             R2[voxel[0]] = voxel[8]
             lagmask[voxel[0]] = voxel[9]
-            failimage[voxel[0]] = voxel[10] & 0x3f
-            if (FML_BADAMPLOW | FML_BADAMPHIGH) & voxel[10]:
+            failimage[voxel[0]] = voxel[10] & 0xffff
+            if (thefitter.FML_INITAMPLOW | thefitter.FML_INITAMPHIGH | thefitter.FML_FITAMPLOW | thefitter.FML_FITAMPHIGH) & voxel[10]:
                 ampfails += 1
-            if FML_BADSEARCHWINDOW & voxel[10]:
-                windowfails += 1
-            if FML_BADWIDTH & voxel[10]:
-                widthfails += 1
-            if FML_BADLAG & voxel[10]:
-                lagfails += 1
-            if FML_HITEDGE & voxel[10]:
-                edgefails += 1
-            if (FML_FITFAIL | FML_INITFAIL) & voxel[10]:
+            if (thefitter.FML_INITWIDTHLOW | thefitter.FML_FITWIDTHLOW) & voxel[10]:
+                lowwidthfails += 1
+            if (thefitter.FML_INITWIDTHHIGH | thefitter.FML_FITWIDTHHIGH) & voxel[10]:
+                highwidthfails += 1
+            if (thefitter.FML_INITLAGLOW | thefitter.FML_FITLAGLOW) & voxel[10]:
+                lowlagfails += 1
+            if (thefitter.FML_INITLAGHIGH | thefitter.FML_FITLAGHIGH) & voxel[10]:
+                highlagfails += 1
+            if thefitter.FML_INITFAIL & voxel[10]:
+                initfails += 1
+            if thefitter.FML_FITFAIL & voxel[10]:
                 fitfails += 1
+
         del data_out
     else:
         for vox in range(0, inputshape[0]):
@@ -283,25 +296,31 @@ def fitcorrx(lagtcgenerator,
                                           rt_floatset=rt_floatset,
                                           rt_floattype=rt_floattype)
                 volumetotal += volumetotalinc
-                if (FML_BADAMPLOW | FML_BADAMPHIGH) & failreason:
+                if (thefitter.FML_INITAMPLOW | thefitter.FML_INITAMPHIGH | thefitter.FML_FITAMPLOW | thefitter.FML_FITAMPHIGH) & failreason:
                     ampfails += 1
-                if FML_BADSEARCHWINDOW & failreason:
-                    windowfails += 1
-                if FML_BADWIDTH & failreason:
-                    widthfails += 1
-                if FML_BADLAG & failreason:
-                    lagfails += 1
-                if FML_HITEDGE & failreason:
-                    edgefails += 1
-                if (FML_FITFAIL | FML_INITFAIL) & failreason:
+                if (thefitter.FML_INITWIDTHLOW | thefitter.FML_FITWIDTHLOW) & failreason:
+                    lowwidthfails += 1
+                if (thefitter.FML_INITWIDTHHIGH | thefitter.FML_FITWIDTHHIGH) & failreason:
+                    highwidthfails += 1
+                if (thefitter.FML_INITLAGLOW | thefitter.FML_INITLAGHIGH) & failreason:
+                    lowlagfails += 1
+                if (thefitter.FML_INITLAGLOW | thefitter.FML_FITLAGLOW) & failreason:
+                    lowlagfails += 1
+                if (thefitter.FML_INITLAGHIGH | thefitter.FML_FITLAGHIGH) & failreason:
+                    highlagfails += 1
+                if thefitter.FML_INITFAIL & failreason:
+                    initfails += 1
+                if thefitter.FML_FITFAIL & failreason:
                     fitfails += 1
+
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
     print('\tampfails=', ampfails,
-          '\n\tlagfails=', lagfails,
-          '\n\twindowfails=', windowfails,
-          '\n\twidthfail=', widthfails,
-          '\n\tedgefail=', edgefails,
-          '\n\tfitfail=', fitfails)
+          '\n\tlowlagfails=', lowlagfails,
+          '\n\thighlagfails=', highlagfails,
+          '\n\tlowwidthfails=', lowwidthfails,
+          '\n\thighwidthfail=', highwidthfails,
+          '\n\ttotal initfails=', initfails,
+          '\n\ttotal fitfails=', fitfails)
 
     # garbage collect
     collected = gc.collect()
