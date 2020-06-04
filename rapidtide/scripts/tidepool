@@ -1099,7 +1099,7 @@ def main():
                            dest='datafileroot',
                            default=None)
     theparser.add_argument('--anatname',
-                           help='Set anatomic mask image',
+                           help='Set anatomic background image',
                            dest='anatname',
                            default=None)
     theparser.add_argument('--maskname',
