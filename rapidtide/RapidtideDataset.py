@@ -417,7 +417,7 @@ class RapidtideDataset:
         if self.geommaskname != '':
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
-                self.theoverlays['geommask'] = overlay('geommask', self.geommaskname, thebase, isaMask=True)
+                self.overlays['geommask'] = overlay('geommask', self.geommaskname, thebase, isaMask=True)
                 print('using ', self.geommaskname, ' as geometric mask')
                 # allloadedmaps.append('geommask')
                 return True
