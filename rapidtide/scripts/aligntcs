@@ -23,160 +23,98 @@
 
 from __future__ import print_function, division
 
-import sys
-import getopt
+import argparse
+import rapidtide.workflows.parser_funcs as pf
 
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
 import rapidtide.miscmath as tide_math
-import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.correlate as tide_corr
 import numpy as np
 from matplotlib.pyplot import plot, show, figure
 
 
-def usage():
-    print("aligntcs - resample and align two time series")
-    print("")
-    print("usage: aligntcs infile1 insamplerate1 infile2 insamplereate2 outputfile [--nodisplay]")
-    print("")
-    print("required arguments:")
-    print("    infile1[:COLNUM] - text file containing a timeseries.  Select column COLNUM if multicolumn file")
-    print("    insamplerate1    - the sample rate of input file 1 in Hz")
-    print("    infile2[:COLNUM] - text file containing a timeseries.  Select column COLNUM if multicolumn file")
-    print("    insamplerate2    - the sample rate of input file 1 in Hz")
-    print("    outputfile	    - the name of the output text file")
-    print("")
-    print("options:")
-    print("    --nodisplay     - do not plot the data (for noninteractive use)")
-    print("")
-    return ()
-
-
 def main():
-    display = True
-    verbose = False
-    searchrange = None
-
     # get the command line parameters
-    nargs = len(sys.argv)
-    if nargs < 6:
-        usage()
-        exit()
-    infile1 = sys.argv[1]
-    insamplerate1 = float(sys.argv[2])
-    infile2 = sys.argv[3]
-    insamplerate2 = float(sys.argv[4])
-    outputfile = sys.argv[5]
-    print(sys.argv, len(sys.argv))
+    parser = argparse.ArgumentParser(prog='aligntcs',
+                                     description='Resample and align two time series.',
+                                     usage='%(prog)s infile1 insamplerate1 infile2 insamplerate2 outputfile [options]')
 
-    theprefilter = tide_filt.noncausalfilter()
+    # Required arguments
+    parser.add_argument('infile1',
+                        metavar="infile1[:COLNUM]",
+                        type=str,
+                        help='text file containing a timeseries.  Select column COLNUM if multicolumn file.')
+    parser.add_argument('insamplerate1',
+                        type=lambda x: pf.is_float(parser, x),
+                        help='The input data file (BOLD fmri file or NIRS text file)')
+    parser.add_argument('infile2',
+                        metavar="infile2[:COLNUM]",
+                        type=str,
+                        help='text file containing a timeseries.  Select column COLNUM if multicolumn file.')
+    parser.add_argument('insamplerate2',
+                        type=lambda x: pf.is_float(parser, x),
+                        help='The input data file (BOLD fmri file or NIRS text file)')
+    parser.add_argument('outputfile',
+                        help='The name of the output file')
 
-    # now scan for optional arguments
+    parser.add_argument(
+        '--nodisplay',
+        dest='display',
+        action='store_false',
+        help=('Do not plot the data (for noninteractive use)'),
+        default=True)
+    parser.add_argument(
+        '--verbose',
+        dest='verbose',
+        action='store_true',
+        help=('Print out more debugging information'),
+        default=False)
+    pf.addlagrangeopts(parser)
+
+    # Filter arguments
+    pf.addfilteropts(parser, 'timecourses')
+
     try:
-        opts, args = getopt.getopt(sys.argv[6:], "r:VLRCF:", ["nodisplay", "help"])
-        print('options:', opts)
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -x not recognized"
-        usage()
-        sys.exit(2)
-    
-    for o, a in opts:
-        if o == "--nodisplay":
-            display = False
-            print('turning display off')
-        elif o == "-r":
-            searchrange = float(a)
-            print('peak search restricted to +/-', searchrange, ' seconds')
-        elif o == "-V":
-            theprefilter.settype('vlf')
-            if verbose:
-                print('prefiltering to vlf band')
-        elif o == "-L":
-            theprefilter.settype('lfo')
-            if verbose:
-                print('prefiltering to lfo band')
-        elif o == "-R":
-            theprefilter.settype('resp')
-            if verbose:
-                print('prefiltering to respiratory band')
-        elif o == "-C":
-            theprefilter.settype('cardiac')
-            if verbose:
-                print('prefiltering to cardiac band')
-        elif o == "-F":
-            arbvec = a.split(',')
-            if len(arbvec) != 2 and len(arbvec) != 4:
-                usage()
-                sys.exit()
-            if len(arbvec) == 2:
-                arb_lower = float(arbvec[0])
-                arb_upper = float(arbvec[1])
-                arb_lowerstop = 0.9 * float(arbvec[0])
-                arb_upperstop = 1.1 * float(arbvec[1])
-            if len(arbvec) == 4:
-                arb_lower = float(arbvec[0])
-                arb_upper = float(arbvec[1])
-                arb_lowerstop = float(arbvec[2])
-                arb_upperstop = float(arbvec[3])
-            theprefilter.settype('arb')
-            theprefilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-            if verbose:
-                print('prefiltering to ', arb_lower, arb_upper, "(stops at ", arb_lowerstop, arb_upperstop, ")")
-        else:
-            assert False, "unhandled option"
+        args = parser.parse_args()
+    except SystemExit:
+        parser.print_help()
+        raise
 
-    intimestep1 = 1.0 / insamplerate1
-    intimestep2 = 1.0 / insamplerate2
+    args = pf.postprocesssearchrangeopts(args)
+    args, theprefilter = pf.postprocessfilteropts(args)
 
-    '''#inputdata1 = tide_io.readvec(infile1)
-    #inputdata2 = tide_io.readvec(infile2)
+    intimestep1 = 1.0 / args.insamplerate1
+    intimestep2 = 1.0 / args.insamplerate2
 
-    inputdata1 = np.transpose(tide_io.readvecs(infile1, colspec=colspec))
-    if np.shape(inputdata1)[1] > 1:
-        print('specify only one column for input file 1')
-        sys.exit()
-    else:
-        inputdata1 = inputdata1[:, 0]
-
-    inputdata2 = np.transpose(tide_io.readvecs(infile2, colspec=colspec))
-    if np.shape(inputdata)[1] > 1:
-        print('specify only one column for input file 2')
-        sys.exit()
-    else:
-        inputdata2 = inputdata2[:, 0]'''
-
-    inputdata1 = tide_io.readcolfromtextfile(inputfilename1)
-    inputdata2 = tide_io.readcolfromtextfile(inputfilename2)
+    inputdata1 = tide_io.readcolfromtextfile(args.infile1)
+    inputdata2 = tide_io.readcolfromtextfile(args.infile2)
 
     # determine waveform lengths
-    time1 = insamplerate1 * (len(inputdata1) - 1)
-    time2 = insamplerate2 * (len(inputdata2) - 1)
+    time1 = args.insamplerate1 * (len(inputdata1) - 1)
+    time2 = args.insamplerate2 * (len(inputdata2) - 1)
 
     fulltime = np.max([time1, time2])
     # pad waveform1 if it's shorter than waveform2
     if time1 < fulltime:
         paddeddata1 = np.zeros(int(np.ceil(fulltime // intimestep1)), dtype=float)
-        paddeddata1[0:len(inputdata1) + 1] = tide_math.corrnormalize(theprefilter.apply(insamplerate1, inputdata1))
+        paddeddata1[0:len(inputdata1) + 1] = tide_math.corrnormalize(theprefilter.apply(args.insamplerate1, inputdata1))
     else:
-        paddeddata1 = tide_math.corrnormalize(theprefilter.apply(insamplerate1, inputdata1))
+        paddeddata1 = tide_math.corrnormalize(theprefilter.apply(args.insamplerate1, inputdata1))
 
     timeaxisfull = np.linspace(0.0, intimestep1 * len(paddeddata1), num=len(paddeddata1), endpoint=False)
     timeaxis1 = np.linspace(0.0, intimestep1 * len(inputdata1), num=len(inputdata1), endpoint=False)
     timeaxis2 = np.linspace(0.0, intimestep2 * len(inputdata2), num=len(inputdata2), endpoint=False)
-    paddeddata2 = tide_resample.doresample(timeaxis2, tide_math.corrnormalize(theprefilter.apply(insamplerate2, inputdata2)), timeaxisfull)
+    paddeddata2 = tide_resample.doresample(timeaxis2, tide_math.corrnormalize(theprefilter.apply(args.insamplerate2, inputdata2)), timeaxisfull)
 
     # now paddeddata1 and 2 are on the same timescales
     thexcorr = tide_corr.fastcorrelate(paddeddata1, paddeddata2)
     xcorrlen = len(thexcorr)
     xcorr_x = np.r_[0.0:xcorrlen] * intimestep1 - (xcorrlen * intimestep1) / 2.0 + intimestep1 / 2.0
 
-    if searchrange is None:
-        searchrange = (xcorrlen * intimestep1) / 4.0
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
-        xcorr_x, thexcorr, -searchrange, searchrange, 1000.0,
+        xcorr_x, thexcorr, args.lagmin, args.lagmax, 1000.0,
         refine=True,
         useguess=False,
         fastgauss=False,
@@ -188,9 +126,9 @@ def main():
     # now align the second timecourse to the first
 
     aligneddata2 = tide_resample.doresample(timeaxis2, inputdata2, timeaxis1 - maxdelay)
-    tide_io.writevec(aligneddata2, outputfile)
+    tide_io.writevec(aligneddata2, args.outputfile)
 
-    if display:
+    if args.display:
         fig = figure()
         ax = fig.add_subplot(111)
         # ax.set_title('GCC')
