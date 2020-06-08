@@ -34,9 +34,9 @@ import rapidtide.util as tide_util
 
 import nibabel as nib
 
-from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float
+from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float, indicatespecifiedAction, setifnotset
 
-class indicatespecifiedAction(argparse.Action):
+'''class indicatespecifiedAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, values)
         setattr(namespace, self.dest+'_nondefault', True)
@@ -46,7 +46,7 @@ def setifnotset(thedict, thekey, theval):
         test = thedict[thekey + '_nondefault']
     except KeyError:
         print('overriding ' + thekey)
-        thedict[thekey] = theval
+        thedict[thekey] = theval'''
 
 
 def _get_parser():
@@ -223,7 +223,9 @@ def _get_parser():
                          metavar='NREPS',
                          help=('Estimate significance threshold by running '
                                'NREPS null correlations (default is 10000, '
-                               'set to 0 to disable). '),
+                               'set to 0 to disable). If you are '
+                               'running multiple passes, "ampthresh" (see below) '
+                               'will be set to the 0.05 significance level.'),
                          default=10000)
     preproc.add_argument('--skipsighistfit',
                          dest='dosighistfit',
@@ -577,9 +579,11 @@ def _get_parser():
                          action='store',
                          metavar='AMP',
                          type=float,
-                         help=('For refinement, exclude voxels with '
-                               'correlation coefficients less than AMP '
-                               '(default is 0.3). '),
+                         help=('For refinement, exclude voxels with correlation '
+                               'coefficients less than AMP (default is 0.3).  NOTE: ampthresh will '
+                               'automatically be set to the p<0.05 significance level determined by '
+                               'the --numnull option if NREPS is set greater than 0 and this is not '
+                               'manually specified.'),
                          default=-1.0)
     reg_ref.add_argument('--sigmathresh',
                          dest='sigmathresh',
