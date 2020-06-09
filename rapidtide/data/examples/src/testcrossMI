@@ -7,9 +7,10 @@ import rapidtide.io as tide_io
 
 input1 = tide_io.readvec('tc1')
 input2 = tide_io.readvec('tc2')
-input3 = tide_io.readvec('tc3')
-input4 = tide_io.readvec('../dst/diff_quad_reference_resampres_pass1.txt')
-input5 = tide_io.readvec('../dst/diff_quad_reference_resampres_pass3.txt')
+input3 = tide_io.readvec('../dst/dgsr_gauss_reference_resampres_pass1.txt')
+input4 = tide_io.readvec('../dst/dgsr_gauss_reference_resampres_pass3.txt')
+#input4 = tide_io.readvec('../dst/diff_quad_reference_resampres_pass1.txt')
+#input5 = tide_io.readvec('../dst/diff_quad_reference_resampres_pass3.txt')
 
 
 #thex, thexcorr = tide_corr.arbcorr(input1, 12.5, input2, 12.5, windowfunc='hamming')
@@ -19,11 +20,19 @@ input5 = tide_io.readvec('../dst/diff_quad_reference_resampres_pass3.txt')
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
-for numbins in [2, 5, 10, 20, 50, 100]:
-    thex, thexmi = tide_corr.cross_MI(input1, input2, Fs=12.5, bins=numbins, windowfunc='hamming')
-    thexnowin, thexminowin = tide_corr.cross_MI(input1, input2, Fs=12.5, bins=numbins, windowfunc='None')
-    ax.plot(thex, thexmi, label=str(numbins))
-    #plt.plot(thexnowin, thexminowin)
+#for numbins in [50, 100, 200]:
+#    thex, thexmi = tide_corr.cross_MI(input1, input2, Fs=12.5, bins=numbins, windowfunc='hamming')
+#    thexnowin, thexminowin = tide_corr.cross_MI(input1, input2, Fs=12.5, bins=numbins, windowfunc='None')
+#    ax.plot(thex, thexmi, label=str(numbins))
+#    #plt.plot(thexnowin, thexminowin)
+#ax.legend()
+#plt.show()
+
+for windowfunc in ['None']:
+    for sigma in [0.25]:
+        for numbins in [10]:
+            thex, thexmi = tide_corr.cross_MI(input3, input3, negsteps=200, possteps=200, Fs=5.33, bins=numbins, windowfunc='hamming', sigma=sigma)
+            ax.plot(thex, thexmi, label='bins:' + str(numbins) + ', sigma:' + str(sigma) + ', win:' + windowfunc)
 ax.legend()
 plt.show()
 
