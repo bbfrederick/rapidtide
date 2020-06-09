@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+
+import numpy as np
+import matplotlib.pyplot as plt
+import rapidtide.correlate as tide_corr
+import rapidtide.io as tide_io
+input1 = tide_io.readvec('tc1')
+input2 = tide_io.readvec('tc2')
+input3 = tide_io.readvec('tc3')
+thex, they = tide_corr.arbcorr(input1, 12.5, input2, 12.5, start2=10.0, windowfunc='hamming')
+plt.plot(thex, they)
+plt.show()
+thex, they = tide_corr.arbcorr(input1, 12.5, input3, 17.0, start2=10.0, windowfunc='hamming')
+plt.plot(thex, they)
+plt.show()
