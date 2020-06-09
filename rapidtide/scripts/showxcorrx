@@ -42,6 +42,7 @@ import rapidtide.nullcorrpass as tide_nullcorr
 import rapidtide.helper_classes as tide_classes
 from rapidtide.workflows.parser_funcs import is_valid_file, is_valid_filespec, invert_float, is_float
 
+import rapidtide.workflows.parser_funcs as pf
 
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
@@ -87,7 +88,7 @@ def usage(inputargs):
     print("")
     print("optional arguments:")
     print("    --nodetrend        - do not detrend the data before correlation")
-    print("    --nowindow         - do not prewindow data before corrlation")
+    print("    --nowindow         - do not window data before corrlation")
     print("    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)")
     print("    --cepstral         - check time delay using Choudhary's cepstral technique ")
     print("    --phat             - perform phase alignment transform (PHAT) rather than ")
@@ -110,6 +111,7 @@ def usage(inputargs):
     print("    -R                 - filter data and regressors to respiratory band")
     print("    -C                 - filter data and regressors to cardiac band")
     print("    -T                 - trim data to match")
+
     print("    -A                 - print data on a single summary line")
     print("    -a                 - if summary mode is on, add a header line showing what values ")
     print("                         mean")
@@ -125,193 +127,144 @@ def usage(inputargs):
 
 def _get_parser():
     """
-    Argument parser for rapidtide
+    Argument parser for showxcorrx
     """
-    parser = argparse.ArgumentParser(prog='rapidtide',
-                                     description='Perform a RIPTiDe time delay analysis on a dataset.',
-                                     usage='%(prog)s in_file outputname [options]')
+    parser = argparse.ArgumentParser(prog='showxcorrx',
+                                     description=('Calculate and display '
+                                                 'crosscorrelation between two '
+                                                 'timeseries.'),
+                                     usage='%(prog)s infile1 infile2 samplerate [options]')
 
     # Required arguments
-    parser.add_argument('infilename1',
-                        type=lambda x: is_valid_filespec(parser, x),
-                        help='Text file containing a timeseries.  Select column COLNUM if multicolumn file')
-    parser.add_argument('infilename2',
-                        type=lambda x: is_valid_filespec(parser, x),
-                        help='Text file containing a timeseries.  Select column COLNUM if multicolumn file')
-    parser.add_argument('samplerate',
-                        help='Sample rate of the timecourses, in Hz')
+    parser.add_argument(
+        'infilename1',
+        type=str,
+        help='Text file containing a timeseries.  Select column COLNUM if multicolumn file')
+    parser.add_argument(
+        'infilename2',
+        type=str,
+        help='Text file containing a timeseries.  Select column COLNUM if multicolumn file')
+    parser.add_argument(
+        'samplerate',
+        type=lambda x: is_float(parser, x),
+        help='Sample rate of the timecourses, in Hz')
 
+    # add optional arguments
+    parser.add_argument(
+        '--nodisplay',
+        dest='display',
+        action='store_false',
+        help=('Do not plot the data (for noninteractive use)'),
+        default=True)
+    parser.add_argument(
+        '--debug',
+        dest='debug',
+        action='store_true',
+        help=('Enable additional debugging output.'),
+        default=False)
+    parser.add_argument(
+        '--verbose',
+        dest='verbose',
+        action='store_true',
+        help=('Print out more debugging information'),
+        default=False)
+    pf.addsearchrangeopts(parser, details=True)
+    pf.addtimerangeopts(parser)
+    parser.add_argument(
+        '--trimdata',
+        dest='trimdata',
+        action='store_true',
+        help=('Trimming data to match'),
+        default=False)
+
+    preproc = parser.add_argument_group()
+    preproc.add_argument(
+        '--detrendorder',
+         dest='detrendorder',
+         action='store',
+         type=int,
+         metavar='ORDER',
+         help=('Set order of trend removal (0 to disable, default is 1 - linear). '),
+         default=1)
+    # add window options
+    pf.addwindowopts(parser)
+
+    # Filter arguments
+    pf.addfilteropts(parser, 'timecourses')
 
     # Preprocessing options
     preproc = parser.add_argument_group('Preprocessing options')
-    preproc.add_argument('--cepstral',
-                         dest='cepstral',
-                         action='store_true',
-                         help="Check time delay using Choudhary's cepstral technique. ",
-                         default=False)
-    preproc.add_argument('--corrweighting',
-                          dest='corrweighting',
-                          action='store',
-                          type=str,
-                          choices=['none', 'phat', 'liang', 'eckart'],
-                          help=('Method to use for cross-correlation '
-                                'weighting. Default is  none. '),
-                          default='none')
-    preproc.add_argument('--label',
-                          dest='label',
-                          action='store',
-                          type=str,
-                          help=('Label for the delay value'),
-                          default='none')
+    preproc.add_argument(
+        '--cepstral',
+         dest='cepstral',
+         action='store_true',
+         help="Check time delay using Choudhary's cepstral technique. ",
+         default=False)
+    preproc.add_argument(
+        '--corrweighting',
+        dest='corrweighting',
+        action='store',
+        type=str,
+        choices=['None', 'phat', 'liang', 'eckart'],
+        help=('Method to use for cross-correlation '
+            'weighting. Default is  None. '),
+        default='None')
+    preproc.add_argument(
+        '--invert',
+        dest='invert',
+        action='store_true',
+        help=('Invert one timecourse prior to correlation. '),
+        default=False)
+    preproc.add_argument(
+        '--label',
+        dest='label',
+        metavar='LABEL',
+        action='store',
+        type=str,
+        help=('Label for the delay value. '),
+        default='None')
+    preproc.add_argument(
+        '--partialcorr',
+        dest='controlvariablefile',
+        action='store',
+        type=lambda x: is_valid_file(parser, x),
+        metavar='FILE',
+        help=('Use the columns of FILE as controlling variables and '
+              'return the partial correlation. '),
+        default=None)
 
-    filt_opts = parser.add_argument_group('Filtering options')
-    filt_opts.add_argument('--filterband',
-                          dest='filterband',
-                          action='store',
-                          type=str,
-                          choices=['vlf', 'lfo', 'resp', 'cardiac', 'lfo_legacy'],
-                          help=('Filter data and regressors to specific band. '),
-                          default='lfo')
-    filt_opts.add_argument('--filterfreqs',
-                          dest='arbvec',
-                          action='store',
-                          nargs='+',
-                          type=lambda x: is_float(parser, x),
-                          metavar=('LOWERPASS UPPERPASS',
-                                   'LOWERSTOP UPPERSTOP'),
-                          help=('Filter data and regressors to retain LOWERPASS to '
-                                'UPPERPASS. LOWERSTOP and UPPERSTOP can also '
-                                'be specified, or will be calculated '
-                                'automatically. '),
-                          default=None)
-    filt_opts.add_argument('--filtertype',
-                          dest='filtertype',
-                          action='store',
-                          type=str,
-                          choices=['trapezoidal', 'brickwall', 'butterworth'],
-                          help=('Filter data and regressors using a trapezoidal FFT filter (default), brickwall, or butterworth bandpass.'),
-                          default='trapezoidal')
-    filt_opts.add_argument('--butterorder',
-                         dest='filtorder',
-                         action='store',
-                         type=int,
-                         metavar='ORDER',
-                         help=('Set order of butterworth filter for band splitting. '),
-                         default=6)
-    filt_opts.add_argument('--padseconds',
-                         dest='padseconds',
-                         action='store',
-                         type=float,
-                         metavar='SECONDS',
-                         help=('The number of seconds of padding to add to each end of a filtered timecourse. '),
-                         default=30.0)
-
-
-    permutationmethod = preproc.add_mutually_exclusive_group()
-    permutationmethod.add_argument('--permutationmethod',
-                          dest='permutationmethod',
-                          action='store',
-                          type=str,
-                          choices=['shuffle', 'phaserandom'],
-                          help=('Permutation method for significance testing.  Default is shuffle. '),
-                          default='shuffle')
-
-    preproc.add_argument('--numnull',
-                         dest='numestreps',
-                         action='store',
-                         type=int,
-                         metavar='NREPS',
-                         help=('Estimate significance threshold by running '
-                               'NREPS null correlations (default is 10000, '
-                               'set to 0 to disable). '),
-                         default=10000)
-    preproc.add_argument('--skipsighistfit',
-                         dest='dosighistfit',
-                         action='store_false',
-                         help=('Do not fit significance histogram with a '
-                               'Johnson SB function. '),
-                         default=True)
-
-    wfunc = preproc.add_mutually_exclusive_group()
-    wfunc.add_argument('--windowfunc',
-                       dest='windowfunc',
-                       action='store',
-                       type=str,
-                       choices=['hamming', 'hann', 'blackmanharris', 'None'],
-                       help=('Window function to use prior to correlation. '
-                             'Options are hamming (default), hann, '
-                             'blackmanharris, and None. '),
-                       default='hamming')
-    wfunc.add_argument('--nowindow',
-                       dest='windowfunc',
-                       action='store_const',
-                       const='None',
-                       help='Disable precorrelation windowing. ',
-                       default='hamming')
-
-    preproc.add_argument('--detrendorder',
-                         dest='detrendorder',
-                         action='store',
-                         type=int,
-                         metavar='ORDER',
-                         help=('Set order of trend removal (0 to disable, default is 1 - linear). '),
-                         default=3)
-
-
-    preproc.add_argument('--timerange',
-                         dest='timerange',
-                         action='store',
-                         nargs=2,
-                         type=int,
-                         metavar=('START', 'END'),
-                         help=('Limit analysis to data between timepoints '
-                               'START and END in the fmri file. If END is set to -1, '
-                               'analysis will go to the last timepoint.  Negative values '
-                               'of START will be set to 0. Default is to use all timepoints.'),
-                         default=(-1, -1))
-
-    cc_group = corr.add_mutually_exclusive_group()
-    cc_group.add_argument('--corrweighting',
-                          dest='corrweighting',
-                          action='store',
-                          type=str,
-                          choices=['none', 'phat', 'liang', 'eckart'],
-                          help=('Method to use for cross-correlation '
-                                'weighting. Default is  none. '),
-                          default='none')
-
-
-    # Correlation fitting options
-    corr_fit = parser.add_argument_group('Correlation fitting options')
-
-    fixdelay = corr_fit.add_mutually_exclusive_group()
-    fixdelay.add_argument('--fixdelay',
-                          dest='fixeddelayvalue',
-                          action='store',
-                          type=float,
-                          metavar='DELAYTIME',
-                          help=("Don't fit the delay time - set it to "
-                                "DELAYTIME seconds for all voxels. "),
-                          default=None)
-    fixdelay.add_argument('--searchrange',
-                          dest='lag_extrema',
-                          action=indicatespecifiedAction,
-                          nargs=2,
-                          type=float,
-                          metavar=('LAGMIN', 'LAGMAX'),
-                          help=('Limit fit to a range of lags from LAGMIN to '
-                                'LAGMAX.  Default is -30.0 to 30.0 seconds. '),
-                          default=(-30.0, 30.0))
-
+    pf.addpermutationopts(preproc)
 
     # Output options
     output = parser.add_argument_group('Output options')
-    output.add_argument('--nolimitoutput',
-                        dest='limitoutput',
-                        action='store_true',
-                        help=("Save some of the large and rarely used "
-                              "files. "),
-                        default=True)
+    output.add_argument(
+        '--outputfile',
+        dest='outputfile',
+        action='store',
+        type=str,
+        metavar='FILE',
+        help=('Write results to FILE. '),
+        default=None)
+    output.add_argument(
+        '--corroutputfile',
+        dest='corroutputfile',
+        action='store',
+        type=str,
+        metavar='FILE',
+        help=('Write correlation function to FILE. '),
+        default=None)
+    output.add_argument(
+        '--summarymode',
+        dest='summarymode',
+        action='store_true',
+        help=('Print all results on a single line. '),
+        default='False')
+    output.add_argument(
+        '--labelline',
+        dest='labelline',
+        action='store_true',
+        help=('Print a header line identifying fields in the summary line. '),
+        default='False')
 
 
     # Miscellaneous options
@@ -321,74 +274,6 @@ def _get_parser():
                       action='store_false',
                       help='Will disable showing progress bars (helpful if stdout is going to a file). ',
                       default=True)
-    misc.add_argument('--checkpoint',
-                      dest='checkpoint',
-                      action='store_true',
-                      help='Enable run checkpoints. ',
-                      default=False)
-    misc.add_argument('--wiener',
-                      dest='dodeconv',
-                      action='store_true',
-                      help=('Do Wiener deconvolution to find voxel transfer '
-                            'function. '),
-                      default=False)
-    misc.add_argument('--saveoptionsastext',
-                      dest='saveoptionsasjson',
-                      action='store_false',
-                      help=('Save options as text, rather than as a json file. '),
-                      default=True)
-    misc.add_argument('--spcalculation',
-                      dest='internalprecision',
-                      action='store_const',
-                      const='single',
-                      help=('Use single precision for internal calculations '
-                            '(may be useful when RAM is limited). '),
-                      default='double')
-    misc.add_argument('--dpoutput',
-                      dest='outputprecision',
-                      action='store_const',
-                      const='double',
-                      help=('Use double precision for output files. '),
-                      default='single')
-    misc.add_argument('--cifti',
-                      dest='isgrayordinate',
-                      action='store_true',
-                      help='Data file is a converted CIFTI. ',
-                      default=False)
-    misc.add_argument('--simulate',
-                      dest='fakerun',
-                      action='store_true',
-                      help='Simulate a run - just report command line options. ',
-                      default=False)
-    misc.add_argument('--displayplots',
-                      dest='displayplots',
-                      action='store_true',
-                      help='Display plots of interesting timecourses. ',
-                      default=False)
-    misc.add_argument('--nonumba',
-                      dest='nonumba',
-                      action='store_true',
-                      help='Disable jit compilation with numba. ',
-                      default=False)
-    misc.add_argument('--nosharedmem',
-                      dest='sharedmem',
-                      action='store_false',
-                      help=('Disable use of shared memory for large array '
-                            'storage. '),
-                      default=True)
-    misc.add_argument('--memprofile',
-                      dest='memprofile',
-                      action='store_true',
-                      help=('Enable memory profiling for debugging - '
-                            'warning: this slows things down a lot. '),
-                      default=False)
-    misc.add_argument('--mklthreads',
-                      dest='mklthreads',
-                      action='store',
-                      type=int,
-                      metavar='MKLTHREADS',
-                      help=('Use no more than MKLTHREADS worker threads in accelerated numpy calls. '),
-                      default=1)
     misc.add_argument('--nprocs',
                       dest='nprocs',
                       action='store',
@@ -398,108 +283,33 @@ def _get_parser():
                             'Setting NPROCS to less than 1 sets the number of '
                             'worker processes to n_cpus - 1. '),
                       default=1)
-    misc.add_argument('--debug',
-                      dest='debug',
-                      action='store_true',
-                      help=('Enable additional debugging output.'),
-                      default=False)
-    misc.add_argument('--verbose',
-                      dest='verbose',
-                      action='store_true',
-                      help=('Enable additional runtime information output. '),
-                      default=False)
 
-    # Experimental options (not fully tested, may not work)
-    experimental = parser.add_argument_group('Experimental options (not fully '
-                                             'tested, may not work)')
-    experimental.add_argument('--respdelete',
-                              dest='respdelete',
-                              action='store_true',
-                              help=('Attempt to detect and remove respiratory signal that strays into the LFO band.'),
-                              default=False)
-    experimental.add_argument('--correlatorhpfreq',
-                              dest='correlator_hpfreq',
-                              action='store',
-                              metavar='HPFREQ',
-                              type=float,
-                              help=('High pass filter the correlation function to get rid of baseline problems. '),
-                              default=None)
-    experimental.add_argument('--cleanrefined',
-                              dest='cleanrefined',
-                              action='store_true',
-                              help=('Perform additional processing on refined '
-                                    'regressor to remove spurious '
-                                    'components. '),
-                              default=False)
-    experimental.add_argument('--dispersioncalc',
-                              dest='dodispersioncalc',
-                              action='store_true',
-                              help=('Generate extra data during refinement to '
-                                    'allow calculation of dispersion. '),
-                              default=False)
-    experimental.add_argument('--acfix',
-                              dest='fix_autocorrelation',
-                              action='store_true',
-                              help=('Perform a secondary correlation to '
-                                    'disambiguate peak location. Experimental. '),
-                              default=False)
-    experimental.add_argument('--tmask',
-                              dest='tmaskname',
-                              action='store',
-                              type=lambda x: is_valid_file(parser, x),
-                              metavar='FILE',
-                              help=('Only correlate during epochs specified '
-                                    'in MASKFILE (NB: each line of FILE '
-                                    'contains the time and duration of an '
-                                    'epoch to include. '),
-                              default=None)
+
     return parser
 
 
-def main(inputargs):
-
-    # get the command line parameters
-    searchrange = 15.0
-    uselabel = False
-    display = True
-    corrweighting = 'none'
-    prewindow = True
-    windowfunc = 'hamming'
-    detrendorder = 1
-    dopartial = False
-    duration = 1000000.0
-    starttime = 0.0
-    thelabel = ""
-    trimdata = False
-    verbose = False
-    summarymode = False
-    outputfile = None
-    labelline = False
-    writecorrlists = False
-    flipfac = 1.0
-    savecorrelation = False
-    calccepstraldelay = False
-    debug = False
-    numreps = 0
-    permutationmethod = 'shuffle'
-    showprogressbar = False
+def main():
+    # set some default values
     absmaxsigma = 1000.0
     absminsigma = 0.25
     zerooutbadfit = False
     corrfittype = 'gauss'
 
-    nargs = len(inputargs)
-    if nargs < 4:
-        usage()
-        exit()
-    infilename1 = inputargs[1]
-    infilename2 = inputargs[2]
-    Fs = float(inputargs[3])
+    # grab the command line arguments then pass them off.
+    try:
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
-    theprefilter = tide_filt.noncausalfilter()
+    # finish up processing arguments
+    args, theprefilter = pf.postprocessfilteropts(args)
+    args = pf.postprocesssearchrangeopts(args)
+    args = pf.postprocesstimerangeopts(args)
 
-    infilename1, colspec1 = tide_io.parsefilespec(infilename1)
-    infilename2, colspec2 = tide_io.parsefilespec(infilename2)
+    infilename1, colspec1 = tide_io.parsefilespec(args.infilename1)
+    infilename2, colspec2 = tide_io.parsefilespec(args.infilename2)
+    Fs = args.samplerate
 
     inputdata1 = np.transpose(tide_io.readvecs(infilename1, colspec=colspec1))
     if np.shape(inputdata1)[1] > 1:
@@ -513,221 +323,58 @@ def main(inputargs):
         sys.exit()
     else:
         inputdata2 = inputdata2[:, 0]
-    numpoints = len(inputdata1)
 
-    # now scan for optional arguments
-    try:
-        opts, args = getopt.getopt(inputargs[4:], "o:fN:r:z:aATtVLRCF:dl:s:D:w",
-                                   ["phat",
-                                    "liang",
-                                    "eckart",
-                                    "nodetrend",
-                                    "nowindow",
-                                    "windowfunc=",
-                                    "cepstral",
-                                    "savecorr=",
-                                    "progressbar",
-                                    "phaserandomize",
-                                    "debug",
-                                    "help"])
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -x not recognized"
-        usage()
-        sys.exit(2)
-
-    for o, a in opts:
-        if o == "-d":
-            display = False
-            if verbose:
-                print('disable display')
-        elif o == "-T":
-            trimdata = True
-            if verbose:
-                print('trimming data to match')
-        elif o == "--phaserandomize":
-            permutationmethod = 'phaserandom'
-            if verbose:
-                print('will show progress bar during null correlation calculation')
-        elif o == "--progressbar":
-            showprogressbar = True
-            if verbose:
-                print('will show progress bar during null correlation calculation')
-        elif o == "--cepstral":
-            calccepstraldelay = True
-            if verbose:
-                print('doing cepstral delay time check')
-        elif o == "--liang":
-            corrweighting = 'Liang'
-            if verbose:
-                print('doing Liang weighted correlation')
-        elif o == "--eckart":
-            corrweighting = 'Eckart'
-            if verbose:
-                print('doing Eckart weighted correlation')
-        elif o == "--phat":
-            corrweighting = 'PHAT'
-            if verbose:
-                print('doing phase alignment transform')
-        elif o == "--debug":
-            debug = True
-            if verbose:
-                print('turning on debugging')
-        elif o == "-f":
-            flipfac *= -1.0
-            if verbose:
-                print('negating second regressor')
-        elif o == "-a":
-            labelline = True
-            if verbose:
-                print('turning on label line')
-        elif o == "-t":
-            print("DEPRECATION WARNING: detrending is now on by default.  Use --nodetrend to disable it")
-        elif o == "--nodetrend":
-            detrendorder = 0
-            if verbose:
-                print('disabling detrending')
-        elif o == "-w":
-            print("DEPRECATION WARNING: windowing is now on by default.  Use --nowindow to disable it")
-        elif o == "--savecorr":
-            savecorrelation = True
-            corroutputfile = a
-            if verbose:
-                print('saving correlation function to', corroutputfile)
-        elif o == "--nowindow":
-            prewindow = False
-            if verbose:
-                print('disabling prewindowing')
-        elif o == "--windowfunc":
-            windowfunc = a
-            if (windowfunc != 'hamming') and (windowfunc != 'blackmanharris') and (windowfunc != 'hann') and (
-                    windowfunc != 'None'):
-                print('illegal window function')
-                sys.exit()
-            if verbose:
-                print('using window function:', windowfunc)
-        elif o == "-z":
-            controlvariablefile = a
-            dopartial = True
-            if verbose:
-                print('performing partial correlations')
-        elif o == "-l":
-            thelabel = a
-            uselabel = True
-            if verbose:
-                print('label set to', thelabel)
-        elif o == "-N":
-            numreps = int(a)
-            if verbose:
-                print('estimating significance threshold with ', numreps, ' trials')
-        elif o == "-r":
-            searchrange = float(a)
-            if verbose:
-                print('peak search restricted to +/-', searchrange, ' seconds')
-        elif o == "-D":
-            duration = float(a)
-            if verbose:
-                print('duration set to', duration)
-        elif o == "-s":
-            starttime = float(a)
-            if verbose:
-                print('starttime set to', starttime)
-        elif o == "-V":
-            theprefilter.settype('vlf')
-            if verbose:
-                print('prefiltering to vlf band')
-        elif o == "-L":
-            theprefilter.settype('lfo')
-            if verbose:
-                print('prefiltering to lfo band')
-        elif o == "-R":
-            theprefilter.settype('resp')
-            if verbose:
-                print('prefiltering to respiratory band')
-        elif o == "-C":
-            theprefilter.settype('cardiac')
-            if verbose:
-                print('prefiltering to cardiac band')
-        elif o == "-o":
-            verbose = False
-            outputfile = a
-            summarymode = True
-        elif o == "-A":
-            verbose = False
-            summarymode = True
-        elif o == "-F":
-            arbvec = a.split(',')
-            if len(arbvec) != 2 and len(arbvec) != 4:
-                usage()
-                sys.exit()
-            if len(arbvec) == 2:
-                arb_lower = float(arbvec[0])
-                arb_upper = float(arbvec[1])
-                arb_lowerstop = 0.9 * float(arbvec[0])
-                arb_upperstop = 1.1 * float(arbvec[1])
-            if len(arbvec) == 4:
-                arb_lower = float(arbvec[0])
-                arb_upper = float(arbvec[1])
-                arb_lowerstop = float(arbvec[2])
-                arb_upperstop = float(arbvec[3])
-            theprefilter.settype('arb')
-            theprefilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-            if verbose:
-                print('prefiltering to ', arb_lower, arb_upper, "(stops at ", arb_lowerstop, arb_upperstop, ")")
-        else:
-            assert False, "unhandled option"
-
-    if debug:
+    if args.debug:
         dumpfiltered = True
     else:
         dumpfiltered = False
     showpearson = True
 
-    if windowfunc == 'None':
-        usewindowfunc = False
-    else:
-        usewindowfunc = True
+    print('startpoint, endpoint:', args.startpoint, args.endpoint)
+    print('thetime:', args.startpoint / Fs)
 
-    startpoint1 = max([int(starttime * Fs), 0])
-    if debug:
+    startpoint1 = np.max([int(args.startpoint / Fs), 0])
+    if args.debug:
         print('startpoint set to ', startpoint1)
-    endpoint1 = min([startpoint1 + int(duration * Fs), int(len(inputdata1))])
-    if debug:
+    endpoint1 = np.min([int(args.endpoint / Fs), int(len(inputdata1))])
+    if args.debug:
         print('endpoint set to ', endpoint1)
-    endpoint2 = min([int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))])
+    endpoint2 = np.min([int(args.endpoint / Fs), int(len(inputdata1)), int(len(inputdata2))])
     trimdata1 = inputdata1[startpoint1:endpoint1]
     trimdata2 = inputdata2[0:endpoint2]
 
-    if trimdata:
+    if args.trimdata:
         minlen = np.min([len(trimdata1), len(trimdata2)])
         trimdata1 = trimdata1[0:minlen]
         trimdata2 = trimdata2[0:minlen]
 
+    if args.invert:
+        flipfac = -1.0
+    else:
+        flipfac = 1.0
+
     # band limit the regressor if that is needed
-    if theprefilter.gettype() != 'none':
-        if verbose:
+    if theprefilter.gettype() != 'None':
+        if args.verbose:
             print("filtering to ", theprefilter.gettype(), " band")
     filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
-                                            prewindow=prewindow,
-                                            detrendorder=detrendorder,
-                                            windowfunc=windowfunc)
+                                            detrendorder=args.detrendorder,
+                                            windowfunc=args.windowfunc)
     filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
-                                            prewindow=prewindow,
-                                            detrendorder=detrendorder,
-                                            windowfunc=windowfunc)
+                                            detrendorder=args.detrendorder,
+                                            windowfunc=args.windowfunc)
     filtereddata2 *= flipfac
     if dumpfiltered:
         tide_io.writenpvecs(filtereddata1, "filtereddata1.txt")
         tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
 
-    if dopartial:
+    if args.controlvariablefile is not None:
         controlvars = tide_io.readnpvecs(controlvariablefile)
         regressorvec = []
         for j in range(0, numregressors):
             regressorvec.append(tide_math.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]),
-                                                        prewindow=prewindow,
-                                                        detrendorder=detrendorder,
-                                                        windowfunc=windowfunc))
+                                                        detrendorder=args.detrendorder,
+                                                        windowfunc=args.windowfunc))
         if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
             thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
         if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
@@ -736,9 +383,9 @@ def main(inputargs):
     # initialize the correlator
     thecorrelator = tide_classes.correlator(Fs=Fs,
                                             ncprefilter=theprefilter,
-                                            detrendorder=detrendorder,
-                                            windowfunc=windowfunc,
-                                            corrweighting=corrweighting)
+                                            detrendorder=args.detrendorder,
+                                            windowfunc=args.windowfunc,
+                                            corrweighting=args.corrweighting)
     thecorrelator.setreftc(trimdata2 * flipfac)
 
     # do the correlation
@@ -746,10 +393,10 @@ def main(inputargs):
     if dumpfiltered:
         tide_io.writenpvecs(thecorrelator.preptesttc, "correlator_filtereddata1.txt")
         tide_io.writenpvecs(thecorrelator.prepreftc, "correlator_filtereddata2.txt")
-    thecorrelator.setlimits(int((searchrange * Fs) - 0.5), int((searchrange * Fs) + 0.5))
+    thecorrelator.setlimits(int((-args.lagmin * Fs) - 0.5), int((args.lagmax * Fs) + 0.5))
     thexcorr_trim, xcorr_x_trim, globalmax = thecorrelator.getcorrelation(trim=True)
 
-    if calccepstraldelay:
+    if args.cepstral:
         cepdelay = tide_corr.cepstraldelay(filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display)
         cepcoff = tide_corr.delayedcorr(filtereddata1, filtereddata2, cepdelay, 1.0 / Fs)
         print('cepstral delay time is', cepdelay, ', correlation is', cepcoff)
@@ -758,147 +405,147 @@ def main(inputargs):
     # calculate the coherence
     f, Cxy = sp.signal.coherence(
         tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
-                                prewindow=prewindow,
-                                detrendorder=detrendorder,
-                                windowfunc=windowfunc),
+                                detrendorder=args.detrendorder,
+                                windowfunc=args.windowfunc),
         tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
-                                prewindow=prewindow,
-                                detrendorder=detrendorder,
-                                windowfunc=windowfunc),
+                                detrendorder=args.detrendorder,
+                                windowfunc=args.windowfunc),
         Fs)
 
     # calculate the cross spectral density
     f, Pxy = sp.signal.csd(
         tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
-                                prewindow=prewindow,
-                                detrendorder=detrendorder,
-                                windowfunc=windowfunc),
+                                detrendorder=args.detrendorder,
+                                windowfunc=args.windowfunc),
         tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
-                                prewindow=prewindow,
-                                detrendorder=detrendorder,
-                                windowfunc=windowfunc),
+                                detrendorder=args.detrendorder,
+                                windowfunc=args.windowfunc),
         Fs)
 
     # intitialize the correlation fitter
     thefitter = tide_classes.correlation_fitter(corrtimeaxis=xcorr_x,
-                                                lagmin=-searchrange,
-                                                lagmax=searchrange,
+                                                lagmin=args.lagmin,
+                                                lagmax=args.lagmax,
                                                 absmaxsigma=absmaxsigma,
                                                 absminsigma=absminsigma,
-                                                debug=debug,
+                                                debug=args.debug,
                                                 corrfittype=corrfittype,
                                                 zerooutbadfit=zerooutbadfit,
                                                 useguess=False
                                                 )
 
-    if debug:
+    if args.debug:
         print('searching for peak correlation over range ',
               thecorrelator.corrorigin - thecorrelator.lagmininpts,
               thecorrelator.corrorigin + thecorrelator.lagmaxinpts)
     maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
-    if debug:
+    if args.debug:
         print('maxdelay before refinement', maxdelay)
 
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(thexcorr)
     if failreason > 0:
-        print('showxcorrx: FIT FAILED with reason', failreason)
+        print('showxcorrx: FIT FAILED with reason:')
         print(thefitter.diagnosefail(failreason))
-    if debug:
+    if args.debug:
         print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
     R = maxval
-    if debug:
+    if args.debug:
         print('maxdelay after refinement', maxdelay)
 
     # set the significance threshold
-    if numreps > 0:
+    if args.numestreps > 0:
         # generate a list of correlations from shuffled data
+        print('calculating null crosscorrelations')
         corrlist = tide_nullcorr.getNullDistributionDatax(filtereddata2,
-                                                    Fs,
-                                                    thecorrelator,
-                                                    thefitter,
-                                                    numestreps=numreps,
-                                                    despeckle_thresh=1000.0,
-                                                    showprogressbar=showprogressbar,
-                                                    permutationmethod=permutationmethod,
-                                                    fixdelay=False)
+                                                            Fs,
+                                                            thecorrelator,
+                                                            thefitter,
+                                                            numestreps=args.numestreps,
+                                                            despeckle_thresh=1000.0,
+                                                            showprogressbar=args.showprogressbar,
+                                                            permutationmethod=args.permutationmethod,
+                                                            nprocs=args.nprocs,
+                                                            fixdelay=False)
 
         # calculate percentiles for the crosscorrelation from the distribution data
         histlen = 100
         thepercentiles = [0.95, 0.99, 0.995]
 
         pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
-        if debug:
+        if args.debug:
             tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
             tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
 
+        print('calculating null Pearson correlations')
         corrlist_pear = tide_nullcorr.getNullDistributionDatax(filtereddata2,
-                                                    Fs,
-                                                    thecorrelator,
-                                                    thefitter,
-                                                    numestreps=numreps,
-                                                    despeckle_thresh=1000.0,
-                                                    showprogressbar=showprogressbar,
-                                                    permutationmethod=permutationmethod,
-                                                    fixdelay=True)
+                                                                Fs,
+                                                                thecorrelator,
+                                                                thefitter,
+                                                                numestreps=args.numestreps,
+                                                                despeckle_thresh=1000.0,
+                                                                showprogressbar=args.showprogressbar,
+                                                                permutationmethod=args.permutationmethod,
+                                                                nprocs=args.nprocs,
+                                                                fixdelay=True)
 
         # calculate significance for the pearson correlation
         pearpcts, pearpcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist_pear, histlen, thepercentiles)
-        if debug:
+        if args.debug:
             tide_stats.printthresholds(pearpcts, thepercentiles, 'Pearson correlation significance thresholds from data:')
             tide_stats.printthresholds(pearpcts_fit, thepercentiles,
                                        'Pearson correlation significance thresholds from fit:')
 
-        if writecorrlists:
+        if args.debug:
             tide_io.writenpvecs(corrlist, "corrlist.txt")
             tide_io.writenpvecs(corrlist_pear, "corrlist_pear.txt")
 
 
-    if debug:
+    if args.debug:
         print(thepxcorr)
 
-    if summarymode:
-        if numreps > 0:
+    if args.summarymode:
+        if args.numestreps > 0:
             thelabelitems = ['pearson_R',       'pearson_R(p=0.05)',  'xcorr_R', 'xcorr_R(p=0.05)', 'xcorr_maxdelay']
             thedataitems =  [ str(thepxcorr[0]), str(pearpcts_fit[0]), str(R),    str(pcts_fit[0]),  str(-maxdelay)]
         else:
             thelabelitems = ['pearson_R',       'pearson_p',       'xcorr_R', 'xcorr_maxdelay']
             thedataitems =  [ str(thepxcorr[0]), str(thepxcorr[1]), str(R),    str(-maxdelay)]
-        if uselabel:
+        if args.label is not None:
             thelabelitems = ['thelabel'] + thelabelitems
-            thedataitems =  [thelabel] + thedataitems
-        if labelline:
+            thedataitems =  [args.label] + thedataitems
+        if args.labelline:
             outputstring = '\t'.join(thelabelitems) + '\n' + '\t'.join(thedataitems)
         else:
             outputstring = '\t'.join(thedataitems)
-        if outputfile is None:
+        if args.outputfile is None:
             print(outputstring)
         else:
-            with open(outputfile, "w") as text_file:
+            with open(args.outputfile, "w") as text_file:
                 text_file.write(outputstring + '\n')
     else:
         # report the pearson correlation
         if showpearson:
             print('Pearson_R:\t', thepxcorr[0])
-            if numreps > 0:
+            if args.numestreps > 0:
                 for idx, percentile in enumerate(thepercentiles):
                     print('    pear_p(', "{:.3f}".format(1.0 - percentile), '):\t', pearpcts[idx])
             print("")
-        if uselabel:
-            print(thelabel, ":\t", -maxdelay)
+        if args.label is not None:
+            print(args.label, ":\t", -maxdelay)
         else:
             print("Crosscorrelation_Rmax:\t", R)
             print("Crosscorrelation_maxdelay:\t", -maxdelay)
-            if numreps > 0:
+            if args.numestreps > 0:
                 for idx, percentile in enumerate(thepercentiles):
                     print('    xc_p(', "{:.3f}".format(1.0 - percentile), '):\t', pcts[idx])
             print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
 
-    if display:
+    if args.display:
         fig = figure()
         ax = fig.add_subplot(111)
         # ax.set_title('GCC')
         plot(xcorr_x, thexcorr, 'k')
-        if debug:
+        if args.debug:
             fig = figure()
             plot(f, Cxy)
             fig = figure()
@@ -906,16 +553,9 @@ def main(inputargs):
             plot(f, np.angle(Pxy) / (2.0 * sp.pi * f))
         show()
 
-    if savecorrelation:
-        tide_io.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), corroutputfile)
+    if args.corroutputfile is not None:
+        tide_io.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), args.corroutputfile)
 
 
 if __name__ == '__main__':
-
-    # grab the command line arguments then pass them off.
-    nargs = len(sys.argv)
-    if nargs < 4:
-        usage(sys.argv)
-        exit()
-
-    main(sys.argv)
+    main()
