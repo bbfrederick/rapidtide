@@ -1,0 +1,9 @@
+aligntcs \
+    lf_HbO \
+    12.5 \
+    lf_tHb \
+    12.5 \
+    ../dst/testalignoutput \
+    --nodisplay \
+    --searchrange -15 15 \
+    --filterband lfo
