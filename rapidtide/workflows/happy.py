@@ -703,11 +703,9 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
     trimlength = np.min([len(reference), len(candidate)])
     thexcorr = tide_corr.fastcorrelate(
         tide_math.corrnormalize(thecardfilt.apply(samplerate, reference),
-                                prewindow=True,
                                 detrendorder=3,
                                 windowfunc='hamming')[:trimlength],
         tide_math.corrnormalize(thecardfilt.apply(samplerate, candidate),
-                                prewindow=True,
                                 detrendorder=3,
                                 windowfunc='hamming')[:trimlength],
         usefft=True)

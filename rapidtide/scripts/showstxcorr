@@ -37,15 +37,15 @@ import nibabel as nib
 from matplotlib.pyplot import plot, legend, show, figure
 
 
-def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, detrendorder, searchstart, searchend,
-                            corrweighting='none', numreps=1000):
+def getNullDistributionData(indata, xcorr_x, thefilter, windowfunc, detrendorder, searchstart, searchend,
+                            corrweighting='None', numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
     corrlist = np.zeros((numreps), dtype='float')
     corrlist_pear = np.zeros((numreps), dtype='float')
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
 
     filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata),
-                                             prewindow=prewindow,
+                                             windowfunc=windowfunc,
                                              detrendorder=detrendorder)
     for i in range(0, numreps):
         # make a shuffled copy of the regressors
@@ -53,7 +53,7 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, detrendorder,
 
         # filter it
         filteredshuffleddata = tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata),
-                                                       prewndow=prewindow,
+                                                       windowfunc=windowfunc,
                                                        detrendorder=detrendorder)
 
         # crosscorrelate with original
@@ -155,7 +155,7 @@ def usage():
     print("")
     print("optional arguments:")
     print("    --nodetrend   - do not detrend the data before correlation")
-    print("    --nowindow    - do not prewindow data before corrlation")
+    print("    --nowindow    - do not window data before corrlation")
     print("    --phat        - perform phase alignment transform (PHAT) rather than ")
     print("                    standard crosscorrelation")
     print("    --liang       - perform phase alignment transform with Liang weighting function rather than ")
@@ -190,8 +190,8 @@ def main():
     searchrange = 15.0
     uselabel = False
     display = True
-    corrweighting = 'none'
-    prewindow = True
+    corrweighting = 'None'
+    windowfunc = 'hamming'
     detrendorder = 1
     dopartial = False
     duration = 1000000.0
@@ -303,9 +303,9 @@ def main():
         elif o == "-w":
             print("DEPRECATION WARNING: windowing is now on by default.  Use --nowindow to disable it")
         elif o == "--nowindow":
-            prewindow = False
+            windowfunc = 'None'
             if verbose:
-                print('disabling prewindowing')
+                print('disabling windowing')
         elif o == "-z":
             controlvariablefile = a
             dopartial = True
@@ -420,7 +420,7 @@ def main():
         sys.exit()
 
     # band limit the regressors if that is needed
-    if theprefilter.gettype() != 'none':
+    if theprefilter.gettype() != 'None':
         if verbose:
             print("filtering to ", theprefilter.gettype(), " band")
 
@@ -432,7 +432,7 @@ def main():
     print('preprocessing all timecourses')
     for component in range(0, numcomponents):
         filtereddata = tide_math.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]),
-                                               prewindow=False,
+                                               windowfunc='None',
                                                detrendorder=detrendorder)
         reformdata[component, :] = tide_math.stdnormalize(tide_fit.detrend(tide_math.stdnormalize(filtereddata), order=detrendorder))
 
@@ -458,7 +458,7 @@ def main():
         times, corrpertime, ppertime = tide_corr.shorttermcorr_1D(reformdata[0, :], reformdata[0, :], sampletime,
                                                                   windowtime, \
                                                                   samplestep=int(stepsize // sampletime),
-                                                                  prewindow=prewindow,
+                                                                  windowfunc=windowfunc,
                                                                   detrendorder=0)
         plength = len(times)
         times, xcorrpertime, Rvals, delayvals, valid = tide_corr.shorttermcorr_2D(reformdata[0, :], reformdata[0, :],
@@ -466,7 +466,8 @@ def main():
                                                                                   windowtime, \
                                                                                   samplestep=int(stepsize // sampletime),
                                                                                   weighting=corrweighting, \
-                                                                                  prewindow=prewindow, detrendorder=0,
+                                                                                  windowfunc=windowfunc,
+                                                                                  detrendorder=0,
                                                                                   display=False)
         xlength = len(times)
 
@@ -486,7 +487,7 @@ def main():
                 corrpertime[component1, component2, 0, :], \
                 ppertime[component1, component2, 0, :] = tide_corr.shorttermcorr_1D( \
                     reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
-                    samplestep=int(stepsize // sampletime), prewindow=prewindow, detrendorder=0)
+                    samplestep=int(stepsize // sampletime), windowfunc=windowfunc, detrendorder=0)
                 times, \
                 xcorrpertime, \
                 Rvals[component1, component2, 0, :], \
@@ -494,7 +495,7 @@ def main():
                 valid[component1, component2, 0, :] = tide_corr.shorttermcorr_2D( \
                     reformdata[component1, :], flipfac * reformdata[component2, :], sampletime, windowtime, \
                     samplestep=int(stepsize // sampletime), weighting=corrweighting, \
-                    prewindow=prewindow, detrendorder=0, display=False)
+                    windowfunc=windowfunc, detrendorder=0, display=False)
 
         outputaffine = np.eye(4)
         input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
@@ -535,14 +536,15 @@ def main():
         times, corrpertime, ppertime = tide_corr.shorttermcorr_1D(reformdata[0, :], flipfac * reformdata[1, :], sampletime,
                                                                   windowtime,
                                                                   samplestep=int(stepsize // sampletime),
-                                                                  prewindow=prewindow,
+                                                                  windowfunc=windowfunc,
                                                                   detrendorder=0)
         times, xcorrpertime, Rvals, delayvals, valid = tide_corr.shorttermcorr_2D(reformdata[0, :],
                                                                                   flipfac * reformdata[1, :],
                                                                                   sampletime, windowtime, \
                                                                                   samplestep=int(stepsize // sampletime),
                                                                                   weighting=corrweighting, \
-                                                                                  prewindow=prewindow, detrendorder=0,
+                                                                                  windowfunc=windowfunc,
+                                                                                  detrendorder=0,
                                                                                   display=False)
         tide_io.writenpvecs(corrpertime, outfilename + "_pearson.txt")
         tide_io.writenpvecs(ppertime, outfilename + "_pvalue.txt")
@@ -550,10 +552,10 @@ def main():
         tide_io.writenpvecs(delayvals, outfilename + "_delay.txt")
         tide_io.writenpvecs(valid, outfilename + "_mask.txt")
         filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimmeddata[0, :]),
-                                                prewindow=False,
+                                                windowfunc='None',
                                                 detrendorder=detrendorder)
         filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimmeddata[1, :]),
-                                                prewindow=False,
+                                                windowfunc='None',
                                                 detrendorder=detrendorder)
 
     """

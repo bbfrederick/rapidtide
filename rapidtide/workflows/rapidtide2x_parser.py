@@ -231,7 +231,7 @@ def usage():
     print("                                     (default value is 0.5)")
     print("    --corrfittype=FITTYPE          - Method for fitting the correlation peak (default is 'gauss'). ")
     print("                                     'quad' uses a quadratic fit. Other options are ")
-    print("                                     'fastgauss' which is faster but not as well tested, and 'none'.")
+    print("                                     'fastgauss' which is faster but not as well tested, and 'None'.")
     print("    --despecklepasses=PASSES       - detect and refit suspect correlations to disambiguate peak")
     print("                                     locations in PASSES passes")
     print("    --despecklethresh=VAL          - refit correlation if median discontinuity magnitude exceeds")
@@ -364,9 +364,8 @@ def process_args():
     # correlation options
     optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
     optiondict['detrendorder'] = 1  # remove linear trends prior to correlation
-    optiondict['usewindowfunc'] = True  # apply a window prior to correlation
     optiondict['windowfunc'] = 'hamming'  # the particular window function to use for correlation
-    optiondict['corrweighting'] = 'none'  # use a standard unweighted crosscorrelation for calculate time delays
+    optiondict['corrweighting'] = 'None'  # use a standard unweighted crosscorrelation for calculate time delays
     optiondict['tmaskname'] = None  # file name for tmask regressor
     optiondict['corrmaskthreshpct'] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict['corrmaskexcludename'] = None
@@ -620,7 +619,7 @@ def process_args():
     for o, a in opts:
         linkchar = ' '
         if o == '--nowindow':
-            optiondict['usewindowfunc'] = False
+            optiondict['windowfunc'] = 'None'
             print('disable precorrelation windowing')
         elif o == '--checkpoint':
             optiondict['checkpoint'] = True
@@ -634,7 +633,6 @@ def process_args():
             linkchar = '='
             print('Will use', optiondict['permutationmethod'], 'as the permutation method for calculating null correlation threshold')
         elif o == '--windowfunc':
-            optiondict['usewindowfunc'] = True
             thewindow = a
             if (thewindow != 'hamming') and (thewindow != 'hann') and (thewindow != 'blackmanharris') and (
                     thewindow != 'None'):

@@ -422,10 +422,10 @@ def _get_parser():
                           dest='corrweighting',
                           action='store',
                           type=str,
-                          choices=['none', 'phat', 'liang', 'eckart'],
+                          choices=['None', 'phat', 'liang', 'eckart'],
                           help=('Method to use for cross-correlation '
-                                'weighting. Default is  none. '),
-                          default='none')
+                                'weighting. Default is "None". '),
+                          default='None')
 
     mask_group = corr.add_mutually_exclusive_group()
     mask_group.add_argument('--corrmaskthresh',
@@ -491,7 +491,7 @@ def _get_parser():
                           dest='corrfittype',
                           action='store',
                           type=str,
-                          choices=['gauss', 'fastgauss', 'quad', 'fastquad', 'none'],
+                          choices=['gauss', 'fastgauss', 'quad', 'fastquad', 'None'],
                           help=("Method for fitting the correlation peak "
                                 "(default is 'gauss'). 'quad' and 'fastquad' use a "
                                 "quadratic fit.  Faster but not as well "
@@ -1007,11 +1007,6 @@ def process_args(inputargs=None):
                                args['fixeddelayvalue'] + 10.0)
     else:
         args['fixdelay'] = False
-
-    if args['windowfunc'] is None:
-        args['usewindowfunc'] = False
-    else:
-        args['usewindowfunc'] = True
 
     if args['in_file'].endswith('txt') and args['realtr'] == 'auto':
         raise ValueError('Either --datatstep or --datafreq must be provided '

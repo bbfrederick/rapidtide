@@ -355,13 +355,12 @@ def ppnormalize(vector):
 
 
 @conditionaljit()
-def corrnormalize(thedata, prewindow=True, detrendorder=1, windowfunc='hamming'):
+def corrnormalize(thedata, detrendorder=1, windowfunc='hamming'):
     """
 
     Parameters
     ----------
     thedata
-    prewindow
     detrendorder
     windowfunc
 
@@ -376,7 +375,7 @@ def corrnormalize(thedata, prewindow=True, detrendorder=1, windowfunc='hamming')
         intervec = stdnormalize(thedata)
 
     # then window
-    if prewindow:
+    if windowfunc != 'None':
         return stdnormalize(tide_filt.windowfunction(np.shape(thedata)[0],
                                                      type=windowfunc) * intervec) / np.sqrt(np.shape(thedata)[0])
     else:

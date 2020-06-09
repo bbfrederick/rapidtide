@@ -96,7 +96,8 @@ def is_range(parser, arg):
 
     return arg
 
-
+defaultfilterorder = 6
+defaultpadseconds = 30.0
 def addfilteropts(parser, filtertarget, details=False):
     filt_opts = parser.add_argument_group('Filtering options')
     filt_opts.add_argument('--filterband',
@@ -132,60 +133,14 @@ def addfilteropts(parser, filtertarget, details=False):
                              type=int,
                              metavar='ORDER',
                              help=('Set order of butterworth filter (if used).'),
-                             default=6)
+                             default=defaultfilterorder)
         filt_opts.add_argument('--padseconds',
                              dest='padseconds',
                              action='store',
                              type=float,
                              metavar='SECONDS',
                              help=('The number of seconds of padding to add to each end of a filtered timecourse. '),
-                             default=30.0)
-
-
-def addpermutationopts(parser):
-    permutationmethod = parser.add_mutually_exclusive_group()
-    permutationmethod.add_argument('--permutationmethod',
-                          dest='permutationmethod',
-                          action='store',
-                          type=str,
-                          choices=['shuffle', 'phaserandom'],
-                          help=('Permutation method for significance testing.  Default is shuffle. '),
-                          default='shuffle')
-
-    parser.add_argument('--numnull',
-                         dest='numestreps',
-                         action='store',
-                         type=int,
-                         metavar='NREPS',
-                         help=('Estimate significance threshold by running '
-                               'NREPS null correlations (default is 10000, '
-                               'set to 0 to disable). '),
-                         default=10000)
-
-def addlagrangeopts(parser, defaultmin=-30.0, defaultmax=30.0):
-    parser.add_argument('--searchrange',
-                          dest='lag_extrema',
-                          action=indicatespecifiedAction,
-                          nargs=2,
-                          type=float,
-                          metavar=('LAGMIN', 'LAGMAX'),
-                          help=('Limit fit to a range of lags from LAGMIN to '
-                                'LAGMAX.  Default is -30.0 to 30.0 seconds. '),
-                          default=(defaultmin, defaultmax))
-
-
-def postprocesssearchrangeopts(args):
-    # Additional argument parsing not handled by argparse
-    try:
-        test = args.lag_extrema_nondefault
-        args.lagmin_nondefault = True
-        args.lagmax_nondefault = True
-    except KeyError:
-        pass
-    args.lagmin = args.lag_extrema[0]
-    args.lagmax = args.lag_extrema[1]
-    return args
-
+                             default=defaultpadseconds)
 
 def postprocessfilteropts(args):
     # configure the filter
@@ -197,7 +152,12 @@ def postprocessfilteropts(args):
     try:
         theorder = args.filtorder
     except AttributeError:
-        args.filtorder = 6
+        args.filtorder = defaultfilterorder
+    try:
+        thepadseconds = args.padseconds
+    except AttributeError:
+        args.filtertype = defaultpadseconds
+
 
     if args.filtertype == 'trapezoidal':
         inittrap = True
@@ -229,6 +189,117 @@ def postprocessfilteropts(args):
     args.lowerstop, args.lowerpass, args.upperpass, args.upperstop = theprefilter.getfreqs()
 
     return args, theprefilter
+
+
+def addwindowopts(parser):
+    wfunc = parser.add_argument_group('Windowing options')
+    wfunc.add_argument('--windowfunc',
+                       dest='windowfunc',
+                       action='store',
+                       type=str,
+                       choices=['hamming', 'hann', 'blackmanharris', 'None'],
+                       help=('Window function to use prior to correlation. '
+                             'Options are hamming (default), hann, '
+                             'blackmanharris, and None. '),
+                       default='hamming')
+
+
+def addpermutationopts(parser):
+    permutationmethod = parser.add_mutually_exclusive_group()
+    permutationmethod.add_argument('--permutationmethod',
+                          dest='permutationmethod',
+                          action='store',
+                          type=str,
+                          choices=['shuffle', 'phaserandom'],
+                          help=('Permutation method for significance testing.  Default is shuffle. '),
+                          default='shuffle')
+    parser.add_argument('--numnull',
+                         dest='numestreps',
+                         action='store',
+                         type=int,
+                         metavar='NREPS',
+                         help=('Estimate significance threshold by running '
+                               'NREPS null correlations (default is 10000, '
+                               'set to 0 to disable). '),
+                         default=10000)
+    parser.add_argument('--skipsighistfit',
+                         dest='dosighistfit',
+                         action='store_false',
+                         help=('Do not fit significance histogram with a '
+                               'Johnson SB function. '),
+                         default=True)
+
+
+
+def addsearchrangeopts(parser, details=False, defaultmin=-30.0, defaultmax=30.0):
+    parser.add_argument('--searchrange',
+                          dest='lag_extrema',
+                          action=indicatespecifiedAction,
+                          nargs=2,
+                          type=float,
+                          metavar=('LAGMIN', 'LAGMAX'),
+                          help=('Limit fit to a range of lags from LAGMIN to '
+                                'LAGMAX.  Default is -30.0 to 30.0 seconds. '),
+                          default=(defaultmin, defaultmax))
+    if details:
+        parser.add_argument('--fixdelay',
+                              dest='fixeddelayvalue',
+                              action='store',
+                              type=float,
+                              metavar='DELAYTIME',
+                              help=("Don't fit the delay time - set it to "
+                                    "DELAYTIME seconds for all voxels. "),
+                              default=None)
+
+def postprocesssearchrangeopts(args):
+    # Additional argument parsing not handled by argparse
+    # first handle fixed delay
+    try:
+        test = args.fixeddelayvalue
+    except:
+        args.fixdelayvalue = None
+    if args.fixeddelayvalue is not None:
+        args.fixdelay = True
+        args.lag_extrema = (args.fixeddelayvalue - 10.0,
+                               args.fixeddelayvalue + 10.0)
+    else:
+        args.fixdelay = False
+
+    # now set the extrema
+    try:
+        test = args.lag_extrema_nondefault
+        args.lagmin_nondefault = True
+        args.lagmax_nondefault = True
+    except AttributeError:
+        pass
+    args.lagmin = args.lag_extrema[0]
+    args.lagmax = args.lag_extrema[1]
+    return args
+
+
+def addtimerangeopts(parser):
+    parser.add_argument('--timerange',
+                         dest='timerange',
+                         action='store',
+                         nargs=2,
+                         type=int,
+                         metavar=('START', 'END'),
+                         help=('Limit analysis to data between timepoints '
+                               'START and END in the input file. If END is set to -1, '
+                               'analysis will go to the last timepoint.  Negative values '
+                               'of START will be set to 0. Default is to use all timepoints.'),
+                         default=(-1, -1))
+
+
+def postprocesstimerangeopts(args):
+    args.startpoint = int(args.timerange[0])
+    if args.timerange[1] == -1:
+        args.endpoint = 100000000
+    else:
+        args.endpoint = int(args.timerange[1])
+    return args
+
+
 
 
 

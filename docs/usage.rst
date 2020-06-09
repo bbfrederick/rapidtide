@@ -689,7 +689,7 @@ Usage:
 		optional arguments:
 		    --nodetrend        - do not detrend the data before correlation
 		    --nowindow         - do not prewindow data before corrlation
-		    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)
+		    --windowfunc=FUNC  - window function to apply before corrlation (default is hamming)
 		    --cepstral         - check time delay using Choudhary's cepstral technique 
 		    --phat             - perform phase alignment transform (PHAT) rather than 
 					 standard crosscorrelation

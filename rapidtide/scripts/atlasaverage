@@ -85,7 +85,7 @@ def main():
     templatefile = sys.argv[2]
     outputfile = sys.argv[3]
 
-    normmethod = 'none'
+    normmethod = 'None'
     summarymethod = 'mean'
 
     # now scan for optional arguments
@@ -99,7 +99,7 @@ def main():
 
     for o, a in opts:
         if o == "--nonorm":
-            normmethod = 'none'
+            normmethod = 'None'
         elif o == "--pctnorm":
             normmethod = 'pctnorm'
         elif o == "--stdnorm":
@@ -114,7 +114,7 @@ def main():
         else:
             assert False, "unhandled option"
 
-    if normmethod == 'none':
+    if normmethod == 'None':
         print('will not normalize timecourses')
     elif normmethod == 'pctnorm':
         print('will normalize timecourses to percentage of mean')
@@ -155,7 +155,7 @@ def main():
                 regiontimecourse = summarize(thevoxels, method=summarymethod)
             else:
                 regiontimecourse = timecourses[0, :] * 0.0
-            if normmethod == 'none':
+            if normmethod == 'None':
                 timecourses[theregion - 1, :] = regiontimecourse - np.mean(regiontimecourse)
             elif normmethod == 'pctnorm':
                 timecourses[theregion - 1, :] = tide_math.pcnormalize(regiontimecourse)

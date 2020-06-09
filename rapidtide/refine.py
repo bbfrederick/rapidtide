@@ -344,7 +344,6 @@ def refineregressor(fmridata,
             print('    summing', np.shape(inlagrange)[0], 'regressors with lags from', lower, 'to', upper)
             if np.shape(inlagrange)[0] > 0:
                 dispersioncalcout[lagnum, :] = tide_math.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0),
-                                                                       prewindow=False,
                                                                        detrendorder=optiondict['detrendorder'],
                                                                        windowfunc=optiondict['windowfunc'])
                 freqs, dispersioncalcspecmag[lagnum, :], dispersioncalcspecphase[lagnum, :] = tide_math.polarfft(
@@ -370,8 +369,8 @@ def refineregressor(fmridata,
         thefit = FastICA(n_components=icacomponents).fit(refinevoxels)  # Reconstruct signals
         print('Using first of ', len(thefit.components_), ' components')
         icadata = thefit.components_[0]
-        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), prewindow=True, detrendorder=optiondict['detrendorder'])
-        filteredica = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], icadata), prewindow=True, detrendorder=optiondict['detrendorder'])
+        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), detrendorder=optiondict['detrendorder'])
+        filteredica = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], icadata), detrendorder=optiondict['detrendorder'])
         thepxcorr = pearsonr(filteredavg, filteredica)[0]
         print('ica/avg correlation = ', thepxcorr)
         if thepxcorr > 0.0:
@@ -383,8 +382,8 @@ def refineregressor(fmridata,
         thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
         print('Using first of ', len(thefit.components_), ' components')
         pcadata = thefit.components_[0]
-        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), prewindow=True, detrendorder=optiondict['detrendorder'])
-        filteredpca = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], pcadata), prewindow=True, detrendorder=optiondict['detrendorder'])
+        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), detrendorder=optiondict['detrendorder'])
+        filteredpca = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], pcadata), detrendorder=optiondict['detrendorder'])
         thepxcorr = pearsonr(filteredavg, filteredpca)[0]
         print('pca/avg correlation = ', thepxcorr)
         if thepxcorr > 0.0:

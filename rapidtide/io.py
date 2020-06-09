@@ -715,7 +715,7 @@ def readoptionsfile(inputfileroot):
         test = thedict['lowerpass']
     except KeyError:
         print('no filter limits found in options file - filling in defaults')
-        if thedict['filtertype'] == 'none':
+        if thedict['filtertype'] == 'None':
             thedict['lowerstop'] = 0.0
             thedict['lowerpass'] = 0.0
             thedict['upperpass'] = -1.0

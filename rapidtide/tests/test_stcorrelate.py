@@ -33,13 +33,12 @@ def test_stcorrelate(debug=False):
     shiftdist = 5
     windowtime = 30.0
     stepsize = 5.0
-    corrweighting = 'none'
+    corrweighting = 'None'
     outfilename = op.join(get_test_temp_path(), 'stcorrtest')
 
     # create outputdir if it doesn't exist
     create_dir(get_test_temp_path())
 
-    prewindow = True
     dodetrend = True
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
 
@@ -56,13 +55,12 @@ def test_stcorrelate(debug=False):
 
     times, corrpertime, ppertime = shorttermcorr_1D(sig1, sig2, tr, windowtime, \
                                                     samplestep=int(stepsize // tr),
-                                                    prewindow=prewindow,
                                                     detrendorder=0)
     plength = len(times)
     times, xcorrpertime, Rvals, delayvals, valid = shorttermcorr_2D(sig1, sig2, tr, windowtime, \
                                                                     samplestep=int(stepsize // tr),
                                                                     weighting=corrweighting, \
-                                                                    prewindow=prewindow, detrendorder=0,
+                                                                    detrendorder=0,
                                                                     display=False)
     xlength = len(times)
     writenpvecs(corrpertime, outfilename + "_pearson.txt")

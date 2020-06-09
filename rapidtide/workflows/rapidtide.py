@@ -892,7 +892,6 @@ def rapidtide_main(argparsingfunc):
             print('Pass number ', thepass)
 
         referencetc = tide_math.corrnormalize(resampref_y,
-                                              prewindow=optiondict['usewindowfunc'],
                                               detrendorder=optiondict['detrendorder'],
                                               windowfunc=optiondict['windowfunc'])
 
@@ -906,7 +905,6 @@ def rapidtide_main(argparsingfunc):
             resampref_y = resptracker.clean(resampref_y, 1.0 / oversamptr, thetimes, thefreqs)
             tide_io.writevec(resampref_y, outputname + '_respfilt_pass' + str(thepass) + '.txt')
             referencetc = tide_math.corrnormalize(resampref_y,
-                                                  prewindow=optiondict['usewindowfunc'],
                                                   detrendorder=optiondict['detrendorder'],
                                                   windowfunc=optiondict['windowfunc'])
         if optiondict['check_autocorrelation']:
@@ -938,7 +936,6 @@ def rapidtide_main(argparsingfunc):
                 thexcorr,
                 acampthresh=theampthresh,
                 aclagthresh=thelagthresh,
-                prewindow=optiondict['usewindowfunc'],
                 detrendorder=optiondict['detrendorder'])
             optiondict['acwidth'] = acwidth + 0.0
             optiondict['absmaxsigma'] = acwidth * 10.0
@@ -963,10 +960,9 @@ def rapidtide_main(argparsingfunc):
                         acfixfilter.settype('arb_stop')
                         acfixfilter.setfreqs(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
                         cleaned_resampref_y = tide_math.corrnormalize(acfixfilter.apply(fmrifreq, resampref_y),
-                                                                      prewindow=False,
+                                                                      windowfunc='None',
                                                                       detrendorder=optiondict['detrendorder'])
                         cleaned_referencetc = tide_math.corrnormalize(cleaned_resampref_y,
-                                                                      prewindow=optiondict['usewindowfunc'],
                                                                       detrendorder=optiondict['detrendorder'],
                                                                       windowfunc=optiondict['windowfunc'])
                         cleaned_nonosreferencetc = tide_math.stdnormalize(acfixfilter.apply(fmrifreq, resampnonosref_y))
@@ -978,18 +974,18 @@ def rapidtide_main(argparsingfunc):
                                             outputname + '_cleanedresampref_y_pass' + str(thepass) + '.txt')
                 else:
                     cleaned_resampref_y = 1.0 * tide_math.corrnormalize(resampref_y,
-                                                                        prewindow=False,
+                                                                        windowfunc='None',
                                                                         detrendorder=optiondict['detrendorder'])
                     cleaned_referencetc = 1.0 * referencetc
             else:
                 print('no sidelobes found in range')
                 cleaned_resampref_y = 1.0 * tide_math.corrnormalize(resampref_y,
-                                                                    prewindow=False,
+                                                                    windowfunc='None',
                                                                     detrendorder=optiondict['detrendorder'])
                 cleaned_referencetc = 1.0 * referencetc
         else:
             cleaned_resampref_y = 1.0 * tide_math.corrnormalize(resampref_y,
-                                                                prewindow=False,
+                                                                windowfunc='None',
                                                                 detrendorder=optiondict['detrendorder'])
             cleaned_referencetc = 1.0 * referencetc
 

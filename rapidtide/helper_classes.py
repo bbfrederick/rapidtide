@@ -164,7 +164,7 @@ class correlator:
                  detrendorder=1,
                  hpfreq=None,
                  windowfunc='hamming',
-                 corrweighting='none'):
+                 corrweighting='None'):
         self.Fs = Fs
         self.corrorigin = corrorigin
         self.lagmininpts = lagmininpts
@@ -174,10 +174,6 @@ class correlator:
         self.hpfreq = hpfreq
         self.detrendorder = detrendorder
         self.windowfunc = windowfunc
-        if self.windowfunc is not None:
-            self.usewindowfunc = True
-        else:
-            self.usewindowfunc = False
         self.corrweighting = corrweighting
         if self.reftc is not None:
             self.setreftc(self.reftc)
@@ -190,13 +186,11 @@ class correlator:
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function
         if hpfreq is None:
             return tide_math.corrnormalize(self.ncprefilter.apply(self.Fs, thetc),
-                                           prewindow=self.usewindowfunc,
                                            detrendorder=self.detrendorder,
                                            windowfunc=self.windowfunc)
         else:
             return self.hpfilt.apply(self.Fs,
                                 tide_math.corrnormalize(self.ncprefilter.apply(self.Fs, thetc),
-                                                        prewindow=self.usewindowfunc,
                                                         detrendorder=self.detrendorder,
                                                         windowfunc=self.windowfunc)
                                 )
@@ -588,7 +582,7 @@ class correlation_fitter:
                 maxsigma = np.float64(maxsigma_init)
 
         # refine if necessary
-        if self.corrfittype != 'none':
+        if self.corrfittype != 'None':
             if self.corrfittype == 'gauss':
                 X = self.corrtimeaxis[peakstart:peakend + 1]
                 data = corrfunc[peakstart:peakend + 1]
@@ -691,7 +685,7 @@ class correlation_fitter:
         if self.debug or self.displayplots:
             print("init to final: maxval", maxval_init, maxval, ", maxlag:", maxlag_init, maxlag, ", width:", maxsigma_init,
                   maxsigma)
-        if self.displayplots and (self.corrfittype != 'none') and (maskval != 0.0):
+        if self.displayplots and (self.corrfittype != 'None') and (maskval != 0.0):
             fig = pl.figure()
             ax = fig.add_subplot(111)
             ax.set_title('Data and fit')

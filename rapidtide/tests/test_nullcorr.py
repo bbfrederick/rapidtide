@@ -70,10 +70,9 @@ def test_nullcorr(debug=False, display=False):
     optiondict = {
         'numestreps':        10000,
         'showprogressbar':   debug,
-        'usewindowfunc':     True,
         'detrendorder':      3,
         'windowfunc':        'hamming',
-        'corrweighting':     'none',
+        'corrweighting':     'None',
         'nprocs':            1,
         'widthlimit':        1000.0,
         'bipolar':           False,

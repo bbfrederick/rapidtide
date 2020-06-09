@@ -57,7 +57,7 @@ rapidtide \
         --nprocs -1 \
         --pickleft \
         --pickleftthresh 0.3 \
-        --corrfittype none \
+        --corrfittype None \
 	--spatialfilt 2 
 
 rapidtide2x \

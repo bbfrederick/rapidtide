@@ -37,14 +37,14 @@ from numpy.random import permutation
 from matplotlib.pyplot import plot, show, figure
 
 
-def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, detrendorder, searchstart, searchend, numreps=1000):
+def getNullDistributionData(indata, xcorr_x, thefilter, windowfunc, detrendorder, searchstart, searchend, numreps=1000):
     print('estimating significance distribution using ', numreps, ' repetitions')
     corrlist = zeros(numreps, dtype='float')
     corrlist_pear = zeros(numreps, dtype='float')
     xcorr_x_trim = xcorr_x[searchstart:searchend + 1]
 
     filteredindata = tide_math.corrnormalize(thefilter.apply(Fs, indata),
-                                             prewindow=prewindow,
+                                             windowfunc=windowfunc,
                                              detrendorder=detrendorder)
     for i in range(0, numreps):
         # make a shuffled copy of the regressors
@@ -52,7 +52,7 @@ def getNullDistributionData(indata, xcorr_x, thefilter, prewindow, detrendorder,
 
         # filter it
         filteredshuffleddata = tide_math.corrnormalize(thefilter.apply(Fs, shuffleddata),
-                                                       prewindow=prewindow,
+                                                       windowfunc=windowfunc,
                                                        detrendorder=detrendorder)
 
         # crosscorrelate with original
@@ -94,7 +94,7 @@ def usage():
     print("")
     print("optional arguments:")
     print("    -t            - detrend the data")
-    print("    -w            - prewindow the data")
+    print("    -w            - window the data with a hamming function")
     print("    -l LABEL      - label for the delay value")
     print("    -s STARTTIME  - time of first datapoint to use in seconds in the first file")
     print("    -D DURATION   - amount of data to use in seconds")
@@ -127,7 +127,7 @@ def main():
     uselabel = False
     display = True
     gccphat = False
-    prewindow = False
+    windowfunc = 'None'
     detrendorder = 0
     dopartial = False
     duration = 1000000.0
@@ -204,9 +204,9 @@ def main():
             if verbose:
                 print('enabling linear detrending')
         elif o == "-w":
-            prewindow = True
+            windowfunc = 'hamming'
             if verbose:
-                print('enabling prewindowing')
+                print('enabling hamming windowing')
         elif o == "-z":
             controlvariablefile = a
             dopartial = True
@@ -291,14 +291,14 @@ def main():
         trimdata2 = trimdata2[0:minlen]
 
     # band limit the regressor if that is needed
-    if theprefilter.gettype() != 'none':
+    if theprefilter.gettype() != 'None':
         if verbose:
             print("filtering to ", theprefilter.gettype(), " band")
     filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
-                                            prewindow=prewindow,
+                                            windowfunc=windowfunc,
                                             detrendorder=detrendorder)
     filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
-                                            prewindow=prewindow,
+                                            windowfunc=windowfunc,
                                             detrendorder=detrendorder)
     if flipregressor:
         filtereddata2 *= -1.0
@@ -311,7 +311,7 @@ def main():
         regressorvec = []
         for j in range(0, controlvars.shape[0]):
             regressorvec.append(tide_math.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]),
-                                                        prewindow=prewindow,
+                                                        windowfunc=windowfunc,
                                                         detrendorder=detrendorder))
         if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
             thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
@@ -360,7 +360,7 @@ def main():
     if estimate_significance:
         # generate a list of correlations from shuffled data
         corrlist, corrlist_pear = getNullDistributionData(trimdata1, xcorr_x, theprefilter,
-                                                          prewindow, detrendorder, searchstart, searchend, numreps=numreps)
+                                                          windowfunc, detrendorder, searchstart, searchend, numreps=numreps)
 
         # calculate percentiles for the crosscorrelation from the distribution data
         histlen = 100

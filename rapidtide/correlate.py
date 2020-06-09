@@ -99,7 +99,7 @@ def disablenumba():
 
 
 # --------------------------- Correlation functions -------------------------------------------------
-def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=10.0, displayplots=False, prewindow=True,
+def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=10.0, displayplots=False,
                   detrendorder=1, debug=False):
     """
 
@@ -111,7 +111,7 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
     acampthresh
     aclagthresh
     displayplots
-    prewindow
+    windowfunc
     detrendorder
     debug
 
@@ -169,17 +169,15 @@ def quickcorr(data1, data2, windowfunc='hamming'):
 
     """
     thepcorr = sp.stats.stats.pearsonr(tide_math.corrnormalize(data1,
-                                                               prewindow=True,
                                                                detrendorder=1,
                                                                windowfunc=windowfunc),
                                        tide_math.corrnormalize(data2,
-                                                               prewindow=True,
                                                                detrendorder=1,
                                                                windowfunc=windowfunc))
     return thepcorr
 
 
-def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewindow=False, detrendorder=0,
+def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, detrendorder=0,
                      windowfunc='hamming'):
     """
 
@@ -190,7 +188,6 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewind
     sampletime
     windowtime
     samplestep
-    prewindow
     detrendorder
     windowfunc
 
@@ -205,11 +202,9 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewind
     ppertime = []
     for i in range(halfwindow, np.shape(data1)[0] - halfwindow, samplestep):
         dataseg1 = tide_math.corrnormalize(data1[i - halfwindow:i + halfwindow],
-                                           prewindow=prewindow,
                                            detrendorder=detrendorder,
                                            windowfunc=windowfunc)
         dataseg2 = tide_math.corrnormalize(data2[i - halfwindow:i + halfwindow],
-                                           prewindow=prewindow,
                                            detrendorder=detrendorder,
                                            windowfunc=windowfunc)
         thepcorr = sp.stats.stats.pearsonr(dataseg1, dataseg2)
@@ -220,8 +215,8 @@ def shorttermcorr_1D(data1, data2, sampletime, windowtime, samplestep=1, prewind
                                                                                                     dtype='float64')
 
 
-def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimit=None, weighting='none',
-                     prewindow=False, windowfunc='hamming', detrendorder=0, display=False):
+def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimit=None, weighting='None',
+                     windowfunc='None', detrendorder=0, display=False):
     """
 
     Parameters
@@ -233,7 +228,6 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     samplestep
     laglimit
     weighting
-    prewindow
     windowfunc
     detrendorder
     display
@@ -254,8 +248,8 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     noverlap = (nperseg - 1)
 
 
-    dataseg1 = tide_math.corrnormalize(data1[0:2 * halfwindow], prewindow=prewindow, detrendorder=detrendorder, windowfunc=windowfunc)
-    dataseg2 = tide_math.corrnormalize(data2[0:2 * halfwindow], prewindow=prewindow, detrendorder=detrendorder, windowfunc=windowfunc)
+    dataseg1 = tide_math.corrnormalize(data1[0:2 * halfwindow], detrendorder=detrendorder, windowfunc=windowfunc)
+    dataseg2 = tide_math.corrnormalize(data2[0:2 * halfwindow], detrendorder=detrendorder, windowfunc=windowfunc)
     thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
     xcorrlen = np.shape(thexcorr)[0]
     xcorr_x = np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
@@ -267,11 +261,9 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     valid = []
     for i in range(halfwindow, np.shape(data1)[0] - halfwindow, samplestep):
         dataseg1 = tide_math.corrnormalize(data1[i - halfwindow:i + halfwindow],
-                                           prewindow=prewindow,
                                            detrendorder=detrendorder,
                                            windowfunc=windowfunc)
         dataseg2 = tide_math.corrnormalize(data2[i - halfwindow:i + halfwindow],
-                                           prewindow=prewindow,
                                            detrendorder=detrendorder,
                                            windowfunc=windowfunc)
         times.append(i * sampletime)
@@ -305,16 +297,10 @@ def calc_MI(x, y, bins=50):
 
 
 def cross_MI(x, y, Fs=1.0, norm=True, windowfunc='hamming', bins=50, debug=False):
-    if windowfunc == 'none':
-        prewindow = False
-    else:
-        prewindow = True
     normx = tide_math.corrnormalize(x,
-                                    prewindow=prewindow,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
     normy = tide_math.corrnormalize(y,
-                                    prewindow=prewindow,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
     thexmi_y = np.zeros((len(normx) + len(normy) - 1), dtype=np.float)
@@ -517,11 +503,9 @@ def arbcorr(input1, Fs1, input2, Fs2,
         matchedinput1 = input1
         matchedinput2 = input2
     norm1 = tide_math.corrnormalize(matchedinput1,
-                                    prewindow=True,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
     norm2 = tide_math.corrnormalize(matchedinput2,
-                                    prewindow=True,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
     thexcorr_y = signal.fftconvolve(norm1, norm2[::-1], mode='full')
@@ -534,7 +518,7 @@ def arbcorr(input1, Fs1, input2, Fs2,
     return thexcorr_x, thexcorr_y
 
 
-def faststcorrelate(input1, input2, windowtype='hann', nperseg=32, weighting='none', displayplots=False):
+def faststcorrelate(input1, input2, windowtype='hann', nperseg=32, weighting='None', displayplots=False):
     nfft = nperseg
     noverlap = (nperseg - 1)
     onesided = False
@@ -581,7 +565,7 @@ def faststcorrelate(input1, input2, windowtype='hann', nperseg=32, weighting='no
 
 
 # http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
-def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=False):
+def fastcorrelate(input1, input2, usefft=True, weighting='None', displayplots=False):
     """
 
     Parameters
@@ -598,7 +582,7 @@ def fastcorrelate(input1, input2, usefft=True, weighting='none', displayplots=Fa
     """
     if usefft:
         # Do an array flipped convolution, which is a correlation.
-        if weighting == 'none':
+        if weighting == 'None':
             return signal.fftconvolve(input1, input2[::-1], mode='full')
         else:
             return weightedfftconvolve(input1, input2[::-1], mode='full', weighting=weighting,
@@ -647,7 +631,7 @@ def _check_valid_mode_shapes(shape1, shape2):
                 "every dimension for 'valid' mode.")
 
 
-def weightedfftconvolve(in1, in2, mode="full", weighting='none', displayplots=False):
+def weightedfftconvolve(in1, in2, mode="full", weighting='None', displayplots=False):
     """Convolve two N-dimensional arrays using FFT.
     Convolve `in1` and `in2` using the fast Fourier transform method, with
     the output size determined by the `mode` argument.
@@ -704,7 +688,7 @@ def weightedfftconvolve(in1, in2, mode="full", weighting='none', displayplots=Fa
     if not complex_result:
         fft1 = rfftn(in1, fsize)
         fft2 = rfftn(in2, fsize)
-        theorigmax = np.max(np.absolute(irfftn(gccproduct(fft1, fft2, 'none'), fsize)[fslice]))
+        theorigmax = np.max(np.absolute(irfftn(gccproduct(fft1, fft2, 'None'), fsize)[fslice]))
         ret = irfftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots), fsize)[fslice].copy()
         ret = irfftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots), fsize)[fslice].copy()
         ret = ret.real
@@ -712,7 +696,7 @@ def weightedfftconvolve(in1, in2, mode="full", weighting='none', displayplots=Fa
     else:
         fft1 = fftpack.fftn(in1, fsize)
         fft2 = fftpack.fftn(in2, fsize)
-        theorigmax = np.max(np.absolute(fftpack.ifftn(gccproduct(fft1, fft2, 'none'))[fslice]))
+        theorigmax = np.max(np.absolute(fftpack.ifftn(gccproduct(fft1, fft2, 'None'))[fslice]))
         ret = fftpack.ifftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots))[fslice].copy()
         ret *= theorigmax / np.max(np.absolute(ret))
 
@@ -742,7 +726,7 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
 
     """
     product = fft1 * fft2
-    if weighting == 'none':
+    if weighting == 'None':
         return product
 
     # calculate the weighting function

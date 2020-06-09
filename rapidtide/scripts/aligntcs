@@ -71,7 +71,7 @@ def main():
         action='store_true',
         help=('Print out more debugging information'),
         default=False)
-    pf.addlagrangeopts(parser)
+    pf.addsearchrangeopts(parser)
 
     # Filter arguments
     pf.addfilteropts(parser, 'timecourses')

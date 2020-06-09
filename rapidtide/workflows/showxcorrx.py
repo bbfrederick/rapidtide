@@ -41,7 +41,7 @@ from rapidtide.workflows.parser_funcs import is_valid_file, is_float
 
 def _get_null_distribution(indata, xcorr_x, thefilter, prewindow, detrendorder,
                            searchstart, searchend, Fs, dofftcorr,
-                           windowfunc='hamming', corrweighting='none',
+                           windowfunc='hamming', corrweighting='None',
                            numreps=1000):
     """
     Get an empirical null distribution from the data.
@@ -92,6 +92,8 @@ def _get_parser():
     parser = argparse.ArgumentParser(description='Calculate and display '
                                                  'crosscorrelation between two'
                                                  ' timeseries.')
+
+
     # Required arguments
     parser.add_argument('infilename1',
                         type=lambda x: is_valid_file(parser, x),
@@ -163,7 +165,7 @@ def _get_parser():
     parser.add_argument('--windowfunc',
                         dest='windowfunc',
                         action='store',
-                        choices=['hamming', 'blackmanharris', 'hann', 'none'],
+                        choices=['hamming', 'blackmanharris', 'hann', 'None'],
                         help=('Window function to apply before correlation '
                               '(default is hamming)"'),
                         default='hamming')
@@ -251,10 +253,10 @@ def _get_parser():
                           dest='corrweighting',
                           action='store',
                           type=str,
-                          choices=['none', 'phat', 'liang', 'eckart'],
+                          choices=['None', 'phat', 'liang', 'eckart'],
                           help=('Method to use for cross-correlation '
                                 'weighting.'),
-                          default='none')
+                          default='None')
     cc_mutex.add_argument('--detrendorder',
                           dest='detrendorder',
                           action='store',
@@ -283,7 +285,7 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
                         flipregressor=False, windowfunc='hamming',
                         calccepstraldelay=False, corroutputfile=False,
                         controlvariablefile=None, numreps=0,
-                        arbvec=None, filtertype='arb', corrweighting='none',
+                        arbvec=None, filtertype='arb', corrweighting='None',
                         detrendorder=1, prewindow=True, verbose=False):
     r"""Calculate and display crosscorrelation between two timeseries.
 
@@ -325,10 +327,10 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
         Number of null correlations to perform to estimate significance.  Default is 10000
     arbvec : [float,float,float,float], optional
         Frequency limits of the arb_pass filter.
-    filtertype : 'none', 'card', 'lfo', 'vlf', 'resp', 'arb'
-        Type of filter to apply data prior to correlation.  Default is 'none'
-    corrweighting : {'none', 'Liang', 'Eckart', 'PHAT'}, optional
-         Weighting function to apply to the crosscorrelation in the Fourier domain.  Default is 'none'
+    filtertype : 'None', 'card', 'lfo', 'vlf', 'resp', 'arb'
+        Type of filter to apply data prior to correlation.  Default is 'None'
+    corrweighting : {'None', 'Liang', 'Eckart', 'PHAT'}, optional
+         Weighting function to apply to the crosscorrelation in the Fourier domain.  Default is 'None'
     detrendorder : int, optional
        Order of polynomial used to detrend crosscorrelation inputs.  Default is 1 (0 disables)
     prewindow : bool, optional
@@ -424,7 +426,7 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
         trimdata2 = trimdata2[0:minlen]
 
     # band limit the regressor if that is needed
-    if theprefilter.gettype() != 'none':
+    if theprefilter.gettype() != 'None':
         if verbose:
             print("filtering to ", theprefilter.gettype(), " band")
     print(windowfunc)

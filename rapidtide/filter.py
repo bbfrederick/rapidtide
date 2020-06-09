@@ -1148,13 +1148,13 @@ class plethfilter:
 
 
 class noncausalfilter:
-    def __init__(self, filtertype='none', transitionfrac=0.05, usebutterworth=False, butterworthorder=6,
+    def __init__(self, filtertype='None', transitionfrac=0.05, usebutterworth=False, butterworthorder=6,
                  usetrapfftfilt=True, correctfreq=True, padtime=30.0, cyclic=False, debug=False):
         r"""A zero time delay filter for one dimensional signals, especially physiological ones.
 
         Parameters
         ----------
-        filtertype : {'none' 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'}, optional
+        filtertype : {'None' 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'}, optional
             The type of filter.
         usebutterworth: boolean, optional
             Use Butterworth filter.  Default is False.
@@ -1174,7 +1174,7 @@ class noncausalfilter:
         Methods
         -------
         settype(thetype)
-            Set the filter type. Options are 'none' (default), 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop',
+            Set the filter type. Options are 'None' (default), 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop',
             'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'.
         gettype()
             Return the current filter type.
@@ -1404,7 +1404,7 @@ class noncausalfilter:
             print('cyclic=', self.cyclic)
 
         # now do the actual filtering
-        if self.filtertype == 'none':
+        if self.filtertype == 'None':
             return data
         elif self.filtertype == 'ringstop':
             return (arb_pass(Fs, data,

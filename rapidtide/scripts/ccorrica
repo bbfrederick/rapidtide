@@ -47,8 +47,8 @@ def usage():
     print("")
     print("optional arguments:")
     print("    --nodetrend        - do not detrend the data before correlation")
-    print("    --nowindow         - do not prewindow data before corrlation")
-    print("    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)")
+    print("    --nowindow         - do not window data before correlation")
+    print("    --windowfunc=FUNC  - window function to apply before corrlation (default is hamming)")
     print("    --phat             - perform phase alignment transform (PHAT) rather than ")
     print("                         standard crosscorrelation")
     print("    --liang            - perform phase alignment transform with Liang weighting function rather than ")
@@ -72,8 +72,7 @@ def usage():
 def main():
     # get the command line parameters
     searchrange = 15.0
-    corrweighting = 'none'
-    prewindow = True
+    corrweighting = 'None'
     windowfunc = 'hamming'
     detrendorder = 1
     dopartial = False
@@ -122,9 +121,9 @@ def main():
             if verbose:
                 print('disabling detrending')
         elif o == "--nowindow":
-            prewindow = False
+            windowfunc = 'None'
             if verbose:
-                print('disabling prewindowing')
+                print('disabling hamming windowing')
         elif o == "--windowfunc":
             windowfunc = a
             if (windowfunc != 'hamming') and (windowfunc != 'blackmanharris') and (windowfunc != 'hann') and (
@@ -202,7 +201,6 @@ def main():
 
     for component in range(0, numcomponents):
         reformdata[component, :] = tide_math.corrnormalize(theprefilter.apply(Fs, reformdata[component, :]),
-                                            prewindow=prewindow,
                                             detrendorder=detrendorder,
                                             windowfunc=windowfunc)
 

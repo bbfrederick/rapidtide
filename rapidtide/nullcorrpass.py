@@ -115,7 +115,7 @@ def getNullDistributionDatax(rawtimecourse,
 
     inputshape = np.asarray([numestreps])
     normalizedreftc = thecorrelator.ncprefilter.apply(Fs, tide_math.corrnormalize(thecorrelator.reftc,
-                                                                                  prewindow=False,
+                                                                                  windowfunc='None',
                                                                                   detrendorder=thecorrelator.detrendorder)
                                                       )
     rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(normalizedreftc)
