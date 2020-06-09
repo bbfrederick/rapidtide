@@ -12,17 +12,18 @@ input4 = tide_io.readvec('../dst/diff_quad_reference_resampres_pass1.txt')
 input5 = tide_io.readvec('../dst/diff_quad_reference_resampres_pass3.txt')
 
 
-thex, thexcorr = tide_corr.arbcorr(input1, 12.5, input2, 12.5, windowfunc='hamming')
-plt.plot(thex, thexcorr)
-plt.show()
-
-thex, thexmi = tide_corr.cross_MI(input1, input2, Fs=12.5, bins=50, windowfunc='hamming')
-thexnowin, thexminowin = tide_corr.cross_MI(input1, input2, Fs=12.5, bins=50, windowfunc='none')
-plt.plot(thex, thexmi)
-plt.plot(thexnowin, thexminowin)
-plt.show()
-
-
-#thex, thexmi = tide_corr.cross_MI(input4, input5, Fs=2.0, bins=10, windowfunc='hamming')
-#plt.plot(thex, thexmi)
+#thex, thexcorr = tide_corr.arbcorr(input1, 12.5, input2, 12.5, windowfunc='hamming')
+#plt.plot(thex, thexcorr)
 #plt.show()
+
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+
+for numbins in [2, 5, 10, 20, 50, 100]:
+    thex, thexmi = tide_corr.cross_MI(input1, input2, Fs=12.5, bins=numbins, windowfunc='hamming')
+    thexnowin, thexminowin = tide_corr.cross_MI(input1, input2, Fs=12.5, bins=numbins, windowfunc='None')
+    ax.plot(thex, thexmi, label=str(numbins))
+    #plt.plot(thexnowin, thexminowin)
+ax.legend()
+plt.show()
+
