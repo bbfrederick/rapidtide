@@ -296,31 +296,94 @@ def calc_MI(x, y, bins=50):
     return mi
 
 
-def cross_MI(x, y, Fs=1.0, norm=True, windowfunc='hamming', bins=50, debug=False):
+# From Ionnis Pappas
+def mutual_information_2d(x, y, sigma=1, bins=256, normalized=True, EPS=1.0e-6):
+    """
+    Computes (normalized) mutual information between two 1D variate from a
+    joint histogram.
+
+    Parameters
+    ----------
+    x : 1D array
+        first variable
+
+    y : 1D array
+        second variable
+
+    sigma: float
+        sigma for Gaussian smoothing of the joint histogram
+
+    Returns
+    -------
+    nmi: float
+        the computed similariy measure
+
+    """
+    bins2d = (bins, bins)
+
+    jh = np.histogram2d(x, y, bins=bins2d)[0]
+
+    # smooth the jh with a gaussian filter of given sigma
+    sp.ndimage.gaussian_filter(jh, sigma=sigma, mode='constant',
+                                 output=jh)
+
+    # compute marginal histograms
+    jh = jh + EPS
+    sh = np.sum(jh)
+    jh = jh / sh
+    s1 = np.sum(jh, axis=0).reshape((-1, jh.shape[0]))
+    s2 = np.sum(jh, axis=1).reshape((jh.shape[1], -1))
+
+    # Normalised Mutual Information of:
+    # Studholme,  jhill & jhawkes (1998).
+    # "A normalized entropy measure of 3-D medical image alignment".
+    # in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
+    if normalized:
+        mi = ((np.sum(s1 * np.log(s1)) + np.sum(s2 * np.log(s2)))
+                / np.sum(jh * np.log(jh))) - 1
+    else:
+        mi = ( np.sum(jh * np.log(jh)) - np.sum(s1 * np.log(s1))
+               - np.sum(s2 * np.log(s2)))
+
+    return mi
+
+
+def cross_MI(x, y, negsteps=-1, possteps=-1, Fs=1.0, norm=True, windowfunc='None', bins=10, sigma=0.25):
     normx = tide_math.corrnormalize(x,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
     normy = tide_math.corrnormalize(y,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
-    thexmi_y = np.zeros((len(normx) + len(normy) - 1), dtype=np.float)
-    for i in range(-len(normy) + 1, len(normx) - 1):
+    if (negsteps == -1) or (negsteps > len(normy) - 1):
+        negsteps = -len(normy) + 1
+    else:
+        negsteps = -negsteps
+    if (possteps == -1) or (possteps > len(normx) - 1):
+        possteps = len(normx) - 1
+    else:
+        possteps = possteps
+    thexmi_y = np.zeros((-negsteps + possteps + 1))
+    print('negsteps, possteps, len(thexmi_y)', negsteps, possteps, len(thexmi_y))
+    for i in range(negsteps, possteps + 1):
         if i < 0:
-            thexmi_y[i + len(normy)] = calc_MI(normx[:i + len(normy) + 1], normy[-i - 1:], bins=bins)
+            thexmi_y[i - negsteps] = mutual_information_2d(normx[:i + len(normy)], normy[-i:],
+                                                             bins=bins,
+                                                             normalized=norm,
+                                                             sigma=sigma)
         elif i == 0:
-            thexmi_y[i + len(normy)] = calc_MI(normx, normy, bins=bins)
+            thexmi_y[i - negsteps] = mutual_information_2d(normx, normy,
+                                                             bins=bins,
+                                                             normalized=norm,
+                                                             sigma=sigma)
         else:
-            thexmi_y[i + len(normy)] = calc_MI(normx[i:], normy[:len(normy) - i], bins=bins)
-    if norm:
-        normfac1 = np.sqrt(calc_MI(normx, normx))
-        normfac2 = np.sqrt(calc_MI(normy, normy))
-        if debug:
-            print(normfac1, normfac2)
-        normfac = normfac1 * normfac2
-        if normfac > 0.0:
-            thexmi_y /= normfac
+            thexmi_y[i - negsteps] = mutual_information_2d(normx[i:], normy[:len(normy) - i],
+                                                             bins=bins,
+                                                             normalized=norm,
+                                                             sigma=sigma)
     thexmi_x = sp.linspace(0.0, len(thexmi_y) / Fs, num=len(thexmi_y), endpoint=False) \
-                 - (len(normx) // 2 + len(normy) // 2) / Fs - 0.5 / Fs
+                 + negsteps / Fs
+
     return thexmi_x, thexmi_y
 
 
