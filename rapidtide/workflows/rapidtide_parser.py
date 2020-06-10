@@ -58,392 +58,454 @@ def _get_parser():
                                      usage='%(prog)s in_file outputname [options]')
 
     # Required arguments
-    parser.add_argument('in_file',
-                        type=lambda x: is_valid_file(parser, x),
-                        help='The input data file (BOLD fmri file or NIRS text file)')
-    parser.add_argument('outputname',
-                        help='The root name for the output files')
+    parser.add_argument(
+            'in_file',
+            type=lambda x: is_valid_file(parser, x),
+            help='The input data file (BOLD fmri file or NIRS text file)')
+    parser.add_argument(
+            'outputname',
+            help='The root name for the output files')
 
     # Analysis types
     analysis_type = parser.add_argument_group('Analysis type').add_mutually_exclusive_group()
-    analysis_type.add_argument('--denoising',
-                        dest='denoising',
-                        action='store_true',
-                        help=('Preset for hemodynamic denoising - this is a macro that '
-                              'sets lagmin=-15.0, lagmax=15.0, passes=3, despeckle_passes=0, '
-                              'refineoffset=True, doglmfilt=True. '
-                              'Any of these options can be overridden with the appropriate '
-                              'additional arguments'),
-                        default=False)
-    analysis_type.add_argument('--delaymapping',
-                        dest='delaymapping',
-                        action='store_true',
-                        help=('Preset for delay mapping analysis - this is a macro that '
-                              'sets lagmin=-10.0, lagmax=30.0, passes=3, despeckle_passes=4, '
-                              'refineoffset=True, pickleft=True, limitoutput=True, doglmfilt=False. '
-                              'Any of these options can be overridden with the appropriate '
-                              'additional arguments'),
-                        default=False)
+    analysis_type.add_argument(
+            '--denoising',
+            dest='denoising',
+            action='store_true',
+            help=('Preset for hemodynamic denoising - this is a macro that '
+                  'sets lagmin=-15.0, lagmax=15.0, passes=3, despeckle_passes=0, '
+                  'refineoffset=True, doglmfilt=True. '
+                  'Any of these options can be overridden with the appropriate '
+                  'additional arguments'),
+            default=False)
+    analysis_type.add_argument(
+            '--delaymapping',
+            dest='delaymapping',
+            action='store_true',
+            help=('Preset for delay mapping analysis - this is a macro that '
+                  'sets lagmin=-10.0, lagmax=30.0, passes=3, despeckle_passes=4, '
+                  'refineoffset=True, pickleft=True, limitoutput=True, doglmfilt=False. '
+                  'Any of these options can be overridden with the appropriate '
+                  'additional arguments'),
+            default=False)
 
     # Macros
     macros = parser.add_argument_group('Macros').add_mutually_exclusive_group()
-    macros.add_argument('--venousrefine',
-                        dest='venousrefine',
-                        action='store_true',
-                        help=('This is a macro that sets --lagminthresh=2.5, '
-                              '--lagmaxthresh=6.0, --ampthresh=0.5, and '
-                              '--refineupperlag to bias refinement towards '
-                              'voxels in the draining vasculature for an '
-                              'fMRI scan. '),
-                        default=False)
-    macros.add_argument('--nirs',
-                        dest='nirs',
-                        action='store_true',
-                        help=('This is a NIRS analysis - this is a macro that '
-                              'sets --nothresh, --preservefiltering, '
-                              '--refineprenorm=var, --ampthresh=0.7, and '
-                              '--lagminthresh=0.1. '),
-                        default=False)
+    macros.add_argument(
+            '--venousrefine',
+            dest='venousrefine',
+            action='store_true',
+            help=('This is a macro that sets --lagminthresh=2.5, '
+                  '--lagmaxthresh=6.0, --ampthresh=0.5, and '
+                  '--refineupperlag to bias refinement towards '
+                  'voxels in the draining vasculature for an '
+                  'fMRI scan. '),
+            default=False)
+    macros.add_argument(
+            '--nirs',
+            dest='nirs',
+            action='store_true',
+            help=('This is a NIRS analysis - this is a macro that '
+                  'sets --nothresh, --preservefiltering, '
+                  '--refineprenorm=var, --ampthresh=0.7, and '
+                  '--lagminthresh=0.1. '),
+            default=False)
 
     # Preprocessing options
     preproc = parser.add_argument_group('Preprocessing options')
     realtr = preproc.add_mutually_exclusive_group()
-    realtr.add_argument('--datatstep',
-                        dest='realtr',
-                        action='store',
-                        metavar='TSTEP',
-                        type=lambda x: is_float(parser, x),
-                        help=('Set the timestep of the data file to TSTEP. '
-                              'This will override the TR in an '
-                              'fMRI file. NOTE: if using data from a text '
-                              'file, for example with NIRS data, using one '
-                              'of these options is mandatory. '),
-                        default='auto')
-    realtr.add_argument('--datafreq',
-                        dest='realtr',
-                        action='store',
-                        metavar='FREQ',
-                        type=lambda x: invert_float(parser, x),
-                        help=('Set the timestep of the data file to 1/FREQ. '
-                              'This will override the TR in an '
-                              'fMRI file. NOTE: if using data from a text '
-                              'file, for example with NIRS data, using one '
-                              'of these options is mandatory. '),
-                        default='auto')
-    preproc.add_argument('--noantialias',
-                         dest='antialias',
-                         action='store_false',
-                         help='Disable antialiasing filter. ',
-                         default=True)
-    preproc.add_argument('--invert',
-                         dest='invertregressor',
-                         action='store_true',
-                         help=('Invert the sign of the regressor before '
-                               'processing. '),
-                         default=False)
-    preproc.add_argument('--interptype',
-                         dest='interptype',
-                         action='store',
-                         type=str,
-                         choices=['univariate', 'cubic', 'quadratic'],
-                         help=("Use specified interpolation type. Options "
-                               "are 'cubic','quadratic', and 'univariate' "
-                               "(default). "),
-                         default='univariate')
-    preproc.add_argument('--offsettime',
-                         dest='offsettime',
-                         action='store',
-                         type=float,
-                         metavar='OFFSETTIME',
-                         help='Apply offset OFFSETTIME to the lag regressors. ',
-                         default=0.0)
-    preproc.add_argument('--autosync',
-                         dest='autosync',
-                         action='store_true',
-                         help=('Estimate and apply the initial offsettime of an external regressor using the global "'
-                               'crosscorrelation. Overrides offsettime if present.'),
-                         default=False)
+    realtr.add_argument(
+            '--datatstep',
+            dest='realtr',
+            action='store',
+            metavar='TSTEP',
+            type=lambda x: is_float(parser, x),
+            help=('Set the timestep of the data file to TSTEP. '
+                  'This will override the TR in an '
+                  'fMRI file. NOTE: if using data from a text '
+                  'file, for example with NIRS data, using one '
+                  'of these options is mandatory. '),
+            default='auto')
+    realtr.add_argument(
+            '--datafreq',
+            dest='realtr',
+            action='store',
+            metavar='FREQ',
+            type=lambda x: invert_float(parser, x),
+            help=('Set the timestep of the data file to 1/FREQ. '
+                  'This will override the TR in an '
+                  'fMRI file. NOTE: if using data from a text '
+                  'file, for example with NIRS data, using one '
+                  'of these options is mandatory. '),
+            default='auto')
+    preproc.add_argument(
+            '--noantialias',
+             dest='antialias',
+             action='store_false',
+             help='Disable antialiasing filter. ',
+             default=True)
+    preproc.add_argument(
+            '--invert',
+             dest='invertregressor',
+             action='store_true',
+             help=('Invert the sign of the regressor before '
+                   'processing. '),
+             default=False)
+    preproc.add_argument(
+            '--interptype',
+             dest='interptype',
+             action='store',
+             type=str,
+             choices=['univariate', 'cubic', 'quadratic'],
+             help=("Use specified interpolation type. Options "
+                   "are 'cubic','quadratic', and 'univariate' "
+                   "(default). "),
+             default='univariate')
+    preproc.add_argument(
+            '--offsettime',
+             dest='offsettime',
+             action='store',
+             type=float,
+             metavar='OFFSETTIME',
+             help='Apply offset OFFSETTIME to the lag regressors. ',
+             default=0.0)
+    preproc.add_argument(
+            '--autosync',
+             dest='autosync',
+             action='store_true',
+             help=('Estimate and apply the initial offsettime of an external regressor using the global "'
+                   'crosscorrelation. Overrides offsettime if present.'),
+             default=False)
 
     filt_opts = parser.add_argument_group('Filtering options')
-    filt_opts.add_argument('--filterband',
-                          dest='filterband',
-                          action='store',
-                          type=str,
-                          choices=['vlf', 'lfo', 'resp', 'cardiac', 'lfo_legacy'],
-                          help=('Filter data and regressors to specific band. '),
-                          default='lfo')
-    filt_opts.add_argument('--filterfreqs',
-                          dest='arbvec',
-                          action='store',
-                          nargs='+',
-                          type=lambda x: is_float(parser, x),
-                          metavar=('LOWERPASS UPPERPASS',
-                                   'LOWERSTOP UPPERSTOP'),
-                          help=('Filter data and regressors to retain LOWERPASS to '
-                                'UPPERPASS. LOWERSTOP and UPPERSTOP can also '
-                                'be specified, or will be calculated '
-                                'automatically. '),
-                          default=None)
-    filt_opts.add_argument('--filtertype',
-                          dest='filtertype',
-                          action='store',
-                          type=str,
-                          choices=['trapezoidal', 'brickwall', 'butterworth'],
-                          help=('Filter data and regressors using a trapezoidal FFT filter (default), brickwall, or butterworth bandpass.'),
-                          default='trapezoidal')
-    filt_opts.add_argument('--butterorder',
-                         dest='filtorder',
-                         action='store',
-                         type=int,
-                         metavar='ORDER',
-                         help=('Set order of butterworth filter for band splitting. '),
-                         default=6)
-    filt_opts.add_argument('--padseconds',
-                         dest='padseconds',
-                         action='store',
-                         type=float,
-                         metavar='SECONDS',
-                         help=('The number of seconds of padding to add to each end of a filtered timecourse. '),
-                         default=30.0)
+    filt_opts.add_argument(
+            '--filterband',
+            dest='filterband',
+            action='store',
+            type=str,
+            choices=['vlf', 'lfo', 'resp', 'cardiac', 'lfo_legacy'],
+            help=('Filter data and regressors to specific band. '),
+            default='lfo')
+    filt_opts.add_argument(
+            '--filterfreqs',
+            dest='arbvec',
+            action='store',
+            nargs='+',
+            type=lambda x: is_float(parser, x),
+            metavar=('LOWERPASS UPPERPASS',
+                   'LOWERSTOP UPPERSTOP'),
+            help=('Filter data and regressors to retain LOWERPASS to '
+                'UPPERPASS. LOWERSTOP and UPPERSTOP can also '
+                'be specified, or will be calculated '
+                'automatically. '),
+            default=None)
+    filt_opts.add_argument(
+            '--filtertype',
+            dest='filtertype',
+            action='store',
+            type=str,
+            choices=['trapezoidal', 'brickwall', 'butterworth'],
+            help=('Filter data and regressors using a trapezoidal FFT filter (default), brickwall, or butterworth bandpass.'),
+            default='trapezoidal')
+    filt_opts.add_argument(
+            '--butterorder',
+             dest='filtorder',
+             action='store',
+             type=int,
+             metavar='ORDER',
+             help=('Set order of butterworth filter for band splitting. '),
+             default=6)
+    filt_opts.add_argument(
+            '--padseconds',
+             dest='padseconds',
+             action='store',
+             type=float,
+             metavar='SECONDS',
+             help=('The number of seconds of padding to add to each end of a filtered timecourse. '),
+             default=30.0)
 
 
     permutationmethod = preproc.add_mutually_exclusive_group()
-    permutationmethod.add_argument('--permutationmethod',
-                          dest='permutationmethod',
-                          action='store',
-                          type=str,
-                          choices=['shuffle', 'phaserandom'],
-                          help=('Permutation method for significance testing.  Default is shuffle. '),
-                          default='shuffle')
+    permutationmethod.add_argument(
+            '--permutationmethod',
+            dest='permutationmethod',
+            action='store',
+            type=str,
+            choices=['shuffle', 'phaserandom'],
+            help=('Permutation method for significance testing.  Default is shuffle. '),
+            default='shuffle')
 
-    preproc.add_argument('--numnull',
-                         dest='numestreps',
-                         action='store',
-                         type=int,
-                         metavar='NREPS',
-                         help=('Estimate significance threshold by running '
-                               'NREPS null correlations (default is 10000, '
-                               'set to 0 to disable). If you are '
-                               'running multiple passes, "ampthresh" (see below) '
-                               'will be set to the 0.05 significance level.'),
-                         default=10000)
-    preproc.add_argument('--skipsighistfit',
-                         dest='dosighistfit',
-                         action='store_false',
-                         help=('Do not fit significance histogram with a '
-                               'Johnson SB function. '),
-                         default=True)
+    preproc.add_argument(
+            '--numnull',
+             dest='numestreps',
+             action='store',
+             type=int,
+             metavar='NREPS',
+             help=('Estimate significance threshold by running '
+                   'NREPS null correlations (default is 10000, '
+                   'set to 0 to disable). If you are '
+                   'running multiple passes, "ampthresh" (see below) '
+                   'will be set to the 0.05 significance level.'),
+             default=10000)
+    preproc.add_argument(
+            '--skipsighistfit',
+            dest='dosighistfit',
+            action='store_false',
+            help=('Do not fit significance histogram with a '
+               'Johnson SB function. '),
+            default=True)
 
     wfunc = preproc.add_mutually_exclusive_group()
-    wfunc.add_argument('--windowfunc',
-                       dest='windowfunc',
-                       action='store',
-                       type=str,
-                       choices=['hamming', 'hann', 'blackmanharris', 'None'],
-                       help=('Window function to use prior to correlation. '
-                             'Options are hamming (default), hann, '
-                             'blackmanharris, and None. '),
-                       default='hamming')
-    wfunc.add_argument('--nowindow',
-                       dest='windowfunc',
-                       action='store_const',
-                       const='None',
-                       help='Disable precorrelation windowing. ',
-                       default='hamming')
+    wfunc.add_argument(
+            '--windowfunc',
+            dest='windowfunc',
+            action='store',
+            type=str,
+            choices=['hamming', 'hann', 'blackmanharris', 'None'],
+            help=('Window function to use prior to correlation. '
+                 'Options are hamming (default), hann, '
+                 'blackmanharris, and None. '),
+            default='hamming')
+    wfunc.add_argument(
+            '--nowindow',
+            dest='windowfunc',
+            action='store_const',
+            const='None',
+            help='Disable precorrelation windowing. ',
+            default='hamming')
 
-    preproc.add_argument('--detrendorder',
-                         dest='detrendorder',
-                         action='store',
-                         type=int,
-                         metavar='ORDER',
-                         help=('Set order of trend removal (0 to disable, default is 1 - linear). '),
-                         default=3)
-    preproc.add_argument('--spatialfilt',
-                         dest='gausssigma',
-                         action='store',
-                         type=float,
-                         metavar='GAUSSSIGMA',
-                         help=('Spatially filter fMRI data prior to analysis '
-                               'using GAUSSSIGMA in mm. '),
-                         default=0.0)
-    preproc.add_argument('--globalmean',
-                         dest='useglobalref',
-                         action='store_true',
-                         help=('Generate a global mean regressor and use that '
-                               'as the reference regressor.  If no external regressor is specified, this'
-                               'is enatbled by default. '),
-                         default=False)
+    preproc.add_argument(
+            '--detrendorder',
+             dest='detrendorder',
+             action='store',
+             type=int,
+             metavar='ORDER',
+             help=('Set order of trend removal (0 to disable, default is 1 - linear). '),
+             default=3)
+    preproc.add_argument(
+            '--spatialfilt',
+             dest='gausssigma',
+             action='store',
+             type=float,
+             metavar='GAUSSSIGMA',
+             help=('Spatially filter fMRI data prior to analysis '
+                   'using GAUSSSIGMA in mm. '),
+             default=0.0)
+    preproc.add_argument(
+            '--globalmean',
+            dest='useglobalref',
+            action='store_true',
+            help=('Generate a global mean regressor and use that '
+               'as the reference regressor.  If no external regressor is specified, this'
+               'is enatbled by default. '),
+            default=False)
 
     globalmethod = preproc.add_mutually_exclusive_group()
-    globalmethod.add_argument('--globalmaskmethod',
-                       dest='globalmaskmethod',
-                       action='store',
-                       type=str,
-                       choices=['mean', 'variance'],
-                       help=('Select whether to use timecourse mean (default) or variance to mask voxels prior to generating global mean. '),
-                       default='mean')
+    globalmethod.add_argument(
+            '--globalmaskmethod',
+            dest='globalmaskmethod',
+            action='store',
+            type=str,
+            choices=['mean', 'variance'],
+            help=('Select whether to use timecourse mean (default) or variance to mask voxels prior to generating global mean. '),
+            default='mean')
 
-    preproc.add_argument('--globalmeaninclude',
-                         dest='globalmeanincludespec',
-                         metavar='MASK[:VALSPEC]',
-                         help=('Only use voxels in NAME for global regressor '
-                               'generation (if VALSPEC is given, only voxels '
-                               'with integral values listed in VALSPEC are used). '),
-                         default=None)
-    preproc.add_argument('--globalmeanexclude',
-                         dest='globalmeanexcludespec',
-                         metavar='MASK[:VALSPEC]',
-                         help=('Do not use voxels in NAME for global regressor '
-                               'generation (if VALSPEC is given, only voxels '
-                               'with integral values listed in VALSPEC are excluded). '),
-                         default=None)
-    preproc.add_argument('--motionfile',
-                         dest='motionfilespec',
-                         metavar='MASK[:VALSPEC]',
-                         help=('Read 6 columns of motion regressors out of MOTFILE text file. '
-                               '(with timepoints rows) and regress their derivatives '
-                               'and delayed derivatives out of the data prior to analysis. '
-                               'If COLSPEC is present, use the comma separated list of ranges to '
-                               'specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For  '
-                               'example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9 '
-                               'for X, Y, Z, RotX, RotY, RotZ, respectively. '),
-                         default=None)
-    preproc.add_argument('--motpos',
-                         dest='mot_pos',
-                         action='store_true',
-                         help=('Toggle whether displacement regressors will be used in motion regression. Default is False. '),
-                         default=False)
-    preproc.add_argument('--motderiv',
-                         dest='mot_deriv',
-                         action='store_false',
-                         help=('Toggle whether derivatives will be used in motion regression.  Default is True. '),
-                         default=True)
-    preproc.add_argument('--motdelayderiv',
-                         dest='mot_delayderiv',
-                         action='store_true',
-                         help=('Toggle whether delayed derivative regressors will be used in motion regression.  Default is False. '),
-                         default=False)
+    preproc.add_argument(
+            '--globalmeaninclude',
+            dest='globalmeanincludespec',
+            metavar='MASK[:VALSPEC]',
+            help=('Only use voxels in NAME for global regressor '
+               'generation (if VALSPEC is given, only voxels '
+               'with integral values listed in VALSPEC are used). '),
+            default=None)
+    preproc.add_argument(
+            '--globalmeanexclude',
+            dest='globalmeanexcludespec',
+            metavar='MASK[:VALSPEC]',
+            help=('Do not use voxels in NAME for global regressor '
+               'generation (if VALSPEC is given, only voxels '
+               'with integral values listed in VALSPEC are excluded). '),
+            default=None)
+    preproc.add_argument(
+            '--motionfile',
+            dest='motionfilespec',
+            metavar='MASK[:VALSPEC]',
+            help=('Read 6 columns of motion regressors out of MOTFILE text file. '
+               '(with timepoints rows) and regress their derivatives '
+               'and delayed derivatives out of the data prior to analysis. '
+               'If COLSPEC is present, use the comma separated list of ranges to '
+               'specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For  '
+               'example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9 '
+               'for X, Y, Z, RotX, RotY, RotZ, respectively. '),
+            default=None)
+    preproc.add_argument(
+            '--motpos',
+            dest='mot_pos',
+            action='store_true',
+            help=('Toggle whether displacement regressors will be used in motion regression. Default is False. '),
+            default=False)
+    preproc.add_argument(
+            '--motderiv',
+            dest='mot_deriv',
+            action='store_false',
+            help=('Toggle whether derivatives will be used in motion regression.  Default is True. '),
+            default=True)
+    preproc.add_argument(
+            '--motdelayderiv',
+            dest='mot_delayderiv',
+            action='store_true',
+            help=('Toggle whether delayed derivative regressors will be used in motion regression.  Default is False. '),
+            default=False)
 
 
-    preproc.add_argument('--meanscale',
-                         dest='meanscaleglobal',
-                         action='store_true',
-                         help=('Mean scale regressors during global mean '
-                               'estimation. '),
-                         default=False)
-    preproc.add_argument('--slicetimes',
-                         dest='slicetimes',
-                         action='store',
-                         type=lambda x: is_valid_file(parser, x),
-                         metavar='FILE',
-                         help=('Apply offset times from FILE to each slice in '
-                               'the dataset. '),
-                         default=None)
-    preproc.add_argument('--numskip',
-                         dest='preprocskip',
-                         action='store',
-                         type=int,
-                         metavar='SKIP',
-                         help=('SKIP TRs were previously deleted during '
-                               'preprocessing (e.g. if you have done your preprocessing '
-                               'in FSL and set dummypoints to a nonzero value.) Default is 0. '),
-                         default=0)
-    preproc.add_argument('--timerange',
-                         dest='timerange',
-                         action='store',
-                         nargs=2,
-                         type=int,
-                         metavar=('START', 'END'),
-                         help=('Limit analysis to data between timepoints '
-                               'START and END in the fmri file. If END is set to -1, '
-                               'analysis will go to the last timepoint.  Negative values '
-                               'of START will be set to 0. Default is to use all timepoints.'),
-                         default=(-1, -1))
-    preproc.add_argument('--nothresh',
-                         dest='nothresh',
-                         action='store_true',
-                         help=('Disable voxel intensity threshold (especially '
-                               'useful for NIRS data). '),
-                         default=False)
+    preproc.add_argument(
+            '--meanscale',
+            dest='meanscaleglobal',
+            action='store_true',
+            help=('Mean scale regressors during global mean '
+               'estimation. '),
+            default=False)
+    preproc.add_argument(
+            '--slicetimes',
+            dest='slicetimes',
+            action='store',
+            type=lambda x: is_valid_file(parser, x),
+            metavar='FILE',
+            help=('Apply offset times from FILE to each slice in '
+               'the dataset. '),
+            default=None)
+    preproc.add_argument(
+            '--numskip',
+            dest='preprocskip',
+            action='store',
+            type=int,
+            metavar='SKIP',
+            help=('SKIP TRs were previously deleted during '
+               'preprocessing (e.g. if you have done your preprocessing '
+               'in FSL and set dummypoints to a nonzero value.) Default is 0. '),
+            default=0)
+    preproc.add_argument(
+            '--timerange',
+            dest='timerange',
+            action='store',
+            nargs=2,
+            type=int,
+            metavar=('START', 'END'),
+            help=('Limit analysis to data between timepoints '
+               'START and END in the fmri file. If END is set to -1, '
+               'analysis will go to the last timepoint.  Negative values '
+               'of START will be set to 0. Default is to use all timepoints.'),
+            default=(-1, -1))
+    preproc.add_argument(
+            '--nothresh',
+            dest='nothresh',
+            action='store_true',
+            help=('Disable voxel intensity threshold (especially '
+               'useful for NIRS data). '),
+            default=False)
 
     # Correlation options
     corr = parser.add_argument_group('Correlation options')
-    corr.add_argument('--oversampfac',
-                      dest='oversampfactor',
-                      action='store',
-                      type=int,
-                      metavar='OVERSAMPFAC',
-                      help=('Oversample the fMRI data by the following '
-                            'integral factor.  Set to -1 for automatic selection (default). '),
-                      default=-1)
-    corr.add_argument('--regressor',
-                      dest='regressorfile',
-                      action='store',
-                      type=lambda x: is_valid_file(parser, x),
-                      metavar='FILE',
-                      help=('Read the initial probe regressor from file FILE (if not '
-                            'specified, generate and use the global regressor). '),
-                      default=None)
+    corr.add_argument(
+            '--oversampfac',
+            dest='oversampfactor',
+            action='store',
+            type=int,
+            metavar='OVERSAMPFAC',
+            help=('Oversample the fMRI data by the following '
+                'integral factor.  Set to -1 for automatic selection (default). '),
+            default=-1)
+    corr.add_argument(
+            '--regressor',
+            dest='regressorfile',
+            action='store',
+            type=lambda x: is_valid_file(parser, x),
+            metavar='FILE',
+            help=('Read the initial probe regressor from file FILE (if not '
+                'specified, generate and use the global regressor). '),
+            default=None)
 
     reg_group = corr.add_mutually_exclusive_group()
-    reg_group.add_argument('--regressorfreq',
-                           dest='inputfreq',
-                           action='store',
-                           type=lambda x: is_float(parser, x),
-                           metavar='FREQ',
-                           help=('Probe regressor in file has sample '
-                                 'frequency FREQ (default is 1/tr) '
-                                 'NB: --regressorfreq and --regressortstep) '
-                                 'are two ways to specify the same thing. '),
-                           default='auto')
-    reg_group.add_argument('--regressortstep',
-                           dest='inputfreq',
-                           action='store',
-                           type=lambda x: invert_float(parser, x),
-                           metavar='TSTEP',
-                           help=('Probe regressor in file has sample '
-                                 'frequency FREQ (default is 1/tr) '
-                                 'NB: --regressorfreq and --regressortstep) '
-                                 'are two ways to specify the same thing. '),
-                           default='auto')
+    reg_group.add_argument(
+            '--regressorfreq',
+            dest='inputfreq',
+            action='store',
+            type=lambda x: is_float(parser, x),
+            metavar='FREQ',
+            help=('Probe regressor in file has sample '
+                 'frequency FREQ (default is 1/tr) '
+                 'NB: --regressorfreq and --regressortstep) '
+                 'are two ways to specify the same thing. '),
+            default='auto')
+    reg_group.add_argument(
+            '--regressortstep',
+            dest='inputfreq',
+            action='store',
+            type=lambda x: invert_float(parser, x),
+            metavar='TSTEP',
+            help=('Probe regressor in file has sample '
+                 'frequency FREQ (default is 1/tr) '
+                 'NB: --regressorfreq and --regressortstep) '
+                 'are two ways to specify the same thing. '),
+            default='auto')
 
-    corr.add_argument('--regressorstart',
-                      dest='inputstarttime',
-                      action='store',
-                      type=float,
-                      metavar='START',
-                      help=('The time delay in seconds into the regressor '
-                            'file, corresponding in the first TR of the fMRI '
-                            'file (default is 0.0). '),
-                      default=0.)
+    corr.add_argument(
+            '--regressorstart',
+            dest='inputstarttime',
+            action='store',
+            type=float,
+            metavar='START',
+            help=('The time delay in seconds into the regressor '
+                'file, corresponding in the first TR of the fMRI '
+                'file (default is 0.0). '),
+            default=0.)
 
     cc_group = corr.add_mutually_exclusive_group()
-    cc_group.add_argument('--corrweighting',
-                          dest='corrweighting',
-                          action='store',
-                          type=str,
-                          choices=['None', 'phat', 'liang', 'eckart'],
-                          help=('Method to use for cross-correlation '
-                                'weighting. Default is "None". '),
-                          default='None')
+    cc_group.add_argument(
+            '--corrweighting',
+            dest='corrweighting',
+            action='store',
+            type=str,
+            choices=['None', 'phat', 'liang', 'eckart'],
+            help=('Method to use for cross-correlation '
+                'weighting. Default is "None". '),
+            default='None')
 
     mask_group = corr.add_mutually_exclusive_group()
-    mask_group.add_argument('--corrmaskthresh',
-                            dest='corrmaskthreshpct',
-                            action='store',
-                            type=float,
-                            metavar='PCT',
-                            help=('Do correlations in voxels where the mean '
-                                  'exceeds this percentage of the robust max '
-                                  '(default is 1.0). '),
-                            default=1.0)
-    mask_group.add_argument('--corrmask',
-                            dest='corrmaskincludespec',
-                            metavar='MASK[:VALSPEC]',
-                            help=('Only do correlations in nonzero voxels in NAME '
-                                  '(if VALSPEC is given, only voxels '
-                                  'with integral values listed in VALSPEC are used). '),
-                            default=None)
+    mask_group.add_argument(
+            '--corrmaskthresh',
+            dest='corrmaskthreshpct',
+            action='store',
+            type=float,
+            metavar='PCT',
+            help=('Do correlations in voxels where the mean '
+                  'exceeds this percentage of the robust max '
+                  '(default is 1.0). '),
+            default=1.0)
+    mask_group.add_argument(
+            '--corrmask',
+            dest='corrmaskincludespec',
+            metavar='MASK[:VALSPEC]',
+            help=('Only do correlations in nonzero voxels in NAME '
+                  '(if VALSPEC is given, only voxels '
+                  'with integral values listed in VALSPEC are used). '),
+            default=None)
+    corr.add_argument(
+            '--similaritymetric',
+            dest='similaritymetric',
+            action='store',
+            type=str,
+            choices=['correlation', 'MI'],
+            help=('Similarity metric for finding delay values.  Choices are "correlation" '
+                '(default) and "MI" (mutual information).'),
+            default='correlation')
+    corr.add_argument(
+            '--madnormMI',
+            dest='madnormMI',
+            action='store_true',
+            help=('Perform median average deviate normalizaton on mutual information function. '),
+            default=False)
+
 
     # Correlation fitting options
     corr_fit = parser.add_argument_group('Correlation fitting options')

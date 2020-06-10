@@ -764,9 +764,9 @@ def rapidtide_main(argparsingfunc):
                                             corrweighting=optiondict['corrweighting'],
                                             hpfreq=optiondict['correlator_hpfreq'])
     thecorrelator.setreftc(np.zeros((optiondict['oversampfactor'] * validtimepoints), dtype=np.float))
-    numccorrlags = thecorrelator.corrlen
-    corrorigin = thecorrelator.corrorigin
-    dummy, corrscale, dummy = thecorrelator.getcorrelation(trim=False)
+    numccorrlags = thecorrelator.similarityfunclen
+    corrorigin = thecorrelator.similarityfuncorigin
+    dummy, corrscale, dummy = thecorrelator.getfunction(trim=False)
 
     lagmininpts = int((-optiondict['lagmin'] / corrtr) - 0.5)
     lagmaxinpts = int((optiondict['lagmax'] / corrtr) + 0.5)
@@ -776,7 +776,17 @@ def rapidtide_main(argparsingfunc):
         sys.exit(1)
 
     thecorrelator.setlimits(lagmininpts, lagmaxinpts)
-    dummy, trimmedcorrscale, dummy = thecorrelator.getcorrelation()
+    dummy, trimmedcorrscale, dummy = thecorrelator.getfunction()
+
+    # initialize the mutualinformationator
+    themutualinformationator = tide_classes.mutualinformationator(Fs=oversampfreq,
+                                                                    ncprefilter=theprefilter,
+                                                                    detrendorder=optiondict['detrendorder'],
+                                                                    windowfunc=optiondict['windowfunc'],
+                                                                    madnorm=optiondict['madnormMI'],
+                                                                    lagmininpts=lagmininpts,
+                                                                    lagmaxinpts=lagmaxinpts)
+
 
     if optiondict['verbose']:
         print('corrorigin at point ', corrorigin, corrscale[corrorigin])
@@ -1011,7 +1021,9 @@ def rapidtide_main(argparsingfunc):
                     tide_io.writedict(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.txt')
             thecorrelator.setlimits(lagmininpts, lagmaxinpts)
             thecorrelator.setreftc(cleaned_resampref_y)
-            dummy, trimmedcorrscale, dummy = thecorrelator.getcorrelation()
+            themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
+            themutualinformationator.setreftc(cleaned_resampref_y)
+            dummy, trimmedcorrscale, dummy = thecorrelator.getfunction()
             thefitter.setcorrtimeaxis(trimmedcorrscale)
             corrdistdata = getNullDistributionData_func(cleaned_resampref_y,
                                                          oversampfreq,
@@ -1059,31 +1071,54 @@ def rapidtide_main(argparsingfunc):
                             'repetitions'])
 
         # Step 1 - Correlation step
-        print('\n\nCorrelation calculation, pass ' + str(thepass))
-        timings.append(['Correlation calculation start, pass ' + str(thepass), time.time(), None, None])
+        if optiondict['similaritymetric'] == 'MI':
+            similaritytype = 'Mutual information'
+        else:
+            similaritytype = 'Correlation'
+        print('\n\n' + similaritytype + ' calculation, pass ' + str(thepass))
+        timings.append([similaritytype +' calculation start, pass ' + str(thepass), time.time(), None, None])
         correlationpass_func = addmemprofiling(tide_corrpass.correlationpass,
                                                optiondict['memprofile'],
                                                memfile,
                                                'before correlationpass')
 
-        thecorrelator.setlimits(lagmininpts, lagmaxinpts)
-        voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = correlationpass_func(fmri_data_valid[:, :],
-                                                               cleaned_referencetc,
-                                                               thecorrelator,
-                                                               initial_fmri_x,
-                                                               os_fmri_x,
-                                                               corrorigin,
-                                                               lagmininpts,
-                                                               lagmaxinpts,
-                                                               corrout,
-                                                               meanval,
-                                                               nprocs=optiondict['nprocs'],
-                                                               oversampfactor=optiondict['oversampfactor'],
-                                                               interptype=optiondict['interptype'],
-                                                               showprogressbar=optiondict['showprogressbar'],
-                                                               chunksize=optiondict['mp_chunksize'],
-                                                               rt_floatset=rt_floatset,
-                                                               rt_floattype=rt_floattype)
+        if optiondict['similaritymetric'] == 'MI':
+            themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
+            voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = correlationpass_func(fmri_data_valid[:, :],
+                                                                  cleaned_referencetc,
+                                                                  themutualinformationator,
+                                                                  initial_fmri_x,
+                                                                  os_fmri_x,
+                                                                  themutualinformationator.similarityfuncorigin,
+                                                                  lagmininpts,
+                                                                  lagmaxinpts,
+                                                                  corrout,
+                                                                  meanval,
+                                                                  nprocs=optiondict['nprocs'],
+                                                                  oversampfactor=optiondict['oversampfactor'],
+                                                                  interptype=optiondict['interptype'],
+                                                                  showprogressbar=optiondict['showprogressbar'],
+                                                                  chunksize=optiondict['mp_chunksize'],
+                                                                  rt_floatset=rt_floatset,
+                                                                  rt_floattype=rt_floattype)
+        else:
+            voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = correlationpass_func(fmri_data_valid[:, :],
+                                                                   cleaned_referencetc,
+                                                                   thecorrelator,
+                                                                   initial_fmri_x,
+                                                                   os_fmri_x,
+                                                                   corrorigin,
+                                                                   lagmininpts,
+                                                                   lagmaxinpts,
+                                                                   corrout,
+                                                                   meanval,
+                                                                   nprocs=optiondict['nprocs'],
+                                                                   oversampfactor=optiondict['oversampfactor'],
+                                                                   interptype=optiondict['interptype'],
+                                                                   showprogressbar=optiondict['showprogressbar'],
+                                                                   chunksize=optiondict['mp_chunksize'],
+                                                                   rt_floatset=rt_floatset,
+                                                                   rt_floattype=rt_floattype)
 
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
@@ -1102,9 +1137,9 @@ def rapidtide_main(argparsingfunc):
                 tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader,
                                     outputname + '_corrout_prefit_pass' + str(thepass)+ outsuffix4d)
 
-        timings.append(['Correlation calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
+        timings.append([similaritytype +' calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
-        # Step 2 - correlation fitting and time lag estimation
+        # Step 2 - similarity function fitting and time lag estimation
         print('\n\nTime lag estimation pass ' + str(thepass))
         timings.append(['Time lag estimation start, pass ' + str(thepass), time.time(), None, None])
         fitcorr_func = addmemprofiling(tide_corrfit.fitcorrx,
