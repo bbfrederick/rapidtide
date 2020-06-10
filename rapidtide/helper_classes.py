@@ -142,44 +142,34 @@ class proberegressor:
         os_fmri_x = np.arange(0.0, validtimepoints * self.targetoversample - (
                 self.targetoversample - 1)) * self.targetoversample * self.targetperiod + skiptime
 
-
-class correlator:
+class similarityfunctionator:
     reftc = None
     prepreftc = None
     testtc = None
     preptesttc = None
     timeaxis = None
-    corrlen = 0
+    similarityfunclen = 0
     datavalid = False
     timeaxisvalid = False
-    corrorigin = 0
+    similarityfuncorigin = 0
 
     def __init__(self,
                  Fs=0.0,
-                 corrorigin=0,
+                 similarityfuncorigin=0,
                  lagmininpts=0,
                  lagmaxinpts=0,
                  ncprefilter=None,
                  reftc=None,
-                 detrendorder=1,
-                 hpfreq=None,
-                 windowfunc='hamming',
-                 corrweighting='None'):
+                 detrendorder=1):
         self.Fs = Fs
-        self.corrorigin = corrorigin
+        self.similarityfuncorigin = similarityfuncorigin
         self.lagmininpts = lagmininpts
         self.lagmaxinpts = lagmaxinpts
         self.ncprefilter = ncprefilter
         self.reftc = reftc
-        self.hpfreq = hpfreq
         self.detrendorder = detrendorder
-        self.windowfunc = windowfunc
-        self.corrweighting = corrweighting
         if self.reftc is not None:
             self.setreftc(self.reftc)
-        if self.hpfreq is not None:
-            self.hpfilt = tide_filt.noncausalfilter('arb')
-            self.hpfilt.setfreqs(self.hpfreq, self.hpfreq, self.Fs, self.Fs)
 
 
     def preptc(self, thetc, hpfreq=None):
@@ -195,35 +185,21 @@ class correlator:
                                                         windowfunc=self.windowfunc)
                                 )
 
-
-    def setreftc(self, reftc, offset=0.0):
-        self.reftc = reftc + 0.0
-        self.prepreftc = self.preptc(self.reftc, hpfreq=self.hpfreq)
-        self.corrlen = len(self.reftc) * 2 - 1
-        self.corrorigin = self.corrlen // 2 + 1
-
-        # make the time axis
-        self.timeaxis = (np.arange(0.0, self.corrlen) * (1.0 / self.Fs) \
-                        - ((self.corrlen - 1) * (1.0 / self.Fs)) / 2.0) - offset
-        self.timeaxisvalid = True
-        self.datavalid = False
-
-
     def setlimits(self, lagmininpts, lagmaxinpts):
         self.lagmininpts = lagmininpts
         self.lagmaxinpts = lagmaxinpts
 
 
     def trim(self, vector):
-        return vector[self.corrorigin - self.lagmininpts:self.corrorigin + self.lagmaxinpts]
+        return vector[self.similarityfuncorigin - self.lagmininpts:self.similarityfuncorigin + self.lagmaxinpts]
 
 
-    def getcorrelation(self, trim=True):
+    def getfunction(self, trim=True):
         if self.datavalid:
             if trim:
-                return self.trim(self.thexcorr), self.trim(self.timeaxis), self.theglobalmax
+                return self.trim(self.thesimfunc), self.trim(self.timeaxis), self.theglobalmax
             else:
-                return self.thexcorr, self.timeaxis, self.theglobalmax
+                return self.thesimfunc, self.timeaxis, self.theglobalmax
         else:
             if self.timeaxisvalid:
                 if trim:
@@ -231,8 +207,122 @@ class correlator:
                 else:
                     return None, self.timeaxis, None
             else:
-                print('must run correlation before fetching data')
+                print('must calculate similarity function before fetching data')
                 return None, None, None
+
+
+class mutualinformationator(similarityfunctionator):
+    def __init__(self,
+                 windowfunc='hamming',
+                 madnorm=False,
+                 bins=20,
+                 sigma=0.25,
+                 *args, **kwargs):
+        self.windowfunc = windowfunc
+        self.madnorm = madnorm
+        self.bins = bins
+        self.sigma = sigma
+        self.hpfreq = None
+        super(mutualinformationator, self).__init__(*args, **kwargs)
+
+    def setreftc(self, reftc, offset=0.0):
+        self.reftc = reftc + 0.0
+        self.prepreftc = self.preptc(self.reftc, hpfreq=None)
+
+        self.timeaxis, dummy, self.similarityfuncorigin = tide_corr.cross_MI(self.prepreftc, self.prepreftc,
+                                                                             negsteps=self.lagmininpts,
+                                                                             possteps=self.lagmaxinpts,
+                                                                             returnaxis=True)
+
+        self.timeaxis -= offset
+        self.similarityfunclen = len(self.timeaxis)
+        self.timeaxisvalid = True
+        self.datavalid = False
+
+
+    def run(self, thetc, trim=True, gettimeaxis=False):
+        if len(thetc) != len(self.reftc):
+            print('timecourses are of different sizes:', len(thetc), '!=', len(self.reftc), '- exiting')
+            sys.exit()
+
+        self.testtc = thetc
+        self.preptesttc = self.preptc(self.testtc)
+
+        # now calculate the similarity function
+        if gettimeaxis:
+            if trim:
+                self.timeaxis, self.thesimfunc, self.similarityfuncorigin = tide_corr.cross_MI(self.preptesttc, self.prepreftc,
+                                                                                             negsteps=self.lagmininpts,
+                                                                                             possteps=self.lagmaxinpts,
+                                                                                             madnorm=self.madnorm,
+                                                                                             returnaxis=True,
+                                                                                             Fs=self.Fs,
+                                                                                             sigma=self.sigma, bins=self.bins)
+            else:
+                self.timeaxis, self.thesimfunc, self.similarityfuncorigin = tide_corr.cross_MI(self.preptesttc, self.prepreftc,
+                                                                                            negsteps=-1,
+                                                                                            possteps=-1,
+                                                                                            madnorm=self.madnorm,
+                                                                                            returnaxis=True,
+                                                                                            Fs=self.Fs,
+                                                                                            sigma=self.sigma, bins=self.bins)
+        else:
+            if trim:
+                self.thesimfunc = tide_corr.cross_MI(self.preptesttc, self.prepreftc,
+                                                     negsteps=self.lagmininpts,
+                                                     possteps=self.lagmaxinpts,
+                                                     madnorm=self.madnorm,
+                                                     Fs=self.Fs,
+                                                     sigma=self.sigma, bins=self.bins)
+            else:
+                self.thesimfunc = tide_corr.cross_MI(self.preptesttc, self.prepreftc,
+                                                        negsteps=-1,
+                                                        possteps=-1,
+                                                        madnorm=self.madnorm,
+                                                        Fs=self.Fs,
+                                                        sigma=self.sigma, bins=self.bins)
+        self.similarityfunclen = len(self.thesimfunc)
+        if trim:
+            self.similarityfuncorigin = self.lagmininpts + 1
+        else:
+            self.similarityfuncorigin = self.similarityfunclen // 2 + 1
+
+        # find the global maximum value
+        self.theglobalmax = np.argmax(self.thesimfunc)
+        self.datavalid = True
+
+        if trim:
+            return self.trim(self.thesimfunc), self.trim(self.timeaxis), self.theglobalmax
+        else:
+            return self.thesimfunc, self.timeaxis, self.theglobalmax
+
+
+class correlator(similarityfunctionator):
+    def __init__(self,
+                 hpfreq=None,
+                 windowfunc='hamming',
+                 corrweighting='None',
+                 *args, **kwargs):
+        self.hpfreq = hpfreq
+        self.windowfunc = windowfunc
+        self.corrweighting = corrweighting
+        if self.hpfreq is not None:
+            self.hpfilt = tide_filt.noncausalfilter('arb')
+            self.hpfilt.setfreqs(self.hpfreq, self.hpfreq, self.Fs, self.Fs)
+        super(correlator, self).__init__(*args, **kwargs)
+
+
+    def setreftc(self, reftc, offset=0.0):
+        self.reftc = reftc + 0.0
+        self.prepreftc = self.preptc(self.reftc, hpfreq=self.hpfreq)
+        self.similarityfunclen = len(self.reftc) * 2 - 1
+        self.similarityfuncorigin = self.similarityfunclen // 2 + 1
+
+        # make the time axis
+        self.timeaxis = (np.arange(0.0, self.similarityfunclen) * (1.0 / self.Fs) \
+                        - ((self.similarityfunclen - 1) * (1.0 / self.Fs)) / 2.0) - offset
+        self.timeaxisvalid = True
+        self.datavalid = False
 
 
     def run(self, thetc, trim=True):
@@ -244,18 +334,18 @@ class correlator:
         self.preptesttc = self.preptc(self.testtc)
 
         # now actually do the correlation
-        self.thexcorr = tide_corr.fastcorrelate(self.preptesttc, self.prepreftc, usefft=True, weighting=self.corrweighting)
-        self.corrlen = len(self.thexcorr)
-        self.corrorigin = self.corrlen // 2 + 1
+        self.thesimfunc = tide_corr.fastcorrelate(self.preptesttc, self.prepreftc, usefft=True, weighting=self.corrweighting)
+        self.similarityfunclen = len(self.thesimfunc)
+        self.similarityfuncorigin = self.similarityfunclen // 2 + 1
 
         # find the global maximum value
-        self.theglobalmax = np.argmax(self.thexcorr)
+        self.theglobalmax = np.argmax(self.thesimfunc)
         self.datavalid = True
 
         if trim:
-            return self.trim(self.thexcorr), self.trim(self.timeaxis), self.theglobalmax
+            return self.trim(self.thesimfunc), self.trim(self.timeaxis), self.theglobalmax
         else:
-            return self.thexcorr, self.timeaxis, self.theglobalmax
+            return self.thesimfunc, self.timeaxis, self.theglobalmax
 
 
 class correlation_fitter:
