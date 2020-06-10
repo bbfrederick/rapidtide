@@ -31,7 +31,7 @@ ax = fig.add_subplot(1, 1, 1)
 for windowfunc in ['None']:
     for sigma in [0.25]:
         for numbins in [10]:
-            thex, thexmi = tide_corr.cross_MI(input3, input3, negsteps=200, possteps=200, Fs=5.33, bins=numbins, windowfunc='hamming', sigma=sigma)
+            thex, thexmi, dummy = tide_corr.cross_MI(input3, input3, negsteps=200, possteps=200, Fs=5.33, bins=numbins, windowfunc='hamming', sigma=sigma, returnaxis=True)
             ax.plot(thex, thexmi, label='bins:' + str(numbins) + ', sigma:' + str(sigma) + ', win:' + windowfunc)
 ax.legend()
 plt.show()
