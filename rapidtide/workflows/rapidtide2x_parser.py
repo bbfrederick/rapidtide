@@ -362,6 +362,8 @@ def process_args():
     optiondict['globalmeanincludevals'] = None    # list of integer values to use in the mask
 
     # correlation options
+    optiondict['similaritymetric'] = 'correlation'
+    optiondict['madnormMI'] = False
     optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
     optiondict['detrendorder'] = 1  # remove linear trends prior to correlation
     optiondict['windowfunc'] = 'hamming'  # the particular window function to use for correlation
