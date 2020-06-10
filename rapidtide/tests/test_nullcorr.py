@@ -77,7 +77,7 @@ def test_nullcorr(debug=False, display=False):
         'widthlimit':        1000.0,
         'bipolar':           False,
         'fixdelay':          False,
-        'corrfittype':       'gauss',
+        'peakfittype':       'gauss',
         'lagmin':            lagmin,
         'lagmax':            lagmax,
         'absminsigma':       0.25,
@@ -108,7 +108,7 @@ def test_nullcorr(debug=False, display=False):
                                              absmaxsigma=optiondict['absmaxsigma'],
                                              absminsigma=optiondict['absminsigma'],
                                              debug=optiondict['debug'],
-                                             corrfittype=optiondict['corrfittype'],
+                                             peakfittype=optiondict['peakfittype'],
                                              searchfrac=optiondict['searchfrac'],
                                              enforcethresh=optiondict['enforcethresh'],
                                              hardlimit=optiondict['hardlimit'])

@@ -101,7 +101,7 @@ def test_findmaxlag(display=False, fittype='gauss', debug=False):
                                                 lagmax=lagmax,
                                                 absmaxsigma=absmaxsigma,
                                                 absminsigma=absminsigma,
-                                                corrfittype=fittype,
+                                                peakfittype=fittype,
                                                 debug=debug,
                                                 searchfrac=searchfrac,
                                                 zerooutbadfit=False)

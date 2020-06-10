@@ -289,7 +289,7 @@ def main():
     absmaxsigma = 1000.0
     absminsigma = 0.25
     zerooutbadfit = False
-    corrfittype = 'gauss'
+    peakfittype = 'gauss'
 
     # grab the command line arguments then pass them off.
     try:
@@ -442,7 +442,7 @@ def main():
                                                 absmaxsigma=absmaxsigma,
                                                 absminsigma=absminsigma,
                                                 debug=args.debug,
-                                                corrfittype=corrfittype,
+                                                peakfittype=peakfittype,
                                                 zerooutbadfit=zerooutbadfit,
                                                 useguess=False
                                                 )
