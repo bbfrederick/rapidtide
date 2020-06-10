@@ -118,7 +118,7 @@ def test_nullcorr(debug=False, display=False):
 
     thecorrelator.setlimits(lagmininpts, lagmaxinpts)
     thecorrelator.setreftc(sourcedata)
-    dummy, trimmedcorrscale, dummy = thecorrelator.getcorrelation()
+    dummy, trimmedcorrscale, dummy = thecorrelator.getfunction()
     thefitter.setcorrtimeaxis(trimmedcorrscale)
     histograms = []
     for thenprocs in [1, -1]:
