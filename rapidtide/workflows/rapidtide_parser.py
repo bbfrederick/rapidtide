@@ -549,12 +549,12 @@ def _get_parser():
                           help=('Do not zero out peak fit values if fit '
                                 'fails. '),
                           default=True)
-    corr_fit.add_argument('--corrfittype',
-                          dest='corrfittype',
+    corr_fit.add_argument('--peakfittype',
+                          dest='peakfittype',
                           action='store',
                           type=str,
                           choices=['gauss', 'fastgauss', 'quad', 'fastquad', 'None'],
-                          help=("Method for fitting the correlation peak "
+                          help=("Method for fitting the peak of the similarity function "
                                 "(default is 'gauss'). 'quad' and 'fastquad' use a "
                                 "quadratic fit.  Faster but not as well "
                                 "tested. "),

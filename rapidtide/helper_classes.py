@@ -392,7 +392,7 @@ class correlation_fitter:
                  enforcethresh=True,
                  allowhighfitamps=True,
                  displayplots=False,
-                 corrfittype='gauss'):
+                 peakfittype='gauss'):
 
         r"""
 
@@ -442,7 +442,7 @@ class correlation_fitter:
         self.lthreshval = lthreshval
         self.uthreshval = uthreshval
         self.debug=debug
-        self.corrfittype=corrfittype
+        self.peakfittype=peakfittype
         self.zerooutbadfit = zerooutbadfit
         self.maxguess = maxguess
         self.useguess = useguess
@@ -590,12 +590,12 @@ class correlation_fitter:
             print('maxindex, maxlag_init, maxval_init:', maxindex, maxlag_init, maxval_init)
 
         # then calculate the width of the peak
-        if self.corrfittype == 'fastquad':
+        if self.peakfittype == 'fastquad':
             peakstart = maxindex - 1
             peakend = maxindex + 1
         else:
             thegrad = np.gradient(corrfunc).astype('float64')  # the gradient of the correlation function
-            if self.corrfittype == 'quad':
+            if self.peakfittype == 'quad':
                 peakpoints = np.where(corrfunc > maxval_init - 0.05, 1,
                                   0)  # mask for places where correlaion exceeds serchfrac*maxval_init
             else:
@@ -672,8 +672,8 @@ class correlation_fitter:
                 maxsigma = np.float64(maxsigma_init)
 
         # refine if necessary
-        if self.corrfittype != 'None':
-            if self.corrfittype == 'gauss':
+        if self.peakfittype != 'None':
+            if self.peakfittype == 'gauss':
                 X = self.corrtimeaxis[peakstart:peakend + 1]
                 data = corrfunc[peakstart:peakend + 1]
                 # do a least squares fit over the top of the peak
@@ -692,7 +692,7 @@ class correlation_fitter:
                     maxsigma = np.float64(0.0)
                 if self.debug:
                     print('fit output array:', [maxval, maxlag, maxsigma])
-            elif self.corrfittype == 'fastgauss':
+            elif self.peakfittype == 'fastgauss':
                 X = self.corrtimeaxis[peakstart:peakend + 1]
                 data = corrfunc[peakstart:peakend + 1]
                 # do a non-iterative fit over the top of the peak
@@ -700,9 +700,9 @@ class correlation_fitter:
                 maxlag = np.float64(1.0 * np.sum(X * data) / np.sum(data))
                 maxsigma = np.float64(np.sqrt(np.abs(np.sum((X - maxlag) ** 2 * data) / np.sum(data))))
                 maxval = np.float64(data.max())
-            elif self.corrfittype == 'fastquad':
+            elif self.peakfittype == 'fastquad':
                 maxlag, maxval, maxsigma, ismax, badfit = tide_fit.refinepeak_quad(self.corrtimeaxis, corrfunc, maxindex)
-            elif self.corrfittype == 'quad':
+            elif self.peakfittype == 'quad':
                 X = self.corrtimeaxis[peakstart:peakend + 1]
                 data = corrfunc[peakstart:peakend + 1]
                 thecoffs = np.polyfit(X, data, 2)
@@ -775,7 +775,7 @@ class correlation_fitter:
         if self.debug or self.displayplots:
             print("init to final: maxval", maxval_init, maxval, ", maxlag:", maxlag_init, maxlag, ", width:", maxsigma_init,
                   maxsigma)
-        if self.displayplots and (self.corrfittype != 'None') and (maskval != 0.0):
+        if self.displayplots and (self.peakfittype != 'None') and (maskval != 0.0):
             fig = pl.figure()
             ax = fig.add_subplot(111)
             ax.set_title('Data and fit')
@@ -826,7 +826,7 @@ class freqtrack:
                                        absmaxsigma=10.0,
                                        absminsigma=0.1,
                                        debug=self.debug,
-                                       corrfittype='fastquad',
+                                       peakfittype='fastquad',
                                        zerooutbadfit=False,
                                        useguess=False
                                        )

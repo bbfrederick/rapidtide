@@ -890,7 +890,7 @@ def rapidtide_main(argparsingfunc):
                                              absmaxsigma=optiondict['absmaxsigma'],
                                              absminsigma=optiondict['absminsigma'],
                                              debug=optiondict['debug'],
-                                             corrfittype=optiondict['corrfittype'],
+                                             peakfittype=optiondict['peakfittype'],
                                              searchfrac=optiondict['searchfrac'],
                                              enforcethresh=optiondict['enforcethresh'],
                                              hardlimit=optiondict['hardlimit'])

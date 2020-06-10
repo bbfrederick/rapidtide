@@ -103,7 +103,7 @@ def usage():
         "[--glmsourcefile=FILE]",
         "[--regressorfreq=FREQ]", "[--regressortstep=TSTEP]" "[--regressor=FILENAME]", "[--regressorstart=STARTTIME]",
         "[--usesp]",
-        "[--corrfittype=FITTYPE]",
+        "[--peakfittype=FITTYPE]",
         "[--mklthreads=NTHREADS]",
         "[--nprocs=NPROCS]",
         "[--nirs]",
@@ -229,8 +229,8 @@ def usage():
     print("    --searchfrac=FRAC              - When peak fitting, include points with amplitude > FRAC * the")
     print("                                     maximum amplitude.")
     print("                                     (default value is 0.5)")
-    print("    --corrfittype=FITTYPE          - Method for fitting the correlation peak (default is 'gauss'). ")
-    print("                                     'quad' uses a quadratic fit. Other options are ")
+    print("    --peakfittype=FITTYPE          - Method for fitting the peak of the similarity function")
+    print("                                     (default is 'gauss'). 'quad' uses a quadratic fit. Other options are ")
     print("                                     'fastgauss' which is faster but not as well tested, and 'None'.")
     print("    --despecklepasses=PASSES       - detect and refit suspect correlations to disambiguate peak")
     print("                                     locations in PASSES passes")
@@ -395,7 +395,7 @@ def process_args():
     optiondict['zerooutbadfit'] = True  # if true zero out all fit parameters if the fit fails
     optiondict['searchfrac'] = 0.5  # The fraction of the main peak over which points are included in the peak
     optiondict['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this should
-    optiondict['corrfittype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
+    optiondict['peakfittype'] = 'gauss'  # if set to 'gauss', use old gaussian fitting, if set to 'quad' use parabolic
     optiondict['acwidth'] = 0.0  # width of the reference autocorrelation function
     optiondict['absmaxsigma'] = 100.0  # width of the reference autocorrelation function
     optiondict['absminsigma'] = 0.25  # width of the reference autocorrelation function
@@ -607,7 +607,7 @@ def process_args():
                                                                                                           'weiner',
                                                                                                           'respdelete',
                                                                                                           'checkpoint',
-                                                                                                          'corrfittype='])
+                                                                                                          'peakfittype='])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like 'option -a not recognized'
@@ -1158,10 +1158,10 @@ def process_args():
             optiondict['passes'] = int(a)
             linkchar = '='
             print('Will do ', optiondict['passes'], ' processing passes')
-        elif o == '--corrfittype':
-            optiondict['corrfittype'] = a
+        elif o == '--peakfittype':
+            optiondict['peakfittype'] = a
             linkchar = '='
-            print('Correlation peak fitting method is ', optiondict['corrfittype'])
+            print('Similarity function peak fitting method is ', optiondict['peakfittype'])
         elif o in ('-h', '--help'):
             usage()
             sys.exit()
