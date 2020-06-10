@@ -1,0 +1,8 @@
+#!/bin/csh -f
+
+showxcorrx \
+    tc1 \
+    tc2 \
+    --filterband lfo \
+    --numnull 0 \
+    12.5
