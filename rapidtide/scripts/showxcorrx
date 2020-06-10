@@ -24,13 +24,9 @@ from __future__ import print_function, division
 
 import sys
 import os
-import platform
-
-import matplotlib
 import numpy as np
 import scipy as sp
 
-import getopt
 import argparse
 import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
@@ -387,14 +383,31 @@ def main():
                                             windowfunc=args.windowfunc,
                                             corrweighting=args.corrweighting)
     thecorrelator.setreftc(trimdata2 * flipfac)
+    themutualinformationator = tide_classes.mutualinformationator(Fs=Fs,
+                                            ncprefilter=theprefilter,
+                                            detrendorder=args.detrendorder,
+                                            windowfunc=args.windowfunc)
+    themutualinformationator.setreftc(trimdata2 * flipfac)
 
     # do the correlation
     thexcorr, xcorr_x, globalmax = thecorrelator.run(trimdata1, trim=False)
+    print('correlator lengths (x, y):', len(xcorr_x), len(thexcorr))
     if dumpfiltered:
         tide_io.writenpvecs(thecorrelator.preptesttc, "correlator_filtereddata1.txt")
         tide_io.writenpvecs(thecorrelator.prepreftc, "correlator_filtereddata2.txt")
     thecorrelator.setlimits(int((-args.lagmin * Fs) - 0.5), int((args.lagmax * Fs) + 0.5))
-    thexcorr_trim, xcorr_x_trim, globalmax = thecorrelator.getcorrelation(trim=True)
+    thexcorr_trim, xcorr_x_trim, dummy = thecorrelator.getfunction(trim=True)
+    print('trimmed correlator lengths (x, y):', len(xcorr_x_trim), len(thexcorr_trim))
+
+    # calculate the MI
+    theMI, MI_x, globalmax = themutualinformationator.run(trimdata1, trim=False, gettimeaxis=True)
+    print('mutualinformationator lengths (x, y):', len(MI_x), len(theMI))
+    if dumpfiltered:
+        tide_io.writenpvecs(themutualinformationator.preptesttc, "MI_filtereddata1.txt")
+        tide_io.writenpvecs(themutualinformationator.prepreftc, "MI_filtereddata2.txt")
+    themutualinformationator.setlimits(int((-args.lagmin * Fs) - 0.5), int((args.lagmax * Fs) + 0.5))
+    theMI_trim, MI_x_trim, globalmax = themutualinformationator.getfunction(trim=True)
+    print('trimmed mutualinformationator lengths (x, y):', len(MI_x_trim), len(theMI_trim))
 
     if args.cepstral:
         cepdelay = tide_corr.cepstraldelay(filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display)
@@ -436,8 +449,8 @@ def main():
 
     if args.debug:
         print('searching for peak correlation over range ',
-              thecorrelator.corrorigin - thecorrelator.lagmininpts,
-              thecorrelator.corrorigin + thecorrelator.lagmaxinpts)
+              thecorrelator.similarityfuncorigin - thecorrelator.lagmininpts,
+              thecorrelator.similarityfuncorigin + thecorrelator.lagmaxinpts)
     maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
     if args.debug:
         print('maxdelay before refinement', maxdelay)
@@ -543,8 +556,12 @@ def main():
     if args.display:
         fig = figure()
         ax = fig.add_subplot(111)
-        # ax.set_title('GCC')
-        plot(xcorr_x, thexcorr, 'k')
+        ax.set_title('Similarity metrics over the search range')
+        ax.plot(xcorr_x_trim, thexcorr_trim, 'k')
+        print(xcorr_x_trim)
+        ax.plot(MI_x_trim, theMI_trim, 'r')
+        ax.legend(['Cross correlation', 'Mutual Information'])
+        print(MI_x_trim)
         if args.debug:
             fig = figure()
             plot(f, Cxy)
