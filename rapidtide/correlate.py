@@ -297,6 +297,7 @@ def calc_MI(x, y, bins=50):
 
 
 # From Ionnis Pappas
+@conditionaljit()
 def mutual_information_2d(x, y, sigma=1, bins=256, normalized=True, EPS=1.0e-6):
     """
     Computes (normalized) mutual information between two 1D variate from a
@@ -348,7 +349,17 @@ def mutual_information_2d(x, y, sigma=1, bins=256, normalized=True, EPS=1.0e-6):
     return mi
 
 
-def cross_MI(x, y, negsteps=-1, possteps=-1, Fs=1.0, norm=True, windowfunc='None', bins=10, sigma=0.25):
+@conditionaljit()
+def cross_MI(x, y,
+             returnaxis=False,
+             negsteps=-1, possteps=-1,
+             Fs=1.0,
+             norm=True,
+             madnorm=False,
+             windowfunc='None',
+             bins=10,
+             sigma=0.25,
+             debug=False):
     normx = tide_math.corrnormalize(x,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
@@ -364,7 +375,8 @@ def cross_MI(x, y, negsteps=-1, possteps=-1, Fs=1.0, norm=True, windowfunc='None
     else:
         possteps = possteps
     thexmi_y = np.zeros((-negsteps + possteps + 1))
-    print('negsteps, possteps, len(thexmi_y)', negsteps, possteps, len(thexmi_y))
+    if debug:
+        print('negsteps, possteps, len(thexmi_y)', negsteps, possteps, len(thexmi_y))
     for i in range(negsteps, possteps + 1):
         if i < 0:
             thexmi_y[i - negsteps] = mutual_information_2d(normx[:i + len(normy)], normy[-i:],
@@ -381,10 +393,17 @@ def cross_MI(x, y, negsteps=-1, possteps=-1, Fs=1.0, norm=True, windowfunc='None
                                                              bins=bins,
                                                              normalized=norm,
                                                              sigma=sigma)
-    thexmi_x = sp.linspace(0.0, len(thexmi_y) / Fs, num=len(thexmi_y), endpoint=False) \
-                 + negsteps / Fs
 
-    return thexmi_x, thexmi_y
+    if madnorm:
+        thexmi_y = tide_math.madnormalize(thexmi_y)
+
+    if returnaxis:
+        thexmi_x = sp.linspace(0.0, len(thexmi_y) / Fs, num=len(thexmi_y), endpoint=False) \
+                     + negsteps / Fs
+
+        return thexmi_x, thexmi_y, negsteps + 1
+    else:
+        return thexmi_y
 
 
 def delayedcorr(data1, data2, delayval, timestep):
