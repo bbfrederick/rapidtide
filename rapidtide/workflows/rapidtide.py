@@ -1071,7 +1071,7 @@ def rapidtide_main(argparsingfunc):
                             'repetitions'])
 
         # Step 1 - Correlation step
-        if optiondict['similaritymetric'] == 'MI':
+        if optiondict['similaritymetric'] == 'mutualinfo':
             similaritytype = 'Mutual information'
         else:
             similaritytype = 'Correlation'
@@ -1082,7 +1082,7 @@ def rapidtide_main(argparsingfunc):
                                                memfile,
                                                'before correlationpass')
 
-        if optiondict['similaritymetric'] == 'MI':
+        if optiondict['similaritymetric'] == 'mutualinfo':
             themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
             voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = correlationpass_func(fmri_data_valid[:, :],
                                                                   cleaned_referencetc,
@@ -1119,7 +1119,7 @@ def rapidtide_main(argparsingfunc):
                                                                    chunksize=optiondict['mp_chunksize'],
                                                                    rt_floatset=rt_floatset,
                                                                    rt_floattype=rt_floattype)
-
+ 
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
@@ -1146,6 +1146,7 @@ def rapidtide_main(argparsingfunc):
                                        optiondict['memprofile'],
                                        memfile,
                                        'before fitcorr')
+        thefitter.setfunctype(optiondict['similaritymetric'])
         thefitter.setcorrtimeaxis(trimmedcorrscale)
         voxelsprocessed_fc = fitcorr_func(genlagtc,
                                           initial_fmri_x,
