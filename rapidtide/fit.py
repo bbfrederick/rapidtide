@@ -410,7 +410,10 @@ def detrend(inputdata, order=1, demean=False):
 
     """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
-    thecoffs = np.polyfit(thetimepoints, inputdata, order)
+    try:
+        thecoffs = np.polyfit(thetimepoints, inputdata, order)
+    except RankWarning:
+        thecoffs = [0.0, 0.0]
     thefittc = trendgen(thetimepoints, thecoffs, demean)
     return inputdata - thefittc
 
@@ -1193,10 +1196,15 @@ def findmaxlag_quad(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     yvals = thexcorr_y[fitstart:fitend]
     xvals = thexcorr_x[fitstart:fitend]
     if fitend - fitstart + 1 > 3:
-        thecoffs = np.polyfit(xvals, yvals, 2)
-        maxlag = -thecoffs[1] / (2.0 * thecoffs[0])
-        maxval = thecoffs[0] * maxlag * maxlag + thecoffs[1] * maxlag + thecoffs[2]
-        maxsigma = maxsigma_init
+        try:
+            thecoffs = np.polyfit(xvals, yvals, 2)
+            maxlag = -thecoffs[1] / (2.0 * thecoffs[0])
+            maxval = thecoffs[0] * maxlag * maxlag + thecoffs[1] * maxlag + thecoffs[2]
+            maxsigma = maxsigma_init
+        except RankWarning:
+            maxlag = 0.0
+            maxval = 0.0
+            maxsigma = 0.0
     else:
         maxlag = 0.0
         maxval = 0.0

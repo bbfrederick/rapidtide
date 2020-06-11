@@ -138,7 +138,10 @@ def main():
 
     # now fit the line
     fitorder = 1
-    thecoffs = np.polyfit(np.array(pairlist[0]), np.array(pairlist[1]), fitorder)
+    try:
+        thecoffs = np.polyfit(np.array(pairlist[0]), np.array(pairlist[1]), fitorder)
+    except RankWarning:
+        thecoffs = [0.0, 0.0]
     print('thecoffs=', thecoffs)
     with open(outputfilename + '_linfit', 'w') as file:
         file.writelines(str(thecoffs))

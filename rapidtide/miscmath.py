@@ -456,7 +456,10 @@ def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):
         The input data with the impulsive noise removed
     """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
-    thecoffs = np.polyfit(thetimepoints, inputdata, order)
+    try:
+        thecoffs = np.polyfit(thetimepoints, inputdata, order)
+    except RankWarning:
+        thecoffs = [0.0, 0.0]
     thefittc = tide_fit.trendgen(thetimepoints, thecoffs, True)
     detrended = inputdata - thefittc
     if debug:
