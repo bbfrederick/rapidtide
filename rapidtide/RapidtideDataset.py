@@ -545,6 +545,10 @@ class RapidtideDataset:
             self.oversampfactor = int(self.therunoptions['oversampfactor'])
         except KeyError:
             self.oversampfactor = 1
+        try:
+            self.similaritymetric = self.therunoptions['similaritymetric']
+        except KeyError:
+            self.similaritymetric = 'correlation'
         self.regressorspecs = [['prefilt', 'reference_origres_prefilt.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
                           ['postfilt', 'reference_origres.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
                           ['pass1', 'reference_resampres_pass1.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],

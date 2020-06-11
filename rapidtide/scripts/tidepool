@@ -369,38 +369,43 @@ def resetDispSmart():
 
 def updateCorrelationFunc():
     global overlays, timeaxis, currentloc
+    global currentdataset
     global corrfunc_ax, corrfuncCurve, corrfitCurve, corrfuncTLine, corrfuncPeakMarker, corrfuncCurvePoint, corrfuncCaption, corrfuncFitter
 
     if corrfunc_ax is not None:
         corrvals = overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
-        fitvals = overlays['gaussout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
-        maxval = overlays['lagstrengths'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
-        minval = np.min(overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :])
-        maxtime = overlays['lagtimes'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
+        #fitvals = overlays['gaussout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
+        peakmaxtime = overlays['lagtimes'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
+        peakmaxval = overlays['lagstrengths'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
+        maxval = np.max(corrvals)
+        minval = np.min(corrvals)
+        valrange = maxval - minval
         try:
             failreason = overlays['failimage'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos]
         except KeyError:
-            failreason = -1
+            failreason = 0
 
         # update the plot
         corrfuncCurve.setData(timeaxis, corrvals)
         #corrfitCurve.setData(timeaxis, fitvals)
         if overlays['corrout'].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos] > 0:
-            thecaption = "lag={1:.2f}, R={0:.2f}".format(maxval, maxtime)
+            if currentdataset.similaritymetric == 'correlation':
+                thecaption = "lag={1:.2f}, R={0:.2f}".format(peakmaxval, peakmaxtime)
+            else:
+                thecaption = "lag={1:.2f}, MI={0:.2f}".format(peakmaxval, peakmaxtime)
         else:
-            maxval = np.max(overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :])
-            maxtime = float(tide_util.valtoindex(timeaxis, np.argmax(overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :])))
+            peakmaxtime = float(tide_util.valtoindex(timeaxis, overlays['lagtime'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos]))
             thefailreason = corrfuncFitter.diagnosefail(failreason)
             print(thefailreason)
             thecaption = "No valid fit"
-        corrfunc_ax.setYRange(minval - 0.1, maxval + 0.3, padding=0)
+        corrfunc_ax.setYRange(minval - 0.05 * valrange, maxval + 0.3 * valrange, padding=0)
         corrfuncCaption.setText(thecaption)
         print('current tpos:', currentloc.tpos)
         print('setting line location:', timeaxis[currentloc.tpos])
         corrfuncTLine.setPos(timeaxis[currentloc.tpos])
-        corrfuncCurvePoint.setPos(float(tide_util.valtoindex(timeaxis, maxtime)) / (len(timeaxis) - 1))
+        corrfuncCurvePoint.setPos(float(tide_util.valtoindex(timeaxis, peakmaxtime)) / (len(timeaxis) - 1))
         if overlays['corrout'].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos] > 0:
-            corrfuncPeakMarker.setData(x=[maxtime], y=[maxval], symbol='d')
+            corrfuncPeakMarker.setData(x=[peakmaxtime], y=[peakmaxval], symbol='d')
         else:
             corrfuncPeakMarker.setData(x=[], y=[], symbol='d')
 
