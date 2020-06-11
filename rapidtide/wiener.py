@@ -50,15 +50,13 @@ def wienerpass(numspatiallocs,
                threshval,
                lagtc,
                optiondict,
-               meanvalue,
-               rvalue,
-               r2value,
-               fitcoff,
-               fitNorm,
-               datatoremove,
-               filtereddata,
+               wienerdeconv,
+               wpeak,
+               resampref_y,
                rt_floatset=np.float64,
                rt_floattype='float64'):
+    rt_floatset = rt_floatset,
+    rt_floattype = rt_floattype
     inputshape = np.shape(fmri_data)
     themask = np.where(np.mean(fmri_data, axis=1) > threshval, 1, 0)
     if optiondict['nprocs'] > 1:
