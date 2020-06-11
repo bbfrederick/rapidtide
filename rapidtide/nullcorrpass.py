@@ -65,7 +65,7 @@ def _procOneNullCorrelationx(normalizedreftc,
 
     # fit the correlation
     thefitter.setcorrtimeaxis(thexcorr_x)
-    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = thefitter.fit(thexcorr_y)
+    maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(thexcorr_y)
 
     return maxval
 
