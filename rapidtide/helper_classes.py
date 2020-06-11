@@ -33,6 +33,7 @@ import rapidtide.fit as tide_fit
 import rapidtide.filter as tide_filt
 import rapidtide.miscmath as tide_math
 import rapidtide.correlate as tide_corr
+from statsmodels.robust import mad
 
 
 class fmridata:
@@ -230,6 +231,7 @@ class mutualinformationator(similarityfunctionator):
         self.prepreftc = self.preptc(self.reftc, hpfreq=None)
 
         self.timeaxis, dummy, self.similarityfuncorigin = tide_corr.cross_MI(self.prepreftc, self.prepreftc,
+                                                                             Fs=self.Fs,
                                                                              negsteps=self.lagmininpts,
                                                                              possteps=self.lagmaxinpts,
                                                                              returnaxis=True)
@@ -266,6 +268,7 @@ class mutualinformationator(similarityfunctionator):
                                                                                             returnaxis=True,
                                                                                             Fs=self.Fs,
                                                                                             sigma=self.sigma, bins=self.bins)
+            self.timeaxisvalid = True
         else:
             if trim:
                 self.thesimfunc = tide_corr.cross_MI(self.preptesttc, self.prepreftc,
@@ -392,6 +395,7 @@ class correlation_fitter:
                  enforcethresh=True,
                  allowhighfitamps=True,
                  displayplots=False,
+                 functype='correlation',
                  peakfittype='gauss'):
 
         r"""
@@ -442,6 +446,7 @@ class correlation_fitter:
         self.lthreshval = lthreshval
         self.uthreshval = uthreshval
         self.debug=debug
+        self.functype=functype
         self.peakfittype=peakfittype
         self.zerooutbadfit = zerooutbadfit
         self.maxguess = maxguess
@@ -487,6 +492,10 @@ class correlation_fitter:
                 upperlim -= 1
                 done = False
         return maxindex, flipfac
+
+
+    def setfunctype(self, functype):
+        self.functype=functype
 
 
     def setrange(self, lagmin, lagmax):
@@ -589,18 +598,36 @@ class correlation_fitter:
         if self.debug:
             print('maxindex, maxlag_init, maxval_init:', maxindex, maxlag_init, maxval_init)
 
+        # set the baseline and baselinedev levels
+        if self.functype == 'correlation':
+            baseline = 0.0
+            baselinedev = 0.0
+        else:
+            # for mutual information, there is a nonzero baseline, so we want the difference from that.
+            baseline = np.median(corrfunc)
+            baselinedev = mad(corrfunc)
+
         # then calculate the width of the peak
         if self.peakfittype == 'fastquad':
             peakstart = maxindex - 1
             peakend = maxindex + 1
         else:
             thegrad = np.gradient(corrfunc).astype('float64')  # the gradient of the correlation function
-            if self.peakfittype == 'quad':
-                peakpoints = np.where(corrfunc > maxval_init - 0.05, 1,
-                                  0)  # mask for places where correlaion exceeds serchfrac*maxval_init
+            if self.functype == 'correlation':
+                if self.peakfittype == 'quad':
+                    peakpoints = np.where(corrfunc > maxval_init - 0.05, 1,
+                                      0)  # mask for places where correlation exceeds searchfrac*maxval_init
+                else:
+                    peakpoints = np.where(corrfunc > self.searchfrac * maxval_init, 1,
+                                      0)  # mask for places where correlation exceeds searchfrac*maxval_init
             else:
-                peakpoints = np.where(corrfunc > self.searchfrac * maxval_init, 1,
-                                  0)  # mask for places where correlaion exceeds serchfrac*maxval_init
+                # for mutual information, there is a nonzero baseline, so we want the difference from that.
+                if self.peakfittype == 'quad':
+                    peakpoints = np.where(corrfunc > maxval_init - 0.05, 1,
+                                      0)  # mask for places where correlation exceeds searchfrac*maxval_init
+                else:
+                    peakpoints = np.where(corrfunc > (baseline + self.searchfrac * (maxval_init - baseline)), 1, 0)
+
             peakpoints[0] = 0
             peakpoints[-1] = 0
             peakstart = np.max([1, maxindex - 1])
@@ -648,20 +675,28 @@ class correlation_fitter:
                     ((2 + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac)))) / np.sqrt(2.0))
                 if self.debug:
                     print('bad initial width - too low')
-            if not (self.lthreshval <= maxval_init <= self.uthreshval) and self.enforcethresh:
-                failreason |= self.FML_INITAMPLOW
-                if self.debug:
-                    print('bad initial amp:', maxval_init, 'is less than', self.lthreshval)
-            if (maxval_init < 0.0):
-                failreason |= self.FML_INITAMPLOW
-                maxval_init = 0.0
-                if self.debug:
-                    print('bad initial amp:', maxval_init, 'is less than 0.0')
-            if (maxval_init > 1.0):
-                failreason |= self.FML_INITAMPHIGH
-                maxval_init = 1.0
-                if self.debug:
-                    print('bad initial amp:', maxval_init, 'is greater than 1.0')
+            if self.functype == 'correlation':
+                if not (self.lthreshval <= maxval_init <= self.uthreshval) and self.enforcethresh:
+                    failreason |= self.FML_INITAMPLOW
+                    if self.debug:
+                        print('bad initial amp:', maxval_init, 'is less than', self.lthreshval)
+                if (maxval_init < 0.0):
+                    failreason |= self.FML_INITAMPLOW
+                    maxval_init = 0.0
+                    if self.debug:
+                        print('bad initial amp:', maxval_init, 'is less than 0.0')
+                if (maxval_init > 1.0):
+                    failreason |= self.FML_INITAMPHIGH
+                    maxval_init = 1.0
+                    if self.debug:
+                        print('bad initial amp:', maxval_init, 'is greater than 1.0')
+            else:
+                # somewhat different rules for mutual information peaks
+                if ((maxval_init - baseline) < self.lthreshval * baselinedev) or (maxval_init < baseline):
+                    failreason |= self.FML_INITAMPLOW
+                    maxval_init = 0.0
+                    if self.debug:
+                        print('bad initial amp:', maxval_init, 'is less than 0.0')
             if (failreason != self.FML_NOERROR) and self.zerooutbadfit:
                 maxval = np.float64(0.0)
                 maxlag = np.float64(0.0)
@@ -674,7 +709,7 @@ class correlation_fitter:
         # refine if necessary
         if self.peakfittype != 'None':
             if self.peakfittype == 'gauss':
-                X = self.corrtimeaxis[peakstart:peakend + 1]
+                X = self.corrtimeaxis[peakstart:peakend + 1] - baseline
                 data = corrfunc[peakstart:peakend + 1]
                 # do a least squares fit over the top of the peak
                 # p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
@@ -683,7 +718,7 @@ class correlation_fitter:
                     print('fit input array:', p0)
                 try:
                     plsq, dummy = sp.optimize.leastsq(tide_fit.gaussresiduals, p0, args=(data, X), maxfev=5000)
-                    maxval = plsq[0]
+                    maxval = plsq[0] + baseline
                     maxlag = np.fmod((1.0 * plsq[1]), self.lagmod)
                     maxsigma = plsq[2]
                 except:
@@ -693,27 +728,32 @@ class correlation_fitter:
                 if self.debug:
                     print('fit output array:', [maxval, maxlag, maxsigma])
             elif self.peakfittype == 'fastgauss':
-                X = self.corrtimeaxis[peakstart:peakend + 1]
+                X = self.corrtimeaxis[peakstart:peakend + 1] - baseline
                 data = corrfunc[peakstart:peakend + 1]
                 # do a non-iterative fit over the top of the peak
                 # 6/12/2015  This is just broken.  Gives quantized maxima
                 maxlag = np.float64(1.0 * np.sum(X * data) / np.sum(data))
                 maxsigma = np.float64(np.sqrt(np.abs(np.sum((X - maxlag) ** 2 * data) / np.sum(data))))
-                maxval = np.float64(data.max())
+                maxval = np.float64(data.max()) + baseline
             elif self.peakfittype == 'fastquad':
                 maxlag, maxval, maxsigma, ismax, badfit = tide_fit.refinepeak_quad(self.corrtimeaxis, corrfunc, maxindex)
             elif self.peakfittype == 'quad':
                 X = self.corrtimeaxis[peakstart:peakend + 1]
                 data = corrfunc[peakstart:peakend + 1]
-                thecoffs = np.polyfit(X, data, 2)
-                a = thecoffs[0]
-                b = thecoffs[1]
-                c = thecoffs[2]
-                maxlag = -b / (2.0 * a)
-                maxval = c - np.square(b) * 0.25
-                maxsigma = np.sqrt(np.fabs(a) / 2.0)
+                try:
+                    thecoffs = np.polyfit(X, data, 2)
+                    a = thecoffs[0]
+                    b = thecoffs[1]
+                    c = thecoffs[2]
+                    maxlag = -b / (2.0 * a)
+                    maxval = c - np.square(b) * 0.25
+                    maxsigma = np.sqrt(np.fabs(a) / 2.0)
+                except RankWarning:
+                    maxlag = 0.0
+                    maxval = 0.0
+                    maxsigma = 0.0
             else:
-                print('illegal corralation refinement type')
+                print('illegal peak refinement type')
 
             # check for errors in fit
             fitfail = False
@@ -721,19 +761,27 @@ class correlation_fitter:
                 lowestcorrcoeff = -1.0
             else:
                 lowestcorrcoeff = 0.0
-            if maxval < lowestcorrcoeff:
-                failreason |= self.FML_FITAMPLOW
-                maxval = lowestcorrcoeff
-                if self.debug:
-                    print('bad fit amp: maxval is lower than lower limit')
-                fitfail = True
-            if (np.abs(maxval) > 1.0):
-                if not self.allowhighfitamps:
-                    failreason |= self.FML_FITAMPHIGH
+            if self.functype == 'correlation':
+                if maxval < lowestcorrcoeff:
+                    failreason |= self.FML_FITAMPLOW
+                    maxval = lowestcorrcoeff
                     if self.debug:
-                        print('bad fit amp: magnitude of', maxval, 'is greater than 1.0')
+                        print('bad fit amp: maxval is lower than lower limit')
                     fitfail = True
-                maxval = 1.0 * np.sign(maxval)
+                if (np.abs(maxval) > 1.0):
+                    if not self.allowhighfitamps:
+                        failreason |= self.FML_FITAMPHIGH
+                        if self.debug:
+                            print('bad fit amp: magnitude of', maxval, 'is greater than 1.0')
+                        fitfail = True
+                    maxval = 1.0 * np.sign(maxval)
+            else:
+                # different rules for mutual information peaks
+                if ((maxval - baseline) < self.lthreshval * baselinedev) or (maxval < baseline):
+                    failreason |= self.FML_FITAMPLOW
+                    maxval_init = 0.0
+                    if self.debug:
+                        print('bad fit amp: maxval is lower than lower limit')
             if (self.lagmin > maxlag) or (maxlag > self.lagmax):
                 if self.debug:
                     print('bad lag after refinement')
