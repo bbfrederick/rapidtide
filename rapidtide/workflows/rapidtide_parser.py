@@ -495,9 +495,9 @@ def _get_parser():
             dest='similaritymetric',
             action='store',
             type=str,
-            choices=['correlation', 'MI'],
+            choices=['correlation', 'mutualinfo'],
             help=('Similarity metric for finding delay values.  Choices are "correlation" '
-                '(default) and "MI" (mutual information).'),
+                '(default) and "mutualinfo".'),
             default='correlation')
     corr.add_argument(
             '--madnormMI',
