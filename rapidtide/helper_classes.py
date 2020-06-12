@@ -122,7 +122,7 @@ class proberegressor:
         self.inputoffset = inputoffset
         self.setinputvec(inputvec, inputfreq, inputstart=inputstart)
         self.targetperiod = targetperiod
-        self.makeinputtimeaxis(self)
+        self.makeinputtimeaxis()
         self.targetoversample = targetoversample
         self.targetpoints = targetpoints
         self.targetstartpoint = targetstartpoint
@@ -446,7 +446,11 @@ class correlation_fitter:
         self.lthreshval = lthreshval
         self.uthreshval = uthreshval
         self.debug=debug
-        self.functype=functype
+        if functype == 'correlation' or functype == 'mutualinfo':
+            self.functype=functype
+        else:
+            print('illegal functype')
+            sys.exit()
         self.peakfittype=peakfittype
         self.zerooutbadfit = zerooutbadfit
         self.maxguess = maxguess
@@ -606,6 +610,8 @@ class correlation_fitter:
             # for mutual information, there is a nonzero baseline, so we want the difference from that.
             baseline = np.median(corrfunc)
             baselinedev = mad(corrfunc)
+        if self.debug:
+            print('baseline, baselinedev:', baseline, baselinedev)
 
         # then calculate the width of the peak
         if self.peakfittype == 'fastquad':
@@ -621,27 +627,44 @@ class correlation_fitter:
                     peakpoints = np.where(corrfunc > self.searchfrac * maxval_init, 1,
                                       0)  # mask for places where correlation exceeds searchfrac*maxval_init
             else:
-                # for mutual information, there is a nonzero baseline, so we want the difference from that.
-                if self.peakfittype == 'quad':
-                    peakpoints = np.where(corrfunc > maxval_init - 0.05, 1,
-                                      0)  # mask for places where correlation exceeds searchfrac*maxval_init
-                else:
-                    peakpoints = np.where(corrfunc > (baseline + self.searchfrac * (maxval_init - baseline)), 1, 0)
+                # for mutual information, there is a flattish, nonzero baseline, so we want the difference from that.
+                peakpoints = np.where(corrfunc > (baseline + self.searchfrac * (maxval_init - baseline)), 1, 0)
 
             peakpoints[0] = 0
             peakpoints[-1] = 0
             peakstart = np.max([1, maxindex - 1])
             peakend = np.min([len(self.corrtimeaxis) - 2, maxindex + 1])
-            while thegrad[peakend + 1] <= 0.0 and peakpoints[peakend + 1] == 1:
-                peakend += 1
-            while thegrad[peakstart - 1] >= 0.0 and peakpoints[peakstart - 1] == 1:
-                peakstart -= 1
+            if self.debug:
+                print('initial peakstart, peakend:', peakstart, peakend)
+            if self.functype == 'mutualinfo':
+                while peakpoints[peakend + 1] == 1:
+                    peakend += 1
+                while peakpoints[peakstart - 1] == 1:
+                    peakstart -= 1
+            else:
+                while thegrad[peakend + 1] <= 0.0 and peakpoints[peakend + 1] == 1:
+                    peakend += 1
+                while thegrad[peakstart - 1] >= 0.0 and peakpoints[peakstart - 1] == 1:
+                    peakstart -= 1
+            if self.debug:
+                print('final peakstart, peakend:', peakstart, peakend)
 
             # deal with flat peak top
             while peakend < (len(self.corrtimeaxis) - 3) and corrfunc[peakend] == corrfunc[peakend - 1]:
                 peakend += 1
             while peakstart > 2 and corrfunc[peakstart] == corrfunc[peakstart + 1]:
                 peakstart -= 1
+            if self.debug:
+                print('peakstart, peakend after flattop correction:', peakstart, peakend)
+                print('\n')
+                for i in range(peakstart, peakend + 1):
+                    print(self.corrtimeaxis[i], corrfunc[i])
+                print('\n')
+                fig = pl.figure()
+                ax = fig.add_subplot(111)
+                ax.set_title('Peak sent to fitting routine')
+                pl.plot(self.corrtimeaxis[peakstart:peakend + 1], corrfunc[peakstart:peakend + 1], 'r')
+                pl.show()
 
             # This is calculated from first principles, but it's always big by a factor or ~1.4.
             #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
@@ -746,12 +769,27 @@ class correlation_fitter:
                     b = thecoffs[1]
                     c = thecoffs[2]
                     maxlag = -b / (2.0 * a)
-                    maxval = c - np.square(b) * 0.25
-                    maxsigma = np.sqrt(np.fabs(a) / 2.0)
+                    maxval = a * maxlag * maxlag + b * maxlag + c
+                    maxsigma = 1.0 / np.fabs(a)
+                    if self.debug:
+                        print('poly coffs:', a, b, c)
+                        print('maxlag, maxval, maxsigma:', maxlag, maxval, maxsigma)
                 except RankWarning:
                     maxlag = 0.0
                     maxval = 0.0
                     maxsigma = 0.0
+                if self.debug:
+                    print('\n')
+                    for i in range(len(X)):
+                        print(X[i], data[i])
+                    print('\n')
+                    fig = pl.figure()
+                    ax = fig.add_subplot(111)
+                    ax.set_title('Peak and fit')
+                    pl.plot(X, data, 'r')
+                    pl.plot(X, c + b * X + a * X * X, 'b')
+                    pl.show()
+
             else:
                 print('illegal peak refinement type')
 
@@ -779,6 +817,11 @@ class correlation_fitter:
                 # different rules for mutual information peaks
                 if ((maxval - baseline) < self.lthreshval * baselinedev) or (maxval < baseline):
                     failreason |= self.FML_FITAMPLOW
+                    if (maxval - baseline) < self.lthreshval * baselinedev:
+                        print('FITAMPLOW: maxval - baseline:', maxval - baseline,
+                                ' < lthreshval * baselinedev:', self.lthreshval * baselinedev)
+                    if maxval < baseline:
+                        print('FITAMPLOW: maxval < baseline:', maxval, baseline)
                     maxval_init = 0.0
                     if self.debug:
                         print('bad fit amp: maxval is lower than lower limit')
