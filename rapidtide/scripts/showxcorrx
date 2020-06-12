@@ -436,13 +436,26 @@ def main():
         Fs)
 
     # intitialize the correlation fitter
-    thefitter = tide_classes.correlation_fitter(corrtimeaxis=xcorr_x,
+    thexcorrfitter = tide_classes.correlation_fitter(corrtimeaxis=xcorr_x,
                                                 lagmin=args.lagmin,
                                                 lagmax=args.lagmax,
                                                 absmaxsigma=absmaxsigma,
                                                 absminsigma=absminsigma,
                                                 debug=args.debug,
                                                 peakfittype=peakfittype,
+                                                functype='correlation',
+                                                zerooutbadfit=zerooutbadfit,
+                                                useguess=False
+                                                )
+    # intitialize the correlation fitter
+    themifitter = tide_classes.correlation_fitter(corrtimeaxis=MI_x_trim,
+                                                lagmin=args.lagmin,
+                                                lagmax=args.lagmax,
+                                                absmaxsigma=absmaxsigma,
+                                                absminsigma=absminsigma,
+                                                debug=args.debug,
+                                                peakfittype='quad',
+                                                functype='mutualinfo',
                                                 zerooutbadfit=zerooutbadfit,
                                                 useguess=False
                                                 )
@@ -453,17 +466,31 @@ def main():
               thecorrelator.similarityfuncorigin + thecorrelator.lagmaxinpts)
     maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
     if args.debug:
-        print('maxdelay before refinement', maxdelay)
+        print('\n\nmaxdelay before refinement', maxdelay)
 
-    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(thexcorr)
+    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thexcorrfitter.fit(thexcorr)
     if failreason > 0:
         print('showxcorrx: FIT FAILED with reason:')
-        print(thefitter.diagnosefail(failreason))
+        print(thexcorrfitter.diagnosefail(failreason))
     if args.debug:
         print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
     R = maxval
     if args.debug:
         print('maxdelay after refinement', maxdelay)
+
+    maxdelaymi = xcorr_x_trim[np.argmax(thexcorr_trim)]
+    if args.debug:
+        print('\n\nmaxdelaymi before refinement', maxdelaymi)
+    maxindexmi, maxdelaymi, maxvalmi, maxsigmami, maskvalmi, failreasonmi, peakstartmi, peakendmi = themifitter.fit(theMI_trim)
+    if failreasonmi > 0:
+        print('showxcorrx: FIT FAILED for mutual information with reason:')
+        print(themifitter.diagnosefail(failreasonmi))
+    if args.debug:
+        print(maxindexmi, maxdelaymi, maxvalmi, maxsigmami, maskvalmi, failreasonmi, peakstartmi, peakendmi)
+    R = maxval
+    if args.debug:
+        print('maxdelay after refinement', maxdelay, '\n\n')
+
 
     # set the significance threshold
     if args.numestreps > 0:
@@ -472,7 +499,7 @@ def main():
         corrlist = tide_nullcorr.getNullDistributionDatax(filtereddata2,
                                                             Fs,
                                                             thecorrelator,
-                                                            thefitter,
+                                                            thexcorrfitter,
                                                             numestreps=args.numestreps,
                                                             despeckle_thresh=1000.0,
                                                             showprogressbar=args.showprogressbar,
@@ -493,7 +520,7 @@ def main():
         corrlist_pear = tide_nullcorr.getNullDistributionDatax(filtereddata2,
                                                                 Fs,
                                                                 thecorrelator,
-                                                                thefitter,
+                                                                thexcorrfitter,
                                                                 numestreps=args.numestreps,
                                                                 despeckle_thresh=1000.0,
                                                                 showprogressbar=args.showprogressbar,
@@ -558,10 +585,10 @@ def main():
         ax = fig.add_subplot(111)
         ax.set_title('Similarity metrics over the search range')
         ax.plot(xcorr_x_trim, thexcorr_trim, 'k')
-        print(xcorr_x_trim)
+        #print(xcorr_x_trim)
         ax.plot(MI_x_trim, theMI_trim, 'r')
         ax.legend(['Cross correlation', 'Mutual Information'])
-        print(MI_x_trim)
+        #print(MI_x_trim)
         if args.debug:
             fig = figure()
             plot(f, Cxy)
@@ -572,6 +599,9 @@ def main():
 
     if args.corroutputfile is not None:
         tide_io.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), args.corroutputfile)
+    if args.debug:
+        tide_io.writenpvecs(np.stack((MI_x_trim, theMI_trim), axis=0), 'mifunc.txt')
+
 
 
 if __name__ == '__main__':
