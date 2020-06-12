@@ -953,7 +953,7 @@ def process_args(inputargs=None):
     args['lagmod']  = 1000.0  # if set to the location of the first autocorrelation sidelobe, this will fold back sidelobes
     args['lthreshval'] = 0.0  # zero out peaks with correlations lower than this value
     args['uthreshval'] = 1.0  # zero out peaks with correlations higher than this value
-    args['absmaxsigma'] = 100.0  # width of the reference autocorrelation function
+    args['absmaxsigma'] = 1000.0  # width of the reference autocorrelation function
     args['absminsigma'] = 0.25  # width of the reference autocorrelation function
 
     # correlation fitting
