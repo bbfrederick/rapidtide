@@ -394,7 +394,7 @@ def updateCorrelationFunc():
             else:
                 thecaption = "lag={1:.2f}, MI={0:.2f}".format(peakmaxval, peakmaxtime)
         else:
-            peakmaxtime = float(tide_util.valtoindex(timeaxis, overlays['lagtime'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos]))
+            peakmaxtime = float(tide_util.valtoindex(timeaxis, overlays['lagtimes'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos]))
             thefailreason = corrfuncFitter.diagnosefail(failreason)
             print(thefailreason)
             thecaption = "No valid fit"
