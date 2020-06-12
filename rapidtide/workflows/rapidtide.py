@@ -54,6 +54,8 @@ import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
 import rapidtide.wiener as tide_wiener
 
+from statsmodels.robust import mad
+
 import copy
 
 try:
@@ -204,9 +206,9 @@ def addmemprofiling(thefunc, memprofile, memfile, themessage):
         return thefunc
 
 def checkforzeromean(thedataset):
-    themean = np.mean(thedataset)
-    thestd = np.std(thedataset)
-    if thestd > themean:
+    themean = np.mean(thedataset, axis=1)
+    thestd = np.std(thedataset, axis=1)
+    if np.mean(thestd) > np.mean(themean):
         return True
     else:
         return False
@@ -1119,7 +1121,12 @@ def rapidtide_main(argparsingfunc):
                                                                    chunksize=optiondict['mp_chunksize'],
                                                                    rt_floatset=rt_floatset,
                                                                    rt_floattype=rt_floattype)
- 
+            print('trimmedcorrscale - start, stop, step, len:',
+                  trimmedcorrscale[0],
+                  trimmedcorrscale[-1],
+                  trimmedcorrscale[1] - trimmedcorrscale[0],
+                  len(trimmedcorrscale))
+
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
@@ -1484,12 +1491,17 @@ def rapidtide_main(argparsingfunc):
             theheader['dim'][0] = 3
             theheader['dim'][4] = 1
 
-    # first generate the MTT map
+    # Prepare extra maps
+    savelist = ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask', 'failimage']
     MTT = np.square(lagsigma) - (optiondict['acwidth'] * optiondict['acwidth'])
     MTT = np.where(MTT > 0.0, MTT, 0.0)
     MTT = np.sqrt(MTT)
-
-    for mapname in ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask', 'failimage', 'MTT']:
+    savelist += ['MTT']
+    if optiondict['similaritymetric'] == 'mutualinfo':
+        baseline = np.median(corrout, axis=1)
+        baselinedev = mad(corrout, axis=1)
+        savelist += ['baseline', 'baselinedev']
+    for mapname in savelist:
         if optiondict['memprofile']:
             memcheckpoint('about to write ' + mapname)
         else:
