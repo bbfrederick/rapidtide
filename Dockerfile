@@ -22,7 +22,13 @@ RUN apt-get install -y --no-install-recommends \
                     libx11-xcb1 \
                     lsb-release \
                     git
-#RUN apt-get install --reinstall libxcb-xinerama0
+RUN apt-get install -y --reinstall libqt5dbus5 
+RUN apt-get install -y --reinstall libqt5widgets5 
+RUN apt-get install -y --reinstall libqt5network5 
+RUN apt-get install -y --reinstall libqt5gui5 
+RUN apt-get install -y --reinstall libqt5core5a 
+RUN apt-get install -y --reinstall libdouble-conversion1 
+RUN apt-get install -y --reinstall libxcb-xinerama0
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 #ENV FSL_DIR="/usr/share/fsl/5.0" \
