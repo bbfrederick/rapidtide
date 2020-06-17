@@ -1,6 +1,6 @@
 + Fix the version numbers in files:
 
-    vi setup.py docs/conf.py rapidtide/version.py VERSION INSTALL.rst Dockerfile dockerbuild/build.sh newrelease_todo
+    vi setup.py docs/conf.py rapidtide/version.py VERSION INSTALL.rst Dockerfile newrelease_todo
 
     setup.py
         search for version=
@@ -19,9 +19,6 @@
 
     Dockerfile
         search for 'org.label-schema.schema-version='
-
-    dockerbuild/build.sh
-        search for VERSION=
 
     newrelease_todo
         search for ' v'

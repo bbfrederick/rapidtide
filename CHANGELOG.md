@@ -1,8 +1,13 @@
 # History of changes
 
-## Version 1.9.1 (4/8/20)
-* (all): Documentation improvements
+## Version 1.9.1 (6/17/20)
+* (all): Documentation improvements.
+* (all): Many internal changes to support future argument specifications.
+* (all): Backported bugfixes from the development version.
+* (rapidtide2x) Fixed specification of timerange.
 * (docker): Fixed an incompatibility in versions between pyfftw and scipy (thank you to Niranjana Shashikumar for reporting the bug and providing the solution!)
+* (docker): Improved container labelling.
+* (docker): Cleaned up container build.
 * (tidepool): Various fixes and improvements backported from the development version.
 
 ## Version 1.9 (1/6/20)
