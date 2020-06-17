@@ -134,11 +134,10 @@ USER rapidtide
 ARG BUILD_DATE
 ARG VCS_REF
 ARG VERSION
-LABEL org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.name="rapidtide" \
-      org.label-schema.description="rapidtide - a set of tools for delay processing" \
-      org.label-schema.url="http://nirs-fmri.net" \
-      org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/bbfrederick/rapidtide" \
-      org.label-schema.version=$VERSION \
-      org.label-schema.schema-version="1.0"
+LABEL net.nirs-fmri.build-date=$BUILD_DATE \
+      net.nirs-fmri.name="rapidtide" \
+      net.nirs-fmri.description="rapidtide - a set of tools for delay processing" \
+      net.nirs-fmri.url="http://nirs-fmri.net" \
+      net.nirs-fmri.vcs-ref=$VCS_REF \
+      net.nirs-fmri.vcs-url="https://github.com/bbfrederick/rapidtide" \
+      net.nirs-fmri.version="1.9.1"
