@@ -1,88 +1,103 @@
 #!/bin/csh -f
 
+#rapidtide \
+	#fmri.nii.gz \
+	#../dst/dgsr_mi_quad \
+	#--passes 1 \
+	#--oversampfac 5 \
+	#--despecklepasses 0 \
+	#--searchrange -10 30 \
+	#--sigmalimit 25.0 \
+	#--nprocs -1 \
+	#--pickleft \
+	#--pickleftthresh 0.3 \
+	#--peakfittype quad \
+	#--spatialfilt 2 \
+	#--saveintermediatemaps \
+	#--similaritymetric mutualinfo \
+	#--ampthresh 0.1
+#
+#rapidtide \
+	#fmri.nii.gz \
+	#../dst/dgsr_mi_None \
+	#--passes 1 \
+	#--oversampfac 5 \
+	#--despecklepasses 0 \
+	#--searchrange -10 30 \
+	#--sigmalimit 25.0 \
+	#--nprocs -1 \
+	#--pickleft \
+	#--pickleftthresh 0.3 \
+	#--peakfittype None \
+	#--spatialfilt 2 \
+	#--saveintermediatemaps \
+	#--similaritymetric mutualinfo \
+	#--ampthresh 0.1
+
+
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr_gauss \
-	--delaymapping \
+	../dst/dgsr_fastquad \
+	--passes 3 \
+	--oversampfac 5 \
+	--searchrange -10 30 \
 	--sigmalimit 25.0 \
-	--ampthresh 0.3 \
 	--nprocs -1 \
 	--pickleft \
 	--pickleftthresh 0.3 \
 	--peakfittype fastquad \
-	--spatialfilt 2 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_mi_quad \
-	--passes 1 \
-	--oversampfac 6 \
-	--despecklepasses 0 \
-	--searchrange -15 15 \
-	--sigmalimit 25.0 \
-	--nprocs -1 \
-	--peakfittype quad \
-	--nofitfilt \
-	--spatialfilt 2 \
-	--similaritymetric mutualinfo 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_mi_fastquad \
-	--passes 1 \
-	--oversampfac 6 \
-	--despecklepasses 0 \
-	--searchrange -15 15 \
-	--sigmalimit 25.0 \
-	--nprocs -1 \
-	--peakfittype fastquad \
-	--nofitfilt \
-	--spatialfilt 2 \
-	--similaritymetric mutualinfo 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_mi_gauss \
-	--passes 1 \
-	--oversampfac 6 \
-	--despecklepasses 0 \
-	--searchrange -15 15 \
-	--sigmalimit 25.0 \
-	--nprocs -1 \
-	--peakfittype gauss \
-	--nofitfilt \
-	--spatialfilt 2 \
-	--similaritymetric mutualinfo 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_mi_fastgauss \
-	--passes 1 \
-	--oversampfac 6 \
-	--despecklepasses 0 \
-	--searchrange -15 15 \
-	--sigmalimit 25.0 \
-	--nprocs -1 \
-	--peakfittype fastgauss \
-	--nofitfilt \
-	--spatialfilt 2 \
-	--similaritymetric mutualinfo 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_mi_None \
-	--passes 3 \
-	--oversampfac 6 \
-	--despecklepasses 0 \
-	--searchrange -15 15 \
-	--sigmalimit 25.0 \
-	--nprocs -1 \
-	--peakfittype None \
-	--nofitfilt \
-        --ampthresh 0.1 \
-	--spatialfilt 2 \
+	--spatialfilt 2  \
         --saveintermediatemaps \
-	--similaritymetric mutualinfo 
+	--similaritymetric correlation \
+	--ampthresh 0.3 
+
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_quad \
+	--passes 3 \
+	--oversampfac 5 \
+	--searchrange -10 30 \
+	--sigmalimit 25.0 \
+	--nprocs -1 \
+	--pickleft \
+	--pickleftthresh 0.3 \
+	--peakfittype quad \
+	--spatialfilt 2  \
+        --saveintermediatemaps \
+	--similaritymetric correlation \
+	--ampthresh 0.3 
+
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_fastgauss \
+	--passes 3 \
+	--oversampfac 5 \
+	--searchrange -10 30 \
+	--sigmalimit 25.0 \
+	--nprocs -1 \
+	--pickleft \
+	--pickleftthresh 0.3 \
+	--peakfittype fastgauss \
+	--spatialfilt 2  \
+        --saveintermediatemaps \
+	--similaritymetric correlation \
+	--ampthresh 0.3 
+
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_gauss \
+	--passes 3 \
+	--oversampfac 5 \
+	--searchrange -10 30 \
+	--sigmalimit 25.0 \
+	--nprocs -1 \
+	--pickleft \
+	--pickleftthresh 0.3 \
+	--peakfittype gauss \
+	--spatialfilt 2  \
+        --saveintermediatemaps \
+	--similaritymetric correlation \
+	--ampthresh 0.3 
 
 #rapidtide \
 	#fmri.nii.gz \
@@ -151,7 +166,6 @@ rapidtide \
 	#--noglm \
 	#--detrendorder=3
 #
-#diffmaps ../dst/dgsr_gauss ../dst/dgsr ../dst/diff_gauss
-#diffmaps ../dst/dgsr_fastgauss ../dst/dgsr ../dst/diff_fastgauss
-#diffmaps ../dst/dgsr_quad ../dst/dgsr ../dst/diff_quad
-#diffmaps ../dst/dgsr_none ../dst/dgsr ../dst/diff_none
+diffmaps ../dst/dgsr_gauss ../dst/dgsr_quad ../dst/diff_gauss_quad
+diffmaps ../dst/dgsr_gauss ../dst/dgsr_fastgauss ../dst/diff_gauss_fastgauss
+diffmaps ../dst/dgsr_quad ../dst/dgsr_fastquad ../dst/diff_quad_fastquad
