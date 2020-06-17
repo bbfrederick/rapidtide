@@ -1,6 +1,6 @@
 + Fix the version numbers in files:
 
-    vi setup.py docs/conf.py rapidtide/version.py VERSION INSTALL.rst
+    vi setup.py docs/conf.py rapidtide/version.py VERSION INSTALL.rst Dockerfile dockerbuild/build.sh newrelease_todo
 
     setup.py
         search for version=
@@ -17,19 +17,30 @@
     INSTALL.rst
         search for '(currently'
 
+    Dockerfile
+        search for 'org.label-schema.schema-version='
+
+    dockerbuild/build.sh
+        search for VERSION=
+
+    newrelease_todo
+        search for ' v'
+
 
 + Edit CHANGELOG.md
 
++ Rebuild Docker container and push
+
+    dockerbuild/build.sh
+    dockerbuild/test.sh
+
 + Sync everything to github.
 
-+ Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging):
++ Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging)
+  and push the tag to github
 
-    git tag -a v1.9.0 -m "v1.9.0"
- 
-
-+ Push the tag to github:
-
-    git push origin v1.9.0
+    git tag -a v1.9.1 -m "v1.9.1"
+    git push origin v1.9.1
 
 
 + Edit the release notes on github
