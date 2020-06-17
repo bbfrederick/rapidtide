@@ -1,4 +1,4 @@
-# Use Ubuntu 18.04 LTS
+# Use Ubuntu 16.04 LTS
 FROM ubuntu:18.04
 
 # Pre-cache neurodebian key
@@ -20,10 +20,15 @@ RUN apt-get install -y --no-install-recommends \
                     xterm \
                     libgl1-mesa-glx \
                     libx11-xcb1 \
-                    libqt5x11extras5 \
                     lsb-release \
                     git
-#RUN apt-get install --reinstall libxcb-xinerama0
+RUN apt-get install -y --reinstall libqt5dbus5 
+RUN apt-get install -y --reinstall libqt5widgets5 
+RUN apt-get install -y --reinstall libqt5network5 
+RUN apt-get install -y --reinstall libqt5gui5 
+RUN apt-get install -y --reinstall libqt5core5a 
+RUN apt-get install -y --reinstall libdouble-conversion1 
+RUN apt-get install -y --reinstall libxcb-xinerama0
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 #ENV FSL_DIR="/usr/share/fsl/5.0" \
@@ -81,7 +86,7 @@ RUN conda config --add channels conda-forge
 RUN df -h
 RUN conda clean --all
 RUN df -h
-RUN conda install -y python=3.7.4 \
+RUN conda install -y python=3.7.3 \
                      pip=19.3.1 \
                      scipy=1.4.1 \
                      numpy=1.17.3 \
@@ -96,7 +101,6 @@ RUN conda install -y python=3.7.4 \
                      tensorflow=1.13.1 \
                      pyqtgraph=0.10.0 \
                      pyfftw=0.12.0 \
-                     pillow=7.0.0 \
                      pandas=0.25.3 \
                      numba=0.46.0; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
@@ -136,11 +140,10 @@ USER rapidtide
 ARG BUILD_DATE
 ARG VCS_REF
 ARG VERSION
-LABEL org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.name="rapidtide" \
-      org.label-schema.description="rapidtide - a set of tools for delay processing" \
-      org.label-schema.url="http://nirs-fmri.net" \
-      org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/bbfrederick/rapidtide" \
-      org.label-schema.version=$VERSION \
-      org.label-schema.schema-version="1.0"
+LABEL net.nirs-fmri.build-date=$BUILD_DATE \
+      net.nirs-fmri.name="rapidtide" \
+      net.nirs-fmri.description="rapidtide - a set of tools for delay processing" \
+      net.nirs-fmri.url="http://nirs-fmri.net" \
+      net.nirs-fmri.vcs-ref=$VCS_REF \
+      net.nirs-fmri.vcs-url="https://github.com/bbfrederick/rapidtide" \
+      net.nirs-fmri.version="1.9.1"
