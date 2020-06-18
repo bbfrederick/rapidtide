@@ -8,14 +8,16 @@ VERSION=`cat VERSION`
 echo "version: ${VERSION}"
 
 
-docker build . -t fredericklab/rapidtide:${VERSION} \
+docker build \
     --build-arg VERSION=${VERSION} \
-    --build-arg BUILD_DATE=`date +"%Y%m%dT%k%M%S"` \
-    --build-arg VCS_REF=`git rev-parse HEAD`
-docker build . -t fredericklab/rapidtide:latest \
+    --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+    --build-arg VCS_REF=`git rev-parse HEAD` \
+    . -t fredericklab/rapidtide:${VERSION} 
+docker build \
     --build-arg VERSION=${VERSION} \
-    --build-arg BUILD_DATE=`date +"%Y%m%dT%k%M%S"` \
-    --build-arg VCS_REF=`git rev-parse HEAD`
+    --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+    --build-arg VCS_REF=`git rev-parse HEAD` \
+    . -t fredericklab/rapidtide:latest
 docker push fredericklab/rapidtide:${VERSION}
 docker push fredericklab/rapidtide:latest
 docker pull fredericklab/rapidtide:${VERSION}
