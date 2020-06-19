@@ -695,7 +695,8 @@ def rapidtide_main(argparsingfunc):
 
     # filter the input data for antialiasing
     if optiondict['antialias']:
-        print('applying trapezoidal antialiasing filter')
+        if optiondict['debug']:
+            print('applying trapezoidal antialiasing filter')
         reference_y_filt = tide_filt.dolptrapfftfilt(inputfreq, 0.25 * fmrifreq, 0.5 * fmrifreq, reference_y,
                                                      padlen=int(inputfreq * optiondict['padseconds']),
                                                      debug=optiondict['debug'])
@@ -782,10 +783,11 @@ def rapidtide_main(argparsingfunc):
 
     # initialize the mutualinformationator
     themutualinformationator = tide_classes.mutualinformationator(Fs=oversampfreq,
+                                                                    smoothingtime=optiondict['smoothingtime'],
                                                                     ncprefilter=theprefilter,
                                                                     detrendorder=optiondict['detrendorder'],
                                                                     windowfunc=optiondict['windowfunc'],
-                                                                    madnorm=optiondict['madnormMI'],
+                                                                    madnorm=False,
                                                                     lagmininpts=lagmininpts,
                                                                     lagmaxinpts=lagmaxinpts)
 

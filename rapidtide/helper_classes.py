@@ -216,6 +216,7 @@ class mutualinformationator(similarityfunctionator):
     def __init__(self,
                  windowfunc='hamming',
                  madnorm=False,
+                 smoothingtime=-1.0,
                  bins=20,
                  sigma=0.25,
                  *args, **kwargs):
@@ -224,6 +225,10 @@ class mutualinformationator(similarityfunctionator):
         self.bins = bins
         self.sigma = sigma
         self.hpfreq = None
+        self.smoothingtime = smoothingtime
+        self.smoothingfilter = tide_filt.noncausalfilter(filtertype='arb')
+        if self.smoothingtime > 0.0:
+            self.smoothingfilter.setfreqs(0.0, 0.0, 1.0 / self.smoothingtime, 1.0 / self.smoothingtime)
         super(mutualinformationator, self).__init__(*args, **kwargs)
 
     def setreftc(self, reftc, offset=0.0):
@@ -284,6 +289,9 @@ class mutualinformationator(similarityfunctionator):
                                                         madnorm=self.madnorm,
                                                         Fs=self.Fs,
                                                         sigma=self.sigma, bins=self.bins)
+        if self.smoothingtime > 0.0:
+            self.thesimfunc = self.smoothingfilter.apply(self.Fs, self.thesimfunc)
+
         self.similarityfunclen = len(self.thesimfunc)
         if trim:
             self.similarityfuncorigin = self.lagmininpts + 1
@@ -817,11 +825,12 @@ class correlation_fitter:
                 # different rules for mutual information peaks
                 if ((maxval - baseline) < self.lthreshval * baselinedev) or (maxval < baseline):
                     failreason |= self.FML_FITAMPLOW
-                    if (maxval - baseline) < self.lthreshval * baselinedev:
-                        print('FITAMPLOW: maxval - baseline:', maxval - baseline,
-                                ' < lthreshval * baselinedev:', self.lthreshval * baselinedev)
-                    if maxval < baseline:
-                        print('FITAMPLOW: maxval < baseline:', maxval, baseline)
+                    if self.debug:
+                        if (maxval - baseline) < self.lthreshval * baselinedev:
+                            print('FITAMPLOW: maxval - baseline:', maxval - baseline,
+                                    ' < lthreshval * baselinedev:', self.lthreshval * baselinedev)
+                        if maxval < baseline:
+                            print('FITAMPLOW: maxval < baseline:', maxval, baseline)
                     maxval_init = 0.0
                     if self.debug:
                         print('bad fit amp: maxval is lower than lower limit')

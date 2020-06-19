@@ -500,84 +500,93 @@ def _get_parser():
                 '(default) and "mutualinfo".'),
             default='correlation')
     corr.add_argument(
-            '--madnormMI',
-            dest='madnormMI',
-            action='store_true',
-            help=('Perform median average deviate normalizaton on mutual information function. '),
-            default=False)
+            '--mutualinfosmoothingtime',
+            dest='smoothingtime',
+            action='store',
+            type=float,
+            metavar='TAU',
+            help=('Time constant of a temporal smoothing function to apply to the mutual information function. '
+                  'Default is 3.0 seconds.  TAU <=0.0 disables smoothing.'),
+            default=3.0)
 
 
     # Correlation fitting options
     corr_fit = parser.add_argument_group('Correlation fitting options')
 
     fixdelay = corr_fit.add_mutually_exclusive_group()
-    fixdelay.add_argument('--fixdelay',
-                          dest='fixeddelayvalue',
-                          action='store',
-                          type=float,
-                          metavar='DELAYTIME',
-                          help=("Don't fit the delay time - set it to "
-                                "DELAYTIME seconds for all voxels. "),
-                          default=None)
-    fixdelay.add_argument('--searchrange',
-                          dest='lag_extrema',
-                          action=indicatespecifiedAction,
-                          nargs=2,
-                          type=float,
-                          metavar=('LAGMIN', 'LAGMAX'),
-                          help=('Limit fit to a range of lags from LAGMIN to '
-                                'LAGMAX.  Default is -30.0 to 30.0 seconds. '),
-                          default=(-30.0, 30.0))
-
-    corr_fit.add_argument('--sigmalimit',
-                          dest='widthlimit',
-                          action='store',
-                          type=float,
-                          metavar='SIGMALIMIT',
-                          help=('Reject lag fits with linewidth wider than '
-                                'SIGMALIMIT Hz. Default is 100.0. '),
-                          default=100.0)
-    corr_fit.add_argument('--bipolar',
-                          dest='bipolar',
-                          action='store_true',
-                          help=('Bipolar mode - match peak correlation '
-                                'ignoring sign. '),
-                          default=False)
-    corr_fit.add_argument('--nofitfilt',
-                          dest='zerooutbadfit',
-                          action='store_false',
-                          help=('Do not zero out peak fit values if fit '
-                                'fails. '),
-                          default=True)
-    corr_fit.add_argument('--peakfittype',
-                          dest='peakfittype',
-                          action='store',
-                          type=str,
-                          choices=['gauss', 'fastgauss', 'quad', 'fastquad', 'None'],
-                          help=("Method for fitting the peak of the similarity function "
-                                "(default is 'gauss'). 'quad' and 'fastquad' use a "
-                                "quadratic fit.  Faster but not as well "
-                                "tested. "),
-                          default='gauss')
-
-    corr_fit.add_argument('--despecklepasses',
-                          dest='despeckle_passes',
-                          action=indicatespecifiedAction,
-                          type=int,
-                          metavar='PASSES',
-                          help=('Detect and refit suspect correlations to '
-                                'disambiguate peak locations in PASSES '
-                                'passes.  Default is to perform 4 passes. '
-                                'Set to 0 to disable. '),
-                          default=4)
-    corr_fit.add_argument('--despecklethresh',
-                          dest='despeckle_thresh',
-                          action='store',
-                          type=float,
-                          metavar='VAL',
-                          help=('Refit correlation if median discontinuity '
-                                'magnitude exceeds VAL (default is 5.0s). '),
-                          default=5.0)
+    fixdelay.add_argument(
+            '--fixdelay',
+            dest='fixeddelayvalue',
+            action='store',
+            type=float,
+            metavar='DELAYTIME',
+            help=("Don't fit the delay time - set it to "
+                "DELAYTIME seconds for all voxels. "),
+            default=None)
+    fixdelay.add_argument(
+            '--searchrange',
+            dest='lag_extrema',
+            action=indicatespecifiedAction,
+            nargs=2,
+            type=float,
+            metavar=('LAGMIN', 'LAGMAX'),
+            help=('Limit fit to a range of lags from LAGMIN to '
+                'LAGMAX.  Default is -30.0 to 30.0 seconds. '),
+            default=(-30.0, 30.0))
+    corr_fit.add_argument(
+            '--sigmalimit',
+            dest='widthlimit',
+            action='store',
+            type=float,
+            metavar='SIGMALIMIT',
+            help=('Reject lag fits with linewidth wider than '
+                'SIGMALIMIT Hz. Default is 100.0. '),
+            default=100.0)
+    corr_fit.add_argument(
+            '--bipolar',
+            dest='bipolar',
+            action='store_true',
+            help=('Bipolar mode - match peak correlation '
+                'ignoring sign. '),
+            default=False)
+    corr_fit.add_argument(
+            '--nofitfilt',
+            dest='zerooutbadfit',
+            action='store_false',
+            help=('Do not zero out peak fit values if fit '
+                'fails. '),
+            default=True)
+    corr_fit.add_argument(
+            '--peakfittype',
+            dest='peakfittype',
+            action='store',
+            type=str,
+            choices=['gauss', 'fastgauss', 'quad', 'fastquad', 'None'],
+            help=("Method for fitting the peak of the similarity function "
+                "(default is 'gauss'). 'quad' and 'fastquad' use a "
+                "quadratic fit.  Faster but not as well "
+                "tested. "),
+            default='gauss')
+    corr_fit.add_argument(
+            '--despecklepasses',
+            dest='despeckle_passes',
+            action=indicatespecifiedAction,
+            type=int,
+            metavar='PASSES',
+            help=('Detect and refit suspect correlations to '
+                'disambiguate peak locations in PASSES '
+                'passes.  Default is to perform 4 passes. '
+                'Set to 0 to disable. '),
+            default=4)
+    corr_fit.add_argument(
+            '--despecklethresh',
+            dest='despeckle_thresh',
+            action='store',
+            type=float,
+            metavar='VAL',
+            help=('Refit correlation if median discontinuity '
+                'magnitude exceeds VAL (default is 5.0s). '),
+            default=5.0)
 
     # Regressor refinement options
     reg_ref = parser.add_argument_group('Regressor refinement options')
@@ -953,7 +962,7 @@ def process_args(inputargs=None):
     args['lagmod']  = 1000.0  # if set to the location of the first autocorrelation sidelobe, this will fold back sidelobes
     args['lthreshval'] = 0.0  # zero out peaks with correlations lower than this value
     args['uthreshval'] = 1.0  # zero out peaks with correlations higher than this value
-    args['absmaxsigma'] = 1000.0  # width of the reference autocorrelation function
+    args['absmaxsigma'] = 10000.0  # width of the reference autocorrelation function
     args['absminsigma'] = 0.25  # width of the reference autocorrelation function
 
     # correlation fitting
@@ -1020,6 +1029,8 @@ def process_args(inputargs=None):
 
 
     # Additional argument parsing not handled by argparse
+    args['despeckle_passes'] = np.max([args['despeckle_passes'], 0])
+
     try:
         test = args['lag_extrema_nondefault']
         args['lagmin_nondefault'] = True
