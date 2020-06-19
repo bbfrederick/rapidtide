@@ -363,6 +363,7 @@ def process_args():
 
     # correlation options
     optiondict['similaritymetric'] = 'correlation'
+    optiondict['smoothingtime'] = 3.0
     optiondict['madnormMI'] = False
     optiondict['dodemean'] = True  # remove the mean from signals prior to correlation
     optiondict['detrendorder'] = 1  # remove linear trends prior to correlation
@@ -839,8 +840,8 @@ def process_args():
         elif o == '--despecklepasses':
             optiondict['check_autocorrelation'] = True
             optiondict['despeckle_passes'] = int(a)
-            if optiondict['despeckle_passes'] < 1:
-                print("minimum number of despeckle passes is 1")
+            if optiondict['despeckle_passes'] < 0:
+                print("minimum number of despeckle passes is 0")
                 sys.exit()
             linkchar = '='
             print('Will do ', optiondict['despeckle_passes'], ' despeckling passes')
