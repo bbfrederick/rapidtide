@@ -37,6 +37,7 @@ def main():
         'atlastool',
         'ccorrica',
         'endtidalproc',
+        'filtnifti',
         'filttc',
         'fingerprint',
         'glmfilt',
