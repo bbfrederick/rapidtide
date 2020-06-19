@@ -4,13 +4,14 @@
 git pull
 
 # bump version
-VERSION=`cat VERSION`
+VERSION=`cat VERSION`-dev
 echo "version: ${VERSION}"
 
 
-docker build . -t fredericklab/rapidtide:${VERSION}-dev \
-    --build-arg VERSION=${VERSION}-dev \
-    --build-arg BUILD_DATE=`date +"%Y%m%dT%k%M%S"` \
-    --build-arg VCS_REF=`git rev-parse HEAD`
-docker push fredericklab/rapidtide:${VERSION}-dev
-docker pull fredericklab/rapidtide:${VERSION}-dev
+docker build \
+    --build-arg VERSION=${VERSION} \
+    --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+    --build-arg VCS_REF=`git rev-parse HEAD` \
+    . -t fredericklab/rapidtide:${VERSION} 
+docker push fredericklab/rapidtide:${VERSION}
+docker pull fredericklab/rapidtide:${VERSION}

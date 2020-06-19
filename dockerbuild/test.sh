@@ -11,5 +11,5 @@ docker run \
     -it \
     -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide:1.9.1-dev \
+    -u rapidtide fredericklab/rapidtide:1.9.0-dev \
     tidepool

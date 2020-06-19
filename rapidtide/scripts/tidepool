@@ -576,10 +576,10 @@ def updateAveragingMode():
     global overlays
     global currentdataset
     print('in updateAveragingMode')
-    if ('atlas' in overlays) and (not atlasaveragingdone):
+    if ('atlas' in overlays) and (not atlasaveragingdone) and False:
         calcAtlasStats()
         set_atlasmask()
-    if ('atlas' in overlays):
+    if ('atlas' in overlays) and False:
         updateAtlasStats()
     if averagingmode is not None:
         currentdataset.focusmap = currentdataset.focusmap.replace('_atlasstat', '') + '_atlasstat'
