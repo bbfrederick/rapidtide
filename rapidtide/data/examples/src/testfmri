@@ -2,7 +2,7 @@
 
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr_mi_fastquad_3pass \
+	../dst/dgsr_mi_fastquad_3p0smooth \
 	--passes 3 \
 	--oversampfac 5 \
 	--despecklepasses 0 \
@@ -16,7 +16,6 @@ rapidtide \
 	--saveintermediatemaps \
 	--similaritymetric mutualinfo \
         --detrendorder 3 \
-        --mutualinfosmoothingtime 4.0 \
         --noglm \
         --numnull 0 \
 	--ampthresh 0.1
