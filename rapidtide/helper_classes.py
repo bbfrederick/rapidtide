@@ -237,6 +237,7 @@ class mutualinformationator(similarityfunctionator):
 
         self.timeaxis, dummy, self.similarityfuncorigin = tide_corr.cross_MI(self.prepreftc, self.prepreftc,
                                                                              Fs=self.Fs,
+                                                                             fast=True,
                                                                              negsteps=self.lagmininpts,
                                                                              possteps=self.lagmaxinpts,
                                                                              returnaxis=True)
@@ -263,6 +264,7 @@ class mutualinformationator(similarityfunctionator):
                                                                                              possteps=self.lagmaxinpts,
                                                                                              madnorm=self.madnorm,
                                                                                              returnaxis=True,
+                                                                                             fast=True,
                                                                                              Fs=self.Fs,
                                                                                              sigma=self.sigma, bins=self.bins)
             else:
@@ -271,6 +273,7 @@ class mutualinformationator(similarityfunctionator):
                                                                                             possteps=-1,
                                                                                             madnorm=self.madnorm,
                                                                                             returnaxis=True,
+                                                                                            fast=True,
                                                                                             Fs=self.Fs,
                                                                                             sigma=self.sigma, bins=self.bins)
             self.timeaxisvalid = True
@@ -280,6 +283,7 @@ class mutualinformationator(similarityfunctionator):
                                                      negsteps=self.lagmininpts,
                                                      possteps=self.lagmaxinpts,
                                                      madnorm=self.madnorm,
+                                                     fast=True,
                                                      Fs=self.Fs,
                                                      sigma=self.sigma, bins=self.bins)
             else:
@@ -287,6 +291,7 @@ class mutualinformationator(similarityfunctionator):
                                                         negsteps=-1,
                                                         possteps=-1,
                                                         madnorm=self.madnorm,
+                                                        fast=True,
                                                         Fs=self.Fs,
                                                         sigma=self.sigma, bins=self.bins)
         if self.smoothingtime > 0.0:
@@ -739,6 +744,12 @@ class correlation_fitter:
 
         # refine if necessary
         if self.peakfittype != 'None':
+            if self.peakfittype == 'COM':
+                X = self.corrtimeaxis[peakstart:peakend + 1] - baseline
+                data = corrfunc[peakstart:peakend + 1]
+                maxval = maxval_init
+                maxlag = np.sum(X * data) / np.sum(X)
+                maxsigma = 10.0
             if self.peakfittype == 'gauss':
                 X = self.corrtimeaxis[peakstart:peakend + 1] - baseline
                 data = corrfunc[peakstart:peakend + 1]
