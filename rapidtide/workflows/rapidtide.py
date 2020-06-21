@@ -46,8 +46,8 @@ import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 
-import rapidtide.nullcorrpass as tide_nullcorr
-import rapidtide.corrpass as tide_corrpass
+import rapidtide.calcnullsimfunc as tide_nullsimfunc
+import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.refine as tide_refine
 import rapidtide.glmpass as tide_glmpass
@@ -1010,7 +1010,7 @@ def rapidtide_main(argparsingfunc):
             if optiondict['verbose']:
                 print('calling getNullDistributionData with args:', oversampfreq, fmritr, corrorigin, lagmininpts,
                       lagmaxinpts)
-            getNullDistributionData_func = addmemprofiling(tide_nullcorr.getNullDistributionDatax,
+            getNullDistributionData_func = addmemprofiling(tide_nullsimfunc.getNullDistributionDatax,
                                                            optiondict['memprofile'],
                                                            memfile,
                                                            'before getnulldistristributiondata')
@@ -1064,7 +1064,7 @@ def rapidtide_main(argparsingfunc):
                         tide_stats.printthresholds(pcts_fit, thepercentiles,
                                                    'Crosscorrelation significance thresholds from fit:')
                         tide_stats.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
-                                                        outputname + '_nullcorrelationhist_pass' + str(thepass),
+                                                        outputname + '_nullsimfunchist_pass' + str(thepass),
                                                         displaytitle='Null correlation histogram, pass' + str(thepass),
                                                         displayplots=optiondict['displayplots'], refine=False)
                 else:
@@ -1081,7 +1081,7 @@ def rapidtide_main(argparsingfunc):
             similaritytype = 'Correlation'
         print('\n\n' + similaritytype + ' calculation, pass ' + str(thepass))
         timings.append([similaritytype +' calculation start, pass ' + str(thepass), time.time(), None, None])
-        correlationpass_func = addmemprofiling(tide_corrpass.correlationpass,
+        correlationpass_func = addmemprofiling(tide_calcsimfunc.correlationpass,
                                                optiondict['memprofile'],
                                                memfile,
                                                'before correlationpass')

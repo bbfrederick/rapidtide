@@ -34,7 +34,7 @@ import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.correlate as tide_corr
-import rapidtide.nullcorrpass as tide_nullcorr
+import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.helper_classes as tide_classes
 from rapidtide.workflows.parser_funcs import is_valid_file, is_valid_filespec, invert_float, is_float
 
@@ -496,7 +496,7 @@ def main():
     if args.numestreps > 0:
         # generate a list of correlations from shuffled data
         print('calculating null crosscorrelations')
-        corrlist = tide_nullcorr.getNullDistributionDatax(filtereddata2,
+        corrlist = tide_nullsimfunc.getNullDistributionDatax(filtereddata2,
                                                             Fs,
                                                             thecorrelator,
                                                             thexsimfuncfitter,
@@ -517,7 +517,7 @@ def main():
             tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
 
         print('calculating null Pearson correlations')
-        corrlist_pear = tide_nullcorr.getNullDistributionDatax(filtereddata2,
+        corrlist_pear = tide_nullsimfunc.getNullDistributionDatax(filtereddata2,
                                                                 Fs,
                                                                 thecorrelator,
                                                                 thexsimfuncfitter,

@@ -17,7 +17,7 @@ rapidtide \
 	--similaritymetric mutualinfo \
         --detrendorder 3 \
         --noglm \
-        --numnull 0 \
+        --numnull 10000 \
 	--ampthresh 0.1
 
 #rapidtide \

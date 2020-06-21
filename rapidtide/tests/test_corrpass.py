@@ -22,7 +22,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.correlate as tide_corr
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.corrpass as tide_corrpass
+import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.resample as tide_resample
 import rapidtide.helper_classes as tide_classes
@@ -33,7 +33,7 @@ from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_
 import os
 
 
-def test_corrpass(debug=False, display=False):
+def test_calcsimfunc(debug=False, display=False):
     # make the lfo filter
     lfofilter = tide_filt.noncausalfilter(filtertype='lfo')
 
@@ -165,7 +165,7 @@ def test_corrpass(debug=False, display=False):
     for thenprocs in [1, -1]:
         for i in range(numpasses):
             voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale \
-                = tide_corrpass.correlationpass(theinputdata,
+                = tide_calcsimfunc.correlationpass(theinputdata,
                                                    sourcedata,
                                                    thecorrelator,
                                                    init_fmri_x,
@@ -214,4 +214,4 @@ def test_corrpass(debug=False, display=False):
             assert mse(voxelshifts, lagtimes) < msethresh
 
 if __name__ == '__main__':
-    test_corrpass(debug=True, display=True)
+    test_calcsimfunc(debug=True, display=True)

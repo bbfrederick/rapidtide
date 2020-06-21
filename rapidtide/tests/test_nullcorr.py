@@ -22,7 +22,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.correlate as tide_corr
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.nullcorrpass as tide_nullcorr
+import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.helper_classes as tide_classes
 
 import matplotlib.pyplot as plt
@@ -30,7 +30,7 @@ from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_
 import os
 
 
-def test_nullcorr(debug=False, display=False):
+def test_nullsimfunc(debug=False, display=False):
     # make the lfo filter
     lfofilter = tide_filt.noncausalfilter(filtertype='lfo')
 
@@ -123,7 +123,7 @@ def test_nullcorr(debug=False, display=False):
     histograms = []
     for thenprocs in [1, -1]:
         for i in range(numpasses):
-            corrlist = tide_nullcorr.getNullDistributionDatax(sourcedata,
+            corrlist = tide_nullsimfunc.getNullDistributionDatax(sourcedata,
                                      Fs,
                                      thecorrelator,
                                      thefitter,
@@ -164,4 +164,4 @@ def test_nullcorr(debug=False, display=False):
 
 
 if __name__ == '__main__':
-    test_nullcorr(debug=True, display=True)
+    test_nullsimfunc(debug=True, display=True)
