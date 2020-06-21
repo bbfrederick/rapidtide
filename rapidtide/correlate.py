@@ -298,7 +298,7 @@ def calc_MI(x, y, bins=50):
 
 # From Ionnis Pappas
 @conditionaljit()
-def mutual_information_2d(x, y, sigma=1, bins=256, normalized=True, EPS=1.0e-6):
+def mutual_information_2d(x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, EPS=1.0e-6, debug=False):
     """
     Computes (normalized) mutual information between two 1D variate from a
     joint histogram.
@@ -320,9 +320,23 @@ def mutual_information_2d(x, y, sigma=1, bins=256, normalized=True, EPS=1.0e-6):
         the computed similariy measure
 
     """
-    bins2d = (bins, bins)
-
-    jh = np.histogram2d(x, y, bins=bins2d)[0]
+    if fast:
+        xstart = bins[0][0]
+        xend = bins[0][-1]
+        ystart = bins[1][0]
+        yend = bins[1][-1]
+        numxbins = len(bins[0]) - 1
+        numybins = len(bins[1]) - 1
+        cuts = (x >= xstart) & (x < xend) & (y >= ystart) & (y < yend)
+        c =  ((x[cuts] - xstart) / (xend - xstart) * numxbins).astype(np.int_)
+        c += ((y[cuts] - ystart) / (yend - ystart) * numybins).astype(np.int_) * numxbins
+        jh = np.bincount(c, minlength=numxbins * numybins).reshape(numxbins, numybins)
+    else:
+        if debug:
+            jh, xbins, ybins = np.histogram2d(x, y, bins=bins)
+            print(xbins, ybins)
+        else:
+            jh = np.histogram2d(x, y, bins=bins)[0]
 
     # smooth the jh with a gaussian filter of given sigma
     sp.ndimage.gaussian_filter(jh, sigma=sigma, mode='constant',
@@ -359,6 +373,8 @@ def cross_MI(x, y,
              windowfunc='None',
              bins=10,
              sigma=0.25,
+             fast=False,
+             prebin=True,
              debug=False):
     normx = tide_math.corrnormalize(x,
                                     detrendorder=1,
@@ -366,6 +382,16 @@ def cross_MI(x, y,
     normy = tide_math.corrnormalize(y,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
+
+    bins2d = (bins, bins)
+
+    # find the bin locations
+    if prebin:
+        jh, bins0, bins1 = np.histogram2d(normx, normy, bins=(bins, bins))
+        bins2d = (bins0, bins1)
+    else:
+        fast = False
+
     if (negsteps == -1) or (negsteps > len(normy) - 1):
         negsteps = -len(normy) + 1
     else:
@@ -380,19 +406,25 @@ def cross_MI(x, y,
     for i in range(negsteps, possteps + 1):
         if i < 0:
             thexmi_y[i - negsteps] = mutual_information_2d(normx[:i + len(normy)], normy[-i:],
-                                                             bins=bins,
+                                                             bins=bins2d,
                                                              normalized=norm,
-                                                             sigma=sigma)
+                                                             fast=fast,
+                                                             sigma=sigma,
+                                                             debug=debug)
         elif i == 0:
             thexmi_y[i - negsteps] = mutual_information_2d(normx, normy,
-                                                             bins=bins,
+                                                             bins=bins2d,
                                                              normalized=norm,
-                                                             sigma=sigma)
+                                                             fast=fast,
+                                                             sigma=sigma,
+                                                             debug=debug)
         else:
             thexmi_y[i - negsteps] = mutual_information_2d(normx[i:], normy[:len(normy) - i],
-                                                             bins=bins,
+                                                             bins=bins2d,
                                                              normalized=norm,
-                                                             sigma=sigma)
+                                                             fast=fast,
+                                                             sigma=sigma,
+                                                             debug=debug)
 
     if madnorm:
         thexmi_y = tide_math.madnormalize(thexmi_y)

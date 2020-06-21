@@ -20,9 +20,28 @@ input4 = tide_io.readvec('../dst/dgsr_gauss_reference_resampres_pass3.txt')
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
+thelen = len(input1)
+numneg = 300
+numpos = 300
 #for numbins in [50, 100, 200]:
-#    thex, thexmi = tide_corr.cross_MI(input1, input2, Fs=12.5, bins=numbins, windowfunc='hamming')
-#    thexnowin, thexminowin = tide_corr.cross_MI(input1, input2, Fs=12.5, bins=numbins, windowfunc='None')
+#    thex, thexmi, dummy = tide_corr.cross_MI(input1, input2,
+#                                                negsteps=numneg,
+#                                                possteps=numpos,
+#                                                Fs=12.5,
+#                                                fast=False,
+#                                                prebin=True,
+#                                                bins=numbins,
+#                                                returnaxis=True,
+#                                                windowfunc='hamming')
+#    thexnowin, thexminowin, dummy = tide_corr.cross_MI(input1, input2,
+#                                                negsteps=numneg,
+#                                                possteps=numpos,
+#                                                Fs=12.5,
+#                                                fast=False,
+#                                                prebin=True,
+#                                                bins=numbins,
+#                                                returnaxis=True,
+#                                                windowfunc='None')
 #    ax.plot(thex, thexmi, label=str(numbins))
 #    #plt.plot(thexnowin, thexminowin)
 #ax.legend()
@@ -31,8 +50,30 @@ ax = fig.add_subplot(1, 1, 1)
 for windowfunc in ['None']:
     for sigma in [0.25]:
         for numbins in [10]:
-            thex, thexmi, dummy = tide_corr.cross_MI(input3, input3, negsteps=200, possteps=200, Fs=5.33, bins=numbins, windowfunc='hamming', sigma=sigma, returnaxis=True)
+            thefastx, thefastxmi, dummy = tide_corr.cross_MI(input3, input3,
+                                                                negsteps=200,
+                                                                possteps=200,
+                                                                Fs=5.33,
+                                                                bins=numbins,
+                                                                windowfunc='hamming',
+                                                                sigma=sigma,
+                                                                returnaxis=True,
+                                                                prebin=True,
+                                                                fast=False,
+                                                                debug=False)
+            thex, thexmi, dummy = tide_corr.cross_MI(input3, input3,
+                                                                negsteps=200,
+                                                                possteps=200,
+                                                                Fs=5.33,
+                                                                bins=numbins,
+                                                                windowfunc='hamming',
+                                                                sigma=sigma,
+                                                                returnaxis=True,
+                                                                prebin=False,
+                                                                fast=False,
+                                                                debug=False)
             ax.plot(thex, thexmi, label='bins:' + str(numbins) + ', sigma:' + str(sigma) + ', win:' + windowfunc)
-ax.legend()
+            ax.plot(thefastx, thefastxmi, label='bins:' + str(numbins) + ', sigma:' + str(sigma) + ', win:' + windowfunc)
+ax.legend(['normal', 'fast'])
 plt.show()
 
