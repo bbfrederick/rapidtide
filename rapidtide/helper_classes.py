@@ -364,7 +364,7 @@ class correlator(similarityfunctionator):
             return self.thesimfunc, self.timeaxis, self.theglobalmax
 
 
-class correlation_fitter:
+class simfunc_fitter:
     corrtimeaxis = None
     FML_NOERROR = np.uint32(0x0000)
 
@@ -931,7 +931,7 @@ class freqtrack:
             print(self.times)
 
         # intitialize the peak fitter
-        thefitter = correlation_fitter(corrtimeaxis=self.freqs,
+        thefitter = simfunc_fitter(corrtimeaxis=self.freqs,
                                        lagmin=self.lowerlim,
                                        lagmax=self.upperlim,
                                        absmaxsigma=10.0,

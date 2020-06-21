@@ -1745,7 +1745,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="corrfunc_groupBox">
+   <widget class="QGroupBox" name="simfunc_groupBox">
     <property name="geometry">
      <rect>
       <x>790</x>
@@ -1780,7 +1780,7 @@
     <property name="title">
      <string>Correlation Function</string>
     </property>
-    <widget class="GraphicsLayoutWidget" name="corrfunc_graphicsView">
+    <widget class="GraphicsLayoutWidget" name="simfunc_graphicsView">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -1815,7 +1815,7 @@
    <zorder>mainimagedata_groupBox</zorder>
    <zorder>regressor_groupBox</zorder>
    <zorder>logOutput_groupBox</zorder>
-   <zorder>corrfunc_groupBox</zorder>
+   <zorder>simfunc_groupBox</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

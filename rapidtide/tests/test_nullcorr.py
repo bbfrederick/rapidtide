@@ -99,7 +99,7 @@ def test_nullcorr(debug=False, display=False):
                                          windowfunc=optiondict['windowfunc'],
                                          corrweighting=optiondict['corrweighting'])
 
-    thefitter = tide_classes.correlation_fitter(lagmod=optiondict['lagmod'],
+    thefitter = tide_classes.simfunc_fitter(lagmod=optiondict['lagmod'],
                                              lthreshval=optiondict['lthreshval'],
                                              uthreshval=optiondict['uthreshval'],
                                              bipolar=optiondict['bipolar'],

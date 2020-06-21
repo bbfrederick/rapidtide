@@ -23,7 +23,7 @@ import rapidtide.correlate as tide_corr
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
 import rapidtide.corrpass as tide_corrpass
-import rapidtide.corrfit as tide_corrfit
+import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.resample as tide_resample
 import rapidtide.helper_classes as tide_classes
 from rapidtide.tests.utils import mse
@@ -139,7 +139,7 @@ def test_corrpass(debug=False, display=False):
                                          windowfunc=optiondict['windowfunc'],
                                          corrweighting=optiondict['corrweighting'])
 
-    thefitter = tide_classes.correlation_fitter(lagmod=optiondict['lagmod'],
+    thefitter = tide_classes.simfunc_fitter(lagmod=optiondict['lagmod'],
                                              lthreshval=optiondict['lthreshval'],
                                              uthreshval=optiondict['uthreshval'],
                                              bipolar=optiondict['bipolar'],
@@ -187,7 +187,7 @@ def test_corrpass(debug=False, display=False):
                 plt.show()
 
             voxelsprocessed_fc \
-                = tide_corrfit.fitcorrx(genlagtc,
+                = tide_simfuncfit.fitcorrx(genlagtc,
                                           init_fmri_x,
                                           lagtc,
                                           trimmedcorrscale,

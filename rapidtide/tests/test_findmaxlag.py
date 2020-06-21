@@ -96,7 +96,7 @@ def test_findmaxlag(display=False, fittype='gauss', debug=False):
     fmlc_lfailreasons = np.zeros(len(testlags), dtype=np.uint16)
 
     # initialize the correlation fitter
-    thefitter = tide_classes.correlation_fitter(corrtimeaxis=xvecs,
+    thefitter = tide_classes.simfunc_fitter(corrtimeaxis=xvecs,
                                                 lagmin=lagmin,
                                                 lagmax=lagmax,
                                                 absmaxsigma=absmaxsigma,

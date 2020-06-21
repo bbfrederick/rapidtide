@@ -2,13 +2,11 @@
 
 # Form implementation generated from reading ui file 'tidepoolTemplate_alt.ui'
 #
-# Created by: PyQt5 UI code generator 5.12.3
+# Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
-
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -675,36 +673,36 @@ class Ui_MainWindow(object):
         font.setFamily("Courier")
         self.logOutput.setFont(font)
         self.logOutput.setObjectName("logOutput")
-        self.corrfunc_groupBox = QtWidgets.QGroupBox(self.centralwidget)
-        self.corrfunc_groupBox.setGeometry(QtCore.QRect(790, 405, 571, 186))
+        self.simfunc_groupBox = QtWidgets.QGroupBox(self.centralwidget)
+        self.simfunc_groupBox.setGeometry(QtCore.QRect(790, 405, 571, 186))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.corrfunc_groupBox.sizePolicy().hasHeightForWidth())
-        self.corrfunc_groupBox.setSizePolicy(sizePolicy)
-        self.corrfunc_groupBox.setMinimumSize(QtCore.QSize(100, 100))
-        self.corrfunc_groupBox.setMaximumSize(QtCore.QSize(800, 1000))
+        sizePolicy.setHeightForWidth(self.simfunc_groupBox.sizePolicy().hasHeightForWidth())
+        self.simfunc_groupBox.setSizePolicy(sizePolicy)
+        self.simfunc_groupBox.setMinimumSize(QtCore.QSize(100, 100))
+        self.simfunc_groupBox.setMaximumSize(QtCore.QSize(800, 1000))
         font = QtGui.QFont()
         font.setFamily("Arial Narrow")
-        self.corrfunc_groupBox.setFont(font)
-        self.corrfunc_groupBox.setObjectName("corrfunc_groupBox")
-        self.corrfunc_graphicsView = GraphicsLayoutWidget(self.corrfunc_groupBox)
-        self.corrfunc_graphicsView.setGeometry(QtCore.QRect(10, 25, 551, 151))
+        self.simfunc_groupBox.setFont(font)
+        self.simfunc_groupBox.setObjectName("simfunc_groupBox")
+        self.simfunc_graphicsView = GraphicsLayoutWidget(self.simfunc_groupBox)
+        self.simfunc_graphicsView.setGeometry(QtCore.QRect(10, 25, 551, 151))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.corrfunc_graphicsView.sizePolicy().hasHeightForWidth())
-        self.corrfunc_graphicsView.setSizePolicy(sizePolicy)
-        self.corrfunc_graphicsView.setMinimumSize(QtCore.QSize(0, 100))
-        self.corrfunc_graphicsView.setMaximumSize(QtCore.QSize(1000, 1000))
-        self.corrfunc_graphicsView.setObjectName("corrfunc_graphicsView")
+        sizePolicy.setHeightForWidth(self.simfunc_graphicsView.sizePolicy().hasHeightForWidth())
+        self.simfunc_graphicsView.setSizePolicy(sizePolicy)
+        self.simfunc_graphicsView.setMinimumSize(QtCore.QSize(0, 100))
+        self.simfunc_graphicsView.setMaximumSize(QtCore.QSize(1000, 1000))
+        self.simfunc_graphicsView.setObjectName("simfunc_graphicsView")
         self.overlays_groupBox.raise_()
         self.imageData_groupBox.raise_()
         self.histogram_groupBox.raise_()
         self.mainimagedata_groupBox.raise_()
         self.regressor_groupBox.raise_()
         self.logOutput_groupBox.raise_()
-        self.corrfunc_groupBox.raise_()
+        self.simfunc_groupBox.raise_()
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1373, 22))
@@ -773,6 +771,7 @@ class Ui_MainWindow(object):
         self.label_5.setText(_translate("MainWindow", "Timecourse (seconds)"))
         self.label_12.setText(_translate("MainWindow", "Power spectrum (Hz)"))
         self.logOutput_groupBox.setTitle(_translate("MainWindow", "Information"))
-        self.corrfunc_groupBox.setTitle(_translate("MainWindow", "Correlation Function"))
+        self.simfunc_groupBox.setTitle(_translate("MainWindow", "Correlation Function"))
         self.actionQuit.setText(_translate("MainWindow", "Quit"))
+
 from pyqtgraph import GraphicsLayoutWidget, GraphicsView

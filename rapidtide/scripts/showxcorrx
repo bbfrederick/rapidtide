@@ -436,7 +436,7 @@ def main():
         Fs)
 
     # intitialize the correlation fitter
-    thexcorrfitter = tide_classes.correlation_fitter(corrtimeaxis=xcorr_x,
+    thexsimfuncfitter = tide_classes.simfunc_fitter(corrtimeaxis=xcorr_x,
                                                 lagmin=args.lagmin,
                                                 lagmax=args.lagmax,
                                                 absmaxsigma=absmaxsigma,
@@ -448,7 +448,7 @@ def main():
                                                 useguess=False
                                                 )
     # intitialize the correlation fitter
-    themifitter = tide_classes.correlation_fitter(corrtimeaxis=MI_x_trim,
+    themifitter = tide_classes.simfunc_fitter(corrtimeaxis=MI_x_trim,
                                                 lagmin=args.lagmin,
                                                 lagmax=args.lagmax,
                                                 absmaxsigma=absmaxsigma,
@@ -468,10 +468,10 @@ def main():
     if args.debug:
         print('\n\nmaxdelay before refinement', maxdelay)
 
-    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thexcorrfitter.fit(thexcorr)
+    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thexsimfuncfitter.fit(thexcorr)
     if failreason > 0:
         print('showxcorrx: FIT FAILED with reason:')
-        print(thexcorrfitter.diagnosefail(failreason))
+        print(thexsimfuncfitter.diagnosefail(failreason))
     if args.debug:
         print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
     R = maxval
@@ -499,7 +499,7 @@ def main():
         corrlist = tide_nullcorr.getNullDistributionDatax(filtereddata2,
                                                             Fs,
                                                             thecorrelator,
-                                                            thexcorrfitter,
+                                                            thexsimfuncfitter,
                                                             numestreps=args.numestreps,
                                                             despeckle_thresh=1000.0,
                                                             showprogressbar=args.showprogressbar,
@@ -520,7 +520,7 @@ def main():
         corrlist_pear = tide_nullcorr.getNullDistributionDatax(filtereddata2,
                                                                 Fs,
                                                                 thecorrelator,
-                                                                thexcorrfitter,
+                                                                thexsimfuncfitter,
                                                                 numestreps=args.numestreps,
                                                                 despeckle_thresh=1000.0,
                                                                 showprogressbar=args.showprogressbar,

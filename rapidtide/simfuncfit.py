@@ -35,7 +35,7 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 
 
-def onecorrfitx(correlationfunc,
+def onesimfuncfitx(correlationfunc,
                 thefitter,
                 disablethresholds=False,
                 initiallag=None,
@@ -94,7 +94,7 @@ def _procOneVoxelFitcorrx(vox,
                           fixeddelayvalue=0.0,
                           rt_floatset=np.float64,
                           rt_floattype='float64'):
-    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = onecorrfitx(corr_y,
+    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = onesimfuncfitx(corr_y,
                                                                                               thefitter,
                                                                                               disablethresholds=disablethresholds,
                                                                                               despeckle_thresh=despeckle_thresh,

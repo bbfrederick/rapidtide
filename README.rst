@@ -217,7 +217,7 @@ Ok, I’m sold. What’s in here?
    out the root name and pull in all of the other associated data. Works
    in native or standard space.
 
--  **correlate.py, corrfit.py, dlfilter.py, filter.py, fit.py, io.py,
+-  **correlate.py, simfuncfit.py, dlfilter.py, filter.py, fit.py, io.py,
    miscmath.py, multiproc.py, refine.py, resample.py, stats.py,
    util.py, helper_classes.py** - These are the libraries of the various helper routines
    that are used by pretty much every program in here for correlation,

@@ -43,7 +43,7 @@ import argparse
 from rapidtide.OrthoImageItem import OrthoImageItem
 from rapidtide.RapidtideDataset import RapidtideDataset
 from rapidtide.Colortables import *
-from rapidtide.helper_classes import correlation_fitter
+from rapidtide.helper_classes import simfunc_fitter
 import os
 import pandas as pd
 from statsmodels.robust.scale import mad
@@ -367,12 +367,12 @@ def resetDispSmart():
     updateDispLimits()
 
 
-def updateCorrelationFunc():
+def updateSimilarityFunc():
     global overlays, timeaxis, currentloc
     global currentdataset
-    global corrfunc_ax, corrfuncCurve, corrfitCurve, corrfuncTLine, corrfuncPeakMarker, corrfuncCurvePoint, corrfuncCaption, corrfuncFitter
+    global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption, simfuncFitter
 
-    if corrfunc_ax is not None:
+    if simfunc_ax is not None:
         corrvals = overlays['corrout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
         #fitvals = overlays['gaussout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
         peakmaxtime = overlays['lagtimes'].maskeddata[currentloc.xpos, currentloc.ypos, currentloc.zpos]
@@ -386,8 +386,8 @@ def updateCorrelationFunc():
             failreason = 0
 
         # update the plot
-        corrfuncCurve.setData(timeaxis, corrvals)
-        #corrfitCurve.setData(timeaxis, fitvals)
+        simfuncCurve.setData(timeaxis, corrvals)
+        #simfuncfitCurve.setData(timeaxis, fitvals)
         if overlays['corrout'].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos] > 0:
             if currentdataset.similaritymetric == 'correlation':
                 thecaption = "lag={1:.2f}, R={0:.2f}".format(peakmaxval, peakmaxtime)
@@ -395,19 +395,19 @@ def updateCorrelationFunc():
                 thecaption = "lag={1:.2f}, MI={0:.2f}".format(peakmaxval, peakmaxtime)
         else:
             peakmaxtime = float(tide_util.valtoindex(timeaxis, overlays['lagtimes'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos]))
-            thefailreason = corrfuncFitter.diagnosefail(failreason)
+            thefailreason = simfuncFitter.diagnosefail(failreason)
             print(thefailreason)
             thecaption = "No valid fit"
-        corrfunc_ax.setYRange(minval - 0.05 * valrange, maxval + 0.3 * valrange, padding=0)
-        corrfuncCaption.setText(thecaption)
+        simfunc_ax.setYRange(minval - 0.05 * valrange, maxval + 0.3 * valrange, padding=0)
+        simfuncCaption.setText(thecaption)
         print('current tpos:', currentloc.tpos)
         print('setting line location:', timeaxis[currentloc.tpos])
-        corrfuncTLine.setPos(timeaxis[currentloc.tpos])
-        corrfuncCurvePoint.setPos(float(tide_util.valtoindex(timeaxis, peakmaxtime)) / (len(timeaxis) - 1))
+        simfuncTLine.setPos(timeaxis[currentloc.tpos])
+        simfuncCurvePoint.setPos(float(tide_util.valtoindex(timeaxis, peakmaxtime)) / (len(timeaxis) - 1))
         if overlays['corrout'].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos] > 0:
-            corrfuncPeakMarker.setData(x=[peakmaxtime], y=[peakmaxval], symbol='d')
+            simfuncPeakMarker.setData(x=[peakmaxtime], y=[peakmaxval], symbol='d')
         else:
-            corrfuncPeakMarker.setData(x=[], y=[], symbol='d')
+            simfuncPeakMarker.setData(x=[], y=[], symbol='d')
 
 
 
@@ -856,17 +856,17 @@ def overlay_radioButton_clicked(which, enabled):
 
 
 def updateTimepoint(event):
-    global data, overlays, corrfunc_ax, tr, tpos, timeaxis, currentloc, ui
+    global data, overlays, simfunc_ax, tr, tpos, timeaxis, currentloc, ui
     global currentdataset
     global vLine
     print('arrived in updateTimepoint')
     pos = event.pos()  ## using signal proxy turns original arguments into a tuple
-    mousePoint = corrfunc_ax.vb.mapToView(pos)
+    mousePoint = simfunc_ax.vb.mapToView(pos)
     tval = mousePoint.x()
     if timeaxis[0] <= tval <= timeaxis[-1]:
         currentloc.tpos = int(tide_util.valtoindex(timeaxis, tval))
         ui.TimeSlider.setValue(currentloc.tpos)
-        updateUI(callingfunc='updateTimepoint', orthoimages=True, correlationfunc=True, focusvals=True)
+        updateUI(callingfunc='updateTimepoint', orthoimages=True, similarityfunc=True, focusvals=True)
 
 
 def updateLUT():
@@ -904,22 +904,22 @@ def mapwithLUT(theimage, themask, theLUT, dispmin, dispmax):
 def updateTFromControls():
     global mainwin, currentloc
     mainwin.setTpos(currentloc.tpos, emitsignal=False)
-    updateUI(callingfunc='updateTFromControls', orthoimages=True, correlationfunc=True, focusvals=True)
+    updateUI(callingfunc='updateTFromControls', orthoimages=True, similarityfunc=True, focusvals=True)
 
 
 def updateXYZFromControls():
     global mainwin, currentloc
     mainwin.setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos, emitsignal=False)
-    updateUI(callingfunc='updateXYZFromControls', orthoimages=True, correlationfunc=True, focusvals=True)
+    updateUI(callingfunc='updateXYZFromControls', orthoimages=True, similarityfunc=True, focusvals=True)
 
 
 def updateXYZFromMainWin():
     global mainwin, currentloc
     currentloc.setXYZpos(mainwin.xpos, mainwin.ypos, mainwin.zpos, emitsignal=False)
-    updateUI(callingfunc='updateXYZFromMainWin', correlationfunc=True, focusvals=True)
+    updateUI(callingfunc='updateXYZFromMainWin', similarityfunc=True, focusvals=True)
 
 
-def updateUI(orthoimages=False, histogram=False, LUT=False, correlationfunc=False, focusvals=False, callingfunc=None):
+def updateUI(orthoimages=False, histogram=False, LUT=False, similarityfunc=False, focusvals=False, callingfunc=None):
     if callingfunc is None:
         print('updateUI called with:')
     else:
@@ -927,7 +927,7 @@ def updateUI(orthoimages=False, histogram=False, LUT=False, correlationfunc=Fals
     print('\torthoimages=', orthoimages)
     print('\thistogram=', histogram)
     print('\tLUT=', LUT)
-    print('\tcorrelationfunc=', correlationfunc)
+    print('\tsimilarityfunc=', similarityfunc)
     print('\tfocusvals=', focusvals)
 
     if histogram:
@@ -935,8 +935,8 @@ def updateUI(orthoimages=False, histogram=False, LUT=False, correlationfunc=Fals
     if LUT:
         updateLUT()
         orthoimages = True
-    if correlationfunc:
-        updateCorrelationFunc()
+    if similarityfunc:
+        updateSimilarityFunc()
     if orthoimages:
         updateOrthoImages()
     if focusvals:
@@ -970,7 +970,7 @@ def updateOrthoImages():
 def printfocusvals():
     global ui, overlays, currentdataset
     global currentloc
-    global corrfuncFitter
+    global simfuncFitter
     logstatus(ui.logOutput, '\n\nValues at location ' + '{0},{1},{2}'.format(currentloc.xpos, currentloc.ypos,currentloc.zpos))
     for key in overlays:
         # print(key, overlays[key].report)
@@ -987,7 +987,7 @@ def printfocusvals():
                         logstatus(ui.logOutput, outstring)
                     else:
                         if focusval > 0.0:
-                            failstring = corrfuncFitter.diagnosefail(np.uint16(focusval))
+                            failstring = simfuncFitter.diagnosefail(np.uint16(focusval))
                             outstring = '\t' + str(overlays[key].label.ljust(26)) + str(':\n\t    ') + \
                                         failstring.replace(', ', '\n\t    ')
                             logstatus(ui.logOutput, outstring)
@@ -1095,7 +1095,7 @@ def main():
                            action='store_true',
                            default=False)
     theparser.add_argument('--settr',
-                           help='Set correlation TR',
+                           help='Set similarity function TR',
                            dest='trval',
                            type=float,
                            default=None)
@@ -1151,7 +1151,7 @@ def main():
 
     if args.trval is not None:
         trval = args.trval
-        print('forcing correlation TR to ', trval)
+        print('forcing similarity function TR to ', trval)
 
     userise = args.userise
     if args.userise:
@@ -1275,13 +1275,13 @@ def main():
         'lagstrengths':
             {
                 'colormap': thermal_state,
-                'label': 'Correlation coefficient',
+                'label': 'Similarity coefficient',
                 'display': True,
                 'funcmask': 'p_lt_0p050_mask'},
         'lagsigma':
             {
                 'colormap': spectrum_state,
-                'label': 'Correlation width',
+                'label': 'Similarity width',
                 'display': True,
                 'funcmask': 'p_lt_0p050_mask'},
         'MTT':
@@ -1305,7 +1305,7 @@ def main():
         'corrout':
             {
                 'colormap': thermal_state,
-                'label': 'Correlation function',
+                'label': 'Similarity function',
                 'display': True,
                 'funcmask': 'p_lt_0p050_mask'},
         'gaussout':
@@ -1672,54 +1672,54 @@ def main():
     histwin = ui.histogram_graphicsView
     hist_ax = histwin.addPlot()
 
-    # set up the correlation function window
-    print('about to set up the correlation function window')
-    global corrfunc_ax, corrfuncCurve, corrfitCurve, corrfuncTLine, corrfuncPeakMarker, corrfuncCurvePoint, corrfuncCaption, corrfuncFitter
+    # set up the similarity function window
+    print('about to set up the similarity function window')
+    global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption, simfuncFitter
 
     try:
-        thecorrfunc_groupBox = ui.corrfunc_groupBox
-        corrfuncwindowexists = True
+        thesimfunc_groupBox = ui.simfunc_groupBox
+        simfuncwindowexists = True
     except AttributeError:
-        print('no correlation function window - cancelling setup')
-        corrfuncwindowexists = False
+        print('no similarity function window - cancelling setup')
+        simfuncwindowexists = False
 
-    if usecorrout and corrfuncwindowexists:
-        print('setting up correlation window')
-        corrfunctitle = ui.corrfunc_groupBox.title()
-        print('current corrfunctitle', corrfunctitle)
-        ui.corrfunc_groupBox.setWindowTitle('blah')
-        corrfunctitle = ui.corrfunc_groupBox.title()
-        print('current corrfunctitle', corrfunctitle)
-        corrfuncwin = ui.corrfunc_graphicsView
-        corrfunc_ax = corrfuncwin.addPlot()
-        corrfuncCurve = corrfunc_ax.plot(timeaxis, 0.0 * timeaxis,
-                                        title='Correlation function',
+    if usecorrout and simfuncwindowexists:
+        print('setting up similarity window')
+        simfunctitle = ui.simfunc_groupBox.title()
+        print('current simfunctitle', simfunctitle)
+        ui.simfunc_groupBox.setWindowTitle('blah')
+        simfunctitle = ui.simfunc_groupBox.title()
+        print('current simfunctitle', simfunctitle)
+        simfuncwin = ui.simfunc_graphicsView
+        simfunc_ax = simfuncwin.addPlot()
+        simfuncCurve = simfunc_ax.plot(timeaxis, 0.0 * timeaxis,
+                                        title='Similarity function',
                                         stepMode=False,
                                         fillLevel=0,
                                         pen=pg.mkPen('w', width=1),
                                         clear=True,
                                         clickable=True)
-        '''corrfitCurve = corrfunc_ax.plot(timeaxis, 0.0 * timeaxis,
+        '''simfuncfitCurve = simfunc_ax.plot(timeaxis, 0.0 * timeaxis,
                                         stepMode=False,
                                         fillLevel=0,
                                         pen=pg.mkPen('r', width=1),
                                         clear=True,
                                         clickable=True)'''
-        corrfuncTLine = corrfunc_ax.addLine(x=timeaxis[0], pen='g')
-        corrfuncCurvePoint = pg.CurvePoint(corrfuncCurve)
-        corrfuncPeakMarker = pg.ScatterPlotItem(x=[],
+        simfuncTLine = simfunc_ax.addLine(x=timeaxis[0], pen='g')
+        simfuncCurvePoint = pg.CurvePoint(simfuncCurve)
+        simfuncPeakMarker = pg.ScatterPlotItem(x=[],
                                                 y=[],
                                                 pen=pg.mkPen('w', width=1),
                                                 brush='b',
                                                 size=10,
                                                 pxMode=True)
-        corrfunc_ax.addItem(corrfuncPeakMarker)
-        corrfuncCaption = pg.TextItem('placeholder', anchor=(0.5, 1.0))
-        corrfuncCaption.setParentItem(corrfuncCurvePoint)
-        corrfuncCurve.scene().sigMouseClicked.connect(updateTimepoint)
-        corrfuncFitter = correlation_fitter()
+        simfunc_ax.addItem(simfuncPeakMarker)
+        simfuncCaption = pg.TextItem('placeholder', anchor=(0.5, 1.0))
+        simfuncCaption.setParentItem(simfuncCurvePoint)
+        simfuncCurve.scene().sigMouseClicked.connect(updateTimepoint)
+        simfuncFitter = simfunc_fitter()
     else:
-        corrfunc_ax = None
+        simfunc_ax = None
 
     # set up the regressor timecourse window
     print('about to set up the timecourse')
@@ -1783,7 +1783,7 @@ def main():
     currentloc.updatedXYZ.connect(updateXYZFromControls)
     currentloc.updatedT.connect(updateTFromControls)
     if usecorrout:
-        updateCorrelationFunc()
+        updateSimilarityFunc()
     updateHistogram()
 
     updateLUT()

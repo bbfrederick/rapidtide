@@ -48,7 +48,7 @@ import rapidtide.util as tide_util
 
 import rapidtide.nullcorrpass as tide_nullcorr
 import rapidtide.corrpass as tide_corrpass
-import rapidtide.corrfit as tide_corrfit
+import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.refine as tide_refine
 import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
@@ -885,7 +885,7 @@ def rapidtide_main(argparsingfunc):
         print('edgebufferfrac set to ', optiondict['edgebufferfrac'])
 
     # intitialize the correlation fitter
-    thefitter = tide_classes.correlation_fitter(lagmod=optiondict['lagmod'],
+    thefitter = tide_classes.simfunc_fitter(lagmod=optiondict['lagmod'],
                                              lthreshval=optiondict['lthreshval'],
                                              uthreshval=optiondict['uthreshval'],
                                              bipolar=optiondict['bipolar'],
@@ -932,7 +932,7 @@ def rapidtide_main(argparsingfunc):
             thexcorr, accheckcorrscale, dummy = thecorrelator.run(resampref_y)
             thefitter.setcorrtimeaxis(accheckcorrscale)
             maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
-                tide_corrfit.onecorrfitx(thexcorr,
+                tide_simfuncfit.onesimfuncfitx(thexcorr,
                                          thefitter,
                                          despeckle_thresh=optiondict['despeckle_thresh'],
                                          lthreshval=optiondict['lthreshval'],
@@ -1151,7 +1151,7 @@ def rapidtide_main(argparsingfunc):
         # Step 2 - similarity function fitting and time lag estimation
         print('\n\nTime lag estimation pass ' + str(thepass))
         timings.append(['Time lag estimation start, pass ' + str(thepass), time.time(), None, None])
-        fitcorr_func = addmemprofiling(tide_corrfit.fitcorrx,
+        fitcorr_func = addmemprofiling(tide_simfuncfit.fitcorrx,
                                        optiondict['memprofile'],
                                        memfile,
                                        'before fitcorr')
