@@ -1,22 +1,26 @@
 #!/bin/csh -f
 
-#rapidtide \
-	#fmri.nii.gz \
-	#../dst/dgsr_mi_quad \
-	#--passes 1 \
-	#--oversampfac 5 \
-	#--despecklepasses 0 \
-	#--searchrange -10 30 \
-	#--sigmalimit 25.0 \
-	#--nprocs -1 \
-	#--pickleft \
-	#--pickleftthresh 0.3 \
-	#--peakfittype quad \
-	#--spatialfilt 2 \
-	#--saveintermediatemaps \
-	#--similaritymetric mutualinfo \
-	#--ampthresh 0.1
-#
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_mi_fastquad_3pass \
+	--passes 3 \
+	--oversampfac 5 \
+	--despecklepasses 0 \
+	--searchrange -10 30 \
+	--sigmalimit 25.0 \
+	--nprocs -1 \
+	--pickleft \
+	--pickleftthresh 0.3 \
+	--peakfittype quad \
+	--spatialfilt 2 \
+	--saveintermediatemaps \
+	--similaritymetric mutualinfo \
+        --detrendorder 3 \
+        --mutualinfosmoothingtime 4.0 \
+        --noglm \
+        --numnull 0 \
+	--ampthresh 0.1
+
 #rapidtide \
 	#fmri.nii.gz \
 	#../dst/dgsr_mi_None \
@@ -35,137 +39,22 @@
 	#--ampthresh 0.1
 
 
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_fastquad \
-	--passes 3 \
-	--oversampfac 5 \
-	--searchrange -10 30 \
-	--sigmalimit 25.0 \
-	--nprocs -1 \
-	--pickleft \
-	--pickleftthresh 0.3 \
-	--peakfittype fastquad \
-	--spatialfilt 2  \
-        --saveintermediatemaps \
-	--similaritymetric correlation \
-	--ampthresh 0.3 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_quad \
-	--passes 3 \
-	--oversampfac 5 \
-	--searchrange -10 30 \
-	--sigmalimit 25.0 \
-	--nprocs -1 \
-	--pickleft \
-	--pickleftthresh 0.3 \
-	--peakfittype quad \
-	--spatialfilt 2  \
-        --saveintermediatemaps \
-	--similaritymetric correlation \
-	--ampthresh 0.3 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_fastgauss \
-	--passes 3 \
-	--oversampfac 5 \
-	--searchrange -10 30 \
-	--sigmalimit 25.0 \
-	--nprocs -1 \
-	--pickleft \
-	--pickleftthresh 0.3 \
-	--peakfittype fastgauss \
-	--spatialfilt 2  \
-        --saveintermediatemaps \
-	--similaritymetric correlation \
-	--ampthresh 0.3 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_gauss \
-	--passes 3 \
-	--oversampfac 5 \
-	--searchrange -10 30 \
-	--sigmalimit 25.0 \
-	--nprocs -1 \
-	--pickleft \
-	--pickleftthresh 0.3 \
-	--peakfittype gauss \
-	--spatialfilt 2  \
-        --saveintermediatemaps \
-	--similaritymetric correlation \
-	--ampthresh 0.3 
-
-#rapidtide \
-	#fmri.nii.gz \
-	#../dst/dgsr_fastgauss \
-	#--delaymapping \
-	#--sigmalimit 25.0 \
-	#--ampthresh 0.3 \
-	#--nprocs -1 \
-	#--pickleft \
-	#--pickleftthresh 0.3 \
-	#--peakfittype fastgauss \
-	#--spatialfilt 2 
-#
 #rapidtide \
 	#fmri.nii.gz \
 	#../dst/dgsr_fastquad \
-	#--delaymapping \
+	#--passes 3 \
+	#--oversampfac 5 \
+	#--searchrange -10 30 \
 	#--sigmalimit 25.0 \
-	#--ampthresh 0.3 \
 	#--nprocs -1 \
 	#--pickleft \
 	#--pickleftthresh 0.3 \
 	#--peakfittype fastquad \
-	#--spatialfilt 2 
-#
-#rapidtide \
-	#fmri.nii.gz \
-	#../dst/dgsr_quad \
-	#--delaymapping \
-	#--sigmalimit 25.0 \
-	#--ampthresh 0.3 \
-	#--nprocs -1 \
-	#--pickleft \
-	#--pickleftthresh 0.3 \
-	#--peakfittype quad \
-	#--spatialfilt 2 
-#
-#rapidtide \
-	#fmri.nii.gz \
-	#../dst/dgsr_none \
-	#--delaymapping \
-	#--sigmalimit 25.0 \
-	#--ampthresh 0.3 \
-	#--nprocs -1 \
-	#--pickleft \
-	#--pickleftthresh 0.3 \
-	#--peakfittype None \
-	#--spatialfilt 2 
-#
-#rapidtide2x \
-	#fmri.nii.gz \
-	#../dst/dgsr_2x_quad \
-	#--peakfittype=quad \
-	#--limitoutput \
-	#-s 25.0 \
-	#--ampthresh=0.3 \
-	#-L \
-	#-r -10,30 \
-	#-f 2 \
-	#--passes=3 \
-	#--refineoffset \
-	#--despecklepasses=4 \
-	#--nprocs=-1 \
-	#--saveoptionsasjson \
-	#--pickleft \
-	#--noglm \
-	#--detrendorder=3
-#
-diffmaps ../dst/dgsr_gauss ../dst/dgsr_quad ../dst/diff_gauss_quad
-diffmaps ../dst/dgsr_gauss ../dst/dgsr_fastgauss ../dst/diff_gauss_fastgauss
-diffmaps ../dst/dgsr_quad ../dst/dgsr_fastquad ../dst/diff_quad_fastquad
+	#--spatialfilt 2  \
+        #--saveintermediatemaps \
+	#--similaritymetric correlation \
+	#--ampthresh 0.3 
+
+#diffmaps ../dst/dgsr_gauss ../dst/dgsr_quad ../dst/diff_gauss_quad
+#diffmaps ../dst/dgsr_gauss ../dst/dgsr_fastgauss ../dst/diff_gauss_fastgauss
+#diffmaps ../dst/dgsr_quad ../dst/dgsr_fastquad ../dst/diff_quad_fastquad
