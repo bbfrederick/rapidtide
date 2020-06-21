@@ -561,7 +561,7 @@ def _get_parser():
             dest='peakfittype',
             action='store',
             type=str,
-            choices=['gauss', 'fastgauss', 'quad', 'fastquad', 'None'],
+            choices=['gauss', 'fastgauss', 'quad', 'fastquad', 'COM', 'None'],
             help=("Method for fitting the peak of the similarity function "
                 "(default is 'gauss'). 'quad' and 'fastquad' use a "
                 "quadratic fit.  Faster but not as well "
