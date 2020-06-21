@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import rapidtide.correlate as tide_corr
@@ -29,7 +30,6 @@ numpos = 300
 #                                                possteps=numpos,
 #                                                Fs=12.5,
 #                                                fast=False,
-#                                                prebin=True,
 #                                                bins=numbins,
 #                                                returnaxis=True,
 #                                                windowfunc='hamming')
@@ -38,7 +38,6 @@ numpos = 300
 #                                                possteps=numpos,
 #                                                Fs=12.5,
 #                                                fast=False,
-#                                                prebin=True,
 #                                                bins=numbins,
 #                                                returnaxis=True,
 #                                                windowfunc='None')
@@ -47,33 +46,58 @@ numpos = 300
 #ax.legend()
 #plt.show()
 
+numruns = 100
 for windowfunc in ['None']:
     for sigma in [0.25]:
         for numbins in [10]:
-            thefastx, thefastxmi, dummy = tide_corr.cross_MI(input3, input3,
+            starttime = time.perf_counter()
+            for i in range(numruns):
+                thex, thexmi, dummy = tide_corr.cross_MI(input3, input3,
                                                                 negsteps=200,
                                                                 possteps=200,
                                                                 Fs=5.33,
                                                                 bins=numbins,
-                                                                windowfunc='hamming',
+                                                                windowfunc=windowfunc,
                                                                 sigma=sigma,
                                                                 returnaxis=True,
-                                                                prebin=True,
                                                                 fast=False,
-                                                                debug=False)
-            thex, thexmi, dummy = tide_corr.cross_MI(input3, input3,
-                                                                negsteps=200,
-                                                                possteps=200,
-                                                                Fs=5.33,
-                                                                bins=numbins,
-                                                                windowfunc='hamming',
-                                                                sigma=sigma,
-                                                                returnaxis=True,
                                                                 prebin=False,
-                                                                fast=False,
                                                                 debug=False)
+            endtime = time.perf_counter()
+            print('time per cross_MI call with no optimizations:', 1000.0 * (endtime - starttime) / numruns, 'ms')
+            starttime = time.perf_counter()
+            for i in range(numruns):
+                theprebinx, theprebinxmi, dummy = tide_corr.cross_MI(input3, input3,
+                                                                negsteps=200,
+                                                                possteps=200,
+                                                                Fs=5.33,
+                                                                bins=numbins,
+                                                                windowfunc=windowfunc,
+                                                                sigma=sigma,
+                                                                returnaxis=True,
+                                                                fast=False,
+                                                                prebin=True,
+                                                                debug=False)
+            endtime = time.perf_counter()
+            print('time per cross_MI call with prebinning:', 1000.0 * (endtime - starttime) / numruns, 'ms')
+            starttime = time.perf_counter()
+            for i in range(numruns):
+                thefastx, thefastxmi, dummy = tide_corr.cross_MI(input3, input3,
+                                                                negsteps=200,
+                                                                possteps=200,
+                                                                Fs=5.33,
+                                                                bins=numbins,
+                                                                windowfunc=windowfunc,
+                                                                sigma=sigma,
+                                                                returnaxis=True,
+                                                                fast=True,
+                                                                prebin=True,
+                                                                debug=False)
+            endtime = time.perf_counter()
+            print('time per cross_MI call with prebinning and bincount:', 1000.0 * (endtime - starttime) / numruns, 'ms')
             ax.plot(thex, thexmi, label='bins:' + str(numbins) + ', sigma:' + str(sigma) + ', win:' + windowfunc)
+            ax.plot(theprebinx, theprebinxmi, label='bins:' + str(numbins) + ', sigma:' + str(sigma) + ', win:' + windowfunc)
             ax.plot(thefastx, thefastxmi, label='bins:' + str(numbins) + ', sigma:' + str(sigma) + ', win:' + windowfunc)
-ax.legend(['normal', 'fast'])
+ax.legend(['normal', 'prebin', 'fast'])
 plt.show()
 

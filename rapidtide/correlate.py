@@ -372,9 +372,9 @@ def cross_MI(x, y,
              madnorm=False,
              windowfunc='None',
              bins=10,
-             sigma=0.25,
-             fast=False,
              prebin=True,
+             sigma=0.25,
+             fast=True,
              debug=False):
     normx = tide_math.corrnormalize(x,
                                     detrendorder=1,
@@ -383,14 +383,15 @@ def cross_MI(x, y,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
 
-    bins2d = (bins, bins)
 
     # find the bin locations
     if prebin:
         jh, bins0, bins1 = np.histogram2d(normx, normy, bins=(bins, bins))
         bins2d = (bins0, bins1)
     else:
-        fast = False
+        bins2d = (bins, bins)
+        fast=False
+
 
     if (negsteps == -1) or (negsteps > len(normy) - 1):
         negsteps = -len(normy) + 1
