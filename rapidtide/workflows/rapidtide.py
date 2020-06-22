@@ -789,8 +789,14 @@ def rapidtide_main(argparsingfunc):
                                                                     windowfunc=optiondict['windowfunc'],
                                                                     madnorm=False,
                                                                     lagmininpts=lagmininpts,
-                                                                    lagmaxinpts=lagmaxinpts)
-
+                                                                    lagmaxinpts=lagmaxinpts,
+                                                                    debug=optiondict['debug'])
+    themutualinformationator.setreftc(np.zeros((optiondict['oversampfactor'] * validtimepoints), dtype=np.float))
+    nummilags = themutualinformationator.similarityfunclen
+    themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
+    dummy, trimmedmiscale, dummy = themutualinformationator.getfunction()
+    print('trimmedcorrscale length:', len(trimmedcorrscale))
+    print('trimmedmiscale length:', len(trimmedmiscale), nummilags)
 
     if optiondict['verbose']:
         print('corrorigin at point ', corrorigin, corrscale[corrorigin])
@@ -799,6 +805,7 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict['savecorrtimes']:
         tide_io.writenpvecs(trimmedcorrscale, outputname + '_corrtimes.txt')
+        tide_io.writenpvecs(trimmedmiscale, outputname + '_mitimes.txt')
 
     # allocate all of the data arrays
     tide_util.logmem('before main array allocation', file=memfile)
@@ -1081,14 +1088,14 @@ def rapidtide_main(argparsingfunc):
             similaritytype = 'Correlation'
         print('\n\n' + similaritytype + ' calculation, pass ' + str(thepass))
         timings.append([similaritytype +' calculation start, pass ' + str(thepass), time.time(), None, None])
-        correlationpass_func = addmemprofiling(tide_calcsimfunc.correlationpass,
+        calcsimilaritypass_func = addmemprofiling(tide_calcsimfunc.correlationpass,
                                                optiondict['memprofile'],
                                                memfile,
                                                'before correlationpass')
 
         if optiondict['similaritymetric'] == 'mutualinfo':
             themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
-            voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = correlationpass_func(fmri_data_valid[:, :],
+            voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = calcsimilaritypass_func(fmri_data_valid[:, :],
                                                                   cleaned_referencetc,
                                                                   themutualinformationator,
                                                                   initial_fmri_x,
@@ -1106,7 +1113,7 @@ def rapidtide_main(argparsingfunc):
                                                                   rt_floatset=rt_floatset,
                                                                   rt_floattype=rt_floattype)
         else:
-            voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = correlationpass_func(fmri_data_valid[:, :],
+            voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = calcsimilaritypass_func(fmri_data_valid[:, :],
                                                                    cleaned_referencetc,
                                                                    thecorrelator,
                                                                    initial_fmri_x,

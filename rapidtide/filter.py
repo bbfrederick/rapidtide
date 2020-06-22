@@ -107,6 +107,10 @@ def padvec(inputdata, padlen=20, cyclic=False):
         The input data, with padlen reflected points added to each end
 
     """
+    if padlen > len(inputdata):
+        print('ERROR: padlen (', padlen,') is greater than input data length (', len(inputdata), ')')
+        sys.exit()
+
     if padlen > 0:
         if cyclic:
             return np.concatenate((inputdata[-padlen:], inputdata, inputdata[0:padlen]))

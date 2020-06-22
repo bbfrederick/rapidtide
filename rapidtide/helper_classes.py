@@ -161,7 +161,8 @@ class similarityfunctionator:
                  lagmaxinpts=0,
                  ncprefilter=None,
                  reftc=None,
-                 detrendorder=1):
+                 detrendorder=1,
+                 debug=False):
         self.Fs = Fs
         self.similarityfuncorigin = similarityfuncorigin
         self.lagmininpts = lagmininpts
@@ -169,6 +170,7 @@ class similarityfunctionator:
         self.ncprefilter = ncprefilter
         self.reftc = reftc
         self.detrendorder = detrendorder
+        self.debug = debug
         if self.reftc is not None:
             self.setreftc(self.reftc)
 
@@ -186,10 +188,6 @@ class similarityfunctionator:
                                                         windowfunc=self.windowfunc)
                                 )
 
-    def setlimits(self, lagmininpts, lagmaxinpts):
-        self.lagmininpts = lagmininpts
-        self.lagmaxinpts = lagmaxinpts
-
 
     def trim(self, vector):
         return vector[self.similarityfuncorigin - self.lagmininpts:self.similarityfuncorigin + self.lagmaxinpts]
@@ -197,15 +195,21 @@ class similarityfunctionator:
 
     def getfunction(self, trim=True):
         if self.datavalid:
+            print('getfunction: datavalid')
             if trim:
+                print('\ytrim')
                 return self.trim(self.thesimfunc), self.trim(self.timeaxis), self.theglobalmax
             else:
+                print('\tno trim')
                 return self.thesimfunc, self.timeaxis, self.theglobalmax
         else:
             if self.timeaxisvalid:
+                print('getfunction: timeaxisvalid')
                 if trim:
+                    print('\ttrim')
                     return None, self.trim(self.timeaxis), None
                 else:
+                    print('\tno trim')
                     return None, self.timeaxis, None
             else:
                 print('must calculate similarity function before fetching data')
@@ -231,6 +235,18 @@ class mutualinformationator(similarityfunctionator):
             self.smoothingfilter.setfreqs(0.0, 0.0, 1.0 / self.smoothingtime, 1.0 / self.smoothingtime)
         super(mutualinformationator, self).__init__(*args, **kwargs)
 
+
+    def setlimits(self, lagmininpts, lagmaxinpts):
+        self.lagmininpts = lagmininpts
+        self.lagmaxinpts = lagmaxinpts
+        origpadtime = self.smoothingfilter.getpadtime()
+        timespan = self.timeaxis[-1] - self.timeaxis[0]
+        newpadtime = np.min([origpadtime, timespan])
+        if newpadtime < origpadtime:
+            print('lowering smoothing filter pad time to', newpadtime)
+            self.smoothingfilter.setpadtime(newpadtime)
+
+
     def setreftc(self, reftc, offset=0.0):
         self.reftc = reftc + 0.0
         self.prepreftc = self.preptc(self.reftc, hpfreq=None)
@@ -246,6 +262,9 @@ class mutualinformationator(similarityfunctionator):
         self.similarityfunclen = len(self.timeaxis)
         self.timeaxisvalid = True
         self.datavalid = False
+        if self.debug:
+            print('mutualinformationator setreftc:', len(self.timeaxis))
+            print('mutualinformationator setreftc:', self.timeaxis)
 
 
     def run(self, thetc, trim=True, gettimeaxis=False):
@@ -326,6 +345,11 @@ class correlator(similarityfunctionator):
             self.hpfilt = tide_filt.noncausalfilter('arb')
             self.hpfilt.setfreqs(self.hpfreq, self.hpfreq, self.Fs, self.Fs)
         super(correlator, self).__init__(*args, **kwargs)
+
+
+    def setlimits(self, lagmininpts, lagmaxinpts):
+        self.lagmininpts = lagmininpts
+        self.lagmaxinpts = lagmaxinpts
 
 
     def setreftc(self, reftc, offset=0.0):
