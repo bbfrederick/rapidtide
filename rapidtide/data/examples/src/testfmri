@@ -2,11 +2,11 @@
 
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr_mi_fastquad_3p0smooth \
+	../dst/dgsr_mi_fastquad_3p0smooth_narrow \
 	--passes 3 \
 	--oversampfac 5 \
 	--despecklepasses 0 \
-	--searchrange -10 30 \
+	--searchrange -10 15 \
 	--sigmalimit 25.0 \
 	--nprocs -1 \
 	--pickleft \
@@ -17,7 +17,7 @@ rapidtide \
 	--similaritymetric mutualinfo \
         --detrendorder 3 \
         --noglm \
-        --numnull 10000 \
+        --numnull 1000 \
 	--ampthresh 0.1
 
 #rapidtide \
