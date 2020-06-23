@@ -1810,7 +1810,7 @@ def happy_main(thearguments):
                 instantaneous_time[t] = (t - zerophaselocs[whichpeak]) / slicesamplerate
             #print(t, whichpeak, zerophaselocs[whichpeak], instantaneous_time[t])
         maxtime = np.ceil(int(1.02 * tide_stats.getfracval(instantaneous_time, 0.98, 200) // pulsereconstepsize)) * pulsereconstepsize
-        outtimes = sp.linspace(0.0, maxtime, num=(maxtime / pulsereconstepsize), endpoint=False)
+        outtimes = sp.linspace(0.0, maxtime, num=int(maxtime / pulsereconstepsize), endpoint=False)
         atp_bypoint = cardiaccycleaverage(instantaneous_time,
                                           outtimes,
                                           cardfromfmri_sliceres,
