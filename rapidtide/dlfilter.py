@@ -70,8 +70,6 @@ if tfversion == -1:
         print('no backend found - exiting')
         sys.exit()
 
-print('tensorflow version: >>>{}<<<'.format(tf.__version__))
-
 if tfversion == 2:
     print('using tensorflow v2x')
     tf.disable_v2_behavior()
@@ -81,6 +79,7 @@ if tfversion == 2:
         TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
     from tensorflow.keras.callbacks import TerminateOnNaN, ModelCheckpoint
     from tensorflow.keras.models import load_model
+    print('tensorflow version: >>>{}<<<'.format(tf.__version__))
 elif tfversion == 1:
     print('using tensorflow v1x')
     from keras.models import Sequential
@@ -89,6 +88,7 @@ elif tfversion == 1:
         TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
     from keras.callbacks import TerminateOnNaN, ModelCheckpoint
     from keras.models import load_model
+    print('tensorflow version: >>>{}<<<'.format(tf.__version__))
 elif tfversion == 0:
     pass
 else:
