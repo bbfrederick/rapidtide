@@ -195,22 +195,16 @@ class similarityfunctionator:
 
     def getfunction(self, trim=True):
         if self.datavalid:
-            print('getfunction: datavalid')
             if trim:
-                print('\ytrim')
-                return self.trim(self.thesimfunc), self.trim(self.timeaxis), self.theglobalmax
+                 return self.trim(self.thesimfunc), self.trim(self.timeaxis), self.theglobalmax
             else:
-                print('\tno trim')
                 return self.thesimfunc, self.timeaxis, self.theglobalmax
         else:
             if self.timeaxisvalid:
-                print('getfunction: timeaxisvalid')
                 if trim:
-                    print('\ttrim')
-                    return None, self.trim(self.timeaxis), None
+                     return None, self.trim(self.timeaxis), None
                 else:
-                    print('\tno trim')
-                    return None, self.timeaxis, None
+                     return None, self.timeaxis, None
             else:
                 print('must calculate similarity function before fetching data')
                 return None, None, None
