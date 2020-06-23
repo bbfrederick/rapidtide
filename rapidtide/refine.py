@@ -209,12 +209,16 @@ def refineregressor(fmridata,
     sigmafails = np.sum(1 - sigmamask * locationmask)
     refinemask = locationmask * ampmask * delaymask * sigmamask
     if tide_stats.getmasksize(refinemask) == 0:
+        print('ERROR: no voxels in the refine mask:')
+        print('\n	', locationfails, ' locationfails',
+              '\n	', ampfails, ' ampfails',
+              '\n	', lagfails, ' lagfails',
+              '\n	', sigmafails, ' sigmafails')
         if (includemask is None) and (excludemask is None):
-            print('ERROR: no voxels in the refine mask - relax ampthresh, delaythresh, or sigmathresh - exiting')
-            sys.exit()
+            print('\nRelax ampthresh, delaythresh, or sigmathresh - exiting')
         else:
-            print('ERROR: no voxels in the refine mask - change include/exclude masks or relax ampthresh, delaythresh, or sigmathresh - exiting')
-            sys.exit()
+            print('\nChange include/exclude masks or relax ampthresh, delaythresh, or sigmathresh - exiting')
+        sys.exit()
 
     if optiondict['cleanrefined']:
         shiftmask = locationmask
