@@ -257,23 +257,17 @@ class overlay:
     def settoffset(self, toffset):
         self.toffset = toffset
 
-    '''def setLUTalpha(thestate, thealpha):
-        theticks = [thestate['ticks'][0]]
-        for theelement in thestate['ticks'][1:-1]:
-            theticks.append((theelement[0], (theelement[1][0], theelement[1][1], theelement[1][2], thealpha)))
-        theticks.append(thestate['ticks'][-1])
-        return {'ticks': theticks, 'mode': thestate['mode']}'''
-
     def setLUT(self, lut_state, alpha=None):
         if alpha is not None:
             theticks = [lut_state['ticks'][0]]
             for theelement in lut_state['ticks'][1:-1]:
                 theticks.append((theelement[0], (theelement[1][0], theelement[1][1], theelement[1][2], alpha)))
             theticks.append(lut_state['ticks'][-1])
+            print('setLUT alpha adjustment:\n', theticks)
             self.lut_state = {'ticks': theticks, 'mode': lut_state['mode']}
         else:
             self.lut_state = lut_state
-        self.gradient.restoreState(lut_state)
+        self.gradient.restoreState(self.lut_state)
         self.theLUT = self.gradient.getLookupTable(512, alpha=True)
 
     def setisdisplayed(self, display_state):

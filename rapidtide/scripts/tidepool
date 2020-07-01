@@ -1064,7 +1064,7 @@ def main():
     forcetr = False
     buttonisdown = False
     harvestcolormaps = False
-    LUT_alpha = 128
+    LUT_alpha = 192
     xdim = 0
     ydim = 0
     zdim = 0
