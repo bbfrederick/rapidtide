@@ -28,9 +28,11 @@ documentation: :py:func:`rapidtide.workflows.showxcorrx_workflow`.
 
 Running from the command line
 -----------------------------
-###rapidtide2
+rapidtide2
+^^^^^^^^^^
 
 Description:
+""""""""""""
 
 The central program in this package is rapidtide2.  This is the program that quantifies the correlation strength and time delay of pervasive signals in a BOLD fMRI dataset.
 
@@ -49,14 +51,18 @@ At its core, rapidtide2 is simply performing a full crosscorrelation between a "
 * I've put a lot of effort into making the outputs as informative as possible - lots of useful maps, histograms, timecourses, etc.
 * There are a lot of tuning parameters you can mess with if you feel the need.  I've tried to make intelligent defaults so things will work well out of the box, but you have the ability to set most of the interesting parameters yourself.
      
-#### Inputs:
+Inputs:
+"""""""
+
 At a minimum, rapidtide2 needs a data file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2 (for fMRI data, in which case it is time by up to 3 spatial dimensions) or a whitespace separated text file (for NIRS data, each column is a time course, each row a separate channel); I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti2 in workbench, run rapidtide2, then convert back. As soon as nibabel finishes their Cifti support (EDIT: and I get around to figuring it out), I'll add that.
 
 The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a time by voxel array for simplicity.
 
 The file you input here should be the result of any preprocessing you intend to do.  The expectation is that rapidtide will be run as the last preprocessing step before resting state or task based analysis.  So any slice time correction, motion correction, spike removal, etc. should already have been done.  If you use FSL, this means that if you've run preprocessing, you would use the filtered_func_data.nii.gz file as input.  Temporal and spatial filtering are the two (partial) exceptions here.  Generally rapidtide is most useful for looking at low frequency oscillations, so when you run it, you usually use the "-L" option or some other to limit the analysis to the detection and removal of low frequency systemic physiological oscillations.  So rapidtide will generally apply it's own temporal filtering on top of whatever you do in preprocessing.  Also, you have the option of doing spatial smoothing in rapidtide to boost the SNR of the analysis; the hemodynamic signals rapidtide looks for are often very smooth, so you rather than smooth your functional data excessively, you can do it within rapidtide so that only the hemodynamic data is smoothed at that level.
      
-#### Outputs:
+Outputs:
+""""""""
+
 Outputs are space or space by time Nifti or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
 	
 The following files are produced, assuming XXX is the outputname:
