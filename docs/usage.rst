@@ -1,3 +1,5 @@
+.. Files seem to want to start with this
+
 Usage
 =====
 For more information about how the rapidtide library can be used, please
