@@ -640,54 +640,54 @@ def MAD_radioButton_clicked(enabled):
 
 
 def gray_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset
+    global imageadj, overlays, currentdataset, LUT_alpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(gray_state)
+        overlays[currentdataset.focusmap].setLUT(gray_state, alpha=LUT_alpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
 
 
 def thermal_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset
+    global imageadj, overlays, currentdataset, LUT_alpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(thermal_state)
+        overlays[currentdataset.focusmap].setLUT(thermal_state, alpha=LUT_alpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
 
 
 def GYR_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset
+    global imageadj, overlays, currentdataset, LUT_alpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(g2y2r_state)
+        overlays[currentdataset.focusmap].setLUT(g2y2r_state, alpha=LUT_alpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
 
 
 def viridis_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset
+    global imageadj, overlays, currentdataset, LUT_alpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(viridis_state)
+        overlays[currentdataset.focusmap].setLUT(viridis_state, alpha=LUT_alpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
 
 
 def jet_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset
+    global imageadj, overlays, currentdataset, LUT_alpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(cyclic_state)
+        overlays[currentdataset.focusmap].setLUT(cyclic_state, alpha=LUT_alpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
 
 
 def rainbow_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset
+    global imageadj, overlays, currentdataset, LUT_alpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(spectrum_state)
+        overlays[currentdataset.focusmap].setLUT(spectrum_state, alpha=LUT_alpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
@@ -852,7 +852,7 @@ def overlay_radioButton_clicked(which, enabled):
             print('setting t position limits to ', 0, overlays[currentdataset.focusmap].tdim - 1)
             currentloc.setTInfo(overlays[currentdataset.focusmap].tdim, overlays[currentdataset.focusmap].tr, overlays[currentdataset.focusmap].toffset)
 
-            updateUI(callingfunc='overlay_radioButton_clicked', histogram=True, LUT=True)
+            updateUI(callingfunc='overlay_radioButton_clicked', histogram=True, LUT=True, orthoimages=True)
 
 
 def updateTimepoint(event):
@@ -868,7 +868,6 @@ def updateTimepoint(event):
         ui.TimeSlider.setValue(currentloc.tpos)
         updateUI(callingfunc='updateTimepoint', orthoimages=True, similarityfunc=True, focusvals=True)
 
-
 def updateLUT():
     global img_colorbar
     global overlays, currentdataset
@@ -877,7 +876,7 @@ def updateLUT():
     img_colorbar.setLookupTable(theLUT)
     if harvestcolormaps:
         print(imageadj.saveState())
-
+    updateUI(callingfunc='updateLUT', orthoimages=True)
 
 '''def updateTimecoursePlot():
     global roisize
@@ -1047,7 +1046,7 @@ def main():
     global roi
     global overlays, regressors, regressorfilterlimits, loadedfuncmaps, atlasstats, averagingmode
     global mainwin, orthoimages, overlaybuttons, panetomap
-    global img_colorbar
+    global img_colorbar, LUT_alpha
     global lg_imgsize, scalefacx, scalefacy, scalefacz
     global xdim, ydim, zdim, tdim, xpos, ypos, zpos, tpos
     global xsize, ysize, zsize, tr
@@ -1065,6 +1064,7 @@ def main():
     forcetr = False
     buttonisdown = False
     harvestcolormaps = False
+    LUT_alpha = 128
     xdim = 0
     ydim = 0
     zdim = 0
@@ -1559,7 +1559,7 @@ def main():
 
     print('setting overlay defaults')
     for themap in currentdataset.allloadedmaps + currentdataset.loadedfuncmasks:
-        overlays[themap].setLUT(defaultdict[themap]['colormap'])
+        overlays[themap].setLUT(defaultdict[themap]['colormap'], alpha=LUT_alpha)
         overlays[themap].setisdisplayed(defaultdict[themap]['display'])
         overlays[themap].setLabel(defaultdict[themap]['label'])
     print('done setting overlay defaults')
