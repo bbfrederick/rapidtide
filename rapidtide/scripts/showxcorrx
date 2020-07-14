@@ -468,6 +468,9 @@ def main():
     if args.debug:
         print('\n\nmaxdelay before refinement', maxdelay)
 
+    thepeaks = thexsimfuncfitter.getpeaks(thexcorr, display=True)
+    for idx, thispeak in enumerate(thepeaks):
+        print('\tpeak', idx, thispeak[0], thispeak[1])
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thexsimfuncfitter.fit(thexcorr)
     if failreason > 0:
         print('showxcorrx: FIT FAILED with reason:')

@@ -21,10 +21,11 @@
 #
 from __future__ import print_function, division
 
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
 
 import numpy as np
 import scipy as sp
+from scipy.signal import find_peaks
 import warnings
 import sys
 
@@ -592,6 +593,21 @@ class simfunc_fitter:
         else:
             return 'No error'
 
+
+    def getpeaks(self, corrfunc, display=False):
+        peaks, dummy = find_peaks(corrfunc, height=0)
+        procpeaks = []
+        for thepeak in peaks:
+            procpeaks.append([self.corrtimeaxis[thepeak], corrfunc[thepeak]])
+        procpeaks.sort(key=lambda x: x[1], reverse=True)
+        if display:
+            plt.plot(corrfunc)
+            plt.plot(peaks, corrfunc[peaks], "x")
+            plt.plot(np.zeros_like(corrfunc), "--", color="gray")
+            plt.show()
+        return procpeaks
+
+
     def fit(self, corrfunc):
         # check to make sure xcorr_x and xcorr_y match
         if self.corrtimeaxis is None:
@@ -691,11 +707,11 @@ class simfunc_fitter:
                 for i in range(peakstart, peakend + 1):
                     print(self.corrtimeaxis[i], corrfunc[i])
                 print('\n')
-                fig = pl.figure()
+                fig = plt.figure()
                 ax = fig.add_subplot(111)
                 ax.set_title('Peak sent to fitting routine')
-                pl.plot(self.corrtimeaxis[peakstart:peakend + 1], corrfunc[peakstart:peakend + 1], 'r')
-                pl.show()
+                plt.plot(self.corrtimeaxis[peakstart:peakend + 1], corrfunc[peakstart:peakend + 1], 'r')
+                plt.show()
 
             # This is calculated from first principles, but it's always big by a factor or ~1.4.
             #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
@@ -820,12 +836,12 @@ class simfunc_fitter:
                     for i in range(len(X)):
                         print(X[i], data[i])
                     print('\n')
-                    fig = pl.figure()
+                    fig = plt.figure()
                     ax = fig.add_subplot(111)
                     ax.set_title('Peak and fit')
-                    pl.plot(X, data, 'r')
-                    pl.plot(X, c + b * X + a * X * X, 'b')
-                    pl.show()
+                    plt.plot(X, data, 'r')
+                    plt.plot(X, c + b * X + a * X * X, 'b')
+                    plt.show()
 
             else:
                 print('illegal peak refinement type')
@@ -905,12 +921,12 @@ class simfunc_fitter:
             print("init to final: maxval", maxval_init, maxval, ", maxlag:", maxlag_init, maxlag, ", width:", maxsigma_init,
                   maxsigma)
         if self.displayplots and (self.peakfittype != 'None') and (maskval != 0.0):
-            fig = pl.figure()
+            fig = plt.figure()
             ax = fig.add_subplot(111)
             ax.set_title('Data and fit')
             hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
-            pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
-            pl.show()
+            plt.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
+            plt.show()
         return maxindex, maxlag, flipfac * maxval, maxsigma, maskval, failreason, peakstart, peakend
 
 
