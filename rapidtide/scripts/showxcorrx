@@ -468,7 +468,15 @@ def main():
     if args.debug:
         print('\n\nmaxdelay before refinement', maxdelay)
 
-    thepeaks = thexsimfuncfitter.getpeaks(thexcorr, display=True)
+    thepeaks = tide_fit.getpeaks(xcorr_x, thexcorr, xrange=(args.lagmin, args.lagmax), display=True)
+    peaklocs = []
+    for thepeak in thepeaks:
+        peaklocs.append(int(round(thepeak[2], 0)))
+    theMI_list = themutualinformationator.run(trimdata1, locs=peaklocs)
+    print('mutual info list:', theMI_list)
+    for i in range(len(thepeaks)):
+        print('\t', thepeaks[i][0], thepeaks[i][1], theMI_list[i])
+
     for idx, thispeak in enumerate(thepeaks):
         print('\tpeak', idx, thispeak[0], thispeak[1])
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thexsimfuncfitter.fit(thexcorr)
