@@ -940,7 +940,7 @@ def rapidtide_main(argparsingfunc):
             thexcorr, accheckcorrscale, dummy = thecorrelator.run(resampref_y)
             thefitter.setcorrtimeaxis(accheckcorrscale)
             maxindex, maxlag, maxval, acwidth, maskval, peakstart, peakend, failreason = \
-                tide_simfuncfit.onesimfuncfitx(thexcorr,
+                tide_simfuncfit.onesimfuncfit(thexcorr,
                                          thefitter,
                                          despeckle_thresh=optiondict['despeckle_thresh'],
                                          lthreshval=optiondict['lthreshval'],
@@ -1129,11 +1129,6 @@ def rapidtide_main(argparsingfunc):
                                                                    chunksize=optiondict['mp_chunksize'],
                                                                    rt_floatset=rt_floatset,
                                                                    rt_floattype=rt_floattype)
-            '''print('trimmedcorrscale - start, stop, step, len:',
-                  trimmedcorrscale[0],
-                  trimmedcorrscale[-1],
-                  trimmedcorrscale[1] - trimmedcorrscale[0],
-                  len(trimmedcorrscale))'''
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
@@ -1153,9 +1148,13 @@ def rapidtide_main(argparsingfunc):
 
         timings.append([similaritytype +' calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
-        # Step 1.5.  Do a peak prefit
+        # Step 1b.  Do a peak prefit
+        peakevalpass_func = addmemprofiling(tide_peakeval.peakevalpass,
+                                                    optiondict['memprofile'],
+                                                    memfile,
+                                                    'before peakevalpass')
         if optiondict['similaritymetric'] == 'hybrid':
-            voxelsprocessed_pe, thepeakdict = tide_peakeval.peakevalpass(
+            voxelsprocessed_pe, thepeakdict = peakevalpass_func(
                 fmri_data_valid[:, :],
                 cleaned_referencetc,
                 initial_fmri_x,
@@ -1178,7 +1177,7 @@ def rapidtide_main(argparsingfunc):
         # Step 2 - similarity function fitting and time lag estimation
         print('\n\nTime lag estimation pass ' + str(thepass))
         timings.append(['Time lag estimation start, pass ' + str(thepass), time.time(), None, None])
-        fitcorr_func = addmemprofiling(tide_simfuncfit.fitcorrx,
+        fitcorr_func = addmemprofiling(tide_simfuncfit.fitcorr,
                                        optiondict['memprofile'],
                                        memfile,
                                        'before fitcorr')
