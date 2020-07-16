@@ -82,27 +82,30 @@ def onesimfuncfit(correlationfunc,
     return maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason
 
 
-def _procOneVoxelFitcorr(vox,
-                          corr_y,
-                          lagtcgenerator,
-                          timeaxis,
-                          thefitter,
-                          disablethresholds=False,
-                          despeckle_thresh=5.0,
-                          initiallag=None,
-                          fixdelay=False,
-                          fixeddelayvalue=0.0,
-                          rt_floatset=np.float64,
-                          rt_floattype='float64'):
-    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = onesimfuncfit(corr_y,
-                                                                                              thefitter,
-                                                                                              disablethresholds=disablethresholds,
-                                                                                              despeckle_thresh=despeckle_thresh,
-                                                                                              fixdelay=fixdelay,
-                                                                                              fixeddelayvalue=fixeddelayvalue,
-                                                                                              initiallag=initiallag,
-                                                                                              rt_floatset=rt_floatset,
-                                                                                              rt_floattype=rt_floattype)
+def _procOneVoxelFitcorr(
+        vox,
+        corr_y,
+        lagtcgenerator,
+        timeaxis,
+        thefitter,
+        disablethresholds=False,
+        despeckle_thresh=5.0,
+        initiallag=None,
+        fixdelay=False,
+        fixeddelayvalue=0.0,
+        rt_floatset=np.float64,
+        rt_floattype='float64'):
+
+    maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason = onesimfuncfit(
+        corr_y,
+        thefitter,
+        disablethresholds=disablethresholds,
+        despeckle_thresh=despeckle_thresh,
+        fixdelay=fixdelay,
+        fixeddelayvalue=fixeddelayvalue,
+        initiallag=initiallag,
+        rt_floatset=rt_floatset,
+        rt_floattype=rt_floattype)
 
     if maxval > 0.3:
         displayplots = False
