@@ -1170,6 +1170,10 @@ def rapidtide_main(argparsingfunc):
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype)
             timings.append(['Peak prefit end, pass ' + str(thepass), time.time(), voxelsprocessed_pe, 'voxels'])
+            mipeaks = lagtimes * 0.0
+            for i in range(numvalidspatiallocs):
+                if len(thepeakdict[str(i)]) > 0:
+                    mipeaks[i] = thepeakdict[str(i)][0][0]
         else:
             thepeakdict = None
 
@@ -1217,9 +1221,16 @@ def rapidtide_main(argparsingfunc):
                 outmaparray *= 0.0
                 outmaparray[validvoxels] = eval('lagtimes')[:]
                 medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape(numspatiallocs)
-                initlags = \
-                    np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, -1000000.0)[
-                        validvoxels]
+                if optiondict['similaritymetric'] == 'hybrid' and thepeakdict is not None:
+                    initlags = \
+                        np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'],
+                                 mipeaks,
+                                 -1000000.0)[validvoxels]
+                else:
+                    initlags = \
+                        np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'],
+                                 medianlags,
+                                 -1000000.0)[validvoxels]
                 if len(initlags) > 0:
                     if len(np.where(initlags != -1000000.0)[0]) > 0:
                         voxelsprocessed_fc_ds += fitcorr_func(genlagtc,
