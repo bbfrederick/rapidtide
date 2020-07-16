@@ -21,14 +21,14 @@
 #
 from __future__ import print_function, division
 
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
 
 import numpy as np
 import scipy as sp
 import scipy.special as sps
 import warnings
 
-from scipy.signal import hilbert
+from scipy.signal import hilbert, find_peaks
 
 import rapidtide.util as tide_util
 
@@ -808,12 +808,12 @@ def findmaxlag_gauss(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         print("init to final: maxval", maxval_init, maxval, ", maxlag:", maxlag_init, maxlag, ", width:", maxsigma_init,
               maxsigma)
     if displayplots and refine and (maskval != 0.0):
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title('Data and fit')
         hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
-        pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
-        pl.show()
+        plt.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
+        plt.show()
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend
 
 
@@ -1099,12 +1099,12 @@ def findmaxlag_gauss_rev(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         print("init to final: maxval", maxval_init, maxval, ", maxlag:", maxlag_init, maxlag, ", width:", maxsigma_init,
               maxsigma)
     if displayplots and refine and (maskval != 0.0):
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title('Data and fit')
         hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
-        pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
-        pl.show()
+        plt.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
+        plt.show()
     return maxindex, maxlag, flipfac * maxval, maxsigma, maskval, failreason, peakstart, peakend
 
 
@@ -1240,12 +1240,12 @@ def findmaxlag_quad(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
         print("init to final: maxval", maxval_init, maxval, ", maxlag:", maxlag_init, maxlag, ", width:", maxsigma_init,
               maxsigma)
     if displayplots and refine and (maskval != 0.0):
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title('Data and fit')
         hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
-        pl.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
-        pl.show()
+        plt.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
+        plt.show()
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason, 0, 0
 
 
@@ -1379,6 +1379,40 @@ def mlregress(x, y, intercept=True):
 # You can redistribute it and/or modify it under the terms of the Do What The
 # Fuck You Want To Public License, Version 2, as published by Sam Hocevar. See
 # http://www.wtfpl.net/ for more details.
+def getpeaks(xvals, yvals, xrange=None, sort=False, display=False):
+    peaks, dummy = find_peaks(yvals, height=0)
+    procpeaks = []
+    if xrange is None:
+        lagmin = xvals[0]
+        lagmax = xvals[-1]
+    else:
+        lagmin = xrange[0]
+        lagmax = xrange[1]
+    originloc = tide_util.valtoindex(xvals, 0.0, discrete=False)
+    for thepeak in peaks:
+        if lagmin <= xvals[thepeak] <= lagmax:
+            procpeaks.append([xvals[thepeak], yvals[thepeak],
+                             tide_util.valtoindex(xvals, xvals[thepeak], discrete=False) - originloc])
+    if display:
+        print('procpeaks:', procpeaks)
+        plotx = []
+        ploty = []
+        offset = []
+        for thepeak in procpeaks:
+            plotx.append(thepeak[0])
+            ploty.append(thepeak[1])
+            offset.append(thepeak[2])
+        print('plotx:', plotx)
+        print('ploty:', ploty)
+        print('offset:', offset)
+        plt.plot(xvals, yvals)
+        plt.plot(plotx, ploty, "x")
+        plt.plot(xvals, np.zeros_like(yvals), "--", color="gray")
+        plt.show()
+    if sort:
+        procpeaks.sort(key=lambda x: x[1], reverse=True)
+    return procpeaks
+
 
 def parabfit(x_axis, y_axis, peakloc, peaksize):
     """
@@ -1564,18 +1598,18 @@ def phaseanalysis(firstharmonic, displayplots=False):
     instantaneous_phase = np.angle(analytic_signal)
     if displayplots:
         print('making plots')
-        fig = pl.figure()
+        fig = plt.figure()
         ax1 = fig.add_subplot(311)
         ax1.set_title('Analytic signal')
         X = np.linspace(0.0, 1.0, num=len(firstharmonic))
-        pl.plot(X, analytic_signal.real, 'k', X, analytic_signal.imag, 'r')
+        plt.plot(X, analytic_signal.real, 'k', X, analytic_signal.imag, 'r')
         ax2 = fig.add_subplot(312)
         ax2.set_title('Phase')
-        pl.plot(X, instantaneous_phase, 'g')
+        plt.plot(X, instantaneous_phase, 'g')
         ax3 = fig.add_subplot(313)
         ax3.set_title('Amplitude')
-        pl.plot(X, amplitude_envelope, 'b')
-        pl.show()
-        pl.savefig('phaseanalysistest.jpg')
+        plt.plot(X, amplitude_envelope, 'b')
+        plt.show()
+        plt.savefig('phaseanalysistest.jpg')
     instantaneous_phase = np.unwrap(instantaneous_phase)
     return instantaneous_phase, amplitude_envelope
