@@ -367,6 +367,7 @@ def mutual_information_2d(x, y, sigma=1, bins=(256, 256), fast=False, normalized
 def cross_MI(x, y,
              returnaxis=False,
              negsteps=-1, possteps=-1,
+             locs=None,
              Fs=1.0,
              norm=True,
              madnorm=False,
@@ -401,26 +402,36 @@ def cross_MI(x, y,
         possteps = len(normx) - 1
     else:
         possteps = possteps
-    thexmi_y = np.zeros((-negsteps + possteps + 1))
-    if debug:
-        print('negsteps, possteps, len(thexmi_y)', negsteps, possteps, len(thexmi_y))
-    for i in range(negsteps, possteps + 1):
+    if locs is None:
+        thexmi_y = np.zeros((-negsteps + possteps + 1))
+        if debug:
+            print('negsteps, possteps, len(thexmi_y)', negsteps, possteps, len(thexmi_y))
+        irange = range(negsteps, possteps + 1)
+    else:
+        thexmi_y = np.zeros((len(locs)), dtype=np.float)
+        irange = np.asarray(locs)
+    destloc = -1
+    for i in irange:
+        if locs is None:
+            destloc = i - negsteps
+        else:
+            destloc += 1
         if i < 0:
-            thexmi_y[i - negsteps] = mutual_information_2d(normx[:i + len(normy)], normy[-i:],
+            thexmi_y[destloc] = mutual_information_2d(normx[:i + len(normy)], normy[-i:],
                                                              bins=bins2d,
                                                              normalized=norm,
                                                              fast=fast,
                                                              sigma=sigma,
                                                              debug=debug)
         elif i == 0:
-            thexmi_y[i - negsteps] = mutual_information_2d(normx, normy,
+            thexmi_y[destloc] = mutual_information_2d(normx, normy,
                                                              bins=bins2d,
                                                              normalized=norm,
                                                              fast=fast,
                                                              sigma=sigma,
                                                              debug=debug)
         else:
-            thexmi_y[i - negsteps] = mutual_information_2d(normx[i:], normy[:len(normy) - i],
+            thexmi_y[destloc] = mutual_information_2d(normx[i:], normy[:len(normy) - i],
                                                              bins=bins2d,
                                                              normalized=norm,
                                                              fast=fast,
@@ -431,10 +442,13 @@ def cross_MI(x, y,
         thexmi_y = tide_math.madnormalize(thexmi_y)
 
     if returnaxis:
-        thexmi_x = sp.linspace(0.0, len(thexmi_y) / Fs, num=len(thexmi_y), endpoint=False) \
-                     + negsteps / Fs
-
-        return thexmi_x, thexmi_y, negsteps + 1
+        if locs is None:
+            thexmi_x = sp.linspace(0.0, len(thexmi_y) / Fs, num=len(thexmi_y), endpoint=False) \
+                         + negsteps / Fs
+            return thexmi_x, thexmi_y, negsteps + 1
+        else:
+            thexmi_x = irange
+            return thexmi_x, thexmi_y, len(thexmi_x)
     else:
         return thexmi_y
 
