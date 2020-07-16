@@ -261,7 +261,7 @@ class mutualinformationator(similarityfunctionator):
             print('mutualinformationator setreftc:', self.timeaxis)
 
 
-    def run(self, thetc, locs=None, trim=True, gettimeaxis=False):
+    def run(self, thetc, locs=None, trim=True, gettimeaxis=True):
         if len(thetc) != len(self.reftc):
             print('timecourses are of different sizes:', len(thetc), '!=', len(self.reftc), '- exiting')
             sys.exit()
