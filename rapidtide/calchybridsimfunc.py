@@ -37,7 +37,6 @@ import rapidtide.util as tide_util
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-
 def _procOneVoxelCorrelation(vox,
                              thetc,
                              thecorrelator,

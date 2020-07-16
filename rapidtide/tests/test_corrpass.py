@@ -170,7 +170,6 @@ def test_calcsimfunc(debug=False, display=False):
                                                    thecorrelator,
                                                    init_fmri_x,
                                                    os_fmri_x,
-                                                   corrzero,
                                                    lagmininpts,
                                                    lagmaxinpts,
                                                    corrout,
