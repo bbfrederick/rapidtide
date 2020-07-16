@@ -302,7 +302,7 @@ def startendcheck(timepoints, startpoint, endpoint):
 
 
 
-def valtoindex(thearray, thevalue, evenspacing=True):
+def valtoindex(thearray, thevalue, evenspacing=True, discrete=True):
     """
 
     Parameters
@@ -322,7 +322,10 @@ def valtoindex(thearray, thevalue, evenspacing=True):
     """
     if evenspacing:
         limval = np.max([thearray[0], np.min([thearray[-1], thevalue])])
-        return int(np.round((limval - thearray[0]) / (thearray[1] - thearray[0]), 0))
+        if discrete:
+            return int(np.round((limval - thearray[0]) / (thearray[1] - thearray[0]), 0))
+        else:
+            return (limval - thearray[0]) / (thearray[1] - thearray[0])
     else:
         return int((np.abs(thearray - thevalue)).argmin())
 
