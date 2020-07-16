@@ -32,6 +32,7 @@ import numpy as np
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
+import rapidtide.fit as tide_fit
 
 # this is here until numpy deals with their fft issue
 import warnings
@@ -45,9 +46,8 @@ def _procOneVoxelPeaks(vox,
                        os_fmri_x,
                        xcorr_x,
                        thexcorr,
-                       lagmin,
-                       lagmax,
                        oversampfactor=1,
+                       sort=True,
                        interptype='univariate'
                        ):
 
@@ -55,7 +55,7 @@ def _procOneVoxelPeaks(vox,
         thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
     else:
         thetc[:] = fmritc
-    thepeaks = tide_fit.getpeaks(xcorr_x, thexcorr, xrange=(lagmin, lagmax), display=True)
+    thepeaks = tide_fit.getpeaks(xcorr_x, thexcorr, display=False)
     peaklocs = []
     for thepeak in thepeaks:
         peaklocs.append(int(round(thepeak[2], 0)))
@@ -63,19 +63,18 @@ def _procOneVoxelPeaks(vox,
     hybridpeaks = []
     for i in range(len(thepeaks)):
         hybridpeaks.append([thepeaks[i][0], thepeaks[i][1], theMI_list[i]])
+    if sort:
+        hybridpeaks.sort(key=lambda x: x[2], reverse=True)
     return vox, hybridpeaks
 
 
 def peakevalpass(
         fmridata,
+        corrdata,
         referencetc,
         themutualinformationator,
         fmri_x,
         os_fmri_x,
-        lagmininpts,
-        lagmaxinpts,
-        corrout,
-        meanval,
         nprocs=1,
         oversampfactor=1,
         interptype='univariate',
@@ -91,8 +90,6 @@ def peakevalpass(
     fmri_x
     os_fmri_x
     tr
-    lagmininpts
-    lagmaxinpts
     corrout
     meanval
     nprocs
@@ -107,8 +104,9 @@ def peakevalpass(
     -------
 
     """
+    peakdict = {}
     themutualinformationator.setreftc(referencetc)
-    themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
+    #themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
 
     inputshape = np.shape(fmridata)
     volumetotal = 0
@@ -136,9 +134,7 @@ def peakevalpass(
                         fmridata[val, :],
                         os_fmri_x,
                         xcorr_x,
-                        thexcorr,
-                        lagmin,
-                        lagmax,
+                        corrdata[val, :],
                         oversampfactor=oversampfactor,
                         interptype=interptype)
                     )
@@ -157,17 +153,14 @@ def peakevalpass(
         # unpack the data
         volumetotal = 0
         for voxel in data_out:
-            meanval[voxel[0]] = voxel[1]
-            corrout[voxel[0], :] = voxel[2]
-            thecorrscale = voxel[3]
-            theglobalmaxlist.append(voxel[4] + 0)
+            peakdict[str(voxel[0])] = voxel[1]
             volumetotal += 1
         del data_out
     else:
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and showprogressbar:
                 tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            dummy, thepeaks = \
+            dummy, peakdict[str(vox)] = \
                 _procOneVoxelPeaks(
                     vox,
                     thetc,
@@ -177,8 +170,6 @@ def peakevalpass(
                     os_fmri_x,
                     xcorr_x,
                     thexcorr,
-                    lagmin,
-                    lagmax,
                     oversampfactor=oversampfactor,
                     interptype=interptype)
             theglobalmaxlist.append(theglobalmax + 0)
