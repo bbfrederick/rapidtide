@@ -70,16 +70,19 @@ def _procOneVoxelPeaks(vox,
 
 def peakevalpass(
         fmridata,
-        corrdata,
         referencetc,
-        themutualinformationator,
         fmri_x,
         os_fmri_x,
+        themutualinformationator,
+        xcorr_x,
+        corrdata,
         nprocs=1,
         oversampfactor=1,
         interptype='univariate',
         showprogressbar=True,
-        chunksize=1000):
+        chunksize=1000,
+        rt_floatset=np.float64,
+        rt_floattype='float64'):
     """
 
     Parameters
@@ -180,4 +183,4 @@ def peakevalpass(
     collected = gc.collect()
     print("Garbage collector: collected %d objects." % collected)
 
-    return volumetotal, theglobalmaxlist, thecorrscale
+    return volumetotal, peakdict
