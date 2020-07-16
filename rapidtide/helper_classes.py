@@ -25,7 +25,6 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 import scipy as sp
-from scipy.signal import find_peaks
 import warnings
 import sys
 
@@ -262,7 +261,7 @@ class mutualinformationator(similarityfunctionator):
             print('mutualinformationator setreftc:', self.timeaxis)
 
 
-    def run(self, thetc, trim=True, gettimeaxis=False):
+    def run(self, thetc, locs=None, trim=True, gettimeaxis=False):
         if len(thetc) != len(self.reftc):
             print('timecourses are of different sizes:', len(thetc), '!=', len(self.reftc), '- exiting')
             sys.exit()
@@ -270,44 +269,41 @@ class mutualinformationator(similarityfunctionator):
         self.testtc = thetc
         self.preptesttc = self.preptc(self.testtc)
 
+        if locs is not None:
+            gettimeaxis = True
+
         # now calculate the similarity function
+        if trim:
+            retvals = tide_corr.cross_MI(self.preptesttc,
+                                         self.prepreftc,
+                                         negsteps=self.lagmininpts,
+                                         possteps=self.lagmaxinpts,
+                                         locs=locs,
+                                         madnorm=self.madnorm,
+                                         returnaxis=gettimeaxis,
+                                         fast=True,
+                                         Fs=self.Fs,
+                                         sigma=self.sigma, bins=self.bins)
+        else:
+            retvals = tide_corr.cross_MI(self.preptesttc,
+                                         self.prepreftc,
+                                         negsteps=-1,
+                                         possteps=-1,
+                                         locs=locs,
+                                         madnorm=self.madnorm,
+                                         returnaxis=gettimeaxis,
+                                         fast=True,
+                                         Fs=self.Fs,
+                                         sigma=self.sigma, bins=self.bins)
         if gettimeaxis:
-            if trim:
-                self.timeaxis, self.thesimfunc, self.similarityfuncorigin = tide_corr.cross_MI(self.preptesttc, self.prepreftc,
-                                                                                             negsteps=self.lagmininpts,
-                                                                                             possteps=self.lagmaxinpts,
-                                                                                             madnorm=self.madnorm,
-                                                                                             returnaxis=True,
-                                                                                             fast=True,
-                                                                                             Fs=self.Fs,
-                                                                                             sigma=self.sigma, bins=self.bins)
-            else:
-                self.timeaxis, self.thesimfunc, self.similarityfuncorigin = tide_corr.cross_MI(self.preptesttc, self.prepreftc,
-                                                                                            negsteps=-1,
-                                                                                            possteps=-1,
-                                                                                            madnorm=self.madnorm,
-                                                                                            returnaxis=True,
-                                                                                            fast=True,
-                                                                                            Fs=self.Fs,
-                                                                                            sigma=self.sigma, bins=self.bins)
+            self.timeaxis, self.thesimfunc, self.similarityfuncorigin = retvals[0], retvals[1], retvals[2]
             self.timeaxisvalid = True
         else:
-            if trim:
-                self.thesimfunc = tide_corr.cross_MI(self.preptesttc, self.prepreftc,
-                                                     negsteps=self.lagmininpts,
-                                                     possteps=self.lagmaxinpts,
-                                                     madnorm=self.madnorm,
-                                                     fast=True,
-                                                     Fs=self.Fs,
-                                                     sigma=self.sigma, bins=self.bins)
-            else:
-                self.thesimfunc = tide_corr.cross_MI(self.preptesttc, self.prepreftc,
-                                                        negsteps=-1,
-                                                        possteps=-1,
-                                                        madnorm=self.madnorm,
-                                                        fast=True,
-                                                        Fs=self.Fs,
-                                                        sigma=self.sigma, bins=self.bins)
+            self.thesimfunc = retvals[0]
+
+        if locs is not None:
+            return self.thesimfunc
+
         if self.smoothingtime > 0.0:
             self.thesimfunc = self.smoothingfilter.apply(self.Fs, self.thesimfunc)
 
@@ -592,20 +588,6 @@ class simfunc_fitter:
             return ', '.join(reasons)
         else:
             return 'No error'
-
-
-    def getpeaks(self, corrfunc, display=False):
-        peaks, dummy = find_peaks(corrfunc, height=0)
-        procpeaks = []
-        for thepeak in peaks:
-            procpeaks.append([self.corrtimeaxis[thepeak], corrfunc[thepeak]])
-        procpeaks.sort(key=lambda x: x[1], reverse=True)
-        if display:
-            plt.plot(corrfunc)
-            plt.plot(peaks, corrfunc[peaks], "x")
-            plt.plot(np.zeros_like(corrfunc), "--", color="gray")
-            plt.show()
-        return procpeaks
 
 
     def fit(self, corrfunc):
