@@ -31,7 +31,7 @@ import argparse
 import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
+import rapidtide.peakeval as tide_peakeval
 import rapidtide.fit as tide_fit
 import rapidtide.correlate as tide_corr
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
@@ -468,17 +468,25 @@ def main():
     if args.debug:
         print('\n\nmaxdelay before refinement', maxdelay)
 
-    thepeaks = tide_fit.getpeaks(xcorr_x, thexcorr, xrange=(args.lagmin, args.lagmax), display=True)
-    peaklocs = []
-    for thepeak in thepeaks:
-        peaklocs.append(int(round(thepeak[2], 0)))
-    theMI_list = themutualinformationator.run(trimdata1, locs=peaklocs)
-    print('mutual info list:', theMI_list)
-    for i in range(len(thepeaks)):
-        print('\t', thepeaks[i][0], thepeaks[i][1], theMI_list[i])
+    timeaxis = np.linspace(0, 1.0, num=len(trimdata1), endpoint=False) / Fs
+    thetc = trimdata1 * 0.0
+    dummy, thepeaks = tide_peakeval._procOneVoxelPeaks(
+                       0,
+                       thetc,
+                       themutualinformationator,
+                       timeaxis,
+                       trimdata1,
+                       timeaxis,
+                       xcorr_x,
+                       thexcorr,
+                       oversampfactor=1
+                       )
 
-    for idx, thispeak in enumerate(thepeaks):
-        print('\tpeak', idx, thispeak[0], thispeak[1])
+    print('peaklist:')
+    print('peak\tloc\tR\tMI')
+    for i in range(len(thepeaks)):
+        print('{0:2d}\t{1:3.2f}\t{2:3.2f}\t{3:3.2f}'.format(i, thepeaks[i][0], thepeaks[i][1], thepeaks[i][2]))
+
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thexsimfuncfitter.fit(thexcorr)
     if failreason > 0:
         print('showxcorrx: FIT FAILED with reason:')
