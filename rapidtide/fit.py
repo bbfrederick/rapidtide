@@ -1379,7 +1379,7 @@ def mlregress(x, y, intercept=True):
 # You can redistribute it and/or modify it under the terms of the Do What The
 # Fuck You Want To Public License, Version 2, as published by Sam Hocevar. See
 # http://www.wtfpl.net/ for more details.
-def getpeaks(xvals, yvals, xrange=None, sort=False, display=False):
+def getpeaks(xvals, yvals, xrange=None, display=False):
     peaks, dummy = find_peaks(yvals, height=0)
     procpeaks = []
     if xrange is None:
@@ -1394,7 +1394,6 @@ def getpeaks(xvals, yvals, xrange=None, sort=False, display=False):
             procpeaks.append([xvals[thepeak], yvals[thepeak],
                              tide_util.valtoindex(xvals, xvals[thepeak], discrete=False) - originloc])
     if display:
-        print('procpeaks:', procpeaks)
         plotx = []
         ploty = []
         offset = []
@@ -1402,15 +1401,10 @@ def getpeaks(xvals, yvals, xrange=None, sort=False, display=False):
             plotx.append(thepeak[0])
             ploty.append(thepeak[1])
             offset.append(thepeak[2])
-        print('plotx:', plotx)
-        print('ploty:', ploty)
-        print('offset:', offset)
         plt.plot(xvals, yvals)
         plt.plot(plotx, ploty, "x")
         plt.plot(xvals, np.zeros_like(yvals), "--", color="gray")
         plt.show()
-    if sort:
-        procpeaks.sort(key=lambda x: x[1], reverse=True)
     return procpeaks
 
 
