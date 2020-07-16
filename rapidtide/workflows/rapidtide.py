@@ -49,6 +49,7 @@ import rapidtide.util as tide_util
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.simfuncfit as tide_simfuncfit
+import rapidtide.peakeval as tide_peakeval
 import rapidtide.refine as tide_refine
 import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
@@ -1128,12 +1129,11 @@ def rapidtide_main(argparsingfunc):
                                                                    chunksize=optiondict['mp_chunksize'],
                                                                    rt_floatset=rt_floatset,
                                                                    rt_floattype=rt_floattype)
-            print('trimmedcorrscale - start, stop, step, len:',
+            '''print('trimmedcorrscale - start, stop, step, len:',
                   trimmedcorrscale[0],
                   trimmedcorrscale[-1],
                   trimmedcorrscale[1] - trimmedcorrscale[0],
-                  len(trimmedcorrscale))
-
+                  len(trimmedcorrscale))'''
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
@@ -1153,6 +1153,28 @@ def rapidtide_main(argparsingfunc):
 
         timings.append([similaritytype +' calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
+        # Step 1.5.  Do a peak prefit
+        if optiondict['similaritymetric'] == 'hybrid':
+            voxelsprocessed_pe, thepeakdict = tide_peakeval.peakevalpass(
+                fmri_data_valid[:, :],
+                cleaned_referencetc,
+                initial_fmri_x,
+                os_fmri_x,
+                themutualinformationator,
+                trimmedcorrscale,
+                corrout,
+                nprocs=optiondict['nprocs'],
+                oversampfactor=optiondict['oversampfactor'],
+                interptype=optiondict['interptype'],
+                showprogressbar=optiondict['showprogressbar'],
+                chunksize=optiondict['mp_chunksize'],
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype)
+            timings.append(['Peak prefit end, pass ' + str(thepass), time.time(), voxelsprocessed_pe, 'voxels'])
+        else:
+            thepeakdict = None
+
+
         # Step 2 - similarity function fitting and time lag estimation
         print('\n\nTime lag estimation pass ' + str(thepass))
         timings.append(['Time lag estimation start, pass ' + str(thepass), time.time(), None, None])
@@ -1170,6 +1192,7 @@ def rapidtide_main(argparsingfunc):
                                           corrout,
                                           lagmask, failimage, lagtimes, lagstrengths, lagsigma,
                                           gaussout, windowout, R2,
+                                          peakdict=thepeakdict,
                                           nprocs=optiondict['nprocs'],
                                           fixdelay=optiondict['fixdelay'],
                                           showprogressbar=optiondict['showprogressbar'],
@@ -1208,6 +1231,7 @@ def rapidtide_main(argparsingfunc):
                                                               corrout,
                                                               lagmask, failimage, lagtimes, lagstrengths, lagsigma,
                                                               gaussout, windowout, R2,
+                                                              peakdict=thepeakdict,
                                                               nprocs=optiondict['nprocs'],
                                                               fixdelay=optiondict['fixdelay'],
                                                               showprogressbar=optiondict['showprogressbar'],
