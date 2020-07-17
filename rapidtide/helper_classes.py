@@ -632,7 +632,7 @@ class simfunc_fitter:
             print('maxindex, maxlag_init, maxval_init:', maxindex, maxlag_init, maxval_init)
 
         # set the baseline and baselinedev levels
-        if self.functype == 'correlation':
+        if (self.functype == 'correlation') or (self.functype == 'hybrid'):
             baseline = 0.0
             baselinedev = 0.0
         else:
@@ -648,7 +648,7 @@ class simfunc_fitter:
             peakend = maxindex + 1
         else:
             thegrad = np.gradient(corrfunc).astype('float64')  # the gradient of the correlation function
-            if self.functype == 'correlation':
+            if (self.functype == 'correlation') or (self.functype == 'hybrid'):
                 if self.peakfittype == 'quad':
                     peakpoints = np.where(corrfunc > maxval_init - 0.05, 1,
                                       0)  # mask for places where correlation exceeds searchfrac*maxval_init
@@ -727,7 +727,7 @@ class simfunc_fitter:
                     ((2 + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac)))) / np.sqrt(2.0))
                 if self.debug:
                     print('bad initial width - too low')
-            if self.functype == 'correlation':
+            if (self.functype == 'correlation') or (self.functype == 'hybrid'):
                 if not (self.lthreshval <= maxval_init <= self.uthreshval) and self.enforcethresh:
                     failreason |= self.FML_INITAMPLOW
                     if self.debug:
@@ -834,7 +834,7 @@ class simfunc_fitter:
                 lowestcorrcoeff = -1.0
             else:
                 lowestcorrcoeff = 0.0
-            if self.functype == 'correlation':
+            if (self.functype == 'correlation') or (self.functype == 'hybrid'):
                 if maxval < lowestcorrcoeff:
                     failreason |= self.FML_FITAMPLOW
                     maxval = lowestcorrcoeff

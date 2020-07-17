@@ -1085,8 +1085,10 @@ def rapidtide_main(argparsingfunc):
         # Step 1 - Correlation step
         if optiondict['similaritymetric'] == 'mutualinfo':
             similaritytype = 'Mutual information'
-        else:
+        elif optiondict['similaritymetric'] == 'correlation':
             similaritytype = 'Correlation'
+        else:
+            similaritytype = 'Hybrid'
         print('\n\n' + similaritytype + ' calculation, pass ' + str(thepass))
         timings.append([similaritytype +' calculation start, pass ' + str(thepass), time.time(), None, None])
         calcsimilaritypass_func = addmemprofiling(tide_calcsimfunc.correlationpass,
@@ -1148,12 +1150,16 @@ def rapidtide_main(argparsingfunc):
 
         timings.append([similaritytype +' calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
 
+
         # Step 1b.  Do a peak prefit
-        peakevalpass_func = addmemprofiling(tide_peakeval.peakevalpass,
+        if optiondict['similaritymetric'] == 'hybrid':
+            print('\n\n Peak prefit calculation, pass ' + str(thepass))
+            timings.append(['Peak prefit calculation start, pass ' + str(thepass), time.time(), None, None])
+            peakevalpass_func = addmemprofiling(tide_peakeval.peakevalpass,
                                                     optiondict['memprofile'],
                                                     memfile,
                                                     'before peakevalpass')
-        if optiondict['similaritymetric'] == 'hybrid':
+
             voxelsprocessed_pe, thepeakdict = peakevalpass_func(
                 fmri_data_valid[:, :],
                 cleaned_referencetc,
@@ -1169,6 +1175,7 @@ def rapidtide_main(argparsingfunc):
                 chunksize=optiondict['mp_chunksize'],
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype)
+
             timings.append(['Peak prefit end, pass ' + str(thepass), time.time(), voxelsprocessed_pe, 'voxels'])
             mipeaks = lagtimes * 0.0
             for i in range(numvalidspatiallocs):
@@ -1187,6 +1194,13 @@ def rapidtide_main(argparsingfunc):
                                        'before fitcorr')
         thefitter.setfunctype(optiondict['similaritymetric'])
         thefitter.setcorrtimeaxis(trimmedcorrscale)
+
+        # use initial lags if this is a hybrid fit
+        if optiondict['similaritymetric'] == 'hybrid' and thepeakdict is not None:
+            initlags = mipeaks
+        else:
+            initlags = None
+
         voxelsprocessed_fc = fitcorr_func(genlagtc,
                                           initial_fmri_x,
                                           lagtc,
@@ -1201,6 +1215,7 @@ def rapidtide_main(argparsingfunc):
                                           showprogressbar=optiondict['showprogressbar'],
                                           chunksize=optiondict['mp_chunksize'],
                                           despeckle_thresh=optiondict['despeckle_thresh'],
+                                          initiallags=initlags,
                                           rt_floatset=rt_floatset,
                                           rt_floattype=rt_floattype
                                           )
@@ -1221,16 +1236,10 @@ def rapidtide_main(argparsingfunc):
                 outmaparray *= 0.0
                 outmaparray[validvoxels] = eval('lagtimes')[:]
                 medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape(numspatiallocs)
-                if optiondict['similaritymetric'] == 'hybrid' and thepeakdict is not None:
-                    initlags = \
-                        np.where(np.abs(outmaparray - medianlags)[validvoxels] > optiondict['despeckle_thresh'],
-                                 mipeaks,
-                                 -1000000.0)
-                else:
-                    initlags = \
-                        np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'],
-                                 medianlags,
-                                 -1000000.0)[validvoxels]
+                initlags = \
+                    np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'],
+                             medianlags,
+                             -1000000.0)[validvoxels]
                 if len(initlags) > 0:
                     if len(np.where(initlags != -1000000.0)[0]) > 0:
                         voxelsprocessed_fc_ds += fitcorr_func(genlagtc,
