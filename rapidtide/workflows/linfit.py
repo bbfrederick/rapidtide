@@ -31,22 +31,6 @@ import rapidtide.io as tide_io
 import numpy as np
 
 
-def usage():
-    print("usage: linfit datafile datamask templatefile templatmask outputroot [--regionatlas=ATLASFILE]")
-    print("")
-    print("required arguments:")
-    print("	datafile                  - the name of the 3D or 4D nifti file to fit")
-    print("	datamask                  - the name of the 3D or 4D nifti file valid voxel mask (must match datafile)")
-    print("	templatefile              - the name of the 3D nifti template file")
-    print("	templatemask              - the name of the 3D nifti template mask")
-    print("	outputroot                - the root name of the output nifti files")
-    print("")
-    print("optional arguments:")
-    print("	--regionatlas=ATLASFILE   - do individual fits to every region in ATLASFILE")
-    print("	--order=ORDER             - perform fit to ORDERth order (default (and minimum) is 1)")
-    print("")
-    return ()
-
 def _get_parser():
     """
     Argument parser for linfit
