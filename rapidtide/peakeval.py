@@ -169,13 +169,12 @@ def peakevalpass(
                     thetc,
                     themutualinformationator,
                     fmri_x,
-                    fmridata[val, :],
+                    fmridata[vox, :],
                     os_fmri_x,
                     xcorr_x,
-                    thexcorr,
+                    corrdata[vox, :],
                     oversampfactor=oversampfactor,
                     interptype=interptype)
-            theglobalmaxlist.append(theglobalmax + 0)
             volumetotal += 1
     print('\nPeak evaluation performed on ' + str(volumetotal) + ' voxels')
 
