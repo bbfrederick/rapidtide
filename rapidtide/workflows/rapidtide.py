@@ -1223,9 +1223,9 @@ def rapidtide_main(argparsingfunc):
                 medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape(numspatiallocs)
                 if optiondict['similaritymetric'] == 'hybrid' and thepeakdict is not None:
                     initlags = \
-                        np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'],
+                        np.where(np.abs(outmaparray - medianlags)[validvoxels] > optiondict['despeckle_thresh'],
                                  mipeaks,
-                                 -1000000.0)[validvoxels]
+                                 -1000000.0)
                 else:
                     initlags = \
                         np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'],
