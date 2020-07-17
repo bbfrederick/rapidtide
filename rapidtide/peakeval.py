@@ -46,6 +46,7 @@ def _procOneVoxelPeaks(vox,
                        os_fmri_x,
                        xcorr_x,
                        thexcorr,
+                       bipolar=False,
                        oversampfactor=1,
                        sort=True,
                        interptype='univariate'
@@ -55,7 +56,7 @@ def _procOneVoxelPeaks(vox,
         thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
     else:
         thetc[:] = fmritc
-    thepeaks = tide_fit.getpeaks(xcorr_x, thexcorr, display=False)
+    thepeaks = tide_fit.getpeaks(xcorr_x, thexcorr, bipolar=bipolar, display=False)
     peaklocs = []
     for thepeak in thepeaks:
         peaklocs.append(int(round(thepeak[2], 0)))
@@ -77,6 +78,7 @@ def peakevalpass(
         xcorr_x,
         corrdata,
         nprocs=1,
+        bipolar=False,
         oversampfactor=1,
         interptype='univariate',
         showprogressbar=True,
@@ -138,6 +140,7 @@ def peakevalpass(
                         os_fmri_x,
                         xcorr_x,
                         corrdata[val, :],
+                        bipolar=bipolar,
                         oversampfactor=oversampfactor,
                         interptype=interptype)
                     )
@@ -173,6 +176,7 @@ def peakevalpass(
                     os_fmri_x,
                     xcorr_x,
                     corrdata[vox, :],
+                    bipolar=bipolar,
                     oversampfactor=oversampfactor,
                     interptype=interptype)
             volumetotal += 1

@@ -1169,6 +1169,7 @@ def rapidtide_main(argparsingfunc):
                 trimmedcorrscale,
                 corrout,
                 nprocs=optiondict['nprocs'],
+                bipolar=optiondict['bipolar'],
                 oversampfactor=optiondict['oversampfactor'],
                 interptype=optiondict['interptype'],
                 showprogressbar=optiondict['showprogressbar'],
