@@ -389,7 +389,7 @@ def updateSimilarityFunc():
         simfuncCurve.setData(timeaxis, corrvals)
         #simfuncfitCurve.setData(timeaxis, fitvals)
         if overlays['corrout'].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos] > 0:
-            if currentdataset.similaritymetric == 'correlation':
+            if (currentdataset.similaritymetric == 'correlation') or (currentdataset.similaritymetric == 'hybrid'):
                 thecaption = "lag={1:.2f}, R={0:.2f}".format(peakmaxval, peakmaxtime)
             else:
                 thecaption = "lag={1:.2f}, MI={0:.2f}".format(peakmaxval, peakmaxtime)
