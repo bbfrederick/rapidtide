@@ -1088,7 +1088,7 @@ def rapidtide_main(argparsingfunc):
         elif optiondict['similaritymetric'] == 'correlation':
             similaritytype = 'Correlation'
         else:
-            similaritytype = 'Hybrid'
+            similaritytype = 'MI enhanced correlation'
         print('\n\n' + similaritytype + ' calculation, pass ' + str(thepass))
         timings.append([similaritytype +' calculation start, pass ' + str(thepass), time.time(), None, None])
         calcsimilaritypass_func = addmemprofiling(tide_calcsimfunc.correlationpass,

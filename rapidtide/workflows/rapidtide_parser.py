@@ -596,7 +596,7 @@ def _get_parser():
                          type=str,
                          choices=['None', 'mean', 'var', 'std', 'invlag'],
                          help=("Apply TYPE prenormalization to each "
-                               "timecourse prior to refinement. "),
+                               "timecourse prior to refinement. Default is 'mean'."),
                          default='mean')
     reg_ref.add_argument('--refineweighting',
                          dest='refineweighting',
@@ -604,8 +604,7 @@ def _get_parser():
                          type=str,
                          choices=['None', 'NIRS', 'R', 'R2'],
                          help=("Apply TYPE weighting to each timecourse prior "
-                               "to refinement. Valid weightings are "
-                               "'None', 'NIRS', 'R', and 'R2' (default). "),
+                               "to refinement. Default is 'R2'. "),
                          default='R2')
     reg_ref.add_argument('--passes',
                          dest='passes',
