@@ -466,6 +466,7 @@ def rapidtide_main(argparsingfunc):
     if tide_stats.getmasksize(corrmask) == 0:
         print('ERROR: there are no voxels in the correlation mask - exiting')
         sys.exit()
+    optiondict['corrmasksize'] = tide_stats.getmasksize(corrmask)
     if internalrefineincludemask is not None:
         if internalrefineexcludemask is not None:
             if tide_stats.getmasksize(corrmask * internalrefineincludemask * (1 - internalrefineexcludemask)) == 0:
@@ -1153,7 +1154,7 @@ def rapidtide_main(argparsingfunc):
 
         # Step 1b.  Do a peak prefit
         if optiondict['similaritymetric'] == 'hybrid':
-            print('\n\n Peak prefit calculation, pass ' + str(thepass))
+            print('\n\nPeak prefit calculation, pass ' + str(thepass))
             timings.append(['Peak prefit calculation start, pass ' + str(thepass), time.time(), None, None])
             peakevalpass_func = addmemprofiling(tide_peakeval.peakevalpass,
                                                     optiondict['memprofile'],
@@ -1243,7 +1244,7 @@ def rapidtide_main(argparsingfunc):
                              -1000000.0)[validvoxels]
                 if len(initlags) > 0:
                     if len(np.where(initlags != -1000000.0)[0]) > 0:
-                        voxelsprocessed_fc_ds += fitcorr_func(genlagtc,
+                        voxelsprocessed_thispass = fitcorr_func(genlagtc,
                                                               initial_fmri_x,
                                                               lagtc,
                                                               trimmedcorrscale,
@@ -1261,6 +1262,11 @@ def rapidtide_main(argparsingfunc):
                                                               rt_floatset=rt_floatset,
                                                               rt_floattype=rt_floattype
                                                               )
+                        voxelsprocessed_fc_ds += voxelsprocessed_thispass
+                        optiondict['despecklemasksize_pass' + str(thepass) + '_d' + str(despecklepass + 1)] = \
+                            voxelsprocessed_thispass
+                        optiondict['despecklemaskpct_pass' + str(thepass) + '_d' + str(despecklepass + 1)] = \
+                            100.0 * voxelsprocessed_thispass / optiondict['corrmasksize']
                     else:
                         despecklingdone = True
                 else:
@@ -1320,6 +1326,8 @@ def rapidtide_main(argparsingfunc):
                 rt_floattype=rt_floattype)
             normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
             tide_io.writenpvecs(normoutputdata, outputname + '_refinedregressor_pass' + str(thepass) + '.txt')
+            optiondict['refinemasksize_pass' + str(thepass)] = voxelsprocessed_rr
+            optiondict['refinemaskpct_pass' + str(thepass)] = 100.0 * voxelsprocessed_rr / optiondict['corrmasksize']
 
             if optiondict['detrendorder'] > 0:
                 resampnonosref_y = tide_fit.detrend(
@@ -1524,6 +1532,16 @@ def rapidtide_main(argparsingfunc):
                                         displaytitle='correlation R2 histogram',
                                         displayplots=optiondict['displayplots'])
     timings.append(['Finished saving histograms', time.time(), None, None])
+
+    # put some quality metrics into the info structure
+    optiondict['lagtimepercentiles'] = tide_stats.getfracvals(
+        lagtimes[np.where(lagmask > 0)], [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
+    optiondict['lagstrengthpercentiles'] = tide_stats.getfracvals(
+        lagstrengths[np.where(lagmask > 0)], [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
+    optiondict['lagsigmapercentiles'] = tide_stats.getfracvals(
+        lagsigma[np.where(lagmask > 0)], [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
+    optiondict['lagmasksize'] = np.sum(lagmask)
+    optiondict['lagmaskpct'] = 100.0 * optiondict['lagmasksize'] / optiondict['corrmasksize']
 
     # Post refinement step 3 - save out all of the important arrays to nifti files
     # write out the options used
