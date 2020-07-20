@@ -1534,12 +1534,14 @@ def rapidtide_main(argparsingfunc):
     timings.append(['Finished saving histograms', time.time(), None, None])
 
     # put some quality metrics into the info structure
-    optiondict['lagtimepercentiles'] = tide_stats.getfracvals(
-        lagtimes[np.where(lagmask > 0)], [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
-    optiondict['lagstrengthpercentiles'] = tide_stats.getfracvals(
-        lagstrengths[np.where(lagmask > 0)], [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
-    optiondict['lagsigmapercentiles'] = tide_stats.getfracvals(
-        lagsigma[np.where(lagmask > 0)], [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
+    histpcts = [0.02, 0.25, 0.5, 0.75, 0.98]
+    thetimepcts = tide_stats.getfracvals(lagtimes[np.where(lagmask > 0)], histpcts, nozero=False)
+    thestrengthpcts = tide_stats.getfracvals(lagstrengths[np.where(lagmask > 0)], histpcts, nozero=False)
+    thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(lagmask > 0)], histpcts, nozero=False)
+    for i in range(len(histpcts)):
+        optiondict['lagtimes_' +     str(int(np.round(100 * histpcts[i], 0))).zfill(2) + 'pct'] = thetimepcts[i]
+        optiondict['lagstrengths_' + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + 'pct'] = thestrengthpcts[i]
+        optiondict['lagsigma_' +     str(int(np.round(100 * histpcts[i], 0))).zfill(2) + 'pct'] = thesigmapcts[i]
     optiondict['lagmasksize'] = np.sum(lagmask)
     optiondict['lagmaskpct'] = 100.0 * optiondict['lagmasksize'] / optiondict['corrmasksize']
 
