@@ -1755,6 +1755,7 @@ def rapidtide_main(argparsingfunc):
     nodeline = 'Processed on ' + platform.node()
     tide_util.proctiminginfo(timings, outputfile=outputname + '_runtimings.txt', extraheader=nodeline)
     optiondict['totalruntime'] = timings[-1][1] - timings[0][1]
+    optiondict['maxrss'] = tide_util.logmem('status', file=None).split(',')[1]
 
     # do a final save of the options file
     if optiondict['saveoptionsasjson']:

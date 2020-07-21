@@ -196,7 +196,7 @@ def logmem(msg, file=None):
         outvals.append(str(rcusage.ru_nswap))
         logline = ','.join(outvals)
     if file is None:
-        print(logline)
+        return(logline)
     else:
         file.writelines(logline + "\n")
 
