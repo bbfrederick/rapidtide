@@ -234,6 +234,8 @@ def rapidtide_main(argparsingfunc):
     timings = [['Start', time.time(), None, None]]
     optiondict, theprefilter = argparsingfunc()
 
+    optiondict['nodename'] = platform.node()
+
     fmrifilename = optiondict['in_file']
     outputname = optiondict['outputname']
     filename = optiondict['regressorfile']
@@ -1752,7 +1754,13 @@ def rapidtide_main(argparsingfunc):
     # Post refinement step 5 - process and save timing information
     nodeline = 'Processed on ' + platform.node()
     tide_util.proctiminginfo(timings, outputfile=outputname + '_runtimings.txt', extraheader=nodeline)
+    optiondict['totalruntime'] = timings[-1][1] - timings[0][1]
 
+    # do a final save of the options file
+    if optiondict['saveoptionsasjson']:
+        tide_io.writedicttojson(optiondict, outputname + '_options.json')
+    else:
+        tide_io.writedict(optiondict, outputname + '_options.txt')
 
 if __name__ == '__main__':
     from rapidtide.workflows.rapidtide_parser import process_args
