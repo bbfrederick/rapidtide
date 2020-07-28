@@ -68,6 +68,7 @@ def correlationpass(fmridata,
                     corrout,
                     meanval,
                     nprocs=1,
+                    alwaysmultiproc=False,
                     oversampfactor=1,
                     interptype='univariate',
                     showprogressbar=True,
@@ -108,7 +109,7 @@ def correlationpass(fmridata,
     reportstep = 1000
     thetc = np.zeros(np.shape(os_fmri_x), dtype=rt_floattype)
     theglobalmaxlist = []
-    if nprocs > 1:
+    if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def correlation_consumer(inQ, outQ):
             while True:

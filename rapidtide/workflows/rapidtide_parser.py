@@ -890,6 +890,11 @@ def _get_parser():
                               help=('Perform a secondary correlation to '
                                     'disambiguate peak location. Experimental. '),
                               default=False)
+    experimental.add_argument('--alwaysmultiproc',
+                              dest='alwaysmultiproc',
+                              action='store_true',
+                              help=('Use the multiprocessing code path even when nprocs=1. '),
+                              default=False)
     experimental.add_argument('--tmask',
                               dest='tmaskname',
                               action='store',
@@ -958,7 +963,7 @@ def process_args(inputargs=None):
     args['dodemean'] = True
     args['edgebufferfrac'] = 0.0  # what fraction of the correlation window to avoid on either end when fitting
     args['enforcethresh'] = True  # only do fits in voxels that exceed threshhold
-    args['lagmod']  = 1000.0  # if set to the location of the first autocorrelation sidelobe, this will fold back sidelobes
+    args['lagmod'] = 1000.0  # if set to the location of the first autocorrelation sidelobe, this will fold back sidelobes
     args['lthreshval'] = 0.0  # zero out peaks with correlations lower than this value
     args['uthreshval'] = 1.0  # zero out peaks with correlations higher than this value
     args['absmaxsigma'] = 10000.0  # width of the reference autocorrelation function

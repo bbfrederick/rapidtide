@@ -243,7 +243,7 @@ def rapidtide_main(argparsingfunc):
     timings.append(['Argument parsing done', time.time(), None, None])
 
     # don't use shared memory if there is only one process
-    if optiondict['nprocs'] == 1:
+    if (optiondict['nprocs'] == 1) and not optiondict['alwaysmultiproc']:
         optiondict['sharedmem'] = False
         print('running single process - disabled shared memory use')
 
@@ -1111,6 +1111,7 @@ def rapidtide_main(argparsingfunc):
                                                                   corrout,
                                                                   meanval,
                                                                   nprocs=optiondict['nprocs'],
+                                                                  alwaysmultiproc=optiondict['alwaysmultiproc'],
                                                                   oversampfactor=optiondict['oversampfactor'],
                                                                   interptype=optiondict['interptype'],
                                                                   showprogressbar=optiondict['showprogressbar'],
@@ -1128,6 +1129,7 @@ def rapidtide_main(argparsingfunc):
                                                                    corrout,
                                                                    meanval,
                                                                    nprocs=optiondict['nprocs'],
+                                                                   alwaysmultiproc=optiondict['alwaysmultiproc'],
                                                                    oversampfactor=optiondict['oversampfactor'],
                                                                    interptype=optiondict['interptype'],
                                                                    showprogressbar=optiondict['showprogressbar'],
@@ -1172,6 +1174,7 @@ def rapidtide_main(argparsingfunc):
                 trimmedcorrscale,
                 corrout,
                 nprocs=optiondict['nprocs'],
+                alwaysmultiproc=optiondict['alwaysmultiproc'],
                 bipolar=optiondict['bipolar'],
                 oversampfactor=optiondict['oversampfactor'],
                 interptype=optiondict['interptype'],
@@ -1215,6 +1218,7 @@ def rapidtide_main(argparsingfunc):
                                           gaussout, windowout, R2,
                                           peakdict=thepeakdict,
                                           nprocs=optiondict['nprocs'],
+                                          alwaysmultiproc=optiondict['alwaysmultiproc'],
                                           fixdelay=optiondict['fixdelay'],
                                           showprogressbar=optiondict['showprogressbar'],
                                           chunksize=optiondict['mp_chunksize'],
@@ -1256,6 +1260,7 @@ def rapidtide_main(argparsingfunc):
                                                               gaussout, windowout, R2,
                                                               peakdict=thepeakdict,
                                                               nprocs=optiondict['nprocs'],
+                                                              alwaysmultiproc=optiondict['alwaysmultiproc'],
                                                               fixdelay=optiondict['fixdelay'],
                                                               showprogressbar=optiondict['showprogressbar'],
                                                               chunksize=optiondict['mp_chunksize'],
@@ -1493,6 +1498,7 @@ def rapidtide_main(argparsingfunc):
                                            filtereddata,
                                            reportstep=reportstep,
                                            nprocs=optiondict['nprocs'],
+                                           alwaysmultiproc=optiondict['alwaysmultiproc'],
                                            showprogressbar=optiondict['showprogressbar'],
                                            mp_chunksize=optiondict['mp_chunksize'],
                                            rt_floatset=rt_floatset,
