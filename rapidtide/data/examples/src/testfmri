@@ -1,59 +1,63 @@
-#!/bin/csh -f
+#!/bin/bash
 
 #rapidtide \
 #	fmri.nii.gz \
-#	../dst/dgsr_mi_fastquad_3p0smooth_narrow \
+#	../dst/dgsr_hybrid_fastquad_multiproc \
+#        --filterband lfo \
 #	--passes 3 \
-#	--oversampfac 5 \
-#	--despecklepasses 0 \
+#	--despecklepasses 4 \
 #	--searchrange -10 15 \
 #	--sigmalimit 25.0 \
 #	--nprocs -1 \
 #	--pickleft \
 #	--pickleftthresh 0.3 \
-#	--peakfittype quad \
+#	--peakfittype fastquad \
 #	--spatialfilt 2 \
-#	--saveintermediatemaps \
-#	--similaritymetric mutualinfo \
+#	--similaritymetric hybrid \
 #        --detrendorder 3 \
 #        --noglm \
-#        --numnull 1000 \
+#        --numnull 0 \
+#	--ampthresh 0.1
+#
+#rapidtide \
+#	fmri.nii.gz \
+#	../dst/dgsr_hybrid_fastquad_singleproc \
+#        --filterband lfo \
+#	--passes 3 \
+#	--despecklepasses 4 \
+#	--searchrange -10 15 \
+#	--sigmalimit 25.0 \
+#	--nprocs 1 \
+#	--pickleft \
+#	--pickleftthresh 0.3 \
+#	--peakfittype fastquad \
+#	--spatialfilt 2 \
+#	--similaritymetric hybrid \
+#        --detrendorder 3 \
+#        --noglm \
+#        --numnull 0 \
 #	--ampthresh 0.1
 
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr_mi_None \
-	--passes 1 \
-	--oversampfac 5 \
-	--despecklepasses 0 \
-	--searchrange -10 30 \
-	--sigmalimit 25.0 \
-	--nprocs -1 \
-	--pickleft \
-	--pickleftthresh 0.3 \
-	--peakfittype None \
-	--spatialfilt 2 \
-	--saveintermediatemaps \
-	--similaritymetric mutualinfo \
-	--ampthresh 0.1
-
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_fastquad \
+	../dst/dgsr_hybrid_fastquad_singlechild \
+        --filterband lfo \
 	--passes 3 \
-	--oversampfac 5 \
-	--searchrange -10 30 \
+	--despecklepasses 4 \
+	--searchrange -10 15 \
 	--sigmalimit 25.0 \
-	--nprocs -1 \
+	--nprocs 1 \
+	--alwaysmultiproc \
 	--pickleft \
 	--pickleftthresh 0.3 \
 	--peakfittype fastquad \
-	--spatialfilt 2  \
-        --saveintermediatemaps \
-	--similaritymetric correlation \
-	--ampthresh 0.3 
+	--spatialfilt 2 \
+	--similaritymetric hybrid \
+        --detrendorder 3 \
+        --noglm \
+        --numnull 0 \
+	--ampthresh 0.1
 
-#diffmaps ../dst/dgsr_gauss ../dst/dgsr_quad ../dst/diff_gauss_quad
+diffmaps ../dst/dgsr_hybrid_fastquad_singleproc ../dst/dgsr_hybrid_fastquad_singlechild ../dst/diff_childvssingle
 #diffmaps ../dst/dgsr_gauss ../dst/dgsr_fastgauss ../dst/diff_gauss_fastgauss
 #diffmaps ../dst/dgsr_quad ../dst/dgsr_fastquad ../dst/diff_quad_fastquad

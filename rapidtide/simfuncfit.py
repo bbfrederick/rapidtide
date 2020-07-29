@@ -158,6 +158,7 @@ def fitcorr(lagtcgenerator,
             R2,
             peakdict=None,
             nprocs=1,
+            alwaysmultiproc=False,
             fixdelay=False,
             showprogressbar=True,
             chunksize=1000,
@@ -179,7 +180,7 @@ def fitcorr(lagtcgenerator,
     zerolagtc = rt_floatset(lagtcgenerator.yfromx(timeaxis))
     sliceoffsettime = 0.0
 
-    if nprocs > 1:
+    if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def fitcorr_consumer(inQ, outQ):
             while True:
