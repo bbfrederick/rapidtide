@@ -1140,15 +1140,17 @@ class plethfilter:
         self.Fl = Fl
         self.attenuation = attenuation
         self.order = order
-        self.b, self.a = scipy.signal.cheby2(self.order,
-                                             self.attenuation,
-                                             [self.Fl / self.Fn, self.Fh / self.Fn],
-                                             btype='bandpass',
-                                             analog=False,
-                                             output='ba')
+        retvec = signal.cheby2(self.order,
+                                self.attenuation,
+                                [self.Fl / self.Fn, self.Fh / self.Fn],
+                                btype='bandpass',
+                                analog=False,
+                                output='ba')
+        self.b = retvec[0]
+        self.a = retvec[1]
 
-    def apply(data):
-        return scipy.signal.filtfilt(self.b, self.a, data, axis=-1, padtype='odd', padlen=None)
+    def apply(self, data):
+        return signal.filtfilt(self.b, self.a, data, axis=-1, padtype='odd', padlen=None)
 
 
 class noncausalfilter:
