@@ -30,6 +30,7 @@ import platform
 import sys
 import time
 import warnings
+import gc
 
 import numpy as np
 import scipy as sp
@@ -125,7 +126,7 @@ def numpy2shared(inarray, thetype):
         inarray_shared = mp.RawArray('f', inarray.reshape(thesize))
     inarray = np.frombuffer(inarray_shared, dtype=thetype, count=thesize)
     inarray.shape = theshape
-    return inarray, inarray_shared, theshape
+    return inarray
 
 
 def allocshared(theshape, thetype):
@@ -538,14 +539,14 @@ def rapidtide_main(argparsingfunc):
                                             optiondict['memprofile'],
                                             memfile,
                                             'before fmri data move')
-        fmri_data_valid, fmri_data_valid_shared, fmri_data_valid_shared_shape = numpy2shared_func(fmri_data_valid,
-                                                                                                  rt_floatset)
+        fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
         timings.append(['End moving fmri_data to shared memory', time.time(), None, None])
 
     # get rid of memory we aren't using
     tide_util.logmem('before purging full sized fmri data', file=memfile)
     del fmri_data
     del nim_data
+    gc.collect()
     tide_util.logmem('after purging full sized fmri data', file=memfile)
 
     # filter out motion regressors here
@@ -864,7 +865,10 @@ def rapidtide_main(argparsingfunc):
             nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
     internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-    lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
+    if optiondict['sharedmem']:
+        lagtc, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
+    else:
+        lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     tide_util.logmem('after lagtc array allocation', file=memfile)
 
     if optiondict['passes'] > 1:
@@ -1406,8 +1410,12 @@ def rapidtide_main(argparsingfunc):
         reportstep = 1000
 
         # now allocate the arrays needed for Wiener deconvolution
-        wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        wpeak = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+        if optiondict['sharedmem']:
+            wienerdeconv, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+            wpeak, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+        else:
+            wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            wpeak = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
 
         wienerpass_func = addmemprofiling(tide_wiener.wienerpass,
                                           optiondict['memprofile'],
@@ -1455,21 +1463,25 @@ def rapidtide_main(argparsingfunc):
                                                     optiondict['memprofile'],
                                                     memfile,
                                                     'before movetoshared (glm)')
-                fmri_data_valid, fmri_data_valid_shared, fmri_data_valid_shared_shape = numpy2shared_func(
-                    fmri_data_valid, rt_floatset)
+                fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
                 timings.append(['End moving fmri_data to shared memory', time.time(), None, None])
             del nim_data
 
         # now allocate the arrays needed for GLM filtering
-        meanvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        fitNorm = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        fitcoff = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         if optiondict['sharedmem']:
+            meanvalue, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+            rvalue, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+            r2value, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+            fitNorm, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+            fitcoff, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             datatoremove, dummy, dummy = allocshared(internalvalidfmrishape, rt_outfloatset)
             filtereddata, dummy, dummy = allocshared(internalvalidfmrishape, rt_outfloatset)
         else:
+            meanvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            fitNorm = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            fitcoff = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             datatoremove = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
             filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
 
