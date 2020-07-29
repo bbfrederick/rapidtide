@@ -241,6 +241,10 @@ class mutualinformationator(similarityfunctionator):
             self.smoothingfilter.setpadtime(newpadtime)
 
 
+    def setbins(self, bins):
+        self.bins = bins
+
+
     def setreftc(self, reftc, offset=0.0):
         self.reftc = reftc + 0.0
         self.prepreftc = self.preptc(self.reftc, hpfreq=None)
@@ -283,7 +287,8 @@ class mutualinformationator(similarityfunctionator):
                                          returnaxis=gettimeaxis,
                                          fast=True,
                                          Fs=self.Fs,
-                                         sigma=self.sigma, bins=self.bins)
+                                         sigma=self.sigma,
+                                         bins=self.bins)
         else:
             retvals = tide_corr.cross_MI(self.preptesttc,
                                          self.prepreftc,
@@ -294,7 +299,8 @@ class mutualinformationator(similarityfunctionator):
                                          returnaxis=gettimeaxis,
                                          fast=True,
                                          Fs=self.Fs,
-                                         sigma=self.sigma, bins=self.bins)
+                                         sigma=self.sigma,
+                                         bins=self.bins)
         if gettimeaxis:
             self.timeaxis, self.thesimfunc, self.similarityfuncorigin = retvals[0], retvals[1], retvals[2]
             self.timeaxisvalid = True

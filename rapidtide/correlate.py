@@ -371,7 +371,7 @@ def cross_MI(x, y,
              norm=True,
              madnorm=False,
              windowfunc='None',
-             bins=10,
+             bins=-1,
              prebin=True,
              sigma=0.25,
              fast=True,
@@ -383,6 +383,12 @@ def cross_MI(x, y,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
 
+
+    # see if we are using the default number of bins
+    if bins < 1:
+        bins = int(np.sqrt(len(x) / 5))
+        if debug:
+            print('cross_MI: bins set to', bins)
 
     # find the bin locations
     if prebin:

@@ -51,14 +51,13 @@ for windowfunc in ['None']:
                                                                     negsteps=200,
                                                                     possteps=200,
                                                                     Fs=samplefreq,
-                                                                    bins=numbins,
                                                                     windowfunc=windowfunc,
                                                                     sigma=sigma,
                                                                     norm=False,
                                                                     returnaxis=True,
                                                                     fast=True,
                                                                     prebin=True,
-                                                                    debug=False)
+                                                                    debug=True)
                     ax.plot(thefastx, thefastxmi, label='bins:' + str(numbins) + ', sigma:' + str(sigma) + ', win:' + windowfunc)
                     thename = 'offset=' + str(offset)
                     thelegends.append(thename)
