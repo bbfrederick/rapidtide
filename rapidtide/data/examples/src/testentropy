@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+import rapidtide.correlate as tide_corr
+import rapidtide.io as tide_io
+
+def addresp(inputwave, samplefreq, respfreq, respamp, offset):
+    timeaxis = np.linspace(0, len(lfowave) / samplefreq, num=len(lfowave), endpoint=False) + offset
+    respwave = respamp + np.sin(timeaxis * 2.0 * np.pi * respfreq)
+    return inputwave + respwave
+    
+
+input1 = tide_io.readvec('tc1')
+input2 = tide_io.readvec('tc2')
+
+samplefreq = 5.33
+respfreq = 0.1
+respamp = 0.25
+lfowave = tide_io.readvec('../dst/dgsr_gauss_reference_resampres_pass1.txt')
+timeaxis = np.linspace(0, len(lfowave) / samplefreq, num=len(lfowave), endpoint=False)
+respwave = np.sin(timeaxis * 2.0 * np.pi * respfreq)
+combo = addresp(lfowave, samplefreq, respfreq, respamp, 0.0)
+
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+
+ax.plot(timeaxis, lfowave)
+ax.plot(timeaxis, respwave)
+ax.plot(timeaxis, combo)
+plt.show()
+
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+
+thelen = len(input1)
+numneg = 300
+numpos = 300
+
+thelegends = []
+for windowfunc in ['None']:
+    for sigma in [0.25]:
+        for numbins in [10]:
+            starttime = time.perf_counter()
+            i = 0
+            for wave1 in [combo]:
+                j = 0
+                for offset in np.linspace(-3.0, 3.0, num=7, endpoint=True):
+                    thefastx, thefastxmi, dummy = tide_corr.cross_MI(wave1, addresp(lfowave, samplefreq, respfreq, respamp, offset),
+                                                                    negsteps=200,
+                                                                    possteps=200,
+                                                                    Fs=samplefreq,
+                                                                    bins=numbins,
+                                                                    windowfunc=windowfunc,
+                                                                    sigma=sigma,
+                                                                    norm=False,
+                                                                    returnaxis=True,
+                                                                    fast=True,
+                                                                    prebin=True,
+                                                                    debug=False)
+                    ax.plot(thefastx, thefastxmi, label='bins:' + str(numbins) + ', sigma:' + str(sigma) + ', win:' + windowfunc)
+                    thename = 'offset=' + str(offset)
+                    thelegends.append(thename)
+                    j += 1
+                i += 1                    
+ax.legend(thelegends)
+plt.show()
+
