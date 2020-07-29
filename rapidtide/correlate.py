@@ -28,7 +28,7 @@ from numpy.fft import rfftn, irfftn
 import matplotlib.pyplot as plt
 
 import sys
-from sklearn.metrics import mutual_info_score, normalized_mutual_info_score, adjusted_mutual_info_score
+from sklearn.metrics import mutual_info_score
 
 import rapidtide.util as tide_util
 import rapidtide.resample as tide_resample
@@ -242,10 +242,10 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     if laglimit is None:
         laglimit = windowtime / 2.0
 
-    dt = np.diff(time)[0]  # In days...
+    '''dt = np.diff(time)[0]  # In days...
     fs = 1.0 / dt
     nfft = nperseg
-    noverlap = (nperseg - 1)
+    noverlap = (nperseg - 1)'''
 
 
     dataseg1 = tide_math.corrnormalize(data1[0:2 * halfwindow], detrendorder=detrendorder, windowfunc=windowfunc)
