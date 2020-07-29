@@ -458,7 +458,7 @@ def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
         thecoffs = np.polyfit(thetimepoints, inputdata, order)
-    except RankWarning:
+    except np.lib.RankWarning:
         thecoffs = [0.0, 0.0]
     thefittc = tide_fit.trendgen(thetimepoints, thecoffs, True)
     detrended = inputdata - thefittc
