@@ -1,18 +1,12 @@
 + Fix the version numbers in files:
 
-    vi setup.py docs/conf.py rapidtide/version.py VERSION INSTALL.rst Dockerfile
-
-    setup.py
-        search for version=
+    vi docs/conf.py rapidtide/version.py INSTALL.rst Dockerfile
 
     docs/conf.py
         search for "version =" and "release ="
 
     rapidtide/version.py
         search for "_version_major =", "_version_minor =", and "_version_micro ="
-
-    VERSION
-        Contains just the version number
 
     INSTALL.rst
         search for '(currently'

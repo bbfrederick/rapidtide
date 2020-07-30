@@ -22,6 +22,13 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
+
+# Write version number out to VERSION file
+version = versioneer.get_version()
+with open(path.join(here, 'VERSION'), "w", encoding='utf-8') as f:
+    f.write(version)
+
+
 addtidepool = True
 
 modules_list = ['rapidtide/miscmath',
