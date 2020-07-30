@@ -48,6 +48,7 @@ modules_list = ['rapidtide/miscmath',
                 'rapidtide/dlfilter',
                 'rapidtide/wiener',
                 'rapidtide/refine',
+                'rapidtide/_version',
                 'rapidtide/workflows/parser_funcs']
 
 if addtidepool:

@@ -997,7 +997,7 @@ def process_args(inputargs=None):
     args['acwidth'] = 0.0  # width of the reference autocorrelation function
 
     # diagnostic information about version
-    args['release_version'], args['git_tag'] = tide_util.version()
+    args['release_version'], args['git_longtag'], args['git_date'], args['git_isdirty'] = tide_util.version()
     args['python_version'] = str(sys.version_info)
 
 

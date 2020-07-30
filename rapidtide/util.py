@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 
 import rapidtide.io as tide_io
 
-import versioneer as vsr
+import rapidtide._version as tide_versioneer
 
 
 # ---------------------------------------- Global constants -------------------------------------------
@@ -383,31 +383,17 @@ def version():
     -------
 
     """
-    thispath, thisfile = os.path.split(__file__)
-    print(thispath)
-    fulltag = 'UNKNOWN', 'UNKNOWN'
+    try:
+        versioninfo = tide_versioneer.get_versions()
 
-    #spec = importlib.util.spec_from_file_location(
-    #    '_version', os.path.join(os.path.dirname(__file__), 'rapidtide/_version.py'))
-    #_version = importlib.util.module_from_spec(spec)
-    #spec.loader.exec_module(_version)
+    except:
+        return 'UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN'
 
-    fullversion = vsr.get_versions()
-    theversion = fullversion['version']
-    thedate = fullversion['date']
-    isdirty = fullversion['dirty']
-    print('fullversion', fullversion)
-    print(theversion, thedate, isdirty)
-
-    if os.path.isfile(os.path.join(thispath, '_gittag.py')):
-        with open(os.path.join(thispath, '_gittag.py')) as f:
-            for line in f:
-                if line.startswith('__gittag__'):
-                    fulltag = (line.split()[2]).split('-')
-                    break
-        return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
-    else:
-        return 'UNKNOWN', 'UNKNOWN'
+    version = versioninfo['version']
+    longgittag = versioninfo['full-revisionid']
+    thedate = versioninfo['date']
+    isdirty = versioninfo['dirty']
+    return version, longgittag, thedate, isdirty
 
 
 '''def version():
