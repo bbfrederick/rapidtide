@@ -16,12 +16,6 @@ import sys
 import versioneer
 
 
-GITTAG_PY = """
-# This file is originally generated from Git information by running 'setup.py
-# install'. Distribution tarballs contain a pre-generated copy of this file.
-__gittag__ = '%s'
-"""
-
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
@@ -100,38 +94,6 @@ script_list = ['rapidtide/scripts/rapidtide2x',
 
 if addtidepool:
     script_list.append('rapidtide/scripts/tidepool')
-
-
-def update_gittag_py():
-    if not path.isdir(".git"):
-        print("This does not appear to be a Git repository.")
-        f = open("rapidtide/_gittag.py", "w")
-        f.write(GITTAG_PY % "UNKNOWN-UNKNOWN")
-        f.close()
-        return
-    try:
-        p = subprocess.Popen(["git", "describe",
-                              "--tags", "--dirty", "--always"],
-                             stdout=subprocess.PIPE)
-    except EnvironmentError:
-        print("unable to run git, leaving rapidtide/_gittag.py alone")
-        return
-    stdout = p.communicate()[0]
-    if p.returncode != 0:
-        print("unable to run git, leaving rapidtide/_gittag.py alone")
-        return
-    # we use tags like "python-rapidtide-0.5", so strip the prefix
-    if sys.version_info[0] == 3:
-        ver = str(stdout.strip(), "utf-8")
-    else:
-        ver = stdout.strip()
-    print(ver)
-    f = open("rapidtide/_gittag.py", "w")
-    f.write(GITTAG_PY % ver)
-    f.close()
-
-
-update_gittag_py()
 
 
 setup(
