@@ -1770,7 +1770,7 @@ def rapidtide_main(argparsingfunc):
     timings.append(['Done', time.time(), None, None])
 
     # Post refinement step 5 - process and save timing information
-    nodeline = 'Processed on ' + platform.node()
+    nodeline = 'Processed on ' + platform.node() + ' (' + optiondict['release_version'] + ', ' + optiondict['git_tag'] + ')'
     tide_util.proctiminginfo(timings, outputfile=outputname + '_runtimings.txt', extraheader=nodeline)
     optiondict['totalruntime'] = timings[-1][1] - timings[0][1]
     optiondict['maxrss'] = tide_util.logmem('status', file=None).split(',')[1]
