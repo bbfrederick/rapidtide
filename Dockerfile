@@ -102,6 +102,7 @@ RUN conda install -y python=3.7.3 \
                      pyqtgraph=0.10.0 \
                      pyfftw=0.12.0 \
                      pandas=0.25.3 \
+                     versioneer=0.18 \
                      numba=0.46.0; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
     chmod +x /usr/local/miniconda/bin/*; sync && \

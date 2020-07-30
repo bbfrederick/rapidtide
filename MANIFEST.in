@@ -6,3 +6,5 @@ recursive-include rapidtide/tests/testdata *.nii.gz *.txt
 recursive-include rapidtide/tests/testtargets *.nii.gz *.txt
 recursive-include rapidtide/tests/tmp .placeholder.txt
 recursive-include rapidtide/data/models *
+include versioneer.py
+include rapidtide/_version.py
