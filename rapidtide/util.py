@@ -31,6 +31,9 @@ import matplotlib.pyplot as plt
 
 import rapidtide.io as tide_io
 
+import versioneer as vsr
+
+
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
@@ -383,6 +386,19 @@ def version():
     thispath, thisfile = os.path.split(__file__)
     print(thispath)
     fulltag = 'UNKNOWN', 'UNKNOWN'
+
+    #spec = importlib.util.spec_from_file_location(
+    #    '_version', os.path.join(os.path.dirname(__file__), 'rapidtide/_version.py'))
+    #_version = importlib.util.module_from_spec(spec)
+    #spec.loader.exec_module(_version)
+
+    fullversion = vsr.get_versions()
+    theversion = fullversion['version']
+    thedate = fullversion['date']
+    isdirty = fullversion['dirty']
+    print('fullversion', fullversion)
+    print(theversion, thedate, isdirty)
+
     if os.path.isfile(os.path.join(thispath, '_gittag.py')):
         with open(os.path.join(thispath, '_gittag.py')) as f:
             for line in f:
@@ -392,6 +408,27 @@ def version():
         return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
     else:
         return 'UNKNOWN', 'UNKNOWN'
+
+
+'''def version():
+    """
+
+    Returns
+    -------
+
+    """
+    thispath, thisfile = os.path.split(__file__)
+    print(thispath)
+    fulltag = 'UNKNOWN', 'UNKNOWN'
+    if os.path.isfile(os.path.join(thispath, '_gittag.py')):
+        with open(os.path.join(thispath, '_gittag.py')) as f:
+            for line in f:
+                if line.startswith('__gittag__'):
+                    fulltag = (line.split()[2]).split('-')
+                    break
+        return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
+    else:
+        return 'UNKNOWN', 'UNKNOWN' '''
 
 
 # --------------------------- timing functions -------------------------------------------------
