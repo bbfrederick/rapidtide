@@ -11,7 +11,9 @@
 
 + Edit CHANGELOG.md
 
+
 + Sync everything to github.
+
 
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging)
   and push the tag to github
@@ -19,9 +21,11 @@
     git tag -a v1.9.2 -m "v1.9.2"
     git push origin v1.9.2
 
+
 + Rebuild Docker container and push
 
     dockerbuild/build.sh
     dockerbuild/test.sh
+
 
 + Edit the release notes on github

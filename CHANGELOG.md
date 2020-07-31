@@ -1,5 +1,9 @@
 # History of changes
 
+## Version 1.9.2 (7/30/20)
+* (all): Changed over to using versioneer to handle version numbers.
+* (rapidtide2, rapidtide2x, rapidtide_2x_trans, rapidtideX) Runtimings file now has additional version information.
+
 ## Version 1.9.1 (6/17/20)
 * (all): Documentation improvements.
 * (all): Many internal changes to support future argument specifications.
