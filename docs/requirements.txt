@@ -1,4 +1,0 @@
-numpydoc
-recommonmark
-sphinx-argparse
-sphinx-gallery

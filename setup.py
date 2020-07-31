@@ -176,7 +176,8 @@ setup(
         'scipy',
         'pandas',
         'scikit-image',
-        'scikit-learn',
+        "scikit-learn<0.21; python_version == '2.7'",
+        "scikit-learn; python_version > '2.7'",
         'nibabel',
         'matplotlib',
         'pyfftw',
@@ -194,9 +195,18 @@ setup(
             'sphinx_rtd_theme',
             'sphinx-argparse',
             'sphinx-gallery',
+            'm2r',
             'numpydoc',
             'recommonmark',
             ],
+        'tests': [
+            'codecov',
+            'coverage',
+            'coveralls',
+            'flake8',
+            'pytest',
+            'pytest-cov'
+        ]
     },
 
     # If there are data files included in your packages that need to be
