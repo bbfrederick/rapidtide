@@ -2,8 +2,10 @@
 
 # notes to self
 #newrelease_todo
-rapidtide/_gittag.py
+VERSION
 changecalls
+
+safezone
 
 # any generated test data
 rapidtide/data/examples/dst/*
@@ -15,11 +17,11 @@ rapidtide/data/examples/src/*corrfunc*
 rapidtide/data/examples/src/*trimmed*
 rapidtide/data/examples/src/sub-01*
 rapidtide/data/examples/src/testhappyx
-rapidtide/experimental/batch/*
+#rapidtide/experimental/batch/*
 rapidtide/experimental/__pycache__
-rapidtide/experimental/.*
-rapidtide/experimental/the*txt
-rapidtide/experimental/model_*
+#rapidtide/experimental/.*
+#rapidtide/experimental/the*txt
+#rapidtide/experimental/model_*
 test.nii.gz
 *junk*
 
@@ -151,3 +153,5 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+default.profraw
