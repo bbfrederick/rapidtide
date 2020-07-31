@@ -1,9 +1,6 @@
 + Fix the version numbers in files:
 
-    vi INSTALL.rst Dockerfile newrelease_todo
-
-    INSTALL.rst
-        search for '(currently'
+    vi Dockerfile newrelease_todo
 
     Dockerfile
         search for 'org.label-schema.schema-version='
@@ -14,18 +11,17 @@
 
 + Edit CHANGELOG.md
 
-+ Rebuild Docker container and push
-
-    dockerbuild/build.sh
-    dockerbuild/test.sh
-
 + Sync everything to github.
 
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging)
   and push the tag to github
 
-    git tag -a v1.9.1 -m "v1.9.1"
-    git push origin v1.9.1
+    git tag -a v1.9.2 -m "v1.9.2"
+    git push origin v1.9.2
 
++ Rebuild Docker container and push
+
+    dockerbuild/build.sh
+    dockerbuild/test.sh
 
 + Edit the release notes on github

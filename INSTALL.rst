@@ -182,7 +182,7 @@ first make sure you have docker installed and properly configured, then run the 
 This it will download the docker container from dockerhub.
 It's around 2GB, so it may take some time, but it caches the file locally, so you won't have to do this again
 unless the container updates.  To use a particular version, replace VERSIONNUMBER with the version of the
-with container you want (currently the newest version is 1.9.1).
+with container you want.
 
 If you like to live on the edge, just use:
 ::
