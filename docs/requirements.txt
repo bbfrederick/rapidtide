@@ -1,4 +1,4 @@
 numpydoc
-m2r
+recommonmark
 sphinx-argparse
 sphinx-gallery

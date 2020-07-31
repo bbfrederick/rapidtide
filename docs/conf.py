@@ -15,6 +15,8 @@
 
 import sys
 import os
+from datetime import datetime
+from m2r import MdInclude
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -51,7 +53,7 @@ extensions = [
     'numpydoc',
     'sphinx.ext.ifconfig',
     'sphinx.ext.linkcode',
-    'm2r',
+    'recommonmark',
     'sphinx_gallery.gen_gallery',
 ]
 
@@ -78,7 +80,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'rapidtide'
-copyright = '2016-2020, Blaise Frederick'
+copyright = '2016-' + datetime.today().strftime("%Y") + ', Blaise Frederick'
 author = 'Blaise Frederick'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -178,6 +180,14 @@ html_static_path = ['_static']
 # https://github.com/rtfd/sphinx_rtd_theme/issues/117
 def setup(app):
     app.add_stylesheet('theme_overrides.css')
+    # Fix to https://github.com/sphinx-doc/sphinx/issues/7420
+    # from https://github.com/life4/deal/commit/7f33cbc595ed31519cefdfaaf6f415dada5acd94
+    # from m2r to make `mdinclude` work
+    app.add_config_value('no_underscore_emphasis', False, 'env')
+    app.add_config_value('m2r_parse_relative_links', False, 'env')
+    app.add_config_value('m2r_anonymous_references', False, 'env')
+    app.add_config_value('m2r_disable_inline_math', False, 'env')
+    app.add_directive('mdinclude', MdInclude)
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
