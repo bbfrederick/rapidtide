@@ -25,8 +25,15 @@
 
 from __future__ import print_function, division
 import sys
-import rapidtide.workflows.happy_trans as happy_workflow
-import rapidtide.workflows.happy_parser as happy_parser
+import rapidtide.workflows.happy_legacy as happy_workflow
 
 if __name__ == '__main__':
-    happy_workflow.happy_main(happy_parser.process_args)
+
+    # grab the command line arguments then pass them off.
+    nargs = len(sys.argv)
+    if nargs < 4:
+        happy_workflow.usage()
+        exit()
+
+    happy_workflow.happy_main(sys.argv)
+

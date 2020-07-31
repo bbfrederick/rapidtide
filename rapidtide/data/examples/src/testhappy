@@ -1,6 +1,6 @@
 #!/bin/csh -f
 
-happy_trans \
+happy \
     happyfmri.nii.gz \
     happyfmri.json \
     ../dst/happy_transtest \
@@ -26,7 +26,7 @@ happy_trans \
     --saveinfoastext
 
 
-happy \
+happy_legacy \
     happyfmri.nii.gz \
     happyfmri.json \
     ../dst/happy_normaltest \
