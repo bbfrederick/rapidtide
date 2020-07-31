@@ -33,4 +33,4 @@ docker run \
     -e DISPLAY=192.168.7.146:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide rapidtide \
-    tidepool
+    tidepool --dataset /data/code/rapidtide/rapidtide/data/examples/dst/dockertest_lagtimes
