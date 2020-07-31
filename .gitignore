@@ -5,6 +5,8 @@
 VERSION
 changecalls
 
+safezone
+
 # any generated test data
 rapidtide/data/examples/dst/*
 rapidtide/tests/tmp/*
