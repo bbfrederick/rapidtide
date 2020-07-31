@@ -577,7 +577,7 @@ def main():
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
-    print(sys.argv[0], 'version:', optiondict['release_version'], optiondict['git_tag'])
+    print(sys.argv[0], 'version:', optiondict['release_version'], optiondict['release_version'])
     tide_util.checkimports(optiondict)
 
     # get the command line parameters
