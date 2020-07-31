@@ -2685,7 +2685,12 @@ def rapidtide_main():
     timings.append(['Done', time.time(), None, None])
 
     # Post refinement step 5 - process and save timing information
-    nodeline = 'Processed on ' + platform.node()
+    nodeline = ' '.join(['Processed on',
+                         platform.node(),
+                         '(',
+                         optiondict['release_version'] + ',',
+                         optiondict['git_date'],
+                         ')'])
     tide_util.proctiminginfo(timings, outputfile=outputname + '_runtimings.txt', extraheader=nodeline)
 
 
