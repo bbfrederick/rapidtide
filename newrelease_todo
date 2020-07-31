@@ -1,9 +1,6 @@
 + Fix the version numbers in files:
 
-    vi docs/conf.py INSTALL.rst Dockerfile newrelease_todo
-
-    docs/conf.py
-        search for "version =" and "release ="
+    vi INSTALL.rst Dockerfile newrelease_todo
 
     INSTALL.rst
         search for '(currently'
