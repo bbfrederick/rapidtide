@@ -30,6 +30,7 @@ import resource
 import matplotlib.pyplot as plt
 
 import rapidtide.io as tide_io
+import rapidtide._version as tide_versioneer
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
