@@ -22,8 +22,8 @@
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging)
   and push the tag to github
 
-    git tag -a v1.9.2 -m "v1.9.2"
-    git push origin v1.9.2
+    git tag -a v1.9.3 -m "v1.9.3"
+    git push origin v1.9.3
 
 
 + Rebuild Docker container and push

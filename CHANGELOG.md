@@ -1,5 +1,8 @@
 # History of changes
 
+## Version 1.9.3 (7/30/20)
+* Bumped version number because I forgot to commit a file
+
 ## Version 1.9.2 (7/30/20)
 * (all): Changed over to using versioneer to handle version numbers.
 * (rapidtide2, rapidtide2x, rapidtide_2x_trans, rapidtideX) Runtimings file now has additional version information.
