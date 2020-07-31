@@ -14,6 +14,10 @@
 
 + Sync everything to github.
 
++ Install the newest version to trigger versioneer
+
+    python setup.py install
+
 
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging)
   and push the tag to github
