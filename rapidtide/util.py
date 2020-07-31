@@ -377,18 +377,17 @@ def version():
     -------
 
     """
-    thispath, thisfile = os.path.split(__file__)
-    print(thispath)
-    fulltag = 'UNKNOWN', 'UNKNOWN'
-    if os.path.isfile(os.path.join(thispath, '_gittag.py')):
-        with open(os.path.join(thispath, '_gittag.py')) as f:
-            for line in f:
-                if line.startswith('__gittag__'):
-                    fulltag = (line.split()[2]).split('-')
-                    break
-        return fulltag[0][1:], '-'.join(fulltag[1:])[:-1]
-    else:
-        return 'UNKNOWN', 'UNKNOWN'
+    try:
+        versioninfo = tide_versioneer.get_versions()
+
+    except:
+        return 'UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN'
+
+    version = versioninfo['version']
+    longgittag = versioninfo['full-revisionid']
+    thedate = versioninfo['date']
+    isdirty = versioninfo['dirty']
+    return version, longgittag, thedate, isdirty
 
 
 # --------------------------- timing functions -------------------------------------------------
