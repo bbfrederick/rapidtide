@@ -34,6 +34,7 @@ Contents
    whats_new.rst
    installation.rst
    usage.rst
+   support.rst
    api.rst
    auto_examples/index
    contributing.rst

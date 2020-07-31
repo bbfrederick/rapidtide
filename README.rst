@@ -7,7 +7,7 @@ What is this package?
 Rapidtide is a suite of python programs used to perform rapid time delay
 analysis on functional imaging data to find time lagged correlations
 between the voxelwise time series and other time series, both in the LFO
-band (rapditide2) and now in the cardiac band (happy).
+band (rapidtide2) and now in the cardiac band (happy).
 
 Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
 
@@ -169,7 +169,7 @@ Ok, I’m sold. What’s in here?
 -  **rapidtide2x** - This is the most modern and updated version of rapidtide.
    This is where all the development effort is going (new features, reimplementation of core routines,
    interface changes.)  I port any major bugfixes
-   back to rapidtide2, but this will become the new rapidtide2 in the 2.0 release.  This 
+   back to rapidtide2, but this will become the new rapidtide2 in the 2.0 release.  This
    will also come with some incompatible calling changes and modifications
    to filter ranges (I'll have a long explanation for why in the 2.0 release notes).
    However, if you are downloading things between releases, this is not guaranteed to be
@@ -178,7 +178,7 @@ Ok, I’m sold. What’s in here?
 -  **happy** - This is a companion to rapidtide that focusses on cardiac signals.
    happy does three things - it attempts to determine the cardiac
    waveform over the time course of an fMRI dataset using slice
-   selective averaging of fully unprocessed fMRI data. It also 
+   selective averaging of fully unprocessed fMRI data. It also
    cleans up this initial estimate using a deep learning filter to
    infer what the simultaneously recorded plethysmogram would be.
    Finally, it uses either the derived or a supplied plethysmogram
@@ -245,20 +245,20 @@ Ok, I’m sold. What’s in here?
    together. It may be generally useful to anybody wanting to display
    functional data.
 
-Support
-=======
+Financial support
+-----------------
 
 This code base is being developed and supported by a grant from the US
 NIH (`1R01 NS097512 <http://grantome.com/grant/NIH/R01-NS097512-02>`__).
 
 References
-==========
+----------
 
 Links to PDFs of all papers mentioned here can be found on the OMG
 website: https://www.nirs-fmri.net/home/publications
 
 General overview of systemic low frequency oscillations in fMRI data
---------------------------------------------------------------------
+`````````````````````````````````````````````````````````````````````
 
 1) Tong Y, Hocke LM, Frederick BB. (2019) Low Frequency Systemic
    Hemodynamic “Noise” in Resting State BOLD fMRI: Characteristics,
@@ -266,7 +266,7 @@ General overview of systemic low frequency oscillations in fMRI data
    Neurosci., 14 August 2019 \| https://doi.org/10.3389/fnins.2019.00787
 
 Multimodal Cerebral Circulation Imaging
----------------------------------------
+```````````````````````````````````````
 
 1)  Tong Y, Frederick BD. (2010) Time lag dependent multimodal
     processing of concurrent fMRI and near-infrared spectroscopy (NIRS)
@@ -312,7 +312,7 @@ Multimodal Cerebral Circulation Imaging
 9)  Donahue M, Strother M, Lindsey K, Hocke L, Tong Y, Frederick B.
     (2015) Time delay processing of hypercapnic fMRI allows quantitative
     parameterization of cerebrovascular reactivity and blood flow
-    delays. Journal of Cerebral Blood Flow & Metabolism.  2015. PubMed 
+    delays. Journal of Cerebral Blood Flow & Metabolism.  2015. PubMed
     PMID: 26661192. Epub October 19, 2015. doi: 10.1177/0271678X15608643.
 
 10) Hocke L, Cayetano K, Tong Y, Frederick B. (2015) An optimized
@@ -333,7 +333,7 @@ Multimodal Cerebral Circulation Imaging
     10.1177/0271678X16631755. PubMed PMID: 26873885.
 
 Cardiac waveform extraction and refinement
-------------------------------------------
+``````````````````````````````````````````
 
 1) Aslan S, Hocke L, Schwarz N, Frederick B. (2019) Extraction of the
    cardiac waveform from simultaneous multislice fMRI data using slice
@@ -341,7 +341,7 @@ Cardiac waveform extraction and refinement
    NeuroImage 198, 303–316 (2019).
 
 Physiological noise identification and removal using time delay methods
------------------------------------------------------------------------
+```````````````````````````````````````````````````````````````````````
 
 1) Tong Y, Lindsey KP, Frederick BD. (2011b) Partitioning of
    physiological noise signals in the brain with concurrent

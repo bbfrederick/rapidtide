@@ -170,17 +170,18 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=["numpy>=1.16; python_version>='3.0'",
-                        "numpy>=1.16,<1.17; python_version<'3.0'",
-                        'scipy',
-                        'pandas',
-                        'scikit-image',
-                        'scikit-learn',
-                        'nibabel',
-                        'matplotlib',
-                        'pyfftw',
-                        'pyqtgraph',
-                        'statsmodels'],
+    install_requires=[
+        "numpy>=1.16; python_version>='3.0'",
+        "numpy>=1.16,<1.17; python_version<'3.0'",
+        'scipy',
+        'pandas',
+        'scikit-image',
+        'scikit-learn',
+        'nibabel',
+        'matplotlib',
+        'pyfftw',
+        'pyqtgraph',
+        'statsmodels'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -194,7 +195,7 @@ setup(
             'sphinx-argparse',
             'sphinx-gallery',
             'numpydoc',
-            'm2r',
+            'recommonmark',
             ],
     },
 
