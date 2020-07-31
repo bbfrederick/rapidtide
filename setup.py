@@ -194,6 +194,7 @@ setup(
             'sphinx_rtd_theme',
             'sphinx-argparse',
             'sphinx-gallery',
+            'm2r',
             'numpydoc',
             'recommonmark',
             ],
