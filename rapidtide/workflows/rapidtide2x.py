@@ -641,7 +641,10 @@ def rapidtide_main():
     optiondict['displayplots'] = False
     optiondict['debug'] = False
     optiondict['verbose'] = False
-    optiondict['release_version'], optiondict['git_tag'] = tide_util.version()
+    optiondict['release_version'], \
+    optiondict['git_longtag'], \
+    optiondict['git_date'],\
+    optiondict['git_isdirty'] = tide_util.version()
     optiondict['python_version'] = str(sys.version_info)
     optiondict['nprocs'] = 1
     optiondict['mklthreads'] = 1
@@ -660,7 +663,6 @@ def rapidtide_main():
 
     # start the clock!
     timings = [['Start', time.time(), None, None]]
-    #print(thearguments, 'version:', optiondict['release_version'], optiondict['git_tag'])
     tide_util.checkimports(optiondict)
 
     # get the command line parameters

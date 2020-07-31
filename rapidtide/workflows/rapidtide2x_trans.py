@@ -639,7 +639,10 @@ def process_args():
     optiondict['displayplots'] = False
     optiondict['debug'] = False
     optiondict['verbose'] = False
-    optiondict['release_version'], optiondict['git_tag'] = tide_util.version()
+    optiondict['release_version'], \
+    optiondict['git_longtag'], \
+    optiondict['git_date'],\
+    optiondict['git_isdirty'] = tide_util.version()
     optiondict['python_version'] = str(sys.version_info)
     optiondict['nprocs'] = 1
     optiondict['mklthreads'] = 1
