@@ -872,12 +872,12 @@ def happy_main(thearguments):
     infodict['outputroot'] = outputroot
 
     # save program version
-    infodict['version'] = tide_util.version()
+    infodict['release_version'], infodict['git_longtag'], infodict['git_date'], infodict['git_isdirty'] = tide_util.version()
 
     # record the machine we ran on
     infodict['hostname'] = platform.node()
 
-    print('running version', infodict['version'], 'on host', infodict['hostname'])
+    print('running version', infodict['release_version'], 'on host', infodict['hostname'])
 
     optparsestart = 4
 

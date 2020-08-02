@@ -682,12 +682,12 @@ def happy_main(argparsingfunc):
     infodict['outputroot'] = outputroot
 
     # save program version
-    infodict['version'] = tide_util.version()
+    infodict['release_version'], infodict['git_longtag'], infodict['git_date'], infodict['git_isdirty'] = tide_util.version()
 
     # record the machine we ran on
     infodict['hostname'] = platform.node()
 
-    print('running version', infodict['version'], 'on host', infodict['hostname'])
+    print('running version', infodict['release_version'], 'on host', infodict['hostname'])
 
     # save the information file
     if args.saveinfoasjson:
@@ -776,9 +776,9 @@ def happy_main(argparsingfunc):
                                                                     motstart=args.motskip,
                                                                     motionhp=args.motionhp,
                                                                     motionlp=args.motionlp,
-                                                                    position=motfilt_pos,
-                                                                    deriv=motfilt_deriv,
-                                                                    derivdelayed=motfilt_derivdelayed)
+                                                                    position=args.motfilt_pos,
+                                                                    deriv=args.motfilt_deriv,
+                                                                    derivdelayed=args.motfilt_derivdelayed)
         fmri_data[validvoxels, :] = filtereddata[:, :]
         infodict['numorthogmotregressors'] = motionregressors.shape[0]
         timings.append(['Motion filtering end', time.time(), numspatiallocs, 'voxels'])
