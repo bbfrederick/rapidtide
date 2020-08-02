@@ -232,27 +232,27 @@ Ok, I’m sold. What’s in here?
    together. It may be generally useful to anybody wanting to display
    functional data.
 
-Support
-=======
+Financial Support
+-----------------
 
 This code base is being developed and supported by a grant from the US
 NIH (`1R01 NS097512 <http://grantome.com/grant/NIH/R01-NS097512-02>`__).
 
 Additional packages used
-========================
+------------------------
 
 Rapidtide would not be possible without many additional open source packages.
 These include:
 
 numpy:
-------
+``````
 
 1) Stéfan van der Walt, S. Chris Colbert and Gaël Varoquaux. The NumPy Array:
    A Structure for Efficient Numerical Computation, Computing in Science
    & Engineering, 13, 22-30 (2011) \| https:10.1109/MCSE.2011.37
 
 scipy:
-------
+``````
 
 1) Pauli Virtanen, Ralf Gommers, Travis E. Oliphant, Matt Haberland, Tyler Reddy,
    David Cournapeau, Evgeni Burovski, Pearu Peterson, Warren Weckesser,
@@ -267,18 +267,18 @@ scipy:
    https://doi.org/10.1038/s41592-019-0686-2
 
 matplotlib:
------------
+```````````
 
 1) John D. Hunter. Matplotlib: A 2D Graphics Environment, Computing in Science
    & Engineering, 9, 90-95 (2007) \| https://10.1109/MCSE.2007.55
 
 nibabel:
---------
+````````
 
 1) https://github.com/nipy/nibabel \| https://10.5281/zenodo.591597
 
 scikit-learn:
--------------
+`````````````
 
 1) Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B.,
    Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V.,
@@ -287,20 +287,20 @@ scikit-learn:
    Journal of Machine Learning Research, 2011. 12: p. 2825-2830. \| https://scikit-learn.org
 
 pandas:
--------
+```````
 
 1) McKinney, W., pandas: a foundational Python library for data analysis
    and statistics. Python for High Performance and Scientific Computing, 2011. 14.
 
 
 References
-==========
+----------
 
 Links to PDFs of all papers mentioned here can be found on the OMG
 website: https://www.nirs-fmri.net/home/publications
 
 General overview of systemic low frequency oscillations in fMRI data
---------------------------------------------------------------------
+````````````````````````````````````````````````````````````````````
 
 1) Tong Y, Hocke LM, Frederick BB. (2019) Low Frequency Systemic
    Hemodynamic “Noise” in Resting State BOLD fMRI: Characteristics,
@@ -308,7 +308,7 @@ General overview of systemic low frequency oscillations in fMRI data
    Neurosci., 14 August 2019 \| https://doi.org/10.3389/fnins.2019.00787
 
 Multimodal Cerebral Circulation Imaging
----------------------------------------
+```````````````````````````````````````
 
 1)  Tong Y, Frederick BD. (2010) Time lag dependent multimodal
     processing of concurrent fMRI and near-infrared spectroscopy (NIRS)
@@ -375,7 +375,7 @@ Multimodal Cerebral Circulation Imaging
     10.1177/0271678X16631755. PubMed PMID: 26873885.
 
 Cardiac waveform extraction and refinement
-------------------------------------------
+``````````````````````````````````````````
 
 1) Aslan S, Hocke L, Schwarz N, Frederick B. (2019) Extraction of the
    cardiac waveform from simultaneous multislice fMRI data using slice
@@ -383,7 +383,7 @@ Cardiac waveform extraction and refinement
    NeuroImage 198, 303–316 (2019).
 
 Physiological noise identification and removal using time delay methods
------------------------------------------------------------------------
+```````````````````````````````````````````````````````````````````````
 
 1) Tong Y, Lindsey KP, Frederick BD. (2011b) Partitioning of
    physiological noise signals in the brain with concurrent
@@ -419,8 +419,8 @@ Physiological noise identification and removal using time delay methods
    :target: https://opensource.org/licenses/Apache-2.0
 .. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=latest
    :target: http://rapidtide.readthedocs.io/en/latest/?badge=latest
-.. |Travis-CI| image:: https://travis-ci.com/bbfrederick/rapidtide.svg?branch=dev
-   :target: https://travis-ci.com/bbfrederick/rapidtide
+.. |CircleCI| image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?style=shield?branch=dev
+   :target: https://circleci.com/gh/neurostuff/NiMARE
 .. |Coverage| image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/dev/graph/badge.svg
    :target: https://codecov.io/gh/bbfrederick/rapidtide
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.814990.svg
