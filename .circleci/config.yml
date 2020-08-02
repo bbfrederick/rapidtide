@@ -58,7 +58,7 @@ jobs:
             fi
             python setup.py install --user
       - run:
-          name: Run Py2.7 tests
+          name: Run Py3.6 tests
           command: |
             source activate py36_env
             py.test --ignore=rapidtide/candidatetests rapidtide
