@@ -1,10 +1,13 @@
+Installing rapidtide
+====================
+
 Bare metal installation
-=======================
+-----------------------
 This gives you the maximum flexibility if you want to look at the code and/or modify things.  It may seem a little daunting at first,
 but it's not that bad.  And if you want a simpler path, skip down to the Docker installation instructions
 
 Required dependencies
----------------------
+`````````````````````
 
 The processing programs in rapidtide require the following to be
 installed first:
@@ -27,7 +30,7 @@ install the following:
 -  pyqtgraph
 
 Optional dependencies
----------------------
+`````````````````````
 
 The following optional dependencies will be used if present:
 
@@ -66,7 +69,7 @@ should install
    seen a conda version of this.
 
 Installing Python
------------------
+`````````````````
 
 The simplest way BY FAR to get this all done is to use Anaconda python
 from Continuum Analytics. It’s a free, curated scientific Python
@@ -77,19 +80,11 @@ https://www.continuum.io. Rapidtide works with Python 2 or 3. If you are
 new to Python, you should probably just start at 3.
 
 After installing Anaconda python, install the remaining dependencies
-(including some good optional ones).  To do this most easily, you should have
-conda-forge as one of your source channels.  To add conda-forge, type:
+(including some good optional ones:
 
 ::
 
-   conda config --add channels conda-forge
-
-
-Then install the additional dependencies:
-
-::
-
-   conda install nibabel pyqtgraph pyfftw 
+   conda install nibabel pyqtgraph pyfftw
 
 
 For the deep learning filter in happy, also do:
@@ -121,8 +116,8 @@ or
 
 Done.
 
-Installing rapidtide
---------------------
+Installing the rapidtide library
+````````````````````````````````
 
 Once you have installed the prerequisites, cd into the package
 directory, and type the following:
@@ -136,7 +131,7 @@ to install all of the tools in the package. You should be able to run
 them from the command line then (after rehashing).
 
 Updating
---------
+````````
 
 If you’ve previously installed rapidtide and want to update, cd into the
 package directory and do a git pull first:
@@ -147,39 +142,9 @@ package directory and do a git pull first:
    python setup.py install
 
 
-Usage
------
-Execute any of the commands to run rapidtide on the sample data:
-
-a) Run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
-::
-
-    rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/dgsr -L -r -15,15 --passes=3
-
-
-b) Run rapidtide2 to perform static global signal regression (sGSR) on an fMRI file[1] (this is just global mean regression):
-::
-
-    rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/sgsr -L -Z 0.0
-
-
-c) Run tidepool to look at all the interesting maps and timecourses from a):
-::
-
-    tidepool
-
-
-(then select the file rapidtide/data/examples/dst/dgsr_lagtimes.nii.gz to load the dataset):
-
-d) Look at the refined regressors produced during dGSR: (the "dgsr_pass1" regressor is the initial global mean before refinement) in their own window.
-::
-
-    showtc rapidtide/data/examples/dst/dgsr_reference_fmrires_pass[123].txt
-
-
 Docker installation
-===================
-As of 1.9.0, there is now a Docker container with a full rapidtide installation.  To use this, 
+-------------------
+As of 1.9.0, there is now a Docker container with a full rapidtide installation.  To use this,
 
 first make sure you have docker installed and properly configured, then run the following:
 ::
@@ -190,7 +155,7 @@ first make sure you have docker installed and properly configured, then run the 
 This it will download the docker container from dockerhub.
 It's around 2GB, so it may take some time, but it caches the file locally, so you won't have to do this again
 unless the container updates.  To use a particular version, replace VERSIONNUMBER with the version of the
-with container you want (currently the newest version is 1.9.0).
+container you want.
 
 If you like to live on the edge, just use:
 ::
@@ -198,9 +163,9 @@ If you like to live on the edge, just use:
     docker pull fredericklab/rapidtide:latest
 
 
-This will use the most recent version on dockerhub.  
+This will use the most recent version on dockerhub.
 
-Now that the file is downloaded, you can run and rapidtide command in the Docker container.  For example, to run a simple 
+Now that the file is downloaded, you can run and rapidtide command in the Docker container.  For example, to run a simple
 rapidtide2x analysis, you would use the following command (you can do this all in one step - it will just integrate the
 first pull into the run time if the version you request hasn't already been downloaded).
 
@@ -230,14 +195,14 @@ in the Docker container in the /src/rapidtide/rapidtide/data/examples/src direct
                 -L -r -15,15 --passes=3
 
 
-You can replace the rapidtide2x blah blah blah command with any program in the package - after the fredericklab/rapidtide:latest, 
-just specify the command and arguments as you usually would.  If you're running a program that displays anything, 
-you'll have to add a few extra arguments to the docker call.  Docker is a little weird about X forwarding - the easiest thing to 
+You can replace the rapidtide2x blah blah blah command with any program in the package - after the fredericklab/rapidtide:latest,
+just specify the command and arguments as you usually would.  If you're running a program that displays anything,
+you'll have to add a few extra arguments to the docker call.  Docker is a little weird about X forwarding - the easiest thing to
 do is find the IP address of the machine you're running on (lets call it MYIPADDRESS), and do the following:
 
 ::
 
-    xhost + 
+    xhost +
 
 This disables X11 security - this is almost certainly not the best thing to do, but I don't have a better solution
 at this time, and it works.
@@ -268,7 +233,7 @@ Then the following command will work (you can replace 'tidepool' with any of the
 
 
 Singularity installation
-========================
+------------------------
 
 Many times you can't use Docker, because of security concerns.  Singularity, from LBL, offers containerized computing
 that runs entirely in user space, so the amount of mischief you can get up to is significantly less.  Singularity
@@ -278,7 +243,7 @@ containers can be created from Docker containers as follows (stealing from the f
     singularity build /my_images/rapidtide-VERSIONNUMBER.simg docker://fredericklab/rapidtide:VERSIONNUMBER
 
 
-Running the container is similar to Docker.  The "-B" option is used to bind filesystems to mountpoints in the container. 
+Running the container is similar to Docker.  The "-B" option is used to bind filesystems to mountpoints in the container.
 For example, to run the simple rapidtide2x analysis above, type the following:
 ::
 
@@ -296,7 +261,7 @@ To run a GUI application, you need to disable x security on your host (see comme
 
 ::
 
-    xhost + 
+    xhost +
 
 then set the display variable to import to the container:
 ::
@@ -313,7 +278,7 @@ then just run the gui command with the command given above.
 
 
 References
-==========
+----------
 1) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B
 (2016). Correcting resting state fMRI-BOLD signals for blood arrival
 time enhances functional connectivity analysis. Front. Hum. Neurosci.,

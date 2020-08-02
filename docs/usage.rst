@@ -328,7 +328,7 @@ The base command you'd use would be:
 
 	::
 
-		rapidtide2 inputfmrifile outputname -L --passes=3 --refineoffset
+		rapidtide inputfmrifile outputname --frequencyband lfo --passes 3
 
 This will do a fairly simple analysis.  First, the -L option means that rapidtide2 will prefilter the data to the LFO band (0.009-0.15Hz). It will then construct a regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor is specified), and then use crosscorrelation to determine the time delay in each voxel.  The --refinepasses=3 option directs rapidtide to to perform the delay analysis 3 times, each time generating a new estimate of the global noise signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.  After the three passes are complete, it will then use a GLM filter to remove a lagged copy of the final mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also a number of maps output with the prefix "outputname_" of delay, correlation strength and so on.
 
@@ -340,7 +340,7 @@ For this type of analysis, a good place to start is the following:
 
 	::
 
-		rapidtide2 inputfmrifile outputname -N 0 -r -10,140 -F 0.0,0.2 --lagmaxthresh=40 --ampthresh=0.2 --noglm --nofitfilt
+		rapidtide inputfmrifile outputname --numnull 0 --searchrange -10,30 --frequencyband lfo --ampthresh 0.2 --noglm --nofitfilt
 
 The first option (-N 0), shuts off the calculation of the null correlation distribution.  This is used to determine the significance threshold, but the method currently implemented in rapidtide2 is a bit simplistic - it assumes that all the time points in the data are exchangable.  This is certainly true for resting state data (see above), but it is very much NOT true for block paradigm gas challenges.  To properly analyze those, I need to consider what time points are 'equivalent', and up to now, I don't, so setting the number of iterations in the Monte Carlo analysis to zero omits this step.
 
