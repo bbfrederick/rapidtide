@@ -182,7 +182,8 @@ setup(
         'matplotlib',
         'pyfftw',
         'pyqtgraph',
-        'statsmodels'],
+        "statsmodels==0.10.2; python_version<'3.0'"
+        "statsmodels>=0.11.0; python_version>='3.0'"],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
