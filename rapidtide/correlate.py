@@ -147,7 +147,8 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
                 if displayplots:
                     pl.plot(corrscale[fitstart:fitend + 1], thexcorr[fitstart:fitend + 1], 'k',
                             corrscale[fitstart:fitend + 1],
-                            tide_fit.gauss_eval(corrscale[fitstart:fitend + 1], [sidelobeamp, sidelobetime, sidelobewidth]),
+                            tide_fit.gauss_eval(corrscale[fitstart:fitend + 1],
+                                                [sidelobeamp, sidelobetime, sidelobewidth]),
                             'r')
                     pl.show()
                 return sidelobetime, sidelobeamp
@@ -247,8 +248,10 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     if laglimit is None:
         laglimit = windowtime / 2.0
 
-    dataseg1 = tide_math.corrnormalize(data1[0:2 * halfwindow], prewindow=prewindow, detrendorder=detrendorder, windowfunc=windowfunc)
-    dataseg2 = tide_math.corrnormalize(data2[0:2 * halfwindow], prewindow=prewindow, detrendorder=detrendorder, windowfunc=windowfunc)
+    dataseg1 = tide_math.corrnormalize(data1[0:2 * halfwindow], prewindow=prewindow, detrendorder=detrendorder,
+                                       windowfunc=windowfunc)
+    dataseg2 = tide_math.corrnormalize(data2[0:2 * halfwindow], prewindow=prewindow, detrendorder=detrendorder,
+                                       windowfunc=windowfunc)
     thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
     xcorrlen = np.shape(thexcorr)[0]
     xcorr_x = np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
@@ -368,7 +371,14 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
 
 class aliasedcorrelator:
 
-    def __init__(self, hiressignal, hires_Fs, lores_Fs, timerange, hiresstarttime=0.0, loresstarttime=0.0, padvalue=30.0):
+    def __init__(self,
+                 hiressignal,
+                 hires_Fs,
+                 lores_Fs,
+                 timerange,
+                 hiresstarttime=0.0,
+                 loresstarttime=0.0,
+                 padvalue=30.0):
         """
 
         Parameters
@@ -417,16 +427,21 @@ class aliasedcorrelator:
             offsetkey = "{:.3f}".format(theoffset)
             try:
                 aliasedhiressignal = self.aliasedsignals[offsetkey]
-                #print(offsetkey, ' - cache hit')
             except KeyError:
-                #print(offsetkey, ' - cache miss')
                 self.aliasedsignals[offsetkey] = tide_math.corrnormalize(self.tcgenerator.yfromx(loresaxis + theoffset))
                 aliasedhiressignal = self.aliasedsignals[offsetkey]
             corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
         return corrfunc
 
 
-def aliasedcorrelate(hiressignal, hires_Fs, lowressignal, lowres_Fs, timerange, hiresstarttime=0.0, lowresstarttime=0.0, padvalue=30.0):
+def aliasedcorrelate(hiressignal,
+                     hires_Fs,
+                     lowressignal,
+                     lowres_Fs,
+                     timerange,
+                     hiresstarttime=0.0,
+                     lowresstarttime=0.0,
+                     padvalue=30.0):
     """
 
     Parameters
