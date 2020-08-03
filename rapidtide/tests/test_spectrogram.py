@@ -62,7 +62,6 @@ def spectralfilterprops(thefilter, debug=False):
     return response
 
 
-
 def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
     tclen = int(tclengthinsecs // sampletime)
     lowestfreq = 1.0/(sampletime * tclen)
@@ -82,7 +81,7 @@ def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
         plt.plot(testwaves[-1]['timeaxis'], testwaves[-1]['waveform'])
         plt.legend([testwaves[-1]['name']])
         plt.show()
-        
+
     testwaves.append({
         'name':        "sinusoidal modulated",
         'timeaxis':    1.0 * timeaxis,
@@ -93,7 +92,7 @@ def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
         plt.plot(testwaves[-1]['timeaxis'], testwaves[-1]['waveform'])
         plt.legend([testwaves[-1]['name']])
         plt.show()
-        
+
     scratch = np.ones(len(timeaxis), dtype=float)
     freqs = [0.1, 0.12, 0.15, 0.2]
     seglen = int(len(scratch) // len(freqs))
@@ -116,7 +115,6 @@ def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
         plt.show()
     writevec(testwaves[-1]['waveform'], 'stepped.txt')
     return testwaves
-
 
 
 def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display=False):
@@ -194,6 +192,7 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
     scratch = timeaxis * 0.0
     scratch[int(tclen / 5):int(2 * tclen / 5)] = 1.0
     scratch[int(3 * tclen / 5):int(4 * tclen / 5)] = 1.0
+    testwaves = []
     testwaves.append({
         'name':        'block regressor',
         'timeaxis':    1.0 * timeaxis,
@@ -211,9 +210,9 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
                 plt.plot(thewave['timeaxis'], offset + thefilter['filter'].apply(1.0/sampletime, thewave['waveform']))
                 legend.append(thewave['name'] + ': '+ thefilter['name'])
                 offset += 1.1
-            #plt.plot(thewave['timeaxis'], thewave['waveform'] + offset)
-            #legend.append(thewave['name'])
-            #offset += 2.2
+            # plt.plot(thewave['timeaxis'], thewave['waveform'] + offset)
+            # legend.append(thewave['name'])
+            # offset += 2.2
             plt.legend(legend)
             plt.show()
 

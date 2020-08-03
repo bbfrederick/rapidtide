@@ -15,23 +15,29 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from __future__ import print_function, division
+import os.path as op
 
 import numpy as np
 import pylab as plt
 import rapidtide.io as tide_io
 
 from rapidtide.correlate import calc_MI
+from .utils import get_test_data_path
 
 
 def test_calc_MI(display=False):
+    """
+    Unit test for mutual information calculation with
+    rapidtide.correlate.calc_MI().
+    """
     inlen = 1000
     offset = 100
-    filename1 = "testdata/lforegressor.txt"
-    filename2 = "testdata/lforegressor.txt"
+    filename1 = op.join(get_test_data_path(), "lforegressor.txt")
+    filename2 = op.join(get_test_data_path(), "lforegressor.txt")
     sig1 = tide_io.readvec(filename1)
     sig2 = np.power(sig1, 2.0)
     sig3 = np.power(sig1, 3.0)
-    
+
     kstart = 3
     kend = 100
     linmivals = []
