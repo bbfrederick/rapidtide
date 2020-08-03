@@ -15,13 +15,19 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from __future__ import print_function, division
+import os.path as op
 
 import matplotlib.pyplot as plt
 import numpy as np
 import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
+from .utils import get_test_data_path
 
 
 def test_proberegressor(debug=False, display=False):
+    """
+    Smoke test for rapidtide.fit.detrend
+    """
     fmritr = 1.5
     offsettime = 0.0
     inputstarttime = 0.0
@@ -29,11 +35,13 @@ def test_proberegressor(debug=False, display=False):
     oversampfactor = 2
     invertregressor = False
     detrendorder = 3
+    preprocskip = 0
 
-    filename = "testdata/lforegressor.txt"
+    filename = op.join(get_test_data_path(), "lforegressor.txt")
     inputfreq = 1.0 / fmritr
     inputstarttime = 0.0
     inputperiod = 1.0 / inputfreq
+    oversamptr = oversampfactor * fmritr
     inputvec = tide_io.readvec(filename)
     numreference = len(inputvec)
     validstart = 0
@@ -41,10 +49,13 @@ def test_proberegressor(debug=False, display=False):
     validtimepoints = validend - validstart + 1
 
     skiptime = fmritr * (preprocskip + addedskip)
-    reference_x = np.arange(0.0, numreference) * inputperiod - (inputstarttime + offsettime)
-    initial_fmri_x = np.arange(0.0, validtimepoints - addedskip) * fmritr + skiptime
-    os_fmri_x = np.arange(0.0, (validtimepoints - addedskip) * oversampfactor - (
-            oversampfactor - 1)) * oversamptr + skiptime
+    reference_x = np.arange(0.0, numreference) * inputperiod - (
+        inputstarttime + offsettime)
+    initial_fmri_x = np.arange(0.0, validtimepoints - addedskip) * \
+        fmritr + skiptime
+    os_fmri_x = np.arange(0.0, (validtimepoints - addedskip) *
+                          oversampfactor - (oversampfactor - 1)) * \
+        oversamptr + skiptime
 
     # invert the regressor if necessary
     if invertregressor:
@@ -52,15 +63,15 @@ def test_proberegressor(debug=False, display=False):
     else:
         invertfac = 1.0
 
-
     # detrend the regressor if necessary
     if detrendorder > 0:
-        reference_y = invertfac * tide_fit.detrend(inputvec[0:numreference],
+        reference_y = invertfac * tide_fit.detrend(inputvec[:numreference],
                                                    order=detrendorder,
                                                    demean=True)
     else:
-        reference_y = invertfac * (inputvec[0:numreference] - np.mean(inputvec[0:numreference]))
-
+        reference_y = invertfac * (
+            inputvec[:numreference] - np.mean(inputvec[:numreference])
+        )
 
     if display:
         plt.figure()
@@ -68,6 +79,7 @@ def test_proberegressor(debug=False, display=False):
         plt.show()
 
     assert True
+
 
 if __name__ == '__main__':
     test_proberegressor(debug=True, display=True)
