@@ -1,4 +1,4 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
 #   Copyright 2016-2019 Blaise Frederick
@@ -75,7 +75,6 @@ if nibabelexists:
         return nim, nim_data, nim_hdr, thedims, thesizes
 
 
-    # dims are the array dimensions along each axis
     def parseniftidims(thedims):
         r"""Split the dims array into individual elements
 
@@ -92,7 +91,6 @@ if nibabelexists:
         return thedims[1], thedims[2], thedims[3], thedims[4]
 
 
-    # sizes are the mapping between voxels and physical coordinates
     def parseniftisizes(thesizes):
         r"""Split the size array into individual elements
 
@@ -376,7 +374,7 @@ if nibabelexists:
         dimmatch = checkspaceresmatch(hdr1['pixdim'], hdr2['pixdim'])
         resmatch = checkspacedimmatch(hdr1['dim'], hdr2['dim'])
         return dimmatch and resmatch
- 
+
 
     def checkspaceresmatch(sizes1, sizes2):
         r"""Check the spatial pixdims of two nifti files to determine if they have the same resolution
@@ -404,7 +402,8 @@ if nibabelexists:
 
 
     def checkspacedimmatch(dims1, dims2):
-        r"""Check the dimension arrays of two nifti files to determine if the cover the same number of voxels in each dimension
+        r"""Check the dimension arrays of two nifti files to determine if
+        the cover the same number of voxels in each dimension
 
         Parameters
         ----------
@@ -477,6 +476,7 @@ def checkifparfile(filename):
         return True
     else:
         return False
+
 
 def readparfile(filename):
     r"""Checks to see if a file is an FSL style motion parameter file
@@ -708,7 +708,7 @@ def readoptionsfile(inputfileroot):
         thedict = readdict(inputfileroot + '.txt')
     else:
         print('no valid options file found')
-        return{}
+        return {}
 
     # correct behavior for older options files
     try:
@@ -752,8 +752,6 @@ def readoptionsfile(inputfileroot):
             thedict['upperpass'] = -1.0
             thedict['upperstop'] = -1.0
     return thedict
-
-
 
 
 def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, debug=False):
@@ -803,22 +801,23 @@ def readbidstsv(inputfilename, debug=False):
     if debug:
         print('thefileroot:', thefileroot)
         print('theext:', theext)
-    if os.path.exists(thefileroot + '.json') and (os.path.exists(thefileroot + '.tsv.gz') or os.path.exists(thefileroot + '.tsv')):
+    if os.path.exists(thefileroot + '.json') and (
+            os.path.exists(thefileroot + '.tsv.gz') or os.path.exists(thefileroot + '.tsv')):
         with open(thefileroot + '.json', 'r') as json_data:
             d = json.load(json_data)
             try:
                 samplerate = float(d['SamplingFrequency'])
-            except:
+            except KeyError:
                 print('no samplerate found in json, setting to 1.0')
                 samplerate = 1.0
             try:
                 starttime = float(d['StartTime'])
-            except:
+            except KeyError:
                 print('no starttime found in json, setting to 0.0')
                 starttime = 0.0
             try:
                 columns = d['Columns']
-            except:
+            except KeyError:
                 print('no columns found in json, will take labels from the tsv file')
                 columns = None
         if os.path.exists(thefileroot + '.tsv.gz'):
@@ -882,6 +881,7 @@ def colspectolist(colspec, debug=False):
         return None
     collist = []
     theranges = colspec.split(',')
+
     def safeint(s):
         try:
             int(s)
@@ -889,6 +889,7 @@ def colspectolist(colspec, debug=False):
         except ValueError:
             print('COLSPECTOLIST:', s, 'is not a legal integer - exiting')
             return None
+
     for thisrange in theranges:
         if debug:
             print('processing range', thisrange)
@@ -899,10 +900,10 @@ def colspectolist(colspec, debug=False):
             start = safeint(theendpoints[0])
             end = safeint(theendpoints[1])
             if start < 0:
-                print('COLSPECTOLIST:',start, 'must be greater than zero')
+                print('COLSPECTOLIST:', start, 'must be greater than zero')
                 return None
             if end < start:
-                print('COLSPECTOLIST:',end, 'must be greater than or equal to', start)
+                print('COLSPECTOLIST:', end, 'must be greater than or equal to', start)
                 return None
             for i in range(start, end + 1):
                 collist.append(i)
@@ -1003,6 +1004,7 @@ def readvec(inputfilename):
                 inputvec[numvals - 1] = np.float64(line)
     return 1.0 * inputvec[0:numvals]
 
+
 def readtc(inputfilename, colnum=None, colname=None, debug=False):
     # check file type
     filebase, extension = os.path.splitext(inputfilename)
@@ -1019,7 +1021,7 @@ def readtc(inputfilename, colnum=None, colname=None, debug=False):
             print('You must specify a column name or number, but not both, to read a bidstsv file')
             sys.exit()
         inputfreq, inputstart, timecourse = readcolfrombidstsv(inputfilename, columnname=colname,
-                                                                          columnnum=colnum, debug=debug)
+                                                               columnnum=colnum, debug=debug)
     else:
         timecourse = np.transpose(readvecs(inputfilename))
         if debug:
