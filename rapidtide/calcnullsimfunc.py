@@ -51,7 +51,6 @@ def _procOneNullCorrelationx(normalizedreftc,
     if permutationmethod == 'shuffle':
         permutedtc = np.random.permutation(normalizedreftc)
     elif permutationmethod == 'phaserandom':
-        #permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.uniform(low=-np.pi, high=np.pi, size=len(rawtcfft_r)))
         permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.permutation(rawtcfft_ang))
     else:
         print('illegal shuffling method')
@@ -114,9 +113,10 @@ def getNullDistributionDatax(rawtimecourse,
     """
 
     inputshape = np.asarray([numestreps])
-    normalizedreftc = thecorrelator.ncprefilter.apply(Fs, tide_math.corrnormalize(thecorrelator.reftc,
-                                                                                  windowfunc='None',
-                                                                                  detrendorder=thecorrelator.detrendorder)
+    normalizedreftc = thecorrelator.ncprefilter.apply(Fs,
+                                                      tide_math.corrnormalize(thecorrelator.reftc,
+                                                                              windowfunc='None',
+                                                                              detrendorder=thecorrelator.detrendorder)
                                                       )
     rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(normalizedreftc)
     if nprocs > 1:
@@ -164,7 +164,6 @@ def getNullDistributionDatax(rawtimecourse,
             if permutationmethod == 'shuffle':
                 permutedtc = np.random.permutation(normalizedreftc)
             elif permutationmethod == 'phaserandom':
-                # permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.uniform(low=-np.pi, high=np.pi, size=len(rawtcfft_r)))
                 permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.permutation(rawtcfft_ang))
             else:
                 print('illegal shuffling method')

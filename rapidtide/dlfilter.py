@@ -22,9 +22,6 @@ Created on Sat Jul 28 23:01:07 2018
 """
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-print('setting backend to Agg')
-mpl.use('Agg')
-
 import numpy as np
 import os
 import sys
@@ -42,6 +39,9 @@ except ImportError:
     pyfftwexists = False
 
 import rapidtide.io as tide_io
+
+print('setting backend to Agg')
+mpl.use('Agg')
 
 tfversion = -1
 try:
@@ -62,9 +62,10 @@ except ImportError:
 if tfversion == -1:
     try:
         import tensorflow.compat.v1 as tf
-        if (tf.__version__)[0] == '2':
+
+        if tf.__version__[0] == '2':
             tfversion = 2
-        elif (tf.__version__)[0] == '1':
+        elif tf.__version__[0] == '1':
             tfversion = 1
     except ImportError:
         print('no backend found - exiting')
@@ -75,10 +76,12 @@ if tfversion == 2:
     tf.disable_v2_behavior()
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.optimizers import RMSprop
-    from tensorflow.keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, BatchNormalization, LSTM, \
+    from tensorflow.keras.layers import Bidirectional, Convolution1D, Dense, Activation, Dropout, \
+        BatchNormalization, LSTM, \
         TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
     from tensorflow.keras.callbacks import TerminateOnNaN, ModelCheckpoint
     from tensorflow.keras.models import load_model
+
     print('tensorflow version: >>>{}<<<'.format(tf.__version__))
 elif tfversion == 1:
     print('using tensorflow v1x')
@@ -88,12 +91,14 @@ elif tfversion == 1:
         TimeDistributed, MaxPooling1D, UpSampling1D, GlobalMaxPool1D
     from keras.callbacks import TerminateOnNaN, ModelCheckpoint
     from keras.models import load_model
+
     print('tensorflow version: >>>{}<<<'.format(tf.__version__))
 elif tfversion == 0:
     pass
 else:
     print('could not find backend - exiting')
     sys.exit()
+
 
 class dlfilter:
     """Base class for deep learning filter"""
@@ -206,7 +211,15 @@ class dlfilter:
             sys.exit()
 
         if self.dofft:
-            self.train_x, self.train_y, self.val_x, self.val_y, self.Ns, self.tclen, self.thebatchsize, dummy, dummy = prep(
+            self.train_x, \
+            self.train_y, \
+            self.val_x, \
+            self.val_y, \
+            self.Ns, \
+            self.tclen, \
+            self.thebatchsize, \
+            dummy, \
+            dummy = prep(
                 self.window_size,
                 thesuffix=self.thesuffix,
                 thedatadir=self.thedatadir,
@@ -274,7 +287,6 @@ class dlfilter:
         plt.legend()
         plt.savefig(self.lossfilename)
         plt.close()
-
 
         return self.loss, self.val_loss, self.pred_error, self.raw_error
 
@@ -403,11 +415,17 @@ class dlfilter:
 
 
 class multiscalecnn(dlfilter):
-    #from keras.layers import Conv1D, Dense, Dropout, Input, Concatenate, GlobalMaxPooling1D
-    #from keras.models import Model
+    # from keras.layers import Conv1D, Dense, Dropout, Input, Concatenate, GlobalMaxPooling1D
+    # from keras.models import Model
     # this base model is one branch of the main model
     # it takes a time series as an input, performs 1-D convolution, and returns it as an output ready for concatenation
-    def __init__(self, num_filters=10, kernel_sizes=[4, 8, 12], input_lens=[64, 128, 192], input_width=1, dilation_rate=1, *args, **kwargs):
+    def __init__(self,
+                 num_filters=10,
+                 kernel_sizes=[4, 8, 12],
+                 input_lens=[64, 128, 192],
+                 input_width=1,
+                 dilation_rate=1,
+                 *args, **kwargs):
         self.num_filters = num_filters
         self.kernel_sizes = kernel_sizes
         self.input_lens = input_lens
@@ -444,6 +462,7 @@ class multiscalecnn(dlfilter):
             os.makedirs(self.modelpath)
         except OSError:
             pass
+
     def makesubnet(self, inputlen, kernelsize):
         # the input is a time series of length input_len and width input_width
         input_seq = Input(shape=(inputlen, self.input_width))
@@ -458,9 +477,7 @@ class multiscalecnn(dlfilter):
         basemodel = Model(inputs=input_seq, outputs=compressed)
         return basemodel
 
-
     def makenet(self):
-
         # the inputs to the branches are the original time series, and its down-sampled versions
         input_smallseq = Input(shape=(self.inputs_lens[0], self.input_width))
         input_medseq = Input(shape=(self.inputs_lens[1], self.input_width))
@@ -581,7 +598,7 @@ class denseautoencoder(dlfilter):
         print('input layer - sizefac:', sizefac)
 
         self.model.add(Dense(sizefac * self.encoding_dim,
-                                 input_shape=(None, self.inputsize)))
+                             input_shape=(None, self.inputsize)))
         self.model.add(BatchNormalization())
         self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
@@ -674,7 +691,7 @@ class convautoencoder(dlfilter):
             layersize = int(layersize // 2)
             nfilters *= 2
             print('input layer size:', layersize, ', nfilters:', nfilters)
-            self.model.add(Convolution1D(filters=nfilters, kernel_size=self.kernel_size,padding='same'))
+            self.model.add(Convolution1D(filters=nfilters, kernel_size=self.kernel_size, padding='same'))
             self.model.add(BatchNormalization())
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
@@ -691,19 +708,15 @@ class convautoencoder(dlfilter):
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
 
-
-
-
         # make the intermediate encoding layers
         for i in range(1, self.num_layers - 1):
             print('input layer size:', layersize)
-            self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size,padding='same'))
+            self.model.add(Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same'))
             self.model.add(BatchNormalization())
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
             self.model.add(MaxPooling1D(2, padding='same'))
             layersize = int(layersize // 2)
-
 
         # make the encoding layer
         print('input layer size:', layersize)
@@ -726,7 +739,6 @@ class convautoencoder(dlfilter):
         print('input layer size:', layersize)
         self.model.add(Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding='same'))
         self.model.compile(optimizer='adam', loss='mse')
-
 
 
 '''
@@ -976,11 +988,13 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag='xyz', inputfrag='
         if os.path.isfile(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)):
             if usebadpts:
                 if os.path.isfile(tobadpts(targetname.replace('alignedpleth', 'pleth'))) \
-                        and os.path.isfile(
-                            tobadpts(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug))):
-                                matchedfilelist.append(targetname)
-                                if debug:
-                                    print(matchedfilelist[-1])
+                        and os.path.isfile(tobadpts(targettoinput(targetname,
+                                                                  targetfrag=targetfrag,
+                                                                  inputfrag=inputfrag,
+                                                                  debug=debug))):
+                    matchedfilelist.append(targetname)
+                    if debug:
+                        print(matchedfilelist[-1])
             else:
                 matchedfilelist.append(targetname)
                 if debug:
@@ -1032,13 +1046,14 @@ def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebad
             nanfound = True
             nanfiles.append(matchedfilelist[i])
         if np.any(np.isnan(tempx)):
-            print('NaN found in file', targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag), '- discarding')
+            print('NaN found in file', targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag),
+                  '- discarding')
             nanfound = True
             nanfiles.append(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag))
         strangefound = False
         if not (0.5 < np.std(tempx) < 20.0):
             print('file', targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag),
-                 'has an extreme standard deviation - discarding')
+                  'has an extreme standard deviation - discarding')
             strangefound = True
             strangemagfiles.append(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag))
         if not (0.5 < np.std(tempy) < 20.0):
@@ -1049,7 +1064,8 @@ def readindata(matchedfilelist, tclen, targetfrag='xyz', inputfrag='abc', usebad
         ntempx = tempx.shape[0]
         ntempy = tempy.shape[0]
         if ntempx < tclen:
-            print('file', targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag), 'is short - discarding')
+            print('file', targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag),
+                  'is short - discarding')
             shortfound = True
             shortfiles.append(targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag))
         if ntempy < tclen:
@@ -1300,7 +1316,6 @@ def prep(window_size,
         for subj in range(N_subjs):
             print(names[subj], 'starts at', subjectstarts[subj])
 
-
     print('Xb.shape:', Xb.shape)
     print('Yb.shape:', Yb.shape)
 
@@ -1347,7 +1362,8 @@ def prep(window_size,
         val_x = Xb_fourier[perm[limit:], :, :]
         val_y = Yb_fourier[perm[limit:], :, :]
         print('train, val dims:', train_x.shape, train_y.shape, val_x.shape, val_y.shape)
-        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip - endskip, batchsize, Xscale_fourier, Yscale_fourier
+        return train_x, train_y, val_x, val_y, N_subjs, tclen - startskip - endskip, \
+               batchsize, Xscale_fourier, Yscale_fourier
     else:
         train_x = Xb[perm_train, :, :]
         train_y = Yb[perm_train, :, :]
