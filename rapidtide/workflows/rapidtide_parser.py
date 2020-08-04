@@ -73,8 +73,8 @@ def _get_parser():
             dest='denoising',
             action='store_true',
             help=('Preset for hemodynamic denoising - this is a macro that '
-                  'sets lagmin=-15.0, lagmax=15.0, passes=3, despeckle_passes=0, '
-                  'refineoffset=True, doglmfilt=True. '
+                  'sets lagmin=-15.0, lagmax=15.0, passes=3, despeckle_passes=4, '
+                  'refineoffset=True, peakfittype=fastquad, doglmfilt=True. '
                   'Any of these options can be overridden with the appropriate '
                   'additional arguments'),
             default=False)
@@ -496,9 +496,9 @@ def _get_parser():
             action='store',
             type=str,
             choices=['correlation', 'mutualinfo', 'hybrid'],
-            help=('Similarity metric for finding delay values.  Choices are "correlation" '
-                '(default), "mutualinfo", and "hybrid".'),
-            default='correlation')
+            help=('Similarity metric for finding delay values.  Choices are "correlation", '
+                '"mutualinfo", and "hybrid" (default).'),
+            default='hybrid')
     corr.add_argument(
             '--mutualinfosmoothingtime',
             dest='smoothingtime',
@@ -1172,9 +1172,10 @@ def process_args(inputargs=None):
         setifnotset(args, 'doglmfilt', False)
 
     if args['denoising']:
-        setifnotset(args, 'despeckle_passes', 0)
+        setifnotset(args, 'despeckle_passes', 4)
         setifnotset(args, 'lagmin', -15.0)
         setifnotset(args, 'lagmax', 15.0)
+        setifnotset(args, 'peakfittype', 'fastquad')
         args['passes'] = 3
         args['refineoffset'] = True
         args['doglmfilt'] = True
