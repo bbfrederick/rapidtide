@@ -12,8 +12,8 @@ band (rapditide2) and now in the cardiac band (happy).
 
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
-.. image:: https://travis-ci.org/bbfrederick/rapidtide.svg?branch=master
-   :target: https://travis-ci.org/bbfrederick/rapidtide
+.. image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?branch=master&style=shield
+   :target: https://circleci.com/gh/bbfrederick/rapidtide
 .. image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/bbfrederick/rapidtide
 
