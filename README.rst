@@ -11,8 +11,7 @@ band (rapidtide2) and now in the cardiac band (happy).
 
 Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
 
-|License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by
-NIH|
+|License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by NIH|
 
 Why do I want to know about time lagged correlations?
 -----------------------------------------------------
@@ -377,7 +376,7 @@ Physiological noise identification and removal using time delay methods
    :target: https://opensource.org/licenses/Apache-2.0
 .. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=latest
    :target: http://rapidtide.readthedocs.io/en/latest/?badge=latest
-.. |CircleCI| image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?style=shield?branch=master
+.. |CircleCI| image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?branch=master&style=shield
    :target: https://circleci.com/gh/bbfrederick/rapidtide
 .. |Coverage| image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/bbfrederick/rapidtide
