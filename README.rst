@@ -11,8 +11,7 @@ band (rapidtide2) and now in the cardiac band (happy).
 
 Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
 
-|License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by
-NIH|
+|License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by NIH|
 
 Why do I want to know about time lagged correlations?
 -----------------------------------------------------
