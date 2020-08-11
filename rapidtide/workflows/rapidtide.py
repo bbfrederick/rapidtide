@@ -131,8 +131,11 @@ def numpy2shared(inarray, thetype):
 
 def allocshared(theshape, thetype):
     thesize = int(1)
-    for element in theshape:
-        thesize *= int(element)
+    if not isinstance(theshape, (list, tuple)):
+        thesize = theshape
+    else:
+        for element in theshape:
+            thesize *= int(element)
     if thetype == np.float64:
         outarray_shared = mp.RawArray('d', thesize)
     else:
