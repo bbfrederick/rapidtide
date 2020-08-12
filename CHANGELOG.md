@@ -6,7 +6,7 @@
 * (rapidtide2): rapidtide2 has been eliminated.  If you used it before, you can use rapidtide2x as a dropin replacement (but you really should start moving to using rapidtide, the new version that is actively being developed).
 * (rapidtide2x): rapidtide2x has been deprecated and replaced by rapidtide (which is basically rapidtide2x v1.9.0 with a different argument parser and default option values).
 * (rapidtide2x): Added deprecation warning.
-* (rapidtide): The correlation function has been replaced by a more flexible "similarity function".  There are currently 3 options: "correlation" (the old method), "mutualinfo", which uses a cross mutual information function, and "hybrid", the new default, which uses the correlation function, but disambiguates the peak to use by comparing the mutual information for each peak.
+* (rapidtide): The correlation function has been replaced by a more flexible "similarity function".  There are currently 3 options: "correlation" (the old method), "mutualinfo", which uses a cross mutual information function, and "hybrid", the new default, which uses the correlation function, but disambiguates which peak to use by comparing the mutual information for each peak.
 * (rapidtide): Changed the default peak fit type to "fastquad", which does a parabolic fit to the peaks to refine location.
 * (rapidtide): The getopt argument parser has been completely rewritten using argparse.  The way you specify many (most?) options has changed.
 * (rapidtide): Any option that takes additional values (numbers, file names, etc.) is now specified as '--option VALUE [VALUE [VALUE...]]' rather than as '--option=VALUE[,VALUE[,VALUE...]]'.
