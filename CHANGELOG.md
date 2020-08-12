@@ -6,6 +6,8 @@
 * (rapidtide2): rapidtide2 has been eliminated.  If you used it before, you can use rapidtide2x as a dropin replacement (but you really should start moving to using rapidtide, the new version that is actively being developed).
 * (rapidtide2x): rapidtide2x has been deprecated and replaced by rapidtide (which is basically rapidtide2x v1.9.0 with a different argument parser and default option values).
 * (rapidtide2x): Added deprecation warning.
+* (rapidtide): The correlation function has been replaced by a more flexible "similarity function".  There are currently 3 options: "correlation" (the old method), "mutualinfo", which uses a cross mutual information function, and "hybrid", the new default, which uses the correlation function, but disambiguates the peak to use by comparing the mutual information for each peak.
+* (rapidtide): Changed the default peak fit type to "fastquad", which does a parabolic fit to the peaks to refine location.
 * (rapidtide): The getopt argument parser has been completely rewritten using argparse.  The way you specify many (most?) options has changed.
 * (rapidtide): Any option that takes additional values (numbers, file names, etc.) is now specified as '--option VALUE [VALUE [VALUE...]]' rather than as '--option=VALUE[,VALUE[,VALUE...]]'.
 * (rapidtide): After a lot of use over the years, I've reset a lot of defaults to reflect typical usage.  You can still do any analysis you were doing before, but it may now require changes to scripts and workflows to get the old default behavior.  For most cases you can get good analyses with a minimum set of command line options now.
@@ -25,6 +27,23 @@
 * (docker container): Fixed some build errors, now pushes container to dockerhub.
 * (rapidtide): Multiprocessing can be forced on, even on a single processor.
 * (rapidtide): Multiprocessing can be disabled on a per-routine basis.
+
+## Version 1.9.3 (7/30/20)
+* Bumped version number because I forgot to commit a file
+
+## Version 1.9.2 (7/30/20)
+* (all): Changed over to using versioneer to handle version numbers.
+* (rapidtide2, rapidtide2x, rapidtide_2x_trans, rapidtideX) Runtimings file now has additional version information.
+
+## Version 1.9.1 (6/17/20)
+* (all): Documentation improvements.
+* (all): Many internal changes to support future argument specifications.
+* (all): Backported bugfixes from the development version.
+* (rapidtide2x) Fixed specification of timerange.
+* (docker): Fixed an incompatibility in versions between pyfftw and scipy (thank you to Niranjana Shashikumar for reporting the bug and providing the solution!)
+* (docker): Improved container labelling.
+* (docker): Cleaned up container build.
+* (tidepool): Various fixes and improvements backported from the development version.
 
 # Version 1.9 (1/6/20)
 * (all): Now compatible with nibabel 3.x
