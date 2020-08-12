@@ -1079,6 +1079,7 @@ def rapidtide_main(argparsingfunc):
                 thefitter,
                 numestreps=optiondict['numestreps'],
                 nprocs=optiondict['nprocs_getNullDist'],
+                alwaysmultiproc=optiondict['alwaysmultiproc'],
                 showprogressbar=optiondict['showprogressbar'],
                 chunksize=optiondict['mp_chunksize'],
                 permutationmethod=optiondict['permutationmethod'],

@@ -78,6 +78,7 @@ def getNullDistributionDatax(rawtimecourse,
                              fixeddelayvalue=0.0,
                              numestreps=0,
                              nprocs=1,
+                             alwaysmultproc=False,
                              showprogressbar=True,
                              chunksize=1000,
                              permutationmethod='shuffle',
@@ -119,7 +120,7 @@ def getNullDistributionDatax(rawtimecourse,
                                                                               detrendorder=thecorrelator.detrendorder)
                                                       )
     rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(normalizedreftc)
-    if nprocs > 1:
+    if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def nullCorrelation_consumer(inQ, outQ):
             while True:
