@@ -905,6 +905,35 @@ def _get_parser():
                                     'contains the time and duration of an '
                                     'epoch to include. '),
                               default=None)
+
+    # Debugging options
+    debugging = parser.add_argument_group('Debugging options (not for general use)')
+    experimental.add_argument('--singleproc_getNullDist',
+                              dest='singleproc_getNullDist',
+                              action='store_true',
+                              help=('Force single proc path for getNullDist.'),
+                              default=False)
+    experimental.add_argument('--singleproc_calcsimilarity',
+                              dest='singleproc_calcsimilarity',
+                              action='store_true',
+                              help=('Force single proc path for calcsimilarity.'),
+                              default=False)
+    experimental.add_argument('--singleproc_peakeval',
+                              dest='singleproc_peakeval',
+                              action='store_true',
+                              help=('Force single proc path for peakeval.'),
+                              default=False)
+    experimental.add_argument('--singleproc_fitcorr',
+                              dest='singleproc_fitcorr',
+                              action='store_true',
+                              help=('Force single proc path for fitcorr.'),
+                              default=False)
+    experimental.add_argument('--singleproc_glm',
+                              dest='singleproc_glm',
+                              action='store_true',
+                              help=('Force single proc path for glm.'),
+                              default=False)
+
     return parser
 
 
@@ -1173,8 +1202,8 @@ def process_args(inputargs=None):
 
     if args['denoising']:
         setifnotset(args, 'despeckle_passes', 4)
-        setifnotset(args, 'lagmin', -15.0)
-        setifnotset(args, 'lagmax', 15.0)
+        setifnotset(args, 'lagmin', -10.0)
+        setifnotset(args, 'lagmax', 10.0)
         setifnotset(args, 'peakfittype', 'fastquad')
         args['passes'] = 3
         args['refineoffset'] = True

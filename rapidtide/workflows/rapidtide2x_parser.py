@@ -491,6 +491,11 @@ def process_args():
     optiondict['psdfilter'] = False
 
     # debugging options
+    optiondict['singleproc_getNullDist'] = False
+    optiondict['singleproc_calcsimilarity'] = False
+    optiondict['singleproc_peakeval'] = False
+    optiondict['singleproc_fitcorr'] = False
+    optiondict['singleproc_glm'] = False
     optiondict['internalprecision'] = 'double'
     optiondict['outputprecision'] = 'single'
     optiondict['nonumba'] = False

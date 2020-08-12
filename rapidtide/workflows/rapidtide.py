@@ -280,6 +280,31 @@ def rapidtide_main(argparsingfunc):
     if optiondict['nprocs'] < 1:
         optiondict['nprocs'] = tide_multiproc.maxcpus()
 
+    if optiondict['singleproc_getNullDist']:
+        optiondict['nprocs_getNullDist'] = 1
+    else:
+        optiondict['nprocs_getNullDist'] = optiondict['nprocs']
+
+    if optiondict['singleproc_calcsimilarity']:
+        optiondict['nprocs_calcsimilarity'] = 1
+    else:
+        optiondict['nprocs_calcsimilarity'] = optiondict['nprocs']
+
+    if optiondict['singleproc_peakeval']:
+        optiondict['nprocs_peakeval'] = 1
+    else:
+        optiondict['nprocs_peakeval'] = optiondict['nprocs']
+
+    if optiondict['singleproc_fitcorr']:
+        optiondict['nprocs_fitcorr'] = 1
+    else:
+        optiondict['nprocs_fitcorr'] = optiondict['nprocs']
+
+    if optiondict['singleproc_glm']:
+        optiondict['nprocs_glm'] = 1
+    else:
+        optiondict['nprocs_glm'] = optiondict['nprocs']
+
     # set the number of MKL threads to use
     if mklexists:
         mkl.set_num_threads(optiondict['mklthreads'])
@@ -1047,19 +1072,20 @@ def rapidtide_main(argparsingfunc):
             themutualinformationator.setreftc(cleaned_resampref_y)
             dummy, trimmedcorrscale, dummy = thecorrelator.getfunction()
             thefitter.setcorrtimeaxis(trimmedcorrscale)
-            corrdistdata = getNullDistributionData_func(cleaned_resampref_y,
-                                                         oversampfreq,
-                                                         thecorrelator,
-                                                         thefitter,
-                                                         numestreps=optiondict['numestreps'],
-                                                         nprocs=optiondict['nprocs'],
-                                                         showprogressbar=optiondict['showprogressbar'],
-                                                         chunksize=optiondict['mp_chunksize'],
-                                                         permutationmethod=optiondict['permutationmethod'],
-                                                         fixdelay=optiondict['fixdelay'],
-                                                         fixeddelayvalue=optiondict['fixeddelayvalue'],
-                                                         rt_floatset=np.float64,
-                                                         rt_floattype='float64')
+            corrdistdata = getNullDistributionData_func(
+                cleaned_resampref_y,
+                oversampfreq,
+                thecorrelator,
+                thefitter,
+                numestreps=optiondict['numestreps'],
+                nprocs=optiondict['nprocs_getNullDist'],
+                showprogressbar=optiondict['showprogressbar'],
+                chunksize=optiondict['mp_chunksize'],
+                permutationmethod=optiondict['permutationmethod'],
+                fixdelay=optiondict['fixdelay'],
+                fixeddelayvalue=optiondict['fixeddelayvalue'],
+                rt_floatset=np.float64,
+                rt_floattype='float64')
             tide_io.writenpvecs(corrdistdata, outputname + '_corrdistdata_pass' + str(thepass) + '.txt')
 
             # calculate percentiles for the crosscorrelation from the distribution data
@@ -1108,41 +1134,43 @@ def rapidtide_main(argparsingfunc):
 
         if optiondict['similaritymetric'] == 'mutualinfo':
             themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
-            voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = calcsimilaritypass_func(fmri_data_valid[:, :],
-                                                                  cleaned_referencetc,
-                                                                  themutualinformationator,
-                                                                  initial_fmri_x,
-                                                                  os_fmri_x,
-                                                                  lagmininpts,
-                                                                  lagmaxinpts,
-                                                                  corrout,
-                                                                  meanval,
-                                                                  nprocs=optiondict['nprocs'],
-                                                                  alwaysmultiproc=optiondict['alwaysmultiproc'],
-                                                                  oversampfactor=optiondict['oversampfactor'],
-                                                                  interptype=optiondict['interptype'],
-                                                                  showprogressbar=optiondict['showprogressbar'],
-                                                                  chunksize=optiondict['mp_chunksize'],
-                                                                  rt_floatset=rt_floatset,
-                                                                  rt_floattype=rt_floattype)
+            voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = calcsimilaritypass_func(
+                fmri_data_valid[:, :],
+                cleaned_referencetc,
+                themutualinformationator,
+                initial_fmri_x,
+                os_fmri_x,
+                lagmininpts,
+                lagmaxinpts,
+                corrout,
+                meanval,
+                nprocs=optiondict['nprocs_calcsimilarity'],
+                alwaysmultiproc=optiondict['alwaysmultiproc'],
+                oversampfactor=optiondict['oversampfactor'],
+                interptype=optiondict['interptype'],
+                showprogressbar=optiondict['showprogressbar'],
+                chunksize=optiondict['mp_chunksize'],
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype)
         else:
-            voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = calcsimilaritypass_func(fmri_data_valid[:, :],
-                                                                   cleaned_referencetc,
-                                                                   thecorrelator,
-                                                                   initial_fmri_x,
-                                                                   os_fmri_x,
-                                                                   lagmininpts,
-                                                                   lagmaxinpts,
-                                                                   corrout,
-                                                                   meanval,
-                                                                   nprocs=optiondict['nprocs'],
-                                                                   alwaysmultiproc=optiondict['alwaysmultiproc'],
-                                                                   oversampfactor=optiondict['oversampfactor'],
-                                                                   interptype=optiondict['interptype'],
-                                                                   showprogressbar=optiondict['showprogressbar'],
-                                                                   chunksize=optiondict['mp_chunksize'],
-                                                                   rt_floatset=rt_floatset,
-                                                                   rt_floattype=rt_floattype)
+            voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = calcsimilaritypass_func(
+                fmri_data_valid[:, :],
+                cleaned_referencetc,
+                thecorrelator,
+                initial_fmri_x,
+                os_fmri_x,
+                lagmininpts,
+                lagmaxinpts,
+                corrout,
+                meanval,
+                nprocs=optiondict['nprocs_calcsimilarity'],
+                alwaysmultiproc=optiondict['alwaysmultiproc'],
+                oversampfactor=optiondict['oversampfactor'],
+                interptype=optiondict['interptype'],
+                showprogressbar=optiondict['showprogressbar'],
+                chunksize=optiondict['mp_chunksize'],
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype)
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
@@ -1180,7 +1208,7 @@ def rapidtide_main(argparsingfunc):
                 themutualinformationator,
                 trimmedcorrscale,
                 corrout,
-                nprocs=optiondict['nprocs'],
+                nprocs=optiondict['nprocs_peakeval'],
                 alwaysmultiproc=optiondict['alwaysmultiproc'],
                 bipolar=optiondict['bipolar'],
                 oversampfactor=optiondict['oversampfactor'],
@@ -1215,25 +1243,26 @@ def rapidtide_main(argparsingfunc):
         else:
             initlags = None
 
-        voxelsprocessed_fc = fitcorr_func(genlagtc,
-                                          initial_fmri_x,
-                                          lagtc,
-                                          trimmedcorrscale,
-                                          thefitter,
-                                          corrout,
-                                          lagmask, failimage, lagtimes, lagstrengths, lagsigma,
-                                          gaussout, windowout, R2,
-                                          peakdict=thepeakdict,
-                                          nprocs=optiondict['nprocs'],
-                                          alwaysmultiproc=optiondict['alwaysmultiproc'],
-                                          fixdelay=optiondict['fixdelay'],
-                                          showprogressbar=optiondict['showprogressbar'],
-                                          chunksize=optiondict['mp_chunksize'],
-                                          despeckle_thresh=optiondict['despeckle_thresh'],
-                                          initiallags=initlags,
-                                          rt_floatset=rt_floatset,
-                                          rt_floattype=rt_floattype
-                                          )
+        voxelsprocessed_fc = fitcorr_func(
+            genlagtc,
+            initial_fmri_x,
+            lagtc,
+            trimmedcorrscale,
+            thefitter,
+            corrout,
+            lagmask, failimage, lagtimes, lagstrengths, lagsigma,
+            gaussout, windowout, R2,
+            peakdict=thepeakdict,
+            nprocs=optiondict['nprocs_fitcorr'],
+            alwaysmultiproc=optiondict['alwaysmultiproc'],
+            fixdelay=optiondict['fixdelay'],
+            showprogressbar=optiondict['showprogressbar'],
+            chunksize=optiondict['mp_chunksize'],
+            despeckle_thresh=optiondict['despeckle_thresh'],
+            initiallags=initlags,
+            rt_floatset=rt_floatset,
+            rt_floattype=rt_floattype
+            )
 
         timings.append(['Time lag estimation end, pass ' + str(thepass), time.time(), voxelsprocessed_fc, 'voxels'])
 
@@ -1257,25 +1286,26 @@ def rapidtide_main(argparsingfunc):
                              -1000000.0)[validvoxels]
                 if len(initlags) > 0:
                     if len(np.where(initlags != -1000000.0)[0]) > 0:
-                        voxelsprocessed_thispass = fitcorr_func(genlagtc,
-                                                              initial_fmri_x,
-                                                              lagtc,
-                                                              trimmedcorrscale,
-                                                              thefitter,
-                                                              corrout,
-                                                              lagmask, failimage, lagtimes, lagstrengths, lagsigma,
-                                                              gaussout, windowout, R2,
-                                                              peakdict=thepeakdict,
-                                                              nprocs=optiondict['nprocs'],
-                                                              alwaysmultiproc=optiondict['alwaysmultiproc'],
-                                                              fixdelay=optiondict['fixdelay'],
-                                                              showprogressbar=optiondict['showprogressbar'],
-                                                              chunksize=optiondict['mp_chunksize'],
-                                                              despeckle_thresh=optiondict['despeckle_thresh'],
-                                                              initiallags=initlags,
-                                                              rt_floatset=rt_floatset,
-                                                              rt_floattype=rt_floattype
-                                                              )
+                        voxelsprocessed_thispass = fitcorr_func(
+                            genlagtc,
+                            initial_fmri_x,
+                            lagtc,
+                            trimmedcorrscale,
+                            thefitter,
+                            corrout,
+                            lagmask, failimage, lagtimes, lagstrengths, lagsigma,
+                            gaussout, windowout, R2,
+                            peakdict=thepeakdict,
+                            nprocs=optiondict['nprocs_fitcorr'],
+                            alwaysmultiproc=optiondict['alwaysmultiproc'],
+                            fixdelay=optiondict['fixdelay'],
+                            showprogressbar=optiondict['showprogressbar'],
+                            chunksize=optiondict['mp_chunksize'],
+                            despeckle_thresh=optiondict['despeckle_thresh'],
+                            initiallags=initlags,
+                            rt_floatset=rt_floatset,
+                            rt_floattype=rt_floattype
+                            )
                         voxelsprocessed_fc_ds += voxelsprocessed_thispass
                         optiondict['despecklemasksize_pass' + str(thepass) + '_d' + str(despecklepass + 1)] = \
                             voxelsprocessed_thispass
@@ -1424,17 +1454,18 @@ def rapidtide_main(argparsingfunc):
                                           optiondict['memprofile'],
                                           memfile,
                                           'before wienerpass')
-        voxelsprocessed_wiener = wienerpass_func(numspatiallocs,
-                                                 reportstep,
-                                                 fmri_data_valid,
-                                                 threshval,
-                                                 optiondict,
-                                                 wienerdeconv,
-                                                 wpeak,
-                                                 resampref_y,
-                                                 rt_floatset=rt_floatset,
-                                                 rt_floattype=rt_floattype
-                                                 )
+        voxelsprocessed_wiener = wienerpass_func(
+            numspatiallocs,
+            reportstep,
+            fmri_data_valid,
+            threshval,
+            optiondict,
+            wienerdeconv,
+            wpeak,
+            resampref_y,
+            rt_floatset=rt_floatset,
+            rt_floattype=rt_floattype
+            )
         timings.append(['Wiener deconvolution end', time.time(), voxelsprocessed_wiener, 'voxels'])
 
     # Post refinement step 1 - GLM fitting to remove moving signal
@@ -1500,25 +1531,26 @@ def rapidtide_main(argparsingfunc):
                                        optiondict['memprofile'],
                                        memfile,
                                        'before glmpass')
-        voxelsprocessed_glm = glmpass_func(numvalidspatiallocs,
-                                           fmri_data_valid,
-                                           threshval,
-                                           lagtc,
-                                           meanvalue,
-                                           rvalue,
-                                           r2value,
-                                           fitcoff,
-                                           fitNorm,
-                                           datatoremove,
-                                           filtereddata,
-                                           reportstep=reportstep,
-                                           nprocs=optiondict['nprocs'],
-                                           alwaysmultiproc=optiondict['alwaysmultiproc'],
-                                           showprogressbar=optiondict['showprogressbar'],
-                                           mp_chunksize=optiondict['mp_chunksize'],
-                                           rt_floatset=rt_floatset,
-                                           rt_floattype=rt_floattype
-                                           )
+        voxelsprocessed_glm = glmpass_func(
+            numvalidspatiallocs,
+            fmri_data_valid,
+            threshval,
+            lagtc,
+            meanvalue,
+            rvalue,
+            r2value,
+            fitcoff,
+            fitNorm,
+            datatoremove,
+            filtereddata,
+            reportstep=reportstep,
+            nprocs=optiondict['nprocs_glm'],
+            alwaysmultiproc=optiondict['alwaysmultiproc'],
+            showprogressbar=optiondict['showprogressbar'],
+            mp_chunksize=optiondict['mp_chunksize'],
+            rt_floatset=rt_floatset,
+            rt_floattype=rt_floattype
+            )
         del fmri_data_valid
 
         timings.append(['GLM filtering end, pass ' + str(thepass), time.time(), voxelsprocessed_glm, 'voxels'])

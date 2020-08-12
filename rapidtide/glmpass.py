@@ -79,7 +79,7 @@ def glmpass(numprocitems,
             themask = np.where(meanim > threshval, 1, 0)
         else:
             themask = np.where(stdim > threshval, 1, 0)
-    if False:  # temporary workaround until I figure out why nprocs > 1 is failing
+    if nprocs > 1 or alwaysmultiproc:  # temporary workaround until I figure out why nprocs > 1 is failing
         # define the consumer function here so it inherits most of the arguments
         def GLM_consumer(inQ, outQ):
             while True:
