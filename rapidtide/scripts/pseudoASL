@@ -27,18 +27,18 @@ import argparse
 import numpy as np
 import sys
 
-def calcASL(lags, strengths, mask, tagoffset, bloodT1):
+def calcASL(lags, strengths, mask, tagoffset, windowstart, bloodT1):
     offsets = lags + tagoffset
-    calcmask = mask * np.where(offsets < 0.0, 0.0, 1.0)
+    calcmask = mask * np.where(offsets < windowstart, 0.0, 1.0)
     decay = np.exp(-offsets / bloodT1)
-    return decay * strengths * calcmask, decay, calcmask, offsets
+    return decay * np.fabs(strengths) * calcmask, decay, calcmask, offsets
 
 
 def main():
     # get the command line parameters
     parser = argparse.ArgumentParser(prog='pseudoASL',
                                      description='Use rapidtide output to predict ASL image.',
-                                     usage='%(prog)s dataset outputfilename tagoffset bloodT1')
+                                     usage='%(prog)s dataset outputfilename tagoffset windowstart bloodT1')
     parser.add_argument(
         'dataset',
         type=str,
@@ -52,7 +52,10 @@ def main():
         'tagoffset',
         type=float,
         help='The assumed time of tagging, relative to the peak of the lag histogram.')
-
+    parser.add_argument(
+        'windowstart',
+        type=float,
+        help='The shortest time delay to include in the image.')
     parser.add_argument(
         'bloodT1',
         type=float,
@@ -74,8 +77,8 @@ def main():
 
     #theaslimage = calcASL(thelags, thestrengths, themask, args.tagoffset, args.bloodT1)
 
-    print('bloodT1, tagoffset:', args.bloodT1, args.tagoffset)
-    theaslimage, decay, calcmask, offsets = calcASL(thelags, thestrengths, themask, args.tagoffset, args.bloodT1)
+    print('bloodT1, tagoffset, windowstart:', args.bloodT1, args.tagoffset, args.windowstart)
+    theaslimage, decay, calcmask, offsets = calcASL(thelags, thestrengths, themask, args.tagoffset, args.windowstart, args.bloodT1)
     tide_io.savetonifti(theaslimage, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_ASL')
     tide_io.savetonifti(decay, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_decay')
     tide_io.savetonifti(calcmask, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_calcmask')
