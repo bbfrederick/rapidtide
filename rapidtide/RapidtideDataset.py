@@ -89,7 +89,7 @@ class overlay:
     "Store a data overlay and some information about it"
 
     def __init__(self, name, filename, namebase, funcmask=None, geommask=None, label=None, report=False,
-                 lut_state=gray_state, alpha=128, display_state=True, isaMask=False, verbose=False):
+                 lut_state=gray_state, alpha=128, display_state=True, isaMask=False, init_LUT=True, verbose=False):
         self.verbose = verbose
         self.name = name
         if label is None:
@@ -108,12 +108,13 @@ class overlay:
         self.setGeomMask(geommask, maskdata=False)
         self.maskData()
         self.updateStats()
-        self.gradient = pg.GradientWidget(orientation='right', allowAdd=True)
-        self.lut_state = lut_state
-        self.display_state = display_state
-        self.theLUT = None
-        self.alpha = alpha
-        self.setLUT(self.lut_state, alpha=self.alpha)
+        if init_LUT:
+            self.gradient = pg.GradientWidget(orientation='right', allowAdd=True)
+            self.lut_state = lut_state
+            self.display_state = display_state
+            self.theLUT = None
+            self.alpha = alpha
+            self.setLUT(self.lut_state, alpha=self.alpha)
         self.space = 'unspecified'
         if (self.header['sform_code'] == 4) or (self.header['qform_code'] == 4):
             if ((self.xdim == 61) and (self.ydim == 73) and (self.zdim == 61)) or \
@@ -144,7 +145,7 @@ class overlay:
 
     def duplicate(self, newname, newlabel):
         return overlay(newname, self.filename, self.namebase, funcmask=self.funcmask, geommask=self.geommask,
-                       label=newlabel, report=self.report,
+                       label=newlabel, report=self.report, init_LUT=self.init_LUT,
                        lut_state=self.lut_state)
 
     def updateStats(self):
@@ -339,6 +340,7 @@ class RapidtideDataset:
                  forceoffset=False,
                  coordinatespace='unspecified',
                  offsettime=0.0,
+                 init_LUT=True,
                  verbose=False):
         self.verbose = verbose
         self.name = name
@@ -352,6 +354,7 @@ class RapidtideDataset:
         self.forceoffset = forceoffset
         self.coordinatespace = coordinatespace
         self.offsettime = offsettime
+        self.init_LUT = init_LUT
         self.referencedir = os.path.join(os.path.split(os.path.split(__file__)[0])[0], 'rapidtide', 'data',
                                     'reference')
         self.setupregressors()
@@ -384,7 +387,7 @@ class RapidtideDataset:
             if os.path.isfile(self.fileroot + themap + '.nii.gz'):
                 print('file: ', self.fileroot + themap + '.nii.gz', ' exists - reading...')
                 thepath, thebase = os.path.split(self.fileroot)
-                self.overlays[themap] = overlay(themap, self.fileroot + themap + '.nii.gz', thebase, report=True)
+                self.overlays[themap] = overlay(themap, self.fileroot + themap + '.nii.gz', thebase, init_LUT=self.init_LUT, report=True)
                 if xdim == 0:
                     xdim = self.overlays[themap].xdim
                     ydim = self.overlays[themap].ydim
@@ -415,7 +418,7 @@ class RapidtideDataset:
         for themap in self.funcmasks:
             if os.path.isfile(self.fileroot + themap + '.nii.gz'):
                 thepath, thebase = os.path.split(self.fileroot)
-                self.overlays[themap] = overlay(themap, self.fileroot + themap + '.nii.gz', thebase, isaMask=True)
+                self.overlays[themap] = overlay(themap, self.fileroot + themap + '.nii.gz', thebase, init_LUT=self.init_LUT, isaMask=True)
                 self.loadedfuncmasks.append(themap)
             else:
                 print('mask: ', self.fileroot + themap + '.nii.gz', ' does not exist!')
@@ -423,10 +426,10 @@ class RapidtideDataset:
 
 
     def _loadgeommask(self):
-        if self.geommaskname != '':
+        if self.geommaskname is not None:
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
-                self.overlays['geommask'] = overlay('geommask', self.geommaskname, thebase, isaMask=True)
+                self.overlays['geommask'] = overlay('geommask', self.geommaskname, thebase, init_LUT=self.init_LUT, isaMask=True)
                 print('using ', self.geommaskname, ' as geometric mask')
                 # allloadedmaps.append('geommask')
                 return True
@@ -443,7 +446,7 @@ class RapidtideDataset:
                 self.geommaskname = os.path.join(self.referencedir, 'MNI152_T1_3mm_brain_mask_bin.nii.gz')
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
-                self.overlays['geommask'] = overlay('geommask', self.geommaskname, thebase, isaMask=True)
+                self.overlays['geommask'] = overlay('geommask', self.geommaskname, thebase, init_LUT=self.init_LUT, isaMask=True)
                 print('using ', self.geommaskname, ' as background')
                 # allloadedmaps.append('geommask')
                 return True
@@ -460,11 +463,11 @@ class RapidtideDataset:
         except KeyError:
             fsldir = None
 
-        if self.anatname != '':
+        if self.anatname is not None:
             print('using user input anatomic name')
             if os.path.isfile(self.anatname):
                 thepath, thebase = os.path.split(self.anatname)
-                self.overlays['anatomic'] = overlay('anatomic', self.anatname, thebase)
+                self.overlays['anatomic'] = overlay('anatomic', self.anatname, thebase, init_LUT=self.init_LUT)
                 print('using ', self.anatname, ' as background')
                 # allloadedmaps.append('anatomic')
                 return True
@@ -474,14 +477,14 @@ class RapidtideDataset:
         elif os.path.isfile(self.fileroot + 'highres_head.nii.gz'):
             print('using hires_head anatomic name')
             thepath, thebase = os.path.split(self.fileroot)
-            self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'highres_head.nii.gz', thebase)
+            self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'highres_head.nii.gz', thebase, init_LUT=self.init_LUT)
             print('using ', self.fileroot + 'highres_head.nii.gz', ' as background')
             # allloadedmaps.append('anatomic')
             return True
         elif os.path.isfile(self.fileroot + 'highres.nii.gz'):
             print('using hires anatomic name')
             thepath, thebase = os.path.split(self.fileroot)
-            self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'highres.nii.gz', thebase)
+            self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'highres.nii.gz', thebase, init_LUT=self.init_LUT)
             print('using ', self.fileroot + 'highres.nii.gz', ' as background')
             # allloadedmaps.append('anatomic')
             return True
@@ -495,7 +498,7 @@ class RapidtideDataset:
                 print('using 3mm MNI anatomic name')
                 mniname = os.path.join(self.referencedir, 'MNI152_T1_3mm.nii.gz')
             if os.path.isfile(mniname):
-                self.overlays['anatomic'] = overlay('anatomic', mniname, 'MNI152')
+                self.overlays['anatomic'] = overlay('anatomic', mniname, 'MNI152', init_LUT=self.init_LUT)
                 print('using ', mniname, ' as background')
                 # allloadedmaps.append('anatomic')
                 return True
@@ -512,7 +515,7 @@ class RapidtideDataset:
                 print('using 1mm MNI anatomic name')
                 mniname = os.path.join(self.referencedir, 'mni_icbm152_nlin_asym_09c_1mm.nii.gz')
             if os.path.isfile(mniname):
-                self.overlays['anatomic'] = overlay('anatomic', mniname, 'MNI152NLin2009cAsym')
+                self.overlays['anatomic'] = overlay('anatomic', mniname, 'MNI152NLin2009cAsym', init_LUT=self.init_LUT)
                 print('using ', mniname, ' as background')
                 # allloadedmaps.append('anatomic')
                 return True
@@ -521,7 +524,7 @@ class RapidtideDataset:
                 print('MNI template brain ', mniname, ' not loaded')
         elif os.path.isfile(self.fileroot + 'mean.nii.gz'):
             thepath, thebase = os.path.split(self.fileroot)
-            self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'mean.nii.gz', thebase)
+            self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'mean.nii.gz', thebase, init_LUT=self.init_LUT)
             print('using ', self.fileroot + 'mean.nii.gz', ' as background')
             # allloadedmaps.append('anatomic')
             return True
@@ -650,8 +653,8 @@ class RapidtideDataset:
                     atlasmaskniftiname = os.path.join(referencedir, atlasname + '_nlin_asym_09c_2mm_mask.nii.gz')'''
             if self.atlasniftiname is not None:
                 if os.path.isfile(self.atlasniftiname):
-                    self.overlays['atlas'] = overlay('atlas', self.atlasniftiname, self.atlasname, report=True)
-                    self.overlays['atlasmask'] = overlay('atlasmask', self.atlasmaskniftiname, self.atlasname, report=True)
+                    self.overlays['atlas'] = overlay('atlas', self.atlasniftiname, self.atlasname, report=True, init_LUT=self.init_LUT)
+                    self.overlays['atlasmask'] = overlay('atlasmask', self.atlasmaskniftiname, self.atlasname, init_LUT=self.init_LUT, report=True)
                     self.allloadedmaps.append('atlas')
                     self.dispmaps.append('atlas')
                 else:
