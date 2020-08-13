@@ -1127,13 +1127,13 @@ def main():
     if anatname is not None:
         print('using ', anatname, ' as the anatomic background image')
     else:
-        anatname = ''
+        anatname = None
 
     geommaskname = args.geommaskname
     if geommaskname is not None:
         print('using ', geommaskname, ' as the geometric mask')
     else:
-        geommaskname = ''
+        geommaskname = None
 
     datafileroot = args.datafileroot
     if datafileroot is not None:
