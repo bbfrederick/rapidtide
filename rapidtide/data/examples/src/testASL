@@ -1,0 +1,11 @@
+#!/bin/bash
+
+pseudoASL \
+    ../dst/dgsr_denoisingpass1_bipolar_multiproc_ \
+    ../dst/hoot \
+    4.0 \
+    3.0 \
+    1.0
+
+fslmaths ../dst/hoot_ASL -s 5 ../dst/hoot_ASL_filtered
+fsleyes ../dst/hoot_*nii.gz
