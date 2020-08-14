@@ -231,6 +231,10 @@ def _get_parser():
 
     pf.addpermutationopts(preproc)
 
+    # similarity function options
+    similarityopts = parser.add_argument_group('Similarity function options')
+    pf.addsimilarityopts(similarityopts)
+
     # Output options
     output = parser.add_argument_group('Output options')
     output.add_argument(
@@ -384,6 +388,7 @@ def main():
                                             corrweighting=args.corrweighting)
     thecorrelator.setreftc(trimdata2 * flipfac)
     themutualinformationator = tide_classes.mutualinformationator(Fs=Fs,
+                                            smoothingtime=args.smoothingtime,
                                             ncprefilter=theprefilter,
                                             detrendorder=args.detrendorder,
                                             windowfunc=args.windowfunc)

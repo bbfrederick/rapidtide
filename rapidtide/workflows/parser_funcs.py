@@ -299,6 +299,18 @@ def postprocesstimerangeopts(args):
         args.endpoint = int(args.timerange[1])
     return args
 
+def addsimilarityopts(parser):
+    parser.add_argument(
+        '--mutualinfosmoothingtime',
+        dest='smoothingtime',
+        action='store',
+        type=float,
+        metavar='TAU',
+        help=('Time constant of a temporal smoothing function to apply to the mutual information function. '
+              'Default is 3.0 seconds.  TAU <=0.0 disables smoothing.'),
+        default=3.0)
+
+
 
 
 
