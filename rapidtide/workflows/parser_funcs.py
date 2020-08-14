@@ -175,7 +175,7 @@ def postprocessfilteropts(args):
         # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
         # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
         theprefilter = tide_filt.noncausalfilter('arb', usetrapfftfilt=inittrap)
-        theprefilter.setfreqs(args.arbvec[2], args.arbvec[0], args.arbve[1], args.arbvec[3])
+        theprefilter.setfreqs(args.arbvec[2], args.arbvec[0], args.arbvec[1], args.arbvec[3])
     else:
         theprefilter = tide_filt.noncausalfilter(args.filterband, usetrapfftfilt=inittrap)
 
