@@ -93,7 +93,6 @@ class fmridata:
         return self.thedata[:, :, :, self.numskip:]
 
 
-
 class proberegressor:
     inputtimeaxis = None
     inputvec = None
