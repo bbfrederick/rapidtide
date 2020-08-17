@@ -657,7 +657,7 @@ def thermal_radioButton_clicked(enabled):
         updateLUT()
 
 
-def GYR_radioButton_clicked(enabled):
+def flame_radioButton_clicked(enabled):
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(flame_state, alpha=LUT_alpha, endalpha=LUT_endalpha)
@@ -840,8 +840,8 @@ def overlay_radioButton_clicked(which, enabled):
                 ui.gray_radioButton.setChecked(True)
             elif overlays[currentdataset.focusmap].lut_state == thermal_state:
                 ui.thermal_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == g2y2r_state:
-                ui.GYR_radioButton.setChecked(True)
+            elif overlays[currentdataset.focusmap].lut_state == flame_state:
+                ui.flame_radioButton.setChecked(True)
             elif overlays[currentdataset.focusmap].lut_state == viridis_state:
                 ui.viridis_radioButton.setChecked(True)
             elif overlays[currentdataset.focusmap].lut_state == cyclic_state:
@@ -1378,7 +1378,7 @@ def main():
     # wire up the colormap radio buttons
     ui.gray_radioButton.clicked.connect(gray_radioButton_clicked)
     ui.thermal_radioButton.clicked.connect(thermal_radioButton_clicked)
-    ui.GYR_radioButton.clicked.connect(GYR_radioButton_clicked)
+    ui.flame_radioButton.clicked.connect(flame_radioButton_clicked)
     ui.viridis_radioButton.clicked.connect(viridis_radioButton_clicked)
     ui.jet_radioButton.clicked.connect(jet_radioButton_clicked)
     ui.rainbow_radioButton.clicked.connect(rainbow_radioButton_clicked)

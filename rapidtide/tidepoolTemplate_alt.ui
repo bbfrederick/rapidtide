@@ -162,7 +162,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QRadioButton" name="GYR_radioButton">
+            <widget class="QRadioButton" name="flame_radioButton">
              <property name="font">
               <font>
                <family>Arial Narrow</family>
@@ -170,7 +170,7 @@
               </font>
              </property>
              <property name="text">
-              <string>GYR</string>
+              <string>Flame</string>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">colormap_buttonGroup</string>
@@ -459,9 +459,6 @@
        <property name="frameShape">
         <enum>QFrame::NoFrame</enum>
        </property>
-       <property name="sizeAdjustPolicy">
-        <enum>QAbstractScrollArea::AdjustIgnored</enum>
-       </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
@@ -496,9 +493,6 @@
        <property name="frameShape">
         <enum>QFrame::NoFrame</enum>
        </property>
-       <property name="sizeAdjustPolicy">
-        <enum>QAbstractScrollArea::AdjustIgnored</enum>
-       </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
@@ -532,9 +526,6 @@
        </property>
        <property name="frameShape">
         <enum>QFrame::NoFrame</enum>
-       </property>
-       <property name="sizeAdjustPolicy">
-        <enum>QAbstractScrollArea::AdjustIgnored</enum>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
