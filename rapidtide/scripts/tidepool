@@ -640,54 +640,54 @@ def MAD_radioButton_clicked(enabled):
 
 
 def gray_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset, LUT_alpha
+    global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(gray_state, alpha=LUT_alpha)
+        overlays[currentdataset.focusmap].setLUT(gray_state, alpha=LUT_alpha, endalpha=LUT_endalpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
 
 
 def thermal_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset, LUT_alpha
+    global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(thermal_state, alpha=LUT_alpha)
+        overlays[currentdataset.focusmap].setLUT(thermal_state, alpha=LUT_alpha, endalpha=LUT_endalpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
 
 
 def GYR_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset, LUT_alpha
+    global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(g2y2r_state, alpha=LUT_alpha)
+        overlays[currentdataset.focusmap].setLUT(flame_state, alpha=LUT_alpha, endalpha=LUT_endalpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
 
 
 def viridis_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset, LUT_alpha
+    global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(viridis_state, alpha=LUT_alpha)
+        overlays[currentdataset.focusmap].setLUT(viridis_state, alpha=LUT_alpha, endalpha=LUT_endalpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
 
 
 def jet_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset, LUT_alpha
+    global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(cyclic_state, alpha=LUT_alpha)
+        overlays[currentdataset.focusmap].setLUT(cyclic_state, alpha=LUT_alpha, endalpha=LUT_endalpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
 
 
 def rainbow_radioButton_clicked(enabled):
-    global imageadj, overlays, currentdataset, LUT_alpha
+    global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
-        overlays[currentdataset.focusmap].setLUT(spectrum_state, alpha=LUT_alpha)
+        overlays[currentdataset.focusmap].setLUT(spectrum_state, alpha=LUT_alpha, endalpha=LUT_endalpha)
         overlays[currentdataset.focusmap].gradient.restoreState(overlays[currentdataset.focusmap].lut_state)
         imageadj.restoreState(overlays[currentdataset.focusmap].lut_state)
         updateLUT()
@@ -1046,7 +1046,7 @@ def main():
     global roi
     global overlays, regressors, regressorfilterlimits, loadedfuncmaps, atlasstats, averagingmode
     global mainwin, orthoimages, overlaybuttons, panetomap
-    global img_colorbar, LUT_alpha
+    global img_colorbar, LUT_alpha, LUT_endalpha
     global lg_imgsize, scalefacx, scalefacy, scalefacz
     global xdim, ydim, zdim, tdim, xpos, ypos, zpos, tpos
     global xsize, ysize, zsize, tr
@@ -1065,6 +1065,7 @@ def main():
     buttonisdown = False
     harvestcolormaps = False
     LUT_alpha = 255
+    LUT_endalpha = 0
     xdim = 0
     ydim = 0
     zdim = 0
@@ -1559,7 +1560,7 @@ def main():
 
     print('setting overlay defaults')
     for themap in currentdataset.allloadedmaps + currentdataset.loadedfuncmasks:
-        overlays[themap].setLUT(defaultdict[themap]['colormap'], alpha=LUT_alpha)
+        overlays[themap].setLUT(defaultdict[themap]['colormap'], alpha=LUT_alpha, endalpha=LUT_endalpha)
         overlays[themap].setisdisplayed(defaultdict[themap]['display'])
         overlays[themap].setLabel(defaultdict[themap]['label'])
     print('done setting overlay defaults')

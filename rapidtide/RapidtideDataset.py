@@ -89,7 +89,7 @@ class overlay:
     "Store a data overlay and some information about it"
 
     def __init__(self, name, filename, namebase, funcmask=None, geommask=None, label=None, report=False,
-                 lut_state=gray_state, alpha=128, display_state=True, isaMask=False, init_LUT=True, verbose=False):
+                 lut_state=gray_state, alpha=128, endalpha=0, display_state=True, isaMask=False, init_LUT=True, verbose=False):
         self.verbose = verbose
         self.name = name
         if label is None:
@@ -114,7 +114,8 @@ class overlay:
             self.display_state = display_state
             self.theLUT = None
             self.alpha = alpha
-            self.setLUT(self.lut_state, alpha=self.alpha)
+            self.endalpha = endalpha
+            self.setLUT(self.lut_state, alpha=self.alpha, endalpha=self.endalpha)
         self.space = 'unspecified'
         if (self.header['sform_code'] == 4) or (self.header['qform_code'] == 4):
             if ((self.xdim == 61) and (self.ydim == 73) and (self.zdim == 61)) or \
@@ -258,16 +259,16 @@ class overlay:
     def settoffset(self, toffset):
         self.toffset = toffset
 
-    def setLUT(self, lut_state, alpha=None):
+    def setLUT(self, lut_state, alpha=255, endalpha=128):
         if alpha is not None:
             theticks = [lut_state['ticks'][0]]
             for theelement in lut_state['ticks'][1:-1]:
                 theticks.append((theelement[0], (theelement[1][0], theelement[1][1], theelement[1][2], alpha)))
             theticks.append(lut_state['ticks'][-1])
             print('setLUT alpha adjustment:\n', theticks)
-            self.lut_state = {'ticks': theticks, 'mode': lut_state['mode']}
+            self.lut_state = setendalpha({'ticks': theticks, 'mode': lut_state['mode']}, endalpha)
         else:
-            self.lut_state = lut_state
+            self.lut_state = setendalpha(lut_state, endalpha)
         self.gradient.restoreState(self.lut_state)
         self.theLUT = self.gradient.getLookupTable(512, alpha=True)
 
