@@ -128,24 +128,24 @@ diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_m
         #--numnull 0 \
 	#--ampthresh 0.1
 #
-##rapidtide \
-#	fmri.nii.gz \
-##	../dst/dgsr_hybrid_fastquad_singleproc \
-#        --filterband lfo \
-#	--passes 3 \
-#	--despecklepasses 4 \
-#	--searchrange -10 15 \
-#	--sigmalimit 25.0 \
-#	--nprocs 1 \
-#	--pickleft \
-#	--pickleftthresh 0.3 \
-#	--peakfittype fastquad \
-#	--spatialfilt 2 \
-#	--similaritymetric hybrid \
-#        --detrendorder 3 \
-#        --noglm \
-#        --numnull 0 \
-#	--ampthresh 0.1
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_gauss \
+        --filterband lfo \
+	--passes 3 \
+	--despecklepasses 4 \
+	--searchrange -10 15 \
+	--sigmalimit 25.0 \
+	--nprocs -1 \
+	--pickleft \
+	--pickleftthresh 0.3 \
+	--peakfittype gauss \
+	--spatialfilt 2 \
+	--similaritymetric correlation \
+        --detrendorder 3 \
+        --noglm \
+        --numnull 0 \
+	--ampthresh 0.1
 
 #rapidtide \
 	#fmri.nii.gz \
