@@ -175,7 +175,7 @@ def postprocessfilteropts(args):
         # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
         # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
         theprefilter = tide_filt.noncausalfilter('arb', usetrapfftfilt=inittrap)
-        theprefilter.setfreqs(args.arbvec[2], args.arbvec[0], args.arbve[1], args.arbvec[3])
+        theprefilter.setfreqs(args.arbvec[2], args.arbvec[0], args.arbvec[1], args.arbvec[3])
     else:
         theprefilter = tide_filt.noncausalfilter(args.filterband, usetrapfftfilt=inittrap)
 
@@ -298,6 +298,18 @@ def postprocesstimerangeopts(args):
     else:
         args.endpoint = int(args.timerange[1])
     return args
+
+def addsimilarityopts(parser):
+    parser.add_argument(
+        '--mutualinfosmoothingtime',
+        dest='smoothingtime',
+        action='store',
+        type=float,
+        metavar='TAU',
+        help=('Time constant of a temporal smoothing function to apply to the mutual information function. '
+              'Default is 3.0 seconds.  TAU <=0.0 disables smoothing.'),
+        default=3.0)
+
 
 
 

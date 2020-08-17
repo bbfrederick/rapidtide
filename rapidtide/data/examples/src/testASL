@@ -2,10 +2,7 @@
 
 pseudoASL \
     ../dst/dgsr_denoisingpass1_bipolar_multiproc_ \
-    ../dst/hoot \
-    4.0 \
-    2.0 \
-    1.0
+    ../dst/hoot 
 
-fslmaths ../dst/hoot_ASL -s 5 ../dst/hoot_ASL_filtered
-fsleyes ../dst/hoot_*nii.gz
+fslmaths ../dst/hoot_ASL -s 3 ../dst/hoot_ASL_filtered
+fsleyes ../dst/hoot_ASL*nii.gz

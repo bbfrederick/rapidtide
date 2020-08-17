@@ -63,6 +63,25 @@ for windowfunc in ['None']:
                     thelegends.append(thename)
                     j += 1
                 i += 1                    
+            for wave1 in [combo]:
+                j = 0
+                for offset in np.linspace(-3.0, 3.0, num=7, endpoint=True):
+                    thecorrx, thecorry, dummy = tide_corr.cross_MI(wave1, addresp(lfowave, samplefreq, respfreq, respamp, offset),
+                                                                    negsteps=200,
+                                                                    possteps=200,
+                                                                    Fs=samplefreq,
+                                                                    windowfunc=windowfunc,
+                                                                    sigma=sigma,
+                                                                    norm=False,
+                                                                    returnaxis=True,
+                                                                    fast=True,
+                                                                    prebin=True,
+                                                                    debug=True)
+                    ax.plot(thecorrx, thecorry, label='bins:' + str(numbins) + ', sigma:' + str(sigma) + ', win:' + windowfunc)
+                    thename = 'offset=' + str(offset)
+                    thelegends.append(thename)
+                    j += 1
+                i += 1                    
 ax.legend(thelegends)
 plt.show()
 

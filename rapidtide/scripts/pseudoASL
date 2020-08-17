@@ -25,13 +25,16 @@ import rapidtide.io as tide_io
 from rapidtide.RapidtideDataset import RapidtideDataset
 import argparse
 import numpy as np
-import sys
 
-def calcASL(lags, strengths, mask, tagoffset, windowstart, bloodT1):
+
+def calcASL(lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, bloodT1=1.841):
+    theaslimage = lags * 0.0
     offsets = lags + tagoffset
-    calcmask = mask * np.where(offsets < windowstart, 0.0, 1.0)
-    decay = np.exp(-offsets / bloodT1)
-    return decay * np.fabs(strengths) * calcmask, decay, calcmask, offsets
+    calcmask = mask * np.where(offsets < pld, 0.0, 1.0)
+    for imtime in np.linspace(pld, pld + TI, num=50, endpoint=True):
+        decay = np.exp(-(offsets + imtime) / bloodT1)
+        theaslimage += decay * np.fabs(strengths) * calcmask
+    return theaslimage, decay, calcmask, offsets
 
 
 def main():
@@ -48,18 +51,36 @@ def main():
         type=str,
         help='The name of the output nifti file.')
 
+
+    # optional parameters
     parser.add_argument(
-        'tagoffset',
+        '--tagoffset',
+        dest='tagoffset',
+        metavar='SECS',
         type=float,
-        help='The assumed time of tagging, relative to the peak of the lag histogram.')
+        help='The assumed time of tagging, relative to the peak of the lag histogram.',
+        default=2.945)
     parser.add_argument(
-        'windowstart',
+        '--pld',
+        dest='pld',
+        metavar='SECS',
         type=float,
-        help='The shortest time delay to include in the image.')
+        help='The postlabel delay.',
+        default=1.8)
     parser.add_argument(
-        'bloodT1',
+        '--labelduration',
+        dest='labelduration',
+        metavar='SECS',
         type=float,
-        help='The high passband frequency limit in Hz (set less than zero to disable LPF)')
+        help='The length of the labelling period.',
+        default=1.8)
+    parser.add_argument(
+        '--bloodT1',
+        dest='bloodT1',
+        metavar='SECS',
+        type=float,
+        help='The T1 of blood at this field strength.',
+        default=1.841)
 
     # get the command line parameters
     try:
@@ -73,12 +94,20 @@ def main():
 
     themask = thedataset.overlays['lagmask'].data
     thelags = thedataset.overlays['lagtimes'].data
+    thewidths = thedataset.overlays['lagsigma'].data
     thestrengths = thedataset.overlays['lagstrengths'].data
 
-    #theaslimage = calcASL(thelags, thestrengths, themask, args.tagoffset, args.bloodT1)
+    print('bloodT1, tagoffset, pld, and inversion time:', args.bloodT1, args.tagoffset, args.pld, args.labelduration)
+    theaslimage, decay, calcmask, offsets = calcASL(
+        thelags,
+        thestrengths,
+        thewidths,
+        themask,
+        tagoffset=args.tagoffset,
+        pld=args.pld,
+        TI=args.labelduration,
+        bloodT1=args.bloodT1)
 
-    print('bloodT1, tagoffset, windowstart:', args.bloodT1, args.tagoffset, args.windowstart)
-    theaslimage, decay, calcmask, offsets = calcASL(thelags, thestrengths, themask, args.tagoffset, args.windowstart, args.bloodT1)
     tide_io.savetonifti(theaslimage, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_ASL')
     tide_io.savetonifti(decay, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_decay')
     tide_io.savetonifti(calcmask, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_calcmask')
