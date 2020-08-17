@@ -576,6 +576,85 @@ def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
 
 
 @conditionaljit()
+def getlpgaussfftfunc(Fs, upperpass, inputdata, debug=False):
+    r"""Generates a gaussian lowpass transfer function.
+
+    Parameters
+    ----------
+    Fs : float
+        Sample rate in Hz
+        :param Fs:
+
+    upperpass : float
+        Upper end of passband in Hz
+        :param upperpass:
+
+    upperstop : float
+        Lower end of stopband in Hz
+        :param upperstop:
+
+    inputdata : 1D numpy array
+        Input data to be filtered
+        :param inputdata:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
+    Returns
+    -------
+    transferfunc : 1D float array
+        The transfer function
+    """
+    freqaxis = np.roll(np.linspace(0.0, 1.0, num=np.shape(inputdata), endpoint=False, dtype='float64') / Fs - 0.5,
+                       int(np.shape(inputdata) // 2))
+    return np.exp(-(freqaxis) ** 2 / (2.0 * upperpass * uppperpass))
+
+
+@conditionaljit()
+def dolpgaussfftfilt(Fs, upperpass, inputdata, padlen=20, cyclic=False, debug=False):
+    r"""Performs an FFT filter with a gaussian lowpass transfer
+    function on an input vector and returns the result.  Ends are padded to reduce transients.
+
+    Parameters
+    ----------
+    Fs : float
+        Sample rate in Hz
+        :param Fs:
+
+    upperpass : float
+        Upper end of passband in Hz
+        :param upperpass:
+
+    inputdata : 1D numpy array
+        Input data to be filtered
+        :param inputdata:
+
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    cyclic : bool, optional
+        If True, pad by wrapping the data in a cyclic manner rather than reflecting at the ends
+        :param cyclic:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
+    Returns
+    -------
+    filtereddata : 1D float array
+        The filtered data
+    """
+    padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
+    inputdata_trans = fftpack.fft(padinputdata)
+    transferfunc = getlpgaussfftfunc(Fs, upperpass, padinputdata, debug=debug)
+    inputdata_trans *= transferfunc
+    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
+
+
+@conditionaljit()
 def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT filter with a trapezoidal lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
