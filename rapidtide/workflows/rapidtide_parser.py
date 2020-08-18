@@ -204,8 +204,8 @@ def _get_parser():
             dest='filtertype',
             action='store',
             type=str,
-            choices=['trapezoidal', 'brickwall', 'butterworth'],
-            help=('Filter data and regressors using a trapezoidal FFT filter (default), brickwall, or butterworth bandpass.'),
+            choices=['trapezoidal', 'brickwall', 'butterworth', 'gaussian'],
+            help=('Filter data and regressors using a trapezoidal FFT filter (default), brickwall, gaussian, or butterworth bandpass.'),
             default='trapezoidal')
     filt_opts.add_argument(
             '--butterorder',
@@ -1031,12 +1031,6 @@ def process_args(inputargs=None):
 
 
     # configure the filter
-    # set the trapezoidal flag, if using
-    if args['filtertype'] == 'trapezoidal':
-        inittrap = True
-    else:
-        inittrap = False
-
     # if arbvec is set, we are going set up an arbpass filter
     if args['arbvec'] is not None:
         if len(args['arbvec']) == 2:
@@ -1047,17 +1041,16 @@ def process_args(inputargs=None):
                              "or four floats.")
         # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
         # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
-        theprefilter = tide_filt.noncausalfilter('arb', usetrapfftfilt=inittrap)
+        theprefilter = tide_filt.noncausalfilter('arb',
+                                                 transferfunc=args['filtertype'],
+                                                 debug=args['debug'])
         theprefilter.setfreqs(args['arbvec'][2], args['arbvec'][0], args['arbvec'][1], args['arbvec'][3])
     else:
-        theprefilter = tide_filt.noncausalfilter(args['filterband'], usetrapfftfilt=inittrap)
+        theprefilter = tide_filt.noncausalfilter(args['filterband'],
+                                                 transferfunc=args['filtertype'],
+                                                 debug=args['debug'])
 
-    # make the filter a butterworth if selected
-    if args['filtertype'] == 'butterworth':
-        args['usebutterworthfilter'] = True
-    else:
-        args['usebutterworthfilter'] = False
-    theprefilter.setbutter(args['usebutterworthfilter'], args['filtorder'])
+    theprefilter.setbutterorder(args['filtorder'])
     args['lowerstop'], args['lowerpass'], args['upperpass'], args['upperstop'] = theprefilter.getfreqs()
 
 

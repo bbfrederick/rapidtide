@@ -576,43 +576,57 @@ def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
 
 
 @conditionaljit()
-def getlpgaussfftfunc(Fs, upperpass, inputdata, debug=False):
-    r"""Generates a gaussian lowpass transfer function.
+def getlptransfunc(Fs, inputdata, upperpass=None, upperstop=None, type='brickwall', debug=False):
+    if upperpass is None:
+        print('getlptransfunc: upperpass must be specified')
+        sys.exit()
+    if debug:
+        print('getlptransfunc:')
+        print('\tFs:', Fs)
+        print('\tnp.shape(inputdata)[0]:', np.shape(inputdata)[0])
+        print('\tupperpass:', upperpass)
+        print('\tupperstop:', upperstop)
+        print('\ttype:', type)
+    if type == 'gaussian':
+        freqaxis = np.roll(np.linspace(0.0, 1.0, num=np.shape(inputdata)[0], endpoint=False, dtype='float64') / Fs - 0.5,
+                           int(np.shape(inputdata)[0] // 2))
+        transferfunc = np.exp(-(freqaxis) ** 2 / (2.0 * upperpass * upperpass))
+    elif type == 'trapezoidal':
+        if upperstop is None:
+            upperstop = upperpass * 1.05
+        transferfunc = np.ones(np.shape(inputdata), dtype='float64')
+        passbin = int((upperpass / Fs) * np.shape(transferfunc)[0])
+        cutoffbin = int((upperstop / Fs) * np.shape(transferfunc)[0])
+        transitionlength = cutoffbin - passbin
+        if debug:
+            print('getlptrapfftfunc - Fs, upperpass, upperstop:', Fs, upperpass, upperstop)
+            print('getlptrapfftfunc - passbin, transitionlength, cutoffbin, len(inputdata):',
+                  passbin, transitionlength, cutoffbin, inputdata.shape)
+        if transitionlength > 0:
+            transitionvector = np.arange(1.0 * transitionlength) / transitionlength
+            transferfunc[passbin:cutoffbin] = 1.0 - transitionvector
+            transferfunc[-cutoffbin:-passbin] = transitionvector
+        if cutoffbin > 0:
+            transferfunc[cutoffbin:-cutoffbin] = 0.0
+    elif type == 'brickwall':
+        transferfunc = np.ones(np.shape(inputdata), dtype=np.float64)
+        cutoffbin = int((upperpass / Fs) * np.shape(transferfunc)[0])
+        if debug:
+            print('getlpfftfunc - Fs, upperpass, len(inputdata):', Fs, upperpass, np.shape(inputdata)[0])
+        transferfunc[cutoffbin:-cutoffbin] = 0.0
+    return transferfunc
 
-    Parameters
-    ----------
-    Fs : float
-        Sample rate in Hz
-        :param Fs:
 
-    upperpass : float
-        Upper end of passband in Hz
-        :param upperpass:
-
-    upperstop : float
-        Lower end of stopband in Hz
-        :param upperstop:
-
-    inputdata : 1D numpy array
-        Input data to be filtered
-        :param inputdata:
-
-    debug : boolean, optional
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
-    Returns
-    -------
-    transferfunc : 1D float array
-        The transfer function
-    """
-    freqaxis = np.roll(np.linspace(0.0, 1.0, num=np.shape(inputdata), endpoint=False, dtype='float64') / Fs - 0.5,
-                       int(np.shape(inputdata) // 2))
-    return np.exp(-(freqaxis) ** 2 / (2.0 * upperpass * uppperpass))
+def gethptransfunc(Fs, inputdata, lowerstop=None, lowerpass=None, type='brickwall', debug=False):
+    if lowerpass is None:
+        print('gethptransfunc: lowerpass must be specified')
+        sys.exit()
+    transferfunc = 1.0 - getlptransfunc(Fs, inputdata, upperpass=lowerstop, upperstop=lowerpass, type=type, debug=debug)
+    return transferfunc
 
 
 @conditionaljit()
-def dolpgaussfftfilt(Fs, upperpass, inputdata, padlen=20, cyclic=False, debug=False):
+def dolptransfuncfilt(Fs, inputdata, upperpass=None, upperstop=None, type='brickwall', padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT filter with a gaussian lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
@@ -649,7 +663,106 @@ def dolpgaussfftfilt(Fs, upperpass, inputdata, padlen=20, cyclic=False, debug=Fa
     """
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = getlpgaussfftfunc(Fs, upperpass, padinputdata, debug=debug)
+    transferfunc = getlptransfunc(Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type, debug=debug)
+    inputdata_trans *= transferfunc
+    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
+
+
+@conditionaljit()
+def dohptransfuncfilt(Fs, inputdata, lowerstop=None, lowerpass=None, type='brickwall', padlen=20, cyclic=False, debug=False):
+    r"""Performs an FFT filter with a trapezoidal highpass transfer
+    function on an input vector and returns the result.  Ends are padded to reduce transients.
+
+    Parameters
+    ----------
+    Fs : float
+        Sample rate in Hz
+        :param Fs:
+
+    lowerstop : float
+        Upper end of stopband in Hz
+        :param lowerstop:
+
+    lowerpass : float
+        Lower end of passband in Hz
+        :param lowerpass:
+
+    inputdata : 1D numpy array
+        Input data to be filtered
+        :param inputdata:
+
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    cyclic : bool, optional
+        If True, pad by wrapping the data in a cyclic manner rather than reflecting at the ends
+        :param cyclic:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
+    Returns
+    -------
+    filtereddata : 1D float array
+        The filtered data
+    """
+    if lowerstop is None:
+        lowerstop = lowerpass * (1.0 / 1.05)
+    padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
+    inputdata_trans = fftpack.fft(padinputdata)
+    transferfunc = 1.0 - getlptransfunc(Fs, padinputdata, upperpass=lowerstop, upperstop=lowerpass, type=type, debug=debug)
+    inputdata_trans *= transferfunc
+    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
+
+
+@conditionaljit()
+def dobptransfuncfilt(Fs, inputdata, lowerstop=None, lowerpass=None, upperpass=None, upperstop=None, type='brickwall', padlen=20, cyclic=False, debug=False):
+    r"""Performs an FFT filter with a trapezoidal highpass transfer
+    function on an input vector and returns the result.  Ends are padded to reduce transients.
+
+    Parameters
+    ----------
+    Fs : float
+        Sample rate in Hz
+        :param Fs:
+
+    lowerstop : float
+        Upper end of stopband in Hz
+        :param lowerstop:
+
+    lowerpass : float
+        Lower end of passband in Hz
+        :param lowerpass:
+
+    inputdata : 1D numpy array
+        Input data to be filtered
+        :param inputdata:
+
+    padlen : int, optional
+        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
+        :param padlen:
+
+    cyclic : bool, optional
+        If True, pad by wrapping the data in a cyclic manner rather than reflecting at the ends
+        :param cyclic:
+
+    debug : boolean, optional
+        When True, internal states of the function will be printed to help debugging.
+        :param debug:
+
+    Returns
+    -------
+    filtereddata : 1D float array
+        The filtered data
+    """
+    if lowerstop is None:
+        lowerstop = lowerpass * (1.0 / 1.05)
+    padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
+    inputdata_trans = fftpack.fft(padinputdata)
+    transferfunc = getlptransfunc(Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type, debug=debug) * \
+                   (1.0 - getlptransfunc(Fs, padinputdata, upperpass=lowerstop, upperstop=lowerpass, type=type, debug=debug))
     inputdata_trans *= transferfunc
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
@@ -1011,9 +1124,18 @@ def csdfilter(obsdata, commondata, padlen=20, cyclic=False, debug=False):
 
 
 @conditionaljit()
-def arb_pass(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
-             usebutterworth=False, butterorder=6,
-             usetrapfftfilt=True, padlen=20, cyclic=False, debug=False):
+def arb_pass(
+        Fs,
+        inputdata,
+        lowerstop,
+        lowerpass,
+        upperpass,
+        upperstop,
+        transferfunc='trapezoidal',
+        butterorder=6,
+        padlen=20,
+        cyclic=False,
+        debug=False):
     r"""Filters an input waveform over a specified range.  By default it is a trapezoidal
     FFT filter, but brickwall and butterworth filters are also available.  Ends are padded to reduce
     transients.
@@ -1044,17 +1166,9 @@ def arb_pass(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
         Lower end of upper stopband in Hz
         :param upperstop:
 
-    usebutterworth : boolean, optional
-        Whether to use a Butterworth filter characteristic.  Default is False.
-        :param usebutterworth:
-
     butterorder : int, optional
-        Order of Butterworth filter.  Default is 6.
+        Order of Butterworth filter, if used.  Default is 6.
         :param butterorder:
-
-    usetrapfftfilt : boolean, optional
-        Whether to use trapezoidal transition band for FFT filter.  Default is True.
-        :param usetrapfftfilt:
 
     padlen : int, optional
         Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
@@ -1076,140 +1190,35 @@ def arb_pass(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
     # check filter limits to see if we should do a lowpass, bandpass, or highpass
     if lowerpass <= 0.0:
         # set up for lowpass
-        if usebutterworth:
+        if transferfunc == 'butterworth':
             retvec = dolpfiltfilt(Fs, upperpass, inputdata, butterorder, padlen=padlen, cyclic=False, debug=debug)
             return retvec
         else:
-            if usetrapfftfilt:
-                return dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=padlen, cyclic=False, debug=debug)
-            else:
-                return dolpfftfilt(Fs, upperpass, inputdata, padlen=padlen, cyclic=False, debug=debug).astype(np.float64)
+            return dolptransfuncfilt(
+                Fs, inputdata,
+                upperpass=upperpass, upperstop=upperstop,
+                type=transferfunc, padlen=padlen, cyclic=cyclic, debug=debug)
     elif (upperpass >= Fs / 2.0) or (upperpass <= 0.0):
         # set up for highpass
-        if usebutterworth:
+        if transferfunc == 'butterworth':
             return dohpfiltfilt(Fs, lowerpass, inputdata, butterorder, padlen=padlen, cyclic=False, debug=debug)
         else:
-            if usetrapfftfilt:
-                return dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=padlen, cyclic=False, debug=debug)
-            else:
-                return dohpfftfilt(Fs, lowerpass, inputdata, padlen=padlen, cyclic=False, debug=debug)
+            return dohptransfuncfilt(
+                Fs, inputdata,
+                lowerpass=lowerpass, lowerstop=lowerstop,
+                type=transferfunc, padlen=padlen, cyclic=cyclic, debug=debug)
     else:
         # set up for bandpass
-        if usebutterworth:
+        if transferfunc == 'butterworth':
             return (dohpfiltfilt(Fs, lowerpass,
                                  dolpfiltfilt(Fs, upperpass, inputdata, butterorder, padlen=padlen, cyclic=False,
                                               debug=debug),
                                  butterorder, padlen=padlen, debug=debug))
         else:
-            if usetrapfftfilt:
-                return (
-                    dobptrapfftfilt(Fs, lowerstop, lowerpass, upperpass, upperstop, inputdata,
-                                    padlen=padlen, cyclic=False, debug=debug).astype(np.float64))
-            else:
-                return dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=padlen, cyclic=False, debug=debug)
-
-
-@conditionaljit()
-def getarbpassfunc(Fs, inputdata, lowerstop, lowerpass, upperpass, upperstop,
-                   usebutterworth=False, butterorder=6,
-                   usetrapfftfilt=True, padlen=20, cyclic=False, debug=False):
-    r"""Generates the transfer function for an arb_pass filter for a given length of input waveform over a specified
-    range.  By default it is a trapezoidal FFT filter, but brickwall and butterworth filters are also available.
-    Ends are padded to reduce transients.
-
-    Parameters
-    ----------
-    Fs : float
-        Sample rate in Hz
-        :param Fs:
-
-    inputdata : 1D numpy array
-        Input data to be filtered
-        :param inputdata:
-
-    lowerstop : float
-        Upper end of lower stopband in Hz
-        :param lowerstop:
-
-    lowerpass : float
-        Lower end of passband in Hz
-        :param lowerpass:
-
-    upperpass : float
-        Upper end of passband in Hz
-        :param upperpass:
-
-    upperstop : float
-        Lower end of upper stopband in Hz
-        :param upperstop:
-
-    usebutterworth : boolean, optional
-        Whether to use a Butterworth filter characteristic.  Default is False.
-        :param usebutterworth:
-
-    butterorder : int, optional
-        Order of Butterworth filter.  Default is 6.
-        :param butterorder:
-
-    usetrapfftfilt : boolean, optional
-        Whether to use trapezoidal transition band for FFT filter.  Default is True.
-        :param usetrapfftfilt:
-
-    padlen : int, optional
-        Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
-        :param padlen:
-
-    cyclic : bool, optional
-        If True, pad by wrapping the data in a cyclic manner rather than reflecting at the ends
-        :param cyclic:
-
-    debug : boolean, optional
-        When True, internal states of the function will be printed to help debugging.
-        :param debug:
-
-    Returns
-    -------
-    filtereddata : 1D float array
-        The filtered data
-
-    """
-    padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
-
-    # check filter limits to see if we should do a lowpass, bandpass, or highpass
-    if lowerpass <= 0.0:
-        # set up for lowpass
-        if usebutterworth:
-            return dolpfiltfilt(Fs, upperpass, inputdata, butterorder, padlen=padlen, cyclic=cyclic, debug=debug)
-        else:
-            if usetrapfftfilt:
-                return getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug)
-            else:
-                return getlptrapfftfunc(Fs, upperpass, padinputdata, debug=debug)
-    elif (upperpass >= Fs / 2.0) or (upperpass <= 0.0):
-        # set up for highpass
-        if usebutterworth:
-            return dohpfiltfilt(Fs, lowerpass, inputdata, butterorder, padlen=padlen, cyclic=cyclic, debug=debug)
-        else:
-            if usetrapfftfilt:
-                return 1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)
-            else:
-                return 1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)
-    else:
-        # set up for bandpass
-        if usebutterworth:
-            return (dohpfiltfilt(Fs, lowerpass,
-                                 dolpfiltfilt(Fs, upperpass, padinputdata,
-                                              butterorder, padlen=padlen, cyclic=cyclic, debug=debug),
-                                 butterorder, padlen=padlen, cyclic=cyclic, debug=debug))
-        else:
-            if usetrapfftfilt:
-                return (
-                        getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug) * \
-                        (1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)))
-            else:
-                return (
-                        getlpfftfunc(Fs, upperpass, padinputdata, debug=debug) * \
-                        (1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)))
+            return dobptransfuncfilt(
+                Fs, inputdata,
+                lowerpass=lowerpass, lowerstop=lowerstop, upperpass=upperpass, upperstop=upperstop,
+                type=transferfunc, padlen=padlen, cyclic=cyclic, debug=debug)
 
 
 class plethfilter:
@@ -1233,20 +1242,28 @@ class plethfilter:
 
 
 class noncausalfilter:
-    def __init__(self, filtertype='None', transitionfrac=0.05, usebutterworth=False, butterworthorder=6,
-                 usetrapfftfilt=True, correctfreq=True, padtime=30.0, cyclic=False, debug=False):
+    def __init__(
+            self,
+            filtertype='None',
+            transitionfrac=0.05,
+            transferfunc='trapezoidal',
+            initlowerstop=None,
+            initlowerpass=None,
+            initupperpass=None,
+            initupperstop=None,
+            butterworthorder=6,
+            correctfreq=True,
+            padtime=30.0,
+            cyclic=False,
+            debug=False):
         r"""A zero time delay filter for one dimensional signals, especially physiological ones.
 
         Parameters
         ----------
         filtertype : {'None' 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'}, optional
             The type of filter.
-        usebutterworth: boolean, optional
-            Use Butterworth filter.  Default is False.
         butterworthorder: int, optional
             Butterworth filter order.  Default is 6.
-        usetrapfftfilt: boolean, optional
-            Use trapezoidal pass band for FFT filter.  Default is True.
         correctfreq: boolean, optional
             Fix pass frequencies that are impossible.  Default is True.
         padtime: float, optional
@@ -1265,9 +1282,8 @@ class noncausalfilter:
             Return the current filter type.
         getfreqs()
             Return the current frequency limits.
-        setbutter(useit, order=self.butterworthorder)
-            Set options for Butterworth filter (set useit to True to make Butterworth the active filter type, set order
-            with the order parameter)
+        setbutterorder(order=self.butterworthorder)
+            Set the order for Butterworth filter
         setpadtime(padtime)
             Set the end pad time in seconds.
         setdebug(debug)
@@ -1282,17 +1298,24 @@ class noncausalfilter:
         self.filtertype = filtertype
         self.species = 'human'
         self.transitionfrac = transitionfrac
-        self.arb_lowerpass = 0.05
-        self.arb_lowerstop = 0.9 * self.arb_lowerpass
-        self.arb_upperpass = 0.20
-        self.arb_upperstop = 1.1 * self.arb_upperpass
+        self.transferfunc = transferfunc
+        if initlowerpass is None:
+            self.arb_lowerpass = 0.05
+            self.arb_lowerstop = 0.9 * self.arb_lowerpass
+        else:
+            self.arb_lowerpass = initlowerpass
+            self.arb_lowerstop = initlowerstop
+        if initupperpass is None:
+            self.arb_upperpass = 0.20
+            self.arb_upperstop = 1.1 * self.arb_upperpass
+        else:
+            self.arb_upperpass = initupperpass
+            self.arb_upperstop = initupperstop
         self.lowerstop = 0.0
         self.lowerpass = 0.0
         self.upperpass = -1.0
         self.upperstop = -1.0
-        self.usebutterworth = usebutterworth
         self.butterworthorder = butterworthorder
-        self.usetrapfftfilt = usetrapfftfilt
         self.correctfreq = correctfreq
         self.padtime = padtime
         self.cyclic = cyclic
@@ -1363,8 +1386,7 @@ class noncausalfilter:
     def gettype(self):
         return self.filtertype
 
-    def setbutter(self, useit, order=3):
-        self.usebutterworth = useit
+    def setbutterorder(self, order=3):
         self.butterworthorder = order
 
     def setdebug(self, debug):
@@ -1382,15 +1404,18 @@ class noncausalfilter:
     def getcyclic(self):
         return self.cyclic
 
-    def settrapfft(self, useit):
-        self.usetrapfftfilt = useit
+    def settransferfunc(self, transferfunc):
+        self.transferfunc = transferfunc
 
     def setfreqs(self, lowerstop, lowerpass, upperpass, upperstop):
-        if not (lowerstop <= lowerpass < upperpass):
-            print('noncausalfilter error: lowerpass (', lowerpass,') must be between lowerstop and upperpass (', lowerstop, upperpass, ')')
+        if lowerstop > lowerpass:
+            print('noncausalfilter error: lowerstop (', lowerstop, ') must be <= lowerpass (', lowerpass, ')')
             sys.exit()
-        if not (lowerpass < upperpass <= upperstop):
-            print('noncausalfilter error: upperpass (', upperpass,') must be between lowerpass and upperstop(', lowerpass, upperstop, ')')
+        if upperpass < upperstop:
+            print('noncausalfilter error: upperstop (', upperstop, ') must be >= upperpass (', upperpass, ')')
+            sys.exit()
+        if (lowerpass < upperpass) and (upperpass >= 0.0):
+            print('noncausalfilter error: lowerpass (', lowerpass,') must be < upperpass (', upperpass, ')')
             sys.exit()
         self.arb_lowerstop = 1.0 * lowerstop
         self.arb_lowerpass = 1.0 * lowerpass
@@ -1481,9 +1506,7 @@ class noncausalfilter:
             print('lowerpass=', self.lowerpass)
             print('upperpass=', self.upperpass)
             print('upperstop=', self.upperstop)
-            print('usebutterworth=', self.usebutterworth)
             print('butterworthorder=', self.butterworthorder)
-            print('usetrapfftfilt=', self.usetrapfftfilt)
             print('padtime=', self.padtime)
             print('padlen=', padlen)
             print('cyclic=', self.cyclic)
@@ -1492,34 +1515,54 @@ class noncausalfilter:
         if self.filtertype == 'None':
             return data
         elif self.filtertype == 'ringstop':
-            return (arb_pass(Fs, data,
-                             0.0, 0.0, Fs / 4.0, 1.1 * Fs / 4.0,
-                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
-                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, cyclic=self.cyclic, debug=self.debug))
+            return (arb_pass(
+                Fs, data,
+                0.0, 0.0, Fs / 4.0, 1.1 * Fs / 4.0,
+                transferfunc=self.transferfunc,
+                butterorder=self.butterworthorder,
+                padlen=padlen,
+                cyclic=self.cyclic,
+                debug=self.debug))
         elif self.filtertype == 'vlf' or self.filtertype == 'lfo' \
                 or self.filtertype == 'lfo_legacy' \
                 or self.filtertype == 'resp' or self.filtertype == 'cardiac':
-            return (arb_pass(Fs, data,
-                             self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
-                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
-                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, cyclic=self.cyclic, debug=self.debug))
+            return (arb_pass(
+                Fs, data,
+                self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
+                transferfunc=self.transferfunc,
+                butterorder=self.butterworthorder,
+                padlen=padlen,
+                cyclic=self.cyclic,
+                debug=self.debug))
         elif self.filtertype == 'vlf_stop' or self.filtertype == 'lfo_stop' \
                 or self.filtertype == 'lfo_legacy_stop' \
                 or self.filtertype == 'resp_stop' or self.filtertype == 'cardiac_stop':
-            return (data - arb_pass(Fs, data,
-                                    self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
-                                    usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
-                                    usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, cyclic=self.cyclic, debug=self.debug))
+            return (data - arb_pass(
+                Fs, data,
+                self.lowerstop, self.lowerpass, self.upperpass, self.upperstop,
+                transferfunc=self.transferfunc,
+                butterorder=self.butterworthorder,
+                padlen=padlen,
+                cyclic=self.cyclic,
+                debug=self.debug))
         elif self.filtertype == 'arb':
-            return (arb_pass(Fs, data,
-                             self.arb_lowerstop, self.arb_lowerpass, self.arb_upperpass, self.arb_upperstop,
-                             usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
-                             usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, cyclic=self.cyclic, debug=self.debug))
+            return (arb_pass(
+                Fs, data,
+                self.arb_lowerstop, self.arb_lowerpass, self.arb_upperpass, self.arb_upperstop,
+                transferfunc=self.transferfunc,
+                butterorder=self.butterworthorder,
+                padlen=padlen,
+                cyclic=self.cyclic,
+                debug=self.debug))
         elif self.filtertype == 'arb_stop':
-            return (data - arb_pass(Fs, data,
-                                    self.arb_lowerstop, self.arb_lowerpass, self.arb_upperpass, self.arb_upperstop,
-                                    usebutterworth=self.usebutterworth, butterorder=self.butterworthorder,
-                                    usetrapfftfilt=self.usetrapfftfilt, padlen=padlen, cyclic=self.cyclic, debug=self.debug))
+            return (data - arb_pass(
+                Fs, data,
+                self.arb_lowerstop, self.arb_lowerpass, self.arb_upperpass, self.arb_upperstop,
+                transferfunc=self.transferfunc,
+                butterorder=self.butterworthorder,
+                padlen=padlen,
+                cyclic=self.cyclic,
+                debug=self.debug))
         else:
             print("bad filter type")
             sys.exit()

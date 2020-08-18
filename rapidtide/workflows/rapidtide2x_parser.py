@@ -422,10 +422,9 @@ def process_args():
     optiondict['savemotionfiltered'] = False  # save motion filtered file for debugging
 
     # filter options
-    optiondict['usebutterworthfilter'] = False
     optiondict['filtorder'] = 6
     optiondict['padseconds'] = 30.0  # the number of seconds of padding to add to each end of a filtered timecourse
-    optiondict['filtertype'] = None
+    optiondict['filtertype'] = 'trapezoidal'
     optiondict['respdelete'] = False
     optiondict['lowerstop'] = None
     optiondict['lowerpass'] = None
@@ -524,7 +523,7 @@ def process_args():
 
     realtr = 0.0
     theprefilter = tide_filt.noncausalfilter()
-    theprefilter.setbutter(optiondict['usebutterworthfilter'], optiondict['filtorder'])
+    theprefilter.setbutterorder(optiondict['filtorder'])
 
     # start the clock!
     tide_util.checkimports(optiondict)
@@ -872,8 +871,8 @@ def process_args():
             optiondict['widthlimit'] = float(a)
             print('Setting gaussian fit width limit to ', optiondict['widthlimit'], 'Hz')
         elif o == '-b':
-            optiondict['usebutterworthfilter'] = True
-            theprefilter.setbutter(optiondict['usebutterworthfilter'], optiondict['filtorder'])
+            optiondict['filtertype'] = 'butterworth'
+            theprefilter.setbutterorder(optiondict['filtorder'])
             print('Using butterworth bandlimit filter')
         elif o == '-Z':
             optiondict['fixeddelayvalue'] = float(a)

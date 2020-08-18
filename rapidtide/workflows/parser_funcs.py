@@ -158,12 +158,6 @@ def postprocessfilteropts(args):
     except AttributeError:
         args.filtertype = defaultpadseconds
 
-
-    if args.filtertype == 'trapezoidal':
-        inittrap = True
-    else:
-        inittrap = False
-
     # if arbvec is set, we are going set up an arbpass filter
     if args.arbvec is not None:
         if len(args.arbvec) == 2:
@@ -174,17 +168,13 @@ def postprocessfilteropts(args):
                              "or four floats.")
         # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
         # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
-        theprefilter = tide_filt.noncausalfilter('arb', usetrapfftfilt=inittrap)
+        theprefilter = tide_filt.noncausalfilter('arb', transferfunc=args.transferfunc)
         theprefilter.setfreqs(args.arbvec[2], args.arbvec[0], args.arbvec[1], args.arbvec[3])
     else:
-        theprefilter = tide_filt.noncausalfilter(args.filterband, usetrapfftfilt=inittrap)
+        theprefilter = tide_filt.noncausalfilter(args.filterband, transferfunc=args.transferfunc)
 
-    # make the filter a butterworth if selected
-    if args.filtertype == 'butterworth':
-        args.usebutterworthfilter = True
-    else:
-        args.usebutterworthfilter = False
-    theprefilter.setbutter(args.usebutterworthfilter, args.filtorder)
+    # set the butterworth order
+    theprefilter.setbutterorder(args.filtorder)
 
     args.lowerstop, args.lowerpass, args.upperpass, args.upperstop = theprefilter.getfreqs()
 

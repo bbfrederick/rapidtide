@@ -141,12 +141,17 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
             allfilters.append(
                 {
                     'name': filtertype + ' brickwall',
-                    'filter': noncausalfilter(filtertype=filtertype),
+                    'filter': noncausalfilter(filtertype=filtertype, transferfunc='brickwall'),
                 })
             allfilters.append(
                 {
                     'name': filtertype + ' trapezoidal',
-                    'filter': noncausalfilter(filtertype=filtertype, usetrapfftfilt=True),
+                    'filter': noncausalfilter(filtertype=filtertype, transferfunc='trapezoidal'),
+                })
+            allfilters.append(
+                {
+                    'name': filtertype + ' gaussian',
+                    'filter': noncausalfilter(filtertype=filtertype, transferfunc='gaussian'),
                 })
 
     # calculate the transfer functions for the filters
