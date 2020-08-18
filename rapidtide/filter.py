@@ -30,6 +30,8 @@ import numpy as np
 from scipy import fftpack, ndimage, signal
 import sys
 
+import matplotlib.pyplot as plt
+
 
 try:
     from memory_profiler import profile
@@ -587,9 +589,9 @@ def getlptransfunc(Fs, inputdata, upperpass=None, upperstop=None, type='brickwal
         print('\tupperpass:', upperpass)
         print('\tupperstop:', upperstop)
         print('\ttype:', type)
+    freqaxis = np.roll(np.linspace(0.0, 1.0, num=np.shape(inputdata)[0], endpoint=False, dtype='float64') / Fs - 0.5,
+                       int(np.shape(inputdata)[0] // 2))
     if type == 'gaussian':
-        freqaxis = np.roll(np.linspace(0.0, 1.0, num=np.shape(inputdata)[0], endpoint=False, dtype='float64') / Fs - 0.5,
-                           int(np.shape(inputdata)[0] // 2))
         transferfunc = np.exp(-(freqaxis) ** 2 / (2.0 * upperpass * upperpass))
     elif type == 'trapezoidal':
         if upperstop is None:
@@ -614,6 +616,12 @@ def getlptransfunc(Fs, inputdata, upperpass=None, upperstop=None, type='brickwal
         if debug:
             print('getlpfftfunc - Fs, upperpass, len(inputdata):', Fs, upperpass, np.shape(inputdata)[0])
         transferfunc[cutoffbin:-cutoffbin] = 0.0
+    if debug:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('LP Transfer function - ' + type)
+        plt.plot(freqaxis, transferfunc)
+        plt.show()
     return transferfunc
 
 
@@ -622,6 +630,12 @@ def gethptransfunc(Fs, inputdata, lowerstop=None, lowerpass=None, type='brickwal
         print('gethptransfunc: lowerpass must be specified')
         sys.exit()
     transferfunc = 1.0 - getlptransfunc(Fs, inputdata, upperpass=lowerstop, upperstop=lowerpass, type=type, debug=debug)
+    if debug:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('HP Transfer function - ' + type)
+        plt.plot(transferfunc)
+        plt.show()
     return transferfunc
 
 
@@ -1414,7 +1428,7 @@ class noncausalfilter:
         if upperpass < upperstop:
             print('noncausalfilter error: upperstop (', upperstop, ') must be >= upperpass (', upperpass, ')')
             sys.exit()
-        if (lowerpass < upperpass) and (upperpass >= 0.0):
+        if (lowerpass > upperpass) and (upperpass >= 0.0):
             print('noncausalfilter error: lowerpass (', lowerpass,') must be < upperpass (', upperpass, ')')
             sys.exit()
         self.arb_lowerstop = 1.0 * lowerstop

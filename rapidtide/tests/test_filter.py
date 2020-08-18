@@ -87,7 +87,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
                 allfilters.append(
                     {
                         'name': filtertype + ' ' + transferfunc,
-                        'filter': noncausalfilter(filtertype=filtertype, transferfunc=transferfunc),
+                        'filter': noncausalfilter(filtertype=filtertype, transferfunc=transferfunc, debug=True),
                     })
 
     # make the lowpass filters
@@ -106,7 +106,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
                                 filtertype='arb',
                                 transferfunc=transferfunc,
                                 initlowerstop=0.0, initlowerpass=0.0,
-                                initupperpass=0.1, initupperstop=0.11)
+                                initupperpass=0.1, initupperstop=0.11, debug=True)
                 })
 
     # make the highpass filters
@@ -125,7 +125,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
                                 filtertype='arb',
                                 transferfunc=transferfunc,
                                 initlowerstop=0.09, initlowerpass=0.1,
-                                initupperpass=-1.0, initupperstop=-1.0)
+                                initupperpass=-1.0, initupperstop=-1.0, debug=True)
                 })
 
     # calculate the transfer functions for the filters
