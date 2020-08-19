@@ -5,6 +5,7 @@ rapidtide \
 	../dst/dgsr_denoisingpass1_bipolar \
         --bipolar \
         --peakfittype fastquad \
+	--spatialfilt 2 \
         --nprocs 1 \
         --denoising 
 
@@ -13,6 +14,7 @@ rapidtide \
 	../dst/dgsr_denoisingpass1_bipolar_multiproc \
         --bipolar \
         --peakfittype fastquad \
+	--spatialfilt 2 \
         --nprocs -1 \
         --denoising 
 
