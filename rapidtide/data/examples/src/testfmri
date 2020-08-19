@@ -11,6 +11,39 @@ rapidtide \
 
 rapidtide \
 	fmri.nii.gz \
+	../dst/dgsr_trapezoidal \
+	--spatialfilt 2 \
+        --filtertype trapezoidal \
+        --nprocs -1 \
+        --denoising 
+
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_butterworth_0 \
+	--spatialfilt 2 \
+        --filtertype butterworth \
+        --nprocs -1 \
+        --denoising \
+        --filterfreqs 0.0 0.1 
+
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_butterworth \
+	--spatialfilt 2 \
+        --filtertype butterworth \
+        --nprocs -1 \
+        --denoising 
+
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_brickwall \
+	--spatialfilt 2 \
+        --filtertype brickwall \
+        --nprocs -1 \
+        --denoising 
+
+rapidtide \
+	fmri.nii.gz \
 	../dst/dgsr_denoisingpass1_bipolar_multiproc \
         --bipolar \
         --peakfittype fastquad \
