@@ -74,11 +74,11 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
     nperseg = np.min([tclen, 256])
     f, dummy = sp.signal.welch(overall, fs=1.0/sampletime, nperseg=nperseg)
 
-    transferfunclist = ['brickwall', 'trapezoidal']
+    transferfunclist = ['gaussian', 'brickwall', 'trapezoidal', 'butterworth']
 
     allfilters = []
 
-    # construct all the physiologcal filters
+    # construct all the physiological filters
     for filtertype in ['lfo', 'resp', 'cardiac']:
         testfilter = noncausalfilter(filtertype=filtertype)
         lstest, lptest, uptest, ustest = testfilter.getfreqs()
@@ -86,11 +86,11 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
             for transferfunc in transferfunclist:
                 allfilters.append(
                     {
-                        'name': filtertype + ' ' + transferfunc,
-                        'filter': noncausalfilter(filtertype=filtertype, transferfunc=transferfunc, debug=True),
+                    'name': filtertype + ' ' + transferfunc,
+                    'filter': noncausalfilter(filtertype=filtertype, transferfunc=transferfunc, debug=False),
                     })
 
-    # make the lowpass filters
+    ''''# make the lowpass filters
     for transferfunc in transferfunclist:
         testfilter = noncausalfilter(
                         filtertype='arb',
@@ -106,7 +106,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
                                 filtertype='arb',
                                 transferfunc=transferfunc,
                                 initlowerstop=0.0, initlowerpass=0.0,
-                                initupperpass=0.1, initupperstop=0.11, debug=True)
+                                initupperpass=0.1, initupperstop=0.11, debug=False)
                 })
 
     # make the highpass filters
@@ -125,8 +125,8 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
                                 filtertype='arb',
                                 transferfunc=transferfunc,
                                 initlowerstop=0.09, initlowerpass=0.1,
-                                initupperpass=-1.0, initupperstop=-1.0, debug=True)
-                })
+                                initupperpass=-1.0, initupperstop=-1.0, debug=False)
+                })'''
 
     # calculate the transfer functions for the filters
     for index in range(0, len(allfilters)):
@@ -146,12 +146,12 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
     if display:
         legend = []
         plt.figure()
-        plt.ylim([-1.1, 1.1 * len(allfilters)])
+        plt.ylim([-1.0, 1.0 * len(allfilters)])
         offset = 0.0
         for thefilter in allfilters:
             plt.plot(thefilter['frequencies'], thefilter['transferfunc'] + offset)
             legend.append(thefilter['name'])
-            offset += 1.1
+            offset += 1.0
         plt.legend(legend)
         plt.show()
 
@@ -202,7 +202,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
             for thefilter in allfilters:
                 plt.plot(thewave['timeaxis'], offset + thefilter['filter'].apply(1.0/sampletime, thewave['waveform']))
                 legend.append(thewave['name'] + ': '+ thefilter['name'])
-                offset += 1.1
+                offset += 1.0
             #plt.plot(thewave['timeaxis'], thewave['waveform'] + offset)
             #legend.append(thewave['name'])
             #offset += 2.2

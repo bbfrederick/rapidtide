@@ -589,10 +589,13 @@ def getlptransfunc(Fs, inputdata, upperpass=None, upperstop=None, type='brickwal
         print('\tupperpass:', upperpass)
         print('\tupperstop:', upperstop)
         print('\ttype:', type)
-    freqaxis = np.roll(np.linspace(0.0, 1.0, num=np.shape(inputdata)[0], endpoint=False, dtype='float64') / Fs - 0.5,
-                       int(np.shape(inputdata)[0] // 2))
+    freqaxis = np.linspace(0.0, 1.0, num=np.shape(inputdata)[0], endpoint=False, dtype='float64') / Fs
     if type == 'gaussian':
-        transferfunc = np.exp(-(freqaxis) ** 2 / (2.0 * upperpass * upperpass))
+        halfloc = int(np.shape(inputdata)[0] // 2)
+        sigma = upperpass / 2.35482
+        transferfunc = np.zeros(np.shape(inputdata), dtype='float64')
+        transferfunc[0:halfloc] = np.exp(-(freqaxis[0:halfloc]) ** 2 / (2.0 * sigma * sigma))
+        transferfunc[halfloc + 1:] = np.exp(-(freqaxis[halfloc + 1:] - 1.0 / Fs) ** 2 / (2.0 * sigma * sigma))
     elif type == 'trapezoidal':
         if upperstop is None:
             upperstop = upperpass * 1.05
@@ -629,13 +632,10 @@ def gethptransfunc(Fs, inputdata, lowerstop=None, lowerpass=None, type='brickwal
     if lowerpass is None:
         print('gethptransfunc: lowerpass must be specified')
         sys.exit()
-    transferfunc = 1.0 - getlptransfunc(Fs, inputdata, upperpass=lowerstop, upperstop=lowerpass, type=type, debug=debug)
-    if debug:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('HP Transfer function - ' + type)
-        plt.plot(transferfunc)
-        plt.show()
+    if type=='trapezoidal':
+         transferfunc = 1.0 - getlptransfunc(Fs, inputdata, upperpass=lowerstop, upperstop=lowerpass, type=type, debug=debug)
+    else:
+         transferfunc = 1.0 - getlptransfunc(Fs, inputdata, upperpass=lowerpass, type=type, debug=debug)
     return transferfunc
 
 
@@ -677,7 +677,14 @@ def dolptransfuncfilt(Fs, inputdata, upperpass=None, upperstop=None, type='brick
     """
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = getlptransfunc(Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type, debug=debug)
+    transferfunc = getlptransfunc(Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type)
+    if debug:
+        freqaxis = np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype='float64') / Fs
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('LP Transfer function - ' + type + ', upperpass={:.2f}'.format(upperpass))
+        plt.plot(freqaxis, transferfunc)
+        plt.show()
     inputdata_trans *= transferfunc
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
@@ -726,7 +733,14 @@ def dohptransfuncfilt(Fs, inputdata, lowerstop=None, lowerpass=None, type='brick
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = 1.0 - getlptransfunc(Fs, padinputdata, upperpass=lowerstop, upperstop=lowerpass, type=type, debug=debug)
+    transferfunc = 1.0 - getlptransfunc(Fs, padinputdata, upperpass=lowerstop, upperstop=lowerpass, type=type)
+    if debug:
+        freqaxis = np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype='float64') / Fs
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('HP Transfer function - ' + type + ', lowerpass={:.2f}'.format(lowerpass))
+        plt.plot(freqaxis, transferfunc)
+        plt.show()
     inputdata_trans *= transferfunc
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
@@ -775,8 +789,15 @@ def dobptransfuncfilt(Fs, inputdata, lowerstop=None, lowerpass=None, upperpass=N
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = getlptransfunc(Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type, debug=debug) * \
-                   (1.0 - getlptransfunc(Fs, padinputdata, upperpass=lowerstop, upperstop=lowerpass, type=type, debug=debug))
+    transferfunc = getlptransfunc(Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type, debug=False) * \
+                   gethptransfunc(Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type))
+    if debug:
+        freqaxis = np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype='float64') / Fs
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('BP Transfer function - ' + type + ', lowerpass={:.2f}, upperpass={:.2f}'.format(lowerpass, upperpass))
+        plt.plot(freqaxis, transferfunc)
+        plt.show()
     inputdata_trans *= transferfunc
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
@@ -1219,7 +1240,7 @@ def arb_pass(
         else:
             return dohptransfuncfilt(
                 Fs, inputdata,
-                lowerpass=lowerpass, lowerstop=lowerstop,
+                lowerstop=lowerstop, lowerpass=lowerpass,
                 type=transferfunc, padlen=padlen, cyclic=cyclic, debug=debug)
     else:
         # set up for bandpass
@@ -1231,7 +1252,7 @@ def arb_pass(
         else:
             return dobptransfuncfilt(
                 Fs, inputdata,
-                lowerpass=lowerpass, lowerstop=lowerstop, upperpass=upperpass, upperstop=upperstop,
+                lowerstop=lowerstop, lowerpass=lowerpass, upperpass=upperpass, upperstop=upperstop,
                 type=transferfunc, padlen=padlen, cyclic=cyclic, debug=debug)
 
 
