@@ -733,7 +733,7 @@ def dohptransfuncfilt(Fs, inputdata, lowerstop=None, lowerpass=None, type='brick
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = 1.0 - getlptransfunc(Fs, padinputdata, upperpass=lowerstop, upperstop=lowerpass, type=type)
+    transferfunc = getlptransfunc(Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type)
     if debug:
         freqaxis = np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype='float64') / Fs
         fig = plt.figure()
@@ -790,7 +790,7 @@ def dobptransfuncfilt(Fs, inputdata, lowerstop=None, lowerpass=None, upperpass=N
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlptransfunc(Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type, debug=False) * \
-                   gethptransfunc(Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type))
+                   gethptransfunc(Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type)
     if debug:
         freqaxis = np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype='float64') / Fs
         fig = plt.figure()
@@ -1446,7 +1446,7 @@ class noncausalfilter:
         if lowerstop > lowerpass:
             print('noncausalfilter error: lowerstop (', lowerstop, ') must be <= lowerpass (', lowerpass, ')')
             sys.exit()
-        if upperpass < upperstop:
+        if upperpass > upperstop:
             print('noncausalfilter error: upperstop (', upperstop, ') must be >= upperpass (', upperpass, ')')
             sys.exit()
         if (lowerpass > upperpass) and (upperpass >= 0.0):
