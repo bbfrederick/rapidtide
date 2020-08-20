@@ -23,7 +23,7 @@ from __future__ import print_function, division
 
 import argparse
 import scipy as sp
-from scipy import pi
+from numpy import pi
 from scipy.stats.stats import pearsonr
 import numpy as np
 from numpy import r_, argmax, zeros
@@ -286,6 +286,7 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
                         calccepstraldelay=False, corroutputfile=False,
                         controlvariablefile=None, numreps=0,
                         arbvec=None, filtertype='arb', corrweighting='None',
+                        transferfunc='trapezoidal',
                         detrendorder=1, prewindow=True, verbose=False):
     r"""Calculate and display crosscorrelation between two timeseries.
 
@@ -383,7 +384,7 @@ def showxcorrx_workflow(infilename1, infilename2, Fs,
 
     savecorrelation = bool(corroutputfile)
 
-    theprefilter = tide_filt.noncausalfilter()
+    theprefilter = tide_filt.noncausalfilter(transferfunc=transferfunc)
 
     if arbvec is not None and filtertype != 'arb':
         raise ValueError('Argument arbvec must be None if filtertype is '
