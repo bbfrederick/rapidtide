@@ -1013,7 +1013,7 @@ def rapidtide_main(argparsingfunc):
                     if doreferencenotch:
                         print('removing spectral component at sidelobe frequency')
                         acstopfreq = 1.0 / sidelobetime
-                        acfixfilter = tide_filt.noncausalfilter(debug=optiondict['debug'])
+                        acfixfilter = tide_filt.noncausalfilter(transferfunc=args.transferfunc, debug=optiondict['debug'])
                         acfixfilter.settype('arb_stop')
                         acfixfilter.setfreqs(acstopfreq * 0.9, acstopfreq * 0.95, acstopfreq * 1.05, acstopfreq * 1.1)
                         cleaned_resampref_y = tide_math.corrnormalize(acfixfilter.apply(fmrifreq, resampref_y),
