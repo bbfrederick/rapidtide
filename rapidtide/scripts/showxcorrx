@@ -36,7 +36,6 @@ import rapidtide.fit as tide_fit
 import rapidtide.correlate as tide_corr
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.helper_classes as tide_classes
-from rapidtide.workflows.parser_funcs import is_valid_file, is_valid_filespec, invert_float, is_float
 
 import rapidtide.workflows.parser_funcs as pf
 
@@ -142,7 +141,7 @@ def _get_parser():
         help='Text file containing a timeseries.  Select column COLNUM if multicolumn file')
     parser.add_argument(
         'samplerate',
-        type=lambda x: is_float(parser, x),
+        type=lambda x: pf.is_float(parser, x),
         help='Sample rate of the timecourses, in Hz')
 
     # add optional arguments
@@ -186,7 +185,7 @@ def _get_parser():
     pf.addwindowopts(parser)
 
     # Filter arguments
-    pf.addfilteropts(parser, 'timecourses')
+    pf.addfilteropts(parser, 'timecourses', details=True)
 
     # Preprocessing options
     preproc = parser.add_argument_group('Preprocessing options')
@@ -223,7 +222,7 @@ def _get_parser():
         '--partialcorr',
         dest='controlvariablefile',
         action='store',
-        type=lambda x: is_valid_file(parser, x),
+        type=lambda x: pf.is_valid_file(parser, x),
         metavar='FILE',
         help=('Use the columns of FILE as controlling variables and '
               'return the partial correlation. '),

@@ -34,7 +34,7 @@ import rapidtide.util as tide_util
 
 import nibabel as nib
 
-from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float, indicatespecifiedAction, setifnotset
+import rapidtide.workflows.parser_funcs as pf
 
 '''class indicatespecifiedAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -60,7 +60,7 @@ def _get_parser():
     # Required arguments
     parser.add_argument(
             'in_file',
-            type=lambda x: is_valid_file(parser, x),
+            type=lambda x: pf.is_valid_file(parser, x),
             help='The input data file (BOLD fmri file or NIRS text file)')
     parser.add_argument(
             'outputname',
@@ -119,7 +119,7 @@ def _get_parser():
             dest='realtr',
             action='store',
             metavar='TSTEP',
-            type=lambda x: is_float(parser, x),
+            type=lambda x: pf.is_float(parser, x),
             help=('Set the timestep of the data file to TSTEP. '
                   'This will override the TR in an '
                   'fMRI file. NOTE: if using data from a text '
@@ -131,7 +131,7 @@ def _get_parser():
             dest='realtr',
             action='store',
             metavar='FREQ',
-            type=lambda x: invert_float(parser, x),
+            type=lambda x: pf.invert_float(parser, x),
             help=('Set the timestep of the data file to 1/FREQ. '
                   'This will override the TR in an '
                   'fMRI file. NOTE: if using data from a text '
@@ -177,55 +177,13 @@ def _get_parser():
                    'crosscorrelation. Overrides offsettime if present.'),
              default=False)
 
-    filt_opts = parser.add_argument_group('Filtering options')
-    filt_opts.add_argument(
-            '--filterband',
-            dest='filterband',
-            action='store',
-            type=str,
-            choices=['vlf', 'lfo', 'resp', 'cardiac', 'lfo_legacy'],
-            help=('Filter data and regressors to specific band. '),
-            default='lfo')
-    filt_opts.add_argument(
-            '--filterfreqs',
-            dest='arbvec',
-            action='store',
-            nargs='+',
-            type=lambda x: is_float(parser, x),
-            metavar=('LOWERPASS UPPERPASS',
-                   'LOWERSTOP UPPERSTOP'),
-            help=('Filter data and regressors to retain LOWERPASS to '
-                'UPPERPASS. LOWERSTOP and UPPERSTOP can also '
-                'be specified, or will be calculated '
-                'automatically. '),
-            default=None)
-    filt_opts.add_argument(
-            '--filtertype',
-            dest='filtertype',
-            action='store',
-            type=str,
-            choices=['trapezoidal', 'brickwall', 'butterworth', 'gaussian'],
-            help=('Filter data and regressors using a trapezoidal FFT filter (default), brickwall, gaussian, or butterworth bandpass.'),
-            default='trapezoidal')
-    filt_opts.add_argument(
-            '--butterorder',
-             dest='filtorder',
-             action='store',
-             type=int,
-             metavar='ORDER',
-             help=('Set order of butterworth filter for band splitting. '),
-             default=6)
-    filt_opts.add_argument(
-            '--padseconds',
-             dest='padseconds',
-             action='store',
-             type=float,
-             metavar='SECONDS',
-             help=('The number of seconds of padding to add to each end of a filtered timecourse. '),
-             default=30.0)
+    # Add filter options
+    pf.addfilteropts(parser, 'data and regressors', details=True)
 
+    # Add permutation options
+    pf.addpermutationopts(parser)
 
-    permutationmethod = preproc.add_mutually_exclusive_group()
+    '''permutationmethod = preproc.add_mutually_exclusive_group()
     permutationmethod.add_argument(
             '--permutationmethod',
             dest='permutationmethod',
@@ -234,7 +192,6 @@ def _get_parser():
             choices=['shuffle', 'phaserandom'],
             help=('Permutation method for significance testing.  Default is shuffle. '),
             default='shuffle')
-
     preproc.add_argument(
             '--numnull',
              dest='numestreps',
@@ -253,7 +210,7 @@ def _get_parser():
             action='store_false',
             help=('Do not fit significance histogram with a '
                'Johnson SB function. '),
-            default=True)
+            default=True)'''
 
     wfunc = preproc.add_mutually_exclusive_group()
     wfunc.add_argument(
@@ -369,7 +326,7 @@ def _get_parser():
             '--slicetimes',
             dest='slicetimes',
             action='store',
-            type=lambda x: is_valid_file(parser, x),
+            type=lambda x: pf.is_valid_file(parser, x),
             metavar='FILE',
             help=('Apply offset times from FILE to each slice in '
                'the dataset. '),
@@ -419,7 +376,7 @@ def _get_parser():
             '--regressor',
             dest='regressorfile',
             action='store',
-            type=lambda x: is_valid_file(parser, x),
+            type=lambda x: pf.is_valid_file(parser, x),
             metavar='FILE',
             help=('Read the initial probe regressor from file FILE (if not '
                 'specified, generate and use the global regressor). '),
@@ -430,7 +387,7 @@ def _get_parser():
             '--regressorfreq',
             dest='inputfreq',
             action='store',
-            type=lambda x: is_float(parser, x),
+            type=lambda x: pf.is_float(parser, x),
             metavar='FREQ',
             help=('Probe regressor in file has sample '
                  'frequency FREQ (default is 1/tr) '
@@ -441,7 +398,7 @@ def _get_parser():
             '--regressortstep',
             dest='inputfreq',
             action='store',
-            type=lambda x: invert_float(parser, x),
+            type=lambda x: pf.invert_float(parser, x),
             metavar='TSTEP',
             help=('Probe regressor in file has sample '
                  'frequency FREQ (default is 1/tr) '
@@ -526,7 +483,7 @@ def _get_parser():
     fixdelay.add_argument(
             '--searchrange',
             dest='lag_extrema',
-            action=indicatespecifiedAction,
+            action=pf.indicatespecifiedAction,
             nargs=2,
             type=float,
             metavar=('LAGMIN', 'LAGMAX'),
@@ -570,7 +527,7 @@ def _get_parser():
     corr_fit.add_argument(
             '--despecklepasses',
             dest='despeckle_passes',
-            action=indicatespecifiedAction,
+            action=pf.indicatespecifiedAction,
             type=int,
             metavar='PASSES',
             help=('Detect and refit suspect correlations to '
@@ -737,7 +694,7 @@ def _get_parser():
     output.add_argument('--glmsourcefile',
                         dest='glmsourcefile',
                         action='store',
-                        type=lambda x: is_valid_file(parser, x),
+                        type=lambda x: pf.is_valid_file(parser, x),
                         metavar='FILE',
                         help=('Regress delayed regressors out of FILE instead '
                               'of the initial fmri file used to estimate '
@@ -898,7 +855,7 @@ def _get_parser():
     experimental.add_argument('--tmask',
                               dest='tmaskname',
                               action='store',
-                              type=lambda x: is_valid_file(parser, x),
+                              type=lambda x: pf.is_valid_file(parser, x),
                               metavar='FILE',
                               help=('Only correlate during epochs specified '
                                     'in MASKFILE (NB: each line of FILE '
@@ -1184,20 +1141,20 @@ def process_args(inputargs=None):
         args['lagmaskthresh'] = 0.1
 
     if args['delaymapping']:
-        setifnotset(args, 'despeckle_passes', 4)
-        setifnotset(args, 'lagmin', -10.0)
-        setifnotset(args, 'lagmax', 30.0)
+        pf.setifnotset(args, 'despeckle_passes', 4)
+        pf.setifnotset(args, 'lagmin', -10.0)
+        pf.setifnotset(args, 'lagmax', 30.0)
         args['passes'] = 3
         args['refineoffset'] = True
         args['pickleft'] = True
         args['limitoutput'] = True
-        setifnotset(args, 'doglmfilt', False)
+        pf.setifnotset(args, 'doglmfilt', False)
 
     if args['denoising']:
-        setifnotset(args, 'despeckle_passes', 4)
-        setifnotset(args, 'lagmin', -10.0)
-        setifnotset(args, 'lagmax', 10.0)
-        setifnotset(args, 'peakfittype', 'fastquad')
+        pf.setifnotset(args, 'despeckle_passes', 4)
+        pf.setifnotset(args, 'lagmin', -10.0)
+        pf.setifnotset(args, 'lagmax', 10.0)
+        pf.setifnotset(args, 'peakfittype', 'fastquad')
         args['passes'] = 3
         args['refineoffset'] = True
         args['doglmfilt'] = True
