@@ -595,16 +595,16 @@ class simfunc_fitter:
             return 'No error'
 
 
-    def fit(self, corrfunc):
+    def fit(self, incorrfunc):
         # check to make sure xcorr_x and xcorr_y match
         if self.corrtimeaxis is None:
             print("Correlation time axis is not defined - exiting")
             sys.exit()
-        if len(self.corrtimeaxis) != len(corrfunc):
+        if len(self.corrtimeaxis) != len(incorrfunc):
             print('Correlation time axis and values do not match in length (',
                    len(self.corrtimeaxis),
                   '!=',
-                  len(corrfunc),
+                  len(incorrfunc),
                   '- exiting')
             sys.exit()
         # set initial parameters
@@ -626,6 +626,7 @@ class simfunc_fitter:
         # make an initial guess at the fit parameters for the gaussian
         # start with finding the maximum value and its location
         flipfac = 1.0
+        corrfunc = incorrfunc + 0.0
         if self.useguess:
             maxindex = tide_util.valtoindex(self.corrtimeaxis, self.maxguess)
         else:
