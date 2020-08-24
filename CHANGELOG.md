@@ -1,6 +1,6 @@
 # History of changes
 
-## Version 2.0alpha1 (8/12/20)
+## Version 2.0alpha1 (8/24/20)
 * (all): Python 2.x is no longer supported.  To be fair, I've done nothing to break 2.x compatibility on purpose, so it probably still works, but I'm expending no effort to keep it working.
 * (documentation): General updates and cleanups.
 * (rapidtide2): rapidtide2 has been eliminated.  If you used it before, you can use rapidtide2x as a dropin replacement (but you really should start moving to using rapidtide, the new version that is actively being developed).
