@@ -2,16 +2,7 @@
 
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr_denoisingpass1_bipolar \
-        --bipolar \
-        --peakfittype fastquad \
-	--spatialfilt 2 \
-        --nprocs 1 \
-        --denoising 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_trapezoidal \
+	../dst/dgsr_trapezoidal_gauss \
 	--spatialfilt 2 \
         --filtertype trapezoidal \
         --nprocs -1 \
@@ -19,147 +10,118 @@ rapidtide \
 
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr_butterworth_0 \
+	../dst/dgsr_butterworth_gauss \
 	--spatialfilt 2 \
         --filtertype butterworth \
         --nprocs -1 \
         --denoising \
-        --filterfreqs 0.0 0.1 
 
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr_butterworth \
-	--spatialfilt 2 \
-        --filtertype butterworth \
-        --nprocs -1 \
-        --denoising 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_brickwall \
+	../dst/dgsr_brickwall_gauss \
 	--spatialfilt 2 \
         --filtertype brickwall \
         --nprocs -1 \
         --denoising 
 
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_denoisingpass1_bipolar_multiproc \
-        --bipolar \
-        --peakfittype fastquad \
-	--spatialfilt 2 \
-        --nprocs -1 \
-        --denoising 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_denoisingpass1_bipolar_mp_none \
-        --singleproc_getNullDist \
-        --singleproc_calcsimilarity \
-        --singleproc_peakeval \
-        --singleproc_fitcorr \
-        --singleproc_glm \
-        --bipolar \
-        --peakfittype fastquad \
-        --nprocs -1 \
-        --denoising 
-
-diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_none ../dst/diff_mp_none
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_denoisingpass1_bipolar_mp_getNullDist \
-        --singleproc_calcsimilarity \
-        --singleproc_peakeval \
-        --singleproc_fitcorr \
-        --singleproc_glm \
-        --bipolar \
-        --peakfittype fastquad \
-        --nprocs -1 \
-        --denoising 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_denoisingpass1_bipolar_mp_calcsimilarity \
-        --singleproc_getNullDist \
-        --singleproc_peakeval \
-        --singleproc_fitcorr \
-        --singleproc_glm \
-        --bipolar \
-        --peakfittype fastquad \
-        --nprocs -1 \
-        --denoising 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_denoisingpass1_bipolar_mp_peakeval \
-        --singleproc_getNullDist \
-        --singleproc_calcsimilarity \
-        --singleproc_fitcorr \
-        --singleproc_glm \
-        --bipolar \
-        --peakfittype fastquad \
-        --nprocs -1 \
-        --denoising 
-
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_denoisingpass1_bipolar_mp_fitcorr \
-        --singleproc_getNullDist \
-        --singleproc_calcsimilarity \
-        --singleproc_peakeval \
-        --singleproc_glm \
-        --bipolar \
-        --peakfittype fastquad \
-        --nprocs -1 \
-        --denoising 
-
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_denoisingpass1_bipolar_mp_glm \
-        --singleproc_getNullDist \
-        --singleproc_calcsimilarity \
-        --singleproc_peakeval \
-        --singleproc_fitcorr \
-        --bipolar \
-        --peakfittype fastquad \
-        --nprocs -1 \
-        --denoising 
-
-diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_multiproc ../dst/diff_multivssingle
-diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_getNullDist ../dst/diff_mp_getNullDist
-diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_calcsimilarity ../dst/diff_mp_calcsimilarity
-diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_peakeval ../dst/diff_mp_peakeval
-diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_fitcorr ../dst/diff_mp_fitcorr
-diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_glm ../dst/diff_mp_glm
+diffmaps ../dst/dgsr_brickwall_gauss ../dst/dgsr_brickwall ../dst/diff_bw_fqvsgauss
+diffmaps ../dst/dgsr_trapezoidal_gauss ../dst/dgsr_trapezoidal ../dst/diff_trap_fqvsgauss
+diffmaps ../dst/dgsr_butterworth_gauss ../dst/dgsr_butterworth ../dst/diff_butter_fqvsgauss
 
 #rapidtide \
-	#../dst/dgsr_denoisingpass1_bipolar_filtereddata.nii.gz \
-	#../dst/dgsr_denoisingpass2_bipolar \
+	#fmri.nii.gz \
+	#../dst/dgsr_denoisingpass1_bipolar_mp_getNullDist \
+        #--singleproc_calcsimilarity \
+        #--singleproc_peakeval \
+        #--singleproc_fitcorr \
+        #--singleproc_glm \
         #--bipolar \
         #--peakfittype fastquad \
         #--nprocs -1 \
-        #--denoising
+        #--denoising 
 #
+#rapidtide \
+	#fmri.nii.gz \
+	#../dst/dgsr_denoisingpass1_bipolar_mp_calcsimilarity \
+        #--singleproc_getNullDist \
+        #--singleproc_peakeval \
+        #--singleproc_fitcorr \
+        #--singleproc_glm \
+        #--bipolar \
+        #--peakfittype fastquad \
+        #--nprocs -1 \
+        #--denoising 
+#
+#rapidtide \
+	#fmri.nii.gz \
+	#../dst/dgsr_denoisingpass1_bipolar_mp_peakeval \
+        #--singleproc_getNullDist \
+        #--singleproc_calcsimilarity \
+        #--singleproc_fitcorr \
+        #--singleproc_glm \
+        #--bipolar \
+        #--peakfittype fastquad \
+        #--nprocs -1 \
+        #--denoising 
 #
 #
 #rapidtide \
 	#fmri.nii.gz \
-	#../dst/dgsr_hybrid_fastquad_multiproc \
-        #--filterband lfo \
-	#--passes 3 \
-	#--despecklepasses 4 \
-	#--searchrange -10 15 \
-	#--sigmalimit 25.0 \
-	#--nprocs -1 \
-	#--pickleft \
-	#--pickleftthresh 0.3 \
-	#--peakfittype fastquad \
-	#--spatialfilt 2 \
-	#--similaritymetric hybrid \
-        #--detrendorder 3 \
-        #--noglm \
+	#../dst/dgsr_denoisingpass1_bipolar_mp_fitcorr \
+        #--singleproc_getNullDist \
+        #--singleproc_calcsimilarity \
+        #--singleproc_peakeval \
+        #--singleproc_glm \
+        #--bipolar \
+        #--peakfittype fastquad \
+        #--nprocs -1 \
+        #--denoising 
+#
+#rapidtide \
+	#fmri.nii.gz \
+	#../dst/dgsr_denoisingpass1_bipolar_mp_glm \
+        #--singleproc_getNullDist \
+        #--singleproc_calcsimilarity \
+        #--singleproc_peakeval \
+        #--singleproc_fitcorr \
+        #--bipolar \
+        #--peakfittype fastquad \
+        #--nprocs -1 \
+        #--denoising 
+#
+#diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_multiproc ../dst/diff_multivssingle
+#diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_getNullDist ../dst/diff_mp_getNullDist
+#diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_calcsimilarity ../dst/diff_mp_calcsimilarity
+#diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_peakeval ../dst/diff_mp_peakeval
+#diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_fitcorr ../dst/diff_mp_fitcorr
+#diffmaps ../dst/dgsr_denoisingpass1_bipolar ../dst/dgsr_denoisingpass1_bipolar_mp_glm ../dst/diff_mp_glm
+#
+##rapidtide \
+	##../dst/dgsr_denoisingpass1_bipolar_filtereddata.nii.gz \
+	##../dst/dgsr_denoisingpass2_bipolar \
+        ##--bipolar \
+        ##--peakfittype fastquad \
+        ##--nprocs -1 \
+        ##--denoising
+##
+##
+##
+##rapidtide \
+	##fmri.nii.gz \
+	##../dst/dgsr_hybrid_fastquad_multiproc \
+        ##--filterband lfo \
+	##--passes 3 \
+	##--despecklepasses 4 \
+	##--searchrange -10 15 \
+	##--sigmalimit 25.0 \
+	##--nprocs -1 \
+	##--pickleft \
+	##--pickleftthresh 0.3 \
+	##--peakfittype fastquad \
+	##--spatialfilt 2 \
+	##--similaritymetric hybrid \
+        ##--detrendorder 3 \
+        ##--noglm \
         #--numnull 0 \
 	#--ampthresh 0.1
 #
