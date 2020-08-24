@@ -395,7 +395,7 @@ def updateSimilarityFunc():
                 thecaption = "lag={1:.2f}, MI={0:.2f}".format(peakmaxval, peakmaxtime)
         else:
             peakmaxtime = float(tide_util.valtoindex(timeaxis, overlays['lagtimes'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos]))
-            thefailreason = simfuncFitter.diagnosefail(failreason)
+            thefailreason = simfuncFitter.diagnosefail(np.uint32(failreason))
             print(thefailreason)
             thecaption = "No valid fit"
         simfunc_ax.setYRange(minval - 0.05 * valrange, maxval + 0.3 * valrange, padding=0)
@@ -986,7 +986,7 @@ def printfocusvals():
                         logstatus(ui.logOutput, outstring)
                     else:
                         if focusval > 0.0:
-                            failstring = simfuncFitter.diagnosefail(np.uint16(focusval))
+                            failstring = simfuncFitter.diagnosefail(np.uint32(focusval))
                             outstring = '\t' + str(overlays[key].label.ljust(26)) + str(':\n\t    ') + \
                                         failstring.replace(', ', '\n\t    ')
                             logstatus(ui.logOutput, outstring)

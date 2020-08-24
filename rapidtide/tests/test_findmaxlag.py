@@ -205,7 +205,7 @@ def test_findmaxlag(display=False, fittype='gauss', debug=False):
 
         print('\nfitter class results over lag range')
         for i in range(len(testsigmas)):
-            print(testsigmas[i], fmlc_maxsigmas[i], fmlc_maxlags[i], fmlc_maxvals[i], peakstartc[i], peakendc[i], fmlc_wfailreasons[i], thefitter.diagnosefail(fmlc_wfailreasons[i]))
+            print(testsigmas[i], fmlc_maxsigmas[i], fmlc_maxlags[i], fmlc_maxvals[i], peakstartc[i], peakendc[i], fmlc_wfailreasons[i], thefitter.diagnosefail(np.uint32(fmlc_wfailreasons[i])))
 
     if display:
         fig = plt.figure()

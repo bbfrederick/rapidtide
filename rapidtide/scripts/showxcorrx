@@ -494,7 +494,7 @@ def main():
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thexsimfuncfitter.fit(thexcorr)
     if failreason > 0:
         print('showxcorrx: FIT FAILED with reason:')
-        print(thexsimfuncfitter.diagnosefail(failreason))
+        print(thexsimfuncfitter.diagnosefail(np.uint32(failreason)))
     if args.debug:
         print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
     R = maxval
@@ -507,7 +507,7 @@ def main():
     maxindexmi, maxdelaymi, maxvalmi, maxsigmami, maskvalmi, failreasonmi, peakstartmi, peakendmi = themifitter.fit(theMI_trim)
     if failreasonmi > 0:
         print('showxcorrx: FIT FAILED for mutual information with reason:')
-        print(themifitter.diagnosefail(failreasonmi))
+        print(themifitter.diagnosefail(np.uint32(failreasonmi)))
     if args.debug:
         print(maxindexmi, maxdelaymi, maxvalmi, maxsigmami, maskvalmi, failreasonmi, peakstartmi, peakendmi)
     R = maxval
