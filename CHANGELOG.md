@@ -4,7 +4,7 @@
 * (all): Python 2.x is no longer supported.  To be fair, I've done nothing to break 2.x compatibility on purpose, so it probably still works, but I'm expending no effort to keep it working.
 * (documentation): General updates and cleanups.
 * (rapidtide2): rapidtide2 has been eliminated.  If you used it before, you can use rapidtide2x as a dropin replacement (but you really should start moving to using rapidtide, the new version that is actively being developed).
-* (rapidtide2x): rapidtide2x has been deprecated and replaced by rapidtide (which is basically rapidtide2x v1.9.0 with a different argument parser and default option values).
+* (rapidtide2x): rapidtide2x has been deprecated and replaced by rapidtide (which is basically rapidtide2x v1.9.3 with a different argument parser and default option values).
 * (rapidtide2x): Added deprecation warning.
 * (rapidtide): The correlation function has been replaced by a more flexible "similarity function".  There are currently 3 options: "correlation" (the old method), "mutualinfo", which uses a cross mutual information function, and "hybrid", the new default, which uses the correlation function, but disambiguates which peak to use by comparing the mutual information for each peak.
 * (rapidtide): Changed the default peak fit type to "fastquad", which does a parabolic fit to the peaks to refine location.
