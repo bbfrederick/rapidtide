@@ -1154,7 +1154,7 @@ def process_args(inputargs=None):
         pf.setifnotset(args, 'despeckle_passes', 4)
         pf.setifnotset(args, 'lagmin', -10.0)
         pf.setifnotset(args, 'lagmax', 10.0)
-        pf.setifnotset(args, 'peakfittype', 'fastquad')
+        pf.setifnotset(args, 'peakfittype', 'gauss')
         args['passes'] = 3
         args['refineoffset'] = True
         args['doglmfilt'] = True
