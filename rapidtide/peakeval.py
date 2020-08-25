@@ -113,13 +113,11 @@ def peakevalpass(
     """
     peakdict = {}
     themutualinformationator.setreftc(referencetc)
-    #themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
 
     inputshape = np.shape(fmridata)
     volumetotal = 0
     reportstep = 1000
     thetc = np.zeros(np.shape(os_fmri_x), dtype=rt_floattype)
-    theglobalmaxlist = []
     if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def correlation_consumer(inQ, outQ):
