@@ -84,6 +84,8 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
 RUN df -h
 RUN conda config --add channels conda-forge
 RUN df -h
+RUN conda update -n base -c defaults conda
+RUN df -h
 RUN conda clean --all
 RUN df -h
 RUN conda install -y python=3.7.3 \

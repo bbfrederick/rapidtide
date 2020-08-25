@@ -21,3 +21,7 @@
 
 
 + Edit the release notes on github
+
++ Build and sync new docker images
+
+    builddocker.sh

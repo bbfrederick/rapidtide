@@ -12,7 +12,7 @@ IMAGE=rapidtide_dev
 git pull
 
 # bump version
-version=`cat VERSION`
+version=`cat VERSION | sed 's/+/ /g' | awk '{print $1}'`
 echo "version: $version"
 
 # run build
