@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'tidepoolTemplate_alt.ui'
+# Form implementation generated from reading ui file 'rapidtide/tidepoolTemplate_alt.ui'
 #
 # Created by: PyQt5 UI code generator 5.12.3
 #
@@ -724,10 +724,15 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.imageData_groupBox.setTitle(_translate("MainWindow", "Image Data"))
+        self.resetDispLimits_Button.setToolTip(_translate("MainWindow", "Set the display range of the current map to the absolute minimum and maximum"))
         self.resetDispLimits_Button.setText(_translate("MainWindow", "Full Range"))
+        self.resetDispSmart_Button.setToolTip(_translate("MainWindow", "Set the display range of the current map to the robust minimum and maximum"))
         self.resetDispSmart_Button.setText(_translate("MainWindow", "Smart"))
+        self.saveDisp_Button.setToolTip(_translate("MainWindow", "Save jpegs of the currently displayed map"))
         self.saveDisp_Button.setText(_translate("MainWindow", "Save"))
+        self.setMask_Button.setToolTip(_translate("MainWindow", "Right click to select the mask used to display the current map"))
         self.setMask_Button.setText(_translate("MainWindow", "No mask"))
+        self.transparency_checkBox.setToolTip(_translate("MainWindow", "With transparency on, map values outside the range limits are not displayed."))
         self.transparency_checkBox.setText(_translate("MainWindow", "Transparency"))
         self.label_2.setText(_translate("MainWindow", "Colormap"))
         self.gray_radioButton.setText(_translate("MainWindow", "Gray"))

@@ -111,6 +111,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="resetDispLimits_Button">
+           <property name="toolTip">
+            <string>Set the display range of the current map to the absolute minimum and maximum</string>
+           </property>
            <property name="text">
             <string>Full Range</string>
            </property>
@@ -118,6 +121,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="resetDispSmart_Button">
+           <property name="toolTip">
+            <string>Set the display range of the current map to the robust minimum and maximum</string>
+           </property>
            <property name="text">
             <string>Smart</string>
            </property>
@@ -125,6 +131,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="saveDisp_Button">
+           <property name="toolTip">
+            <string>Save jpegs of the currently displayed map</string>
+           </property>
            <property name="text">
             <string>Save</string>
            </property>
@@ -132,6 +141,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="setMask_Button">
+           <property name="toolTip">
+            <string>Right click to select the mask used to display the current map</string>
+           </property>
            <property name="text">
             <string>No mask</string>
            </property>
@@ -149,6 +161,9 @@
          </item>
          <item>
           <widget class="QCheckBox" name="transparency_checkBox">
+           <property name="toolTip">
+            <string>With transparency on, map values outside the range limits are not displayed.</string>
+           </property>
            <property name="text">
             <string>Transparency</string>
            </property>
@@ -1867,7 +1882,7 @@
   </property>
  </designerdata>
  <buttongroups>
-  <buttongroup name="stats_buttonGroup"/>
   <buttongroup name="colormap_buttonGroup"/>
+  <buttongroup name="stats_buttonGroup"/>
  </buttongroups>
 </ui>
