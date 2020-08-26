@@ -29,12 +29,17 @@ import numpy as np
 
 def calcASL(lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, bloodT1=1.841):
     theaslimage = lags * 0.0
+
+    # convert rapidtide delays to time from tagging, and only keep positive delays after pld
     offsets = lags + tagoffset
     calcmask = mask * np.where(offsets < pld, 0.0, 1.0)
+
     for imtime in np.linspace(pld, pld + TI, num=50, endpoint=True):
-        decay = np.exp(-(offsets + imtime) / bloodT1)
-        theaslimage += decay * np.fabs(strengths) * calcmask
-    return theaslimage, decay, calcmask, offsets
+        tagdecayfac = np.exp(-(offsets + imtime) / bloodT1) * calcmask
+        oxyfac = strengths * 0.0 + 1.0
+        cbvfac = np.fabs(strengths) * oxyfac
+        theaslimage += tagdecayfac * cbvfac
+    return theaslimage, tagdecayfac, oxyfac, cbvfac, calcmask, offsets
 
 
 def main():
@@ -98,7 +103,7 @@ def main():
     thestrengths = thedataset.overlays['lagstrengths'].data
 
     print('bloodT1, tagoffset, pld, and inversion time:', args.bloodT1, args.tagoffset, args.pld, args.labelduration)
-    theaslimage, decay, calcmask, offsets = calcASL(
+    theaslimage, tagdecayfac, oxyfac, cbvfac, calcmask, offsets = calcASL(
         thelags,
         thestrengths,
         thewidths,
@@ -109,7 +114,9 @@ def main():
         bloodT1=args.bloodT1)
 
     tide_io.savetonifti(theaslimage, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_ASL')
-    tide_io.savetonifti(decay, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_decay')
+    tide_io.savetonifti(tagdecayfac, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_tagdecayfac')
+    tide_io.savetonifti(oxyfac, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_oxyfac')
+    tide_io.savetonifti(cbvfac, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_cbvfac')
     tide_io.savetonifti(calcmask, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_calcmask')
     tide_io.savetonifti(offsets, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_offsets')
     tide_io.savetonifti(themask, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_lagmask')
