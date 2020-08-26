@@ -639,6 +639,20 @@ def MAD_radioButton_clicked(enabled):
         updateAveragingMode()
 
 
+def transparency_checkbox_clicked():
+    global LUT_alpha, LUT_endalpha, ui, overlays, currentdataset
+    if ui.transparency_checkBox.isChecked():
+        LUT_endalpha = 0
+    else:
+        LUT_endalpha = 255
+    print('LUT_endalpha=', LUT_endalpha)
+    for themap in currentdataset.loadedfuncmaps:
+        overlays[themap].setLUT(overlays[themap].lut_state, alpha=LUT_alpha, endalpha=LUT_endalpha)
+        overlays[themap].gradient.restoreState(overlays[themap].lut_state)
+        imageadj.restoreState(overlays[themap].lut_state)
+    updateLUT()
+
+
 def gray_radioButton_clicked(enabled):
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
@@ -1382,6 +1396,9 @@ def main():
     ui.viridis_radioButton.clicked.connect(viridis_radioButton_clicked)
     ui.jet_radioButton.clicked.connect(jet_radioButton_clicked)
     ui.rainbow_radioButton.clicked.connect(rainbow_radioButton_clicked)
+
+    # wire up the transparency checkbox
+    ui.transparency_checkBox.stateChanged.connect(transparency_checkbox_clicked)
 
     overlaybuttons = [ui.overlay_radioButton_01,
                       ui.overlay_radioButton_02,
