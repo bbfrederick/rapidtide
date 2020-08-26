@@ -79,7 +79,7 @@ def main():
         dest='bloodT1',
         metavar='SECS',
         type=float,
-        help='The T1 of blood at this field strength (defalt is 1.841, for 3T).',
+        help='The T1 of blood at this field strength (default is 1.841, for 3T).',
         default=1.841)
 
     # get the command line parameters
