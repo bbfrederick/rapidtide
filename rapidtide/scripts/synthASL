@@ -39,7 +39,7 @@ def calcASL(lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, blo
 
 def main():
     # get the command line parameters
-    parser = argparse.ArgumentParser(prog='pseudoASL',
+    parser = argparse.ArgumentParser(prog='synthASL',
                                      description='Use rapidtide output to predict ASL image.',
                                      usage='%(prog)s dataset outputfilename tagoffset windowstart bloodT1')
     parser.add_argument(
@@ -58,28 +58,28 @@ def main():
         dest='tagoffset',
         metavar='SECS',
         type=float,
-        help='The assumed time of tagging, relative to the peak of the lag histogram.',
+        help='The assumed time of tagging, relative to the peak of the lag histogram (default is 2.945).',
         default=2.945)
     parser.add_argument(
         '--pld',
         dest='pld',
         metavar='SECS',
         type=float,
-        help='The postlabel delay.',
+        help='The postlabel delay (default is 1.8).',
         default=1.8)
     parser.add_argument(
         '--labelduration',
         dest='labelduration',
         metavar='SECS',
         type=float,
-        help='The length of the labelling period.',
+        help='The length of the labelling period (default is 1.8).',
         default=1.8)
     parser.add_argument(
         '--bloodT1',
         dest='bloodT1',
         metavar='SECS',
         type=float,
-        help='The T1 of blood at this field strength.',
+        help='The T1 of blood at this field strength (defalt is 1.841, for 3T).',
         default=1.841)
 
     # get the command line parameters
