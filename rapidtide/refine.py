@@ -85,7 +85,10 @@ def _procOneVoxelTimeShift(vox,
     elif refineweighting == 'R2':
         thisweight = R2val
     else:
-        thisweight = 1.0
+        if lagstrength > 0.0:
+            thisweight = 1.0
+        else:
+            thisweight = -1.0
     if detrendorder > 0:
         normtc = tide_fit.detrend(fmritc * normfac * thisweight, order=detrendorder, demean=True)
     else:
@@ -178,9 +181,9 @@ def refineregressor(fmridata,
     if optiondict['ampthresh'] < 0.0:
         theampthresh = tide_stats.getfracval(lagstrengths, -optiondict['ampthresh'], nozero=True)
         print('setting ampthresh to the', -100.0 * optiondict['ampthresh'], 'th percentile (', theampthresh, ')')
-        ampmask = np.where(lagstrengths >= theampthresh, np.int16(1), np.int16(0))
+        ampmask = np.where(np.fabs(lagstrengths) >= theampthresh, np.int16(1), np.int16(0))
     else:
-        ampmask = np.where(lagstrengths >= optiondict['ampthresh'], np.int16(1), np.int16(0))
+        ampmask = np.where(np.fabs(lagstrengths) >= optiondict['ampthresh'], np.int16(1), np.int16(0))
     if optiondict['lagmaskside'] == 'upper':
         delaymask = \
             np.where((lagtimes - optiondict['offsettime']) > optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \

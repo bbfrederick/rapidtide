@@ -36,7 +36,8 @@ rapidtide \
 #diffmaps ../dst/dgsr_brickwall_gauss ../dst/dgsr_brickwall ../dst/diff_bw_fqvsgauss
 #diffmaps ../dst/dgsr_trapezoidal_gauss ../dst/dgsr_trapezoidal ../dst/diff_trap_fqvsgauss
 #diffmaps ../dst/dgsr_butterworth_gauss_bipolar ../dst/dgsr_butterworth_gauss ../dst/diff_butter_bipvsnormal
-diffmaps ../dst/dgsr_butterworth_gauss_bipolar_fixed ../dst/dgsr_butterworth_gauss_bipolar ../dst/diff_butter_fixtest
+#diffmaps ../dst/dgsr_butterworth_gauss_bipolar_fixed ../dst/dgsr_butterworth_gauss_bipolar ../dst/diff_butter_fixtest
+diffmaps ../dst/dgsr_butterworth_gauss_bipolar_fixed_refinemod ../dst/dgsr_butterworth_gauss_bipolar_fixed ../dst/diff_butter_fixtest
 
 #rapidtide \
 	#fmri.nii.gz \

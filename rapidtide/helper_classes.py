@@ -627,9 +627,11 @@ class simfunc_fitter:
         corrfunc = incorrfunc + 0.0
         if self.useguess:
             maxindex = tide_util.valtoindex(self.corrtimeaxis, self.maxguess)
+            if corrfunc[maxindex] < 0.0:
+                flipfac = -1.0
         else:
             maxindex, flipfac = self._maxindex_noedge(corrfunc)
-            corrfunc *= flipfac
+        corrfunc *= flipfac
         maxlag_init = (1.0 * self.corrtimeaxis[maxindex]).astype('float64')
         maxval_init = corrfunc[maxindex].astype('float64')
         if self.debug:
