@@ -514,12 +514,10 @@ class simfunc_fitter:
             done = True
             maxindex = (np.argmax(corrfunc[lowerlim:upperlim]) + lowerlim).astype('int32')
             if self.bipolar:
-                minindex = (np.argmax(np.fabs(corrfunc[lowerlim:upperlim])) + lowerlim).astype('int32')
+                minindex = (np.argmax(-corrfunc[lowerlim:upperlim]) + lowerlim).astype('int32')
                 if np.fabs(corrfunc[minindex]) > np.fabs(corrfunc[maxindex]):
                     maxindex = minindex
                     flipfac = -1.0
-            else:
-                maxindex = (np.argmax(corrfunc[lowerlim:upperlim]) + lowerlim).astype('int32')
             if upperlim == lowerlim:
                 done = True
             if maxindex == 0:
