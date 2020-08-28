@@ -23,7 +23,7 @@ rapidtide \
         --bipolar \
         --filtertype butterworth \
         --nprocs -1 \
-        --denoising \
+        --denoising 
 
 #rapidtide \
 #	fmri.nii.gz \
