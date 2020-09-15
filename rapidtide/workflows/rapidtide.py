@@ -1370,7 +1370,9 @@ def rapidtide_main(argparsingfunc):
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype)
             normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
+            normunfilteredoutputdata = tide_math.stdnormalize(outputdata)
             tide_io.writenpvecs(normoutputdata, outputname + '_refinedregressor_pass' + str(thepass) + '.txt')
+            tide_io.writenpvecs(normunfilteredoutputdata, outputname + '_unfilteredrefinedregressor_pass' + str(thepass) + '.txt')
             optiondict['refinemasksize_pass' + str(thepass)] = voxelsprocessed_rr
             optiondict['refinemaskpct_pass' + str(thepass)] = 100.0 * voxelsprocessed_rr / optiondict['corrmasksize']
 
