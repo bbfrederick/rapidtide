@@ -733,7 +733,7 @@ def dohptransfuncfilt(Fs, inputdata, lowerstop=None, lowerpass=None, type='brick
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = getlptransfunc(Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type)
+    transferfunc = getlptransfunc(Fs, padinputdata, upperpass=lowerstop, upperstop=lowerpass, type=type)
     if debug:
         freqaxis = np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype='float64') / Fs
         fig = plt.figure()
@@ -741,7 +741,7 @@ def dohptransfuncfilt(Fs, inputdata, lowerstop=None, lowerpass=None, type='brick
         ax.set_title('HP Transfer function - ' + type + ', lowerpass={:.2f}'.format(lowerpass))
         plt.plot(freqaxis, transferfunc)
         plt.show()
-    inputdata_trans *= transferfunc
+    inputdata_trans *= (1.0 - transferfunc)
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
