@@ -347,17 +347,21 @@ def mutual_information_2d(x, y, sigma=1, bins=(256, 256), fast=False, normalized
     jh = jh / sh
     s1 = np.sum(jh, axis=0).reshape((-1, jh.shape[0]))
     s2 = np.sum(jh, axis=1).reshape((jh.shape[1], -1))
+    HX = -np.sum(s1 * np.log(s1))
+    HY = -np.sum(s2 * np.log(s2))
+    HXcommaY = -np.sum(jh * np.log(jh))
+    #normfac = np.min([HX, HY])
 
     # Normalised Mutual Information of:
     # Studholme,  jhill & jhawkes (1998).
     # "A normalized entropy measure of 3-D medical image alignment".
     # in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
     if normalized:
-        mi = ((np.sum(s1 * np.log(s1)) + np.sum(s2 * np.log(s2)))
-                / np.sum(jh * np.log(jh))) - 1
+        mi = ( HX + HY ) / ( HXcommaY ) - 1.0
     else:
-        mi = ( np.sum(jh * np.log(jh)) - np.sum(s1 * np.log(s1))
-               - np.sum(s2 * np.log(s2)))
+        mi = -( HXcommaY - HX - HY )
+    if debug:
+        print(HX, HY, HXcommaY, mi)
 
     return mi
 
@@ -456,6 +460,10 @@ def cross_MI(x, y,
             return thexmi_x, thexmi_y, len(thexmi_x)
     else:
         return thexmi_y
+
+
+def MI_to_R(themi, d=1):
+    return np.power(1.0 - np.exp(-2.0 * themi / d), -0.5)
 
 
 def delayedcorr(data1, data2, delayval, timestep):

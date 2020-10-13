@@ -5,4 +5,5 @@ showxcorrx \
     tc2 \
     --filterband lfo \
     --numnull 0 \
+    --nonorm \
     12.5

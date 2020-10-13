@@ -212,12 +212,14 @@ class similarityfunctionator:
 class mutualinformationator(similarityfunctionator):
     def __init__(self,
                  windowfunc='hamming',
+                 norm=True,
                  madnorm=False,
                  smoothingtime=-1.0,
                  bins=20,
                  sigma=0.25,
                  *args, **kwargs):
         self.windowfunc = windowfunc
+        self.norm = norm
         self.madnorm = madnorm
         self.bins = bins
         self.sigma = sigma
@@ -279,6 +281,7 @@ class mutualinformationator(similarityfunctionator):
         if trim:
             retvals = tide_corr.cross_MI(self.preptesttc,
                                          self.prepreftc,
+                                         norm=self.norm,
                                          negsteps=self.lagmininpts,
                                          possteps=self.lagmaxinpts,
                                          locs=locs,
@@ -291,6 +294,7 @@ class mutualinformationator(similarityfunctionator):
         else:
             retvals = tide_corr.cross_MI(self.preptesttc,
                                          self.prepreftc,
+                                         norm=self.norm,
                                          negsteps=-1,
                                          possteps=-1,
                                          locs=locs,

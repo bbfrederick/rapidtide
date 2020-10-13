@@ -273,6 +273,11 @@ def _get_parser():
                       action='store_false',
                       help='Will disable showing progress bars (helpful if stdout is going to a file). ',
                       default=True)
+    misc.add_argument('--nonorm',
+                      dest='minorm',
+                      action='store_false',
+                      help='Will disable normalization of the mutual information function. ',
+                      default=True)
     misc.add_argument('--nprocs',
                       dest='nprocs',
                       action='store',
@@ -390,6 +395,7 @@ def main():
                                             smoothingtime=args.smoothingtime,
                                             ncprefilter=theprefilter,
                                             detrendorder=args.detrendorder,
+                                            norm=args.minorm,
                                             windowfunc=args.windowfunc)
     themutualinformationator.setreftc(trimdata2 * flipfac)
 
@@ -487,9 +493,11 @@ def main():
                        )
 
     print('peaklist:')
-    print('peak\tloc\tR\tMI')
+    print('peak\tloc\tR\tMI\t"R"')
     for i in range(len(thepeaks)):
-        print('{0:2d}\t{1:3.2f}\t{2:3.2f}\t{3:3.2f}'.format(i, thepeaks[i][0], thepeaks[i][1], thepeaks[i][2]))
+        print('{0:2d}\t{1:3.2f}\t{2:3.2f}\t{3:3.2f}\t{4:3.2f}'.format(i, thepeaks[i][0], thepeaks[i][1],
+                                                                      thepeaks[i][2],
+                                                                      tide_corr.MI_to_R(thepeaks[i][2])))
 
     maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thexsimfuncfitter.fit(thexcorr)
     if failreason > 0:
