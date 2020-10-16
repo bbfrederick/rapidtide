@@ -146,7 +146,8 @@ def test_nullsimfunc(debug=False, display=False):
                 tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
                 tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
     
-            thehist = tide_stats.makehistogram(np.abs(corrlist), histlen, therange=[0.0, 1.0])
+            thehist, peakheight, peakloc, peakwidth, centerofmass = tide_stats.makehistogram(np.abs(corrlist), histlen,
+                                                                                             therange=[0.0, 1.0])
             histograms.append(thehist)
             thestore = np.zeros((2, len(thehist[0])), dtype='float64')
             thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0

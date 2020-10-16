@@ -718,7 +718,7 @@ def rapidtide_main(argparsingfunc):
                              inputfreq,
                              starttime=inputstarttime,
                              columns=['prefilt'],
-                             append=True)
+                             append=False)
     else:
         tide_io.writenpvecs(reference_y, outputname + '_reference_origres_prefilt.txt')
 
@@ -806,12 +806,12 @@ def rapidtide_main(argparsingfunc):
                                  tide_math.stdnormalize(resampnonosref_y),
                                  1.0 / fmritr,
                                  columns=['pass1'],
-                                 append=True)
+                                 append=False)
             tide_io.writebidstsv(outputname + '_reference-resampres',
                                  tide_math.stdnormalize(resampref_y),
                                  oversampfreq,
                                  columns=['pass1'],
-                                 append=True)
+                                 append=False)
     else:
         tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
         tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
@@ -1029,7 +1029,7 @@ def rapidtide_main(argparsingfunc):
                                      1.0 / (accheckcorrscale[1] - accheckcorrscale[0]),
                                      starttime=accheckcorrscale[0],
                                      columns=['pass'+ str(thepass)],
-                                     append=True)
+                                     append=(thepass > 1))
             else:
                 tide_io.writenpvecs(outputarray, outputname + '_referenceautocorr_pass' + str(thepass) + '.txt')
             thelagthresh = np.max((abs(optiondict['lagmin']), abs(optiondict['lagmax'])))
@@ -1156,8 +1156,8 @@ def rapidtide_main(argparsingfunc):
                 tide_io.writebidstsv(outputname + '_reference-corrdistdata',
                                      corrdistdata,
                                      1.0,
-                                     columns=['pass'+ str(thepass + 1)],
-                                     append=True)
+                                     columns=['pass'+ str(thepass)],
+                                     append=(thepass > 1))
             else:
                 tide_io.writenpvecs(corrdistdata, outputname + '_corrdistdata_pass' + str(thepass) + '.txt')
 
@@ -1178,17 +1178,20 @@ def rapidtide_main(argparsingfunc):
                     optiondict['p_lt_' + thepvalnames[i] + '_pass' + str(thepass) + '_fitthresh.txt'] = pcts_fit[i]
             if optiondict['ampthreshfromsig']:
                 if pcts is not None:
-                    print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
+                    print('setting ampthresh to the p<{:.3f}'.format(1.0 - thepercentiles[0]), ' threshhold')
                     optiondict['ampthresh'] = pcts[0]
                     tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
                     if optiondict['dosighistfit']:
                         tide_stats.printthresholds(pcts_fit, thepercentiles,
                                                    'Crosscorrelation significance thresholds from fit:')
                         tide_stats.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
-                                                        outputname + '_nullsimfunchist_pass' + str(thepass),
+                                                        outputname + '_nullsimfunchist',
                                                         displaytitle='Null correlation histogram, pass' + str(thepass),
                                                         displayplots=optiondict['displayplots'], refine=False,
                                                         dictvarname='nullsimfunchist_pass' + str(thepass),
+                                                        saveasbids=optiondict['bidsnames'],
+                                                        therange=(0.0, 1.0),
+                                                        append=(thepass > 1),
                                                         thedict=optiondict)
                 else:
                     print('leaving ampthresh unchanged')
@@ -1253,12 +1256,14 @@ def rapidtide_main(argparsingfunc):
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
-                                        outputname + '_globallaghist_pass' + str(thepass),
+                                        outputname + '_globallaghist',
                                         displaytitle='lagtime histogram',
                                         displayplots=optiondict['displayplots'],
                                         therange=(corrscale[0], corrscale[-1]),
                                         refine=False,
                                         dictvarname='globallaghist_pass' + str(thepass),
+                                        saveasbids=optiondict['bidsnames'],
+                                        append=(thepass > 1),
                                         thedict=optiondict)
 
         if optiondict['checkpoint']:
@@ -1465,12 +1470,12 @@ def rapidtide_main(argparsingfunc):
                 tide_io.writebidstsv(outputname + '_reference-refinedregressor',
                                      normunfilteredoutputdata,
                                      1.0 / fmritr,
-                                     columns=['unfiltered_pass' + str(thepass + 1)],
-                                     append=True)
+                                     columns=['unfiltered_pass' + str(thepass)],
+                                     append=(thepass > 1))
                 tide_io.writebidstsv(outputname + '_reference-refinedregressor',
                                      normoutputdata,
                                      1.0 / fmritr,
-                                     columns=['filtered_pass' + str(thepass + 1)],
+                                     columns=['filtered_pass' + str(thepass)],
                                      append=True)
             else:
                 tide_io.writenpvecs(normoutputdata, outputname + '_refinedregressor_pass' + str(thepass) + '.txt')
@@ -1697,18 +1702,21 @@ def rapidtide_main(argparsingfunc):
                                     displayplots=optiondict['displayplots'],
                                     refine=False,
                                     dictvarname='laghist',
-                                    thedict = optiondict)
+                                    saveasbids=optiondict['bidsnames'],
+                                    thedict=optiondict)
     tide_stats.makeandsavehistogram(lagstrengths[np.where(lagmask > 0)], optiondict['histlen'], 0,
                                     outputname + '_strengthhist',
                                     displaytitle='lagstrength histogram', displayplots=optiondict['displayplots'],
                                     therange=(0.0, 1.0),
                                     dictvarname='strengthhist',
+                                    saveasbids=optiondict['bidsnames'],
                                     thedict=optiondict)
     tide_stats.makeandsavehistogram(lagsigma[np.where(lagmask > 0)], optiondict['histlen'], 1,
                                     outputname + '_widthhist',
                                     displaytitle='lagsigma histogram',
                                     displayplots=optiondict['displayplots'],
                                     dictvarname='widthhist',
+                                    saveasbids=optiondict['bidsnames'],
                                     thedict=optiondict)
     if optiondict['doglmfilt']:
         tide_stats.makeandsavehistogram(r2value[np.where(lagmask > 0)], optiondict['histlen'], 1,
@@ -1716,6 +1724,7 @@ def rapidtide_main(argparsingfunc):
                                         displaytitle='correlation R2 histogram',
                                         displayplots=optiondict['displayplots'],
                                         dictvarname='Rhist',
+                                        saveasbids=optiondict['bidsnames'],
                                         thedict=optiondict)
     timings.append(['Finished saving histograms', time.time(), None, None])
 

@@ -207,7 +207,8 @@ def sigFromDistributionData(vallist, histlen, thepercentiles, displayplots=False
     if len(np.where(vallist != 0.0)[0]) == 0:
         print('no nonzero values - skipping percentile calculation')
         return None, 0, 0
-    thehistogram = makehistogram(np.abs(vallist), histlen, therange=[0.0, 1.0])
+    thehistogram, peakheight, peakloc, peakwidth, centerofmass = makehistogram(np.abs(vallist), histlen,
+                                                                               therange=[0.0, 1.0])
     if dosighistfit:
         histfit = fitjsbpdf(thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero)
     if twotail:
@@ -375,7 +376,7 @@ def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False, p
     return peaklag, peakheight, peakwidth
 
 
-def makehistogram(indata, histlen, binsize=None, therange=None):
+def makehistogram(indata, histlen, binsize=None, therange=None, refine=False):
     """
 
     Parameters
@@ -398,7 +399,23 @@ def makehistogram(indata, histlen, binsize=None, therange=None):
     else:
         thebins = histlen
     thehist = np.histogram(indata, thebins, therange)
-    return thehist
+
+    thestore = np.zeros((2, len(thehist[0])), dtype='float64')
+    thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
+    thestore[1, :] = thehist[0][-histlen:]
+    # get starting values for the peak, ignoring first and last point of histogram
+    peakindex = np.argmax(thestore[1, 1:-2])
+    peakloc = thestore[0, peakindex + 1]
+    peakheight = thestore[1, peakindex + 1]
+    numbins = 1
+    while (peakindex + numbins < histlen - 1) and (thestore[1, peakindex + numbins] > peakheight / 2.0):
+        numbins += 1
+    peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
+    if refine:
+        peakheight, peakloc, peakwidth = tide_fit.gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
+    centerofmass = np.sum(thestore[0, :] * thestore[1, :]) / np.sum(thestore[1, :])
+
+    return thehist, peakheight, peakloc, peakwidth, centerofmass
 
 
 def makeandsavehistogram(indata, histlen, endtrim, outname,
@@ -408,7 +425,9 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
                          refine=False,
                          therange=None,
                          dictvarname=None,
-                         thedict=None):
+                         thedict=None,
+                         saveasbids=False,
+                         append=False):
     """
 
     Parameters
@@ -421,37 +440,39 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
     displayplots
     refine
     therange
+    dictvarname
+    thedict
 
     Returns
     -------
 
     """
-    thehist = makehistogram(indata, histlen, binsize=binsize, therange=therange)
+    thehist, peakheight, peakloc, peakwidth, centerofmass = makehistogram(indata, histlen,
+                                                                          binsize=binsize,
+                                                                          therange=therange,
+                                                                          refine=refine)
     thestore = np.zeros((2, len(thehist[0])), dtype='float64')
     thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
     thestore[1, :] = thehist[0][-histlen:]
-    # get starting values for the peak, ignoring first and last point of histogram
-    peakindex = np.argmax(thestore[1, 1:-2])
-    peaklag = thestore[0, peakindex + 1]
-    peakheight = thestore[1, peakindex + 1]
-    numbins = 1
-    while (peakindex + numbins < histlen - 1) and (thestore[1, peakindex + numbins] > peakheight / 2.0):
-        numbins += 1
-    peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
-    if refine:
-        peakheight, peaklag, peakwidth = tide_fit.gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
-    centerofmass = np.sum(thestore[0, :] * thestore[1, :]) / np.sum(thestore[1, :])
     if dictvarname is None:
         varroot = outname
     else:
         varroot = dictvarname
     if thedict is None:
         tide_io.writenpvecs(np.array([centerofmass]), outname + '_centerofmass.txt')
-        tide_io.writenpvecs(np.array([peaklag]), outname + '_peak.txt')
+        tide_io.writenpvecs(np.array([peakloc]), outname + '_peak.txt')
     else:
         thedict[varroot + '_centerofmass.txt'] = centerofmass
-        thedict[varroot + '_peak.txt'] = peaklag
-    tide_io.writenpvecs(thestore, outname + '.txt')
+        thedict[varroot + '_peak.txt'] = peakloc
+    if saveasbids:
+        tide_io.writebidstsv(outname,
+                             thestore[1, :],
+                             1.0 / (thestore[0, 1] - thestore[0, 0]),
+                             starttime=thestore[0, 0],
+                             columns=[varroot],
+                             append=append)
+    else:
+        tide_io.writenpvecs(thestore, outname + '.txt')
     if displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(111)
