@@ -3,12 +3,19 @@
 import rapidtide.io as tide_io
 import numpy as np
 
-samplerate, starttime, columns, data, compressed = tide_io.readbidstsv("test2", debug=True)
+newdata = np.random.rand(400)
 
-print(samplerate, starttime, columns, data.shape)
+samplerate = 25.0
+starttime = -10.0
 
-csf = 2.0 * data[0, :].reshape((-1))
+tide_io.writebidstsv("testbids", newdata, samplerate, columns=["initial"], starttime=starttime, append=False, debug=False)
 
-print(csf.shape)
+samplerate, starttime, columns, data, compressed = tide_io.readbidstsv("testbids", debug=True)
 
-tide_io.writebidstsv("test", csf, samplerate, columns=["csf4"], starttime=0.0, append=True, debug=False)
+print(samplerate, starttime, columns, data.shape, compressed)
+
+scaled = 2.0 * data[0, :].reshape((-1))
+
+print(scaled.shape)
+
+tide_io.writebidstsv("testbids", scaled, samplerate, columns=["2x"], starttime=starttime, append=True, debug=False)
