@@ -755,47 +755,55 @@ def readoptionsfile(inputfileroot):
 
 
 def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, append=False, debug=False):
+    if len(data.shape) == 1:
+        reshapeddata = data.reshape((1, -1))
     if append:
-        insamplerate, instarttime, incolumns, indata = readbidstsv(outputfileroot + '.json')
+        insamplerate, instarttime, incolumns, indata, incompressed = readbidstsv(outputfileroot + '.json')
         if insamplerate is None:
             print('creating file:', data.shape, columns, samplerate)
             startcol = 0
+            compressed = True
         else:
-            print('appending:', insamplerate, instarttime, incolumns, indata.shape, data.shape)
-            if (insamplerate == samplerate) and (instarttime == starttime) and data.shape[0] == indata.shape[1]:
+            print('appending:', insamplerate, instarttime, incolumns, indata.shape, reshapeddata.shape)
+            compressed = incompressed
+            if (insamplerate == samplerate) and (instarttime == starttime) and reshapeddata.shape[1] == indata.shape[1]:
                 startcol = len(incolumns)
             else:
                 print('data dimensions not compatible with existing dimensions')
                 print(samplerate, insamplerate)
                 print(starttime, instarttime)
                 print(columns, incolumns)
-                print(indata.shape, data.shape)
+                print(indata.shape, reshapeddata.shape)
                 sys.exit()
     else:
         startcol = 0
+        compressed = True
 
     if columns is None:
         columns = []
-        for i in range(data.shape[1]):
+        for i in range(reshapeddata.shape[0]):
             columns.append("col_" + str(i + startcol).zfill(2))
         else:
-            if len(columns) != data.shape[1]:
+            if len(columns) != reshapeddata.shape[1]:
                 print('number of column names does not match number of columns in data')
                 sys.exit()
     if startcol > 0:
         df = pd.DataFrame(data=np.transpose(indata), columns=incolumns)
         for i in range(len(columns)):
-            df[columns[i]] = data[:, i]
+            df[columns[i]] = reshapeddata[i, :]
     else:
-        df = pd.DataFrame(data=np.transpose(data), columns=columns)
-    df.to_csv(outputfileroot + '.tsv.gz', sep='\t', compression='gzip', index=False)
+        df = pd.DataFrame(data=np.transpose(reshapeddata), columns=columns)
+    if compressed:
+        df.to_csv(outputfileroot + '.tsv.gz', sep='\t', compression='gzip', index=False)
+    else:
+        df.to_csv(outputfileroot + '.tsv.gz', sep='\t', compression=None, index=False)
     headerdict = {}
     headerdict['SamplingFrequency'] = samplerate
     headerdict['StartTime'] = starttime
     if startcol == 0:
         headerdict['Columns'] = columns
     else:
-        headerdict['Columns'] = columns + incolumns
+        headerdict['Columns'] = incolumns + columns
 
     with open(outputfileroot + '.json', 'wb') as fp:
         fp.write(json.dumps(headerdict, sort_keys=True, indent=4, separators=(',', ':')).encode("utf-8"))
@@ -849,16 +857,18 @@ def readbidstsv(inputfilename, debug=False):
                 columns = None
         if os.path.exists(thefileroot + '.tsv.gz'):
             df = pd.read_csv(thefileroot + '.tsv.gz', compression='gzip', header=0, sep='\t', quotechar='"')
+            compressed = True
         else:
             df = pd.read_csv(thefileroot + '.tsv', header=0, sep='\t', quotechar='"')
+            compressed = False
         if columns is None:
             columns = list(df.columns.values)
         if debug:
-            print(samplerate, starttime, columns, np.transpose(df.to_numpy()).shape)
-        return samplerate, starttime, columns, np.transpose(df.to_numpy())
+            print(samplerate, starttime, columns, np.transpose(df.to_numpy()).shape, compressed)
+        return samplerate, starttime, columns, np.transpose(df.to_numpy()), compressed
     else:
         print('file pair does not exist')
-        return [None, None, None, None]
+        return [None, None, None, None, None]
 
 
 def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False):
