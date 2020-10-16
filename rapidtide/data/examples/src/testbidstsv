@@ -8,14 +8,28 @@ newdata = np.random.rand(400)
 samplerate = 25.0
 starttime = -10.0
 
+
+# create a test file
 tide_io.writebidstsv("testbids", newdata, samplerate, columns=["initial"], starttime=starttime, append=False, debug=False)
+print('file created')
 
+
+# read it back
 samplerate, starttime, columns, data, compressed = tide_io.readbidstsv("testbids", debug=True)
-
+print('file read back')
 print(samplerate, starttime, columns, data.shape, compressed)
 
-scaled = 2.0 * data[0, :].reshape((-1))
-
+# make a new regressor and add it to the file
+scaled = 1.1 * data[0, :].reshape((-1))
 print(scaled.shape)
+tide_io.writebidstsv("testbids", scaled, samplerate, columns=["plus_10_pct"], starttime=starttime, append=True, debug=False)
+print('column appended')
 
-tide_io.writebidstsv("testbids", scaled, samplerate, columns=["2x"], starttime=starttime, append=True, debug=False)
+# read it back
+samplerate, starttime, columns, data, compressed = tide_io.readbidstsv("testbids", debug=True)
+print('file read back again')
+print(samplerate, starttime, columns, data.shape, compressed)
+
+# negate both timecourses and write to teh file
+tide_io.writebidstsv("testbids", -data, samplerate, columns=["neg_initial", "neg_plus_10_pct"], starttime=starttime, append=True, debug=False)
+
