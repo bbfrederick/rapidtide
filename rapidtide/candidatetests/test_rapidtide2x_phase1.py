@@ -18,7 +18,6 @@ from __future__ import print_function
 
 import numpy as np
 import matplotlib.pyplot as plt 
-from scipy import arange
 import os
 
 import rapidtide.io as tide_io
