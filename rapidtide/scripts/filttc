@@ -161,7 +161,7 @@ def main():
     # check file type
     filebase, extension = os.path.splitext(textfilename[0])
     if extension == '.json':
-        thissamplerate, thisstartoffset, colnames, invecs = tide_io.readbidstsv(textfilename[0])
+        thissamplerate, thisstartoffset, colnames, invecs, compressed = tide_io.readbidstsv(textfilename[0])
     else:
         invecs = tide_io.readvecs(textfilename[0])
         thissamplerate = samplerate

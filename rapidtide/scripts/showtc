@@ -335,7 +335,7 @@ def showtc(args):
         # check file type
         filebase, extension = os.path.splitext(textfilename[i][0])
         if extension == '.json':
-            thissamplerate, thisstartoffset, colnames, invecs = tide_io.readbidstsv(textfilename[i][0])
+            thissamplerate, thisstartoffset, colnames, invecs, compressed = tide_io.readbidstsv(textfilename[i][0])
         else:
             invecs = tide_io.readvecs(textfilename[i][0], numskip=args['numskip'])
             thissamplerate = samplerate
