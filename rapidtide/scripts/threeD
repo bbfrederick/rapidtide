@@ -132,7 +132,7 @@ view.camera = cam2  # Select turntable at first
 # Create an XYZAxis visual
 axis = scene.visuals.XYZAxis(parent=view)
 s = STTransform(translate=(50, 50), scale=(50, 50, 50, 1))
-affine = s.as_matrix()
+affine = s.to_numpy()
 axis.transform = affine
 
 

@@ -438,6 +438,7 @@ def process_args():
     optiondict['savecorrtimes'] = False
     optiondict['saveoptionsasjson'] = False
     optiondict['saveintermediatemaps'] = False
+    optiondict['bidsnames'] = False
 
     optiondict['interptype'] = 'univariate'
     optiondict['useglobalref'] = False

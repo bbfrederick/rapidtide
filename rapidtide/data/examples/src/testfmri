@@ -2,11 +2,18 @@
 
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr_butterworth_unipolar \
+	../dst/dgsr_standardnames \
 	--spatialfilt 2 \
-        --filtertype butterworth \
+        --nprocs -1 \
+        --passes 3 
+
+rapidtide \
+	fmri.nii.gz \
+	../dst/dgsr_bidsnames \
+	--spatialfilt 2 \
         --nprocs -1 \
         --passes 3 \
+        --bidsnames
 
 rapidtide \
 	fmri.nii.gz \

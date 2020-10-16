@@ -754,23 +754,49 @@ def readoptionsfile(inputfileroot):
     return thedict
 
 
+def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, append=False, debug=False):
+    if append:
+        insamplerate, instarttime, incolumns, indata = readbidstsv(outputfileroot + '.json')
+        if insamplerate is None:
+            print('creating file:', data.shape, columns, samplerate)
+            startcol = 0
+        else:
+            print('appending:', insamplerate, instarttime, incolumns, indata.shape, data.shape)
+            if (insamplerate == samplerate) and (instarttime == starttime) and data.shape[0] == indata.shape[1]:
+                startcol = len(incolumns)
+            else:
+                print('data dimensions not compatible with existing dimensions')
+                print(samplerate, insamplerate)
+                print(starttime, instarttime)
+                print(columns, incolumns)
+                print(indata.shape, data.shape)
+                sys.exit()
+    else:
+        startcol = 0
 
-
-def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, debug=False):
     if columns is None:
         columns = []
         for i in range(data.shape[1]):
-            columns.append("col_" + str(i).zfill(2))
+            columns.append("col_" + str(i + startcol).zfill(2))
         else:
             if len(columns) != data.shape[1]:
                 print('number of column names does not match number of columns in data')
                 sys.exit()
-    df = pd.DataFrame(data=data, columns=columns)
-    df.to_csv(outputfileroot + '.tsv.gz', sep='\t', compression='gzip')
+    if startcol > 0:
+        df = pd.DataFrame(data=np.transpose(indata), columns=incolumns)
+        for i in range(len(columns)):
+            df[columns[i]] = data[:, i]
+    else:
+        df = pd.DataFrame(data=np.transpose(data), columns=columns)
+    df.to_csv(outputfileroot + '.tsv.gz', sep='\t', compression='gzip', index=False)
     headerdict = {}
     headerdict['SamplingFrequency'] = samplerate
     headerdict['StartTime'] = starttime
-    headerdict['Columns'] = columns
+    if startcol == 0:
+        headerdict['Columns'] = columns
+    else:
+        headerdict['Columns'] = columns + incolumns
+
     with open(outputfileroot + '.json', 'wb') as fp:
         fp.write(json.dumps(headerdict, sort_keys=True, indent=4, separators=(',', ':')).encode("utf-8"))
 
@@ -827,7 +853,9 @@ def readbidstsv(inputfilename, debug=False):
             df = pd.read_csv(thefileroot + '.tsv', header=0, sep='\t', quotechar='"')
         if columns is None:
             columns = list(df.columns.values)
-        return samplerate, starttime, columns, np.transpose(df.as_matrix())
+        if debug:
+            print(samplerate, starttime, columns, np.transpose(df.to_numpy()).shape)
+        return samplerate, starttime, columns, np.transpose(df.to_numpy())
     else:
         print('file pair does not exist')
         return [None, None, None, None]

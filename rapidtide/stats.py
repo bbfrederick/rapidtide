@@ -406,7 +406,8 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
                          displaytitle='histogram',
                          displayplots=False,
                          refine=False,
-                         therange=None):
+                         therange=None,
+                         thedict=None):
     """
 
     Parameters
@@ -439,8 +440,12 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
     if refine:
         peakheight, peaklag, peakwidth = tide_fit.gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
     centerofmass = np.sum(thestore[0, :] * thestore[1, :]) / np.sum(thestore[1, :])
-    tide_io.writenpvecs(np.array([centerofmass]), outname + '_centerofmass.txt')
-    tide_io.writenpvecs(np.array([peaklag]), outname + '_peak.txt')
+    if thedict is None:
+        tide_io.writenpvecs(np.array([centerofmass]), outname + '_centerofmass.txt')
+        tide_io.writenpvecs(np.array([peaklag]), outname + '_peak.txt')
+    else:
+        thedict[outname + '_centerofmass.txt'] = centerofmass
+        thedict[outname + '_peak.txt'] = peaklag
     tide_io.writenpvecs(thestore, outname + '.txt')
     if displayplots:
         fig = plt.figure()
