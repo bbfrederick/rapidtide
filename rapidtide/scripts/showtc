@@ -34,7 +34,6 @@ import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.util as tide_util
 import numpy as np
-from scipy import fftpack, linspace
 
 from matplotlib.pyplot import figure, plot, show, savefig, setp
 
@@ -351,10 +350,11 @@ def showtc(args):
                 if colnames is None:
                     collist.append(int(column))
                 else:
-                    if colnames.index(column) > 0:
-                        collist.append(colnames.index(column))
-                    else:
-                        print('no column named', column)
+                    try:
+                        theindex = colnames.index(column)
+                        collist.append(theindex)
+                    except ValueError:
+                        print('no column named', column, 'in', colnames)
                         sys.exit()
         else:
             collist = range(0, invecs.shape[0])
