@@ -713,7 +713,12 @@ def rapidtide_main(argparsingfunc):
 
     # write out the reference regressor prior to filtering
     if optiondict['bidsnames']:
-        tide_io.writenpvecs(reference_y, outputname + '_reference_origres_prefilt.txt')
+        tide_io.writebidstsv(outputname + '_reference-origres',
+                             reference_y,
+                             inputfreq,
+                             starttime=inputstarttime,
+                             columns=['prefilt'],
+                             append=True)
     else:
         tide_io.writenpvecs(reference_y, outputname + '_reference_origres_prefilt.txt')
 
@@ -725,7 +730,12 @@ def rapidtide_main(argparsingfunc):
 
     # write out the reference regressor used
     if optiondict['bidsnames']:
-        tide_io.writenpvecs(tide_math.stdnormalize(reference_y), outputname + '_reference_origres.txt')
+        tide_io.writebidstsv(outputname + '_reference-origres',
+                             tide_math.stdnormalize(reference_y),
+                             inputfreq,
+                             starttime=inputstarttime,
+                             columns=['postfilt'],
+                             append=True)
     else:
         tide_io.writenpvecs(tide_math.stdnormalize(reference_y), outputname + '_reference_origres.txt')
 
@@ -791,16 +801,17 @@ def rapidtide_main(argparsingfunc):
         optiondict['kurtosisz_reference_pass1'], \
         optiondict['kurtosisp_reference_pass1'] = tide_stats.kurtosisstats(resampref_y)
     if optiondict['bidsnames']:
-        tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
         if optiondict['bidsnames']:
-            tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
-            tide_io.writebidstsv(outputname + '_reference_fmrires',
+            tide_io.writebidstsv(outputname + '_reference-fmrires',
                                  tide_math.stdnormalize(resampnonosref_y),
                                  1.0 / fmritr,
                                  columns=['pass1'],
                                  append=True)
-
-        tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
+            tide_io.writebidstsv(outputname + '_reference-resampres',
+                                 tide_math.stdnormalize(resampref_y),
+                                 oversampfreq,
+                                 columns=['pass1'],
+                                 append=True)
     else:
         tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
         tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
@@ -1013,7 +1024,12 @@ def rapidtide_main(argparsingfunc):
                                          )
             outputarray = np.asarray([accheckcorrscale, thexcorr])
             if optiondict['bidsnames']:
-                tide_io.writenpvecs(outputarray, outputname + '_referenceautocorr_pass' + str(thepass) + '.txt')
+                tide_io.writebidstsv(outputname + '_reference-autocorr',
+                                     thexcorr,
+                                     1.0 / (accheckcorrscale[1] - accheckcorrscale[0]),
+                                     starttime=accheckcorrscale[0],
+                                     columns=['pass'+ str(thepass)],
+                                     append=True)
             else:
                 tide_io.writenpvecs(outputarray, outputname + '_referenceautocorr_pass' + str(thepass) + '.txt')
             thelagthresh = np.max((abs(optiondict['lagmin']), abs(optiondict['lagmax'])))
@@ -1137,7 +1153,11 @@ def rapidtide_main(argparsingfunc):
                 rt_floatset=np.float64,
                 rt_floattype='float64')
             if optiondict['bidsnames']:
-                tide_io.writenpvecs(corrdistdata, outputname + '_corrdistdata_pass' + str(thepass) + '.txt')
+                tide_io.writebidstsv(outputname + '_reference-corrdistdata',
+                                     corrdistdata,
+                                     1.0,
+                                     columns=['pass'+ str(thepass + 1)],
+                                     append=True)
             else:
                 tide_io.writenpvecs(corrdistdata, outputname + '_corrdistdata_pass' + str(thepass) + '.txt')
 
@@ -1167,7 +1187,9 @@ def rapidtide_main(argparsingfunc):
                         tide_stats.makeandsavehistogram(corrdistdata, optiondict['sighistlen'], 0,
                                                         outputname + '_nullsimfunchist_pass' + str(thepass),
                                                         displaytitle='Null correlation histogram, pass' + str(thepass),
-                                                        displayplots=optiondict['displayplots'], refine=False)
+                                                        displayplots=optiondict['displayplots'], refine=False,
+                                                        dictvarname='nullsimfunchist_pass' + str(thepass),
+                                                        thedict=optiondict)
                 else:
                     print('leaving ampthresh unchanged')
 
@@ -1232,8 +1254,12 @@ def rapidtide_main(argparsingfunc):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
                                         outputname + '_globallaghist_pass' + str(thepass),
-                                        displaytitle='lagtime histogram', displayplots=optiondict['displayplots'],
-                                        therange=(corrscale[0], corrscale[-1]), refine=False, thedict=optiondict)
+                                        displaytitle='lagtime histogram',
+                                        displayplots=optiondict['displayplots'],
+                                        therange=(corrscale[0], corrscale[-1]),
+                                        refine=False,
+                                        dictvarname='globallaghist_pass' + str(thepass),
+                                        thedict=optiondict)
 
         if optiondict['checkpoint']:
             outcorrarray[:, :] = 0.0
@@ -1436,8 +1462,16 @@ def rapidtide_main(argparsingfunc):
             normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
             normunfilteredoutputdata = tide_math.stdnormalize(outputdata)
             if optiondict['bidsnames']:
-                tide_io.writenpvecs(normoutputdata, outputname + '_refinedregressor_pass' + str(thepass) + '.txt')
-                tide_io.writenpvecs(normunfilteredoutputdata, outputname + '_unfilteredrefinedregressor_pass' + str(thepass) + '.txt')
+                tide_io.writebidstsv(outputname + '_reference-refinedregressor',
+                                     normunfilteredoutputdata,
+                                     1.0 / fmritr,
+                                     columns=['unfiltered_pass' + str(thepass + 1)],
+                                     append=True)
+                tide_io.writebidstsv(outputname + '_reference-refinedregressor',
+                                     normoutputdata,
+                                     1.0 / fmritr,
+                                     columns=['filtered_pass' + str(thepass + 1)],
+                                     append=True)
             else:
                 tide_io.writenpvecs(normoutputdata, outputname + '_refinedregressor_pass' + str(thepass) + '.txt')
                 tide_io.writenpvecs(normunfilteredoutputdata, outputname + '_unfilteredrefinedregressor_pass' + str(thepass) + '.txt')
@@ -1484,13 +1518,16 @@ def rapidtide_main(argparsingfunc):
                 optiondict['kurtosisz_reference_pass' + str(thepass + 1)], \
                 optiondict['kurtosisp_reference_pass' + str(thepass + 1)] = tide_stats.kurtosisstats(resampref_y)
             if optiondict['bidsnames']:
-                tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
-                tide_io.writebidstsv(outputname + '_reference_fmrires',
+                tide_io.writebidstsv(outputname + '_reference-fmrires',
                                      tide_math.stdnormalize(resampnonosref_y),
                                      1.0 / fmritr,
                                      columns=['pass'+ str(thepass + 1)],
                                      append=True)
-                tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
+                tide_io.writebidstsv(outputname + '_reference-resampres',
+                                     tide_math.stdnormalize(resampref_y),
+                                     oversampfreq,
+                                     columns=['pass'+ str(thepass + 1)],
+                                     append=True)
             else:
                 tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
                 tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
@@ -1654,20 +1691,32 @@ def rapidtide_main(argparsingfunc):
 
     # Post refinement step 2 - make and save interesting histograms
     timings.append(['Start saving histograms', time.time(), None, None])
-    tide_stats.makeandsavehistogram(lagtimes[np.where(lagmask > 0)], optiondict['histlen'], 0, outputname + '_laghist',
-                                    displaytitle='lagtime histogram', displayplots=optiondict['displayplots'],
-                                    refine=False)
+    tide_stats.makeandsavehistogram(lagtimes[np.where(lagmask > 0)], optiondict['histlen'], 0,
+                                    outputname + '_laghist',
+                                    displaytitle='lagtime histogram',
+                                    displayplots=optiondict['displayplots'],
+                                    refine=False,
+                                    dictvarname='laghist',
+                                    thedict = optiondict)
     tide_stats.makeandsavehistogram(lagstrengths[np.where(lagmask > 0)], optiondict['histlen'], 0,
                                     outputname + '_strengthhist',
                                     displaytitle='lagstrength histogram', displayplots=optiondict['displayplots'],
-                                    therange=(0.0, 1.0))
+                                    therange=(0.0, 1.0),
+                                    dictvarname='strengthhist',
+                                    thedict=optiondict)
     tide_stats.makeandsavehistogram(lagsigma[np.where(lagmask > 0)], optiondict['histlen'], 1,
                                     outputname + '_widthhist',
-                                    displaytitle='lagsigma histogram', displayplots=optiondict['displayplots'])
+                                    displaytitle='lagsigma histogram',
+                                    displayplots=optiondict['displayplots'],
+                                    dictvarname='widthhist',
+                                    thedict=optiondict)
     if optiondict['doglmfilt']:
-        tide_stats.makeandsavehistogram(r2value[np.where(lagmask > 0)], optiondict['histlen'], 1, outputname + '_Rhist',
+        tide_stats.makeandsavehistogram(r2value[np.where(lagmask > 0)], optiondict['histlen'], 1,
+                                        outputname + '_Rhist',
                                         displaytitle='correlation R2 histogram',
-                                        displayplots=optiondict['displayplots'])
+                                        displayplots=optiondict['displayplots'],
+                                        dictvarname='Rhist',
+                                        thedict=optiondict)
     timings.append(['Finished saving histograms', time.time(), None, None])
 
     # put some quality metrics into the info structure
