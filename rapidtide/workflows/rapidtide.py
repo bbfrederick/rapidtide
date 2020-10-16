@@ -795,7 +795,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict['bidsnames']:
             tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
             tide_io.writebidstsv(outputname + '_reference_fmrires',
-                                 tide_math.stdnormalize(resampnonosref_y).reshape((-1)),
+                                 tide_math.stdnormalize(resampnonosref_y),
                                  1.0 / fmritr,
                                  columns=['pass1'],
                                  append=True)
@@ -1486,7 +1486,7 @@ def rapidtide_main(argparsingfunc):
             if optiondict['bidsnames']:
                 tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
                 tide_io.writebidstsv(outputname + '_reference_fmrires',
-                                     tide_math.stdnormalize(resampnonosref_y).reshape((-1)),
+                                     tide_math.stdnormalize(resampnonosref_y),
                                      1.0 / fmritr,
                                      columns=['pass'+ str(thepass + 1)],
                                      append=True)

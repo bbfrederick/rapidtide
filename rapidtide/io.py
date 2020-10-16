@@ -757,6 +757,8 @@ def readoptionsfile(inputfileroot):
 def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, append=False, debug=False):
     if len(data.shape) == 1:
         reshapeddata = data.reshape((1, -1))
+    else:
+        reshapeddata = data
     if append:
         insamplerate, instarttime, incolumns, indata, incompressed = readbidstsv(outputfileroot + '.json')
         if insamplerate is None:
