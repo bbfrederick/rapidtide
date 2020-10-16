@@ -34,7 +34,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.util as tide_util
 import numpy as np
-from scipy import arange, fftpack, linspace
+from scipy import fftpack, linspace
 
 from matplotlib.pyplot import figure, plot, show, savefig, setp
 
@@ -387,7 +387,7 @@ def showtc(args):
                 yvecs.append(spectrum)
             else:
                 yvecs.append(invecs[j] * 1.0)
-                xvecs.append(thisstartoffset + arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate)
+                xvecs.append(thisstartoffset + np.arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate)
             if len(yvecs[-1]) < minlen:
                 minlen = len(yvecs[-1])
             if not legendset:

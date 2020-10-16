@@ -27,7 +27,6 @@ import numpy as np
 import rapidtide.io as tide_io
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from scipy import arange
 from scipy.signal import stft, istft, check_NOLA
 import argparse
 
@@ -206,7 +205,7 @@ def main():
     timestep = 1.0 / args.samplerate
 
     yvec = tide_io.readvec(args.textfilename)
-    xvec = arange(0.0, len(yvec), 1.0) * timestep
+    xvec = np.arange(0.0, len(yvec), 1.0) * timestep
 
     thelabel = args.textfilename
     ndplot(yvec, xvec, thelabel, nperseg=args.nperseg)

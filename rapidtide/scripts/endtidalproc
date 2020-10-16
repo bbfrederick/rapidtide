@@ -27,7 +27,6 @@ import bisect
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import numpy as np
-from scipy import arange
 
 from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float
 
@@ -127,7 +126,7 @@ def main():
 
     # read in the data
     yvec = tide_io.readvec(args.infilename)
-    xvec = arange(0.0, len(yvec), 1.0) / args.samplerate
+    xvec = np.arange(0.0, len(yvec), 1.0) / args.samplerate
 
     thestartpoint = np.max([0, bisect.bisect_right(xvec, args.thestarttime)])
     theendpoint = np.min([len(xvec) - 1, bisect.bisect_left(xvec, args.theendtime)])

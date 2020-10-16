@@ -29,7 +29,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.miscmath as tide_math
 import numpy as np
-from scipy import arange, fftpack
+from scipy import fftpack
 from scipy.interpolate import interp1d
 from scipy.signal import decimate
 
@@ -371,7 +371,7 @@ for i in range(0, numfiles):
         if debug:
             print('appending vector number ', j)
         yvecs.append(invecs[j] * 1.0)
-        xvecs.append(thisstartoffset + arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate)
+        xvecs.append(thisstartoffset + np.arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate)
         if len(yvecs[-1]) < minlen:
             minlen = len(yvecs[-1])
         if not legendset:

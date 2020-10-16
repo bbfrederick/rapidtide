@@ -20,7 +20,6 @@ import os.path as op
 
 import numpy as np
 import matplotlib.pyplot as plt 
-from scipy import arange
 
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit

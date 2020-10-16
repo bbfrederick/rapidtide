@@ -27,7 +27,7 @@ import getopt
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import numpy as np
-from scipy import arange, fftpack, linspace
+from scipy import fftpack, linspace
 
 def usage():
     print("filttc - filter the data in text files")
