@@ -717,10 +717,10 @@ def _get_parser():
                         action='store_true',
                         help='Save lag times, strengths, widths, and mask for each pass. ',
                         default=False)
-    output.add_argument('--bidsnames',
-                        dest='bidsnames',
+    output.add_argument('--bidsoutput',
+                        dest='bidsoutput',
                         action='store_true',
-                        help='Use BIDS naming conventions for output files. ',
+                        help='Use BIDS naming and format conventions for output files. ',
                         default=False)
 
     # Miscellaneous options
@@ -1167,10 +1167,10 @@ def process_args(inputargs=None):
 
     # process limitoutput
     if args['limitoutput']:
-        args['savedatatoremove'] = False
+        args['savemovingsignal'] = False
         args['savelagregressors'] = False
     else:
-        args['savedatatoremove'] = True
+        args['savemovingsignal'] = True
         args['savelagregressors'] = True
 
 

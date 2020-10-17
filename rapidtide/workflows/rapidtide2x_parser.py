@@ -433,12 +433,12 @@ def process_args():
 
     # output options
     optiondict['savelagregressors'] = True
-    optiondict['savedatatoremove'] = True
+    optiondict['savemovingsignal'] = True
     optiondict['saveglmfiltered'] = True
     optiondict['savecorrtimes'] = False
     optiondict['saveoptionsasjson'] = False
     optiondict['saveintermediatemaps'] = False
-    optiondict['bidsnames'] = False
+    optiondict['bidsoutput'] = False
 
     optiondict['interptype'] = 'univariate'
     optiondict['useglobalref'] = False
@@ -733,7 +733,7 @@ def process_args():
             print('mean scale voxels prior to generating global mean')
         elif o == '--limitoutput':
             optiondict['savelagregressors'] = False
-            optiondict['savedatatoremove'] = False
+            optiondict['savemovingsignal'] = False
             print('disabling output of lagregressors and some ancillary GLM timecourses')
         elif o == '--debug':
             optiondict['debug'] = True

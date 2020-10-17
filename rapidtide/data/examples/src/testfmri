@@ -9,11 +9,11 @@ rapidtide \
 
 rapidtide \
 	fmri.nii.gz \
-	../dst/dgsr_bidsnames \
+	../dst/dgsr_bids \
 	--spatialfilt 2 \
         --nprocs -1 \
         --passes 3 \
-        --bidsnames
+        --bidsoutput
 
 rapidtide \
 	fmri.nii.gz \
