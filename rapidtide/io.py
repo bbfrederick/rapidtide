@@ -762,11 +762,13 @@ def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, 
     if append:
         insamplerate, instarttime, incolumns, indata, incompressed = readbidstsv(outputfileroot + '.json')
         if insamplerate is None:
-            print('creating file:', data.shape, columns, samplerate)
+            if debug:
+                print('creating file:', data.shape, columns, samplerate)
             startcol = 0
             compressed = True
         else:
-            print('appending:', insamplerate, instarttime, incolumns, indata.shape, reshapeddata.shape)
+            if debug:
+                print('appending:', insamplerate, instarttime, incolumns, indata.shape, reshapeddata.shape)
             compressed = incompressed
             if (insamplerate == samplerate) and (instarttime == starttime) and reshapeddata.shape[1] == indata.shape[1]:
                 startcol = len(incolumns)
