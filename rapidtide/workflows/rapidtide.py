@@ -888,7 +888,7 @@ def rapidtide_main(argparsingfunc):
     lagtimes = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     lagstrengths = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     lagsigma = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
-    lagmask = np.zeros(internalvalidspaceshape, dtype='uint16')
+    fitmask = np.zeros(internalvalidspaceshape, dtype='uint16')
     failreason = np.zeros(internalvalidspaceshape, dtype='uint32')
     R2 = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
@@ -1349,7 +1349,7 @@ def rapidtide_main(argparsingfunc):
             trimmedcorrscale,
             thefitter,
             corrout,
-            lagmask, failreason, lagtimes, lagstrengths, lagsigma,
+            fitmask, failreason, lagtimes, lagstrengths, lagsigma,
             gaussout, windowout, R2,
             peakdict=thepeakdict,
             nprocs=optiondict['nprocs_fitcorr'],
@@ -1392,7 +1392,7 @@ def rapidtide_main(argparsingfunc):
                             trimmedcorrscale,
                             thefitter,
                             corrout,
-                            lagmask, failreason, lagtimes, lagstrengths, lagsigma,
+                            fitmask, failreason, lagtimes, lagstrengths, lagsigma,
                             gaussout, windowout, R2,
                             peakdict=thepeakdict,
                             nprocs=optiondict['nprocs_fitcorr'],
@@ -1441,7 +1441,7 @@ def rapidtide_main(argparsingfunc):
             print('\n\nRegressor refinement, pass' + str(thepass))
             timings.append(['Regressor refinement start, pass ' + str(thepass), time.time(), None, None])
             if optiondict['refineoffset']:
-                peaklag, peakheight, peakwidth = tide_stats.gethistprops(lagtimes[np.where(lagmask > 0)],
+                peaklag, peakheight, peakwidth = tide_stats.gethistprops(lagtimes[np.where(fitmask > 0)],
                                                                          optiondict['histlen'],
                                                                          pickleft=optiondict['pickleft'],
                                                                          peakthresh=optiondict['pickleftthresh'])
@@ -1463,7 +1463,7 @@ def rapidtide_main(argparsingfunc):
                 lagstrengths,
                 lagtimes,
                 lagsigma,
-                lagmask,
+                fitmask,
                 R2,
                 theprefilter,
                 optiondict,
@@ -1547,7 +1547,7 @@ def rapidtide_main(argparsingfunc):
             timings.append(
                 ['Regressor refinement end, pass ' + str(thepass), time.time(), voxelsprocessed_rr, 'voxels'])
         if optiondict['saveintermediatemaps']:
-            maplist = ['lagtimes', 'lagstrengths', 'lagsigma', 'lagmask']
+            maplist = ['lagtimes', 'lagstrengths', 'lagsigma', 'fitmask']
             if thepass < optiondict['passes']:
                 maplist.append('refinemask')
             for mapname in maplist:
@@ -1705,10 +1705,10 @@ def rapidtide_main(argparsingfunc):
     # Post refinement step 2 - make and save interesting histograms
     timings.append(['Start saving histograms', time.time(), None, None])
     if optiondict['bidsoutput']:
-        namesuffix = '_desc-lagtime_hist'
+        namesuffix = '_desc-lagtimes_hist'
     else:
         namesuffix = '_laghist'
-    tide_stats.makeandsavehistogram(lagtimes[np.where(lagmask > 0)], optiondict['histlen'], 0,
+    tide_stats.makeandsavehistogram(lagtimes[np.where(fitmask > 0)], optiondict['histlen'], 0,
                                     outputname + namesuffix,
                                     displaytitle='lagtime histogram',
                                     displayplots=optiondict['displayplots'],
@@ -1717,10 +1717,10 @@ def rapidtide_main(argparsingfunc):
                                     saveasbids=optiondict['bidsoutput'],
                                     thedict=optiondict)
     if optiondict['bidsoutput']:
-        namesuffix = '_desc-strength_hist'
+        namesuffix = '_desc-maxcorr_hist'
     else:
         namesuffix = '_strengthhist'
-    tide_stats.makeandsavehistogram(lagstrengths[np.where(lagmask > 0)], optiondict['histlen'], 0,
+    tide_stats.makeandsavehistogram(lagstrengths[np.where(fitmask > 0)], optiondict['histlen'], 0,
                                     outputname + namesuffix,
                                     displaytitle='lagstrength histogram', displayplots=optiondict['displayplots'],
                                     therange=(0.0, 1.0),
@@ -1731,7 +1731,7 @@ def rapidtide_main(argparsingfunc):
         namesuffix = '_desc-width_hist'
     else:
         namesuffix = '_widthhist'
-    tide_stats.makeandsavehistogram(lagsigma[np.where(lagmask > 0)], optiondict['histlen'], 1,
+    tide_stats.makeandsavehistogram(lagsigma[np.where(fitmask > 0)], optiondict['histlen'], 1,
                                     outputname + namesuffix,
                                     displaytitle='lagsigma histogram',
                                     displayplots=optiondict['displayplots'],
@@ -1739,11 +1739,11 @@ def rapidtide_main(argparsingfunc):
                                     saveasbids=optiondict['bidsoutput'],
                                     thedict=optiondict)
     if optiondict['bidsoutput']:
-        namesuffix = '_desc-R2_hist'
+        namesuffix = '_desc-fitR2_hist'
     else:
         namesuffix = '_R2hist'
     if optiondict['doglmfilt']:
-        tide_stats.makeandsavehistogram(r2value[np.where(lagmask > 0)], optiondict['histlen'], 1,
+        tide_stats.makeandsavehistogram(r2value[np.where(fitmask > 0)], optiondict['histlen'], 1,
                                         outputname + namesuffix,
                                         displaytitle='correlation R2 histogram',
                                         displayplots=optiondict['displayplots'],
@@ -1754,15 +1754,15 @@ def rapidtide_main(argparsingfunc):
 
     # put some quality metrics into the info structure
     histpcts = [0.02, 0.25, 0.5, 0.75, 0.98]
-    thetimepcts = tide_stats.getfracvals(lagtimes[np.where(lagmask > 0)], histpcts, nozero=False)
-    thestrengthpcts = tide_stats.getfracvals(lagstrengths[np.where(lagmask > 0)], histpcts, nozero=False)
-    thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(lagmask > 0)], histpcts, nozero=False)
+    thetimepcts = tide_stats.getfracvals(lagtimes[np.where(fitmask > 0)], histpcts, nozero=False)
+    thestrengthpcts = tide_stats.getfracvals(lagstrengths[np.where(fitmask > 0)], histpcts, nozero=False)
+    thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
         optiondict['lagtimes_' +     str(int(np.round(100 * histpcts[i], 0))).zfill(2) + 'pct'] = thetimepcts[i]
         optiondict['lagstrengths_' + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + 'pct'] = thestrengthpcts[i]
         optiondict['lagsigma_' +     str(int(np.round(100 * histpcts[i], 0))).zfill(2) + 'pct'] = thesigmapcts[i]
-    optiondict['lagmasksize'] = np.sum(lagmask)
-    optiondict['lagmaskpct'] = 100.0 * optiondict['lagmasksize'] / optiondict['corrmasksize']
+    optiondict['fitmasksize'] = np.sum(fitmask)
+    optiondict['fitmaskpct'] = 100.0 * optiondict['fitmasksize'] / optiondict['corrmasksize']
 
     # Post refinement step 3 - save out all of the important arrays to nifti files
     # write out the options used
@@ -1782,7 +1782,7 @@ def rapidtide_main(argparsingfunc):
             theheader['dim'][4] = 1
 
     # Prepare extra maps
-    savelist = ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'lagmask', 'failreason']
+    savelist = ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'fitmask', 'failreason']
     MTT = np.square(lagsigma) - (optiondict['acwidth'] * optiondict['acwidth'])
     MTT = np.where(MTT > 0.0, MTT, 0.0)
     MTT = np.sqrt(MTT)
@@ -1852,7 +1852,7 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict['numestreps'] > 0:
         for i in range(0, len(thepercentiles)):
-            pmask = np.where(np.abs(lagstrengths) > pcts[i], lagmask, 0 * lagmask)
+            pmask = np.where(np.abs(lagstrengths) > pcts[i], fitmask, 0 * fitmask)
             if optiondict['dosighistfit']:
                 ### BBF NOTE - think about how to integrate this into bids
                 tide_io.writenpvecs(sigfit, outputname + '_sigfit' + '.txt')
@@ -1887,7 +1887,7 @@ def rapidtide_main(argparsingfunc):
     del lagstrengths
     del lagsigma
     del R2
-    del lagmask
+    del fitmask
 
     # now do the ones with other numbers of time points
     if not optiondict['textio']:
