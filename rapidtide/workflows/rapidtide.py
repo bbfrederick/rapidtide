@@ -1176,6 +1176,7 @@ def rapidtide_main(argparsingfunc):
                 optiondict['p_lt_' + thepvalnames[i] + '_pass' + str(thepass) + '_thresh.txt'] = pcts[i]
                 if optiondict['dosighistfit']:
                     optiondict['p_lt_' + thepvalnames[i] + '_pass' + str(thepass) + '_fitthresh.txt'] = pcts_fit[i]
+                    optiondict['sigfit'] = sigfit
             if optiondict['ampthreshfromsig']:
                 if pcts is not None:
                     print('setting ampthresh to the p<{:.3f}'.format(1.0 - thepercentiles[0]), ' threshhold')
@@ -1853,9 +1854,6 @@ def rapidtide_main(argparsingfunc):
     if optiondict['numestreps'] > 0:
         for i in range(0, len(thepercentiles)):
             pmask = np.where(np.abs(lagstrengths) > pcts[i], fitmask, 0 * fitmask)
-            if optiondict['dosighistfit']:
-                ### BBF NOTE - think about how to integrate this into bids
-                tide_io.writenpvecs(sigfit, outputname + '_sigfit' + '.txt')
             outmaparray[:] = 0.0
             outmaparray[validvoxels] = pmask[:]
             if optiondict['textio']:

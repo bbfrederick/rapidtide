@@ -29,6 +29,8 @@ import rapidtide.filter as tide_filt
 import rapidtide.miscmath as tide_math
 import numpy as np
 import pyqtgraph as pg
+import copy
+
 
 atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
            'ATT': {'atlasname': 'ATTbasedFlowTerritories_split'}}
@@ -36,7 +38,12 @@ atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
 class timecourse:
     "Store a timecourse and some information about it"
 
-    def __init__(self, name, filename, namebase, samplerate, displaysamplerate, starttime=0.0, label=None, report=False, verbose=False):
+    def __init__(self, name, filename, namebase, samplerate, displaysamplerate,
+                 starttime=0.0,
+                 label=None,
+                 report=False,
+                 isbids=False,
+                 verbose=False):
         self.verbose = verbose
         self.name = name
         self.filename = filename
@@ -44,6 +51,7 @@ class timecourse:
         self.samplerate = samplerate
         self.displaysamplerate = displaysamplerate
         self.starttime = starttime
+        self.isbids = isbids
 
         if label is None:
             self.label = name
@@ -52,10 +60,19 @@ class timecourse:
         self.report = report
         if self.verbose:
             print('reading timecourse ', self.name, ' from ', self.filename, '...')
-        self.readTimeData()
+        self.readTimeData(self.name)
 
-    def readTimeData(self):
-        self.timedata = tide_io.readvec(self.filename)
+    def readTimeData(self, thename):
+        if self.isbids:
+            dummy, dummy, columns, indata, dummy = tide_io.readbidstsv(self.filename)
+            try:
+                self.timedata = indata[columns.index(thename), :]
+            except ValueError:
+                print('no column named', thename, 'in', columns)
+                self.timedata = None
+                return
+        else:
+            self.timedata = tide_io.readvec(self.filename)
         self.length = len(self.timedata)
         self.timeaxis = (np.linspace(0.0, self.length, num=self.length, endpoint=False) / self.samplerate) - self.starttime
         self.specaxis, self.specdata = tide_filt.spectrum(tide_math.corrnormalize(self.timedata), self.samplerate)
@@ -358,6 +375,19 @@ class RapidtideDataset:
         self.init_LUT = init_LUT
         self.referencedir = os.path.join(os.path.split(os.path.split(__file__)[0])[0], 'rapidtide', 'data',
                                     'reference')
+
+        # check which naming style the dataset has
+        if os.path.isfile(self.fileroot + 'desc-lagtimes_map.nii.gz'):
+            self.bidsformat = True
+            self.newstylenames = True
+        else:
+            self.bidsformat = False
+            if os.path.isfile(self.fileroot + 'fitmask.nii.gz'):
+                self.newstylenames = True
+            else:
+                self.newstylenames = False
+        print('RapidtideDataset init: self.bidsformat=', self.bidsformat, 'self.newstylenames=', self.newstylenames)
+
         self.setupregressors()
         self.setupoverlays()
 
@@ -367,62 +397,66 @@ class RapidtideDataset:
             if os.path.isfile(self.fileroot + thisregressor[1]):
                 print('file: ', self.fileroot + thisregressor[1], ' exists - reading...')
                 thepath, thebase = os.path.split(self.fileroot + thisregressor[1])
-                self.regressors[thisregressor[0]] = timecourse(thisregressor[0],
-                                                             self.fileroot + thisregressor[1],
-                                                             thebase,
-                                                             thisregressor[2],
-                                                             thisregressor[3],
-                                                             starttime=thisregressor[4],
-                                                             verbose=self.verbose)
+                theregressor = timecourse(thisregressor[0],
+                                          self.fileroot + thisregressor[1],
+                                          thebase,
+                                          thisregressor[2],
+                                          thisregressor[3],
+                                          starttime=thisregressor[4],
+                                          isbids=self.bidsformat,
+                                          verbose=self.verbose)
+                if theregressor.timedata is not None:
+                    self.regressors[thisregressor[0]] = copy.deepcopy(theregressor)
                 if self.focusregressor is None:
                     self.focusregressor = thisregressor[0]
             else:
                 print('file: ', self.fileroot + thisregressor[1], ' does not exist - skipping...')
+
 
     def _loadfuncmaps(self):
         self.loadedfuncmaps = []
         xdim = 0
         ydim = 0
         zdim = 0
-        for themap in self.funcmaps:
-            if os.path.isfile(self.fileroot + themap + '.nii.gz'):
-                print('file: ', self.fileroot + themap + '.nii.gz', ' exists - reading...')
+        for mapname, mapfilename in self.funcmaps:
+            if os.path.isfile(self.fileroot + mapfilename + '.nii.gz'):
+                print('file: ', self.fileroot + mapfilename + '.nii.gz', ' exists - reading...')
                 thepath, thebase = os.path.split(self.fileroot)
-                self.overlays[themap] = overlay(themap, self.fileroot + themap + '.nii.gz', thebase, init_LUT=self.init_LUT, report=True)
+                self.overlays[mapname] = overlay(mapname, self.fileroot + mapfilename + '.nii.gz', thebase, init_LUT=self.init_LUT, report=True)
                 if xdim == 0:
-                    xdim = self.overlays[themap].xdim
-                    ydim = self.overlays[themap].ydim
-                    zdim = self.overlays[themap].zdim
-                    tdim = self.overlays[themap].tdim
-                    xsize = self.overlays[themap].xsize
-                    ysize = self.overlays[themap].ysize
-                    zsize = self.overlays[themap].zsize
-                    tr = self.overlays[themap].tr
+                    xdim = self.overlays[mapname].xdim
+                    ydim = self.overlays[mapname].ydim
+                    zdim = self.overlays[mapname].zdim
+                    tdim = self.overlays[mapname].tdim
+                    xsize = self.overlays[mapname].xsize
+                    ysize = self.overlays[mapname].ysize
+                    zsize = self.overlays[mapname].zsize
+                    tr = self.overlays[mapname].tr
                 else:
-                    if xdim != self.overlays[themap].xdim or \
-                            ydim != self.overlays[themap].ydim or \
-                            zdim != self.overlays[themap].zdim:
+                    if xdim != self.overlays[mapname].xdim or \
+                            ydim != self.overlays[mapname].ydim or \
+                            zdim != self.overlays[mapname].zdim:
                         print('overlay dimensions do not match!')
                         sys.exit()
-                    if xsize != self.overlays[themap].xsize or \
-                            ysize != self.overlays[themap].ysize \
-                            or zsize != self.overlays[themap].zsize:
+                    if xsize != self.overlays[mapname].xsize or \
+                            ysize != self.overlays[mapname].ysize \
+                            or zsize != self.overlays[mapname].zsize:
                         print('overlay voxel sizes do not match!')
                         sys.exit()
-                self.loadedfuncmaps.append(themap)
+                self.loadedfuncmaps.append(mapname)
             else:
-                print('map: ', self.fileroot + themap + '.nii.gz', ' does not exist!')
+                print('map: ', self.fileroot + mapfilename + '.nii.gz', ' does not exist!')
         print('functional maps loaded:', self.loadedfuncmaps)
 
     def _loadfuncmasks(self):
         self.loadedfuncmasks = []
-        for themap in self.funcmasks:
-            if os.path.isfile(self.fileroot + themap + '.nii.gz'):
+        for maskname, maskfilename in self.funcmasks:
+            if os.path.isfile(self.fileroot + maskfilename + '.nii.gz'):
                 thepath, thebase = os.path.split(self.fileroot)
-                self.overlays[themap] = overlay(themap, self.fileroot + themap + '.nii.gz', thebase, init_LUT=self.init_LUT, isaMask=True)
-                self.loadedfuncmasks.append(themap)
+                self.overlays[maskname] = overlay(maskname, self.fileroot + maskfilename + '.nii.gz', thebase, init_LUT=self.init_LUT, isaMask=True)
+                self.loadedfuncmasks.append(maskname)
             else:
-                print('mask: ', self.fileroot + themap + '.nii.gz', ' does not exist!')
+                print('mask: ', self.fileroot + maskfilename + '.nii.gz', ' does not exist!')
         print(self.loadedfuncmasks)
 
 
@@ -529,6 +563,20 @@ class RapidtideDataset:
             print('using ', self.fileroot + 'mean.nii.gz', ' as background')
             # allloadedmaps.append('anatomic')
             return True
+        elif os.path.isfile(self.fileroot + 'meanvalue.nii.gz'):
+            thepath, thebase = os.path.split(self.fileroot)
+            self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'meanvalue.nii.gz', thebase,
+                                                init_LUT=self.init_LUT)
+            print('using ', self.fileroot + 'meanvalue_map.nii.gz', ' as background')
+            # allloadedmaps.append('anatomic')
+            return True
+        elif os.path.isfile(self.fileroot + 'desc-meanvalue_map.nii.gz'):
+            thepath, thebase = os.path.split(self.fileroot)
+            self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'desc-meanvalue_map.nii.gz', thebase,
+                                                init_LUT=self.init_LUT)
+            print('using ', self.fileroot + 'desc-meanvalue_map.nii.gz', ' as background')
+            # allloadedmaps.append('anatomic')
+            return True
         else:
             print('no anatomic image loaded')
             return False
@@ -562,12 +610,20 @@ class RapidtideDataset:
             self.similaritymetric = self.therunoptions['similaritymetric']
         except KeyError:
             self.similaritymetric = 'correlation'
-        self.regressorspecs = [['prefilt', 'reference_origres_prefilt.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
-                          ['postfilt', 'reference_origres.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
-                          ['pass1', 'reference_resampres_pass1.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                          ['pass2', 'reference_resampres_pass2.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                          ['pass3', 'reference_resampres_pass3.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                          ['pass4', 'reference_resampres_pass4.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
+        if self.bidsformat:
+            self.regressorspecs = [['prefilt', 'desc-origres_regressor.json', self.inputfreq, self.inputfreq, self.inputstarttime],
+                              ['postfilt', 'desc-origres_regressor.json', self.inputfreq, self.inputfreq, self.inputstarttime],
+                              ['pass1', 'desc-fmrires_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass2', 'desc-fmrires_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass3', 'desc-fmrires_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass4', 'desc-fmrires_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
+        else:
+            self.regressorspecs = [['prefilt', 'reference_origres_prefilt.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
+                              ['postfilt', 'reference_origres.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
+                              ['pass1', 'reference_resampres_pass1.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass2', 'reference_resampres_pass2.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass3', 'reference_resampres_pass3.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass4', 'reference_resampres_pass4.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
         self._loadregressors()
 
     def getregressors(self):
@@ -581,14 +637,55 @@ class RapidtideDataset:
         self.overlays = {}
 
         # first the functional maps
-        self.funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'R2', 'fitNorm', 'fitcoff']
-        if self.userise:
-            self.funcmaps = ['lagtimes', 'lagstrengths', 'lagsigma', 'MTT', 'R2', 'risetime_epoch_0', 'starttime_epoch_0',
-                        'maxamp_epoch_0']
-        if self.usecorrout:
-            self.funcmaps += ['corrout']
-            #self.funcmaps += ['gaussout']
-            self.funcmaps += ['failimage']
+        if self.bidsformat:
+            self.funcmaps = [['lagtimes', 'desc-lagtimes_map'],
+                             ['lagstrengths', 'desc-lagstrengths_map'],
+                             ['lagsigma', 'desc-lagsigma_map'],
+                             ['MTT', 'desc-MTT_map'],
+                             ['R2', 'desc-R2_map'],
+                             ['fitNorm', 'desc-fitNorm_map'],
+                             ['fitcoff', 'desc-fitcoff_map']]
+            if self.usecorrout:
+                self.funcmaps += [['corrout', 'desc-corrout_info']]
+                # self.funcmaps += [['gaussout', 'desc-gaussout_info']]
+                self.funcmaps += [['failimage', 'desc-failreason_info']]
+
+        else:
+            if self.newstylenames:
+                self.funcmaps = [['lagtimes', 'lagtimes'],
+                                 ['lagstrengths', 'lagstrengths'],
+                                 ['lagsigma', 'lagsigma'],
+                                 ['MTT', 'MTT'],
+                                 ['R2', 'R2'],
+                                 ['fitNorm', 'fitNorm'],
+                                 ['fitcoff', 'fitcoff']]
+                if self.usecorrout:
+                    self.funcmaps += [['corrout', 'corrout']]
+                    # self.funcmaps += [['gaussout', 'gaussout']]
+                    self.funcmaps += [['failimage', 'failreason']]
+
+            else:
+                self.funcmaps = [['lagtimes', 'lagtimes'],
+                                 ['lagstrengths', 'lagstrengths'],
+                                 ['lagsigma', 'lagsigma'],
+                                 ['MTT', 'MTT'],
+                                 ['R2', 'R2'],
+                                 ['fitNorm', 'fitNorm'],
+                                 ['fitcoff', 'fitcoff']]
+                if self.userise:
+                    self.funcmaps = [['lagtimes', 'lagtimes'],
+                                     ['lagstrengths', 'lagstrengths'],
+                                     ['lagsigma', 'lagsigma'],
+                                     ['MTT', 'MTT'],
+                                     ['R2', 'R2'],
+                                     ['risetime_epoch_0', 'risetime_epoch_0'],
+                                     ['starttime_epoch_0', 'starttime_epoch_0'],
+                                     ['maxamp_epoch_0', 'maxamp_epoch_0']]
+                if self.usecorrout:
+                    self.funcmaps += [['corrout', 'corrout']]
+                    # self.funcmaps += [['gaussout', 'gaussout']]
+                    self.funcmaps += [['failimage', 'failimage']]
+
         self._loadfuncmaps()
         for themap in self.loadedfuncmaps:
             if self.forcetr:
@@ -623,8 +720,31 @@ class RapidtideDataset:
             self.allloadedmaps.append('anatomic')
 
         # then the functional masks
-        self.funcmasks = ['lagmask', 'refinemask', 'meanmask', 'p_lt_0p050_mask', 'p_lt_0p010_mask', 'p_lt_0p005_mask',
-                     'p_lt_0p001_mask']
+        if self.bidsformat:
+            self.funcmasks = [['lagmask', 'desc-fitmask_map'],
+                              ['refinemask', 'desc-refine_mask'],
+                              ['meanmask', 'desc-meanmask_mask'],
+                              ['p_lt_0p050_mask', 'desc-plt0p050_mask'],
+                              ['p_lt_0p010_mask', 'desc-plt0p010_mask'],
+                              ['p_lt_0p005_mask', 'desc-plt0p005_mask'],
+                              ['p_lt_0p001_mask', 'desc-plt0p001_mask']]
+        else:
+            if self.newstylenames:
+                self.funcmasks = [['lagmask', 'fitmask'],
+                                 ['refinemask', 'refinemask'],
+                                 ['meanmask', 'meanmask'],
+                                 ['p_lt_0p050_mask', 'p_lt_0p050_mask'],
+                                 ['p_lt_0p010_mask', 'p_lt_0p010_mask'],
+                                 ['p_lt_0p005_mask', 'p_lt_0p005_mask'],
+                                 ['p_lt_0p001_mask', 'p_lt_0p001_mask']]
+            else:
+                self.funcmasks = [['lagmask', 'lagmask'],
+                                 ['refinemask', 'refinemask'],
+                                 ['meanmask', 'meanmask'],
+                                 ['p_lt_0p050_mask', 'p_lt_0p050_mask'],
+                                 ['p_lt_0p010_mask', 'p_lt_0p010_mask'],
+                                 ['p_lt_0p005_mask', 'p_lt_0p005_mask'],
+                                 ['p_lt_0p001_mask', 'p_lt_0p001_mask']]
         self._loadfuncmasks()
 
         # then the geometric masks

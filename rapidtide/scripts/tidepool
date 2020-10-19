@@ -33,10 +33,6 @@ from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
 
-import rapidtide.stats as tide_stats
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 import sys
 import argparse
@@ -55,8 +51,14 @@ def selectFile():
     global datafileroot
     mydialog = QtGui.QFileDialog()
     options = mydialog.Options()
-    lagfilename = mydialog.getOpenFileName(options=options, filter="Lag time files (*_lagtimes.nii.gz)")[0]
-    datafileroot = str(lagfilename[:-15])
+    lagfilename = mydialog.getOpenFileName(options=options,
+                                           filter="Lag time files (*_lagtimes.nii.gz *_desc-lagtimes_map.nii.gz)")[0]
+    # check to see which file type we got back
+    bidsstartloc = lagfilename.find('desc-lagtimes_map.nii.gz')
+    if bidsstartloc > 0:
+        datafileroot = str(lagfilename[:bidsstartloc])
+    else:
+        datafileroot = str(lagfilename[:lagfilename.find('lagtimes.nii.gz')])
 
 
 class xyztlocation(QtGui.QWidget):
@@ -1595,6 +1597,7 @@ def main():
     print('done setting geometric masks')
 
     print('setting functional masks')
+    print(currentdataset.loadedfuncmaps)
     for theoverlay in currentdataset.loadedfuncmaps:
         if theoverlay != 'failimage':
             if 'p_lt_0p050_mask' in overlays and False:  # disable this BBF 2/8/18
