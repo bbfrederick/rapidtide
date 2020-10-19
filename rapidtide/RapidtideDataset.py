@@ -613,10 +613,10 @@ class RapidtideDataset:
         if self.bidsformat:
             self.regressorspecs = [['prefilt', 'desc-origres_regressor.json', self.inputfreq, self.inputfreq, self.inputstarttime],
                               ['postfilt', 'desc-origres_regressor.json', self.inputfreq, self.inputfreq, self.inputstarttime],
-                              ['pass1', 'desc-fmrires_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass2', 'desc-fmrires_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass3', 'desc-fmrires_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass4', 'desc-fmrires_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
+                              ['pass1', 'desc-resampres_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass2', 'desc-resampres_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass3', 'desc-resampres_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass4', 'desc-resampres_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
         else:
             self.regressorspecs = [['prefilt', 'reference_origres_prefilt.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
                               ['postfilt', 'reference_origres.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
