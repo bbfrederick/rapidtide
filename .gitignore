@@ -156,3 +156,5 @@ venv.bak/
 .mypy_cache/
 
 default.profraw
+
+*.xlsx
