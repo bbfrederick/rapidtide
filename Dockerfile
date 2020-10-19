@@ -88,24 +88,24 @@ RUN conda update -n base -c defaults conda
 RUN df -h
 RUN conda clean --all
 RUN df -h
-RUN conda install -y python=3.7.3 \
-                     pip=19.3.1 \
+RUN conda install -y python=3.7.6 \
+                     pip=20.2.2 \
                      scipy=1.4.1 \
-                     numpy=1.17.3 \
+                     numpy=1.17.5 \
                      mkl=2019.4 \
                      mkl-service=2.3.0 \
-                     matplotlib=3.1.2 \
-                     statsmodels=0.10.2 \
-                     scikit-image=0.16.2 \
-                     scikit-learn=0.22 \
-                     nibabel=2.5.1 \
-                     keras=2.3.1 \
+                     matplotlib=3.2.1 \
+                     statsmodels=0.11.1 \
+                     scikit-image=0.17.2 \
+                     scikit-learn=0.23.1 \
+                     nibabel=3.1.0 \
+                     keras=2.2.4 \
                      tensorflow=1.13.1 \
                      pyqtgraph=0.11.0 \
                      pyfftw=0.12.0 \
-                     pandas=0.25.3 \
+                     pandas=1.0.5 \
                      versioneer=0.18 \
-                     numba=0.46.0; sync && \
+                     numba=0.49.1; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
     chmod +x /usr/local/miniconda/bin/*; sync && \
     conda build purge-all; sync && \
