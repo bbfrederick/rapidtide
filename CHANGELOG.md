@@ -1,8 +1,15 @@
 # History of changes
 
-## Version 2.0alpha2 (8/24/20)
-* (tidepool) You can now turn out-of-range map transparency on and off.
+## Version 2.0alpha2 (10/19/20)
+* (all) Significant internal changes to noncausalfilter.
+* (rapidtide) Fixed a longstanding bug which used an unnecessarily stringent amplitude threshold for selecting voxels to use for refinement.
 * (rapidtide) Improvements to processing in "bipolar" mode.
+* (rapidtide) Internal improvements to mutual information normalization.
+* (rapidtide) New --bidsoutput option to make all output files BIDS compatible in naming and format.
+* (tidepool) Revised to properly handle new naming conventions for output files.
+* (tidepool) You can now turn out-of-range map transparency on and off (it's off by default).
+* (tidepool) Internal colortable code is now much cleaner.
+* (Docker) Improved build scripts.
 
 ## Version 2.0alpha1 (8/24/20)
 * (all): Python 2.x is no longer supported.  To be fair, I've done nothing to break 2.x compatibility on purpose, so it probably still works, but I'm expending no effort to keep it working.
