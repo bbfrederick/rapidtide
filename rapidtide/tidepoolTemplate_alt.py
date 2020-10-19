@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'rapidtide/tidepoolTemplate_alt.ui'
+# Form implementation generated from reading ui file 'tidepoolTemplate_alt.ui'
 #
 # Created by: PyQt5 UI code generator 5.12.3
 #
@@ -71,7 +71,7 @@ class Ui_MainWindow(object):
         self.dispmin_doubleSpinBox.setObjectName("dispmin_doubleSpinBox")
         self.verticalLayout_3.addWidget(self.dispmin_doubleSpinBox)
         self.transparency_checkBox = QtWidgets.QCheckBox(self.imageData_groupBox)
-        self.transparency_checkBox.setChecked(True)
+        self.transparency_checkBox.setChecked(False)
         self.transparency_checkBox.setObjectName("transparency_checkBox")
         self.verticalLayout_3.addWidget(self.transparency_checkBox)
         self.gridLayout_2.addLayout(self.verticalLayout_3, 0, 1, 1, 1)

@@ -168,7 +168,7 @@
             <string>Transparency</string>
            </property>
            <property name="checked">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -1882,7 +1882,7 @@
   </property>
  </designerdata>
  <buttongroups>
-  <buttongroup name="colormap_buttonGroup"/>
   <buttongroup name="stats_buttonGroup"/>
+  <buttongroup name="colormap_buttonGroup"/>
  </buttongroups>
 </ui>
