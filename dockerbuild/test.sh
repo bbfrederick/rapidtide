@@ -7,9 +7,9 @@ xhost +
 
 docker run \
     --network host\
-    --volume=/Users/frederic:/data \
+    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
     -it \
     -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide_dev:v2.0alpha1 \
+    -u rapidtide fredericklab/rapidtide_dev:v2.0alpha2 \
     tidepool
