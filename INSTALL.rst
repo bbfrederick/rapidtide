@@ -175,7 +175,8 @@ option to docker.
 ::
 
     docker run \
-        --volume=INPUTDIRECTORY:/data_in,OUTPUTDIRECTORY:/data_out \
+        --mount type=bind,source=INPUTDIRECTORY,destination=/data_in \
+        --mount type=bind,source=OUTPUTDIRECTORY,destination=/data_out \
         fredericklab/rapidtide:VERSIONNUMBER \
             rapidtide2x \
                 /data_in/YOURNIFTIFILE.nii.gz \
@@ -187,7 +188,7 @@ in the Docker container in the /src/rapidtide/rapidtide/data/examples/src direct
 ::
 
     docker run \
-        --volume=OUTPUTDIRECTORY:/data_out \
+        --mount type=bind,source=OUTPUTDIRECTORY,destination=/data_out \
         fredericklab/rapidtide:latest \
             rapidtide2x \
                 /src/rapidtide/rapidtide/data/examples/src/fmri.nii.gz \
