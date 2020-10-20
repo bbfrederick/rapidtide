@@ -139,8 +139,8 @@ class proberegressor:
                                      self.targetperiod * self.targetstartpoint + self.targetperiod * self.targetpoints,
                                      num=self.targetpoints,
                                      endpoint=True)
-        os_fmri_x = np.arange(0.0, validtimepoints * self.targetoversample - (
-                self.targetoversample - 1)) * self.targetoversample * self.targetperiod + skiptime
+        #os_fmri_x = np.arange(0.0, validtimepoints * self.targetoversample - (
+        #        self.targetoversample - 1)) * self.targetoversample * self.targetperiod + skiptime
 
 class similarityfunctionator:
     reftc = None
@@ -819,7 +819,7 @@ class simfunc_fitter:
                     if self.debug:
                         print('poly coffs:', a, b, c)
                         print('maxlag, maxval, maxsigma:', maxlag, maxval, maxsigma)
-                except RankWarning:
+                except np.lib.polynomial.RankWarning:
                     maxlag = 0.0
                     maxval = 0.0
                     maxsigma = 0.0
@@ -917,7 +917,7 @@ class simfunc_fitter:
             ax = fig.add_subplot(111)
             ax.set_title('Data and fit')
             hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
-            plt.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
+            plt.plot(X, data, 'ro', hiresx, tide_fit.gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
             plt.show()
         return maxindex, maxlag, flipfac * maxval, maxsigma, maskval, failreason, peakstart, peakend
 
