@@ -412,7 +412,7 @@ def detrend(inputdata, order=1, demean=False):
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
         thecoffs = np.polyfit(thetimepoints, inputdata, order)
-    except RankWarning:
+    except np.lib.polynomial.RankWarning:
         thecoffs = [0.0, 0.0]
     thefittc = trendgen(thetimepoints, thecoffs, demean)
     return inputdata - thefittc
@@ -1201,7 +1201,7 @@ def findmaxlag_quad(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
             maxlag = -thecoffs[1] / (2.0 * thecoffs[0])
             maxval = thecoffs[0] * maxlag * maxlag + thecoffs[1] * maxlag + thecoffs[2]
             maxsigma = maxsigma_init
-        except RankWarning:
+        except np.lib.polynomial.RankWarning:
             maxlag = 0.0
             maxval = 0.0
             maxsigma = 0.0
@@ -1239,13 +1239,6 @@ def findmaxlag_quad(thexcorr_x, thexcorr_y, lagmin, lagmax, widthlimit,
     if debug or displayplots:
         print("init to final: maxval", maxval_init, maxval, ", maxlag:", maxlag_init, maxlag, ", width:", maxsigma_init,
               maxsigma)
-    if displayplots and refine and (maskval != 0.0):
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('Data and fit')
-        hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
-        plt.plot(X, data, 'ro', hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), 'b-')
-        plt.show()
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason, 0, 0
 
 
@@ -1394,8 +1387,13 @@ def getpeaks(xvals, yvals, xrange=None, bipolar=False, display=False):
     originloc = tide_util.valtoindex(xvals, 0.0, discrete=False)
     for thepeak in peaks:
         if lagmin <= xvals[thepeak] <= lagmax:
-            procpeaks.append([xvals[thepeak], yvals[thepeak],
-                             tide_util.valtoindex(xvals, xvals[thepeak], discrete=False) - originloc])
+            if bipolar:
+                procpeaks.append([xvals[thepeak], yvals[thepeak],
+                                 tide_util.valtoindex(xvals, xvals[thepeak], discrete=False) - originloc])
+            else:
+                if yvals[thepeak] > 0.0:
+                    procpeaks.append([xvals[thepeak], yvals[thepeak],
+                                      tide_util.valtoindex(xvals, xvals[thepeak], discrete=False) - originloc])
     if display:
         plotx = []
         ploty = []
