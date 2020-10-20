@@ -21,6 +21,9 @@ import os.path as op
 import numpy as np
 import matplotlib.pyplot as plt 
 
+import matplotlib as mpl
+mpl.use('Qt5Agg')
+
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import rapidtide.helper_classes as tide_classes
