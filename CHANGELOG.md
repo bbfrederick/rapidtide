@@ -1,7 +1,11 @@
 # History of changes
 
 ## Version 2.0alpha3 (10/19/20)
+* (rapidtide) Fixed sample rate on BIDS regressor outputs.
 * (tidepool) Corrected sample rate for regressor timecourses.
+* (Docker) Switched to current method for specifying external mounts in the documentation.
+* (tests) Fixed test_filter.py to remove bad test.
+* (tests) Added test_delayestimation.py to try to get end to end validation on the core of rapidtide.
 
 ## Version 2.0alpha2 (10/19/20)
 * (all) Significant internal changes to noncausalfilter.
