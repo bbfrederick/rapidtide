@@ -74,13 +74,14 @@ def correlationpass(fmridata,
                     showprogressbar=True,
                     chunksize=1000,
                     rt_floatset=np.float64,
-                    rt_floattype='float64'):
+                    rt_floattype='float64',
+                    debug=False):
     """
 
     Parameters
     ----------
     fmridata
-    referencetc
+    referencetc - the reference regressor, already oversampled
     thecorrelator
     fmri_x
     os_fmri_x
