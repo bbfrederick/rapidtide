@@ -187,7 +187,7 @@ def test_delayestimation(display=False, debug=False):
 
     # call thefitter
     if debug:
-        print('calling fitter')
+        print('\n\ncalling fitter')
     thefitter.setfunctype(similaritymetric)
     thefitter.setcorrtimeaxis(trimmedcorrscale)
     genlagtc = tide_resample.fastresampler(timepoints, waveforms[0, :])
@@ -200,29 +200,42 @@ def test_delayestimation(display=False, debug=False):
     gaussout = np.zeros(internalvalidcorrshape, dtype=np.float)
     windowout = np.zeros(internalvalidcorrshape, dtype=np.float)
     R2 = np.zeros((numlocs), dtype=np.float)
-    voxelsprocessed_fc = tide_simfuncfit.fitcorr(
-        genlagtc,
-        timepoints,
-        lagtc,
-        trimmedcorrscale,
-        thefitter,
-        corrout,
-        fitmask, failreason, lagtimes, lagstrengths, lagsigma,
-        gaussout, windowout, R2,
-        peakdict=thepeakdict,
-        nprocs=nprocs,
-        alwaysmultiproc=False,
-        fixdelay=None,
-        showprogressbar=False,
-        chunksize=1000,
-        despeckle_thresh=100.0,
-        initiallags=None
-    )
-    if debug:
-        print(voxelsprocessed_fc)
 
-    for i in range(numlocs):
-        print('location', i,':', lagtimes[i], lagstrengths[i], lagsigma[i])
+    if display:
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        legend = []
+    for peakfittype in ['gauss', 'fastgauss', 'quad', 'fastquad', 'COM']:
+        thefitter.setpeakfittype(peakfittype)
+        voxelsprocessed_fc = tide_simfuncfit.fitcorr(
+            genlagtc,
+            timepoints,
+            lagtc,
+            trimmedcorrscale,
+            thefitter,
+            corrout,
+            fitmask, failreason, lagtimes, lagstrengths, lagsigma,
+            gaussout, windowout, R2,
+            peakdict=thepeakdict,
+            nprocs=nprocs,
+            alwaysmultiproc=False,
+            fixdelay=None,
+            showprogressbar=False,
+            chunksize=1000,
+            despeckle_thresh=100.0,
+            initiallags=None
+        )
+        if debug:
+            print(voxelsprocessed_fc)
+
+        print('\npeakfittype:', peakfittype)
+        for i in range(numlocs):
+            print('location', i,':', lagtimes[i], lagstrengths[i], lagsigma[i])
+        if display:
+            ax.plot(np.linspace(0.0, numlocs, num=numlocs, endpoint=False) * timestep, lagtimes, label=peakfittype)
+    if display:
+        ax.legend()
+        plt.show()
 
     #assert eval_fml_result(lagmin, lagmax, testlags, fml_maxlags, fml_lfailreasons)
     #assert eval_fml_result(absminval, absmaxval, testvals, fml_maxvals, fml_lfailreasons)
