@@ -829,7 +829,6 @@ def rapidtide_main(argparsingfunc):
                                             corrweighting=optiondict['corrweighting'],
                                             hpfreq=optiondict['correlator_hpfreq'])
     thecorrelator.setreftc(np.zeros((optiondict['oversampfactor'] * validtimepoints), dtype=np.float))
-    numccorrlags = thecorrelator.similarityfunclen
     corrorigin = thecorrelator.similarityfuncorigin
     dummy, corrscale, dummy = thecorrelator.getfunction(trim=False)
 
