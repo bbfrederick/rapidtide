@@ -74,7 +74,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
     nperseg = np.min([tclen, 256])
     f, dummy = sp.signal.welch(overall, fs=1.0/sampletime, nperseg=nperseg)
 
-    transferfunclist = ['gaussian', 'brickwall', 'trapezoidal', 'butterworth']
+    transferfunclist = ['brickwall', 'trapezoidal', 'butterworth']
 
     allfilters = []
 
