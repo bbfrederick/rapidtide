@@ -19,9 +19,9 @@ from __future__ import print_function
 import os.path as op
 
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+import multiprocessing as mp
 
-import rapidtide.fit as tide_fit
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.filter as tide_filt
 import rapidtide.helper_classes as tide_classes
@@ -32,9 +32,40 @@ import rapidtide.calcsimfunc as tide_calcsimfunc
 import matplotlib as mpl
 mpl.use('Qt5Agg')
 
+try:
+    import mkl
 
-def gaussianpacket(timepoints, offset, width, frequency):
-    return tide_fit.gauss_eval(timepoints, [1.0, offset, width]) * np.cos((timepoints - offset) * frequency * 2.0 * np.pi)
+    mklexists = True
+except ImportError:
+    mklexists = False
+
+
+def numpy2shared(inarray, thetype):
+    thesize = inarray.size
+    theshape = inarray.shape
+    if thetype == np.float64:
+        inarray_shared = mp.RawArray('d', inarray.reshape(thesize))
+    else:
+        inarray_shared = mp.RawArray('f', inarray.reshape(thesize))
+    inarray = np.frombuffer(inarray_shared, dtype=thetype, count=thesize)
+    inarray.shape = theshape
+    return inarray
+
+
+def allocshared(theshape, thetype):
+    thesize = int(1)
+    if not isinstance(theshape, (list, tuple)):
+        thesize = theshape
+    else:
+        for element in theshape:
+            thesize *= int(element)
+    if thetype == np.float64:
+        outarray_shared = mp.RawArray('d', thesize)
+    else:
+        outarray_shared = mp.RawArray('f', thesize)
+    outarray = np.frombuffer(outarray_shared, dtype=thetype, count=thesize)
+    outarray.shape = theshape
+    return outarray, outarray_shared, theshape
 
 
 def multisine(timepoints, parameterlist):
@@ -55,6 +86,11 @@ def checkfits(foundvalues, testvalues, tolerance=0.001):
 
 def test_delayestimation(display=False, debug=False):
 
+    # set the number of MKL threads to use
+    if mklexists:
+        print('disabling MKL')
+        mkl.set_num_threads(1)
+
     # set parameters
     Fs = 10.0
     numpoints = 5000
@@ -67,7 +103,6 @@ def test_delayestimation(display=False, debug=False):
     corrtr = 1.0 / oversampfreq
     smoothingtime = 1.0
     bipolar = False
-    nprocs = 1
     interptype = 'univariate'
     lagmod = 1000.0
     lagmin = -20.0
@@ -77,6 +112,7 @@ def test_delayestimation(display=False, debug=False):
     peakfittype = 'gauss'
     corrweighting = 'None'
     similaritymetric = 'hybrid'
+    chunksize = 5
 
     # set up the filter
     theprefilter = tide_filt.noncausalfilter('arb',
@@ -88,10 +124,10 @@ def test_delayestimation(display=False, debug=False):
     # construct the various test waveforms
     timepoints = np.linspace(0.0, numpoints / Fs, num=numpoints, endpoint=False)
     oversamptimepoints = np.linspace(0.0, numpoints / Fs, num=oversampfac * numpoints, endpoint=False)
-    waveforms = np.zeros((numlocs, numpoints), dtype=np.float)
+    waveforms = np.zeros((numlocs, numpoints), dtype=np.float64)
     paramlist = [[0.314, 0.055457, 0.0], [-0.723, 0.08347856, np.pi], [-0.834, 0.1102947, 0.0], [1.0, 0.13425, 0.5]]
-    offsets = np.zeros(numlocs, dtype=np.float)
-    amplitudes = np.ones(numlocs, dtype=np.float)
+    offsets = np.zeros(numlocs, dtype=np.float64)
+    amplitudes = np.ones(numlocs, dtype=np.float64)
     for i in range(numlocs):
         offsets[i] = timestep * (i - refnum)
         waveforms[i, :] = multisine(timepoints - offsets[i], paramlist)
@@ -101,6 +137,8 @@ def test_delayestimation(display=False, debug=False):
         for i in range(numlocs):
             ax.plot(timepoints, waveforms[i, :])
         plt.show()
+
+    waveforms = numpy2shared(waveforms, np.float64)
 
     referencetc = tide_resample.doresample(timepoints, waveforms[refnum, :], oversamptimepoints, method=interptype)
 
@@ -115,13 +153,13 @@ def test_delayestimation(display=False, debug=False):
                                             corrweighting=corrweighting,
                                             hpfreq=None,
                                             debug=True)
-    thecorrelator.setreftc(np.zeros((oversampfac * numpoints), dtype=np.float))
+    thecorrelator.setreftc(np.zeros((oversampfac * numpoints), dtype=np.float64))
     thecorrelator.setlimits(lagmininpts, lagmaxinpts)
     dummy, trimmedcorrscale, dummy = thecorrelator.getfunction()
     corroutlen = np.shape(trimmedcorrscale)[0]
     internalvalidcorrshape = (numlocs, corroutlen)
-    corrout = np.zeros(internalvalidcorrshape, dtype=np.float)
-    meanval = np.zeros((numlocs), dtype=np.float)
+    corrout, dummy, dummy = allocshared(internalvalidcorrshape, np.float64)
+    meanval, dummy, dummy = allocshared((numlocs), np.float64)
     if debug:
         print('corrout shape:', corrout.shape)
         print('thecorrelator: corroutlen=', corroutlen)
@@ -139,7 +177,7 @@ def test_delayestimation(display=False, debug=False):
                                                                   lagmaxinpts=lagmaxinpts,
                                                                   debug=False)
 
-    themutualinformationator.setreftc(np.zeros((oversampfac * numpoints), dtype=np.float))
+    themutualinformationator.setreftc(np.zeros((oversampfac * numpoints), dtype=np.float64))
     themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
 
 
@@ -158,127 +196,133 @@ def test_delayestimation(display=False, debug=False):
                                              peakfittype=peakfittype
                                              )
 
-    # call correlationpass
-    if debug:
-        print('\n\ncalling correlationpass')
-        print('waveforms shape:', waveforms.shape)
-    voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = tide_calcsimfunc.correlationpass(
-                waveforms[:, :],
-                referencetc,
-                thecorrelator,
-                timepoints,
-                oversamptimepoints,
-                lagmininpts,
-                lagmaxinpts,
-                corrout,
-                meanval,
-                nprocs=nprocs,
-                alwaysmultiproc=False,
-                oversampfactor=oversampfac,
-                interptype=interptype,
-                showprogressbar=False,
-                chunksize=100)
-    if debug:
-        print(voxelsprocessed_cp, len(theglobalmaxlist), len(trimmedcorrscale))
+    lagtc, dummy, dummy = allocshared(waveforms.shape, np.float64)
+    fitmask, dummy, dummy = allocshared((numlocs), 'uint16')
+    failreason, dummy, dummy = allocshared((numlocs), 'uint32')
+    lagtimes, dummy, dummy = allocshared((numlocs), np.float64)
+    lagstrengths, dummy, dummy = allocshared((numlocs), np.float64)
+    lagsigma, dummy, dummy = allocshared((numlocs), np.float64)
+    gaussout, dummy, dummy = allocshared(internalvalidcorrshape, np.float64)
+    windowout, dummy, dummy = allocshared(internalvalidcorrshape, np.float64)
+    R2, dummy, dummy = allocshared((numlocs), np.float64)
 
-    if display:
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
-        for i in range(numlocs):
-            ax.plot(trimmedcorrscale, corrout[i, :])
-        plt.show()
-
-    # call peakeval
-    if debug:
-        print('\n\ncalling peakeval')
-    voxelsprocessed_pe, thepeakdict = tide_peakeval.peakevalpass(
-                waveforms[:, :],
-                referencetc,
-                timepoints,
-                oversamptimepoints,
-                themutualinformationator,
-                trimmedcorrscale,
-                corrout,
-                nprocs=nprocs,
-                alwaysmultiproc=False,
-                bipolar=bipolar,
-                oversampfactor=oversampfac,
-                interptype=interptype,
-                showprogressbar=False,
-                chunksize=100)
-
-    if debug:
-        for key in thepeakdict:
-            print(key, thepeakdict[key])
-
-    # call thefitter
-    if debug:
-        print('\n\ncalling fitter')
-    thefitter.setfunctype(similaritymetric)
-    thefitter.setcorrtimeaxis(trimmedcorrscale)
-    genlagtc = tide_resample.fastresampler(timepoints, waveforms[0, :])
-    lagtc = np.zeros(waveforms.shape, dtype=np.float)
-    fitmask = np.zeros((numlocs), dtype='uint16')
-    failreason = np.zeros((numlocs), dtype='uint32')
-    lagtimes = np.zeros((numlocs), dtype=np.float)
-    lagstrengths = np.zeros((numlocs), dtype=np.float)
-    lagsigma = np.zeros((numlocs), dtype=np.float)
-    gaussout = np.zeros(internalvalidcorrshape, dtype=np.float)
-    windowout = np.zeros(internalvalidcorrshape, dtype=np.float)
-    R2 = np.zeros((numlocs), dtype=np.float)
-
-    if display:
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
-        legend = []
-    for peakfittype in ['gauss', 'fastgauss', 'quad', 'fastquad']:
-        thefitter.setpeakfittype(peakfittype)
-        voxelsprocessed_fc = tide_simfuncfit.fitcorr(
-            genlagtc,
-            timepoints,
-            lagtc,
-            trimmedcorrscale,
-            thefitter,
-            corrout,
-            fitmask, failreason, lagtimes, lagstrengths, lagsigma,
-            gaussout, windowout, R2,
-            peakdict=thepeakdict,
-            nprocs=nprocs,
-            alwaysmultiproc=False,
-            fixdelay=None,
-            showprogressbar=False,
-            chunksize=1000,
-            despeckle_thresh=100.0,
-            initiallags=None
-        )
+    for nprocs in [4, 1]:
+        # call correlationpass
         if debug:
-            print(voxelsprocessed_fc)
-
+            print('\n\ncalling correlationpass')
+            print('waveforms shape:', waveforms.shape)
+        voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = tide_calcsimfunc.correlationpass(
+                    waveforms[:, :],
+                    referencetc,
+                    thecorrelator,
+                    timepoints,
+                    oversamptimepoints,
+                    lagmininpts,
+                    lagmaxinpts,
+                    corrout,
+                    meanval,
+                    nprocs=nprocs,
+                    alwaysmultiproc=False,
+                    oversampfactor=oversampfac,
+                    interptype=interptype,
+                    showprogressbar=False,
+                    chunksize=chunksize)
         if debug:
-            print('\npeakfittype:', peakfittype)
+            print(voxelsprocessed_cp, len(theglobalmaxlist), len(trimmedcorrscale))
+
+        if display:
+            fig = plt.figure()
+            ax = fig.add_subplot(1, 1, 1)
             for i in range(numlocs):
-                print('location', i,':', offsets[i], lagtimes[i], lagtimes[i] - offsets[i], lagstrengths[i], lagsigma[i])
-            if display:
-                ax.plot(offsets, lagtimes, label=peakfittype)
-        if checkfits(lagtimes, offsets, tolerance=0.01):
-            print(peakfittype, ' lagtime: pass')
-            assert True
+                ax.plot(trimmedcorrscale, corrout[i, :])
+            plt.show()
+
+        # call peakeval
+        if debug:
+            print('\n\ncalling peakeval')
+        voxelsprocessed_pe, thepeakdict = tide_peakeval.peakevalpass(
+                    waveforms[:, :],
+                    referencetc,
+                    timepoints,
+                    oversamptimepoints,
+                    themutualinformationator,
+                    trimmedcorrscale,
+                    corrout,
+                    nprocs=nprocs,
+                    alwaysmultiproc=False,
+                    bipolar=bipolar,
+                    oversampfactor=oversampfac,
+                    interptype=interptype,
+                    showprogressbar=False,
+                    chunksize=chunksize)
+
+        if debug:
+            for key in thepeakdict:
+                print(key, thepeakdict[key])
+
+        # call thefitter
+        if debug:
+            print('\n\ncalling fitter')
+        thefitter.setfunctype(similaritymetric)
+        thefitter.setcorrtimeaxis(trimmedcorrscale)
+        genlagtc = tide_resample.fastresampler(timepoints, waveforms[0, :])
+
+        if display:
+            fig = plt.figure()
+            ax = fig.add_subplot(1, 1, 1)
+            legend = []
+        if nprocs == 1:
+            proctype = 'singleproc'
         else:
-            print(peakfittype, ' lagtime: fail')
-            assert False
-        if checkfits(lagstrengths, amplitudes, tolerance=0.001):
-            print(peakfittype, ' lagstrength: pass')
-            assert True
-        else:
-            print(peakfittype, ' lagstrength: fail')
-            assert False
+            proctype = 'multiproc'
+        for peakfittype in ['gauss', 'fastgauss', 'quad', 'fastquad']:
+            thefitter.setpeakfittype(peakfittype)
+            voxelsprocessed_fc = tide_simfuncfit.fitcorr(
+                genlagtc,
+                timepoints,
+                lagtc,
+                trimmedcorrscale,
+                thefitter,
+                corrout,
+                fitmask, failreason, lagtimes, lagstrengths, lagsigma,
+                gaussout, windowout, R2,
+                peakdict=thepeakdict,
+                nprocs=nprocs,
+                alwaysmultiproc=False,
+                fixdelay=None,
+                showprogressbar=False,
+                chunksize=chunksize,
+                despeckle_thresh=100.0,
+                initiallags=None
+            )
+            if debug:
+                print(voxelsprocessed_fc)
+
+            if debug:
+                print('\npeakfittype:', peakfittype)
+                for i in range(numlocs):
+                    print('location', i,':', offsets[i], lagtimes[i], lagtimes[i] - offsets[i], lagstrengths[i], lagsigma[i])
+                if display:
+                    ax.plot(offsets, lagtimes, label=peakfittype)
+            if checkfits(lagtimes, offsets, tolerance=0.01):
+                print(proctype, peakfittype, ' lagtime: pass')
+                assert True
+            else:
+                print(proctype, peakfittype, ' lagtime: fail')
+                assert False
+            if checkfits(lagstrengths, amplitudes, tolerance=0.001):
+                print(proctype, peakfittype, ' lagstrength: pass')
+                assert True
+            else:
+                print(proctype, peakfittype, ' lagstrength: fail')
+                assert False
 
     if display:
         ax.legend()
         plt.show()
 
 def main():
-    test_delayestimation(display=True, debug=True)
+    test_delayestimation(display=False, debug=True)
 
 
 if __name__ == '__main__':
