@@ -658,8 +658,8 @@ class simfunc_fitter:
 
         # then calculate the width of the peak
         if self.peakfittype == 'fastquad' or self.peakfittype == 'COM':
-            peakstart = maxindex - 1
-            peakend = maxindex + 1
+            peakstart = np.max([1, maxindex - 2])
+            peakend = np.min([len(self.corrtimeaxis) - 2, maxindex + 2])
         else:
             thegrad = np.gradient(corrfunc).astype('float64')  # the gradient of the correlation function
             if (self.functype == 'correlation') or (self.functype == 'hybrid'):
