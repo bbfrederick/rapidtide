@@ -31,6 +31,7 @@ import sys
 import time
 import warnings
 import gc
+import os
 
 import numpy as np
 import scipy as sp
@@ -228,6 +229,17 @@ def rapidtide_main(argparsingfunc):
     fmrifilename = optiondict['in_file']
     outputname = optiondict['outputname']
     filename = optiondict['regressorfile']
+
+    # construct the BIDS base dictionary
+    outputpath = os.path.dirname(optiondict['outputname'])
+    rawsources = [os.path.relpath(optiondict['in_file'], start=outputpath)]
+    if optiondict['regressorfile'] is not None:
+        rawsources.append(os.path.relpath(optiondict['regressorfile'], start=outputpath))
+    bidsbasedict = {
+        'RawSources'        : rawsources,
+        'Units'             : 'None',
+        'CommandLineArgs'   : optiondict['commandlineargs']
+    }
 
     timings.append(['Argument parsing done', time.time(), None, None])
 
@@ -1563,6 +1575,10 @@ def rapidtide_main(argparsingfunc):
                 else:
                     if optiondict['bidsoutput']:
                         savename = outputname + '_pass-' + passsuffix + '_desc-' + mapname + '_map'
+                        bidsdict = bidsbasedict.copy()
+                        if mapname == 'lagtimes' or mapname == 'lagsigma':
+                            bidsdict['Units'] = 'second'
+                        tide_io.writedicttojson(bidsdict, savename + '.json')
                     else:
                         savename = outputname + '_' + mapname + passsuffix
                     tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
@@ -1804,6 +1820,10 @@ def rapidtide_main(argparsingfunc):
         else:
             if optiondict['bidsoutput']:
                 savename = outputname + '_desc-' + mapname + outsuffix3d + '_map'
+                bidsdict = bidsbasedict.copy()
+                if mapname == 'lagtimes' or mapname == 'lagsigma':
+                    bidsdict['Units'] = 'second'
+                tide_io.writedicttojson(bidsdict, savename + '.json')
             else:
                 savename = outputname + '_' + mapname + outsuffix3d
             tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
@@ -1823,6 +1843,8 @@ def rapidtide_main(argparsingfunc):
             else:
                 if optiondict['bidsoutput']:
                     savename = outputname + '_desc-' + mapname + outsuffix3d + '_map'
+                    bidsdict = bidsbasedict.copy()
+                    tide_io.writedicttojson(bidsdict, savename + '.json')
                 else:
                     savename = outputname + '_' + mapname + outsuffix3d
                 tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
@@ -1845,6 +1867,8 @@ def rapidtide_main(argparsingfunc):
             else:
                 if optiondict['bidsoutput']:
                     savename = outputname + '_desc-' + mapname + outsuffix3d + '_map'
+                    bidsdict = bidsbasedict.copy()
+                    tide_io.writedicttojson(bidsdict, savename + '.json')
                 else:
                     savename = outputname + '_' + mapname + outsuffix3d
                 tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)

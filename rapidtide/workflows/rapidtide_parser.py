@@ -923,6 +923,7 @@ def process_args(inputargs=None):
             raise
 
     # save the raw and formatted command lines
+    args['commandlineargs'] = argstowrite[1:]
     thecommandline = ' '.join(argstowrite)
     tide_io.writevec([thecommandline], args['outputname'] + '_commandline.txt')
     formattedcommandline = []

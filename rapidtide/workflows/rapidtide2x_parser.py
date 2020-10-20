@@ -1193,6 +1193,7 @@ def process_args():
     # write out the command used
     tide_io.writevec(formattedcmdline, optiondict['outputname'] + '_formattedcommandline.txt')
     tide_io.writevec([' '.join(sys.argv)], optiondict['outputname'] + '_commandline.txt')
+    optiondict['commandlineargs'] = sys.argv[1:]
 
     # add additional information to option structure for debugging
     optiondict['realtr'] = realtr
