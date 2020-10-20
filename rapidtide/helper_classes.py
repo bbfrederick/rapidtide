@@ -537,6 +537,10 @@ class simfunc_fitter:
         self.functype=functype
 
 
+    def setpeakfittype(self, peakfittype):
+        self.peakfittype=peakfittype
+
+
     def setrange(self, lagmin, lagmax):
         self.lagmin = lagmin
         self.lagmax = lagmax
@@ -653,7 +657,7 @@ class simfunc_fitter:
             print('baseline, baselinedev:', baseline, baselinedev)
 
         # then calculate the width of the peak
-        if self.peakfittype == 'fastquad':
+        if self.peakfittype == 'fastquad' or self.peakfittype == 'COM':
             peakstart = maxindex - 1
             peakend = maxindex + 1
         else:
@@ -774,9 +778,9 @@ class simfunc_fitter:
                 X = self.corrtimeaxis[peakstart:peakend + 1] - baseline
                 data = corrfunc[peakstart:peakend + 1]
                 maxval = maxval_init
-                maxlag = np.sum(X * data) / np.sum(X)
+                maxlag = np.sum(X * data) / np.sum(data)
                 maxsigma = 10.0
-            if self.peakfittype == 'gauss':
+            elif self.peakfittype == 'gauss':
                 X = self.corrtimeaxis[peakstart:peakend + 1] - baseline
                 data = corrfunc[peakstart:peakend + 1]
                 # do a least squares fit over the top of the peak
