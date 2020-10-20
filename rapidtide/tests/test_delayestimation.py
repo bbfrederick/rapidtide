@@ -22,6 +22,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 
+import rapidtide.miscmath as tide_math
+import rapidtide.glmpass as tide_glmpass
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.filter as tide_filt
 import rapidtide.helper_classes as tide_classes
@@ -112,7 +114,9 @@ def test_delayestimation(display=False, debug=False):
     peakfittype = 'gauss'
     corrweighting = 'None'
     similaritymetric = 'hybrid'
+    windowfunc = 'hamming'
     chunksize = 5
+    pedestal = 100.0
 
     # set up the filter
     theprefilter = tide_filt.noncausalfilter('arb',
@@ -130,7 +134,7 @@ def test_delayestimation(display=False, debug=False):
     amplitudes = np.ones(numlocs, dtype=np.float64)
     for i in range(numlocs):
         offsets[i] = timestep * (i - refnum)
-        waveforms[i, :] = multisine(timepoints - offsets[i], paramlist)
+        waveforms[i, :] = multisine(timepoints - offsets[i], paramlist) + pedestal
     if display:
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
@@ -138,10 +142,14 @@ def test_delayestimation(display=False, debug=False):
             ax.plot(timepoints, waveforms[i, :])
         plt.show()
 
+    threshval = pedestal / 4.0
     waveforms = numpy2shared(waveforms, np.float64)
 
     referencetc = tide_resample.doresample(timepoints, waveforms[refnum, :], oversamptimepoints, method=interptype)
-
+    referencetc = theprefilter.apply(oversampfreq, referencetc)
+    referencetc = tide_math.corrnormalize(referencetc,
+                                          detrendorder=detrendorder,
+                                          windowfunc=windowfunc)
 
     # set up thecorrelator
     if debug:
@@ -149,7 +157,7 @@ def test_delayestimation(display=False, debug=False):
     thecorrelator = tide_classes.correlator(Fs=oversampfreq,
                                             ncprefilter=theprefilter,
                                             detrendorder=detrendorder,
-                                            windowfunc='hamming',
+                                            windowfunc=windowfunc,
                                             corrweighting=corrweighting,
                                             hpfreq=None,
                                             debug=True)
@@ -171,7 +179,7 @@ def test_delayestimation(display=False, debug=False):
                                                                   smoothingtime=smoothingtime,
                                                                   ncprefilter=theprefilter,
                                                                   detrendorder=detrendorder,
-                                                                  windowfunc='hamming',
+                                                                  windowfunc=windowfunc,
                                                                   madnorm=False,
                                                                   lagmininpts=lagmininpts,
                                                                   lagmaxinpts=lagmaxinpts,
@@ -204,7 +212,14 @@ def test_delayestimation(display=False, debug=False):
     lagsigma, dummy, dummy = allocshared((numlocs), np.float64)
     gaussout, dummy, dummy = allocshared(internalvalidcorrshape, np.float64)
     windowout, dummy, dummy = allocshared(internalvalidcorrshape, np.float64)
+    rvalue, dummy, dummy = allocshared((numlocs), np.float64)
+    r2value, dummy, dummy = allocshared((numlocs), np.float64)
+    fitcoff, dummy, dummy = allocshared((numlocs), np.float64)
+    fitNorm, dummy, dummy = allocshared((numlocs), np.float64)
     R2, dummy, dummy = allocshared((numlocs), np.float64)
+    movingsignal, dummy, dummy = allocshared(waveforms.shape, np.float64)
+    filtereddata, dummy, dummy = allocshared(waveforms.shape, np.float64)
+
 
     for nprocs in [4, 1]:
         # call correlationpass
@@ -265,17 +280,16 @@ def test_delayestimation(display=False, debug=False):
             print('\n\ncalling fitter')
         thefitter.setfunctype(similaritymetric)
         thefitter.setcorrtimeaxis(trimmedcorrscale)
-        genlagtc = tide_resample.fastresampler(timepoints, waveforms[0, :])
+        genlagtc = tide_resample.fastresampler(timepoints, waveforms[refnum, :])
 
         if display:
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)
-            legend = []
         if nprocs == 1:
             proctype = 'singleproc'
         else:
             proctype = 'multiproc'
-        for peakfittype in ['gauss', 'fastgauss', 'quad', 'fastquad']:
+        for peakfittype in ['fastgauss', 'quad', 'fastquad', 'gauss']:
             thefitter.setpeakfittype(peakfittype)
             voxelsprocessed_fc = tide_simfuncfit.fitcorr(
                 genlagtc,
@@ -310,7 +324,7 @@ def test_delayestimation(display=False, debug=False):
             else:
                 print(proctype, peakfittype, ' lagtime: fail')
                 assert False
-            if checkfits(lagstrengths, amplitudes, tolerance=0.001):
+            if checkfits(lagstrengths, amplitudes, tolerance=0.05):
                 print(proctype, peakfittype, ' lagstrength: pass')
                 assert True
             else:
@@ -320,6 +334,46 @@ def test_delayestimation(display=False, debug=False):
     if display:
         ax.legend()
         plt.show()
+
+    filteredwaveforms, dummy, dummy = allocshared(waveforms.shape, np.float64)
+    for i in range(numlocs):
+        filteredwaveforms[i, :] = theprefilter.apply(Fs, waveforms[i, :])
+
+    for nprocs in [4, 1]:
+        voxelsprocessed_glm = tide_glmpass.glmpass(
+            numlocs,
+            waveforms[:, :],
+            threshval,
+            lagtc,
+            meanval,
+            rvalue,
+            r2value,
+            fitcoff,
+            fitNorm,
+            movingsignal,
+            filtereddata,
+            nprocs=nprocs,
+            alwaysmultiproc=False,
+            showprogressbar=False,
+            mp_chunksize=chunksize
+        )
+
+        if nprocs == 1:
+            proctype = 'singleproc'
+        else:
+            proctype = 'multiproc'
+        diffsignal = filtereddata
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        #ax.plot(timepoints, filtereddata[refnum, :], label='filtereddata')
+        ax.plot(oversamptimepoints, referencetc, label='referencetc')
+        ax.plot(timepoints, movingsignal[refnum, :], label='movingsignal')
+        ax.legend()
+        plt.show()
+
+        print(proctype, 'glmpass', np.mean(diffsignal), np.max(np.fabs(diffsignal)))
+
+
 
 def main():
     test_delayestimation(display=False, debug=True)
