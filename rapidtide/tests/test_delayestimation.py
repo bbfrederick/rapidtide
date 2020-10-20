@@ -21,22 +21,27 @@ import os.path as op
 import numpy as np
 import matplotlib.pyplot as plt 
 
-import rapidtide.io as tide_io
+import rapidtide.fit as tide_fit
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.filter as tide_filt
 import rapidtide.helper_classes as tide_classes
 import rapidtide.resample as tide_resample
-from rapidtide.tests.utils import get_test_data_path
+import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.calcsimfunc as tide_calcsimfunc
 
 import matplotlib as mpl
 mpl.use('Qt5Agg')
 
 
-def test_peakeval(display=False, debug=False):
+def gaussianpacket(timepoints, offset, width, frequency):
+    return tide_fit.gauss_eval(timepoints, [1.0, offset, width]) * np.cos((timepoints - offset) * frequency * 2.0 * np.pi)
+
+
+def test_delayestimation(display=False, debug=False):
     Fs = 10.0
-    numpoints = 1000
+    numpoints = 5000
     thefreq = 0.1
+    thewidth = 10.0
     numlocs = 10
     timestep = 0.25
     oversampfac = 2
@@ -53,6 +58,7 @@ def test_peakeval(display=False, debug=False):
     lagmaxinpts = int((lagmax / corrtr) + 0.5)
     peakfittype = 'gauss'
     corrweighting = 'None'
+    similaritymetric = 'hybrid'
 
 
     timepoints = np.linspace(0.0, numpoints / Fs, num=numpoints, endpoint=False)
@@ -62,7 +68,7 @@ def test_peakeval(display=False, debug=False):
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         for i in range(waveforms.shape[0]):
-            waveforms[i, :] = np.cos((timepoints + i * timestep) * thefreq * 2.0 * np.pi) * tide_filt.hamming(numpoints)
+            waveforms[i, :] = gaussianpacket(timepoints, i * timestep + timepoints[int(len(timepoints) // 2)], thewidth, thefreq)
             ax.plot(timepoints, waveforms[i, :], 'r')
         plt.show()
     referencetc = tide_resample.doresample(timepoints, waveforms[0, :], oversamptimepoints, method=interptype)
@@ -73,7 +79,8 @@ def test_peakeval(display=False, debug=False):
     theprefilter.setfreqs(0.0, 0.0, 1.0, 1.0)
 
     # set up thecorrelator
-    print('\n\nsetting up thecorrelator')
+    if debug:
+        print('\n\nsetting up thecorrelator')
     thecorrelator = tide_classes.correlator(Fs=Fs*oversampfac,
                                             ncprefilter=theprefilter,
                                             detrendorder=detrendorder,
@@ -89,11 +96,13 @@ def test_peakeval(display=False, debug=False):
     internalvalidcorrshape = (numlocs, corroutlen)
     corrout = np.zeros(internalvalidcorrshape, dtype=np.float)
     meanval = np.zeros((numlocs), dtype=np.float)
-    print('corrout shape:', corrout.shape)
-    print('thecorrelator: corroutlen=', corroutlen, ', corrorigin=', corrorigin)
+    if debug:
+        print('corrout shape:', corrout.shape)
+        print('thecorrelator: corroutlen=', corroutlen, ', corrorigin=', corrorigin)
 
     # set up themutualinformationator
-    print('\n\nsetting up themutualinformationator')
+    if debug:
+        print('\n\nsetting up themutualinformationator')
     themutualinformationator = tide_classes.mutualinformationator(Fs=Fs*oversampfac,
                                                                   smoothingtime=smoothingtime,
                                                                   ncprefilter=theprefilter,
@@ -109,7 +118,8 @@ def test_peakeval(display=False, debug=False):
 
 
     # set up thefitter
-    print('\n\nsetting up thefitter')
+    if debug:
+        print('\n\nsetting up thefitter')
     thefitter = tide_classes.simfunc_fitter(lagmod=lagmod,
                                              lthreshval=0.0,
                                              uthreshval=1.0,
@@ -123,8 +133,9 @@ def test_peakeval(display=False, debug=False):
                                              )
 
     # call correlationpass
-    print('\n\ncalling correlationpass')
-    print('waveforms shape:', waveforms.shape)
+    if debug:
+        print('\n\ncalling correlationpass')
+        print('waveforms shape:', waveforms.shape)
     voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale = tide_calcsimfunc.correlationpass(
                 waveforms[:, :],
                 referencetc,
@@ -141,7 +152,8 @@ def test_peakeval(display=False, debug=False):
                 interptype=interptype,
                 showprogressbar=False,
                 chunksize=100)
-    print(voxelsprocessed_cp, len(theglobalmaxlist), len(trimmedcorrscale))
+    if debug:
+        print(voxelsprocessed_cp, len(theglobalmaxlist), len(trimmedcorrscale))
 
     if display:
         fig = plt.figure()
@@ -151,7 +163,8 @@ def test_peakeval(display=False, debug=False):
         plt.show()
 
     # call peakeval
-    print('\n\ncalling peakeval')
+    if debug:
+        print('\n\ncalling peakeval')
     voxelsprocessed_pe, thepeakdict = tide_peakeval.peakevalpass(
                 waveforms[:, :],
                 referencetc,
@@ -168,8 +181,49 @@ def test_peakeval(display=False, debug=False):
                 showprogressbar=False,
                 chunksize=100)
 
-    print(thepeakdict)
-    
+    if debug:
+        for key in thepeakdict:
+            print(key, thepeakdict[key])
+
+    # call thefitter
+    if debug:
+        print('calling fitter')
+    thefitter.setfunctype(similaritymetric)
+    thefitter.setcorrtimeaxis(trimmedcorrscale)
+    genlagtc = tide_resample.fastresampler(timepoints, waveforms[0, :])
+    lagtc = np.zeros(waveforms.shape, dtype=np.float)
+    fitmask = np.zeros((numlocs), dtype='uint16')
+    failreason = np.zeros((numlocs), dtype='uint32')
+    lagtimes = np.zeros((numlocs), dtype=np.float)
+    lagstrengths = np.zeros((numlocs), dtype=np.float)
+    lagsigma = np.zeros((numlocs), dtype=np.float)
+    gaussout = np.zeros(internalvalidcorrshape, dtype=np.float)
+    windowout = np.zeros(internalvalidcorrshape, dtype=np.float)
+    R2 = np.zeros((numlocs), dtype=np.float)
+    voxelsprocessed_fc = tide_simfuncfit.fitcorr(
+        genlagtc,
+        timepoints,
+        lagtc,
+        trimmedcorrscale,
+        thefitter,
+        corrout,
+        fitmask, failreason, lagtimes, lagstrengths, lagsigma,
+        gaussout, windowout, R2,
+        peakdict=thepeakdict,
+        nprocs=nprocs,
+        alwaysmultiproc=False,
+        fixdelay=None,
+        showprogressbar=False,
+        chunksize=1000,
+        despeckle_thresh=100.0,
+        initiallags=None
+    )
+    if debug:
+        print(voxelsprocessed_fc)
+
+    for i in range(numlocs):
+        print('location', i,':', lagtimes[i], lagstrengths[i], lagsigma[i])
+
     #assert eval_fml_result(lagmin, lagmax, testlags, fml_maxlags, fml_lfailreasons)
     #assert eval_fml_result(absminval, absmaxval, testvals, fml_maxvals, fml_lfailreasons)
     #assert eval_fml_result(absminsigma, absmaxsigma, testsigmas, fml_maxsigmas, fml_lfailreasons)
@@ -179,7 +233,7 @@ def test_peakeval(display=False, debug=False):
     #assert eval_fml_result(absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_lfailreasons)
 
 def main():
-    test_peakeval(display=True, debug=True)
+    test_delayestimation(display=True, debug=True)
 
 
 if __name__ == '__main__':
