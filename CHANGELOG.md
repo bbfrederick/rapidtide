@@ -1,5 +1,8 @@
 # History of changes
 
+## Version 2.0alpha3 (10/19/20)
+* (tidepool) Corrected sample rate for regressor timecourses.
+
 ## Version 2.0alpha2 (10/19/20)
 * (all) Significant internal changes to noncausalfilter.
 * (rapidtide) Fixed a longstanding bug which used an unnecessarily stringent amplitude threshold for selecting voxels to use for refinement.
