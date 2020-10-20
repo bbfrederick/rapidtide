@@ -70,8 +70,8 @@ def test_delayestimation(display=False, debug=False):
     nprocs = 1
     interptype = 'univariate'
     lagmod = 1000.0
-    lagmin = -10.0
-    lagmax = 10.0
+    lagmin = -20.0
+    lagmax = 20.0
     lagmininpts = int((-lagmin / corrtr) - 0.5)
     lagmaxinpts = int((lagmax / corrtr) + 0.5)
     peakfittype = 'gauss'
@@ -89,7 +89,7 @@ def test_delayestimation(display=False, debug=False):
     timepoints = np.linspace(0.0, numpoints / Fs, num=numpoints, endpoint=False)
     oversamptimepoints = np.linspace(0.0, numpoints / Fs, num=oversampfac * numpoints, endpoint=False)
     waveforms = np.zeros((numlocs, numpoints), dtype=np.float)
-    paramlist = [[1.0, 0.05, 0.0], [0.7, 0.08, np.pi], [0.2, 0.1, 0.0]]
+    paramlist = [[0.314, 0.055457, 0.0], [-0.723, 0.08347856, np.pi], [-0.834, 0.1102947, 0.0], [1.0, 0.13425, 0.5]]
     offsets = np.zeros(numlocs, dtype=np.float)
     amplitudes = np.ones(numlocs, dtype=np.float)
     for i in range(numlocs):
@@ -231,7 +231,7 @@ def test_delayestimation(display=False, debug=False):
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         legend = []
-    for peakfittype in ['gauss', 'fastgauss', 'quad', 'fastquad', 'COM']:
+    for peakfittype in ['gauss', 'fastgauss', 'quad', 'fastquad']:
         thefitter.setpeakfittype(peakfittype)
         voxelsprocessed_fc = tide_simfuncfit.fitcorr(
             genlagtc,
@@ -254,20 +254,24 @@ def test_delayestimation(display=False, debug=False):
         if debug:
             print(voxelsprocessed_fc)
 
-        print('\npeakfittype:', peakfittype)
-        for i in range(numlocs):
-            print('location', i,':', offsets[i], lagtimes[i], lagtimes[i] - offsets[i], lagstrengths[i], lagsigma[i])
-        if display:
-            ax.plot(offsets, lagtimes, label=peakfittype)
-        print('for', peakfittype)
-        if checkfits(lagtimes, offsets, tolerance=0.001):
-            print('\tlagtime: pass')
+        if debug:
+            print('\npeakfittype:', peakfittype)
+            for i in range(numlocs):
+                print('location', i,':', offsets[i], lagtimes[i], lagtimes[i] - offsets[i], lagstrengths[i], lagsigma[i])
+            if display:
+                ax.plot(offsets, lagtimes, label=peakfittype)
+        if checkfits(lagtimes, offsets, tolerance=0.01):
+            print(peakfittype, ' lagtime: pass')
+            assert True
         else:
-            print('\tlagtime: fail')
+            print(peakfittype, ' lagtime: fail')
+            assert False
         if checkfits(lagstrengths, amplitudes, tolerance=0.001):
-            print('\tlagstrength: pass')
+            print(peakfittype, ' lagstrength: pass')
+            assert True
         else:
-            print('\tlagstrength: fail')
+            print(peakfittype, ' lagstrength: fail')
+            assert False
 
     if display:
         ax.legend()
