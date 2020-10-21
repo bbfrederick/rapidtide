@@ -2114,7 +2114,7 @@ def rapidtide_main():
             if optiondict['ampthreshfromsig']:
                 if pcts is not None:
                     print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
-                    optiondict['ampthresh'] = pcts[2]
+                    optiondict['ampthresh'] = pcts[0]
                     tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
                     if optiondict['dosighistfit']:
                         tide_stats.printthresholds(pcts_fit, thepercentiles,
