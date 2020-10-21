@@ -1,50 +1,50 @@
 #!/bin/csh -f
 
-rapidtide2 \
-	fmri.nii.gz \
-	../dst/dgsr_2 \
-        --limitoutput \
-        -s 25.0 \
-        -L \
-	-r -20,20 \
-	-f 2 \
-        --refinepasses=3 \
-        --despecklepasses=4 \
-        --accheck \
-        --nprocs=-1 \
-        --detrendorder=3
-
-#rapidtide2x \
+#rapidtide2 \
 	#fmri.nii.gz \
-	#../dst/dgsr_2x \
+	#../dst/dgsr_2 \
         #--limitoutput \
         #-s 25.0 \
         #-L \
 	#-r -20,20 \
 	#-f 2 \
-        #--passes=3 \
-        #--refineoffset \
+        #--refinepasses=3 \
         #--despecklepasses=4 \
+        #--accheck \
         #--nprocs=-1 \
-        #--saveoptionsasjson \
-        #--pickleft \
-        #--nofitfilt \
         #--detrendorder=3
 
-rapidtideX \
+rapidtide2x \
 	fmri.nii.gz \
-	../dst/dgsr_X \
+	../dst/dgsr_2x \
         --limitoutput \
-        --sigmalimit 25.0 \
-        --numnull 0 \
-        --filterband lfo \
-	--searchrange -20 20 \
-	--spatialfilt 2 \
-        --passes 3 \
-        --despecklepasses 4 \
-        --nprocs -1 \
+        -s 25.0 \
+        -L \
+	-r -20,20 \
+	-f 2 \
+        --passes=3 \
+        --refineoffset \
+        --despecklepasses=4 \
+        --nprocs=-1 \
+        --saveoptionsasjson \
         --pickleft \
         --nofitfilt \
-        --detrendorder 3
+        --detrendorder=3
+
+#rapidtideX \
+	#fmri.nii.gz \
+	#../dst/dgsr_X \
+        #--limitoutput \
+        #--sigmalimit 25.0 \
+        #--numnull 0 \
+        #--filterband lfo \
+	#--searchrange -20 20 \
+	#--spatialfilt 2 \
+        #--passes 3 \
+        #--despecklepasses 4 \
+        #--nprocs -1 \
+        #--pickleft \
+        #--nofitfilt \
+        #--detrendorder 3
 
 #diffmaps ../dst/dgsr_nomask ../dst/dgsr_cerebellar ../dst/diff

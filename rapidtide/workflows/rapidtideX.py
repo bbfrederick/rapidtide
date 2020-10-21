@@ -55,6 +55,8 @@ import nibabel as nib
 
 import copy
 
+import bisect
+
 from .parser_funcs import (is_valid_file, invert_float, is_float)
 
 try:
@@ -108,12 +110,6 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
             endindex = np.min((bisect.bisect_right(timeaxis, endtime), len(maskvector) - 1))
             maskvector[startindex:endindex] = 1.0
             print(starttime, startindex, endtime, endindex)
-    if debug:
-        fig = figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('temporal mask vector')
-        plot(timeaxis, maskvector)
-        show()
     return maskvector
 
 
@@ -2017,9 +2013,6 @@ def rapidtide_main():
                 tide_io.writenpvecs(cleaned_resampref_y,
                                     outputname + '_cleanedresampref_y_pass' + str(thepass) + '.txt')
 
-                plot(cleaned_resampref_y)
-                plot(cleaned_referencetc)
-                show()
                 if optiondict['saveoptionsasjson']:
                     tide_io.writedicttojson(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.json')
                 else:
@@ -2057,7 +2050,7 @@ def rapidtide_main():
             if optiondict['ampthreshfromsig']:
                 if pcts is not None:
                     print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
-                    optiondict['ampthresh'] = pcts[2]
+                    optiondict['ampthresh'] = pcts[0]
                     tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
                     if optiondict['dosighistfit']:
                         tide_stats.printthresholds(pcts_fit, thepercentiles,
@@ -2618,8 +2611,6 @@ def rapidtide_main():
     memfile.close()
     print('done')
 
-    if optiondict['displayplots']:
-        show()
     timings.append(['Done', time.time(), None, None])
 
     # Post refinement step 5 - process and save timing information

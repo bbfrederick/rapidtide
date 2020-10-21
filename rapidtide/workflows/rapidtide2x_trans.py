@@ -1130,7 +1130,7 @@ def process_args():
         elif o == '--regressorfreq':
             optiondict['inputfreq'] = float(a)
             linkchar = '='
-            print('Setting regressor sample frequency to ', inputfreq)
+            print('Setting regressor sample frequency to ', optiondict['inputfreq'])
         elif o == '--regressortstep':
             optiondict['inputfreq'] = 1.0 / float(a)
             linkchar = '='
@@ -2119,7 +2119,7 @@ def rapidtide_main():
             if optiondict['ampthreshfromsig']:
                 if pcts is not None:
                     print('setting ampthresh to the p<', "{:.3f}".format(1.0 - thepercentiles[0]), ' threshhold')
-                    optiondict['ampthresh'] = pcts[2]
+                    optiondict['ampthresh'] = pcts[0]
                     tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
                     if optiondict['dosighistfit']:
                         tide_stats.printthresholds(pcts_fit, thepercentiles,
