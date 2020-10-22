@@ -42,7 +42,8 @@ def main():
                         help='the name of the output time course file')
     parser.add_argument('--debug',
                         action='store_true',
-                        help='turn on additional debugging output')
+                        help='turn on additional debugging output',
+                        default=False)
     args = parser.parse_args()
 
     if args.debug:
