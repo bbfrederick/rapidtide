@@ -468,6 +468,7 @@ def makeandsavehistogram(indata, histlen, endtrim, outname,
         tide_io.writebidstsv(outname,
                              thestore[1, :],
                              1.0 / (thestore[0, 1] - thestore[0, 0]),
+                             compressed=False,
                              starttime=thestore[0, 0],
                              columns=[varroot],
                              append=append)

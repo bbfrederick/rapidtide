@@ -237,7 +237,7 @@ def rapidtide_main(argparsingfunc):
         rawsources.append(os.path.relpath(optiondict['regressorfile'], start=outputpath))
     bidsbasedict = {
         'RawSources'        : rawsources,
-        'Units'             : 'None',
+        'Units'             : 'arbitrary',
         'CommandLineArgs'   : optiondict['commandlineargs']
     }
 
@@ -725,9 +725,10 @@ def rapidtide_main(argparsingfunc):
 
     # write out the reference regressor prior to filtering
     if optiondict['bidsoutput']:
-        tide_io.writebidstsv(outputname + '_desc-origres_regressor',
+        tide_io.writebidstsv(outputname + '_desc-initialmovingregressor_timeseries',
                              reference_y,
                              inputfreq,
+                             compressed=False,
                              starttime=inputstarttime,
                              columns=['prefilt'],
                              append=False)
@@ -742,9 +743,10 @@ def rapidtide_main(argparsingfunc):
 
     # write out the reference regressor used
     if optiondict['bidsoutput']:
-        tide_io.writebidstsv(outputname + '_desc-origres_regressor',
+        tide_io.writebidstsv(outputname + '_desc-initialmovingregressor_timeseries',
                              tide_math.stdnormalize(reference_y),
                              inputfreq,
+                             compressed=False,
                              starttime=inputstarttime,
                              columns=['postfilt'],
                              append=True)
@@ -814,14 +816,16 @@ def rapidtide_main(argparsingfunc):
         optiondict['kurtosisp_reference_pass1'] = tide_stats.kurtosisstats(resampref_y)
     if optiondict['bidsoutput']:
         if optiondict['bidsoutput']:
-            tide_io.writebidstsv(outputname + '_desc-fmrires_regressor',
+            tide_io.writebidstsv(outputname + '_desc-movingregressor_timeseries',
                                  tide_math.stdnormalize(resampnonosref_y),
                                  1.0 / fmritr,
+                                 compressed=False,
                                  columns=['pass1'],
                                  append=False)
-            tide_io.writebidstsv(outputname + '_desc-resampres_regressor',
+            tide_io.writebidstsv(outputname + '_desc-oversampledmovingregressor_timeseries',
                                  tide_math.stdnormalize(resampref_y),
                                  oversampfreq,
+                                 compressed=False,
                                  columns=['pass1'],
                                  append=False)
     else:
@@ -1035,9 +1039,10 @@ def rapidtide_main(argparsingfunc):
                                          )
             outputarray = np.asarray([accheckcorrscale, thexcorr])
             if optiondict['bidsoutput']:
-                tide_io.writebidstsv(outputname + '_desc-autocorr_regressor',
+                tide_io.writebidstsv(outputname + '_desc-autocorr_timeseries',
                                      thexcorr,
                                      1.0 / (accheckcorrscale[1] - accheckcorrscale[0]),
+                                     compressed=False,
                                      starttime=accheckcorrscale[0],
                                      columns=['pass'+ str(thepass)],
                                      append=(thepass > 1))
@@ -1167,6 +1172,7 @@ def rapidtide_main(argparsingfunc):
                 tide_io.writebidstsv(outputname + '_desc-corrdistdata_info',
                                      corrdistdata,
                                      1.0,
+                                     compressed=False,
                                      columns=['pass'+ str(thepass)],
                                      append=(thepass > 1))
             else:
@@ -1430,7 +1436,7 @@ def rapidtide_main(argparsingfunc):
                     print('Nothing left to do! Terminating despeckling')
                     break
 
-            if optiondict['savedespecklemasks']:
+            if optiondict['savedespecklemasks'] and thepass == optiondict['passes']:
                 theheader = copy.deepcopy(nim_hdr)
                 if fileiscifti:
                     theheader['intent_code'] = 3006
@@ -1438,9 +1444,9 @@ def rapidtide_main(argparsingfunc):
                     theheader['dim'][0] = 3
                     theheader['dim'][4] = 1
                 if optiondict['bidsoutput']:
-                    savename = outputname + '_pass-' + str(thepass) + '_desc-despeckle_mask'
+                    savename = outputname + '_desc-despeckle_mask'
                 else:
-                    savename = outputname + '_despecklemask_pass' + str(thepass)
+                    savename = outputname + '_despecklemask'
                 tide_io.savetonifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)).reshape(nativespaceshape),
                                     theheader,
                                     savename)
@@ -1487,14 +1493,16 @@ def rapidtide_main(argparsingfunc):
             normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
             normunfilteredoutputdata = tide_math.stdnormalize(outputdata)
             if optiondict['bidsoutput']:
-                tide_io.writebidstsv(outputname + '_desc-refined_regressor',
+                tide_io.writebidstsv(outputname + '_desc-refinedmovingregressor_timeseries',
                                      normunfilteredoutputdata,
                                      1.0 / fmritr,
+                                     compressed=False,
                                      columns=['unfiltered_pass' + str(thepass)],
                                      append=(thepass > 1))
-                tide_io.writebidstsv(outputname + '_desc-refined_regressor',
+                tide_io.writebidstsv(outputname + '_desc-refinedmovingregressor_timeseries',
                                      normoutputdata,
                                      1.0 / fmritr,
+                                     compressed=False,
                                      columns=['filtered_pass' + str(thepass)],
                                      append=True)
             else:
@@ -1543,14 +1551,16 @@ def rapidtide_main(argparsingfunc):
                 optiondict['kurtosisz_reference_pass' + str(thepass + 1)], \
                 optiondict['kurtosisp_reference_pass' + str(thepass + 1)] = tide_stats.kurtosisstats(resampref_y)
             if optiondict['bidsoutput']:
-                tide_io.writebidstsv(outputname + '_desc-fmrires_regressor',
+                tide_io.writebidstsv(outputname + '_desc-movingregressor_timeseries',
                                      tide_math.stdnormalize(resampnonosref_y),
                                      1.0 / fmritr,
+                                     compressed=False,
                                      columns=['pass'+ str(thepass + 1)],
                                      append=True)
-                tide_io.writebidstsv(outputname + '_desc-resampres_regressor',
+                tide_io.writebidstsv(outputname + '_desc-oversampledmovingregressor_timeseries',
                                      tide_math.stdnormalize(resampref_y),
                                      oversampfreq,
+                                     compressed=False,
                                      columns=['pass'+ str(thepass + 1)],
                                      append=True)
             else:
@@ -1559,22 +1569,29 @@ def rapidtide_main(argparsingfunc):
             timings.append(
                 ['Regressor refinement end, pass ' + str(thepass), time.time(), voxelsprocessed_rr, 'voxels'])
         if optiondict['saveintermediatemaps']:
-            maplist = ['lagtimes', 'lagstrengths', 'lagsigma', 'fitmask']
+            maplist = [('lagtimes', 'maxtime'),
+                       ('lagstrengths', 'maxcorr'),
+                       ('lagsigma', 'maxwidth'),
+                       ('fitmask', 'fitmask'),
+                       ('failreason', 'corrfitfailreason')]
             if thepass < optiondict['passes']:
-                maplist.append('refinemask')
-            for mapname in maplist:
+                maplist.append(('refinemask', 'refinemask'))
+            for mapname, mapsuffix in maplist:
                 if optiondict['memprofile']:
-                    memcheckpoint('about to write ' + mapname)
+                    memcheckpoint('about to write ' + mapname + 'to' + mapsuffix)
                 else:
-                    tide_util.logmem('about to write ' + mapname, file=memfile)
+                    tide_util.logmem('about to write ' + mapname + 'to' + mapsuffix, file=memfile)
                 outmaparray[:] = 0.0
                 outmaparray[validvoxels] = eval(mapname)[:]
                 if optiondict['textio']:
                     tide_io.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
-                                        outputname + '_' + mapname + passsuffix + '.txt')
+                                        outputname + '_' + mapsuffix + passsuffix + '.txt')
                 else:
                     if optiondict['bidsoutput']:
-                        savename = outputname + '_pass-' + passsuffix + '_desc-' + mapname + '_map'
+                        if mapname == 'fitmask':
+                            savename = outputname + '_pass-' + passsuffix + '_desc-corrfit_mask'
+                        else:
+                            savename = outputname + '_pass-' + passsuffix + '_desc-' + mapsuffix + '_map'
                         bidsdict = bidsbasedict.copy()
                         if mapname == 'lagtimes' or mapname == 'lagsigma':
                             bidsdict['Units'] = 'second'
@@ -1655,7 +1672,7 @@ def rapidtide_main(argparsingfunc):
             rvalue, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             r2value, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             fitNorm, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
-            fitcoff, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+            fitcoeff, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             movingsignal, dummy, dummy = allocshared(internalvalidfmrishape, rt_outfloatset)
             filtereddata, dummy, dummy = allocshared(internalvalidfmrishape, rt_outfloatset)
         else:
@@ -1663,7 +1680,7 @@ def rapidtide_main(argparsingfunc):
             rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             fitNorm = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-            fitcoff = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            fitcoeff = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
             filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
 
@@ -1687,7 +1704,7 @@ def rapidtide_main(argparsingfunc):
             meanvalue,
             rvalue,
             r2value,
-            fitcoff,
+            fitcoeff,
             fitNorm,
             movingsignal,
             filtereddata,
@@ -1721,7 +1738,7 @@ def rapidtide_main(argparsingfunc):
     # Post refinement step 2 - make and save interesting histograms
     timings.append(['Start saving histograms', time.time(), None, None])
     if optiondict['bidsoutput']:
-        namesuffix = '_desc-lagtimes_hist'
+        namesuffix = '_desc-maxtime_hist'
     else:
         namesuffix = '_laghist'
     tide_stats.makeandsavehistogram(lagtimes[np.where(fitmask > 0)], optiondict['histlen'], 0,
@@ -1744,7 +1761,7 @@ def rapidtide_main(argparsingfunc):
                                     saveasbids=optiondict['bidsoutput'],
                                     thedict=optiondict)
     if optiondict['bidsoutput']:
-        namesuffix = '_desc-width_hist'
+        namesuffix = '_desc-maxwidth_hist'
     else:
         namesuffix = '_widthhist'
     tide_stats.makeandsavehistogram(lagsigma[np.where(fitmask > 0)], optiondict['histlen'], 1,
@@ -1755,7 +1772,7 @@ def rapidtide_main(argparsingfunc):
                                     saveasbids=optiondict['bidsoutput'],
                                     thedict=optiondict)
     if optiondict['bidsoutput']:
-        namesuffix = '_desc-fitR2_hist'
+        namesuffix = '_desc-maxcorrsq_hist'
     else:
         namesuffix = '_R2hist'
     if optiondict['doglmfilt']:
@@ -1798,28 +1815,36 @@ def rapidtide_main(argparsingfunc):
             theheader['dim'][4] = 1
 
     # Prepare extra maps
-    savelist = ['lagtimes', 'lagstrengths', 'R2', 'lagsigma', 'fitmask', 'failreason']
+    savelist = [('lagtimes', 'maxtime'),
+                ('lagstrengths', 'maxcorr'),
+                ('lagsigma', 'maxwidth'),
+                ('R2', 'maxcorrsq'),
+                ('fitmask', 'fitmask'),
+                ('failreason', 'corrfitfailreason')]
     MTT = np.square(lagsigma) - (optiondict['acwidth'] * optiondict['acwidth'])
     MTT = np.where(MTT > 0.0, MTT, 0.0)
     MTT = np.sqrt(MTT)
-    savelist += ['MTT']
+    savelist += [('MTT', 'MTT')]
     if optiondict['similaritymetric'] == 'mutualinfo':
         baseline = np.median(corrout, axis=1)
         baselinedev = mad(corrout, axis=1)
-        savelist += ['baseline', 'baselinedev']
-    for mapname in savelist:
+        savelist += [('baseline', 'baseline'), ('baselinedev', 'baselinedev')]
+    for mapname, mapsuffix in savelist:
         if optiondict['memprofile']:
-            memcheckpoint('about to write ' + mapname)
+            memcheckpoint('about to write ' + mapname + 'to' + mapsuffix)
         else:
-            tide_util.logmem('about to write ' + mapname, file=memfile)
+            tide_util.logmem('about to write ' + mapname + 'to' + mapsuffix, file=memfile)
         outmaparray[:] = 0.0
         outmaparray[validvoxels] = eval(mapname)[:]
         if optiondict['textio']:
             tide_io.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
-                                outputname + '_' + mapname + outsuffix3d + '.txt')
+                                outputname + '_' + mapsuffix + outsuffix3d + '.txt')
         else:
             if optiondict['bidsoutput']:
-                savename = outputname + '_desc-' + mapname + outsuffix3d + '_map'
+                if mapname == 'fitmask':
+                    savename = outputname + '_desc-corrfit' + outsuffix3d + '_mask'
+                else:
+                    savename = outputname + '_desc-' + mapsuffix + outsuffix3d + '_map'
                 bidsdict = bidsbasedict.copy()
                 if mapname == 'lagtimes' or mapname == 'lagsigma':
                     bidsdict['Units'] = 'second'
@@ -1829,8 +1854,8 @@ def rapidtide_main(argparsingfunc):
             tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
 
     if optiondict['doglmfilt']:
-        for mapname, mapsuffix in [('rvalue', 'fitR'), ('r2value', 'fitR2'), ('meanvalue', 'mean'),
-                                   ('fitcoff', 'fitcoff'), ('fitNorm', 'fitNorm')]:
+        for mapname, mapsuffix in [('rvalue', 'lfofilterR'), ('r2value', 'lfofilterR2'), ('meanvalue', 'lfofilterMean'),
+                                   ('fitcoeff', 'lfofilterCoeff'), ('fitNorm', 'lfofilterNorm')]:
             if optiondict['memprofile']:
                 memcheckpoint('about to write ' + mapname)
             else:
@@ -1842,7 +1867,7 @@ def rapidtide_main(argparsingfunc):
                                     outputname + '_' + mapsuffix + outsuffix3d + '.txt')
             else:
                 if optiondict['bidsoutput']:
-                    savename = outputname + '_desc-' + mapname + outsuffix3d + '_map'
+                    savename = outputname + '_desc-' + mapsuffix + outsuffix3d + '_map'
                     bidsdict = bidsbasedict.copy()
                     tide_io.writedicttojson(bidsdict, savename + '.json')
                 else:
@@ -1851,7 +1876,7 @@ def rapidtide_main(argparsingfunc):
         del rvalue
         del r2value
         del meanvalue
-        del fitcoff
+        del fitcoeff
         del fitNorm
     else:
         for mapname, mapsuffix in [('meanvalue', 'mean')]:
@@ -1938,7 +1963,7 @@ def rapidtide_main(argparsingfunc):
                             outputname + '_windowout' + outsuffix4d + '.txt')
     else:
         if optiondict['bidsoutput']:
-            savename = outputname + '_desc-fitwindow' + outsuffix4d  + '_info'
+            savename = outputname + '_desc-corrfitwindow' + outsuffix4d  + '_info'
         else:
             savename = outputname + '_windowout' + outsuffix4d
         tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
@@ -2011,7 +2036,7 @@ def rapidtide_main(argparsingfunc):
                                 outputname + '_filtereddata' + outsuffix4d + '.txt')
         else:
             if optiondict['bidsoutput']:
-                savename = outputname + '_desc-lfofiltered' + outsuffix4d + '_bold'
+                savename = outputname + '_desc-lfofilterResult' + outsuffix4d + '_bold'
             else:
                 savename = outputname + '_filtereddata' + outsuffix4d
             tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)

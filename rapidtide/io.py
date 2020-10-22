@@ -754,19 +754,38 @@ def readoptionsfile(inputfileroot):
     return thedict
 
 
-def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, append=False, debug=False):
+def writebidstsv(outputfileroot, data, samplerate,
+                 compressed=False,
+                 columns=None,
+                 starttime=0.0,
+                 append=False,
+                 colsinjson=False,
+                 debug=False):
+    if debug:
+        print('entering writebidstsv:')
+        print('\toutputfileroot:', outputfileroot)
+        print('\tdata.shape:', data.shape)
+        print('\tsamplerate:', samplerate)
+        print('\tcompressed:', compressed)
+        print('\tcolumns:', columns)
+        print('\tstarttime:', starttime)
+        print('\tappend:', append)
     if len(data.shape) == 1:
         reshapeddata = data.reshape((1, -1))
     else:
         reshapeddata = data
     if append:
-        insamplerate, instarttime, incolumns, indata, incompressed = readbidstsv(outputfileroot + '.json')
+        insamplerate, instarttime, incolumns, indata, incompressed = readbidstsv(outputfileroot + '.json', debug=debug)
+        if debug:
+            print('appending')
+            print(insamplerate, instarttime, incolumns, indata, incompressed)
         if insamplerate is None:
+            # file does not already exist
             if debug:
                 print('creating file:', data.shape, columns, samplerate)
             startcol = 0
-            compressed = True
         else:
+            # file does already exist
             if debug:
                 print('appending:', insamplerate, instarttime, incolumns, indata.shape, reshapeddata.shape)
             compressed = incompressed
@@ -781,7 +800,6 @@ def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, 
                 sys.exit()
     else:
         startcol = 0
-        compressed = True
 
     if columns is None:
         columns = []
@@ -800,14 +818,15 @@ def writebidstsv(outputfileroot, data, samplerate, columns=None, starttime=0.0, 
     if compressed:
         df.to_csv(outputfileroot + '.tsv.gz', sep='\t', compression='gzip', index=False)
     else:
-        df.to_csv(outputfileroot + '.tsv.gz', sep='\t', compression=None, index=False)
+        df.to_csv(outputfileroot + '.tsv', sep='\t', compression=None, index=False)
     headerdict = {}
     headerdict['SamplingFrequency'] = samplerate
     headerdict['StartTime'] = starttime
-    if startcol == 0:
-        headerdict['Columns'] = columns
-    else:
-        headerdict['Columns'] = incolumns + columns
+    if colsinjson:
+        if startcol == 0:
+            headerdict['Columns'] = columns
+        else:
+            headerdict['Columns'] = incolumns + columns
 
     with open(outputfileroot + '.json', 'wb') as fp:
         fp.write(json.dumps(headerdict, sort_keys=True, indent=4, separators=(',', ':')).encode("utf-8"))
@@ -863,7 +882,7 @@ def readbidstsv(inputfilename, debug=False):
             df = pd.read_csv(thefileroot + '.tsv.gz', compression='gzip', header=0, sep='\t', quotechar='"')
             compressed = True
         else:
-            df = pd.read_csv(thefileroot + '.tsv', header=0, sep='\t', quotechar='"')
+            df = pd.read_csv(thefileroot + '.tsv',  header=0, sep='\t', quotechar='"')
             compressed = False
         if columns is None:
             columns = list(df.columns.values)

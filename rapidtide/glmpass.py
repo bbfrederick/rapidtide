@@ -40,9 +40,9 @@ def _procOneItemGLM(vox,
                      rt_floatset=np.float64,
                      rt_floattype='float64'):
     thefit, R = tide_fit.mlregress(theevs, thedata)
-    fitcoff = rt_floatset(thefit[0, 1])
-    datatoremove = rt_floatset(fitcoff * theevs)
-    return vox, rt_floatset(thefit[0, 0]), rt_floatset(R), rt_floatset(R * R), fitcoff, \
+    fitcoeff = rt_floatset(thefit[0, 1])
+    datatoremove = rt_floatset(fitcoeff * theevs)
+    return vox, rt_floatset(thefit[0, 0]), rt_floatset(R), rt_floatset(R * R), fitcoeff, \
            rt_floatset(thefit[0, 1] / thefit[0, 0]), datatoremove, rt_floatset(thedata - datatoremove)
 
 
@@ -53,7 +53,7 @@ def glmpass(numprocitems,
             meanvalue,
             rvalue,
             r2value,
-            fitcoff,
+            fitcoeff,
             fitNorm,
             datatoremove,
             filtereddata,
@@ -124,7 +124,7 @@ def glmpass(numprocitems,
                 meanvalue[voxel[0]] = voxel[1]
                 rvalue[voxel[0]] = voxel[2]
                 r2value[voxel[0]] = voxel[3]
-                fitcoff[voxel[0]] = voxel[4]
+                fitcoeff[voxel[0]] = voxel[4]
                 fitNorm[voxel[0]] = voxel[5]
                 datatoremove[voxel[0], :] = voxel[6]
                 filtereddata[voxel[0], :] = voxel[7]
@@ -134,7 +134,7 @@ def glmpass(numprocitems,
                 meanvalue[timepoint[0]] = timepoint[1]
                 rvalue[timepoint[0]] = timepoint[2]
                 r2value[timepoint[0]] = timepoint[3]
-                fitcoff[timepoint[0]] = timepoint[4]
+                fitcoeff[timepoint[0]] = timepoint[4]
                 fitNorm[timepoint[0]] = timepoint[5]
                 datatoremove[:, timepoint[0]] = timepoint[6]
                 filtereddata[:, timepoint[0]] = timepoint[7]
@@ -153,7 +153,7 @@ def glmpass(numprocitems,
                     meanvalue[vox],\
                     rvalue[vox], \
                     r2value[vox], \
-                    fitcoff[vox], \
+                    fitcoeff[vox], \
                     fitNorm[vox], \
                     datatoremove[vox, :], \
                     filtereddata[vox, :] = \
@@ -173,7 +173,7 @@ def glmpass(numprocitems,
                     meanvalue[timepoint], \
                     rvalue[timepoint], \
                     r2value[timepoint], \
-                    fitcoff[timepoint], \
+                    fitcoeff[timepoint], \
                     fitNorm[timepoint], \
                     datatoremove[:, timepoint], \
                     filtereddata[:, timepoint] = \
