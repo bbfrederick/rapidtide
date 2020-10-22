@@ -4,34 +4,6 @@ set rec1=$1
 set rec2=$2
 set dest=$3
 
-foreach map ( lagmask )
-    set map1name = ${rec1}_${map}.nii.gz
-    set map2name = ${rec2}_${map}.nii.gz
-    if ( -f ${map1name} && -f ${map2name} ) then
-        fslmaths ${map1name} -add ${map2name} -bin ${dest}_${map}
-    else
-        echo 'skipping '$map
-        endif
-    end
-
-foreach map ( lagtimes lagstrengths lagsigma mean MTT R2 refinemask corrout gaussout filtereddata fitNorm fitR fitR2 fitcoff p_lt_0p001_mask p_lt_0p005_mask p_lt_0p010_mask p_lt_0p050_mask )
-    set map1name = ${rec1}_${map}.nii.gz
-    set map2name = ${rec2}_${map}.nii.gz
-    if ( -f ${map1name} && -f ${map2name} ) then
-        fslmaths ${map1name} -sub ${map2name} ${dest}_${map}
-    else
-        echo 'skipping '$map
-        endif
-    end
-
-foreach tc ( reference_origres_prefilt reference_resampres_pass1 reference_resampres_pass2 reference_resampres_pass3 reference_resampres_pass4 )
-    set tc1name = ${rec1}_${tc}.txt
-    set tc2name = ${rec2}_${tc}.txt
-    echo $tc1name $tc2name
-    if ( -f ${tc1name} && -f ${tc2name} ) then
-        echo 'doing subtraction for '${tc}
-        paste ${tc1name} ${tc2name} | awk '{print $1 - $2}' > ${dest}_${tc}.txt
-    else
-        echo 'skipping '$tc
-        endif
+foreach map ( lagmask lagtimes lagstrengths lagsigma mean MTT R2 refinemask corrout gaussout filtereddata fitNorm fitR fitR2 fitcoff p_lt_0p001_mask p_lt_0p005_mask p_lt_0p010_mask p_lt_0p050_mask )
+    fslmaths $rec1'_'$map'.nii.gz' -sub $rec2'_'$map'.nii.gz' $dest'_'$map
     end
