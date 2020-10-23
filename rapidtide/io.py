@@ -694,7 +694,7 @@ def readfmriprepconfounds(inputfilename):
     """
     confounddict = {}
     df = pd.read_csv(inputfilename + '.tsv', sep='\t', quotechar='"')
-    for thecolname, theseries in df.iteritems():
+    for thecolname, theseries in df.items():
         confounddict[thecolname] = theseries.values
     return confounddict
 

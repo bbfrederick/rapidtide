@@ -147,9 +147,10 @@ def autocorrcheck(corrscale, thexcorr, delta=0.1, acampthresh=0.1, aclagthresh=1
 
                 if displayplots:
                     plt.plot(corrscale[fitstart:fitend + 1], thexcorr[fitstart:fitend + 1], 'k',
-                            corrscale[fitstart:fitend + 1],
-                            tide_fit.gauss_eval(corrscale[fitstart:fitend + 1], [sidelobeamp, sidelobetime, sidelobewidth]),
-                            'r')
+                             corrscale[fitstart:fitend + 1],
+                             tide_fit.gauss_eval(corrscale[fitstart:fitend + 1],
+                                                 [sidelobeamp, sidelobetime, sidelobewidth]),
+                             'r')
                     plt.show()
                 return sidelobetime, sidelobeamp
     return None, None
@@ -247,7 +248,6 @@ def shorttermcorr_2D(data1, data2, sampletime, windowtime, samplestep=1, laglimi
     nfft = nperseg
     noverlap = (nperseg - 1)'''
 
-
     dataseg1 = tide_math.corrnormalize(data1[0:2 * halfwindow], detrendorder=detrendorder, windowfunc=windowfunc)
     dataseg2 = tide_math.corrnormalize(data2[0:2 * halfwindow], detrendorder=detrendorder, windowfunc=windowfunc)
     thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
@@ -328,7 +328,7 @@ def mutual_information_2d(x, y, sigma=1, bins=(256, 256), fast=False, normalized
         numxbins = len(bins[0]) - 1
         numybins = len(bins[1]) - 1
         cuts = (x >= xstart) & (x < xend) & (y >= ystart) & (y < yend)
-        c =  ((x[cuts] - xstart) / (xend - xstart) * numxbins).astype(np.int_)
+        c = ((x[cuts] - xstart) / (xend - xstart) * numxbins).astype(np.int_)
         c += ((y[cuts] - ystart) / (yend - ystart) * numybins).astype(np.int_) * numxbins
         jh = np.bincount(c, minlength=numxbins * numybins).reshape(numxbins, numybins)
     else:
@@ -350,16 +350,16 @@ def mutual_information_2d(x, y, sigma=1, bins=(256, 256), fast=False, normalized
     HX = -np.sum(s1 * np.log(s1))
     HY = -np.sum(s2 * np.log(s2))
     HXcommaY = -np.sum(jh * np.log(jh))
-    #normfac = np.min([HX, HY])
+    # normfac = np.min([HX, HY])
 
     # Normalised Mutual Information of:
     # Studholme,  jhill & jhawkes (1998).
     # "A normalized entropy measure of 3-D medical image alignment".
     # in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
     if normalized:
-        mi = ( HX + HY ) / ( HXcommaY ) - 1.0
+        mi = (HX + HY) / (HXcommaY) - 1.0
     else:
-        mi = -( HXcommaY - HX - HY )
+        mi = -(HXcommaY - HX - HY)
     if debug:
         print(HX, HY, HXcommaY, mi)
 
@@ -387,7 +387,6 @@ def cross_MI(x, y,
                                     detrendorder=1,
                                     windowfunc=windowfunc)
 
-
     # see if we are using the default number of bins
     if bins < 1:
         bins = int(np.sqrt(len(x) / 5))
@@ -400,8 +399,7 @@ def cross_MI(x, y,
         bins2d = (bins0, bins1)
     else:
         bins2d = (bins, bins)
-        fast=False
-
+        fast = False
 
     if (negsteps == -1) or (negsteps > len(normy) - 1):
         negsteps = -len(normy) + 1
@@ -427,25 +425,25 @@ def cross_MI(x, y,
             destloc += 1
         if i < 0:
             thexmi_y[destloc] = mutual_information_2d(normx[:i + len(normy)], normy[-i:],
-                                                             bins=bins2d,
-                                                             normalized=norm,
-                                                             fast=fast,
-                                                             sigma=sigma,
-                                                             debug=debug)
+                                                      bins=bins2d,
+                                                      normalized=norm,
+                                                      fast=fast,
+                                                      sigma=sigma,
+                                                      debug=debug)
         elif i == 0:
             thexmi_y[destloc] = mutual_information_2d(normx, normy,
-                                                             bins=bins2d,
-                                                             normalized=norm,
-                                                             fast=fast,
-                                                             sigma=sigma,
-                                                             debug=debug)
+                                                      bins=bins2d,
+                                                      normalized=norm,
+                                                      fast=fast,
+                                                      sigma=sigma,
+                                                      debug=debug)
         else:
             thexmi_y[destloc] = mutual_information_2d(normx[i:], normy[:len(normy) - i],
-                                                             bins=bins2d,
-                                                             normalized=norm,
-                                                             fast=fast,
-                                                             sigma=sigma,
-                                                             debug=debug)
+                                                      bins=bins2d,
+                                                      normalized=norm,
+                                                      fast=fast,
+                                                      sigma=sigma,
+                                                      debug=debug)
 
     if madnorm:
         thexmi_y = tide_math.madnormalize(thexmi_y)
@@ -453,7 +451,7 @@ def cross_MI(x, y,
     if returnaxis:
         if locs is None:
             thexmi_x = sp.linspace(0.0, len(thexmi_y) / Fs, num=len(thexmi_y), endpoint=False) \
-                         + negsteps / Fs
+                       + negsteps / Fs
             return thexmi_x, thexmi_y, negsteps + 1
         else:
             thexmi_x = irange
@@ -537,7 +535,8 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
 
 class aliasedcorrelator:
 
-    def __init__(self, hiressignal, hires_Fs, lores_Fs, timerange, hiresstarttime=0.0, loresstarttime=0.0, padtime=30.0):
+    def __init__(self, hiressignal, hires_Fs, lores_Fs, timerange, hiresstarttime=0.0, loresstarttime=0.0,
+                 padtime=30.0):
         """
 
         Parameters
@@ -586,16 +585,17 @@ class aliasedcorrelator:
             offsetkey = "{:.3f}".format(theoffset)
             try:
                 aliasedhiressignal = self.aliasedsignals[offsetkey]
-                #print(offsetkey, ' - cache hit')
+                # print(offsetkey, ' - cache hit')
             except KeyError:
-                #print(offsetkey, ' - cache miss')
+                # print(offsetkey, ' - cache miss')
                 self.aliasedsignals[offsetkey] = tide_math.corrnormalize(self.tcgenerator.yfromx(loresaxis + theoffset))
                 aliasedhiressignal = self.aliasedsignals[offsetkey]
             corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
         return corrfunc
 
 
-def aliasedcorrelate(hiressignal, hires_Fs, lowressignal, lowres_Fs, timerange, hiresstarttime=0.0, lowresstarttime=0.0, padtime=30.0):
+def aliasedcorrelate(hiressignal, hires_Fs, lowressignal, lowres_Fs, timerange, hiresstarttime=0.0, lowresstarttime=0.0,
+                     padtime=30.0):
     """
 
     Parameters
@@ -652,7 +652,7 @@ def arbcorr(input1, Fs1, input2, Fs2,
                                     windowfunc=windowfunc)
     thexcorr_y = signal.fftconvolve(norm1, norm2[::-1], mode='full')
     thexcorr_x = sp.linspace(0.0, len(thexcorr_y) / corrFs, num=len(thexcorr_y), endpoint=False) \
-        - (len(norm1) // 2 + len(norm2) // 2) / corrFs + start1 - start2
+                 - (len(norm1) // 2 + len(norm2) // 2) / corrFs + start1 - start2
     if debug:
         print('len(norm1) = ', len(norm1))
         print('len(norm2) = ', len(norm2))
@@ -666,29 +666,28 @@ def faststcorrelate(input1, input2, windowtype='hann', nperseg=32, weighting='No
     onesided = False
     boundary = 'even'
     freqs, times, thestft1 = signal.stft(input1,
-                                 fs=1.0,
-                                 window=windowtype,
-                                 nperseg=nperseg,
-                                 noverlap=noverlap,
-                                 nfft=nfft,
-                                 detrend='linear',
-                                 return_onesided=onesided,
-                                 boundary=boundary,
-                                 padded=True,
-                                 axis=-1)
+                                         fs=1.0,
+                                         window=windowtype,
+                                         nperseg=nperseg,
+                                         noverlap=noverlap,
+                                         nfft=nfft,
+                                         detrend='linear',
+                                         return_onesided=onesided,
+                                         boundary=boundary,
+                                         padded=True,
+                                         axis=-1)
 
     freqs, times, thestft2 = signal.stft(input2,
-                                 fs=1.0,
-                                 window=windowtype,
-                                 nperseg=nperseg,
-                                 noverlap=noverlap,
-                                 nfft=nfft,
-                                 detrend='linear',
-                                 return_onesided=onesided,
-                                 boundary=boundary,
-                                 padded=True,
-                                 axis=-1)
-
+                                         fs=1.0,
+                                         window=windowtype,
+                                         nperseg=nperseg,
+                                         noverlap=noverlap,
+                                         nfft=nfft,
+                                         detrend='linear',
+                                         return_onesided=onesided,
+                                         boundary=boundary,
+                                         padded=True,
+                                         axis=-1)
 
     acorrfft1 = thestft1 * np.conj(thestft1)
     acorrfft2 = thestft2 * np.conj(thestft2)
