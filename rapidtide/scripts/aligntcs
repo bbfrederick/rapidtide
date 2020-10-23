@@ -106,7 +106,10 @@ def main():
     timeaxisfull = np.linspace(0.0, intimestep1 * len(paddeddata1), num=len(paddeddata1), endpoint=False)
     timeaxis1 = np.linspace(0.0, intimestep1 * len(inputdata1), num=len(inputdata1), endpoint=False)
     timeaxis2 = np.linspace(0.0, intimestep2 * len(inputdata2), num=len(inputdata2), endpoint=False)
-    paddeddata2 = tide_resample.doresample(timeaxis2, tide_math.corrnormalize(theprefilter.apply(args.insamplerate2, inputdata2)), timeaxisfull)
+    paddeddata2 = tide_resample.doresample(timeaxis2,
+                                           tide_math.corrnormalize(theprefilter.apply(args.insamplerate2,
+                                                                                      inputdata2)),
+                                           timeaxisfull)
 
     # now paddeddata1 and 2 are on the same timescales
     thexcorr = tide_corr.fastcorrelate(paddeddata1, paddeddata2)
@@ -139,6 +142,7 @@ def main():
         plot(timeaxis1, aligneddata2)
         plot()
         show()
+
 
 if __name__ == '__main__':
     main()
