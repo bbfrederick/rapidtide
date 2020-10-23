@@ -20,7 +20,6 @@
 #       $Id: filtnifti,v 1.9 2016/07/06 15:25:36 frederic Exp $
 #
 
-import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 from rapidtide.RapidtideDataset import RapidtideDataset
 import argparse
