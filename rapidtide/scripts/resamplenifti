@@ -27,6 +27,7 @@ import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
 import numpy as np
 
+
 def main():
     parser = argparse.ArgumentParser(prog='resamplenifti',
                                      description='Resamples a nifti file to a different TR.',
@@ -55,7 +56,6 @@ def main():
         default=False)
 
     args = parser.parse_args()
-
 
     # get the input TR
     inputtr, numinputtrs = tide_io.fmritimeinfo(args.inputfile)
@@ -107,6 +107,6 @@ def main():
     outputroot, dummy = tide_io.niftisplitext(args.outputfile)
     tide_io.savetonifti(resampledtcs, resampled_hdr, outputroot)
 
+
 if __name__ == '__main__':
     main()
-
