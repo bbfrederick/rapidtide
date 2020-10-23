@@ -140,12 +140,9 @@ The following files are produced, assuming XXX is the outputname:
 
 
 BIDS Outputs:
+"""""""""""""
 
 The following output files are produced, assuming XXX is the (BIDS compliant) prefix:
-
-Always present
-==============
-
 
 Name | Extension(s) | Meaning | When present
 ---- | ------------ | ------- | ------------
