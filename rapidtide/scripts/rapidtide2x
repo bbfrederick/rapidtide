@@ -24,7 +24,6 @@
 #
 
 from __future__ import print_function, division
-import sys
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide2x_parser as rapidtide_parser
 
