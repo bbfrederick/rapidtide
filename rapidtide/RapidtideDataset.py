@@ -22,6 +22,7 @@
 #
 # -*- coding: utf-8 -*-
 import os
+import sys
 from rapidtide.Colortables import *
 import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
@@ -30,6 +31,7 @@ import rapidtide.miscmath as tide_math
 import numpy as np
 import pyqtgraph as pg
 import copy
+import nibabel as nib
 
 
 atlases = {'ASPECTS': {'atlasname': 'ASPECTS'},
@@ -213,12 +215,12 @@ class overlay:
         return self.toffset + self.tr * tpos
 
     def real2vox(self, xcoord, ycoord, zcoord, time):
-        x, y, z = apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
+        x, y, z = nib.apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
         t = self.real2tr(time)
         return int(np.round(x, 0)), int(np.round(y, 0)), int(np.round(z, 0)), int(np.round(t, 0))
 
     def vox2real(self, xpos, ypos, zpos, tpos):
-        return np.concatenate((apply_affine(self.affine, [xpos, ypos, zpos]), [self.tr2real(tpos)]), axis=0)
+        return np.concatenate((nib.apply_affine(self.affine, [xpos, ypos, zpos]), [self.tr2real(tpos)]), axis=0)
 
     def setXYZpos(self, xpos, ypos, zpos):
         self.xpos = int(xpos)
@@ -611,12 +613,12 @@ class RapidtideDataset:
         except KeyError:
             self.similaritymetric = 'correlation'
         if self.bidsformat:
-            self.regressorspecs = [['prefilt', 'desc-origres_regressor.json', self.inputfreq, self.inputfreq, self.inputstarttime],
-                              ['postfilt', 'desc-origres_regressor.json', self.inputfreq, self.inputfreq, self.inputstarttime],
-                              ['pass1', 'desc-resampres_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass2', 'desc-resampres_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass3', 'desc-resampres_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass4', 'desc-resampres_regressor.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
+            self.regressorspecs = [['prefilt', 'desc-initialmovingregressor_timeseries.json', self.inputfreq, self.inputfreq, self.inputstarttime],
+                              ['postfilt', 'desc-initialmovingregressor_timeseries.json', self.inputfreq, self.inputfreq, self.inputstarttime],
+                              ['pass1', 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass2', 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass3', 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass4', 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
         else:
             self.regressorspecs = [['prefilt', 'reference_origres_prefilt.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
                               ['postfilt', 'reference_origres.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
@@ -638,13 +640,13 @@ class RapidtideDataset:
 
         # first the functional maps
         if self.bidsformat:
-            self.funcmaps = [['lagtimes', 'desc-lagtimes_map'],
-                             ['lagstrengths', 'desc-lagstrengths_map'],
-                             ['lagsigma', 'desc-lagsigma_map'],
+            self.funcmaps = [['lagtimes', 'desc-maxtime_map'],
+                             ['lagstrengths', 'desc-maxcorr_map'],
+                             ['lagsigma', 'desc-maxwidth_map'],
                              ['MTT', 'desc-MTT_map'],
-                             ['R2', 'desc-R2_map'],
+                             ['R2', 'desc-maxcorrsq_map'],
                              ['fitNorm', 'desc-fitNorm_map'],
-                             ['fitcoff', 'desc-fitcoff_map']]
+                             ['fitcoff', 'desc-fitCoeff_map']]
             if self.usecorrout:
                 self.funcmaps += [['corrout', 'desc-corrout_info']]
                 # self.funcmaps += [['gaussout', 'desc-gaussout_info']]
@@ -652,17 +654,17 @@ class RapidtideDataset:
 
         else:
             if self.newstylenames:
-                self.funcmaps = [['lagtimes', 'lagtimes'],
-                                 ['lagstrengths', 'lagstrengths'],
-                                 ['lagsigma', 'lagsigma'],
+                self.funcmaps = [['lagtimes', 'maxtime'],
+                                 ['lagstrengths', 'maxcorr'],
+                                 ['lagsigma', 'maxwidth'],
                                  ['MTT', 'MTT'],
-                                 ['R2', 'R2'],
+                                 ['R2', 'maxcorrsq'],
                                  ['fitNorm', 'fitNorm'],
-                                 ['fitcoff', 'fitcoff']]
+                                 ['fitcoff', 'fitCoeff']]
                 if self.usecorrout:
                     self.funcmaps += [['corrout', 'corrout']]
                     # self.funcmaps += [['gaussout', 'gaussout']]
-                    self.funcmaps += [['failimage', 'failreason']]
+                    self.funcmaps += [['failimage', 'corrfitfailreason']]
 
             else:
                 self.funcmaps = [['lagtimes', 'lagtimes'],
@@ -766,7 +768,7 @@ class RapidtideDataset:
                     self.atlasmaskniftiname = os.path.join(self.referencedir, self.atlasname + '_2mm_mask.nii.gz')
                 if self.xsize == 3.0 and self.ysize == 3.0 and self.zsize == 3.0:
                     self.atlasniftiname = os.path.join(self.referencedir, self.atlasname + '_3mm.nii.gz')
-                    self.atlasmaskniftiname = os.path.join(referencedir, self.atlasname + '_3mm_mask.nii.gz')
+                    self.atlasmaskniftiname = os.path.join(self.referencedir, self.atlasname + '_3mm_mask.nii.gz')
             else:
                 pass
                 '''if xsize == 2.0 and ysize == 2.0 and zsize == 2.0:
