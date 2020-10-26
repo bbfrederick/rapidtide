@@ -674,7 +674,7 @@ def _get_parser():
     output = parser.add_argument_group('Output options')
     output.add_argument('--nolimitoutput',
                         dest='limitoutput',
-                        action='store_true',
+                        action='store_false',
                         help=("Save some of the large and rarely used "
                               "files. "),
                         default=True)
