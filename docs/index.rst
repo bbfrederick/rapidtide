@@ -38,6 +38,13 @@ Contents
    auto_examples/index
    contributing.rst
 
+.. toctree::
+   :hidden:
+   :name: hiddentoc
+
+   practicalities
+   theoryofoperation
+
 Indices and tables
 ==================
 
