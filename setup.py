@@ -191,6 +191,7 @@ setup(
             'sphinx-gallery',
             'numpydoc',
             'm2r',
+            'recommonmark',
             ],
         'tests': [
             'codecov',
