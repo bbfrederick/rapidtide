@@ -29,11 +29,13 @@ Contents
 ========
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
    introduction.rst
    whats_new.rst
    installation.rst
    usage.rst
+   candidate_usage.md
    api.rst
    auto_examples/index
    contributing.rst
@@ -42,8 +44,8 @@ Contents
    :hidden:
    :name: hiddentoc
 
-   practicalities
-   theoryofoperation
+   practicalities.rst
+   theoryofoperation.rst
 
 Indices and tables
 ==================

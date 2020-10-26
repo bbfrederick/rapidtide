@@ -190,7 +190,7 @@ The following files are produced, assuming XXX is the outputname:
 >     XXX_datatoremove.nii.gz                               - The scaled, delayed regressor that was removed from every voxel.
 >     XXX_fitcoff.nii.gz                                    - Map of the fit amplitude for the delayed LFO waveform.
 >     XXX_fitNorm.nii.gz                                    - I have no idea.
->     XXX_fitR2.nii.gz                                      - Map of the squared R value for the fit (multiply by 100 to get the percent of the        
+>     XXX_fitR2.nii.gz                                      - Map of the squared R value for the fit (multiply by 100 to get the percent of the
 >                                 variance explained by the LFO regressor).
 >     XXX_fitR.nii.gz                                       - Map of the R value for the fit.
 >
