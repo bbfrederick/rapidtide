@@ -5,13 +5,12 @@ For more information about how the rapidtide library can be used, please
 see the API page. Common rapidtide workflows can also be called from the
 command line.
 
-Run rapidtide2
+Run rapidtide
 --------------
 
 This is the full rapidtide workflow. The learn more about this workflow,
 check out the workflow documentation:
-:py`rapidtide.workflows.rapidtide_workflow`{.interpreted-text
-role="func"}.
+:py`rapidtide.workflows.rapidtide_workflow`{.interpreted-textrole="func"}.
 
 ::: {.argparse}
 :::
@@ -30,33 +29,33 @@ role="func"}.
 Running from the command line
 -----------------------------
 
-### rapidtide2
+### rapidtide
 
 #### Description:
 
-The central program in this package is rapidtide2. This is the program
+The central program in this package is rapidtide. This is the program
 that quantifies the correlation strength and time delay of pervasive
 signals in a BOLD fMRI dataset.
 
-At its core, rapidtide2 is simply performing a full crosscorrelation
+At its core, rapidtide is simply performing a full crosscorrelation
 between a \"probe\" timecourse and every voxel in an fMRI dataset (by
 "full" I mean over a range of time lags that account for any delays
 between the signals, rather than only at zero lag, as in a Pearson
 correlation). As with many things, however, the devil is in the details,
-and so rapidtide2 provides a number of features which make it pretty
+and so rapidtide provides a number of features which make it pretty
 good at this particular task. A few highlights:
 
 -   There are lots of ways to do something even as simple as a
     cross-correlation in a nonoptimal way (not windowing, improper
     normalization, doing it in the time rather than frequency domain,
-    etc.). I\'m pretty sure what rapidtide2 does by default is, if not
+    etc.). I\'m pretty sure what rapidtide does by default is, if not
     the best way, at least a very good and very fast way.
--   rapidtide2 has been optimized and profiled to speed it up quite a
+-   rapidtide has been optimized and profiled to speed it up quite a
     bit; it has an optional dependency on numba -- if it's installed,
     some of the most heavily used routines will speed up significantly
     due to judicious use of \@jit.
 -   The sample rate of your probe regressor and the fMRI data do not
-    have to match - rapidtide2 resamples the probe regressor to an
+    have to match - rapidtide resamples the probe regressor to an
     integral multiple of the fMRI data rate automatically.
 -   The probe and data can be temporally prefiltered to the LFO,
     respiratory, or cardiac frequency band with a command line switch,
@@ -64,7 +63,7 @@ good at this particular task. A few highlights:
 -   The data can be spatially smoothed at runtime (so you don\'t have to
     keep smoothed versions of big datasets around). This is quite fast,
     so no reason not to do it this way.
--   rapidtide2 can generate a probe regressor from the global mean of
+-   rapidtide can generate a probe regressor from the global mean of
     the data itself - no externally recorded timecourse is required.
     Optionally you can input both a mask of regions that you want to be
     included in the mean, and the voxels that you want excluded from the
@@ -73,22 +72,22 @@ good at this particular task. A few highlights:
 -   Determining the significance threshold for filtered correlations
     where the optimal delay has been selected is nontrivial; using the
     conventional formulae for the significance of a correlation leads to
-    wildly inflated p values. rapidtide2 estimates the spurious
+    wildly inflated p values. rapidtide estimates the spurious
     correlation threshold by calculating the distribution of null
     correlation values obtained with a shuffling procedure at the
     beginning of each run (the default is to use 10000 shuffled
     correlations), and uses this value to mask the correlation maps it
     calculates. As of version 0.1.2 it will also handle two-tailed
     significance, which you need when using bipolar mode.
--   rapidtide2 can do an iterative refinement of the probe regressor by
+-   rapidtide can do an iterative refinement of the probe regressor by
     aligning the voxel timecourses in time and regenerating the test
     regressor.
--   rapidtide2 fits the peak of the correlation function, so you can
+-   rapidtide fits the peak of the correlation function, so you can
     make fine grained distinctions between close lag times. The
     resolution of the time lag discrimination is set by the length of
     the timecourse, not the timestep -- this is a feature of
-    correlations, not rapidtide2.
--   Once the time delay in each voxel has been found, rapidtide2 outputs
+    correlations, not rapidtide.
+-   Once the time delay in each voxel has been found, rapidtide outputs
     a 4D file of delayed probe regressors for using as voxel specific
     confound regressors or to estimate the strength of the probe
     regressor in each voxel. This regression is performed by default,
@@ -102,14 +101,14 @@ good at this particular task. A few highlights:
 
 #### Inputs:
 
-At a minimum, rapidtide2 needs a data file to work on (space by time),
+At a minimum, rapidtide needs a data file to work on (space by time),
 which is generally thought to be a BOLD fMRI data file. This can be
 Nifti1 or Nifti2 (for fMRI data, in which case it is time by up to 3
 spatial dimensions) or a whitespace separated text file (for NIRS data,
 each column is a time course, each row a separate channel); I can
 currently read (probably) but not write Cifti files, so if you want to
 use grayordinate files you need to convert them to nifti2 in workbench,
-run rapidtide2, then convert back. As soon as nibabel finishes their
+run rapidtide, then convert back. As soon as nibabel finishes their
 Cifti support (EDIT: and I get around to figuring it out), I\'ll add
 that.
 
@@ -155,11 +154,11 @@ The following files are produced, assuming XXX is the outputname:
 >     XXX_runtimings.txt                                    - The final output showing how long each processing step took
 >
 >     Pass specific outputs
->     XXX_corrdistdata_passN.txt                            - These are all the null correlations produced during the significance estimation 
+>     XXX_corrdistdata_passN.txt                            - These are all the null correlations produced during the significance estimation
 >                                 step.  These are used to create the significance distribution.
 >     XXX_nullcorrelationhist_passN_peak.txt                - The location of the peak of the significance distribution histogram.
 >     XXX_nullcorrelationhist_passN.txt                     - The significance distribution histogram (use showhist to view).
->     XXX_referenceautocorr_passN.txt                       - The autocorrelation function of the reference regressor 
+>     XXX_referenceautocorr_passN.txt                       - The autocorrelation function of the reference regressor
 >                                 (used for finding sidelobes).
 >     XXX_reference_fmrires_passN.txt                       - The reference regressor, resampled to the timepoints of the data file.
 >     XXX_reference_resampres_passN.txt                     - The reference regressor, resampled to the timepoints of the data
@@ -168,11 +167,11 @@ The following files are produced, assuming XXX is the outputname:
 >
 >     Final output maps
 >     XXX_corrout.nii.gz                                    - The oversampled correlation function over the lag range for each spatial location.
->     XXX_gaussout.nii.gz                                   - A fit to the oversampled correlation function over the lag range 
+>     XXX_gaussout.nii.gz                                   - A fit to the oversampled correlation function over the lag range
 >                                 for each spatial location.
 >     XXX_lagmask.nii.gz                                    - The mask showing all voxels where correlation values were returned.
 >     XXX_lagsigma.nii.gz                                   - The width of the largest crosscorrelation peak within the lag range (NB:
->                                 This partially indicates MTT, but in practice it is dominated by the width of 
+>                                 This partially indicates MTT, but in practice it is dominated by the width of
 >                                 the autocorrelation function of the reference regressor, so is less useful than
 >                                 it might otherwise be.)
 >     XXX_lagstrengths.nii.gz                               - The maximum crosscorrelation strength over the lag range (R).
@@ -180,7 +179,7 @@ The following files are produced, assuming XXX is the outputname:
 >     XXX_mean.nii.gz                                       - The mean of the datafile over time for all voxels.
 >     XXX_p_lt_0pPPP_mask.nii.gz                            - The mask showing all voxels with R meeting the p<PPP significance threshold.
 >     XXX_R2.nii.gz                                         - The squared maximum correlation coefficient at every voxel.
->     XXX_refinemask.nii.gz                                 - The voxels used for refinement in the last refinement pass (only 
+>     XXX_refinemask.nii.gz                                 - The voxels used for refinement in the last refinement pass (only
 >                                 present if refinement is performed).
 >     XXX_lagregressors.nii.gz                              - The delayed sLFO regressor for every voxel (not scaled).
 >     XXX_laghist_peak.txt
@@ -221,35 +220,28 @@ The following files are produced, assuming XXX is the outputname:
 The following output files are produced, assuming XXX is the (BIDS
 compliant) prefix:
 
-Name \| Extension(s) \| Meaning \| When present \-\-\-- \|
-\-\-\-\-\-\-\-\-\-\-\-- \| \-\-\-\-\-\-- \|
-\-\-\-\-\-\-\-\-\-\-\--XXX\_maxtime\_map \| (.nii.gz, .json) \| Time of
-offset of the maximum of the similarity function \| Always
-XXX\_maxcorr\_map \| (.nii.gz, .json) \| Maximum similarity function
-value (usually the correlation coefficient, R) \| Always
-XXX\_maxcorrsq\_map (.nii.gz, .json) \| \| Maximum similarity function
-value, squared \| Always XXX\_maxwidth\_map \| (.nii.gz, .json) \| Width
-of the maximum of the similarity function \| Always XXX\_MTT\_map \|
-(.nii.gz, .json) \| Mean transit time (estimated) \| Always
-XXX\_corrfit\_mask \| (.nii.gz) \| Mask showing where the similarity
-function fit succeeded \| Always XXX\_corrfitfailreason\_map \|
-(.nii.gz, .json) \| A numerical code giving the reason a peak could not
-be found (0 if fit succeeded) \| Always XXX\_lfofilterCoeff\_map \|
-(.nii.gz) \| Magnitude of the delayed sLFO regressor from GLM filter \|
-If GLM filtering is enabled (default) XXX\_lfofilterMean\_map \|
-(.nii.gz) \| Mean value over time, from GLM fit \| If GLM filtering is
-enabled (default) XXX\_lfofilterNorm\_map \| (.nii.gz) \| GLM filter
-coefficient, divided by the voxel mean over time \| If GLM filtering is
-enabled (default) XXX\_lfofilterR2\_map \| (.nii.gz) \| R value for the
-GLM fit in the voxel, squared \| If GLM filtering is enabled (default)
-XXX\_lfofilterR\_map \| (.nii.gz) \| R value for the GLM fit in the
-voxel \| If GLM filtering is enabled (default)
+Name | Extension(s) | Meaning | When present
+---- | ------------ | ------- | ------------
+XXX_maxtime_map | (.nii.gz, .json) | Time of offset of the maximum of the similarity function | Always
+XXX_maxcorr_map | (.nii.gz, .json) | Maximum similarity function value (usually the correlation coefficient, R) | Always
+XXX_maxcorrsq_map | (.nii.gz, .json) | Maximum similarity function value, squared | Always
+XXX_maxwidth_map | (.nii.gz, .json) | Width of the maximum of the similarity function | Always
+XXX_MTT_map | (.nii.gz, .json) | Mean transit time (estimated) | Always
+XXX_corrfit_mask | (.nii.gz) | Mask showing where the similarity function fit succeeded | Always
+XXX_corrfitfailreason_map | (.nii.gz, .json) | A numerical code giving the reason a peak could not be found (0 if fit succeeded) | Always
+XXX_lfofilterResult_bold | (.nii.gz, .json) | Filtered BOLD dataset after removing moving regressor | If GLM filtering is enabled (default)
+XXX_lfofilterRemoved_bold | (.nii.gz, .json) | Voxelwise delayed moving regressor that has been removed from the dataset | If GLM filtering is enabled (default) and "--nolimitoutput" is selected
+XXX_lfofilterCoeff_map | (.nii.gz) | Magnitude of the delayed sLFO regressor from GLM filter | If GLM filtering is enabled (default)
+XXX_lfofilterMean_map | (.nii.gz) | Mean value over time, from GLM fit | If GLM filtering is enabled (default)
+XXX_lfofilterNorm_map | (.nii.gz) | GLM filter coefficient, divided by the voxel mean over time | If GLM filtering is enabled (default)
+XXX_lfofilterR2_map | (.nii.gz) | R value for the GLM fit in the voxel, squared | If GLM filtering is enabled (default)
+XXX_lfofilterR_map | (.nii.gz) | R value for the GLM fit in the voxel | If GLM filtering is enabled (default)
 
-\#\#\#\# Usage:
+#### Usage:
 
 > :
 >
->     usage:  rapidtide2  datafilename outputname 
+>     usage:  rapidtide  datafilename outputname
 >     [-r LAGMIN,LAGMAX] [-s SIGMALIMIT] [-a] [--nowindow] [--phat] [--liang] [--eckart] [-f GAUSSSIGMA] [-O oversampfac] [-t TSTEP] [--datatstep=TSTEP] [--datafreq=FREQ] [-d] [-b] [-V] [-L] [-R] [-C] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-o OFFSETTIME] [-T] [-p] [-P] [-A ORDER] [-B] [-h HISTLEN] [-i INTERPTYPE] [-I] [-Z DELAYTIME] [-N NREPS] [--numskip=SKIP] [--refineweighting=TYPE] [--refineprenorm=TYPE] [--passes=PASSES] [--refinepasses=PASSES] [--excludemask=MASK] [--includemask=MASK] [--lagminthresh=MIN] [--lagmaxthresh=MAX] [--ampthresh=AMP] [--sigmathresh=SIGMA] [--corrmaskthresh=PCT] [--refineoffset] [--pca] [--ica] [--weightedavg] [--avg] [--psdfilter] [--despecklethresh=VAL] [--despecklepasses=PASSES] [--dispersioncalc] [--refineupperlag] [--refinelowerlag] [--nosharedmem] [--tmask=MASKFILE] [--limitoutput] [--timerange=START,END] [--skipsighistfit] [--accheck] [--acfix][--numskip=SKIP] [--slicetimes=FILE] [--glmsourcefile=FILE] [--regressorfreq=FREQ] [--regressortstep=TSTEP][--regressor=FILENAME] [--regressorstart=STARTTIME] [--usesp] [--maxfittype=FITTYPE] [--multiproc] [--nprocs=NPROCS] [--nirs] [--venousrefine]
 >
 >     Required arguments:
@@ -286,15 +278,15 @@ voxel \| If GLM filtering is enabled (default)
 >         -L                         - Filter data and regressors to LFO band
 >         -R                         - Filter data and regressors to respiratory band
 >         -C                         - Filter data and regressors to cardiac band
->         -N                         - Estimate significance threshold by running NREPS null 
+>         -N                         - Estimate significance threshold by running NREPS null
 >                      correlations (default is 10000, set to 0 to disable)
 >         --skipsighistfit           - Do not fit significance histogram with a Johnson SB function
 >         --windowfunc=FUNC          - Use FUNC window funcion prior to correlation.  Options are
 >                      hamming (default), hann, blackmanharris, and None
 >         --nowindow                 - Disable precorrelation windowing
->         -f GAUSSSIGMA              - Spatially filter fMRI data prior to analysis using 
+>         -f GAUSSSIGMA              - Spatially filter fMRI data prior to analysis using
 >                      GAUSSSIGMA in mm
->         -M                         - Generate a global mean regressor and use that as the 
+>         -M                         - Generate a global mean regressor and use that as the
 >                      reference regressor
 >         -m                         - Mean scale regressors during global mean estimation
 >         --slicetimes=FILE          - Apply offset times from FILE to each slice in the dataset
@@ -304,73 +296,73 @@ voxel \| If GLM filtering is enabled (default)
 >                      for NIRS data)
 >
 >     Correlation options:
->         -O OVERSAMPFAC             - Oversample the fMRI data by the following integral 
+>         -O OVERSAMPFAC             - Oversample the fMRI data by the following integral
 >                      factor (default is 2)
->         --regressor=FILENAME       - Read probe regressor from file FILENAME (if none 
+>         --regressor=FILENAME       - Read probe regressor from file FILENAME (if none
 >                      specified, generate and use global regressor)
->         --regressorfreq=FREQ       - Probe regressor in file has sample frequency FREQ 
+>         --regressorfreq=FREQ       - Probe regressor in file has sample frequency FREQ
 >                      (default is 1/tr) NB: --regressorfreq and --regressortstep
 >                      are two ways to specify the same thing
->         --regressortstep=TSTEP     - Probe regressor in file has sample time step TSTEP 
+>         --regressortstep=TSTEP     - Probe regressor in file has sample time step TSTEP
 >                      (default is tr) NB: --regressorfreq and --regressortstep
 >                      are two ways to specify the same thing
 >         --regressorstart=START     - The time delay in seconds into the regressor file, corresponding
 >                      in the first TR of the fmri file (default is 0.0)
->         --phat                     - Use generalized cross-correlation with phase alignment 
+>         --phat                     - Use generalized cross-correlation with phase alignment
 >                      transform (PHAT) instead of correlation
 >         --liang                    - Use generalized cross-correlation with Liang weighting function
 >                      (Liang, et al, doi:10.1109/IMCCC.2015.283)
 >         --eckart                   - Use generalized cross-correlation with Eckart weighting function
->         --corrmaskthresh=PCT       - Do correlations in voxels where the mean exceeeds this 
+>         --corrmaskthresh=PCT       - Do correlations in voxels where the mean exceeeds this
 >                      percentage of the robust max (default is 1.0)
 >         --accheck                  - Check for periodic components that corrupt the autocorrelation
 >
 >     Correlation fitting options:
->         -Z DELAYTIME               - Don't fit the delay time - set it to DELAYTIME seconds 
+>         -Z DELAYTIME               - Don't fit the delay time - set it to DELAYTIME seconds
 >                      for all voxels
 >         -r LAGMIN,LAGMAX           - Limit fit to a range of lags from LAGMIN to LAGMAX
 >         -s SIGMALIMIT              - Reject lag fits with linewidth wider than SIGMALIMIT
 >         -B                         - Bipolar mode - match peak correlation ignoring sign
 >         --nofitfilt                - Do not zero out peak fit values if fit fails
->         --maxfittype=FITTYPE       - Method for fitting the correlation peak (default is 'gauss'). 
+>         --maxfittype=FITTYPE       - Method for fitting the correlation peak (default is 'gauss').
 >                      'quad' uses a quadratic fit.  Faster but not as well tested
 >         --despecklepasses=PASSES   - detect and refit suspect correlations to disambiguate peak locations in PASSES passes
 >         --despecklethresh=VAL      - refit correlation if median discontinuity magnitude exceeds VAL (default is 5s)
 >
 >     Regressor refinement options:
->         --refineprenorm=TYPE       - Apply TYPE prenormalization to each timecourse prior 
->                      to refinement (valid weightings are 'None', 
+>         --refineprenorm=TYPE       - Apply TYPE prenormalization to each timecourse prior
+>                      to refinement (valid weightings are 'None',
 >                      'mean' (default), 'var', and 'std'
->         --refineweighting=TYPE     - Apply TYPE weighting to each timecourse prior 
->                      to refinement (valid weightings are 'None', 
+>         --refineweighting=TYPE     - Apply TYPE weighting to each timecourse prior
+>                      to refinement (valid weightings are 'None',
 >                      'R', 'R2' (default)
->         --passes=PASSES,           - Set the number of processing passes to PASSES 
+>         --passes=PASSES,           - Set the number of processing passes to PASSES
 >          --refinepasses=PASSES       (default is 1 pass - no refinement).
 >                      NB: refinepasses is the wrong name for this option -
 >                      --refinepasses is deprecated, use --passes from now on.
->         --includemask=MASK         - Only use voxels in NAME for global regressor 
+>         --includemask=MASK         - Only use voxels in NAME for global regressor
 >                      generation and regressor refinement
->         --excludemask=MASK         - Do not use voxels in NAME for global regressor 
+>         --excludemask=MASK         - Do not use voxels in NAME for global regressor
 >                      generation and regressor refinement
->         --lagminthresh=MIN         - For refinement, exclude voxels with delays less 
+>         --lagminthresh=MIN         - For refinement, exclude voxels with delays less
 >                      than MIN (default is 0.5s)
->         --lagmaxthresh=MAX         - For refinement, exclude voxels with delays greater 
+>         --lagmaxthresh=MAX         - For refinement, exclude voxels with delays greater
 >                      than MAX (default is 5s)
->         --ampthresh=AMP            - For refinement, exclude voxels with correlation 
+>         --ampthresh=AMP            - For refinement, exclude voxels with correlation
 >                      coefficients less than AMP (default is 0.3)
->         --sigmathresh=SIGMA        - For refinement, exclude voxels with widths greater 
+>         --sigmathresh=SIGMA        - For refinement, exclude voxels with widths greater
 >                      than SIGMA (default is 100s)
->         --refineoffset             - Adjust offset time during refinement to bring peak 
+>         --refineoffset             - Adjust offset time during refinement to bring peak
 >                      delay to zero
 >         --refineupperlag           - Only use positive lags for regressor refinement
 >         --refinelowerlag           - Only use negative lags for regressor refinement
->         --pca                      - Use pca to derive refined regressor (default is 
+>         --pca                      - Use pca to derive refined regressor (default is
 >                      unweighted averaging)
->         --ica                      - Use ica to derive refined regressor (default is 
+>         --ica                      - Use ica to derive refined regressor (default is
 >                      unweighted averaging)
->         --weightedavg              - Use weighted average to derive refined regressor 
+>         --weightedavg              - Use weighted average to derive refined regressor
 >                      (default is unweighted averaging)
->         --avg                      - Use unweighted average to derive refined regressor 
+>         --avg                      - Use unweighted average to derive refined regressor
 >                      (default)
 >         --psdfilter                - Apply a PSD weighted Wiener filter to shifted
 >                      timecourses prior to refinement
@@ -380,11 +372,11 @@ voxel \| If GLM filtering is enabled (default)
 >         -T                         - Save a table of lagtimes used
 >         -h HISTLEN                 - Change the histogram length to HISTLEN (default is
 >                      100)
->         --timerange=START,END      - Limit analysis to data between timepoints START 
+>         --timerange=START,END      - Limit analysis to data between timepoints START
 >                      and END in the fmri file
->         --glmsourcefile=FILE       - Regress delayed regressors out of FILE instead of the 
+>         --glmsourcefile=FILE       - Regress delayed regressors out of FILE instead of the
 >                      initial fmri file used to estimate delays
->         --noglm                    - Turn off GLM filtering to remove delayed regressor 
+>         --noglm                    - Turn off GLM filtering to remove delayed regressor
 >                      from each voxel (disables output of fitNorm)
 >         --preservefiltering        - don't reread data prior to GLM
 >
@@ -412,8 +404,8 @@ voxel \| If GLM filtering is enabled (default)
 >         --dispersioncalc           - Generate extra data during refinement to allow calculation of dispersion.
 >         --acfix                    - Perform a secondary correlation to disambiguate peak location
 >                      (enables --accheck).  Experimental.
->         --tmask=MASKFILE           - Only correlate during epochs specified in 
->                      MASKFILE (NB: each line of MASKFILE contains the 
+>         --tmask=MASKFILE           - Only correlate during epochs specified in
+>                      MASKFILE (NB: each line of MASKFILE contains the
 >                      time and duration of an epoch to include
 >         -p                         - Prewhiten and refit data
 >         -P                         - Save prewhitened data (turns prewhitening on)
@@ -443,7 +435,7 @@ The base command you\'d use would be:
 >     rapidtide inputfmrifile outputname --frequencyband lfo --passes 3
 
 This will do a fairly simple analysis. First, the -L option means that
-rapidtide2 will prefilter the data to the LFO band (0.009-0.15Hz). It
+rapidtide will prefilter the data to the LFO band (0.009-0.15Hz). It
 will then construct a regressor from the global mean of the signal in
 inputfmrifile (default behavior if no regressor is specified), and then
 use crosscorrelation to determine the time delay in each voxel. The
@@ -478,7 +470,7 @@ For this type of analysis, a good place to start is the following:
 
 The first option (-N 0), shuts off the calculation of the null
 correlation distribution. This is used to determine the significance
-threshold, but the method currently implemented in rapidtide2 is a bit
+threshold, but the method currently implemented in rapidtide is a bit
 simplistic - it assumes that all the time points in the data are
 exchangable. This is certainly true for resting state data (see above),
 but it is very much NOT true for block paradigm gas challenges. To
@@ -628,7 +620,7 @@ The following files are produced, assuming XXX is the outputname:
 >     XXX_histogram.txt
 >
 >             Images
->     XXX_app.nii.gz                                        - The cardiac waveform over one cycle in each voxel. 
+>     XXX_app.nii.gz                                        - The cardiac waveform over one cycle in each voxel.
 >     XXX_rawapp.nii.gz
 >     XXX_mask.nii.gz
 >     XXX_maskedapp.nii.gz
@@ -675,7 +667,7 @@ The following files are produced, assuming XXX is the outputname:
 >         --numskip=SKIP                 - Skip SKIP tr's at the beginning of the fmri file (default is 0).
 >         --motskip=SKIP                 - Skip SKIP tr's at the beginning of the motion regressor file (default is 0).
 >         --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.
->                          (with timepoints rows) and regress them, their derivatives, 
+>                          (with timepoints rows) and regress them, their derivatives,
 >                          and delayed derivatives out of the data prior to analysis.
 >                          If COLSPEC is present, use the comma separated list of ranges to
 >                          specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For
@@ -700,12 +692,12 @@ The following files are produced, assuming XXX is the outputname:
 >
 >     External cardiac waveform options:
 >         --cardiacfile=FILE[:COL]       - Read the cardiac waveform from file FILE.  If COL is an integer,
->                          format json file, use column named COL (if no file is specified 
+>                          format json file, use column named COL (if no file is specified
 >                          is specified, estimate cardiac signal from data)
->         --cardiacfreq=FREQ             - Cardiac waveform in cardiacfile has sample frequency FREQ 
+>         --cardiacfreq=FREQ             - Cardiac waveform in cardiacfile has sample frequency FREQ
 >                          (default is 32Hz). NB: --cardiacfreq and --cardiactstep
 >                          are two ways to specify the same thing
->         --cardiactstep=TSTEP           - Cardiac waveform in file has sample time step TSTEP 
+>         --cardiactstep=TSTEP           - Cardiac waveform in file has sample time step TSTEP
 >                          (default is 0.03125s) NB: --cardiacfreq and --cardiactstep
 >                          are two ways to specify the same thing
 >         --cardiacstart=START           - The time delay in seconds into the cardiac file, corresponding
@@ -741,7 +733,7 @@ The following files are produced, assuming XXX is the outputname:
 >                          to blood vessels
 >         --saveinfoasjson               - Save the info file in json format rather than text.  Will eventually
 >         --trimcorrelations             - Some physiological timecourses don't cover the entire length of the
->                          fMRI experiment.  Use this option to trim other waveforms to match 
+>                          fMRI experiment.  Use this option to trim other waveforms to match
 >                          when calculating correlations.
 >
 > These options are somewhat self-explanatory. I will be expanding this
@@ -772,7 +764,7 @@ a better initial cardiac estimate, which in turn gives a better filtered
 output. The 25Hz plethysmogram will be found in
 secondpassoutput\_cardfromfmri\_dlfiletered\_25.0Hz.txt
 
-rapidtide2std
+rapidtidestd
 -------------
 
 ### Description:
@@ -792,7 +784,7 @@ rapidtide2std
 
 ### Usage:
 
->     usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]
+>     usage: rapidtidestd INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]
 >
 >     required arguments:
 >         INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
@@ -809,7 +801,7 @@ showxcorr
 
 ### Description:
 
-> Like rapidtide2, but for single time courses. Takes two text files as
+> Like rapidtide, but for single time courses. Takes two text files as
 > input, calculates and displays the time lagged crosscorrelation
 > between them, fits the maximum time lag, and estimates the
 > significance of the correlation. It has a range of filtering,
@@ -843,11 +835,11 @@ showxcorr
 >         -l LABEL      - label for the delay value
 >         -s STARTTIME  - time of first datapoint to use in seconds in the first file
 >         -D DURATION   - amount of data to use in seconds
->         -r RANGE      - restrict peak search range to +/- RANGE seconds (default is 
+>         -r RANGE      - restrict peak search range to +/- RANGE seconds (default is
 >                 +/-15)
 >         -d            - turns off display of graph
 >         -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.
->                 LOWERSTOP and UPPERSTOP can be specified, or will be 
+>                 LOWERSTOP and UPPERSTOP can be specified, or will be
 >                 calculated automatically
 >         -V            - filter data and regressors to VLF band
 >         -L            - filter data and regressors to LFO band
@@ -855,12 +847,12 @@ showxcorr
 >         -C            - filter data and regressors to cardiac band
 >         -T            - trim data to match
 >         -A            - print data on a single summary line
->         -a            - if summary mode is on, add a header line showing what values 
+>         -a            - if summary mode is on, add a header line showing what values
 >                 mean
 >         -f            - negate (flip) second regressor
->         -z FILENAME   - use the columns of FILENAME as controlling variables and 
+>         -z FILENAME   - use the columns of FILENAME as controlling variables and
 >                 return the partial correlation
->         -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS 
+>         -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS
 >                 repetition
 
 showxcorrx \-\-\-\-\-\-\-\--
@@ -871,7 +863,7 @@ showxcorrx \-\-\-\-\-\-\-\--
 > it\'s an x file, it\'s more fluid and I don\'t guarantee that it will
 > keep a stable interface (or even work at any given time). But every
 > time I add something new, it goes here. The goal is eventually to make
-> this the \"real\" version. Unlike rapidtide2, however, I\'ve let it
+> this the \"real\" version. Unlike rapidtide, however, I\'ve let it
 > drift quite a bit without syncing it because some people here actually
 > use showxcorr and I don\'t want to disrupt workflows\...
 
@@ -904,21 +896,21 @@ showxcorrx \-\-\-\-\-\-\-\--
 >         --nodetrend        - do not detrend the data before correlation
 >         --nowindow         - do not prewindow data before corrlation
 >         --windowfunc=FUNC  - window function to apply before corrlation (default is hamming)
->         --cepstral         - check time delay using Choudhary's cepstral technique 
->         --phat             - perform phase alignment transform (PHAT) rather than 
+>         --cepstral         - check time delay using Choudhary's cepstral technique
+>         --phat             - perform phase alignment transform (PHAT) rather than
 >                  standard crosscorrelation
->         --liang            - perform phase alignment transform with Liang weighting function rather than 
+>         --liang            - perform phase alignment transform with Liang weighting function rather than
 >                  standard crosscorrelation
->         --eckart           - perform phase alignment transform with Eckart weighting function rather than 
+>         --eckart           - perform phase alignment transform with Eckart weighting function rather than
 >                  standard crosscorrelation
 >         -l LABEL           - label for the delay value
 >         -s STARTTIME       - time of first datapoint to use in seconds in the first file
 >         -D DURATION        - amount of data to use in seconds
->         -r RANGE           - restrict peak search range to +/- RANGE seconds (default is 
+>         -r RANGE           - restrict peak search range to +/- RANGE seconds (default is
 >                  +/-15)
 >         -d                 - turns off display of graph
 >         -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ.
->                  LOWERSTOP and UPPERSTOP can be specified, or will be 
+>                  LOWERSTOP and UPPERSTOP can be specified, or will be
 >                  calculated automatically
 >         -V                 - filter data and regressors to VLF band
 >         -L                 - filter data and regressors to LFO band
@@ -926,13 +918,13 @@ showxcorrx \-\-\-\-\-\-\-\--
 >         -C                 - filter data and regressors to cardiac band
 >         -T                 - trim data to match
 >         -A                 - print data on a single summary line
->         -a                 - if summary mode is on, add a header line showing what values 
+>         -a                 - if summary mode is on, add a header line showing what values
 >                  mean
 >         -f                 - negate (flip) second regressor
 >         -savecorr=FILE     - Save the correlation function to the file FILE in xy format
->         -z FILENAME        - use the columns of FILENAME as controlling variables and 
+>         -z FILENAME        - use the columns of FILENAME as controlling variables and
 >                  return the partial correlation
->         -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS 
+>         -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS
 >                  repetition
 >         -o OUTPUTFILE      - Writes summary lines to OUTPUTFILE (sets -A)
 
@@ -1021,11 +1013,11 @@ showhist
 ### Description:
 
 > Another simple command line utility that displays the histograms
-> generated by rapidtide2.
+> generated by rapidtide.
 
 ### Inputs:
 
-> A textfile generated by rapidtide2 containing histogram information
+> A textfile generated by rapidtide containing histogram information
 
 ### Outputs:
 
@@ -1248,20 +1240,20 @@ showstxcorr \-\-\-\-\-\-\-\--
 >
 >         -o, --outfile=OUTNAME:           - the root name of the output files
 >
->         --samplefreq=FREQ                - sample frequency of all timecourses is FREQ 
+>         --samplefreq=FREQ                - sample frequency of all timecourses is FREQ
 >            or
->         --sampletime=TSTEP               - time step of all timecourses is TSTEP 
+>         --sampletime=TSTEP               - time step of all timecourses is TSTEP
 >                            NB: --samplefreq and --sampletime are two ways to specify
 >                            the same thing.
 >
 >     optional arguments:
 >         --nodetrend   - do not detrend the data before correlation
 >         --nowindow    - do not prewindow data before corrlation
->         --phat        - perform phase alignment transform (PHAT) rather than 
+>         --phat        - perform phase alignment transform (PHAT) rather than
 >                 standard crosscorrelation
->         --liang       - perform phase alignment transform with Liang weighting function rather than 
+>         --liang       - perform phase alignment transform with Liang weighting function rather than
 >                 standard crosscorrelation
->         --eckart      - perform phase alignment transform with Eckart weighting function rather than 
+>         --eckart      - perform phase alignment transform with Eckart weighting function rather than
 >                 standard crosscorrelation
 >         -s STARTTIME  - time of first datapoint to use in seconds in the first file
 >         -D DURATION   - amount of data to use in seconds
@@ -1282,7 +1274,7 @@ tidepool
 ### Description:
 
 > This is a very experimental tool for displaying all of the various
-> maps generated by rapidtide2 in one place, overlayed on an anatomic
+> maps generated by rapidtide in one place, overlayed on an anatomic
 > image. This makes it a bit easier to see how all the maps are related
 > to one another. To use it, launch tidepool from the command line, and
 > then select a lag time map - tidpool will figure out the root name and

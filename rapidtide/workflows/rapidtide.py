@@ -2025,7 +2025,7 @@ def rapidtide_main(argparsingfunc):
                                 outputname + '_movingsignal' + outsuffix4d + '.txt')
             else:
                 if optiondict['bidsoutput']:
-                    savename = outputname + '_desc-movingsignal' + outsuffix4d + '_bold'
+                    savename = outputname + '_desc-lfofilterRemoved' + outsuffix4d + '_bold'
                 else:
                     savename = outputname + '_movingsignal' + outsuffix4d
                 tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
@@ -2036,7 +2036,7 @@ def rapidtide_main(argparsingfunc):
                                 outputname + '_filtereddata' + outsuffix4d + '.txt')
         else:
             if optiondict['bidsoutput']:
-                savename = outputname + '_desc-lfofilterResult' + outsuffix4d + '_bold'
+                savename = outputname + '_desc-lfofilterCleaned' + outsuffix4d + '_bold'
             else:
                 savename = outputname + '_filtereddata' + outsuffix4d
             tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
