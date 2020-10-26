@@ -717,11 +717,11 @@ def _get_parser():
                         action='store_true',
                         help='Save lag times, strengths, widths, and mask for each pass. ',
                         default=False)
-    output.add_argument('--bidsoutput',
+    output.add_argument('--oldstyleoutput',
                         dest='bidsoutput',
-                        action='store_true',
-                        help='Use BIDS naming and format conventions for output files. ',
-                        default=False)
+                        action='store_false',
+                        help='Use legacy file naming and formats rather than BIDS naming and format conventions for output files. ',
+                        default=True)
 
     # Miscellaneous options
     misc = parser.add_argument_group('Miscellaneous options')

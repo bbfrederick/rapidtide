@@ -52,9 +52,9 @@ def selectFile():
     mydialog = QtGui.QFileDialog()
     options = mydialog.Options()
     lagfilename = mydialog.getOpenFileName(options=options,
-                                           filter="Lag time files (*_lagtimes.nii.gz *_desc-lagtimes_map.nii.gz)")[0]
+                                           filter="Lag time files (*_lagtimes.nii.gz *_desc-maxtime_map.nii.gz)")[0]
     # check to see which file type we got back
-    bidsstartloc = lagfilename.find('desc-lagtimes_map.nii.gz')
+    bidsstartloc = lagfilename.find('desc-maxtime_map.nii.gz')
     if bidsstartloc > 0:
         datafileroot = str(lagfilename[:bidsstartloc])
     else:
@@ -1353,7 +1353,7 @@ def main():
             {
                 'colormap': thermal_state,
                 'label': 'GLM fit coefficient',
-                'display': False,
+                'display': True,
                 'funcmask': 'p_lt_0p050_mask'}}
 
 
