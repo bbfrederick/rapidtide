@@ -1846,7 +1846,7 @@ def rapidtide_main(argparsingfunc):
                 else:
                     savename = outputname + '_desc-' + mapsuffix + outsuffix3d + '_map'
                 bidsdict = bidsbasedict.copy()
-                if mapname == 'lagtimes' or mapname == 'lagsigma':
+                if mapname == 'lagtimes' or mapname == 'lagsigma' or mapname == 'MTT':
                     bidsdict['Units'] = 'second'
                 tide_io.writedicttojson(bidsdict, savename + '.json')
             else:

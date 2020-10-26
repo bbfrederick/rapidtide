@@ -5,6 +5,7 @@ rapidtide \
 	../dst/dgsr_standardnames \
 	--spatialfilt 2 \
         --nprocs -1 \
+        --oldstylenames \
         --passes 3 
 
 rapidtide \
@@ -12,18 +13,17 @@ rapidtide \
 	../dst/dgsr_bids \
 	--spatialfilt 2 \
         --nprocs -1 \
-        --passes 3 \
-        --bidsoutput
+        --passes 3 
 
-rapidtide \
-	fmri.nii.gz \
-	../dst/dgsr_butterworth_onepass \
-	--spatialfilt 2 \
-        --filtertype butterworth \
-        --nprocs -1 \
-        --passes 1
+#rapidtide \
+#	fmri.nii.gz \
+#	../dst/dgsr_butterworth_onepass \
+#	--spatialfilt 2 \
+#        --filtertype butterworth \
+#        --nprocs -1 \
+#        --passes 1
 
-diffmaps ../dst/dgsr_butterworth_onepass_bipolar ../dst/dgsr_butterworth_onepass ../dst/diff_bipvsnorm
+#diffmaps ../dst/dgsr_butterworth_onepass_bipolar ../dst/dgsr_butterworth_onepass ../dst/diff_bipvsnorm
 
 #rapidtide \
 #	fmri.nii.gz \

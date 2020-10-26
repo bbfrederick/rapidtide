@@ -379,7 +379,7 @@ class RapidtideDataset:
                                     'reference')
 
         # check which naming style the dataset has
-        if os.path.isfile(self.fileroot + 'desc-lagtimes_map.nii.gz'):
+        if os.path.isfile(self.fileroot + 'desc-maxtime_map.nii.gz'):
             self.bidsformat = True
             self.newstylenames = True
         else:
@@ -569,14 +569,14 @@ class RapidtideDataset:
             thepath, thebase = os.path.split(self.fileroot)
             self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'meanvalue.nii.gz', thebase,
                                                 init_LUT=self.init_LUT)
-            print('using ', self.fileroot + 'meanvalue_map.nii.gz', ' as background')
+            print('using ', self.fileroot + 'meanvalue.nii.gz', ' as background')
             # allloadedmaps.append('anatomic')
             return True
-        elif os.path.isfile(self.fileroot + 'desc-meanvalue_map.nii.gz'):
+        elif os.path.isfile(self.fileroot + 'desc-lfofilterMean_map.nii.gz'):
             thepath, thebase = os.path.split(self.fileroot)
-            self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'desc-meanvalue_map.nii.gz', thebase,
+            self.overlays['anatomic'] = overlay('anatomic', self.fileroot + 'desc-lfofilterMean_map.nii.gz', thebase,
                                                 init_LUT=self.init_LUT)
-            print('using ', self.fileroot + 'desc-meanvalue_map.nii.gz', ' as background')
+            print('using ', self.fileroot + 'desc-lfofilterMean_map.nii.gz', ' as background')
             # allloadedmaps.append('anatomic')
             return True
         else:
@@ -644,9 +644,9 @@ class RapidtideDataset:
                              ['lagstrengths', 'desc-maxcorr_map'],
                              ['lagsigma', 'desc-maxwidth_map'],
                              ['MTT', 'desc-MTT_map'],
-                             ['R2', 'desc-maxcorrsq_map'],
-                             ['fitNorm', 'desc-fitNorm_map'],
-                             ['fitcoff', 'desc-fitCoeff_map']]
+                             ['R2', 'desc-lfofilterR2_map'],
+                             ['fitNorm', 'desc-lfofilterNorm_map'],
+                             ['fitcoff', 'desc-lfofilterCoeff_map']]
             if self.usecorrout:
                 self.funcmaps += [['corrout', 'desc-corrout_info']]
                 # self.funcmaps += [['gaussout', 'desc-gaussout_info']]
@@ -723,7 +723,7 @@ class RapidtideDataset:
 
         # then the functional masks
         if self.bidsformat:
-            self.funcmasks = [['lagmask', 'desc-fitmask_map'],
+            self.funcmasks = [['lagmask', 'desc-corrfit_mask'],
                               ['refinemask', 'desc-refine_mask'],
                               ['meanmask', 'desc-meanmask_mask'],
                               ['p_lt_0p050_mask', 'desc-plt0p050_mask'],
