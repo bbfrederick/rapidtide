@@ -1143,10 +1143,7 @@ def rapidtide_main(argparsingfunc):
                                         outputname + '_cleanedreference_pass' + str(thepass) + '.txt')
                     tide_io.writenpvecs(cleaned_resampref_y,
                                         outputname + '_cleanedresampref_y_pass' + str(thepass) + '.txt')
-                if optiondict['saveoptionsasjson']:
-                    tide_io.writedicttojson(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.json')
-                else:
-                    tide_io.writedict(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.txt')
+                tide_io.writedicttojson(optiondict, outputname + '_options_pregetnull_pass' + str(thepass) + '.json')
             thecorrelator.setlimits(lagmininpts, lagmaxinpts)
             thecorrelator.setreftc(cleaned_resampref_y)
             themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
@@ -1799,10 +1796,7 @@ def rapidtide_main(argparsingfunc):
 
     # Post refinement step 3 - save out all of the important arrays to nifti files
     # write out the options used
-    if optiondict['saveoptionsasjson']:
-        tide_io.writedicttojson(optiondict, outputname + '_options.json')
-    else:
-        tide_io.writedict(optiondict, outputname + '_options.txt')
+    tide_io.writedicttojson(optiondict, outputname + '_options.json')
 
     # do ones with one time point first
     timings.append(['Start saving maps', time.time(), None, None])
@@ -2062,10 +2056,10 @@ def rapidtide_main(argparsingfunc):
     optiondict['maxrss'] = tide_util.logmem('status', file=None).split(',')[1]
 
     # do a final save of the options file
-    if optiondict['saveoptionsasjson']:
-        tide_io.writedicttojson(optiondict, outputname + '_options.json')
+    if optiondict['bidsoutput']:
+        tide_io.writedicttojson(optiondict, outputname + '_desc-runoptions_info.json')
     else:
-        tide_io.writedict(optiondict, outputname + '_options.txt')
+        tide_io.writedicttojson(optiondict, outputname + '_options.json')
 
 if __name__ == '__main__':
     from rapidtide.workflows.rapidtide_parser import process_args

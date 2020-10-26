@@ -321,7 +321,6 @@ def usage():
     print("                                     less than 1 sets the number of worker processes to")
     print("                                     n_cpus - 1 (default).  Setting NPROCS enables --multiproc.")
     print("    --debug                        - Enable additional information output")
-    print("    --saveoptionsasjson            - Save the options file in json format rather than text.  Will eventually")
     print("                                     become the default, but for now I'm just trying it out.")
     print("")
     print("Experimental options (not fully tested, may not work):")
@@ -436,7 +435,6 @@ def process_args():
     optiondict['savemovingsignal'] = True
     optiondict['saveglmfiltered'] = True
     optiondict['savecorrtimes'] = False
-    optiondict['saveoptionsasjson'] = False
     optiondict['saveintermediatemaps'] = False
     optiondict['bidsoutput'] = False
 
@@ -584,7 +582,6 @@ def process_args():
                                                                                                           'weightedavg',
                                                                                                           'avg',
                                                                                                           'psdfilter',
-                                                                                                          'saveoptionsasjson',
                                                                                                           'dispersioncalc',
                                                                                                           'noglm',
                                                                                                           'nosharedmem',
@@ -764,9 +761,6 @@ def process_args():
                 print('will use n_cpus - 1 processes for calculation')
             else:
                 print('will use', optiondict['nprocs'], 'processes for calculation')
-        elif o == '--saveoptionsasjson':
-            optiondict['saveoptionsasjson'] = True
-            print('saving options file as json rather than text')
         elif o == '--savemotionglmfilt':
             optiondict['savemotionfiltered'] = True
             print('saveing motion filtered data')

@@ -741,11 +741,6 @@ def _get_parser():
                       help=('Do Wiener deconvolution to find voxel transfer '
                             'function. '),
                       default=False)
-    misc.add_argument('--saveoptionsastext',
-                      dest='saveoptionsasjson',
-                      action='store_false',
-                      help=('Save options as text, rather than as a json file. '),
-                      default=True)
     misc.add_argument('--spcalculation',
                       dest='internalprecision',
                       action='store_const',
