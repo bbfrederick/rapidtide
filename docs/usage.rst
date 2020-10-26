@@ -641,10 +641,15 @@ For compatibility with old workflows, rapidtide can be called using legacy synta
 
 	These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
 
-#### Examples:
+Examples:
+"""""""""
+
 Rapidtide can do many things - as I've found more interesting things to do with time delay processing, it's gained new functions and options to support these new applications.  As a result, it can be a little hard to know what to use for a new experiment.  To help with that, I've decided to add this section to the manual to get you started.  It's broken up by type of data/analysis you might want to do.
 
-##### Removing low frequency physiological noise from resting state data
+
+Removing low frequency physiological noise from resting state data
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
 This is what I thought most people would use rapidtide for - finding and removing the low frequency (LFO) signal from an existing dataset.  This presupposes you have not made a simultaneous physiological recording (well, you may have, but it assumes you aren't using it).  For this, you can use a minimal set of options, since the defaults are mostly right.
 
 The base command you'd use would be:
@@ -655,7 +660,8 @@ The base command you'd use would be:
 
 This will do a fairly simple analysis.  First, the -L option means that rapidtide will prefilter the data to the LFO band (0.009-0.15Hz). It will then construct a regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor is specified), and then use crosscorrelation to determine the time delay in each voxel.  The --refinepasses=3 option directs rapidtide to to perform the delay analysis 3 times, each time generating a new estimate of the global noise signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.  After the three passes are complete, it will then use a GLM filter to remove a lagged copy of the final mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also a number of maps output with the prefix `"outputname_"` of delay, correlation strength and so on.
 
-##### Mapping long time delays in response to a gas challenge experiment
+Mapping long time delays in response to a gas challenge experiment:
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 Processing this sort of data requires a very different set of options from the previous case.  Instead of the distribution of delays you expect in healthy controls (a slightly skewed, somewhat normal distribution with a tail on the positive side, ranging from about -5 to 5 seconds), in this case, the maximum delay can be extremely long (100-120 seconds is not uncommon in stroke, moyamoya disesase, and atherosclerosis).  To do this, you need to radically change what options you use, not just the delay range, but a number of other options having to do with refinement and statistical measures.
 
