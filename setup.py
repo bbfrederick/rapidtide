@@ -57,7 +57,7 @@ if addtidepool:
     modules_list.append('rapidtide/tidepoolTemplate_alt')
     modules_list.append('rapidtide/OrthoImageItem')
 
-script_list = ['rapidtide/scripts/rapidtide2x',
+script_list = ['rapidtide/scripts/rapidtide2x_legacy',
                'rapidtide/scripts/rapidtide',
                'rapidtide/scripts/rapidtide2std',
                'rapidtide/scripts/happy2std',
