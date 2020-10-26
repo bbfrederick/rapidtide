@@ -134,7 +134,7 @@ BIDS Outputs:
 
 .. csv-table:: BIDS-Format Outputs
    :header: "Name", "Extension(s)", "Content", "When present"
-   :widths: 15, 15, 30, 10
+   :widths: 15, 10, 30, 10
 
    "XXX_maxtime_map", ".nii.gz, .json", "Time of offset of the maximum of the similarity function", "Always"
    "XXX_desc-maxtime_hist", ".tsv, .json", "Histogram of the maxtime map", "Always"
