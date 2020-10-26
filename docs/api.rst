@@ -1,25 +1,29 @@
+.. _api_ref:
+
+.. currentmodule:: rapidtide
+
 API
 ===
 
+.. _api_workflows_ref:
 
 :mod:`rapidtide.workflows`: Rapidtide workflows
 --------------------------------------------------
+
 .. automodule:: rapidtide.workflows
     :no-members:
     :no-inherited-members:
 
-.. autosummary:: rapidtide.workflows
+.. currentmodule:: rapidtide.workflows
+
+.. autosummary::
     :toctree: generated/
     :template: function.rst
 
-    rapidtide.workflows.rapidtide_workflow
-    rapidtide.workflows.showxcorrx_workflow
+    rapidtide.workflows.rapidtide.rapidtide_main
 
 
-.. currentmodule:: rapidtide
-
-.. _calibration_ref:
-
+.. _api_correlate_ref:
 
 :mod:`rapidtide.correlate`: Correlation functions
 --------------------------------------------------
@@ -27,7 +31,9 @@ API
     :no-members:
     :no-inherited-members:
 
-.. autosummary:: rapidtide.correlate
+.. currentmodule:: rapidtide.correlate
+
+.. autosummary::
     :toctree: generated/
     :template: function.rst
 
@@ -44,10 +50,7 @@ API
     rapidtide.correlate.gccproduct
 
 
-.. currentmodule:: rapidtide
-
-.. _calibration_ref:
-
+.. _api_filter_ref:
 
 :mod:`rapidtide.filter`: Filters
 --------------------------------------------------
@@ -55,7 +58,9 @@ API
     :no-members:
     :no-inherited-members:
 
-.. autosummary:: rapidtide.filter
+.. currentmodule:: rapidtide.filter
+
+.. autosummary::
     :toctree: generated/
     :template: function.rst
 
@@ -89,10 +94,7 @@ API
     rapidtide.filter.noncausalfilter
 
 
-.. currentmodule:: rapidtide
-
-.. _calibration_ref:
-
+.. _api_fit_ref:
 
 :mod:`rapidtide.fit`: Fitting functions
 --------------------------------------------------
@@ -100,7 +102,9 @@ API
     :no-members:
     :no-inherited-members:
 
-.. autosummary:: rapidtide.fit
+.. currentmodule:: rapidtide.fit
+
+.. autosummary::
     :toctree: generated/
     :template: function.rst
 
@@ -133,10 +137,7 @@ API
     rapidtide.fit.peakdetect
 
 
-.. currentmodule:: rapidtide
-
-.. _calibration_ref:
-
+.. _api_io_ref:
 
 :mod:`rapidtide.io`: Input/output functions
 --------------------------------------------------
@@ -144,7 +145,9 @@ API
     :no-members:
     :no-inherited-members:
 
-.. autosummary:: rapidtide.io
+.. currentmodule:: rapidtide.io
+
+.. autosummary::
     :toctree: generated/
     :template: function.rst
 
@@ -172,10 +175,7 @@ API
     rapidtide.io.writenpvecs
 
 
-.. currentmodule:: rapidtide
-
-.. _calibration_ref:
-
+.. _api_miscmath_ref:
 
 :mod:`rapidtide.miscmath`: Miscellaneous math functions
 -------------------------------------------------------
@@ -183,7 +183,9 @@ API
     :no-members:
     :no-inherited-members:
 
-.. autosummary:: rapidtide.miscmath
+.. currentmodule:: rapidtide.miscmath
+
+.. autosummary::
     :toctree: generated/
     :template: function.rst
 
@@ -204,10 +206,7 @@ API
     rapidtide.miscmath.envdetect
 
 
-.. currentmodule:: rapidtide
-
-.. _calibration_ref:
-
+.. _api_resample_ref:
 
 :mod:`rapidtide.resample`: Resampling functions
 --------------------------------------------------
@@ -215,7 +214,9 @@ API
     :no-members:
     :no-inherited-members:
 
-.. autosummary:: rapidtide.resample
+.. currentmodule:: rapidtide.resample
+
+.. autosummary::
     :toctree: generated/
     :template: function.rst
 
@@ -231,10 +232,7 @@ API
     rapidtide.resample.fastresampler
 
 
-.. currentmodule:: rapidtide
-
-.. _calibration_ref:
-
+.. _api_stats_ref:
 
 :mod:`rapidtide.stats`: Statistical functions
 --------------------------------------------------
@@ -242,7 +240,9 @@ API
     :no-members:
     :no-inherited-members:
 
-.. autosummary:: rapidtide.stats
+.. currentmodule:: rapidtide.stats
+
+.. autosummary::
     :toctree: generated/
     :template: function.rst
 
@@ -265,10 +265,7 @@ API
     rapidtide.stats.makemask
 
 
-.. currentmodule:: rapidtide
-
-.. _calibration_ref:
-
+.. _api_util_ref:
 
 :mod:`rapidtide.util`: Utility functions
 --------------------------------------------------
@@ -276,7 +273,9 @@ API
     :no-members:
     :no-inherited-members:
 
-.. autosummary:: rapidtide.util
+.. currentmodule:: rapidtide.util
+
+.. autosummary::
     :toctree: generated/
     :template: function.rst
 
@@ -290,8 +289,3 @@ API
     rapidtide.util.version
     rapidtide.util.timefmt
     rapidtide.util.proctiminginfo
-
-
-.. currentmodule:: rapidtide
-
-.. _calibration_ref:

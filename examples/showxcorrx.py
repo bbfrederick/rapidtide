@@ -18,7 +18,7 @@ Calculate and display crosscorrelation between two random timeseries.
 from os import remove
 import matplotlib.pyplot as plt
 import numpy as np
-from rapidtide.workflows import showxcorrx_workflow
+from rapidtide.scripts import showxcorrx
 
 ###############################################################################
 # Arguments
@@ -46,7 +46,7 @@ fig.show()
 ###############################################################################
 # Now let's run it
 # --------------------------------
-showxcorrx_workflow(f1, f2, samplerate)
+showxcorrx.main(f1, f2, samplerate)
 
 ###############################################################################
 # Clean up

@@ -4,27 +4,16 @@ For more information about how the rapidtide library can be used, please
 see the API page. Common rapidtide workflows can also be called from the
 command line.
 
-Run rapidtide2
---------------
+Run rapidtide
+-------------
 This is the full rapidtide workflow. The learn more about this workflow,
 check out the workflow documentation:
 :py:func:`rapidtide.workflows.rapidtide_workflow`.
 
 .. argparse::
-   :ref: rapidtide.workflows.rapidtide2._get_parser
-   :prog: rapidtide2
+   :ref: rapidtide.workflows.rapidtide_parser._get_parser
+   :prog: rapidtide
    :func: _get_parser
-
-Run showxcorrx
---------------
-This is the showxcorrx workflow.
-The learn more about this workflow, check out the workflow
-documentation: :py:func:`rapidtide.workflows.showxcorrx_workflow`.
-
-.. argparse::
-  :ref: rapidtide.workflows.showxcorrx._get_parser
-  :prog: showxcorrx
-  :func: _get_parser
 
 Running from the command line
 -----------------------------
@@ -142,24 +131,24 @@ The following files are produced, assuming XXX is the outputname:
 BIDS Outputs:
 """""""""""""
 
-The following output files are produced, assuming XXX is the (BIDS compliant) prefix:
+.. csv-table:: BIDS-Format Outputs
+   :header: "Name", "Extension(s)", "Content", "When present"
+   :widths: 15, 10, 30, 10
 
-Name | Extension(s) | Meaning | When present
----- | ------------ | ------- | ------------
-XXX_maxtime_map | (.nii.gz, .json) | Time of offset of the maximum of the similarity function | Always
-XXX_maxcorr_map | (.nii.gz, .json) | Maximum similarity function value (usually the correlation coefficient, R) | Always
-XXX_maxcorrsq_map  (.nii.gz, .json) | | Maximum similarity function value, squared | Always
-XXX_maxwidth_map | (.nii.gz, .json) | Width of the maximum of the similarity function | Always
-XXX_MTT_map | (.nii.gz, .json) | Mean transit time (estimated) | Always
-XXX_corrfit_mask | (.nii.gz) | Mask showing where the similarity function fit succeeded | Always
-XXX_corrfitfailreason_map | (.nii.gz, .json) | A numerical code giving the reason a peak could not be found (0 if fit succeeded) | Always
-XXX_lfofilterCoeff_map | (.nii.gz) | Magnitude of the delayed sLFO regressor from GLM filter | If GLM filtering is enabled (default)
-XXX_lfofilterMean_map | (.nii.gz) | Mean value over time, from GLM fit | If GLM filtering is enabled (default)
-XXX_lfofilterNorm_map | (.nii.gz) | GLM filter coefficient, divided by the voxel mean over time | If GLM filtering is enabled (default)
-XXX_lfofilterR2_map | (.nii.gz) | R value for the GLM fit in the voxel, squared | If GLM filtering is enabled (default)
-XXX_lfofilterR_map | (.nii.gz) | R value for the GLM fit in the voxel | If GLM filtering is enabled (default)
-
-
+   "XXX_maxtime_map", "(.nii.gz, .json)", "Time of offset of the maximum of the similarity function", "Always"
+   "XXX_maxcorr_map", "(.nii.gz, .json)", "Maximum similarity function value (usually the correlation coefficient, R)", "Always"
+   "XXX_maxcorrsq_map", "(.nii.gz, .json)", "Maximum similarity function value, squared", "Always"
+   "XXX_maxwidth_map", "(.nii.gz, .json)", "Width of the maximum of the similarity function", "Always"
+   "XXX_MTT_map", "(.nii.gz, .json)", "Mean transit time (estimated)", "Always"
+   "XXX_corrfit_mask", "(.nii.gz)", "Mask showing where the similarity function fit succeeded", "Always"
+   "XXX_corrfitfailreason_map", "(.nii.gz, .json)", "A numerical code giving the reason a peak could not be found (0 if fit succeeded)", "Always"
+   "XXX_lfofilterCleaned_bold", "(.nii.gz, .json)", "Filtered BOLD dataset after removing moving regressor", "If GLM filtering is enabled (default)"
+   "XXX_lfofilterRemoved_bold", "(.nii.gz, .json)", "Scaled, voxelwise delayed moving regressor that has been removed from the dataset", "If GLM filtering is enabled (default) and `--nolimitoutput` is selected"
+   "XXX_lfofilterCoeff_map", "(.nii.gz)", "Magnitude of the delayed sLFO regressor from GLM filter", "If GLM filtering is enabled (default)"
+   "XXX_lfofilterMean_map", "(.nii.gz)", "Mean value over time, from GLM fit", "If GLM filtering is enabled (default)"
+   "XXX_lfofilterNorm_map", "(.nii.gz)", "GLM filter coefficient, divided by the voxel mean over time", "If GLM filtering is enabled (default)"
+   "XXX_lfofilterR2_map", "(.nii.gz)", "R value for the GLM fit in the voxel, squared", "If GLM filtering is enabled (default)"
+   "XXX_lfofilterR_map", "(.nii.gz)", "R value for the GLM fit in the voxel", "If GLM filtering is enabled (default)"
 
 #### Usage:
 
@@ -352,7 +341,7 @@ The base command you'd use would be:
 
 		rapidtide inputfmrifile outputname --frequencyband lfo --passes 3
 
-This will do a fairly simple analysis.  First, the -L option means that rapidtide2 will prefilter the data to the LFO band (0.009-0.15Hz). It will then construct a regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor is specified), and then use crosscorrelation to determine the time delay in each voxel.  The --refinepasses=3 option directs rapidtide to to perform the delay analysis 3 times, each time generating a new estimate of the global noise signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.  After the three passes are complete, it will then use a GLM filter to remove a lagged copy of the final mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also a number of maps output with the prefix "outputname_" of delay, correlation strength and so on.
+This will do a fairly simple analysis.  First, the -L option means that rapidtide2 will prefilter the data to the LFO band (0.009-0.15Hz). It will then construct a regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor is specified), and then use crosscorrelation to determine the time delay in each voxel.  The --refinepasses=3 option directs rapidtide to to perform the delay analysis 3 times, each time generating a new estimate of the global noise signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.  After the three passes are complete, it will then use a GLM filter to remove a lagged copy of the final mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also a number of maps output with the prefix `"outputname_"` of delay, correlation strength and so on.
 
 ##### Mapping long time delays in response to a gas challenge experiment
 
@@ -571,7 +560,7 @@ Examples:
 ^^^^^^^^^
 
 Just getting the cardiac waveform from resting state data
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 The base command you'd use would be:
 
@@ -684,7 +673,7 @@ Usage:
 
 
 showxcorrx
----------
+----------
 
 Description:
 ^^^^^^^^^^^^
@@ -810,7 +799,7 @@ Usage:
 		    --debug                  - print debugging information
 
 histnifti
---------
+---------
 
 Description:
 ^^^^^^^^^^^^
@@ -932,7 +921,7 @@ Usage:
 
 
 tcfrom3col
-------
+----------
 
 Description:
 ^^^^^^^^^^^^
@@ -1075,7 +1064,7 @@ Usage:
 
 
 showstxcorr
----------
+-----------
 
 Description:
 ^^^^^^^^^^^^
@@ -1188,9 +1177,6 @@ Outputs:
 Usage:
 ^^^^^^
 
-::
-
-
 OrthoImageItem.py
 -----------------
 
@@ -1206,5 +1192,3 @@ Outputs:
 
 Usage:
 ^^^^^^
-
-::

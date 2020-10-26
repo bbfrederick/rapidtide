@@ -189,9 +189,17 @@ setup(
             'sphinx_rtd_theme',
             'sphinx-argparse',
             'sphinx-gallery',
-            'numpydoc',
             'm2r',
+            'recommonmark',
             ],
+        'tests': [
+            'codecov',
+            'coverage',
+            'coveralls',
+            'flake8',
+            'pytest',
+            'pytest-cov'
+        ],
     },
 
     # If there are data files included in your packages that need to be

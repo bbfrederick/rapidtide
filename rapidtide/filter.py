@@ -1325,8 +1325,6 @@ class noncausalfilter:
             Turn debugging on and off with the debug flag.
         getpadtime()
             Return the current end pad time.
-        settrapfft(useit)
-            Set to use trapezoidal FFT filter.  If false use brickwall.
         setfreqs(lowerstop, lowerpass, upperpass, upperstop)
             Set the frequency parameters of the 'arb' and 'arb_stop' filter.
         """
