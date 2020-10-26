@@ -75,13 +75,14 @@ BIDS Outputs:
    "XXX_corrfit_mask", ".nii.gz", "Mask showing where the similarity function fit succeeded", "Always"
    "XXX_corrfitfailreason_map", ".nii.gz, .json", "A numerical code giving the reason a peak could not be found (0 if fit succeeded)", "Always"
    "XXX_desc-corrfitwindow_info", ".nii.gz", "Values used for correlation peak fitting", "Always"
-   "XXX_lfofilterCleaned_bold", ".nii.gz, .json", "Filtered BOLD dataset after removing moving regressor", "If GLM filtering is enabled (default)"
-   "XXX_lfofilterRemoved_bold", ".nii.gz, .json", "Scaled, voxelwise delayed moving regressor that has been removed from the dataset", "If GLM filtering is enabled (default) and `--nolimitoutput` is selected"
-   "XXX_lfofilterCoeff_map", ".nii.gz", "Magnitude of the delayed sLFO regressor from GLM filter", "If GLM filtering is enabled (default)"
-   "XXX_lfofilterMean_map", ".nii.gz", "Mean value over time, from GLM fit", "If GLM filtering is enabled (default)"
-   "XXX_lfofilterNorm_map", ".nii.gz", "GLM filter coefficient, divided by the voxel mean over time", "If GLM filtering is enabled (default)"
-   "XXX_lfofilterR2_map", ".nii.gz", "R value for the GLM fit in the voxel, squared", "If GLM filtering is enabled (default)"
-   "XXX_lfofilterR_map", ".nii.gz", "R value for the GLM fit in the voxel", "If GLM filtering is enabled (default)"
+   "XXX_desc-runoptions_info", ".json", "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance", "Always"
+   "XXX_desc-lfofilterCleaned_bold", ".nii.gz, .json", "Filtered BOLD dataset after removing moving regressor", "If GLM filtering is enabled (default)"
+   "XXX_desc-lfofilterRemoved_bold", ".nii.gz, .json", "Scaled, voxelwise delayed moving regressor that has been removed from the dataset", "If GLM filtering is enabled (default) and `--nolimitoutput` is selected"
+   "XXX_desc-lfofilterCoeff_map", ".nii.gz", "Magnitude of the delayed sLFO regressor from GLM filter", "If GLM filtering is enabled (default)"
+   "XXX_desc-lfofilterMean_map", ".nii.gz", "Mean value over time, from GLM fit", "If GLM filtering is enabled (default)"
+   "XXX_desc-lfofilterNorm_map", ".nii.gz", "GLM filter coefficient, divided by the voxel mean over time", "If GLM filtering is enabled (default)"
+   "XXX_desc-lfofilterR2_map", ".nii.gz", "R value for the GLM fit in the voxel, squared", "If GLM filtering is enabled (default)"
+   "XXX_desc-lfofilterR_map", ".nii.gz", "R value for the GLM fit in the voxel", "If GLM filtering is enabled (default)"
    "XXX_desc-processed_mask", ".nii.gz", "Mask of all voxels in which the similarity function is calculated", "Always"
    "XXX_desc-globalmean_mask", ".nii.gz", "Mask of voxels used to calculate the global mean signal", "This file will exist if no external regressor is specified"
    "XXX_desc-refine_mask", ".nii.gz", "Mask of voxels used in the last estimate a refined version of the probe regressor", "Exists if passes > 1"
@@ -639,7 +640,63 @@ For compatibility with old workflows, rapidtide can be called using legacy synta
                                            contains the time (first column) and duration (second column) of an
                                            epoch to include.)
 
-	These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
+
+
+These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
+
+When using the legacy interface, file names will be output using the old, non-BIDS names and formats.  rapidtide can be forced to use the old style outputs with the "--oldstyleoutput" flag.
+
+Equivalence between BIDS and legacy outputs:
+""""""""""""""""""""""""""""""""""""""""""""
+
+.. csv-table::
+   :header: "BIDS style name", "Legacy name"
+   :widths: 20, 20
+
+   "XXX_maxtime_map(.nii.gz, .json)", "XXX_lagtimes.nii.gz"
+   "XXX_desc-maxtime_hist(.tsv, .json)", "XXX_laghist.txt"
+   "XXX_maxcorr_map(.nii.gz, .json)", "XXX_lagstrengths.nii.gz"
+   "XXX_desc-maxcorr_hist(.tsv, .json)", "XXX_strengthhist.txt"
+   "XXX_maxcorrsq_map(.nii.gz, .json)", "XXX_R2.nii.gz"
+   "XXX_desc-maxcorrsq_hist(.tsv, .json)", "XXX_R2hist.txt"
+   "XXX_maxwidth_map(.nii.gz, .json)", "XXX_lagsigma.nii.gz"
+   "XXX_desc-maxwidth_hist(.tsv, .json)", "XXX_widthhist.txt"
+   "XXX_MTT_map(.nii.gz, .json)", "XXX_MTT.nii.gz"
+   "XXX_corrfit_mask.nii.gz", "XXX_fitmask.nii.gz"
+   "XXX_corrfitfailreason_map(.nii.gz, .json)", "XXX_failreason.nii.gz"
+   "XXX_desc-corrfitwindow_info.nii.gz", "XXX_windowout.nii.gz"
+   "XXX_desc-runoptions_info.json", "XXX_options.json"
+   "XXX_desc-lfofilterCleaned_bold(.nii.gz, .json)", "XXX_filtereddata.nii.gz"
+   "XXX_desc-lfofilterRemoved_bold(.nii.gz, .json)", "XXX_datatoremove.nii.gz"
+   "XXX_desc-lfofilterCoeff_map.nii.gz", "XXX_fitcoeff.nii.gz"
+   "XXX_desc-lfofilterMean_map.nii.gz", "XXX_meanvalue.nii.gz"
+   "XXX_desc-lfofilterNorm_map.nii.gz", "XXX_fitNorm.nii.gz"
+   "XXX_desc-lfofilterR2_map.nii.gz", "XXX_r2value.nii.gz"
+   "XXX_desc-lfofilterR_map.nii.gz", "XXX_rvalue.nii.gz"
+   "XXX_desc-processed_mask.nii.gz", "XXX_corrmask.nii.gz"
+   "XXX_desc-globalmean_mask.nii.gz", "XXX_meanmask.nii.gz"
+   "XXX_desc-refine_mask.nii.gz", "XXX_refinemask.nii.gz"
+   "XXX_desc-despeckle_mask.nii.gz", "XXX_despecklemask.nii.gz"
+   "XXX_desc-corrout_info.nii.gz", "XXX_corrout.nii.gz"
+   "XXX_desc-gaussout_info.nii.gz", "XXX_gaussout.nii.gz"
+   "XXX_desc-autocorr_timeseries(.tsv, .json)", "XXX_referenceautocorr_passN.txt"
+   "XXX_desc-corrdistdata_info(.tsv, .json)", "XXX_corrdistdata_passN.txt"
+   "XXX_desc-nullsimfunc_hist(.tsv, .json)", "XXX_nullsimfunchist_passN.txt"
+   "XXX_desc-plt0p050_mask.nii.gz", "XXX_p_lt_0p050_mask.nii.gz"
+   "XXX_desc-plt0p010_mask.nii.gz", "XXX_p_lt_0p010_mask.nii.gz"
+   "XXX_desc-plt0p005_mask.nii.gz", "XXX_p_lt_0p005_mask.nii.gz"
+   "XXX_desc-plt0p001_mask.nii.gz", "XXX_p_lt_0p001_mask.nii.gz"
+   "XXX_desc-globallag_hist(.tsv, .json)", "XXX_globallaghist_passN.txt"
+   "XXX_desc-initialmovingregressor_timeseries(.tsv, .json)", "XXX_reference_origres.txt, XXX_reference_origres_prefilt.txt"
+   "XXX_desc-movingregressor_timeseries(.tsv, .json)", "XXX_reference_fmrires_passN.txt"
+   "XXX_desc-oversampledmovingregressor_timeseries(.tsv, .json)", "XXX_reference_resampres_passN.txt"
+   "XXX_desc-refinedmovingregressor_timeseries(.tsv, .json)", "XXX_unfilteredrefinedregressor_passN.txt, XXX_refinedregressor_passN.txt"
+   "XXX_commandline.txt", "XXX_commandline.txt"
+   "XXX_formattedcommandline.txt", "XXX_formattedcommandline.txt"
+   "XXX_memusage.csv", "XXX_memusage.csv"
+   "XXX_runtimings.txt", "XXX_runtimings.txt"
+..
+
 
 Examples:
 """""""""
@@ -669,18 +726,19 @@ For this type of analysis, a good place to start is the following:
 
 	::
 
-		rapidtide inputfmrifile outputname --numnull 0 --searchrange -10,30 --filterfreqs 0.0 0.1 --ampthresh 0.2 --noglm --nofitfilt
+		rapidtide inputfmrifile outputname --numnull 0 --searchrange -10 140 --filterfreqs 0.0 0.1 --ampthresh 0.2 --noglm --nofitfilt
 
 The first option (-N 0), shuts off the calculation of the null correlation distribution.  This is used to determine the significance threshold, but the method currently implemented in rapidtide is a bit simplistic - it assumes that all the time points in the data are exchangable.  This is certainly true for resting state data (see above), but it is very much NOT true for block paradigm gas challenges.  To properly analyze those, I need to consider what time points are 'equivalent', and up to now, I don't, so setting the number of iterations in the Monte Carlo analysis to zero omits this step.
 
-The second option (-r -10,140) is fairly obvious - this extends the detectable delay range out to 140 seconds.  Note that this is somewhat larger than the maximum delays we frequently see, but to find the correlation peak with maximum precision, you need sufficient additional delay values so that the correlation can come to a peak and then come down enough that you can properly fit it.
+The second option (--searchrange -10 140) is fairly obvious - this extends the detectable delay range out to 140 seconds.  Note that this is somewhat larger than the maximum delays we frequently see, but to find the correlation peak with maximum precision, you need sufficient additional delay values so that the correlation can come to a peak and then come down enough that you can properly fit it.
 
-The -noglm option disables data filtering.  If you are using rapidtide to estimate and remove low frequency noise from resting state or task fMRI data, the last step is to use a glm filter to remove this circulatory signal, leaving "pure" neuronal activations, which you'll use in further analyses.  That's not relevant here - the signal you'd be removing is the one you care about. So this option skips that step to save time and disk space.
+The -noglm option disables data filtering.  If you are using rapidtide to estimate and remove low frequency noise from resting state or task fMRI data, the last step is to use a glm filter to remove this circulatory signal, leaving "pure" neuronal signal, which you'll use in further analyses.  That's not relevant here - the signal you'd be removing is the one you care about. So this option skips that step to save time and disk space.
 
 --nofitfilt skips a step after peak estimation.  Estimating the delay and correlation amplitude in each voxel is a two step process. First you make a quick estimate (where is the maximum point of the correlation function, and what is its amplitude?), then you refine it by fitting a Gaussian function to the peak to improve the estimate.  If this step fails, which it can if the peak is too close to the end of the lag range, or strangely shaped, the default behavior is to mark the point as bad and zero out the parameters for the voxel.  The nofitfilt option means that if the fit fails, output the initial estimates rather than all zeros.   This means that you get some information, even if it's not fully refined.  In my experience it does tend to make the maps for the gas challenge experiments a lot cleaner to use this option since the correlation function is pretty well behaved.
 
 
-##### Denoising NIRS data (NEW)
+Denoising NIRS data (NEW)
+'''''''''''''''''''''''''
 
 When we started this whole research effort, I waw originally planning to denoise NIRS data, not fMRI data.  But one thing led to another, and the NIRS got derailed for the fMRI effort.  Now that we have some time to catch our breaths, and more importantly, we have access to some much higher quality NIRS data, this moved back to the front burner.  The majority of the work was already done, I just needed to account for a few qualities that make NIRS data different from fMRI data:
 
@@ -691,28 +749,28 @@ When we started this whole research effort, I waw originally planning to denoise
 
 
 happy
-----------
+^^^^^
 
 Description:
-^^^^^^^^^^^^
+""""""""""""
 
-	happy is a new addition to the rapidtide suite.  It's complementary to rapidtide - it's focussed on fast, cardiac signals in fMRI, rather than the slow, LFO signals we are usually looking at.  It's sort of a Frankenprogram - it has three distinct jobs, which are related, but are very distinct.
+happy is a new addition to the rapidtide suite.  It's complementary to rapidtide - it's focussed on fast, cardiac signals in fMRI, rather than the slow, LFO signals we are usually looking at.  It's sort of a Frankenprogram - it has three distinct jobs, which are related, but are very distinct.
 
-	The first thing happy does is try to extract a cardiac waveform from the fMRI data.  This is something I've been thinking about for a long time.  Words go here
+The first thing happy does is try to extract a cardiac waveform from the fMRI data.  This is something I've been thinking about for a long time.  Words go here
 
-	The second task is to take this raw estimate of the cardiac waveform, and clean it up using a deep learning filter.  The original signal is useful, but pretty gross, but I figured you should be able to exploit the pseudoperiodic nature of the signal to greatly improve it.  This is also a testbed to work on using neural nets to process time domain signals.  It seemed like a worthwhile project, so it got grafted in.
+The second task is to take this raw estimate of the cardiac waveform, and clean it up using a deep learning filter.  The original signal is useful, but pretty gross, but I figured you should be able to exploit the pseudoperiodic nature of the signal to greatly improve it.  This is also a testbed to work on using neural nets to process time domain signals.  It seemed like a worthwhile project, so it got grafted in.
 
-	The final task (which was actually the initial task, and the reason I wrote happy to begin with) is to implement Henning Voss' totally cool hypersampling with analytic phase projection (guess where the name "happy" comes from).  This is fairly straightforward, as Voss describes his method very clearly.  But I have lots of data with no simultaneously recorded cardiac signals, and I was too lazy to go find datasets with pleth data to play with, so that's why I did the cardiac waveform extraction part.
+The final task (which was actually the initial task, and the reason I wrote happy to begin with) is to implement Henning Voss' totally cool hypersampling with analytic phase projection (guess where the name "happy" comes from).  This is fairly straightforward, as Voss describes his method very clearly.  But I have lots of data with no simultaneously recorded cardiac signals, and I was too lazy to go find datasets with pleth data to play with, so that's why I did the cardiac waveform extraction part.
 
 
 Inputs:
 ^^^^^^^
-	Happy needs a 4D BOLD fMRI data file (space by time) as input.  This can be Nifti1 or Nifti2.  If you have a simultaneously recorded cardiac waveform, it will happily use it, otherwise it will try to construct (and refine) one. NOTE: the 4D input dataset needs to be completely unpreprocessed - gradient distortion correction and motion correction can destroy the relationship between slice number and actual acquisition time, and slice time correction does not behave as expected for aliased signals (which the cardiac component in fMRI most certainly is), and in any case we need the slice time offsets to construct our waveform.
+Happy needs a 4D BOLD fMRI data file (space by time) as input.  This can be Nifti1 or Nifti2.  If you have a simultaneously recorded cardiac waveform, it will happily use it, otherwise it will try to construct (and refine) one. NOTE: the 4D input dataset needs to be completely unpreprocessed - gradient distortion correction and motion correction can destroy the relationship between slice number and actual acquisition time, and slice time correction does not behave as expected for aliased signals (which the cardiac component in fMRI most certainly is), and in any case we need the slice time offsets to construct our waveform.
 
 
 Outputs:
 ^^^^^^^^
-	Outputs are space or space by time Nifti or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
+Outputs are space or space by time Nifti or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
 
 The following files are produced, assuming XXX is the outputname:
 
