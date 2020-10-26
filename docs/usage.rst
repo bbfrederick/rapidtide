@@ -134,22 +134,47 @@ BIDS Outputs:
 
 .. csv-table:: BIDS-Format Outputs
    :header: "Name", "Extension(s)", "Content", "When present"
-   :widths: 15, 10, 30, 10
+   :widths: 15, 15, 30, 10
 
-   "XXX_maxtime_map", "(.nii.gz, .json)", "Time of offset of the maximum of the similarity function", "Always"
-   "XXX_maxcorr_map", "(.nii.gz, .json)", "Maximum similarity function value (usually the correlation coefficient, R)", "Always"
-   "XXX_maxcorrsq_map", "(.nii.gz, .json)", "Maximum similarity function value, squared", "Always"
-   "XXX_maxwidth_map", "(.nii.gz, .json)", "Width of the maximum of the similarity function", "Always"
-   "XXX_MTT_map", "(.nii.gz, .json)", "Mean transit time (estimated)", "Always"
-   "XXX_corrfit_mask", "(.nii.gz)", "Mask showing where the similarity function fit succeeded", "Always"
-   "XXX_corrfitfailreason_map", "(.nii.gz, .json)", "A numerical code giving the reason a peak could not be found (0 if fit succeeded)", "Always"
-   "XXX_lfofilterCleaned_bold", "(.nii.gz, .json)", "Filtered BOLD dataset after removing moving regressor", "If GLM filtering is enabled (default)"
-   "XXX_lfofilterRemoved_bold", "(.nii.gz, .json)", "Scaled, voxelwise delayed moving regressor that has been removed from the dataset", "If GLM filtering is enabled (default) and `--nolimitoutput` is selected"
-   "XXX_lfofilterCoeff_map", "(.nii.gz)", "Magnitude of the delayed sLFO regressor from GLM filter", "If GLM filtering is enabled (default)"
-   "XXX_lfofilterMean_map", "(.nii.gz)", "Mean value over time, from GLM fit", "If GLM filtering is enabled (default)"
-   "XXX_lfofilterNorm_map", "(.nii.gz)", "GLM filter coefficient, divided by the voxel mean over time", "If GLM filtering is enabled (default)"
-   "XXX_lfofilterR2_map", "(.nii.gz)", "R value for the GLM fit in the voxel, squared", "If GLM filtering is enabled (default)"
-   "XXX_lfofilterR_map", "(.nii.gz)", "R value for the GLM fit in the voxel", "If GLM filtering is enabled (default)"
+   "XXX_maxtime_map", ".nii.gz, .json", "Time of offset of the maximum of the similarity function", "Always"
+   "XXX_desc-maxtime_hist", ".tsv, .json", "Histogram of the maxtime map", "Always"
+   "XXX_maxcorr_map", ".nii.gz, .json", "Maximum similarity function value (usually the correlation coefficient, R)", "Always"
+   "XXX_desc-maxcorr_hist", ".tsv, .json", "Histogram of the maxcorr map", "Always"
+   "XXX_maxcorrsq_map", ".nii.gz, .json", "Maximum similarity function value, squared", "Always"
+   "XXX_desc-maxcorrsq_hist", ".tsv, .json", "Histogram of the maxcorrsq map", "Always"
+   "XXX_maxwidth_map", ".nii.gz, .json", "Width of the maximum of the similarity function", "Always"
+   "XXX_desc-maxwidth_hist", ".tsv, .json", "Histogram of the maxwidth map", "Always"
+   "XXX_MTT_map", ".nii.gz, .json", "Mean transit time (estimated)", "Always"
+   "XXX_corrfit_mask", ".nii.gz", "Mask showing where the similarity function fit succeeded", "Always"
+   "XXX_corrfitfailreason_map", ".nii.gz, .json", "A numerical code giving the reason a peak could not be found (0 if fit succeeded)", "Always"
+   "XXX_desc-corrfitwindow_info", ".nii.gz", "Values used for correlation peak fitting", "Always"
+   "XXX_lfofilterCleaned_bold", ".nii.gz, .json", "Filtered BOLD dataset after removing moving regressor", "If GLM filtering is enabled (default)"
+   "XXX_lfofilterRemoved_bold", ".nii.gz, .json", "Scaled, voxelwise delayed moving regressor that has been removed from the dataset", "If GLM filtering is enabled (default) and `--nolimitoutput` is selected"
+   "XXX_lfofilterCoeff_map", ".nii.gz", "Magnitude of the delayed sLFO regressor from GLM filter", "If GLM filtering is enabled (default)"
+   "XXX_lfofilterMean_map", ".nii.gz", "Mean value over time, from GLM fit", "If GLM filtering is enabled (default)"
+   "XXX_lfofilterNorm_map", ".nii.gz", "GLM filter coefficient, divided by the voxel mean over time", "If GLM filtering is enabled (default)"
+   "XXX_lfofilterR2_map", ".nii.gz", "R value for the GLM fit in the voxel, squared", "If GLM filtering is enabled (default)"
+   "XXX_lfofilterR_map", ".nii.gz", "R value for the GLM fit in the voxel", "If GLM filtering is enabled (default)"
+   "XXX_desc-processed_mask", ".nii.gz", "Mask of all voxels in which the similarity function is calculated", "Always"
+   "XXX_desc-globalmean_mask", ".nii.gz", "Mask of voxels used to calculate the global mean signal", "This file will exist if no external regressor is specified"
+   "XXX_desc-refine_mask", ".nii.gz", "Mask of voxels used in the last estimate a refined version of the probe regressor", "Exists if passes > 1"
+   "XXX_desc-despeckle_mask", ".nii.gz", "Mask of the last set of voxels that had their time delays adjusted due to autocorrelations in the probe regressor", "Exists if despecklepasses > 0"
+   "XXX_desc-corrout_info", ".nii.gz", "Full similarity function over the search range", "Always"
+   "XXX_desc-gaussout_info", ".nii.gz", "Gaussian fit to similarity function peak over the search range", "Always"
+   "XXX_desc-autocorr_timeseries", ".tsv, .json", "Autocorrelation of the probe regressor for each pass", "Always"
+   "XXX_desc-corrdistdata_info", ".tsv, .json", "Null correlations from the significance estimation for each pass", "Present if --numnull > 0"
+   "XXX_desc-nullsimfunc_hist", ".tsv, .json", "Histogram of the distribution of null correlation values for each pass", "Present if --numnull > 0"
+   "XXX_desc-plt0p050_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.05 significance level", "Present if --numnull > 0"
+   "XXX_desc-plt0p010_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.01 significance level", "Present if --numnull > 0"
+   "XXX_desc-plt0p005_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.005 significance level", "Present if --numnull > 0"
+   "XXX_desc-plt0p001_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.001 significance level", "Present if --numnull > 0"
+   "XXX_desc-globallag_hist", ".tsv, .json", "Histogram of peak correlation times between probe and all voxels, over all time lags, for each pass", "Always"
+   "XXX_desc-initialmovingregressor_timeseries", ".tsv, .json", "The raw and filtered initial probe regressor, at the original sampling resolution", "Always"
+   "XXX_desc-movingregressor_timeseries", ".tsv, .json", "The probe regressor used in each pass, at the time resolution of the data", "Always
+   "XXX_desc-oversampledmovingregressor_timeseries", ".tsv, .json", "The probe regressor used in each pass, at the time resolution used for calculating the similarity function", "Always"
+   "XXX_desc-refinedmovingregressor_timeseries", ".tsv, .json", "The raw and filtered probe regressor produced by the refinement procedure, at eh time resolution of the data", "Exists if passes > 1"
+
+
 
 #### Usage:
 
