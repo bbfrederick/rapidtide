@@ -64,7 +64,7 @@ def _get_parser():
             help='The input data file (BOLD fmri file or NIRS text file)')
     parser.add_argument(
             'outputname',
-            help='The root name for the output files')
+            help='The root name for the output files.  For BIDS compliance, this can only contain valid BIDS entities from the source data.')
 
     # Analysis types
     analysis_type = parser.add_argument_group('Analysis type').add_mutually_exclusive_group()
