@@ -170,9 +170,9 @@ BIDS Outputs:
    "XXX_desc-plt0p001_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.001 significance level", "Present if --numnull > 0"
    "XXX_desc-globallag_hist", ".tsv, .json", "Histogram of peak correlation times between probe and all voxels, over all time lags, for each pass", "Always"
    "XXX_desc-initialmovingregressor_timeseries", ".tsv, .json", "The raw and filtered initial probe regressor, at the original sampling resolution", "Always"
-   "XXX_desc-movingregressor_timeseries", ".tsv, .json", "The probe regressor used in each pass, at the time resolution of the data", "Always
+   "XXX_desc-movingregressor_timeseries", ".tsv, .json", "The probe regressor used in each pass, at the time resolution of the data", "Always"
    "XXX_desc-oversampledmovingregressor_timeseries", ".tsv, .json", "The probe regressor used in each pass, at the time resolution used for calculating the similarity function", "Always"
-   "XXX_desc-refinedmovingregressor_timeseries", ".tsv, .json", "The raw and filtered probe regressor produced by the refinement procedure, at eh time resolution of the data", "Exists if passes > 1"
+   "XXX_desc-refinedmovingregressor_timeseries", ".tsv, .json", "The raw and filtered probe regressor produced by the refinement procedure, at the time resolution of the data", "Exists if passes > 1"
 
 
 
