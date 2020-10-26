@@ -229,8 +229,8 @@ XXX_maxwidth_map | (.nii.gz, .json) | Width of the maximum of the similarity fun
 XXX_MTT_map | (.nii.gz, .json) | Mean transit time (estimated) | Always
 XXX_corrfit_mask | (.nii.gz) | Mask showing where the similarity function fit succeeded | Always
 XXX_corrfitfailreason_map | (.nii.gz, .json) | A numerical code giving the reason a peak could not be found (0 if fit succeeded) | Always
-XXX_lfofilterResult_bold | (.nii.gz, .json) | Filtered BOLD dataset after removing moving regressor | If GLM filtering is enabled (default)
-XXX_lfofilterRemoved_bold | (.nii.gz, .json) | Voxelwise delayed moving regressor that has been removed from the dataset | If GLM filtering is enabled (default) and "--nolimitoutput" is selected
+XXX_lfofilterCleaned_bold | (.nii.gz, .json) | Filtered BOLD dataset after removing moving regressor | If GLM filtering is enabled (default)
+XXX_lfofilterRemoved_bold | (.nii.gz, .json) | Scaled, voxelwise delayed moving regressor that has been removed from the dataset | If GLM filtering is enabled (default) and "--nolimitoutput" is selected
 XXX_lfofilterCoeff_map | (.nii.gz) | Magnitude of the delayed sLFO regressor from GLM filter | If GLM filtering is enabled (default)
 XXX_lfofilterMean_map | (.nii.gz) | Mean value over time, from GLM fit | If GLM filtering is enabled (default)
 XXX_lfofilterNorm_map | (.nii.gz) | GLM filter coefficient, divided by the voxel mean over time | If GLM filtering is enabled (default)
