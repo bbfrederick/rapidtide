@@ -2,15 +2,15 @@ Theory of operation
 ===================
 If you're bored enough or misguided enough to be reading this section, you are my intended audience!
 
-Run rapidtide2
+Run rapidtide
 --------------
 This is the full rapidtide workflow. The learn more about this workflow,
 check out the workflow documentation:
 :py:func:`rapidtide.workflows.rapidtide_workflow`.
 
 .. argparse::
-   :ref: rapidtide.workflows.rapidtide2._get_parser
-   :prog: rapidtide2
+   :ref: rapidtide.workflows.rapidtide._get_parser
+   :prog: rapidtide
    :func: _get_parser
 
 Run showxcorrx
@@ -26,8 +26,8 @@ documentation: :py:func:`rapidtide.workflows.showxcorrx_workflow`.
 
 Running from the command line
 -----------------------------
-rapidtide2
-^^^^^^^^^^
+rapidtide
+^^^^^^^^^
 
 Description:
 """"""""""""
