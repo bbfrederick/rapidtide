@@ -158,3 +158,6 @@ venv.bak/
 default.profraw
 
 *.xlsx
+
+docs/practicalities.rst
+docs/theoryofoperation.rst
