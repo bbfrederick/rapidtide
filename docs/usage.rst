@@ -4,17 +4,6 @@ For more information about how the rapidtide library can be used, please
 see the API page. Common rapidtide workflows can also be called from the
 command line.
 
-Run rapidtide
--------------
-This is the full rapidtide workflow. The learn more about this workflow,
-check out the workflow documentation:
-:py:func:`rapidtide.workflows.rapidtide_workflow`.
-
-.. argparse::
-   :ref: rapidtide.workflows.rapidtide_parser._get_parser
-   :prog: rapidtide
-   :func: _get_parser
-
 Running from the command line
 -----------------------------
 rapidtide
@@ -77,7 +66,7 @@ BIDS Outputs:
    "XXX_desc-corrfitwindow_info", ".nii.gz", "Values used for correlation peak fitting", "Always"
    "XXX_desc-runoptions_info", ".json", "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance", "Always"
    "XXX_desc-lfofilterCleaned_bold", ".nii.gz, .json", "Filtered BOLD dataset after removing moving regressor", "If GLM filtering is enabled (default)"
-   "XXX_desc-lfofilterRemoved_bold", ".nii.gz, .json", "Scaled, voxelwise delayed moving regressor that has been removed from the dataset", "If GLM filtering is enabled (default) and `--nolimitoutput` is selected"
+   "XXX_desc-lfofilterRemoved_bold", ".nii.gz, .json", "Scaled, voxelwise delayed moving regressor that has been removed from the dataset", "If GLM filtering is enabled (default) and ``--nolimitoutput`` is selected"
    "XXX_desc-lfofilterCoeff_map", ".nii.gz", "Magnitude of the delayed sLFO regressor from GLM filter", "If GLM filtering is enabled (default)"
    "XXX_desc-lfofilterMean_map", ".nii.gz", "Mean value over time, from GLM fit", "If GLM filtering is enabled (default)"
    "XXX_desc-lfofilterNorm_map", ".nii.gz", "GLM filter coefficient, divided by the voxel mean over time", "If GLM filtering is enabled (default)"
@@ -90,12 +79,12 @@ BIDS Outputs:
    "XXX_desc-corrout_info", ".nii.gz", "Full similarity function over the search range", "Always"
    "XXX_desc-gaussout_info", ".nii.gz", "Gaussian fit to similarity function peak over the search range", "Always"
    "XXX_desc-autocorr_timeseries", ".tsv, .json", "Autocorrelation of the probe regressor for each pass", "Always"
-   "XXX_desc-corrdistdata_info", ".tsv, .json", "Null correlations from the significance estimation for each pass", "Present if --numnull > 0"
-   "XXX_desc-nullsimfunc_hist", ".tsv, .json", "Histogram of the distribution of null correlation values for each pass", "Present if --numnull > 0"
-   "XXX_desc-plt0p050_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.05 significance level", "Present if --numnull > 0"
-   "XXX_desc-plt0p010_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.01 significance level", "Present if --numnull > 0"
-   "XXX_desc-plt0p005_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.005 significance level", "Present if --numnull > 0"
-   "XXX_desc-plt0p001_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.001 significance level", "Present if --numnull > 0"
+   "XXX_desc-corrdistdata_info", ".tsv, .json", "Null correlations from the significance estimation for each pass", "Present if ``--numnull`` > 0"
+   "XXX_desc-nullsimfunc_hist", ".tsv, .json", "Histogram of the distribution of null correlation values for each pass", "Present if ``--numnull`` > 0"
+   "XXX_desc-plt0p050_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.05 significance level", "Present if ``--numnull`` > 0"
+   "XXX_desc-plt0p010_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.01 significance level", "Present if ``--numnull`` > 0"
+   "XXX_desc-plt0p005_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.005 significance level", "Present if ``--numnull`` > 0"
+   "XXX_desc-plt0p001_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.001 significance level", "Present if ``--numnull`` > 0"
    "XXX_desc-globallag_hist", ".tsv, .json", "Histogram of peak correlation times between probe and all voxels, over all time lags, for each pass", "Always"
    "XXX_desc-initialmovingregressor_timeseries", ".tsv, .json", "The raw and filtered initial probe regressor, at the original sampling resolution", "Always"
    "XXX_desc-movingregressor_timeseries", ".tsv, .json", "The probe regressor used in each pass, at the time resolution of the data", "Always"
@@ -107,6 +96,13 @@ BIDS Outputs:
 Usage:
 """"""
 
+.. argparse::
+   :ref: rapidtide.workflows.rapidtide_parser._get_parser
+   :prog: rapidtide
+   :func: _get_parser
+
+   Debugging options : @skip
+      skip debugging options
 
     ::
 
