@@ -4,24 +4,19 @@ For more information about how the rapidtide library can be used, please
 see the API page. Common rapidtide workflows can also be called from the
 command line.
 
-Run rapidtide
--------------
-This is the full rapidtide workflow. The learn more about this workflow,
-check out the workflow documentation:
-:py:func:`rapidtide.workflows.rapidtide_workflow`.
+..
+   Headings are organized in this manner:
+   =====
+   -----
+   ^^^^^
+   """""
+   '''''
 
-.. argparse::
-   :ref: rapidtide.workflows.rapidtide_parser._get_parser
-   :prog: rapidtide
-   :func: _get_parser
-
-Running from the command line
------------------------------
 rapidtide
-^^^^^^^^^
+---------
 
 Description:
-""""""""""""
+^^^^^^^^^^^^
 
 The central program in this package is rapidtide.  This is the program that calculates a similarity function between a "probe" signal and every voxel of a BOLD fMRI dataset.  It then determines the peak value, time delay, and wi
 dth of the similarity function to determine when and how strongly that probe signal appears in each voxel.
@@ -42,7 +37,7 @@ At its core, rapidtide is simply performing a full crosscorrelation between a "p
 * There are a lot of tuning parameters you can mess with if you feel the need.  I've tried to make intelligent defaults so things will work well out of the box, but you have the ability to set most of the interesting parameters yourself.
 
 Inputs:
-"""""""
+^^^^^^^
 
 At a minimum, rapidtide needs a data file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2 (for fMRI data, in which case it is time by up to 3 spatial dimensions) or a whitespace separated text file (for NIRS data, each column is a time course, each row a separate channel); I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti2 in workbench, run rapidtide, then convert back. As soon as nibabel finishes their Cifti support (EDIT: and I get around to figuring it out), I'll add that.
 
@@ -51,13 +46,13 @@ The file needs one time dimension and at least one spatial dimension.  Internall
 The file you input here should be the result of any preprocessing you intend to do.  The expectation is that rapidtide will be run as the last preprocessing step before resting state or task based analysis.  So any slice time correction, motion correction, spike removal, etc. should already have been done.  If you use FSL, this means that if you've run preprocessing, you would use the filtered_func_data.nii.gz file as input.  Temporal and spatial filtering are the two (partial) exceptions here.  Generally rapidtide is most useful for looking at low frequency oscillations, so when you run it, you usually use the "--filterband lfo" option or some other to limit the analysis to the detection and removal of low frequency systemic physiological oscillations.  So rapidtide will generally apply it's own temporal filtering on top of whatever you do in preprocessing.  Also, you have the option of doing spatial smoothing in rapidtide to boost the SNR of the analysis; the hemodynamic signals rapidtide looks for are often very smooth, so you rather than smooth your functional data excessively, you can do it within rapidtide so that only the hemodynamic data is smoothed at that level.
 
 Outputs:
-""""""""
+^^^^^^^^
 
 Outputs are space or space by time Nifti or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  File formats and naming follow BIDS conventions for derivative data for fMRI input data.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
 
 
 BIDS Outputs:
-"""""""""""""
+^^^^^^^^^^^^^
 
 .. csv-table::
    :header: "Name", "Extension(s)", "Content", "When present"
@@ -77,7 +72,7 @@ BIDS Outputs:
    "XXX_desc-corrfitwindow_info", ".nii.gz", "Values used for correlation peak fitting", "Always"
    "XXX_desc-runoptions_info", ".json", "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance", "Always"
    "XXX_desc-lfofilterCleaned_bold", ".nii.gz, .json", "Filtered BOLD dataset after removing moving regressor", "If GLM filtering is enabled (default)"
-   "XXX_desc-lfofilterRemoved_bold", ".nii.gz, .json", "Scaled, voxelwise delayed moving regressor that has been removed from the dataset", "If GLM filtering is enabled (default) and `--nolimitoutput` is selected"
+   "XXX_desc-lfofilterRemoved_bold", ".nii.gz, .json", "Scaled, voxelwise delayed moving regressor that has been removed from the dataset", "If GLM filtering is enabled (default) and ``--nolimitoutput`` is selected"
    "XXX_desc-lfofilterCoeff_map", ".nii.gz", "Magnitude of the delayed sLFO regressor from GLM filter", "If GLM filtering is enabled (default)"
    "XXX_desc-lfofilterMean_map", ".nii.gz", "Mean value over time, from GLM fit", "If GLM filtering is enabled (default)"
    "XXX_desc-lfofilterNorm_map", ".nii.gz", "GLM filter coefficient, divided by the voxel mean over time", "If GLM filtering is enabled (default)"
@@ -90,12 +85,12 @@ BIDS Outputs:
    "XXX_desc-corrout_info", ".nii.gz", "Full similarity function over the search range", "Always"
    "XXX_desc-gaussout_info", ".nii.gz", "Gaussian fit to similarity function peak over the search range", "Always"
    "XXX_desc-autocorr_timeseries", ".tsv, .json", "Autocorrelation of the probe regressor for each pass", "Always"
-   "XXX_desc-corrdistdata_info", ".tsv, .json", "Null correlations from the significance estimation for each pass", "Present if --numnull > 0"
-   "XXX_desc-nullsimfunc_hist", ".tsv, .json", "Histogram of the distribution of null correlation values for each pass", "Present if --numnull > 0"
-   "XXX_desc-plt0p050_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.05 significance level", "Present if --numnull > 0"
-   "XXX_desc-plt0p010_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.01 significance level", "Present if --numnull > 0"
-   "XXX_desc-plt0p005_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.005 significance level", "Present if --numnull > 0"
-   "XXX_desc-plt0p001_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.001 significance level", "Present if --numnull > 0"
+   "XXX_desc-corrdistdata_info", ".tsv, .json", "Null correlations from the significance estimation for each pass", "Present if ``--numnull`` > 0"
+   "XXX_desc-nullsimfunc_hist", ".tsv, .json", "Histogram of the distribution of null correlation values for each pass", "Present if ``--numnull`` > 0"
+   "XXX_desc-plt0p050_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.05 significance level", "Present if ``--numnull`` > 0"
+   "XXX_desc-plt0p010_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.01 significance level", "Present if ``--numnull`` > 0"
+   "XXX_desc-plt0p005_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.005 significance level", "Present if ``--numnull`` > 0"
+   "XXX_desc-plt0p001_mask", ".nii.gz", "Voxels where the maxcorr value exceeds the p < 0.001 significance level", "Present if ``--numnull`` > 0"
    "XXX_desc-globallag_hist", ".tsv, .json", "Histogram of peak correlation times between probe and all voxels, over all time lags, for each pass", "Always"
    "XXX_desc-initialmovingregressor_timeseries", ".tsv, .json", "The raw and filtered initial probe regressor, at the original sampling resolution", "Always"
    "XXX_desc-movingregressor_timeseries", ".tsv, .json", "The probe regressor used in each pass, at the time resolution of the data", "Always"
@@ -105,11 +100,17 @@ BIDS Outputs:
 
 
 Usage:
-""""""
+^^^^^^
 
+.. argparse::
+   :ref: rapidtide.workflows.rapidtide_parser._get_parser
+   :prog: rapidtide
+   :func: _get_parser
 
-    ::
+   Debugging options : @skip
+      skip debugging options
 
+::
       usage: rapidtide in_file outputname [options]
       Perform a RIPTiDe time delay analysis on a dataset.
 
@@ -406,10 +407,8 @@ Usage:
         --singleproc_fitcorr  Force single proc path for fitcorr.
         --singleproc_glm      Force single proc path for glm.
 
-
-
 Legacy interface:
-"""""""""""""""""
+^^^^^^^^^^^^^^^^^
 For compatibility with old workflows, rapidtide can be called using legacy syntax by using "rapidtide2x_legacy".  Although the underlying code is the same, not all options are settable from the legacy interface.  This interface is deprecated and will be removed in a future version of rapidtide, so please convert existing workflows.
 
 
@@ -647,7 +646,7 @@ These options are somewhat self-explanatory.  I will be expanding this section o
 When using the legacy interface, file names will be output using the old, non-BIDS names and formats.  rapidtide can be forced to use the old style outputs with the "--legacyoutput" flag.
 
 Equivalence between BIDS and legacy outputs:
-""""""""""""""""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. csv-table::
    :header: "BIDS style name", "Legacy name"
@@ -699,13 +698,13 @@ Equivalence between BIDS and legacy outputs:
 
 
 Examples:
-"""""""""
+^^^^^^^^^
 
 Rapidtide can do many things - as I've found more interesting things to do with time delay processing, it's gained new functions and options to support these new applications.  As a result, it can be a little hard to know what to use for a new experiment.  To help with that, I've decided to add this section to the manual to get you started.  It's broken up by type of data/analysis you might want to do.
 
 
 Removing low frequency physiological noise from resting state data
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 This is what I thought most people would use rapidtide for - finding and removing the low frequency (LFO) signal from an existing dataset.  This presupposes you have not made a simultaneous physiological recording (well, you may have, but it assumes you aren't using it).  For this, you can use a minimal set of options, since the defaults are mostly right.
 
@@ -718,7 +717,7 @@ The base command you'd use would be:
 This will do a fairly simple analysis.  First, the -L option means that rapidtide will prefilter the data to the LFO band (0.009-0.15Hz). It will then construct a regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor is specified), and then use crosscorrelation to determine the time delay in each voxel.  The --refinepasses=3 option directs rapidtide to to perform the delay analysis 3 times, each time generating a new estimate of the global noise signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.  After the three passes are complete, it will then use a GLM filter to remove a lagged copy of the final mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also a number of maps output with the prefix `"outputname_"` of delay, correlation strength and so on.
 
 Mapping long time delays in response to a gas challenge experiment:
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Processing this sort of data requires a very different set of options from the previous case.  Instead of the distribution of delays you expect in healthy controls (a slightly skewed, somewhat normal distribution with a tail on the positive side, ranging from about -5 to 5 seconds), in this case, the maximum delay can be extremely long (100-120 seconds is not uncommon in stroke, moyamoya disesase, and atherosclerosis).  To do this, you need to radically change what options you use, not just the delay range, but a number of other options having to do with refinement and statistical measures.
 
@@ -738,7 +737,7 @@ The -noglm option disables data filtering.  If you are using rapidtide to estima
 
 
 Denoising NIRS data (NEW)
-'''''''''''''''''''''''''
+"""""""""""""""""""""""""
 
 When we started this whole research effort, I waw originally planning to denoise NIRS data, not fMRI data.  But one thing led to another, and the NIRS got derailed for the fMRI effort.  Now that we have some time to catch our breaths, and more importantly, we have access to some much higher quality NIRS data, this moved back to the front burner.  The majority of the work was already done, I just needed to account for a few qualities that make NIRS data different from fMRI data:
 
@@ -747,12 +746,11 @@ When we started this whole research effort, I waw originally planning to denoise
 * NIRS data is in some sense "calibrated" as relative micromolar changes in oxy-, deoxy-, and total hemoglobin concentration, so mean and/or variance normalizing the timecourses may not be right thing to do.  I've added in some new options to mess with normalizations.
 
 
-
 happy
-^^^^^
+-----
 
 Description:
-""""""""""""
+^^^^^^^^^^^^
 
 happy is a new addition to the rapidtide suite.  It's complementary to rapidtide - it's focussed on fast, cardiac signals in fMRI, rather than the slow, LFO signals we are usually looking at.  It's sort of a Frankenprogram - it has three distinct jobs, which are related, but are very distinct.
 
