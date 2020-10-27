@@ -352,7 +352,7 @@ Usage:
         --saveintermediatemaps
                               Save lag times, strengths, widths, and mask for each
                               pass.
-        --oldstyleoutput      Use legacy file naming and formats rather than BIDS
+        --legacyoutput        Use legacy file naming and formats rather than BIDS
                               naming and format conventions for output files.
 
       Miscellaneous options:
@@ -644,7 +644,7 @@ For compatibility with old workflows, rapidtide can be called using legacy synta
 
 These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
 
-When using the legacy interface, file names will be output using the old, non-BIDS names and formats.  rapidtide can be forced to use the old style outputs with the "--oldstyleoutput" flag.
+When using the legacy interface, file names will be output using the old, non-BIDS names and formats.  rapidtide can be forced to use the old style outputs with the "--legacyoutput" flag.
 
 Equivalence between BIDS and legacy outputs:
 """"""""""""""""""""""""""""""""""""""""""""

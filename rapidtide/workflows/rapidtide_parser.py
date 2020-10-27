@@ -717,7 +717,7 @@ def _get_parser():
                         action='store_true',
                         help='Save lag times, strengths, widths, and mask for each pass. ',
                         default=False)
-    output.add_argument('--oldstyleoutput',
+    output.add_argument('--legacyoutput',
                         dest='bidsoutput',
                         action='store_false',
                         help='Use legacy file naming and formats rather than BIDS naming and format conventions for output files. ',
