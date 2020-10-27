@@ -1587,6 +1587,8 @@ def rapidtide_main(argparsingfunc):
                     if optiondict['bidsoutput']:
                         if mapname == 'fitmask':
                             savename = outputname + '_pass-' + passsuffix + '_desc-corrfit_mask'
+                        elif mapname == 'failreason':
+                                savename = outputname + '_pass-' + passsuffix + '_desc-corrfitfailreason_info'
                         else:
                             savename = outputname + '_pass-' + passsuffix + '_desc-' + mapsuffix + '_map'
                         bidsdict = bidsbasedict.copy()
@@ -1837,6 +1839,8 @@ def rapidtide_main(argparsingfunc):
             if optiondict['bidsoutput']:
                 if mapname == 'fitmask':
                     savename = outputname + '_desc-corrfit' + outsuffix3d + '_mask'
+                elif mapname == 'failreason':
+                    savename = outputname + '_desc-corrfitfailreason' + outsuffix3d + '_info'
                 else:
                     savename = outputname + '_desc-' + mapsuffix + outsuffix3d + '_map'
                 bidsdict = bidsbasedict.copy()
