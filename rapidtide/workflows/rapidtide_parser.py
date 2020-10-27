@@ -46,7 +46,6 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="rapidtide",
         description=("Perform a RIPTiDe time delay analysis on a dataset."),
-        usage="%(prog)s in_file outputname [options]",
     )
 
     # Required arguments
@@ -73,8 +72,7 @@ def _get_parser():
             "arguments. "
             "Any parameter set by an analysis type can be overridden "
             "by setting that parameter explicitly. "
-            "Analysis types are mutually exclusive with one another, "
-            "but may be combined with 'Macros'."
+            "Analysis types are mutually exclusive with one another."
         ),
     ).add_mutually_exclusive_group()
     analysis_type.add_argument(
@@ -112,8 +110,7 @@ def _get_parser():
             "Single arguments that change default values for many "
             "arguments. "
             "Macros override individually set parameters. "
-            "Macros are mutually exclusive with one another, but may "
-            "be combined with 'Analysis Types'."
+            "Macros are mutually exclusive with one another."
         ),
     ).add_mutually_exclusive_group()
     macros.add_argument(
@@ -229,36 +226,6 @@ def _get_parser():
     # Add permutation options
     pf.addpermutationopts(parser)
 
-    """permutationmethod = preproc.add_mutually_exclusive_group()
-    permutationmethod.add_argument(
-            '--permutationmethod',
-            dest='permutationmethod',
-            action='store',
-            type=str,
-            choices=['shuffle', 'phaserandom'],
-            help=('Permutation method for significance testing.  '
-                  'Default is shuffle. '),
-            default='shuffle')
-    preproc.add_argument(
-            '--numnull',
-             dest='numestreps',
-             action='store',
-             type=int,
-             metavar='NREPS',
-             help=('Estimate significance threshold by running '
-                   'NREPS null correlations (default is 10000, '
-                   'set to 0 to disable). If you are '
-                   'running multiple passes, "ampthresh" (see below) '
-                   'will be set to the 0.05 significance level.'),
-             default=10000)
-    preproc.add_argument(
-            '--skipsighistfit',
-            dest='dosighistfit',
-            action='store_false',
-            help=('Do not fit significance histogram with a '
-               'Johnson SB function. '),
-            default=True)"""
-
     wfunc = preproc.add_mutually_exclusive_group()
     wfunc.add_argument(
         "--windowfunc",
@@ -317,9 +284,7 @@ def _get_parser():
         ),
         default=False,
     )
-
-    globalmethod = preproc.add_mutually_exclusive_group()
-    globalmethod.add_argument(
+    preproc.add_argument(
         "--globalmaskmethod",
         dest="globalmaskmethod",
         action="store",
@@ -331,7 +296,6 @@ def _get_parser():
         ),
         default="mean",
     )
-
     preproc.add_argument(
         "--globalmeaninclude",
         dest="globalmeanincludespec",
@@ -524,9 +488,7 @@ def _get_parser():
         ),
         default=0.0,
     )
-
-    cc_group = corr.add_mutually_exclusive_group()
-    cc_group.add_argument(
+    corr.add_argument(
         "--corrweighting",
         dest="corrweighting",
         action="store",
@@ -1280,12 +1242,10 @@ def process_args(inputargs=None):
     args["dosighistfit"] = True
 
     # output options
-    args["savecorrmask"] = True
     args["savedespecklemasks"] = True
     args["saveglmfiltered"] = True
     args["savemotionfiltered"] = False
     args["savecorrmask"] = True
-    args["histlen"] = 250
 
     # refinement options
     args["estimatePCAdims"] = False
