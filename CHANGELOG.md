@@ -1,6 +1,6 @@
 # History of changes
 
-## Version 2.0alpha4 (10/19/26)
+## Version 2.0alpha4 (10/26/26)
 * rapidtide2x has been renamed to rapidtide2x_legacy
 * (rapidtide, rapidtide2x) The options file is now always saved in .json format.
 * (rapidtide) BIDS format output naming and file structures have been updated to be more compliant with the standard.
