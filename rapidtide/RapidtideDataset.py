@@ -650,15 +650,15 @@ class RapidtideDataset:
             if self.usecorrout:
                 self.funcmaps += [['corrout', 'desc-corrout_info']]
                 # self.funcmaps += [['gaussout', 'desc-gaussout_info']]
-                self.funcmaps += [['failimage', 'desc-failreason_info']]
+                self.funcmaps += [['failimage', 'desc-corrfitfailreason_info']]
 
         else:
             if self.newstylenames:
-                self.funcmaps = [['lagtimes', 'maxtime'],
-                                 ['lagstrengths', 'maxcorr'],
-                                 ['lagsigma', 'maxwidth'],
+                self.funcmaps = [['lagtimes', 'lagtimes'],
+                                 ['lagstrengths', 'lagstrengths'],
+                                 ['lagsigma', 'lagsigma'],
                                  ['MTT', 'MTT'],
-                                 ['R2', 'maxcorrsq'],
+                                 ['R2', 'R2'],
                                  ['fitNorm', 'fitNorm'],
                                  ['fitcoff', 'fitCoeff']]
                 if self.usecorrout:
