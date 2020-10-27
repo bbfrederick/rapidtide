@@ -80,8 +80,8 @@ BIDS Outputs:
    "XXX_desc-lfofilterR_map", ".nii.gz", "R value for the GLM fit in the voxel", "If GLM filtering is enabled (default)"
    "XXX_desc-processed_mask", ".nii.gz", "Mask of all voxels in which the similarity function is calculated", "Always"
    "XXX_desc-globalmean_mask", ".nii.gz", "Mask of voxels used to calculate the global mean signal", "This file will exist if no external regressor is specified"
-   "XXX_desc-refine_mask", ".nii.gz", "Mask of voxels used in the last estimate a refined version of the probe regressor", "Exists if passes > 1"
-   "XXX_desc-despeckle_mask", ".nii.gz", "Mask of the last set of voxels that had their time delays adjusted due to autocorrelations in the probe regressor", "Exists if despecklepasses > 0"
+   "XXX_desc-refine_mask", ".nii.gz", "Mask of voxels used in the last estimate a refined version of the probe regressor", "Present if passes > 1"
+   "XXX_desc-despeckle_mask", ".nii.gz", "Mask of the last set of voxels that had their time delays adjusted due to autocorrelations in the probe regressor", "Present if despecklepasses > 0"
    "XXX_desc-corrout_info", ".nii.gz", "Full similarity function over the search range", "Always"
    "XXX_desc-gaussout_info", ".nii.gz", "Gaussian fit to similarity function peak over the search range", "Always"
    "XXX_desc-autocorr_timeseries", ".tsv, .json", "Autocorrelation of the probe regressor for each pass", "Always"
@@ -95,7 +95,7 @@ BIDS Outputs:
    "XXX_desc-initialmovingregressor_timeseries", ".tsv, .json", "The raw and filtered initial probe regressor, at the original sampling resolution", "Always"
    "XXX_desc-movingregressor_timeseries", ".tsv, .json", "The probe regressor used in each pass, at the time resolution of the data", "Always"
    "XXX_desc-oversampledmovingregressor_timeseries", ".tsv, .json", "The probe regressor used in each pass, at the time resolution used for calculating the similarity function", "Always"
-   "XXX_desc-refinedmovingregressor_timeseries", ".tsv, .json", "The raw and filtered probe regressor produced by the refinement procedure, at the time resolution of the data", "Exists if passes > 1"
+   "XXX_desc-refinedmovingregressor_timeseries", ".tsv, .json", "The raw and filtered probe regressor produced by the refinement procedure, at the time resolution of the data", "Present if passes > 1"
 ..
 
 
