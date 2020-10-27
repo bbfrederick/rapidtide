@@ -13,11 +13,15 @@
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging) 
   and push to github:
 
-    git tag -a v2.0alpha3 -m "v2.0alpha3"
-    git push origin v2.0alpha3
+    git tag -a v2.0alpha4 -m "v2.0alpha4"
+    git push origin v2.0alpha4
 
 
 + Edit the release notes on github
+
++ Build rapidtide
+
+    python setup.py install
 
 + Build and sync new docker images
 

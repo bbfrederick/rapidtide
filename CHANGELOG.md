@@ -1,5 +1,13 @@
 # History of changes
 
+## Version 2.0alpha4 (10/19/26)
+* rapidtide2x has been renamed to rapidtide2x_legacy
+* (rapidtide, rapidtide2x) The options file is now always saved in .json format.
+* (rapidtide) BIDS format output naming and file structures have been updated to be more compliant with the standard.
+* (RapidtideDataset.py) Better handling of different file names.
+* (documentation) The documentation has been expanded and revised to reflect the current state of rapidtide.
+* (all) Code cleanup.
+
 ## Version 2.0alpha3 (10/19/20)
 * (rapidtide) Fixed sample rate on BIDS regressor outputs.
 * (tidepool) Corrected sample rate for regressor timecourses.
