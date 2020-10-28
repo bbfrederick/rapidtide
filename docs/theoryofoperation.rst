@@ -20,15 +20,31 @@ at locations farther from the heart along the vasculature.  This appears to be a
 signal carried by the blood, as changes in blood oxygenation and/or volume that
 propagate with bulk blood flow.  The source of the signal is not known, being
 variously attributed to cardiac and respiratory changes over time, changes in
-blood CO2, gastric motility, and other sources (for a survey, see [REF].)  As
-biology is complicated, it's probably some mixture of these sources and others
-that we may not have considered.
+blood CO2, gastric motility, and other sources (for a survey, see [Tong2019]_.)
+As biology is complicated, it's probably some mixture of these sources and
+others that we may not have considered. No matter what the source of the signal,
+this model can be exploited for a number of purposes.
 
-No matter what the source of the signal, this model can be exploited for a
-number of purposes.  First, if you're interested in hemodynamics, the time
-delay in every voxel gives you a lot of information that's otherwise hard
-to obtain, namely the arrival time of blood in each voxel, and the fraction
-of the variance in that voxel that's accounted for by that moving signal.
+If you're interested in hemodynamics, using  rapidtide to get the time delay in
+every voxel gives you a lot of information  that's otherwise hard or impossible
+to obtain noninvasively, namely the arrival time of blood in each voxel, and the
+fraction of the variance in that voxel  that's accounted for by that moving
+signal, which is related to regional CBV (however there's also a factor that's
+due to blood oxygenation, so you have  to interpret it carefully).  You can use
+this information to understand the blood flow changes arising from vascular
+pathology, such as  stroke or moyamoya disease, or to potentially see changes in
+blood flow due to a pharmacological intervention. In this case, the moving
+signal is not noise - it's the signal of interest.  So the various maps
+rapidtide produces can be used to describe hemodynamics.
+
+However, if you are interested in local rather than global hemodynamics,
+due to, say, neuronal activation, then this moving signal is rather pernicious
+in-band noise.  Global mean regression is often used to remove it, but this is
+not optimal - in fact it can generate spurious anticorrelations, which are
+not helpful.  Rapidtide will regress out the moving signal, appropriately
+delayed in each voxel.  This gives you better noise removal, and also
+avoids generating spurious correlations.  For a detailed consideration of this,
+look here [Erdogan2016]_.
 
 
 How does rapidtide work?
@@ -79,3 +95,15 @@ Save Useful Parameters
 
 Regress Out the Moving Signal
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. [Tong2019] Tong, Y., Hocke, L.M., and Frederick, B.B., Low Frequency
+   Systemic Hemodynamic "Noise" in Resting State BOLD fMRI: Characteristics,
+   Causes, Implications, Mitigation Strategies, and Applications.
+   Front Neurosci, 2019. 13: p. 787.
+   \| http://dx.doi.org/10.3389/fnins.2019.00787
+
+
+.. [Erdogan2016] Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B. Correcting
+   resting state fMRI-BOLD signals for blood arrival time enhances
+   functional connectivity analysis. Front. Hum. Neurosci., 28 June 2016
+   \| http://dx.doi.org/10.3389/fnhum.2016.00311

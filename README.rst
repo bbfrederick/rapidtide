@@ -407,13 +407,19 @@ Physiological noise identification and removal using time delay methods
    other denoising methods in resting state functional MRI with
    ultrahigh temporal resolution. Magnetic resonance in medicine :
    official journal of the Society of Magnetic Resonance in Medicine /
-   Society of Magnetic Resonance in Medicine. 2016. doi:
-   10.1002/mrm.26038. PubMed PMID: 26854203.
+   Society of Magnetic Resonance in Medicine. 2016.
+   \| http://dx.doi.org/10.1002/mrm.26038. PubMed PMID: 26854203.
 
 5) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B (2016). Correcting
    resting state fMRI-BOLD signals for blood arrival time enhances
    functional connectivity analysis. Front. Hum. Neurosci., 28 June 2016
    \| http://dx.doi.org/10.3389/fnhum.2016.00311
+
+6) Tong, Y, Hocke, LM, and Frederick, BB, Low Frequency
+   Systemic Hemodynamic "Noise" in Resting State BOLD fMRI: Characteristics,
+   Causes, Implications, Mitigation Strategies, and Applications.
+   Front Neurosci, 2019. 13: p. 787.
+   \| http://dx.doi.org/10.3389/fnins.2019.00787
 
 .. |License| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
