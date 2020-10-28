@@ -349,7 +349,7 @@ def progressbar(thisval, end_val, label='Percent', barsize=60):
     percent = float(thisval) / end_val
     hashes = '#' * int(round(percent * barsize))
     spaces = ' ' * (barsize - len(hashes))
-    sys.stdout.write("\r{0}: [{1}] {2:.3f}%".format(label, hashes + spaces, 100.0 * percent))
+    sys.stdout.write("\r{0}: [{1}] {2:.2f}%".format(label, hashes + spaces, 100.0 * percent))
     sys.stdout.flush()
 
 
