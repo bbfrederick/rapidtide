@@ -99,6 +99,7 @@ RUN conda install -y python=3.7.6 \
                      scikit-image=0.17.2 \
                      scikit-learn=0.23.1 \
                      nibabel=3.1.0 \
+                     nilearn \
                      keras=2.2.4 \
                      tensorflow=1.13.1 \
                      pyqtgraph=0.11.0 \

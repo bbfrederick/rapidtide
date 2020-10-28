@@ -4,6 +4,7 @@ pandas
 scikit-image
 scikit-learn
 nibabel
+nilearn
 matplotlib
 pyfftw
 pyqtgraph

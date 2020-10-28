@@ -20,6 +20,7 @@ installed first:
 -  pandas
 -  scikit-learn
 -  nibabel
+-  nilearn
 -  matplotlib
 -  statsmodels
 
