@@ -4,7 +4,7 @@ Rapidtide
 What is this package?
 ---------------------
 
-Rapidtide is a suite of python programs used to perform rapid time delay
+Rapidtide is a suite of Python programs used to perform rapid time delay
 analysis on functional imaging data to find time lagged correlations
 between the voxelwise time series and other time series, both in the LFO
 band (rapditide2) and now in the cardiac band (happy).
@@ -132,16 +132,16 @@ new features and bug fixes!
 
 Python version compatibility
 ============================
-I switched over a while ago to using python 3 as my daily driver, so I know
+I switched over a while ago to using Python 3 as my daily driver, so I know
 that everything works there. However, I know that a lot of people can’t
-or won’t switch from python 2x, so I made every effort to write code
+or won’t switch from Python 2x, so I made every effort to write code
 that works in both, and I have been testing in both.
 
 That said, the writing is on the wall, and since I depend on a number of
-packages that have dropped, python 2.x support has ended. However,
+packages that have dropped, Python 2.x support has ended. However,
 as of version 1.9.0 I'm also releasing the code in a docker
 container (fredericklab/rapidtide), which has everything nicely installed in
-a fully configured python 3 environment, so there's really no need for me to do a 2.x
+a fully configured Python 3 environment, so there's really no need for me to do a 2.x
 installation anymore.
 
 Ok, I’m sold. What’s in here?
@@ -249,7 +249,7 @@ numpy:
 
 1) Stéfan van der Walt, S. Chris Colbert and Gaël Varoquaux. The NumPy Array:
    A Structure for Efficient Numerical Computation, Computing in Science
-   & Engineering, 13, 22-30 (2011) \| https:10.1109/MCSE.2011.37
+   & Engineering, 13, 22-30 (2011) \| https://doi.org/10.1109/MCSE.2011.37
 
 scipy:
 ``````
@@ -270,12 +270,12 @@ matplotlib:
 ```````````
 
 1) John D. Hunter. Matplotlib: A 2D Graphics Environment, Computing in Science
-   & Engineering, 9, 90-95 (2007) \| https://10.1109/MCSE.2007.55
+   & Engineering, 9, 90-95 (2007) \| https://doi.org/10.1109/MCSE.2007.55
 
 nibabel:
 ````````
 
-1) https://github.com/nipy/nibabel \| https://10.5281/zenodo.591597
+1) https://github.com/nipy/nibabel \| https://doi.org/10.5281/zenodo.591597
 
 scikit-learn:
 `````````````
