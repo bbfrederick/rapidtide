@@ -113,7 +113,7 @@ def printthresholds(pcts, thepercentiles, labeltext):
     """
     print(labeltext)
     for i in range(0, len(pcts)):
-        print('\tp <', "{:.3f}".format(1.0 - thepercentiles[i]), ': ', pcts[i])
+        print('\tp <', "{:.3f}".format(1.0 - thepercentiles[i]), ': ',  "{:.3f}".format(pcts[i]))
 
 
 def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
