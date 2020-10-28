@@ -876,7 +876,8 @@ def readbidstsv(inputfilename, debug=False):
             try:
                 columns = d['Columns']
             except:
-                print('no columns found in json, will take labels from the tsv file')
+                if debug:
+                    print('no columns found in json, will take labels from the tsv file')
                 columns = None
         if os.path.exists(thefileroot + '.tsv.gz'):
             df = pd.read_csv(thefileroot + '.tsv.gz', compression='gzip', header=0, sep='\t', quotechar='"')
