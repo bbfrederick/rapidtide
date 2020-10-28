@@ -662,7 +662,7 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
     return thevals
 
 
-def makemask(image, threshpct=25.0, verbose=False, nozero=False):
+def makemask(image, threshpct=25.0, verbose=False, nozero=False, noneg=False):
     """
 
     Parameters
@@ -673,6 +673,10 @@ def makemask(image, threshpct=25.0, verbose=False, nozero=False):
         Voxels with values greater then threshpct of the 98th percentile of voxel values are preserved.
     verbose: bool
         If true, print additional debugging information.
+    nozero: bool
+        If true, exclude zero values when calculating percentiles
+    noneg: bool
+        If true, exclude negative values when calculating percentiles
 
     Returns
     -------
@@ -680,7 +684,10 @@ def makemask(image, threshpct=25.0, verbose=False, nozero=False):
         An int16 mask with dimensions matching the input. 1 for voxels to preserve, 0 elsewhere
 
     """
-    pct2, pct98 = getfracvals(image, [0.02, 0.98], nozero=nozero)
+    if noneg:
+        pct2, pct98 = getfracvals(np.where(image >= 0.0, image, 0.0), [0.02, 0.98], nozero=nozero)
+    else:
+        pct2, pct98 = getfracvals(image, [0.02, 0.98], nozero=nozero)
     threshval = pct2 + (threshpct / 100.0) * (pct98 - pct2)
     if verbose:
         print('fracval:', fracval, ' threshpct:', threshpct, ' mask threshhold:', threshval)

@@ -487,7 +487,7 @@ def rapidtide_main(argparsingfunc):
         stdim = np.std(fmri_data, axis=1)
         if np.mean(stdim) < np.mean(meanim):
             print('generating correlation mask from mean image')
-            corrmask = np.uint16(tide_stats.makemask(meanim, threshpct=optiondict['corrmaskthreshpct']))
+            corrmask = np.uint16(tide_stats.makemask(meanim, threshpct=optiondict['corrmaskthreshpct'], noneg=True))
         else:
             print('generating correlation mask from std image')
             corrmask = np.uint16(tide_stats.makemask(stdim, threshpct=optiondict['corrmaskthreshpct']))
