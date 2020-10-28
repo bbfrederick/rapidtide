@@ -685,10 +685,11 @@ def makemask(image, threshpct=25.0, verbose=False, nozero=False, noneg=False):
 
     """
     if noneg:
-        pct2, pct98 = getfracvals(np.where(image >= 0.0, image, 0.0), [0.02, 0.98], nozero=nozero)
+        pct2, pct98, pctthresh = getfracvals(np.where(image >= 0.0, image, 0.0), [0.02, 0.98, threshpct], nozero=nozero)
     else:
-        pct2, pct98 = getfracvals(image, [0.02, 0.98], nozero=nozero)
+        pct2, pct98, pctthresh = getfracvals(image, [0.02, 0.98, threshpct], nozero=nozero)
     threshval = pct2 + (threshpct / 100.0) * (pct98 - pct2)
+    print('old style threshval:', threshval, 'new style threshval:', pctthresh)
     if verbose:
         print('fracval:', fracval, ' threshpct:', threshpct, ' mask threshhold:', threshval)
     themask = np.where(image > threshval, np.int16(1), np.int16(0))
