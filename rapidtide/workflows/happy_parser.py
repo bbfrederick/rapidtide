@@ -25,43 +25,28 @@ from __future__ import print_function, division
 
 import argparse
 import sys
-
 import numpy as np
 
 import rapidtide.io as tide_io
-import rapidtide.util as tide_util
-
-from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float, is_int
-
-class indicatespecifiedAction(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, values)
-        setattr(namespace, self.dest+'_nondefault', True)
-
-def setifnotset(thedict, thekey, theval):
-    try:
-        test = thedict[thekey + '_nondefault']
-    except KeyError:
-        print('overriding ' + thekey)
-        thedict[thekey] = theval
+import rapidtide.workflows.parser_funcs as pf
 
 
 def _get_parser():
     """
     Argument parser for happy
     """
-    parser = argparse.ArgumentParser(prog='happy_trans',
+    parser = argparse.ArgumentParser(prog='happy',
                                      description='Hypersampling by Analytic Phase Projection - Yay!.',
                                      usage='%(prog)s fmrifile slicetimefile outputroot [options]')
 
     # Required arguments
     parser.add_argument(
         'fmrifilename',
-        type=lambda x: is_valid_file(parser, x),
+        type=lambda x: pf.is_valid_file(parser, x),
         help='The input data file (BOLD fmri file or NIRS text file)')
     parser.add_argument(
         'slicetimename',
-        type=lambda x: is_valid_file(parser, x),
+        type=lambda x: pf.is_valid_file(parser, x),
         help=('Text file containing the offset time in seconds of each slice relative '
               'to the start of the TR, one value per line, OR the BIDS sidecar JSON file.'))
     parser.add_argument(
@@ -106,7 +91,7 @@ def _get_parser():
         dest='mklthreads',
         action='store',
         metavar='NTHREADS',
-        type=lambda x: is_int(parser, x),
+        type=lambda x: pf.is_int(parser, x),
         help=('Use NTHREADS MKL threads to accelerate processing (defaults to 1 - more '
               'threads up to the number of cores can accelerate processing a lot, but '
               'can really kill you on clusters unless you\'re very careful.  Use at your own risk'),
@@ -119,16 +104,16 @@ def _get_parser():
         dest='numskip',
         action='store',
         metavar='SKIP',
-        type=lambda x: is_int(parser, x),
-        help=('Skip SKIP tr\'s at the beginning of the fMRI file (default is 0). '),
+        type=lambda x: pf.is_int(parser, x),
+        help='Skip SKIP tr\'s at the beginning of the fMRI file (default is 0). ',
         default=0)
     preprocessing_opts.add_argument(
         '--motskip',
         dest='motskip',
         action='store',
         metavar='SKIP',
-        type=lambda x: is_int(parser, x),
-        help=('Skip SKIP tr\'s at the beginning of the motion regressor file (default is 0). '),
+        type=lambda x: pf.is_int(parser, x),
+        help='Skip SKIP tr\'s at the beginning of the motion regressor file (default is 0). ',
         default=0)
     preprocessing_opts.add_argument(
         '--motionfile',
@@ -140,23 +125,23 @@ def _get_parser():
               'If COLSPEC is present, use the comma separated list of ranges to '
               'specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For '
               'example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9 '
-              'for X, Y, Z, RotX, RotY, RotZ, respectively.' ),
+              'for X, Y, Z, RotX, RotY, RotZ, respectively.'),
         default=None)
     preprocessing_opts.add_argument(
         '--motionhp',
         dest='motionhp',
         action='store',
         metavar='HPFREQ',
-        type=lambda x: is_float(parser, x),
-        help=('Highpass filter motion regressors to HPFREQ Hz prior to regression. '),
+        type=lambda x: pf.is_float(parser, x),
+        help='Highpass filter motion regressors to HPFREQ Hz prior to regression. ',
         default=None)
     preprocessing_opts.add_argument(
         '--motionlp',
         dest='motionlp',
         action='store',
         metavar='LPFREQ',
-        type=lambda x: is_float(parser, x),
-        help=('Lowpass filter motion regressors to LPFREQ Hz prior to regression. '),
+        type=lambda x: pf.is_float(parser, x),
+        help='Lowpass filter motion regressors to LPFREQ Hz prior to regression. ',
         default=None)
 
     # Cardiac estimation tuning
@@ -176,48 +161,48 @@ def _get_parser():
         dest='minhr',
         action='store',
         metavar='MINHR',
-        type=lambda x: is_float(parser, x),
-        help=('Limit lower cardiac frequency search range to MINHR BPM (default is 40). '),
+        type=lambda x: pf.is_float(parser, x),
+        help='Limit lower cardiac frequency search range to MINHR BPM (default is 40). ',
         default=40.0)
     cardiac_est_tuning.add_argument(
         '--maxhr',
         dest='maxhr',
         action='store',
         metavar='MAXHR',
-        type=lambda x: is_float(parser, x),
-        help=('Limit upper cardiac frequency search range to MAXHR BPM (default is 140). '),
+        type=lambda x: pf.is_float(parser, x),
+        help='Limit upper cardiac frequency search range to MAXHR BPM (default is 140). ',
         default=140.0)
     cardiac_est_tuning.add_argument(
         '--minhrfilt',
         dest='minhrfilt',
         action='store',
         metavar='MINHR',
-        type=lambda x: is_float(parser, x),
-        help=('Highpass filter cardiac waveform estimate to MINHR BPM (default is 40). '),
+        type=lambda x: pf.is_float(parser, x),
+        help='Highpass filter cardiac waveform estimate to MINHR BPM (default is 40). ',
         default=40.0)
     cardiac_est_tuning.add_argument(
         '--maxhrfilt',
         dest='maxhrfilt',
         action='store',
         metavar='MAXHR',
-        type=lambda x: is_float(parser, x),
-        help=('Lowpass filter cardiac waveform estimate to MAXHR BPM (default is 1000). '),
+        type=lambda x: pf.is_float(parser, x),
+        help='Lowpass filter cardiac waveform estimate to MAXHR BPM (default is 1000). ',
         default=1000.0)
     cardiac_est_tuning.add_argument(
         '--envcutoff',
         dest='envcutoff',
         action='store',
         metavar='CUTOFF',
-        type=lambda x: is_float(parser, x),
-        help=('Lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4 Hz). '),
+        type=lambda x: pf.is_float(parser, x),
+        help='Lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4 Hz). ',
         default=0.4)
     cardiac_est_tuning.add_argument(
         '--notchwidth',
         dest='notchpct',
         action='store',
         metavar='WIDTH',
-        type=lambda x: is_float(parser, x),
-        help=('Set the width of the notch filter, in percent of the notch frequency (default is 1.5). '),
+        type=lambda x: pf.is_float(parser, x),
+        help='Set the width of the notch filter, in percent of the notch frequency (default is 1.5). ',
         default=1.5)
 
     # External cardiac waveform options
@@ -229,7 +214,7 @@ def _get_parser():
         help=('Read the cardiac waveform from file FILE.  If COL is an integer, '
               'and FILE is a text file, use the COL\'th column.  If FILE is a BIDS '
               'format json file, use column named COL. If no file is specified, '
-              'estimate the cardiac signal from the fMRI data.' ),
+              'estimate the cardiac signal from the fMRI data.'),
         default=None)
     cardiac_freq = external_cardiac_opts.add_mutually_exclusive_group()
     cardiac_freq.add_argument(
@@ -237,7 +222,7 @@ def _get_parser():
         dest='inputfreq',
         action='store',
         metavar='FREQ',
-        type=lambda x: is_float(parser, x),
+        type=lambda x: pf.is_float(parser, x),
         help=('Cardiac waveform in cardiacfile has sample frequency FREQ '
               '(default is 32Hz). NB: --cardiacfreq and --cardiactstep '
               'are two ways to specify the same thing. '),
@@ -247,7 +232,7 @@ def _get_parser():
         dest='inputfreq',
         action='store',
         metavar='TSTEP',
-        type=lambda x: invert_float(parser, x),
+        type=lambda x: pf.invert_float(parser, x),
         help=('Cardiac waveform in cardiacfile has time step TSTEP '
               '(default is 1/32 sec). NB: --cardiacfreq and --cardiactstep '
               'are two ways to specify the same thing. '),
@@ -275,7 +260,7 @@ def _get_parser():
         dest='forcedhr',
         metavar='BPM',
         action='store',
-        type=lambda x: is_float(parser, x) / 60.0,
+        type=lambda x: pf.is_float(parser, x) / 60.0,
         help=('Force heart rate fundamental detector to be centered at BPM '
               '(overrides peak frequencies found from spectrum).  Useful'
               'if there is structured noise that confuses the peak finder. '),
@@ -303,16 +288,16 @@ def _get_parser():
         dest='destpoints',
         metavar='BINS',
         action='store',
-        type=lambda x: is_int(parser, x),
-        help=('Number of output phase bins (default is 32). '),
+        type=lambda x: pf.is_int(parser, x),
+        help='Number of output phase bins (default is 32). ',
         default=32)
     phase_proj_tuning.add_argument(
         '--gridbins',
         dest='congridbins',
         metavar='BINS',
         action='store',
-        type=lambda x: is_float(parser, x),
-        help=('Width of the gridding kernel in output phase bins (default is 3.0). '),
+        type=lambda x: pf.is_float(parser, x),
+        help='Width of the gridding kernel in output phase bins (default is 3.0). ',
         default=3.0)
     phase_proj_tuning.add_argument(
         '--gridkernel',
@@ -320,7 +305,7 @@ def _get_parser():
         action='store',
         type=str,
         choices=['old', 'gauss', 'kaiser'],
-        help=('Convolution gridding kernel. Default is kaiser'),
+        help='Convolution gridding kernel. Default is kaiser',
         default='kaiser')
     phase_proj_tuning.add_argument(
         '--projmask',
@@ -346,7 +331,7 @@ def _get_parser():
         '--arteriesonly',
         dest='arteriesonly',
         action='store_true',
-        help=('Restrict cardiac waveform estimation to putative arteries only.'),
+        help='Restrict cardiac waveform estimation to putative arteries only.',
         default=False)
 
     # Debugging options
@@ -373,7 +358,7 @@ def _get_parser():
         '--nodetrend',
         dest='detrendorder',
         action='store',
-        type=lambda x: is_int(parser, 0),
+        type=lambda x: pf.is_int(parser, 0),
         help='Disable data detrending. ',
         default=3)
     debug_opts.add_argument(
@@ -497,7 +482,6 @@ def process_args(inputargs=None):
         print('before postprocessing')
         print(args)
 
-
     # some tunable parameters
     args.outputlevel = 1
     args.maskthreshpct = 10.0
@@ -518,7 +502,6 @@ def process_args(inputargs=None):
     args.colnum = None
     args.colname = None
 
-
     # Additional argument parsing not handled by argparse
     # deal with notch filter logic
     if args.disablenotch:
@@ -534,14 +517,14 @@ def process_args(inputargs=None):
 
     if args.cardiacfilename is not None:
         args.cardiacfilename, thecolnum = tide_io.processnamespec(args.cardiacfilename,
-                                                                         'Using column in ',
-                                                                         'as cardiac timecourse.')
+                                                                  'Using column in ',
+                                                                  'as cardiac timecourse.')
         if thecolnum is not None:
             args.colnum = thecolnum[0]
         else:
             args.colnum = None
 
     # start the clock!
-    #tide_util.checkimports(args)
+    # tide_util.checkimports(args)
 
     return args
