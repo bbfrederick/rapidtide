@@ -37,7 +37,7 @@ def _get_parser():
     """
     parser = argparse.ArgumentParser(prog='happy',
                                      description='Hypersampling by Analytic Phase Projection - Yay!.',
-                                     usage='%(prog)s fmrifile slicetimefile outputroot [options]')
+                                     )
 
     # Required arguments
     parser.add_argument(
