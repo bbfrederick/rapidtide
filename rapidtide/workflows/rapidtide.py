@@ -37,6 +37,7 @@ import numpy as np
 import scipy as sp
 from matplotlib.pyplot import figure, plot, show
 from scipy import ndimage
+from nilearn import masking
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
@@ -172,14 +173,10 @@ def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, masknam
 
 
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
-    # mask to interesting voxels
-    if optiondict['globalmaskmethod'] == 'mean':
-        themask = tide_stats.makemask(np.mean(indata, axis=1), optiondict['corrmaskthreshpct'])
-    elif optiondict['globalmaskmethod'] == 'variance':
-        themask = tide_stats.makemask(np.var(indata, axis=1), optiondict['corrmaskthreshpct'])
-    if optiondict['nothresh']:
-        themask *= 0
-        themask += 1
+    # Start with all voxels
+    themask = indata[:, 0] * 0 + 1
+
+    # modify the mask if needed
     if includemask is not None:
         themask = themask * includemask
     if excludemask is not None:
@@ -194,7 +191,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
         if themask[vox] > 0.0:
             numvoxelsused += 1
             if optiondict['meanscaleglobal']:
-                themean = np.mean(indata[vox, :])
+                themean = np.mean(indata, axis=1)
                 if themean != 0.0:
                     globalmean = globalmean + indata[vox, :] / themean - 1.0
             else:
@@ -390,8 +387,14 @@ def rapidtide_main(argparsingfunc):
     if abs(optiondict['lagmax']) > (validend - validstart + 1) * fmritr / 2.0:
         print('magnitude of lagmax exceeds', (validend - validstart + 1) * fmritr / 2.0, ' - invalid')
         sys.exit()
+
+    # do spatial filtering if requested
+    if optiondict['gausssigma'] < 0.0 and not optiondict['textio']:
+        # set gausssigma automatically
+        optiondict['gausssigma'] = np.mean([xdim, ydim, slicethickness]) / 2.0
     if optiondict['gausssigma'] > 0.0:
-        print('applying gaussian spatial filter to timepoints ', validstart, ' to ', validend)
+        print('applying gaussian spatial filter to timepoints ', validstart, ' to ', validend,
+              ' with sigma=', optiondict['gausssigma'])
         reportstep = 10
         for i in range(validstart, validend + 1):
             if (i % reportstep == 0 or i == validend) and optiondict['showprogressbar']:
@@ -487,7 +490,7 @@ def rapidtide_main(argparsingfunc):
         stdim = np.std(fmri_data, axis=1)
         if np.mean(stdim) < np.mean(meanim):
             print('generating correlation mask from mean image')
-            corrmask = np.uint16(tide_stats.makemask(meanim, threshpct=optiondict['corrmaskthreshpct'], noneg=True))
+            corrmask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
         else:
             print('generating correlation mask from std image')
             corrmask = np.uint16(tide_stats.makemask(stdim, threshpct=optiondict['corrmaskthreshpct']))
@@ -1462,7 +1465,8 @@ def rapidtide_main(argparsingfunc):
                                                                          peakthresh=optiondict['pickleftthresh'])
                 optiondict['offsettime'] = peaklag
                 optiondict['offsettime_total'] += peaklag
-                print('offset time set to ', optiondict['offsettime'], ', total is ', optiondict['offsettime_total'])
+                print('offset time set to ', "{:.3f}".format(optiondict['offsettime']),
+                      ', total is ', "{:.3f}".format(optiondict['offsettime_total']))
 
             # regenerate regressor for next pass
             refineregressor_func = addmemprofiling(tide_refine.refineregressor,
