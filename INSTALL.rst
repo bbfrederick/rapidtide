@@ -19,6 +19,7 @@ installed first:
 -  scipy
 -  pandas
 -  scikit-learn
+-  scikit-image
 -  nibabel
 -  nilearn
 -  matplotlib
