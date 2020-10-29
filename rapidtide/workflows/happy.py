@@ -101,7 +101,7 @@ def physiofromimage(normdata_byslice,
                     multiplicative=True):
     # find out what timepoints we have, and their spacing
     numsteps, minstep, sliceoffsets = tide_io.sliceinfo(slicetimes, tr)
-    print(len(slicetimes), 'slice times with', numsteps, 'unique values - diff is', minstep)
+    print(len(slicetimes), 'slice times with', numsteps, 'unique values - diff is', "{:.3f}".format(minstep))
 
     # make sure there is an appflips array
     if appflips_byslice is None:
@@ -151,7 +151,7 @@ def physiofromimage(normdata_byslice,
     if not verbose:
         print('done')
     slicesamplerate = 1.0 * numsteps / tr
-    print('slice sample rate is ', slicesamplerate)
+    print('slice sample rate is ', "{:.3f}".format(slicesamplerate))
 
     # delete the TR frequency and the first subharmonic
     print('notch filtering...')
@@ -296,7 +296,7 @@ def findbadpts(thewaveform, nameroot, outputroot, samplerate, infodict,
         numsigma = np.sqrt(1.0 / (1.0 - retainthresh))
         thresh = numsigma * sigma
         thebadpts = np.where(absdev >= thresh, 1.0, 0.0)
-        print('bad point threshhold set to', thresh, 'using the', thetype, 'method for', nameroot)
+        print('bad point threshhold set to', "{:.3f}".format(thresh), 'using the', thetype, 'method for', nameroot)
     elif thetype == 'fracval':
         lower, upper = tide_stats.getfracvals(thewaveform, [(1.0 - retainthresh) / 2.0, (1.0 + retainthresh) / 2.0],
                                               numbins=200)
@@ -972,8 +972,8 @@ def happy_main(argparsingfunc):
                 # check the match between the raw and filtered cardiac signals
                 maxval, maxdelay, failreason = checkcardmatch(raw_cardfromfmri_sliceres, cardfromfmri_sliceres, slicesamplerate,
                                                   debug=args.debug)
-                print('Filtered cardiac fmri waveform delay is', maxdelay, 'relative to raw fMRI data')
-                print('Correlation coefficient between cardiac regressors:', maxval)
+                print('Filtered cardiac fmri waveform delay is', "{:.3f}".format(maxdelay), 'relative to raw fMRI data')
+                print('Correlation coefficient between cardiac regressors:', "{:.3f}".format(maxval))
                 infodict['corrcoeff_raw2filt'] = maxval + 0
                 infodict['delay_raw2filt'] = maxdelay + 0
                 infodict['failreason_raw2filt'] = failreason + 0
@@ -1248,7 +1248,7 @@ def happy_main(argparsingfunc):
                 instantaneous_time[t] = (t - zerophaselocs[whichpeak]) / slicesamplerate
             #print(t, whichpeak, zerophaselocs[whichpeak], instantaneous_time[t])
         maxtime = np.ceil(int(1.02 * tide_stats.getfracval(instantaneous_time, 0.98, 200) // args.pulsereconstepsize)) * args.pulsereconstepsize
-        outtimes = sp.linspace(0.0, maxtime, num=(maxtime / args.pulsereconstepsize), endpoint=False)
+        outtimes = sp.linspace(0.0, maxtime, num=int(maxtime / args.pulsereconstepsize), endpoint=False)
         atp_bypoint = cardiaccycleaverage(instantaneous_time,
                                           outtimes,
                                           cardfromfmri_sliceres,
@@ -1391,7 +1391,7 @@ def happy_main(argparsingfunc):
         tide_util.logmem('before making vessel masks', file=memfile)
         hardvesselthresh = tide_stats.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
         softvesselthresh = args.softvesselfrac * hardvesselthresh
-        print('hard, soft vessel threshholds set to', hardvesselthresh, softvesselthresh)
+        print('hard, soft vessel threshholds set to', "{:.3f}".format(hardvesselthresh), "{:.3f}".format(softvesselthresh))
 
         # save a vessel masked version of app
         if args.unnormvesselmap:
