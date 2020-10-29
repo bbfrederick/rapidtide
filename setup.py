@@ -173,6 +173,7 @@ setup(
                         'scikit-image',
                         'scikit-learn',
                         'nibabel',
+                        'nilearn',
                         'matplotlib',
                         'pyfftw',
                         'pyqtgraph>=0.11.0',

@@ -292,6 +292,11 @@ pandas:
 1) McKinney, W., pandas: a foundational Python library for data analysis
    and statistics. Python for High Performance and Scientific Computing, 2011. 14.
 
+nilearn:
+````````
+
+1) https://github.com/nilearn/nilearn
+
 
 References
 ----------
