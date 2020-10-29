@@ -3,20 +3,18 @@
 happy \
     happyfmri.nii.gz \
     happyfmri.json \
-    ../dst/happy_transtest \
+    ../dst/happy \
     --mklthreads 8 \
     --model model_revised \
     --outputbins 40 \
     --gridbins 3.5 \
     --stdfreq 20.0 \
-    --estmask happytestvesselmask.nii.gz \
     --minhr 46 \
     --maxhr 131.2 \
     --minhrfilt 45.5 \
     --maxhrfilt 800.0 \
     --envcutoff 0.45 \
     --notchwidth 1.25 \
-    --cardiacfile happytestpleth.txt \
     --cardiacfreq 20.0 \
     --cardiacstart 0.0 \
     --aliasedcorrelation \
