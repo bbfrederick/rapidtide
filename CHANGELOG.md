@@ -1,6 +1,17 @@
 # History of changes
 
-## Version 2.0alpha4 (10/26/26)
+## Version 2.0alpha5 (10/29/20)
+Much thanks to Taylor Salo for his continuing contributions, with several substantive improvements to code, documentation, and automatic testing, and generally helping devise a sensible release roadmap.
+* (rapidtide, happy) Switched to using nilearn's mask generator for automatic mask generation, since it's much more sophisticated.  It seems to be a big improvement, and handles data processed by fmriprep and SPM with no fiddling.
+* (rapidtide, happy) General improvement of output of floating point numbers.  Limit to 3 decimal places.
+* (rapidtide) Use logging module for output.
+* (rapidtide, rapidtide_legacy) Options file is now always saved as a json.
+* (rapidtide) Added ability to autochoose an appropriate spatial filter by setting --spatialfilt to a negative value.
+* (rapidtide_parser) Code cleanup and formatting fixes.
+* (documentation) Much reorganization, reformatting and cleanup.
+* (documentation) New "theory of operation" section for rapidtide.  Still working on it.
+
+## Version 2.0alpha4 (10/26/20)
 * rapidtide2x has been renamed to rapidtide2x_legacy
 * (rapidtide, rapidtide2x) The options file is now always saved in .json format.
 * (rapidtide) BIDS format output naming and file structures have been updated to be more compliant with the standard.
