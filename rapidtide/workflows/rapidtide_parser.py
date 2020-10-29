@@ -269,7 +269,9 @@ def _get_parser():
         metavar="GAUSSSIGMA",
         help=(
             "Spatially filter fMRI data prior to analysis "
-            "using GAUSSSIGMA in mm."
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to have rapidtide set it to half the mean voxel "
+            "dimension (a rule of thumb for a good value)."
         ),
         default=0.0,
     )
