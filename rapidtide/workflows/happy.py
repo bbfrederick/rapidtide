@@ -46,6 +46,7 @@ from scipy.signal import welch, savgol_filter
 from scipy.stats import kurtosis, skew
 from statsmodels.robust import mad
 import copy
+from nilearn import masking
 
 import warnings
 
@@ -748,8 +749,9 @@ def happy_main(argparsingfunc):
 
     # make and save a mask of the voxels to process based on image intensity
     tide_util.logmem('before mask creation', file=memfile)
-    mask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, :], axis=1),
-                                         threshpct=args.maskthreshpct))
+    mask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
+    #mask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, :], axis=1),
+    #                                     threshpct=args.maskthreshpct))
     validvoxels = np.where(mask > 0)[0]
     theheader = copy.deepcopy(nim_hdr)
     theheader['dim'][4] = 1
