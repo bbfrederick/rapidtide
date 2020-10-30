@@ -500,7 +500,7 @@ def readparfile(filename):
     return motiondict
 
 
-def readmotion(filename, colspec=None):
+def readmotion(filename):
     r"""Reads motion regressors from filename (from the columns specified in colspec, if given)
 
     Parameters
@@ -516,14 +516,47 @@ def readmotion(filename, colspec=None):
         All the timecourses in the file, keyed by name
 
     """
-    labels = ['X', 'Y', 'Z', 'RotX', 'RotY', 'RotZ']
+    # read in the motion timecourses
+    print('reading motion timecourses...')
+    filebase, extension = os.path.splitext(filename)
+    if extension == '.par':
+        allmotion = readvecs(filename)
+        motiondict = {}
+        motiondict['xtrans'] = allmotion[3, :] * 1.0
+        motiondict['ytrans'] = allmotion[4, :] * 1.0
+        motiondict['ztrans'] = allmotion[5, :] * 1.0
+        motiondict['maxtrans'] = np.max([np.max(motiondict['xtrans']), np.max(motiondict['ytrans']), np.max(motiondict['ztrans'])])
+        motiondict['mintrans'] = np.min([np.min(motiondict['xtrans']), np.min(motiondict['ytrans']), np.min(motiondict['ztrans'])])
+        motiondict['xrot'] = allmotion[0, :] * 1.0
+        motiondict['yrot'] = allmotion[1, :] * 1.0
+        motiondict['zrot'] = allmotion[2, :] * 1.0
+        motiondict['maxrot'] = np.max([np.max(motiondict['xrot']), np.max(motiondict['yrot']), np.max(motiondict['zrot'])])
+        motiondict['minrot'] = np.min([np.min(motiondict['xrot']), np.min(motiondict['yrot']), np.min(motiondict['zrot'])])
+    elif extension == '.tsv':
+        allmotion = readfmriprepconfounds(filebase)
+        motiondict = {}
+        motiondict['xtrans'] = allmotion['trans_x'] * 1.0
+        motiondict['ytrans'] = allmotion['trans_y'] * 1.0
+        motiondict['ztrans'] = allmotion['trans_z'] * 1.0
+        motiondict['maxtrans'] = np.max([np.max(motiondict['xtrans']), np.max(motiondict['ytrans']), np.max(motiondict['ztrans'])])
+        motiondict['mintrans'] = np.min([np.min(motiondict['xtrans']), np.min(motiondict['ytrans']), np.min(motiondict['ztrans'])])
+        motiondict['xrot'] = allmotion['rot_x'] * 1.0
+        motiondict['yrot'] = allmotion['rot_y'] * 1.0
+        motiondict['zrot'] = allmotion['rot_z'] * 1.0
+        motiondict['maxrot'] = np.max([np.max(motiondict['xrot']), np.max(motiondict['yrot']), np.max(motiondict['zrot'])])
+        motiondict['minrot'] = np.min([np.min(motiondict['xrot']), np.min(motiondict['yrot']), np.min(motiondict['zrot'])])
+    else:
+        print('cannot read files with extension', extension)
+        sys.exit()
+    '''
+    motionlen = motiondict['xtrans'].shape[0]
     motiontimeseries = readvecs(filename, colspec=colspec)
     if motiontimeseries.shape[0] != 6:
         print('readmotion: expect 6 motion regressors', motiontimeseries.shape[0], 'given')
         sys.exit()
     motiondict = {}
     for j in range(0, 6):
-        motiondict[labels[j]] = 1.0 * motiontimeseries[j, :]
+        motiondict[labels[j]] = 1.0 * motiontimeseries[j, :]'''
     return motiondict
 
 
@@ -541,7 +574,7 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, de
         All the derivative timecourses to use in a numpy array
 
     """
-    labels = ['X', 'Y', 'Z', 'RotX', 'RotY', 'RotZ']
+    labels = ['xtrans', 'ytrans', 'ztrans', 'xrot', 'yrot', 'zrot']
     numpoints = len(motiondict[labels[0]])
     if end == -1:
         end = numpoints - 1
@@ -561,19 +594,23 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, de
         print('no output types selected - exiting')
         sys.exit()
     activecolumn = 0
+    outlabels = []
     if position:
         for thelabel in labels:
             outputregressors[activecolumn, :] = motiondict[thelabel][start:end + 1]
+            outlabels.append(thelabel)
             activecolumn += 1
     if deriv:
         for thelabel in labels:
             outputregressors[activecolumn, 1:] = np.diff(motiondict[thelabel][start:end + 1])
+            outlabels.append(thelabel + '_deriv')
             activecolumn += 1
     if derivdelayed:
         for thelabel in labels:
             outputregressors[activecolumn, 2:] = np.diff(motiondict[thelabel][start:end + 1])[1:]
+            outlabels.append(thelabel + '_delayedderiv')
             activecolumn += 1
-    return outputregressors
+    return outputregressors, outlabels
 
 
 def sliceinfo(slicetimes, tr):
