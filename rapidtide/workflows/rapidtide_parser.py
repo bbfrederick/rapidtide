@@ -323,15 +323,11 @@ def _get_parser():
     preproc.add_argument(
         "--motionfile",
         dest="motionfilespec",
-        metavar="MASK[:VALSPEC]",
+        metavar="MOTFILE",
         help=(
-            "Read 6 columns of motion regressors out of MOTFILE text file. "
+            "Read 6 columns of motion regressors out of MOTFILE file (.par or BIDS .json) "
             "(with timepoints rows) and regress their derivatives "
             "and delayed derivatives out of the data prior to analysis. "
-            "If COLSPEC is present, use the comma separated list of ranges to "
-            "specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For  "
-            "example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9 "
-            "for X, Y, Z, RotX, RotY, RotZ, respectively."
         ),
         default=None,
     )

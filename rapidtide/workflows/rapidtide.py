@@ -586,18 +586,24 @@ def rapidtide_main(argparsingfunc):
         print('regressing out motion')
 
         timings.append(['Motion filtering start', time.time(), None, None])
-        motionregressors, fmri_data_valid = tide_glmpass.motionregress(optiondict['motionfilename'],
-                                                                    fmri_data_valid,
-                                                                    tr,
-                                                                    motstart=validstart,
-                                                                    motend=validend + 1,
-                                                                    position=optiondict['mot_pos'],
-                                                                    deriv=optiondict['mot_deriv'],
-                                                                    derivdelayed=optiondict['mot_delayderiv'])
+        motionregressors, motionregressorlabels, fmri_data_valid = tide_glmpass.motionregress(
+            optiondict['motionfilename'],
+            fmri_data_valid,
+            fmritr,
+            motstart=validstart,
+            motend=validend + 1,
+            position=optiondict['mot_pos'],
+            deriv=optiondict['mot_deriv'],
+            derivdelayed=optiondict['mot_delayderiv'])
 
         timings.append(['Motion filtering end', time.time(), fmri_data_valid.shape[0], 'voxels'])
         if optiondict['bidsoutput']:
-            tide_io.writenpvecs(motionregressors, outputname + '_orthogonalizedmotion.txt')
+            tide_io.writebidstsv(outputname + '_desc-orthogonalizedmotion_timeseries',
+                                 motionregressors,
+                                 1.0 / fmritr,
+                                 compressed=False,
+                                 columns=motionregressorlabels,
+                                 append=True)
         else:
             tide_io.writenpvecs(motionregressors, outputname + '_orthogonalizedmotion.txt')
         if optiondict['memprofile']:

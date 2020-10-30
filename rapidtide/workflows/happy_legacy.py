@@ -1331,16 +1331,17 @@ def happy_main(thearguments):
     # filter out motion regressors here
     if motionfilename is not None:
         timings.append(['Motion filtering start', time.time(), None, None])
-        motionregressors, filtereddata = tide_glmpass.motionregress(motionfilename,
-                                                                    fmri_data[validvoxels, :],
-                                                                    tr,
-                                                                    orthogonalize=orthogonalize,
-                                                                    motstart=motskip,
-                                                                    motionhp=motionhp,
-                                                                    motionlp=motionlp,
-                                                                    position=motfilt_pos,
-                                                                    deriv=motfilt_deriv,
-                                                                    derivdelayed=motfilt_derivdelayed)
+        motionregressors, motionregressorlabels, filtereddata = tide_glmpass.motionregress(
+            motionfilename,
+            fmri_data[validvoxels, :],
+            tr,
+            orthogonalize=orthogonalize,
+            motstart=motskip,
+            motionhp=motionhp,
+            motionlp=motionlp,
+            position=motfilt_pos,
+            deriv=motfilt_deriv,
+            derivdelayed=motfilt_derivdelayed)
         fmri_data[validvoxels, :] = filtereddata[:, :]
         infodict['numorthogmotregressors'] = motionregressors.shape[0]
         timings.append(['Motion filtering end', time.time(), numspatiallocs, 'voxels'])
