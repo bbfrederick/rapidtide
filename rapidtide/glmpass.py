@@ -201,16 +201,17 @@ def motionregress(themotionfilename,
                   derivdelayed=False,
                   debug=False):
     print('regressing out motion')
-    splitfilename = themotionfilename.split(':')
+    '''splitfilename = themotionfilename.split(':')
     if len(splitfilename) == 1:
         themotionfilename = splitfilename[0]
         colspec = None
     else:
         themotionfilename = splitfilename[0]
-        colspec = splitfilename[1]
-    motionregressors = tide_io.calcmotregressors(
-        tide_io.readmotion(themotionfilename, colspec=colspec),
-        position=position, deriv=deriv, derivdelayed=derivdelayed)
+        colspec = splitfilename[1]'''
+    motionregressors, motionregressorlabels = tide_io.calcmotregressors(tide_io.readmotion(themotionfilename),
+                                                                        position=position,
+                                                                        deriv=deriv,
+                                                                        derivdelayed=derivdelayed)
     if motend == -1:
         motionregressors = motionregressors[:, motstart:]
     else:
@@ -233,7 +234,7 @@ def motionregress(themotionfilename,
     filtereddata = confoundglm(thedataarray, motionregressors, debug=debug)
     print()
     print('motion filtering complete')
-    return motionregressors, filtereddata
+    return motionregressors, motionregressorlabels, filtereddata
 
 
 def confoundglm(data,
