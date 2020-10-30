@@ -72,6 +72,10 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-4.7.12.1-Linux-x86
     rm Miniconda3-4.7.12.1-Linux-x86_64.sh
 
 
+# Update to the newest version of conda
+RUN conda update -n base -c defaults conda
+
+
 # Set CPATH for packages relying on compiled libs (e.g. indexed_gzip)
 ENV PATH="/usr/local/miniconda/bin:$PATH" \
     CPATH="/usr/local/miniconda/include/:$CPATH" \
