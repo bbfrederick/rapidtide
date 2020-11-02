@@ -913,7 +913,7 @@ def happy_main(argparsingfunc):
             else:
                 tide_io.writevec(cycleaverage, outputroot + '_cycleaverage.txt')
                 tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_sliceres.txt')
-        else:
+        '''else:
             if args.saveintermediate:
                 if args.bidsoutput:
                     tide_io.writebidstsv(outputroot + '_desc-cycleaverage_timeseries',
@@ -930,7 +930,7 @@ def happy_main(argparsingfunc):
                                          append=True)
                 else:
                     tide_io.writevec(cycleaverage, outputroot + '_cycleaverage_pass' + str(thispass + 1) + '.txt')
-                    tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_sliceres_pass' + str(thispass + 1) + '.txt')
+                    tide_io.writevec(cardfromfmri_sliceres, outputroot + '_cardfromfmri_sliceres_pass' + str(thispass + 1) + '.txt')'''
 
         # stash away a copy of the waveform if we need it later
         raw_cardfromfmri_sliceres = np.array(cardfromfmri_sliceres)
@@ -982,7 +982,7 @@ def happy_main(argparsingfunc):
                                      append=False)
             else:
                 tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(args.stdfreq) + 'Hz.txt')
-        else:
+        '''else:
             if args.saveintermediate:
                 if args.bidsoutput:
                     tide_io.writebidstsv(outputroot + '_desc-stdrescardfromfmri_timeseries',
@@ -992,7 +992,7 @@ def happy_main(argparsingfunc):
                                          columns=['cardiacfromfmri_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1)],
                                          append=True)
                 else:
-                    tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')
+                    tide_io.writevec(cardfromfmri_stdres, outputroot + '_cardfromfmri_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')'''
         infodict['numcardpts_stdres'] = len(cardfromfmri_stdres)
 
         # normalize the signal to remove envelope effects
@@ -1018,7 +1018,7 @@ def happy_main(argparsingfunc):
             else:
                 tide_io.writevec(normcardfromfmri_stdres, outputroot + '_normcardfromfmri_' + str(args.stdfreq) + 'Hz.txt')
                 tide_io.writevec(cardfromfmrienv_stdres, outputroot + '_cardfromfmrienv_' + str(args.stdfreq) + 'Hz.txt')
-        else:
+        '''else:
             if args.saveintermediate:
                 if args.bidsoutput:
                     tide_io.writebidstsv(outputroot + '_desc-stdrescardfromfmri_timeseries',
@@ -1035,7 +1035,7 @@ def happy_main(argparsingfunc):
                                          append=True)
                 else:
                     tide_io.writevec(normcardfromfmri_stdres, outputroot + '_normcardfromfmri_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')
-                    tide_io.writevec(cardfromfmrienv_stdres, outputroot + '_cardfromfmrienv_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')
+                    tide_io.writevec(cardfromfmrienv_stdres, outputroot + '_cardfromfmrienv_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')'''
 
         # calculate quality metrics
         calcplethquality(normcardfromfmri_stdres, args.stdfreq, infodict, '_bold', outputroot, outputlevel=args.outputlevel,
@@ -1077,7 +1077,7 @@ def happy_main(argparsingfunc):
                     else:
                         tide_io.writevec(normdlfilteredcard, outputroot + '_normcardfromfmri_dlfiltered_' + str(args.stdfreq) + 'Hz.txt')
                         tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(args.stdfreq) + 'Hz.txt')
-                else:
+                '''else:
                     if args.saveintermediate:
                         if args.bidsoutput:
                             tide_io.writebidstsv(outputroot + '_desc-stdrescardfromfmri_timeseries',
@@ -1097,7 +1097,7 @@ def happy_main(argparsingfunc):
                                                  append=True)
                         else:
                             tide_io.writevec(normdlfilteredcard, outputroot + '_normcardfromfmri_dlfiltered_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')
-                            tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')
+                            tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')'''
 
                 # calculate quality metrics
                 calcplethquality(dlfilteredcard, args.stdfreq, infodict, '_dlfiltered', outputroot, outputlevel=args.outputlevel,
@@ -1529,9 +1529,10 @@ def happy_main(argparsingfunc):
                                      append=True)
             else:
                 tide_io.writevec(atp_bypoint, outputroot + '_cardpulsefromfmri.txt')
-        else:
+        '''else:
             if args.saveintermediate:
                 if args.bidsoutput:
+                    print('got to here')
                     tide_io.writebidstsv(outputroot + '_desc-cardpulsefromfmri_timeseries',
                                          atp_bypoint,
                                          1.0 / (outtimes[1] - outtimes[0]),
@@ -1539,8 +1540,9 @@ def happy_main(argparsingfunc):
                                          compressed=False,
                                          columns=['pulsefromfmri_pass' + str(thispass + 1)],
                                          append=True)
+                    print('got past here')
                 else:
-                    tide_io.writevec(atp_bypoint, outputroot + '_cardpulsefromfmri_pass' + str(thispass + 1) + '.txt')
+                    tide_io.writevec(atp_bypoint, outputroot + '_cardpulsefromfmri_pass' + str(thispass + 1) + '.txt')'''
 
         if not args.verbose:
             print('phase projecting...')
