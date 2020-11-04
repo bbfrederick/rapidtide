@@ -1609,6 +1609,38 @@ def rapidtide_main(argparsingfunc):
                         savename = outputname + '_' + mapname + passsuffix
                     tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
 
+    # Post refinement step -1 - Coherence calculation
+    if optiondict['calccoherence']:
+        timings.append(['Coherence calculation start', time.time(), None, None])
+        print('\n\nCoherence calculation')
+        reportstep = 1000
+
+        # now allocate the arrays needed for Wiener deconvolution
+        if optiondict['sharedmem']:
+            coherencefunc, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+            wpeak, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+        else:
+            wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            wpeak = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+
+        coherencepass_func = addmemprofiling(tide_coherence.coherencepass,
+                                          optiondict['memprofile'],
+                                          memfile,
+                                          'before coherencepass')
+        voxelsprocessed_coherence = coherencepass_func(
+            numspatiallocs,
+            reportstep,
+            fmri_data_valid,
+            threshval,
+            optiondict,
+            wienerdeconv,
+            wpeak,
+            resampref_y,
+            rt_floatset=rt_floatset,
+            rt_floattype=rt_floattype
+        )
+        timings.append(['Coherence calculation end', time.time(), voxelsprocessed_coherence, 'voxels'])
+
 
     # Post refinement step 0 - Wiener deconvolution
     if optiondict['dodeconv']:

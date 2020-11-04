@@ -897,6 +897,16 @@ def _get_parser():
         ),
         default=True,
     )
+    output.add_argument(
+        "--calccoherence",
+        dest="calccoherence",
+        action="store_true",
+        help=(
+            "Calculate and save the coherence between the final regressor and the data."
+        ),
+        default=False,
+    )
+
 
     # Miscellaneous options
     misc = parser.add_argument_group("Miscellaneous options")

@@ -516,6 +516,7 @@ def process_args():
     optiondict['savedespecklemasks'] = True
     optiondict['checkpoint'] = False                    # save checkpoint information for tracking program state
     optiondict['alwaysmultiproc'] = False
+    optiondict['calccoherence'] = False
 
     # package options
     optiondict['memprofilerexists'] = memprofilerexists
