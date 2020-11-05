@@ -304,7 +304,7 @@ def startendcheck(timepoints, startpoint, endpoint):
 
 
 
-def valtoindex(thearray, thevalue, evenspacing=True, discrete=True):
+def valtoindex(thearray, thevalue, evenspacing=True, discrete=True, discretization='round', debug=False):
     """
 
     Parameters
@@ -315,6 +315,10 @@ def valtoindex(thearray, thevalue, evenspacing=True, discrete=True):
         The value to search for in the array
     evenspacing: boolean, optional
         If True (default), assume data is evenly spaced for faster calculation.
+    discrete: boolean, optional
+        If True make the index an integer (round by default).
+    discretization: string, optional
+        Select rounding method - floor, ceiling, or round(default)
 
     Returns
     -------
@@ -324,10 +328,26 @@ def valtoindex(thearray, thevalue, evenspacing=True, discrete=True):
     """
     if evenspacing:
         limval = np.max([thearray[0], np.min([thearray[-1], thevalue])])
+        position = (limval - thearray[0]) / (thearray[1] - thearray[0])
+        if debug:
+            print('valtoindex:')
+            print('\tthevalue:', thevalue)
+            print('\tarraymin:', thearray[0])
+            print('\tarraymax:', thearray[-1])
+            print('\tlimval:', limval)
+            print('\tindex:', int(np.round((limval - thearray[0]) / (thearray[1] - thearray[0]), 0)))
         if discrete:
-            return int(np.round((limval - thearray[0]) / (thearray[1] - thearray[0]), 0))
-        else:
-            return (limval - thearray[0]) / (thearray[1] - thearray[0])
+            if discretization == 'round':
+                position = int(np.round(position, 0))
+            elif discretization == 'floor':
+                position = int(np.floor(position))
+            elif discretization == 'ceiling':
+                position = int(np.ceil(position))
+            else:
+                print('valtoindex - illegal discretization mode')
+                position = None
+            position = int(np.min([len(thearray) - 1, np.max([0, position])]))
+        return position
     else:
         return int((np.abs(thearray - thevalue)).argmin())
 
