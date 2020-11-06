@@ -14,6 +14,7 @@ rapidtide \
 	--spatialfilt 2 \
         --nprocs -1 \
         --passes 3 \
+        --calccoherence \
         --nolimitoutput
 
 #diffmaps ../dst/dgsr_butterworth_onepass_bipolar ../dst/dgsr_butterworth_onepass ../dst/diff_bipvsnorm
