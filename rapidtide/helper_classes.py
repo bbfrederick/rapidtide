@@ -417,7 +417,6 @@ class coherer:
         self.windowfunc = windowfunc
         self.detrendorder = detrendorder
         self.nperseg = nperseg
-        print('nperseg=', self.nperseg)
         self.debug = debug
         if freqmin is not None:
             self.freqmin = freqmin
@@ -451,6 +450,13 @@ class coherer:
             print('setlimits:')
             print('\tfreqmin,freqmax:', self.freqmin, self.freqmax)
             print('\tfreqmininpts,freqmaxinpts:', self.freqmininpts, self.freqmaxinpts)
+
+
+    def getaxisinfo(self):
+        return self.freqaxis[self.freqmininpts], \
+               self.freqaxis[self.freqmaxinpts], \
+               self.freqaxis[1] - self.freqaxis[0], \
+               self.freqmaxinpts - self.freqmininpts
 
 
     def setreftc(self, reftc):
