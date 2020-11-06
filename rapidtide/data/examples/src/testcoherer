@@ -3,6 +3,7 @@
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 import rapidtide.helper_classes as tide_classes
+import rapidtide.calccoherence as tide_calccoherence
 import matplotlib.pyplot as plt
 
 thereftc = tide_io.readvec("lf_HbO")
@@ -16,17 +17,26 @@ thecoherer = tide_classes.coherer(Fs=12.5,
                                   ncprefilter=thefilter,
                                   debug=False)
 
-yaxis, xaxis, globalmax = thecoherer.run(thetesttc, trim=True)
+yaxis, xaxis, maxindex = thecoherer.run(thetesttc, trim=True)
+
+dummy, xaxis2, yaxis2, dummy, dummy = tide_calccoherence._procOneVoxelCoherence(
+        0,
+        thecoherer,
+        thetesttc)
 
 #print(thecoherer.freqmin, thecoherer.freqmininpts,
 #      thecoherer.freqmax, thecoherer.freqmaxinpts)
 
 print(xaxis)
 print(yaxis)
-print("peak value of {:.3f} occurs at {:.3f}Hz".format(yaxis[globalmax], xaxis[globalmax]))
+print("peak value of {:.3f} occurs at {:.3f}Hz".format(yaxis[maxindex], xaxis[maxindex]))
 
 plt.figure()
 plt.plot(xaxis, yaxis)
+plt.show()
+
+plt.figure()
+plt.plot(xaxis2, yaxis2)
 plt.show()
 
 #preppedref = thecoherer.prepreftc
