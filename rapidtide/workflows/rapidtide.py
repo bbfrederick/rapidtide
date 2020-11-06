@@ -51,6 +51,7 @@ import rapidtide.util as tide_util
 
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
+import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.refine as tide_refine
@@ -999,6 +1000,7 @@ def rapidtide_main(argparsingfunc):
                                              enforcethresh=optiondict['enforcethresh'],
                                              hardlimit=optiondict['hardlimit'])
 
+
     for thepass in range(1, optiondict['passes'] + 1):
         # initialize the pass
         if optiondict['passes'] > 1:
@@ -1118,17 +1120,20 @@ def rapidtide_main(argparsingfunc):
                                                                         windowfunc='None',
                                                                         detrendorder=optiondict['detrendorder'])
                     cleaned_referencetc = 1.0 * referencetc
+                    cleaned_nonosreferencetc = 1.0 * resampnonosref_y
             else:
                 print('no sidelobes found in range')
                 cleaned_resampref_y = 1.0 * tide_math.corrnormalize(resampref_y,
                                                                     windowfunc='None',
                                                                     detrendorder=optiondict['detrendorder'])
                 cleaned_referencetc = 1.0 * referencetc
+                cleaned_nonosreferencetc = 1.0 * resampnonosref_y
         else:
             cleaned_resampref_y = 1.0 * tide_math.corrnormalize(resampref_y,
                                                                 windowfunc='None',
                                                                 detrendorder=optiondict['detrendorder'])
             cleaned_referencetc = 1.0 * referencetc
+            cleaned_nonosreferencetc = 1.0 * resampnonosref_y
 
         # Step 0 - estimate significance
         if optiondict['numestreps'] > 0:
@@ -1615,30 +1620,81 @@ def rapidtide_main(argparsingfunc):
         print('\n\nCoherence calculation')
         reportstep = 1000
 
-        # now allocate the arrays needed for Wiener deconvolution
-        if optiondict['sharedmem']:
-            coherencefunc, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
-            wpeak, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+        # make the coherer
+        thecoherer = tide_classes.coherer(Fs=(1.0 / fmritr) ,
+                                          reftc=cleaned_nonosreferencetc,
+                                          freqmin=0.0,
+                                          freqmax=0.2,
+                                          ncprefilter=theprefilter,
+                                          windowfunc=optiondict['windowfunc'],
+                                          detrendorder=optiondict['detrendorder'],
+                                          debug=False)
+        coherencefreqstart, dummy, coherencefreqstep, corrfreqaxissize = thecoherer.getaxisinfo()
+        #coherencefreqstart = thecoherer.freqaxis[0]
+        #coherencefreqstep = thecoherer.freqaxis[1] - coherencefreqstart
+        #corrfreqaxissize = thecoherer.freqmaxinpts - thecoherer.freqmininpts
+        if optiondict['textio']:
+            nativecoherenceshape = (xsize, corrfreqaxissize)
         else:
-            wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-            wpeak = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            if fileiscifti:
+                nativecoherenceshape = (1, 1, 1, corrfreqaxissize, numspatiallocs)
+            else:
+                nativecoherenceshape = (xsize, ysize, numslices, corrfreqaxissize)
 
-        coherencepass_func = addmemprofiling(tide_coherence.coherencepass,
+        internalvalidcoherenceshape = (numvalidspatiallocs, corrfreqaxissize)
+        internalcoherenceshape = (numspatiallocs, corrfreqaxissize)
+
+        # now allocate the arrays needed for the coherence calculation
+        if optiondict['sharedmem']:
+            coherencefunc, dummy, dummy = allocshared(internalvalidcoherenceshape, rt_outfloatset)
+            coherencepeakval, dummy, dummy = allocshared(numvalidspatiallocs, rt_outfloatset)
+            coherencepeakfreq, dummy, dummy = allocshared(numvalidspatiallocs, rt_outfloatset)
+        else:
+            coherencefunc = np.zeros(internalvalidcoherenceshape, dtype=rt_outfloattype)
+            coherencepeakval, dummy, dummy = allocshared(numvalidspatiallocs, rt_outfloatset)
+            coherencepeakfreq = np.zeros(numvalidspatiallocs, dtype=rt_outfloattype)
+
+        coherencepass_func = addmemprofiling(tide_calccoherence.coherencepass,
                                           optiondict['memprofile'],
                                           memfile,
                                           'before coherencepass')
         voxelsprocessed_coherence = coherencepass_func(
-            numspatiallocs,
-            reportstep,
             fmri_data_valid,
-            threshval,
-            optiondict,
-            wienerdeconv,
-            wpeak,
-            resampref_y,
+            thecoherer,
+            coherencefunc,
+            coherencepeakval,
+            coherencepeakfreq,
+            reportstep,
+            showprogressbar=optiondict['showprogressbar'],
+            chunksize=optiondict['mp_chunksize'],
+            nprocs=1,
+            alwaysmultiproc=False,
             rt_floatset=rt_floatset,
-            rt_floattype=rt_floattype
-        )
+            rt_floattype=rt_floattype)
+
+        # save the results of the calculations
+        outcoherencearray = np.zeros(internalcoherenceshape, dtype=rt_floattype)
+        outcoherencearray[validvoxels, :] = coherencefunc[:, :]
+        theheader = copy.deepcopy(nim_hdr)
+        if fileiscifti:
+            theheader['intent_code'] = 3006
+        else:
+            theheader['dim'][4] = corrfreqaxissize
+            theheader['toffset'] = coherencefreqstart
+            theheader['pixdim'][4] = coherencefreqstep
+
+        if optiondict['textio']:
+            tide_io.writenpvecs(outcoherencearray.reshape(nativecoherenceshape),
+                                outputname + '_coherence' + outsuffix4d + '.txt')
+        else:
+            if optiondict['bidsoutput']:
+                savename = outputname + '_desc-coherence' + outsuffix4d + '_info'
+            else:
+                savename = outputname + '_coherence' + outsuffix4d
+            tide_io.savetonifti(outcoherencearray.reshape(nativecoherenceshape), theheader, savename)
+        del coherencefunc
+        del outcoherencearray
+
         timings.append(['Coherence calculation end', time.time(), voxelsprocessed_coherence, 'voxels'])
 
 
@@ -1863,6 +1919,9 @@ def rapidtide_main(argparsingfunc):
     MTT = np.where(MTT > 0.0, MTT, 0.0)
     MTT = np.sqrt(MTT)
     savelist += [('MTT', 'MTT')]
+    if optiondict['calccoherence']:
+        savelist += [('coherencepeakval', 'coherencepeakval'),
+                     ('coherencepeakfreq', 'coherencepeakfreq')]
     if optiondict['similaritymetric'] == 'mutualinfo':
         baseline = np.median(corrout, axis=1)
         baselinedev = mad(corrout, axis=1)
