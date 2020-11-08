@@ -416,7 +416,7 @@ class coherer:
         self.reftc = reftc
         self.windowfunc = windowfunc
         self.detrendorder = detrendorder
-        self.nperseg = nperseg
+        self.nperseg = np.min([nperseg, len(reftc)])
         self.debug = debug
         if freqmin is not None:
             self.freqmin = freqmin
@@ -495,6 +495,13 @@ class coherer:
         self.preptesttc = self.preptc(self.testtc)
 
         # now actually do the coherence
+        if self.debug:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            plt.plot(self.prepreftc, 'r')
+            plt.plot(self.preptesttc, 'b')
+            plt.legend(['reference', 'test timecourse'])
+            plt.show()
         self.freqaxis, self.thecoherence = sp.signal.coherence(self.prepreftc, self.preptesttc,
                                                                fs=self.Fs,
                                                                nperseg=self.nperseg,
