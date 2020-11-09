@@ -115,9 +115,9 @@ def coherencepass(fmridata,
         # unpack the data
         volumetotal = 0
         for voxel in data_out:
-            coherencefunc[voxel[0], :] = voxel[2]
-            coherencepeakval[voxel[0]] = voxel[3]
-            coherencepeakfreq[voxel[0]] = voxel[4]
+            coherencefunc[voxel[0], :] = voxel[2] + 0.0
+            coherencepeakval[voxel[0]] = voxel[3] + 0.0
+            coherencepeakfreq[voxel[0]] = voxel[4] + 0.0
             volumetotal += 1
         del data_out
     else:
