@@ -409,14 +409,12 @@ class coherer:
                  reftc=None,
                  detrendorder=1,
                  windowfunc='hamming',
-                 nperseg=512,
                  debug=False):
         self.Fs = Fs
         self.ncprefilter = ncprefilter
         self.reftc = reftc
         self.windowfunc = windowfunc
         self.detrendorder = detrendorder
-        self.nperseg = np.min([nperseg, len(reftc)])
         self.debug = debug
         if freqmin is not None:
             self.freqmin = freqmin
@@ -429,7 +427,6 @@ class coherer:
             print('\tFs:', self.Fs)
             print('\twindowfunc:', self.windowfunc)
             print('\tdetrendorder:', self.detrendorder)
-            print('\tnperseg:', self.nperseg)
             print('\tfreqmin:', self.freqmin)
             print('\tfreqmax:', self.freqmax)
 
@@ -467,7 +464,6 @@ class coherer:
         self.freqaxis, self.thecoherence = sp.signal.coherence(self.prepreftc,
                                                                self.prepreftc,
                                                                fs=self.Fs)
-        #                                                       nperseg=self.nperseg,
         #                                                       window=self.windowfunc)'''
         self.similarityfunclen = len(self.thecoherence)
         self.similarityfuncorigin = 0
@@ -506,7 +502,6 @@ class coherer:
         self.freqaxis, self.thecoherence = sp.signal.coherence(self.prepreftc,
                                                                self.preptesttc,
                                                                fs=self.Fs)
-            #                                                   nperseg=self.nperseg,
             #                                                   window=self.windowfunc)'''
         self.similarityfunclen = len(self.thecoherence)
         self.similarityfuncorigin = 0
