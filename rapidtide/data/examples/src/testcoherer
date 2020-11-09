@@ -15,7 +15,7 @@ thecoherer = tide_classes.coherer(Fs=12.5,
                                   freqmin=0.0,
                                   freqmax=0.2,
                                   ncprefilter=thefilter,
-                                  debug=False)
+                                  debug=True)
 
 yaxis, xaxis, maxindex = thecoherer.run(thetesttc, trim=True)
 

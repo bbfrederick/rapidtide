@@ -491,7 +491,7 @@ class coherer:
             print('timecourses are of different sizes:', len(thetc), '!=', len(self.reftc), '- exiting')
             sys.exit()
 
-        self.testtc = thetc
+        self.testtc = thetc + 0.0
         self.preptesttc = self.preptc(self.testtc)
 
         # now actually do the coherence
