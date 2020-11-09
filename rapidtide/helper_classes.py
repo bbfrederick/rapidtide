@@ -444,8 +444,8 @@ class coherer:
         self.freqmin = freqmin
         self.freqmax = freqmax
         if self.freqaxisvalid:
-            self.freqmininpts = tide_util.valtoindex(self.freqaxis, self.freqmin)
-            self.freqmaxinpts = tide_util.valtoindex(self.freqaxis, self.freqmax)
+            self.freqmininpts = np.max([0, tide_util.valtoindex(self.freqaxis, self.freqmin)])
+            self.freqmaxinpts = np.min([tide_util.valtoindex(self.freqaxis, self.freqmax), len(self.freqaxis) - 1])
         if self.debug:
             print('setlimits:')
             print('\tfreqmin,freqmax:', self.freqmin, self.freqmax)
@@ -464,10 +464,11 @@ class coherer:
         self.prepreftc = self.preptc(self.reftc)
 
         # get frequency axis, etc
-        self.freqaxis, self.thecoherence = sp.signal.coherence(self.prepreftc, self.prepreftc,
-                                                               fs=self.Fs,
-                                                               nperseg=self.nperseg,
-                                                               window=self.windowfunc)
+        self.freqaxis, self.thecoherence = sp.signal.coherence(self.prepreftc,
+                                                               self.prepreftc,
+                                                               fs=self.Fs)
+        #                                                       nperseg=self.nperseg,
+        #                                                       window=self.windowfunc)'''
         self.similarityfunclen = len(self.thecoherence)
         self.similarityfuncorigin = 0
         self.freqaxisvalid = True
@@ -502,21 +503,21 @@ class coherer:
             plt.plot(self.preptesttc, 'b')
             plt.legend(['reference', 'test timecourse'])
             plt.show()
-        self.freqaxis, self.thecoherence = sp.signal.coherence(self.prepreftc, self.preptesttc,
-                                                               fs=self.Fs,
-                                                               nperseg=self.nperseg,
-                                                               window=self.windowfunc)
+        self.freqaxis, self.thecoherence = sp.signal.coherence(self.prepreftc,
+                                                               self.preptesttc,
+                                                               fs=self.Fs)
+            #                                                   nperseg=self.nperseg,
+            #                                                   window=self.windowfunc)'''
         self.similarityfunclen = len(self.thecoherence)
         self.similarityfuncorigin = 0
-
-        # find the global maximum value
-        self.theglobalmax = np.argmax(self.thecoherence)
         self.datavalid = True
 
         if trim:
-            return self.trim(self.thecoherence), self.trim(self.freqaxis), self.theglobalmax
+            self.themax = np.argmax(self.thecoherence[self.freqmininpts:self.freqmaxinpts])
+            return self.trim(self.thecoherence), self.trim(self.freqaxis), self.themax
         else:
-            return self.thecoherence, self.freqaxis, self.theglobalmax
+            self.themax = np.argmax(self.thecoherence)
+            return self.thecoherence, self.freqaxis, self.themax
 
 
 
