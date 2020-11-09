@@ -1629,10 +1629,8 @@ def rapidtide_main(argparsingfunc):
                                           windowfunc=optiondict['windowfunc'],
                                           detrendorder=optiondict['detrendorder'],
                                           debug=False)
+        thecoherer.setreftc(cleaned_nonosreferencetc)
         coherencefreqstart, dummy, coherencefreqstep, corrfreqaxissize = thecoherer.getaxisinfo()
-        #coherencefreqstart = thecoherer.freqaxis[0]
-        #coherencefreqstep = thecoherer.freqaxis[1] - coherencefreqstart
-        #corrfreqaxissize = thecoherer.freqmaxinpts - thecoherer.freqmininpts
         if optiondict['textio']:
             nativecoherenceshape = (xsize, corrfreqaxissize)
         else:
