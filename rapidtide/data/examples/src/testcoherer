@@ -5,30 +5,40 @@ import rapidtide.filter as tide_filt
 import rapidtide.helper_classes as tide_classes
 import rapidtide.calccoherence as tide_calccoherence
 import matplotlib.pyplot as plt
+import numpy as np
 
 thereftc = tide_io.readvec("lf_HbO")
 thetesttc = tide_io.readvec("lt_HbO")
+thereftc = tide_io.readvec("mot1")
+thetesttc = tide_io.readvec("mot2")
 thefilter = tide_filt.noncausalfilter("lfo")
 
-thecoherer = tide_classes.coherer(Fs=12.5, 
+print('setting up coherer')
+thecoherer = tide_classes.coherer(Fs=(1.0 / 1.16), 
                                   reftc=thereftc,
                                   freqmin=0.0,
                                   freqmax=0.2,
                                   ncprefilter=thefilter,
                                   debug=True)
+print('done setting up coherer')
 
+
+print('running coherer')
 yaxis, xaxis, maxindex = thecoherer.run(thetesttc, trim=True)
+print(maxindex)
+print('done running coherer')
 
 dummy, xaxis2, yaxis2, dummy, dummy = tide_calccoherence._procOneVoxelCoherence(
         0,
         thecoherer,
         thetesttc)
 
-#print(thecoherer.freqmin, thecoherer.freqmininpts,
-#      thecoherer.freqmax, thecoherer.freqmaxinpts)
+print(thecoherer.freqmin, thecoherer.freqmininpts,
+      thecoherer.freqmax, thecoherer.freqmaxinpts)
 
-print(xaxis)
-print(yaxis)
+#print(xaxis)
+#print(yaxis)
+print(maxindex)
 print("peak value of {:.3f} occurs at {:.3f}Hz".format(yaxis[maxindex], xaxis[maxindex]))
 
 plt.figure()
@@ -39,10 +49,13 @@ plt.figure()
 plt.plot(xaxis2, yaxis2)
 plt.show()
 
-#preppedref = thecoherer.prepreftc
-#preppeddata = thecoherer.preptesttc
-#
-#plt.figure()
-#plt.plot(preppedref)
-#plt.plot(preppeddata)
-#plt.show()
+preppedref = thecoherer.prepreftc
+preppeddata = thecoherer.preptesttc
+
+plt.figure()
+plt.plot(preppedref)
+plt.plot(preppeddata)
+plt.show()
+
+#np.savetxt('preppedref.txt', preppedref)
+#np.savetxt('preppeddata.txt', preppeddata)
