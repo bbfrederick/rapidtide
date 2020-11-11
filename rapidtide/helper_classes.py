@@ -483,7 +483,7 @@ class coherer:
         return vector[self.freqmininpts:self.freqmaxinpts]
 
 
-    def run(self, thetc, trim=True):
+    def run(self, thetc, trim=True, alt=False):
         if len(thetc) != len(self.reftc):
             print('timecourses are of different sizes:', len(thetc), '!=', len(self.reftc), '- exiting')
             sys.exit()
@@ -499,21 +499,60 @@ class coherer:
             plt.plot(self.preptesttc, 'b')
             plt.legend(['reference', 'test timecourse'])
             plt.show()
-        self.freqaxis, self.thecoherence = sp.signal.coherence(self.prepreftc,
-                                                               self.preptesttc,
-                                                               fs=self.Fs)
-            #                                                   window=self.windowfunc)'''
+
+        if not alt:
+            self.freqaxis, self.thecoherence = sp.signal.coherence(self.prepreftc,
+                                                                   self.preptesttc,
+                                                                   fs=self.Fs)
+        else:
+            self.freqaxis, self.thecsdxy = sp.signal.csd(10000.0 * self.prepreftc,
+                                                         10000.0 * self.preptesttc,
+                                                         fs=self.Fs,
+                                                         scaling='spectrum')
+            self.freqaxis, self.thecsdxx = sp.signal.csd(10000.0 * self.prepreftc,
+                                                         10000.0 * self.prepreftc,
+                                                         fs=self.Fs,
+                                                         scaling='spectrum')
+            self.freqaxis, self.thecsdyy = sp.signal.csd(10000.0 * self.preptesttc,
+                                                         10000.0 * self.preptesttc,
+                                                         fs=self.Fs,
+                                                         scaling='spectrum')
+            self.thecoherence = np.nan_to_num(abs(self.thecsdxy) ** 2 / (abs(self.thecsdxx) * abs(self.thecsdyy)))
+
+
         self.similarityfunclen = len(self.thecoherence)
         self.similarityfuncorigin = 0
         self.datavalid = True
 
         if trim:
-            self.themax = np.argmax(self.thecoherence[self.freqmininpts:self.freqmaxinpts])
-            return self.trim(self.thecoherence), self.trim(self.freqaxis), self.themax
+            if alt:
+                self.themax = np.argmax(self.thecoherence[self.freqmininpts:self.freqmaxinpts])
+                return self.trim(self.thecoherence), \
+                       self.trim(self.freqaxis), \
+                       self.themax, \
+                       self.trim(self.thecsdxx), \
+                       self.trim(self.thecsdyy), \
+                       self.trim(self.thecsdxy)
+            else:
+                self.themax = np.argmax(self.thecoherence[self.freqmininpts:self.freqmaxinpts])
+                return self.trim(self.thecoherence), \
+                       self.trim(self.freqaxis), \
+                       self.themax
         else:
-            self.themax = np.argmax(self.thecoherence)
-            return self.thecoherence, self.freqaxis, self.themax
+            if alt:
+                self.themax = np.argmax(self.thecoherence)
+                return self.thecoherence, \
+                       self.freqaxis, \
+                       self.themax, \
+                       self.thecsdxx, \
+                       self.thecsdyy, \
+                       self.thecsdxy
 
+            else:
+                self.themax = np.argmax(self.thecoherence)
+                return self.thecoherence, \
+                       self.freqaxis, \
+                       self.themax
 
 
 class simfunc_fitter:

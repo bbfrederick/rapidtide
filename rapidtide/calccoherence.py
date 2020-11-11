@@ -41,9 +41,13 @@ def _procOneVoxelCoherence(
         vox,
         thecoherer,
         fmritc,
+        alt=False,
         rt_floatset=np.float64,
         rt_floattype='float64'):
-    thecoherence_y, thecoherence_x, globalmaxindex = thecoherer.run(fmritc, trim=True)
+    if alt:
+        thecoherence_y, thecoherence_x, globalmaxindex, dummy, dummy, dummy = thecoherer.run(fmritc, trim=True, alt=True)
+    else:
+        thecoherence_y, thecoherence_x, globalmaxindex = thecoherer.run(fmritc, trim=True)
     maxindex = np.argmax(thecoherence_y)
     return vox, thecoherence_x, thecoherence_y, thecoherence_y[maxindex], thecoherence_x[maxindex]
 
@@ -54,6 +58,7 @@ def coherencepass(fmridata,
                   coherencepeakval,
                   coherencepeakfreq,
                   reportstep,
+                  alt=False,
                   chunksize=1000,
                   nprocs=1,
                   alwaysmultiproc=False,
@@ -99,6 +104,7 @@ def coherencepass(fmridata,
                     outQ.put(_procOneVoxelCoherence(val,
                                                     thecoherer,
                                                     fmridata[val, :],
+                                                    alt=alt,
                                                     rt_floatset=rt_floatset,
                                                     rt_floattype=rt_floattype))
 
@@ -128,6 +134,7 @@ def coherencepass(fmridata,
                 vox,
                 thecoherer,
                 fmridata[vox, :],
+                alt=alt,
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype)
             volumetotal += 1

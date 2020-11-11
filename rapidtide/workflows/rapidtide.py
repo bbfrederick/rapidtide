@@ -1663,6 +1663,7 @@ def rapidtide_main(argparsingfunc):
             coherencepeakval,
             coherencepeakfreq,
             reportstep,
+            alt=True,
             showprogressbar=optiondict['showprogressbar'],
             chunksize=optiondict['mp_chunksize'],
             nprocs=1,
