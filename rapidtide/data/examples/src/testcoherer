@@ -25,13 +25,14 @@ print('done setting up coherer')
 
 print('running coherer')
 yaxis, xaxis, maxindex = thecoherer.run(thetesttc, trim=True)
-print(maxindex)
+yaxis2, xaxis2, maxindex2, csdxy, csdxx, csdyy = thecoherer.run(thetesttc, trim=True, alt=True)
+print(maxindex, maxindex2)
 print('done running coherer')
 
-dummy, xaxis2, yaxis2, dummy, dummy = tide_calccoherence._procOneVoxelCoherence(
-        0,
-        thecoherer,
-        thetesttc)
+#dummy, xaxis2, yaxis2, dummy, dummy = tide_calccoherence._procOneVoxelCoherence(
+        #0,
+        #thecoherer,
+        #thetesttc)
 
 print(thecoherer.freqmin, thecoherer.freqmininpts,
       thecoherer.freqmax, thecoherer.freqmaxinpts)
@@ -40,9 +41,12 @@ print(thecoherer.freqmin, thecoherer.freqmininpts,
 #print(yaxis)
 print(maxindex)
 print("peak value of {:.3f} occurs at {:.3f}Hz".format(yaxis[maxindex], xaxis[maxindex]))
+print("peak value of {:.3f} occurs at {:.3f}Hz".format(yaxis2[maxindex2], xaxis2[maxindex2]))
 
 plt.figure()
-plt.plot(xaxis, yaxis)
+plt.plot(xaxis, yaxis, 'r')
+plt.plot(xaxis2, yaxis2, 'b')
+plt.legend(['normal', 'alt'])
 plt.show()
 
 plt.figure()
