@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+
+import rapidtide.io as tide_io
+import nibabel as nib
+import numpy as np
+
+infile = '/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii'
+
+# first check if file is cifti
+if tide_io.checkifcifti(infile):
+    nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromcifti(infile)
+    print(thedims)
+    print(thesizes)
+else:
+    print('file is not cifti')

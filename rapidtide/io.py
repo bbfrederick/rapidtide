@@ -75,6 +75,40 @@ if nibabelexists:
         return nim, nim_data, nim_hdr, thedims, thesizes
 
 
+    def readfromcifti(inputfile):
+        r"""Open a cifti file and read in the various important parts
+
+        Parameters
+        ----------
+        inputfile : str
+            The name of the cifti file.
+
+        Returns
+        -------
+        nim : nifti image structure
+        nim_data : array-like
+        nim_hdr : nifti header
+        thedims : int array
+        thesizes : float array
+
+        """
+        if os.path.isfile(inputfile):
+            inputfilename = inputfile
+        elif os.path.isfile(inputfile + '.nii'):
+            inputfilename = inputfile + '.nii'
+        else:
+            print('cifti file', inputfile, 'does not exist')
+            sys.exit()
+        nim = nib.load(inputfilename)
+        nim_data = np.transpose(nim.get_fdata())
+        nim_hdr = vars(nim)['_nifti_header'].copy()
+        print(nim_hdr)
+        indims = nim_hdr['dim'].copy()
+        outdims = (indims[6], 1, 1, indims[5], 1, 1, 1, indims[0])
+        thesizes = nim_hdr['pixdim'].copy()
+        return nim, nim_data, nim_hdr, outdims, thesizes
+
+
     # dims are the array dimensions along each axis
     def parseniftidims(thedims):
         r"""Split the dims array into individual elements
@@ -285,6 +319,42 @@ if nibabelexists:
         else:
             output_data = infile_data[:, :, :, startpt:startpt + numpoints]
         savetonifti(output_data, theheader, outputfile)
+
+
+    def checkifcifti(filename, debug=False):
+        r"""Check to see if the specified file is CIFTI format
+
+        Parameters
+        ----------
+        filename : str
+            The file name
+
+        Returns
+        -------
+        iscifti : bool
+            True if the file header indicates this is a CIFTI file
+
+        """
+        theimg = nib.load(filename)
+        thedict = vars(theimg)
+        if debug:
+            print('thedict:', thedict)
+        try:
+            intent = thedict['_nifti_header']['intent_code']
+            if debug:
+                print('intent found')
+            if intent == 3002:
+                if debug:
+                    print('\tmatches')
+                return True
+            else:
+                if debug:
+                    print('\tdoes not match')
+                return False
+        except KeyError:
+            if debug:
+                print('intent not found')
+            return False
 
 
     def checkiftext(filename):
