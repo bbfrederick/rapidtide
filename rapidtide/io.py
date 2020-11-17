@@ -103,10 +103,9 @@ if nibabelexists:
         nim_data = np.transpose(nim.get_fdata())
         nim_hdr = vars(nim)['_nifti_header'].copy()
         print(nim_hdr)
-        indims = nim_hdr['dim'].copy()
-        outdims = (indims[6], 1, 1, indims[5], 1, 1, 1, indims[0])
+        thedims = nim_hdr['dim'].copy()
         thesizes = nim_hdr['pixdim'].copy()
-        return nim, nim_data, nim_hdr, outdims, thesizes
+        return nim, nim_data, nim_hdr, thedims, thesizes
 
 
     # dims are the array dimensions along each axis
@@ -207,6 +206,69 @@ if nibabelexists:
 
         output_nifti.to_filename(thename + suffix)
         output_nifti = None
+
+
+    def savetocifti(thearray, theheader, thename):
+        r""" Save a data array out to a cifti
+
+        Parameters
+        ----------
+        thearray : array-like
+            The data array to save.
+        theheader : nifti header
+            A valid nifti header
+        thepixdim : array
+            The pixel dimensions.
+        thename : str
+            The name of the cifti file to save
+
+        Returns
+        -------
+
+        """
+        img = nib.cifti2.Cifti2Image(np.transpose(thearray), theheader)
+        img.update_headers()
+        if thearray.shape[1] == 1:
+            img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES')
+        else:
+            img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES')
+        suffix = '.nii'
+        nib.cifti2.save(img, thename + suffix)
+
+        '''thedtype = thearray.dtype
+        if thedtype == np.uint8:
+            theheader.datatype = 2
+        elif thedtype == np.int16:
+            theheader.datatype = 4
+        elif thedtype == np.int32:
+            theheader.datatype = 8
+        elif thedtype == np.float32:
+            theheader.datatype = 16
+        elif thedtype == np.complex64:
+            theheader.datatype = 32
+        elif thedtype == np.float64:
+            theheader.datatype = 64
+        elif thedtype == np.int8:
+            theheader.datatype = 256
+        elif thedtype == np.uint16:
+            theheader.datatype = 512
+        elif thedtype == np.uint32:
+            theheader.datatype = 768
+        elif thedtype == np.int64:
+            theheader.datatype = 1024
+        elif thedtype == np.uint64:
+            theheader.datatype = 1280
+        elif thedtype == np.float128:
+            theheader.datatype = 1536
+        elif thedtype == np.complex128:
+            theheader.datatype = 1792
+        elif thedtype == np.complex256:
+            theheader.datatype = 2048
+        else:
+            print('type', thedtype, 'is not legal')
+            sys.exit()'''
+
+        nib.cifti2.save(img, thename + suffix)
 
 
     def checkifnifti(filename):

@@ -332,19 +332,21 @@ def rapidtide_main(argparsingfunc):
         numspatiallocs = int(xsize)
         slicesize = numspatiallocs
     else:
-        nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
-        if nim_hdr['intent_code'] == 3002:
+        fileiscifti = tide_io.checkifcifti(fmrifilename)
+        if fileiscifti:
             print('input file is CIFTI')
+            nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromcifti(fmrifilename)
             optiondict['isgrayordinate'] = True
-            fileiscifti = True
-            timepoints = nim_data.shape[4]
-            numspatiallocs = nim_data.shape[5]
+            timepoints = nim_data.shape[1]
+            numspatiallocs = nim_data.shape[0]
+            print('cifti file has', timepoints, 'timepoints, ', numspatiallocs, 'numspatiallocs')
             slicesize = numspatiallocs
             outsuffix3d = '.dscalar'
             outsuffix4d = '.dtseries'
         else:
             print('input file is NIFTI')
-            fileiscifti = False
+            nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
+            optiondict['isgrayordinate'] = False
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
             slicesize = numspatiallocs / int(numslices)
@@ -354,7 +356,7 @@ def rapidtide_main(argparsingfunc):
     tide_util.logmem('after reading in fmri data', file=memfile)
 
     # correct some fields if necessary
-    if optiondict['isgrayordinate']:
+    if fileiscifti:
         fmritr = 0.72  # this is wrong and is a hack until I can parse CIFTI XML
     else:
         if optiondict['textio']:
@@ -489,12 +491,15 @@ def rapidtide_main(argparsingfunc):
         # check to see if the data has been demeaned
         meanim = np.mean(fmri_data, axis=1)
         stdim = np.std(fmri_data, axis=1)
-        if np.mean(stdim) < np.mean(meanim):
-            print('generating correlation mask from mean image')
-            corrmask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
+        if fileiscifti:
+            corrmask = np.uint(nim_data[:, 0] * 0 + 1)
         else:
-            print('generating correlation mask from std image')
-            corrmask = np.uint16(tide_stats.makemask(stdim, threshpct=optiondict['corrmaskthreshpct']))
+            if np.mean(stdim) < np.mean(meanim):
+                print('generating correlation mask from mean image')
+                corrmask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
+            else:
+                print('generating correlation mask from std image')
+                corrmask = np.uint16(tide_stats.makemask(stdim, threshpct=optiondict['corrmaskthreshpct']))
     if tide_stats.getmasksize(corrmask) == 0:
         print('ERROR: there are no voxels in the correlation mask - exiting')
         sys.exit()
@@ -518,13 +523,10 @@ def rapidtide_main(argparsingfunc):
         corrmask *= 0
         corrmask += 1
         threshval = -10000000.0
-    if optiondict['savecorrmask']:
+    if optiondict['savecorrmask'] and not fileiscifti:
         theheader = copy.deepcopy(nim_hdr)
-        if fileiscifti:
-            theheader['intent_code'] = 3006
-        else:
-            theheader['dim'][0] = 3
-            theheader['dim'][4] = 1
+        theheader['dim'][0] = 3
+        theheader['dim'][4] = 1
         if optiondict['bidsoutput']:
             savename = outputname + '_desc-processed_mask'
         else:
@@ -649,16 +651,16 @@ def rapidtide_main(argparsingfunc):
         fullmeanmask = np.zeros((numspatiallocs), dtype=rt_floattype)
         fullmeanmask[validvoxels] = meanmask[:]
         theheader = copy.deepcopy(nim_hdr)
-        if fileiscifti:
-            theheader['intent_code'] = 3006
-        else:
-            theheader['dim'][0] = 3
-            theheader['dim'][4] = 1
         if optiondict['bidsoutput']:
             savename = outputname + '_desc-globalmean_mask'
         else:
             savename = outputname + '_meanmask' + ''
-        tide_io.savetonifti(fullmeanmask.reshape((xsize, ysize, numslices)), theheader, savename)
+        if not fileiscifti:
+            theheader['dim'][0] = 3
+            theheader['dim'][4] = 1
+            tide_io.savetonifti(fullmeanmask.reshape((xsize, ysize, numslices)), theheader, savename)
+        else:
+            tide_io.savetocifti(fullmeanmask, theheader, savename)
         optiondict['preprocskip'] = 0
     else:
         inputfreq = optiondict['inputfreq']
@@ -1449,18 +1451,22 @@ def rapidtide_main(argparsingfunc):
 
             if optiondict['savedespecklemasks'] and thepass == optiondict['passes']:
                 theheader = copy.deepcopy(nim_hdr)
-                if fileiscifti:
-                    theheader['intent_code'] = 3006
-                else:
+                if not fileiscifti:
                     theheader['dim'][0] = 3
                     theheader['dim'][4] = 1
-                if optiondict['bidsoutput']:
-                    savename = outputname + '_desc-despeckle_mask'
+                    if optiondict['bidsoutput']:
+                        savename = outputname + '_desc-despeckle_mask'
+                    else:
+                        savename = outputname + '_despecklemask'
+                    tide_io.savetonifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'],
+                                                  medianlags, 0.0)).reshape(nativespaceshape),
+                                        theheader,
+                                        savename)
                 else:
-                    savename = outputname + '_despecklemask'
-                tide_io.savetonifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'], medianlags, 0.0)).reshape(nativespaceshape),
-                                    theheader,
-                                    savename)
+                    tide_io.savetocifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'],
+                                                  medianlags, 0.0)),
+                                        theheader,
+                                        savename)
             print('\n\n', voxelsprocessed_fc_ds, 'voxels despeckled in', optiondict['despeckle_passes'], 'passes')
             timings.append(
                 ['Correlation despeckle end, pass ' + str(thepass), time.time(), voxelsprocessed_fc_ds, 'voxels'])
