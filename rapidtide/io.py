@@ -208,7 +208,7 @@ if nibabelexists:
         output_nifti = None
 
 
-    def savetocifti(thearray, theheader, thename):
+    def savetocifti(thearray, theheader, thename, debug=True):
         r""" Save a data array out to a cifti
 
         Parameters
@@ -226,12 +226,21 @@ if nibabelexists:
         -------
 
         """
-        img = nib.cifti2.Cifti2Image(np.transpose(thearray), theheader)
-        img.update_headers()
-        if thearray.shape[1] == 1:
-            img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES')
+        if debug:
+            print('savetocifti:', thename)
+        workingarray = np.transpose(thearray).reshape((thearray.shape[0], -1))
+        if workingarray.shape[1] == 1:
+            workingarray.reshape((workingarray.shape[0]))
+            img = nib.cifti2.Cifti2Image(workingarray, nifti_header=theheader)
+            img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS')
+            if debug:
+                print('\tDENSE_SCALARS')
         else:
+            img = nib.cifti2.Cifti2Image(workingarray, nifti_header=theheader)
             img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES')
+            if debug:
+                print('\tDENSE_SERIES')
+        img.update_headers()
         suffix = '.nii'
         nib.cifti2.save(img, thename + suffix)
 
