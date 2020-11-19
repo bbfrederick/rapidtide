@@ -335,7 +335,7 @@ def rapidtide_main(argparsingfunc):
         fileiscifti = tide_io.checkifcifti(fmrifilename)
         if fileiscifti:
             print('input file is CIFTI')
-            nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromcifti(fmrifilename)
+            cifti, cifti_data, cifti_hdr, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromcifti(fmrifilename)
             optiondict['isgrayordinate'] = True
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]

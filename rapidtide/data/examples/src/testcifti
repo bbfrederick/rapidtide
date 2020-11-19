@@ -8,7 +8,9 @@ infile = '/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dt
 
 # first check if file is cifti
 if tide_io.checkifcifti(infile):
-    nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromcifti(infile)
+    cifti, cifti_data, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes = tide_io.readfromcifti(infile)
+    map1 = cifti.header.get_index_map(1)
+    print(map1)
     print(thedims)
     print(thesizes)
 else:

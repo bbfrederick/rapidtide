@@ -99,13 +99,20 @@ if nibabelexists:
         else:
             print('cifti file', inputfile, 'does not exist')
             sys.exit()
-        nim = nib.load(inputfilename)
-        nim_data = np.transpose(nim.get_fdata())
-        nim_hdr = vars(nim)['_nifti_header'].copy()
-        print(nim_hdr)
-        thedims = nim_hdr['dim'].copy()
-        thesizes = nim_hdr['pixdim'].copy()
-        return nim, nim_data, nim_hdr, thedims, thesizes
+
+        cifti = nib.load(inputfilename)
+        cifti_data = cifti.get_fdata(dtype=np.float32)
+        cifti_hdr = cifti.header
+        nifti_hdr = cifti.nifti_header
+
+        axes = [cifti_hdr.get_axis(i) for i in range(cifti.ndim)]
+        for theaxis in axes:
+            print(theaxis)
+
+        nifti_data = np.transpose(cifti_data)
+        thedims = nifti_hdr['dim'].copy()
+        thesizes = nifti_hdr['pixdim'].copy()
+        return cifti, cifti_data, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes
 
 
     # dims are the array dimensions along each axis
@@ -232,6 +239,7 @@ if nibabelexists:
         if workingarray.shape[1] == 1:
             workingarray.reshape((workingarray.shape[0]))
             img = nib.cifti2.Cifti2Image(workingarray, nifti_header=theheader)
+            img.nifti_header.set_dim_info([])
             img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS')
             if debug:
                 print('\tDENSE_SCALARS')
