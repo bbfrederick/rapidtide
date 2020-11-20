@@ -231,7 +231,7 @@ if nibabelexists:
         output_nifti = None
 
 
-    def savetocifti(thearray, theciftiheader, theniftiheader, thename, start=0.0, step=1.0, debug=True):
+    def savetocifti(thearray, theciftiheader, theniftiheader, thename, start=0.0, step=1.0, debug=False):
         r""" Save a data array out to a cifti
 
         Parameters
@@ -297,13 +297,13 @@ if nibabelexists:
         if numdims == 1:
             img.nifti_header.set_dim_info(1)
             img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS')
-            suffix = '_dscalar.nii'
+            suffix = '.dscalar.nii'
             if debug:
                 print('\tDENSE_SCALARS')
         else:
             img.nifti_header.set_dim_info(2)
             img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES')
-            suffix = '_dtseries.nii'
+            suffix = '.dtseries.nii'
             if debug:
                 print('\tDENSE_SERIES')
         img.update_headers()
