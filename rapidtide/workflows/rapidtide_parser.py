@@ -1377,7 +1377,7 @@ def process_args(inputargs=None):
         fmri_tr = float(args["realtr"])
     else:
         if tide_io.checkifcifti(args["in_file"]):
-            fmri_tr = 1.0
+            fmri_tr, dummy = tide_io.getciftitr(nib.load(args["in_file"]).header)
         else:
             fmri_tr = nib.load(args["in_file"]).header.get_zooms()[3]
     args["realtr"] = fmri_tr

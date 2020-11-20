@@ -101,19 +101,34 @@ if nibabelexists:
             sys.exit()
 
         cifti = nib.load(inputfilename)
-        cifti_data = cifti.get_fdata(dtype=np.float32)
+        nifti_data = np.transpose(cifti.get_fdata(dtype=np.float32))
         cifti_hdr = cifti.header
         nifti_hdr = cifti.nifti_header
 
+        timestep, starttime = getciftitr(cifti_hdr)
         axes = [cifti_hdr.get_axis(i) for i in range(cifti.ndim)]
         if debug:
             for theaxis in axes:
                 print(theaxis)
 
-        nifti_data = np.transpose(cifti_data)
         thedims = nifti_hdr['dim'].copy()
         thesizes = nifti_hdr['pixdim'].copy()
-        return cifti, cifti_data, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes
+        return cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, timestep
+
+
+    def getciftitr(cifti_hdr):
+        seriesaxis = None
+        for theaxis in cifti_hdr.matrix.mapped_indices:
+            if isinstance(cifti_hdr.matrix.get_axis(theaxis), nib.cifti2.SeriesAxis):
+                seriesaxis = theaxis
+        if seriesaxis is not None:
+            timepoint1 = cifti_hdr.matrix.get_axis(seriesaxis).get_element(1)
+            starttime = cifti_hdr.matrix.get_axis(seriesaxis).get_element(0)
+            timestep = timepoint1 - starttime
+        else:
+            print('No series axis found!  Exiting')
+            sys.exit()
+        return timestep, starttime
 
 
     # dims are the array dimensions along each axis
@@ -216,7 +231,7 @@ if nibabelexists:
         output_nifti = None
 
 
-    def savetocifti(thearray, theciftiheader, theniftiheader, thename, debug=True):
+    def savetocifti(thearray, theciftiheader, theniftiheader, thename, start=0.0, step=1.0, debug=True):
         r""" Save a data array out to a cifti
 
         Parameters
@@ -238,75 +253,62 @@ if nibabelexists:
         """
         if debug:
             print('savetocifti:', thename)
-        workingarray = np.transpose(thearray).reshape((thearray.shape[0], -1))
-        if workingarray.shape[1] == 1:
+        workingarray = np.transpose(thearray)
+
+        # find the BrainModelAxis from the input file
+        modelaxis = None
+        for theaxis in theciftiheader.matrix.mapped_indices:
+            if isinstance(theciftiheader.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis):
+                modelaxis = theaxis
+                if debug:
+                    print('axis', theaxis, 'is the BrainModelAxis')
+
+        # process things differently for dscalar and dtseries files
+        if len(workingarray.shape) == 1:
+            numdims = 1
+            # make workingarray properly one dimensional
             workingarray = np.squeeze(workingarray)
             if debug:
-                print('workingarray shape', workingarray.shape)
-            #workingarray.reshape((workingarray.shape[0]))
-            # find the BrainModelAxis
-            modelaxis = None
-            for theaxis in theciftiheader.matrix.mapped_indices:
-                if isinstance(theciftiheader.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis):
-                    modelaxis = theaxis
-                    if debug:
-                        print('axis', theaxis, 'is the BrainModelAxis')
+                print('dscalar path: workingarray shape', workingarray.shape)
             if modelaxis is not None:
                 newheader = nib.cifti2.Cifti2Header.from_axes([theciftiheader.matrix.get_axis(modelaxis)])
-                img = nib.cifti2.Cifti2Image(workingarray,
-                                             header=newheader,
-                                             nifti_header=theniftiheader)
-                img.nifti_header.set_dim_info(1)
-                img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS')
-                if debug:
-                    print('\tDENSE_SCALARS')
             else:
                 print('no BrainModelAxis found in source file - exiting')
                 sys.exit()
+
         else:
-            img = nib.cifti2.Cifti2Image(workingarray,
-                                         header=theciftiheader,
-                                         nifti_header=theniftiheader)
+            numdims = 2
+            # find the series header
+            if debug:
+                print('dtseries path: workingarray shape', workingarray.shape)
+            if modelaxis is not None:
+                seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(start, step, workingarray.shape[0])
+                newheader = nib.cifti2.Cifti2Header.from_axes([seriesaxis, theciftiheader.matrix.get_axis(modelaxis)])
+            else:
+                print('no BrainModelAxis found in source file - exiting')
+                sys.exit()
+
+        # now create the output file structure
+        img = nib.cifti2.Cifti2Image(workingarray,
+                                     header=newheader,
+                                     nifti_header=theniftiheader)
+
+        # make the header right
+        if numdims == 1:
+            img.nifti_header.set_dim_info(1)
+            img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS')
+            suffix = '_dscalar.nii'
+            if debug:
+                print('\tDENSE_SCALARS')
+        else:
+            img.nifti_header.set_dim_info(2)
             img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES')
+            suffix = '_dtseries.nii'
             if debug:
                 print('\tDENSE_SERIES')
         img.update_headers()
-        suffix = '.nii'
-        nib.cifti2.save(img, thename + suffix)
 
-        '''thedtype = thearray.dtype
-        if thedtype == np.uint8:
-            theheader.datatype = 2
-        elif thedtype == np.int16:
-            theheader.datatype = 4
-        elif thedtype == np.int32:
-            theheader.datatype = 8
-        elif thedtype == np.float32:
-            theheader.datatype = 16
-        elif thedtype == np.complex64:
-            theheader.datatype = 32
-        elif thedtype == np.float64:
-            theheader.datatype = 64
-        elif thedtype == np.int8:
-            theheader.datatype = 256
-        elif thedtype == np.uint16:
-            theheader.datatype = 512
-        elif thedtype == np.uint32:
-            theheader.datatype = 768
-        elif thedtype == np.int64:
-            theheader.datatype = 1024
-        elif thedtype == np.uint64:
-            theheader.datatype = 1280
-        elif thedtype == np.float128:
-            theheader.datatype = 1536
-        elif thedtype == np.complex128:
-            theheader.datatype = 1792
-        elif thedtype == np.complex256:
-            theheader.datatype = 2048
-        else:
-            print('type', thedtype, 'is not legal')
-            sys.exit()'''
-
+        # save the data
         nib.cifti2.save(img, thename + suffix)
 
 

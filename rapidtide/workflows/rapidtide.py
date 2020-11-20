@@ -335,14 +335,12 @@ def rapidtide_main(argparsingfunc):
         fileiscifti = tide_io.checkifcifti(fmrifilename)
         if fileiscifti:
             print('input file is CIFTI')
-            cifti, cifti_data, cifti_hdr, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromcifti(fmrifilename)
+            cifti, cifti_hdr, nim_data, nim_hdr, thedims, thesizes, dummy = tide_io.readfromcifti(fmrifilename)
             optiondict['isgrayordinate'] = True
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
             print('cifti file has', timepoints, 'timepoints, ', numspatiallocs, 'numspatiallocs')
             slicesize = numspatiallocs
-            outsuffix3d = '.dscalar'
-            outsuffix4d = '.dtseries'
         else:
             print('input file is NIFTI')
             nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
@@ -350,8 +348,6 @@ def rapidtide_main(argparsingfunc):
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
             slicesize = numspatiallocs / int(numslices)
-            outsuffix3d = ''
-            outsuffix4d = ''
         xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
     tide_util.logmem('after reading in fmri data', file=memfile)
 
@@ -619,12 +615,12 @@ def rapidtide_main(argparsingfunc):
             outfmriarray[validvoxels, :] = fmri_data_valid[:, :]
             if optiondict['textio']:
                 tide_io.writenpvecs(outfmriarray.reshape((numspatiallocs, validtimepoints)),
-                                outputname + '_motionfiltered' + '' + '.txt')
+                                outputname + '_motionfiltered.txt')
             else:
                 if optiondict['bidsoutput']:
                     savename = outputname + '_desc-motionfiltered'
                 else:
-                    savename = outputname + '_motionfiltered' + ''
+                    savename = outputname + '_motionfiltered'
                 tide_io.savetonifti(outfmriarray.reshape((xsize, ysize, numslices, validtimepoints)), nim_hdr, savename)
 
     # read in the timecourse to resample
@@ -654,7 +650,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict['bidsoutput']:
             savename = outputname + '_desc-globalmean_mask'
         else:
-            savename = outputname + '_meanmask' + ''
+            savename = outputname + '_meanmask'
         if not fileiscifti:
             theheader['dim'][0] = 3
             theheader['dim'][4] = 1
@@ -1310,12 +1306,12 @@ def rapidtide_main(argparsingfunc):
             outcorrarray[validvoxels, :] = corrout[:, :]
             if optiondict['textio']:
                 tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
-                                    outputname + '_corrout_prefit_pass' + str(thepass) + outsuffix4d + '.txt')
+                                    outputname + '_corrout_prefit_pass' + str(thepass) + '.txt')
             else:
                 if optiondict['bidsoutput']:
-                    savename = outputname + '_desc-corroutprefit_pass-' + str(thepass) + outsuffix4d
+                    savename = outputname + '_desc-corroutprefit_pass-' + str(thepass)
                 else:
-                    savename = outputname + '_corrout_prefit_pass' + str(thepass) + outsuffix4d
+                    savename = outputname + '_corrout_prefit_pass' + str(thepass)
                 tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
 
         timings.append([similaritytype +' calculation end, pass ' + str(thepass), time.time(), voxelsprocessed_cp, 'voxels'])
@@ -1691,12 +1687,12 @@ def rapidtide_main(argparsingfunc):
 
         if optiondict['textio']:
             tide_io.writenpvecs(outcoherencearray.reshape(nativecoherenceshape),
-                                outputname + '_coherence' + outsuffix4d + '.txt')
+                                outputname + '_coherence.txt')
         else:
             if optiondict['bidsoutput']:
-                savename = outputname + '_desc-coherence' + outsuffix4d + '_info'
+                savename = outputname + '_desc-coherence_info'
             else:
-                savename = outputname + '_coherence' + outsuffix4d
+                savename = outputname + '_coherence'
             tide_io.savetonifti(outcoherencearray.reshape(nativecoherenceshape), theheader, savename)
         del coherencefunc
         del outcoherencearray
@@ -1941,21 +1937,21 @@ def rapidtide_main(argparsingfunc):
         outmaparray[validvoxels] = eval(mapname)[:]
         if optiondict['textio']:
             tide_io.writenpvecs(outmaparray.reshape(nativespaceshape, 1),
-                                outputname + '_' + mapsuffix + outsuffix3d + '.txt')
+                                outputname + '_' + mapsuffix + '.txt')
         else:
             if optiondict['bidsoutput']:
                 if mapname == 'fitmask':
-                    savename = outputname + '_desc-corrfit' + outsuffix3d + '_mask'
+                    savename = outputname + '_desc-corrfit_mask'
                 elif mapname == 'failreason':
-                    savename = outputname + '_desc-corrfitfailreason' + outsuffix3d + '_info'
+                    savename = outputname + '_desc-corrfitfailreason_info'
                 else:
-                    savename = outputname + '_desc-' + mapsuffix + outsuffix3d + '_map'
+                    savename = outputname + '_desc-' + mapsuffix + '_map'
                 bidsdict = bidsbasedict.copy()
                 if mapname == 'lagtimes' or mapname == 'lagsigma' or mapname == 'MTT':
                     bidsdict['Units'] = 'second'
                 tide_io.writedicttojson(bidsdict, savename + '.json')
             else:
-                savename = outputname + '_' + mapname + outsuffix3d
+                savename = outputname + '_' + mapname
             if not fileiscifti:
                 tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
             else:
@@ -1972,14 +1968,14 @@ def rapidtide_main(argparsingfunc):
             outmaparray[validvoxels] = eval(mapname)[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
-                                    outputname + '_' + mapsuffix + outsuffix3d + '.txt')
+                                    outputname + '_' + mapsuffix + '.txt')
             else:
                 if optiondict['bidsoutput']:
-                    savename = outputname + '_desc-' + mapsuffix + outsuffix3d + '_map'
+                    savename = outputname + '_desc-' + mapsuffix + '_map'
                     bidsdict = bidsbasedict.copy()
                     tide_io.writedicttojson(bidsdict, savename + '.json')
                 else:
-                    savename = outputname + '_' + mapname + outsuffix3d
+                    savename = outputname + '_' + mapname
                 if not fileiscifti:
                     tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
                 else:
@@ -1999,14 +1995,14 @@ def rapidtide_main(argparsingfunc):
             outmaparray = eval(mapname)[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
-                                    outputname + '_' + mapsuffix + outsuffix3d + '.txt')
+                                    outputname + '_' + mapsuffix + '.txt')
             else:
                 if optiondict['bidsoutput']:
-                    savename = outputname + '_desc-' + mapname + outsuffix3d + '_map'
+                    savename = outputname + '_desc-' + mapname + '_map'
                     bidsdict = bidsbasedict.copy()
                     tide_io.writedicttojson(bidsdict, savename + '.json')
                 else:
-                    savename = outputname + '_' + mapname + outsuffix3d
+                    savename = outputname + '_' + mapname
                 if not fileiscifti:
                     tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
                 else:
@@ -2020,30 +2016,32 @@ def rapidtide_main(argparsingfunc):
             outmaparray[validvoxels] = pmask[:]
             if optiondict['textio']:
                 tide_io.writenpvecs(outmaparray.reshape(nativespaceshape),
-                                    outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d + '.txt')
+                                    outputname + '_p_lt_' + thepvalnames[i] + '_mask.txt')
             else:
                 if optiondict['bidsoutput']:
-                    savename = outputname + '_desc-plt' + thepvalnames[i] + '_mask' + outsuffix3d
+                    savename = outputname + '_desc-plt' + thepvalnames[i] + '_mask'
                 else:
-                    savename = outputname + '_p_lt_' + thepvalnames[i] + '_mask' + outsuffix3d
-                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+                    savename = outputname + '_p_lt_' + thepvalnames[i] + '_mask'
+                if not fileiscifti:
+                    tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+                else:
+                    tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
 
     if optiondict['passes'] > 1:
         outmaparray[:] = 0.0
         outmaparray[validvoxels] = refinemask[:]
         if optiondict['textio']:
             tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
-                                outputname + '_lagregressor' + outsuffix4d + '.txt')
+                                outputname + '_lagregressor.txt')
         else:
             if optiondict['bidsoutput']:
-                savename = outputname + '_desc-refine_mask' + outsuffix3d
+                savename = outputname + '_desc-refine_mask'
             else:
-                savename = outputname + '_refinemask' + outsuffix3d
+                savename = outputname + '_refinemask'
             if not fileiscifti:
                 tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
             else:
                 tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
-
         del refinemask
 
     # clean up arrays that will no longer be needed
@@ -2066,59 +2064,80 @@ def rapidtide_main(argparsingfunc):
     outcorrarray[validvoxels, :] = gaussout[:, :]
     if optiondict['textio']:
         tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
-                            outputname + '_gaussout' + outsuffix4d + '.txt')
+                            outputname + '_gaussout.txt')
     else:
         if optiondict['bidsoutput']:
-            savename = outputname + '_desc-gaussout' + outsuffix4d + '_info'
+            savename = outputname + '_desc-gaussout_info'
         else:
-            savename = outputname + '_gaussout' + outsuffix4d
-        tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
+            savename = outputname + '_gaussout'
+        if not fileiscifti:
+            tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
+        else:
+            tide_io.savetocifti(outcorrarray, cifti_hdr, theheader, savename,
+                                start=theheader['toffset'],
+                                step=corrtr)
+
     del gaussout
     outcorrarray[:, :] = 0.0
     outcorrarray[validvoxels, :] = windowout[:, :]
     if optiondict['textio']:
         tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
-                            outputname + '_windowout' + outsuffix4d + '.txt')
+                            outputname + '_windowout.txt')
     else:
         if optiondict['bidsoutput']:
-            savename = outputname + '_desc-corrfitwindow' + outsuffix4d  + '_info'
+            savename = outputname + '_desc-corrfitwindow_info'
         else:
-            savename = outputname + '_windowout' + outsuffix4d
-        tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
+            savename = outputname + '_windowout'
+        if not fileiscifti:
+            tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
+        else:
+            tide_io.savetocifti(outcorrarray, cifti_hdr, theheader, savename,
+                                start=theheader['toffset'],
+                                step=corrtr)
+
     del windowout
     outcorrarray[:, :] = 0.0
     outcorrarray[validvoxels, :] = corrout[:, :]
     if optiondict['textio']:
         tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape),
-                            outputname + '_corrout' + outsuffix4d + '.txt')
+                            outputname + '_corrout.txt')
     else:
         if optiondict['bidsoutput']:
-            savename = outputname + '_desc-corrout' + outsuffix4d + '_info'
+            savename = outputname + '_desc-corrout_info'
         else:
-            savename = outputname + '_corrout' + outsuffix4d
-        tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
+            savename = outputname + '_corrout'
+        if not fileiscifti:
+            tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
+        else:
+            tide_io.savetocifti(outcorrarray, cifti_hdr, theheader, savename,
+                                start=theheader['toffset'],
+                                step=corrtr)
     del corrout
 
     if not optiondict['textio']:
         theheader = copy.deepcopy(nim_hdr)
         theheader['pixdim'][4] = fmritr
         theheader['toffset'] = 0.0
-        if fileiscifti:
-            theheader['intent_code'] = 3002
-        else:
+        if not fileiscifti:
             theheader['dim'][4] = np.shape(initial_fmri_x)[0]
 
     if optiondict['savelagregressors']:
         outfmriarray[validvoxels, :] = lagtc[:, :]
         if optiondict['textio']:
             tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
-                                outputname + '_lagregressor' + outsuffix4d + '.txt')
+                                outputname + '_lagregressor.txt')
         else:
             if optiondict['bidsoutput']:
-                savename = outputname + '_desc-lagregressor' + outsuffix4d + '_bold'
+                savename = outputname + '_desc-lagregressor_bold'
             else:
-                savename = outputname + '_lagregressor' + outsuffix4d
+                savename = outputname + '_lagregressor'
             tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+            if not fileiscifti:
+                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+            else:
+                tide_io.savetocifti(outfmriarray, cifti_hdr, theheader, savename,
+                                    start=0.0,
+                                    step=fmritr)
         del lagtc
 
     if optiondict['passes'] > 1:
@@ -2126,13 +2145,18 @@ def rapidtide_main(argparsingfunc):
             outfmriarray[validvoxels, :] = shiftedtcs[:, :]
             if optiondict['textio']:
                 tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
-                                    outputname + '_shiftedtcs' + outsuffix4d + '.txt')
+                                    outputname + '_shiftedtcs.txt')
             else:
                 if optiondict['bidsoutput']:
-                    savename = outputname + '_desc-shiftedtcs' + outsuffix4d + '_bold'
+                    savename = outputname + '_desc-shiftedtcs_bold'
                 else:
-                    savename = outputname + '_shiftedtcs' + outsuffix4d
-                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+                    savename = outputname + '_shiftedtcs'
+                if not fileiscifti:
+                    tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+                else:
+                    tide_io.savetocifti(outfmriarray, cifti_hdr, theheader, savename,
+                                        start=0.0,
+                                        step=fmritr)
         del shiftedtcs
 
     if optiondict['doglmfilt'] and optiondict['saveglmfiltered']:
@@ -2140,24 +2164,34 @@ def rapidtide_main(argparsingfunc):
             outfmriarray[validvoxels, :] = movingsignal[:, :]
             if optiondict['textio']:
                 tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
-                                outputname + '_movingsignal' + outsuffix4d + '.txt')
+                                outputname + '_movingsignal.txt')
             else:
                 if optiondict['bidsoutput']:
-                    savename = outputname + '_desc-lfofilterRemoved' + outsuffix4d + '_bold'
+                    savename = outputname + '_desc-lfofilterRemoved_bold'
                 else:
-                    savename = outputname + '_movingsignal' + outsuffix4d
-                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+                    savename = outputname + '_movingsignal'
+                if not fileiscifti:
+                    tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+                else:
+                    tide_io.savetocifti(outfmriarray, cifti_hdr, theheader, savename,
+                                        start=0.0,
+                                        step=fmritr)
         del movingsignal
         outfmriarray[validvoxels, :] = filtereddata[:, :]
         if optiondict['textio']:
             tide_io.writenpvecs(outfmriarray.reshape(nativefmrishape),
-                                outputname + '_filtereddata' + outsuffix4d + '.txt')
+                                outputname + '_filtereddata.txt')
         else:
             if optiondict['bidsoutput']:
-                savename = outputname + '_desc-lfofilterCleaned' + outsuffix4d + '_bold'
+                savename = outputname + '_desc-lfofilterCleaned_bold'
             else:
-                savename = outputname + '_filtereddata' + outsuffix4d
-            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+                savename = outputname + '_filtereddata'
+            if not fileiscifti:
+                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+            else:
+                tide_io.savetocifti(outfmriarray, cifti_hdr, theheader, savename,
+                                    start=0.0,
+                                    step=fmritr)
         del filtereddata
 
     timings.append(['Finished saving maps', time.time(), None, None])
