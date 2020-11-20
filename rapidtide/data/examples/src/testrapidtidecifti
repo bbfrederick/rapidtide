@@ -1,0 +1,8 @@
+#!/bin/bash
+
+rapidtide \
+    /Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii \
+    ../dst/hoot \
+    --nprocs -1 \
+    --despecklepasses 0 \
+    --passes 1

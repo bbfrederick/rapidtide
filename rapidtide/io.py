@@ -75,7 +75,7 @@ if nibabelexists:
         return nim, nim_data, nim_hdr, thedims, thesizes
 
 
-    def readfromcifti(inputfile):
+    def readfromcifti(inputfile, debug=False):
         r"""Open a cifti file and read in the various important parts
 
         Parameters
@@ -106,8 +106,9 @@ if nibabelexists:
         nifti_hdr = cifti.nifti_header
 
         axes = [cifti_hdr.get_axis(i) for i in range(cifti.ndim)]
-        for theaxis in axes:
-            print(theaxis)
+        if debug:
+            for theaxis in axes:
+                print(theaxis)
 
         nifti_data = np.transpose(cifti_data)
         thedims = nifti_hdr['dim'].copy()
@@ -215,19 +216,21 @@ if nibabelexists:
         output_nifti = None
 
 
-    def savetocifti(thearray, theheader, thename, debug=True):
+    def savetocifti(thearray, theciftiheader, theniftiheader, thename, debug=True):
         r""" Save a data array out to a cifti
 
         Parameters
         ----------
         thearray : array-like
             The data array to save.
-        theheader : nifti header
+        theciftiheader : cifti header
+            A valid cifti header
+        theniftiheader : nifti header
             A valid nifti header
-        thepixdim : array
-            The pixel dimensions.
         thename : str
             The name of the cifti file to save
+        debug: bool
+            Print extended debugging information
 
         Returns
         -------
@@ -237,14 +240,33 @@ if nibabelexists:
             print('savetocifti:', thename)
         workingarray = np.transpose(thearray).reshape((thearray.shape[0], -1))
         if workingarray.shape[1] == 1:
-            workingarray.reshape((workingarray.shape[0]))
-            img = nib.cifti2.Cifti2Image(workingarray, nifti_header=theheader)
-            img.nifti_header.set_dim_info([])
-            img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS')
+            workingarray = np.squeeze(workingarray)
             if debug:
-                print('\tDENSE_SCALARS')
+                print('workingarray shape', workingarray.shape)
+            #workingarray.reshape((workingarray.shape[0]))
+            # find the BrainModelAxis
+            modelaxis = None
+            for theaxis in theciftiheader.matrix.mapped_indices:
+                if isinstance(theciftiheader.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis):
+                    modelaxis = theaxis
+                    if debug:
+                        print('axis', theaxis, 'is the BrainModelAxis')
+            if modelaxis is not None:
+                newheader = nib.cifti2.Cifti2Header.from_axes([theciftiheader.matrix.get_axis(modelaxis)])
+                img = nib.cifti2.Cifti2Image(workingarray,
+                                             header=newheader,
+                                             nifti_header=theniftiheader)
+                img.nifti_header.set_dim_info(1)
+                img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS')
+                if debug:
+                    print('\tDENSE_SCALARS')
+            else:
+                print('no BrainModelAxis found in source file - exiting')
+                sys.exit()
         else:
-            img = nib.cifti2.Cifti2Image(workingarray, nifti_header=theheader)
+            img = nib.cifti2.Cifti2Image(workingarray,
+                                         header=theciftiheader,
+                                         nifti_header=theniftiheader)
             img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES')
             if debug:
                 print('\tDENSE_SERIES')

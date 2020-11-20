@@ -660,7 +660,7 @@ def rapidtide_main(argparsingfunc):
             theheader['dim'][4] = 1
             tide_io.savetonifti(fullmeanmask.reshape((xsize, ysize, numslices)), theheader, savename)
         else:
-            tide_io.savetocifti(fullmeanmask, theheader, savename)
+            tide_io.savetocifti(fullmeanmask, cifti_hdr, theheader, savename)
         optiondict['preprocskip'] = 0
     else:
         inputfreq = optiondict['inputfreq']
@@ -1465,6 +1465,7 @@ def rapidtide_main(argparsingfunc):
                 else:
                     tide_io.savetocifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'],
                                                   medianlags, 0.0)),
+                                        cifti_hdr,
                                         theheader,
                                         savename)
             print('\n\n', voxelsprocessed_fc_ds, 'voxels despeckled in', optiondict['despeckle_passes'], 'passes')
@@ -1955,7 +1956,10 @@ def rapidtide_main(argparsingfunc):
                 tide_io.writedicttojson(bidsdict, savename + '.json')
             else:
                 savename = outputname + '_' + mapname + outsuffix3d
-            tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+            if not fileiscifti:
+                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+            else:
+                tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
 
     if optiondict['doglmfilt']:
         for mapname, mapsuffix in [('rvalue', 'lfofilterR'), ('r2value', 'lfofilterR2'), ('meanvalue', 'lfofilterMean'),
@@ -1976,7 +1980,10 @@ def rapidtide_main(argparsingfunc):
                     tide_io.writedicttojson(bidsdict, savename + '.json')
                 else:
                     savename = outputname + '_' + mapname + outsuffix3d
-                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+                if not fileiscifti:
+                    tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+                else:
+                    tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
         del rvalue
         del r2value
         del meanvalue
@@ -2000,7 +2007,10 @@ def rapidtide_main(argparsingfunc):
                     tide_io.writedicttojson(bidsdict, savename + '.json')
                 else:
                     savename = outputname + '_' + mapname + outsuffix3d
-                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+                if not fileiscifti:
+                    tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+                else:
+                    tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
         del meanvalue
 
     if optiondict['numestreps'] > 0:
@@ -2029,7 +2039,11 @@ def rapidtide_main(argparsingfunc):
                 savename = outputname + '_desc-refine_mask' + outsuffix3d
             else:
                 savename = outputname + '_refinemask' + outsuffix3d
-            tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+            if not fileiscifti:
+                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+            else:
+                tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
+
         del refinemask
 
     # clean up arrays that will no longer be needed

@@ -9,6 +9,18 @@ infile = '/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dt
 # first check if file is cifti
 if tide_io.checkifcifti(infile):
     cifti, cifti_data, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes = tide_io.readfromcifti(infile)
+    print(cifti_hdr)
+    # find the BrainModelAxis
+    modelaxis = None
+    for theaxis in cifti_hdr.matrix.mapped_indices:
+        print(theaxis, cifti_hdr.matrix.get_axis(theaxis))
+        if isinstance(cifti_hdr.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis):
+            print('axis', theaxis, 'is the BrainModelAxis')
+            modelaxis = theaxis
+    newheader = nib.cifti2.Cifti2Header.from_axes([cifti_hdr.matrix.get_axis(modelaxis)])
+    print(newheader)
+
+
     map1 = cifti.header.get_index_map(1)
     print(map1)
     print(thedims)
