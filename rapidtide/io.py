@@ -105,7 +105,10 @@ if nibabelexists:
         cifti_hdr = cifti.header
         nifti_hdr = cifti.nifti_header
 
-        timestep, starttime = getciftitr(cifti_hdr)
+        if nifti_hdr['intent_code'] == 3002:
+            timestep, starttime = getciftitr(cifti_hdr)
+        else:
+            timestep, starttime = None, None
         axes = [cifti_hdr.get_axis(i) for i in range(cifti.ndim)]
         if debug:
             for theaxis in axes:
