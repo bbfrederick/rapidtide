@@ -3,17 +3,59 @@
 import rapidtide.io as tide_io
 import nibabel as nib
 import numpy as np
+import sys
 
 infile = '/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii'
 outfile = '../dst/test'
 
-# first check if file is cifti
-if tide_io.checkifcifti(infile):
-    cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, fmritr = tide_io.readfromcifti(infile)
-    print(nifti_hdr)
+def ciftidump(filename):
+    if tide_io.checkifcifti(infile):
+        cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, fmritr = tide_io.readfromcifti(filename)
+    
+        # dump the file
+        print('filename:', filename)
+        print('\ncifti:')
+        print(cifti)
+    
+        print('\ncifti_hdr:')
+        print(cifti_hdr)
+        print(cifti_hdr.matrix.get_data_shape())
+        for theaxis in cifti_hdr.matrix.mapped_indices:
+            print(cifti_hdr.matrix.get_axis(theaxis))
+
+        print('\nnifti_hdr:')
+        print(nifti_hdr)
+    
+        print('\nthedims:')
+        print(thedims)
+    
+        print('\nthesizes:')
+        print(thesizes)
+    
+        print('\nfmritr:')
+        print(fmritr)
+
+        return cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, fmritr
+    else:
+        return None, None, None, None, None, None, None
+
+
+filenames = ['/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii',
+                '../dst/hoot_desc-corrout_info.dtseries.nii',
+                '../dst/hoot_desc-maxtime.dscalar_map.nii',
+                '../dst/hoot_desc-lfofilterCleaned_bold.dtseries.nii']
+
+for thefile in filenames:
+    cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, fmritr = ciftidump(thefile)
+    print('\n\n\n')
+
+sys.exit()
+
+
+if cifti is not None:
     print('nifti data shape:', nifti_data.shape)
     print('file TR is:', fmritr)
-    tide_io.savetocifti(nifti_data, cifti_hdr, nifti_hdr, outfile, start=0.0, step=1.3)
+    #tide_io.savetocifti(nifti_data, cifti_hdr, nifti_hdr, outfile, start=0.0, step=1.3)
     print(cifti_hdr)
     print(thedims)
     print(thesizes)
