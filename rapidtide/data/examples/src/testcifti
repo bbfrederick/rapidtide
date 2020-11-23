@@ -42,7 +42,7 @@ def ciftidump(filename):
 
 filenames = ['/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii',
                 '../dst/hoot_desc-corrout_info.dtseries.nii',
-                '../dst/hoot_desc-maxtime.dscalar_map.nii',
+                '../dst/hoot_desc-maxtime_map.dscalar.nii',
                 '../dst/hoot_desc-lfofilterCleaned_bold.dtseries.nii']
 
 for thefile in filenames:
