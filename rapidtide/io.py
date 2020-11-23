@@ -234,7 +234,12 @@ if nibabelexists:
         output_nifti = None
 
 
-    def savetocifti(thearray, theciftiheader, theniftiheader, thename, start=0.0, step=1.0, debug=False):
+    def savetocifti(thearray, theciftiheader, theniftiheader, thename,
+                    isseries=False,
+                    names=['placeholder'],
+                    start=0.0,
+                    step=1.0,
+                    debug=False):
         r""" Save a data array out to a cifti
 
         Parameters
@@ -257,6 +262,8 @@ if nibabelexists:
         if debug:
             print('savetocifti:', thename)
         workingarray = np.transpose(thearray)
+        if len(workingarray.shape) == 1:
+            workingarray = workingarray.reshape((1, -1))
 
         # find the BrainModelAxis from the input file
         modelaxis = None
@@ -267,21 +274,21 @@ if nibabelexists:
                     print('axis', theaxis, 'is the BrainModelAxis')
 
         # process things differently for dscalar and dtseries files
-        if len(workingarray.shape) == 1:
-            numdims = 1
-            # make workingarray properly one dimensional
-            workingarray = np.squeeze(workingarray)
+        if not isseries:
+            # make a proper scalar header
+            if len(names) != workingarray.shape[0]:
+                print('savetocifti - number of supplied names does not match array size - exiting.')
+                sys.exit()
             if debug:
                 print('dscalar path: workingarray shape', workingarray.shape)
             if modelaxis is not None:
-                newheader = nib.cifti2.Cifti2Header.from_axes([theciftiheader.matrix.get_axis(modelaxis)])
+                scalaraxis = nib.cifti2.cifti2_axes.ScalarAxis(names)
+                newheader = nib.cifti2.Cifti2Header.from_axes([scalaraxis, theciftiheader.matrix.get_axis(modelaxis)])
             else:
                 print('no BrainModelAxis found in source file - exiting')
                 sys.exit()
-
         else:
-            numdims = 2
-            # find the series header
+            # make a proper series header
             if debug:
                 print('dtseries path: workingarray shape', workingarray.shape)
             if modelaxis is not None:
@@ -297,8 +304,8 @@ if nibabelexists:
                                      nifti_header=theniftiheader)
 
         # make the header right
-        if numdims == 1:
-            img.nifti_header.set_dim_info(1)
+        if not isseries:
+            img.nifti_header.set_dim_info(2)
             img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS')
             suffix = '.dscalar.nii'
             if debug:

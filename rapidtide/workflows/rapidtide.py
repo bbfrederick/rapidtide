@@ -656,7 +656,8 @@ def rapidtide_main(argparsingfunc):
             theheader['dim'][0] = 3
             tide_io.savetonifti(fullmeanmask.reshape((xsize, ysize, numslices)), theheader, savename)
         else:
-            tide_io.savetocifti(fullmeanmask, cifti_hdr, theheader, savename)
+            tide_io.savetocifti(fullmeanmask, cifti_hdr, theheader, savename,
+                                    isseries=False, names=['meanmask'])
         optiondict['preprocskip'] = 0
     else:
         inputfreq = optiondict['inputfreq']
@@ -1463,7 +1464,8 @@ def rapidtide_main(argparsingfunc):
                                                   medianlags, 0.0)),
                                         cifti_hdr,
                                         theheader,
-                                        savename)
+                                        savename,
+                                        isseries=False, names=['despecklemask'])
             print('\n\n', voxelsprocessed_fc_ds, 'voxels despeckled in', optiondict['despeckle_passes'], 'passes')
             timings.append(
                 ['Correlation despeckle end, pass ' + str(thepass), time.time(), voxelsprocessed_fc_ds, 'voxels'])
@@ -1952,7 +1954,8 @@ def rapidtide_main(argparsingfunc):
             if not fileiscifti:
                 tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
             else:
-                tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
+                tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename,
+                                    isseries=False, names=[mapsuffix])
 
     if optiondict['doglmfilt']:
         for mapname, mapsuffix in [('rvalue', 'lfofilterR'), ('r2value', 'lfofilterR2'), ('meanvalue', 'lfofilterMean'),
@@ -1976,7 +1979,8 @@ def rapidtide_main(argparsingfunc):
                 if not fileiscifti:
                     tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
                 else:
-                    tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
+                    tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename,
+                                        isseries=False, names=[mapsuffix])
         del rvalue
         del r2value
         del meanvalue
@@ -2003,7 +2007,8 @@ def rapidtide_main(argparsingfunc):
                 if not fileiscifti:
                     tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
                 else:
-                    tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
+                    tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename,
+                                    isseries=False, names=[mapsuffix])
         del meanvalue
 
     if optiondict['numestreps'] > 0:
@@ -2022,7 +2027,8 @@ def rapidtide_main(argparsingfunc):
                 if not fileiscifti:
                     tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
                 else:
-                    tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
+                    tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename,
+                                    isseries=False, names=['p_lt_' + thepvalnames[i] + '_mask'])
 
     if optiondict['passes'] > 1:
         outmaparray[:] = 0.0
@@ -2038,7 +2044,8 @@ def rapidtide_main(argparsingfunc):
             if not fileiscifti:
                 tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
             else:
-                tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename)
+                tide_io.savetocifti(outmaparray, cifti_hdr, theheader, savename,
+                                    isseries=False, names=['refinemask'])
         del refinemask
 
     # clean up arrays that will no longer be needed
@@ -2068,6 +2075,7 @@ def rapidtide_main(argparsingfunc):
             tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
         else:
             tide_io.savetocifti(outcorrarray, cifti_hdr, theheader, savename,
+                                isseries=True,
                                 start=theheader['toffset'],
                                 step=corrtr)
 
@@ -2086,6 +2094,7 @@ def rapidtide_main(argparsingfunc):
             tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
         else:
             tide_io.savetocifti(outcorrarray, cifti_hdr, theheader, savename,
+                                isseries=True,
                                 start=theheader['toffset'],
                                 step=corrtr)
 
@@ -2104,6 +2113,7 @@ def rapidtide_main(argparsingfunc):
             tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
         else:
             tide_io.savetocifti(outcorrarray, cifti_hdr, theheader, savename,
+                                isseries=True,
                                 start=theheader['toffset'],
                                 step=corrtr)
     del corrout
@@ -2129,6 +2139,7 @@ def rapidtide_main(argparsingfunc):
                 tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
             else:
                 tide_io.savetocifti(outfmriarray, cifti_hdr, theheader, savename,
+                                    isseries=True,
                                     start=0.0,
                                     step=fmritr)
         del lagtc
@@ -2148,6 +2159,7 @@ def rapidtide_main(argparsingfunc):
                     tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
                 else:
                     tide_io.savetocifti(outfmriarray, cifti_hdr, theheader, savename,
+                                        isseries=True,
                                         start=0.0,
                                         step=fmritr)
         del shiftedtcs
@@ -2167,6 +2179,7 @@ def rapidtide_main(argparsingfunc):
                     tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
                 else:
                     tide_io.savetocifti(outfmriarray, cifti_hdr, theheader, savename,
+                                        isseries=True,
                                         start=0.0,
                                         step=fmritr)
         del movingsignal
@@ -2183,6 +2196,7 @@ def rapidtide_main(argparsingfunc):
                 tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
             else:
                 tide_io.savetocifti(outfmriarray, cifti_hdr, theheader, savename,
+                                    isseries=True,
                                     start=0.0,
                                     step=fmritr)
         del filtereddata
