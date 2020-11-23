@@ -46,6 +46,7 @@ from statsmodels.robust.scale import mad
 
 from nibabel.affines import apply_affine
 
+os.environ['QT_MAC_WANTS_LAYER'] = '1'
 
 def selectFile():
     global datafileroot
