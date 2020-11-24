@@ -285,8 +285,7 @@ if nibabelexists:
             if debug:
                 print('dtseries path: workingarray shape', workingarray.shape)
             theintent = 'NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES'
-            theniftiheader['intent_code'] = 3002
-            theniftiheader['intent_name'] = b'ConnDenseSeries'
+            theintentname = "ConnDenseSeries"
             if modelaxis is not None:
                 seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(start, step, workingarray.shape[0])
                 axislist = [seriesaxis, theciftiheader.matrix.get_axis(modelaxis)]
@@ -298,8 +297,7 @@ if nibabelexists:
             if debug:
                 print('dscalar path: workingarray shape', workingarray.shape)
             theintent = 'NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS'
-            theniftiheader['intent_code'] = 3006
-            theniftiheader['intent_name'] = b'ConnDenseScalar'
+            theintentname = "ConnDenseScalar"
             if len(names) != workingarray.shape[0]:
                 print('savetocifti - number of supplied names does not match array size - exiting.')
                 sys.exit()
@@ -313,16 +311,12 @@ if nibabelexists:
         if debug:
             print('about to create cifti image - nifti header is:', theniftiheader)
 
-        #newheader = nib.cifti2.Cifti2Header.from_axes(axislist)
-        #newheader = nib.cifti2.cifti2_axes.to_header(axislist)
         img = nib.cifti2.Cifti2Image(dataobj=workingarray,
-                                     header=axislist,
-                                     nifti_header=theniftiheader)
+                                     header=axislist)
 
         # make the header right
-        img.nifti_header.set_dim_info(2)
+        img.nifti_header.set_intent(theintent, name=theintentname)
         img.update_headers()
-        img.nifti_header.set_intent(theintent)
 
         if isseries:
             suffix = '.dtseries.nii'
@@ -473,14 +467,7 @@ if nibabelexists:
             intent = thedict['_nifti_header']['intent_code']
             if debug:
                 print('intent found')
-            if intent == 3002:
-                if debug:
-                    print('\tmatches')
-                return True
-            else:
-                if debug:
-                    print('\tdoes not match')
-                return False
+            return intent >= 3000 and intent < 3100
         except KeyError:
             if debug:
                 print('intent not found')
