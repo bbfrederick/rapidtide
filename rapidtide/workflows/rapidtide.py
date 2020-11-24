@@ -651,13 +651,18 @@ def rapidtide_main(argparsingfunc):
             savename = outputname + '_desc-globalmean_mask'
         else:
             savename = outputname + '_meanmask'
-        theheader['dim'][4] = 1
-        if not fileiscifti:
-            theheader['dim'][0] = 3
-            tide_io.savetonifti(fullmeanmask.reshape((xsize, ysize, numslices)), theheader, savename)
-        else:
+        if fileiscifti:
+            timeindex = theheader['dim'][0] - 1
+            spaceindex = theheader['dim'][0]
+            theheader['dim'][timeindex] = 1
+            theheader['dim'][spaceindex] = numspatiallocs
             tide_io.savetocifti(fullmeanmask, cifti_hdr, theheader, savename,
-                                    isseries=False, names=['meanmask'])
+                                isseries=False, names=['meanmask'])
+        else:
+            theheader['dim'][0] = 3
+            theheader['dim'][4] = numspatiallocs
+            tide_io.savetonifti(fullmeanmask.reshape((xsize, ysize, numslices)), theheader, savename)
+
         optiondict['preprocskip'] = 0
     else:
         inputfreq = optiondict['inputfreq']
@@ -1460,6 +1465,10 @@ def rapidtide_main(argparsingfunc):
                                         theheader,
                                         savename)
                 else:
+                    timeindex = theheader['dim'][0] - 1
+                    spaceindex = theheader['dim'][0]
+                    theheader['dim'][timeindex] = 1
+                    theheader['dim'][spaceindex] = numspatiallocs
                     tide_io.savetocifti((np.where(np.abs(outmaparray - medianlags) > optiondict['despeckle_thresh'],
                                                   medianlags, 0.0)),
                                         cifti_hdr,
@@ -1680,12 +1689,8 @@ def rapidtide_main(argparsingfunc):
         outcoherencearray = np.zeros(internalcoherenceshape, dtype=rt_floattype)
         outcoherencearray[validvoxels, :] = coherencefunc[:, :]
         theheader = copy.deepcopy(nim_hdr)
-        theheader['dim'][4] = coherencefreqaxissize
         theheader['toffset'] = coherencefreqstart
         theheader['pixdim'][4] = coherencefreqstep
-        if not fileiscifti:
-            theheader['dim'][0] = 3
-
         if optiondict['textio']:
             tide_io.writenpvecs(outcoherencearray.reshape(nativecoherenceshape),
                                 outputname + '_coherence.txt')
@@ -1694,6 +1699,16 @@ def rapidtide_main(argparsingfunc):
                 savename = outputname + '_desc-coherence_info'
             else:
                 savename = outputname + '_coherence'
+        if fileiscifti:
+            timeindex = theheader['dim'][0] - 1
+            spaceindex = theheader['dim'][0]
+            theheader['dim'][timeindex] = coherencefreqaxissize
+            theheader['dim'][spaceindex] = numspatiallocs
+            tide_io.savetocifti(outcoherencearray, cifti_hdr, theheader, savename,
+                                isseries=True, names=['coherence'])
+        else:
+            theheader['dim'][0] = 3
+            theheader['dim'][4] = coherencefreqaxissize
             tide_io.savetonifti(outcoherencearray.reshape(nativecoherenceshape), theheader, savename)
         del coherencefunc
         del outcoherencearray
@@ -1905,9 +1920,14 @@ def rapidtide_main(argparsingfunc):
     timings.append(['Start saving maps', time.time(), None, None])
     if not optiondict['textio']:
         theheader = copy.deepcopy(nim_hdr)
-        theheader['dim'][4] = 1
-        if not fileiscifti:
+        if fileiscifti:
+            timeindex = theheader['dim'][0] - 1
+            spaceindex = theheader['dim'][0]
+            theheader['dim'][timeindex] = 1
+            theheader['dim'][spaceindex] = numspatiallocs
+        else:
             theheader['dim'][0] = 3
+            theheader['dim'][4] = 1
 
     # Prepare extra maps
     savelist = [('lagtimes', 'maxtime'),
@@ -2058,9 +2078,15 @@ def rapidtide_main(argparsingfunc):
     # now do the ones with other numbers of time points
     if not optiondict['textio']:
         theheader = copy.deepcopy(nim_hdr)
-        theheader['dim'][4] = np.shape(corrscale)[0]
         theheader['toffset'] = corrscale[corrorigin - lagmininpts]
-        theheader['pixdim'][4] = corrtr
+        if fileiscifti:
+            timeindex = theheader['dim'][0] - 1
+            spaceindex = theheader['dim'][0]
+            theheader['dim'][timeindex] = np.shape(outcorrarray)[1]
+            theheader['dim'][spaceindex] = numspatiallocs
+        else:
+            theheader['dim'][4] = np.shape(outcorrarray)[1]
+            theheader['pixdim'][4] = corrtr
     outcorrarray[:, :] = 0.0
     outcorrarray[validvoxels, :] = gaussout[:, :]
     if optiondict['textio']:
@@ -2120,9 +2146,14 @@ def rapidtide_main(argparsingfunc):
 
     if not optiondict['textio']:
         theheader = copy.deepcopy(nim_hdr)
-        theheader['pixdim'][4] = fmritr
-        theheader['toffset'] = 0.0
-        theheader['dim'][4] = np.shape(initial_fmri_x)[0]
+        if fileiscifti:
+            timeindex = theheader['dim'][0] - 1
+            spaceindex = theheader['dim'][0]
+            theheader['dim'][timeindex] = np.shape(outfmriarray)[1]
+            theheader['dim'][spaceindex] = numspatiallocs
+        else:
+            theheader['dim'][4] = np.shape(outfmriarray)[1]
+            theheader['pixdim'][4] = fmritr
 
     if optiondict['savelagregressors']:
         outfmriarray[validvoxels, :] = lagtc[:, :]

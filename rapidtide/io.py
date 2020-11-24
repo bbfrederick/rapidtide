@@ -252,6 +252,12 @@ if nibabelexists:
             A valid nifti header
         thename : str
             The name of the cifti file to save
+        isseries: bool
+            True if output is a dtseries, False if dtscalar
+        start: float
+            starttime in seconds
+        step: float
+            timestep in seconds
         debug: bool
             Print extended debugging information
 
@@ -274,49 +280,60 @@ if nibabelexists:
                     print('axis', theaxis, 'is the BrainModelAxis')
 
         # process things differently for dscalar and dtseries files
-        if not isseries:
-            # make a proper scalar header
-            if len(names) != workingarray.shape[0]:
-                print('savetocifti - number of supplied names does not match array size - exiting.')
-                sys.exit()
-            if debug:
-                print('dscalar path: workingarray shape', workingarray.shape)
-            if modelaxis is not None:
-                scalaraxis = nib.cifti2.cifti2_axes.ScalarAxis(names)
-                newheader = nib.cifti2.Cifti2Header.from_axes([scalaraxis, theciftiheader.matrix.get_axis(modelaxis)])
-            else:
-                print('no BrainModelAxis found in source file - exiting')
-                sys.exit()
-        else:
+        if isseries:
             # make a proper series header
             if debug:
                 print('dtseries path: workingarray shape', workingarray.shape)
+            theintent = 'NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES'
+            theniftiheader['intent_code'] = 3002
+            theniftiheader['intent_name'] = b'ConnDenseSeries'
             if modelaxis is not None:
                 seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(start, step, workingarray.shape[0])
-                newheader = nib.cifti2.Cifti2Header.from_axes([seriesaxis, theciftiheader.matrix.get_axis(modelaxis)])
+                axislist = [seriesaxis, theciftiheader.matrix.get_axis(modelaxis)]
             else:
                 print('no BrainModelAxis found in source file - exiting')
                 sys.exit()
-
+        else:
+            # make a proper scalar header
+            if debug:
+                print('dscalar path: workingarray shape', workingarray.shape)
+            theintent = 'NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS'
+            theniftiheader['intent_code'] = 3006
+            theniftiheader['intent_name'] = b'ConnDenseScalar'
+            if len(names) != workingarray.shape[0]:
+                print('savetocifti - number of supplied names does not match array size - exiting.')
+                sys.exit()
+            if modelaxis is not None:
+                scalaraxis = nib.cifti2.cifti2_axes.ScalarAxis(names)
+                axislist = [scalaraxis, theciftiheader.matrix.get_axis(modelaxis)]
+            else:
+                print('no BrainModelAxis found in source file - exiting')
+                sys.exit()
         # now create the output file structure
-        img = nib.cifti2.Cifti2Image(workingarray,
-                                     header=newheader,
+        if debug:
+            print('about to create cifti image - nifti header is:', theniftiheader)
+
+        #newheader = nib.cifti2.Cifti2Header.from_axes(axislist)
+        #newheader = nib.cifti2.cifti2_axes.to_header(axislist)
+        img = nib.cifti2.Cifti2Image(dataobj=workingarray,
+                                     header=axislist,
                                      nifti_header=theniftiheader)
 
         # make the header right
-        if not isseries:
-            img.nifti_header.set_dim_info(2)
-            img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS')
-            suffix = '.dscalar.nii'
-            if debug:
-                print('\tDENSE_SCALARS')
-        else:
-            img.nifti_header.set_dim_info(2)
-            img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES')
+        img.nifti_header.set_dim_info(2)
+        img.update_headers()
+        img.nifti_header.set_intent(theintent)
+
+        if isseries:
             suffix = '.dtseries.nii'
             if debug:
                 print('\tDENSE_SERIES')
-        img.update_headers()
+        else:
+            suffix = '.dscalar.nii'
+            if debug:
+                print('\tDENSE_SCALARS')
+        if debug:
+            print('after update_headers() - nifti header is:', theniftiheader)
 
         # save the data
         nib.cifti2.save(img, thename + suffix)
