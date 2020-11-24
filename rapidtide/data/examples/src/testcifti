@@ -18,22 +18,23 @@ def ciftidump(filename):
         print(cifti)
     
         print('\ncifti_hdr:')
-        print(cifti_hdr)
-        print(cifti_hdr.matrix.get_data_shape())
+        print('\t', cifti_hdr)
+        print('\t', cifti_hdr.matrix.get_data_shape())
         for theaxis in cifti_hdr.matrix.mapped_indices:
-            print(cifti_hdr.matrix.get_axis(theaxis))
+            print('\t', cifti_hdr.matrix.get_axis(theaxis))
+        #print('\t', cifti_hdr.cifti2_axes.from_index_mapping())
 
         print('\nnifti_hdr:')
-        print(nifti_hdr)
+        print('\t', nifti_hdr)
     
         print('\nthedims:')
-        print(thedims)
+        print('\t', thedims)
     
         print('\nthesizes:')
-        print(thesizes)
+        print('\t', thesizes)
     
         print('\nfmritr:')
-        print(fmritr)
+        print('\t', fmritr)
 
         return cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, fmritr
     else:
@@ -41,9 +42,10 @@ def ciftidump(filename):
 
 
 filenames = ['/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii',
-                '../dst/hoot_desc-corrout_info.dtseries.nii',
-                '../dst/hoot_desc-maxtime_map.dscalar.nii',
-                '../dst/hoot_desc-lfofilterCleaned_bold.dtseries.nii']
+                '/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas_hp2000_clean.dtseries.nii']
+#                '../dst/hoot_desc-corrout_info.dtseries.nii',
+#                '../dst/hoot_desc-maxtime_map.dscalar.nii',
+#                '../dst/hoot_desc-lfofilterCleaned_bold.dtseries.nii']
 
 for thefile in filenames:
     cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, fmritr = ciftidump(thefile)
