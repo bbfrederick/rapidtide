@@ -1,5 +1,12 @@
 # History of changes
 
+## Version 2.0alpha6 (11/23/20)
+* (rapidtide) Completely revamped CIFTI I/O.  Should now read and write native CIFTI2 files (do not need to convert to NIFTI-2 in workbench).
+* (rapidtide) Better handling of motion files.
+* (rapidtide) Added coherence calculation.  Not quite working right yet.
+* (happy) Started adding BIDS output.
+* (tidepool) Fixed to work with Big Sur (macOS 11).
+
 ## Version 2.0alpha5 (10/29/20)
 Much thanks to Taylor Salo for his continuing contributions, with several substantive improvements to code, documentation, and automatic testing, and generally helping devise a sensible release roadmap.
 * (rapidtide, happy) Switched to using nilearn's mask generator for automatic mask generation, since it's much more sophisticated.  It seems to be a big improvement, and handles data processed by fmriprep and SPM with no fiddling.
