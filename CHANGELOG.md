@@ -1,6 +1,6 @@
 # History of changes
 
-## Version 2.0alpha6 (11/23/20)
+## Version 2.0alpha6 (11/30/20)
 * (rapidtide) Completely revamped CIFTI I/O.  Should now read and write native CIFTI2 files (do not need to convert to NIFTI-2 in workbench).
 * (rapidtide) Better handling of motion files.
 * (rapidtide) Added coherence calculation.  Not quite working right yet.
