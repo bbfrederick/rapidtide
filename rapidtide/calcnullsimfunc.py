@@ -193,5 +193,5 @@ def getNullDistributionDatax(rawtimecourse,
 
     # return the distribution data
     numnonzero = len(np.where(corrlist != 0.0)[0])
-    print(numnonzero, 'non-zero correlations out of', len(corrlist), '(', 100.0 * numnonzero / len(corrlist), '%)')
+    print('{:d} non-zero correlations out of {:d} ({:.2f}%)'.format(numnonzero, len(corrlist), 100.0 * numnonzero / len(corrlist)))
     return corrlist
