@@ -823,6 +823,15 @@ def _get_parser():
         default="unweighted_average",
     )
     reg_ref.add_argument(
+        "--PCAtarget",
+        dest="PCAtarget",
+        action="store",
+        type=float,
+        metavar="FRAC",
+        help=("PCA during refinement will attempt to explain FRAC of the total variance."),
+        default=0.8,
+    )
+    reg_ref.add_argument(
         "--convergencethresh",
         dest="convergencethresh",
         action="store",
@@ -1281,7 +1290,6 @@ def process_args(inputargs=None):
     args["savecorrmask"] = True
 
     # refinement options
-    args["estimatePCAdims"] = False
     args["filterbeforePCA"] = True
     args["dispersioncalc_step"] = 0.50
 

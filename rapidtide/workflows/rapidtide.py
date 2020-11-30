@@ -1222,7 +1222,7 @@ def rapidtide_main(argparsingfunc):
                     optiondict['sigfit'] = sigfit
             if optiondict['ampthreshfromsig']:
                 if pcts is not None:
-                    print('setting ampthresh to the p<{:.3f}'.format(1.0 - thepercentiles[0]), ' threshhold')
+                    print('setting ampthresh to the p < {:.3f}'.format(1.0 - thepercentiles[0]), ' threshhold')
                     optiondict['ampthresh'] = pcts[0]
                     tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
                     if optiondict['dosighistfit']:
@@ -1551,7 +1551,7 @@ def rapidtide_main(argparsingfunc):
             # check for convergence
             regressormse = mse(normoutputdata, previousnormoutputdata)
             optiondict['regressormse_pass' + str(thepass)] = regressormse
-            print('regressor difference at end of pass', thepass, 'is', regressormse)
+            print('regressor difference at end of pass {:d} is {:.6f}'.format(thepass, regressormse))
             if optiondict['convergencethresh'] is not None:
                 if thepass >= optiondict['maxpasses'] or regressormse < optiondict['convergencethresh']:
                     stoprefining = True

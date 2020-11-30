@@ -162,7 +162,7 @@ def refineregressor(fmridata,
     excludemask : 3D array
         Mask of voxels to exclude from refinement.  Default is None (no voxels).
     debug : bool
-        Enable additional debugging output.  Default is false
+        Enable additional debugging output.  Default is False
     rt_floatset : function
         Function to coerce variable types
     rt_floattype : {'float32', 'float64'}
@@ -365,10 +365,7 @@ def refineregressor(fmridata,
                             optiondict['outputname'] + '_dispersioncalcspecphase_pass' + str(passnum) + '.txt')
         tide_io.writenpvecs(freqs, optiondict['outputname'] + '_dispersioncalcfreqs_pass' + str(passnum) + '.txt')
 
-    if optiondict['estimatePCAdims']:
-        pcacomponents = 'mle'
-    else:
-        pcacomponents = 1
+    pcacomponents = optiondict['PCAtarget']
     icacomponents = 1
 
     if optiondict['refinetype'] == 'ica':
@@ -376,8 +373,10 @@ def refineregressor(fmridata,
         thefit = FastICA(n_components=icacomponents).fit(refinevoxels)  # Reconstruct signals
         print('Using first of ', len(thefit.components_), ' components')
         icadata = thefit.components_[0]
-        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), detrendorder=optiondict['detrendorder'])
-        filteredica = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], icadata), detrendorder=optiondict['detrendorder'])
+        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata),
+                                              detrendorder=optiondict['detrendorder'])
+        filteredica = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], icadata),
+                                              detrendorder=optiondict['detrendorder'])
         thepxcorr = pearsonr(filteredavg, filteredica)[0]
         print('ica/avg correlation = ', thepxcorr)
         if thepxcorr > 0.0:
@@ -385,12 +384,20 @@ def refineregressor(fmridata,
         else:
             outputdata = -1.0 * icadata
     elif optiondict['refinetype'] == 'pca':
+        # use the method of "A novel perspective to calibrate temporal delays in cerebrovascular reactivity
+        # using hypercapnic and hyperoxic respiratory challenges". NeuroImage 187, 154?165 (2019).
         print('performing pca refinement')
         thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
-        print('Using first of ', len(thefit.components_), ' components')
-        pcadata = thefit.components_[0]
-        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata), detrendorder=optiondict['detrendorder'])
-        filteredpca = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], pcadata), detrendorder=optiondict['detrendorder'])
+        print('Using ', len(thefit.components_), ' components, accounting for ',
+              '{:.2f}% of the variance'.format(100.0 * np.cumsum(thefit.explained_variance_ratio_)[-1]))
+        reduceddata = thefit.inverse_transform(thefit.transform(refinevoxels))
+        if debug:
+            print('complex processing: reduceddata.shape =', reduceddata.shape)
+        pcadata = np.mean(reduceddata, axis=0)
+        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata),
+                                              detrendorder=optiondict['detrendorder'])
+        filteredpca = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], pcadata),
+                                              detrendorder=optiondict['detrendorder'])
         thepxcorr = pearsonr(filteredavg, filteredpca)[0]
         print('pca/avg correlation = ', thepxcorr)
         if thepxcorr > 0.0:
