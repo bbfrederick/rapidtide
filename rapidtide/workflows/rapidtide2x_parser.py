@@ -479,6 +479,8 @@ def process_args():
     optiondict['refineincludevals'] = None        # list of integer values to use in the mask
     optiondict['corrmaskvallist'] = None
     optiondict['refinetype'] = 'unweighted_average'
+    optiondict['convergencethresh'] = None
+    optiondict['maxpasses'] = 10
     optiondict['estimatePCAdims'] = False
     optiondict['filterbeforePCA'] = True
     optiondict['fmrifreq'] = 0.0

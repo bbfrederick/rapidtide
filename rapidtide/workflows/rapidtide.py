@@ -59,6 +59,8 @@ import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
 import rapidtide.wiener as tide_wiener
 
+from rapidtide.tests.utils import mse
+
 from statsmodels.robust import mad
 
 import copy
@@ -806,6 +808,7 @@ def rapidtide_main(argparsingfunc):
                                                padlen=int(oversampfreq * optiondict['padseconds']),
                                                method=optiondict['interptype'])
     print(len(os_fmri_x,), len(resampref_y), len(initial_fmri_x,), len(resampnonosref_y))
+    previousnormoutputdata = resampnonosref_y + 0.0
 
     # prepare the temporal mask
     if optiondict['tmaskname'] is not None:
@@ -1004,8 +1007,16 @@ def rapidtide_main(argparsingfunc):
                                              enforcethresh=optiondict['enforcethresh'],
                                              hardlimit=optiondict['hardlimit'])
 
+    # loop over all passes
+    stoprefining = False
+    if optiondict['convergencethresh'] is None:
+        numpasses = optiondict['passes']
+    else:
+        numpasses = np.max([optiondict['passes'], optiondict['maxpasses']])
+    for thepass in range(1, numpasses + 1):
+        if stoprefining:
+            break
 
-    for thepass in range(1, optiondict['passes'] + 1):
         # initialize the pass
         if optiondict['passes'] > 1:
             print('\n\n*********************')
@@ -1207,7 +1218,7 @@ def rapidtide_main(argparsingfunc):
             for i in range(len(thepvalnames)):
                 optiondict['p_lt_' + thepvalnames[i] + '_pass' + str(thepass) + '_thresh.txt'] = pcts[i]
                 if optiondict['dosighistfit']:
-                    optiondict['p_lt_' + thepvalnames[i] + '_pass' + str(thepass) + '_fitthresh.txt'] = pcts_fit[i]
+                    optiondict['p_lt_' + thepvalnames[i] + '_pass' + str(thepass) + '_fitthresh'] = pcts_fit[i]
                     optiondict['sigfit'] = sigfit
             if optiondict['ampthreshfromsig']:
                 if pcts is not None:
@@ -1401,7 +1412,7 @@ def rapidtide_main(argparsingfunc):
         # Step 2b - Correlation time despeckle
         if optiondict['despeckle_passes'] > 0:
             print('\n\nCorrelation despeckling pass ' + str(thepass))
-            print('\tUsing despeckle_thresh =' + str(optiondict['despeckle_thresh']))
+            print('\tUsing despeckle_thresh = {:.3f}'.format(optiondict['despeckle_thresh']))
             timings.append(['Correlation despeckle start, pass ' + str(thepass), time.time(), None, None])
 
             # find lags that are very different from their neighbors, and refit starting at the median lag for the point
@@ -1480,7 +1491,7 @@ def rapidtide_main(argparsingfunc):
                 ['Correlation despeckle end, pass ' + str(thepass), time.time(), voxelsprocessed_fc_ds, 'voxels'])
 
         # Step 3 - regressor refinement for next pass
-        if thepass < optiondict['passes']:
+        if thepass < optiondict['passes'] or optiondict['convergencethresh'] is not None:
             print('\n\nRegressor refinement, pass' + str(thepass))
             timings.append(['Regressor refinement start, pass ' + str(thepass), time.time(), None, None])
             if optiondict['refineoffset']:
@@ -1490,8 +1501,8 @@ def rapidtide_main(argparsingfunc):
                                                                          peakthresh=optiondict['pickleftthresh'])
                 optiondict['offsettime'] = peaklag
                 optiondict['offsettime_total'] += peaklag
-                print('offset time set to ', "{:.3f}".format(optiondict['offsettime']),
-                      ', total is ', "{:.3f}".format(optiondict['offsettime_total']))
+                print('offset time set to', "{:.3f}".format(optiondict['offsettime']),
+                      ', total is', "{:.3f}".format(optiondict['offsettime_total']))
 
             # regenerate regressor for next pass
             refineregressor_func = addmemprofiling(tide_refine.refineregressor,
@@ -1537,6 +1548,16 @@ def rapidtide_main(argparsingfunc):
             optiondict['refinemasksize_pass' + str(thepass)] = voxelsprocessed_rr
             optiondict['refinemaskpct_pass' + str(thepass)] = 100.0 * voxelsprocessed_rr / optiondict['corrmasksize']
 
+            # check for convergence
+            regressormse = mse(normoutputdata, previousnormoutputdata)
+            optiondict['regressormse_pass' + str(thepass)] = regressormse
+            print('regressor difference at end of pass', thepass, 'is', regressormse)
+            if optiondict['convergencethresh'] is not None:
+                if thepass >= optiondict['maxpasses'] or regressormse < optiondict['convergencethresh']:
+                    stoprefining = True
+            else:
+                stoprefining = False
+
             if optiondict['detrendorder'] > 0:
                 resampnonosref_y = tide_fit.detrend(
                     tide_resample.doresample(initial_fmri_x,
@@ -1570,6 +1591,7 @@ def rapidtide_main(argparsingfunc):
                 resampref_y -= thefit[0, 1] * tmaskos_y
 
             # reinitialize lagtc for resampling
+            previousnormoutputdata = normoutputdata + 0.0
             genlagtc = tide_resample.fastresampler(initial_fmri_x, normoutputdata, padtime=padtime)
             nonosrefname = '_reference_fmrires_pass' + str(thepass + 1) + '.txt'
             osrefname = '_reference_resampres_pass' + str(thepass + 1) + '.txt'
@@ -1627,6 +1649,8 @@ def rapidtide_main(argparsingfunc):
                     else:
                         savename = outputname + '_' + mapname + passsuffix
                     tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+    # We are done with refinement.
+    optiondict['actual_passes'] = thepass - 1
 
     # Post refinement step -1 - Coherence calculation
     if optiondict['calccoherence']:

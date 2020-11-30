@@ -813,7 +813,6 @@ def _get_parser():
         help=("Only use negative lags for regressor refinement."),
         default="both",
     )
-
     reg_ref.add_argument(
         "--refinetype",
         dest="refinetype",
@@ -823,6 +822,25 @@ def _get_parser():
         help=("Method with which to derive refined regressor."),
         default="unweighted_average",
     )
+    reg_ref.add_argument(
+        "--convergencethresh",
+        dest="convergencethresh",
+        action="store",
+        type=float,
+        metavar="THRESH",
+        help=("Continue refinement until the MSE between regressors becomes <= THRESH."),
+        default=None,
+    )
+    reg_ref.add_argument(
+        "--maxpasses",
+        dest="maxpasses",
+        action="store",
+        type=int,
+        metavar="MAXPASSES",
+        help=("Terminate refinement after MAXPASSES passes, whether or not convergence has occured. Default is 10"),
+        default=10,
+    )
+
 
     # Output options
     output = parser.add_argument_group("Output options")
@@ -1022,6 +1040,13 @@ def _get_parser():
             "worker processes to n_cpus - 1."
         ),
         default=1,
+    )
+    misc.add_argument(
+        "--version",
+        dest="printversion",
+        action="store_true",
+        help=("Print version information and exit."),
+        default=False,
     )
     misc.add_argument(
         "--debug",
