@@ -819,8 +819,8 @@ def _get_parser():
         action="store",
         type=str,
         choices=["pca", "ica", "weighted_average", "unweighted_average"],
-        help=("Method with which to derive refined regressor."),
-        default="unweighted_average",
+        help=("Method with which to derive refined regressor (default is 'pca'"),
+        default="pca",
     )
     reg_ref.add_argument(
         "--PCAtarget",
@@ -828,7 +828,8 @@ def _get_parser():
         action="store",
         type=float,
         metavar="FRAC",
-        help=("PCA during refinement will attempt to explain FRAC of the total variance."),
+        help=("PCA during refinement will attempt to explain FRAC of the total variance."
+              "Default is 0.8."),
         default=0.8,
     )
     reg_ref.add_argument(
@@ -847,7 +848,7 @@ def _get_parser():
         type=int,
         metavar="MAXPASSES",
         help=("Terminate refinement after MAXPASSES passes, whether or not convergence has occured. Default is 10"),
-        default=10,
+        default=15,
     )
 
 

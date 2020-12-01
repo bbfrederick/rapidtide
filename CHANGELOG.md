@@ -1,5 +1,9 @@
 # History of changes
 
+## Version 2.0alpha7 (12/1/20)
+* (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154–165 (2019).
+* (rapidtide) The PCA refinement algorithm has been improved to match the method described in Champagne, et al., and is now the default.
+
 ## Version 2.0alpha6 (11/30/20)
 * (rapidtide) Completely revamped CIFTI I/O.  Should now read and write native CIFTI2 files (do not need to convert to NIFTI-2 in workbench).
 * (rapidtide) Better handling of motion files.

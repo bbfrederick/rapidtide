@@ -1,20 +1,21 @@
 #!/bin/bash
 
-rapidtide \
-	sub-TEST.nii.gz \
-	../dst/sub-TEST_standardnames \
-	--spatialfilt 2 \
-        --nprocs -1 \
-        --legacyoutput \
-        --passes 3 
+#rapidtide \
+#	sub-TEST.nii.gz \
+#	../dst/sub-TEST_standardnames \
+#	--spatialfilt 2 \
+#        --nprocs -1 \
+#        --legacyoutput \
+#        --passes 3 
 
+
+# denoising example
 rapidtide \
 	sub-TEST.nii.gz \
 	../dst/sub-TEST \
 	--spatialfilt 2 \
         --nprocs -1 \
-        --passes 3 \
-        --calccoherence \
-        --noglm
+        --convergencethresh 0.005 \
+        --maxpasses 12
 
 #diffmaps ../dst/dgsr_butterworth_onepass_bipolar ../dst/dgsr_butterworth_onepass ../dst/diff_bipvsnorm
