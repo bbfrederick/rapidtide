@@ -838,7 +838,8 @@ def _get_parser():
         action="store",
         type=float,
         metavar="THRESH",
-        help=("Continue refinement until the MSE between regressors becomes <= THRESH."),
+        help=("Continue refinement until the MSE between regressors becomes <= THRESH.  "
+              "By default, this is not set, so refinement will run for the specified number of passes"),
         default=None,
     )
     reg_ref.add_argument(
