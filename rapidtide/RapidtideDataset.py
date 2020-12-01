@@ -612,6 +612,10 @@ class RapidtideDataset:
             self.similaritymetric = self.therunoptions['similaritymetric']
         except KeyError:
             self.similaritymetric = 'correlation'
+        try:
+            self.numberofpasses = self.therunoptions['actual_passes']
+        except KeyError:
+            self.numberofpasses = self.therunoptions['passes']
         if self.bidsformat:
             self.regressorspecs = [['prefilt', 'desc-initialmovingregressor_timeseries.json', self.inputfreq, self.inputfreq, self.inputstarttime],
                               ['postfilt', 'desc-initialmovingregressor_timeseries.json', self.inputfreq, self.inputfreq, self.inputstarttime],
