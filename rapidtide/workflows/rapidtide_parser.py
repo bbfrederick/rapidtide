@@ -847,7 +847,7 @@ def _get_parser():
         action="store",
         type=int,
         metavar="MAXPASSES",
-        help=("Terminate refinement after MAXPASSES passes, whether or not convergence has occured. Default is 10"),
+        help=("Terminate refinement after MAXPASSES passes, whether or not convergence has occured. Default is 15"),
         default=15,
     )
 
