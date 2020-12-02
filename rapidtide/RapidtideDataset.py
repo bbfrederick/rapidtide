@@ -62,7 +62,7 @@ class timecourse:
         self.report = report
         if self.verbose:
             print('reading timecourse ', self.name, ' from ', self.filename, '...')
-        self.readTimeData(self.name)
+        self.readTimeData(self.label)
 
     def readTimeData(self, thename):
         if self.isbids:
@@ -396,23 +396,25 @@ class RapidtideDataset:
     def _loadregressors(self):
         self.focusregressor = None
         for thisregressor in self.regressorspecs:
-            if os.path.isfile(self.fileroot + thisregressor[1]):
-                print('file: ', self.fileroot + thisregressor[1], ' exists - reading...')
-                thepath, thebase = os.path.split(self.fileroot + thisregressor[1])
+            if os.path.isfile(self.fileroot + thisregressor[2]):
+                print('file: ', self.fileroot + thisregressor[2], ' exists - reading...')
+                thepath, thebase = os.path.split(self.fileroot + thisregressor[2])
                 theregressor = timecourse(thisregressor[0],
-                                          self.fileroot + thisregressor[1],
+                                          self.fileroot + thisregressor[2],
                                           thebase,
-                                          thisregressor[2],
                                           thisregressor[3],
-                                          starttime=thisregressor[4],
+                                          thisregressor[4],
+                                          label=thisregressor[1],
+                                          starttime=thisregressor[5],
                                           isbids=self.bidsformat,
                                           verbose=self.verbose)
                 if theregressor.timedata is not None:
                     self.regressors[thisregressor[0]] = copy.deepcopy(theregressor)
+                    theregressor.summarize()
                 if self.focusregressor is None:
                     self.focusregressor = thisregressor[0]
             else:
-                print('file: ', self.fileroot + thisregressor[1], ' does not exist - skipping...')
+                print('file: ', self.fileroot + thisregressor[2], ' does not exist - skipping...')
 
 
     def _loadfuncmaps(self):
@@ -616,20 +618,26 @@ class RapidtideDataset:
             self.numberofpasses = self.therunoptions['actual_passes']
         except KeyError:
             self.numberofpasses = self.therunoptions['passes']
-        if self.bidsformat:
-            self.regressorspecs = [['prefilt', 'desc-initialmovingregressor_timeseries.json', self.inputfreq, self.inputfreq, self.inputstarttime],
-                              ['postfilt', 'desc-initialmovingregressor_timeseries.json', self.inputfreq, self.inputfreq, self.inputstarttime],
-                              ['pass1', 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass2', 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass3', 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass4', 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
+        if self.numberofpasses > 4:
+            secondtolast = self.numberofpasses - 1
+            last = self.numberofpasses
         else:
-            self.regressorspecs = [['prefilt', 'reference_origres_prefilt.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
-                              ['postfilt', 'reference_origres.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
-                              ['pass1', 'reference_resampres_pass1.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass2', 'reference_resampres_pass2.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass3', 'reference_resampres_pass3.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
-                              ['pass4', 'reference_resampres_pass4.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
+            secondtolast = 3
+            last = 4
+        if self.bidsformat:
+            self.regressorspecs = [['prefilt', 'prefilt', 'desc-initialmovingregressor_timeseries.json', self.inputfreq, self.inputfreq, self.inputstarttime],
+                              ['postfilt', 'postfilt', 'desc-initialmovingregressor_timeseries.json', self.inputfreq, self.inputfreq, self.inputstarttime],
+                              ['pass1', 'pass1', 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass2', 'pass2', 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass3', 'pass{:d}'.format(secondtolast), 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass4', 'pass{:d}'.format(last), 'desc-oversampledmovingregressor_timeseries.json', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
+        else:
+            self.regressorspecs = [['prefilt', 'prefilt', 'reference_origres_prefilt.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
+                              ['postfilt', 'postfilt', 'reference_origres.txt', self.inputfreq, self.inputfreq, self.inputstarttime],
+                              ['pass1', 'pass1', 'reference_resampres_pass1.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass2', 'pass2', 'reference_resampres_pass2.txt', self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass3', 'pass{:d}'.format(secondtolast), 'reference_resampres_pass{:d}.txt'.format(secondtolast), self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0],
+                              ['pass4', 'pass{:d}'.format(last), 'reference_resampres_pass{:d}.txt'.format(last), self.fmrifreq * self.oversampfactor, self.fmrifreq, 0.0]]
         self._loadregressors()
 
     def getregressors(self):

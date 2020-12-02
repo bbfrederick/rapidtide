@@ -1527,9 +1527,11 @@ def main():
         ui.pass2_radioButton.show()
     if 'pass3' in regressors.keys():
         ui.pass3_radioButton.setDisabled(False)
+        ui.pass3_radioButton.setText("Pass " + regressors['pass3'].label[4:])
         ui.pass3_radioButton.show()
     if 'pass4' in regressors.keys():
         ui.pass4_radioButton.setDisabled(False)
+        ui.pass4_radioButton.setText("Pass " + regressors['pass4'].label[4:])
         ui.pass4_radioButton.show()
 
     win.setWindowTitle('TiDePool - ' + datafileroot[:-1])
