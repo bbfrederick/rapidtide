@@ -305,13 +305,13 @@ def fitcorr(lagtcgenerator,
                     fitfails += 1
 
     print('\nCorrelation fitted in ' + str(volumetotal) + ' voxels')
-    print('\tampfails=', ampfails,
-          '\n\tlowlagfails=', lowlagfails,
-          '\n\thighlagfails=', highlagfails,
-          '\n\tlowwidthfails=', lowwidthfails,
-          '\n\thighwidthfail=', highwidthfails,
-          '\n\ttotal initfails=', initfails,
-          '\n\ttotal fitfails=', fitfails)
+    print('\tampfails:', ampfails,
+          '\n\tlowlagfails:', lowlagfails,
+          '\n\thighlagfails:', highlagfails,
+          '\n\tlowwidthfails:', lowwidthfails,
+          '\n\thighwidthfail:', highwidthfails,
+          '\n\ttotal initfails:', initfails,
+          '\n\ttotal fitfails:', fitfails)
 
     # garbage collect
     collected = gc.collect()
