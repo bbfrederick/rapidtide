@@ -642,6 +642,7 @@ def rapidtide_main(argparsingfunc):
 
     # now set the regressor that we'll use
     if optiondict['useglobalref']:
+        print('using global mean as probe regressor')
         inputfreq = meanfreq
         inputperiod = meanperiod
         inputstarttime = meanstarttime
@@ -667,6 +668,7 @@ def rapidtide_main(argparsingfunc):
 
         optiondict['preprocskip'] = 0
     else:
+        print('using externally supplied probe regressor')
         inputfreq = optiondict['inputfreq']
         inputstarttime = optiondict['inputstarttime']
         if inputfreq is None:
@@ -680,10 +682,15 @@ def rapidtide_main(argparsingfunc):
     numreference = len(inputvec)
     optiondict['inputfreq'] = inputfreq
     optiondict['inputstarttime'] = inputstarttime
-    print('regressor start time, end time, and step', -inputstarttime, inputstarttime + numreference * inputperiod,
-          inputperiod)
+    print('Regressor start time, end time, and step: {:.3f}, {:.3f}, {:.3f}'.format(-inputstarttime,
+                                                                                    inputstarttime + numreference * inputperiod,
+                                                                                    inputperiod)
+          )
     if optiondict['verbose']:
-        print('input vector length', len(inputvec), 'input freq', inputfreq, 'input start time', inputstarttime)
+        print('Input vector')
+        print('\tlength: {:d}'.format(len(inputvec)))
+        print('\tinput freq: {:d}'.format(inputfreq))
+        print('\tinput start time: {:.3f}'.format(inputstarttime))
 
     if not optiondict['useglobalref']:
         globalcorrx, globalcorry = tide_corr.arbcorr(meanvec, meanfreq, inputvec, inputfreq, start2=inputstarttime)
@@ -889,10 +896,10 @@ def rapidtide_main(argparsingfunc):
     nummilags = themutualinformationator.similarityfunclen
     themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
     dummy, trimmedmiscale, dummy = themutualinformationator.getfunction()
-    print('trimmedcorrscale length:', len(trimmedcorrscale))
-    print('trimmedmiscale length:', len(trimmedmiscale), nummilags)
 
     if optiondict['verbose']:
+        print('trimmedcorrscale length:', len(trimmedcorrscale))
+        print('trimmedmiscale length:', len(trimmedmiscale), nummilags)
         print('corrorigin at point ', corrorigin, corrscale[corrorigin])
         print('corr range from ', corrorigin - lagmininpts, '(', corrscale[
             corrorigin - lagmininpts], ') to ', corrorigin + lagmaxinpts, '(', corrscale[corrorigin + lagmaxinpts], ')')
@@ -1553,8 +1560,14 @@ def rapidtide_main(argparsingfunc):
             optiondict['regressormse_pass' + str(thepass)] = regressormse
             print('regressor difference at end of pass {:d} is {:.6f}'.format(thepass, regressormse))
             if optiondict['convergencethresh'] is not None:
-                if thepass >= optiondict['maxpasses'] or regressormse < optiondict['convergencethresh']:
+                if thepass >= optiondict['maxpasses']:
+                    print('refinement ended (maxpasses reached')
                     stoprefining = True
+                elif regressormse < optiondict['convergencethresh']:
+                    print('refinement ended (refinement has converged')
+                    stoprefining = True
+                else:
+                    stoprefining = False
             else:
                 stoprefining = False
 
@@ -1650,7 +1663,10 @@ def rapidtide_main(argparsingfunc):
                         savename = outputname + '_' + mapname + passsuffix
                     tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
     # We are done with refinement.
-    optiondict['actual_passes'] = thepass - 1
+    if optiondict['convergencethresh'] is None:
+        optiondict['actual_passes'] = optiondict['passes']
+    else:
+        optiondict['actual_passes'] = thepass
 
     # Post refinement step -1 - Coherence calculation
     if optiondict['calccoherence']:
