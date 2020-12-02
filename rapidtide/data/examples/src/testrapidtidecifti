@@ -3,6 +3,7 @@
 rapidtide \
     /Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii \
     ../dst/nofix \
+    --regressor /Users/frederic/Dropbox_PHC/connectome_quality/100307_rfMRI_REST1_noswap_RL_reference_fmrires_pass3.txt \
     --nprocs -1 \
     --despecklepasses 0 \
     --passes 1
@@ -10,6 +11,7 @@ rapidtide \
 rapidtide \
     /Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas_hp2000_clean.dtseries.nii \
     ../dst/fix \
+    --regressor /Users/frederic/Dropbox_PHC/connectome_quality/100307_rfMRI_REST1_noswap_RL_reference_fmrires_pass3.txt \
     --nprocs -1 \
     --despecklepasses 0 \
     --passes 1
