@@ -41,25 +41,32 @@ except ImportError:
     PILexists = False
 
 
-def newColorbar(view, left, top, impixpervoxx, impixpervoxy, imgsize):
+def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
     cb_xdim = imgsize // 10
     cb_ydim = imgsize
     theviewbox = pg.ViewBox(enableMouse=False)
     theviewbox.setRange(QtCore.QRectF(0, 0, cb_xdim, cb_ydim),
                         xRange=(0, cb_xdim - 1), yRange=(0, cb_ydim - 1), padding=0.0,
                         disableAutoRange=True)
+    theviewbox.setBackgroundColor([50, 50, 50])
     theviewbox.setAspectLocked()
 
-    thecolorbarwin = pg.ImageItem()
-    theviewbox.addItem(thecolorbarwin)
-    thecolorbarwin.translate(left, top)
-    thecolorbarwin.scale(impixpervoxx, impixpervoxy)
+    thecolorbarfgwin = pg.ImageItem()
+    theviewbox.addItem(thecolorbarfgwin)
+    thecolorbarfgwin.setZValue(10)
+    thecolorbarfgwin.translate(left, top)
+    thecolorbarfgwin.scale(impixpervoxx, impixpervoxy)
+
+    thecolorbarbgwin = pg.ImageItem()
+    theviewbox.addItem(thecolorbarbgwin)
+    thecolorbarbgwin.setZValue(0)
+    thecolorbarbgwin.translate(left, top)
+    thecolorbarbgwin.scale(impixpervoxx, impixpervoxy)
 
     colorbarvals = np.zeros((cb_xdim, cb_ydim), dtype=np.float64)
     for i in range(0, cb_ydim):
         colorbarvals[:, i] = i * (1.0 / (cb_ydim - 1.0))
-    thecolorbarwin.setImage(colorbarvals, levels=[0.0, 1.0])
-    return thecolorbarwin, theviewbox
+    return thecolorbarfgwin, thecolorbarbgwin, theviewbox, colorbarvals
 
 
 def newViewWindow(view, xdim, ydim, left, top, impixpervoxx, impixpervoxy, imgsize, enableMouse=False):
@@ -425,11 +432,6 @@ class OrthoImageItem(QtGui.QWidget):
             print(foreground.getbands())
 
             # now composite
-            #square.paste(background, None, background)
-            #square.paste(foreground, None, foreground)
-            #flipped = square.transpose(Image.FLIP_TOP_BOTTOM)
-
-            # now composite
             background.paste(foreground, None, foreground)
             flipped = background.transpose(Image.FLIP_TOP_BOTTOM)
 
@@ -471,6 +473,22 @@ class OrthoImageItem(QtGui.QWidget):
         thesquarewin.scale(maximpervox, maximpervox)
         thesquarewin.setImage(np.zeros((maxdim, maxdim), dtype=float), autoLevels=True)
 
+        # make a rectangular background
+        therectwin = pg.ImageItem()
+        therectwin.translate(0, 0)
+        therectwin.scale(maximpervox, maximpervox)
+        therectwin.setImage(np.zeros((maxdim // 10, maxdim), dtype=float), autoLevels=True)
+
+        thecolorbarfgwin, thecolorbarbgwin, thecolorbarviewbox, colorbarvals = newColorbar(0, 0,
+                                                                                           maximpervox, maximpervox,
+                                                                                           maxdim)
+        cbim = self.applyLUT(colorbarvals, (colorbarvals * 0 + 1).astype('int'), self.map.theLUT, 0.0, 1.0)
+        thecolorbarfgwin.setImage(cbim.astype('float'))
+        thecolorbarbgwin.setImage(cbim.astype('float'), autoLevels=True)
+        print(thecolorbarfgwin)
+        print(thecolorbarbgwin)
+        print(thecolorbarviewbox)
+
         self.saveandcomposite(thesquarewin,
                               self.axviewwin, self.axviewbgwin,
                               thename + '_ax', thedir,
@@ -486,9 +504,15 @@ class OrthoImageItem(QtGui.QWidget):
                               thename + '_sag', thedir,
                               self.ydim * self.ysize,
                               self.zdim * self.zsize)
+        '''self.saveandcomposite(therectwin,
+                              thecolorbarfgwin, thecolorbarbgwin,
+                              thename + '_colorbar', thedir,
+                              maximpervox * maxdim // 10,
+                              maximpervox * maxdim)'''
+
         with open(os.path.join(thedir, thename + '_lims.txt'), 'w') as FILE:
             FILE.writelines(str(self.map.dispmin) + '\t' + str(self.map.dispmax))
-            # img_colorbar.save(thedir + self.map.name + '_colorbar.png')
+            #img_colorbar.save(thedir + self.map.name + '_colorbar.png')
 
     def summarize(self):
         if self.map is not None:
