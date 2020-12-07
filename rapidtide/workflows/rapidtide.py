@@ -1568,6 +1568,8 @@ def rapidtide_main(argparsingfunc):
                     stoprefining = True
                 else:
                     stoprefining = False
+            elif thepass >= optiondict['passes']:
+                stoprefining = True
             else:
                 stoprefining = False
 
@@ -1611,22 +1613,23 @@ def rapidtide_main(argparsingfunc):
             optiondict['kurtosis_reference_pass' + str(thepass + 1)], \
                 optiondict['kurtosisz_reference_pass' + str(thepass + 1)], \
                 optiondict['kurtosisp_reference_pass' + str(thepass + 1)] = tide_stats.kurtosisstats(resampref_y)
-            if optiondict['bidsoutput']:
-                tide_io.writebidstsv(outputname + '_desc-movingregressor_timeseries',
-                                     tide_math.stdnormalize(resampnonosref_y),
-                                     1.0 / fmritr,
-                                     compressed=False,
-                                     columns=['pass'+ str(thepass + 1)],
-                                     append=True)
-                tide_io.writebidstsv(outputname + '_desc-oversampledmovingregressor_timeseries',
-                                     tide_math.stdnormalize(resampref_y),
-                                     oversampfreq,
-                                     compressed=False,
-                                     columns=['pass'+ str(thepass + 1)],
-                                     append=True)
-            else:
-                tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
-                tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
+            if not stoprefining:
+                if optiondict['bidsoutput']:
+                    tide_io.writebidstsv(outputname + '_desc-movingregressor_timeseries',
+                                         tide_math.stdnormalize(resampnonosref_y),
+                                         1.0 / fmritr,
+                                         compressed=False,
+                                         columns=['pass'+ str(thepass + 1)],
+                                         append=True)
+                    tide_io.writebidstsv(outputname + '_desc-oversampledmovingregressor_timeseries',
+                                         tide_math.stdnormalize(resampref_y),
+                                         oversampfreq,
+                                         compressed=False,
+                                         columns=['pass'+ str(thepass + 1)],
+                                         append=True)
+                else:
+                    tide_io.writenpvecs(tide_math.stdnormalize(resampnonosref_y), outputname + nonosrefname)
+                    tide_io.writenpvecs(tide_math.stdnormalize(resampref_y), outputname + osrefname)
             timings.append(
                 ['Regressor refinement end, pass ' + str(thepass), time.time(), voxelsprocessed_rr, 'voxels'])
         if optiondict['saveintermediatemaps']:
@@ -1666,7 +1669,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict['convergencethresh'] is None:
         optiondict['actual_passes'] = optiondict['passes']
     else:
-        optiondict['actual_passes'] = thepass
+        optiondict['actual_passes'] = thepass - 1
 
     # Post refinement step -1 - Coherence calculation
     if optiondict['calccoherence']:
@@ -1873,7 +1876,7 @@ def rapidtide_main(argparsingfunc):
             )
         del fmri_data_valid
 
-        timings.append(['GLM filtering end, pass ' + str(thepass), time.time(), voxelsprocessed_glm, 'voxels'])
+        timings.append(['GLM filtering end', time.time(), voxelsprocessed_glm, 'voxels'])
         if optiondict['memprofile']:
             memcheckpoint('...done')
         else:
