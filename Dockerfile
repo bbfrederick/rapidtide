@@ -105,6 +105,7 @@ RUN conda install -y python=3.7.6 \
                      nibabel=3.2.0 \
                      nilearn=0.6.2 \
                      keras=2.2.4 \
+                     h5py==2.10.0 \
                      tensorflow=1.13.1 \
                      pyqtgraph=0.11.0 \
                      pyfftw=0.12.0 \
