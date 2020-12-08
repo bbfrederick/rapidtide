@@ -91,6 +91,7 @@ def physiofromimage(normdata_byslice,
                     cardprefilter,
                     respprefilter,
                     notchpct=1.5,
+                    invertphysiosign=False,
                     madnorm=True,
                     nprocs=1,
                     arteriesonly=False,
@@ -103,6 +104,12 @@ def physiofromimage(normdata_byslice,
     # find out what timepoints we have, and their spacing
     numsteps, minstep, sliceoffsets = tide_io.sliceinfo(slicetimes, tr)
     print(len(slicetimes), 'slice times with', numsteps, 'unique values - diff is', "{:.3f}".format(minstep))
+
+    # set inversion factor
+    if invertphysiosign:
+        thesign = -1.0
+    else:
+        thesign = 1.0
 
     # make sure there is an appflips array
     if appflips_byslice is None:
@@ -141,7 +148,7 @@ def physiofromimage(normdata_byslice,
                     axis=0)
                 slicenorms[theslice] = 1.0
             for t in range(timepoints):
-                hirestc[numsteps * t + sliceoffsets[theslice]] += sliceavs[theslice, t]
+                hirestc[numsteps * t + sliceoffsets[theslice]] += thesign * sliceavs[theslice, t]
     for i in range(numsteps):
         cycleaverage[i] = np.mean(hirestc[i:-1:numsteps])
     for t in range(len(hirestc)):
@@ -884,6 +891,7 @@ def happy_main(argparsingfunc):
         slicesamplerate, numsteps, cycleaverage, slicenorms \
             = physiofromimage(normdata_byslice, estmask_byslice, numslices, timepoints, tr,
                                                     slicetimes, thecardbandfilter, therespbandfilter,
+                                                    invertphysiosign=args.invertphysiosign,
                                                     madnorm=args.domadnorm,
                                                     nprocs=args.nprocs,
                                                     notchpct=args.notchpct,

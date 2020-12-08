@@ -200,6 +200,13 @@ def _get_parser():
         type=lambda x: pf.is_float(parser, x),
         help='Set the width of the notch filter, in percent of the notch frequency (default is 1.5). ',
         default=1.5)
+    cardiac_est_tuning.add_argument(
+        '--invertphysiosign',
+        dest='invertphysiosign',
+        action='store_true',
+        help=('Invert the waveform extracted from the physiological signal.  '
+              'Use this if there is a contrast agent in the blood. '),
+        default=False)
 
     # External cardiac waveform options
     external_cardiac_opts = parser.add_argument_group('External cardiac waveform options')
