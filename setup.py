@@ -51,7 +51,10 @@ modules_list = ['rapidtide/miscmath',
                 'rapidtide/wiener',
                 'rapidtide/refine',
                 'rapidtide/_version',
-                'rapidtide/workflows/parser_funcs']
+                'rapidtide/workflows/parser_funcs',
+                'rapidtide/workflows/happy_parser',
+                'rapidtide/workflows/rapidtide_parser',
+                'rapidtide/workflows/rapidtide2x_parser']
 
 if addtidepool:
     modules_list.append('rapidtide/tidepoolTemplate')
