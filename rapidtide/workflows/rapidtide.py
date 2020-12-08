@@ -1557,7 +1557,7 @@ def rapidtide_main(argparsingfunc):
 
             # check for convergence
             regressormse = mse(normoutputdata, previousnormoutputdata)
-            optiondict['regressormse_pass' + str(thepass)] = regressormse
+            optiondict['regressormse_pass' + str(thepass).zfill(2)] = regressormse
             print('regressor difference at end of pass {:d} is {:.6f}'.format(thepass, regressormse))
             if optiondict['convergencethresh'] is not None:
                 if thepass >= optiondict['maxpasses']:
