@@ -162,7 +162,7 @@ def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, masknam
             sys.exit()
     else:
         themask, maskarray, mask_hdr, maskdims, masksizes = tide_io.readfromnifti(maskfilename)
-        themask = np.where(themask > 0.5, 1, 0)
+        maskarray = np.where(maskarray > 0.5, 1, 0)
         if not tide_io.checkspacematch(mask_hdr, nim_hdr):
             print('Dimensions of ' + maskname + ' mask do not match the fmri data - exiting')
             sys.exit()
