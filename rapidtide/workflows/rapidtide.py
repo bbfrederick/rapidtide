@@ -972,7 +972,7 @@ def rapidtide_main(argparsingfunc):
         lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     tide_util.logmem('after lagtc array allocation', file=memfile)
 
-    if optiondict['passes'] > 1:
+    if optiondict['passes'] > 1 or optiondict['convergencethresh'] is not None:
         if optiondict['sharedmem']:
             shiftedtcs, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
             weights, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
