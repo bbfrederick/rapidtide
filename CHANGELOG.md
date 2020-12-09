@@ -1,5 +1,12 @@
 # History of changes
 
+## Version 2.0alpha8 (12/9/20)
+* (rapidtide) Significant enhancement to PCA refinement options.
+* (tidepool) Tidepool now gracefully handles runs with more than 4 passes.  The timecourses displayed are prefilt, postfilt, pass1, pass2, pass(N-1) and pass(N).
+* (happy) Added support for scans where there is circulating contrast.
+* (happy, rapidtide2x, rapidtide) The parsers are now being properly installed during setup.
+* (package) Renamed some test data for consistency.
+
 ## Version 2.0alpha7 (12/1/20)
 * (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154–165 (2019).
 * (rapidtide) The PCA refinement algorithm has been improved to match the method described in Champagne, et al., and is now the default.
