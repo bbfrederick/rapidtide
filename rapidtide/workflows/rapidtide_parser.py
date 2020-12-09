@@ -831,8 +831,8 @@ def _get_parser():
         help=("Number of PCA components used for refinement.  If VALUE >= 1, will retain this many components.  If "
               "0.0 < VALUE < 1.0, enough components will be retained to explain the fraction VALUE of the "
               "total variance. If VALUE is negative, the number of components will be to retain will be selected "
-              "automatically using the MLE method.  Default is -1 (automatic estimation)."),
-        default=-1.0,
+              "automatically using the MLE method.  Default is 0.8."),
+        default=0.8,
     )
     reg_ref.add_argument(
         "--convergencethresh",
