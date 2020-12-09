@@ -25,6 +25,7 @@
 
 from __future__ import print_function, division
 
+import sys
 import multiprocessing as mp
 import threading as thread
 try:
@@ -104,12 +105,19 @@ def run_multiproc(consumerfunc, inputshape, maskarray, nprocs=1, procbyvoxel=Tru
     else:
         indexaxis = 1
         procunit = 'timepoints'
+
+    # check that the mask array matches the index dimension
+    if maskarray is not None:
+        if inputshape[indexaxis] != len(maskarray):
+            print('run_multiproc: fatal error - maskarray dimension does not equal index axis dimension')
+            sys.exit()
+
     # pack the data and send to workers
     data_in = []
     for d in range(inputshape[indexaxis]):
         if maskarray is None:
             data_in.append(d)
-        elif maskarray[d] > 0:
+        elif maskarray[d] > 0.5:
             data_in.append(d)
     print('processing', len(data_in), procunit + ' with', n_workers, 'processes')
     data_out = _process_data(data_in, inQ, outQ, showprogressbar=showprogressbar,
@@ -124,7 +132,7 @@ def run_multiproc(consumerfunc, inputshape, maskarray, nprocs=1, procbyvoxel=Tru
 
     return data_out
 
-def run_multithread(consumerfunc, inputshape, maskarray, nprocs=1, showprogressbar=True, chunksize=1000):
+def run_multithread(consumerfunc, inputshape, maskarray, nprocs=1, procbyvoxel=True, showprogressbar=True, chunksize=1000):
     # initialize the workers and the queues
     n_workers = nprocs
     inQ = thrQueue.Queue()
@@ -133,14 +141,27 @@ def run_multithread(consumerfunc, inputshape, maskarray, nprocs=1, showprogressb
     for i, w in enumerate(workers):
         w.start()
 
+    if procbyvoxel:
+        indexaxis = 0
+        procunit = 'voxels'
+    else:
+        indexaxis = 1
+        procunit = 'timepoints'
+
+    # check that the mask array matches the index dimension
+    if maskarray is not None:
+        if inputshape[indexaxis] != len(maskarray):
+            print('run_multithread: fatal error - maskarray dimension does not equal index axis dimension')
+            sys.exit()
+
     # pack the data and send to workers
     data_in = []
-    for d in range(inputshape[0]):
+    for d in range(inputshape[indexaxis]):
         if maskarray is None:
             data_in.append(d)
         elif maskarray[d] > 0:
             data_in.append(d)
-    print('processing', len(data_in), 'voxels with', n_workers, 'threads')
+    print('processing', len(data_in), procunit + ' with', n_workers, 'threads')
     data_out = _process_data(data_in, inQ, outQ, showprogressbar=showprogressbar,
                              chunksize=chunksize)
 
