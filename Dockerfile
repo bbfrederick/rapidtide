@@ -94,14 +94,14 @@ RUN conda clean --all
 RUN df -h
 RUN conda install -y python=3.7.6 \
                      pip=20.2.2 \
-                     scipy=1.4.1 \
+                     scipy=1.5.2 \
                      numpy=1.17.5 \
                      mkl=2019.4 \
                      mkl-service=2.3.0 \
                      matplotlib=3.2.1 \
                      statsmodels=0.11.1 \
                      scikit-image=0.17.2 \
-                     scikit-learn=0.23.1 \
+                     scikit-learn=0.23.2 \
                      nibabel=3.2.0 \
                      nilearn=0.6.2 \
                      keras=2.2.4 \
