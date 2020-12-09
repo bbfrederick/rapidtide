@@ -396,9 +396,17 @@ def refineregressor(fmridata,
         # use the method of "A novel perspective to calibrate temporal delays in cerebrovascular reactivity
         # using hypercapnic and hyperoxic respiratory challenges". NeuroImage 187, 154?165 (2019).
         print('performing pca refinement with pcacomponents set to', pcacomponents)
-        thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
+        try:
+            thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
+        except ValueError:
+            if pcacomponents == 'mle':
+                print('mle estimation failed - falling back to pcacomponents=0.8')
+                thefit = PCA(n_components=0.8).fit(refinevoxels)
+            else:
+                print('unhandled math exception in PCA refinement - exiting')
+                sys.exit()
         print('Using ', len(thefit.components_), ' components, accounting for ',
-              '{:.2f}% of the variance'.format(100.0 * np.cumsum(thefit.explained_variance_ratio_)[-1]))
+              '{:.2f}% of the variance'.format(100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]))
         reduceddata = thefit.inverse_transform(thefit.transform(refinevoxels))
         if debug:
             print('complex processing: reduceddata.shape =', reduceddata.shape)
