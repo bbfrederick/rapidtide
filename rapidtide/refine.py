@@ -365,7 +365,14 @@ def refineregressor(fmridata,
                             optiondict['outputname'] + '_dispersioncalcspecphase_pass' + str(passnum) + '.txt')
         tide_io.writenpvecs(freqs, optiondict['outputname'] + '_dispersioncalcfreqs_pass' + str(passnum) + '.txt')
 
-    pcacomponents = optiondict['PCAtarget']
+    pcacomponents = optiondict['pcacomponents']
+    if pcacomponents < 0.0:
+        pcacomponents = 'mle'
+    elif pcacomponents >= 1.0:
+        pcacomponents = int(np.round(pcacomponents))
+    elif pcacomponents == 0.0:
+        print('0.0 is not an allowed value for pcacomponents')
+        sys.exit()
     icacomponents = 1
 
     if optiondict['refinetype'] == 'ica':

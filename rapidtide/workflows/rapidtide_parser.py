@@ -823,14 +823,16 @@ def _get_parser():
         default="pca",
     )
     reg_ref.add_argument(
-        "--PCAtarget",
-        dest="PCAtarget",
+        "--pcacomponents",
+        dest="pcacomponents",
         action="store",
         type=float,
-        metavar="FRAC",
-        help=("PCA during refinement will attempt to explain FRAC of the total variance."
-              "Default is 0.8."),
-        default=0.8,
+        metavar="VALUE",
+        help=("Number of PCA components used for refinement.  If VALUE >= 1, will retain this many components.  If "
+              "0.0 < VALUE < 1.0, enough components will be retained to explain the fraction VALUE of the "
+              "total variance. If VALUE is negative, the number of components will be to retain will be selected "
+              "automatically using the MLE method.  Default is -1 (automatic estimation)."),
+        default=-1.0,
     )
     reg_ref.add_argument(
         "--convergencethresh",
