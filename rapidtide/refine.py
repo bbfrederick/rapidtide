@@ -203,6 +203,7 @@ def refineregressor(fmridata,
         locationmask = locationmask * includemask
     if excludemask is not None:
         locationmask = locationmask * (1 - excludemask)
+    locationmask = locationmask.astype(np.int16)
     print('location mask created')
 
     # first generate the refine mask
@@ -365,14 +366,15 @@ def refineregressor(fmridata,
                             optiondict['outputname'] + '_dispersioncalcspecphase_pass' + str(passnum) + '.txt')
         tide_io.writenpvecs(freqs, optiondict['outputname'] + '_dispersioncalcfreqs_pass' + str(passnum) + '.txt')
 
-    pcacomponents = optiondict['pcacomponents']
-    if pcacomponents < 0.0:
+    if optiondict['pcacomponents'] < 0.0:
         pcacomponents = 'mle'
-    elif pcacomponents >= 1.0:
-        pcacomponents = int(np.round(pcacomponents))
-    elif pcacomponents == 0.0:
+    elif optiondict['pcacomponents'] >= 1.0:
+        pcacomponents = int(np.round(optiondict['pcacomponents']))
+    elif optiondict['pcacomponents'] == 0.0:
         print('0.0 is not an allowed value for pcacomponents')
         sys.exit()
+    else:
+        pcacomponents = optiondict['pcacomponents']
     icacomponents = 1
 
     if optiondict['refinetype'] == 'ica':
@@ -393,7 +395,7 @@ def refineregressor(fmridata,
     elif optiondict['refinetype'] == 'pca':
         # use the method of "A novel perspective to calibrate temporal delays in cerebrovascular reactivity
         # using hypercapnic and hyperoxic respiratory challenges". NeuroImage 187, 154?165 (2019).
-        print('performing pca refinement')
+        print('performing pca refinement with pcacomponents set to', pcacomponents)
         thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
         print('Using ', len(thefit.components_), ' components, accounting for ',
               '{:.2f}% of the variance'.format(100.0 * np.cumsum(thefit.explained_variance_ratio_)[-1]))
