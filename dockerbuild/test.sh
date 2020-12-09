@@ -10,10 +10,8 @@ xhost +
 docker run \
     --rm \
     --ipc host \
-    --network host\
     --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
     -it \
-    -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide fredericklab/rapidtide_dev:${VERSION} \
     rapidtide \
@@ -32,4 +30,4 @@ docker run \
     -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide fredericklab/rapidtide_dev:${VERSION} \
-    tidepool
+    tidepool --dataset /data/dst/sub-RAPIDTIDETEST_
