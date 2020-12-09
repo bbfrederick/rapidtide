@@ -30,18 +30,18 @@ rapidtide \
 
 rapidtide \
 	sub-RAPIDTIDETEST.nii.gz \
-	../dst/sub-RAPIDTIDETEST_PCA5 \
+	../dst/sub-RAPIDTIDETEST_PCAmle \
 	--spatialfilt 2 \
-        --pcacomponents 5.1 \
+        --pcacomponents -1 \
         --nprocs -1 \
         --passes 3 \
         --noglm
 
 rapidtide \
 	sub-RAPIDTIDETEST.nii.gz \
-	../dst/sub-RAPIDTIDETEST_PCAmle \
+	../dst/sub-RAPIDTIDETEST_PCA5 \
 	--spatialfilt 2 \
-        --pcacomponents -1 \
+        --pcacomponents 5.1 \
         --nprocs -1 \
         --passes 3 \
         --noglm
