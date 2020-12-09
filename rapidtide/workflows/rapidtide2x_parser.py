@@ -481,7 +481,7 @@ def process_args():
     optiondict['refinetype'] = 'unweighted_average'
     optiondict['convergencethresh'] = None
     optiondict['maxpasses'] = 10
-    optiondict['PCAtarget'] = 0.8
+    optiondict['pcacomponents'] = -1
     optiondict['filterbeforePCA'] = True
     optiondict['fmrifreq'] = 0.0
     optiondict['dodispersioncalc'] = False
