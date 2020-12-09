@@ -1,5 +1,8 @@
 # History of changes
 
+## Version 2.0alpha9 (12/9/20)
+* (rapidtide) Added workaround for occasional MLE PCA component estimation failure (this seems to be an unresolved scikit-learn problem as of 0.23.2)
+
 ## Version 2.0alpha8 (12/9/20)
 * (rapidtide) Significant enhancement to PCA refinement options.
 * (tidepool) Tidepool now gracefully handles runs with more than 4 passes.  The timecourses displayed are prefilt, postfilt, pass1, pass2, pass(N-1) and pass(N).
