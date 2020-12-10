@@ -1081,6 +1081,15 @@ def _get_parser():
         "Experimental options (not fully tested, may not work)"
     )
     experimental.add_argument(
+        "--echocancel",
+        dest="echocancel",
+        action="store_true",
+        help=(
+            "Attempt to perform echo cancellation."
+        ),
+        default=False,
+    )
+    experimental.add_argument(
         "--respdelete",
         dest="respdelete",
         action="store_true",

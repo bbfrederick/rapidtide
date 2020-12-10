@@ -520,6 +520,9 @@ def process_args():
     optiondict['alwaysmultiproc'] = False
     optiondict['calccoherence'] = False
 
+    # experimental options
+    optiondict['echocancel'] = False
+
     # package options
     optiondict['memprofilerexists'] = memprofilerexists
 

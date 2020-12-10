@@ -412,10 +412,29 @@ def makehistogram(indata, histlen, binsize=None, therange=None, refine=False):
         numbins += 1
     peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
     if refine:
-        peakheight, peakloc, peakwidth = tide_fit.gaussfit(peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :])
+        peakheight, peakloc, peakwidth = tide_fit.gaussfit(peakheight, peakloc, peakwidth, thestore[0, :], thestore[1, :])
     centerofmass = np.sum(thestore[0, :] * thestore[1, :]) / np.sum(thestore[1, :])
 
     return thehist, peakheight, peakloc, peakwidth, centerofmass
+
+def echoloc(indata, histlen):
+    thehist, peakheight, peakloc, peakwidth, centerofmass = makehistogram(indata, histlen, refine=True)
+    print('primary peak:', peakheight, peakloc, peakwidth)
+    thestore = np.zeros((2, len(thehist[0])), dtype='float64')
+    thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
+    thestore[1, :] = thehist[0][-histlen:]
+    startpt = np.argmax(thestore[1, 1:-2])
+    while (thestore[1, startpt] > thestore[1, startpt + 1]) and (startpt < len(thehist[0]) - 2):
+        startpt += 1
+    echopeakindex = np.argmax(thestore[1, startpt:-2]) + startpt
+    echopeakloc = thestore[0, echopeakindex + 1]
+    echopeakheight = thestore[1, echopeakindex + 1]
+    numbins = 1
+    while (echopeakindex + numbins < histlen - 1) and (thestore[1, echopeakindex + numbins] > echopeakheight / 2.0):
+        numbins += 1
+    echopeakwidth = (thestore[0, echopeakindex + numbins] - thestore[0, echopeakindex]) * 2.0
+    echopeakheight, echopeakloc, echopeakwidth = tide_fit.gaussfit(echopeakheight, echopeakloc, echopeakwidth, thestore[0, :], thestore[1, :])
+    return echopeakloc - peakloc, (echopeakheight * echopeakwidth) / (peakheight * peakwidth)
 
 
 def makeandsavehistogram(indata, histlen, endtrim, outname,
@@ -691,7 +710,7 @@ def makemask(image, threshpct=25.0, verbose=False, nozero=False, noneg=False):
     threshval = pct2 + (threshpct / 100.0) * (pct98 - pct2)
     print('old style threshval:', threshval, 'new style threshval:', pctthresh)
     if verbose:
-        print('fracval:', fracval, ' threshpct:', threshpct, ' mask threshhold:', threshval)
+        print('fracval:', pctthresh, ' threshpct:', threshpct, ' mask threshhold:', threshval)
     themask = np.where(image > threshval, np.int16(1), np.int16(0))
     return themask
 

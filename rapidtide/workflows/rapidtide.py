@@ -1315,6 +1315,9 @@ def rapidtide_main(argparsingfunc):
             namesuffix = '_desc-globallag_hist'
         else:
             namesuffix = '_globallaghist_pass' + str(thepass)
+        if optiondict['echocancel']:
+            echooffset, echoratio = tide_stats.echoloc(np.asarray(theglobalmaxlist), len(corrscale))
+            print('Pass', thepass, 'echooffset, echoratio:', echooffset, echoratio)
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
                                         outputname + namesuffix,
                                         displaytitle='lagtime histogram',
