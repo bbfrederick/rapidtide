@@ -1015,6 +1015,89 @@ def rapidtide_main(argparsingfunc):
                                              enforcethresh=optiondict['enforcethresh'],
                                              hardlimit=optiondict['hardlimit'])
 
+    # Preprocessing - echo cancellation
+    if optiondict['echocancel']:
+        print('\n\n' + 'Echo cancellation')
+        timings.append(['Echo cancellation start', time.time(), None, None])
+        calcsimilaritypass_func = addmemprofiling(tide_calcsimfunc.correlationpass,
+                                                  optiondict['memprofile'],
+                                                  memfile,
+                                                  'before correlationpass')
+
+        referencetc = tide_math.corrnormalize(resampref_y,
+                                              detrendorder=optiondict['detrendorder'],
+                                              windowfunc=optiondict['windowfunc'])
+
+        voxelsprocessed_echo, theglobalmaxlist, trimmedcorrscale = calcsimilaritypass_func(
+            fmri_data_valid[:, :],
+            referencetc,
+            thecorrelator,
+            initial_fmri_x,
+            os_fmri_x,
+            lagmininpts,
+            lagmaxinpts,
+            corrout,
+            meanval,
+            nprocs=optiondict['nprocs_calcsimilarity'],
+            alwaysmultiproc=optiondict['alwaysmultiproc'],
+            oversampfactor=optiondict['oversampfactor'],
+            interptype=optiondict['interptype'],
+            showprogressbar=optiondict['showprogressbar'],
+            chunksize=optiondict['mp_chunksize'],
+            rt_floatset=rt_floatset,
+            rt_floattype=rt_floattype)
+        for i in range(len(theglobalmaxlist)):
+            theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
+        if optiondict['bidsoutput']:
+            namesuffix = '_desc-globallag_hist'
+        else:
+            namesuffix = '_globallaghist_echocancel'
+        echooffset, echoratio = tide_stats.echoloc(np.asarray(theglobalmaxlist), len(corrscale))
+        print('Echooffset, echoratio:', echooffset, echoratio)
+        tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
+                                        outputname + namesuffix,
+                                        displaytitle='lagtime histogram',
+                                        displayplots=optiondict['displayplots'],
+                                        therange=(corrscale[0], corrscale[-1]),
+                                        refine=False,
+                                        dictvarname='globallaghist_echocancel',
+                                        saveasbids=optiondict['bidsoutput'],
+                                        append=False,
+                                        thedict=optiondict)
+
+        # Now regress out the echo
+        tide_io.writebidstsv(outputname + '_desc-echocancellation_timeseries',
+                             resampref_y,
+                             1.0 / oversamptr,
+                             compressed=False,
+                             columns=['original'],
+                             append=False)
+        shifttr = echooffset / oversamptr  # lagtime is in seconds
+        echotc, dummy, dummy, dummy = tide_resample.timeshift(resampref_y, shifttr, numpadtrs)
+        echotc[0:int(np.ceil(shifttr))] = 0.0
+        echofit, echoR = tide_fit.mlregress(echotc, resampref_y)
+        fitcoeff = echofit[0, 1]
+        resampref_y -= fitcoeff * echotc
+        optiondict['echooffset'] = echooffset
+        optiondict['echoratio'] = echoratio
+        optiondict['echofit'] = [echofit[0, 0], echofit[0, 1]]
+        optiondict['echofitR'] = echoR
+        tide_io.writebidstsv(outputname + '_desc-echocancellation_timeseries',
+                             echotc,
+                             1.0 / oversamptr,
+                             compressed=False,
+                             columns=['echo'],
+                             append=True)
+        tide_io.writebidstsv(outputname + '_desc-echocancellation_timeseries',
+                             resampref_y,
+                             1.0 / oversamptr,
+                             compressed=False,
+                             columns=['filtered'],
+                             append=True)
+
+        timings.append(['Echo cancellation calculation end', time.time(), voxelsprocessed_echo, 'voxels'])
+
+    # --------------------- Main pass loop ---------------------
     # loop over all passes
     stoprefining = False
     if optiondict['convergencethresh'] is None:
@@ -1315,9 +1398,6 @@ def rapidtide_main(argparsingfunc):
             namesuffix = '_desc-globallag_hist'
         else:
             namesuffix = '_globallaghist_pass' + str(thepass)
-        if optiondict['echocancel']:
-            echooffset, echoratio = tide_stats.echoloc(np.asarray(theglobalmaxlist), len(corrscale))
-            print('Pass', thepass, 'echooffset, echoratio:', echooffset, echoratio)
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
                                         outputname + namesuffix,
                                         displaytitle='lagtime histogram',
@@ -1326,7 +1406,7 @@ def rapidtide_main(argparsingfunc):
                                         refine=False,
                                         dictvarname='globallaghist_pass' + str(thepass),
                                         saveasbids=optiondict['bidsoutput'],
-                                        append=(thepass > 1),
+                                        append=(optiondict['echocancel'] or (thepass > 1)),
                                         thedict=optiondict)
 
         if optiondict['checkpoint']:

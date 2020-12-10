@@ -417,13 +417,15 @@ def makehistogram(indata, histlen, binsize=None, therange=None, refine=False):
 
     return thehist, peakheight, peakloc, peakwidth, centerofmass
 
-def echoloc(indata, histlen):
+def echoloc(indata, histlen, startoffset=5.0):
     thehist, peakheight, peakloc, peakwidth, centerofmass = makehistogram(indata, histlen, refine=True)
-    print('primary peak:', peakheight, peakloc, peakwidth)
     thestore = np.zeros((2, len(thehist[0])), dtype='float64')
     thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
     thestore[1, :] = thehist[0][-histlen:]
-    startpt = np.argmax(thestore[1, 1:-2])
+    timestep = thestore[0, 1] - thestore[0, 0]
+    startpt = np.argmax(thestore[1, :]) + int(startoffset // timestep)
+    print('primary peak:', peakheight, peakloc, peakwidth)
+    print('startpt, startloc, timestep:', startpt, thestore[1, startpt], timestep)
     while (thestore[1, startpt] > thestore[1, startpt + 1]) and (startpt < len(thehist[0]) - 2):
         startpt += 1
     echopeakindex = np.argmax(thestore[1, startpt:-2]) + startpt
