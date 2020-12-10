@@ -212,6 +212,7 @@ def addmemprofiling(thefunc, memprofile, memfile, themessage):
         tide_util.logmem(themessage, file=memfile)
         return thefunc
 
+
 def checkforzeromean(thedataset):
     themean = np.mean(thedataset, axis=1)
     thestd = np.std(thedataset, axis=1)
@@ -219,6 +220,34 @@ def checkforzeromean(thedataset):
         return True
     else:
         return False
+
+
+def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints):
+    tide_io.writebidstsv(outputname + '_desc-echocancellation_timeseries',
+                         thetimecourse,
+                         1.0 / thetimestep,
+                         compressed=False,
+                         columns=['original'],
+                         append=False)
+    shifttr = echooffset / thetimestep  # lagtime is in seconds
+    echotc, dummy, dummy, dummy = tide_resample.timeshift(thetimecourse, shifttr, padtimepoints)
+    echotc[0:int(np.ceil(shifttr))] = 0.0
+    echofit, echoR = tide_fit.mlregress(echotc, thetimecourse)
+    fitcoeff = echofit[0, 1]
+    outputtimecourse = thetimecourse - fitcoeff * echotc
+    tide_io.writebidstsv(outputname + '_desc-echocancellation_timeseries',
+                         echotc,
+                         1.0 / thetimestep,
+                         compressed=False,
+                         columns=['echo'],
+                         append=True)
+    tide_io.writebidstsv(outputname + '_desc-echocancellation_timeseries',
+                         outputtimecourse,
+                         1.0 / thetimestep,
+                         compressed=False,
+                         columns=['filtered'],
+                         append=True)
+    return outputtimecourse, echofit, echoR
 
 
 def rapidtide_main(argparsingfunc):
@@ -1052,49 +1081,26 @@ def rapidtide_main(argparsingfunc):
             namesuffix = '_desc-globallag_hist'
         else:
             namesuffix = '_globallaghist_echocancel'
-        echooffset, echoratio = tide_stats.echoloc(np.asarray(theglobalmaxlist), len(corrscale))
-        print('Echooffset, echoratio:', echooffset, echoratio)
         tide_stats.makeandsavehistogram(np.asarray(theglobalmaxlist), len(corrscale), 0,
                                         outputname + namesuffix,
                                         displaytitle='lagtime histogram',
                                         displayplots=optiondict['displayplots'],
                                         therange=(corrscale[0], corrscale[-1]),
                                         refine=False,
-                                        dictvarname='globallaghist_echocancel',
+                                        dictvarname='globallaghist_preechocancel',
                                         saveasbids=optiondict['bidsoutput'],
                                         append=False,
                                         thedict=optiondict)
 
-        # Now regress out the echo
-        tide_io.writebidstsv(outputname + '_desc-echocancellation_timeseries',
-                             resampref_y,
-                             1.0 / oversamptr,
-                             compressed=False,
-                             columns=['original'],
-                             append=False)
-        shifttr = echooffset / oversamptr  # lagtime is in seconds
-        echotc, dummy, dummy, dummy = tide_resample.timeshift(resampref_y, shifttr, numpadtrs)
-        echotc[0:int(np.ceil(shifttr))] = 0.0
-        echofit, echoR = tide_fit.mlregress(echotc, resampref_y)
-        fitcoeff = echofit[0, 1]
-        resampref_y -= fitcoeff * echotc
+        # Now find and regress out the echo
+        echooffset, echoratio = tide_stats.echoloc(np.asarray(theglobalmaxlist), len(corrscale))
+        print('Echooffset, echoratio:', echooffset, echoratio)
+        echoremovedtc, echofit, echoR = echocancel(resampref_y, echooffset, oversamptr, outputname, numpadtrs)
         optiondict['echooffset'] = echooffset
         optiondict['echoratio'] = echoratio
         optiondict['echofit'] = [echofit[0, 0], echofit[0, 1]]
         optiondict['echofitR'] = echoR
-        tide_io.writebidstsv(outputname + '_desc-echocancellation_timeseries',
-                             echotc,
-                             1.0 / oversamptr,
-                             compressed=False,
-                             columns=['echo'],
-                             append=True)
-        tide_io.writebidstsv(outputname + '_desc-echocancellation_timeseries',
-                             resampref_y,
-                             1.0 / oversamptr,
-                             compressed=False,
-                             columns=['filtered'],
-                             append=True)
-
+        resampref_y = echoremovedtc
         timings.append(['Echo cancellation calculation end', time.time(), voxelsprocessed_echo, 'voxels'])
 
     # --------------------- Main pass loop ---------------------
