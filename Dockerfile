@@ -1,4 +1,4 @@
-# Use Ubuntu 16.04 LTS
+# Use Ubuntu 18.04 LTS
 FROM ubuntu:18.04
 
 # Pre-cache neurodebian key
@@ -90,7 +90,8 @@ RUN conda config --add channels conda-forge
 RUN df -h
 RUN conda update -n base -c defaults conda
 RUN df -h
-RUN conda clean --all
+#RUN conda clean --all
+RUN conda build purge-all
 RUN df -h
 RUN conda install -y python=3.7.6 \
                      pip=20.2.2 \
