@@ -29,19 +29,20 @@ import rapidtide.io as tide_io
 
 
 def usage():
+    print("usage: atlastool inputtemplatename outputtemplatename")
+    print("")
+    print("required arguments:")
+    print("    inputtemplatename    - the name of the 3d or 4d input template file")
+    print("    outputtemplatename   - the name of the 3d or 4d output template file")
+    print("")
+    print("optional arguments:")
+    print("    --3d            - return a 3d file with regions encoded as integers")
+    print("    --4d            - return a 4d file with one region per volume")
     print(
-        'usage: atlastool inputtemplatename outputtemplatename')
-    print('')
-    print('required arguments:')
-    print('    inputtemplatename    - the name of the 3d or 4d input template file')
-    print('    outputtemplatename   - the name of the 3d or 4d output template file')
-    print('')
-    print('optional arguments:')
-    print('    --3d            - return a 3d file with regions encoded as integers')
-    print('    --4d            - return a 4d file with one region per volume')
-    print('    --split         - split regions along the midline into left and right subregions')
-    print('    --target=TARGET - match resolution of TARGET')
-    print('')
+        "    --split         - split regions along the midline into left and right subregions"
+    )
+    print("    --target=TARGET - match resolution of TARGET")
+    print("")
     return ()
 
 
@@ -56,7 +57,9 @@ outputtemplatename = sys.argv[2]
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(sys.argv[3:], "h", ["3d", "4d", "split", "target=", "help"])
+    opts, args = getopt.getopt(
+        sys.argv[3:], "h", ["3d", "4d", "split", "target=", "help"]
+    )
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -69,26 +72,32 @@ targetfile = None
 for o, a in opts:
     if o == "--3d":
         volumeperregion = False
-        print('will put out a 3d file')
+        print("will put out a 3d file")
     elif o == "--4d":
         volumeperregion = True
-        print('will put out a 4d file')
+        print("will put out a 4d file")
     elif o == "--split":
         dosplit = True
-        print('will split regions into left and right subregions')
+        print("will split regions into left and right subregions")
     elif o == "--target":
         targetfile = a
-        print('will match resolution of', a)
-    elif o == "-h" or o == '--help':
+        print("will match resolution of", a)
+    elif o == "-h" or o == "--help":
         usage()
         exit()
     else:
         assert False, "unhandled option"
 
-print('loading template data')
-template_img, template_data, template_hdr, templatedims, templatesizes = tide_io.readfromnifti(inputtemplatename)
+print("loading template data")
+(
+    template_img,
+    template_data,
+    template_hdr,
+    templatedims,
+    templatesizes,
+) = tide_io.readfromnifti(inputtemplatename)
 
-print('reshaping')
+print("reshaping")
 xsize = templatedims[1]
 ysize = templatedims[2]
 numslices = templatedims[3]
@@ -102,69 +111,95 @@ if numtimepoints > 1:
     templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints)).astype(int)
 else:
     # file is 3d, construct a 4d array
-    print('going from 3d to 4d')
+    print("going from 3d to 4d")
     numregions = np.max(template_data).astype(int)
     rs_template = np.reshape(template_data, numvoxels).astype(int)
-    templatevoxels = np.zeros((numvoxels, numregions), dtype='int')
+    templatevoxels = np.zeros((numvoxels, numregions), dtype="int")
     for theregion in range(1, numregions + 1):
         templatevoxels[:, theregion - 1] = np.where(rs_template == theregion, 1, 0)
 
 # now we have a 4d file, regardless of what we started with
 if dosplit:
-    print('splitting left right')
-    tempvoxels = np.reshape(templatevoxels, (xsize, ysize, numslices, numregions)).astype(int)
-    tempvoxels[int(xsize // 2) + 1:, :, :, :] *= 2
+    print("splitting left right")
+    tempvoxels = np.reshape(
+        templatevoxels, (xsize, ysize, numslices, numregions)
+    ).astype(int)
+    tempvoxels[int(xsize // 2) + 1 :, :, :, :] *= 2
     templatevoxels = np.reshape(tempvoxels, (numvoxels, numregions))
-    newtemplatevoxels = np.zeros((numvoxels, numregions * 2), dtype='int')
+    newtemplatevoxels = np.zeros((numvoxels, numregions * 2), dtype="int")
     for theregion in range(1, numregions + 1):
-        newtemplatevoxels[:, theregion - 1] = np.where(templatevoxels[:, theregion - 1] == 1, 1, 0)
-        newtemplatevoxels[:, theregion + numregions - 1] = np.where(templatevoxels[:, theregion - 1] == 2, 1, 0)
+        newtemplatevoxels[:, theregion - 1] = np.where(
+            templatevoxels[:, theregion - 1] == 1, 1, 0
+        )
+        newtemplatevoxels[:, theregion + numregions - 1] = np.where(
+            templatevoxels[:, theregion - 1] == 2, 1, 0
+        )
     numregions *= 2
     templatevoxels = np.reshape(newtemplatevoxels, (numvoxels, numregions))
 
 
 if targetfile is not None:
     # do the resampling here
-    print('resampling to new resolution')
-    fsldir = os.environ.get('FSLDIR')
+    print("resampling to new resolution")
+    fsldir = os.environ.get("FSLDIR")
     if fsldir is not None:
         # first write out a temp file with the data
         outputvoxels = templatevoxels
-        template_hdr['dim'][4] = numregions
-        tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, 'temppre')
-        flirtcmd = os.path.join(fsldir, 'bin', 'flirt')
+        template_hdr["dim"][4] = numregions
+        tide_io.savetonifti(
+            outputvoxels.reshape((xsize, ysize, numslices, numregions)),
+            template_hdr,
+            "temppre",
+        )
+        flirtcmd = os.path.join(fsldir, "bin", "flirt")
         thecommand = []
         thecommand.append(flirtcmd)
-        thecommand.append('-in')
-        thecommand.append('temppre')
-        thecommand.append('-ref')
+        thecommand.append("-in")
+        thecommand.append("temppre")
+        thecommand.append("-ref")
         thecommand.append(targetfile)
-        thecommand.append('-applyxfm')
-        thecommand.append('-init')
-        thecommand.append(os.path.join(fsldir, 'data', 'atlases', 'bin', 'eye.mat'))
-        thecommand.append('-out')
-        thecommand.append('temppost')
+        thecommand.append("-applyxfm")
+        thecommand.append("-init")
+        thecommand.append(os.path.join(fsldir, "data", "atlases", "bin", "eye.mat"))
+        thecommand.append("-out")
+        thecommand.append("temppost")
         subprocess.call(thecommand)
-        template_img, template_data, template_hdr, templatedims, templatesizes = tide_io.readfromnifti('temppost')
+        (
+            template_img,
+            template_data,
+            template_hdr,
+            templatedims,
+            templatesizes,
+        ) = tide_io.readfromnifti("temppost")
         xsize = templatedims[1]
         ysize = templatedims[2]
         numslices = templatedims[3]
         numregions = templatedims[4]
         numvoxels = int(xsize) * int(ysize) * int(numslices)
-        templatevoxels = np.around(np.reshape(template_data, (numvoxels, numregions))).astype('int')
+        templatevoxels = np.around(
+            np.reshape(template_data, (numvoxels, numregions))
+        ).astype("int")
     else:
-        print('FSL directory not found - aborting')
+        print("FSL directory not found - aborting")
         sys.exit()
 
 if volumeperregion:
     outputvoxels = templatevoxels
-    template_hdr['dim'][4] = numregions
-    tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)), template_hdr, outputtemplatename)
+    template_hdr["dim"][4] = numregions
+    tide_io.savetonifti(
+        outputvoxels.reshape((xsize, ysize, numslices, numregions)),
+        template_hdr,
+        outputtemplatename,
+    )
 else:
-    print('collapsing back to 3d')
+    print("collapsing back to 3d")
     outputvoxels = templatevoxels[:, 0] * 0
     for i in range(numvoxels):
         if np.max(templatevoxels[i, :]) > 0.5:
             outputvoxels[i] = np.argmax(templatevoxels[i, :]) + 1
-    template_hdr['dim'][4] = 1
-    tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices)), template_hdr, outputtemplatename)
+    template_hdr["dim"][4] = 1
+    tide_io.savetonifti(
+        outputvoxels.reshape((xsize, ysize, numslices)),
+        template_hdr,
+        outputtemplatename,
+    )

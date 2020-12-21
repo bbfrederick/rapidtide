@@ -33,40 +33,46 @@ def test_aliasedcorrelate(display=False):
     width = 2.5
     rangepts = 101
     timerange = np.linspace(0.0, width, num=101) - width / 2.0
-    hiaxis = np.linspace(0.0, 2.0 * np.pi * inlenhi / Fs_hi, num=inlenhi, endpoint=False)
-    loaxis = np.linspace(0.0, 2.0 * np.pi * inlenlo / Fs_lo, num=inlenlo, endpoint=False)
+    hiaxis = np.linspace(
+        0.0, 2.0 * np.pi * inlenhi / Fs_hi, num=inlenhi, endpoint=False
+    )
+    loaxis = np.linspace(
+        0.0, 2.0 * np.pi * inlenlo / Fs_lo, num=inlenlo, endpoint=False
+    )
     sighi = hiaxis * 0.0
     siglo = loaxis * 0.0
     for theinfo in siginfo:
         sighi += theinfo[0] * np.sin(theinfo[1] * hiaxis)
         siglo += theinfo[0] * np.sin(theinfo[1] * loaxis)
-    aliasedcorrelate_result = aliasedcorrelate(sighi, Fs_hi, siglo, Fs_lo, timerange, padtime=width)
+    aliasedcorrelate_result = aliasedcorrelate(
+        sighi, Fs_hi, siglo, Fs_lo, timerange, padtime=width
+    )
 
     thecorrelator = aliasedcorrelator(sighi, Fs_hi, Fs_lo, timerange, padtime=width)
     aliasedcorrelate_result2 = thecorrelator.apply(siglo, 0.0)
-    
+
     if display:
         plt.figure()
-        #plt.ylim([-1.0, 3.0])
-        plt.plot(hiaxis, sighi, 'k')
-        plt.scatter(loaxis, siglo, c='r')
-        plt.legend(['sighi', 'siglo'])
+        # plt.ylim([-1.0, 3.0])
+        plt.plot(hiaxis, sighi, "k")
+        plt.scatter(loaxis, siglo, c="r")
+        plt.legend(["sighi", "siglo"])
 
         plt.figure()
-        plt.plot(timerange, aliasedcorrelate_result, 'k')
-        plt.plot(timerange, aliasedcorrelate_result2, 'r')
-        print('maximum occurs at offset', timerange[np.argmax(aliasedcorrelate_result)])
+        plt.plot(timerange, aliasedcorrelate_result, "k")
+        plt.plot(timerange, aliasedcorrelate_result2, "r")
+        print("maximum occurs at offset", timerange[np.argmax(aliasedcorrelate_result)])
 
         plt.show()
 
-    #assert (fastcorrelate_result == stdcorrelate_result).all
+    # assert (fastcorrelate_result == stdcorrelate_result).all
     aethresh = 10
-    #np.testing.assert_almost_equal(fastcorrelate_result, stdcorrelate_result, aethresh)
+    # np.testing.assert_almost_equal(fastcorrelate_result, stdcorrelate_result, aethresh)
 
 
 def main():
     test_aliasedcorrelate(display=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -32,45 +32,83 @@ import numpy as np
 
 
 def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
-    thecardfilt = tide_filt.noncausalfilter(filtertype='cardiac')
+    thecardfilt = tide_filt.noncausalfilter(filtertype="cardiac")
     trimlength = np.min([len(reference), len(candidate)])
     thexcorr = tide_corr.fastcorrelate(
-        tide_math.corrnormalize(thecardfilt.apply(samplerate, reference),
-                                detrendorder=3,
-                                windowfunc='hamming')[:trimlength],
-        tide_math.corrnormalize(thecardfilt.apply(samplerate, candidate),
-                                detrendorder=3,
-                                windowfunc='hamming')[:trimlength],
-        usefft=True)
+        tide_math.corrnormalize(
+            thecardfilt.apply(samplerate, reference),
+            detrendorder=3,
+            windowfunc="hamming",
+        )[:trimlength],
+        tide_math.corrnormalize(
+            thecardfilt.apply(samplerate, candidate),
+            detrendorder=3,
+            windowfunc="hamming",
+        )[:trimlength],
+        usefft=True,
+    )
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / samplerate
-    xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
+    xcorr_x = (
+        np.r_[0.0:xcorrlen] * sampletime
+        - (xcorrlen * sampletime) / 2.0
+        + sampletime / 2.0
+    )
     searchrange = 5.0
     trimstart = tide_util.valtoindex(xcorr_x, -2.0 * searchrange)
     trimend = tide_util.valtoindex(xcorr_x, 2.0 * searchrange)
-    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
-        xcorr_x[trimstart:trimend], thexcorr[trimstart:trimend], -searchrange, searchrange, 3.0,
+    (
+        maxindex,
+        maxdelay,
+        maxval,
+        maxsigma,
+        maskval,
+        failreason,
+        peakstart,
+        peakend,
+    ) = tide_fit.findmaxlag_gauss(
+        xcorr_x[trimstart:trimend],
+        thexcorr[trimstart:trimend],
+        -searchrange,
+        searchrange,
+        3.0,
         refine=refine,
         zerooutbadfit=False,
         useguess=False,
         fastgauss=False,
-        displayplots=False)
+        displayplots=False,
+    )
     if debug:
-        print('CORRELATION: maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend:',
-              maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend)
+        print(
+            "CORRELATION: maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend:",
+            maxindex,
+            maxdelay,
+            maxval,
+            maxsigma,
+            maskval,
+            failreason,
+            peakstart,
+            peakend,
+        )
     return maxval, maxdelay, failreason
 
 
 def usage():
-    print("usage: applydlfilter inputfile outputfile [--model=MODELROOT] [--filesarelists]")
+    print(
+        "usage: applydlfilter inputfile outputfile [--model=MODELROOT] [--filesarelists]"
+    )
     print("")
     print("required arguments:")
-    print("	inputfile                 - the name of a text file containing 25.0Hz raw cardiac signal")
+    print(
+        "	inputfile                 - the name of a text file containing 25.0Hz raw cardiac signal"
+    )
     print("	outputfile                - the name of the output text file")
     print("")
     print("optional arguments:")
     print("	--model=MODELROOT         - use model named MODELROOT (default is model)")
-    print("	--filesarelists           - input files contain lists of filenames, rather than data")
+    print(
+        "	--filesarelists           - input files contain lists of filenames, rather than data"
+    )
     print("	--nodisplay               - disables display")
 
 
@@ -84,12 +122,14 @@ def main():
     verbose = False
     predfilename = sys.argv[2]
 
-    modelname = 'model_revised'
+    modelname = "model_revised"
     filesarelists = False
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(sys.argv[3:], "x", ["model=", "nodisplay", "filesarelists", "help"])
+        opts, args = getopt.getopt(
+            sys.argv[3:], "x", ["model=", "nodisplay", "filesarelists", "help"]
+        )
     except getopt.GetoptError as err:
         # print(help information and exit:
         print(str(err))  # will print something like "option -a not recognized"
@@ -100,44 +140,47 @@ def main():
         if o == "--model":
             modelname = a
             if verbose:
-                print('will use', modelname)
+                print("will use", modelname)
         elif o == "--nodisplay":
             display = False
             if verbose:
-                print('disabling display')
+                print("disabling display")
         elif o == "--filesarelists":
             filesarelists = True
             if verbose:
-                print('will treat specified files as lists')
+                print("will treat specified files as lists")
         else:
             assert False, "unhandled option"
 
     if filesarelists:
         fmrifilenamelist = []
-        with open(fmrifilename, 'r') as f:
+        with open(fmrifilename, "r") as f:
             inputlist = f.readlines()
             for line in inputlist:
                 fmrifilenamelist.append(line.strip())
                 if verbose:
                     print(fmrifilenamelist[-1])
         predfilenamelist = []
-        with open(predfilename, 'r') as f:
+        with open(predfilename, "r") as f:
             inputlist = f.readlines()
             for line in inputlist:
                 predfilenamelist.append(line.strip())
                 if verbose:
                     print(predfilenamelist[-1])
         if len(fmrifilenamelist) != len(predfilenamelist):
-            print('list lengths do not match - exiting')
+            print("list lengths do not match - exiting")
             sys.exit()
     else:
         fmrifilenamelist = [fmrifilename]
         predfilenamelist = [predfilename]
 
     # load the filter
-    modelpath = os.path.join(os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0], 'rapidtide',
-                             'data',
-                             'models')
+    modelpath = os.path.join(
+        os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0],
+        "rapidtide",
+        "data",
+        "models",
+    )
     thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
     thedlfilter.loadmodel(modelname)
     model = thedlfilter.model
@@ -147,27 +190,33 @@ def main():
     badpts = None
     if usebadpts:
         try:
-            badpts = tide_io.readvec(fmrifilename.replace('.txt', '_badpts.txt'))
+            badpts = tide_io.readvec(fmrifilename.replace(".txt", "_badpts.txt"))
         except:
-            print('bad points file', fmrifilename.replace('.txt', '_badpts.txt'), 'not found!')
+            print(
+                "bad points file",
+                fmrifilename.replace(".txt", "_badpts.txt"),
+                "not found!",
+            )
             sys.exit()
 
     for idx, fmrifilename in enumerate(fmrifilenamelist):
         # read in the data
         if verbose:
-            print('reading in', fmrifilename)
+            print("reading in", fmrifilename)
         fmridata = tide_io.readvec(fmrifilename)
 
         if verbose:
-            print('filtering...')
+            print("filtering...")
         predicteddata = thedlfilter.apply(fmridata, badpts=badpts)
 
         if verbose:
-            print('writing to', predfilenamelist[idx])
+            print("writing to", predfilenamelist[idx])
         tide_io.writevec(predicteddata, predfilenamelist[idx])
 
-        maxval, maxdelay, failreason = checkcardmatch(fmridata, predicteddata, 25.0, debug=False)
-        print(fmrifilename, 'max correlation input to output:', maxval)
+        maxval, maxdelay, failreason = checkcardmatch(
+            fmridata, predicteddata, 25.0, debug=False
+        )
+        print(fmrifilename, "max correlation input to output:", maxval)
 
         if display:
             plt.figure()
@@ -176,5 +225,5 @@ def main():
             plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

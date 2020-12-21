@@ -26,71 +26,97 @@ from rapidtide.filter import noncausalfilter
 
 
 def spectralfilterprops(thefilter, debug=False):
-    lowerstop, lowerpass, upperpass, upperstop = thefilter['filter'].getfreqs()
-    freqspace = thefilter['frequencies'][1] - thefilter['frequencies'][0]
+    lowerstop, lowerpass, upperpass, upperstop = thefilter["filter"].getfreqs()
+    freqspace = thefilter["frequencies"][1] - thefilter["frequencies"][0]
     lowerstopindex = int(np.floor(lowerstop / freqspace))
     lowerpassindex = int(np.ceil(lowerpass / freqspace))
     upperpassindex = int(np.floor(upperpass / freqspace))
-    upperstopindex = int(np.min([np.ceil(upperstop / freqspace), len(thefilter['frequencies']) - 1]))
+    upperstopindex = int(
+        np.min([np.ceil(upperstop / freqspace), len(thefilter["frequencies"]) - 1])
+    )
     if debug:
-        print('target freqs:', lowerstop, lowerpass, upperpass, upperstop)
-        print('actual freqs:', thefilter['frequencies'][lowerstopindex],
-                            thefilter['frequencies'][lowerpassindex],
-                            thefilter['frequencies'][upperpassindex],
-                            thefilter['frequencies'][upperstopindex])
+        print("target freqs:", lowerstop, lowerpass, upperpass, upperstop)
+        print(
+            "actual freqs:",
+            thefilter["frequencies"][lowerstopindex],
+            thefilter["frequencies"][lowerpassindex],
+            thefilter["frequencies"][upperpassindex],
+            thefilter["frequencies"][upperstopindex],
+        )
     response = {}
 
-    passbandmean = np.mean(thefilter['transferfunc'][lowerpassindex:upperpassindex])
-    passbandmax = np.max(thefilter['transferfunc'][lowerpassindex:upperpassindex])
-    passbandmin = np.min(thefilter['transferfunc'][lowerpassindex:upperpassindex])
+    passbandmean = np.mean(thefilter["transferfunc"][lowerpassindex:upperpassindex])
+    passbandmax = np.max(thefilter["transferfunc"][lowerpassindex:upperpassindex])
+    passbandmin = np.min(thefilter["transferfunc"][lowerpassindex:upperpassindex])
 
-    response['passbandripple'] = (passbandmax - passbandmin)/passbandmean
+    response["passbandripple"] = (passbandmax - passbandmin) / passbandmean
 
     if lowerstopindex > 2:
-        response['lowerstopmean'] = np.mean(thefilter['transferfunc'][0:lowerstopindex])/passbandmean
-        response['lowerstopmax'] = np.max(np.abs(thefilter['transferfunc'][0:lowerstopindex]))/passbandmean
+        response["lowerstopmean"] = (
+            np.mean(thefilter["transferfunc"][0:lowerstopindex]) / passbandmean
+        )
+        response["lowerstopmax"] = (
+            np.max(np.abs(thefilter["transferfunc"][0:lowerstopindex])) / passbandmean
+        )
     else:
-        response['lowerstopmean'] = 0.0
-        response['lowerstopmax'] = 0.0
+        response["lowerstopmean"] = 0.0
+        response["lowerstopmax"] = 0.0
 
-    if len(thefilter['transferfunc']) - upperstopindex > 2:
-        response['upperstopmean'] = np.mean(thefilter['transferfunc'][upperstopindex:-1])/passbandmean
-        response['upperstopmax'] = np.max(np.abs(thefilter['transferfunc'][upperstopindex:-1]))/passbandmean
+    if len(thefilter["transferfunc"]) - upperstopindex > 2:
+        response["upperstopmean"] = (
+            np.mean(thefilter["transferfunc"][upperstopindex:-1]) / passbandmean
+        )
+        response["upperstopmax"] = (
+            np.max(np.abs(thefilter["transferfunc"][upperstopindex:-1])) / passbandmean
+        )
     else:
-        response['upperstopmean'] = 0.0
-        response['upperstopmax'] = 0.0
+        response["upperstopmean"] = 0.0
+        response["upperstopmax"] = 0.0
     return response
 
 
 def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=False):
     tclen = int(tclengthinsecs // sampletime)
-    print('Testing transfer function:')
-    lowestfreq = 1.0/(sampletime * tclen)
-    nyquist = 0.5/sampletime
-    print('    sampletime=',sampletime,', timecourse length=',tclengthinsecs, 's,  possible frequency range:',lowestfreq, nyquist)
+    print("Testing transfer function:")
+    lowestfreq = 1.0 / (sampletime * tclen)
+    nyquist = 0.5 / sampletime
+    print(
+        "    sampletime=",
+        sampletime,
+        ", timecourse length=",
+        tclengthinsecs,
+        "s,  possible frequency range:",
+        lowestfreq,
+        nyquist,
+    )
     timeaxis = np.arange(0.0, 1.0 * tclen) * sampletime
 
     overall = np.random.normal(size=tclen)
     nperseg = np.min([tclen, 256])
-    f, dummy = sp.signal.welch(overall, fs=1.0/sampletime, nperseg=nperseg)
+    f, dummy = sp.signal.welch(overall, fs=1.0 / sampletime, nperseg=nperseg)
 
-    transferfunclist = ['brickwall', 'trapezoidal', 'butterworth']
+    transferfunclist = ["brickwall", "trapezoidal", "butterworth"]
 
     allfilters = []
 
     # construct all the physiological filters
-    for filtertype in ['lfo', 'resp', 'cardiac']:
+    for filtertype in ["lfo", "resp", "cardiac"]:
         testfilter = noncausalfilter(filtertype=filtertype)
         lstest, lptest, uptest, ustest = testfilter.getfreqs()
         if lptest < nyquist:
             for transferfunc in transferfunclist:
                 allfilters.append(
                     {
-                    'name': filtertype + ' ' + transferfunc,
-                    'filter': noncausalfilter(filtertype=filtertype, transferfunc=transferfunc, debug=False),
-                    })
+                        "name": filtertype + " " + transferfunc,
+                        "filter": noncausalfilter(
+                            filtertype=filtertype,
+                            transferfunc=transferfunc,
+                            debug=False,
+                        ),
+                    }
+                )
 
-    ''''# make the lowpass filters
+    """'# make the lowpass filters
     for transferfunc in transferfunclist:
         testfilter = noncausalfilter(
                         filtertype='arb',
@@ -126,21 +152,21 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
                                 transferfunc=transferfunc,
                                 initlowerstop=0.09, initlowerpass=0.1,
                                 initupperpass=-1.0, initupperstop=-1.0, debug=False)
-                })'''
+                })"""
 
     # calculate the transfer functions for the filters
     for index in range(0, len(allfilters)):
         psd_raw = 0.0 * dummy
         psd_filt = 0.0 * dummy
-        for i in range(0,numruns):
+        for i in range(0, numruns):
             inputsig = np.random.normal(size=tclen)
-            outputsig = allfilters[index]['filter'].apply(1.0/sampletime, inputsig)
-            f, raw = sp.signal.welch(inputsig, fs=1.0/sampletime, nperseg=nperseg)
-            f, filt = sp.signal.welch(outputsig, fs=1.0/sampletime, nperseg=nperseg)
+            outputsig = allfilters[index]["filter"].apply(1.0 / sampletime, inputsig)
+            f, raw = sp.signal.welch(inputsig, fs=1.0 / sampletime, nperseg=nperseg)
+            f, filt = sp.signal.welch(outputsig, fs=1.0 / sampletime, nperseg=nperseg)
             psd_raw += raw
             psd_filt += filt
-        allfilters[index]['frequencies'] = f
-        allfilters[index]['transferfunc'] = psd_filt / psd_raw
+        allfilters[index]["frequencies"] = f
+        allfilters[index]["transferfunc"] = psd_filt / psd_raw
 
     # show transfer functions
     if display:
@@ -149,8 +175,8 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
         plt.ylim([-1.0, 1.0 * len(allfilters)])
         offset = 0.0
         for thefilter in allfilters:
-            plt.plot(thefilter['frequencies'], thefilter['transferfunc'] + offset)
-            legend.append(thefilter['name'])
+            plt.plot(thefilter["frequencies"], thefilter["transferfunc"] + offset)
+            legend.append(thefilter["name"])
             offset += 1.0
         plt.legend(legend)
         plt.show()
@@ -158,39 +184,45 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
     # test transfer function responses
     for thefilter in allfilters:
         response = spectralfilterprops(thefilter)
-        print('    Evaluating', thefilter['name'], 'transfer function')
-        print('\tpassbandripple:', response['passbandripple'])
-        print('\tlowerstopmax:', response['lowerstopmax'])
-        print('\tlowerstopmean:', response['lowerstopmean'])
-        print('\tupperstopmax:', response['upperstopmax'])
-        print('\tupperstopmean:', response['upperstopmean'])
-        #assert response['passbandripple'] < 0.45
-        assert response['lowerstopmax'] < 1e4
-        assert response['lowerstopmean'] < 1e4
-        assert response['upperstopmax'] < 1e4
-        assert response['upperstopmean'] < 1e4
+        print("    Evaluating", thefilter["name"], "transfer function")
+        print("\tpassbandripple:", response["passbandripple"])
+        print("\tlowerstopmax:", response["lowerstopmax"])
+        print("\tlowerstopmean:", response["lowerstopmean"])
+        print("\tupperstopmax:", response["upperstopmax"])
+        print("\tupperstopmean:", response["upperstopmean"])
+        # assert response['passbandripple'] < 0.45
+        assert response["lowerstopmax"] < 1e4
+        assert response["lowerstopmean"] < 1e4
+        assert response["upperstopmax"] < 1e4
+        assert response["upperstopmean"] < 1e4
 
     # construct some test waveforms for end effects
     testwaves = []
-    testwaves.append({
-        'name':        'constant high',
-        'timeaxis':    1.0 * timeaxis,
-        'waveform':    np.ones((tclen), dtype='float'),
-        })
-    testwaves.append({
-        'name':        'white noise',
-        'timeaxis':    1.0 * timeaxis,
-        'waveform':    0.3 * np.random.normal(size=tclen),
-        })
+    testwaves.append(
+        {
+            "name": "constant high",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": np.ones((tclen), dtype="float"),
+        }
+    )
+    testwaves.append(
+        {
+            "name": "white noise",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": 0.3 * np.random.normal(size=tclen),
+        }
+    )
 
     scratch = timeaxis * 0.0
-    scratch[int(tclen / 5):int(2 * tclen / 5)] = 1.0
-    scratch[int(3 * tclen / 5):int(4 * tclen / 5)] = 1.0
-    testwaves.append({
-        'name':        'block regressor',
-        'timeaxis':    1.0 * timeaxis,
-        'waveform':    1.0 * scratch,
-        })
+    scratch[int(tclen / 5) : int(2 * tclen / 5)] = 1.0
+    scratch[int(3 * tclen / 5) : int(4 * tclen / 5)] = 1.0
+    testwaves.append(
+        {
+            "name": "block regressor",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": 1.0 * scratch,
+        }
+    )
 
     # show the end effects waveforms
     if display:
@@ -200,29 +232,32 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
         offset = 0.0
         for thewave in testwaves:
             for thefilter in allfilters:
-                plt.plot(thewave['timeaxis'], offset + thefilter['filter'].apply(1.0/sampletime, thewave['waveform']))
-                legend.append(thewave['name'] + ': '+ thefilter['name'])
+                plt.plot(
+                    thewave["timeaxis"],
+                    offset
+                    + thefilter["filter"].apply(1.0 / sampletime, thewave["waveform"]),
+                )
+                legend.append(thewave["name"] + ": " + thefilter["name"])
                 offset += 1.0
-            #plt.plot(thewave['timeaxis'], thewave['waveform'] + offset)
-            #legend.append(thewave['name'])
-            #offset += 2.2
+            # plt.plot(thewave['timeaxis'], thewave['waveform'] + offset)
+            # legend.append(thewave['name'])
+            # offset += 2.2
             plt.legend(legend)
             plt.show()
 
 
 def test_filterprops(display=False):
-    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100,
-                     display=display)
-    eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100,
-                     display=display)
-    eval_filterprops(sampletime=0.1, tclengthinsecs=1000.0, numruns=10,
-                     display=display)
+    eval_filterprops(
+        sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=display
+    )
+    eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100, display=display)
+    eval_filterprops(sampletime=0.1, tclengthinsecs=1000.0, numruns=10, display=display)
 
 
 def main():
     test_filterprops(display=True)
 
 
-if __name__ == '__main__':
-    mpl.use('TkAgg')
+if __name__ == "__main__":
+    mpl.use("TkAgg")
     main()

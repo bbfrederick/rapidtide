@@ -29,45 +29,58 @@ import argparse
 
 def _get_parser():
     # get the command line parameters
-    parser = argparse.ArgumentParser(prog='showxy',
-                                     description='Plots xy histogram data in text file.',
-                                     usage='%(prog)s texfilename [options]')
-    parser.add_argument('infilename',
-                        help='a text file containing histogram data')
-    parser.add_argument('--xlabel',
-                        dest='thexlabel',
-                        type=str,
-                        metavar='XLABEL',
-                        help='Use XLABEL on the x axis.',
-                        default=None)
-    parser.add_argument('--ylabel',
-                        dest='theylabel',
-                        type=str,
-                        metavar='YLABEL',
-                        help='Use YLABEL on the y axis.',
-                        default=None)
-    parser.add_argument('--title',
-                        dest='thetitle',
-                        type=str,
-                        metavar='TITLE',
-                        help='Use TITLE at the top of the graph.',
-                        default=None)
-    parser.add_argument('--outputfile',
-                        dest='outputfile',
-                        type=str,
-                        metavar='FILENAME',
-                        help='Save plot to FILENAME rather than displaying on the screen.',
-                        default=None)
-    parser.add_argument('--dobars',
-                        dest='dobars',
-                        action='store_true',
-                        help='Plot bars rather than lines.',
-                        default=False)
-    parser.add_argument('--debug',
-                        dest='debug',
-                        action='store_true',
-                        help='Print additional internal information.',
-                        default=False)
+    parser = argparse.ArgumentParser(
+        prog="showxy",
+        description="Plots xy histogram data in text file.",
+        usage="%(prog)s texfilename [options]",
+    )
+    parser.add_argument("infilename", help="a text file containing histogram data")
+    parser.add_argument(
+        "--xlabel",
+        dest="thexlabel",
+        type=str,
+        metavar="XLABEL",
+        help="Use XLABEL on the x axis.",
+        default=None,
+    )
+    parser.add_argument(
+        "--ylabel",
+        dest="theylabel",
+        type=str,
+        metavar="YLABEL",
+        help="Use YLABEL on the y axis.",
+        default=None,
+    )
+    parser.add_argument(
+        "--title",
+        dest="thetitle",
+        type=str,
+        metavar="TITLE",
+        help="Use TITLE at the top of the graph.",
+        default=None,
+    )
+    parser.add_argument(
+        "--outputfile",
+        dest="outputfile",
+        type=str,
+        metavar="FILENAME",
+        help="Save plot to FILENAME rather than displaying on the screen.",
+        default=None,
+    )
+    parser.add_argument(
+        "--dobars",
+        dest="dobars",
+        action="store_true",
+        help="Plot bars rather than lines.",
+        default=False,
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Print additional internal information.",
+        default=False,
+    )
 
     return parser
 
@@ -82,29 +95,28 @@ def main():
     if args.debug:
         print(args)
 
-
     indata = tide_io.readvecs(args.infilename)
     xvecs = indata[0, :]
     yvecs = indata[1, :]
     if args.dobars:
-        bar(xvecs, yvecs, width=(0.8 * (xvecs[1] - xvecs[0])), color='g')
+        bar(xvecs, yvecs, width=(0.8 * (xvecs[1] - xvecs[0])), color="g")
     else:
-        plot(xvecs, yvecs, 'r')
+        plot(xvecs, yvecs, "r")
 
     if args.thetitle is not None:
         title(args.thetitle)
 
     if args.thexlabel is not None:
-        xlabel(args.thexlabel, fontsize=16, fontweight='bold')
+        xlabel(args.thexlabel, fontsize=16, fontweight="bold")
 
     if args.theylabel is not None:
-        ylabel(args.theylabel, fontsize=16, fontweight='bold')
+        ylabel(args.theylabel, fontsize=16, fontweight="bold")
 
     if args.outputfile is None:
         show()
     else:
-        savefig(args.outputfile, bbox_inches='tight')
+        savefig(args.outputfile, bbox_inches="tight")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
-

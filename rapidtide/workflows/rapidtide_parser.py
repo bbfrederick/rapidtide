@@ -255,10 +255,7 @@ def _get_parser():
         action="store",
         type=int,
         metavar="ORDER",
-        help=(
-            "Set order of trend removal (0 to disable, "
-            "default is 1 - linear)."
-        ),
+        help=("Set order of trend removal (0 to disable, " "default is 1 - linear)."),
         default=3,
     )
     preproc.add_argument(
@@ -410,8 +407,7 @@ def _get_parser():
         dest="nothresh",
         action="store_true",
         help=(
-            "Disable voxel intensity threshold (especially useful for NIRS "
-            "data)."
+            "Disable voxel intensity threshold (especially useful for NIRS " "data)."
         ),
         default=False,
     )
@@ -492,10 +488,7 @@ def _get_parser():
         action="store",
         type=str,
         choices=["None", "phat", "liang", "eckart"],
-        help=(
-            "Method to use for cross-correlation weighting. "
-            "Default is 'None'."
-        ),
+        help=("Method to use for cross-correlation weighting. " "Default is 'None'."),
         default="None",
     )
 
@@ -562,8 +555,7 @@ def _get_parser():
         type=float,
         metavar="DELAYTIME",
         help=(
-            "Don't fit the delay time - set it to DELAYTIME seconds for all "
-            "voxels."
+            "Don't fit the delay time - set it to DELAYTIME seconds for all " "voxels."
         ),
         default=None,
     )
@@ -678,9 +670,7 @@ def _get_parser():
         action="store",
         type=int,
         metavar="PASSES",
-        help=(
-            "Set the number of processing passes to PASSES.  "
-            "Default is 3."),
+        help=("Set the number of processing passes to PASSES.  " "Default is 3."),
         default=3,
     )
     reg_ref.add_argument(
@@ -777,10 +767,7 @@ def _get_parser():
         "--pickleft",
         dest="pickleft",
         action="store_true",
-        help=(
-            "Will select the leftmost delay peak when setting the refine "
-            "offset."
-        ),
+        help=("Will select the leftmost delay peak when setting the refine " "offset."),
         default=False,
     )
     reg_ref.add_argument(
@@ -828,10 +815,12 @@ def _get_parser():
         action="store",
         type=float,
         metavar="VALUE",
-        help=("Number of PCA components used for refinement.  If VALUE >= 1, will retain this many components.  If "
-              "0.0 < VALUE < 1.0, enough components will be retained to explain the fraction VALUE of the "
-              "total variance. If VALUE is negative, the number of components will be to retain will be selected "
-              "automatically using the MLE method.  Default is 0.8."),
+        help=(
+            "Number of PCA components used for refinement.  If VALUE >= 1, will retain this many components.  If "
+            "0.0 < VALUE < 1.0, enough components will be retained to explain the fraction VALUE of the "
+            "total variance. If VALUE is negative, the number of components will be to retain will be selected "
+            "automatically using the MLE method.  Default is 0.8."
+        ),
         default=0.8,
     )
     reg_ref.add_argument(
@@ -840,8 +829,10 @@ def _get_parser():
         action="store",
         type=float,
         metavar="THRESH",
-        help=("Continue refinement until the MSE between regressors becomes <= THRESH.  "
-              "By default, this is not set, so refinement will run for the specified number of passes"),
+        help=(
+            "Continue refinement until the MSE between regressors becomes <= THRESH.  "
+            "By default, this is not set, so refinement will run for the specified number of passes"
+        ),
         default=None,
     )
     reg_ref.add_argument(
@@ -850,10 +841,11 @@ def _get_parser():
         action="store",
         type=int,
         metavar="MAXPASSES",
-        help=("Terminate refinement after MAXPASSES passes, whether or not convergence has occured. Default is 15"),
+        help=(
+            "Terminate refinement after MAXPASSES passes, whether or not convergence has occured. Default is 15"
+        ),
         default=15,
     )
-
 
     # Output options
     output = parser.add_argument_group("Output options")
@@ -937,7 +929,6 @@ def _get_parser():
         ),
         default=False,
     )
-
 
     # Miscellaneous options
     misc = parser.add_argument_group("Miscellaneous options")
@@ -1036,8 +1027,7 @@ def _get_parser():
         type=int,
         metavar="MKLTHREADS",
         help=(
-            "Use no more than MKLTHREADS worker threads in accelerated numpy "
-            "calls."
+            "Use no more than MKLTHREADS worker threads in accelerated numpy " "calls."
         ),
         default=1,
     )
@@ -1084,9 +1074,7 @@ def _get_parser():
         "--echocancel",
         dest="echocancel",
         action="store_true",
-        help=(
-            "Attempt to perform echo cancellation."
-        ),
+        help=("Attempt to perform echo cancellation."),
         default=False,
     )
     experimental.add_argument(
@@ -1230,11 +1218,9 @@ def process_args(inputargs=None):
 
     sh = logging.StreamHandler()
     if args["debug"]:
-        logging.basicConfig(level=logging.DEBUG,
-                            handlers=[sh])
+        logging.basicConfig(level=logging.DEBUG, handlers=[sh])
     else:
-        logging.basicConfig(level=logging.INFO,
-                            handlers=[sh])
+        logging.basicConfig(level=logging.INFO, handlers=[sh])
 
     # save the raw and formatted command lines
     args["commandlineargs"] = argstowrite[1:]
@@ -1326,8 +1312,7 @@ def process_args(inputargs=None):
             args["arbvec"].append(args["arbvec"][0] * 0.95)
             args["arbvec"].append(args["arbvec"][1] * 1.05)
         elif len(args["arbvec"]) != 4:
-            raise ValueError("Argument '--arb' must be either two or four "
-                             "floats.")
+            raise ValueError("Argument '--arb' must be either two or four " "floats.")
         # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
         # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
         theprefilter = tide_filt.noncausalfilter(
@@ -1445,11 +1430,11 @@ def process_args(inputargs=None):
         args["corrmaskincludename"] = None
 
     if args["globalmeanincludespec"] is not None:
-        (args["globalmeanincludename"],
-         args["globalmeanincludevals"]) = tide_io.processnamespec(
-            args["globalmeanincludespec"],
-            "Including voxels where ",
-            "in global mean."
+        (
+            args["globalmeanincludename"],
+            args["globalmeanincludevals"],
+        ) = tide_io.processnamespec(
+            args["globalmeanincludespec"], "Including voxels where ", "in global mean."
         )
     else:
         args["globalmeanincludename"] = None
@@ -1467,40 +1452,35 @@ def process_args(inputargs=None):
         args["globalmeanexcludename"] = None
 
     if args["refineincludespec"] is not None:
-        (args["refineincludename"],
-         args["refineincludevals"]) = tide_io.processnamespec(
-            args["refineincludespec"],
-            "Including voxels where ",
-            "in refinement."
+        (
+            args["refineincludename"],
+            args["refineincludevals"],
+        ) = tide_io.processnamespec(
+            args["refineincludespec"], "Including voxels where ", "in refinement."
         )
     else:
         args["refineincludename"] = None
 
     if args["refineexcludespec"] is not None:
-        (args["refineexcludename"],
-         args["refineexcludevals"]) = tide_io.processnamespec(
-            args["refineexcludespec"],
-            "Excluding voxels where ",
-            "from refinement."
+        (
+            args["refineexcludename"],
+            args["refineexcludevals"],
+        ) = tide_io.processnamespec(
+            args["refineexcludespec"], "Excluding voxels where ", "from refinement."
         )
     else:
         args["refineexcludename"] = None
 
     # motion processing
     if args["motionfilespec"] is not None:
-        (args["motionfilename"],
-         args["motionfilevals"]) = tide_io.processnamespec(
-            args["motionfilespec"],
-            "Using columns in ",
-            "as motion regressors."
+        (args["motionfilename"], args["motionfilevals"]) = tide_io.processnamespec(
+            args["motionfilespec"], "Using columns in ", "as motion regressors."
         )
     else:
         args["motionfilename"] = None
 
     if args["venousrefine"]:
-        LGR.warning(
-            "Using 'venousrefine' macro. Overriding any affected arguments."
-        )
+        LGR.warning("Using 'venousrefine' macro. Overriding any affected arguments.")
         args["lagminthresh"] = 2.5
         args["lagmaxthresh"] = 6.0
         args["ampthresh"] = 0.5

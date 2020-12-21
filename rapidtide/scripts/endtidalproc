@@ -30,61 +30,80 @@ import numpy as np
 
 from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float
 
-def phase(mcv): 
-    return np.arctan2(mcv.imag, mcv.real) 
+
+def phase(mcv):
+    return np.arctan2(mcv.imag, mcv.real)
+
 
 def _get_parser():
     # get the command line parameters
-    parser = argparse.ArgumentParser(prog='endtidalproc',
-                                     description='Process a gas trace to generate the endtidal waveform.',
-                                     usage='%(prog)s infilename outfilename [options]')
-    parser.add_argument('infilename',
-                        help='a text file containing a single gas trace, one timepoint per line')
-    parser.add_argument('outfilename',
-                        help='a text file for the interpolated data')
-    parser.add_argument('--isoxygen',
-                        dest='isoxygen',
-                        action='store_true',
-                        help='Assume the trace is oxygen, fits the bottom of the waveform, not the top.',
-                        default=False)
+    parser = argparse.ArgumentParser(
+        prog="endtidalproc",
+        description="Process a gas trace to generate the endtidal waveform.",
+        usage="%(prog)s infilename outfilename [options]",
+    )
+    parser.add_argument(
+        "infilename",
+        help="a text file containing a single gas trace, one timepoint per line",
+    )
+    parser.add_argument("outfilename", help="a text file for the interpolated data")
+    parser.add_argument(
+        "--isoxygen",
+        dest="isoxygen",
+        action="store_true",
+        help="Assume the trace is oxygen, fits the bottom of the waveform, not the top.",
+        default=False,
+    )
     samp_group = parser.add_mutually_exclusive_group()
-    samp_group.add_argument('--samplerate',
-                           dest='samplerate',
-                           action='store',
-                           type=lambda x: is_float(parser, x),
-                           metavar='FREQ',
-                           help=('The sample rate of the input data is FREQ Hz (default is 1Hz).'),
-                           default=None)
-    samp_group.add_argument('--sampletime',
-                           dest='samplerate',
-                           action='store',
-                           type=lambda x: invert_float(parser, x),
-                           metavar='TSTEP',
-                           help=('The sample rate of the input data is 1/TSTEP Hz (default is 1Hz).'),
-                           default=None)
-    parser.add_argument('--starttime',
-                        dest='thestarttime',
-                        metavar='START',
-                        type=float,
-                        help='Start plot at START seconds.',
-                        default=-1000000.0)
-    parser.add_argument('--endtime',
-                        dest='theendtime',
-                        metavar='END',
-                        type=float,
-                        help='Finish plot at END seconds.',
-                        default=1000000.0)
-    parser.add_argument('--thresh',
-                        dest='thresh',
-                        metavar='PCT',
-                        type=float,
-                        help='Amount of fall (or rise) needed, in percent, to recognize a peak (or trough).',
-                        default=1.0)
-    parser.add_argument('--debug',
-                        dest='debug',
-                        action='store_true',
-                        help='Print additional internal information.',
-                        default=False)
+    samp_group.add_argument(
+        "--samplerate",
+        dest="samplerate",
+        action="store",
+        type=lambda x: is_float(parser, x),
+        metavar="FREQ",
+        help=("The sample rate of the input data is FREQ Hz (default is 1Hz)."),
+        default=None,
+    )
+    samp_group.add_argument(
+        "--sampletime",
+        dest="samplerate",
+        action="store",
+        type=lambda x: invert_float(parser, x),
+        metavar="TSTEP",
+        help=("The sample rate of the input data is 1/TSTEP Hz (default is 1Hz)."),
+        default=None,
+    )
+    parser.add_argument(
+        "--starttime",
+        dest="thestarttime",
+        metavar="START",
+        type=float,
+        help="Start plot at START seconds.",
+        default=-1000000.0,
+    )
+    parser.add_argument(
+        "--endtime",
+        dest="theendtime",
+        metavar="END",
+        type=float,
+        help="Finish plot at END seconds.",
+        default=1000000.0,
+    )
+    parser.add_argument(
+        "--thresh",
+        dest="thresh",
+        metavar="PCT",
+        type=float,
+        help="Amount of fall (or rise) needed, in percent, to recognize a peak (or trough).",
+        default=1.0,
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Print additional internal information.",
+        default=False,
+    )
 
     return parser
 
@@ -93,7 +112,7 @@ def process_args():
     """
     Compile arguments for rapidtide workflow.
     """
-    print('processing command line arguments')
+    print("processing command line arguments")
     try:
         args = _get_parser().parse_args()
     except SystemExit:
@@ -105,7 +124,7 @@ def process_args():
 
     if args.debug:
         print()
-        print('args:')
+        print("args:")
         print(args)
 
     return args
@@ -115,13 +134,13 @@ def main():
     args = process_args()
 
     if args.isoxygen:
-        print('Fitting trace as oxygen')
+        print("Fitting trace as oxygen")
     else:
-        print('Fitting trace as CO2')
+        print("Fitting trace as CO2")
 
     # check range
     if args.thestarttime >= args.theendtime:
-        print('endtime must be greater then starttime;')
+        print("endtime must be greater then starttime;")
         sys.exit()
 
     # read in the data
@@ -138,7 +157,9 @@ def main():
     maxtime = 1.0
     f = 2.0
     lookaheadval = int((args.samplerate * maxtime) / f)
-    maxpeaks, minpeaks = tide_fit.peakdetect(yvec, lookahead=lookaheadval, delta=args.thethresh)
+    maxpeaks, minpeaks = tide_fit.peakdetect(
+        yvec, lookahead=lookaheadval, delta=args.thethresh
+    )
 
     if isoxygen:
         peaklist = minpeaks
@@ -160,5 +181,5 @@ def main():
     tide_io.writevec(peakinterp, args.outfilename)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

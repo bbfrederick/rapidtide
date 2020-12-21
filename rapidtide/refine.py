@@ -43,32 +43,33 @@ from scipy.stats.stats import pearsonr
 from scipy.signal import welch
 
 
-def _procOneVoxelTimeShift(vox,
-                           fmritc,
-                           lagstrength,
-                           R2val,
-                           lagtime,
-                           padtrs,
-                           fmritr,
-                           theprefilter,
-                           fmrifreq,
-                           refineprenorm='mean',
-                           lagmaxthresh=5.0,
-                           refineweighting='R',
-                           detrendorder=1,
-                           offsettime=0.0,
-                           filterbeforePCA=False,
-                           psdfilter=False,
-                           rt_floatset=np.float64,
-                           rt_floattype='float64'
-                           ):
-    if refineprenorm == 'mean':
+def _procOneVoxelTimeShift(
+    vox,
+    fmritc,
+    lagstrength,
+    R2val,
+    lagtime,
+    padtrs,
+    fmritr,
+    theprefilter,
+    fmrifreq,
+    refineprenorm="mean",
+    lagmaxthresh=5.0,
+    refineweighting="R",
+    detrendorder=1,
+    offsettime=0.0,
+    filterbeforePCA=False,
+    psdfilter=False,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+):
+    if refineprenorm == "mean":
         thedivisor = np.mean(fmritc)
-    elif refineprenorm == 'var':
+    elif refineprenorm == "var":
         thedivisor = np.var(fmritc)
-    elif refineprenorm == 'std':
+    elif refineprenorm == "std":
         thedivisor = np.std(fmritc)
-    elif refineprenorm == 'invlag':
+    elif refineprenorm == "invlag":
         if lagtime < lagmaxthresh:
             thedivisor = lagmaxthresh - lagtime
         else:
@@ -80,9 +81,9 @@ def _procOneVoxelTimeShift(vox,
     else:
         normfac = 0.0
 
-    if refineweighting == 'R':
+    if refineweighting == "R":
         thisweight = lagstrength
-    elif refineweighting == 'R2':
+    elif refineweighting == "R2":
         thisweight = R2val
     else:
         if lagstrength > 0.0:
@@ -90,11 +91,15 @@ def _procOneVoxelTimeShift(vox,
         else:
             thisweight = -1.0
     if detrendorder > 0:
-        normtc = tide_fit.detrend(fmritc * normfac * thisweight, order=detrendorder, demean=True)
+        normtc = tide_fit.detrend(
+            fmritc * normfac * thisweight, order=detrendorder, demean=True
+        )
     else:
         normtc = fmritc * normfac * thisweight
     shifttr = -(-offsettime + lagtime) / fmritr  # lagtime is in seconds
-    [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide_resample.timeshift(normtc, shifttr, padtrs)
+    [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide_resample.timeshift(
+        normtc, shifttr, padtrs
+    )
     if filterbeforePCA:
         outtc = theprefilter.apply(fmrifreq, shiftedtc)
         outweights = theprefilter.apply(fmrifreq, weights)
@@ -102,31 +107,39 @@ def _procOneVoxelTimeShift(vox,
         outtc = 1.0 * shiftedtc
         outweights = 1.0 * weights
     if psdfilter:
-        freqs, psd = welch(tide_math.corrnormalize(shiftedtc, True, True), fmritr, scaling='spectrum', window='hamming',
-                           return_onesided=False, nperseg=len(shiftedtc))
+        freqs, psd = welch(
+            tide_math.corrnormalize(shiftedtc, True, True),
+            fmritr,
+            scaling="spectrum",
+            window="hamming",
+            return_onesided=False,
+            nperseg=len(shiftedtc),
+        )
         return vox, outtc, outweights, np.sqrt(psd)
     else:
         return vox, outtc, outweights, None
 
 
-def refineregressor(fmridata,
-                    fmritr,
-                    shiftedtcs,
-                    weights,
-                    passnum,
-                    lagstrengths,
-                    lagtimes,
-                    lagsigma,
-                    lagmask,
-                    R2,
-                    theprefilter,
-                    optiondict,
-                    padtrs=60,
-                    includemask=None,
-                    excludemask=None,
-                    debug=False,
-                    rt_floatset=np.float64,
-                    rt_floattype='float64'):
+def refineregressor(
+    fmridata,
+    fmritr,
+    shiftedtcs,
+    weights,
+    passnum,
+    lagstrengths,
+    lagtimes,
+    lagsigma,
+    lagmask,
+    R2,
+    theprefilter,
+    optiondict,
+    padtrs=60,
+    includemask=None,
+    excludemask=None,
+    debug=False,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+):
     """
 
     Parameters
@@ -178,33 +191,57 @@ def refineregressor(fmridata,
         Mask of voxels used for refinement
     """
     inputshape = np.shape(fmridata)
-    if optiondict['ampthresh'] < 0.0:
-        theampthresh = tide_stats.getfracval(lagstrengths, -optiondict['ampthresh'], nozero=True)
-        print('setting ampthresh to the', -100.0 * optiondict['ampthresh'], 'th percentile (', theampthresh, ')')
-        ampmask = np.where(np.fabs(lagstrengths) >= theampthresh, np.int16(1), np.int16(0))
+    if optiondict["ampthresh"] < 0.0:
+        theampthresh = tide_stats.getfracval(
+            lagstrengths, -optiondict["ampthresh"], nozero=True
+        )
+        print(
+            "setting ampthresh to the",
+            -100.0 * optiondict["ampthresh"],
+            "th percentile (",
+            theampthresh,
+            ")",
+        )
+        ampmask = np.where(
+            np.fabs(lagstrengths) >= theampthresh, np.int16(1), np.int16(0)
+        )
     else:
-        ampmask = np.where(np.fabs(lagstrengths) >= optiondict['ampthresh'], np.int16(1), np.int16(0))
-    if optiondict['lagmaskside'] == 'upper':
-        delaymask = \
-            np.where((lagtimes - optiondict['offsettime']) > optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
-            np.where((lagtimes - optiondict['offsettime']) < optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
-    elif optiondict['lagmaskside'] == 'lower':
-        delaymask = \
-            np.where((lagtimes - optiondict['offsettime']) < -optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
-            np.where((lagtimes - optiondict['offsettime']) > -optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
+        ampmask = np.where(
+            np.fabs(lagstrengths) >= optiondict["ampthresh"], np.int16(1), np.int16(0)
+        )
+    if optiondict["lagmaskside"] == "upper":
+        delaymask = np.where(
+            (lagtimes - optiondict["offsettime"]) > optiondict["lagminthresh"],
+            np.int16(1),
+            np.int16(0),
+        ) * np.where(
+            (lagtimes - optiondict["offsettime"]) < optiondict["lagmaxthresh"],
+            np.int16(1),
+            np.int16(0),
+        )
+    elif optiondict["lagmaskside"] == "lower":
+        delaymask = np.where(
+            (lagtimes - optiondict["offsettime"]) < -optiondict["lagminthresh"],
+            np.int16(1),
+            np.int16(0),
+        ) * np.where(
+            (lagtimes - optiondict["offsettime"]) > -optiondict["lagmaxthresh"],
+            np.int16(1),
+            np.int16(0),
+        )
     else:
-        abslag = abs(lagtimes) - optiondict['offsettime']
-        delaymask = \
-            np.where(abslag > optiondict['lagminthresh'], np.int16(1), np.int16(0)) * \
-            np.where(abslag < optiondict['lagmaxthresh'], np.int16(1), np.int16(0))
-    sigmamask = np.where(lagsigma < optiondict['sigmathresh'], np.int16(1), np.int16(0))
+        abslag = abs(lagtimes) - optiondict["offsettime"]
+        delaymask = np.where(
+            abslag > optiondict["lagminthresh"], np.int16(1), np.int16(0)
+        ) * np.where(abslag < optiondict["lagmaxthresh"], np.int16(1), np.int16(0))
+    sigmamask = np.where(lagsigma < optiondict["sigmathresh"], np.int16(1), np.int16(0))
     locationmask = lagmask + 0
     if includemask is not None:
         locationmask = locationmask * includemask
     if excludemask is not None:
         locationmask = locationmask * (1 - excludemask)
     locationmask = locationmask.astype(np.int16)
-    print('location mask created')
+    print("location mask created")
 
     # first generate the refine mask
     locationfails = np.sum(1 - locationmask)
@@ -213,18 +250,30 @@ def refineregressor(fmridata,
     sigmafails = np.sum(1 - sigmamask * locationmask)
     refinemask = locationmask * ampmask * delaymask * sigmamask
     if tide_stats.getmasksize(refinemask) == 0:
-        print('ERROR: no voxels in the refine mask:')
-        print('\n	', locationfails, ' locationfails',
-              '\n	', ampfails, ' ampfails',
-              '\n	', lagfails, ' lagfails',
-              '\n	', sigmafails, ' sigmafails')
+        print("ERROR: no voxels in the refine mask:")
+        print(
+            "\n	",
+            locationfails,
+            " locationfails",
+            "\n	",
+            ampfails,
+            " ampfails",
+            "\n	",
+            lagfails,
+            " lagfails",
+            "\n	",
+            sigmafails,
+            " sigmafails",
+        )
         if (includemask is None) and (excludemask is None):
-            print('\nRelax ampthresh, delaythresh, or sigmathresh - exiting')
+            print("\nRelax ampthresh, delaythresh, or sigmathresh - exiting")
         else:
-            print('\nChange include/exclude masks or relax ampthresh, delaythresh, or sigmathresh - exiting')
+            print(
+                "\nChange include/exclude masks or relax ampthresh, delaythresh, or sigmathresh - exiting"
+            )
         sys.exit()
 
-    if optiondict['cleanrefined']:
+    if optiondict["cleanrefined"]:
         shiftmask = locationmask
     else:
         shiftmask = refinemask
@@ -232,7 +281,7 @@ def refineregressor(fmridata,
     reportstep = 1000
 
     # timeshift the valid voxels
-    if optiondict['nprocs'] > 1:
+    if optiondict["nprocs"] > 1:
         # define the consumer function here so it inherits most of the arguments
         def timeshift_consumer(inQ, outQ):
             while True:
@@ -245,76 +294,88 @@ def refineregressor(fmridata,
                         break
 
                     # process and send the data
-                    outQ.put(_procOneVoxelTimeShift(val,
-                                                    fmridata[val, :],
-                                                    lagstrengths[val],
-                                                    R2[val],
-                                                    lagtimes[val],
-                                                    padtrs,
-                                                    fmritr,
-                                                    theprefilter,
-                                                    optiondict['fmrifreq'],
-                                                    refineprenorm=optiondict['refineprenorm'],
-                                                    lagmaxthresh=optiondict['lagmaxthresh'],
-                                                    refineweighting=optiondict['refineweighting'],
-                                                    detrendorder=optiondict['detrendorder'],
-                                                    offsettime=optiondict['offsettime'],
-                                                    filterbeforePCA=optiondict['filterbeforePCA'],
-                                                    psdfilter=optiondict['psdfilter'],
-                                                    rt_floatset=rt_floatset,
-                                                    rt_floattype=rt_floattype
-                                                    ))
+                    outQ.put(
+                        _procOneVoxelTimeShift(
+                            val,
+                            fmridata[val, :],
+                            lagstrengths[val],
+                            R2[val],
+                            lagtimes[val],
+                            padtrs,
+                            fmritr,
+                            theprefilter,
+                            optiondict["fmrifreq"],
+                            refineprenorm=optiondict["refineprenorm"],
+                            lagmaxthresh=optiondict["lagmaxthresh"],
+                            refineweighting=optiondict["refineweighting"],
+                            detrendorder=optiondict["detrendorder"],
+                            offsettime=optiondict["offsettime"],
+                            filterbeforePCA=optiondict["filterbeforePCA"],
+                            psdfilter=optiondict["psdfilter"],
+                            rt_floatset=rt_floatset,
+                            rt_floattype=rt_floattype,
+                        )
+                    )
 
                 except Exception as e:
                     print("error!", e)
                     break
 
-        data_out = tide_multiproc.run_multiproc(timeshift_consumer,
-                                                inputshape, shiftmask,
-                                                nprocs=optiondict['nprocs'],
-                                                showprogressbar=True,
-                                                chunksize=optiondict['mp_chunksize'])
+        data_out = tide_multiproc.run_multiproc(
+            timeshift_consumer,
+            inputshape,
+            shiftmask,
+            nprocs=optiondict["nprocs"],
+            showprogressbar=True,
+            chunksize=optiondict["mp_chunksize"],
+        )
 
         # unpack the data
         psdlist = []
         for voxel in data_out:
             shiftedtcs[voxel[0], :] = voxel[1]
             weights[voxel[0], :] = voxel[2]
-            if optiondict['psdfilter']:
+            if optiondict["psdfilter"]:
                 psdlist.append(voxel[3])
         del data_out
 
     else:
         psdlist = []
         for vox in range(0, inputshape[0]):
-            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict['showprogressbar']:
-                tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete (timeshifting)')
+            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict[
+                "showprogressbar"
+            ]:
+                tide_util.progressbar(
+                    vox + 1, inputshape[0], label="Percent complete (timeshifting)"
+                )
             if shiftmask[vox] > 0.5:
-                retvals = _procOneVoxelTimeShift(vox,
-                                                 fmridata[vox, :],
-                                                 lagstrengths[vox],
-                                                 R2[vox],
-                                                 lagtimes[vox],
-                                                 padtrs,
-                                                 fmritr,
-                                                 theprefilter,
-                                                 optiondict['fmrifreq'],
-                                                 refineprenorm=optiondict['refineprenorm'],
-                                                 lagmaxthresh=optiondict['lagmaxthresh'],
-                                                 refineweighting=optiondict['refineweighting'],
-                                                 detrendorder=optiondict['detrendorder'],
-                                                 offsettime=optiondict['offsettime'],
-                                                 filterbeforePCA=optiondict['filterbeforePCA'],
-                                                 psdfilter=optiondict['psdfilter'],
-                                                 rt_floatset=rt_floatset,
-                                                 rt_floattype=rt_floattype)
+                retvals = _procOneVoxelTimeShift(
+                    vox,
+                    fmridata[vox, :],
+                    lagstrengths[vox],
+                    R2[vox],
+                    lagtimes[vox],
+                    padtrs,
+                    fmritr,
+                    theprefilter,
+                    optiondict["fmrifreq"],
+                    refineprenorm=optiondict["refineprenorm"],
+                    lagmaxthresh=optiondict["lagmaxthresh"],
+                    refineweighting=optiondict["refineweighting"],
+                    detrendorder=optiondict["detrendorder"],
+                    offsettime=optiondict["offsettime"],
+                    filterbeforePCA=optiondict["filterbeforePCA"],
+                    psdfilter=optiondict["psdfilter"],
+                    rt_floatset=rt_floatset,
+                    rt_floattype=rt_floattype,
+                )
                 shiftedtcs[retvals[0], :] = retvals[1]
                 weights[retvals[0], :] = retvals[2]
-                if optiondict['psdfilter']:
+                if optiondict["psdfilter"]:
                     psdlist.append(retvals[3])
         print()
 
-    if optiondict['psdfilter']:
+    if optiondict["psdfilter"]:
         print(len(psdlist))
         print(psdlist[0])
         print(np.shape(np.asarray(psdlist, dtype=rt_floattype)))
@@ -328,119 +389,196 @@ def refineregressor(fmridata,
     refineweights = weights[validlist]
     weightsum = np.sum(refineweights, axis=0) / volumetotal
     averagedata = np.sum(refinevoxels, axis=0) / volumetotal
-    if optiondict['cleanrefined']:
+    if optiondict["cleanrefined"]:
         invalidlist = np.where((1 - ampmask) > 0)[0]
         discardvoxels = shiftedtcs[invalidlist]
         discardweights = weights[invalidlist]
         discardweightsum = np.sum(discardweights, axis=0) / volumetotal
         averagediscard = np.sum(discardvoxels, axis=0) / volumetotal
-    if optiondict['dodispersioncalc']:
-        print('splitting regressors by time lag for phase delay estimation')
-        laglist = np.arange(optiondict['dispersioncalc_lower'], optiondict['dispersioncalc_upper'],
-                            optiondict['dispersioncalc_step'])
-        dispersioncalcout = np.zeros((np.shape(laglist)[0], inputshape[1]), dtype=rt_floattype)
+    if optiondict["dodispersioncalc"]:
+        print("splitting regressors by time lag for phase delay estimation")
+        laglist = np.arange(
+            optiondict["dispersioncalc_lower"],
+            optiondict["dispersioncalc_upper"],
+            optiondict["dispersioncalc_step"],
+        )
+        dispersioncalcout = np.zeros(
+            (np.shape(laglist)[0], inputshape[1]), dtype=rt_floattype
+        )
         fftlen = int(inputshape[1] // 2)
         fftlen -= fftlen % 2
-        dispersioncalcspecmag = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
-        dispersioncalcspecphase = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
+        dispersioncalcspecmag = np.zeros(
+            (np.shape(laglist)[0], fftlen), dtype=rt_floattype
+        )
+        dispersioncalcspecphase = np.zeros(
+            (np.shape(laglist)[0], fftlen), dtype=rt_floattype
+        )
         for lagnum in range(0, np.shape(laglist)[0]):
-            lower = laglist[lagnum] - optiondict['dispersioncalc_step'] / 2.0
-            upper = laglist[lagnum] + optiondict['dispersioncalc_step'] / 2.0
+            lower = laglist[lagnum] - optiondict["dispersioncalc_step"] / 2.0
+            upper = laglist[lagnum] + optiondict["dispersioncalc_step"] / 2.0
             inlagrange = np.where(
-                locationmask * ampmask * np.where(lower < lagtimes, np.int16(1), np.int16(0))
-                * np.where(lagtimes < upper, np.int16(1), np.int16(0)))[0]
-            print('    summing', np.shape(inlagrange)[0], 'regressors with lags from', lower, 'to', upper)
+                locationmask
+                * ampmask
+                * np.where(lower < lagtimes, np.int16(1), np.int16(0))
+                * np.where(lagtimes < upper, np.int16(1), np.int16(0))
+            )[0]
+            print(
+                "    summing",
+                np.shape(inlagrange)[0],
+                "regressors with lags from",
+                lower,
+                "to",
+                upper,
+            )
             if np.shape(inlagrange)[0] > 0:
-                dispersioncalcout[lagnum, :] = tide_math.corrnormalize(np.mean(shiftedtcs[inlagrange], axis=0),
-                                                                       detrendorder=optiondict['detrendorder'],
-                                                                       windowfunc=optiondict['windowfunc'])
-                freqs, dispersioncalcspecmag[lagnum, :], dispersioncalcspecphase[lagnum, :] = tide_math.polarfft(
-                    dispersioncalcout[lagnum, :],
-                    1.0 / fmritr)
+                dispersioncalcout[lagnum, :] = tide_math.corrnormalize(
+                    np.mean(shiftedtcs[inlagrange], axis=0),
+                    detrendorder=optiondict["detrendorder"],
+                    windowfunc=optiondict["windowfunc"],
+                )
+                (
+                    freqs,
+                    dispersioncalcspecmag[lagnum, :],
+                    dispersioncalcspecphase[lagnum, :],
+                ) = tide_math.polarfft(dispersioncalcout[lagnum, :], 1.0 / fmritr)
             inlagrange = None
-        tide_io.writenpvecs(dispersioncalcout,
-                            optiondict['outputname'] + '_dispersioncalcvecs_pass' + str(passnum) + '.txt')
-        tide_io.writenpvecs(dispersioncalcspecmag,
-                            optiondict['outputname'] + '_dispersioncalcspecmag_pass' + str(passnum) + '.txt')
-        tide_io.writenpvecs(dispersioncalcspecphase,
-                            optiondict['outputname'] + '_dispersioncalcspecphase_pass' + str(passnum) + '.txt')
-        tide_io.writenpvecs(freqs, optiondict['outputname'] + '_dispersioncalcfreqs_pass' + str(passnum) + '.txt')
+        tide_io.writenpvecs(
+            dispersioncalcout,
+            optiondict["outputname"]
+            + "_dispersioncalcvecs_pass"
+            + str(passnum)
+            + ".txt",
+        )
+        tide_io.writenpvecs(
+            dispersioncalcspecmag,
+            optiondict["outputname"]
+            + "_dispersioncalcspecmag_pass"
+            + str(passnum)
+            + ".txt",
+        )
+        tide_io.writenpvecs(
+            dispersioncalcspecphase,
+            optiondict["outputname"]
+            + "_dispersioncalcspecphase_pass"
+            + str(passnum)
+            + ".txt",
+        )
+        tide_io.writenpvecs(
+            freqs,
+            optiondict["outputname"]
+            + "_dispersioncalcfreqs_pass"
+            + str(passnum)
+            + ".txt",
+        )
 
-    if optiondict['pcacomponents'] < 0.0:
-        pcacomponents = 'mle'
-    elif optiondict['pcacomponents'] >= 1.0:
-        pcacomponents = int(np.round(optiondict['pcacomponents']))
-    elif optiondict['pcacomponents'] == 0.0:
-        print('0.0 is not an allowed value for pcacomponents')
+    if optiondict["pcacomponents"] < 0.0:
+        pcacomponents = "mle"
+    elif optiondict["pcacomponents"] >= 1.0:
+        pcacomponents = int(np.round(optiondict["pcacomponents"]))
+    elif optiondict["pcacomponents"] == 0.0:
+        print("0.0 is not an allowed value for pcacomponents")
         sys.exit()
     else:
-        pcacomponents = optiondict['pcacomponents']
+        pcacomponents = optiondict["pcacomponents"]
     icacomponents = 1
 
-    if optiondict['refinetype'] == 'ica':
-        print('performing ica refinement')
-        thefit = FastICA(n_components=icacomponents).fit(refinevoxels)  # Reconstruct signals
-        print('Using first of ', len(thefit.components_), ' components')
+    if optiondict["refinetype"] == "ica":
+        print("performing ica refinement")
+        thefit = FastICA(n_components=icacomponents).fit(
+            refinevoxels
+        )  # Reconstruct signals
+        print("Using first of ", len(thefit.components_), " components")
         icadata = thefit.components_[0]
-        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata),
-                                              detrendorder=optiondict['detrendorder'])
-        filteredica = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], icadata),
-                                              detrendorder=optiondict['detrendorder'])
+        filteredavg = tide_math.corrnormalize(
+            theprefilter.apply(optiondict["fmrifreq"], averagedata),
+            detrendorder=optiondict["detrendorder"],
+        )
+        filteredica = tide_math.corrnormalize(
+            theprefilter.apply(optiondict["fmrifreq"], icadata),
+            detrendorder=optiondict["detrendorder"],
+        )
         thepxcorr = pearsonr(filteredavg, filteredica)[0]
-        print('ica/avg correlation = ', thepxcorr)
+        print("ica/avg correlation = ", thepxcorr)
         if thepxcorr > 0.0:
             outputdata = 1.0 * icadata
         else:
             outputdata = -1.0 * icadata
-    elif optiondict['refinetype'] == 'pca':
+    elif optiondict["refinetype"] == "pca":
         # use the method of "A novel perspective to calibrate temporal delays in cerebrovascular reactivity
         # using hypercapnic and hyperoxic respiratory challenges". NeuroImage 187, 154?165 (2019).
-        print('performing pca refinement with pcacomponents set to', pcacomponents)
+        print("performing pca refinement with pcacomponents set to", pcacomponents)
         try:
             thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
         except ValueError:
-            if pcacomponents == 'mle':
-                print('mle estimation failed - falling back to pcacomponents=0.8')
+            if pcacomponents == "mle":
+                print("mle estimation failed - falling back to pcacomponents=0.8")
                 thefit = PCA(n_components=0.8).fit(refinevoxels)
             else:
-                print('unhandled math exception in PCA refinement - exiting')
+                print("unhandled math exception in PCA refinement - exiting")
                 sys.exit()
-        print('Using ', len(thefit.components_), ' components, accounting for ',
-              '{:.2f}% of the variance'.format(100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]))
+        print(
+            "Using ",
+            len(thefit.components_),
+            " components, accounting for ",
+            "{:.2f}% of the variance".format(
+                100.0
+                * np.cumsum(thefit.explained_variance_ratio_)[
+                    len(thefit.components_) - 1
+                ]
+            ),
+        )
         reduceddata = thefit.inverse_transform(thefit.transform(refinevoxels))
         if debug:
-            print('complex processing: reduceddata.shape =', reduceddata.shape)
+            print("complex processing: reduceddata.shape =", reduceddata.shape)
         pcadata = np.mean(reduceddata, axis=0)
-        filteredavg = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], averagedata),
-                                              detrendorder=optiondict['detrendorder'])
-        filteredpca = tide_math.corrnormalize(theprefilter.apply(optiondict['fmrifreq'], pcadata),
-                                              detrendorder=optiondict['detrendorder'])
+        filteredavg = tide_math.corrnormalize(
+            theprefilter.apply(optiondict["fmrifreq"], averagedata),
+            detrendorder=optiondict["detrendorder"],
+        )
+        filteredpca = tide_math.corrnormalize(
+            theprefilter.apply(optiondict["fmrifreq"], pcadata),
+            detrendorder=optiondict["detrendorder"],
+        )
         thepxcorr = pearsonr(filteredavg, filteredpca)[0]
-        print('pca/avg correlation = ', thepxcorr)
+        print("pca/avg correlation = ", thepxcorr)
         if thepxcorr > 0.0:
             outputdata = 1.0 * pcadata
         else:
             outputdata = -1.0 * pcadata
-    elif optiondict['refinetype'] == 'weighted_average':
-        print('performing weighted averaging refinement')
+    elif optiondict["refinetype"] == "weighted_average":
+        print("performing weighted averaging refinement")
         outputdata = np.nan_to_num(averagedata / weightsum)
     else:
-        print('performing unweighted averaging refinement')
+        print("performing unweighted averaging refinement")
         outputdata = averagedata
 
-    if optiondict['cleanrefined']:
+    if optiondict["cleanrefined"]:
         thefit, R = tide_fit.mlregress(averagediscard, averagedata)
         fitcoff = rt_floatset(thefit[0, 1])
         datatoremove = rt_floatset(fitcoff * averagediscard)
         outputdata -= datatoremove
     print()
-    print('Timeshift applied to ' + str(int(volumetotal)) + ' voxels, ' + str(len(validlist)) + ' used for refinement:',
-          '\n	', locationfails, ' locationfails',
-          '\n	', ampfails, ' ampfails',
-          '\n	', lagfails, ' lagfails',
-          '\n	', sigmafails, ' sigmafails')
+    print(
+        "Timeshift applied to "
+        + str(int(volumetotal))
+        + " voxels, "
+        + str(len(validlist))
+        + " used for refinement:",
+        "\n	",
+        locationfails,
+        " locationfails",
+        "\n	",
+        ampfails,
+        " ampfails",
+        "\n	",
+        lagfails,
+        " lagfails",
+        "\n	",
+        sigmafails,
+        " sigmafails",
+    )
 
-    if optiondict['psdfilter']:
+    if optiondict["psdfilter"]:
         outputdata = tide_filt.transferfuncfilt(outputdata, snr)
 
     # garbage collect

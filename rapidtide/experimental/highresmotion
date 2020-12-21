@@ -33,9 +33,12 @@ import scipy as sp
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 
+
 def usage():
-    print('highresmotion - creates subsampled motion timecourses at the slice acquisition time resolution')
-    print('    usage: highresmotion fmrifile slicetimefile outputname')
+    print(
+        "highresmotion - creates subsampled motion timecourses at the slice acquisition time resolution"
+    )
+    print("    usage: highresmotion fmrifile slicetimefile outputname")
 
 
 cleanup = False
@@ -62,99 +65,149 @@ nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
 xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
 xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
 spaceunit, timeunit = nim_hdr.get_xyzt_units()
-if timeunit == 'msec':
+if timeunit == "msec":
     tr /= 1000.0
 
-print('dimensions:', xdim, ydim, slicethickness, tr)
+print("dimensions:", xdim, ydim, slicethickness, tr)
 
 slicetimes = tide_io.getslicetimesfromfile(slicetimename)
 numsteps, minstep, sliceoffsets = tide_io.sliceinfo(slicetimes, tr)
-print('There are', numsteps, 'unique slice acquisition times with spacing', minstep)
-print('Effective sampling rate:', 1.0 / minstep)
+print("There are", numsteps, "unique slice acquisition times with spacing", minstep)
+print("Effective sampling rate:", 1.0 / minstep)
 
 # get the baseline motion plot
 if dostep0:
-    mcflirtcmd = [os.path.join(os.getenv('FSLDIR'), 'bin', 'mcflirt'), '-in', fmrifilename, '-o', outfilename + '_baseline_mcf', '-plots']
+    mcflirtcmd = [
+        os.path.join(os.getenv("FSLDIR"), "bin", "mcflirt"),
+        "-in",
+        fmrifilename,
+        "-o",
+        outfilename + "_baseline_mcf",
+        "-plots",
+    ]
     print(mcflirtcmd)
     subprocess.call(mcflirtcmd)
     if cleanup:
-        os.remove(outfilename + '_baseline_mcf.nii.gz')
+        os.remove(outfilename + "_baseline_mcf.nii.gz")
 
 # change the slice dimension
 if dostep1:
     theheader = nim_hdr
-    theheader['pixdim'][3] = slicethickness * numsteps
-    tide_io.savetonifti(nim_data, theheader, thesizes, outfilename + '_temp')
+    theheader["pixdim"][3] = slicethickness * numsteps
+    tide_io.savetonifti(nim_data, theheader, thesizes, outfilename + "_temp")
 
 # now split the modified file by slice
 if dostep2:
-    fslsplitcmd = [os.path.join(os.getenv('FSLDIR'), 'bin', 'fslsplit'), outfilename + '_temp', outfilename + '_temp_', '-z']
+    fslsplitcmd = [
+        os.path.join(os.getenv("FSLDIR"), "bin", "fslsplit"),
+        outfilename + "_temp",
+        outfilename + "_temp_",
+        "-z",
+    ]
     subprocess.call(fslsplitcmd)
     if cleanup:
-        os.remove(outfilename + '_temp.nii.gz')
+        os.remove(outfilename + "_temp.nii.gz")
 
 # now split the modified file by slice
 if dostep2a:
-    mkzerocmd = [os.path.join(os.getenv('FSLDIR'), 'bin', 'fslmaths'), fmrifilename, '-mul', '0', outfilename + '_zero']
+    mkzerocmd = [
+        os.path.join(os.getenv("FSLDIR"), "bin", "fslmaths"),
+        fmrifilename,
+        "-mul",
+        "0",
+        outfilename + "_zero",
+    ]
     subprocess.call(mkzerocmd)
-    fslsplitcmd = [os.path.join(os.getenv('FSLDIR'), 'bin', 'fslsplit'), fmrifilename, outfilename + '_temp_', '-z']
+    fslsplitcmd = [
+        os.path.join(os.getenv("FSLDIR"), "bin", "fslsplit"),
+        fmrifilename,
+        outfilename + "_temp_",
+        "-z",
+    ]
     subprocess.call(fslsplitcmd)
-    fslsplitcmd = [os.path.join(os.getenv('FSLDIR'), 'bin', 'fslsplit'), outfilename + '_zero', outfilename + '_zero_', '-z']
+    fslsplitcmd = [
+        os.path.join(os.getenv("FSLDIR"), "bin", "fslsplit"),
+        outfilename + "_zero",
+        outfilename + "_zero_",
+        "-z",
+    ]
     subprocess.call(fslsplitcmd)
     if cleanup:
-        #os.remove(outfilename + '_temp.nii.gz')
-        os.remove(outfilename + '_zero.nii.gz')
+        # os.remove(outfilename + '_temp.nii.gz')
+        os.remove(outfilename + "_zero.nii.gz")
 
 # merge the stacks
 if dostep3a:
     skipfac = int(numslices // numsteps)
     for i in range(numsteps):
-        fslmergecmd = [os.path.join(os.getenv('FSLDIR'), 'bin', 'fslmerge'), '-z', outfilename + '_stack_' + str(i).zfill(2)]
+        fslmergecmd = [
+            os.path.join(os.getenv("FSLDIR"), "bin", "fslmerge"),
+            "-z",
+            outfilename + "_stack_" + str(i).zfill(2),
+        ]
         for j in range(numslices):
             print(numslices, skipfac, j, i)
             if j % numsteps == i:
-                fslmergecmd.append(outfilename + '_temp_' + str(j).zfill(4))
-                print('data at slice', j)
+                fslmergecmd.append(outfilename + "_temp_" + str(j).zfill(4))
+                print("data at slice", j)
             else:
-                fslmergecmd.append(outfilename + '_zero_' + str(j).zfill(4))
-                print('zero at slice', j)
+                fslmergecmd.append(outfilename + "_zero_" + str(j).zfill(4))
+                print("zero at slice", j)
         subprocess.call(fslmergecmd)
-        mcflirtcmd = [os.path.join(os.getenv('FSLDIR'), 'bin', 'mcflirt'), '-in', outfilename + '_stack_' + str(i).zfill(2), '-plots']
+        mcflirtcmd = [
+            os.path.join(os.getenv("FSLDIR"), "bin", "mcflirt"),
+            "-in",
+            outfilename + "_stack_" + str(i).zfill(2),
+            "-plots",
+        ]
         subprocess.call(mcflirtcmd)
         if cleanup:
-            os.remove(outfilename + '_stack_' + str(i).zfill(2) + '.nii.gz')
-            os.remove(outfilename + '_stack_' + str(i).zfill(2) + '_mcf.nii.gz')
+            os.remove(outfilename + "_stack_" + str(i).zfill(2) + ".nii.gz")
+            os.remove(outfilename + "_stack_" + str(i).zfill(2) + "_mcf.nii.gz")
 
 # merge the stacks
 if dostep3:
     skipfac = int(numslices // numsteps)
     for i in range(numsteps):
-        fslmergecmd = [os.path.join(os.getenv('FSLDIR'), 'bin', 'fslmerge'), '-z', outfilename + '_stack_' + str(i).zfill(2)]
+        fslmergecmd = [
+            os.path.join(os.getenv("FSLDIR"), "bin", "fslmerge"),
+            "-z",
+            outfilename + "_stack_" + str(i).zfill(2),
+        ]
         for j in range(skipfac):
-            fslmergecmd.append(outfilename + '_temp_' + str(i + skipfac * j).zfill(4))
+            fslmergecmd.append(outfilename + "_temp_" + str(i + skipfac * j).zfill(4))
         subprocess.call(fslmergecmd)
 
     if cleanup:
         for i in range(numslices):
-            os.remove(outfilename + '_temp_' + str(i).zfill(4) + '.nii.gz')
+            os.remove(outfilename + "_temp_" + str(i).zfill(4) + ".nii.gz")
 
 # motion correct
 if dostep4:
     for i in range(numsteps):
-        mcflirtcmd = [os.path.join(os.getenv('FSLDIR'), 'bin', 'mcflirt'), '-in', outfilename + '_stack_' + str(i).zfill(2), '-plots']
+        mcflirtcmd = [
+            os.path.join(os.getenv("FSLDIR"), "bin", "mcflirt"),
+            "-in",
+            outfilename + "_stack_" + str(i).zfill(2),
+            "-plots",
+        ]
         subprocess.call(mcflirtcmd)
         if cleanup:
-            os.remove(outfilename + '_stack_' + str(i).zfill(2) + '.nii.gz')
+            os.remove(outfilename + "_stack_" + str(i).zfill(2) + ".nii.gz")
 
 # merge the motion corrected timecourses
 if dostep5:
-    thedata = tide_io.readvecs(outfilename + '_stack_' + str(0).zfill(2) + '_mcf.par' )
+    thedata = tide_io.readvecs(outfilename + "_stack_" + str(0).zfill(2) + "_mcf.par")
     print(thedata.shape)
     destarray = np.zeros((thedata.shape[0], thedata.shape[1] * numsteps), dtype=float)
     for i in range(numsteps):
-        thedata = tide_io.readvecs(outfilename + '_stack_' + str(i).zfill(2) + '_mcf.par' )
+        thedata = tide_io.readvecs(
+            outfilename + "_stack_" + str(i).zfill(2) + "_mcf.par"
+        )
         for j in range(thedata.shape[1]):
             destarray[:, i + j * numsteps] = thedata[:, j]
     for i in range(destarray.shape[0]):
-        destarray[i, :] = tide_filt.harmonicnotchfilter(destarray[i, :], 1.0 / minstep, 1.0 / tr, notchpct=1.5, debug=False)
-    tide_io.writenpvecs(destarray, outfilename + '.par')
+        destarray[i, :] = tide_filt.harmonicnotchfilter(
+            destarray[i, :], 1.0 / minstep, 1.0 / tr, notchpct=1.5, debug=False
+        )
+    tide_io.writenpvecs(destarray, outfilename + ".par")

@@ -39,6 +39,7 @@ from rapidtide.tests.utils import mse
 
 import matplotlib.pyplot as plt
 
+
 def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, display=False):
     # read in some data
     phases = sp.linspace(0.0, numpoints * phasestep, num=numpoints, endpoint=False)
@@ -69,15 +70,17 @@ def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, display=Fal
 
 def test_phaseanalysis(debug=False, display=False):
     msethresh = 1e-3
-    instantaneous_mse, filtered_mse = eval_phaseanalysis(phasestep=0.1, amplitude=3.0, numpoints=1000, display=display)
+    instantaneous_mse, filtered_mse = eval_phaseanalysis(
+        phasestep=0.1, amplitude=3.0, numpoints=1000, display=display
+    )
     print(instantaneous_mse, filtered_mse)
     assert instantaneous_mse < msethresh
     assert filtered_mse < msethresh
-    
+
 
 def main():
     test_phaseanalysis(debug=True, display=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

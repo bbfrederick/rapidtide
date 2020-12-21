@@ -17,25 +17,40 @@
 from __future__ import print_function
 
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import os
 from shutil import copyfile
 
-from utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path, create_dir
+from utils import (
+    get_test_data_path,
+    get_test_target_path,
+    get_test_temp_path,
+    get_examples_path,
+    get_rapidtide_root,
+    get_scripts_path,
+    create_dir,
+)
 
-for phase in ['rapidtide2x_phase1', 'rapidtide2x_phase2', 'rapidtide2x_phase3']:
+for phase in ["rapidtide2x_phase1", "rapidtide2x_phase2", "rapidtide2x_phase3"]:
 
     # copy things into target directory
-    for suffix in ['_fitcoff.nii.gz', '_MTT.nii.gz', '_lagmask.nii.gz', '_lagtimes.nii.gz', '_lagstrengths.nii.gz', '_lagsigma.nii.gz']:
+    for suffix in [
+        "_fitcoff.nii.gz",
+        "_MTT.nii.gz",
+        "_lagmask.nii.gz",
+        "_lagtimes.nii.gz",
+        "_lagstrengths.nii.gz",
+        "_lagsigma.nii.gz",
+    ]:
         # set the source and destination filename
-        sourcefile = phase + 'output' + suffix
-        destfile = sourcefile.replace('phase1output', 'phase1target')
-        
+        sourcefile = phase + "output" + suffix
+        destfile = sourcefile.replace("phase1output", "phase1target")
+
         # check to see that the source file exists
         fullsourcefile = os.path.join(get_test_temp_path(), sourcefile)
         if os.path.isfile(fullsourcefile):
-            fulldestfile = os.path.join('testtargets', destfile)
+            fulldestfile = os.path.join("testtargets", destfile)
             copyfile(fullsourcefile, fulldestfile)
-            #print('cp', fullsourcefile, fulldestfile)
+            # print('cp', fullsourcefile, fulldestfile)
         else:
-            print(fullsourcefile, 'does not exist - skipping')
+            print(fullsourcefile, "does not exist - skipping")

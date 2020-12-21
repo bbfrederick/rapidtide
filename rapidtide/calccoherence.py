@@ -34,37 +34,51 @@ import rapidtide.util as tide_util
 
 # this is here until numpy deals with their fft issue
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def _procOneVoxelCoherence(
-        vox,
-        thecoherer,
-        fmritc,
-        alt=False,
-        rt_floatset=np.float64,
-        rt_floattype='float64'):
+    vox, thecoherer, fmritc, alt=False, rt_floatset=np.float64, rt_floattype="float64"
+):
     if alt:
-        thecoherence_y, thecoherence_x, globalmaxindex, dummy, dummy, dummy = thecoherer.run(fmritc, trim=True, alt=True)
+        (
+            thecoherence_y,
+            thecoherence_x,
+            globalmaxindex,
+            dummy,
+            dummy,
+            dummy,
+        ) = thecoherer.run(fmritc, trim=True, alt=True)
     else:
-        thecoherence_y, thecoherence_x, globalmaxindex = thecoherer.run(fmritc, trim=True)
+        thecoherence_y, thecoherence_x, globalmaxindex = thecoherer.run(
+            fmritc, trim=True
+        )
     maxindex = np.argmax(thecoherence_y)
-    return vox, thecoherence_x, thecoherence_y, thecoherence_y[maxindex], thecoherence_x[maxindex]
+    return (
+        vox,
+        thecoherence_x,
+        thecoherence_y,
+        thecoherence_y[maxindex],
+        thecoherence_x[maxindex],
+    )
 
 
-def coherencepass(fmridata,
-                  thecoherer,
-                  coherencefunc,
-                  coherencepeakval,
-                  coherencepeakfreq,
-                  reportstep,
-                  alt=False,
-                  chunksize=1000,
-                  nprocs=1,
-                  alwaysmultiproc=False,
-                  showprogressbar=True,
-                  rt_floatset=np.float64,
-                  rt_floattype='float64'):
+def coherencepass(
+    fmridata,
+    thecoherer,
+    coherencefunc,
+    coherencepeakval,
+    coherencepeakfreq,
+    reportstep,
+    alt=False,
+    chunksize=1000,
+    nprocs=1,
+    alwaysmultiproc=False,
+    showprogressbar=True,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+):
     """
 
     Parameters
@@ -101,22 +115,29 @@ def coherencepass(fmridata,
                         break
 
                     # process and send the data
-                    outQ.put(_procOneVoxelCoherence(val,
-                                                    thecoherer,
-                                                    fmridata[val, :],
-                                                    alt=alt,
-                                                    rt_floatset=rt_floatset,
-                                                    rt_floattype=rt_floattype))
+                    outQ.put(
+                        _procOneVoxelCoherence(
+                            val,
+                            thecoherer,
+                            fmridata[val, :],
+                            alt=alt,
+                            rt_floatset=rt_floatset,
+                            rt_floattype=rt_floattype,
+                        )
+                    )
 
                 except Exception as e:
                     print("error!", e)
                     break
 
-        data_out = tide_multiproc.run_multiproc(coherence_consumer,
-                                                inputshape, None,
-                                                nprocs=nprocs,
-                                                showprogressbar=showprogressbar,
-                                                chunksize=chunksize)
+        data_out = tide_multiproc.run_multiproc(
+            coherence_consumer,
+            inputshape,
+            None,
+            nprocs=nprocs,
+            showprogressbar=showprogressbar,
+            chunksize=chunksize,
+        )
 
         # unpack the data
         volumetotal = 0
@@ -129,16 +150,23 @@ def coherencepass(fmridata,
     else:
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and showprogressbar:
-                tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            dummy, dummy, coherencefunc[vox], coherencepeakval[vox], coherencepeakfreq[vox] = _procOneVoxelCoherence(
+                tide_util.progressbar(vox + 1, inputshape[0], label="Percent complete")
+            (
+                dummy,
+                dummy,
+                coherencefunc[vox],
+                coherencepeakval[vox],
+                coherencepeakfreq[vox],
+            ) = _procOneVoxelCoherence(
                 vox,
                 thecoherer,
                 fmridata[vox, :],
                 alt=alt,
                 rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype)
+                rt_floattype=rt_floattype,
+            )
             volumetotal += 1
-    print('\nCoherence performed on ' + str(volumetotal) + ' voxels')
+    print("\nCoherence performed on " + str(volumetotal) + " voxels")
 
     # garbage collect
     collected = gc.collect()

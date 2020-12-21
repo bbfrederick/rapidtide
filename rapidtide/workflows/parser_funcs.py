@@ -186,8 +186,7 @@ def postprocessfilteropts(args):
             args.arbvec.append(args.arbvec[0] * 0.95)
             args.arbvec.append(args.arbvec[1] * 1.05)
         elif len(args.arbvec) != 4:
-            raise ValueError("Argument '--arb' must be either two or four "
-                             "floats.")
+            raise ValueError("Argument '--arb' must be either two or four " "floats.")
         # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
         # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
         theprefilter = tide_filt.noncausalfilter(
@@ -240,10 +239,7 @@ def addpermutationopts(parser):
         action="store",
         type=str,
         choices=["shuffle", "phaserandom"],
-        help=(
-            "Permutation method for significance testing.  "
-            "Default is shuffle."
-        ),
+        help=("Permutation method for significance testing.  " "Default is shuffle."),
         default="shuffle",
     )
     parser.add_argument(
@@ -268,8 +264,7 @@ def addpermutationopts(parser):
     )
 
 
-def addsearchrangeopts(parser, details=False, defaultmin=-30.0,
-                       defaultmax=30.0):
+def addsearchrangeopts(parser, details=False, defaultmin=-30.0, defaultmax=30.0):
     parser.add_argument(
         "--searchrange",
         dest="lag_extrema",
@@ -307,10 +302,7 @@ def postprocesssearchrangeopts(args):
         args.fixdelayvalue = None
     if args.fixeddelayvalue is not None:
         args.fixdelay = True
-        args.lag_extrema = (
-            args.fixeddelayvalue - 10.0,
-            args.fixeddelayvalue + 10.0
-        )
+        args.lag_extrema = (args.fixeddelayvalue - 10.0, args.fixeddelayvalue + 10.0)
     else:
         args.fixdelay = False
 

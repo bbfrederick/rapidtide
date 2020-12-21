@@ -26,7 +26,9 @@ import argparse
 import numpy as np
 
 
-def calcASL(lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, bloodT1=1.841):
+def calcASL(
+    lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, bloodT1=1.841
+):
     theaslimage = lags * 0.0
 
     # convert rapidtide delays to time from tagging, and only keep positive delays after pld
@@ -43,48 +45,49 @@ def calcASL(lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, blo
 
 def main():
     # get the command line parameters
-    parser = argparse.ArgumentParser(prog='synthASL',
-                                     description='Use rapidtide output to predict ASL image.',
-                                     usage='%(prog)s dataset outputfilename tagoffset windowstart bloodT1')
+    parser = argparse.ArgumentParser(
+        prog="synthASL",
+        description="Use rapidtide output to predict ASL image.",
+        usage="%(prog)s dataset outputfilename tagoffset windowstart bloodT1",
+    )
+    parser.add_argument("dataset", type=str, help="The name of the rapidtide dataset.")
     parser.add_argument(
-        'dataset',
-        type=str,
-        help='The name of the rapidtide dataset.')
-    parser.add_argument(
-        'outputfilename',
-        type=str,
-        help='The name of the output nifti file.')
-
+        "outputfilename", type=str, help="The name of the output nifti file."
+    )
 
     # optional parameters
     parser.add_argument(
-        '--tagoffset',
-        dest='tagoffset',
-        metavar='SECS',
+        "--tagoffset",
+        dest="tagoffset",
+        metavar="SECS",
         type=float,
-        help='The assumed time of tagging, relative to the peak of the lag histogram (default is 2.945).',
-        default=2.945)
+        help="The assumed time of tagging, relative to the peak of the lag histogram (default is 2.945).",
+        default=2.945,
+    )
     parser.add_argument(
-        '--pld',
-        dest='pld',
-        metavar='SECS',
+        "--pld",
+        dest="pld",
+        metavar="SECS",
         type=float,
-        help='The postlabel delay (default is 1.8).',
-        default=1.8)
+        help="The postlabel delay (default is 1.8).",
+        default=1.8,
+    )
     parser.add_argument(
-        '--labelduration',
-        dest='labelduration',
-        metavar='SECS',
+        "--labelduration",
+        dest="labelduration",
+        metavar="SECS",
         type=float,
-        help='The length of the labelling period (default is 1.8).',
-        default=1.8)
+        help="The length of the labelling period (default is 1.8).",
+        default=1.8,
+    )
     parser.add_argument(
-        '--bloodT1',
-        dest='bloodT1',
-        metavar='SECS',
+        "--bloodT1",
+        dest="bloodT1",
+        metavar="SECS",
         type=float,
-        help='The T1 of blood at this field strength (default is 1.841, for 3T).',
-        default=1.841)
+        help="The T1 of blood at this field strength (default is 1.841, for 3T).",
+        default=1.841,
+    )
 
     # get the command line parameters
     try:
@@ -93,15 +96,20 @@ def main():
         parser.print_help()
         raise
 
+    thedataset = RapidtideDataset("main", args.dataset, init_LUT=False)
 
-    thedataset = RapidtideDataset('main', args.dataset, init_LUT=False)
+    themask = thedataset.overlays["lagmask"].data
+    thelags = thedataset.overlays["lagtimes"].data
+    thewidths = thedataset.overlays["lagsigma"].data
+    thestrengths = thedataset.overlays["lagstrengths"].data
 
-    themask = thedataset.overlays['lagmask'].data
-    thelags = thedataset.overlays['lagtimes'].data
-    thewidths = thedataset.overlays['lagsigma'].data
-    thestrengths = thedataset.overlays['lagstrengths'].data
-
-    print('bloodT1, tagoffset, pld, and inversion time:', args.bloodT1, args.tagoffset, args.pld, args.labelduration)
+    print(
+        "bloodT1, tagoffset, pld, and inversion time:",
+        args.bloodT1,
+        args.tagoffset,
+        args.pld,
+        args.labelduration,
+    )
     theaslimage, tagdecayfac, oxyfac, cbvfac, calcmask, offsets = calcASL(
         thelags,
         thestrengths,
@@ -110,17 +118,55 @@ def main():
         tagoffset=args.tagoffset,
         pld=args.pld,
         TI=args.labelduration,
-        bloodT1=args.bloodT1)
+        bloodT1=args.bloodT1,
+    )
 
-    tide_io.savetonifti(theaslimage, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_ASL')
-    tide_io.savetonifti(tagdecayfac, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_tagdecayfac')
-    tide_io.savetonifti(oxyfac, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_oxyfac')
-    tide_io.savetonifti(cbvfac, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_cbvfac')
-    tide_io.savetonifti(calcmask, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_calcmask')
-    tide_io.savetonifti(offsets, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_offsets')
-    tide_io.savetonifti(themask, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_lagmask')
-    tide_io.savetonifti(thelags, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_lagtimes')
-    tide_io.savetonifti(thestrengths, thedataset.overlays['lagstrengths'].header, args.outputfilename + '_lagstrengths')
+    tide_io.savetonifti(
+        theaslimage,
+        thedataset.overlays["lagstrengths"].header,
+        args.outputfilename + "_ASL",
+    )
+    tide_io.savetonifti(
+        tagdecayfac,
+        thedataset.overlays["lagstrengths"].header,
+        args.outputfilename + "_tagdecayfac",
+    )
+    tide_io.savetonifti(
+        oxyfac,
+        thedataset.overlays["lagstrengths"].header,
+        args.outputfilename + "_oxyfac",
+    )
+    tide_io.savetonifti(
+        cbvfac,
+        thedataset.overlays["lagstrengths"].header,
+        args.outputfilename + "_cbvfac",
+    )
+    tide_io.savetonifti(
+        calcmask,
+        thedataset.overlays["lagstrengths"].header,
+        args.outputfilename + "_calcmask",
+    )
+    tide_io.savetonifti(
+        offsets,
+        thedataset.overlays["lagstrengths"].header,
+        args.outputfilename + "_offsets",
+    )
+    tide_io.savetonifti(
+        themask,
+        thedataset.overlays["lagstrengths"].header,
+        args.outputfilename + "_lagmask",
+    )
+    tide_io.savetonifti(
+        thelags,
+        thedataset.overlays["lagstrengths"].header,
+        args.outputfilename + "_lagtimes",
+    )
+    tide_io.savetonifti(
+        thestrengths,
+        thedataset.overlays["lagstrengths"].header,
+        args.outputfilename + "_lagstrengths",
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

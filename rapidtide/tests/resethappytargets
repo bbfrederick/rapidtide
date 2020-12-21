@@ -18,26 +18,41 @@
 from __future__ import print_function
 
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import os
 from shutil import copyfile
 
-#from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path, create_dir
-from utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path, create_dir
+# from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path, create_dir
+from utils import (
+    get_test_data_path,
+    get_test_target_path,
+    get_test_temp_path,
+    get_examples_path,
+    get_rapidtide_root,
+    get_scripts_path,
+    create_dir,
+)
 
-for phase in ['happy_']:
+for phase in ["happy_"]:
 
     # copy things into target directory
-    for suffix in ['_app.nii.gz', '_mask.nii.gz', '_vesselmask.nii.gz', '_cardfromfmri_25.0Hz.txt', '_cardfromfmri_dlfiltered_25.0Hz.txt', '_cardfromfmrienv_25.0Hz.txt']:
+    for suffix in [
+        "_app.nii.gz",
+        "_mask.nii.gz",
+        "_vesselmask.nii.gz",
+        "_cardfromfmri_25.0Hz.txt",
+        "_cardfromfmri_dlfiltered_25.0Hz.txt",
+        "_cardfromfmrienv_25.0Hz.txt",
+    ]:
         # set the source and destination filename
-        sourcefile = phase + 'output' + suffix
-        destfile = sourcefile.replace('_output', '_target')
-        
+        sourcefile = phase + "output" + suffix
+        destfile = sourcefile.replace("_output", "_target")
+
         # check to see that the source file exists
         fullsourcefile = os.path.join(get_test_temp_path(), sourcefile)
         if os.path.isfile(fullsourcefile):
-            fulldestfile = os.path.join('testtargets', destfile)
+            fulldestfile = os.path.join("testtargets", destfile)
             copyfile(fullsourcefile, fulldestfile)
-            #print('cp', fullsourcefile, fulldestfile)
+            # print('cp', fullsourcefile, fulldestfile)
         else:
-            print(fullsourcefile, 'does not exist - skipping')
+            print(fullsourcefile, "does not exist - skipping")

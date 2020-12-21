@@ -22,11 +22,12 @@
 #
 from __future__ import print_function
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 import sys
 import os
 import argparse
-from rapidtide.workflows.parser_funcs import (is_valid_file, invert_float, is_float)
+from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float
 
 import matplotlib.cm as cm
 import rapidtide.io as tide_io
@@ -41,183 +42,246 @@ from matplotlib.pyplot import figure, plot, show, savefig, setp
 def phase(mcv):
     return np.arctan2(mcv.imag, mcv.real)
 
-def _get_parser():
-    parser = argparse.ArgumentParser(prog='showtc',
-                                     description='Plots the data in text files.',
-                                     usage='%(prog)s texfilename[:col1,col2...,coln] [textfilename]... [options]')
 
-    parser.add_argument('textfilenames',
-                        type=str,
-                        nargs='+',
-                        help='One or more input files, with optional column specifications')
+def _get_parser():
+    parser = argparse.ArgumentParser(
+        prog="showtc",
+        description="Plots the data in text files.",
+        usage="%(prog)s texfilename[:col1,col2...,coln] [textfilename]... [options]",
+    )
+
+    parser.add_argument(
+        "textfilenames",
+        type=str,
+        nargs="+",
+        help="One or more input files, with optional column specifications",
+    )
 
     sampling = parser.add_mutually_exclusive_group()
-    sampling.add_argument('--samplerate',
-                        dest='samplerate',
-                        action='store',
-                        metavar='FREQ',
-                        type=lambda x: is_float(parser, x),
-                        help=('Set the sample rate of the data file to FREQ. '
-                              'If neither samplerate or sampletime is specified, sample rate is 1.0.'),
-                        default='auto')
-    sampling.add_argument('--sampletime',
-                        dest='samplerate',
-                        action='store',
-                        metavar='TSTEP',
-                        type=lambda x: invert_float(parser, x),
-                        help=('Set the sample rate of the data file to 1.0/TSTEP. '
-                              'If neither samplerate or sampletime is specified, sample rate is 1.0.'),
-                        default='auto')
+    sampling.add_argument(
+        "--samplerate",
+        dest="samplerate",
+        action="store",
+        metavar="FREQ",
+        type=lambda x: is_float(parser, x),
+        help=(
+            "Set the sample rate of the data file to FREQ. "
+            "If neither samplerate or sampletime is specified, sample rate is 1.0."
+        ),
+        default="auto",
+    )
+    sampling.add_argument(
+        "--sampletime",
+        dest="samplerate",
+        action="store",
+        metavar="TSTEP",
+        type=lambda x: invert_float(parser, x),
+        help=(
+            "Set the sample rate of the data file to 1.0/TSTEP. "
+            "If neither samplerate or sampletime is specified, sample rate is 1.0."
+        ),
+        default="auto",
+    )
 
-    parser.add_argument('--displaytype',
-                         dest='displaymode',
-                         action='store',
-                         type=str,
-                         choices=['time', 'power', 'phase'],
-                         help=("Display data as time series (default), power spectrum, or phase spectrum."),
-                         default='time')
-    parser.add_argument('--format',
-                         dest='plotformat',
-                         action='store',
-                         type=str,
-                         choices=['overlaid', 'separate', 'separatelinked'],
-                         help=('Display data overlaid (default), in individually scaled windows, or in separate windows with linked scaling.'),
-                         default='overlaid')
-    parser.add_argument('--waterfall',
-                        action='store_true',
-                        dest='dowaterfall',
-                        help='Display multiple timecourses in a waterfall plot.',
-                        default=False)
+    parser.add_argument(
+        "--displaytype",
+        dest="displaymode",
+        action="store",
+        type=str,
+        choices=["time", "power", "phase"],
+        help=(
+            "Display data as time series (default), power spectrum, or phase spectrum."
+        ),
+        default="time",
+    )
+    parser.add_argument(
+        "--format",
+        dest="plotformat",
+        action="store",
+        type=str,
+        choices=["overlaid", "separate", "separatelinked"],
+        help=(
+            "Display data overlaid (default), in individually scaled windows, or in separate windows with linked scaling."
+        ),
+        default="overlaid",
+    )
+    parser.add_argument(
+        "--waterfall",
+        action="store_true",
+        dest="dowaterfall",
+        help="Display multiple timecourses in a waterfall plot.",
+        default=False,
+    )
 
-    parser.add_argument('--transpose',
-                        action='store_true',
-                        dest='dotranspose',
-                        help='Swap rows and columns in the input files.',
-                        default=False)
+    parser.add_argument(
+        "--transpose",
+        action="store_true",
+        dest="dotranspose",
+        help="Swap rows and columns in the input files.",
+        default=False,
+    )
 
-    parser.add_argument('--title',
-                        dest='thetitle',
-                        metavar='TITLE',
-                        type=str,
-                        action='store',
-                        help='Use TITLE as the overall title of the graph.',
-                        default='')
-    parser.add_argument('--xlabel',
-                        dest='xlabel',
-                        metavar='LABEL',
-                        type=str,
-                        action='store',
-                        help='Label for the plot x axis.',
-                        default='')
-    parser.add_argument('--ylabel',
-                        dest='ylabel',
-                        metavar='LABEL',
-                        type=str,
-                        action='store',
-                        help='Label for the plot y axis.',
-                        default='')
-    parser.add_argument('--legends',
-                        dest='legends',
-                        metavar='LEGEND[,LEGEND[,LEGEND...]]',
-                        type=str,
-                        action='store',
-                        help='Comma separated list of legends for each timecourse.',
-                        default=None)
+    parser.add_argument(
+        "--title",
+        dest="thetitle",
+        metavar="TITLE",
+        type=str,
+        action="store",
+        help="Use TITLE as the overall title of the graph.",
+        default="",
+    )
+    parser.add_argument(
+        "--xlabel",
+        dest="xlabel",
+        metavar="LABEL",
+        type=str,
+        action="store",
+        help="Label for the plot x axis.",
+        default="",
+    )
+    parser.add_argument(
+        "--ylabel",
+        dest="ylabel",
+        metavar="LABEL",
+        type=str,
+        action="store",
+        help="Label for the plot y axis.",
+        default="",
+    )
+    parser.add_argument(
+        "--legends",
+        dest="legends",
+        metavar="LEGEND[,LEGEND[,LEGEND...]]",
+        type=str,
+        action="store",
+        help="Comma separated list of legends for each timecourse.",
+        default=None,
+    )
 
-    parser.add_argument('--legendloc',
-                        dest='legendloc',
-                        metavar='LOC',
-                        type=int,
-                        action='store',
-                        help=('Integer from 0 to 10 inclusive specifying legend location.  Legal values are: '
-                              '0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right, '
-                              '5: right, 6: center left, 7: center right, 8: lower center, 9: upper center, '
-                              '10: center.  Default is 2.'),
-                        default=2)
+    parser.add_argument(
+        "--legendloc",
+        dest="legendloc",
+        metavar="LOC",
+        type=int,
+        action="store",
+        help=(
+            "Integer from 0 to 10 inclusive specifying legend location.  Legal values are: "
+            "0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right, "
+            "5: right, 6: center left, 7: center right, 8: lower center, 9: upper center, "
+            "10: center.  Default is 2."
+        ),
+        default=2,
+    )
 
-    parser.add_argument('--colors',
-                        dest='colors',
-                        metavar='COLOR[,COLOR[,COLOR...]]',
-                        type=str,
-                        action='store',
-                        help='Comma separated list of colors for each timecourse.',
-                        default=None)
+    parser.add_argument(
+        "--colors",
+        dest="colors",
+        metavar="COLOR[,COLOR[,COLOR...]]",
+        type=str,
+        action="store",
+        help="Comma separated list of colors for each timecourse.",
+        default=None,
+    )
 
-    parser.add_argument('--nolegend',
-                        dest='dolegend',
-                        action='store_false',
-                        help='Turn off legend label.',
-                        default=True)
-    parser.add_argument('--noxax',
-                        dest='showxax',
-                        action='store_false',
-                        help='Do not show x axis.',
-                        default=True)
-    parser.add_argument('--noyax',
-                        dest='showyax',
-                        action='store_false',
-                        help='Do not show y axis.',
-                        default=True)
+    parser.add_argument(
+        "--nolegend",
+        dest="dolegend",
+        action="store_false",
+        help="Turn off legend label.",
+        default=True,
+    )
+    parser.add_argument(
+        "--noxax",
+        dest="showxax",
+        action="store_false",
+        help="Do not show x axis.",
+        default=True,
+    )
+    parser.add_argument(
+        "--noyax",
+        dest="showyax",
+        action="store_false",
+        help="Do not show y axis.",
+        default=True,
+    )
 
-    parser.add_argument('--linewidth',
-                        dest='linewidths',
-                        metavar='LINEWIDTH[,LINEWIDTH[,LINEWIDTH...]]',
-                        type=str,
-                        help='A comma separated list of linewidths (in points) for plots.  Default is 1.',
-                        default=None)
+    parser.add_argument(
+        "--linewidth",
+        dest="linewidths",
+        metavar="LINEWIDTH[,LINEWIDTH[,LINEWIDTH...]]",
+        type=str,
+        help="A comma separated list of linewidths (in points) for plots.  Default is 1.",
+        default=None,
+    )
 
-    parser.add_argument('--tofile',
-                        dest='outputfile',
-                        metavar='FILENAME',
-                        type=str,
-                        action='store',
-                        help='Write figure to file FILENAME instead of displaying on the screen.',
-                        default=None)
-    parser.add_argument('--fontscalefac',
-                        dest='fontscalefac',
-                        metavar='FAC',
-                        type=float,
-                        action='store',
-                        help='Scaling factor for annotation fonts (default is 1.0).',
-                        default=1.0)
-    parser.add_argument('--saveres',
-                        dest='saveres',
-                        metavar='DPI',
-                        type=int,
-                        action='store',
-                        help='Write figure to file at DPI dots per inch (default is 1000).',
-                        default=1000)
-    parser.add_argument('--voffset',
-                        dest='voffset',
-                        metavar='OFFSET',
-                        type=float,
-                        action='store',
-                        help='Plot multiple timecourses with OFFSET between them (use negative OFFSET to set automatically).',
-                        default=0.0)
+    parser.add_argument(
+        "--tofile",
+        dest="outputfile",
+        metavar="FILENAME",
+        type=str,
+        action="store",
+        help="Write figure to file FILENAME instead of displaying on the screen.",
+        default=None,
+    )
+    parser.add_argument(
+        "--fontscalefac",
+        dest="fontscalefac",
+        metavar="FAC",
+        type=float,
+        action="store",
+        help="Scaling factor for annotation fonts (default is 1.0).",
+        default=1.0,
+    )
+    parser.add_argument(
+        "--saveres",
+        dest="saveres",
+        metavar="DPI",
+        type=int,
+        action="store",
+        help="Write figure to file at DPI dots per inch (default is 1000).",
+        default=1000,
+    )
+    parser.add_argument(
+        "--voffset",
+        dest="voffset",
+        metavar="OFFSET",
+        type=float,
+        action="store",
+        help="Plot multiple timecourses with OFFSET between them (use negative OFFSET to set automatically).",
+        default=0.0,
+    )
 
-    parser.add_argument('--starttime',
-                        dest='thestarttime',
-                        metavar='START',
-                        type=float,
-                        help='Start plotting at START seconds.',
-                        default=-1000000.0)
-    parser.add_argument('--endtime',
-                        dest='theendtime',
-                        metavar='END',
-                        type=float,
-                        help='Finish plotting at END seconds.',
-                        default=1000000.0)
-    parser.add_argument('--numskip',
-                        dest='numskip',
-                        metavar='NUM',
-                        type=int,
-                        help='Skip NUM lines at the beginning of each file (to get past header lines).',
-                        default=0)
-    parser.add_argument('--debug',
-                        dest='debug',
-                        action='store_true',
-                        help='Output additional debugging information.',
-                        default=False)
+    parser.add_argument(
+        "--starttime",
+        dest="thestarttime",
+        metavar="START",
+        type=float,
+        help="Start plotting at START seconds.",
+        default=-1000000.0,
+    )
+    parser.add_argument(
+        "--endtime",
+        dest="theendtime",
+        metavar="END",
+        type=float,
+        help="Finish plotting at END seconds.",
+        default=1000000.0,
+    )
+    parser.add_argument(
+        "--numskip",
+        dest="numskip",
+        metavar="NUM",
+        type=int,
+        help="Skip NUM lines at the beginning of each file (to get past header lines).",
+        default=0,
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Output additional debugging information.",
+        default=False,
+    )
 
     return parser
 
@@ -225,88 +289,88 @@ def _get_parser():
 def showtc(args):
     # process the file list
     textfilename = []
-    for thefile in args['textfilenames']:
-        textfilename.append(thefile.split(':'))
+    for thefile in args["textfilenames"]:
+        textfilename.append(thefile.split(":"))
 
     # set the sample rate
-    if args['samplerate'] == 'auto':
+    if args["samplerate"] == "auto":
         samplerate = 1.0
     else:
-        samplerate = args['samplerate']
+        samplerate = args["samplerate"]
 
     # set the appropriate display mode
-    if args['displaymode'] == 'time':
+    if args["displaymode"] == "time":
         dospectrum = False
-        specmode = 'power'
-    elif args['displaymode'] == 'power':
+        specmode = "power"
+    elif args["displaymode"] == "power":
         dospectrum = True
-        specmode = 'power'
-    elif args['displaymode'] == 'phase':
+        specmode = "power"
+    elif args["displaymode"] == "phase":
         dospectrum = True
-        specmode = 'phase'
+        specmode = "phase"
     else:
-        print('illegal display mode')
+        print("illegal display mode")
         sys.exit()
 
     # determine how to composite multiple plots
-    if args['plotformat'] == 'overlaid':
+    if args["plotformat"] == "overlaid":
         separate = False
         linky = True
-    elif args['plotformat'] == 'separate':
+    elif args["plotformat"] == "separate":
         separate = True
         linky = False
-    elif args['plotformat'] == 'separatelinked':
+    elif args["plotformat"] == "separatelinked":
         separate = True
         linky = True
     else:
-        print('illegal formatting mode')
+        print("illegal formatting mode")
         sys.exit()
-    voffset = args['voffset']
+    voffset = args["voffset"]
 
     # set various cosmetic aspects of the plots
-    if args['colors'] is not None:
-        colornames = args['colors'].split(',')
+    if args["colors"] is not None:
+        colornames = args["colors"].split(",")
     else:
         colornames = []
 
-    if args['legends'] is not None:
-        legends = args['legends'].split(',')
+    if args["legends"] is not None:
+        legends = args["legends"].split(",")
         legendset = True
     else:
         legends = []
         legendset = False
-    dolegend = args['dolegend']
+    dolegend = args["dolegend"]
 
-    if args['linewidths'] is not None:
+    if args["linewidths"] is not None:
         thelinewidth = []
-        for thestring in args['linewidths'].split(','):
+        for thestring in args["linewidths"].split(","):
             thelinewidth.append(float(thestring))
     else:
         thelinewidth = [1.0]
     numlinewidths = len(thelinewidth)
 
-    thetitle = args['thetitle']
-    xlabel = args['xlabel']
-    ylabel = args['ylabel']
-    showxax = args['showxax']
-    showyax = args['showyax']
-    thestarttime = args['thestarttime']
-    theendtime = args['theendtime']
-    fontscalefac = args['fontscalefac']
-    if 0 <= args['legendloc'] <= 10:
-        legendloc = args['legendloc']
+    thetitle = args["thetitle"]
+    xlabel = args["xlabel"]
+    ylabel = args["ylabel"]
+    showxax = args["showxax"]
+    showyax = args["showyax"]
+    thestarttime = args["thestarttime"]
+    theendtime = args["theendtime"]
+    fontscalefac = args["fontscalefac"]
+    if 0 <= args["legendloc"] <= 10:
+        legendloc = args["legendloc"]
     else:
-        print('illegal legend location:', args['legendloc'])
+        print("illegal legend location:", args["legendloc"])
         sys.exit()
 
     # set options for saving plots
-    saveres = args['saveres']
-    outputfile = args['outputfile']
+    saveres = args["saveres"]
+    outputfile = args["outputfile"]
 
     # miscellaneous
-    dotranspose = args['dotranspose']
-    dowaterfall = args['dowaterfall']
-    debug = args['debug']
+    dotranspose = args["dotranspose"]
+    dowaterfall = args["dowaterfall"]
+    debug = args["debug"]
 
     savespec = False
     detrendorder = 1
@@ -315,7 +379,7 @@ def showtc(args):
 
     # check range
     if thestarttime >= theendtime:
-        print('endtime must be greater then starttime;')
+        print("endtime must be greater then starttime;")
         sys.exit()
 
     # handle required args first
@@ -329,24 +393,30 @@ def showtc(args):
     shortcolnames = True
     # read in all the data
     for i in range(0, len(textfilename)):
-        print('filename ', i, textfilename[i])
+        print("filename ", i, textfilename[i])
 
         # check file type
         filebase, extension = os.path.splitext(textfilename[i][0])
-        if extension == '.json':
-            thissamplerate, thisstartoffset, colnames, invecs, compressed = tide_io.readbidstsv(textfilename[i][0])
+        if extension == ".json":
+            (
+                thissamplerate,
+                thisstartoffset,
+                colnames,
+                invecs,
+                compressed,
+            ) = tide_io.readbidstsv(textfilename[i][0])
         else:
-            invecs = tide_io.readvecs(textfilename[i][0], numskip=args['numskip'])
+            invecs = tide_io.readvecs(textfilename[i][0], numskip=args["numskip"])
             thissamplerate = samplerate
             thisstartoffset = 0.0
             colnames = None
         if dotranspose:
             invecs = np.transpose(invecs)
         if debug:
-            print('   ', invecs.shape[0], ' columns')
+            print("   ", invecs.shape[0], " columns")
         if len(textfilename[i]) == 2:
             collist = []
-            for column in (textfilename[i][1]).split(','):
+            for column in (textfilename[i][1]).split(","):
                 if colnames is None:
                     collist.append(int(column))
                 else:
@@ -354,14 +424,14 @@ def showtc(args):
                         theindex = colnames.index(column)
                         collist.append(theindex)
                     except ValueError:
-                        print('no column named', column, 'in', colnames)
+                        print("no column named", column, "in", colnames)
                         sys.exit()
         else:
             collist = range(0, invecs.shape[0])
             # for j in range(0, invecs.shape[0]):
         for j in collist:
             if debug:
-                print('appending vector number ', j)
+                print("appending vector number ", j)
             if dospectrum:
                 if invecs.shape[1] % 2 == 1:
                     invec = invecs[j, :-1]
@@ -378,42 +448,64 @@ def showtc(args):
                     nperseg = None
 
                 if useHamming:
-                   freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(invec)) * invec, Fs=thissamplerate, mode=specmode)
+                    freqaxis, spectrum = tide_filt.spectrum(
+                        tide_filt.hamming(len(invec)) * invec,
+                        Fs=thissamplerate,
+                        mode=specmode,
+                    )
                 else:
-                   freqaxis, spectrum = tide_filt.spectrum(invec, Fs = thissamplerate, mode=specmode)
+                    freqaxis, spectrum = tide_filt.spectrum(
+                        invec, Fs=thissamplerate, mode=specmode
+                    )
                 if savespec:
-                    tide_io.writenpvecs(np.transpose(np.stack([freqaxis, spectrum], axis=1)), "thespectrum.txt")
+                    tide_io.writenpvecs(
+                        np.transpose(np.stack([freqaxis, spectrum], axis=1)),
+                        "thespectrum.txt",
+                    )
                 xvecs.append(freqaxis)
                 yvecs.append(spectrum)
             else:
                 yvecs.append(invecs[j] * 1.0)
-                xvecs.append(thisstartoffset + np.arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate)
+                xvecs.append(
+                    thisstartoffset
+                    + np.arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate
+                )
             if len(yvecs[-1]) < minlen:
                 minlen = len(yvecs[-1])
             if not legendset:
                 if invecs.shape[0] > 1:
                     if colnames is None:
                         if shortcolnames:
-                            linelabels.append('column' + str(j).zfill(2))
+                            linelabels.append("column" + str(j).zfill(2))
                         else:
-                            linelabels.append(textfilename[i][0] + '_column' + str(j).zfill(2))
+                            linelabels.append(
+                                textfilename[i][0] + "_column" + str(j).zfill(2)
+                            )
 
                     else:
                         if shortcolnames:
                             linelabels.append(colnames[j])
                         else:
-                            linelabels.append(textfilename[i][0] + '_' + colnames[j])
+                            linelabels.append(textfilename[i][0] + "_" + colnames[j])
                 else:
                     linelabels.append(textfilename[i][0])
             else:
                 linelabels.append(legends[i % len(legends)])
-                '''if invecs.shape[0] > 1:
+                """if invecs.shape[0] > 1:
                     linelabels.append(legends[i % len(legends)] + '_column' + str(j).zfill(2))
                 else:
-                    linelabels.append(legends[i % len(legends)])'''
+                    linelabels.append(legends[i % len(legends)])"""
             samplerates.append(thissamplerate + 0.0)
             if debug:
-                print('timecourse:', j, ', len:', len(xvecs[-1]), ', timerange:', xvecs[-1][0], xvecs[-1][-1])
+                print(
+                    "timecourse:",
+                    j,
+                    ", len:",
+                    len(xvecs[-1]),
+                    ", timerange:",
+                    xvecs[-1][0],
+                    xvecs[-1][-1],
+                )
             numvecs += 1
 
     thestartpoint = tide_util.valtoindex(xvecs[0], thestarttime)
@@ -421,8 +513,8 @@ def showtc(args):
     thestarttime = xvecs[0][thestartpoint]
     theendtime = xvecs[0][theendpoint]
     if debug:
-        print('full range (pts):',thestartpoint, theendpoint)
-        print('full range (time):',thestarttime, theendtime)
+        print("full range (pts):", thestartpoint, theendpoint)
+        print("full range (time):", thestarttime, theendtime)
     overallxmax = -1e38
     overallxmin = 1e38
     for thevec in xvecs:
@@ -432,8 +524,12 @@ def showtc(args):
     ymins = []
     ymaxs = []
     for thevec in yvecs:
-        ymins.append(np.min(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
-        ymaxs.append(np.max(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
+        ymins.append(
+            np.min(np.asarray(thevec[thestartpoint:theendpoint], dtype="float"))
+        )
+        ymaxs.append(
+            np.max(np.asarray(thevec[thestartpoint:theendpoint], dtype="float"))
+        )
     overallymax = -1e38
     overallymin = 1e38
     for thevec in yvecs:
@@ -441,12 +537,12 @@ def showtc(args):
         overallymin = np.min([np.min(thevec), overallymin])
     yrange = (overallymin, overallymax)
     if debug:
-        print('xrange:', xrange)
-        print('yrange:', yrange)
+        print("xrange:", xrange)
+        print("yrange:", yrange)
     if voffset < 0.0:
         voffset = yrange[1] - yrange[0]
     if debug:
-        print('voffset:', voffset)
+        print("voffset:", voffset)
     if not separate:
         for i in range(0, numvecs):
             yvecs[i] += (numvecs - i - 1) * voffset
@@ -503,8 +599,13 @@ def showtc(args):
     for i in range(0, numvecs):
         if separate:
             ax = axlist[i]
-        ax.plot(xvecs[i], yvecs[i],
-                color=colorlist[i], label=linelabels[i], linewidth=thelinewidth[i % numlinewidths])
+        ax.plot(
+            xvecs[i],
+            yvecs[i],
+            color=colorlist[i],
+            label=linelabels[i],
+            linewidth=thelinewidth[i % numlinewidths],
+        )
         if dolegend:
             ax.legend(fontsize=thelegendfontsize, loc=legendloc)
         ax.set_xlim(xrange)
@@ -518,9 +619,9 @@ def showtc(args):
             # print(themin, themax, thediff)
             ax.set_ylim(top=(themax + thediff / 20.0), bottom=(themin - thediff / 20.0))
         if showxax:
-            ax.tick_params(axis='x', labelsize=thexlabelfontsize, which='both')
+            ax.tick_params(axis="x", labelsize=thexlabelfontsize, which="both")
         if showyax:
-            ax.tick_params(axis='y', labelsize=theylabelfontsize, which='both')
+            ax.tick_params(axis="y", labelsize=theylabelfontsize, which="both")
 
         if separate:
             fig.subplots_adjust(hspace=0)
@@ -528,22 +629,22 @@ def showtc(args):
 
         if dospectrum:
             if xlabel is None:
-                xlabel = 'Frequency (Hz)'
-            if specmode=='power':
+                xlabel = "Frequency (Hz)"
+            if specmode == "power":
                 if ylabel is None:
-                    ylabel = 'Signal power'
+                    ylabel = "Signal power"
             else:
                 if ylabel is None:
-                    ylabel = 'Signal phase'
+                    ylabel = "Signal phase"
         else:
             if xlabel is None:
-                xlabel = 'Time (s)'
+                xlabel = "Time (s)"
         if showxax:
-            ax.set_xlabel(xlabel, fontsize=thexlabelfontsize, fontweight='bold')
+            ax.set_xlabel(xlabel, fontsize=thexlabelfontsize, fontweight="bold")
         else:
             ax.xaxis.set_visible(False)
         if showyax:
-            ax.set_ylabel(ylabel, fontsize=theylabelfontsize, fontweight='bold')
+            ax.set_ylabel(ylabel, fontsize=theylabelfontsize, fontweight="bold")
         else:
             ax.yaxis.set_visible(False)
 
@@ -552,7 +653,8 @@ def showtc(args):
     if outputfile is None:
         show()
     else:
-        savefig(outputfile, bbox_inches='tight', dpi=saveres)
+        savefig(outputfile, bbox_inches="tight", dpi=saveres)
+
 
 def main():
     try:
@@ -561,7 +663,7 @@ def main():
         _get_parser().print_help()
         raise
 
-    if args['debug']:
+    if args["debug"]:
         print(args)
 
     showtc(args)
@@ -569,4 +671,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

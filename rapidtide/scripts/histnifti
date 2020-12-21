@@ -28,40 +28,41 @@ import sys
 import numpy as np
 
 
-def progressbar(thisval, end_val, label='Percent', barsize=60):
+def progressbar(thisval, end_val, label="Percent", barsize=60):
     percent = float(thisval) / end_val
-    hashes = '#' * int(round(percent * barsize))
-    spaces = ' ' * (barsize - len(hashes))
-    sys.stdout.write('\r{0}: [{1}] {2:.3f}%'.format(label, hashes + spaces, 100.0 * percent))
+    hashes = "#" * int(round(percent * barsize))
+    spaces = " " * (barsize - len(hashes))
+    sys.stdout.write(
+        "\r{0}: [{1}] {2:.3f}%".format(label, hashes + spaces, 100.0 * percent)
+    )
     sys.stdout.flush()
 
 
 def _get_parser():
     # get the command line parameters
     parser = argparse.ArgumentParser(
-        prog='histnifti',
-        description='Generates a histogram of the values in a NIFTI file.',
-        usage='%(prog)s inputfile outputroot')
+        prog="histnifti",
+        description="Generates a histogram of the values in a NIFTI file.",
+        usage="%(prog)s inputfile outputroot",
+    )
+    parser.add_argument("inputfile", help="the name of the input NIFTI file")
+    parser.add_argument("outputroot", help="the root of the output file names")
     parser.add_argument(
-        'inputfile',
-        help='the name of the input NIFTI file')
-    parser.add_argument(
-        'outputroot',
-        help='the root of the output file names')
-    parser.add_argument(
-        '--histlen',
-        dest='histlen',
+        "--histlen",
+        dest="histlen",
         type=int,
-        metavar='LEN',
-        help='Set histogram length to LEN (default is 101).',
-        default=101)
+        metavar="LEN",
+        help="Set histogram length to LEN (default is 101).",
+        default=101,
+    )
     parser.add_argument(
-        '--maskfile',
-        dest='maskfile',
+        "--maskfile",
+        dest="maskfile",
         type=str,
-        metavar='MASK',
-        help='Only process voxels within the 3D mask MASK.',
-        default=None)
+        metavar="MASK",
+        help="Only process voxels within the 3D mask MASK.",
+        default=None,
+    )
     return parser
 
 
@@ -70,7 +71,7 @@ def main():
     thepercentiles = [0.95, 0.99, 0.995, 0.999]
     thepvalnames = []
     for thispercentile in thepercentiles:
-        thepvalnames.append(str(1.0 - thispercentile).replace('.', 'p'))
+        thepvalnames.append(str(1.0 - thispercentile).replace(".", "p"))
 
     # get the command line parameters
     try:
@@ -80,48 +81,64 @@ def main():
         raise
 
     # load the data
-    print('loading data')
-    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)
+    print("loading data")
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(
+        args.inputfile
+    )
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
     xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
     Fs = 1.0 / tr
-    #print('tr from header =', tr, ', sample frequency is ', Fs)
+    # print('tr from header =', tr, ', sample frequency is ', Fs)
     if timepoints > 1:
         is4D = True
     else:
         is4D = False
 
     if args.maskfile is not None:
-        mask_img, mask_data, mask_hdr, themaskdims, themasksizes = tide_io.readfromnifti(args.maskfile)
+        (
+            mask_img,
+            mask_data,
+            mask_hdr,
+            themaskdims,
+            themasksizes,
+        ) = tide_io.readfromnifti(args.maskfile)
         if not tide_io.checkspacematch(mask_hdr, input_hdr):
-            print('Dimensions of ' + args.maskfile + ' mask do not match the input data - exiting')
+            print(
+                "Dimensions of "
+                + args.maskfile
+                + " mask do not match the input data - exiting"
+            )
             sys.exit()
 
     numspatiallocs = int(xsize) * int(ysize) * int(numslices)
     if is4D:
         corr_data = input_data.reshape((numspatiallocs, timepoints))
 
-        print('allocating arrays')
-        sorteddata = np.zeros((numspatiallocs, timepoints), dtype='float')
-        outputhists = np.zeros((numspatiallocs, args.histlen), dtype='float')
-        outputhistfits = np.zeros((numspatiallocs, args.histlen), dtype='float')
-        pcts_data = np.zeros((numspatiallocs, len(thepercentiles)), dtype='float')
-        pcts_fit = np.zeros((numspatiallocs, len(thepercentiles)), dtype='float')
+        print("allocating arrays")
+        sorteddata = np.zeros((numspatiallocs, timepoints), dtype="float")
+        outputhists = np.zeros((numspatiallocs, args.histlen), dtype="float")
+        outputhistfits = np.zeros((numspatiallocs, args.histlen), dtype="float")
+        pcts_data = np.zeros((numspatiallocs, len(thepercentiles)), dtype="float")
+        pcts_fit = np.zeros((numspatiallocs, len(thepercentiles)), dtype="float")
 
         # cycle over all voxels
         # therange=(0,1.1*tide_stats.getfracvals(corr_data,[0.95],numbins=1000,nozero=True)[0])
         therange = (0, np.max(corr_data))
-        print('the range is ', therange)
+        print("the range is ", therange)
 
-        print('now cycling over all voxels')
+        print("now cycling over all voxels")
         for spatialloc in range(0, numspatiallocs):
             sorteddata[spatialloc, :] = np.sort(corr_data[spatialloc, :])
             if spatialloc % 100 == 0:
-                progressbar(spatialloc + 1, numspatiallocs, label='Percent complete')
+                progressbar(spatialloc + 1, numspatiallocs, label="Percent complete")
 
         # now do the ones with other numbers of time points
         theheader = input_hdr
-        tide_io.savetonifti(sorteddata.reshape((xsize, ysize, numslices, timepoints)), theheader, args.outputroot + '_sorted')
+        tide_io.savetonifti(
+            sorteddata.reshape((xsize, ysize, numslices, timepoints)),
+            theheader,
+            args.outputroot + "_sorted",
+        )
     else:
         reshapeddata = input_data.reshape((numspatiallocs))
         if args.maskfile is None:
@@ -131,11 +148,16 @@ def main():
             reshapedmask = mask_data.reshape((numspatiallocs))
             imgvals = reshapeddata[np.where(reshapedmask > 0.5)]
             print(imgvals.shape)
-        tide_stats.makeandsavehistogram(imgvals, args.histlen, 0,
-                                        args.outputroot + '_hist',
-                                        displaytitle='Value histogram',
-                                        displayplots=True, refine=False)
+        tide_stats.makeandsavehistogram(
+            imgvals,
+            args.histlen,
+            0,
+            args.outputroot + "_hist",
+            displaytitle="Value histogram",
+            displayplots=True,
+            refine=False,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

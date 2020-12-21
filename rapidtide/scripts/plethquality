@@ -26,6 +26,7 @@ import glob
 from scipy.stats import skew
 import rapidtide.io as tide_io
 
+
 def plethquality(waveform, Fs, S_windowsecs=5.0, debug=False):
     """
 
@@ -58,11 +59,11 @@ def plethquality(waveform, Fs, S_windowsecs=5.0, debug=False):
     S_windowpts += 1 - S_windowpts % 2
     S_waveform = waveform * 0.0
     if debug:
-        print('S_windowsecs, S_windowpts:', S_windowsecs, S_windowpts)
+        print("S_windowsecs, S_windowpts:", S_windowsecs, S_windowpts)
     for i in range(0, len(waveform)):
         startpt = np.max([0, i - S_windowpts // 2])
         endpt = np.min([i + S_windowpts // 2, len(waveform)])
-        S_waveform[i] = skew(waveform[startpt:endpt + 1], nan_policy='omit')
+        S_waveform[i] = skew(waveform[startpt : endpt + 1], nan_policy="omit")
         if debug:
             print(i, startpt, endpt, endpt - startpt + 1, S_waveform[i])
 
@@ -71,11 +72,14 @@ def plethquality(waveform, Fs, S_windowsecs=5.0, debug=False):
 
     return S_sqi_mean, S_sqi_std, S_waveform
 
+
 def usage():
     print("usage: plethquality inputfile outputfile samplerate")
     print("")
     print("required arguments:")
-    print("    inputfile                 - the name of a text file containing a cardiac signal")
+    print(
+        "    inputfile                 - the name of a text file containing a cardiac signal"
+    )
     print("    outputfile                - the name of the output text file")
     print("    samplerate                - data samplerate in Hz")
     print("")
@@ -109,13 +113,12 @@ def main():
         else:
             assert False, "unhandled option"
 
-
     # read in the data
     plethdata = tide_io.readvec(inputfile)
 
     # calculate the quality score
     s_mean, s_std, quality = plethquality(plethdata, Fs)
-    print(inputfile, s_mean, '+/-', s_std)
+    print(inputfile, s_mean, "+/-", s_std)
     tide_io.writevec(quality, outputfile)
 
     if display:
@@ -124,5 +127,5 @@ def main():
         plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

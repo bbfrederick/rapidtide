@@ -27,6 +27,5 @@ from __future__ import print_function, division
 import sys
 import rapidtide.workflows.linfit as linfit_workflow
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     linfit_workflow.main()
-

@@ -29,42 +29,69 @@ import numpy as np
 import argparse
 
 
-from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show, bar, savefig, scatter, axhline, xlim, ylim, annotate
- 
+from matplotlib.pyplot import (
+    plot,
+    xlabel,
+    ylabel,
+    title,
+    legend,
+    show,
+    bar,
+    savefig,
+    scatter,
+    axhline,
+    xlim,
+    ylim,
+    annotate,
+)
 
-def bland_altman_plot(data1, data2, identifier=None, fontscalefac=1.0, xrange=None, yrange=None, *args, **kwargs):
+
+def bland_altman_plot(
+    data1,
+    data2,
+    identifier=None,
+    fontscalefac=1.0,
+    xrange=None,
+    yrange=None,
+    *args,
+    **kwargs
+):
     data1 = np.asarray(data1)
     data2 = np.asarray(data2)
     slope, intercept, r_value, p_value, std_err = linregress(data1, data2)
-    diff_slope, diff_intercept, diff_r_value, diff_p_value, diff_std_err = linregress((data1 + data2) / 2.0, data1 - data2)
+    diff_slope, diff_intercept, diff_r_value, diff_p_value, diff_std_err = linregress(
+        (data1 + data2) / 2.0, data1 - data2
+    )
     mean = np.mean([data1, data2], axis=0)
     diff = data1 - data2  # Difference between data1 and data2
     md = np.mean(diff)  # Mean of the difference
     sd = np.std(diff, axis=0)  # Standard deviation of the difference
     print()
     if identifier is not None:
-        print('id:', identifier)
-    print('slope:', slope)
-    print('r_value:', r_value)
-    print('p_value:', p_value)
-    print('diff_slope:', diff_slope)
-    print('diff_r_value:', diff_r_value)
-    print('diff_p_value:', diff_p_value)
-    print('mean difference:', md)
-    print('std difference:', sd)
-    mdstring = 'Mean diff: ' + format(md, '.3f')
-    sdstring = 'Std diff: ' + format(sd, '.3f')
-    annotate(mdstring + '\n' + sdstring,
-                xy=(0.65, 0.90),
-                xycoords='figure fraction',
-                horizontalalignment='left',
-                verticalalignment='top',
-                fontsize=fontscalefac * 16)
+        print("id:", identifier)
+    print("slope:", slope)
+    print("r_value:", r_value)
+    print("p_value:", p_value)
+    print("diff_slope:", diff_slope)
+    print("diff_r_value:", diff_r_value)
+    print("diff_p_value:", diff_p_value)
+    print("mean difference:", md)
+    print("std difference:", sd)
+    mdstring = "Mean diff: " + format(md, ".3f")
+    sdstring = "Std diff: " + format(sd, ".3f")
+    annotate(
+        mdstring + "\n" + sdstring,
+        xy=(0.65, 0.90),
+        xycoords="figure fraction",
+        horizontalalignment="left",
+        verticalalignment="top",
+        fontsize=fontscalefac * 16,
+    )
 
-    scatter(mean, diff, facecolors='none', edgecolors='b', *args, **kwargs)
-    axhline(md, color='gray', linestyle='--')
-    axhline(md + 2 * sd, color='gray', linestyle='--')
-    axhline(md - 2 * sd, color='gray', linestyle='--')
+    scatter(mean, diff, facecolors="none", edgecolors="b", *args, **kwargs)
+    axhline(md, color="gray", linestyle="--")
+    axhline(md + 2 * sd, color="gray", linestyle="--")
+    axhline(md - 2 * sd, color="gray", linestyle="--")
     if xrange is not None:
         xlim(xrange)
     if yrange is not None:
@@ -72,129 +99,165 @@ def bland_altman_plot(data1, data2, identifier=None, fontscalefac=1.0, xrange=No
 
 
 def stringtorange(thestring):
-    thelist = thestring.split(',')
+    thelist = thestring.split(",")
     if len(thelist) != 2:
-        print('range setting requires two comma separated floats - exiting')
+        print("range setting requires two comma separated floats - exiting")
         sys.exit()
     try:
         themin = float(thelist[0])
     except:
-        print('range setting requires two comma separated floats - exiting')
+        print("range setting requires two comma separated floats - exiting")
         sys.exit()
     try:
         themax = float(thelist[1])
     except:
-        print('range setting requires two comma separated floats - exiting')
+        print("range setting requires two comma separated floats - exiting")
         sys.exit()
     return (themin, themax)
 
 
 def _get_parser():
     # get the command line parameters
-    parser = argparse.ArgumentParser(prog='showxy',
-                                     description='Plots xy data in text files.',
-                                     usage='%(prog)s texfilename [textfilename]... [options]')
-    parser.add_argument('textfilenames',
-                        type=str,
-                        nargs='+',
-                        help='One or more text files containing whitespace separated x y data, one point per line.')
+    parser = argparse.ArgumentParser(
+        prog="showxy",
+        description="Plots xy data in text files.",
+        usage="%(prog)s texfilename [textfilename]... [options]",
+    )
+    parser.add_argument(
+        "textfilenames",
+        type=str,
+        nargs="+",
+        help="One or more text files containing whitespace separated x y data, one point per line.",
+    )
 
-    parser.add_argument('--xlabel',
-                        dest='thexlabel',
-                        type=str,
-                        metavar='XLABEL',
-                        help='Use XLABEL on the x axis.',
-                        default=None)
-    parser.add_argument('--ylabel',
-                        dest='theylabel',
-                        type=str,
-                        metavar='YLABEL',
-                        help='Use YLABEL on the y axis.',
-                        default=None)
-    parser.add_argument('--xrange',
-                        dest='xrange',
-                        nargs=2,
-                        type=float,
-                        metavar=('XMIN', 'XMAX'),
-                        help=('Limit x display range to XMIN to XMAX. '),
-                        default=None)
-    parser.add_argument('--yrange',
-                        dest='yrange',
-                        nargs=2,
-                        type=float,
-                        metavar=('YMIN', 'YMAX'),
-                        help=('Limit y display range to YMIN to YMAX. '),
-                        default=None)
-    parser.add_argument('--title',
-                        dest='thetitle',
-                        type=str,
-                        metavar='TITLE',
-                        help='Use TITLE at the top of the graph.',
-                        default=None)
-    parser.add_argument('--outputfile',
-                        dest='outputfile',
-                        type=str,
-                        metavar='FILENAME',
-                        help='Save plot to FILENAME rather than displaying on the screen.',
-                        default=None)
-    parser.add_argument('--fontscalefac',
-                        dest='fontscalefac',
-                        metavar='FAC',
-                        type=float,
-                        action='store',
-                        help='Scaling factor for annotation fonts (default is 1.0).',
-                        default=1.0)
-    parser.add_argument('--saveres',
-                        dest='saveres',
-                        metavar='DPI',
-                        type=str,
-                        action='store',
-                        help='Write figure to file at DPI dots per inch (default is 1000).',
-                        default=1000)
-    parser.add_argument('--legends',
-                        dest='legends',
-                        metavar='LEGEND[,LEGEND[,LEGEND...]]',
-                        type=str,
-                        action='store',
-                        help='Comma separated list of legends for each timecourse.',
-                        default=None)
-    parser.add_argument('--legendloc',
-                        dest='legendloc',
-                        metavar='LOC',
-                        type=int,
-                        action='store',
-                        help=('Integer from 0 to 10 inclusive specifying legend location.  Legal values are: '
-                              '0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right, '
-                              '5: right, 6: center left, 7: center right, 8: lower center, 9: upper center, '
-                              '10: center.  Default is 2.'),
-                        default=2)
-    parser.add_argument('--colors',
-                        dest='colors',
-                        metavar='COLOR[,COLOR[,COLOR...]]',
-                        type=str,
-                        action='store',
-                        help='Comma separated list of colors for each timecourse.',
-                        default=None)
-    parser.add_argument('--blandaltman',
-                        dest='blandaltman',
-                        action='store_true',
-                        help='Make a Bland-Altman plot.',
-                        default=False)
-    parser.add_argument('--usepoints',
-                        dest='usepoints',
-                        action='store_true',
-                        help='Plot as individual values (do not connect points)',
-                        default=False)
-    parser.add_argument('--dobars',
-                        dest='dobars',
-                        action='store_true',
-                        help='Plot bars rather than lines.',
-                        default=False)
-    parser.add_argument('--debug',
-                        dest='debug',
-                        action='store_true',
-                        help='Print additional internal information.',
-                        default=False)
+    parser.add_argument(
+        "--xlabel",
+        dest="thexlabel",
+        type=str,
+        metavar="XLABEL",
+        help="Use XLABEL on the x axis.",
+        default=None,
+    )
+    parser.add_argument(
+        "--ylabel",
+        dest="theylabel",
+        type=str,
+        metavar="YLABEL",
+        help="Use YLABEL on the y axis.",
+        default=None,
+    )
+    parser.add_argument(
+        "--xrange",
+        dest="xrange",
+        nargs=2,
+        type=float,
+        metavar=("XMIN", "XMAX"),
+        help=("Limit x display range to XMIN to XMAX. "),
+        default=None,
+    )
+    parser.add_argument(
+        "--yrange",
+        dest="yrange",
+        nargs=2,
+        type=float,
+        metavar=("YMIN", "YMAX"),
+        help=("Limit y display range to YMIN to YMAX. "),
+        default=None,
+    )
+    parser.add_argument(
+        "--title",
+        dest="thetitle",
+        type=str,
+        metavar="TITLE",
+        help="Use TITLE at the top of the graph.",
+        default=None,
+    )
+    parser.add_argument(
+        "--outputfile",
+        dest="outputfile",
+        type=str,
+        metavar="FILENAME",
+        help="Save plot to FILENAME rather than displaying on the screen.",
+        default=None,
+    )
+    parser.add_argument(
+        "--fontscalefac",
+        dest="fontscalefac",
+        metavar="FAC",
+        type=float,
+        action="store",
+        help="Scaling factor for annotation fonts (default is 1.0).",
+        default=1.0,
+    )
+    parser.add_argument(
+        "--saveres",
+        dest="saveres",
+        metavar="DPI",
+        type=str,
+        action="store",
+        help="Write figure to file at DPI dots per inch (default is 1000).",
+        default=1000,
+    )
+    parser.add_argument(
+        "--legends",
+        dest="legends",
+        metavar="LEGEND[,LEGEND[,LEGEND...]]",
+        type=str,
+        action="store",
+        help="Comma separated list of legends for each timecourse.",
+        default=None,
+    )
+    parser.add_argument(
+        "--legendloc",
+        dest="legendloc",
+        metavar="LOC",
+        type=int,
+        action="store",
+        help=(
+            "Integer from 0 to 10 inclusive specifying legend location.  Legal values are: "
+            "0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right, "
+            "5: right, 6: center left, 7: center right, 8: lower center, 9: upper center, "
+            "10: center.  Default is 2."
+        ),
+        default=2,
+    )
+    parser.add_argument(
+        "--colors",
+        dest="colors",
+        metavar="COLOR[,COLOR[,COLOR...]]",
+        type=str,
+        action="store",
+        help="Comma separated list of colors for each timecourse.",
+        default=None,
+    )
+    parser.add_argument(
+        "--blandaltman",
+        dest="blandaltman",
+        action="store_true",
+        help="Make a Bland-Altman plot.",
+        default=False,
+    )
+    parser.add_argument(
+        "--usepoints",
+        dest="usepoints",
+        action="store_true",
+        help="Plot as individual values (do not connect points)",
+        default=False,
+    )
+    parser.add_argument(
+        "--dobars",
+        dest="dobars",
+        action="store_true",
+        help="Plot bars rather than lines.",
+        default=False,
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Print additional internal information.",
+        default=False,
+    )
 
     return parser
 
@@ -216,18 +279,18 @@ def main():
 
     # set various cosmetic aspects of the plots
     if args.colors is not None:
-        colornames = args.colors.split(',')
+        colornames = args.colors.split(",")
     else:
         colornames = []
 
     if args.legends is not None:
-        args.legends = args.legends.split(',')
+        args.legends = args.legends.split(",")
 
     xvecs = []
     yvecs = []
     for i in range(0, len(textfilename)):
         if args.debug:
-            print('reading data from', textfilename[i])
+            print("reading data from", textfilename[i])
         indata = tide_io.readvecs(textfilename[i])
         xvecs.append(1.0 * indata[0, :])
         yvecs.append(1.0 * indata[1, :])
@@ -240,17 +303,33 @@ def main():
 
     for i in range(0, len(textfilename)):
         if args.dobars:
-            bar(xvecs[i], yvecs[i], width=1.5, color='lightgray', align='center', edgecolor=None)
+            bar(
+                xvecs[i],
+                yvecs[i],
+                width=1.5,
+                color="lightgray",
+                align="center",
+                edgecolor=None,
+            )
             if args.xrange is not None:
                 xlim(args.xrange)
             if args.yrange is not None:
                 ylim(args.yrange)
 
         elif args.blandaltman:
-            bland_altman_plot(xvecs[i], yvecs[i], identifier=textfilename[i], fontscalefac=args.fontscalefac, xrange=args.xrange, yrange=args.yrange)
+            bland_altman_plot(
+                xvecs[i],
+                yvecs[i],
+                identifier=textfilename[i],
+                fontscalefac=args.fontscalefac,
+                xrange=args.xrange,
+                yrange=args.yrange,
+            )
         else:
             if args.usepoints:
-                plot(xvecs[i], yvecs[i], color=colorlist[i], marker='.', linestyle='None')
+                plot(
+                    xvecs[i], yvecs[i], color=colorlist[i], marker=".", linestyle="None"
+                )
             else:
                 plot(xvecs[i], yvecs[i], color=colorlist[i])
             if args.xrange is not None:
@@ -261,17 +340,17 @@ def main():
     if args.legends is not None:
         legend(args.legends, loc=args.legendloc)
     if args.thetitle is not None:
-        title(args.thetitle, fontsize=args.fontscalefac * 18, fontweight='bold')
+        title(args.thetitle, fontsize=args.fontscalefac * 18, fontweight="bold")
     if args.thexlabel is not None:
-        xlabel(args.thexlabel, fontsize=args.fontscalefac * 16, fontweight='bold')
+        xlabel(args.thexlabel, fontsize=args.fontscalefac * 16, fontweight="bold")
     if args.theylabel is not None:
-        ylabel(args.theylabel, fontsize=args.fontscalefac * 16, fontweight='bold')
+        ylabel(args.theylabel, fontsize=args.fontscalefac * 16, fontweight="bold")
 
     if args.outputfile is None:
         show()
     else:
-        savefig(args.outputfile, bbox_inches='tight', dpi=args.saveres)
+        savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
-

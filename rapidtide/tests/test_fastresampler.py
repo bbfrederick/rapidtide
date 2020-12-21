@@ -24,8 +24,9 @@ from rapidtide.tests.utils import mse
 def test_fastresampler(debug=False):
     if debug:
         import matplotlib as mpl
-        print('setting backend to Qt5Agg')
-        mpl.use('Qt5Agg')
+
+        print("setting backend to Qt5Agg")
+        mpl.use("Qt5Agg")
     tr = 1.0
     padtime = 50.0
     testlen = 1000
@@ -46,7 +47,7 @@ def test_fastresampler(debug=False):
         plt.figure()
         plt.ylim([-1.0, 2.0 * len(shiftlist) + 1.0])
         plt.plot(timecoursein)
-        legend = ['Original']
+        legend = ["Original"]
         offset = 0.0
 
     for shiftdist in shiftlist:
@@ -64,10 +65,10 @@ def test_fastresampler(debug=False):
         if debug:
             offset += 1.0
             plt.plot(tcrolled + offset)
-            legend.append('Roll ' + str(shiftdist))
+            legend.append("Roll " + str(shiftdist))
             offset += 1.0
             plt.plot(tcshifted + offset)
-            legend.append('Fastresampler ' + str(shiftdist))
+            legend.append("Fastresampler " + str(shiftdist))
 
         # do the tests
         msethresh = 1e-6
@@ -84,5 +85,5 @@ def main():
     test_fastresampler(debug=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

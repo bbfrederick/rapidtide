@@ -26,20 +26,30 @@ import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.helper_classes as tide_classes
 
 import matplotlib.pyplot as plt
-from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path, create_dir
+from rapidtide.tests.utils import (
+    get_test_data_path,
+    get_test_target_path,
+    get_test_temp_path,
+    get_examples_path,
+    get_rapidtide_root,
+    get_scripts_path,
+    create_dir,
+)
 import os
 
 
 def test_nullsimfunc(debug=False, display=False):
     # make the lfo filter
-    lfofilter = tide_filt.noncausalfilter(filtertype='lfo')
+    lfofilter = tide_filt.noncausalfilter(filtertype="lfo")
 
     # make the starting regressor
     timestep = 1.5
     Fs = 1.0 / timestep
-    #sourcelen = 1200
-    #sourcedata = lfofilter.apply(Fs, np.random.rand(sourcelen))
-    sourcedata = tide_io.readvecs(os.path.join(get_test_data_path(), 'fmri_globalmean.txt'))[0]
+    # sourcelen = 1200
+    # sourcedata = lfofilter.apply(Fs, np.random.rand(sourcelen))
+    sourcedata = tide_io.readvecs(
+        os.path.join(get_test_data_path(), "fmri_globalmean.txt")
+    )[0]
     sourcelen = len(sourcedata)
     numpasses = 1
 
@@ -50,13 +60,16 @@ def test_nullsimfunc(debug=False, display=False):
 
     thexcorr = tide_corr.fastcorrelate(sourcedata, sourcedata)
     xcorrlen = len(thexcorr)
-    xcorr_x = np.linspace(0.0, xcorrlen, xcorrlen, endpoint=False) * timestep - (xcorrlen * timestep) / 2.0 + timestep / 2.0
+    xcorr_x = (
+        np.linspace(0.0, xcorrlen, xcorrlen, endpoint=False) * timestep
+        - (xcorrlen * timestep) / 2.0
+        + timestep / 2.0
+    )
 
     if display:
         plt.figure()
         plt.plot(xcorr_x, thexcorr)
         plt.show()
-
 
     corrzero = xcorrlen // 2
     lagmin = -10
@@ -68,50 +81,54 @@ def test_nullsimfunc(debug=False, display=False):
     searchend = int(np.round(corrzero + lagmax / timestep))
 
     optiondict = {
-        'numestreps':        10000,
-        'showprogressbar':   debug,
-        'detrendorder':      3,
-        'windowfunc':        'hamming',
-        'corrweighting':     'None',
-        'nprocs':            1,
-        'widthlimit':        1000.0,
-        'bipolar':           False,
-        'fixdelay':          False,
-        'peakfittype':       'gauss',
-        'lagmin':            lagmin,
-        'lagmax':            lagmax,
-        'absminsigma':       0.25,
-        'absmaxsigma':       25.0,
-        'edgebufferfrac':    0.0,
-        'lthreshval':        0.0,
-        'uthreshval':        1.0,
-        'debug':             False,
-        'enforcethresh':     True,
-        'lagmod':            1000.0,
-        'searchfrac':        0.5,
-        'permutationmethod': 'shuffle',
-        'hardlimit':         True
+        "numestreps": 10000,
+        "showprogressbar": debug,
+        "detrendorder": 3,
+        "windowfunc": "hamming",
+        "corrweighting": "None",
+        "nprocs": 1,
+        "widthlimit": 1000.0,
+        "bipolar": False,
+        "fixdelay": False,
+        "peakfittype": "gauss",
+        "lagmin": lagmin,
+        "lagmax": lagmax,
+        "absminsigma": 0.25,
+        "absmaxsigma": 25.0,
+        "edgebufferfrac": 0.0,
+        "lthreshval": 0.0,
+        "uthreshval": 1.0,
+        "debug": False,
+        "enforcethresh": True,
+        "lagmod": 1000.0,
+        "searchfrac": 0.5,
+        "permutationmethod": "shuffle",
+        "hardlimit": True,
     }
-    theprefilter = tide_filt.noncausalfilter('lfo')
-    thecorrelator = tide_classes.correlator(Fs=Fs,
-                                         ncprefilter=theprefilter,
-                                         detrendorder=optiondict['detrendorder'],
-                                         windowfunc=optiondict['windowfunc'],
-                                         corrweighting=optiondict['corrweighting'])
+    theprefilter = tide_filt.noncausalfilter("lfo")
+    thecorrelator = tide_classes.correlator(
+        Fs=Fs,
+        ncprefilter=theprefilter,
+        detrendorder=optiondict["detrendorder"],
+        windowfunc=optiondict["windowfunc"],
+        corrweighting=optiondict["corrweighting"],
+    )
 
-    thefitter = tide_classes.simfunc_fitter(lagmod=optiondict['lagmod'],
-                                             lthreshval=optiondict['lthreshval'],
-                                             uthreshval=optiondict['uthreshval'],
-                                             bipolar=optiondict['bipolar'],
-                                             lagmin=optiondict['lagmin'],
-                                             lagmax=optiondict['lagmax'],
-                                             absmaxsigma=optiondict['absmaxsigma'],
-                                             absminsigma=optiondict['absminsigma'],
-                                             debug=optiondict['debug'],
-                                             peakfittype=optiondict['peakfittype'],
-                                             searchfrac=optiondict['searchfrac'],
-                                             enforcethresh=optiondict['enforcethresh'],
-                                             hardlimit=optiondict['hardlimit'])
+    thefitter = tide_classes.simfunc_fitter(
+        lagmod=optiondict["lagmod"],
+        lthreshval=optiondict["lthreshval"],
+        uthreshval=optiondict["uthreshval"],
+        bipolar=optiondict["bipolar"],
+        lagmin=optiondict["lagmin"],
+        lagmax=optiondict["lagmax"],
+        absmaxsigma=optiondict["absmaxsigma"],
+        absminsigma=optiondict["absminsigma"],
+        debug=optiondict["debug"],
+        peakfittype=optiondict["peakfittype"],
+        searchfrac=optiondict["searchfrac"],
+        enforcethresh=optiondict["enforcethresh"],
+        hardlimit=optiondict["hardlimit"],
+    )
 
     if debug:
         print(optiondict)
@@ -123,46 +140,65 @@ def test_nullsimfunc(debug=False, display=False):
     histograms = []
     for thenprocs in [1, -1]:
         for i in range(numpasses):
-            corrlist = tide_nullsimfunc.getNullDistributionDatax(sourcedata,
-                                     Fs,
-                                     thecorrelator,
-                                     thefitter,
-                                     despeckle_thresh=5.0,
-                                     fixdelay=False,
-                                     fixeddelayvalue=0.0,
-                                     numestreps=optiondict['numestreps'],
-                                     nprocs=thenprocs,
-                                     showprogressbar=optiondict['showprogressbar'],
-                                     chunksize=1000,
-                                     permutationmethod=optiondict['permutationmethod'])
-            tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), 'corrdistdata.txt'))
-    
+            corrlist = tide_nullsimfunc.getNullDistributionDatax(
+                sourcedata,
+                Fs,
+                thecorrelator,
+                thefitter,
+                despeckle_thresh=5.0,
+                fixdelay=False,
+                fixeddelayvalue=0.0,
+                numestreps=optiondict["numestreps"],
+                nprocs=thenprocs,
+                showprogressbar=optiondict["showprogressbar"],
+                chunksize=1000,
+                permutationmethod=optiondict["permutationmethod"],
+            )
+            tide_io.writenpvecs(
+                corrlist, os.path.join(get_test_temp_path(), "corrdistdata.txt")
+            )
+
             # calculate percentiles for the crosscorrelation from the distribution data
             histlen = 250
             thepercentiles = [0.95, 0.99, 0.995]
-    
-            pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
+
+            pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(
+                corrlist, histlen, thepercentiles
+            )
             if debug:
-                tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
-                tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
-    
-            thehist, peakheight, peakloc, peakwidth, centerofmass = tide_stats.makehistogram(np.abs(corrlist), histlen,
-                                                                                             therange=[0.0, 1.0])
+                tide_stats.printthresholds(
+                    pcts,
+                    thepercentiles,
+                    "Crosscorrelation significance thresholds from data:",
+                )
+                tide_stats.printthresholds(
+                    pcts_fit,
+                    thepercentiles,
+                    "Crosscorrelation significance thresholds from fit:",
+                )
+
+            (
+                thehist,
+                peakheight,
+                peakloc,
+                peakwidth,
+                centerofmass,
+            ) = tide_stats.makehistogram(np.abs(corrlist), histlen, therange=[0.0, 1.0])
             histograms.append(thehist)
-            thestore = np.zeros((2, len(thehist[0])), dtype='float64')
+            thestore = np.zeros((2, len(thehist[0])), dtype="float64")
             thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
             thestore[1, :] = thehist[0][-histlen:]
             if display:
                 plt.figure()
                 plt.plot(thestore[0, :], thestore[1, :])
                 plt.show()
-    
-            #tide_stats.makeandsavehistogram(corrlist, histlen, 0,
-                                            #os.path.join(get_test_temp_path(), 'correlationhist'),
-                                            #displaytitle='Null correlation histogram',
-                                            #displayplots=display, refine=False)
+
+            # tide_stats.makeandsavehistogram(corrlist, histlen, 0,
+            # os.path.join(get_test_temp_path(), 'correlationhist'),
+            # displaytitle='Null correlation histogram',
+            # displayplots=display, refine=False)
             assert True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_nullsimfunc(debug=True, display=True)

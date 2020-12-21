@@ -27,22 +27,23 @@ import sys
 import numpy as np
 import getopt
 
-def usage():
-    print('usage: histtc inputfile outputroot [--numbins=BINS]')
-    print('')
-    print('required arguments:')
-    print('	inputfile	      - the name of the input text file')
-    print('	outputroot	      - the root of the output text file')
-    print('optional arguments:')
-    print(' --numbins=BINS    - Number of histogram bins (default is 101)')
 
-    print('')
-    return()
+def usage():
+    print("usage: histtc inputfile outputroot [--numbins=BINS]")
+    print("")
+    print("required arguments:")
+    print("	inputfile	      - the name of the input text file")
+    print("	outputroot	      - the root of the output text file")
+    print("optional arguments:")
+    print(" --numbins=BINS    - Number of histogram bins (default is 101)")
+
+    print("")
+    return ()
 
 
 def main():
     # set default variable values
-    histlen=101
+    histlen = 101
 
     # get the command line parameters
     if len(sys.argv) != 3:
@@ -50,8 +51,8 @@ def main():
         exit()
 
     # handle required args first
-    inputfilename=sys.argv[1]
-    outputroot=sys.argv[2]
+    inputfilename = sys.argv[1]
+    outputroot = sys.argv[2]
 
     # now check options
     try:
@@ -74,10 +75,12 @@ def main():
     maxval = np.max(inputdata)
     minval = np.min(inputdata)
     therange = [minval, maxval]
-    print('therange:', therange)
+    print("therange:", therange)
 
-    tide_stats.makeandsavehistogram(inputdata, histlen, 0, outputroot, therange=therange)
+    tide_stats.makeandsavehistogram(
+        inputdata, histlen, 0, outputroot, therange=therange
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

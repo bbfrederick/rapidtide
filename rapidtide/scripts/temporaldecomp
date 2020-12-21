@@ -26,6 +26,5 @@
 from __future__ import print_function, division
 import rapidtide.workflows.temporaldecomp as temporaldecomp_workflow
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     temporaldecomp_workflow.main()
-

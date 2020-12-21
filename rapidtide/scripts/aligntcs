@@ -37,44 +37,55 @@ from matplotlib.pyplot import plot, show, figure
 
 def main():
     # get the command line parameters
-    parser = argparse.ArgumentParser(prog='aligntcs',
-                                     description='Resample and align two time series.',
-                                     usage='%(prog)s infile1 insamplerate1 infile2 insamplerate2 outputfile [options]')
+    parser = argparse.ArgumentParser(
+        prog="aligntcs",
+        description="Resample and align two time series.",
+        usage="%(prog)s infile1 insamplerate1 infile2 insamplerate2 outputfile [options]",
+    )
 
     # Required arguments
-    parser.add_argument('infile1',
-                        metavar="infile1[:COLNUM]",
-                        type=str,
-                        help='text file containing a timeseries.  Select column COLNUM if multicolumn file.')
-    parser.add_argument('insamplerate1',
-                        type=lambda x: pf.is_float(parser, x),
-                        help='The input data file (BOLD fmri file or NIRS text file)')
-    parser.add_argument('infile2',
-                        metavar="infile2[:COLNUM]",
-                        type=str,
-                        help='text file containing a timeseries.  Select column COLNUM if multicolumn file.')
-    parser.add_argument('insamplerate2',
-                        type=lambda x: pf.is_float(parser, x),
-                        help='The input data file (BOLD fmri file or NIRS text file)')
-    parser.add_argument('outputfile',
-                        help='The name of the output file')
+    parser.add_argument(
+        "infile1",
+        metavar="infile1[:COLNUM]",
+        type=str,
+        help="text file containing a timeseries.  Select column COLNUM if multicolumn file.",
+    )
+    parser.add_argument(
+        "insamplerate1",
+        type=lambda x: pf.is_float(parser, x),
+        help="The input data file (BOLD fmri file or NIRS text file)",
+    )
+    parser.add_argument(
+        "infile2",
+        metavar="infile2[:COLNUM]",
+        type=str,
+        help="text file containing a timeseries.  Select column COLNUM if multicolumn file.",
+    )
+    parser.add_argument(
+        "insamplerate2",
+        type=lambda x: pf.is_float(parser, x),
+        help="The input data file (BOLD fmri file or NIRS text file)",
+    )
+    parser.add_argument("outputfile", help="The name of the output file")
 
     parser.add_argument(
-        '--nodisplay',
-        dest='display',
-        action='store_false',
-        help=('Do not plot the data (for noninteractive use)'),
-        default=True)
+        "--nodisplay",
+        dest="display",
+        action="store_false",
+        help=("Do not plot the data (for noninteractive use)"),
+        default=True,
+    )
     parser.add_argument(
-        '--verbose',
-        dest='verbose',
-        action='store_true',
-        help=('Print out more debugging information'),
-        default=False)
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help=("Print out more debugging information"),
+        default=False,
+    )
     pf.addsearchrangeopts(parser)
 
     # Filter arguments
-    pf.addfilteropts(parser, 'timecourses')
+    pf.addfilteropts(parser, "timecourses")
 
     try:
         args = parser.parse_args()
@@ -99,29 +110,58 @@ def main():
     # pad waveform1 if it's shorter than waveform2
     if time1 < fulltime:
         paddeddata1 = np.zeros(int(np.ceil(fulltime // intimestep1)), dtype=float)
-        paddeddata1[0:len(inputdata1) + 1] = tide_math.corrnormalize(theprefilter.apply(args.insamplerate1, inputdata1))
+        paddeddata1[0 : len(inputdata1) + 1] = tide_math.corrnormalize(
+            theprefilter.apply(args.insamplerate1, inputdata1)
+        )
     else:
-        paddeddata1 = tide_math.corrnormalize(theprefilter.apply(args.insamplerate1, inputdata1))
+        paddeddata1 = tide_math.corrnormalize(
+            theprefilter.apply(args.insamplerate1, inputdata1)
+        )
 
-    timeaxisfull = np.linspace(0.0, intimestep1 * len(paddeddata1), num=len(paddeddata1), endpoint=False)
-    timeaxis1 = np.linspace(0.0, intimestep1 * len(inputdata1), num=len(inputdata1), endpoint=False)
-    timeaxis2 = np.linspace(0.0, intimestep2 * len(inputdata2), num=len(inputdata2), endpoint=False)
-    paddeddata2 = tide_resample.doresample(timeaxis2,
-                                           tide_math.corrnormalize(theprefilter.apply(args.insamplerate2,
-                                                                                      inputdata2)),
-                                           timeaxisfull)
+    timeaxisfull = np.linspace(
+        0.0, intimestep1 * len(paddeddata1), num=len(paddeddata1), endpoint=False
+    )
+    timeaxis1 = np.linspace(
+        0.0, intimestep1 * len(inputdata1), num=len(inputdata1), endpoint=False
+    )
+    timeaxis2 = np.linspace(
+        0.0, intimestep2 * len(inputdata2), num=len(inputdata2), endpoint=False
+    )
+    paddeddata2 = tide_resample.doresample(
+        timeaxis2,
+        tide_math.corrnormalize(theprefilter.apply(args.insamplerate2, inputdata2)),
+        timeaxisfull,
+    )
 
     # now paddeddata1 and 2 are on the same timescales
     thexcorr = tide_corr.fastcorrelate(paddeddata1, paddeddata2)
     xcorrlen = len(thexcorr)
-    xcorr_x = np.r_[0.0:xcorrlen] * intimestep1 - (xcorrlen * intimestep1) / 2.0 + intimestep1 / 2.0
+    xcorr_x = (
+        np.r_[0.0:xcorrlen] * intimestep1
+        - (xcorrlen * intimestep1) / 2.0
+        + intimestep1 / 2.0
+    )
 
-    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = tide_fit.findmaxlag_gauss(
-        xcorr_x, thexcorr, args.lagmin, args.lagmax, 1000.0,
+    (
+        maxindex,
+        maxdelay,
+        maxval,
+        maxsigma,
+        maskval,
+        failreason,
+        peakstart,
+        peakend,
+    ) = tide_fit.findmaxlag_gauss(
+        xcorr_x,
+        thexcorr,
+        args.lagmin,
+        args.lagmax,
+        1000.0,
         refine=True,
         useguess=False,
         fastgauss=False,
-        displayplots=False)
+        displayplots=False,
+    )
 
     print("Crosscorrelation_Rmax:\t", maxval)
     print("Crosscorrelation_maxdelay:\t", maxdelay)
@@ -135,7 +175,7 @@ def main():
         fig = figure()
         ax = fig.add_subplot(111)
         # ax.set_title('GCC')
-        plot(xcorr_x, thexcorr, 'k')
+        plot(xcorr_x, thexcorr, "k")
         show()
         fig = figure()
         plot(timeaxis1, inputdata1)
@@ -144,5 +184,5 @@ def main():
         show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

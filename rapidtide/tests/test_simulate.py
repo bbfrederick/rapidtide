@@ -38,7 +38,7 @@ def test_simulate(display=False):
     oversampfac = 10
     inputfreq = oversampfac / fmritr
     inputstarttime = 0.0
-    timecourse = np.zeros((oversampfac * numtrs), dtype='float')
+    timecourse = np.zeros((oversampfac * numtrs), dtype="float")
     timecourse[500:600] = 1.0
     timecourse[700:750] = 1.0
 
@@ -49,15 +49,17 @@ def test_simulate(display=False):
     # prepare the input data for interpolation
     print("Input regressor has ", simregressorpts, " points")
     inputstep = 1.0 / inputfreq
-    nirs_x = np.r_[0.0:1.0 * simregressorpts] * inputstep - inputstarttime
+    nirs_x = np.r_[0.0 : 1.0 * simregressorpts] * inputstep - inputstarttime
     nirs_y = inputvec[0:simregressorpts]
-    print('nirs regressor runs from ', nirs_x[0], ' to ', nirs_x[-1])
+    print("nirs regressor runs from ", nirs_x[0], " to ", nirs_x[-1])
 
     # prepare the output timepoints
     fmrifreq = 1.0 / fmritr
-    initial_fmri_x = np.r_[0:fmritr * (numtrs - fmriskip):fmritr] + fmritr * fmriskip
-    print('length of fmri after removing skip:', len(initial_fmri_x))
-    print('fmri time runs from ', initial_fmri_x[0], ' to ', initial_fmri_x[-1])
+    initial_fmri_x = (
+        np.r_[0 : fmritr * (numtrs - fmriskip) : fmritr] + fmritr * fmriskip
+    )
+    print("length of fmri after removing skip:", len(initial_fmri_x))
+    print("fmri time runs from ", initial_fmri_x[0], " to ", initial_fmri_x[-1])
 
     # set the sim parameters
     immean = 1.0
@@ -65,7 +67,7 @@ def test_simulate(display=False):
     lag = 10.0 * fmritr
     noiselevel = 0.0
 
-    simdata = np.zeros((len(initial_fmri_x)), dtype='float')
+    simdata = np.zeros((len(initial_fmri_x)), dtype="float")
 
     fmrilcut = 0.0
     fmriucut = fmrifreq / 2.0
@@ -81,7 +83,7 @@ def test_simulate(display=False):
     if display:
         fig = figure()
         ax = fig.add_subplot(111)
-        ax.set_title('Regressors')
+        ax.set_title("Regressors")
         plt.plot(nirs_x, nirs_y, initial_fmri_x, initial_fmri_y)
         plt.show()
 
@@ -100,12 +102,12 @@ def test_simulate(display=False):
     msethresh = 1e-6
     aethresh = 2
     assert mse(simdata, initial_fmri_y) < aethresh
-    #np.testing.assert_almost_equal(simdata, initial_fmri_y)
+    # np.testing.assert_almost_equal(simdata, initial_fmri_y)
 
 
 def main():
     test_simulate(display=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

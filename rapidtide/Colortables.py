@@ -23,21 +23,22 @@
 # -*- coding: utf-8 -*-
 from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
+
 def setendalpha(thestate, alpha, debug=False):
     if debug:
-        print('color mode:', thestate['mode'])
-    sortedticks = sorted(thestate['ticks'], key=lambda x: x[0])
+        print("color mode:", thestate["mode"])
+    sortedticks = sorted(thestate["ticks"], key=lambda x: x[0])
     newticks = []
     starttuple = sortedticks[0][1]
     if float(sortedticks[0][0]) == 0.0:
         if debug:
-            print('first element is 0.0000')
+            print("first element is 0.0000")
         newticks.append((0.0000, (starttuple[0], starttuple[1], starttuple[2], alpha)))
         newticks.append((0.0001, starttuple))
         startloc = 1
     else:
         if debug:
-            print('first element is', sortedticks[0][0], 'not 0.0000')
+            print("first element is", sortedticks[0][0], "not 0.0000")
         newticks.append((0.0000, (0, 0, 0, alpha)))
         newticks.append((0.0001, (0, 0, 0, starttuple[3])))
         startloc = 0
@@ -45,13 +46,13 @@ def setendalpha(thestate, alpha, debug=False):
     starttuple = sortedticks[-1][1]
     if float(sortedticks[-1][0]) == 1.0:
         if debug:
-            print('last element is 1.0000')
+            print("last element is 1.0000")
         newticks.append((0.9999, starttuple))
         newticks.append((1.0000, (starttuple[0], starttuple[1], starttuple[2], alpha)))
     else:
         if debug:
-            print('last element is', sortedticks[-1][0], 'not 1.0000')
-        if thestate['mode'] == 'hsv':
+            print("last element is", sortedticks[-1][0], "not 1.0000")
+        if thestate["mode"] == "hsv":
             newticks.append((0.9999, (255, 0, 0, starttuple[3])))
             newticks.append((1.0000, (255, 0, 0, alpha)))
         else:
@@ -59,41 +60,48 @@ def setendalpha(thestate, alpha, debug=False):
             newticks.append((1.0000, (255, 255, 255, alpha)))
 
     if debug:
-        print('original ticks:', sortedticks)
-        print('final ticks:', newticks)
+        print("original ticks:", sortedticks)
+        print("final ticks:", newticks)
 
-    adjustedgradient = {'ticks':    newticks,
-                        'mode':     thestate['mode']}
+    adjustedgradient = {"ticks": newticks, "mode": thestate["mode"]}
 
     return adjustedgradient
 
+
 # some predefined colortables
-thermal_state = Gradients['thermal']
-flame_state = Gradients['flame']
-yellowy_state = Gradients['yellowy']
-bipolar_state = Gradients['bipolar']
-spectrum_state = Gradients['spectrum']
-cyclic_state = Gradients['cyclic']
-gray_state = Gradients['grey']
+thermal_state = Gradients["thermal"]
+flame_state = Gradients["flame"]
+yellowy_state = Gradients["yellowy"]
+bipolar_state = Gradients["bipolar"]
+spectrum_state = Gradients["spectrum"]
+cyclic_state = Gradients["cyclic"]
+gray_state = Gradients["grey"]
 grey_state = gray_state
 
-viridis_state = Gradients['viridis']
-inferno_state = Gradients['inferno']
-plasma_state = Gradients['plasma']
-magma_state = Gradients['magma']
+viridis_state = Gradients["viridis"]
+inferno_state = Gradients["inferno"]
+plasma_state = Gradients["plasma"]
+magma_state = Gradients["magma"]
 
-g2y2r_state = {'ticks':     [(0.0000, (0, 0, 0, 0)),
-                             (0.0001, (0, 255, 0, 255)),
-                             (0.5000, (255, 255, 0, 255)),
-                             (0.9999, (255, 0, 0, 255)),
-                             (1.0000, (255, 0, 0, 0))],
-               'mode':      'rgb'}
-mask_state = {'ticks':      [(0.0000, (0, 0, 0, 255)),
-                             (1.0000, (255, 255, 255, 0))],
-              'mode':       'rgb'}
-greyclip_state = {'ticks':  [(0.0, (0, 0, 0, 255)),
-                             (0.99, (255, 255, 255, 255)),
-                             (1.0, (255, 0, 0, 255))],
-                  'mode':   'rgb'}
-
-
+g2y2r_state = {
+    "ticks": [
+        (0.0000, (0, 0, 0, 0)),
+        (0.0001, (0, 255, 0, 255)),
+        (0.5000, (255, 255, 0, 255)),
+        (0.9999, (255, 0, 0, 255)),
+        (1.0000, (255, 0, 0, 0)),
+    ],
+    "mode": "rgb",
+}
+mask_state = {
+    "ticks": [(0.0000, (0, 0, 0, 255)), (1.0000, (255, 255, 255, 0))],
+    "mode": "rgb",
+}
+greyclip_state = {
+    "ticks": [
+        (0.0, (0, 0, 0, 255)),
+        (0.99, (255, 255, 255, 255)),
+        (1.0, (255, 0, 0, 255)),
+    ],
+    "mode": "rgb",
+}

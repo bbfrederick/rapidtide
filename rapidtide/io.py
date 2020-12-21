@@ -41,6 +41,7 @@ except ImportError:
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 if nibabelexists:
+
     def readfromnifti(inputfile):
         r"""Open a nifti file and read in the various important parts
 
@@ -60,20 +61,19 @@ if nibabelexists:
         """
         if os.path.isfile(inputfile):
             inputfilename = inputfile
-        elif os.path.isfile(inputfile + '.nii.gz'):
-            inputfilename = inputfile + '.nii.gz'
-        elif os.path.isfile(inputfile + '.nii'):
-            inputfilename = inputfile + '.nii'
+        elif os.path.isfile(inputfile + ".nii.gz"):
+            inputfilename = inputfile + ".nii.gz"
+        elif os.path.isfile(inputfile + ".nii"):
+            inputfilename = inputfile + ".nii"
         else:
-            print('nifti file', inputfile, 'does not exist')
+            print("nifti file", inputfile, "does not exist")
             sys.exit()
         nim = nib.load(inputfilename)
         nim_data = nim.get_fdata()
         nim_hdr = nim.header.copy()
-        thedims = nim_hdr['dim'].copy()
-        thesizes = nim_hdr['pixdim'].copy()
+        thedims = nim_hdr["dim"].copy()
+        thesizes = nim_hdr["pixdim"].copy()
         return nim, nim_data, nim_hdr, thedims, thesizes
-
 
     def readfromcifti(inputfile, debug=False):
         r"""Open a cifti file and read in the various important parts
@@ -94,10 +94,10 @@ if nibabelexists:
         """
         if os.path.isfile(inputfile):
             inputfilename = inputfile
-        elif os.path.isfile(inputfile + '.nii'):
-            inputfilename = inputfile + '.nii'
+        elif os.path.isfile(inputfile + ".nii"):
+            inputfilename = inputfile + ".nii"
         else:
-            print('cifti file', inputfile, 'does not exist')
+            print("cifti file", inputfile, "does not exist")
             sys.exit()
 
         cifti = nib.load(inputfilename)
@@ -105,7 +105,7 @@ if nibabelexists:
         cifti_hdr = cifti.header
         nifti_hdr = cifti.nifti_header
 
-        if nifti_hdr['intent_code'] == 3002:
+        if nifti_hdr["intent_code"] == 3002:
             timestep, starttime = getciftitr(cifti_hdr)
         else:
             timestep, starttime = None, None
@@ -114,10 +114,9 @@ if nibabelexists:
             for theaxis in axes:
                 print(theaxis)
 
-        thedims = nifti_hdr['dim'].copy()
-        thesizes = nifti_hdr['pixdim'].copy()
+        thedims = nifti_hdr["dim"].copy()
+        thesizes = nifti_hdr["pixdim"].copy()
         return cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, timestep
-
 
     def getciftitr(cifti_hdr):
         seriesaxis = None
@@ -129,10 +128,9 @@ if nibabelexists:
             starttime = cifti_hdr.matrix.get_axis(seriesaxis).get_element(0)
             timestep = timepoint1 - starttime
         else:
-            print('No series axis found!  Exiting')
+            print("No series axis found!  Exiting")
             sys.exit()
         return timestep, starttime
-
 
     # dims are the array dimensions along each axis
     def parseniftidims(thedims):
@@ -150,7 +148,6 @@ if nibabelexists:
         """
         return thedims[1], thedims[2], thedims[3], thedims[4]
 
-
     # sizes are the mapping between voxels and physical coordinates
     def parseniftisizes(thesizes):
         r"""Split the size array into individual elements
@@ -167,9 +164,8 @@ if nibabelexists:
         """
         return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
-
     def savetonifti(thearray, theheader, thename):
-        r""" Save a data array out to a nifti file
+        r"""Save a data array out to a nifti file
 
         Parameters
         ----------
@@ -189,12 +185,12 @@ if nibabelexists:
         outputaffine = theheader.get_best_affine()
         qaffine, qcode = theheader.get_qform(coded=True)
         saffine, scode = theheader.get_sform(coded=True)
-        if theheader['magic'] == 'n+2':
+        if theheader["magic"] == "n+2":
             output_nifti = nib.Nifti2Image(thearray, outputaffine, header=theheader)
-            suffix = '.nii'
+            suffix = ".nii"
         else:
             output_nifti = nib.Nifti1Image(thearray, outputaffine, header=theheader)
-            suffix = '.nii.gz'
+            suffix = ".nii.gz"
         output_nifti.set_qform(qaffine, code=int(qcode))
         output_nifti.set_sform(saffine, code=int(scode))
         thedtype = thearray.dtype
@@ -227,20 +223,24 @@ if nibabelexists:
         elif thedtype == np.complex256:
             theheader.datatype = 2048
         else:
-            print('type', thedtype, 'is not legal')
+            print("type", thedtype, "is not legal")
             sys.exit()
 
         output_nifti.to_filename(thename + suffix)
         output_nifti = None
 
-
-    def savetocifti(thearray, theciftiheader, theniftiheader, thename,
-                    isseries=False,
-                    names=['placeholder'],
-                    start=0.0,
-                    step=1.0,
-                    debug=False):
-        r""" Save a data array out to a cifti
+    def savetocifti(
+        thearray,
+        theciftiheader,
+        theniftiheader,
+        thename,
+        isseries=False,
+        names=["placeholder"],
+        start=0.0,
+        step=1.0,
+        debug=False,
+    ):
+        r"""Save a data array out to a cifti
 
         Parameters
         ----------
@@ -266,7 +266,7 @@ if nibabelexists:
 
         """
         if debug:
-            print('savetocifti:', thename)
+            print("savetocifti:", thename)
         workingarray = np.transpose(thearray)
         if len(workingarray.shape) == 1:
             workingarray = workingarray.reshape((1, -1))
@@ -274,64 +274,68 @@ if nibabelexists:
         # find the BrainModelAxis from the input file
         modelaxis = None
         for theaxis in theciftiheader.matrix.mapped_indices:
-            if isinstance(theciftiheader.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis):
+            if isinstance(
+                theciftiheader.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis
+            ):
                 modelaxis = theaxis
                 if debug:
-                    print('axis', theaxis, 'is the BrainModelAxis')
+                    print("axis", theaxis, "is the BrainModelAxis")
 
         # process things differently for dscalar and dtseries files
         if isseries:
             # make a proper series header
             if debug:
-                print('dtseries path: workingarray shape', workingarray.shape)
-            theintent = 'NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES'
+                print("dtseries path: workingarray shape", workingarray.shape)
+            theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES"
             theintentname = "ConnDenseSeries"
             if modelaxis is not None:
-                seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(start, step, workingarray.shape[0])
+                seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(
+                    start, step, workingarray.shape[0]
+                )
                 axislist = [seriesaxis, theciftiheader.matrix.get_axis(modelaxis)]
             else:
-                print('no BrainModelAxis found in source file - exiting')
+                print("no BrainModelAxis found in source file - exiting")
                 sys.exit()
         else:
             # make a proper scalar header
             if debug:
-                print('dscalar path: workingarray shape', workingarray.shape)
-            theintent = 'NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS'
+                print("dscalar path: workingarray shape", workingarray.shape)
+            theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS"
             theintentname = "ConnDenseScalar"
             if len(names) != workingarray.shape[0]:
-                print('savetocifti - number of supplied names does not match array size - exiting.')
+                print(
+                    "savetocifti - number of supplied names does not match array size - exiting."
+                )
                 sys.exit()
             if modelaxis is not None:
                 scalaraxis = nib.cifti2.cifti2_axes.ScalarAxis(names)
                 axislist = [scalaraxis, theciftiheader.matrix.get_axis(modelaxis)]
             else:
-                print('no BrainModelAxis found in source file - exiting')
+                print("no BrainModelAxis found in source file - exiting")
                 sys.exit()
         # now create the output file structure
         if debug:
-            print('about to create cifti image - nifti header is:', theniftiheader)
+            print("about to create cifti image - nifti header is:", theniftiheader)
 
-        img = nib.cifti2.Cifti2Image(dataobj=workingarray,
-                                     header=axislist)
+        img = nib.cifti2.Cifti2Image(dataobj=workingarray, header=axislist)
 
         # make the header right
         img.nifti_header.set_intent(theintent, name=theintentname)
         img.update_headers()
 
         if isseries:
-            suffix = '.dtseries.nii'
+            suffix = ".dtseries.nii"
             if debug:
-                print('\tDENSE_SERIES')
+                print("\tDENSE_SERIES")
         else:
-            suffix = '.dscalar.nii'
+            suffix = ".dscalar.nii"
             if debug:
-                print('\tDENSE_SCALARS')
+                print("\tDENSE_SCALARS")
         if debug:
-            print('after update_headers() - nifti header is:', theniftiheader)
+            print("after update_headers() - nifti header is:", theniftiheader)
 
         # save the data
         nib.cifti2.save(img, thename + suffix)
-
 
     def checkifnifti(filename):
         r"""Check to see if a file name is a valid nifti name.
@@ -351,7 +355,6 @@ if nibabelexists:
             return True
         else:
             return False
-
 
     def niftisplitext(filename):
         r"""Split nifti filename into name base and extensionn.
@@ -377,73 +380,82 @@ if nibabelexists:
         else:
             return firstsplit[0], firstsplit[1]
 
-
     def niftisplit(inputfile, outputroot, axis=3):
-        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
+        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(
+            inputfile
+        )
         theheader = copy.deepcopy(infile_hdr)
         numpoints = infiledims[axis + 1]
         print(infiledims)
-        theheader['dim'][axis + 1] = 1
+        theheader["dim"][axis + 1] = 1
         for i in range(numpoints):
             if infiledims[0] == 5:
                 if axis == 0:
-                    thisslice = infile_data[i:i + 1, :, :, :, :]
+                    thisslice = infile_data[i : i + 1, :, :, :, :]
                 elif axis == 1:
-                    thisslice = infile_data[:, i:i + 1, :, :, :]
+                    thisslice = infile_data[:, i : i + 1, :, :, :]
                 elif axis == 2:
-                    thisslice = infile_data[:, :, i:i + 1, :, :]
+                    thisslice = infile_data[:, :, i : i + 1, :, :]
                 elif axis == 3:
-                    thisslice = infile_data[:, :, :, i:i + 1, :]
+                    thisslice = infile_data[:, :, :, i : i + 1, :]
                 elif axis == 4:
-                    thisslice = infile_data[:, :, :, :, i:i + 1]
+                    thisslice = infile_data[:, :, :, :, i : i + 1]
                 else:
-                    print('illegal axis')
+                    print("illegal axis")
                     sys.exit()
             elif infiledims[0] == 4:
                 if axis == 0:
-                    thisslice = infile_data[i:i + 1, :, :, :]
+                    thisslice = infile_data[i : i + 1, :, :, :]
                 elif axis == 1:
-                    thisslice = infile_data[:, i:i + 1, :, :]
+                    thisslice = infile_data[:, i : i + 1, :, :]
                 elif axis == 2:
-                    thisslice = infile_data[:, :, i:i + 1, :]
+                    thisslice = infile_data[:, :, i : i + 1, :]
                 elif axis == 3:
-                    thisslice = infile_data[:, :, :, i:i + 1]
+                    thisslice = infile_data[:, :, :, i : i + 1]
                 else:
-                    print('illegal axis')
+                    print("illegal axis")
                     sys.exit()
             savetonifti(thisslice, theheader, outputroot + str(i).zfill(4))
 
-
-    def niftimerge(inputlist, outputname, writetodisk=True, axis=3, returndata=False, debug=False):
+    def niftimerge(
+        inputlist, outputname, writetodisk=True, axis=3, returndata=False, debug=False
+    ):
         inputdata = []
         for thefile in inputlist:
             if debug:
-                print('reading', thefile)
-            infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(thefile)
+                print("reading", thefile)
+            infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(
+                thefile
+            )
             if infiledims[0] == 3:
-                inputdata.append(infile_data.reshape((infiledims[1], infiledims[2], infiledims[3], 1)) + 0.0)
+                inputdata.append(
+                    infile_data.reshape(
+                        (infiledims[1], infiledims[2], infiledims[3], 1)
+                    )
+                    + 0.0
+                )
             else:
                 inputdata.append(infile_data + 0.0)
         theheader = copy.deepcopy(infile_hdr)
-        theheader['dim'][axis + 1] = len(inputdata)
+        theheader["dim"][axis + 1] = len(inputdata)
         output_data = np.concatenate(inputdata, axis=axis)
         if writetodisk:
             savetonifti(output_data, theheader, outputname)
         if returndata:
             return output_data, infile_hdr
 
-
     def niftiroi(inputfile, outputfile, startpt, numpoints):
         print(inputfile, outputfile, startpt, numpoints)
-        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
+        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(
+            inputfile
+        )
         theheader = copy.deepcopy(infile_hdr)
-        theheader['dim'][4] = numpoints
+        theheader["dim"][4] = numpoints
         if infiledims[0] == 5:
-            output_data = infile_data[:, :, :, startpt:startpt + numpoints, :]
+            output_data = infile_data[:, :, :, startpt : startpt + numpoints, :]
         else:
-            output_data = infile_data[:, :, :, startpt:startpt + numpoints]
+            output_data = infile_data[:, :, :, startpt : startpt + numpoints]
         savetonifti(output_data, theheader, outputfile)
-
 
     def checkifcifti(filename, debug=False):
         r"""Check to see if the specified file is CIFTI format
@@ -462,17 +474,16 @@ if nibabelexists:
         theimg = nib.load(filename)
         thedict = vars(theimg)
         if debug:
-            print('thedict:', thedict)
+            print("thedict:", thedict)
         try:
-            intent = thedict['_nifti_header']['intent_code']
+            intent = thedict["_nifti_header"]["intent_code"]
             if debug:
-                print('intent found')
+                print("intent found")
             return intent >= 3000 and intent < 3100
         except KeyError:
             if debug:
-                print('intent not found')
+                print("intent not found")
             return False
-
 
     def checkiftext(filename):
         r"""Check to see if the specified filename ends in '.txt'
@@ -492,7 +503,6 @@ if nibabelexists:
             return True
         else:
             return False
-
 
     def getniftiroot(filename):
         r"""Strip a nifti filename down to the root with no extensions
@@ -515,7 +525,6 @@ if nibabelexists:
         else:
             return filename
 
-
     def fmritimeinfo(niftifilename):
         r"""Retrieve the repetition time and number of timepoints from a nifti file
 
@@ -534,15 +543,14 @@ if nibabelexists:
         """
         nim = nib.load(niftifilename)
         hdr = nim.header.copy()
-        thedims = hdr['dim'].copy()
-        thesizes = hdr['pixdim'].copy()
-        if hdr.get_xyzt_units()[1] == 'msec':
+        thedims = hdr["dim"].copy()
+        thesizes = hdr["pixdim"].copy()
+        if hdr.get_xyzt_units()[1] == "msec":
             tr = thesizes[4] / 1000.0
         else:
             tr = thesizes[4]
         timepoints = thedims[4]
         return tr, timepoints
-
 
     def checkspacematch(hdr1, hdr2):
         r"""Check the headers of two nifti files to determine if the cover the same volume at the same resolution
@@ -560,10 +568,9 @@ if nibabelexists:
             True if the spatial dimensions and resolutions of the two files match.
 
         """
-        dimmatch = checkspaceresmatch(hdr1['pixdim'], hdr2['pixdim'])
-        resmatch = checkspacedimmatch(hdr1['dim'], hdr2['dim'])
+        dimmatch = checkspaceresmatch(hdr1["pixdim"], hdr2["pixdim"])
+        resmatch = checkspacedimmatch(hdr1["dim"], hdr2["dim"])
         return dimmatch and resmatch
- 
 
     def checkspaceresmatch(sizes1, sizes2):
         r"""Check the spatial pixdims of two nifti files to determine if they have the same resolution
@@ -571,9 +578,9 @@ if nibabelexists:
         Parameters
         ----------
         sizes1 : float array
-            The size array from the first nifti file 
+            The size array from the first nifti file
         sizes2 : float array
-            The size array from the second nifti file 
+            The size array from the second nifti file
 
         Returns
         -------
@@ -589,16 +596,15 @@ if nibabelexists:
             else:
                 return True
 
-
     def checkspacedimmatch(dims1, dims2):
         r"""Check the dimension arrays of two nifti files to determine if the cover the same number of voxels in each dimension
 
         Parameters
         ----------
         dims1 : int array
-            The dimension array from the first nifti file 
+            The dimension array from the first nifti file
         dims2 : int array
-            The dimension array from the second nifti file 
+            The dimension array from the second nifti file
 
         Returns
         -------
@@ -613,16 +619,15 @@ if nibabelexists:
             else:
                 return True
 
-
     def checktimematch(dims1, dims2, numskip1=0, numskip2=0):
         r"""Check the dimensions of two nifti files to determine if the cover the same number of timepoints
 
         Parameters
         ----------
         dims1 : int array
-            The dimension array from the first nifti file 
+            The dimension array from the first nifti file
         dims2 : int array
-            The dimension array from the second nifti file 
+            The dimension array from the second nifti file
         numskip1 : int, optional
             Number of timepoints skipped at the beginning of file 1
         numskip2 : int, optional
@@ -636,10 +641,19 @@ if nibabelexists:
         """
         if (dims1[4] - numskip1) != (dims2[4] - numskip2):
             print("File numbers of timepoints do not match")
-            print("dimension ", 4, ":", dims1[4],
-                  "(skip ", numskip1, ") !=",
-                  dims2[4],
-                  " (skip ", numskip2, ")")
+            print(
+                "dimension ",
+                4,
+                ":",
+                dims1[4],
+                "(skip ",
+                numskip1,
+                ") !=",
+                dims2[4],
+                " (skip ",
+                numskip2,
+                ")",
+            )
             return False
         else:
             return True
@@ -665,6 +679,7 @@ def checkifparfile(filename):
     else:
         return False
 
+
 def readparfile(filename):
     r"""Checks to see if a file is an FSL style motion parameter file
 
@@ -679,7 +694,7 @@ def readparfile(filename):
         All the timecourses in the file, keyed by name
 
     """
-    labels = ['X', 'Y', 'Z', 'RotX', 'RotY', 'RotZ']
+    labels = ["X", "Y", "Z", "RotX", "RotY", "RotZ"]
     motiontimeseries = readvecs(filename)
     motiondict = {}
     for j in range(0, 6):
@@ -704,38 +719,86 @@ def readmotion(filename):
 
     """
     # read in the motion timecourses
-    print('reading motion timecourses...')
+    print("reading motion timecourses...")
     filebase, extension = os.path.splitext(filename)
-    if extension == '.par':
+    if extension == ".par":
         allmotion = readvecs(filename)
         motiondict = {}
-        motiondict['xtrans'] = allmotion[3, :] * 1.0
-        motiondict['ytrans'] = allmotion[4, :] * 1.0
-        motiondict['ztrans'] = allmotion[5, :] * 1.0
-        motiondict['maxtrans'] = np.max([np.max(motiondict['xtrans']), np.max(motiondict['ytrans']), np.max(motiondict['ztrans'])])
-        motiondict['mintrans'] = np.min([np.min(motiondict['xtrans']), np.min(motiondict['ytrans']), np.min(motiondict['ztrans'])])
-        motiondict['xrot'] = allmotion[0, :] * 1.0
-        motiondict['yrot'] = allmotion[1, :] * 1.0
-        motiondict['zrot'] = allmotion[2, :] * 1.0
-        motiondict['maxrot'] = np.max([np.max(motiondict['xrot']), np.max(motiondict['yrot']), np.max(motiondict['zrot'])])
-        motiondict['minrot'] = np.min([np.min(motiondict['xrot']), np.min(motiondict['yrot']), np.min(motiondict['zrot'])])
-    elif extension == '.tsv':
+        motiondict["xtrans"] = allmotion[3, :] * 1.0
+        motiondict["ytrans"] = allmotion[4, :] * 1.0
+        motiondict["ztrans"] = allmotion[5, :] * 1.0
+        motiondict["maxtrans"] = np.max(
+            [
+                np.max(motiondict["xtrans"]),
+                np.max(motiondict["ytrans"]),
+                np.max(motiondict["ztrans"]),
+            ]
+        )
+        motiondict["mintrans"] = np.min(
+            [
+                np.min(motiondict["xtrans"]),
+                np.min(motiondict["ytrans"]),
+                np.min(motiondict["ztrans"]),
+            ]
+        )
+        motiondict["xrot"] = allmotion[0, :] * 1.0
+        motiondict["yrot"] = allmotion[1, :] * 1.0
+        motiondict["zrot"] = allmotion[2, :] * 1.0
+        motiondict["maxrot"] = np.max(
+            [
+                np.max(motiondict["xrot"]),
+                np.max(motiondict["yrot"]),
+                np.max(motiondict["zrot"]),
+            ]
+        )
+        motiondict["minrot"] = np.min(
+            [
+                np.min(motiondict["xrot"]),
+                np.min(motiondict["yrot"]),
+                np.min(motiondict["zrot"]),
+            ]
+        )
+    elif extension == ".tsv":
         allmotion = readfmriprepconfounds(filebase)
         motiondict = {}
-        motiondict['xtrans'] = allmotion['trans_x'] * 1.0
-        motiondict['ytrans'] = allmotion['trans_y'] * 1.0
-        motiondict['ztrans'] = allmotion['trans_z'] * 1.0
-        motiondict['maxtrans'] = np.max([np.max(motiondict['xtrans']), np.max(motiondict['ytrans']), np.max(motiondict['ztrans'])])
-        motiondict['mintrans'] = np.min([np.min(motiondict['xtrans']), np.min(motiondict['ytrans']), np.min(motiondict['ztrans'])])
-        motiondict['xrot'] = allmotion['rot_x'] * 1.0
-        motiondict['yrot'] = allmotion['rot_y'] * 1.0
-        motiondict['zrot'] = allmotion['rot_z'] * 1.0
-        motiondict['maxrot'] = np.max([np.max(motiondict['xrot']), np.max(motiondict['yrot']), np.max(motiondict['zrot'])])
-        motiondict['minrot'] = np.min([np.min(motiondict['xrot']), np.min(motiondict['yrot']), np.min(motiondict['zrot'])])
+        motiondict["xtrans"] = allmotion["trans_x"] * 1.0
+        motiondict["ytrans"] = allmotion["trans_y"] * 1.0
+        motiondict["ztrans"] = allmotion["trans_z"] * 1.0
+        motiondict["maxtrans"] = np.max(
+            [
+                np.max(motiondict["xtrans"]),
+                np.max(motiondict["ytrans"]),
+                np.max(motiondict["ztrans"]),
+            ]
+        )
+        motiondict["mintrans"] = np.min(
+            [
+                np.min(motiondict["xtrans"]),
+                np.min(motiondict["ytrans"]),
+                np.min(motiondict["ztrans"]),
+            ]
+        )
+        motiondict["xrot"] = allmotion["rot_x"] * 1.0
+        motiondict["yrot"] = allmotion["rot_y"] * 1.0
+        motiondict["zrot"] = allmotion["rot_z"] * 1.0
+        motiondict["maxrot"] = np.max(
+            [
+                np.max(motiondict["xrot"]),
+                np.max(motiondict["yrot"]),
+                np.max(motiondict["zrot"]),
+            ]
+        )
+        motiondict["minrot"] = np.min(
+            [
+                np.min(motiondict["xrot"]),
+                np.min(motiondict["yrot"]),
+                np.min(motiondict["zrot"]),
+            ]
+        )
     else:
-        print('cannot read files with extension', extension)
+        print("cannot read files with extension", extension)
         sys.exit()
-    '''
+    """
     motionlen = motiondict['xtrans'].shape[0]
     motiontimeseries = readvecs(filename, colspec=colspec)
     if motiontimeseries.shape[0] != 6:
@@ -743,11 +806,13 @@ def readmotion(filename):
         sys.exit()
     motiondict = {}
     for j in range(0, 6):
-        motiondict[labels[j]] = 1.0 * motiontimeseries[j, :]'''
+        motiondict[labels[j]] = 1.0 * motiontimeseries[j, :]"""
     return motiondict
 
 
-def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, derivdelayed=False):
+def calcmotregressors(
+    motiondict, start=0, end=-1, position=True, deriv=True, derivdelayed=False
+):
     r"""Calculates various motion related timecourses from motion data dict, and returns an array
 
     Parameters
@@ -761,7 +826,7 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, de
         All the derivative timecourses to use in a numpy array
 
     """
-    labels = ['xtrans', 'ytrans', 'ztrans', 'xrot', 'yrot', 'zrot']
+    labels = ["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"]
     numpoints = len(motiondict[labels[0]])
     if end == -1:
         end = numpoints - 1
@@ -778,24 +843,28 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, de
     if numoutputregressors > 0:
         outputregressors = np.zeros((numoutputregressors, numoutputpoints), dtype=float)
     else:
-        print('no output types selected - exiting')
+        print("no output types selected - exiting")
         sys.exit()
     activecolumn = 0
     outlabels = []
     if position:
         for thelabel in labels:
-            outputregressors[activecolumn, :] = motiondict[thelabel][start:end + 1]
+            outputregressors[activecolumn, :] = motiondict[thelabel][start : end + 1]
             outlabels.append(thelabel)
             activecolumn += 1
     if deriv:
         for thelabel in labels:
-            outputregressors[activecolumn, 1:] = np.diff(motiondict[thelabel][start:end + 1])
-            outlabels.append(thelabel + '_deriv')
+            outputregressors[activecolumn, 1:] = np.diff(
+                motiondict[thelabel][start : end + 1]
+            )
+            outlabels.append(thelabel + "_deriv")
             activecolumn += 1
     if derivdelayed:
         for thelabel in labels:
-            outputregressors[activecolumn, 2:] = np.diff(motiondict[thelabel][start:end + 1])[1:]
-            outlabels.append(thelabel + '_delayedderiv')
+            outputregressors[activecolumn, 2:] = np.diff(
+                motiondict[thelabel][start : end + 1]
+            )[1:]
+            outlabels.append(thelabel + "_delayedderiv")
             activecolumn += 1
     return outputregressors, outlabels
 
@@ -812,15 +881,15 @@ def sliceinfo(slicetimes, tr):
 
 def getslicetimesfromfile(slicetimename):
     filebase, extension = os.path.splitext(slicetimename)
-    if extension == '.json':
+    if extension == ".json":
         jsoninfodict = readdictfromjson(slicetimename)
         try:
-            slicetimelist = jsoninfodict['SliceTiming']
+            slicetimelist = jsoninfodict["SliceTiming"]
             slicetimes = np.zeros((len(slicetimelist)), dtype=np.float64)
             for idx, thetime in enumerate(slicetimelist):
                 slicetimes[idx] = float(thetime)
         except KeyError:
-            print(slicetimename, 'is not a valid BIDS sidecar file')
+            print(slicetimename, "is not a valid BIDS sidecar file")
             sys.exit()
     else:
         slicetimes = readvec(slicetimename)
@@ -842,12 +911,12 @@ def readbidssidecar(inputfilename):
 
     """
     thefileroot, theext = os.path.splitext(inputfilename)
-    if os.path.exists(thefileroot + '.json'):
-        with open(thefileroot + '.json', 'r') as json_data:
+    if os.path.exists(thefileroot + ".json"):
+        with open(thefileroot + ".json", "r") as json_data:
             d = json.load(json_data)
             return d
     else:
-        print('sidecar file does not exist')
+        print("sidecar file does not exist")
         return {}
 
 
@@ -872,8 +941,12 @@ def writedicttojson(thedict, thefilename):
             thisdict[key] = thedict[key].tolist()
         else:
             thisdict[key] = thedict[key]
-    with open(thefilename, 'wb') as fp:
-        fp.write(json.dumps(thisdict, sort_keys=True, indent=4, separators=(',', ':')).encode("utf-8"))
+    with open(thefilename, "wb") as fp:
+        fp.write(
+            json.dumps(
+                thisdict, sort_keys=True, indent=4, separators=(",", ":")
+            ).encode("utf-8")
+        )
 
 
 def readdictfromjson(inputfilename):
@@ -891,12 +964,12 @@ def readdictfromjson(inputfilename):
 
     """
     thefileroot, theext = os.path.splitext(inputfilename)
-    if os.path.exists(thefileroot + '.json'):
-        with open(thefileroot + '.json', 'r') as json_data:
+    if os.path.exists(thefileroot + ".json"):
+        with open(thefileroot + ".json", "r") as json_data:
             d = json.load(json_data)
             return d
     else:
-        print('specified json file does not exist')
+        print("specified json file does not exist")
         return {}
 
 
@@ -917,106 +990,123 @@ def readfmriprepconfounds(inputfilename):
 
     """
     confounddict = {}
-    df = pd.read_csv(inputfilename + '.tsv', sep='\t', quotechar='"')
+    df = pd.read_csv(inputfilename + ".tsv", sep="\t", quotechar='"')
     for thecolname, theseries in df.items():
         confounddict[thecolname] = theseries.values
     return confounddict
 
 
 def readoptionsfile(inputfileroot):
-    if os.path.isfile(inputfileroot + '.json'):
+    if os.path.isfile(inputfileroot + ".json"):
         # options saved as json
-        thedict = readdictfromjson(inputfileroot + '.json')
-    elif os.path.isfile(inputfileroot + '.txt'):
+        thedict = readdictfromjson(inputfileroot + ".json")
+    elif os.path.isfile(inputfileroot + ".txt"):
         # options saved as text
-        thedict = readdict(inputfileroot + '.txt')
+        thedict = readdict(inputfileroot + ".txt")
     else:
-        print('no valid options file found')
-        return{}
+        print("no valid options file found")
+        return {}
 
     # correct behavior for older options files
     try:
-        test = thedict['lowerpass']
+        test = thedict["lowerpass"]
     except KeyError:
-        print('no filter limits found in options file - filling in defaults')
-        if thedict['filtertype'] == 'None':
-            thedict['lowerstop'] = 0.0
-            thedict['lowerpass'] = 0.0
-            thedict['upperpass'] = -1.0
-            thedict['upperstop'] = -1.0
-        elif thedict['filtertype'] == 'vlf':
-            thedict['lowerstop'] = 0.0
-            thedict['lowerpass'] = 0.0
-            thedict['upperpass'] = 0.009
-            thedict['upperstop'] = 0.010
-        elif thedict['filtertype'] == 'lfo':
-            thedict['lowerstop'] = 0.009
-            thedict['lowerpass'] = 0.010
-            thedict['upperpass'] = 0.15
-            thedict['upperstop'] = 0.20
-        elif thedict['filtertype'] == 'resp':
-            thedict['lowerstop'] = 0.15
-            thedict['lowerpass'] = 0.20
-            thedict['upperpass'] = 0.4
-            thedict['upperstop'] = 0.5
-        elif thedict['filtertype'] == 'card':
-            thedict['lowerstop'] = 0.4
-            thedict['lowerpass'] = 0.5
-            thedict['upperpass'] = 2.5
-            thedict['upperstop'] = 3.0
-        elif thedict['filtertype'] == 'arb':
-            thedict['lowerstop'] = thedict['arb_lowerstop']
-            thedict['lowerpass'] = thedict['arb_lower']
-            thedict['upperpass'] = thedict['arb_upper']
-            thedict['upperstop'] = thedict['arb_upperstop']
+        print("no filter limits found in options file - filling in defaults")
+        if thedict["filtertype"] == "None":
+            thedict["lowerstop"] = 0.0
+            thedict["lowerpass"] = 0.0
+            thedict["upperpass"] = -1.0
+            thedict["upperstop"] = -1.0
+        elif thedict["filtertype"] == "vlf":
+            thedict["lowerstop"] = 0.0
+            thedict["lowerpass"] = 0.0
+            thedict["upperpass"] = 0.009
+            thedict["upperstop"] = 0.010
+        elif thedict["filtertype"] == "lfo":
+            thedict["lowerstop"] = 0.009
+            thedict["lowerpass"] = 0.010
+            thedict["upperpass"] = 0.15
+            thedict["upperstop"] = 0.20
+        elif thedict["filtertype"] == "resp":
+            thedict["lowerstop"] = 0.15
+            thedict["lowerpass"] = 0.20
+            thedict["upperpass"] = 0.4
+            thedict["upperstop"] = 0.5
+        elif thedict["filtertype"] == "card":
+            thedict["lowerstop"] = 0.4
+            thedict["lowerpass"] = 0.5
+            thedict["upperpass"] = 2.5
+            thedict["upperstop"] = 3.0
+        elif thedict["filtertype"] == "arb":
+            thedict["lowerstop"] = thedict["arb_lowerstop"]
+            thedict["lowerpass"] = thedict["arb_lower"]
+            thedict["upperpass"] = thedict["arb_upper"]
+            thedict["upperstop"] = thedict["arb_upperstop"]
         else:
-            print('cannot determine filtering')
-            thedict['lowerstop'] = 0.0
-            thedict['lowerpass'] = 0.0
-            thedict['upperpass'] = -1.0
-            thedict['upperstop'] = -1.0
+            print("cannot determine filtering")
+            thedict["lowerstop"] = 0.0
+            thedict["lowerpass"] = 0.0
+            thedict["upperpass"] = -1.0
+            thedict["upperstop"] = -1.0
     return thedict
 
 
-def writebidstsv(outputfileroot, data, samplerate,
-                 compressed=False,
-                 columns=None,
-                 starttime=0.0,
-                 append=False,
-                 colsinjson=False,
-                 debug=False):
+def writebidstsv(
+    outputfileroot,
+    data,
+    samplerate,
+    compressed=False,
+    columns=None,
+    starttime=0.0,
+    append=False,
+    colsinjson=False,
+    debug=False,
+):
     if debug:
-        print('entering writebidstsv:')
-        print('\toutputfileroot:', outputfileroot)
-        print('\tdata.shape:', data.shape)
-        print('\tsamplerate:', samplerate)
-        print('\tcompressed:', compressed)
-        print('\tcolumns:', columns)
-        print('\tstarttime:', starttime)
-        print('\tappend:', append)
+        print("entering writebidstsv:")
+        print("\toutputfileroot:", outputfileroot)
+        print("\tdata.shape:", data.shape)
+        print("\tsamplerate:", samplerate)
+        print("\tcompressed:", compressed)
+        print("\tcolumns:", columns)
+        print("\tstarttime:", starttime)
+        print("\tappend:", append)
     if len(data.shape) == 1:
         reshapeddata = data.reshape((1, -1))
     else:
         reshapeddata = data
     if append:
-        insamplerate, instarttime, incolumns, indata, incompressed = readbidstsv(outputfileroot + '.json', debug=debug)
+        insamplerate, instarttime, incolumns, indata, incompressed = readbidstsv(
+            outputfileroot + ".json", debug=debug
+        )
         if debug:
-            print('appending')
+            print("appending")
             print(insamplerate, instarttime, incolumns, indata, incompressed)
         if insamplerate is None:
             # file does not already exist
             if debug:
-                print('creating file:', data.shape, columns, samplerate)
+                print("creating file:", data.shape, columns, samplerate)
             startcol = 0
         else:
             # file does already exist
             if debug:
-                print('appending:', insamplerate, instarttime, incolumns, indata.shape, reshapeddata.shape)
+                print(
+                    "appending:",
+                    insamplerate,
+                    instarttime,
+                    incolumns,
+                    indata.shape,
+                    reshapeddata.shape,
+                )
             compressed = incompressed
-            if (insamplerate == samplerate) and (instarttime == starttime) and reshapeddata.shape[1] == indata.shape[1]:
+            if (
+                (insamplerate == samplerate)
+                and (instarttime == starttime)
+                and reshapeddata.shape[1] == indata.shape[1]
+            ):
                 startcol = len(incolumns)
             else:
-                print('data dimensions not compatible with existing dimensions')
+                print("data dimensions not compatible with existing dimensions")
                 print(samplerate, insamplerate)
                 print(starttime, instarttime)
                 print(columns, incolumns)
@@ -1031,7 +1121,7 @@ def writebidstsv(outputfileroot, data, samplerate,
             columns.append("col_" + str(i + startcol).zfill(2))
         else:
             if len(columns) != reshapeddata.shape[1]:
-                print('number of column names does not match number of columns in data')
+                print("number of column names does not match number of columns in data")
                 sys.exit()
     if startcol > 0:
         df = pd.DataFrame(data=np.transpose(indata), columns=incolumns)
@@ -1040,20 +1130,24 @@ def writebidstsv(outputfileroot, data, samplerate,
     else:
         df = pd.DataFrame(data=np.transpose(reshapeddata), columns=columns)
     if compressed:
-        df.to_csv(outputfileroot + '.tsv.gz', sep='\t', compression='gzip', index=False)
+        df.to_csv(outputfileroot + ".tsv.gz", sep="\t", compression="gzip", index=False)
     else:
-        df.to_csv(outputfileroot + '.tsv', sep='\t', compression=None, index=False)
+        df.to_csv(outputfileroot + ".tsv", sep="\t", compression=None, index=False)
     headerdict = {}
-    headerdict['SamplingFrequency'] = samplerate
-    headerdict['StartTime'] = starttime
+    headerdict["SamplingFrequency"] = samplerate
+    headerdict["StartTime"] = starttime
     if colsinjson:
         if startcol == 0:
-            headerdict['Columns'] = columns
+            headerdict["Columns"] = columns
         else:
-            headerdict['Columns'] = incolumns + columns
+            headerdict["Columns"] = incolumns + columns
 
-    with open(outputfileroot + '.json', 'wb') as fp:
-        fp.write(json.dumps(headerdict, sort_keys=True, indent=4, separators=(',', ':')).encode("utf-8"))
+    with open(outputfileroot + ".json", "wb") as fp:
+        fp.write(
+            json.dumps(
+                headerdict, sort_keys=True, indent=4, separators=(",", ":")
+            ).encode("utf-8")
+        )
 
 
 def readbidstsv(inputfilename, debug=False):
@@ -1082,40 +1176,56 @@ def readbidstsv(inputfilename, debug=False):
     """
     thefileroot, theext = os.path.splitext(inputfilename)
     if debug:
-        print('thefileroot:', thefileroot)
-        print('theext:', theext)
-    if os.path.exists(thefileroot + '.json') and (os.path.exists(thefileroot + '.tsv.gz') or os.path.exists(thefileroot + '.tsv')):
-        with open(thefileroot + '.json', 'r') as json_data:
+        print("thefileroot:", thefileroot)
+        print("theext:", theext)
+    if os.path.exists(thefileroot + ".json") and (
+        os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv")
+    ):
+        with open(thefileroot + ".json", "r") as json_data:
             d = json.load(json_data)
             try:
-                samplerate = float(d['SamplingFrequency'])
+                samplerate = float(d["SamplingFrequency"])
             except:
-                print('no samplerate found in json, setting to 1.0')
+                print("no samplerate found in json, setting to 1.0")
                 samplerate = 1.0
             try:
-                starttime = float(d['StartTime'])
+                starttime = float(d["StartTime"])
             except:
-                print('no starttime found in json, setting to 0.0')
+                print("no starttime found in json, setting to 0.0")
                 starttime = 0.0
             try:
-                columns = d['Columns']
+                columns = d["Columns"]
             except:
                 if debug:
-                    print('no columns found in json, will take labels from the tsv file')
+                    print(
+                        "no columns found in json, will take labels from the tsv file"
+                    )
                 columns = None
-        if os.path.exists(thefileroot + '.tsv.gz'):
-            df = pd.read_csv(thefileroot + '.tsv.gz', compression='gzip', header=0, sep='\t', quotechar='"')
+        if os.path.exists(thefileroot + ".tsv.gz"):
+            df = pd.read_csv(
+                thefileroot + ".tsv.gz",
+                compression="gzip",
+                header=0,
+                sep="\t",
+                quotechar='"',
+            )
             compressed = True
         else:
-            df = pd.read_csv(thefileroot + '.tsv',  header=0, sep='\t', quotechar='"')
+            df = pd.read_csv(thefileroot + ".tsv", header=0, sep="\t", quotechar='"')
             compressed = False
         if columns is None:
             columns = list(df.columns.values)
         if debug:
-            print(samplerate, starttime, columns, np.transpose(df.to_numpy()).shape, compressed)
+            print(
+                samplerate,
+                starttime,
+                columns,
+                np.transpose(df.to_numpy()).shape,
+                compressed,
+            )
         return samplerate, starttime, columns, np.transpose(df.to_numpy()), compressed
     else:
-        print('file pair does not exist')
+        print("file pair does not exist")
         return [None, None, None, None, None]
 
 
@@ -1134,7 +1244,7 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
     """
     samplerate, starttime, columns, data = readbidstsv(inputfilename, debug=debug)
     if data is None:
-        print('no valid datafile found')
+        print("no valid datafile found")
         return None, None, None
     else:
         if columnname is not None:
@@ -1143,18 +1253,23 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
                 thecolnum = columns.index(columnname)
                 return samplerate, starttime, data[thecolnum, :]
             except:
-                print('no column named', columnname, 'in', inputfilename)
+                print("no column named", columnname, "in", inputfilename)
                 return None, None, None
         # we can only get here if columnname is undefined
         if not (0 < columnnum < len(columns)):
-            print('specified column number', columnnum, 'is out of range in', inputfilename)
+            print(
+                "specified column number",
+                columnnum,
+                "is out of range in",
+                inputfilename,
+            )
             return None, None, None
         else:
             return samplerate, starttime, data[columnnum, :]
 
 
 def parsefilespec(filespec):
-    inputlist = filespec.split(':')
+    inputlist = filespec.split(":")
     thefilename = inputlist[0]
     if len(inputlist) > 1:
         return thefilename, inputlist[1]
@@ -1164,36 +1279,38 @@ def parsefilespec(filespec):
 
 def colspectolist(colspec, debug=False):
     if colspec is None:
-        print('COLSPECTOLIST: no range specification - exiting')
+        print("COLSPECTOLIST: no range specification - exiting")
         return None
     collist = []
-    theranges = colspec.split(',')
+    theranges = colspec.split(",")
+
     def safeint(s):
         try:
             int(s)
             return int(s)
         except ValueError:
-            print('COLSPECTOLIST:', s, 'is not a legal integer - exiting')
+            print("COLSPECTOLIST:", s, "is not a legal integer - exiting")
             return None
+
     for thisrange in theranges:
         if debug:
-            print('processing range', thisrange)
-        theendpoints = thisrange.split('-')
+            print("processing range", thisrange)
+        theendpoints = thisrange.split("-")
         if len(theendpoints) == 1:
             collist.append(safeint(theendpoints[0]))
         elif len(theendpoints) == 2:
             start = safeint(theendpoints[0])
             end = safeint(theendpoints[1])
             if start < 0:
-                print('COLSPECTOLIST:',start, 'must be greater than zero')
+                print("COLSPECTOLIST:", start, "must be greater than zero")
                 return None
             if end < start:
-                print('COLSPECTOLIST:',end, 'must be greater than or equal to', start)
+                print("COLSPECTOLIST:", end, "must be greater than or equal to", start)
                 return None
             for i in range(start, end + 1):
                 collist.append(i)
         else:
-            print('COLSPECTOLIST: bad range specification - exiting')
+            print("COLSPECTOLIST: bad range specification - exiting")
             return None
     return sorted(collist)
 
@@ -1205,11 +1322,7 @@ def processnamespec(maskspec, spectext1, spectext2):
     else:
         thevals = None
     if thevals is not None:
-        print(spectext1,
-              thename,
-              ' = ',
-              thevals,
-              spectext2)
+        print(spectext1, thename, " = ", thevals, spectext2)
     return thename, thevals
 
 
@@ -1224,19 +1337,19 @@ def readcolfromtextfile(inputfilename):
     Returns
     -------
     """
-    splitname = inputfilename.split(':')
+    splitname = inputfilename.split(":")
     if len(splitname) == 1:
         colspec = None
     elif len(splitname) == 2:
         inputfilename = splitname[0]
         colspec = splitname[1]
     else:
-        print('Badly formed file specification', inputfilename, '- exiting')
+        print("Badly formed file specification", inputfilename, "- exiting")
         sys.exit()
 
     inputdata = np.transpose(readvecs(inputfilename, colspec=colspec))
     if np.shape(inputdata)[1] > 1:
-        print('specify only one column for input file 1')
+        print("specify only one column for input file 1")
         sys.exit()
     else:
         return inputdata[:, 0]
@@ -1253,7 +1366,7 @@ def readvecs(inputfilename, colspec=None, numskip=0):
     -------
 
     """
-    with open(inputfilename, 'r') as thefile:
+    with open(inputfilename, "r") as thefile:
         lines = thefile.readlines()
     if colspec is None:
         numvecs = len(lines[0].split())
@@ -1261,13 +1374,13 @@ def readvecs(inputfilename, colspec=None, numskip=0):
     else:
         collist = colspectolist(colspec)
         if collist[-1] > len(lines[0].split()):
-            print('READVECS: too many columns requested - exiting')
+            print("READVECS: too many columns requested - exiting")
             sys.exit()
         if max(collist) > len(lines[0].split()) - 1:
-            print('READVECS: requested column', max(collist), 'too large - exiting')
+            print("READVECS: requested column", max(collist), "too large - exiting")
             sys.exit()
         numvecs = len(collist)
-    inputvec = np.zeros((numvecs, MAXLINES), dtype='float64')
+    inputvec = np.zeros((numvecs, MAXLINES), dtype="float64")
     numvals = 0
     for line in lines[numskip:]:
         if len(line) > 1:
@@ -1294,9 +1407,9 @@ def readvec(inputfilename, numskip=0):
         The data from the file
 
     """
-    inputvec = np.zeros(MAXLINES, dtype='float64')
+    inputvec = np.zeros(MAXLINES, dtype="float64")
     numvals = 0
-    with open(inputfilename, 'r') as thefile:
+    with open(inputfilename, "r") as thefile:
         lines = thefile.readlines()
         for line in lines[numskip:]:
             if len(line) > 1:
@@ -1304,30 +1417,36 @@ def readvec(inputfilename, numskip=0):
                 inputvec[numvals - 1] = np.float64(line)
     return 1.0 * inputvec[0:numvals]
 
+
 def readtc(inputfilename, colnum=None, colname=None, debug=False):
     # check file type
     filebase, extension = os.path.splitext(inputfilename)
     inputfreq = None
     inputstart = None
     if debug:
-        print('filebase:', filebase)
-        print('extension:', extension)
-    if extension == '.json':
+        print("filebase:", filebase)
+        print("extension:", extension)
+    if extension == ".json":
         if (colnum is None) and (colname is None):
-            print('You must specify a column name or number to read a bidstsv file')
+            print("You must specify a column name or number to read a bidstsv file")
             sys.exit()
         if (colnum is not None) and (colname is not None):
-            print('You must specify a column name or number, but not both, to read a bidstsv file')
+            print(
+                "You must specify a column name or number, but not both, to read a bidstsv file"
+            )
             sys.exit()
-        inputfreq, inputstart, timecourse = readcolfrombidstsv(inputfilename, columnname=colname,
-                                                                          columnnum=colnum, debug=debug)
+        inputfreq, inputstart, timecourse = readcolfrombidstsv(
+            inputfilename, columnname=colname, columnnum=colnum, debug=debug
+        )
     else:
         timecourse = np.transpose(readvecs(inputfilename))
         if debug:
             print(timecourse.shape)
         if len(timecourse.shape) != 1:
             if (colnum is None) or (colname is not None):
-                print('You must specify a column number (not a name) to read a column from a multicolumn file')
+                print(
+                    "You must specify a column number (not a name) to read a column from a multicolumn file"
+                )
                 sys.exit()
             timecourse = timecourse[:, colnum]
 
@@ -1346,14 +1465,14 @@ def readlabels(inputfilename):
 
     """
     inputvec = []
-    with open(inputfilename, 'r') as thefile:
+    with open(inputfilename, "r") as thefile:
         lines = thefile.readlines()
         for line in lines:
             inputvec.append(line.rstrip())
     return inputvec
 
 
-def writedict(thedict, outputfile, lineend=''):
+def writedict(thedict, outputfile, lineend=""):
     r"""
     Write all the key value pairs from a dictionary to a text file.
 
@@ -1370,21 +1489,21 @@ def writedict(thedict, outputfile, lineend=''):
     -------
 
     """
-    if lineend == 'mac':
-        thelineending = '\r'
-        openmode = 'wb'
-    elif lineend == 'win':
-        thelineending = '\r\n'
-        openmode = 'wb'
-    elif lineend == 'linux':
-        thelineending = '\n'
-        openmode = 'wb'
+    if lineend == "mac":
+        thelineending = "\r"
+        openmode = "wb"
+    elif lineend == "win":
+        thelineending = "\r\n"
+        openmode = "wb"
+    elif lineend == "linux":
+        thelineending = "\n"
+        openmode = "wb"
     else:
-        thelineending = '\n'
-        openmode = 'w'
+        thelineending = "\n"
+        openmode = "w"
     with open(outputfile, openmode) as FILE:
         for key, value in sorted(thedict.items()):
-            FILE.writelines(str(key) + ':\t' + str(value) + thelineending)
+            FILE.writelines(str(key) + ":\t" + str(value) + thelineending)
 
 
 def readdict(inputfilename):
@@ -1403,7 +1522,7 @@ def readdict(inputfilename):
     """
     if os.path.exists(inputfilename):
         thedict = {}
-        with open(inputfilename, 'r') as f:
+        with open(inputfilename, "r") as f:
             for line in f:
                 values = line.split()
                 key = values[0][:-1]
@@ -1413,11 +1532,11 @@ def readdict(inputfilename):
                 thedict[key] = thevalues
         return thedict
     else:
-        print('specified file does not exist')
+        print("specified file does not exist")
         return {}
 
 
-def writevec(thevec, outputfile, lineend=''):
+def writevec(thevec, outputfile, lineend=""):
     r"""Write a vector out to a text file.
     Parameters
     ----------
@@ -1432,25 +1551,25 @@ def writevec(thevec, outputfile, lineend=''):
     -------
 
     """
-    if lineend == 'mac':
-        thelineending = '\r'
-        openmode = 'wb'
-    elif lineend == 'win':
-        thelineending = '\r\n'
-        openmode = 'wb'
-    elif lineend == 'linux':
-        thelineending = '\n'
-        openmode = 'wb'
+    if lineend == "mac":
+        thelineending = "\r"
+        openmode = "wb"
+    elif lineend == "win":
+        thelineending = "\r\n"
+        openmode = "wb"
+    elif lineend == "linux":
+        thelineending = "\n"
+        openmode = "wb"
     else:
-        thelineending = '\n'
-        openmode = 'w'
+        thelineending = "\n"
+        openmode = "w"
     with open(outputfile, openmode) as FILE:
         for i in thevec:
             FILE.writelines(str(i) + thelineending)
 
 
 # rewritten to guarantee file closure, combines writenpvec and writenpvecs
-def writenpvecs(thevecs, outputfile, lineend=''):
+def writenpvecs(thevecs, outputfile, lineend=""):
     r"""Write out a two dimensional numpy array to a text file
 
     Parameters
@@ -1467,23 +1586,23 @@ def writenpvecs(thevecs, outputfile, lineend=''):
 
     """
     theshape = np.shape(thevecs)
-    if lineend == 'mac':
-        thelineending = '\r'
-        openmode = 'wb'
-    elif lineend == 'win':
-        thelineending = '\r\n'
-        openmode = 'wb'
-    elif lineend == 'linux':
-        thelineending = '\n'
-        openmode = 'wb'
+    if lineend == "mac":
+        thelineending = "\r"
+        openmode = "wb"
+    elif lineend == "win":
+        thelineending = "\r\n"
+        openmode = "wb"
+    elif lineend == "linux":
+        thelineending = "\n"
+        openmode = "wb"
     else:
-        thelineending = '\n'
-        openmode = 'w'
+        thelineending = "\n"
+        openmode = "w"
     with open(outputfile, openmode) as FILE:
         if thevecs.ndim == 2:
             for i in range(0, theshape[1]):
                 for j in range(0, theshape[0]):
-                    FILE.writelines(str(thevecs[j, i]) + '\t')
+                    FILE.writelines(str(thevecs[j, i]) + "\t")
                 FILE.writelines(thelineending)
         else:
             for i in range(0, theshape[0]):

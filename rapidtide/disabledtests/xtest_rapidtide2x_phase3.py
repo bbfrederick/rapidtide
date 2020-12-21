@@ -17,14 +17,19 @@
 from __future__ import print_function
 
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import os
 
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import rapidtide.util as tide_util
 import rapidtide.workflows.rapidtide2x as rapidtide2x_workflow
-from rapidtide.tests.utils import get_test_target_path, get_test_temp_path, get_examples_path, create_dir
+from rapidtide.tests.utils import (
+    get_test_target_path,
+    get_test_temp_path,
+    get_examples_path,
+    create_dir,
+)
 
 
 def test_rapidtide2x_phase3(debug=False):
@@ -35,30 +40,31 @@ def test_rapidtide2x_phase3(debug=False):
 
         # trigger the usage function
         rapidtide2x_workflow.usage()
-    
+
         # and launch the processing
-        theargs = ['rapidtide2x']
-        theargs += [os.path.join(get_examples_path(), 'fmri.nii.gz')]
-        theargs += [os.path.join(get_test_temp_path(), 'rapidtide2x_phase3output')]
-        theargs += ['--nowindow']
-        theargs += ['--windowfunc=hamming']
-        theargs += ['--liang', '--eckart', '--phat']
-        theargs += ['--usesp']
-        theargs += ['--preservefiltering']
-        theargs += ['--corrmaskthresh=0.25']
-        theargs += ['-I', '-B', '-a', '-M', '-m']
-        theargs += ['-C', '-R', '-L', '-V', '-F', '0.01,0.08']
-        theargs += ['-v', '--debug']
-        theargs += ['--globalmaskmethod=mean']
-        theargs += ['--mklthreads=1']
-        theargs += ['--nosharedmem']
-        theargs += ['-S']
+        theargs = ["rapidtide2x"]
+        theargs += [os.path.join(get_examples_path(), "fmri.nii.gz")]
+        theargs += [os.path.join(get_test_temp_path(), "rapidtide2x_phase3output")]
+        theargs += ["--nowindow"]
+        theargs += ["--windowfunc=hamming"]
+        theargs += ["--liang", "--eckart", "--phat"]
+        theargs += ["--usesp"]
+        theargs += ["--preservefiltering"]
+        theargs += ["--corrmaskthresh=0.25"]
+        theargs += ["-I", "-B", "-a", "-M", "-m"]
+        theargs += ["-C", "-R", "-L", "-V", "-F", "0.01,0.08"]
+        theargs += ["-v", "--debug"]
+        theargs += ["--globalmaskmethod=mean"]
+        theargs += ["--mklthreads=1"]
+        theargs += ["--nosharedmem"]
+        theargs += ["-S"]
         rapidtide2x_workflow.rapidtide_main(theargs)
     assert True
+
 
 def main():
     test_rapidtide2x_phase3(debug=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

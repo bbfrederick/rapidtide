@@ -36,24 +36,29 @@ import rapidtide.fit as tide_fit
 
 # this is here until numpy deals with their fft issue
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
 
-def _procOneVoxelPeaks(vox,
-                       thetc,
-                       themutualinformationator,
-                       fmri_x,
-                       fmritc,
-                       os_fmri_x,
-                       xcorr_x,
-                       thexcorr,
-                       bipolar=False,
-                       oversampfactor=1,
-                       sort=True,
-                       interptype='univariate'
-                       ):
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
+
+def _procOneVoxelPeaks(
+    vox,
+    thetc,
+    themutualinformationator,
+    fmri_x,
+    fmritc,
+    os_fmri_x,
+    xcorr_x,
+    thexcorr,
+    bipolar=False,
+    oversampfactor=1,
+    sort=True,
+    interptype="univariate",
+):
 
     if oversampfactor >= 1:
-        thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
+        thetc[:] = tide_resample.doresample(
+            fmri_x, fmritc, os_fmri_x, method=interptype
+        )
     else:
         thetc[:] = fmritc
     thepeaks = tide_fit.getpeaks(xcorr_x, thexcorr, bipolar=bipolar, display=False)
@@ -70,22 +75,23 @@ def _procOneVoxelPeaks(vox,
 
 
 def peakevalpass(
-        fmridata,
-        referencetc,
-        fmri_x,
-        os_fmri_x,
-        themutualinformationator,
-        xcorr_x,
-        corrdata,
-        nprocs=1,
-        alwaysmultiproc=False,
-        bipolar=False,
-        oversampfactor=1,
-        interptype='univariate',
-        showprogressbar=True,
-        chunksize=1000,
-        rt_floatset=np.float64,
-        rt_floattype='float64'):
+    fmridata,
+    referencetc,
+    fmri_x,
+    os_fmri_x,
+    themutualinformationator,
+    xcorr_x,
+    corrdata,
+    nprocs=1,
+    alwaysmultiproc=False,
+    bipolar=False,
+    oversampfactor=1,
+    interptype="univariate",
+    showprogressbar=True,
+    chunksize=1000,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+):
     """
 
     Parameters
@@ -131,18 +137,20 @@ def peakevalpass(
                         break
 
                     # process and send the data
-                    outQ.put(_procOneVoxelPeaks(
-                        val,
-                        thetc,
-                        themutualinformationator,
-                        fmri_x,
-                        fmridata[val, :],
-                        os_fmri_x,
-                        xcorr_x,
-                        corrdata[val, :],
-                        bipolar=bipolar,
-                        oversampfactor=oversampfactor,
-                        interptype=interptype)
+                    outQ.put(
+                        _procOneVoxelPeaks(
+                            val,
+                            thetc,
+                            themutualinformationator,
+                            fmri_x,
+                            fmridata[val, :],
+                            os_fmri_x,
+                            xcorr_x,
+                            corrdata[val, :],
+                            bipolar=bipolar,
+                            oversampfactor=oversampfactor,
+                            interptype=interptype,
+                        )
                     )
 
                 except Exception as e:
@@ -151,10 +159,12 @@ def peakevalpass(
 
         data_out = tide_multiproc.run_multiproc(
             correlation_consumer,
-            inputshape, None,
+            inputshape,
+            None,
             nprocs=nprocs,
             showprogressbar=showprogressbar,
-            chunksize=chunksize)
+            chunksize=chunksize,
+        )
 
         # unpack the data
         volumetotal = 0
@@ -165,22 +175,22 @@ def peakevalpass(
     else:
         for vox in range(0, inputshape[0]):
             if (vox % reportstep == 0 or vox == inputshape[0] - 1) and showprogressbar:
-                tide_util.progressbar(vox + 1, inputshape[0], label='Percent complete')
-            dummy, peakdict[str(vox)] = \
-                _procOneVoxelPeaks(
-                    vox,
-                    thetc,
-                    themutualinformationator,
-                    fmri_x,
-                    fmridata[vox, :],
-                    os_fmri_x,
-                    xcorr_x,
-                    corrdata[vox, :],
-                    bipolar=bipolar,
-                    oversampfactor=oversampfactor,
-                    interptype=interptype)
+                tide_util.progressbar(vox + 1, inputshape[0], label="Percent complete")
+            dummy, peakdict[str(vox)] = _procOneVoxelPeaks(
+                vox,
+                thetc,
+                themutualinformationator,
+                fmri_x,
+                fmridata[vox, :],
+                os_fmri_x,
+                xcorr_x,
+                corrdata[vox, :],
+                bipolar=bipolar,
+                oversampfactor=oversampfactor,
+                interptype=interptype,
+            )
             volumetotal += 1
-    print('\nPeak evaluation performed on ' + str(volumetotal) + ' voxels')
+    print("\nPeak evaluation performed on " + str(volumetotal) + " voxels")
 
     # garbage collect
     collected = gc.collect()

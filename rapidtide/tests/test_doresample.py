@@ -24,15 +24,16 @@ from rapidtide.tests.utils import mse
 def test_doresample(debug=False):
     if debug:
         import matplotlib as mpl
-        print('setting backend to Qt5Agg')
-        mpl.use('Qt5Agg')
+
+        print("setting backend to Qt5Agg")
+        mpl.use("Qt5Agg")
     tr = 1.0
     padtime = 30.0
     padlen = int(padtime // tr)
     testlen = 1000
     shiftdist = 30
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
-    #timecoursein = np.zeros((testlen), dtype='float64')
+    # timecoursein = np.zeros((testlen), dtype='float64')
     timecoursein = np.float64(timeaxis * 0.0)
     midpoint = int(testlen // 2) + 1
     timecoursein[midpoint - 1] = np.float64(1.0)
@@ -46,7 +47,7 @@ def test_doresample(debug=False):
         plt.figure()
         plt.ylim([-1.0, 2.0 * len(shiftlist) + 1.0])
         plt.plot(timecoursein)
-        legend = ['Original']
+        legend = ["Original"]
         offset = 0.0
 
     for shiftdist in shiftlist:
@@ -54,21 +55,27 @@ def test_doresample(debug=False):
         tcrolled = np.float64(np.roll(timecoursein, shiftdist))
 
         # generate the fast resampled regressor
-        tcshifted = doresample(timeaxis, timecoursein, timeaxis - shiftdist, method='univariate', padlen=padlen)
+        tcshifted = doresample(
+            timeaxis,
+            timecoursein,
+            timeaxis - shiftdist,
+            method="univariate",
+            padlen=padlen,
+        )
 
         # print out all elements
         for i in range(0, len(tcrolled)):
-            #print(i, tcrolled[i], tcshifted[i], tcshifted[i] - tcrolled[i])
+            # print(i, tcrolled[i], tcshifted[i], tcshifted[i] - tcrolled[i])
             pass
 
         # plot if we are doing that
         if debug:
             offset += 1.0
             plt.plot(tcrolled + offset)
-            legend.append('Roll ' + str(shiftdist))
+            legend.append("Roll " + str(shiftdist))
             offset += 1.0
             plt.plot(tcshifted + offset)
-            legend.append('doresample ' + str(shiftdist))
+            legend.append("doresample " + str(shiftdist))
 
         # do the tests
         msethresh = 1e-6
@@ -85,5 +92,5 @@ def main():
     test_doresample(debug=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
