@@ -1,5 +1,9 @@
 # History of changes
 
+## Version 2.0alpha10 (12/21/20)
+* (package) Ran all python files through Black to give consistent formatting.
+* (rapidtide) Did some prep work to implement echo cancellation.
+
 ## Version 2.0alpha9 (12/9/20)
 * (rapidtide) Added workaround for occasional MLE PCA component estimation failure (this seems to be an unresolved scikit-learn problem as of 0.23.2)
 
