@@ -525,9 +525,9 @@ def _get_parser():
         choices=["correlation", "mutualinfo", "hybrid"],
         help=(
             "Similarity metric for finding delay values.  "
-            "Choices are 'correlation', 'mutualinfo', and 'hybrid' (default)."
+            "Choices are 'correlation' (default), 'mutualinfo', and 'hybrid'."
         ),
-        default="hybrid",
+        default="correlation",
     )
     corr.add_argument(
         "--mutualinfosmoothingtime",
