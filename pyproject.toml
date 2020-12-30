@@ -19,8 +19,6 @@ exclude = '''
   )/
   | get_version.py
   | versioneer.py
-  | nimare/info.py
-  | nimare/_version.py
-  | nimare/due.py
+  | rapidtide/_version.py
 )
 '''
