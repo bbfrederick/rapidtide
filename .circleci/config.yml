@@ -33,7 +33,7 @@ jobs:
           name: Run Py3.6 tests
           command: |
             source activate py36_env
-            py.test rapidtide
+            py.test rapidtide --ignore=candidatetests
 
   test_py38:
     working_directory: /tmp/src/rapidtide
@@ -61,7 +61,7 @@ jobs:
           name: Run Py3.8 tests
           command: |
             source activate py38_env
-            py.test rapidtide
+            py.test rapidtide --ignore=candidatetests
 
   make_env_py37:
     working_directory: /tmp/src/rapidtide
@@ -141,7 +141,7 @@ jobs:
           command:  |
             apt-get install -yqq curl
             source activate py37_env
-            py.test --cov-report xml:coverage.xml --cov=rapidtide rapidtide
+            py.test --ignore=candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
 
