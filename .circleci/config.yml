@@ -123,7 +123,7 @@ jobs:
           name: Linting
           command:  |
             source activate py37_env
-            flake8 --ignore=E501,E722,E114,E116,W503,W504 /tmp/src/rapidtide/rapidtide
+            flake8 /tmp/src/rapidtide/rapidtide
       - store_artifacts:
           path: /tmp/data/lint
 
