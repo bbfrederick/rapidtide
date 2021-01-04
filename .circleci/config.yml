@@ -17,8 +17,6 @@ jobs:
           root: /tmp
           paths:
               - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps9-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -31,17 +29,41 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
-      - save_cache:  # environment cache tied to requirements
-          key: deps9-{{ checksum "setup.py" }}
-          paths:
-            - "/opt/conda/envs/py36_env"
       - run:
-          name: Run Py2.7 tests
+          name: Run Py3.6 tests
           command: |
             source activate py36_env
-            py.test rapidtide
+            py.test rapidtide --ignore=rapidtide/candidatetests
 
-  build_py37:
+  test_py38:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py38_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py38_env
+            else
+                conda create -n py38_env python=3.8 -yq
+                source activate py38_env
+                pip install -e .[tests,doc]
+            fi
+            python setup.py install --user
+      - run:
+          name: Run Py3.8 tests
+          command: |
+            source activate py38_env
+            py.test rapidtide --ignore=rapidtide/candidatetests
+
+  make_env_py37:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -69,35 +91,6 @@ jobs:
           key: deps9-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py37_env"
-
-  build_py38:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-              - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps9-{{ checksum "setup.py" }}
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            if [[ -e /opt/conda/envs/py38_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py38_env
-            else
-                conda create -n py38_env python=3.8 -yq
-                source activate py38_env
-                pip install -e .[tests,doc]
-            fi
-            python setup.py install --user
-      - save_cache:  # environment cache tied to requirements
-          key: deps9-{{ checksum "setup.py" }}
-          paths:
-            - "/opt/conda/envs/py38_env"
 
   build_docs:
     working_directory: /tmp/src/rapidtide
@@ -130,7 +123,7 @@ jobs:
           name: Linting
           command:  |
             source activate py37_env
-            flake8 --ignore=E501,E722,E114,E116,W503,W504 /tmp/src/rapidtide/rapidtide
+            flake8 /tmp/src/rapidtide/rapidtide
       - store_artifacts:
           path: /tmp/data/lint
 
@@ -148,7 +141,7 @@ jobs:
           command:  |
             apt-get install -yqq curl
             source activate py37_env
-            py.test --cov-report xml:coverage.xml --cov=rapidtide rapidtide
+            py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
 
@@ -182,29 +175,29 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - build_py37:
+      - test_py38:
           filters:
             tags:
               only: /.*/
-      - build_py38:
+      - make_env_py37:
           filters:
             tags:
               only: /.*/
       - build_docs:
           requires:
-            - build_py37
+            - make_env_py37
           filters:
             tags:
               only: /.*/
       - style_check:
           requires:
-            - build_py37
+            - make_env_py37
           filters:
             tags:
               only: /.*/
       - test_py37_with_coverage:
           requires:
-            - build_py37
+            - make_env_py37
           filters:
             tags:
               only:
