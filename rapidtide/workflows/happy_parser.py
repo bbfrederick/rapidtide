@@ -160,6 +160,53 @@ def _get_parser():
         help="Lowpass filter motion regressors to LPFREQ Hz prior to regression. ",
         default=None,
     )
+    preprocessing_opts.add_argument(
+        "--nomotorthogonalize",
+        dest="orthogonalize",
+        action="store_false",
+        help=(
+            "Do not orthogonalize motion regressors prior to regressing them out of the "
+            "data. "
+        ),
+        default=True,
+    )
+    preprocessing_opts.add_argument(
+        "--motpos",
+        dest="motfilt_pos",
+        action="store_true",
+        help=(
+            "Include motion position regressors. "
+        ),
+        default=False,
+    )
+    preprocessing_opts.add_argument(
+        "--nomotderiv",
+        dest="motfilt_deriv",
+        action="store_false",
+        help=(
+            "Do not use motion derivative regressors. "
+        ),
+        default=True,
+    )
+    preprocessing_opts.add_argument(
+        "--nomotderivdelayed",
+        dest="motfilt_derivdelayed",
+        action="store_false",
+        help=(
+            "Do not use motion derivative regressors. "
+        ),
+        default=True,
+    )
+    preprocessing_opts.add_argument(
+        "--discardmotionfiltered",
+        dest="savemotionglmfilt",
+        action="store_false",
+        help=(
+            "Do not save data after motion filtering. "
+        ),
+        default=True,
+    )
+
 
     # Cardiac estimation tuning
     cardiac_est_tuning = parser.add_argument_group("Cardiac estimation tuning")

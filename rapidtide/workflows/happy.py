@@ -1051,9 +1051,13 @@ def happy_main(argparsingfunc):
         fmri_data[validvoxels, :] = filtereddata[:, :]
         infodict["numorthogmotregressors"] = motionregressors.shape[0]
         timings.append(["Motion filtering end", time.time(), numspatiallocs, "voxels"])
+        if args.orthogonalize:
+            motiontype = "orthogonalizedmotion"
+        else:
+            motiontype = "motion"
         if args.bidsoutput:
             tide_io.writebidstsv(
-                outputroot + "_desc-orthogonalizedmotion_timeseries",
+                outputroot + "_desc-" + motiontype + "_timeseries",
                 motionregressors,
                 mrsamplerate,
                 compressed=False,
@@ -1062,7 +1066,7 @@ def happy_main(argparsingfunc):
             )
         else:
             tide_io.writenpvecs(
-                motionregressors, outputroot + "_orthogonalizedmotion.txt"
+                motionregressors, outputroot + "_" + motiontype + ".txt"
             )
         if args.savemotionglmfilt:
             if args.bidsoutput:
@@ -2089,7 +2093,7 @@ def happy_main(argparsingfunc):
                     starttime=outphases[0],
                     compressed=False,
                     columns=["cardiaccyclefromfmri"],
-                    append=True,
+                    append=False,
                 )
             else:
                 tide_io.writevec(app_bypoint, outputroot + "_cardcyclefromfmri.txt")
@@ -2165,7 +2169,7 @@ def happy_main(argparsingfunc):
                     starttime=outtimes[0],
                     compressed=False,
                     columns=["pulsefromfmri"],
-                    append=True,
+                    append=False,
                 )
             else:
                 tide_io.writevec(atp_bypoint, outputroot + "_cardpulsefromfmri.txt")

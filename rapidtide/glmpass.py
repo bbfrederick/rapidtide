@@ -237,13 +237,6 @@ def motionregress(
     debug=False,
 ):
     print("regressing out motion")
-    """splitfilename = themotionfilename.split(':')
-    if len(splitfilename) == 1:
-        themotionfilename = splitfilename[0]
-        colspec = None
-    else:
-        themotionfilename = splitfilename[0]
-        colspec = splitfilename[1]"""
     motionregressors, motionregressorlabels = tide_io.calcmotregressors(
         tide_io.readmotion(themotionfilename),
         position=position,
@@ -271,6 +264,11 @@ def motionregress(
             motionregressors[i, :] = mothpfilt.apply(1.0 / tr, motionregressors[i, :])
     if orthogonalize:
         motionregressors = tide_fit.gram_schmidt(motionregressors)
+        initregressors = len(motionregressorlabels)
+        motionregressorlabels = []
+        for theregressor in range(motionregressors.shape[0]):
+            motionregressorlabels.append("orthogmotion_{:02d}".format(theregressor))
+        print("After orthogonalization, {0} of {1} regressors remain.".format(len(motionregressorlabels), initregressors))
 
     print("start motion filtering")
     filtereddata = confoundglm(thedataarray, motionregressors, debug=debug)
