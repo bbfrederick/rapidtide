@@ -1,6 +1,21 @@
 #!/bin/csh -f
 
 happy \
+    ses-060_bold_trunc.nii.gz \
+    ses-060_bold_trunc.json \
+    ../dst/happy_nomotion \
+    --mklthreads 8
+
+happy \
+    ses-060_bold_trunc.nii.gz \
+    ses-060_bold_trunc.json \
+    ../dst/happy_motion \
+    --mklthreads 8 \
+    --nomotpos \
+    --motionfile ses-060_bold_trunc_prefiltered_func_data_mcf.par
+
+
+happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy \
@@ -48,3 +63,11 @@ happy_legacy \
     --increaseoutputlevel \
     --decreaseoutputlevel \
     --dodlfilter
+
+
+happy \
+    ses-060_bold_trunc.nii.gz \
+    ses-060_bold_trunc.json \
+    ../dst/happy_motion \
+    --mklthreads 8 \
+    --motionfile ses-060_bold_trunc_prefiltered_func_data_mcf.par
