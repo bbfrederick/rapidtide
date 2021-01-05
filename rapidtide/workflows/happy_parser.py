@@ -165,8 +165,7 @@ def _get_parser():
         dest="orthogonalize",
         action="store_false",
         help=(
-            "Do not orthogonalize motion regressors prior to regressing them out of the "
-            "data. "
+            "Do not orthogonalize motion regressors prior to regressing them out of the " "data. "
         ),
         default=True,
     )
@@ -174,39 +173,30 @@ def _get_parser():
         "--motpos",
         dest="motfilt_pos",
         action="store_true",
-        help=(
-            "Include motion position regressors. "
-        ),
+        help=("Include motion position regressors. "),
         default=False,
     )
     preprocessing_opts.add_argument(
         "--nomotderiv",
         dest="motfilt_deriv",
         action="store_false",
-        help=(
-            "Do not use motion derivative regressors. "
-        ),
+        help=("Do not use motion derivative regressors. "),
         default=True,
     )
     preprocessing_opts.add_argument(
         "--nomotderivdelayed",
         dest="motfilt_derivdelayed",
         action="store_false",
-        help=(
-            "Do not use motion derivative regressors. "
-        ),
+        help=("Do not use motion derivative regressors. "),
         default=True,
     )
     preprocessing_opts.add_argument(
         "--discardmotionfiltered",
         dest="savemotionglmfilt",
         action="store_false",
-        help=(
-            "Do not save data after motion filtering. "
-        ),
+        help=("Do not save data after motion filtering. "),
         default=True,
     )
-
 
     # Cardiac estimation tuning
     cardiac_est_tuning = parser.add_argument_group("Cardiac estimation tuning")
@@ -289,9 +279,7 @@ def _get_parser():
     )
 
     # External cardiac waveform options
-    external_cardiac_opts = parser.add_argument_group(
-        "External cardiac waveform options"
-    )
+    external_cardiac_opts = parser.add_argument_group("External cardiac waveform options")
     external_cardiac_opts.add_argument(
         "--cardiacfile",
         dest="cardiacfilename",
@@ -350,8 +338,7 @@ def _get_parser():
         action="store",
         type=float,
         help=(
-            "Frequency to which the cardiac signals are resampled for output. "
-            "Default is 25. "
+            "Frequency to which the cardiac signals are resampled for output. " "Default is 25. "
         ),
         default=25.0,
     )
@@ -464,9 +451,7 @@ def _get_parser():
     )
 
     # Debugging options
-    debug_opts = parser.add_argument_group(
-        "Debugging options (probably not of interest to users)"
-    )
+    debug_opts = parser.add_argument_group("Debugging options (probably not of interest to users)")
     debug_opts.add_argument(
         "--debug",
         dest="debug",
@@ -621,9 +606,7 @@ def process_args(inputargs=None):
         else:
             suffix = ""
         formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
-    tide_io.writevec(
-        formattedcommandline, args.outputroot + "_formattedcommandline.txt"
-    )
+    tide_io.writevec(formattedcommandline, args.outputroot + "_formattedcommandline.txt")
 
     if args.debug:
         print()
@@ -656,9 +639,7 @@ def process_args(inputargs=None):
         args.notchpct = None
 
     # determine the outputlevel
-    args.outputlevel = np.max(
-        [0, args.outputlevel + args.inc_outputlevel - args.dec_outputlevel]
-    )
+    args.outputlevel = np.max([0, args.outputlevel + args.inc_outputlevel - args.dec_outputlevel])
 
     if args.debug:
         print()

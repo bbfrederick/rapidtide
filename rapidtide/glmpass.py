@@ -34,9 +34,7 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 
 
-def _procOneItemGLM(
-    vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"
-):
+def _procOneItemGLM(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"):
     thefit, R = tide_fit.mlregress(theevs, thedata)
     fitcoeff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoeff * theevs)
@@ -165,12 +163,8 @@ def glmpass(
         itemstotal = 0
         if procbyvoxel:
             for vox in range(0, numprocitems):
-                if (
-                    vox % reportstep == 0 or vox == numprocitems - 1
-                ) and showprogressbar:
-                    tide_util.progressbar(
-                        vox + 1, numprocitems, label="Percent complete"
-                    )
+                if (vox % reportstep == 0 or vox == numprocitems - 1) and showprogressbar:
+                    tide_util.progressbar(vox + 1, numprocitems, label="Percent complete")
                 thedata = fmri_data[vox, :].copy()
                 if (themask is None) or (themask[vox] > 0):
                     (
@@ -195,9 +189,7 @@ def glmpass(
                 if (
                     timepoint % reportstep == 0 or timepoint == numprocitems - 1
                 ) and showprogressbar:
-                    tide_util.progressbar(
-                        timepoint + 1, numprocitems, label="Percent complete"
-                    )
+                    tide_util.progressbar(timepoint + 1, numprocitems, label="Percent complete")
                 thedata = fmri_data[:, timepoint].copy()
                 if (themask is None) or (themask[timepoint] > 0):
                     (
@@ -248,18 +240,14 @@ def motionregress(
     else:
         motionregressors = motionregressors[:, motstart:motend]
     if (motionlp is not None) or (motionhp is not None):
-        mothpfilt = tide_filt.noncausalfilter(
-            filtertype="arb", transferfunc="trapezoidal"
-        )
+        mothpfilt = tide_filt.noncausalfilter(filtertype="arb", transferfunc="trapezoidal")
         if motionlp is None:
             motionlp = 0.5 / tr
         else:
             motionlp = np.min([0.5 / tr, motionlp])
         if motionhp is None:
             motionhp = 0.0
-        mothpfilt.setfreqs(
-            0.9 * motionhp, motionhp, motionlp, np.min([0.5 / tr, motionlp * 1.1])
-        )
+        mothpfilt.setfreqs(0.9 * motionhp, motionhp, motionlp, np.min([0.5 / tr, motionlp * 1.1]))
         for i in range(motionregressors.shape[0]):
             motionregressors[i, :] = mothpfilt.apply(1.0 / tr, motionregressors[i, :])
     if orthogonalize:
@@ -268,7 +256,11 @@ def motionregress(
         motionregressorlabels = []
         for theregressor in range(motionregressors.shape[0]):
             motionregressorlabels.append("orthogmotion_{:02d}".format(theregressor))
-        print("After orthogonalization, {0} of {1} regressors remain.".format(len(motionregressorlabels), initregressors))
+        print(
+            "After orthogonalization, {0} of {1} regressors remain.".format(
+                len(motionregressorlabels), initregressors
+            )
+        )
 
     print("start motion filtering")
     filtereddata = confoundglm(thedataarray, motionregressors, debug=debug)
@@ -308,19 +300,13 @@ def confoundglm(
     datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
     filtereddata = data * 0.0
     for i in range(data.shape[0]):
-        if (
-            showprogressbar
-            and (i > 0)
-            and (i % reportstep == 0 or i == data.shape[0] - 1)
-        ):
+        if showprogressbar and (i > 0) and (i % reportstep == 0 or i == data.shape[0] - 1):
             tide_util.progressbar(i + 1, data.shape[0], label="Percent complete")
         datatoremove *= 0.0
         thefit, R = tide_fit.mlregress(regressors, data[i, :])
         if i == 0 and debug:
             print("fit shape:", thefit.shape)
         for j in range(regressors.shape[0]):
-            datatoremove += rt_floatset(
-                rt_floatset(thefit[0, 1 + j]) * regressors[j, :]
-            )
+            datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * regressors[j, :])
         filtereddata[i, :] = data[i, :] - datatoremove
     return filtereddata
