@@ -1,24 +1,11 @@
 #!/bin/csh -f
 
-happy \
-    ses-060_bold_trunc.nii.gz \
-    ses-060_bold_trunc.json \
-    ../dst/happy_nomotion \
-    --mklthreads 8
-
-happy \
-    ses-060_bold_trunc.nii.gz \
-    ses-060_bold_trunc.json \
-    ../dst/happy_motion \
-    --mklthreads 8 \
-    --nomotpos \
-    --motionfile ses-060_bold_trunc_prefiltered_func_data_mcf.par
-
 
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy \
+    --aliasedcorrelation \
     --mklthreads 8 \
     --model model_revised \
     --outputbins 40 \
@@ -39,35 +26,35 @@ happy \
     --saveinfoastext
 
 
-happy_legacy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    ../dst/happy_normaltest \
-    --mklthreads=8 \
-    --model=model_revised \
-    --outputbins=40 \
-    --gridbins=3.5 \
-    --stdfreq=20.0 \
-    --estmask=happytestvesselmask.nii.gz \
-    --minhr=46 \
-    --maxhr=131.2 \
-    --minhrfilt=45.5 \
-    --maxhrfilt=800.0 \
-    --envcutoff=0.45 \
-    --notchwidth=1.25 \
-    --cardiacfile=happytestpleth.txt \
-    --cardiacfreq=20.0 \
-    --cardiacstart=0.0 \
-    --aliasedcorrelation \
-    --increaseoutputlevel \
-    --increaseoutputlevel \
-    --decreaseoutputlevel \
-    --dodlfilter
+#happy_legacy \
+    #sub-HAPPYTEST.nii.gz \
+    #sub-HAPPYTEST.json \
+    #../dst/happy_normaltest \
+    #--mklthreads=8 \
+    #--model=model_revised \
+    #--outputbins=40 \
+    #--gridbins=3.5 \
+    #--stdfreq=20.0 \
+    #--estmask=happytestvesselmask.nii.gz \
+    #--minhr=46 \
+    #--maxhr=131.2 \
+    #--minhrfilt=45.5 \
+    #--maxhrfilt=800.0 \
+    #--envcutoff=0.45 \
+    #--notchwidth=1.25 \
+    #--cardiacfile=happytestpleth.txt \
+    #--cardiacfreq=20.0 \
+    #--cardiacstart=0.0 \
+    #--aliasedcorrelation \
+    #--increaseoutputlevel \
+    #--increaseoutputlevel \
+    #--decreaseoutputlevel \
+    #--dodlfilter
 
 
-happy \
-    ses-060_bold_trunc.nii.gz \
-    ses-060_bold_trunc.json \
-    ../dst/happy_motion \
-    --mklthreads 8 \
-    --motionfile ses-060_bold_trunc_prefiltered_func_data_mcf.par
+#happy \
+    #ses-060_bold_trunc.nii.gz \
+    #ses-060_bold_trunc.json \
+    #../dst/happy_motion \
+    #--mklthreads 8 \
+    #--motionfile ses-060_bold_trunc_prefiltered_func_data_mcf.par
