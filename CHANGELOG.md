@@ -1,5 +1,10 @@
 # History of changes
 
+## Version 2.0alpha11 (1/5/21)
+* (rapidtide) Rolled back default similarity metric to 'correlation' from 'hybrid'.  'hybrid' works very well most of the time, and fails strangely occasionally.  When 'correlation' fails, it does so in more predictable and explicable ways.
+* (happy) Restored functionality and options for motion regression that I broke when separating out the command parser.
+* (tests) CircleCI config files changed to keep tests from stepping on each other's caches (thanks to Taylor Salo).
+
 ## Version 2.0alpha10 (12/21/20)
 * (package) Ran all python files through Black to give consistent formatting.
 * (rapidtide) Did some prep work to implement echo cancellation.
