@@ -1,7 +1,9 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
-
+about: Got an idea for a new feature, or changing an existing one? This is the place.
+title: ''
+labels: 'enhancement'
+assignees: ''
 ---
 
 **Is your feature request related to a problem? Please describe.**
