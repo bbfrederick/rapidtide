@@ -1364,13 +1364,13 @@ def happy_main(argparsingfunc):
                 thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
                 thedlfilter.loadmodel(args.modelname)
                 infodict["dlfiltermodel"] = args.modelname
-                normdlfilteredcard = thedlfilter.apply(normcardfromfmri_stdres)
-                dlfilteredcard = thedlfilter.apply(cardfromfmri_stdres)
+                normdlfilteredcard_stdres = thedlfilter.apply(normcardfromfmri_stdres)
+                dlfilteredcard_stdres = thedlfilter.apply(cardfromfmri_stdres)
                 if thispass == numpasses - 1:
                     if args.bidsoutput:
                         tide_io.writebidstsv(
                             outputroot + "_desc-stdrescardfromfmri_timeseries",
-                            normdlfilteredcard,
+                            normdlfilteredcard_stdres,
                             args.stdfreq,
                             compressed=False,
                             columns=["normcardiacfromfmri_dlfiltered" + str(args.stdfreq) + "Hz"],
@@ -1378,7 +1378,7 @@ def happy_main(argparsingfunc):
                         )
                         tide_io.writebidstsv(
                             outputroot + "_desc-stdrescardfromfmri_timeseries",
-                            dlfilteredcard,
+                            dlfilteredcard_stdres,
                             args.stdfreq,
                             compressed=False,
                             columns=["cardiacfromfmri_dlfiltered" + str(args.stdfreq) + "Hz"],
@@ -1386,14 +1386,14 @@ def happy_main(argparsingfunc):
                         )
                     else:
                         tide_io.writevec(
-                            normdlfilteredcard,
+                            normdlfilteredcard_stdres,
                             outputroot
                             + "_normcardfromfmri_dlfiltered_"
                             + str(args.stdfreq)
                             + "Hz.txt",
                         )
                         tide_io.writevec(
-                            dlfilteredcard,
+                            dlfilteredcard_stdres,
                             outputroot
                             + "_cardfromfmri_dlfiltered_"
                             + str(args.stdfreq)
@@ -1403,7 +1403,7 @@ def happy_main(argparsingfunc):
                     if args.saveintermediate:
                         if args.bidsoutput:
                             tide_io.writebidstsv(outputroot + '_desc-stdrescardfromfmri_timeseries',
-                                                 normdlfilteredcard,
+                                                 normdlfilteredcard_stdres,
                                                  args.stdfreq,
                                                  compressed=False,
                                                  columns=[
@@ -1411,19 +1411,19 @@ def happy_main(argparsingfunc):
                                                          thispass + 1)],
                                                  append=True)
                             tide_io.writebidstsv(outputroot + '_desc-stdrescardfromfmri_timeseries',
-                                                 dlfilteredcard,
+                                                 dlfilteredcard_stdres,
                                                  args.stdfreq,
                                                  compressed=False,
                                                  columns=['cardiacfromfmri_dlfiltered' + str(args.stdfreq) + 'Hz_pass' + str(
                                                      thispass + 1)],
                                                  append=True)
                         else:
-                            tide_io.writevec(normdlfilteredcard, outputroot + '_normcardfromfmri_dlfiltered_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')
-                            tide_io.writevec(dlfilteredcard, outputroot + '_cardfromfmri_dlfiltered_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')"""
+                            tide_io.writevec(normdlfilteredcard_stdres, outputroot + '_normcardfromfmri_dlfiltered_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')
+                            tide_io.writevec(dlfilteredcard_stdres, outputroot + '_cardfromfmri_dlfiltered_' + str(args.stdfreq) + 'Hz_pass' + str(thispass + 1) + '.txt')"""
 
                 # calculate quality metrics
                 calcplethquality(
-                    dlfilteredcard,
+                    dlfilteredcard_stdres,
                     args.stdfreq,
                     infodict,
                     "_dlfiltered",
@@ -1435,9 +1435,12 @@ def happy_main(argparsingfunc):
 
                 # downsample to sliceres from stdres
                 # cardfromfmri_sliceres = tide_math.madnormalize(
-                #    tide_resample.arbresample(dlfilteredcard, args.stdfreq, slicesamplerate, decimate=True, debug=False))
+                #    tide_resample.arbresample(dlfilteredcard_stdres, args.stdfreq, slicesamplerate, decimate=True, debug=False))
                 stdtimeaxis = (1.0 / args.stdfreq) * sp.linspace(
-                    0.0, len(dlfilteredcard), num=(len(dlfilteredcard)), endpoint=False
+                    0.0,
+                    len(dlfilteredcard_stdres),
+                    num=(len(dlfilteredcard_stdres)),
+                    endpoint=False,
                 )
                 arb_lowerstop = 0.0
                 arb_lowerpass = 0.0
@@ -1449,7 +1452,7 @@ def happy_main(argparsingfunc):
                 cardfromfmri_sliceres = tide_math.madnormalize(
                     tide_resample.doresample(
                         stdtimeaxis,
-                        theaafilter.apply(args.stdfreq, dlfilteredcard),
+                        theaafilter.apply(args.stdfreq, dlfilteredcard_stdres),
                         slicetimeaxis,
                         method="univariate",
                         padlen=0,
@@ -2107,16 +2110,18 @@ def happy_main(argparsingfunc):
         # setup for aliased correlation if we're going to do it
         if args.doaliasedcorrelation and (thispass == numpasses - 1):
             if args.cardiacfilename:
-                signal_stdres = pleth_stdres
+                signal_sliceres = pleth_sliceres
+                # signal_stdres = pleth_stdres
             else:
-                signal_stdres = dlfilteredcard
+                signal_sliceres = cardfromfmri_sliceres
+                # signal_stdres = dlfilteredcard_stdres
             corrsearchvals = (
                 np.linspace(0.0, args.aliasedcorrelationwidth, num=args.aliasedcorrelationpts)
                 - args.aliasedcorrelationwidth / 2.0
             )
             thecorrelator = tide_corr.aliasedcorrelator(
-                signal_stdres,
-                args.stdfreq,
+                signal_sliceres,
+                slicesamplerate,
                 mrsamplerate,
                 corrsearchvals,
                 padtime=args.aliasedcorrelationwidth,
