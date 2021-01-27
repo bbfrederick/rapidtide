@@ -3,17 +3,23 @@
 import numpy as np
 from rapidtide.util import makeslicetimes
 
-numslices = 20
-mbfac = 1
+numslices = 64
+mbfac = 4
 tr = 1.0
 
-sliceorders = ["ascending", "descending",
-                "ascending_interleaved", "descending_interleaved", 
-                "ascending_interleaved_siemens", "descending_interleaved_siemens", 
-                "ascending_interleaved_philips", "descending_interleaved_philips"]
+sliceorders = [
+    "ascending",
+    "descending",
+    "ascending_interleaved",
+    "descending_interleaved",
+    "ascending_interleaved_siemens",
+    "descending_interleaved_siemens",
+    "ascending_interleaved_philips",
+    "descending_interleaved_philips",
+]
 
 for thesliceorder in sliceorders:
-    thetimes = makeslicetimes(numslices, thesliceorder, tr=tr, multibandfac=mbfac)
-    print('\n', thesliceorder)
+    thetimes = makeslicetimes(numslices, thesliceorder, tr=tr, multibandfac=mbfac, debug=True)
+    print("\n", thesliceorder)
     for i in range(len(thetimes)):
-        print(i, '\t', thetimes[i])
+        print(i, "\t{:.3f}".format(thetimes[i]))

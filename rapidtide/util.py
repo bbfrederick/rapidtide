@@ -514,46 +514,63 @@ def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
 
 
 # --------------------------- simulation functions ----------------------------------------------
-def makeslicetimes(numslices, sliceordertype, tr=1.0, multibandfac=1):
+def makeslicetimes(numslices, sliceordertype, tr=1.0, multibandfac=1, debug=False):
     outlist = np.zeros((numslices), dtype=np.float)
     if (numslices % multibandfac) != 0:
         print("ERROR: numslices is not evenly divisible by multband factor")
         return None
     mbcycle = int(numslices / multibandfac)
     if sliceordertype == "ascending":
-        start = 0
-        step = 1
+        controllist = [[0, 1]]
     elif sliceordertype == "descending":
-        start = mbcycle - 1
-        step = -1
+        controllist = [[mbcycle - 1, -1]]
     elif sliceordertype == "ascending_interleaved":
-        start = 0
-        step = 2
+        controllist = [[0, 2], [1, 2]]
     elif sliceordertype == "descending_interleaved":
-        start = mbcycle - 1
-        step = -2
+        controllist = [[mbcycle - 1, -2], [mbcycle - 2, -2]]
     elif sliceordertype == "ascending_interleaved_siemens":
-        start = 0
-        step = 2
+        if numslices % 2 == 0:
+            controllist = [[0, 2], [1, 2]]
+        else:
+            controllist = [[1, 2], [0, 2]]
     elif sliceordertype == "descending_interleaved_siemens":
-        start = mbcycle - 1
-        step = -2
+        if numslices % 2 == 0:
+            controllist = [[mbcycle - 1, -2], [mbcycle - 2, -2]]
+        else:
+            controllist = [[mbcycle - 2, -2], [mbcycle - 1, -2]]
     elif sliceordertype == "ascending_interleaved_philips":
-        start = 0
-        step = int(np.floor(np.sqrt(numslices)))
+        controllist = []
+        numgroups = int(np.floor(np.sqrt(numslices)))
+        for i in range(numgroups):
+            controllist.append([i, numgroups])
     elif sliceordertype == "descending_interleaved_philips":
-        start = mbcycle - 1
-        step = -int(np.floor(np.sqrt(numslices)))
+        controllist = []
+        numgroups = int(np.floor(np.sqrt(numslices)))
+        for i in range(numgroups):
+            controllist.append([mbcycle - i - 1, -numgroups])
     else:
         print("ERROR: illegal sliceordertype")
         return None
 
     # now make the slicetimes
-    timestep = tr / mbcycle
+    timelist = np.linspace(0, tr, num=mbcycle, endpoint=False)
+    slicelist = []
+    if debug:
+        print("sliceordertype:", sliceordertype)
+        print("number of mbcycles:", numslices // mbcycle)
+        print("size of mbcycles:", mbcycle)
+    for thecontrollist in controllist:
+        start = thecontrollist[0]
+        step = thecontrollist[1]
+        theindex = start
+        while 0 <= theindex < mbcycle:
+            slicelist.append(theindex)
+            theindex += step
+    if debug:
+        print(slicelist)
     for index in range(numslices):
-        outlist[index] = timestep * (
-            ((start + index * step) % mbcycle) + (index % mbcycle) % int(mbcycle / abs(step))
-        )
+        posinmbcycle = index % mbcycle
+        outlist[index] = timelist[slicelist[posinmbcycle]] + 0.0
     return outlist
 
 
