@@ -171,9 +171,7 @@ def logmem(msg, file=None):
                 "Children Shared Mem",
                 "Children Unshared Mem",
                 "Children Unshared Stack",
-                "Children Non IO Page Fault"
-                "Children IO Page Fault"
-                "Children Swap Out",
+                "Children Non IO Page Fault" "Children IO Page Fault" "Children Swap Out",
             ]
         )
     else:
@@ -300,9 +298,7 @@ def startendcheck(timepoints, startpoint, endpoint):
         realend = endpoint
         print("endpoint set to ", endpoint)
     if realstart >= realend:
-        print(
-            "endpoint (", realend, ") must be greater than startpoint (", realstart, ")"
-        )
+        print("endpoint (", realend, ") must be greater than startpoint (", realstart, ")")
         sys.exit()
     return realstart, realend
 
@@ -382,9 +378,7 @@ def progressbar(thisval, end_val, label="Percent", barsize=60):
     percent = float(thisval) / end_val
     hashes = "#" * int(round(percent * barsize))
     spaces = " " * (barsize - len(hashes))
-    sys.stdout.write(
-        "\r{0}: [{1}] {2:.2f}%".format(label, hashes + spaces, 100.0 * percent)
-    )
+    sys.stdout.write("\r{0}: [{1}] {2:.2f}%".format(label, hashes + spaces, 100.0 * percent))
     sys.stdout.flush()
 
 
@@ -507,9 +501,7 @@ def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
         endtime = starttime + inputdata[1, idx]
         if (starttime <= timeaxis[-1]) and (endtime >= 0.0) and (endtime > starttime):
             startindex = np.max((bisect.bisect_left(timeaxis, starttime), 0))
-            endindex = np.min(
-                (bisect.bisect_right(timeaxis, endtime), len(outputvector))
-            )
+            endindex = np.min((bisect.bisect_right(timeaxis, endtime), len(outputvector)))
             outputvector[startindex:endindex] = inputdata[2, idx]
             print(starttime, startindex, endtime, endindex)
     if debug:
@@ -519,6 +511,50 @@ def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
         plt.plot(timeaxis, outputvector)
         plt.show()
     return outputvector
+
+
+# --------------------------- simulation functions ----------------------------------------------
+def makeslicetimes(numslices, sliceordertype, tr=1.0, multibandfac=1):
+    outlist = np.zeros((numslices), dtype=np.float)
+    if (numslices % multibandfac) != 0:
+        print("ERROR: numslices is not evenly divisible by multband factor")
+        return None
+    mbcycle = int(numslices / multibandfac)
+    if sliceordertype == "ascending":
+        start = 0
+        step = 1
+    elif sliceordertype == "descending":
+        start = mbcycle - 1
+        step = -1
+    elif sliceordertype == "ascending_interleaved":
+        start = 0
+        step = 2
+    elif sliceordertype == "descending_interleaved":
+        start = mbcycle - 1
+        step = -2
+    elif sliceordertype == "ascending_interleaved_siemens":
+        start = 0
+        step = 2
+    elif sliceordertype == "descending_interleaved_siemens":
+        start = mbcycle - 1
+        step = -2
+    elif sliceordertype == "ascending_interleaved_philips":
+        start = 0
+        step = int(np.floor(np.sqrt(numslices)))
+    elif sliceordertype == "descending_interleaved_philips":
+        start = mbcycle - 1
+        step = -int(np.floor(np.sqrt(numslices)))
+    else:
+        print("ERROR: illegal sliceordertype")
+        return None
+
+    # now make the slicetimes
+    timestep = tr / mbcycle
+    for index in range(numslices):
+        outlist[index] = timestep * (
+            ((start + index * step) % mbcycle) + (index % mbcycle) % int(mbcycle / abs(step))
+        )
+    return outlist
 
 
 # --------------------------- testing functions -------------------------------------------------
@@ -548,9 +584,7 @@ def comparemap(map1, map2, mask=None, debug=False):
                 if debug:
                     print("dealing with ndims == ndims_mask case")
                 if map1.shape != mask.shape:
-                    print(
-                        "comparemap: mask does not have the same shape as the maps - aborting"
-                    )
+                    print("comparemap: mask does not have the same shape as the maps - aborting")
                     sys.exit()
                 validvoxels = np.where(mask > 0)[0]
                 map1valid = map1[validvoxels, :]
@@ -615,15 +649,9 @@ def comparerapidtideruns(root1, root2):
             mask = maskdata1 * maskdata2
             if os.path.isfile(filename1) and os.path.isfile(filename2):
                 # files exist - read them in and process them
-                nim1, data1, hdr1, thedims1, thesizes1 = tide_io.readfromnifti(
-                    filename1
-                )
-                nim2, data2, hdr2, thedims2, thesizes2 = tide_io.readfromnifti(
-                    filename2
-                )
-                if tide_io.checkspacematch(hdr1, hdr2) and tide_io.checkspacematch(
-                    hdr1, maskhdr1
-                ):
+                nim1, data1, hdr1, thedims1, thesizes1 = tide_io.readfromnifti(filename1)
+                nim2, data2, hdr2, thedims2, thesizes2 = tide_io.readfromnifti(filename2)
+                if tide_io.checkspacematch(hdr1, hdr2) and tide_io.checkspacematch(hdr1, maskhdr1):
                     # files match in size
                     results[map] = {}
                     (
@@ -678,15 +706,9 @@ def comparehappyruns(root1, root2, debug=False):
                     print("comparing maps:")
                     print("\t", filename1)
                     print("\t", filename2)
-                nim1, data1, hdr1, thedims1, thesizes1 = tide_io.readfromnifti(
-                    filename1
-                )
-                nim2, data2, hdr2, thedims2, thesizes2 = tide_io.readfromnifti(
-                    filename2
-                )
-                if tide_io.checkspacematch(hdr1, hdr2) and tide_io.checkspacematch(
-                    hdr1, maskhdr1
-                ):
+                nim1, data1, hdr1, thedims1, thesizes1 = tide_io.readfromnifti(filename1)
+                nim2, data2, hdr2, thedims2, thesizes2 = tide_io.readfromnifti(filename2)
+                if tide_io.checkspacematch(hdr1, hdr2) and tide_io.checkspacematch(hdr1, maskhdr1):
                     # files match in size
                     results[map] = {}
                     (
