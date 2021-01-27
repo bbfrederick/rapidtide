@@ -274,9 +274,7 @@ if nibabelexists:
         # find the BrainModelAxis from the input file
         modelaxis = None
         for theaxis in theciftiheader.matrix.mapped_indices:
-            if isinstance(
-                theciftiheader.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis
-            ):
+            if isinstance(theciftiheader.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis):
                 modelaxis = theaxis
                 if debug:
                     print("axis", theaxis, "is the BrainModelAxis")
@@ -289,9 +287,7 @@ if nibabelexists:
             theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES"
             theintentname = "ConnDenseSeries"
             if modelaxis is not None:
-                seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(
-                    start, step, workingarray.shape[0]
-                )
+                seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(start, step, workingarray.shape[0])
                 axislist = [seriesaxis, theciftiheader.matrix.get_axis(modelaxis)]
             else:
                 print("no BrainModelAxis found in source file - exiting")
@@ -381,9 +377,7 @@ if nibabelexists:
             return firstsplit[0], firstsplit[1]
 
     def niftisplit(inputfile, outputroot, axis=3):
-        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(
-            inputfile
-        )
+        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
         theheader = copy.deepcopy(infile_hdr)
         numpoints = infiledims[axis + 1]
         print(infiledims)
@@ -417,22 +411,15 @@ if nibabelexists:
                     sys.exit()
             savetonifti(thisslice, theheader, outputroot + str(i).zfill(4))
 
-    def niftimerge(
-        inputlist, outputname, writetodisk=True, axis=3, returndata=False, debug=False
-    ):
+    def niftimerge(inputlist, outputname, writetodisk=True, axis=3, returndata=False, debug=False):
         inputdata = []
         for thefile in inputlist:
             if debug:
                 print("reading", thefile)
-            infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(
-                thefile
-            )
+            infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(thefile)
             if infiledims[0] == 3:
                 inputdata.append(
-                    infile_data.reshape(
-                        (infiledims[1], infiledims[2], infiledims[3], 1)
-                    )
-                    + 0.0
+                    infile_data.reshape((infiledims[1], infiledims[2], infiledims[3], 1)) + 0.0
                 )
             else:
                 inputdata.append(infile_data + 0.0)
@@ -446,9 +433,7 @@ if nibabelexists:
 
     def niftiroi(inputfile, outputfile, startpt, numpoints):
         print(inputfile, outputfile, startpt, numpoints)
-        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(
-            inputfile
-        )
+        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
         theheader = copy.deepcopy(infile_hdr)
         theheader["dim"][4] = numpoints
         if infiledims[0] == 5:
@@ -810,9 +795,7 @@ def readmotion(filename):
     return motiondict
 
 
-def calcmotregressors(
-    motiondict, start=0, end=-1, position=True, deriv=True, derivdelayed=False
-):
+def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, derivdelayed=False):
     r"""Calculates various motion related timecourses from motion data dict, and returns an array
 
     Parameters
@@ -854,16 +837,12 @@ def calcmotregressors(
             activecolumn += 1
     if deriv:
         for thelabel in labels:
-            outputregressors[activecolumn, 1:] = np.diff(
-                motiondict[thelabel][start : end + 1]
-            )
+            outputregressors[activecolumn, 1:] = np.diff(motiondict[thelabel][start : end + 1])
             outlabels.append(thelabel + "_deriv")
             activecolumn += 1
     if derivdelayed:
         for thelabel in labels:
-            outputregressors[activecolumn, 2:] = np.diff(
-                motiondict[thelabel][start : end + 1]
-            )[1:]
+            outputregressors[activecolumn, 2:] = np.diff(motiondict[thelabel][start : end + 1])[1:]
             outlabels.append(thelabel + "_delayedderiv")
             activecolumn += 1
     return outputregressors, outlabels
@@ -943,9 +922,7 @@ def writedicttojson(thedict, thefilename):
             thisdict[key] = thedict[key]
     with open(thefilename, "wb") as fp:
         fp.write(
-            json.dumps(
-                thisdict, sort_keys=True, indent=4, separators=(",", ":")
-            ).encode("utf-8")
+            json.dumps(thisdict, sort_keys=True, indent=4, separators=(",", ":")).encode("utf-8")
         )
 
 
@@ -1144,10 +1121,47 @@ def writebidstsv(
 
     with open(outputfileroot + ".json", "wb") as fp:
         fp.write(
-            json.dumps(
-                headerdict, sort_keys=True, indent=4, separators=(",", ":")
-            ).encode("utf-8")
+            json.dumps(headerdict, sort_keys=True, indent=4, separators=(",", ":")).encode("utf-8")
         )
+
+
+def readvectorsfromtextfile(inputfilename, colspec=None, debug=False):
+    r"""Read one or more time series from some sort of text file
+
+    Parameters
+    ----------
+    inputfilename : str
+        The file name.  If extension is .tsv or .json, it will be assumed to be either a BIDS tsv, or failing that,
+         a non-BIDS tsv.  If any other extension or no extension, it will be assumed to be a text file.
+    colspec:  A valid list and/or range of column numbers, or list of column names, or None
+    debug : bool
+        Output additional debugging information
+
+    Returns
+    -------
+        samplerate : float
+            Sample rate in Hz
+        starttime : float
+            Time of first point, in seconds
+        columns : str array
+            Names of the timecourses contained in the file
+        data : 2D numpy array
+            Timecourses from the file
+
+    NOTE:  If file does not exist or is not valid, all return values are None"""
+
+    thefileroot, theext = os.path.splitext(inputfilename)
+    if debug:
+        print("thefileroot:", thefileroot)
+        print("theext:", theext)
+    if os.path.exists(thefileroot + ".json") and (
+        os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv")
+    ):
+        filetype = "bidstsv"
+    elif os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv"):
+        filetype = "plaintsv"
+    else:
+        filetype = "text"
 
 
 def readbidstsv(inputfilename, debug=False):
@@ -1197,9 +1211,7 @@ def readbidstsv(inputfilename, debug=False):
                 columns = d["Columns"]
             except:
                 if debug:
-                    print(
-                        "no columns found in json, will take labels from the tsv file"
-                    )
+                    print("no columns found in json, will take labels from the tsv file")
                 columns = None
         if os.path.exists(thefileroot + ".tsv.gz"):
             df = pd.read_csv(
@@ -1431,9 +1443,7 @@ def readtc(inputfilename, colnum=None, colname=None, debug=False):
             print("You must specify a column name or number to read a bidstsv file")
             sys.exit()
         if (colnum is not None) and (colname is not None):
-            print(
-                "You must specify a column name or number, but not both, to read a bidstsv file"
-            )
+            print("You must specify a column name or number, but not both, to read a bidstsv file")
             sys.exit()
         inputfreq, inputstart, timecourse = readcolfrombidstsv(
             inputfilename, columnname=colname, columnnum=colnum, debug=debug
