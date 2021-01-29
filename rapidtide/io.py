@@ -1254,7 +1254,7 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
     -------
 
     """
-    samplerate, starttime, columns, data = readbidstsv(inputfilename, debug=debug)
+    samplerate, starttime, columns, data, compressed = readbidstsv(inputfilename, debug=debug)
     if data is None:
         print("no valid datafile found")
         return None, None, None
@@ -1482,7 +1482,7 @@ def readlabels(inputfilename):
     return inputvec
 
 
-def writedict(thedict, outputfile, lineend=""):
+def writedict(thedict, outputfile, lineend="", machinereadable=False):
     r"""
     Write all the key value pairs from a dictionary to a text file.
 
@@ -1512,8 +1512,15 @@ def writedict(thedict, outputfile, lineend=""):
         thelineending = "\n"
         openmode = "w"
     with open(outputfile, openmode) as FILE:
+        if machinereadable:
+            FILE.writelines("{" + thelineending)
         for key, value in sorted(thedict.items()):
-            FILE.writelines(str(key) + ":\t" + str(value) + thelineending)
+            if machinereadable:
+                FILE.writelines('"' + str(key) + '"' + ":\t" + str(value) + thelineending)
+            else:
+                FILE.writelines(str(key) + ":\t" + str(value) + thelineending)
+        if machinereadable:
+            FILE.writelines("}" + thelineending)
 
 
 def readdict(inputfilename):

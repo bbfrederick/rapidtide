@@ -61,9 +61,7 @@ def undecimate(inputarray, factor, outlen):
     xin = np.linspace(-1.0, 1.0, num=inlen, endpoint=True)
     xout = np.linspace(-1.0, 1.0, num=inlen * (factor + 1), endpoint=True)
     f = interp1d(xin, inputarray, kind="cubic")
-    outputarray[
-        centerloc - int(resampwidth // 2) : centerloc + int(resampwidth // 2)
-    ] = f(xout)
+    outputarray[centerloc - int(resampwidth // 2) : centerloc + int(resampwidth // 2)] = f(xout)
     weights[centerloc - int(resampwidth // 2) : centerloc + int(resampwidth // 2)] = 1.0
     return outputarray, weights
 
@@ -145,9 +143,7 @@ def harmonogram(
         destarray = np.zeros((n, int(len(magspec) // n), 2), dtype=float)
         # destarray[0, :, 0] = decimateandselect(magspec, 0, outlen)
         # destarray[0, :, 1] = tide_math.phasemod(decimateandselect(np.unwrap(phasespec), 0, outlen))
-        destfreqaxis = freqaxis[
-            centerloc - int(outlen // 2) : centerloc + int(outlen // 2)
-        ]
+        destfreqaxis = freqaxis[centerloc - int(outlen // 2) : centerloc + int(outlen // 2)]
 
         fig = figure()
         axlist = []
@@ -397,7 +393,7 @@ for i in range(0, numfiles):
     # check file type
     filebase, extension = os.path.splitext(textfilename[i][0])
     if extension == ".json":
-        thissamplerate, thisstartoffset, colnames, invecs = tide_io.readbidstsv(
+        thissamplerate, thisstartoffset, colnames, invecs, compressed = tide_io.readbidstsv(
             textfilename[i][0]
         )
     else:
@@ -420,9 +416,7 @@ for i in range(0, numfiles):
         if debug:
             print("appending vector number ", j)
         yvecs.append(invecs[j] * 1.0)
-        xvecs.append(
-            thisstartoffset + np.arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate
-        )
+        xvecs.append(thisstartoffset + np.arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate)
         if len(yvecs[-1]) < minlen:
             minlen = len(yvecs[-1])
         if not legendset:
@@ -431,9 +425,7 @@ for i in range(0, numfiles):
                     if shortcolnames:
                         linelabels.append("column" + str(j).zfill(2))
                     else:
-                        linelabels.append(
-                            textfilename[i][0] + "_column" + str(j).zfill(2)
-                        )
+                        linelabels.append(textfilename[i][0] + "_column" + str(j).zfill(2))
 
                 else:
                     if shortcolnames:
@@ -444,9 +436,7 @@ for i in range(0, numfiles):
                 linelabels.append(textfilename[i][0])
         else:
             if invecs.shape[0] > 1:
-                linelabels.append(
-                    legendlist[i % len(legendlist)] + "_column" + str(j).zfill(2)
-                )
+                linelabels.append(legendlist[i % len(legendlist)] + "_column" + str(j).zfill(2))
             else:
                 linelabels.append(legendlist[i % len(legendlist)])
         samplerates.append(thissamplerate + 0.0)

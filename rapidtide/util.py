@@ -520,6 +520,7 @@ def makeslicetimes(numslices, sliceordertype, tr=1.0, multibandfac=1, debug=Fals
         print("ERROR: numslices is not evenly divisible by multband factor")
         return None
     mbcycle = int(numslices / multibandfac)
+    normal = True
     if sliceordertype == "ascending":
         controllist = [[0, 1]]
     elif sliceordertype == "descending":
@@ -528,6 +529,12 @@ def makeslicetimes(numslices, sliceordertype, tr=1.0, multibandfac=1, debug=Fals
         controllist = [[0, 2], [1, 2]]
     elif sliceordertype == "descending_interleaved":
         controllist = [[mbcycle - 1, -2], [mbcycle - 2, -2]]
+    elif sliceordertype == "ascending_sparkplug":
+        normal = False
+        controllist = [[0, int(mbcycle // 2) - 1]]
+    elif sliceordertype == "descending_sparkplug":
+        normal = False
+        controllist = [[mbcycle - 1, -int(mbcycle // 2) - 1]]
     elif sliceordertype == "ascending_interleaved_siemens":
         if numslices % 2 == 0:
             controllist = [[0, 2], [1, 2]]
@@ -563,9 +570,15 @@ def makeslicetimes(numslices, sliceordertype, tr=1.0, multibandfac=1, debug=Fals
         start = thecontrollist[0]
         step = thecontrollist[1]
         theindex = start
-        while 0 <= theindex < mbcycle:
-            slicelist.append(theindex)
-            theindex += step
+        if normal:
+            while 0 <= theindex < mbcycle:
+                slicelist.append(theindex)
+                theindex += step
+        else:
+            while len(slicelist) < mbcycle:
+                slicelist.append(theindex)
+                theindex = (theindex + step) % mbcycle
+
     if debug:
         print(slicelist)
     for index in range(numslices):
