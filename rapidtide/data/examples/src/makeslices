@@ -2,24 +2,29 @@
 
 import numpy as np
 from rapidtide.util import makeslicetimes
+from rapidtide.io import writedict
 
-numslices = 64
-mbfac = 4
-tr = 1.0
+numslices = 60
+mbfac = 6
+tr = 1
 
+prefix = "slc_{0:d}_mb_{1:d}_".format(numslices, mbfac)
 sliceorders = [
-    "ascending",
-    "descending",
-    "ascending_interleaved",
-    "descending_interleaved",
-    "ascending_interleaved_siemens",
-    "descending_interleaved_siemens",
-    "ascending_interleaved_philips",
-    "descending_interleaved_philips",
+    ["ascending", "asc"],
+    ["descending", "desc"],
+    ["ascending_interleaved", "asc_int"],
+    ["descending_interleaved", "desc_int"],
+    ["ascending_sparkplug", "asc_spark"],
+    ["descending_sparkplug", "desc_spark"],
+    ["ascending_interleaved_siemens", "asc_int_siemens"],
+    ["descending_interleaved_siemens", "desc_int_siemens"],
+    ["ascending_interleaved_philips", "asc_int_philips"],
+    ["descending_interleaved_philips", "desc_int_philips"],
 ]
 
 for thesliceorder in sliceorders:
-    thetimes = makeslicetimes(numslices, thesliceorder, tr=tr, multibandfac=mbfac, debug=True)
-    print("\n", thesliceorder)
+    thetimes = makeslicetimes(numslices, thesliceorder[0], tr=tr, multibandfac=mbfac, debug=True)
+    print("\n", thesliceorder[0])
     for i in range(len(thetimes)):
         print(i, "\t{:.3f}".format(thetimes[i]))
+    writedict({"SliceTiming": thetimes.tolist()}, prefix + thesliceorder[1] + ".json", machinereadable=True)
