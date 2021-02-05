@@ -1,5 +1,10 @@
 # History of changes
 
+## Version 2.0alpha12 (2/5/21)
+* (all) Fixed readbidstsv calls.
+* (all) Beginning a rethink of a universal text timecourse reader.
+* (happy) Added new tools for slice time generation.
+
 ## Version 2.0alpha11 (1/5/21)
 * (rapidtide) Rolled back default similarity metric to 'correlation' from 'hybrid'.  'hybrid' works very well most of the time, and fails strangely occasionally.  When 'correlation' fails, it does so in more predictable and explicable ways.
 * (happy) Restored functionality and options for motion regression that I broke when separating out the command parser.

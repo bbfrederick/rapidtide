@@ -13,8 +13,8 @@
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging) 
   and push to github:
 
-    git tag -a v2.0alpha11 -m "v2.0alpha11"
-    git push origin v2.0alpha11
+    git tag -a v2.0alpha12 -m "v2.0alpha12"
+    git push origin v2.0alpha12
 
 
 + Edit the release notes on github
