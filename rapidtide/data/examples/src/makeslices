@@ -27,4 +27,8 @@ for thesliceorder in sliceorders:
     print("\n", thesliceorder[0])
     for i in range(len(thetimes)):
         print(i, "\t{:.3f}".format(thetimes[i]))
-    writedict({"SliceTiming": thetimes.tolist()}, prefix + thesliceorder[1] + ".json", machinereadable=True)
+    writedict(
+        {"SliceTiming": thetimes.tolist()},
+        prefix + thesliceorder[1] + ".json",
+        machinereadable=True,
+    )
