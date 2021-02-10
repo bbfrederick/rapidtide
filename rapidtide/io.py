@@ -1201,6 +1201,14 @@ def readvectorsfromtextfile(fullfilespec, debug=False):
     else:
         print("illegal file type:", filetype)
 
+    if debug:
+        print("\tthesamplerate:", thesamplerate)
+        print("\tthestarttime:", thestarttime)
+        print("\tthecolumns:", thecolumns)
+        print("\tthedata.shape:", thedata.shape)
+        print("\tcompressed:", compressed)
+        print("\tfiletype:", filetype)
+
     return thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype
 
 
@@ -1257,13 +1265,21 @@ def readbidstsv(inputfilename, debug=False):
             df = pd.read_csv(
                 thefileroot + ".tsv.gz",
                 compression="gzip",
-                header=0,
+                header=None,
+                names=columns,
                 sep="\t",
                 quotechar='"',
             )
             compressed = True
         else:
-            df = pd.read_csv(thefileroot + ".tsv", header=0, sep="\t", quotechar='"')
+            df = pd.read_csv(
+                thefileroot + ".tsv",
+                compression=None,
+                header=None,
+                names=columns,
+                sep="\t",
+                quotechar='"',
+            )
             compressed = False
         if columns is None:
             columns = list(df.columns.values)
