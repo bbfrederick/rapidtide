@@ -100,6 +100,14 @@ DEFAULT_FILTER_ORDER = 6
 DEFAULT_PAD_SECONDS = 30.0
 
 
+def addreqtextfile(parser, varname):
+    parser.add_argument(
+        varname,
+        type=str,
+        help="Text file containing a timeseries.  Select column COLNUM if multicolumn file",
+    )
+
+
 def addfilteropts(parser, filtertarget, details=False):
     filt_opts = parser.add_argument_group("Filtering options")
     filt_opts.add_argument(
@@ -157,8 +165,7 @@ def addfilteropts(parser, filtertarget, details=False):
             type=float,
             metavar="SECONDS",
             help=(
-                "The number of seconds of padding to add to each end of a "
-                "filtered timecourse. "
+                "The number of seconds of padding to add to each end of a " "filtered timecourse. "
             ),
             default=DEFAULT_PAD_SECONDS,
         )
@@ -193,13 +200,9 @@ def postprocessfilteropts(args):
             "arb",
             transferfunc=args.filtertype,
         )
-        theprefilter.setfreqs(
-            args.arbvec[2], args.arbvec[0], args.arbvec[1], args.arbvec[3]
-        )
+        theprefilter.setfreqs(args.arbvec[2], args.arbvec[0], args.arbvec[1], args.arbvec[3])
     else:
-        theprefilter = tide_filt.noncausalfilter(
-            args.filterband, transferfunc=args.filtertype
-        )
+        theprefilter = tide_filt.noncausalfilter(args.filterband, transferfunc=args.filtertype)
 
     # set the butterworth order
     theprefilter.setbutterorder(args.filtorder)
@@ -285,10 +288,7 @@ def addsearchrangeopts(parser, details=False, defaultmin=-30.0, defaultmax=30.0)
             action="store",
             type=float,
             metavar="DELAYTIME",
-            help=(
-                "Don't fit the delay time - set it to "
-                "DELAYTIME seconds for all voxels. "
-            ),
+            help=("Don't fit the delay time - set it to " "DELAYTIME seconds for all voxels. "),
             default=None,
         )
 
