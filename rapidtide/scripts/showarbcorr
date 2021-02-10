@@ -62,8 +62,8 @@ def _get_parser():
     )
 
     # Required arguments
-    addreqtextfile(parser, "infilename1")
-    addreqtextfile(parser, "infilename2")
+    pf.addreqtextfile(parser, "infilename1")
+    pf.addreqtextfile(parser, "infilename2")
 
     # add optional arguments
     parser.add_argument(

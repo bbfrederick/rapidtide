@@ -73,6 +73,7 @@ script_list = [
     "rapidtide/scripts/aligntcs",
     "rapidtide/scripts/plethquality",
     "rapidtide/scripts/showxcorrx",
+    "rapidtide/scripts/showarbcorr",
     "rapidtide/scripts/ccorrica",
     "rapidtide/scripts/showstxcorr",
     "rapidtide/scripts/resamp1tc",
