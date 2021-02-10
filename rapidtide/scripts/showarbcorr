@@ -56,9 +56,9 @@ def _get_parser():
     Argument parser for showarbcorr
     """
     parser = argparse.ArgumentParser(
-        prog="showxcorrx",
+        prog="showarbcorr",
         description=("Calculate and display " "crosscorrelation between two " "timeseries."),
-        usage="%(prog)s infile1 infile2 samplerate [options]",
+        usage="%(prog)s infile1 infile2 [options]",
     )
 
     # Required arguments
@@ -301,18 +301,16 @@ def main():
         dumpfiltered = False
     showpearson = True
 
+    if args.samplerate1 is not None:
+        Fs1 = args.samplerate1
     if Fs1 is None:
-        if args.samplerate1 is not None:
-            Fs1 = args.samplerate1
-        else:
-            print("sample rate must be specified for timecourse 1 - exiting")
-            sys.exit()
+        print("sample rate must be specified for timecourse 1 - exiting")
+        sys.exit()
+    if args.samplerate2 is not None:
+        Fs2 = args.samplerate2
     if Fs2 is None:
-        if args.samplerate2 is not None:
-            Fs2 = args.samplerate2
-        else:
-            print("sample rate must be specified for timecourse 2 - exiting")
-            sys.exit()
+        print("sample rate must be specified for timecourse 2 - exiting")
+        sys.exit()
 
     # print("startpoint1, endpoint1:", args.startpoint1, args.endpoint1)
 
