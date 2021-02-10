@@ -862,7 +862,7 @@ def rapidtide_main(argparsingfunc):
         print("\tinput start time: {:.3f}".format(inputstarttime))
 
     if not optiondict["useglobalref"]:
-        globalcorrx, globalcorry, dummy = tide_corr.arbcorr(
+        globalcorrx, globalcorry, dummy, dummy = tide_corr.arbcorr(
             meanvec, meanfreq, inputvec, inputfreq, start2=inputstarttime
         )
         synctime = globalcorrx[np.argmax(globalcorry)]

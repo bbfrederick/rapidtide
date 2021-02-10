@@ -764,11 +764,13 @@ def arbcorr(
         + start1
         - start2
     )
+    zeroloc = int(np.argmin(np.fabs(thexcorr_x)))
     if debug:
         print("len(norm1) = ", len(norm1))
         print("len(norm2) = ", len(norm2))
         print("len(thexcorr_y)", len(thexcorr_y))
-    return thexcorr_x, thexcorr_y, corrFs
+        print("zeroloc =", zeroloc)
+    return thexcorr_x, thexcorr_y, corrFs, zeroloc
 
 
 def faststcorrelate(

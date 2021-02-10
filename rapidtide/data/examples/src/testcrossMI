@@ -14,7 +14,7 @@ input4 = tide_io.readvec('../dst/dgsr_gauss_reference_resampres_pass3.txt')
 #input5 = tide_io.readvec('../dst/diff_quad_reference_resampres_pass3.txt')
 
 
-#thex, thexcorr, dummy = tide_corr.arbcorr(input1, 12.5, input2, 12.5, windowfunc='hamming')
+#thex, thexcorr, dummy, dummy = tide_corr.arbcorr(input1, 12.5, input2, 12.5, windowfunc='hamming')
 #plt.plot(thex, thexcorr)
 #plt.show()
 
