@@ -128,9 +128,7 @@ def autocorrcheck(
 
     """
     lookahead = 2
-    peaks = tide_fit.peakdetect(
-        thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead
-    )
+    peaks = tide_fit.peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
     maxpeaks = np.asarray(peaks[0], dtype="float64")
     minpeaks = np.asarray(peaks[1], dtype="float64")
     if len(peaks[0]) > 0:
@@ -302,9 +300,7 @@ def shorttermcorr_2D(
     thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
     xcorrlen = np.shape(thexcorr)[0]
     xcorr_x = (
-        np.arange(0.0, xcorrlen) * sampletime
-        - (xcorrlen * sampletime) / 2.0
-        + sampletime / 2.0
+        np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     )
     corrzero = int(xcorrlen // 2)
     xcorrpertime = []
@@ -404,9 +400,7 @@ def mutual_information_2d(
         numybins = len(bins[1]) - 1
         cuts = (x >= xstart) & (x < xend) & (y >= ystart) & (y < yend)
         c = ((x[cuts] - xstart) / (xend - xstart) * numxbins).astype(np.int_)
-        c += ((y[cuts] - ystart) / (yend - ystart) * numybins).astype(
-            np.int_
-        ) * numxbins
+        c += ((y[cuts] - ystart) / (yend - ystart) * numybins).astype(np.int_) * numxbins
         jh = np.bincount(c, minlength=numxbins * numybins).reshape(numxbins, numybins)
     else:
         if debug:
@@ -489,9 +483,7 @@ def cross_MI(
     if locs is None:
         thexmi_y = np.zeros((-negsteps + possteps + 1))
         if debug:
-            print(
-                "negsteps, possteps, len(thexmi_y)", negsteps, possteps, len(thexmi_y)
-            )
+            print("negsteps, possteps, len(thexmi_y)", negsteps, possteps, len(thexmi_y))
         irange = range(negsteps, possteps + 1)
     else:
         thexmi_y = np.zeros((len(locs)), dtype=np.float)
@@ -657,8 +649,7 @@ class aliasedcorrelator:
         self.timerange = timerange
         self.loresstarttime = loresstarttime
         self.highresaxis = (
-            np.arange(0.0, len(self.hiressignal)) * (1.0 / self.hires_Fs)
-            - self.hiresstarttime
+            np.arange(0.0, len(self.hiressignal)) * (1.0 / self.hires_Fs) - self.hiresstarttime
         )
         self.padtime = padtime
         self.tcgenerator = tide_resample.fastresampler(
@@ -681,10 +672,7 @@ class aliasedcorrelator:
         corrfunc: 1D array
             The correlation function evaluated at timepoints of timerange
         """
-        loresaxis = (
-            np.arange(0.0, len(loressignal)) * (1.0 / self.lores_Fs)
-            - self.loresstarttime
-        )
+        loresaxis = np.arange(0.0, len(loressignal)) * (1.0 / self.lores_Fs) - self.loresstarttime
         targetsignal = tide_math.corrnormalize(loressignal)
         corrfunc = self.timerange * 0.0
         for i in range(len(self.timerange)):
@@ -739,9 +727,7 @@ def aliasedcorrelate(
     targetsignal = tide_math.corrnormalize(lowressignal)
     corrfunc = timerange * 0.0
     for i in range(len(timerange)):
-        aliasedhiressignal = tide_math.corrnormalize(
-            tcgenerator.yfromx(lowresaxis + timerange[i])
-        )
+        aliasedhiressignal = tide_math.corrnormalize(tcgenerator.yfromx(lowresaxis + timerange[i]))
         corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
     return corrfunc
 
@@ -760,25 +746,17 @@ def arbcorr(
     if Fs1 > Fs2:
         corrFs = Fs1
         matchedinput1 = input1
-        matchedinput2 = tide_resample.upsample(
-            input2, Fs2, corrFs, method=method, debug=debug
-        )
+        matchedinput2 = tide_resample.upsample(input2, Fs2, corrFs, method=method, debug=debug)
     elif Fs2 > Fs1:
         corrFs = Fs2
-        matchedinput1 = tide_resample.upsample(
-            input1, Fs1, corrFs, method=method, debug=debug
-        )
+        matchedinput1 = tide_resample.upsample(input1, Fs1, corrFs, method=method, debug=debug)
         matchedinput2 = input2
     else:
         corrFs = Fs1
         matchedinput1 = input1
         matchedinput2 = input2
-    norm1 = tide_math.corrnormalize(
-        matchedinput1, detrendorder=1, windowfunc=windowfunc
-    )
-    norm2 = tide_math.corrnormalize(
-        matchedinput2, detrendorder=1, windowfunc=windowfunc
-    )
+    norm1 = tide_math.corrnormalize(matchedinput1, detrendorder=1, windowfunc=windowfunc)
+    norm2 = tide_math.corrnormalize(matchedinput2, detrendorder=1, windowfunc=windowfunc)
     thexcorr_y = signal.fftconvolve(norm1, norm2[::-1], mode="full")
     thexcorr_x = (
         sp.linspace(0.0, len(thexcorr_y) / corrFs, num=len(thexcorr_y), endpoint=False)
@@ -790,7 +768,7 @@ def arbcorr(
         print("len(norm1) = ", len(norm1))
         print("len(norm2) = ", len(norm2))
         print("len(thexcorr_y)", len(thexcorr_y))
-    return thexcorr_x, thexcorr_y
+    return thexcorr_x, thexcorr_y, corrFs
 
 
 def faststcorrelate(
@@ -830,12 +808,8 @@ def faststcorrelate(
 
     acorrfft1 = thestft1 * np.conj(thestft1)
     acorrfft2 = thestft2 * np.conj(thestft2)
-    acorr1 = np.roll(fftpack.ifft(acorrfft1, axis=0).real, nperseg // 2, axis=0)[
-        nperseg // 2, :
-    ]
-    acorr2 = np.roll(fftpack.ifft(acorrfft2, axis=0).real, nperseg // 2, axis=0)[
-        nperseg // 2, :
-    ]
+    acorr1 = np.roll(fftpack.ifft(acorrfft1, axis=0).real, nperseg // 2, axis=0)[nperseg // 2, :]
+    acorr2 = np.roll(fftpack.ifft(acorrfft2, axis=0).real, nperseg // 2, axis=0)[nperseg // 2, :]
     normfacs = np.sqrt(acorr1 * acorr2)
     product = thestft1 * np.conj(thestft2)
     stcorr = np.roll(fftpack.ifft(product, axis=0).real, nperseg // 2, axis=0)
@@ -970,9 +944,7 @@ def weightedfftconvolve(in1, in2, mode="full", weighting="None", displayplots=Fa
 
     s1 = np.array(in1.shape)
     s2 = np.array(in2.shape)
-    complex_result = np.issubdtype(in1.dtype, np.complex) or np.issubdtype(
-        in2.dtype, np.complex
-    )
+    complex_result = np.issubdtype(in1.dtype, np.complex) or np.issubdtype(in2.dtype, np.complex)
     size = s1 + s2 - 1
 
     if mode == "valid":
@@ -984,26 +956,22 @@ def weightedfftconvolve(in1, in2, mode="full", weighting="None", displayplots=Fa
     if not complex_result:
         fft1 = rfftn(in1, fsize)
         fft2 = rfftn(in2, fsize)
-        theorigmax = np.max(
-            np.absolute(irfftn(gccproduct(fft1, fft2, "None"), fsize)[fslice])
-        )
-        ret = irfftn(
-            gccproduct(fft1, fft2, weighting, displayplots=displayplots), fsize
-        )[fslice].copy()
-        ret = irfftn(
-            gccproduct(fft1, fft2, weighting, displayplots=displayplots), fsize
-        )[fslice].copy()
+        theorigmax = np.max(np.absolute(irfftn(gccproduct(fft1, fft2, "None"), fsize)[fslice]))
+        ret = irfftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots), fsize)[
+            fslice
+        ].copy()
+        ret = irfftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots), fsize)[
+            fslice
+        ].copy()
         ret = ret.real
         ret *= theorigmax / np.max(np.absolute(ret))
     else:
         fft1 = fftpack.fftn(in1, fsize)
         fft2 = fftpack.fftn(in2, fsize)
-        theorigmax = np.max(
-            np.absolute(fftpack.ifftn(gccproduct(fft1, fft2, "None"))[fslice])
-        )
-        ret = fftpack.ifftn(
-            gccproduct(fft1, fft2, weighting, displayplots=displayplots)
-        )[fslice].copy()
+        theorigmax = np.max(np.absolute(fftpack.ifftn(gccproduct(fft1, fft2, "None"))[fslice]))
+        ret = fftpack.ifftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots))[
+            fslice
+        ].copy()
         ret *= theorigmax / np.max(np.absolute(ret))
 
     # scale to preserve the maximum
