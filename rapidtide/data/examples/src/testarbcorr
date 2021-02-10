@@ -4,12 +4,64 @@ import numpy as np
 import matplotlib.pyplot as plt
 import rapidtide.correlate as tide_corr
 import rapidtide.io as tide_io
-input1 = tide_io.readvec('tc1')
-input2 = tide_io.readvec('tc2')
-input3 = tide_io.readvec('tc3')
-thex, they, corrFs, dummy = tide_corr.arbcorr(input1, 12.5, input2, 12.5, start2=10.0, windowfunc='hamming')
-plt.plot(thex, they)
-plt.show()
-thex, they, corrFs, dummy = tide_corr.arbcorr(input1, 12.5, input3, 17.0, start2=10.0, windowfunc='hamming')
-plt.plot(thex, they)
-plt.show()
+import rapidtide.workflows.parser_funcs as pf
+
+
+def _get_parser():
+    """
+    Argument parser for showarbcorr
+    """
+    parser = argparse.ArgumentParser(
+        prog="showarbcorr",
+        description=("Calculate and display " "crosscorrelation between two " "timeseries."),
+        usage="%(prog)s infile1 infile2 [options]",
+    )
+
+    # Required arguments
+    pf.addreqtextfile(parser, "infilename1")
+    pf.addreqtextfile(parser, "infilename2")
+
+    # add optional arguments
+    parser.add_argument(
+        "--samplerate1",
+        type=lambda x: pf.is_float(parser, x),
+        help="Sample rate of timecourse 1, in Hz",
+        default=None,
+    )
+    parser.add_argument(
+        "--samplerate2",
+        type=lambda x: pf.is_float(parser, x),
+        help="Sample rate of timecourse 2, in Hz",
+        default=None,
+    )
+
+
+def main():
+    # try:
+    #    args = _get_parser().parse_args()
+    # except SystemExit:
+    #    _get_parser().print_help()
+    #    raise
+
+    infilename1 = "timecourse1.txt"
+    infilename2 = "timecourse1.txt"
+
+    for thefilespec in ["timecourse1.txt", "timecourse1.tsv", "timecourse2_physio.json"]:
+        dummy, dummy, dummy, dummy, dummy, dummy = tide_io.readvectorsfromtextfile(
+            thefilespec, debug=True
+        )
+
+    Fs1, starttime1, dummy, input1, dummy, dummy = tide_io.readvectorsfromtextfile(infilename1)
+    Fs2, starttime2, dummy, input2, dummy, dummy = tide_io.readvectorsfromtextfile(infilename2)
+    Fs1 = 12.5
+    Fs2 = 12.5
+
+    thex, they, corrFs, dummy = tide_corr.arbcorr(
+        input1[0, :], Fs1, input2[0, :], Fs2, start2=10.0, windowfunc="hamming"
+    )
+    plt.plot(thex, they)
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()

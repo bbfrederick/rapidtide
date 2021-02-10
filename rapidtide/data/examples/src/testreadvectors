@@ -5,9 +5,21 @@ import matplotlib.pyplot as plt
 import rapidtide.correlate as tide_corr
 import rapidtide.io as tide_io
 
-for thefilename in ["timecourse1.txt", "timecourse1.tsv", "timecourse2_physio.tsv", "timecourse2_physio.json"]:
-    print('\n\n\n', thefilename)
-    thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype = tide_io.readvectorsfromtextfile(thefilename, debug=True)
+for thefilename in [
+    "timecourse1.txt",
+    "timecourse1.tsv",
+    "timecourse2_physio.tsv",
+    "timecourse2_physio.json",
+]:
+    print("\n\n\n", thefilename)
+    (
+        thesamplerate,
+        thestarttime,
+        thecolumns,
+        thedata,
+        compressed,
+        filetype,
+    ) = tide_io.readvectorsfromtextfile(thefilename, debug=True)
 
     print(thesamplerate, thestarttime, thecolumns, compressed, filetype)
     if thesamplerate is None:
@@ -17,11 +29,14 @@ for thefilename in ["timecourse1.txt", "timecourse1.tsv", "timecourse2_physio.ts
     if compressed is None:
         compressed = False
     print(thesamplerate, thestarttime, thecolumns, compressed, filetype)
-    
+
     yaxis = thedata[0, :]
     datalen = len(yaxis)
     print("datalen:", datalen)
-    xaxis = np.linspace(0.0, (1.0 * datalen) / thesamplerate, num=datalen, endpoint=False) + thestarttime
+    xaxis = (
+        np.linspace(0.0, (1.0 * datalen) / thesamplerate, num=datalen, endpoint=False)
+        + thestarttime
+    )
     print(xaxis, yaxis)
     plt.plot(xaxis, yaxis)
     plt.show()

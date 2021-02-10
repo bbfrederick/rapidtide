@@ -18,6 +18,7 @@ rapidtide/data/examples/src/*corrfunc*
 rapidtide/data/examples/src/*trimmed*
 rapidtide/data/examples/src/sub-01*
 rapidtide/data/examples/src/testhappyx
+rapidtide/data/examples/src/filtereddata*
 #rapidtide/experimental/batch/*
 rapidtide/experimental/__pycache__
 #rapidtide/experimental/.*
