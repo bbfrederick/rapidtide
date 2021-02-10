@@ -744,7 +744,7 @@ def readmotion(filename):
             ]
         )
     elif extension == ".tsv":
-        allmotion = readfmriprepconfounds(filebase)
+        allmotion = readlabelledtsv(filebase)
         motiondict = {}
         motiondict["xtrans"] = allmotion["trans_x"] * 1.0
         motiondict["ytrans"] = allmotion["trans_y"] * 1.0
@@ -950,7 +950,7 @@ def readdictfromjson(inputfilename):
         return {}
 
 
-def readfmriprepconfounds(inputfilename):
+def readlabelledtsv(inputfilename):
     r"""Read time series out of an fmriprep confounds tsv file
 
     Parameters
@@ -1125,12 +1125,12 @@ def writebidstsv(
         )
 
 
-def readvectorsfromtextfile(inputfilename, colspec=None, debug=False):
+def readvectorsfromtextfile(fullfilespec, debug=False):
     r"""Read one or more time series from some sort of text file
 
     Parameters
     ----------
-    inputfilename : str
+    fullfilespec : str
         The file name.  If extension is .tsv or .json, it will be assumed to be either a BIDS tsv, or failing that,
          a non-BIDS tsv.  If any other extension or no extension, it will be assumed to be a text file.
     colspec:  A valid list and/or range of column numbers, or list of column names, or None
@@ -1150,18 +1150,58 @@ def readvectorsfromtextfile(inputfilename, colspec=None, debug=False):
 
     NOTE:  If file does not exist or is not valid, all return values are None"""
 
-    thefileroot, theext = os.path.splitext(inputfilename)
+    thefilename, colspec = parsefilespec(fullfilespec)
+    thefileroot, theext = os.path.splitext(thefilename)
+    if theext == ".gz":
+        thefileroot, thenextext = os.path.splitext(thefileroot)
+        if thenextext is not None:
+            theext = thenextext + theext
     if debug:
         print("thefileroot:", thefileroot)
         print("theext:", theext)
-    if os.path.exists(thefileroot + ".json") and (
-        os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv")
-    ):
-        filetype = "bidstsv"
-    elif os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv"):
-        filetype = "plaintsv"
+    if theext == ".json" or theext == ".tsv" or theext == ".tsv.gz":
+        if os.path.exists(thefileroot + ".json") and (
+            os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv")
+        ):
+            # now see if it is a physio or stim file
+            if thefileroot[-5::] == "_stim" or thefileroot[-7:] == "_physio":
+                filetype = "bidscontinuous"
+            else:
+                filetype = "plaintsv"
+        elif os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv"):
+            filetype = "plaintsv"
     else:
         filetype = "text"
+
+    if debug:
+        print("filetype determined to be", filetype)
+
+    if filetype == "text":
+        # check that colspec is valid
+
+        thedata = readvecs(thefilename, colspec)
+        thesamplerate = None
+        thestarttime = None
+        thecolumns = None
+        compressed = None
+    elif filetype == "bidscontinuous":
+        thesamplerate, thestarttime, thecolumns, thedata, compressed = readbidstsv(
+            thefilename, debug=False
+        )
+    elif filetype == "plaintsv":
+        thedatadict = readlabelledtsv(thefileroot)
+        thecolumns = list(thedatadict.keys())
+        thedatacols = []
+        for thekey in thecolumns:
+            thedatacols.append(thedatadict[thekey])
+        thedata = np.array(thedatacols)
+        thesamplerate = None
+        thestarttime = None
+        compressed = None
+    else:
+        print("illegal file type:", filetype)
+
+    return thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype
 
 
 def readbidstsv(inputfilename, debug=False):

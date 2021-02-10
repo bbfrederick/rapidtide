@@ -1,0 +1,7 @@
+{
+    "SamplingFrequency": 12.5,
+    "StartTime": -10.0,
+    "Columns": [
+        "thevalues"
+    ]
+}
