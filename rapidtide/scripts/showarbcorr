@@ -130,13 +130,6 @@ def _get_parser():
     # Preprocessing options
     preproc = parser.add_argument_group("Preprocessing options")
     preproc.add_argument(
-        "--cepstral",
-        dest="cepstral",
-        action="store_true",
-        help="Check time delay using Choudhary's cepstral technique. ",
-        default=False,
-    )
-    preproc.add_argument(
         "--corrweighting",
         dest="corrweighting",
         action="store",
@@ -160,18 +153,6 @@ def _get_parser():
         type=str,
         help=("Label for the delay value. "),
         default="None",
-    )
-    preproc.add_argument(
-        "--partialcorr",
-        dest="controlvariablefile",
-        action="store",
-        type=lambda x: pf.is_valid_file(parser, x),
-        metavar="FILE",
-        help=(
-            "Use the columns of FILE as controlling variables and "
-            "return the partial correlation. "
-        ),
-        default=None,
     )
 
     pf.addpermutationopts(preproc)
@@ -267,16 +248,9 @@ def main():
     args = pf.postprocesssearchrangeopts(args)
     args = pf.postprocesstimerangeopts(args)
 
-    args.numestreps = 0
-
-    # infilename1, colspec1 = tide_io.parsefilespec(args.infilename1)
-    # infilename2, colspec2 = tide_io.parsefilespec(args.infilename2)
-    # Fs = args.samplerate
-
     Fs1, starttime1, dummy, inputdata1, dummy, dummy = tide_io.readvectorsfromtextfile(
         args.infilename1
     )
-    # inputdata1 = np.transpose(tide_io.readvecs(infilename1, colspec=colspec1))
     inputdata1 = np.transpose(inputdata1)
     if np.shape(inputdata1)[1] > 1:
         print("specify only one column for input file 1")
@@ -287,7 +261,6 @@ def main():
     Fs2, starttime2, dummy, inputdata2, dummy, dummy = tide_io.readvectorsfromtextfile(
         args.infilename2
     )
-    # inputdata2 = np.transpose(tide_io.readvecs(infilename2, colspec=colspec2))
     inputdata2 = np.transpose(inputdata2)
     if np.shape(inputdata2)[1] > 1:
         print("specify only one column for input file 2")
@@ -311,19 +284,6 @@ def main():
     if Fs2 is None:
         print("sample rate must be specified for timecourse 2 - exiting")
         sys.exit()
-
-    # print("startpoint1, endpoint1:", args.startpoint1, args.endpoint1)
-
-    """print("thetime:", args.startpoint / Fs)
-    startpoint1 = np.max([int(args.startpoint / Fs1), 0])
-    if args.debug:
-        print("startpoint set to ", startpoint1)
-    endpoint1 = np.min([int(args.endpoint / Fs1), int(len(inputdata1))])
-    if args.debug:
-        print("endpoint set to ", endpoint1)
-    endpoint2 = np.min([int(args.endpoint / Fs1), int(len(inputdata1)), int(len(inputdata2))])
-    trimdata1 = inputdata1[startpoint1:endpoint1]
-    trimdata2 = inputdata2[0:endpoint2]"""
 
     trimdata1 = inputdata1
     trimdata2 = inputdata2
@@ -370,12 +330,10 @@ def main():
     )
 
     # do the correlation
-    # thexcorr, xcorr_x, globalmax = thecorrelator.run(trimdata1, trim=False)
     print("correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
     if dumpfiltered:
         tide_io.writenpvecs(thecorrelator.preptesttc, "correlator_filtereddata1.txt")
         tide_io.writenpvecs(thecorrelator.prepreftc, "correlator_filtereddata2.txt")
-    # thecorrelator.setlimits(int((-args.lagmin * corrFs) - 0.5), int((args.lagmax * corrFs) + 0.5))
     print("lagmin, lagmax", args.lagmin, args.lagmax)
     lowerlim = int((args.lagmin * corrFs) - 0.5) + zeroloc
     upperlim = int((args.lagmax * corrFs) + 0.5) + zeroloc
@@ -383,7 +341,6 @@ def main():
     print("lowerlim, upperlim", lowerlim, upperlim)
     xcorr_x_trim = xcorr_x[lowerlim:upperlim]
     thexcorr_trim = thexcorr[lowerlim:upperlim]
-    # thexcorr_trim, xcorr_x_trim, dummy = thecorrelator.getfunction(trim=True)
     print("trimmed correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
     # thepxcorr = pearsonr(filtereddata1, filtereddata2)
@@ -412,33 +369,6 @@ def main():
     if args.debug:
         print("\n\nmaxdelay before refinement", maxdelay)
 
-    """timeaxis = np.linspace(0, 1.0, num=len(trimdata1), endpoint=False) / Fs
-    thetc = trimdata1 * 0.0
-    dummy, thepeaks = tide_peakeval._procOneVoxelPeaks(
-        0,
-        thetc,
-        themutualinformationator,
-        timeaxis,
-        trimdata1,
-        timeaxis,
-        xcorr_x,
-        thexcorr,
-        oversampfactor=1,
-    )
-
-    print("peaklist:")
-    print('peak\tloc\tR\tMI\t"R"')
-    for i in range(len(thepeaks)):
-        print(
-            "{0:2d}\t{1:3.2f}\t{2:3.2f}\t{3:3.2f}\t{4:3.2f}".format(
-                i,
-                thepeaks[i][0],
-                thepeaks[i][1],
-                thepeaks[i][2],
-                tide_corr.MI_to_R(thepeaks[i][2]),
-            )
-        )
-"""
     (
         maxindex,
         maxdelay,
@@ -458,140 +388,12 @@ def main():
     if args.debug:
         print("maxdelay after refinement", maxdelay)
 
-    """maxdelaymi = xcorr_x_trim[np.argmax(thexcorr_trim)]
-    if args.debug:
-        print("\n\nmaxdelaymi before refinement", maxdelaymi)
-    (
-        maxindexmi,
-        maxdelaymi,
-        maxvalmi,
-        maxsigmami,
-        maskvalmi,
-        failreasonmi,
-        peakstartmi,
-        peakendmi,
-    ) = themifitter.fit(theMI_trim)
-    if failreasonmi > 0:
-        print("showxcorrx: FIT FAILED for mutual information with reason:")
-        print(themifitter.diagnosefail(np.uint32(failreasonmi)))
-    if args.debug:
-        print(
-            maxindexmi,
-            maxdelaymi,
-            maxvalmi,
-            maxsigmami,
-            maskvalmi,
-            failreasonmi,
-            peakstartmi,
-            peakendmi,
-        )
-    R = maxval
-    if args.debug:
-        print("maxdelay after refinement", maxdelay, "\n\n")"""
-
-    # set the significance threshold
-    """if args.numestreps > 0:
-        # generate a list of correlations from shuffled data
-        print("calculating null crosscorrelations")
-        corrlist = tide_nullsimfunc.getNullDistributionDatax(
-            filtereddata2,
-            Fs,
-            thecorrelator,
-            thexsimfuncfitter,
-            numestreps=args.numestreps,
-            despeckle_thresh=1000.0,
-            showprogressbar=args.showprogressbar,
-            permutationmethod=args.permutationmethod,
-            nprocs=args.nprocs,
-            fixdelay=False,
-        )
-
-        # calculate percentiles for the crosscorrelation from the distribution data
-        histlen = 100
-        thepercentiles = [0.95, 0.99, 0.995]
-
-        pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(
-            corrlist, histlen, thepercentiles
-        )
-        if args.debug:
-            tide_stats.printthresholds(
-                pcts,
-                thepercentiles,
-                "Crosscorrelation significance thresholds from data:",
-            )
-            tide_stats.printthresholds(
-                pcts_fit,
-                thepercentiles,
-                "Crosscorrelation significance thresholds from fit:",
-            )
-
-        print("calculating null Pearson correlations")
-        corrlist_pear = tide_nullsimfunc.getNullDistributionDatax(
-            filtereddata2,
-            Fs,
-            thecorrelator,
-            thexsimfuncfitter,
-            numestreps=args.numestreps,
-            despeckle_thresh=1000.0,
-            showprogressbar=args.showprogressbar,
-            permutationmethod=args.permutationmethod,
-            nprocs=args.nprocs,
-            fixdelay=True,
-        )
-
-        # calculate significance for the pearson correlation
-        pearpcts, pearpcts_fit, histfit = tide_stats.sigFromDistributionData(
-            corrlist_pear, histlen, thepercentiles
-        )
-        if args.debug:
-            tide_stats.printthresholds(
-                pearpcts,
-                thepercentiles,
-                "Pearson correlation significance thresholds from data:",
-            )
-            tide_stats.printthresholds(
-                pearpcts_fit,
-                thepercentiles,
-                "Pearson correlation significance thresholds from fit:",
-            )
-
-        if args.debug:
-            tide_io.writenpvecs(corrlist, "corrlist.txt")
-            tide_io.writenpvecs(corrlist_pear, "corrlist_pear.txt")"""
-
-    if args.debug:
-        print(thepxcorr)
-
     if args.summarymode:
-        if args.numestreps > 0:
-            thelabelitems = [
-                "pearson_R",
-                "pearson_R(p=0.05)",
-                "xcorr_R",
-                "xcorr_R(p=0.05)",
-                "xcorr_maxdelay",
-            ]
-            thedataitems = [
-                str(thepxcorr[0]),
-                str(pearpcts_fit[0]),
-                str(R),
-                str(pcts_fit[0]),
-                str(-maxdelay),
-            ]
-        else:
-            thelabelitems = ["pearson_R", "pearson_p", "xcorr_R", "xcorr_maxdelay"]
-            thelabelitems = ["xcorr_R", "xcorr_maxdelay"]
-
-            """thedataitems = [
-                str(thepxcorr[0]),
-                str(thepxcorr[1]),
-                str(R),
-                str(-maxdelay),
-            ]"""
-            thedataitems = [
-                str(R),
-                str(-maxdelay),
-            ]
+        thelabelitems = ["xcorr_R", "xcorr_maxdelay"]
+        thedataitems = [
+            str(R),
+            str(-maxdelay),
+        ]
 
         if args.label is not None:
             thelabelitems = ["thelabel"] + thelabelitems
@@ -609,28 +411,12 @@ def main():
         # report the pearson correlation
         if showpearson:
             print("Pearson_R:\t", thepxcorr[0])
-            if args.numestreps > 0:
-                for idx, percentile in enumerate(thepercentiles):
-                    print(
-                        "    pear_p(",
-                        "{:.3f}".format(1.0 - percentile),
-                        "):\t",
-                        pearpcts[idx],
-                    )
             print("")
         if args.label is not None:
             print(args.label, ":\t", -maxdelay)
         else:
             print("Crosscorrelation_Rmax:\t", R)
             print("Crosscorrelation_maxdelay:\t", -maxdelay)
-            if args.numestreps > 0:
-                for idx, percentile in enumerate(thepercentiles):
-                    print(
-                        "    xc_p(",
-                        "{:.3f}".format(1.0 - percentile),
-                        "):\t",
-                        pcts[idx],
-                    )
             print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
 
     if args.display:
@@ -638,10 +424,7 @@ def main():
         ax = fig.add_subplot(111)
         ax.set_title("Similarity metrics over the search range")
         ax.plot(xcorr_x_trim, thexcorr_trim, "k")
-        # print(xcorr_x_trim)
-        # ax.plot(MI_x_trim, theMI_trim, "r")
         ax.legend(["Cross correlation"])
-        # print(MI_x_trim)
         if args.debug:
             fig = figure()
             plot(f, Cxy)
@@ -652,8 +435,6 @@ def main():
 
     if args.corroutputfile is not None:
         tide_io.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), args.corroutputfile)
-    # if args.debug:
-    #    tide_io.writenpvecs(np.stack((MI_x_trim, theMI_trim), axis=0), "mifunc.txt")
 
 
 if __name__ == "__main__":
