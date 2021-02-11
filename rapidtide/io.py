@@ -1152,6 +1152,7 @@ def readvectorsfromtextfile(fullfilespec, debug=False):
 
     thefilename, colspec = parsefilespec(fullfilespec)
     thefileroot, theext = os.path.splitext(thefilename)
+
     if theext == ".gz":
         thefileroot, thenextext = os.path.splitext(thefileroot)
         if thenextext is not None:
@@ -1177,23 +1178,34 @@ def readvectorsfromtextfile(fullfilespec, debug=False):
         print("filetype determined to be", filetype)
 
     if filetype == "text":
-        # check that colspec is valid
-
+        # colspec can only be None or a list of integer ranges
         thedata = readvecs(thefilename, colspec)
         thesamplerate = None
         thestarttime = None
         thecolumns = None
         compressed = None
     elif filetype == "bidscontinuous":
+        # colspec can be None or a list of comma separated column names
         thesamplerate, thestarttime, thecolumns, thedata, compressed = readbidstsv(
             thefilename, debug=False
         )
     elif filetype == "plaintsv":
         thedatadict = readlabelledtsv(thefileroot)
-        thecolumns = list(thedatadict.keys())
+        if debug:
+            print("plaintsv:", list(thedatadict.keys()), thedatadict)
+        if colspec is None:
+            thecolumns = list(thedatadict.keys())
+        else:
+            thecolumns = colspec.split(",")
+        if debug:
+            print("plaintsv processing path: thecolumns=", colspec, thecolumns)
         thedatacols = []
         for thekey in thecolumns:
-            thedatacols.append(thedatadict[thekey])
+            try:
+                thedatacols.append(thedatadict[thekey])
+            except KeyError:
+                print(thefilename, "does not contain column", thekey)
+                sys.exit()
         thedata = np.array(thedatacols)
         thesamplerate = None
         thestarttime = None
@@ -1208,18 +1220,6 @@ def readvectorsfromtextfile(fullfilespec, debug=False):
         print("\tthedata.shape:", thedata.shape)
         print("\tcompressed:", compressed)
         print("\tfiletype:", filetype)
-
-    """collist = []
-    for column in (colspec.split(","):
-        if columns is None:
-            collist.append(int(column))
-        else:
-            try:
-                theindex = colnames.index(column)
-                collist.append(theindex)
-            except ValueError:
-                print("no column named", column, "in", colnames)
-                sys.exit()"""
 
     return thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype
 

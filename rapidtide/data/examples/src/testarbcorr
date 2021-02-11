@@ -46,7 +46,15 @@ def main():
     infilename1 = "timecourse1.txt"
     infilename2 = "timecourse1.txt"
 
-    for thefilespec in ["timecourse1.txt", "timecourse1.tsv", "timecourse2_physio.json"]:
+    # for thefilespec in ["timecourse1.txt", "timecourse1.tsv", "timecourse2_physio.json"]:
+    for thefilespec in [
+        "sub-100307_task-rest_acq-1LR_physio.json",
+        "sub-100307_task-rest_acq-1LR_physio.json:Cardiac",
+        "sub-100307_text.txt",
+        "sub-100307_text.txt:2",
+        "sub-100307_plaintsv.tsv",
+        "sub-100307_plaintsv.tsv:Cardiac",
+    ]:
         dummy, dummy, dummy, dummy, dummy, dummy = tide_io.readvectorsfromtextfile(
             thefilespec, debug=True
         )
