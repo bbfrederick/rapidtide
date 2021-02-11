@@ -1209,6 +1209,18 @@ def readvectorsfromtextfile(fullfilespec, debug=False):
         print("\tcompressed:", compressed)
         print("\tfiletype:", filetype)
 
+    """collist = []
+    for column in (colspec.split(","):
+        if columns is None:
+            collist.append(int(column))
+        else:
+            try:
+                theindex = colnames.index(column)
+                collist.append(theindex)
+            except ValueError:
+                print("no column named", column, "in", colnames)
+                sys.exit()"""
+
     return thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype
 
 
