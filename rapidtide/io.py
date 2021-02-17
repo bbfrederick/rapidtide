@@ -1032,13 +1032,35 @@ def writebidstsv(
     outputfileroot,
     data,
     samplerate,
-    compressed=False,
+    compressed=True,
     columns=None,
     starttime=0.0,
     append=False,
-    colsinjson=False,
+    colsinjson=True,
+    colsintsv=False,
     debug=False,
 ):
+    """
+    NB: to be strictly valid, a continuous BIDS tsv file (i.e. a "_physio" or "_stim" file) requires:
+    1) The .tsv is compressed (.tsv.gz)
+    2) "SamplingFrequency", "StartTime", "Columns" must exist and be in the .json file
+    3) The tsv file does NOT have column headers.
+    4) "_physio" or "_stim" has to be at the end of the name, although this seems a little flexible
+
+    The first 3 are the defaults, but if you really want to override them, you can.
+
+    :param outputfileroot:
+    :param data:
+    :param samplerate:
+    :param compressed:
+    :param columns:
+    :param starttime:
+    :param append:
+    :param colsinjson:
+    :param colsintsv:
+    :param debug:
+    :return:
+    """
     if debug:
         print("entering writebidstsv:")
         print("\toutputfileroot:", outputfileroot)
@@ -1096,10 +1118,10 @@ def writebidstsv(
         columns = []
         for i in range(reshapeddata.shape[0]):
             columns.append("col_" + str(i + startcol).zfill(2))
-        else:
-            if len(columns) != reshapeddata.shape[1]:
-                print("number of column names does not match number of columns in data")
-                sys.exit()
+    else:
+        if len(columns) != reshapeddata.shape[1]:
+            print("number of column names does not match number of columns in data")
+            sys.exit()
     if startcol > 0:
         df = pd.DataFrame(data=np.transpose(indata), columns=incolumns)
         for i in range(len(columns)):
@@ -1107,9 +1129,13 @@ def writebidstsv(
     else:
         df = pd.DataFrame(data=np.transpose(reshapeddata), columns=columns)
     if compressed:
-        df.to_csv(outputfileroot + ".tsv.gz", sep="\t", compression="gzip", index=False)
+        df.to_csv(
+            outputfileroot + ".tsv.gz", sep="\t", compression="gzip", header=colsintsv, index=False
+        )
     else:
-        df.to_csv(outputfileroot + ".tsv", sep="\t", compression=None, index=False)
+        df.to_csv(
+            outputfileroot + ".tsv", sep="\t", compression=None, header=colsintsv, index=False
+        )
     headerdict = {}
     headerdict["SamplingFrequency"] = samplerate
     headerdict["StartTime"] = starttime
@@ -1125,7 +1151,7 @@ def writebidstsv(
         )
 
 
-def readvectorsfromtextfile(fullfilespec, debug=False):
+def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     r"""Read one or more time series from some sort of text file
 
     Parameters
@@ -1160,6 +1186,7 @@ def readvectorsfromtextfile(fullfilespec, debug=False):
     if debug:
         print("thefileroot:", thefileroot)
         print("theext:", theext)
+        print("colspec:", colspec)
     if theext == ".json" or theext == ".tsv" or theext == ".tsv.gz":
         if os.path.exists(thefileroot + ".json") and (
             os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv")
@@ -1180,6 +1207,9 @@ def readvectorsfromtextfile(fullfilespec, debug=False):
     if filetype == "text":
         # colspec can only be None or a list of integer ranges
         thedata = readvecs(thefilename, colspec)
+        if onecol and thedata.shape[0] > 1:
+            print("specify a single column from", thefilename)
+            sys.exit()
         thesamplerate = None
         thestarttime = None
         thecolumns = None
@@ -1187,18 +1217,20 @@ def readvectorsfromtextfile(fullfilespec, debug=False):
     elif filetype == "bidscontinuous":
         # colspec can be None or a list of comma separated column names
         thesamplerate, thestarttime, thecolumns, thedata, compressed = readbidstsv(
-            thefilename, debug=False
+            thefilename, colspec=colspec, debug=False
         )
+        if onecol and thedata.shape[0] > 1:
+            print("specify a single column from", thefilename)
+            sys.exit()
     elif filetype == "plaintsv":
         thedatadict = readlabelledtsv(thefileroot)
-        if debug:
-            print("plaintsv:", list(thedatadict.keys()), thedatadict)
         if colspec is None:
             thecolumns = list(thedatadict.keys())
         else:
             thecolumns = colspec.split(",")
-        if debug:
-            print("plaintsv processing path: thecolumns=", colspec, thecolumns)
+        if onecol and len(thecolumns) > 1:
+            print("specify a single column from", thefilename)
+            sys.exit()
         thedatacols = []
         for thekey in thecolumns:
             try:
@@ -1224,13 +1256,15 @@ def readvectorsfromtextfile(fullfilespec, debug=False):
     return thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype
 
 
-def readbidstsv(inputfilename, debug=False):
+def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
     r"""Read time series out of a BIDS tsv file
 
     Parameters
     ----------
     inputfilename : str
         The root name of the tsv and accompanying json file (no extension)
+    colspec: list
+        A comma separated list of column names to return
     debug : bool
         Output additional debugging information
 
@@ -1262,37 +1296,63 @@ def readbidstsv(inputfilename, debug=False):
             except:
                 print("no samplerate found in json, setting to 1.0")
                 samplerate = 1.0
+                if warn:
+                    print(
+                        "Warning - SamplingFrequency not found in .json file.  This is not BIDS compliant."
+                    )
             try:
                 starttime = float(d["StartTime"])
             except:
                 print("no starttime found in json, setting to 0.0")
                 starttime = 0.0
+                if warn:
+                    print(
+                        "Warning - StartTime not found in .json file.  This is not BIDS compliant."
+                    )
             try:
                 columns = d["Columns"]
             except:
                 if debug:
                     print("no columns found in json, will take labels from the tsv file")
                 columns = None
+                if warn:
+                    print(
+                        "Warning - Columns not found in .json file.  This is not BIDS compliant."
+                    )
         if os.path.exists(thefileroot + ".tsv.gz"):
             df = pd.read_csv(
                 thefileroot + ".tsv.gz",
                 compression="gzip",
-                header=None,
                 names=columns,
+                header=None,
                 sep="\t",
                 quotechar='"',
             )
             compressed = True
         else:
+            if warn:
+                print("Warning - tsv file is uncompressed.  This is not BIDS compliant.")
             df = pd.read_csv(
                 thefileroot + ".tsv",
                 compression=None,
-                header=None,
                 names=columns,
+                header=None,
                 sep="\t",
                 quotechar='"',
             )
             compressed = False
+
+        # check for header line
+        if any(df.iloc[0].apply(lambda x: isinstance(x, str))):
+            headerlinefound = True
+            df = df[1:].reset_index(drop=True)
+            if warn:
+                print(
+                    "Warning - Column header line found in .tsv file.  This is not BIDS compliant."
+                )
+        else:
+            headerlinefound = False
+
         if columns is None:
             columns = list(df.columns.values)
         if debug:
@@ -1302,8 +1362,28 @@ def readbidstsv(inputfilename, debug=False):
                 columns,
                 np.transpose(df.to_numpy()).shape,
                 compressed,
+                warn,
+                headerlinefound,
             )
-        return samplerate, starttime, columns, np.transpose(df.to_numpy()), compressed
+
+        # select a subset of columns if they were specified
+        if colspec is None:
+            return samplerate, starttime, columns, np.transpose(df.to_numpy()), compressed
+        else:
+            collist = colspec.split(",")
+            try:
+                selectedcols = df[collist]
+            except KeyError:
+                print("specified column list cannot be found in", inputfilename)
+                return [None, None, None, None, None]
+            columns = list(selectedcols.columns.values)
+            return (
+                samplerate,
+                starttime,
+                columns,
+                np.transpose(selectedcols.to_numpy()),
+                compressed,
+            )
     else:
         print("file pair does not exist")
         return [None, None, None, None, None]
