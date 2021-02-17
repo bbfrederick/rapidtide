@@ -4,25 +4,43 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy \
-    --aliasedcorrelation \
+    ../dst/happy_bidsjsoncard \
+    --cardiacfile happystdres_bids.json:normcardiac_25.0Hz \
     --mklthreads 8 \
     --model model_revised \
-    --outputbins 40 \
-    --gridbins 3.5 \
-    --stdfreq 20.0 \
-    --minhr 46 \
-    --maxhr 131.2 \
-    --minhrfilt 45.5 \
-    --maxhrfilt 800.0 \
-    --envcutoff 0.45 \
-    --notchwidth 1.25 \
-    --cardiacfreq 20.0 \
-    --cardiacstart 0.0 \
-    --aliasedcorrelation \
-    --increaseoutputlevel \
-    --increaseoutputlevel \
-    --decreaseoutputlevel \
+    --debug \
+    --saveinfoastext
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happy_bidstsvcard \
+    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
+    --mklthreads 8 \
+    --model model_revised \
+    --debug \
+    --saveinfoastext
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happy_plaintsvcard \
+    --cardiacfile happystdres_physio.tsv:normcardiac_25.0Hz \
+    --cardiacfreq 25.0 \
+    --mklthreads 8 \
+    --model model_revised \
+    --debug \
+    --saveinfoastext
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happy_textcard \
+    --cardiacfile happystdres_text.txt:1 \
+    --cardiacfreq 25.0 \
+    --mklthreads 8 \
+    --model model_revised \
+    --debug \
     --saveinfoastext
 
 
