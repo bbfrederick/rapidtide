@@ -24,6 +24,7 @@ from __future__ import print_function, division
 import sys
 import subprocess
 import getopt
+import numpy as np
 import rapidtide.io as tide_io
 
 
@@ -37,9 +38,7 @@ def usage():
     print("optional arguments:")
     print("    --3d            - return a 3d file with regions encoded as integers")
     print("    --4d            - return a 4d file with one region per volume")
-    print(
-        "    --split         - split regions along the midline into left and right subregions"
-    )
+    print("    --split         - split regions along the midline into left and right subregions")
     print("    --target=TARGET - match resolution of TARGET")
     print("")
     return ()
@@ -57,9 +56,7 @@ def main():
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(
-            sys.argv[3:], "h", ["3d", "4d", "split", "target=", "help"]
-        )
+        opts, args = getopt.getopt(sys.argv[3:], "h", ["3d", "4d", "split", "target=", "help"])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like "option -x not recognized"
@@ -108,27 +105,23 @@ def main():
     if numtimepoints > 1:
         # array is already 4d, just reshape it
         numregions = numtimepoints
-        templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints)).astype(
-            int
-        )
+        templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints)).astype(int)
     else:
         # file is 3d, construct a 4d array
         print("going from 3d to 4d")
         numregions = np.max(template_data).astype(int)
         rs_template = np.reshape(template_data, numvoxels).astype(int)
-        templatevoxels = np.zeros((numvoxels, numregions), dtype(int))
+        templatevoxels = np.zeros((numvoxels, numregions), dtype=np.uint16)
         for theregion in range(1, numregions + 1):
             templatevoxels[:, theregion - 1] = np.where(rs_template == theregion, 1, 0)
 
     # now we have a 4d file, regardless of what we started with
     if dosplit:
         print("splitting left right")
-        tempvoxels = np.reshape(
-            templatevoxels, (xsize, ysize, numslices, numregions)
-        ).astype(int)
+        tempvoxels = np.reshape(templatevoxels, (xsize, ysize, numslices, numregions)).astype(int)
         tempvoxels[int(xsize // 2) + 1 :, :, :, :] *= 2
         templatevoxels = np.reshape(tempvoxels, (numvoxels, numregions))
-        newtemplatevoxels = np.zeros((numvoxels, numregions * 2), dtype="int")
+        newtemplatevoxels = np.zeros((numvoxels, numregions * 2), dtype=np.uint16)
         for theregion in range(1, numregions + 1):
             newtemplatevoxels[:, theregion - 1] = np.where(
                 templatevoxels[:, theregion - 1] == 1, 1, 0
@@ -177,9 +170,9 @@ def main():
             numslices = templatedims[3]
             numregions = templatedims[4]
             numvoxels = int(xsize) * int(ysize) * int(numslices)
-            templatevoxels = np.around(
-                np.reshape(template_data, (numvoxels, numregions))
-            ).astype("int")
+            templatevoxels = np.around(np.reshape(template_data, (numvoxels, numregions))).astype(
+                "int"
+            )
         else:
             print("FSL directory not found - aborting")
             sys.exit()
