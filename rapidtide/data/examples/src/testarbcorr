@@ -48,15 +48,18 @@ def main():
 
     # for thefilespec in ["timecourse1.txt", "timecourse1.tsv", "timecourse2_physio.json"]:
     for thefilespec in [
-        "sub-100307_task-rest_acq-1LR_physio.json",
         "sub-100307_task-rest_acq-1LR_physio.json:Cardiac",
-        "sub-100307_text.txt",
         "sub-100307_text.txt:2",
-        "sub-100307_plaintsv.tsv",
+        "timecourse1.tsv",
+        "timecourse1.tsv:values",
         "sub-100307_plaintsv.tsv:Cardiac",
+        "sub-100307_task-rest_acq-1LR_physio.json",
+        "sub-100307_text.txt",
+        "sub-100307_plaintsv.tsv",
     ]:
+        print()
         dummy, dummy, dummy, dummy, dummy, dummy = tide_io.readvectorsfromtextfile(
-            thefilespec, debug=True
+            thefilespec, onecol=True, debug=True
         )
 
     Fs1, starttime1, dummy, input1, dummy, dummy = tide_io.readvectorsfromtextfile(infilename1)
@@ -68,7 +71,7 @@ def main():
         input1[0, :], Fs1, input2[0, :], Fs2, start2=10.0, windowfunc="hamming"
     )
     plt.plot(thex, they)
-    plt.show()
+    #plt.show()
 
 
 if __name__ == "__main__":
