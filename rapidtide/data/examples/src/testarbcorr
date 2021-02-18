@@ -71,7 +71,7 @@ def main():
         input1[0, :], Fs1, input2[0, :], Fs2, start2=10.0, windowfunc="hamming"
     )
     plt.plot(thex, they)
-    #plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
