@@ -532,9 +532,8 @@ def makeandsavehistogram(
     if saveasbids:
         tide_io.writebidstsv(
             outname,
-            thestore[1, :],
+            np.transpose(thestore[1, :]),
             1.0 / (thestore[0, 1] - thestore[0, 0]),
-            compressed=False,
             starttime=thestore[0, 0],
             columns=[varroot],
             append=append,
