@@ -1,6 +1,6 @@
 {
     "SamplingFrequency":25.0,
-    "StartTime":0.0
+    "StartTime":0.0,
     "Columns": [
         "cardiacfromfmri_25.0Hz",
         "normcardiac_25.0Hz",
