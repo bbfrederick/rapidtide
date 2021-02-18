@@ -188,9 +188,7 @@ def ssmooth(xsize, ysize, zsize, sigma, inputdata):
         The filtered spatial data
 
     """
-    return ndimage.gaussian_filter(
-        inputdata, [sigma / xsize, sigma / ysize, sigma / zsize]
-    )
+    return ndimage.gaussian_filter(inputdata, [sigma / xsize, sigma / ysize, sigma / zsize])
 
 
 # - butterworth filters
@@ -310,9 +308,7 @@ def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, cyclic=False, debug
 
 
 @conditionaljit()
-def dobpfiltfilt(
-    Fs, lowerpass, upperpass, inputdata, order, padlen=20, cyclic=False, debug=False
-):
+def dobpfiltfilt(Fs, lowerpass, upperpass, inputdata, order, padlen=20, cyclic=False, debug=False):
     r"""Performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
@@ -368,9 +364,7 @@ def dobpfiltfilt(
             len(inputdata),
             order,
         )
-    [b, a] = signal.butter(
-        order, [2.0 * lowerpass / Fs, 2.0 * upperpass / Fs], "bandpass"
-    )
+    [b, a] = signal.butter(order, [2.0 * lowerpass / Fs, 2.0 * upperpass / Fs], "bandpass")
     return unpadvec(
         signal.filtfilt(b, a, padvec(inputdata, padlen=padlen, cyclic=cyclic)).real,
         padlen=padlen,
@@ -527,9 +521,7 @@ def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, cyclic=False, debug=False):
 
 
 @conditionaljit()
-def dobpfftfilt(
-    Fs, lowerpass, upperpass, inputdata, padlen=20, cyclic=False, debug=False
-):
+def dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT brickwall bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
@@ -632,9 +624,7 @@ def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
 
 
 @conditionaljit()
-def getlptransfunc(
-    Fs, inputdata, upperpass=None, upperstop=None, type="brickwall", debug=False
-):
+def getlptransfunc(Fs, inputdata, upperpass=None, upperstop=None, type="brickwall", debug=False):
     if upperpass is None:
         print("getlptransfunc: upperpass must be specified")
         sys.exit()
@@ -646,18 +636,13 @@ def getlptransfunc(
         print("\tupperstop:", upperstop)
         print("\ttype:", type)
     freqaxis = (
-        np.linspace(
-            0.0, 1.0, num=np.shape(inputdata)[0], endpoint=False, dtype="float64"
-        )
-        / Fs
+        np.linspace(0.0, 1.0, num=np.shape(inputdata)[0], endpoint=False, dtype="float64") / Fs
     )
     if type == "gaussian":
         halfloc = int(np.shape(inputdata)[0] // 2)
         sigma = upperpass / 2.35482
         transferfunc = np.zeros(np.shape(inputdata), dtype="float64")
-        transferfunc[0:halfloc] = np.exp(
-            -((freqaxis[0:halfloc]) ** 2) / (2.0 * sigma * sigma)
-        )
+        transferfunc[0:halfloc] = np.exp(-((freqaxis[0:halfloc]) ** 2) / (2.0 * sigma * sigma))
         transferfunc[halfloc + 1 :] = np.exp(
             -((freqaxis[halfloc + 1 :] - 1.0 / Fs) ** 2) / (2.0 * sigma * sigma)
         )
@@ -669,9 +654,7 @@ def getlptransfunc(
         cutoffbin = int((upperstop / Fs) * np.shape(transferfunc)[0])
         transitionlength = cutoffbin - passbin
         if debug:
-            print(
-                "getlptrapfftfunc - Fs, upperpass, upperstop:", Fs, upperpass, upperstop
-            )
+            print("getlptrapfftfunc - Fs, upperpass, upperstop:", Fs, upperpass, upperstop)
             print(
                 "getlptrapfftfunc - passbin, transitionlength, cutoffbin, len(inputdata):",
                 passbin,
@@ -705,9 +688,7 @@ def getlptransfunc(
     return transferfunc
 
 
-def gethptransfunc(
-    Fs, inputdata, lowerstop=None, lowerpass=None, type="brickwall", debug=False
-):
+def gethptransfunc(Fs, inputdata, lowerstop=None, lowerpass=None, type="brickwall", debug=False):
     if lowerpass is None:
         print("gethptransfunc: lowerpass must be specified")
         sys.exit()
@@ -779,16 +760,12 @@ def dolptransfuncfilt(
     )
     if debug:
         freqaxis = (
-            np.linspace(
-                0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype="float64"
-            )
+            np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype="float64")
             / Fs
         )
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_title(
-            "LP Transfer function - " + type + ", upperpass={:.2f}".format(upperpass)
-        )
+        ax.set_title("LP Transfer function - " + type + ", upperpass={:.2f}".format(upperpass))
         plt.plot(freqaxis, transferfunc)
         plt.show()
     inputdata_trans *= transferfunc
@@ -853,16 +830,12 @@ def dohptransfuncfilt(
     )
     if debug:
         freqaxis = (
-            np.linspace(
-                0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype="float64"
-            )
+            np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype="float64")
             / Fs
         )
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_title(
-            "HP Transfer function - " + type + ", lowerpass={:.2f}".format(lowerpass)
-        )
+        ax.set_title("HP Transfer function - " + type + ", lowerpass={:.2f}".format(lowerpass))
         plt.plot(freqaxis, transferfunc)
         plt.show()
     inputdata_trans *= 1.0 - transferfunc
@@ -924,21 +897,20 @@ def dobptransfuncfilt(
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = getlptransfunc(
-        Fs,
-        padinputdata,
-        upperpass=upperpass,
-        upperstop=upperstop,
-        type=type,
-        debug=False,
-    ) * gethptransfunc(
-        Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type
+    transferfunc = (
+        getlptransfunc(
+            Fs,
+            padinputdata,
+            upperpass=upperpass,
+            upperstop=upperstop,
+            type=type,
+            debug=False,
+        )
+        * gethptransfunc(Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type)
     )
     if debug:
         freqaxis = (
-            np.linspace(
-                0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype="float64"
-            )
+            np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype="float64")
             / Fs
         )
         fig = plt.figure()
@@ -955,9 +927,7 @@ def dobptransfuncfilt(
 
 
 @conditionaljit()
-def dolptrapfftfilt(
-    Fs, upperpass, upperstop, inputdata, padlen=20, cyclic=False, debug=False
-):
+def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT filter with a trapezoidal lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
@@ -1004,9 +974,7 @@ def dolptrapfftfilt(
 
 
 @conditionaljit()
-def dohptrapfftfilt(
-    Fs, lowerstop, lowerpass, inputdata, padlen=20, cyclic=False, debug=False
-):
+def dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
@@ -1047,9 +1015,7 @@ def dohptrapfftfilt(
     """
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = 1.0 - getlptrapfftfunc(
-        Fs, lowerstop, lowerpass, padinputdata, debug=debug
-    )
+    transferfunc = 1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)
     inputdata_trans *= transferfunc
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
@@ -1127,9 +1093,9 @@ def dobptrapfftfilt(
             " Fstopu=",
             upperstop,
         )
-    transferfunc = getlptrapfftfunc(
-        Fs, upperpass, upperstop, padinputdata, debug=debug
-    ) * (1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug))
+    transferfunc = getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug) * (
+        1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)
+    )
     inputdata_trans *= transferfunc
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
@@ -1145,11 +1111,7 @@ def wiener_deconvolution(signal, kernel, lambd):
     )  # zero pad the kernel to same length
     H = fftpack.fft(kernel)
     deconvolved = np.roll(
-        np.real(
-            fftpack.ifft(
-                fftpack.fft(signal) * np.conj(H) / (H * np.conj(H) + lambd ** 2)
-            )
-        ),
+        np.real(fftpack.ifft(fftpack.fft(signal) * np.conj(H) / (H * np.conj(H) + lambd ** 2))),
         int(len(signal) // 2),
     )
     return deconvolved
@@ -1282,7 +1244,6 @@ def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False)
 
     """
     # delete the fundamental and its harmonics
-    print("notch filtering...")
     filteredtc = timecourse + 0.0
     maxpass = Fs / 2.0
     if notchpct is not None:
@@ -1290,9 +1251,7 @@ def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False)
         freqstep = 0.5 * Fs / len(filteredtc)
         maxharmonic = int(maxpass // stopfreq)
         if debug:
-            print(
-                "highest harmonic is", maxharmonic, "(", maxharmonic * stopfreq, "Hz)"
-            )
+            print("highest harmonic is", maxharmonic, "(", maxharmonic * stopfreq, "Hz)")
         thenotchfilter = noncausalfilter()
         for harmonic in range(1, maxharmonic + 1):
             notchfreq = harmonic * stopfreq
@@ -1343,9 +1302,7 @@ def csdfilter(obsdata, commondata, padlen=20, cyclic=False, debug=False):
     padobsdata = padvec(obsdata, padlen=padlen, cyclic=cyclic)
     padcommondata = padvec(commondata, padlen=padlen, cyclic=cyclic)
     obsdata_trans = fftpack.fft(padobsdata)
-    transferfunc = np.sqrt(
-        np.abs(fftpack.fft(padobsdata) * np.conj(fftpack.fft(padcommondata)))
-    )
+    transferfunc = np.sqrt(np.abs(fftpack.fft(padobsdata) * np.conj(fftpack.fft(padcommondata))))
     obsdata_trans *= transferfunc
     return unpadvec(fftpack.ifft(obsdata_trans).real, padlen=padlen)
 
@@ -1516,9 +1473,7 @@ class plethfilter:
         self.a = retvec[1]
 
     def apply(self, data):
-        return signal.filtfilt(
-            self.b, self.a, data, axis=-1, padtype="odd", padlen=None
-        )
+        return signal.filtfilt(self.b, self.a, data, axis=-1, padtype="odd", padlen=None)
 
 
 class noncausalfilter:
@@ -1974,10 +1929,7 @@ def blackmanharris(length, debug=False):
         a2 = 0.14128
         a3 = 0.01168
         BHwindows[str(length)] = (
-            a0
-            - a1 * np.cos(argvec)
-            + a2 * np.cos(2.0 * argvec)
-            - a3 * np.cos(3.0 * argvec)
+            a0 - a1 * np.cos(argvec) + a2 * np.cos(2.0 * argvec) - a3 * np.cos(3.0 * argvec)
         )
         if debug:
             print("initialized Blackman-Harris window for length", length)
