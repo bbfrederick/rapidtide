@@ -8,7 +8,6 @@ happy \
     --cardiacfile happystdres_bids.json:normcardiac_25.0Hz \
     --mklthreads 8 \
     --model model_revised \
-    --debug \
     --saveinfoastext
 
 happy \
@@ -18,7 +17,6 @@ happy \
     --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
     --mklthreads 8 \
     --model model_revised \
-    --debug \
     --saveinfoastext
 
 happy \
@@ -29,7 +27,6 @@ happy \
     --cardiacfreq 25.0 \
     --mklthreads 8 \
     --model model_revised \
-    --debug \
     --saveinfoastext
 
 happy \
@@ -40,7 +37,6 @@ happy \
     --cardiacfreq 25.0 \
     --mklthreads 8 \
     --model model_revised \
-    --debug \
     --saveinfoastext
 
 
