@@ -158,9 +158,7 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
         thestore[1, 0] = zeroterm
 
     # generate the johnsonsb function
-    johnsonsbvals = johnsonsb.pdf(
-        thestore[0, :], params[0], params[1], params[2], params[3]
-    )
+    johnsonsbvals = johnsonsb.pdf(thestore[0, :], params[0], params[1], params[2], params[3])
     corrfac = (1.0 - zeroterm) / (1.0 * histlen)
     johnsonsbvals *= corrfac
     johnsonsbvals[0] = zeroterm
@@ -169,9 +167,7 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title("fitjsbpdf: histogram")
-        plt.plot(
-            thestore[0, :], thestore[1, :], "b", thestore[0, :], johnsonsbvals, "r"
-        )
+        plt.plot(thestore[0, :], thestore[1, :], "b", thestore[0, :], johnsonsbvals, "r")
         plt.legend(["histogram", "fit to johnsonsb"])
         plt.show()
     return np.append(params, np.array([zeroterm]))
@@ -349,9 +345,7 @@ def kurtosisstats(timecourse):
 
 
 # --------------------------- histogram functions -------------------------------------------------
-def gethistprops(
-    indata, histlen, refine=False, therange=None, pickleft=False, peakthresh=0.33
-):
+def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False, peakthresh=0.33):
     """
 
     Parameters
@@ -467,9 +461,7 @@ def echoloc(indata, histlen, startoffset=5.0):
     startpt = np.argmax(thestore[1, :]) + int(startoffset // timestep)
     print("primary peak:", peakheight, peakloc, peakwidth)
     print("startpt, startloc, timestep:", startpt, thestore[1, startpt], timestep)
-    while (thestore[1, startpt] > thestore[1, startpt + 1]) and (
-        startpt < len(thehist[0]) - 2
-    ):
+    while (thestore[1, startpt] > thestore[1, startpt + 1]) and (startpt < len(thehist[0]) - 2):
         startpt += 1
     echopeakindex = np.argmax(thestore[1, startpt:-2]) + startpt
     echopeakloc = thestore[0, echopeakindex + 1]
@@ -479,15 +471,11 @@ def echoloc(indata, histlen, startoffset=5.0):
         thestore[1, echopeakindex + numbins] > echopeakheight / 2.0
     ):
         numbins += 1
-    echopeakwidth = (
-        thestore[0, echopeakindex + numbins] - thestore[0, echopeakindex]
-    ) * 2.0
+    echopeakwidth = (thestore[0, echopeakindex + numbins] - thestore[0, echopeakindex]) * 2.0
     echopeakheight, echopeakloc, echopeakwidth = tide_fit.gaussfit(
         echopeakheight, echopeakloc, echopeakwidth, thestore[0, :], thestore[1, :]
     )
-    return echopeakloc - peakloc, (echopeakheight * echopeakwidth) / (
-        peakheight * peakwidth
-    )
+    return echopeakloc - peakloc, (echopeakheight * echopeakwidth) / (peakheight * peakwidth)
 
 
 def makeandsavehistogram(
@@ -504,6 +492,7 @@ def makeandsavehistogram(
     thedict=None,
     saveasbids=False,
     append=False,
+    debug=False,
 ):
     """
 
@@ -549,6 +538,7 @@ def makeandsavehistogram(
             starttime=thestore[0, 0],
             columns=[varroot],
             append=append,
+            debug=debug,
         )
     else:
         tide_io.writenpvecs(thestore, outname + ".txt")
@@ -777,9 +767,7 @@ def makemask(image, threshpct=25.0, verbose=False, nozero=False, noneg=False):
             np.where(image >= 0.0, image, 0.0), [0.02, 0.98, threshpct], nozero=nozero
         )
     else:
-        pct2, pct98, pctthresh = getfracvals(
-            image, [0.02, 0.98, threshpct], nozero=nozero
-        )
+        pct2, pct98, pctthresh = getfracvals(image, [0.02, 0.98, threshpct], nozero=nozero)
     threshval = pct2 + (threshpct / 100.0) * (pct98 - pct2)
     print("old style threshval:", threshval, "new style threshval:", pctthresh)
     if verbose:
