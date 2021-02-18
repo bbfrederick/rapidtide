@@ -585,8 +585,6 @@ def process_args(inputargs=None):
             _get_parser().print_help()
             raise
 
-    print("this is the new, improved version of the happy parser!!!")
-
     # save the raw and formatted command lines
     thecommandline = " ".join(argstowrite)
     tide_io.writevec([thecommandline], args.outputroot + "_commandline.txt")
