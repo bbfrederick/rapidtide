@@ -1307,7 +1307,9 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 samplerate = 1.0
                 if warn:
                     print(
-                        "Warning - SamplingFrequency not found in .json file.  This is not BIDS compliant."
+                        "Warning - SamplingFrequency not found in "
+                        + thefileroot
+                        + ".json.  This is not BIDS compliant."
                     )
             try:
                 starttime = float(d["StartTime"])
@@ -1316,7 +1318,9 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 starttime = 0.0
                 if warn:
                     print(
-                        "Warning - StartTime not found in .json file.  This is not BIDS compliant."
+                        "Warning - StartTime not found in "
+                        + thefileroot
+                        + ".json.  This is not BIDS compliant."
                     )
             try:
                 columns = d["Columns"]
@@ -1326,7 +1330,9 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 columns = None
                 if warn:
                     print(
-                        "Warning - Columns not found in .json file.  This is not BIDS compliant."
+                        "Warning - Columns not found in "
+                        + thefileroot
+                        + ".json.  This is not BIDS compliant."
                     )
         if os.path.exists(thefileroot + ".tsv.gz"):
             df = pd.read_csv(
@@ -1340,7 +1346,11 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
             compressed = True
         else:
             if warn:
-                print("Warning - tsv file is uncompressed.  This is not BIDS compliant.")
+                print(
+                    "Warning - "
+                    + thefileroot
+                    + ".tsv is uncompressed.  This is not BIDS compliant."
+                )
             df = pd.read_csv(
                 thefileroot + ".tsv",
                 compression=None,
@@ -1357,7 +1367,9 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
             df = df[1:].reset_index(drop=True)
             if warn:
                 print(
-                    "Warning - Column header line found in .tsv file.  This is not BIDS compliant."
+                    "Warning - Column header line found in "
+                    + thefileroot
+                    + ".tsv.  This is not BIDS compliant."
                 )
         else:
             headerlinefound = False
