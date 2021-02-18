@@ -1120,7 +1120,13 @@ def writebidstsv(
             columns.append("col_" + str(i + startcol).zfill(2))
     else:
         if len(columns) != reshapeddata.shape[1]:
-            print("number of column names does not match number of columns in data")
+            print(
+                "number of column names (",
+                len(columns),
+                ") does not match number of columns (",
+                reshapeddata.shape[1],
+                ") in data",
+            )
             sys.exit()
     if startcol > 0:
         df = pd.DataFrame(data=np.transpose(indata), columns=incolumns)
@@ -1192,10 +1198,11 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
             os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv")
         ):
             # now see if it is a physio or stim file
-            if thefileroot[-5::] == "_stim" or thefileroot[-7:] == "_physio":
+            """if thefileroot[-5::] == "_stim" or thefileroot[-7:] == "_physio":
                 filetype = "bidscontinuous"
             else:
-                filetype = "plaintsv"
+                filetype = "plaintsv"""
+            filetype = "bidscontinuous"
         elif os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv"):
             filetype = "plaintsv"
     else:
@@ -1252,6 +1259,10 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         print("\tthedata.shape:", thedata.shape)
         print("\tcompressed:", compressed)
         print("\tfiletype:", filetype)
+
+    # special case for single column return
+    if onecol:
+        thedata = thedata[0, :]
 
     return thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype
 
