@@ -1072,6 +1072,8 @@ def writebidstsv(
         print("\tappend:", append)
     if len(data.shape) == 1:
         reshapeddata = data.reshape((1, -1))
+        if debug:
+            print("input data reshaped from", data.shape, "to", reshapeddata.shape)
     else:
         reshapeddata = data
     if append:
@@ -1119,7 +1121,7 @@ def writebidstsv(
         for i in range(reshapeddata.shape[0]):
             columns.append("col_" + str(i + startcol).zfill(2))
     else:
-        if len(columns) != reshapeddata.shape[1]:
+        if len(columns) != reshapeddata.shape[0]:
             print(
                 "number of column names (",
                 len(columns),
@@ -1259,10 +1261,6 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         print("\tthedata.shape:", thedata.shape)
         print("\tcompressed:", compressed)
         print("\tfiletype:", filetype)
-
-    # special case for single column return
-    if onecol:
-        thedata = thedata[0, :]
 
     return thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype
 
