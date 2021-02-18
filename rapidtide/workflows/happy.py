@@ -604,34 +604,35 @@ def getphysiofile(
     infodict["cardiacfromfmri"] = False
 
     # check file type
-    """filebase, extension = os.path.splitext(cardiacfile)
-    if debug:
-        print("filebase:", filebase)
-        print("extension:", extension)"""
     filefreq, filestart, dummy, pleth_fullres, dummy, dummy = tide_io.readvectorsfromtextfile(
         cardiacfile, onecol=True, debug=debug
     )
-    if inputfreq == "auto":
+    if inputfreq < 0.0:
         if filefreq is not None:
             inputfreq = filefreq
+        else:
+            inputfreq = -inputfreq
+
+    if inputstart is None:
+        if filestart is not None:
+            inputstart = filestart
+        else:
+            inputstart = 0.0
     print("filefreq, filestart, inputfreq, inputstart", filefreq, filestart, inputfreq, inputstart)
 
-    """if extension == ".json":
-        inputfreq, inputstart, pleth_fullres = tide_io.readcolfrombidstsv(
-            cardiacfile, columnname=colname, columnnum=colnum, debug=debug
-        )
-    else:
-        pleth_fullres = np.transpose(tide_io.readvecs(cardiacfile))
-        print(pleth_fullres.shape)
-        if len(pleth_fullres.shape) != 1:
-            pleth_fullres = pleth_fullres[:, colnum].flatten()"""
     if debug:
         print("inputfreq:", inputfreq)
         print("inputstart:", inputstart)
         print("pleth_fullres:", pleth_fullres)
+        print("pleth_fullres.shape:", pleth_fullres.shape)
     inputtimeaxis = (
-        sp.arange(0.0, (1.0 / inputfreq) * len(pleth_fullres), 1.0 / inputfreq) + inputstart
+        np.linspace(
+            0.0, (1.0 / inputfreq) * len(pleth_fullres), num=len(pleth_fullres), endpoint=False
+        )
+        + inputstart
     )
+    if debug:
+        print(inputtimeaxis)
     if (inputtimeaxis[0] > slop) or (inputtimeaxis[-1] < slicetimeaxis[-1] - slop):
         print("getphysiofile: error - plethysmogram waveform does not cover the fmri time range")
         print("\tinputtimeaxis[0]:", inputtimeaxis[0])
@@ -2308,6 +2309,7 @@ def happy_main(argparsingfunc):
                 0,
                 outputroot + namesuffix,
                 saveasbids=args.bidsoutput,
+                debug=args.debug,
             )
 
         # find vessel threshholds

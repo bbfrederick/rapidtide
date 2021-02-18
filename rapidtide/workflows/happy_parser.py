@@ -304,7 +304,7 @@ def _get_parser():
             "(default is 32Hz). NB: --cardiacfreq and --cardiactstep "
             "are two ways to specify the same thing. "
         ),
-        default="auto",
+        default=-32.0,
     )
     cardiac_freq.add_argument(
         "--cardiactstep",
@@ -317,7 +317,7 @@ def _get_parser():
             "(default is 1/32 sec). NB: --cardiacfreq and --cardiactstep "
             "are two ways to specify the same thing. "
         ),
-        default="auto",
+        default=-32.0,
     )
     external_cardiac_opts.add_argument(
         "--cardiacstart",
@@ -329,7 +329,7 @@ def _get_parser():
             "The time delay in seconds into the cardiac file, corresponding "
             "to the first TR of the fMRI file (default is 0.0) "
         ),
-        default=1.0,
+        default=None,
     )
     external_cardiac_opts.add_argument(
         "--stdfreq",
@@ -584,6 +584,8 @@ def process_args(inputargs=None):
         except SystemExit:
             _get_parser().print_help()
             raise
+
+    print("this is the new, improved version of the happy parser!!!")
 
     # save the raw and formatted command lines
     thecommandline = " ".join(argstowrite)
