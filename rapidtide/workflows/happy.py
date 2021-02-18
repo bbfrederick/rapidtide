@@ -585,8 +585,6 @@ def calcplethquality(
 
 def getphysiofile(
     cardiacfile,
-    colnum,
-    colname,
     inputfreq,
     inputstart,
     slicetimeaxis,
@@ -606,11 +604,19 @@ def getphysiofile(
     infodict["cardiacfromfmri"] = False
 
     # check file type
-    filebase, extension = os.path.splitext(cardiacfile)
+    """filebase, extension = os.path.splitext(cardiacfile)
     if debug:
         print("filebase:", filebase)
-        print("extension:", extension)
-    if extension == ".json":
+        print("extension:", extension)"""
+    filefreq, filestart, dummy, pleth_fullres, dummy, dummy = tide_io.readvectorsfromtextfile(
+        cardiacfile, onecol=True, debug=debug
+    )
+    if inputfreq == "auto":
+        if filefreq is not None:
+            inputfreq = filefreq
+    print("filefreq, filestart, inputfreq, inputstart", filefreq, filestart, inputfreq, inputstart)
+
+    """if extension == ".json":
         inputfreq, inputstart, pleth_fullres = tide_io.readcolfrombidstsv(
             cardiacfile, columnname=colname, columnnum=colnum, debug=debug
         )
@@ -618,7 +624,7 @@ def getphysiofile(
         pleth_fullres = np.transpose(tide_io.readvecs(cardiacfile))
         print(pleth_fullres.shape)
         if len(pleth_fullres.shape) != 1:
-            pleth_fullres = pleth_fullres[:, colnum].flatten()
+            pleth_fullres = pleth_fullres[:, colnum].flatten()"""
     if debug:
         print("inputfreq:", inputfreq)
         print("inputstart:", inputstart)
@@ -1521,8 +1527,6 @@ def happy_main(argparsingfunc):
             tide_util.logmem("before cardiacfromfile", file=memfile)
             pleth_sliceres, pleth_stdres = getphysiofile(
                 args.cardiacfilename,
-                args.colnum,
-                args.colname,
                 args.inputfreq,
                 args.inputstart,
                 slicetimeaxis,
