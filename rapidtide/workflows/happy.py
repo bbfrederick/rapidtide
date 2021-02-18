@@ -621,7 +621,6 @@ def getphysiofile(
             inputstart = filestart
         else:
             inputstart = 0.0
-    print("filefreq, filestart, inputfreq, inputstart", filefreq, filestart, inputfreq, inputstart)
 
     if debug:
         print("inputfreq:", inputfreq)
