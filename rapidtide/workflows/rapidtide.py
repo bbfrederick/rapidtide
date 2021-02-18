@@ -235,7 +235,6 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
         outputname + "_desc-echocancellation_timeseries",
         thetimecourse,
         1.0 / thetimestep,
-        compressed=False,
         columns=["original"],
         append=False,
     )
@@ -249,7 +248,6 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
         outputname + "_desc-echocancellation_timeseries",
         echotc,
         1.0 / thetimestep,
-        compressed=False,
         columns=["echo"],
         append=True,
     )
@@ -257,7 +255,6 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
         outputname + "_desc-echocancellation_timeseries",
         outputtimecourse,
         1.0 / thetimestep,
-        compressed=False,
         columns=["filtered"],
         append=True,
     )
@@ -752,7 +749,6 @@ def rapidtide_main(argparsingfunc):
                 outputname + "_desc-orthogonalizedmotion_timeseries",
                 motionregressors,
                 1.0 / fmritr,
-                compressed=False,
                 columns=motionregressorlabels,
                 append=True,
             )
@@ -941,7 +937,6 @@ def rapidtide_main(argparsingfunc):
             outputname + "_desc-initialmovingregressor_timeseries",
             reference_y,
             inputfreq,
-            compressed=False,
             starttime=inputstarttime,
             columns=["prefilt"],
             append=False,
@@ -966,7 +961,6 @@ def rapidtide_main(argparsingfunc):
             outputname + "_desc-initialmovingregressor_timeseries",
             tide_math.stdnormalize(reference_y),
             inputfreq,
-            compressed=False,
             starttime=inputstarttime,
             columns=["postfilt"],
             append=True,
@@ -1080,7 +1074,6 @@ def rapidtide_main(argparsingfunc):
                 outputname + "_desc-movingregressor_timeseries",
                 tide_math.stdnormalize(resampnonosref_y),
                 1.0 / fmritr,
-                compressed=False,
                 columns=["pass1"],
                 append=False,
             )
@@ -1088,7 +1081,6 @@ def rapidtide_main(argparsingfunc):
                 outputname + "_desc-oversampledmovingregressor_timeseries",
                 tide_math.stdnormalize(resampref_y),
                 oversampfreq,
-                compressed=False,
                 columns=["pass1"],
                 append=False,
             )
@@ -1442,7 +1434,6 @@ def rapidtide_main(argparsingfunc):
                     outputname + "_desc-autocorr_timeseries",
                     thexcorr,
                     1.0 / (accheckcorrscale[1] - accheckcorrscale[0]),
-                    compressed=False,
                     starttime=accheckcorrscale[0],
                     columns=["pass" + str(thepass)],
                     append=(thepass > 1),
@@ -1658,7 +1649,6 @@ def rapidtide_main(argparsingfunc):
                     outputname + "_desc-corrdistdata_info",
                     corrdistdata,
                     1.0,
-                    compressed=False,
                     columns=["pass" + str(thepass)],
                     append=(thepass > 1),
                 )
@@ -2141,7 +2131,6 @@ def rapidtide_main(argparsingfunc):
                     outputname + "_desc-refinedmovingregressor_timeseries",
                     normunfilteredoutputdata,
                     1.0 / fmritr,
-                    compressed=False,
                     columns=["unfiltered_pass" + str(thepass)],
                     append=(thepass > 1),
                 )
@@ -2149,7 +2138,6 @@ def rapidtide_main(argparsingfunc):
                     outputname + "_desc-refinedmovingregressor_timeseries",
                     normoutputdata,
                     1.0 / fmritr,
-                    compressed=False,
                     columns=["filtered_pass" + str(thepass)],
                     append=True,
                 )
@@ -2245,7 +2233,6 @@ def rapidtide_main(argparsingfunc):
                         outputname + "_desc-movingregressor_timeseries",
                         tide_math.stdnormalize(resampnonosref_y),
                         1.0 / fmritr,
-                        compressed=False,
                         columns=["pass" + str(thepass + 1)],
                         append=True,
                     )
@@ -2253,7 +2240,6 @@ def rapidtide_main(argparsingfunc):
                         outputname + "_desc-oversampledmovingregressor_timeseries",
                         tide_math.stdnormalize(resampref_y),
                         oversampfreq,
-                        compressed=False,
                         columns=["pass" + str(thepass + 1)],
                         append=True,
                     )
