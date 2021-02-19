@@ -22,6 +22,7 @@
 #
 from __future__ import print_function, division
 import sys
+import os
 import subprocess
 import getopt
 import numpy as np
@@ -105,20 +106,25 @@ def main():
     if numtimepoints > 1:
         # array is already 4d, just reshape it
         numregions = numtimepoints
-        templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints)).astype(int)
+        templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints))
     else:
         # file is 3d, construct a 4d array
+        slop = 0.1
         print("going from 3d to 4d")
-        numregions = np.max(template_data).astype(int)
-        rs_template = np.reshape(template_data, numvoxels).astype(int)
-        templatevoxels = np.zeros((numvoxels, numregions), dtype=np.uint16)
+        numregions = np.floor(np.max(template_data)).astype(np.uint16)
+        rs_template = np.reshape(template_data, numvoxels)
+        templatevoxels = np.zeros((numvoxels, numregions))
         for theregion in range(1, numregions + 1):
-            templatevoxels[:, theregion - 1] = np.where(rs_template == theregion, 1, 0)
+            templatevoxels[:, theregion - 1] = np.where(
+                np.fabs(rs_template - theregion) <= slop, 1, 0
+            )
 
     # now we have a 4d file, regardless of what we started with
     if dosplit:
         print("splitting left right")
-        tempvoxels = np.reshape(templatevoxels, (xsize, ysize, numslices, numregions)).astype(int)
+        tempvoxels = np.reshape(templatevoxels, (xsize, ysize, numslices, numregions)).astype(
+            np.uint16
+        )
         tempvoxels[int(xsize // 2) + 1 :, :, :, :] *= 2
         templatevoxels = np.reshape(tempvoxels, (numvoxels, numregions))
         newtemplatevoxels = np.zeros((numvoxels, numregions * 2), dtype=np.uint16)
