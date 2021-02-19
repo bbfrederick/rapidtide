@@ -68,7 +68,7 @@ try:
     from keras.callbacks import TerminateOnNaN, ModelCheckpoint
     from keras.models import load_model
 except ImportError:
-    print("falling back to standard tensorflow keras")
+    print("import plaidml.keras failed: falling back to standard tensorflow keras")
 
 if tfversion == -1:
     try:
@@ -78,6 +78,7 @@ if tfversion == -1:
             tfversion = 2
         elif tf.__version__[0] == "1":
             tfversion = 1
+        print("tensorflow version is", tfversion)
     except ImportError:
         print("no backend found - exiting")
         sys.exit()
@@ -188,7 +189,7 @@ class dlfilter:
         readlim=None,
         readskip=None,
         countlim=None,
-        **kwargs
+        **kwargs,
     ):
 
         self.window_size = window_size
@@ -354,18 +355,14 @@ class dlfilter:
         self.infodict["dropout_rate"] = self.dropout_rate
         self.infodict["train_arch"] = sys.platform
         self.infodict["modelname"] = self.modelname
-        tide_io.writedicttojson(
-            self.infodict, os.path.join(self.modelname, "model_meta.json")
-        )
+        tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, "model_meta.json"))
 
     def updatemetadata(self):
         self.infodict["loss"] = self.loss
         self.infodict["val_loss"] = self.val_loss
         self.infodict["raw_error"] = self.raw_error
         self.infodict["prediction_error"] = self.pred_error
-        tide_io.writedicttojson(
-            self.infodict, os.path.join(self.modelname, "model_meta.json")
-        )
+        tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, "model_meta.json"))
 
     def savemodel(self, usehdf=True):
         if usehdf:
@@ -423,9 +420,7 @@ class dlfilter:
             tensorboard = TensorBoard(
                 log_dir=self.intermediatemodelpath + "logs/{}".format(time())
             )
-            self.model.fit(
-                self.train_x, self.train_y, verbose=1, callbacks=[tensorboard]
-            )
+            self.model.fit(self.train_x, self.train_y, verbose=1, callbacks=[tensorboard])
         else:
             if self.num_pretrain_epochs > 0:
                 print("pretraining model to reproduce input data")
@@ -504,7 +499,7 @@ class multiscalecnn(dlfilter):
         input_width=1,
         dilation_rate=1,
         *args,
-        **kwargs
+        **kwargs,
     ):
         self.num_filters = num_filters
         self.kernel_sizes = kernel_sizes
@@ -552,9 +547,9 @@ class multiscalecnn(dlfilter):
         input_seq = Input(shape=(inputlen, self.input_width))
 
         # 1-D convolution and global max-pooling
-        convolved = Conv1D(
-            self.num_filters, kernelsize, padding="same", activation="tanh"
-        )(input_seq)
+        convolved = Conv1D(self.num_filters, kernelsize, padding="same", activation="tanh")(
+            input_seq
+        )
         processed = GlobalMaxPool1D()(convolved)
 
         # dense layer with dropout regularization
@@ -580,9 +575,7 @@ class multiscalecnn(dlfilter):
         # concatenate all the outputs
         merged = Concatenate()([embedding_small, embedding_med, embedding_original])
         out = Dense(1, activation="sigmoid")(merged)
-        self.model = Model(
-            inputs=[input_smallseq, input_medseq, input_origseq], outputs=out
-        )
+        self.model = Model(inputs=[input_smallseq, input_medseq, input_origseq], outputs=out)
         self.model.compile(optimizer=RMSprop(), loss="mse")
 
 
@@ -657,9 +650,7 @@ class cnn(dlfilter):
 
         # make the output layer
         self.model.add(
-            Convolution1D(
-                filters=self.inputsize, kernel_size=self.kernel_size, padding="same"
-            )
+            Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding="same")
         )
         self.model.compile(optimizer=RMSprop(), loss="mse")
 
@@ -706,9 +697,7 @@ class denseautoencoder(dlfilter):
             sizefac = int(sizefac * 2)
         print("input layer - sizefac:", sizefac)
 
-        self.model.add(
-            Dense(sizefac * self.encoding_dim, input_shape=(None, self.inputsize))
-        )
+        self.model.add(Dense(sizefac * self.encoding_dim, input_shape=(None, self.inputsize)))
         self.model.add(BatchNormalization())
         self.model.add(Dropout(rate=self.dropout_rate))
         self.model.add(Activation(self.activation))
@@ -746,13 +735,7 @@ class denseautoencoder(dlfilter):
 
 class convautoencoder(dlfilter):
     def __init__(
-        self,
-        encoding_dim=10,
-        num_filters=5,
-        kernel_size=5,
-        dilation_rate=1,
-        *args,
-        **kwargs
+        self, encoding_dim=10, num_filters=5, kernel_size=5, dilation_rate=1, *args, **kwargs
     ):
         self.encoding_dim = encoding_dim
         self.num_filters = num_filters
@@ -820,9 +803,7 @@ class convautoencoder(dlfilter):
             nfilters *= 2
             print("input layer size:", layersize, ", nfilters:", nfilters)
             self.model.add(
-                Convolution1D(
-                    filters=nfilters, kernel_size=self.kernel_size, padding="same"
-                )
+                Convolution1D(filters=nfilters, kernel_size=self.kernel_size, padding="same")
             )
             self.model.add(BatchNormalization())
             self.model.add(Dropout(rate=self.dropout_rate))
@@ -865,9 +846,7 @@ class convautoencoder(dlfilter):
         # make the encoding layer
         print("input layer size:", layersize)
         self.model.add(
-            Convolution1D(
-                filters=self.num_filters, kernel_size=self.kernel_size, padding="same"
-            )
+            Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding="same")
         )
         self.model.add(BatchNormalization())
         self.model.add(Dropout(rate=self.dropout_rate))
@@ -892,9 +871,7 @@ class convautoencoder(dlfilter):
         # make the output layer
         print("input layer size:", layersize)
         self.model.add(
-            Convolution1D(
-                filters=self.inputsize, kernel_size=self.kernel_size, padding="same"
-            )
+            Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding="same")
         )
         self.model.compile(optimizer="adam", loss="mse")
 
@@ -1015,9 +992,7 @@ class lstm(dlfilter):
 
 
 class hybrid(dlfilter):
-    def __init__(
-        self, invert=False, num_filters=10, kernel_size=5, num_units=16, *args, **kwargs
-    ):
+    def __init__(self, invert=False, num_filters=10, kernel_size=5, num_units=16, *args, **kwargs):
         self.invert = invert
         self.num_filters = num_filters
         self.kernel_size = kernel_size
@@ -1133,9 +1108,7 @@ class hybrid(dlfilter):
 
             # make the output layer
             self.model.add(
-                Convolution1D(
-                    filters=self.inputsize, kernel_size=self.kernel_size, padding="same"
-                )
+                Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding="same")
             )
 
         self.model.compile(optimizer=RMSprop(), loss="mse")
@@ -1189,9 +1162,7 @@ def targettoinput(name, targetfrag="xyz", inputfrag="abc", debug=False):
     return name.replace(targetfrag, inputfrag)
 
 
-def getmatchedfiles(
-    searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc", debug=False
-):
+def getmatchedfiles(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc", debug=False):
     # list all of the target files
     fromfile = sorted(glob.glob(searchstring))
     if debug:
@@ -1201,9 +1172,7 @@ def getmatchedfiles(
     matchedfilelist = []
     for targetname in fromfile:
         if os.path.isfile(
-            targettoinput(
-                targetname, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug
-            )
+            targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)
         ):
             if usebadpts:
                 if os.path.isfile(
@@ -1233,9 +1202,7 @@ def getmatchedfiles(
     # find out how long the files are
     tempy = np.loadtxt(matchedfilelist[0])
     tempx = np.loadtxt(
-        targettoinput(
-            matchedfilelist[0], targetfrag=targetfrag, inputfrag=inputfrag, debug=debug
-        )
+        targettoinput(matchedfilelist[0], targetfrag=targetfrag, inputfrag=inputfrag, debug=debug)
     )
     tclen = np.min([tempx.shape[0], tempy.shape[0]])
     print("tclen set to", tclen)
@@ -1302,31 +1269,23 @@ def readindata(
         if np.any(np.isnan(tempx)):
             print(
                 "NaN found in file",
-                targettoinput(
-                    matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
-                ),
+                targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag),
                 "- discarding",
             )
             nanfound = True
             nanfiles.append(
-                targettoinput(
-                    matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
-                )
+                targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag)
             )
         strangefound = False
         if not (0.5 < np.std(tempx) < 20.0):
             print(
                 "file",
-                targettoinput(
-                    matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
-                ),
+                targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag),
                 "has an extreme standard deviation - discarding",
             )
             strangefound = True
             strangemagfiles.append(
-                targettoinput(
-                    matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
-                )
+                targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag)
             )
         if not (0.5 < np.std(tempy) < 20.0):
             print(
@@ -1342,16 +1301,12 @@ def readindata(
         if ntempx < tclen:
             print(
                 "file",
-                targettoinput(
-                    matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
-                ),
+                targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag),
                 "is short - discarding",
             )
             shortfound = True
             shortfiles.append(
-                targettoinput(
-                    matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
-                )
+                targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag)
             )
         if ntempy < tclen:
             print("file", matchedfilelist[i], "is short - discarding")
@@ -1381,9 +1336,7 @@ def readindata(
                         )
                     )
                 )
-                bad1[:tclen, count] = 1.0 - (1.0 - tempbad1[:tclen]) * (
-                    1.0 - tempbad2[:tclen]
-                )
+                bad1[:tclen, count] = 1.0 - (1.0 - tempbad1[:tclen]) * (1.0 - tempbad2[:tclen])
             count += 1
     print(count, "runs pass file length check")
     if len(nanfiles) > 0:
@@ -1460,9 +1413,7 @@ def prep(
 
     """
 
-    searchstring = os.path.join(
-        thedatadir, "*_" + targetfrag + "_" + thesuffix + ".txt"
-    )
+    searchstring = os.path.join(thedatadir, "*_" + targetfrag + "_" + thesuffix + ".txt")
 
     # find matched files
     matchedfilelist, tclen = getmatchedfiles(
@@ -1691,17 +1642,13 @@ def prep(
                 np.max(Y[0, :, j]),
             )
             for i in range(windowspersubject):
-                Xb[j * windowspersubject + i, :, 0] = X[
-                    0, step * i : (step * i + window_size), j
-                ]
+                Xb[j * windowspersubject + i, :, 0] = X[0, step * i : (step * i + window_size), j]
 
         Yb = np.zeros((N_subjs * windowspersubject, window_size, 1))
         print("dimensions of Yb:", Yb.shape)
         for j in range(N_subjs):
             for i in range(windowspersubject):
-                Yb[j * windowspersubject + i, :, 0] = Y[
-                    0, step * i : (step * i + window_size), j
-                ]
+                Yb[j * windowspersubject + i, :, 0] = Y[0, step * i : (step * i + window_size), j]
 
         if usebadpts:
             Xb_withbad = np.zeros((N_subjs * windowspersubject, window_size, 2))
@@ -1750,9 +1697,7 @@ def prep(
     # find nearest subject start
     firstvalsubject = np.abs(subjectstarts - limit).argmin()
     print("firstvalsubject:", firstvalsubject)
-    perm_train = np.random.permutation(
-        np.int64(np.arange(subjectstarts[firstvalsubject]))
-    )
+    perm_train = np.random.permutation(np.int64(np.arange(subjectstarts[firstvalsubject])))
     perm_val = np.random.permutation(
         np.int64(np.arange(subjectstarts[firstvalsubject], Xb.shape[0]))
     )
@@ -1774,9 +1719,7 @@ def prep(
 
         val_x = Xb_fourier[perm[limit:], :, :]
         val_y = Yb_fourier[perm[limit:], :, :]
-        print(
-            "train, val dims:", train_x.shape, train_y.shape, val_x.shape, val_y.shape
-        )
+        print("train, val dims:", train_x.shape, train_y.shape, val_x.shape, val_y.shape)
         return (
             train_x,
             train_y,
@@ -1795,9 +1738,7 @@ def prep(
         val_x = Xb[perm_val, :, :]
         val_y = Yb[perm_val, :, :]
 
-        print(
-            "train, val dims:", train_x.shape, train_y.shape, val_x.shape, val_y.shape
-        )
+        print("train, val dims:", train_x.shape, train_y.shape, val_x.shape, val_y.shape)
         return (
             train_x,
             train_y,
