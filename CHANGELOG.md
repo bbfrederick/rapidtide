@@ -1,11 +1,14 @@
 # History of changes
 
 ## Version 2.0alpha13 (2/18/21)
+* (package) Copied Taylor Salo's improvements to build and deployment from the master branch.
+* (all) Ran all python files through Black to give consistent formatting (really, truly this time).
 * (all) Implemented new, generalized text/tsv/bids text file reader with column selection (readvectorsfromtextfile).
 * (atlastool) Fixed some import and syntax issues with numpy.
 * (showarbcorr) New program to do crosscorrelations on timecourses with different samplerates.
 * (happy) Fixed column selection bug with BIDS files.
 * (happy) General formatting improvements.
+* (dlfilter) Made diagnostics more informative to help get dlfilter enabled.
 
 ## Version 2.0alpha12 (2/5/21)
 * (all) Fixed readbidstsv calls.
