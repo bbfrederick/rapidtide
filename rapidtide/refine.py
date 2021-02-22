@@ -91,9 +91,7 @@ def _procOneVoxelTimeShift(
         else:
             thisweight = -1.0
     if detrendorder > 0:
-        normtc = tide_fit.detrend(
-            fmritc * normfac * thisweight, order=detrendorder, demean=True
-        )
+        normtc = tide_fit.detrend(fmritc * normfac * thisweight, order=detrendorder, demean=True)
     else:
         normtc = fmritc * normfac * thisweight
     shifttr = -(-offsettime + lagtime) / fmritr  # lagtime is in seconds
@@ -192,9 +190,7 @@ def refineregressor(
     """
     inputshape = np.shape(fmridata)
     if optiondict["ampthresh"] < 0.0:
-        theampthresh = tide_stats.getfracval(
-            lagstrengths, -optiondict["ampthresh"], nozero=True
-        )
+        theampthresh = tide_stats.getfracval(lagstrengths, -optiondict["ampthresh"], nozero=True)
         print(
             "setting ampthresh to the",
             -100.0 * optiondict["ampthresh"],
@@ -202,9 +198,7 @@ def refineregressor(
             theampthresh,
             ")",
         )
-        ampmask = np.where(
-            np.fabs(lagstrengths) >= theampthresh, np.int16(1), np.int16(0)
-        )
+        ampmask = np.where(np.fabs(lagstrengths) >= theampthresh, np.int16(1), np.int16(0))
     else:
         ampmask = np.where(
             np.fabs(lagstrengths) >= optiondict["ampthresh"], np.int16(1), np.int16(0)
@@ -402,17 +396,11 @@ def refineregressor(
             optiondict["dispersioncalc_upper"],
             optiondict["dispersioncalc_step"],
         )
-        dispersioncalcout = np.zeros(
-            (np.shape(laglist)[0], inputshape[1]), dtype=rt_floattype
-        )
+        dispersioncalcout = np.zeros((np.shape(laglist)[0], inputshape[1]), dtype=rt_floattype)
         fftlen = int(inputshape[1] // 2)
         fftlen -= fftlen % 2
-        dispersioncalcspecmag = np.zeros(
-            (np.shape(laglist)[0], fftlen), dtype=rt_floattype
-        )
-        dispersioncalcspecphase = np.zeros(
-            (np.shape(laglist)[0], fftlen), dtype=rt_floattype
-        )
+        dispersioncalcspecmag = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
+        dispersioncalcspecphase = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
         for lagnum in range(0, np.shape(laglist)[0]):
             lower = laglist[lagnum] - optiondict["dispersioncalc_step"] / 2.0
             upper = laglist[lagnum] + optiondict["dispersioncalc_step"] / 2.0
@@ -444,31 +432,19 @@ def refineregressor(
             inlagrange = None
         tide_io.writenpvecs(
             dispersioncalcout,
-            optiondict["outputname"]
-            + "_dispersioncalcvecs_pass"
-            + str(passnum)
-            + ".txt",
+            optiondict["outputname"] + "_dispersioncalcvecs_pass" + str(passnum) + ".txt",
         )
         tide_io.writenpvecs(
             dispersioncalcspecmag,
-            optiondict["outputname"]
-            + "_dispersioncalcspecmag_pass"
-            + str(passnum)
-            + ".txt",
+            optiondict["outputname"] + "_dispersioncalcspecmag_pass" + str(passnum) + ".txt",
         )
         tide_io.writenpvecs(
             dispersioncalcspecphase,
-            optiondict["outputname"]
-            + "_dispersioncalcspecphase_pass"
-            + str(passnum)
-            + ".txt",
+            optiondict["outputname"] + "_dispersioncalcspecphase_pass" + str(passnum) + ".txt",
         )
         tide_io.writenpvecs(
             freqs,
-            optiondict["outputname"]
-            + "_dispersioncalcfreqs_pass"
-            + str(passnum)
-            + ".txt",
+            optiondict["outputname"] + "_dispersioncalcfreqs_pass" + str(passnum) + ".txt",
         )
 
     if optiondict["pcacomponents"] < 0.0:
@@ -484,9 +460,7 @@ def refineregressor(
 
     if optiondict["refinetype"] == "ica":
         print("performing ica refinement")
-        thefit = FastICA(n_components=icacomponents).fit(
-            refinevoxels
-        )  # Reconstruct signals
+        thefit = FastICA(n_components=icacomponents).fit(refinevoxels)  # Reconstruct signals
         print("Using first of ", len(thefit.components_), " components")
         icadata = thefit.components_[0]
         filteredavg = tide_math.corrnormalize(
@@ -521,10 +495,7 @@ def refineregressor(
             len(thefit.components_),
             " components, accounting for ",
             "{:.2f}% of the variance".format(
-                100.0
-                * np.cumsum(thefit.explained_variance_ratio_)[
-                    len(thefit.components_) - 1
-                ]
+                100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
             ),
         )
         reduceddata = thefit.inverse_transform(thefit.transform(refinevoxels))

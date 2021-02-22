@@ -54,18 +54,12 @@ def usage():
     print(
         "    --sampletime=Ts         - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)"
     )
-    print(
-        "    -F                      - Filter data and regressors from LOWERFREQ to UPPERFREQ."
-    )
-    print(
-        "                              LOWERSTOP and UPPERSTOP can be specified, or will be"
-    )
+    print("    -F                      - Filter data and regressors from LOWERFREQ to UPPERFREQ.")
+    print("                              LOWERSTOP and UPPERSTOP can be specified, or will be")
     print("                              calculated automatically")
     print("    -V                      - Filter data and regressors to VLF band")
     print("    -L                      - Filter data and regressors to LFO band")
-    print(
-        "    -R                      - Filter data and regressors to respiratory band"
-    )
+    print("    -R                      - Filter data and regressors to respiratory band")
     print("    -C                      - Filter data and regressors to cardiac band")
     print("    --padtime=PAD           - End pad in seconds (default is 30)")
     print("    --debug                 - print debugging information")

@@ -38,9 +38,7 @@ def usage():
     print("optional arguments:")
     print("    --3d            - return a 3d file with regions encoded as integers")
     print("    --4d            - return a 4d file with one region per volume")
-    print(
-        "    --split         - split regions along the midline into left and right subregions"
-    )
+    print("    --split         - split regions along the midline into left and right subregions")
     print("    --target=TARGET - match resolution of TARGET")
     print("")
     return ()
@@ -57,9 +55,7 @@ outputtemplatename = sys.argv[2]
 
 # now scan for optional arguments
 try:
-    opts, args = getopt.getopt(
-        sys.argv[3:], "h", ["3d", "4d", "split", "target=", "help"]
-    )
+    opts, args = getopt.getopt(sys.argv[3:], "h", ["3d", "4d", "split", "target=", "help"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like "option -x not recognized"
@@ -121,16 +117,12 @@ else:
 # now we have a 4d file, regardless of what we started with
 if dosplit:
     print("splitting left right")
-    tempvoxels = np.reshape(
-        templatevoxels, (xsize, ysize, numslices, numregions)
-    ).astype(int)
+    tempvoxels = np.reshape(templatevoxels, (xsize, ysize, numslices, numregions)).astype(int)
     tempvoxels[int(xsize // 2) + 1 :, :, :, :] *= 2
     templatevoxels = np.reshape(tempvoxels, (numvoxels, numregions))
     newtemplatevoxels = np.zeros((numvoxels, numregions * 2), dtype="int")
     for theregion in range(1, numregions + 1):
-        newtemplatevoxels[:, theregion - 1] = np.where(
-            templatevoxels[:, theregion - 1] == 1, 1, 0
-        )
+        newtemplatevoxels[:, theregion - 1] = np.where(templatevoxels[:, theregion - 1] == 1, 1, 0)
         newtemplatevoxels[:, theregion + numregions - 1] = np.where(
             templatevoxels[:, theregion - 1] == 2, 1, 0
         )
@@ -176,9 +168,9 @@ if targetfile is not None:
         numslices = templatedims[3]
         numregions = templatedims[4]
         numvoxels = int(xsize) * int(ysize) * int(numslices)
-        templatevoxels = np.around(
-            np.reshape(template_data, (numvoxels, numregions))
-        ).astype("int")
+        templatevoxels = np.around(np.reshape(template_data, (numvoxels, numregions))).astype(
+            "int"
+        )
     else:
         print("FSL directory not found - aborting")
         sys.exit()

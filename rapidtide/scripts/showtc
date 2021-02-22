@@ -89,9 +89,7 @@ def _get_parser():
         action="store",
         type=str,
         choices=["time", "power", "phase"],
-        help=(
-            "Display data as time series (default), power spectrum, or phase spectrum."
-        ),
+        help=("Display data as time series (default), power spectrum, or phase spectrum."),
         default="time",
     )
     parser.add_argument(
@@ -467,8 +465,7 @@ def showtc(args):
             else:
                 yvecs.append(invecs[j] * 1.0)
                 xvecs.append(
-                    thisstartoffset
-                    + np.arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate
+                    thisstartoffset + np.arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate
                 )
             if len(yvecs[-1]) < minlen:
                 minlen = len(yvecs[-1])
@@ -478,9 +475,7 @@ def showtc(args):
                         if shortcolnames:
                             linelabels.append("column" + str(j).zfill(2))
                         else:
-                            linelabels.append(
-                                textfilename[i][0] + "_column" + str(j).zfill(2)
-                            )
+                            linelabels.append(textfilename[i][0] + "_column" + str(j).zfill(2))
 
                     else:
                         if shortcolnames:
@@ -524,12 +519,8 @@ def showtc(args):
     ymins = []
     ymaxs = []
     for thevec in yvecs:
-        ymins.append(
-            np.min(np.asarray(thevec[thestartpoint:theendpoint], dtype="float"))
-        )
-        ymaxs.append(
-            np.max(np.asarray(thevec[thestartpoint:theendpoint], dtype="float"))
-        )
+        ymins.append(np.min(np.asarray(thevec[thestartpoint:theendpoint], dtype="float")))
+        ymaxs.append(np.max(np.asarray(thevec[thestartpoint:theendpoint], dtype="float")))
     overallymax = -1e38
     overallymin = 1e38
     for thevec in yvecs:

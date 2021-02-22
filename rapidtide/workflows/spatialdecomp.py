@@ -65,9 +65,7 @@ def _get_parser():
         type=lambda x: is_float(parser, x),
         action="store",
         metavar="NCOMPS",
-        help=(
-            "The number of PCA/ICA components to return (default is to estimate the number)."
-        ),
+        help=("The number of PCA/ICA components to return (default is to estimate the number)."),
         default=-1.0,
     )
     parser.add_argument(
@@ -177,8 +175,7 @@ def spatialdecomp_workflow(
             proclocs = np.where(datamask_data.reshape(numspatiallocs) > 0.9)
         else:
             proclocs = np.where(
-                np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1)
-                > 0.9
+                np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1) > 0.9
             )
             rs_mask = datamask_data.reshape((numspatiallocs, timepoints))[proclocs, :]
             rs_mask = np.where(rs_mask > 0.9, 1.0, 0.0)[0]
@@ -248,9 +245,7 @@ def spatialdecomp_workflow(
             thecomponents = np.transpose(thefit.components_[0:pcacomponents])
 
         # save the eigenvalues
-        print(
-            "variance explained by component:", 100.0 * thefit.explained_variance_ratio_
-        )
+        print("variance explained by component:", 100.0 * thefit.explained_variance_ratio_)
         tide_io.writenpvecs(
             100.0 * thefit.explained_variance_ratio_,
             outputroot + "_explained_variance_pct.txt",

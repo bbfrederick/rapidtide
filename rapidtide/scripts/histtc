@@ -77,9 +77,7 @@ def main():
     therange = [minval, maxval]
     print("therange:", therange)
 
-    tide_stats.makeandsavehistogram(
-        inputdata, histlen, 0, outputroot, therange=therange
-    )
+    tide_stats.makeandsavehistogram(inputdata, histlen, 0, outputroot, therange=therange)
 
 
 if __name__ == "__main__":

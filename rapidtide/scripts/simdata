@@ -46,9 +46,7 @@ def prepareband(
 
     print("Input regressor has ", regressorpts, " points")
     regressor_x = (
-        sp.linspace(
-            0.0, (1.0 / samprate) * regressorpts, num=regressorpts, endpoint=False
-        )
+        sp.linspace(0.0, (1.0 / samprate) * regressorpts, num=regressorpts, endpoint=False)
         - starttime
     )
     regressor_y = rawvec[0:regressorpts]
@@ -100,9 +98,7 @@ def fmrisignal(
     if doresp:
         thesignal += meanvalue * (respmag / 100.0) * respwave.yfromx(times + respdelay)
     if docardiac:
-        thesignal += (
-            meanvalue * (cardiacmag / 100.0) * cardiacwave.yfromx(times + cardiacdelay)
-        )
+        thesignal += meanvalue * (cardiacmag / 100.0) * cardiacwave.yfromx(times + cardiacdelay)
     return thesignal + meanvalue
 
 
@@ -130,9 +126,7 @@ def usage():
         "	lfolagfile=FILENAME         - NIFTI file with the lfo delay value in seconds at every point"
     )
     print("	lforegressor=FILENAME       - the name of the LFO regressor text file")
-    print(
-        "	lfosamprate=FREQ            - the sample rate of the LFO regressor file, in Hz"
-    )
+    print("	lfosamprate=FREQ            - the sample rate of the LFO regressor file, in Hz")
     print(
         "	lfostarttime=TIME           - the time delay, in seconds, into the LFO regressor file that matches the start time of the fmrifile. Default is 0"
     )
@@ -142,9 +136,7 @@ def usage():
     print(
         "	resplagfile=FILENAME        - NIFTI file with the resp delay value in seconds at every point"
     )
-    print(
-        "	respregressor=FILENAME      - the name of the respiratory regressor text file"
-    )
+    print("	respregressor=FILENAME      - the name of the respiratory regressor text file")
     print(
         "	respsamprate=FREQ           - the sample rate of the respiratory regressor file, in Hz"
     )
@@ -158,17 +150,13 @@ def usage():
         "	cardiaclagfile=FILENAME     - NIFTI file with the cardiac delay value in seconds at every point"
     )
     print("	cardiacregressor=FILENAME   - the name of the cardiac regressor text file")
-    print(
-        "	cardiacsamprate=FREQ        - the sample rate of the cardiac regressor file, in Hz"
-    )
+    print("	cardiacsamprate=FREQ        - the sample rate of the cardiac regressor file, in Hz")
     print(
         "	cardiacstarttime=TIME       - the time delay, in seconds, into the LFO regressor file that matches the start time of the fmrifile. Default is 0"
     )
     print("")
     print("optional arguments:")
-    print(
-        "	numskip=SKIP                - use to simulate tr periods deleted during preprocessing"
-    )
+    print("	numskip=SKIP                - use to simulate tr periods deleted during preprocessing")
     print("	noiselevel=LEVEL            - the variance of the noise.  Default is 0.0")
     """print("					0 : None")
     print("					1 : Regular up (0, 1, 2, 3, ...)")
@@ -387,16 +375,12 @@ def simdata_main(thearguments):
     sliceoffsettimes = tide_io.getslicetimesfromfile(slicetimefile)
 
     fmritr, numtrs = tide_io.fmritimeinfo(fmrifilename)
-    nim_fmri, fmridata, fmriheader, fmridims, fmrisizes = tide_io.readfromnifti(
-        fmrifilename
-    )
+    nim_fmri, fmridata, fmriheader, fmridims, fmrisizes = tide_io.readfromnifti(fmrifilename)
     print("fmri data: ", numtrs, " timepoints, tr = ", fmritr)
 
     # prepare the output timepoints
     initial_fmri_x = (
-        sp.linspace(
-            0.0, fmritr * (numtrs - numskip), num=(numtrs - numskip), endpoint=False
-        )
+        sp.linspace(0.0, fmritr * (numtrs - numskip), num=(numtrs - numskip), endpoint=False)
         + fmritr * numskip
     )
     print("length of fmri after removing skip:", len(initial_fmri_x))

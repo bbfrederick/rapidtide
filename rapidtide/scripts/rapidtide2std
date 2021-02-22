@@ -74,9 +74,7 @@ def makefslcmd(theinputfile, reftarget, xform, outputname, warpfile=None):
 def usage():
     print("rapidtide2std:  register rapidtide output maps to standard space")
     print("")
-    print(
-        "usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]"
-    )
+    print("usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]")
     print("")
     print("required arguments:")
     print(
@@ -91,15 +89,11 @@ def usage():
     )
     print("")
     print("optional arguments:")
-    print(
-        "    --all              - also transform the corrout file (warning - file may be huge)"
-    )
+    print("    --all              - also transform the corrout file (warning - file may be huge)")
     print(
         "    --hires            - transform to match the high resolution anatomic image rather than the standard"
     )
-    print(
-        "    --linear           - only do linear transformation, even if warpfile exists"
-    )
+    print("    --linear           - only do linear transformation, even if warpfile exists")
     print(
         "    --onefile=FILE     - align a single file, specified by name without extension (ignore INPUTFILEROOT)"
     )
@@ -171,15 +165,11 @@ def main():
     if aligntohires:
         reftarget = os.path.abspath(os.path.join(xformdir, "reg", "highres.nii.gz"))
         warpfuncfile = ""
-        xformfuncmat = os.path.abspath(
-            os.path.join(xformdir, "reg", "example_func2highres.mat")
-        )
+        xformfuncmat = os.path.abspath(os.path.join(xformdir, "reg", "example_func2highres.mat"))
         outputtag = "_hires_"
         theanatmaps = ["highres"]
     else:
-        xformfuncmat = os.path.abspath(
-            os.path.join(xformdir, "reg", "example_func2standard.mat")
-        )
+        xformfuncmat = os.path.abspath(os.path.join(xformdir, "reg", "example_func2standard.mat"))
         warpfuncfile = os.path.abspath(
             os.path.join(xformdir, "reg", "example_func2standard_warp.nii.gz")
         )
@@ -250,9 +240,7 @@ def main():
     subjroot = thebase[:-15]
 
     for themap in thefmrimaps:
-        inputname = os.path.abspath(
-            os.path.join(thepath, subjroot + "_" + themap + ".nii.gz")
-        )
+        inputname = os.path.abspath(os.path.join(thepath, subjroot + "_" + themap + ".nii.gz"))
         if os.path.isfile(inputname):
             outputname = os.path.abspath(
                 os.path.join(theoutputdir, subjroot + outputtag + themap + ".nii.gz")
@@ -275,19 +263,14 @@ def main():
                 outputname = os.path.abspath(
                     os.path.join(
                         theoutputdir,
-                        subjroot
-                        + outputtag
-                        + themap.replace("standard", "anat")
-                        + ".nii.gz",
+                        subjroot + outputtag + themap.replace("standard", "anat") + ".nii.gz",
                     )
                 )
                 if aligntohires:
                     thecommand = ["cp", inputname, outputname]
                 else:
                     xform = os.path.abspath(
-                        glob.glob(
-                            os.path.join(xformdir, "reg", "highres2standard.mat")
-                        )[0]
+                        glob.glob(os.path.join(xformdir, "reg", "highres2standard.mat"))[0]
                     )
                     thecommand = makefslcmd(inputname, reftarget, xform, outputname)
 

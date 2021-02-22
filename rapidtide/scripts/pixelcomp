@@ -137,12 +137,8 @@ def main():
     for i in range(0, len(nonzeropoints[0])):
         pairlist.append(
             [
-                input1_data[
-                    nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]
-                ],
-                input2_data[
-                    nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]
-                ],
+                input1_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]],
+                input2_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]],
             ]
         )
 
@@ -150,9 +146,7 @@ def main():
 
     # construct a 2d histogram
     numbins = 100
-    H, xedges, yedges = np.histogram2d(
-        thearray[:, 0], thearray[:, 1], bins=numbins, normed=True
-    )
+    H, xedges, yedges = np.histogram2d(thearray[:, 0], thearray[:, 1], bins=numbins, normed=True)
     extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
     plt.figure()
     cset = plt.contour(H, extent=extent)

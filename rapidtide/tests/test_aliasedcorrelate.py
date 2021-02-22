@@ -33,12 +33,8 @@ def test_aliasedcorrelate(display=False):
     width = 2.5
     rangepts = 101
     timerange = np.linspace(0.0, width, num=101) - width / 2.0
-    hiaxis = np.linspace(
-        0.0, 2.0 * np.pi * inlenhi / Fs_hi, num=inlenhi, endpoint=False
-    )
-    loaxis = np.linspace(
-        0.0, 2.0 * np.pi * inlenlo / Fs_lo, num=inlenlo, endpoint=False
-    )
+    hiaxis = np.linspace(0.0, 2.0 * np.pi * inlenhi / Fs_hi, num=inlenhi, endpoint=False)
+    loaxis = np.linspace(0.0, 2.0 * np.pi * inlenlo / Fs_lo, num=inlenlo, endpoint=False)
     sighi = hiaxis * 0.0
     siglo = loaxis * 0.0
     for theinfo in siginfo:

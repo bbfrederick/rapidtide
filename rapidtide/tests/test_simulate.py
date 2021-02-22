@@ -55,9 +55,7 @@ def test_simulate(display=False):
 
     # prepare the output timepoints
     fmrifreq = 1.0 / fmritr
-    initial_fmri_x = (
-        np.r_[0 : fmritr * (numtrs - fmriskip) : fmritr] + fmritr * fmriskip
-    )
+    initial_fmri_x = np.r_[0 : fmritr * (numtrs - fmriskip) : fmritr] + fmritr * fmriskip
     print("length of fmri after removing skip:", len(initial_fmri_x))
     print("fmri time runs from ", initial_fmri_x[0], " to ", initial_fmri_x[-1])
 

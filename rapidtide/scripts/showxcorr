@@ -111,13 +111,9 @@ def usage():
     print("    -t            - detrend the data")
     print("    -w            - window the data with a hamming function")
     print("    -l LABEL      - label for the delay value")
-    print(
-        "    -s STARTTIME  - time of first datapoint to use in seconds in the first file"
-    )
+    print("    -s STARTTIME  - time of first datapoint to use in seconds in the first file")
     print("    -D DURATION   - amount of data to use in seconds")
-    print(
-        "    -r RANGE      - restrict peak search range to +/- RANGE seconds (default is "
-    )
+    print("    -r RANGE      - restrict peak search range to +/- RANGE seconds (default is ")
     print("                    +/-15)")
     print("    -d            - turns off display of graph")
     print("    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.")
@@ -129,18 +125,12 @@ def usage():
     print("    -C            - filter data and regressors to cardiac band")
     print("    -T            - trim data to match")
     print("    -A            - print data on a single summary line")
-    print(
-        "    -a            - if summary mode is on, add a header line showing what values "
-    )
+    print("    -a            - if summary mode is on, add a header line showing what values ")
     print("                    mean")
     print("    -f            - negate (flip) second regressor")
-    print(
-        "    -z FILENAME   - use the columns of FILENAME as controlling variables and "
-    )
+    print("    -z FILENAME   - use the columns of FILENAME as controlling variables and ")
     print("                    return the partial correlation")
-    print(
-        "    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS "
-    )
+    print("    -N TRIALS     - estimate significance thresholds by Monte Carlo with TRIALS ")
     print("                    repetition")
     print("    -Y            - turn on debugging")
     print("")
@@ -365,16 +355,12 @@ def main():
             filtereddata1, filtereddata2, usefft=dofftcorr, weighting="PHAT"
         )
     else:
-        thexcorr = tide_corr.fastcorrelate(
-            filtereddata1, filtereddata2, usefft=dofftcorr
-        )
+        thexcorr = tide_corr.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr)
     thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / Fs
-    xcorr_x = (
-        r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
-    )
+    xcorr_x = r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     halfwindow = int(searchrange * Fs)
     corrzero = xcorrlen // 2
     searchstart = corrzero - halfwindow
@@ -501,9 +487,7 @@ def main():
                         "):\t",
                         pcts[idx],
                     )
-            print(
-                infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]"
-            )
+            print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
 
     if summarymode:
         if estimate_significance:
@@ -517,9 +501,7 @@ def main():
                         "xcorr_R(P=0.05)",
                         "xcorr_maxdelay",
                     )
-                print(
-                    thelabel, thepxcorr[0], pearpcts_fit[0], R, pcts_fit[0], -maxdelay
-                )
+                print(thelabel, thepxcorr[0], pearpcts_fit[0], R, pcts_fit[0], -maxdelay)
             else:
                 if labelline:
                     print(

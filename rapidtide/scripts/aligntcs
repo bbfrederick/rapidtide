@@ -114,9 +114,7 @@ def main():
             theprefilter.apply(args.insamplerate1, inputdata1)
         )
     else:
-        paddeddata1 = tide_math.corrnormalize(
-            theprefilter.apply(args.insamplerate1, inputdata1)
-        )
+        paddeddata1 = tide_math.corrnormalize(theprefilter.apply(args.insamplerate1, inputdata1))
 
     timeaxisfull = np.linspace(
         0.0, intimestep1 * len(paddeddata1), num=len(paddeddata1), endpoint=False
@@ -137,9 +135,7 @@ def main():
     thexcorr = tide_corr.fastcorrelate(paddeddata1, paddeddata2)
     xcorrlen = len(thexcorr)
     xcorr_x = (
-        np.r_[0.0:xcorrlen] * intimestep1
-        - (xcorrlen * intimestep1) / 2.0
-        + intimestep1 / 2.0
+        np.r_[0.0:xcorrlen] * intimestep1 - (xcorrlen * intimestep1) / 2.0 + intimestep1 / 2.0
     )
 
     (

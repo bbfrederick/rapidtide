@@ -76,13 +76,9 @@ def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
 def newViewWindow(
     view, xdim, ydim, left, top, impixpervoxx, impixpervoxy, imgsize, enableMouse=False
 ):
-    theviewbox = view.addViewBox(
-        enableMouse=enableMouse, enableMenu=False, lockAspect=1.0
-    )
+    theviewbox = view.addViewBox(enableMouse=enableMouse, enableMenu=False, lockAspect=1.0)
     theviewbox.setAspectLocked()
-    theviewbox.setRange(
-        QtCore.QRectF(0, 0, imgsize, imgsize), padding=0.0, disableAutoRange=True
-    )
+    theviewbox.setRange(QtCore.QRectF(0, 0, imgsize, imgsize), padding=0.0, disableAutoRange=True)
     theviewbox.setBackgroundColor([50, 50, 50])
 
     theviewfgwin = pg.ImageItem()
@@ -136,15 +132,9 @@ class OrthoImageItem(QtGui.QWidget):
         self.ydim = self.map.ydim  # this is the number of voxels along this axis
         self.zdim = self.map.zdim  # this is the number of voxels along this axis
         self.tdim = self.map.tdim  # this is the number of voxels along this axis
-        self.xsize = (
-            self.map.xsize
-        )  # this is the mapping between voxel and physical space
-        self.ysize = (
-            self.map.ysize
-        )  # this is the mapping between voxel and physical space
-        self.zsize = (
-            self.map.zsize
-        )  # this is the mapping between voxel and physical space
+        self.xsize = self.map.xsize  # this is the mapping between voxel and physical space
+        self.ysize = self.map.ysize  # this is the mapping between voxel and physical space
+        self.zsize = self.map.zsize  # this is the mapping between voxel and physical space
         self.imgsize = imgsize
         self.xfov = self.xdim * self.xsize
         self.yfov = self.ydim * self.ysize
@@ -302,9 +292,7 @@ class OrthoImageItem(QtGui.QWidget):
             axbg = None
         else:
             axbg = self.bgmap.data[:, :, self.zpos]
-        self.updateOneView(
-            axdata, axmask, axbg, self.map.theLUT, self.axviewwin, self.axviewbgwin
-        )
+        self.updateOneView(axdata, axmask, axbg, self.map.theLUT, self.axviewwin, self.axviewbgwin)
         self.axviewvLine.setValue(self.xvox2pix(self.xpos))
         self.axviewhLine.setValue(self.yvox2pix(self.ypos))
 
@@ -463,9 +451,7 @@ class OrthoImageItem(QtGui.QWidget):
         else:
             return self.map.maskeddata[self.xpos, self.ypos, self.zpos]
 
-    def saveandcomposite(
-        self, square_img, fg_img, bg_img, name, savedir, scalefach, scalefacv
-    ):
+    def saveandcomposite(self, square_img, fg_img, bg_img, name, savedir, scalefach, scalefacv):
         if PILexists:
             print("using PIL to save ", name)
             squarename = os.path.join(savedir, name + "_square.png")
@@ -512,9 +498,7 @@ class OrthoImageItem(QtGui.QWidget):
         mydialog = QtGui.QFileDialog()
         options = mydialog.Options()
         thedir = str(
-            mydialog.getExistingDirectory(
-                options=options, caption="Image output directory"
-            )
+            mydialog.getExistingDirectory(options=options, caption="Image output directory")
         )
         print("thedir=", thedir)
         thename = self.map.namebase + self.map.name
@@ -531,9 +515,7 @@ class OrthoImageItem(QtGui.QWidget):
         therectwin = pg.ImageItem()
         therectwin.translate(0, 0)
         therectwin.scale(maximpervox, maximpervox)
-        therectwin.setImage(
-            np.zeros((maxdim // 10, maxdim), dtype=float), autoLevels=True
-        )
+        therectwin.setImage(np.zeros((maxdim // 10, maxdim), dtype=float), autoLevels=True)
 
         (
             thecolorbarfgwin,

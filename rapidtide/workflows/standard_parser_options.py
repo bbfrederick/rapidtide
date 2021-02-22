@@ -50,9 +50,7 @@ def addfilteropts(parser):
         action="store",
         type=float,
         metavar="SECONDS",
-        help=(
-            "The number of seconds of padding to add to each end of a filtered timecourse. "
-        ),
+        help=("The number of seconds of padding to add to each end of a filtered timecourse. "),
         default=30.0,
     )
 

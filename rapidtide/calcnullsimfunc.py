@@ -54,9 +54,7 @@ def _procOneNullCorrelationx(
     if permutationmethod == "shuffle":
         permutedtc = np.random.permutation(normalizedreftc)
     elif permutationmethod == "phaserandom":
-        permutedtc = tide_filt.ifftfrompolar(
-            rawtcfft_r, np.random.permutation(rawtcfft_ang)
-        )
+        permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.permutation(rawtcfft_ang))
     else:
         print("illegal shuffling method")
         sys.exit()

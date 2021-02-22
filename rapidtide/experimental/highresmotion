@@ -201,9 +201,7 @@ if dostep5:
     print(thedata.shape)
     destarray = np.zeros((thedata.shape[0], thedata.shape[1] * numsteps), dtype=float)
     for i in range(numsteps):
-        thedata = tide_io.readvecs(
-            outfilename + "_stack_" + str(i).zfill(2) + "_mcf.par"
-        )
+        thedata = tide_io.readvecs(outfilename + "_stack_" + str(i).zfill(2) + "_mcf.par")
         for j in range(thedata.shape[1]):
             destarray[:, i + j * numsteps] = thedata[:, j]
     for i in range(destarray.shape[0]):

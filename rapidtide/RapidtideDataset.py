@@ -87,20 +87,15 @@ class timecourse:
             self.timedata = tide_io.readvec(self.filename)
         self.length = len(self.timedata)
         self.timeaxis = (
-            np.linspace(0.0, self.length, num=self.length, endpoint=False)
-            / self.samplerate
+            np.linspace(0.0, self.length, num=self.length, endpoint=False) / self.samplerate
         ) - self.starttime
         self.specaxis, self.specdata = tide_filt.spectrum(
             tide_math.corrnormalize(self.timedata), self.samplerate
         )
-        self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(
-            self.timedata
-        )
+        self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(self.timedata)
 
         if self.verbose:
-            print(
-                "timecourse data range:", np.min(self.timedata), np.max(self.timedata)
-            )
+            print("timecourse data range:", np.min(self.timedata), np.max(self.timedata))
             print("sample rate:", self.samplerate)
             print("timecourse length:", self.length)
             print("timeaxis length:", len(self.timeaxis))
@@ -228,9 +223,7 @@ class overlay:
             self.pct50,
             self.pct75,
             self.robustmax,
-        ) = tide_stats.getfracvals(
-            calcmaskeddata, [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False
-        )
+        ) = tide_stats.getfracvals(calcmaskeddata, [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
         self.dispmin = self.robustmin
         self.dispmax = self.robustmax
         self.histy, self.histx = np.histogram(
@@ -265,9 +258,7 @@ class overlay:
             print("overlay data range:", np.min(self.data), np.max(self.data))
             print("header", self.header)
         self.xdim, self.ydim, self.zdim, self.tdim = tide_io.parseniftidims(self.dims)
-        self.xsize, self.ysize, self.zsize, self.tr = tide_io.parseniftisizes(
-            self.sizes
-        )
+        self.xsize, self.ysize, self.zsize, self.tr = tide_io.parseniftisizes(self.sizes)
         self.toffset = self.header["toffset"]
         if self.verbose:
             print("overlay dims:", self.xdim, self.ydim, self.zdim, self.tdim)
@@ -367,9 +358,7 @@ class overlay:
                 )
             theticks.append(lut_state["ticks"][-1])
             print("setLUT alpha adjustment:\n", theticks)
-            self.lut_state = setendalpha(
-                {"ticks": theticks, "mode": lut_state["mode"]}, endalpha
-            )
+            self.lut_state = setendalpha({"ticks": theticks, "mode": lut_state["mode"]}, endalpha)
         else:
             self.lut_state = setendalpha(lut_state, endalpha)
         self.gradient.restoreState(self.lut_state)
@@ -490,9 +479,7 @@ class RapidtideDataset:
         self.focusregressor = None
         for thisregressor in self.regressorspecs:
             if os.path.isfile(self.fileroot + thisregressor[2]):
-                print(
-                    "file: ", self.fileroot + thisregressor[2], " exists - reading..."
-                )
+                print("file: ", self.fileroot + thisregressor[2], " exists - reading...")
                 thepath, thebase = os.path.split(self.fileroot + thisregressor[2])
                 theregressor = timecourse(
                     thisregressor[0],
@@ -563,9 +550,7 @@ class RapidtideDataset:
                         sys.exit()
                 self.loadedfuncmaps.append(mapname)
             else:
-                print(
-                    "map: ", self.fileroot + mapfilename + ".nii.gz", " does not exist!"
-                )
+                print("map: ", self.fileroot + mapfilename + ".nii.gz", " does not exist!")
         print("functional maps loaded:", self.loadedfuncmaps)
 
     def _loadfuncmasks(self):
@@ -685,9 +670,7 @@ class RapidtideDataset:
             if self.xsize == 2.0 and self.ysize == 2.0 and self.zsize == 2.0:
                 print("using 2mm MNI anatomic name")
                 if fsldir is not None:
-                    mniname = os.path.join(
-                        fsldir, "data", "standard", "MNI152_T1_2mm.nii.gz"
-                    )
+                    mniname = os.path.join(fsldir, "data", "standard", "MNI152_T1_2mm.nii.gz")
             elif self.xsize == 3.0 and self.ysize == 3.0 and self.zsize == 3.0:
                 print("using 3mm MNI anatomic name")
                 mniname = os.path.join(self.referencedir, "MNI152_T1_3mm.nii.gz")
@@ -711,9 +694,7 @@ class RapidtideDataset:
                     )
             elif self.xsize == 1.0 and self.ysize == 1.0 and self.zsize == 1.0:
                 print("using 1mm MNI anatomic name")
-                mniname = os.path.join(
-                    self.referencedir, "mni_icbm152_nlin_asym_09c_1mm.nii.gz"
-                )
+                mniname = os.path.join(self.referencedir, "mni_icbm152_nlin_asym_09c_1mm.nii.gz")
             if os.path.isfile(mniname):
                 self.overlays["anatomic"] = overlay(
                     "anatomic", mniname, "MNI152NLin2009cAsym", init_LUT=self.init_LUT

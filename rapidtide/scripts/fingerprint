@@ -63,9 +63,7 @@ def fingerprint_main(
         theatlasname = os.path.join(referencedir, "ASPECTS_2mm.nii.gz")
         theatlasregionsname = os.path.join(referencedir, "ASPECTS_regions.txt")
     elif whichatlas == "ATT":
-        theatlasname = os.path.join(
-            referencedir, "ATTbasedFlowTerritories_split_2mm.nii.gz"
-        )
+        theatlasname = os.path.join(referencedir, "ATTbasedFlowTerritories_split_2mm.nii.gz")
         theatlasregionsname = os.path.join(
             referencedir, "ATTbasedFlowTerritories_split_regions.txt"
         )
@@ -80,12 +78,8 @@ def fingerprint_main(
         thetemplatedims,
         thetemplatesizes,
     ) = tide_io.readfromnifti(thetemplatename)
-    atlas, atlas_data, atlas_hdr, atlasdims, atlassizes = tide_io.readfromnifti(
-        theatlasname
-    )
-    atlaslabels = pd.read_csv(
-        theatlasregionsname, delimiter="\t", header=None, names=["Region"]
-    )
+    atlas, atlas_data, atlas_hdr, atlasdims, atlassizes = tide_io.readfromnifti(theatlasname)
+    atlaslabels = pd.read_csv(theatlasregionsname, delimiter="\t", header=None, names=["Region"])
     (
         themap,
         themap_data,
@@ -147,9 +141,7 @@ if __name__ == "__main__":
             if values == "":
                 setattr(namespace, self.dest, "__EMPTY__")
             else:
-                setattr(
-                    namespace, self.dest, os.path.abspath(os.path.expanduser(values))
-                )
+                setattr(namespace, self.dest, os.path.abspath(os.path.expanduser(values)))
 
     def is_dir(dirname):
         """Checks if a path is an actual directory"""

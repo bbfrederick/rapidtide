@@ -47,9 +47,7 @@ def test_rapidtide2x(debug=False):
         theargs += [os.path.join(get_test_temp_path(), "rapidtide2x_phase2output")]
         theargs += [
             "--regressor="
-            + os.path.join(
-                get_test_data_path(), "rapidtide2x_phase1target_reference_fmrires.txt"
-            )
+            + os.path.join(get_test_data_path(), "rapidtide2x_phase1target_reference_fmrires.txt")
         ]
         theargs += ["--regressortstep=1.5"]
         theargs += ["--limitoutput"]
@@ -65,9 +63,7 @@ def test_rapidtide2x(debug=False):
         theargs += ["--saveoptionsasjson"]
         theargs += ["--detrendorder=3"]
         theargs += ["--pickleft"]
-        theargs += [
-            "--corrmask=" + os.path.join(get_examples_path(), "quartermask.nii.gz")
-        ]
+        theargs += ["--corrmask=" + os.path.join(get_examples_path(), "quartermask.nii.gz")]
         theargs += ["--noglm"]
         rapidtide2x_workflow.rapidtide_main(theargs)
 

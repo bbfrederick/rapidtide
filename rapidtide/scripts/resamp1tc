@@ -71,9 +71,7 @@ def main():
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(
-            sys.argv[5:], "s", ["nodisplay", "noantialias", "help"]
-        )
+        opts, args = getopt.getopt(sys.argv[5:], "s", ["nodisplay", "noantialias", "help"])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like "option -x not recognized"
@@ -104,12 +102,8 @@ def main():
     outputdata = tide_resample.arbresample(
         inputdata, insamplerate, outsamplerate, decimate=False, antialias=antialias
     )
-    in_t = intimestep * sp.linspace(
-        0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True
-    )
-    out_t = outtimestep * sp.linspace(
-        0.0, len(outputdata), len(outputdata), endpoint=True
-    )
+    in_t = intimestep * sp.linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True)
+    out_t = outtimestep * sp.linspace(0.0, len(outputdata), len(outputdata), endpoint=True)
     if len(out_t) < len(outputdata):
         outputdata = outputdata[0 : len(out_t)]
 

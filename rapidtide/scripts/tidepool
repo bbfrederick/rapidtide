@@ -126,22 +126,12 @@ class xyztlocation(QtGui.QWidget):
         self.zdim = zdim
         self.affine = affine
         self.invaffine = np.linalg.inv(self.affine)
-        self.xcoord, self.ycoord, self.zcoord = self.vox2real(
-            self.xpos, self.ypos, self.zpos
-        )
-        self.setupSpinBox(
-            self.XPosSpinBox, self.getXpos, 0, self.xdim - 1, 1, self.xpos
-        )
-        self.setupSpinBox(
-            self.YPosSpinBox, self.getYpos, 0, self.ydim - 1, 1, self.ypos
-        )
-        self.setupSpinBox(
-            self.ZPosSpinBox, self.getZpos, 0, self.zdim - 1, 1, self.zpos
-        )
+        self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
+        self.setupSpinBox(self.XPosSpinBox, self.getXpos, 0, self.xdim - 1, 1, self.xpos)
+        self.setupSpinBox(self.YPosSpinBox, self.getYpos, 0, self.ydim - 1, 1, self.ypos)
+        self.setupSpinBox(self.ZPosSpinBox, self.getZpos, 0, self.zdim - 1, 1, self.zpos)
         xllcoord, yllcoord, zllcoord = self.vox2real(0, 0, 0)
-        xulcoord, yulcoord, zulcoord = self.vox2real(
-            self.xdim - 1, self.ydim - 1, self.zdim - 1
-        )
+        xulcoord, yulcoord, zulcoord = self.vox2real(self.xdim - 1, self.ydim - 1, self.zdim - 1)
         xmin = np.min([xllcoord, xulcoord])
         xmax = np.max([xllcoord, xulcoord])
         ymin = np.min([yllcoord, yulcoord])
@@ -178,9 +168,7 @@ class xyztlocation(QtGui.QWidget):
         self.toffset = toffset
         self.tr = tr
         self.tcoord = self.tr2real(self.tpos)
-        self.setupSpinBox(
-            self.TPosSpinBox, self.getTpos, 0, self.tdim - 1, 1, self.tpos
-        )
+        self.setupSpinBox(self.TPosSpinBox, self.getTpos, 0, self.tdim - 1, 1, self.tpos)
         tllcoord = self.tr2real(0)
         tulcoord = self.tr2real(self.tdim - 1)
         tmin = np.min([tllcoord, tulcoord])
@@ -193,9 +181,7 @@ class xyztlocation(QtGui.QWidget):
             (tmax - tmin) / self.tdim,
             self.tcoord,
         )
-        self.setupTimeSlider(
-            self.TimeSlider, self.getTimeSlider, 0, self.tdim - 1, self.tpos
-        )
+        self.setupTimeSlider(self.TimeSlider, self.getTimeSlider, 0, self.tdim - 1, self.tpos)
         self.setupRunMovieButton(self.runMovieButton, self.runMovieToggle)
 
     def setupRunMovieButton(self, thebutton, thehandler):
@@ -210,9 +196,7 @@ class xyztlocation(QtGui.QWidget):
             theslider.setSingleStep(1)
             theslider.valueChanged.connect(thehandler)
 
-    def setupSpinBox(
-        self, thespinbox, thehandler, minval, maxval, stepsize, currentval
-    ):
+    def setupSpinBox(self, thespinbox, thehandler, minval, maxval, stepsize, currentval):
         if thespinbox is not None:
             thespinbox.setRange(minval, maxval)
             thespinbox.setSingleStep(stepsize)
@@ -267,18 +251,14 @@ class xyztlocation(QtGui.QWidget):
         self.xpos = xpos
         self.ypos = ypos
         self.zpos = zpos
-        self.xcoord, self.ycoord, self.zcoord = self.vox2real(
-            self.xpos, self.ypos, self.zpos
-        )
+        self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
         self.updateXYZValues(emitsignal=emitsignal)
 
     def setXYZcoord(self, xcoord, ycoord, zcoord, emitsignal=True):
         self.xcoord = xcoord
         self.ycoord = ycoord
         self.zcoord = zcoord
-        self.xpos, self.ypos, self.zpos = self.real2vox(
-            self.xcoord, self.ycoord, self.zcoord
-        )
+        self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
         self.updateXYZValues(emitsignal=emitsignal)
 
     def setTpos(self, tpos):
@@ -298,9 +278,7 @@ class xyztlocation(QtGui.QWidget):
         newx = int(self.XPosSpinBox.value())
         if self.xpos != newx:
             self.xpos = newx
-            self.xcoord, self.ycoord, self.zcoord = self.vox2real(
-                self.xpos, self.ypos, self.zpos
-            )
+            self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
             self.updateXYZValues(emitsignal=True)
 
     def getYpos(self, event):
@@ -308,9 +286,7 @@ class xyztlocation(QtGui.QWidget):
         newy = int(self.YPosSpinBox.value())
         if self.ypos != newy:
             self.ypos = newy
-            self.xcoord, self.ycoord, self.zcoord = self.vox2real(
-                self.xpos, self.ypos, self.zpos
-            )
+            self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
             self.updateXYZValues(emitsignal=True)
 
     def getZpos(self, event):
@@ -318,9 +294,7 @@ class xyztlocation(QtGui.QWidget):
         newz = int(self.ZPosSpinBox.value())
         if self.zpos != newz:
             self.zpos = newz
-            self.xcoord, self.ycoord, self.zcoord = self.vox2real(
-                self.xpos, self.ypos, self.zpos
-            )
+            self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
             self.updateXYZValues(emitsignal=True)
 
     def getTpos(self, event):
@@ -338,27 +312,21 @@ class xyztlocation(QtGui.QWidget):
         newxcoord = self.XCoordSpinBox.value()
         if self.xcoord != newxcoord:
             self.xcoord = newxcoord
-            self.xpos, self.ypos, self.zpos = self.real2vox(
-                self.xcoord, self.ycoord, self.zcoord
-            )
+            self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
             self.updateXYZValues(emitsignal=True)
 
     def getYcoord(self, event):
         newycoord = self.YCoordSpinBox.value()
         if self.ycoord != newycoord:
             self.ycoord = newycoord
-            self.xpos, self.ypos, self.zpos = self.real2vox(
-                self.xcoord, self.ycoord, self.zcoord
-            )
+            self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
             self.updateXYZValues(emitsignal=True)
 
     def getZcoord(self, event):
         newzcoord = self.ZCoordSpinBox.value()
         if self.zcoord != newzcoord:
             self.zcoord = newzcoord
-            self.xpos, self.ypos, self.zpos = self.real2vox(
-                self.xcoord, self.ycoord, self.zcoord
-            )
+            self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
             self.updateXYZValues(emitsignal=True)
 
     def getTcoord(self, event):
@@ -439,17 +407,11 @@ def updateDispLimits():
         overlays[currentdataset.focusmap].maxval,
     )
     ui.dispmin_doubleSpinBox.setSingleStep(
-        (
-            overlays[currentdataset.focusmap].maxval
-            - overlays[currentdataset.focusmap].minval
-        )
+        (overlays[currentdataset.focusmap].maxval - overlays[currentdataset.focusmap].minval)
         / 100.0
     )
     ui.dispmax_doubleSpinBox.setSingleStep(
-        (
-            overlays[currentdataset.focusmap].maxval
-            - overlays[currentdataset.focusmap].minval
-        )
+        (overlays[currentdataset.focusmap].maxval - overlays[currentdataset.focusmap].minval)
         / 100.0
     )
     ui.dispmin_doubleSpinBox.setValue(overlays[currentdataset.focusmap].dispmin)
@@ -466,12 +428,8 @@ def resetDispLimits():
 
 def resetDispSmart():
     global overlays, currentdataset
-    overlays[currentdataset.focusmap].dispmin = overlays[
-        currentdataset.focusmap
-    ].robustmin
-    overlays[currentdataset.focusmap].dispmax = overlays[
-        currentdataset.focusmap
-    ].robustmax
+    overlays[currentdataset.focusmap].dispmin = overlays[currentdataset.focusmap].robustmin
+    overlays[currentdataset.focusmap].dispmax = overlays[currentdataset.focusmap].robustmax
     updateDispLimits()
 
 
@@ -481,9 +439,7 @@ def updateSimilarityFunc():
     global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption, simfuncFitter
 
     if simfunc_ax is not None:
-        corrvals = overlays["corrout"].data[
-            currentloc.xpos, currentloc.ypos, currentloc.zpos, :
-        ]
+        corrvals = overlays["corrout"].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
         # fitvals = overlays['gaussout'].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
         peakmaxtime = overlays["lagtimes"].maskeddata[
             currentloc.xpos, currentloc.ypos, currentloc.zpos
@@ -504,10 +460,7 @@ def updateSimilarityFunc():
         # update the plot
         simfuncCurve.setData(timeaxis, corrvals)
         # simfuncfitCurve.setData(timeaxis, fitvals)
-        if (
-            overlays["corrout"].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos]
-            > 0
-        ):
+        if overlays["corrout"].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos] > 0:
             if (currentdataset.similaritymetric == "correlation") or (
                 currentdataset.similaritymetric == "hybrid"
             ):
@@ -518,17 +471,13 @@ def updateSimilarityFunc():
             peakmaxtime = float(
                 tide_util.valtoindex(
                     timeaxis,
-                    overlays["lagtimes"].data[
-                        currentloc.xpos, currentloc.ypos, currentloc.zpos
-                    ],
+                    overlays["lagtimes"].data[currentloc.xpos, currentloc.ypos, currentloc.zpos],
                 )
             )
             thefailreason = simfuncFitter.diagnosefail(np.uint32(failreason))
             print(thefailreason)
             thecaption = "No valid fit"
-        simfunc_ax.setYRange(
-            minval - 0.05 * valrange, maxval + 0.3 * valrange, padding=0
-        )
+        simfunc_ax.setYRange(minval - 0.05 * valrange, maxval + 0.3 * valrange, padding=0)
         simfuncCaption.setText(thecaption)
         print("current tpos:", currentloc.tpos)
         print("setting line location:", timeaxis[currentloc.tpos])
@@ -536,10 +485,7 @@ def updateSimilarityFunc():
         simfuncCurvePoint.setPos(
             float(tide_util.valtoindex(timeaxis, peakmaxtime)) / (len(timeaxis) - 1)
         )
-        if (
-            overlays["corrout"].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos]
-            > 0
-        ):
+        if overlays["corrout"].mask[currentloc.xpos, currentloc.ypos, currentloc.zpos] > 0:
             simfuncPeakMarker.setData(x=[peakmaxtime], y=[peakmaxval], symbol="d")
         else:
             simfuncPeakMarker.setData(x=[], y=[], symbol="d")
@@ -617,9 +563,7 @@ def updateRegressor():
             regressors[focusregressor].kurtosis_z,
             regressors[focusregressor].kurtosis_p,
         )
-        text = pg.TextItem(
-            text=thelabel, anchor=(0.0, 2.0), angle=0, fill=(0, 0, 0, 100)
-        )
+        text = pg.TextItem(text=thelabel, anchor=(0.0, 2.0), angle=0, fill=(0, 0, 0, 100))
         # regressor_ax.addItem(text)
 
 
@@ -667,8 +611,7 @@ def calcAtlasStats():
                     print("calculating stats for region", regnum + 1, "(", region, ")")
                     atlasstats[themap][region] = {}
                     maskedregion = np.where(
-                        (overlays["atlas"].data == (regnum + 1))
-                        & (overlays[themap].mask > 0)
+                        (overlays["atlas"].data == (regnum + 1)) & (overlays[themap].mask > 0)
                     )
                     atlasstats[themap][region]["mean"] = np.mean(
                         overlays[themap].data[maskedregion]
@@ -679,12 +622,8 @@ def calcAtlasStats():
                     atlasstats[themap][region]["robustmean"] = mad(
                         overlays[themap].data[maskedregion]
                     )
-                    atlasstats[themap][region]["std"] = np.std(
-                        overlays[themap].data[maskedregion]
-                    )
-                    atlasstats[themap][region]["MAD"] = mad(
-                        overlays[themap].data[maskedregion]
-                    )
+                    atlasstats[themap][region]["std"] = np.std(overlays[themap].data[maskedregion])
+                    atlasstats[themap][region]["MAD"] = mad(overlays[themap].data[maskedregion])
                 atlasstatmap = overlays[themap].duplicate(
                     themap + "_atlasstat", overlays[themap].label
                 )
@@ -704,9 +643,7 @@ def calcAtlasStats():
                     templist = []
                     for regnum, region in enumerate(currentdataset.atlaslabels):
                         templist.append(
-                            atlasstats[themap][currentdataset.atlaslabels[regnum]][
-                                thestat
-                            ]
+                            atlasstats[themap][currentdataset.atlaslabels[regnum]][thestat]
                         )
                     d[themap] = np.asarray(templist)
                     cols.append(themap)
@@ -763,9 +700,7 @@ def updateAveragingMode():
     if ("atlas" in overlays) and False:
         updateAtlasStats()
     if averagingmode is not None:
-        currentdataset.focusmap = (
-            currentdataset.focusmap.replace("_atlasstat", "") + "_atlasstat"
-        )
+        currentdataset.focusmap = currentdataset.focusmap.replace("_atlasstat", "") + "_atlasstat"
     else:
         currentdataset.focusmap = currentdataset.focusmap.replace("_atlasstat", "")
     resetDispLimits()
@@ -836,9 +771,7 @@ def transparency_checkbox_clicked():
         LUT_endalpha = 255
     print("LUT_endalpha=", LUT_endalpha)
     for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setLUT(
-            overlays[themap].lut_state, alpha=LUT_alpha, endalpha=LUT_endalpha
-        )
+        overlays[themap].setLUT(overlays[themap].lut_state, alpha=LUT_alpha, endalpha=LUT_endalpha)
         overlays[themap].gradient.restoreState(overlays[themap].lut_state)
         imageadj.restoreState(overlays[themap].lut_state)
     updateLUT()
@@ -1162,9 +1095,7 @@ def updateTFromControls():
 
 def updateXYZFromControls():
     global mainwin, currentloc
-    mainwin.setXYZpos(
-        currentloc.xpos, currentloc.ypos, currentloc.zpos, emitsignal=False
-    )
+    mainwin.setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos, emitsignal=False)
     updateUI(
         callingfunc="updateXYZFromControls",
         orthoimages=True,
@@ -1225,9 +1156,7 @@ def updateOrthoImages():
 
     for thismap in panetomap:
         if thismap != "":
-            orthoimages[thismap].setXYZpos(
-                currentloc.xpos, currentloc.ypos, currentloc.zpos
-            )
+            orthoimages[thismap].setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos)
             orthoimages[thismap].setTpos(currentloc.tpos)
     mainwin.setMap(overlays[currentdataset.focusmap])
     mainwin.setTpos(currentloc.tpos)
@@ -1250,9 +1179,7 @@ def printfocusvals():
         if key != "mnibrainmask":
             # print('key=', key)
             if overlays[key].report:
-                overlays[key].setXYZpos(
-                    currentloc.xpos, currentloc.ypos, currentloc.zpos
-                )
+                overlays[key].setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos)
                 overlays[key].setTpos(currentloc.tpos)
                 focusval = overlays[key].getFocusVal()
                 if key != "atlas":
@@ -1871,8 +1798,7 @@ def main():
         timeaxis = (
             np.linspace(
                 0.0,
-                overlays[currentdataset.focusmap].tdim
-                * overlays[currentdataset.focusmap].tr,
+                overlays[currentdataset.focusmap].tdim * overlays[currentdataset.focusmap].tr,
                 num=overlays[currentdataset.focusmap].tdim,
                 endpoint=False,
             )

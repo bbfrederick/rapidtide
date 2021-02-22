@@ -49,11 +49,7 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
     )
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / samplerate
-    xcorr_x = (
-        np.r_[0.0:xcorrlen] * sampletime
-        - (xcorrlen * sampletime) / 2.0
-        + sampletime / 2.0
-    )
+    xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     searchrange = 5.0
     trimstart = tide_util.valtoindex(xcorr_x, -2.0 * searchrange)
     trimend = tide_util.valtoindex(xcorr_x, 2.0 * searchrange)
@@ -94,9 +90,7 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
 
 
 def usage():
-    print(
-        "usage: applydlfilter inputfile outputfile [--model=MODELROOT] [--filesarelists]"
-    )
+    print("usage: applydlfilter inputfile outputfile [--model=MODELROOT] [--filesarelists]")
     print("")
     print("required arguments:")
     print(
@@ -106,9 +100,7 @@ def usage():
     print("")
     print("optional arguments:")
     print("	--model=MODELROOT         - use model named MODELROOT (default is model)")
-    print(
-        "	--filesarelists           - input files contain lists of filenames, rather than data"
-    )
+    print("	--filesarelists           - input files contain lists of filenames, rather than data")
     print("	--nodisplay               - disables display")
 
 
@@ -213,9 +205,7 @@ def main():
             print("writing to", predfilenamelist[idx])
         tide_io.writevec(predicteddata, predfilenamelist[idx])
 
-        maxval, maxdelay, failreason = checkcardmatch(
-            fmridata, predicteddata, 25.0, debug=False
-        )
+        maxval, maxdelay, failreason = checkcardmatch(fmridata, predicteddata, 25.0, debug=False)
         print(fmrifilename, "max correlation input to output:", maxval)
 
         if display:

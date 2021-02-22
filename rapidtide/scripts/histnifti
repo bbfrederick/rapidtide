@@ -32,9 +32,7 @@ def progressbar(thisval, end_val, label="Percent", barsize=60):
     percent = float(thisval) / end_val
     hashes = "#" * int(round(percent * barsize))
     spaces = " " * (barsize - len(hashes))
-    sys.stdout.write(
-        "\r{0}: [{1}] {2:.3f}%".format(label, hashes + spaces, 100.0 * percent)
-    )
+    sys.stdout.write("\r{0}: [{1}] {2:.3f}%".format(label, hashes + spaces, 100.0 * percent))
     sys.stdout.flush()
 
 
@@ -82,9 +80,7 @@ def main():
 
     # load the data
     print("loading data")
-    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(
-        args.inputfile
-    )
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
     xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
     Fs = 1.0 / tr
@@ -103,11 +99,7 @@ def main():
             themasksizes,
         ) = tide_io.readfromnifti(args.maskfile)
         if not tide_io.checkspacematch(mask_hdr, input_hdr):
-            print(
-                "Dimensions of "
-                + args.maskfile
-                + " mask do not match the input data - exiting"
-            )
+            print("Dimensions of " + args.maskfile + " mask do not match the input data - exiting")
             sys.exit()
 
     numspatiallocs = int(xsize) * int(ysize) * int(numslices)

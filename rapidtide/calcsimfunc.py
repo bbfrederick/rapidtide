@@ -52,9 +52,7 @@ def _procOneVoxelCorrelation(
     rt_floattype="float64",
 ):
     if oversampfactor >= 1:
-        thetc[:] = tide_resample.doresample(
-            fmri_x, fmritc, os_fmri_x, method=interptype
-        )
+        thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
     else:
         thetc[:] = fmritc
     thexcorr_y, thexcorr_x, theglobalmax = thecorrelator.run(thetc)

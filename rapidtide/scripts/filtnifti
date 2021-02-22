@@ -36,12 +36,8 @@ def main():
         description="Temporally filters a nifti file.",
         usage="%(prog)s inputfile outputname lpfreq hpfreq",
     )
-    parser.add_argument(
-        "inputfilename", type=str, help="The name of the input nifti file."
-    )
-    parser.add_argument(
-        "outputfilename", type=str, help="The name of the output nifti file."
-    )
+    parser.add_argument("inputfilename", type=str, help="The name of the input nifti file.")
+    parser.add_argument("outputfilename", type=str, help="The name of the output nifti file.")
     parser.add_argument(
         "lowestfreq",
         type=float,
@@ -74,13 +70,9 @@ def main():
         print("disabling lowpass filter")
 
     if ftype == "bandpass":
-        print(
-            "passing frequencies between ", args.lowestfreq, " and ", args.highestfreq
-        )
+        print("passing frequencies between ", args.lowestfreq, " and ", args.highestfreq)
 
-    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(
-        args.inputfilename
-    )
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfilename)
     if input_hdr.get_xyzt_units()[1] == "msec":
         tr = thesizes[4] / 1000.0
     else:
@@ -95,9 +87,7 @@ def main():
     print("now cycling over all voxels")
     theprefilter = tide_filt.noncausalfilter()
     theprefilter.settype("arb")
-    theprefilter.setfreqs(
-        args.lowestfreq, args.lowestfreq, args.highestfreq, args.highestfreq
-    )
+    theprefilter.setfreqs(args.lowestfreq, args.lowestfreq, args.highestfreq, args.highestfreq)
 
     for zloc in range(numslices):
         print("processing slice ", zloc)

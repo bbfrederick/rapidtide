@@ -103,12 +103,8 @@ def usage(inputargs):
     print(
         "    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)"
     )
-    print(
-        "    --cepstral         - check time delay using Choudhary's cepstral technique "
-    )
-    print(
-        "    --phat             - perform phase alignment transform (PHAT) rather than "
-    )
+    print("    --cepstral         - check time delay using Choudhary's cepstral technique ")
+    print("    --phat             - perform phase alignment transform (PHAT) rather than ")
     print("                         standard crosscorrelation")
     print(
         "    --liang            - perform phase alignment transform with Liang weighting function rather than "
@@ -119,21 +115,13 @@ def usage(inputargs):
     )
     print("                         standard crosscorrelation")
     print("    -l LABEL           - label for the delay value")
-    print(
-        "    -s STARTTIME       - time of first datapoint to use in seconds in the first file"
-    )
+    print("    -s STARTTIME       - time of first datapoint to use in seconds in the first file")
     print("    -D DURATION        - amount of data to use in seconds")
-    print(
-        "    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is "
-    )
+    print("    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is ")
     print("                         +/-15)")
     print("    -d                 - turns off display of graph")
-    print(
-        "    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ."
-    )
-    print(
-        "                         LOWERSTOP and UPPERSTOP can be specified, or will be "
-    )
+    print("    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ.")
+    print("                         LOWERSTOP and UPPERSTOP can be specified, or will be ")
     print("                         calculated automatically")
     print("    -V                 - filter data and regressors to VLF band")
     print("    -L                 - filter data and regressors to LFO band")
@@ -142,21 +130,13 @@ def usage(inputargs):
     print("    -T                 - trim data to match")
 
     print("    -A                 - print data on a single summary line")
-    print(
-        "    -a                 - if summary mode is on, add a header line showing what values "
-    )
+    print("    -a                 - if summary mode is on, add a header line showing what values ")
     print("                         mean")
     print("    -f                 - negate (flip) second regressor")
-    print(
-        "    -savecorr=FILE     - Save the correlation function to the file FILE in xy format"
-    )
-    print(
-        "    -z FILENAME        - use the columns of FILENAME as controlling variables and "
-    )
+    print("    -savecorr=FILE     - Save the correlation function to the file FILE in xy format")
+    print("    -z FILENAME        - use the columns of FILENAME as controlling variables and ")
     print("                         return the partial correlation")
-    print(
-        "    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS "
-    )
+    print("    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS ")
     print("                         repetition")
     print("    -o OUTPUTFILE      - Writes summary lines to OUTPUTFILE (sets -A)")
     print("")
@@ -169,9 +149,7 @@ def _get_parser():
     """
     parser = argparse.ArgumentParser(
         prog="showxcorrx",
-        description=(
-            "Calculate and display " "crosscorrelation between two " "timeseries."
-        ),
+        description=("Calculate and display " "crosscorrelation between two " "timeseries."),
         usage="%(prog)s infile1 infile2 samplerate [options]",
     )
 
@@ -412,9 +390,7 @@ def main():
     endpoint1 = np.min([int(args.endpoint / Fs), int(len(inputdata1))])
     if args.debug:
         print("endpoint set to ", endpoint1)
-    endpoint2 = np.min(
-        [int(args.endpoint / Fs), int(len(inputdata1)), int(len(inputdata2))]
-    )
+    endpoint2 = np.min([int(args.endpoint / Fs), int(len(inputdata1)), int(len(inputdata2))])
     trimdata1 = inputdata1[startpoint1:endpoint1]
     trimdata2 = inputdata2[0:endpoint2]
 
@@ -488,16 +464,12 @@ def main():
     if dumpfiltered:
         tide_io.writenpvecs(thecorrelator.preptesttc, "correlator_filtereddata1.txt")
         tide_io.writenpvecs(thecorrelator.prepreftc, "correlator_filtereddata2.txt")
-    thecorrelator.setlimits(
-        int((-args.lagmin * Fs) - 0.5), int((args.lagmax * Fs) + 0.5)
-    )
+    thecorrelator.setlimits(int((-args.lagmin * Fs) - 0.5), int((args.lagmax * Fs) + 0.5))
     thexcorr_trim, xcorr_x_trim, dummy = thecorrelator.getfunction(trim=True)
     print("trimmed correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
     # calculate the MI
-    theMI, MI_x, globalmax = themutualinformationator.run(
-        trimdata1, trim=False, gettimeaxis=True
-    )
+    theMI, MI_x, globalmax = themutualinformationator.run(trimdata1, trim=False, gettimeaxis=True)
     print("mutualinformationator lengths (x, y):", len(MI_x), len(theMI))
     if dumpfiltered:
         tide_io.writenpvecs(themutualinformationator.preptesttc, "MI_filtereddata1.txt")
@@ -506,17 +478,13 @@ def main():
         int((-args.lagmin * Fs) - 0.5), int((args.lagmax * Fs) + 0.5)
     )
     theMI_trim, MI_x_trim, globalmax = themutualinformationator.getfunction(trim=True)
-    print(
-        "trimmed mutualinformationator lengths (x, y):", len(MI_x_trim), len(theMI_trim)
-    )
+    print("trimmed mutualinformationator lengths (x, y):", len(MI_x_trim), len(theMI_trim))
 
     if args.cepstral:
         cepdelay = tide_corr.cepstraldelay(
             filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display
         )
-        cepcoff = tide_corr.delayedcorr(
-            filtereddata1, filtereddata2, cepdelay, 1.0 / Fs
-        )
+        cepcoff = tide_corr.delayedcorr(filtereddata1, filtereddata2, cepdelay, 1.0 / Fs)
         print("cepstral delay time is", cepdelay, ", correlation is", cepcoff)
     thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
@@ -799,9 +767,7 @@ def main():
                         "):\t",
                         pcts[idx],
                     )
-            print(
-                infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]"
-            )
+            print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
 
     if args.display:
         fig = figure()

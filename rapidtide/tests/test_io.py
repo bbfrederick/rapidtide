@@ -56,14 +56,10 @@ def test_io(debug=True, display=False):
 
     # test fmritimeinfo
     fmritimeinfothresh = 1e-2
-    tr, timepoints = tide_io.fmritimeinfo(
-        os.path.join(get_examples_path(), "happyfmri.nii.gz")
-    )
+    tr, timepoints = tide_io.fmritimeinfo(os.path.join(get_examples_path(), "happyfmri.nii.gz"))
     assert np.fabs(tr - 1.16) < fmritimeinfothresh
     assert timepoints == 110
-    tr, timepoints = tide_io.fmritimeinfo(
-        os.path.join(get_examples_path(), "fmri.nii.gz")
-    )
+    tr, timepoints = tide_io.fmritimeinfo(os.path.join(get_examples_path(), "fmri.nii.gz"))
     assert np.fabs(tr - 1.5) < fmritimeinfothresh
     assert timepoints == 260
 

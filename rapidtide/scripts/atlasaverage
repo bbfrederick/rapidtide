@@ -23,10 +23,8 @@
 from __future__ import print_function
 import sys
 import getopt
-import string
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
-from sklearn.cluster import KMeans, MiniBatchKMeans
 
 import numpy as np
 
@@ -66,27 +64,17 @@ def usage():
     print("")
     print("optional arguments:")
     print("    --nonorm         - don't normalize timecourses (default)")
-    print(
-        "    --pctnorm        - scale each timecourse to it's percentage of the mean over time"
-    )
-    print(
-        "    --varnorm        - scale each timecourse to have a variance over time of 1.0"
-    )
+    print("    --pctnorm        - scale each timecourse to it's percentage of the mean over time")
+    print("    --varnorm        - scale each timecourse to have a variance over time of 1.0")
     print(
         "    --stdnorm        - scale each timecourse to have a standard deviation over time of 1.0"
     )
     print(
         "    --ppnorm         - scale each timecourse to have a peak to peak range over time of 1.0"
     )
-    print(
-        "    --mean           - calculate the mean over each spatial region (default)"
-    )
-    print(
-        "    --nzmean         - calculate the mean over nonzero values in each spatial region"
-    )
-    print(
-        "    --mad            - calculate the median average deviate over each spatial region"
-    )
+    print("    --mean           - calculate the mean over each spatial region (default)")
+    print("    --nzmean         - calculate the mean over nonzero values in each spatial region")
+    print("    --mad            - calculate the median average deviate over each spatial region")
     print(
         "    --nzmad          - calculate the median average deviate over nonzero values in each spatial region"
     )
@@ -150,9 +138,7 @@ def main():
         print("will normalize timecourses to p-p deviation of 1.0")
 
     print("loading fmri data")
-    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(
-        inputfilename
-    )
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
     print("loading template data")
     (
         template_img,
@@ -195,9 +181,7 @@ def main():
             else:
                 regiontimecourse = timecourses[0, :] * 0.0
             if normmethod == "None":
-                timecourses[theregion - 1, :] = regiontimecourse - np.mean(
-                    regiontimecourse
-                )
+                timecourses[theregion - 1, :] = regiontimecourse - np.mean(regiontimecourse)
             elif normmethod == "pctnorm":
                 timecourses[theregion - 1, :] = tide_math.pcnormalize(regiontimecourse)
             elif normmethod == "varnorm":

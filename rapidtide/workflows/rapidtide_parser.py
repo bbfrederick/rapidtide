@@ -343,8 +343,7 @@ def _get_parser():
         dest="mot_deriv",
         action="store_false",
         help=(
-            "Toggle whether derivatives will be used in motion regression.  "
-            "Default is True. "
+            "Toggle whether derivatives will be used in motion regression.  " "Default is True. "
         ),
         default=True,
     )
@@ -406,9 +405,7 @@ def _get_parser():
         "--nothresh",
         dest="nothresh",
         action="store_true",
-        help=(
-            "Disable voxel intensity threshold (especially useful for NIRS " "data)."
-        ),
+        help=("Disable voxel intensity threshold (especially useful for NIRS " "data)."),
         default=False,
     )
 
@@ -554,9 +551,7 @@ def _get_parser():
         action="store",
         type=float,
         metavar="DELAYTIME",
-        help=(
-            "Don't fit the delay time - set it to DELAYTIME seconds for all " "voxels."
-        ),
+        help=("Don't fit the delay time - set it to DELAYTIME seconds for all " "voxels."),
         default=None,
     )
     fixdelay.add_argument(
@@ -578,10 +573,7 @@ def _get_parser():
         action="store",
         type=float,
         metavar="SIGMALIMIT",
-        help=(
-            "Reject lag fits with linewidth wider than "
-            "SIGMALIMIT Hz. Default is 100.0."
-        ),
+        help=("Reject lag fits with linewidth wider than " "SIGMALIMIT Hz. Default is 100.0."),
         default=100.0,
     )
     corr_fit.add_argument(
@@ -632,8 +624,7 @@ def _get_parser():
         type=float,
         metavar="VAL",
         help=(
-            "Refit correlation if median discontinuity "
-            "magnitude exceeds VAL (default is 5.0s)."
+            "Refit correlation if median discontinuity " "magnitude exceeds VAL (default is 5.0s)."
         ),
         default=5.0,
     )
@@ -701,10 +692,7 @@ def _get_parser():
         action="store",
         metavar="MIN",
         type=float,
-        help=(
-            "For refinement, exclude voxels with delays "
-            "less than MIN (default is 0.25s). "
-        ),
+        help=("For refinement, exclude voxels with delays " "less than MIN (default is 0.25s). "),
         default=0.5,
     )
     reg_ref.add_argument(
@@ -713,10 +701,7 @@ def _get_parser():
         action="store",
         metavar="MAX",
         type=float,
-        help=(
-            "For refinement, exclude voxels with delays "
-            "greater than MAX (default is 5s). "
-        ),
+        help=("For refinement, exclude voxels with delays " "greater than MAX (default is 5s). "),
         default=5.0,
     )
     reg_ref.add_argument(
@@ -757,10 +742,7 @@ def _get_parser():
         "--psdfilter",
         dest="psdfilter",
         action="store_true",
-        help=(
-            "Apply a PSD weighted Wiener filter to "
-            "shifted timecourses prior to refinement."
-        ),
+        help=("Apply a PSD weighted Wiener filter to " "shifted timecourses prior to refinement."),
         default=False,
     )
     reg_ref.add_argument(
@@ -924,9 +906,7 @@ def _get_parser():
         "--calccoherence",
         dest="calccoherence",
         action="store_true",
-        help=(
-            "Calculate and save the coherence between the final regressor and the data."
-        ),
+        help=("Calculate and save the coherence between the final regressor and the data."),
         default=False,
     )
 
@@ -936,10 +916,7 @@ def _get_parser():
         "--noprogressbar",
         dest="showprogressbar",
         action="store_false",
-        help=(
-            "Will disable showing progress bars (helpful if stdout is going "
-            "to a file)."
-        ),
+        help=("Will disable showing progress bars (helpful if stdout is going " "to a file)."),
         default=True,
     )
     misc.add_argument(
@@ -1014,10 +991,7 @@ def _get_parser():
         "--memprofile",
         dest="memprofile",
         action="store_true",
-        help=(
-            "Enable memory profiling for debugging - "
-            "warning: this slows things down a lot."
-        ),
+        help=("Enable memory profiling for debugging - " "warning: this slows things down a lot."),
         default=False,
     )
     misc.add_argument(
@@ -1026,9 +1000,7 @@ def _get_parser():
         action="store",
         type=int,
         metavar="MKLTHREADS",
-        help=(
-            "Use no more than MKLTHREADS worker threads in accelerated numpy " "calls."
-        ),
+        help=("Use no more than MKLTHREADS worker threads in accelerated numpy " "calls."),
         default=1,
     )
     misc.add_argument(
@@ -1081,10 +1053,7 @@ def _get_parser():
         "--respdelete",
         dest="respdelete",
         action="store_true",
-        help=(
-            "Attempt to detect and remove respiratory signal that strays into "
-            "the LFO band."
-        ),
+        help=("Attempt to detect and remove respiratory signal that strays into " "the LFO band."),
         default=False,
     )
     experimental.add_argument(
@@ -1093,10 +1062,7 @@ def _get_parser():
         action="store",
         metavar="HPFREQ",
         type=float,
-        help=(
-            "High pass filter the correlation function to get rid of baseline "
-            "problems."
-        ),
+        help=("High pass filter the correlation function to get rid of baseline " "problems."),
         default=None,
     )
     experimental.add_argument(
@@ -1114,20 +1080,14 @@ def _get_parser():
         "--dispersioncalc",
         dest="dodispersioncalc",
         action="store_true",
-        help=(
-            "Generate extra data during refinement to "
-            "allow calculation of dispersion."
-        ),
+        help=("Generate extra data during refinement to " "allow calculation of dispersion."),
         default=False,
     )
     experimental.add_argument(
         "--acfix",
         dest="fix_autocorrelation",
         action="store_true",
-        help=(
-            "Perform a secondary correlation to "
-            "disambiguate peak location. Experimental."
-        ),
+        help=("Perform a secondary correlation to " "disambiguate peak location. Experimental."),
         default=False,
     )
     experimental.add_argument(
@@ -1244,9 +1204,7 @@ def process_args(inputargs=None):
         else:
             suffix = ""
         formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
-    tide_io.writevec(
-        formattedcommandline, args["outputname"] + "_formattedcommandline.txt"
-    )
+    tide_io.writevec(formattedcommandline, args["outputname"] + "_formattedcommandline.txt")
 
     LGR.debug("\nbefore postprocessing:\n{}".format(args))
 
@@ -1400,8 +1358,7 @@ def process_args(inputargs=None):
 
     if args["in_file"].endswith("txt") and args["realtr"] == "auto":
         raise ValueError(
-            "Either --datatstep or --datafreq must be provided "
-            "if data file is a text file."
+            "Either --datatstep or --datafreq must be provided " "if data file is a text file."
         )
 
     if args["realtr"] != "auto":
@@ -1418,10 +1375,7 @@ def process_args(inputargs=None):
 
     # mask processing
     if args["corrmaskincludespec"] is not None:
-        (
-            args["corrmaskincludename"],
-            args["corrmaskincludevals"],
-        ) = tide_io.processnamespec(
+        (args["corrmaskincludename"], args["corrmaskincludevals"],) = tide_io.processnamespec(
             args["corrmaskincludespec"],
             "Including voxels where ",
             "in correlation calculations.",
@@ -1430,20 +1384,14 @@ def process_args(inputargs=None):
         args["corrmaskincludename"] = None
 
     if args["globalmeanincludespec"] is not None:
-        (
-            args["globalmeanincludename"],
-            args["globalmeanincludevals"],
-        ) = tide_io.processnamespec(
+        (args["globalmeanincludename"], args["globalmeanincludevals"],) = tide_io.processnamespec(
             args["globalmeanincludespec"], "Including voxels where ", "in global mean."
         )
     else:
         args["globalmeanincludename"] = None
 
     if args["globalmeanexcludespec"] is not None:
-        (
-            args["globalmeanexcludename"],
-            args["globalmeanexcludevals"],
-        ) = tide_io.processnamespec(
+        (args["globalmeanexcludename"], args["globalmeanexcludevals"],) = tide_io.processnamespec(
             args["globalmeanexcludespec"],
             "Excluding voxels where ",
             "from global mean.",
@@ -1452,20 +1400,14 @@ def process_args(inputargs=None):
         args["globalmeanexcludename"] = None
 
     if args["refineincludespec"] is not None:
-        (
-            args["refineincludename"],
-            args["refineincludevals"],
-        ) = tide_io.processnamespec(
+        (args["refineincludename"], args["refineincludevals"],) = tide_io.processnamespec(
             args["refineincludespec"], "Including voxels where ", "in refinement."
         )
     else:
         args["refineincludename"] = None
 
     if args["refineexcludespec"] is not None:
-        (
-            args["refineexcludename"],
-            args["refineexcludevals"],
-        ) = tide_io.processnamespec(
+        (args["refineexcludename"], args["refineexcludevals"],) = tide_io.processnamespec(
             args["refineexcludespec"], "Excluding voxels where ", "from refinement."
         )
     else:

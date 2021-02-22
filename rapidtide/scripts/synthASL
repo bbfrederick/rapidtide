@@ -26,9 +26,7 @@ import argparse
 import numpy as np
 
 
-def calcASL(
-    lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, bloodT1=1.841
-):
+def calcASL(lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, bloodT1=1.841):
     theaslimage = lags * 0.0
 
     # convert rapidtide delays to time from tagging, and only keep positive delays after pld
@@ -51,9 +49,7 @@ def main():
         usage="%(prog)s dataset outputfilename tagoffset windowstart bloodT1",
     )
     parser.add_argument("dataset", type=str, help="The name of the rapidtide dataset.")
-    parser.add_argument(
-        "outputfilename", type=str, help="The name of the output nifti file."
-    )
+    parser.add_argument("outputfilename", type=str, help="The name of the output nifti file.")
 
     # optional parameters
     parser.add_argument(

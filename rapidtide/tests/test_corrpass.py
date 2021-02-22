@@ -72,9 +72,7 @@ def test_calcsimfunc(debug=False, display=False):
     shiftend = 5.0
     voxelshifts = np.linspace(shiftstart, shiftend, numvoxels, endpoint=False)
     for i in range(numvoxels):
-        theinputdata[i, :] = np.sin(
-            2.0 * np.pi * testfreq * (init_fmri_x - voxelshifts[i])
-        )
+        theinputdata[i, :] = np.sin(2.0 * np.pi * testfreq * (init_fmri_x - voxelshifts[i]))
 
     if display:
         plt.figure()

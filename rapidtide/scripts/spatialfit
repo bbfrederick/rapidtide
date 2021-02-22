@@ -35,9 +35,7 @@ def usage():
     print("")
     print("required arguments:")
     print("	datafile	- the name of the 3 or 4 dimensional nifti file to fit")
-    print(
-        "	templatefile	- the name of the 3 dimensional nifti file to use as a template"
-    )
+    print("	templatefile	- the name of the 3 dimensional nifti file to use as a template")
     print("	outputroot	- the root name of the output nifti files")
     print("")
     print("optional arguments:")
@@ -58,9 +56,7 @@ def main():
 
     # parse command line arguments
     try:
-        opts, args = getopt.gnu_getopt(
-            sys.argv, "h", ["help", "dmask=", "tmask=", "order="]
-        )
+        opts, args = getopt.gnu_getopt(sys.argv, "h", ["help", "dmask=", "tmask=", "order="])
     except getopt.GetoptError as err:
         # print(help information and exit:
         print(str(err))  # will print something like "option -a not recognized"
@@ -205,17 +201,12 @@ def main():
         lincoffs[thetime] = thefit[0, 1]
         offsets[thetime] = thefit[0, 0]
         rvals[thetime] = R
-        fitdata[:, thetime] = (
-            lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
-        )
+        fitdata[:, thetime] = lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
         newtemplate += (
-            np.nan_to_num(maskeddata[:, thetime] / lincoffs[thetime])
-            * rs_datamask[:, thetime]
+            np.nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask[:, thetime]
         )
         newmask += rs_datamask[:, thetime] * bin_templatemask
-        normalized[:, thetime] = (
-            rs_datafile[:, thetime] - offsets[thetime]
-        ) / lincoffs[thetime]
+        normalized[:, thetime] = (rs_datafile[:, thetime] - offsets[thetime]) / lincoffs[thetime]
     residuals = rs_datafile - fitdata
 
     # write out the data files

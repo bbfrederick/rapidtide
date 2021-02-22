@@ -62,9 +62,7 @@ def _get_parser():
         type=lambda x: is_valid_file(parser, x),
         help="The name of the 3D nifti template mask (must match datafile).",
     )
-    parser.add_argument(
-        "outputroot", type=str, help="The root name for all output files."
-    )
+    parser.add_argument("outputroot", type=str, help="The root name for all output files.")
     parser.add_argument(
         "--regionatlas",
         metavar="ATLASFILE",
@@ -207,9 +205,7 @@ def linfit(
         print("making region masks")
         regionvoxels = np.zeros((numspatiallocs, numregions), dtype="float")
         for region in range(0, numregions):
-            thisregion = np.where(
-                (rs_regionatlas * rs_templatemask_bin) == (region + 1)
-            )
+            thisregion = np.where((rs_regionatlas * rs_templatemask_bin) == (region + 1))
             regionvoxels[thisregion, region] = 1.0
 
     # mask everything
@@ -250,10 +246,8 @@ def linfit(
                 if order == 2:
                     sqrcoffs[region, thetime] = thefit[0, 2]
                     fitdata[voxelstoreconstruct, thetime] += (
-                        sqrcoffs[region, thetime]
-                        * np.square(rs_templatefile[voxelstoreconstruct])
-                        + lincoffs[region, thetime]
-                        * rs_templatefile[voxelstoreconstruct]
+                        sqrcoffs[region, thetime] * np.square(rs_templatefile[voxelstoreconstruct])
+                        + lincoffs[region, thetime] * rs_templatefile[voxelstoreconstruct]
                         + offsets[region, thetime]
                     )
                 else:
@@ -273,8 +267,7 @@ def linfit(
             offsets[thetime] = thefit[0, 0]
             rvals[thetime] = R
             fitdata[voxelstoreconstruct, thetime] = (
-                lincoffs[thetime] * rs_templatefile[voxelstoreconstruct]
-                + offsets[thetime]
+                lincoffs[thetime] * rs_templatefile[voxelstoreconstruct] + offsets[thetime]
             )
             # if datamask3d:
             #    newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask

@@ -56,9 +56,7 @@ def _procOneVoxelPeaks(
 ):
 
     if oversampfactor >= 1:
-        thetc[:] = tide_resample.doresample(
-            fmri_x, fmritc, os_fmri_x, method=interptype
-        )
+        thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
     else:
         thetc[:] = fmritc
     thepeaks = tide_fit.getpeaks(xcorr_x, thexcorr, bipolar=bipolar, display=False)

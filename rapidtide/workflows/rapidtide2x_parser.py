@@ -142,9 +142,7 @@ def usage():
     )
     print("")
     print("Required arguments:")
-    print(
-        "    datafilename               - The input data file (BOLD fmri file or NIRS)"
-    )
+    print("    datafilename               - The input data file (BOLD fmri file or NIRS)")
     print("    outputname                 - The root name for the output files")
     print("")
     print("Optional arguments:")
@@ -175,9 +173,7 @@ def usage():
     print(
         "    -t TSTEP,                      - Set the timestep of the data file to TSTEP (or 1/FREQ)"
     )
-    print(
-        "      --datatstep=TSTEP,             This will override the TR in an fMRI file."
-    )
+    print("      --datatstep=TSTEP,             This will override the TR in an fMRI file.")
     print(
         "      --datafreq=FREQ                NOTE: if using data from a text file, for example with"
     )
@@ -194,12 +190,8 @@ def usage():
     print(
         "    -i                             - Use specified interpolation type (options are 'cubic',"
     )
-    print(
-        "                                     'quadratic', and 'univariate (default)')"
-    )
-    print(
-        "    -o                             - Apply an offset OFFSETTIME to the lag regressors"
-    )
+    print("                                     'quadratic', and 'univariate (default)')")
+    print("    -o                             - Apply an offset OFFSETTIME to the lag regressors")
     print(
         "    --autosync                     - Calculate and apply offset time of an external regressor from "
     )
@@ -220,12 +212,8 @@ def usage():
     print("                                     calculated automatically")
     print("    -V                             - Filter data and regressors to VLF band")
     print("    -L                             - Filter data and regressors to LFO band")
-    print(
-        "    -R                             - Filter data and regressors to respiratory band"
-    )
-    print(
-        "    -C                             - Filter data and regressors to cardiac band"
-    )
+    print("    -R                             - Filter data and regressors to respiratory band")
+    print("    -C                             - Filter data and regressors to cardiac band")
     print(
         "    --padseconds=SECONDS           - Set the filter pad time to SECONDS seconds.  Default"
     )
@@ -252,9 +240,7 @@ def usage():
     print(
         "    --windowfunc=FUNC              - Use FUNC window funcion prior to correlation.  Options are"
     )
-    print(
-        "                                     hamming (default), hann, blackmanharris, and None"
-    )
+    print("                                     hamming (default), hann, blackmanharris, and None")
     print("    --nowindow                     - Disable precorrelation windowing")
     print(
         "    -f GAUSSSIGMA                  - Spatially filter fMRI data prior to analysis using "
@@ -291,12 +277,8 @@ def usage():
         "                                     have done your preprocessing in FSL and set dummypoints to a "
     )
     print("                                     nonzero value.) Default is 0.")
-    print(
-        "    --timerange=START,END          - Limit analysis to data between timepoints START "
-    )
-    print(
-        "                                     and END in the fmri file. If END is set to -1, "
-    )
+    print("    --timerange=START,END          - Limit analysis to data between timepoints START ")
+    print("                                     and END in the fmri file. If END is set to -1, ")
     print(
         "                                     analysis will go to the last timepoint.  Negative values "
     )
@@ -325,9 +307,7 @@ def usage():
     print(
         "                                     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9"
     )
-    print(
-        "                                     for X, Y, Z, RotX, RotY, RotZ, respectively"
-    )
+    print("                                     for X, Y, Z, RotX, RotY, RotZ, respectively")
     print(
         "    --motpos                       - Toggle whether displacement regressors will be used in motion regression."
     )
@@ -348,12 +328,8 @@ def usage():
     print(
         "                                     factor.  Setting to -1 chooses the factor automatically (default)"
     )
-    print(
-        "    --regressor=FILENAME           - Read probe regressor from file FILENAME (if none "
-    )
-    print(
-        "                                     specified, generate and use global regressor)"
-    )
+    print("    --regressor=FILENAME           - Read probe regressor from file FILENAME (if none ")
+    print("                                     specified, generate and use global regressor)")
     print(
         "    --regressorfreq=FREQ           - Probe regressor in file has sample frequency FREQ "
     )
@@ -371,30 +347,22 @@ def usage():
     print(
         "    --regressorstart=START         - The time delay in seconds into the regressor file, corresponding"
     )
-    print(
-        "                                     in the first TR of the fmri file (default is 0.0)"
-    )
+    print("                                     in the first TR of the fmri file (default is 0.0)")
     print(
         "    --phat                         - Use generalized cross-correlation with phase alignment "
     )
-    print(
-        "                                     transform (PHAT) instead of correlation"
-    )
+    print("                                     transform (PHAT) instead of correlation")
     print(
         "    --liang                        - Use generalized cross-correlation with Liang weighting function"
     )
-    print(
-        "                                     (Liang, et al, doi:10.1109/IMCCC.2015.283)"
-    )
+    print("                                     (Liang, et al, doi:10.1109/IMCCC.2015.283)")
     print(
         "    --eckart                       - Use generalized cross-correlation with Eckart weighting function"
     )
     print(
         "    --corrmaskthresh=PCT           - Do correlations in voxels where the mean exceeeds this "
     )
-    print(
-        "                                     percentage of the robust max (default is 1.0)"
-    )
+    print("                                     percentage of the robust max (default is 1.0)")
     print(
         "    --corrmask=MASK                - Only do correlations in voxels in MASK (if set, corrmaskthresh"
     )
@@ -417,9 +385,7 @@ def usage():
     print(
         "    -B                             - Bipolar mode - match peak correlation ignoring sign"
     )
-    print(
-        "    --nofitfilt                    - Do not zero out peak fit values if fit fails"
-    )
+    print("    --nofitfilt                    - Do not zero out peak fit values if fit fails")
     print(
         "    --searchfrac=FRAC              - When peak fitting, include points with amplitude > FRAC * the"
     )
@@ -451,20 +417,12 @@ def usage():
     print(
         "    --refineprenorm=TYPE           - Apply TYPE prenormalization to each timecourse prior "
     )
-    print(
-        "                                     to refinement (valid weightings are 'None', "
-    )
+    print("                                     to refinement (valid weightings are 'None', ")
     print("                                     'mean' (default), 'var', and 'std'")
-    print(
-        "    --refineweighting=TYPE         - Apply TYPE weighting to each timecourse prior "
-    )
-    print(
-        "                                     to refinement (valid weightings are 'None', "
-    )
+    print("    --refineweighting=TYPE         - Apply TYPE weighting to each timecourse prior ")
+    print("                                     to refinement (valid weightings are 'None', ")
     print("                                     'R', 'R2' (default)")
-    print(
-        "    --passes=PASSES,               - Set the number of processing passes to PASSES "
-    )
+    print("    --passes=PASSES,               - Set the number of processing passes to PASSES ")
     print("     --refinepasses=PASSES           (default is 1 pass - no refinement).")
     print(
         "                                     NB: refinepasses is the wrong name for this option -"
@@ -484,17 +442,13 @@ def usage():
     print(
         "                                     given, only voxels with integral values listed in VALSPEC are used.)"
     )
-    print(
-        "    --lagminthresh=MIN             - For refinement, exclude voxels with delays less "
-    )
+    print("    --lagminthresh=MIN             - For refinement, exclude voxels with delays less ")
     print("                                     than MIN (default is 0.5s)")
     print(
         "    --lagmaxthresh=MAX             - For refinement, exclude voxels with delays greater "
     )
     print("                                     than MAX (default is 5s)")
-    print(
-        "    --ampthresh=AMP                - For refinement, exclude voxels with correlation "
-    )
+    print("    --ampthresh=AMP                - For refinement, exclude voxels with correlation ")
     print(
         "                                     coefficients less than AMP (default is 0.3).  NOTE: ampthresh will"
     )
@@ -520,31 +474,19 @@ def usage():
         "    --pickleftthresh=THRESH        - Set the threshold value (fraction of maximum) to decide something is a "
     )
     print("                                     peak in a histogram.  Default is 0.33.")
-    print(
-        "    --refineupperlag               - Only use positive lags for regressor refinement"
-    )
-    print(
-        "    --refinelowerlag               - Only use negative lags for regressor refinement"
-    )
-    print(
-        "    --pca                          - Use pca to derive refined regressor (default is "
-    )
+    print("    --refineupperlag               - Only use positive lags for regressor refinement")
+    print("    --refinelowerlag               - Only use negative lags for regressor refinement")
+    print("    --pca                          - Use pca to derive refined regressor (default is ")
     print("                                     unweighted averaging)")
-    print(
-        "    --ica                          - Use ica to derive refined regressor (default is "
-    )
+    print("    --ica                          - Use ica to derive refined regressor (default is ")
     print("                                     unweighted averaging)")
-    print(
-        "    --weightedavg                  - Use weighted average to derive refined regressor "
-    )
+    print("    --weightedavg                  - Use weighted average to derive refined regressor ")
     print("                                     (default is unweighted averaging)")
     print(
         "    --avg                          - Use unweighted average to derive refined regressor "
     )
     print("                                     (default)")
-    print(
-        "    --psdfilter                    - Apply a PSD weighted Wiener filter to shifted"
-    )
+    print("    --psdfilter                    - Apply a PSD weighted Wiener filter to shifted")
     print("                                     timecourses prior to refinement")
     print("")
     print("Output options:")
@@ -559,15 +501,11 @@ def usage():
     print(
         "    --glmsourcefile=FILE           - Regress delayed regressors out of FILE instead of the "
     )
-    print(
-        "                                     initial fmri file used to estimate delays"
-    )
+    print("                                     initial fmri file used to estimate delays")
     print(
         "    --noglm                        - Turn off GLM filtering to remove delayed regressor "
     )
-    print(
-        "                                     from each voxel (disables output of fitNorm)"
-    )
+    print("                                     from each voxel (disables output of fitNorm)")
     print("    --preservefiltering            - don't reread data prior to GLM")
     print("")
     print("Miscellaneous options:")
@@ -582,19 +520,13 @@ def usage():
     )
     print("                                     be useful when RAM is limited)")
     print("    -c                             - Data file is a converted CIFTI")
-    print(
-        "    -S                             - Simulate a run - just report command line options"
-    )
-    print(
-        "    -d                             - Display plots of interesting timecourses"
-    )
+    print("    -S                             - Simulate a run - just report command line options")
+    print("    -d                             - Display plots of interesting timecourses")
     print("    --nonumba                      - Disable jit compilation with numba")
     print(
         "    --nosharedmem                  - Disable use of shared memory for large array storage"
     )
-    print(
-        "    --memprofile                   - Enable memory profiling for debugging - warning:"
-    )
+    print("    --memprofile                   - Enable memory profiling for debugging - warning:")
     print("                                     this slows things down a lot.")
     print(
         "    --multiproc                    - Enable multiprocessing versions of key subroutines.  This"
@@ -635,9 +567,7 @@ def usage():
         "    --acfix                        - Perform a secondary correlation to disambiguate peak location"
     )
     print("                                     (enables --accheck).  Experimental.")
-    print(
-        "    --tmask=MASKFILE               - Only correlate during epochs specified in "
-    )
+    print("    --tmask=MASKFILE               - Only correlate during epochs specified in ")
     print(
         "                                     MASKFILE (NB: if file has one colum, the length needs to match"
     )
@@ -673,26 +603,16 @@ def process_args():
         "antialias"
     ] = True  # apply an antialiasing filter to any regressors prior to filtering
     optiondict["invertregressor"] = False  # invert the initial regressor during startup
-    optiondict[
-        "slicetimes"
-    ] = None  # do not apply any slice order correction by default
-    optiondict[
-        "startpoint"
-    ] = -1  # by default, analyze the entire length of the dataset
-    optiondict[
-        "endpoint"
-    ] = 10000000  # by default, analyze the entire length of the dataset
+    optiondict["slicetimes"] = None  # do not apply any slice order correction by default
+    optiondict["startpoint"] = -1  # by default, analyze the entire length of the dataset
+    optiondict["endpoint"] = 10000000  # by default, analyze the entire length of the dataset
     optiondict["preprocskip"] = 0  # number of trs skipped in preprocessing
     optiondict["meanscaleglobal"] = False
     optiondict["globalmaskmethod"] = "mean"
     optiondict["globalmeanexcludename"] = None
-    optiondict[
-        "globalmeanexcludevals"
-    ] = None  # list of integer values to use in the mask
+    optiondict["globalmeanexcludevals"] = None  # list of integer values to use in the mask
     optiondict["globalmeanincludename"] = None
-    optiondict[
-        "globalmeanincludevals"
-    ] = None  # list of integer values to use in the mask
+    optiondict["globalmeanincludevals"] = None  # list of integer values to use in the mask
 
     # correlation options
     optiondict["similaritymetric"] = "correlation"
@@ -700,9 +620,7 @@ def process_args():
     optiondict["madnormMI"] = False
     optiondict["dodemean"] = True  # remove the mean from signals prior to correlation
     optiondict["detrendorder"] = 1  # remove linear trends prior to correlation
-    optiondict[
-        "windowfunc"
-    ] = "hamming"  # the particular window function to use for correlation
+    optiondict["windowfunc"] = "hamming"  # the particular window function to use for correlation
     optiondict[
         "corrweighting"
     ] = "None"  # use a standard unweighted crosscorrelation for calculate time delays
@@ -711,13 +629,9 @@ def process_args():
         "corrmaskthreshpct"
     ] = 1.0  # percentage of robust maximum of mean to mask correlations
     optiondict["corrmaskexcludename"] = None
-    optiondict[
-        "corrmaskexcludevals"
-    ] = None  # list of integer values to use in the mask
+    optiondict["corrmaskexcludevals"] = None  # list of integer values to use in the mask
     optiondict["corrmaskincludename"] = None
-    optiondict[
-        "corrmaskincludevals"
-    ] = None  # list of integer values to use in the mask
+    optiondict["corrmaskincludevals"] = None  # list of integer values to use in the mask
 
     optiondict[
         "check_autocorrelation"
@@ -736,22 +650,14 @@ def process_args():
         "hardlimit"
     ] = True  # Peak value must be within specified range.  If false, allow max outside if maximum
     # correlation value is that one end of the range.
-    optiondict[
-        "bipolar"
-    ] = False  # find peak with highest magnitude, regardless of sign
-    optiondict[
-        "lthreshval"
-    ] = 0.0  # zero out peaks with correlations lower than this value
-    optiondict[
-        "uthreshval"
-    ] = 1.0  # zero out peaks with correlations higher than this value
+    optiondict["bipolar"] = False  # find peak with highest magnitude, regardless of sign
+    optiondict["lthreshval"] = 0.0  # zero out peaks with correlations lower than this value
+    optiondict["uthreshval"] = 1.0  # zero out peaks with correlations higher than this value
     optiondict[
         "edgebufferfrac"
     ] = 0.0  # what fraction of the correlation window to avoid on either end when fitting
     optiondict["enforcethresh"] = True  # only do fits in voxels that exceed threshhold
-    optiondict[
-        "zerooutbadfit"
-    ] = True  # if true zero out all fit parameters if the fit fails
+    optiondict["zerooutbadfit"] = True  # if true zero out all fit parameters if the fit fails
     optiondict[
         "searchfrac"
     ] = 0.5  # The fraction of the main peak over which points are included in the peak
@@ -774,9 +680,7 @@ def process_args():
     optiondict[
         "glmsourcefile"
     ] = None  # name of the file from which to regress delayed regressors (if not the original data)
-    optiondict[
-        "dodeconv"
-    ] = False  # do Wiener deconvolution to find voxel transfer function
+    optiondict["dodeconv"] = False  # do Wiener deconvolution to find voxel transfer function
     optiondict["motionfilename"] = None  # by default do no motion regression
     optiondict["mot_pos"] = False  # do not do position
     optiondict["mot_deriv"] = True  # do use derivative
@@ -887,9 +791,7 @@ def process_args():
     optiondict["showprogressbar"] = True
     optiondict["savecorrmask"] = True
     optiondict["savedespecklemasks"] = True
-    optiondict[
-        "checkpoint"
-    ] = False  # save checkpoint information for tracking program state
+    optiondict["checkpoint"] = False  # save checkpoint information for tracking program state
     optiondict["alwaysmultiproc"] = False
     optiondict["calccoherence"] = False
 
@@ -1070,9 +972,7 @@ def process_args():
             print("It's spelled wiener, not weiner")
             print("The filter is named after Norbert Wiener, an MIT mathematician.")
             print("The name probably indicates that his family came from Vienna.")
-            print(
-                "Spell it right and try again.  I mean, I know what you meant, and could just"
-            )
+            print("Spell it right and try again.  I mean, I know what you meant, and could just")
             print("call the routine you wanted anyway, but then how would you learn?")
             sys.exit()
         elif o == "--cleanrefined":
@@ -1080,9 +980,7 @@ def process_args():
             print("Will attempt to clean refined regressor")
         elif o == "--respdelete":
             optiondict["respdelete"] = True
-            print(
-                "Will attempt to track and delete respiratory waveforms in the passband"
-            )
+            print("Will attempt to track and delete respiratory waveforms in the passband")
         elif o == "--wiener":
             optiondict["dodeconv"] = True
             print("Will perform Wiener deconvolution")
@@ -1122,9 +1020,7 @@ def process_args():
         elif o == "--globalmaskmethod":
             optiondict["globalmaskmethod"] = a
             if optiondict["globalmaskmethod"] == "mean":
-                print(
-                    "will use mean value to mask voxels prior to generating global mean"
-                )
+                print("will use mean value to mask voxels prior to generating global mean")
             elif optiondict["globalmaskmethod"] == "variance":
                 print(
                     "will use timecourse variance to mask voxels prior to generating global mean"
@@ -1141,9 +1037,7 @@ def process_args():
         elif o == "--limitoutput":
             optiondict["savelagregressors"] = False
             optiondict["savemovingsignal"] = False
-            print(
-                "disabling output of lagregressors and some ancillary GLM timecourses"
-            )
+            print("disabling output of lagregressors and some ancillary GLM timecourses")
         elif o == "--debug":
             optiondict["debug"] = True
             theprefilter.setdebug(optiondict["debug"])
@@ -1154,9 +1048,7 @@ def process_args():
         elif o == "--softlimit":
             optiondict["hardlimit"] = False
             linkchar = "="
-            print(
-                "will relax peak lag constraint for maximum correlations at edge of range"
-            )
+            print("will relax peak lag constraint for maximum correlations at edge of range")
         elif o == "--nosharedmem":
             optiondict["sharedmem"] = False
             linkchar = "="
@@ -1190,9 +1082,7 @@ def process_args():
                 optiondict["memprofile"] = True
                 print("enabling memory profiling")
             else:
-                print(
-                    "cannot enable memory profiling - memory_profiler module not found"
-                )
+                print("cannot enable memory profiling - memory_profiler module not found")
         elif o == "--noglm":
             optiondict["doglmfilt"] = False
             print("disabling GLM filter")
@@ -1268,9 +1158,7 @@ def process_args():
             optiondict["numestreps"] = int(a)
             if optiondict["numestreps"] == 0:
                 optiondict["ampthreshfromsig"] = False
-                print(
-                    "Will not estimate significance thresholds from null correlations"
-                )
+                print("Will not estimate significance thresholds from null correlations")
             else:
                 print(
                     "Will estimate p<0.05 significance threshold from ",
@@ -1298,17 +1186,13 @@ def process_args():
         elif o == "--acfix":
             optiondict["fix_autocorrelation"] = True
             optiondict["check_autocorrelation"] = True
-            print(
-                "Will remove periodic components in the autocorrelation function (experimental)"
-            )
+            print("Will remove periodic components in the autocorrelation function (experimental)")
         elif o == "--noprogressbar":
             optiondict["showprogressbar"] = False
             print("Will disable progress bars")
         elif o == "-s":
             optiondict["widthlimit"] = float(a)
-            print(
-                "Setting gaussian fit width limit to ", optiondict["widthlimit"], "Hz"
-            )
+            print("Setting gaussian fit width limit to ", optiondict["widthlimit"], "Hz")
         elif o == "-b":
             optiondict["filtertype"] = "butterworth"
             theprefilter.setbutterorder(optiondict["filtorder"])
@@ -1318,9 +1202,7 @@ def process_args():
             optiondict["fixdelay"] = True
             optiondict["lagmin"] = optiondict["fixeddelayvalue"] - 10.0
             optiondict["lagmax"] = optiondict["fixeddelayvalue"] + 10.0
-            print(
-                "Delay will be set to ", optiondict["fixeddelayvalue"], "in all voxels"
-            )
+            print("Delay will be set to ", optiondict["fixeddelayvalue"], "in all voxels")
         elif o == "--motionfile":
             optiondict["motionfilename"] = a
             print(
@@ -1423,19 +1305,13 @@ def process_args():
             )
         elif o == "--avg":
             optiondict["refinetype"] = "unweighted_average"
-            print(
-                "Will use unweighted average to refine regressor rather than simple averaging"
-            )
+            print("Will use unweighted average to refine regressor rather than simple averaging")
         elif o == "--weightedavg":
             optiondict["refinetype"] = "weighted_average"
-            print(
-                "Will use weighted average to refine regressor rather than simple averaging"
-            )
+            print("Will use weighted average to refine regressor rather than simple averaging")
         elif o == "--ica":
             optiondict["refinetype"] = "ica"
-            print(
-                "Will use ICA procedure to refine regressor rather than simple averaging"
-            )
+            print("Will use ICA procedure to refine regressor rather than simple averaging")
         elif o == "--dispersioncalc":
             optiondict["dodispersioncalc"] = True
             print("Will do dispersion calculation during regressor refinement")
@@ -1445,9 +1321,7 @@ def process_args():
             print("Correlation parameters will be recorded even if out of bounds")
         elif o == "--pca":
             optiondict["refinetype"] = "pca"
-            print(
-                "Will use PCA procedure to refine regressor rather than simple averaging"
-            )
+            print("Will use PCA procedure to refine regressor rather than simple averaging")
         elif o == "--numskip":
             optiondict["preprocskip"] = int(a)
             linkchar = "="
@@ -1672,9 +1546,7 @@ def process_args():
             (
                 optiondict["corrmaskincludename"],
                 optiondict["corrmaskincludevals"],
-            ) = tide_io.processnamespec(
-                a, "Using voxels where ", "in correlation calculations."
-            )
+            ) = tide_io.processnamespec(a, "Using voxels where ", "in correlation calculations.")
         elif o == "--refineprenorm":
             optiondict["refineprenorm"] = a
             if (
@@ -1713,18 +1585,14 @@ def process_args():
         elif o == "--peakfittype":
             optiondict["peakfittype"] = a
             linkchar = "="
-            print(
-                "Similarity function peak fitting method is ", optiondict["peakfittype"]
-            )
+            print("Similarity function peak fitting method is ", optiondict["peakfittype"])
         elif o in ("-h", "--help"):
             usage()
             sys.exit()
         else:
             assert False, "unhandled option: " + o
         formattedcmdline.append("\t" + o + linkchar + a + " \\")
-    formattedcmdline[len(formattedcmdline) - 1] = formattedcmdline[
-        len(formattedcmdline) - 1
-    ][:-2]
+    formattedcmdline[len(formattedcmdline) - 1] = formattedcmdline[len(formattedcmdline) - 1][:-2]
 
     # store the filter limits
     (
@@ -1735,12 +1603,8 @@ def process_args():
     ) = theprefilter.getfreqs()
 
     # write out the command used
-    tide_io.writevec(
-        formattedcmdline, optiondict["outputname"] + "_formattedcommandline.txt"
-    )
-    tide_io.writevec(
-        [" ".join(sys.argv)], optiondict["outputname"] + "_commandline.txt"
-    )
+    tide_io.writevec(formattedcmdline, optiondict["outputname"] + "_formattedcommandline.txt")
+    tide_io.writevec([" ".join(sys.argv)], optiondict["outputname"] + "_commandline.txt")
     optiondict["commandlineargs"] = sys.argv[1:]
 
     # add additional information to option structure for debugging
@@ -1750,8 +1614,7 @@ def process_args():
     optiondict["dispersioncalc_upper"] = optiondict["lagmax"]
     optiondict["dispersioncalc_step"] = np.max(
         [
-            (optiondict["dispersioncalc_upper"] - optiondict["dispersioncalc_lower"])
-            / 25,
+            (optiondict["dispersioncalc_upper"] - optiondict["dispersioncalc_lower"]) / 25,
             optiondict["dispersioncalc_step"],
         ]
     )

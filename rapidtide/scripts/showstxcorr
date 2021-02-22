@@ -172,9 +172,7 @@ def usage():
     )
     print("")
     print("required arguments:")
-    print(
-        "    -i, --infile= timcoursefile1     - text file containing one or more timeseries"
-    )
+    print("    -i, --infile= timcoursefile1     - text file containing one or more timeseries")
     print("    [-i, --infile= timcoursefile2]   - text file containing a timeseries")
     print(
         "                                       NB: if one timecourse file is specified, each column"
@@ -185,19 +183,13 @@ def usage():
     print(
         "                                       2 columns in the file.  If two filenames are given, each"
     )
-    print(
-        "                                       file must have only one column of data."
-    )
+    print("                                       file must have only one column of data.")
     print("")
     print("    -o, --outfile=OUTNAME:           - the root name of the output files")
     print("")
-    print(
-        "    --samplefreq=FREQ                - sample frequency of all timecourses is FREQ "
-    )
+    print("    --samplefreq=FREQ                - sample frequency of all timecourses is FREQ ")
     print("           or")
-    print(
-        "    --sampletime=TSTEP               - time step of all timecourses is TSTEP "
-    )
+    print("    --sampletime=TSTEP               - time step of all timecourses is TSTEP ")
     print(
         "                                       NB: --samplefreq and --sampletime are two ways to specify"
     )
@@ -217,9 +209,7 @@ def usage():
     )
     print("                    standard crosscorrelation")
     # print("    -l LABEL      - label for the delay value")
-    print(
-        "    -s STARTTIME  - time of first datapoint to use in seconds in the first file"
-    )
+    print("    -s STARTTIME  - time of first datapoint to use in seconds in the first file")
     print("    -D DURATION   - amount of data to use in seconds")
     print("    -d            - turns off display of graph")
     print("    -F            - filter data and regressors from LOWERFREQ to UPPERFREQ.")
@@ -233,9 +223,7 @@ def usage():
     # print("    -A            - print data on a single summary line")
     # print("    -a            - if summary mode is on, add a header line showing what values mean")
     # print("    -z FILENAME   - use the columns of FILENAME as controlling variables and return the partial correlation")
-    print(
-        "    -W WINDOWLEN  - use a window length of WINDOWLEN seconds (default is 50.0s)"
-    )
+    print("    -W WINDOWLEN  - use a window length of WINDOWLEN seconds (default is 50.0s)")
     print(
         "    -S STEPSIZE   - timestep between subsequent measurements (default is 25.0s).  Will be rounded to the nearest sample time"
     )
@@ -515,9 +503,7 @@ def main():
                 int(len(inputdata2)),
             ]
         )
-        endpoint2 = min(
-            [int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))]
-        )
+        endpoint2 = min([int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))])
         trimmeddata = np.zeros((2, numpoints), dtype="float")
         trimmeddata[0, :] = inputdata1[startpoint:endpoint1]
         trimmeddata[1, :] = inputdata2[0:endpoint2]
@@ -596,9 +582,7 @@ def main():
         Rvals = np.zeros((numcomponents, numcomponents, 1, xlength), dtype="float")
         delayvals = np.zeros((numcomponents, numcomponents, 1, xlength), dtype="float")
         valid = np.zeros((numcomponents, numcomponents, 1, xlength), dtype="float")
-        corrpertime = np.zeros(
-            (numcomponents, numcomponents, 1, plength), dtype="float"
-        )
+        corrpertime = np.zeros((numcomponents, numcomponents, 1, plength), dtype="float")
         ppertime = np.zeros((numcomponents, numcomponents, 1, plength), dtype="float")
 
         # do the correlations
@@ -637,9 +621,7 @@ def main():
                 )
 
         outputaffine = np.eye(4)
-        input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(
-            inputfilename
-        )
+        input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
         init_img = nib.Nifti1Image(corrpertime, outputaffine)
         init_hdr = init_img.header.copy()
         init_sizes = init_hdr["pixdim"].copy()

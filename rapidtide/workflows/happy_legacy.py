@@ -76,9 +76,7 @@ def usage():
         "- Hypersampling by Analytic Phase Projection - Yay!",
     )
     print("")
-    print(
-        "usage: ", os.path.basename(sys.argv[0]), " fmrifile slicetimefile outputroot"
-    )
+    print("usage: ", os.path.basename(sys.argv[0]), " fmrifile slicetimefile outputroot")
     print("")
     print("required arguments:")
     print("    fmrifile:                      - NIFTI file containing BOLD fMRI data")
@@ -88,9 +86,7 @@ def usage():
     print(
         "                                     to the start of the TR, one value per line, OR the BIDS sidecar JSON file"
     )
-    print(
-        "                                     for the fmrifile (contains the SliceTiming field"
-    )
+    print("                                     for the fmrifile (contains the SliceTiming field")
     print("    outputroot:                    - Base name for all output files")
     print("")
     print("optional arguments:")
@@ -167,9 +163,7 @@ def usage():
     print(
         "                                     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9"
     )
-    print(
-        "                                     for X, Y, Z, RotX, RotY, RotZ, respectively"
-    )
+    print("                                     for X, Y, Z, RotX, RotY, RotZ, respectively")
     print(
         "    --motionhp=HPFREQ              - Highpass filter motion regressors to HPFREQ Hz prior to regression"
     )
@@ -224,9 +218,7 @@ def usage():
     print(
         "                                     format json file, use column named COL. If no file is specified, "
     )
-    print(
-        "                                     estimate the cardiac signal from the fMRI data."
-    )
+    print("                                     estimate the cardiac signal from the fMRI data.")
     print(
         "    --cardiacfreq=FREQ             - Cardiac waveform in cardiacfile has sample frequency FREQ "
     )
@@ -244,9 +236,7 @@ def usage():
     print(
         "    --cardiacstart=START           - The time delay in seconds into the cardiac file, corresponding"
     )
-    print(
-        "                                     in the first TR of the fMRI file (default is 0.0)"
-    )
+    print("                                     in the first TR of the fMRI file (default is 0.0)")
     print(
         "    --stdfreq=FREQ                 - Frequency to which the cardiac signals are resampled for output."
     )
@@ -262,9 +252,7 @@ def usage():
     )
     print("")
     print("Phase projection tuning:")
-    print(
-        "    --outputbins=BINS              - Number of output phase bins (default is 32)"
-    )
+    print("    --outputbins=BINS              - Number of output phase bins (default is 32)")
     print(
         "    --gridbins=BINS                - Width of the gridding kernel in output phase bins (default is 3.0)"
     )
@@ -314,9 +302,7 @@ def usage():
     print(
         "    --nocensor                     - Bad points will not be excluded from analytic phase projection"
     )
-    print(
-        "    --noappsmooth                  - Disable smoothing app file in the phase direction"
-    )
+    print("    --noappsmooth                  - Disable smoothing app file in the phase direction")
     print(
         "    --nophasefilt                  - Disable the phase trend filter (probably not a good idea)"
     )
@@ -532,9 +518,7 @@ def getcardcoeffs(
     return peakfreq
 
 
-def normalizevoxels(
-    fmri_data, detrendorder, validvoxels, time, timings, showprogressbar=False
-):
+def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showprogressbar=False):
     print("normalizing voxels...")
     normdata = fmri_data * 0.0
     demeandata = fmri_data * 0.0
@@ -545,12 +529,8 @@ def normalizevoxels(
     if detrendorder > 0:
         print("detrending to order", detrendorder, "...")
         for idx, thevox in enumerate(validvoxels):
-            if (
-                (idx % reportstep == 0) or (idx == len(validvoxels) - 1)
-            ) and showprogressbar:
-                tide_util.progressbar(
-                    idx + 1, len(validvoxels), label="Percent complete"
-                )
+            if ((idx % reportstep == 0) or (idx == len(validvoxels) - 1)) and showprogressbar:
+                tide_util.progressbar(idx + 1, len(validvoxels), label="Percent complete")
             fmri_data[thevox, :] = tide_fit.detrend(
                 fmri_data[thevox, :], order=detrendorder, demean=False
             )
@@ -559,9 +539,7 @@ def normalizevoxels(
 
     means = np.mean(fmri_data[:, :], axis=1).flatten()
     demeandata[validvoxels, :] = fmri_data[validvoxels, :] - means[validvoxels, None]
-    normdata[validvoxels, :] = np.nan_to_num(
-        demeandata[validvoxels, :] / means[validvoxels, None]
-    )
+    normdata[validvoxels, :] = np.nan_to_num(demeandata[validvoxels, :] / means[validvoxels, None])
     timings.append(["Normalization finished", time.time(), numspatiallocs, "voxels"])
     print("normalization took", time.time() - starttime, "seconds")
     return normdata, demeandata, means
@@ -576,9 +554,7 @@ def cleancardiac(Fs, plethwaveform, cutoff=0.4, thresh=0.2, nyquist=None, debug=
     print("envelope detection")
     envelope = tide_math.envdetect(
         Fs,
-        tide_math.madnormalize(
-            plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform))
-        ),
+        tide_math.madnormalize(plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform))),
         cutoff=cutoff,
     )
     envmean = np.mean(envelope)
@@ -648,9 +624,7 @@ def findbadpts(
         therange = upper - lower
         lowerthresh = lower - therange
         upperthresh = upper + therange
-        thebadpts = np.where(
-            (lowerthresh <= thewaveform) & (thewaveform <= upperthresh), 0.0, 1.0
-        )
+        thebadpts = np.where((lowerthresh <= thewaveform) & (thewaveform <= upperthresh), 0.0, 1.0)
         thresh = (lowerthresh, upperthresh)
         print(
             "values outside of ",
@@ -699,10 +673,7 @@ def approximateentropy(waveform, m, r):
 
     def _phi(m):
         x = [[waveform[j] for j in range(i, i + m - 1 + 1)] for i in range(N - m + 1)]
-        C = [
-            len([1 for x_j in x if _maxdist(x_i, x_j) <= r]) / (N - m + 1.0)
-            for x_i in x
-        ]
+        C = [len([1 for x_j in x if _maxdist(x_i, x_j) <= r]) / (N - m + 1.0) for x_i in x]
         return (N - m + 1.0) ** (-1) * sum(np.log(C))
 
     N = len(waveform)
@@ -830,15 +801,9 @@ def calcplethquality(
     infodict["E_sqi_std" + suffix] = E_sqi_std
 
     if outputlevel > 1:
-        tide_io.writevec(
-            S_waveform, outputroot + suffix + "_S_sqi_" + str(Fs) + "Hz.txt"
-        )
-        tide_io.writevec(
-            K_waveform, outputroot + suffix + "_K_sqi_" + str(Fs) + "Hz.txt"
-        )
-        tide_io.writevec(
-            E_waveform, outputroot + suffix + "_E_sqi_" + str(Fs) + "Hz.txt"
-        )
+        tide_io.writevec(S_waveform, outputroot + suffix + "_S_sqi_" + str(Fs) + "Hz.txt")
+        tide_io.writevec(K_waveform, outputroot + suffix + "_K_sqi_" + str(Fs) + "Hz.txt")
+        tide_io.writevec(E_waveform, outputroot + suffix + "_E_sqi_" + str(Fs) + "Hz.txt")
 
 
 def getphysiofile(
@@ -881,22 +846,17 @@ def getphysiofile(
         print("inputstart:", inputstart)
         print("pleth_fullres:", pleth_fullres)
     inputtimeaxis = (
-        sp.arange(0.0, (1.0 / inputfreq) * len(pleth_fullres), 1.0 / inputfreq)
-        + inputstart
+        sp.arange(0.0, (1.0 / inputfreq) * len(pleth_fullres), 1.0 / inputfreq) + inputstart
     )
     if inputtimeaxis[0] > 0.0 or inputtimeaxis[-1] < slicetimeaxis[-1]:
-        print(
-            "getphysiofile: error - plethysmogram waveform does not cover the fmri time range"
-        )
+        print("getphysiofile: error - plethysmogram waveform does not cover the fmri time range")
         sys.exit()
     if debug:
         print("pleth_fullres: len=", len(pleth_fullres), "vals=", pleth_fullres)
         print("inputfreq =", inputfreq)
         print("inputstart =", inputstart)
         print("inputtimeaxis: len=", len(inputtimeaxis), "vals=", inputtimeaxis)
-    timings.append(
-        ["Cardiac signal from physiology data read in", time.time(), None, None]
-    )
+    timings.append(["Cardiac signal from physiology data read in", time.time(), None, None])
 
     # filter and amplitude correct the waveform to remove gain fluctuations
     cleanpleth_fullres, normpleth_fullres, plethenv_fullres, envmean = cleancardiac(
@@ -913,12 +873,8 @@ def getphysiofile(
     if outputlevel > 1:
         tide_io.writevec(pleth_fullres, outputroot + "_rawpleth_native.txt")
         tide_io.writevec(cleanpleth_fullres, outputroot + "_pleth_native.txt")
-        tide_io.writevec(
-            plethenv_fullres, outputroot + "_cardenvelopefromfile_native.txt"
-        )
-    timings.append(
-        ["Cardiac signal from physiology data cleaned", time.time(), None, None]
-    )
+        tide_io.writevec(plethenv_fullres, outputroot + "_cardenvelopefromfile_native.txt")
+    timings.append(["Cardiac signal from physiology data cleaned", time.time(), None, None])
 
     # resample to slice time resolution and save
     pleth_sliceres = tide_resample.doresample(
@@ -1013,11 +969,7 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
     )
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / samplerate
-    xcorr_x = (
-        np.r_[0.0:xcorrlen] * sampletime
-        - (xcorrlen * sampletime) / 2.0
-        + sampletime / 2.0
-    )
+    xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     searchrange = 5.0
     trimstart = tide_util.valtoindex(xcorr_x, -2.0 * searchrange)
     trimend = tide_util.valtoindex(xcorr_x, 2.0 * searchrange)
@@ -1086,9 +1038,7 @@ def cardiaccycleaverage(
         np.nan_to_num(rawapp_bypoint / weight_bypoint),
         0.0,
     )
-    minval = np.min(
-        rawapp_bypoint[np.where(weight_bypoint > np.max(weight_bypoint) / 50.0)]
-    )
+    minval = np.min(rawapp_bypoint[np.where(weight_bypoint > np.max(weight_bypoint) / 50.0)])
     rawapp_bypoint = np.where(
         weight_bypoint > np.max(weight_bypoint) / 50.0, rawapp_bypoint - minval, 0.0
     )
@@ -1223,9 +1173,7 @@ def happy_main(thearguments):
     # record the machine we ran on
     infodict["hostname"] = platform.node()
 
-    print(
-        "running version", infodict["release_version"], "on host", infodict["hostname"]
-    )
+    print("running version", infodict["release_version"], "on host", infodict["hostname"])
 
     optparsestart = 4
 
@@ -1361,9 +1309,7 @@ def happy_main(thearguments):
         elif o == "--dodlfilter":
             if dlfilterexists:
                 dodlfilter = True
-                print(
-                    "Will apply deep learning filter to enhance the cardiac waveforms"
-                )
+                print("Will apply deep learning filter to enhance the cardiac waveforms")
             else:
                 print(
                     "dlfilter not found - check to make sure Keras is installed and working.  Disabling."
@@ -1388,9 +1334,7 @@ def happy_main(thearguments):
             print("Will not censor bad points")
         elif o == "--projectwithraw":
             projectwithraw = True
-            print(
-                "Will use fmri derived cardiac waveform as phase source for projection"
-            )
+            print("Will use fmri derived cardiac waveform as phase source for projection")
         elif o == "--nomadnorm":
             domadnorm = False
             print("Disabling MAD normalization between slices")
@@ -1414,9 +1358,7 @@ def happy_main(thearguments):
         elif o == "--gridbins":
             linkchar = "="
             congridbins = float(a)
-            print(
-                "Will use a convolution gridding kernel of width", congridbins, "bins"
-            )
+            print("Will use a convolution gridding kernel of width", congridbins, "bins")
         elif o == "--gridkernel":
             linkchar = "="
             gridkernel = a
@@ -1524,15 +1466,11 @@ def happy_main(thearguments):
         elif o == "--motionhp":
             linkchar = "="
             motionhp = float(a)
-            print(
-                "Will highpass motion regressors at", motionhp, "Hz prior to regression"
-            )
+            print("Will highpass motion regressors at", motionhp, "Hz prior to regression")
         elif o == "--motionlp":
             linkchar = "="
             motionlp = float(a)
-            print(
-                "Will lowpass motion regressors at", motionlp, "Hz prior to regression"
-            )
+            print("Will lowpass motion regressors at", motionlp, "Hz prior to regression")
         elif o == "--savetcsastsv":
             savetcsastsv = True
             print("Will save timecourses in BIDS tsv format")
@@ -1588,9 +1526,7 @@ def happy_main(thearguments):
         else:
             assert False, "unhandled option: " + o
         formattedcmdline.append("\t" + o + linkchar + a + " \\")
-    formattedcmdline[len(formattedcmdline) - 1] = formattedcmdline[
-        len(formattedcmdline) - 1
-    ][:-2]
+    formattedcmdline[len(formattedcmdline) - 1] = formattedcmdline[len(formattedcmdline) - 1][:-2]
 
     # write out the command used
     tide_util.savecommandline(thearguments, outputroot)
@@ -1736,11 +1672,7 @@ def happy_main(thearguments):
     # filter out motion regressors here
     if motionfilename is not None:
         timings.append(["Motion filtering start", time.time(), None, None])
-        (
-            motionregressors,
-            motionregressorlabels,
-            filtereddata,
-        ) = tide_glmpass.motionregress(
+        (motionregressors, motionregressorlabels, filtereddata,) = tide_glmpass.motionregress(
             motionfilename,
             fmri_data[validvoxels, :],
             tr,
@@ -1762,9 +1694,7 @@ def happy_main(thearguments):
                 theheader,
                 outputroot + "_motionfiltered",
             )
-            timings.append(
-                ["Motion filtered data saved", time.time(), numspatiallocs, "voxels"]
-            )
+            timings.append(["Motion filtered data saved", time.time(), numspatiallocs, "voxels"])
 
     # get slice times
     slicetimes = tide_io.getslicetimesfromfile(slicetimename)
@@ -1788,18 +1718,16 @@ def happy_main(thearguments):
         print(estmaskname)
     if estmaskname is not None:
         tide_util.logmem("before reading in estmask", file=memfile)
-        estmask_byslice = readextmask(
-            estmaskname, nim_hdr, xsize, ysize, numslices
-        ) * np.float64(mask_byslice)
+        estmask_byslice = readextmask(estmaskname, nim_hdr, xsize, ysize, numslices) * np.float64(
+            mask_byslice
+        )
         print("using estmask from file", estmaskname)
         numpasses = 1
     else:
         # just fall back to the intensity mask
         estmask_byslice = mask_byslice.astype("float64")
         numpasses = 2
-        print(
-            "not using separate estimation mask - doing initial estimate using intensity mask"
-        )
+        print("not using separate estimation mask - doing initial estimate using intensity mask")
     if fliparteries:
         # add another pass to refine the waveform after getting the new appflips
         numpasses += 1
@@ -1862,9 +1790,7 @@ def happy_main(thearguments):
         )
         if thispass == numpasses - 1:
             tide_io.writevec(cycleaverage, outputroot + "_cycleaverage.txt")
-            tide_io.writevec(
-                cardfromfmri_sliceres, outputroot + "_cardfromfmri_sliceres.txt"
-            )
+            tide_io.writevec(cardfromfmri_sliceres, outputroot + "_cardfromfmri_sliceres.txt")
         else:
             if saveintermediate:
                 tide_io.writevec(
@@ -1873,10 +1799,7 @@ def happy_main(thearguments):
                 )
                 tide_io.writevec(
                     cardfromfmri_sliceres,
-                    outputroot
-                    + "_cardfromfmri_sliceres_pass"
-                    + str(thispass + 1)
-                    + ".txt",
+                    outputroot + "_cardfromfmri_sliceres_pass" + str(thispass + 1) + ".txt",
                 )
 
         # stash away a copy of the waveform if we need it later
@@ -2045,17 +1968,11 @@ def happy_main(thearguments):
                 if thispass == numpasses - 1:
                     tide_io.writevec(
                         normdlfilteredcard,
-                        outputroot
-                        + "_normcardfromfmri_dlfiltered_"
-                        + str(stdfreq)
-                        + "Hz.txt",
+                        outputroot + "_normcardfromfmri_dlfiltered_" + str(stdfreq) + "Hz.txt",
                     )
                     tide_io.writevec(
                         dlfilteredcard,
-                        outputroot
-                        + "_cardfromfmri_dlfiltered_"
-                        + str(stdfreq)
-                        + "Hz.txt",
+                        outputroot + "_cardfromfmri_dlfiltered_" + str(stdfreq) + "Hz.txt",
                     )
                 else:
                     if saveintermediate:
@@ -2099,9 +2016,7 @@ def happy_main(thearguments):
                 arb_upperpass = slicesamplerate / 2.0
                 arb_upperstop = slicesamplerate / 2.0
                 theaafilter = tide_filt.noncausalfilter(filtertype="arb")
-                theaafilter.setfreqs(
-                    arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop
-                )
+                theaafilter.setfreqs(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
 
                 cardfromfmri_sliceres = tide_math.madnormalize(
                     tide_resample.doresample(
@@ -2126,9 +2041,7 @@ def happy_main(thearguments):
                     smoothlen=smoothlen,
                     debug=debug,
                 )
-                infodict["cardiacbpm_dlfiltered"] = np.round(
-                    peakfreq_dlfiltered * 60.0, 2
-                )
+                infodict["cardiacbpm_dlfiltered"] = np.round(peakfreq_dlfiltered * 60.0, 2)
                 infodict["cardiacfreq_dlfiltered"] = peakfreq_dlfiltered
 
                 # check the match between the raw and filtered cardiac signals
@@ -2205,9 +2118,7 @@ def happy_main(thearguments):
 
             # align the pleth signal with the cardiac signal derived from the data
             if aligncardiac:
-                alignpts_sliceres = (
-                    -maxdelay / slicesamplerate
-                )  # maxdelay is in seconds
+                alignpts_sliceres = -maxdelay / slicesamplerate  # maxdelay is in seconds
                 pleth_sliceres, dummy1, dummy2, dummy2 = tide_resample.timeshift(
                     pleth_sliceres, alignpts_sliceres, int(10.0 * slicesamplerate)
                 )
@@ -2217,9 +2128,7 @@ def happy_main(thearguments):
                 )
             if thispass == numpasses - 1:
                 tide_io.writevec(pleth_sliceres, outputroot + "_pleth_sliceres.txt")
-                tide_io.writevec(
-                    pleth_stdres, outputroot + "_pleth_" + str(stdfreq) + "Hz.txt"
-                )
+                tide_io.writevec(pleth_stdres, outputroot + "_pleth_" + str(stdfreq) + "Hz.txt")
 
             # now clean up cardiac signal
             filtpleth_stdres, normpleth_stdres, plethenv_stdres, envmean = cleancardiac(
@@ -2333,9 +2242,7 @@ def happy_main(thearguments):
 
             if not projectwithraw:
                 cardiacwaveform = np.array(pleth_sliceres)
-                badpointlist = 1.0 - (1.0 - thebadplethpts_sliceres) * (
-                    1.0 - badpointlist
-                )
+                badpointlist = 1.0 - (1.0 - thebadplethpts_sliceres) * (1.0 - badpointlist)
 
             infodict["pleth"] = True
             peakfreq = peakfreq_file
@@ -2344,9 +2251,7 @@ def happy_main(thearguments):
             peakfreq = peakfreq_bold
         if outputlevel > 0:
             if thispass == numpasses - 1:
-                tide_io.writevec(
-                    badpointlist, outputroot + "_overall_sliceres_badpts.txt"
-                )
+                tide_io.writevec(badpointlist, outputroot + "_overall_sliceres_badpts.txt")
 
         #  extract the fundamental
         if forcedhr is not None:
@@ -2354,9 +2259,7 @@ def happy_main(thearguments):
             infodict["forcedhr"] = peakfreq
         if cardiacfilename is None:
             filthiresfund = tide_math.madnormalize(
-                getfundamental(
-                    cardiacwaveform * (1.0 - thebadcardpts), slicesamplerate, peakfreq
-                )
+                getfundamental(cardiacwaveform * (1.0 - thebadcardpts), slicesamplerate, peakfreq)
             )
         else:
             filthiresfund = tide_math.madnormalize(
@@ -2364,18 +2267,14 @@ def happy_main(thearguments):
             )
         if outputlevel > 1:
             if thispass == numpasses - 1:
-                tide_io.writevec(
-                    filthiresfund, outputroot + "_cardiacfundamental_sliceres.txt"
-                )
+                tide_io.writevec(filthiresfund, outputroot + "_cardiacfundamental_sliceres.txt")
 
         # now calculate the phase waveform
         tide_util.logmem("before analytic phase analysis", file=memfile)
         instantaneous_phase, amplitude_envelope = tide_fit.phaseanalysis(filthiresfund)
         if outputlevel > 0:
             if thispass == numpasses - 1:
-                tide_io.writevec(
-                    amplitude_envelope, outputroot + "_ampenv_sliceres.txt"
-                )
+                tide_io.writevec(amplitude_envelope, outputroot + "_ampenv_sliceres.txt")
                 tide_io.writevec(
                     instantaneous_phase,
                     outputroot + "_instphase_unwrapped_sliceres.txt",
@@ -2392,9 +2291,7 @@ def happy_main(thearguments):
                     )
         initialphase = instantaneous_phase[0]
         infodict["phi0"] = initialphase
-        timings.append(
-            ["Phase waveform generated" + passstring, time.time(), None, None]
-        )
+        timings.append(["Phase waveform generated" + passstring, time.time(), None, None])
 
         # account for slice time offests
         offsets_byslice = np.zeros((xsize * ysize, numslices), dtype=np.float64)
@@ -2486,12 +2383,8 @@ def happy_main(thearguments):
         cine_byslice = cine.reshape((xsize * ysize, numslices, destpoints))
         rawapp = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
         rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, destpoints))
-        corrected_rawapp = np.zeros(
-            (xsize, ysize, numslices, destpoints), dtype=np.float64
-        )
-        corrected_rawapp_byslice = rawapp.reshape(
-            (xsize * ysize, numslices, destpoints)
-        )
+        corrected_rawapp = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
+        corrected_rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, destpoints))
         normapp = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
         normapp_byslice = normapp.reshape((xsize * ysize, numslices, destpoints))
         weights = np.zeros((xsize, ysize, numslices, destpoints), dtype=np.float64)
@@ -2499,9 +2392,7 @@ def happy_main(thearguments):
         derivatives = np.zeros((xsize, ysize, numslices, 4), dtype=np.float64)
         derivatives_byslice = derivatives.reshape((xsize * ysize, numslices, 4))
 
-        timings.append(
-            ["Output arrays allocated" + passstring, time.time(), None, None]
-        )
+        timings.append(["Output arrays allocated" + passstring, time.time(), None, None])
 
         if centric:
             outphases = sp.linspace(-np.pi, np.pi, num=destpoints, endpoint=False)
@@ -2517,13 +2408,9 @@ def happy_main(thearguments):
         demeandata_byslice = demeandata.reshape((xsize * ysize, numslices, timepoints))
         means_byslice = means.reshape((xsize * ysize, numslices))
 
-        timings.append(
-            ["Phase projection to image started" + passstring, time.time(), None, None]
-        )
+        timings.append(["Phase projection to image started" + passstring, time.time(), None, None])
         print("starting phase projection")
-        proctrs = range(
-            timepoints
-        )  # proctrs is the list of all fmri trs to be projected
+        proctrs = range(timepoints)  # proctrs is the list of all fmri trs to be projected
         procpoints = range(
             timepoints * numsteps
         )  # procpoints is the list of all sliceres datapoints to be projected
@@ -2574,9 +2461,7 @@ def happy_main(thearguments):
                     minval = wrappedphase[minloc]
             phasediff = minval - (maxval - 2.0 * np.pi)
             timediff = minloc - maxloc
-            zerophaselocs.append(
-                1.0 * minloc - (minval - outphases[0]) * timediff / phasediff
-            )
+            zerophaselocs.append(1.0 * minloc - (minval - outphases[0]) * timediff / phasediff)
             # print(idx, [maxloc, maxval], [minloc, minval], phasediff, timediff, zerophaselocs[-1])
         instantaneous_time = instantaneous_phase * 0.0
 
@@ -2598,9 +2483,7 @@ def happy_main(thearguments):
             )
             * pulsereconstepsize
         )
-        outtimes = sp.linspace(
-            0.0, maxtime, num=int(maxtime / pulsereconstepsize), endpoint=False
-        )
+        outtimes = sp.linspace(0.0, maxtime, num=int(maxtime / pulsereconstepsize), endpoint=False)
         atp_bypoint = cardiaccycleaverage(
             instantaneous_time,
             outtimes,
@@ -2679,25 +2562,19 @@ def happy_main(thearguments):
                         cyclic=True,
                     )
                     for i in range(len(theindices)):
-                        weight_byslice[
-                            validlocs, theslice, theindices[i]
-                        ] += theweights[i]
+                        weight_byslice[validlocs, theslice, theindices[i]] += theweights[i]
                         rawapp_byslice[validlocs, theslice, theindices[i]] += (
                             theweights[i] * filteredmr
                         )
-                        cine_byslice[validlocs, theslice, theindices[i]] += (
-                            theweights[i] * cinemr
-                        )
+                        cine_byslice[validlocs, theslice, theindices[i]] += theweights[i] * cinemr
                 for d in range(destpoints):
                     if weight_byslice[validlocs[0], theslice, d] == 0.0:
                         weight_byslice[validlocs, theslice, d] = 1.0
                 rawapp_byslice[validlocs, theslice, :] = np.nan_to_num(
-                    rawapp_byslice[validlocs, theslice, :]
-                    / weight_byslice[validlocs, theslice, :]
+                    rawapp_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :]
                 )
                 cine_byslice[validlocs, theslice, :] = np.nan_to_num(
-                    cine_byslice[validlocs, theslice, :]
-                    / weight_byslice[validlocs, theslice, :]
+                    cine_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :]
                 )
             else:
                 rawapp_byslice[:, theslice, :] = 0.0
@@ -2715,9 +2592,9 @@ def happy_main(thearguments):
             appflips_byslice = np.where(
                 -derivatives_byslice[:, :, 2] > derivatives_byslice[:, :, 0], -1.0, 1.0
             )
-            timecoursemean = np.mean(
-                rawapp_byslice[validlocs, theslice, :], axis=1
-            ).reshape((-1, 1))
+            timecoursemean = np.mean(rawapp_byslice[validlocs, theslice, :], axis=1).reshape(
+                (-1, 1)
+            )
             if fliparteries:
                 corrected_rawapp_byslice[validlocs, theslice, :] = (
                     rawapp_byslice[validlocs, theslice, :] - timecoursemean
@@ -2744,9 +2621,7 @@ def happy_main(thearguments):
                             -demeandata_byslice[theloc, theslice, :],
                             -thetimes[theslice][0],
                         )
-                        maxloc = np.argmax(
-                            np.abs(thecorrfunc_byslice[theloc, theslice, :])
-                        )
+                        maxloc = np.argmax(np.abs(thecorrfunc_byslice[theloc, theslice, :]))
                         wavedelay_byslice[theloc, theslice] = corrsearchvals[maxloc]
                         waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[
                             theloc, theslice, maxloc
@@ -2758,8 +2633,7 @@ def happy_main(thearguments):
                 corrected_rawapp_byslice[validlocs, theslice, :] - timecoursemin
             )
             normapp_byslice[validlocs, theslice, :] = np.nan_to_num(
-                app_byslice[validlocs, theslice, :]
-                / means_byslice[validlocs, theslice, None]
+                app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None]
             )
         if not verbose:
             print(" done")
@@ -2784,9 +2658,7 @@ def happy_main(thearguments):
             tide_io.savetonifti(cine, theheader, outputroot + "_cine")
             if outputlevel > 0:
                 tide_io.savetonifti(rawapp, theheader, outputroot + "_rawapp")
-        timings.append(
-            ["Phase projected data saved" + passstring, time.time(), None, None]
-        )
+        timings.append(["Phase projected data saved" + passstring, time.time(), None, None])
 
         if doaliasedcorrelation and thispass == numpasses - 1:
             theheader = copy.deepcopy(nim_hdr)
@@ -2806,19 +2678,13 @@ def happy_main(thearguments):
         validlocs = np.where(mask > 0)[0]
         histinput = app2d[validlocs, :].reshape((len(validlocs), destpoints))
         if outputlevel > 0:
-            tide_stats.makeandsavehistogram(
-                histinput, histlen, 0, outputroot + "_histogram"
-            )
+            tide_stats.makeandsavehistogram(histinput, histlen, 0, outputroot + "_histogram")
 
         # find vessel threshholds
         tide_util.logmem("before making vessel masks", file=memfile)
-        hardvesselthresh = (
-            tide_stats.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
-        )
+        hardvesselthresh = tide_stats.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
         softvesselthresh = softvesselfrac * hardvesselthresh
-        print(
-            "hard, soft vessel threshholds set to", hardvesselthresh, softvesselthresh
-        )
+        print("hard, soft vessel threshholds set to", hardvesselthresh, softvesselthresh)
 
         # save a vessel masked version of app
         if unnormvesselmap:
@@ -2854,12 +2720,8 @@ def happy_main(thearguments):
             minphase = np.argmin(normapp, axis=3) * 2.0 * np.pi / destpoints - np.pi
             maxphase = np.argmax(normapp, axis=3) * 2.0 * np.pi / destpoints - np.pi
         risediff = (maxphase - minphase) * vesselmask
-        arteries = np.where(
-            appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmask, 0
-        )
-        veins = np.where(
-            appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmask, 0
-        )
+        arteries = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmask, 0)
+        veins = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmask, 0)
         theheader = copy.deepcopy(nim_hdr)
         theheader["dim"][4] = 1
         if thispass == numpasses - 1:
@@ -2881,16 +2743,12 @@ def happy_main(thearguments):
         vesselmap = np.max(normapp, axis=3)
     tide_io.savetonifti(vesselmap, theheader, outputroot + "_vesselmap")
     tide_io.savetonifti(
-        np.where(
-            appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmap, 0.0
-        ),
+        np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmap, 0.0),
         theheader,
         outputroot + "_arterymap",
     )
     tide_io.savetonifti(
-        np.where(
-            appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmap, 0.0
-        ),
+        np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmap, 0.0),
         theheader,
         outputroot + "_veinmap",
     )
@@ -2902,13 +2760,9 @@ def happy_main(thearguments):
         tide_util.logmem("before cardiac regression", file=memfile)
         print("generating cardiac regressors")
         cardiacnoise = fmri_data * 0.0
-        cardiacnoise_byslice = cardiacnoise.reshape(
-            (xsize * ysize, numslices, timepoints)
-        )
+        cardiacnoise_byslice = cardiacnoise.reshape((xsize * ysize, numslices, timepoints))
         phaseindices = (cardiacnoise * 0.0).astype(np.int16)
-        phaseindices_byslice = phaseindices.reshape(
-            (xsize * ysize, numslices, timepoints)
-        )
+        phaseindices_byslice = phaseindices.reshape((xsize * ysize, numslices, timepoints))
         for theslice in range(numslices):
             print("calculating cardiac noise for slice", theslice)
             validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
@@ -2967,9 +2821,7 @@ def happy_main(thearguments):
                 nprocs=nprocs,
             )
             print(datatoremove.shape, cardiacnoise.shape, fitcoffs.shape)
-            datatoremove[validlocs, :] = np.multiply(
-                cardiacnoise[validlocs, :], fitcoffs[:, None]
-            )
+            datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
             filtereddata = fmri_data - datatoremove
             timings.append(
                 [
@@ -3025,9 +2877,7 @@ def happy_main(thearguments):
                 procbyvoxel=True,
                 nprocs=nprocs,
             )
-            datatoremove[validlocs, :] = np.multiply(
-                cardiacnoise[validlocs, :], fitcoffs[:, None]
-            )
+            datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
             filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove
             timings.append(
                 [

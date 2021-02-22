@@ -47,9 +47,7 @@ def test_nullsimfunc(debug=False, display=False):
     Fs = 1.0 / timestep
     # sourcelen = 1200
     # sourcedata = lfofilter.apply(Fs, np.random.rand(sourcelen))
-    sourcedata = tide_io.readvecs(
-        os.path.join(get_test_data_path(), "fmri_globalmean.txt")
-    )[0]
+    sourcedata = tide_io.readvecs(os.path.join(get_test_data_path(), "fmri_globalmean.txt"))[0]
     sourcelen = len(sourcedata)
     numpasses = 1
 
@@ -154,9 +152,7 @@ def test_nullsimfunc(debug=False, display=False):
                 chunksize=1000,
                 permutationmethod=optiondict["permutationmethod"],
             )
-            tide_io.writenpvecs(
-                corrlist, os.path.join(get_test_temp_path(), "corrdistdata.txt")
-            )
+            tide_io.writenpvecs(corrlist, os.path.join(get_test_temp_path(), "corrdistdata.txt"))
 
             # calculate percentiles for the crosscorrelation from the distribution data
             histlen = 250

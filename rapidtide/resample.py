@@ -177,9 +177,7 @@ def congrid(xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False):
         congridyvals = {}
         congridyvals["kernel"] = kernel
         congridyvals["width"] = width * 1.0
-    optsigma = np.array(
-        [0.4241, 0.4927, 0.4839, 0.5063, 0.5516, 0.5695, 0.5682, 0.5974]
-    )
+    optsigma = np.array([0.4241, 0.4927, 0.4839, 0.5063, 0.5516, 0.5695, 0.5682, 0.5974])
     optbeta = np.array([1.9980, 2.3934, 3.3800, 4.2054, 4.9107, 5.7567, 6.6291, 7.4302])
     xstep = xaxis[1] - xaxis[0]
     if (loc < xaxis[0] - xstep / 2.0 or loc > xaxis[-1] + xstep / 2.0) and not cyclic:
@@ -189,18 +187,14 @@ def congrid(xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False):
     if kernel != "old":
         if not (1.5 <= width <= 5.0) or (np.fmod(width, 0.5) > 0.0):
             print("congrid: width is", width)
-            print(
-                "congrid: width must be a half-integral value between 1.5 and 5.0 inclusive"
-            )
+            print("congrid: width must be a half-integral value between 1.5 and 5.0 inclusive")
             sys.exit()
         else:
             kernelindex = int((width - 1.5) // 0.5)
 
     # find the closest grid point to the target location, calculate relative offsets from this point
     center = tide_util.valtoindex(xaxis, loc)
-    offset = np.fmod(
-        np.round((loc - xaxis[center]) / xstep, 3), 1.0
-    )  # will vary from -0.5 to 0.5
+    offset = np.fmod(np.round((loc - xaxis[center]) / xstep, 3), 1.0)  # will vary from -0.5 to 0.5
     if cyclic:
         if center == len(xaxis) - 1 and offset > 0.5:
             center = 0
@@ -233,9 +227,7 @@ def congrid(xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False):
                 )
                 + offset
             )
-            congridyvals[offsetkey] = tide_fit.gauss_eval(
-                xvals, np.array([1.0, 0.0, width])
-            )
+            congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, width]))
             yvals = congridyvals[offsetkey]
         startpt = int(center - widthinpts // 2)
         indices = range(startpt, startpt + widthinpts)
@@ -256,9 +248,7 @@ def congrid(xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False):
             xvals = indices - center + offset
             if kernel == "gauss":
                 sigma = optsigma[kernelindex]
-                congridyvals[offsetkey] = tide_fit.gauss_eval(
-                    xvals, np.array([1.0, 0.0, sigma])
-                )
+                congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, sigma]))
             elif kernel == "kaiser":
                 beta = optbeta[kernelindex]
                 congridyvals[offsetkey] = tide_fit.kaiserbessel_eval(
@@ -370,9 +360,7 @@ class fastresampler:
         return out_y
 
 
-def doresample(
-    orig_x, orig_y, new_x, method="cubic", padlen=0, antialias=False, debug=False
-):
+def doresample(orig_x, orig_y, new_x, method="cubic", padlen=0, antialias=False, debug=False):
     """
     Resample data from one spacing to another.  By default, does not apply any antialiasing filter.
 
@@ -416,9 +404,7 @@ def doresample(
     final_freq = len(new_x) / (new_x[-1] - new_x[0])
     if antialias and (init_freq > final_freq):
         aafilterfreq = final_freq / 2.0
-        aafilter = tide_filt.noncausalfilter(
-            filtertype="arb", transferfunc="trapezoidal"
-        )
+        aafilter = tide_filt.noncausalfilter(filtertype="arb", transferfunc="trapezoidal")
         aafilter.setfreqs(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
         pad_y = aafilter.apply(init_freq, pad_y)
 
@@ -426,20 +412,14 @@ def doresample(
         cj = signal.cspline1d(pad_y)
         # return tide_filt.unpadvec(
         #   np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
-        return signal.cspline1d_eval(
-            cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]
-        )
+        return signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])
     elif method == "quadratic":
         qj = signal.qspline1d(pad_y)
         # return tide_filt.unpadvec(
         #    np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
-        return signal.qspline1d_eval(
-            qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]
-        )
+        return signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])
     elif method == "univariate":
-        interpolator = sp.interpolate.UnivariateSpline(
-            pad_x, pad_y, k=3, s=0
-        )  # s=0 interpolates
+        interpolator = sp.interpolate.UnivariateSpline(pad_x, pad_y, k=3, s=0)  # s=0 interpolates
         # return tide_filt.unpadvec(np.float64(interpolator(new_x)), padlen=padlen)
         return np.float64(interpolator(new_x))
     else:
@@ -477,9 +457,7 @@ def arbresample(
     if decimate:
         if final_freq > init_freq:
             # upsample only
-            upsampled = upsample(
-                inputdata, init_freq, final_freq, method=method, debug=debug
-            )
+            upsampled = upsample(inputdata, init_freq, final_freq, method=method, debug=debug)
             if debug:
                 print("arbresample - upsampled points:", len(upsampled))
             return upsampled
@@ -512,17 +490,12 @@ def arbresample(
                     print("arbresample - downsampled points:", len(downsampled))
                 return downsampled
             else:
-                initaxis = sp.linspace(
-                    0, len(upsampled), len(upsampled), endpoint=False
-                )
+                initaxis = sp.linspace(0, len(upsampled), len(upsampled), endpoint=False)
                 print(len(initaxis), len(upsampled))
                 f = sp.interpolate.interp1d(initaxis, upsampled)
                 downsampled = f(
                     q // 2
-                    + q
-                    * sp.linspace(
-                        0, len(upsampled) // q, len(upsampled) // q, endpoint=False
-                    )
+                    + q * sp.linspace(0, len(upsampled) // q, len(upsampled) // q, endpoint=False)
                 )
                 return downsampled
         else:
@@ -549,18 +522,14 @@ def arbresample(
         return resampled
 
 
-def upsample(
-    inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, debug=False
-):
+def upsample(inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, debug=False):
     starttime = time.time()
     if Fs_higher <= Fs_init:
         print("upsample: target frequency must be higher than initial frequency")
         sys.exit()
 
     # upsample
-    orig_x = sp.linspace(
-        0.0, (1.0 / Fs_init) * len(inputdata), num=len(inputdata), endpoint=False
-    )
+    orig_x = sp.linspace(0.0, (1.0 / Fs_init) * len(inputdata), num=len(inputdata), endpoint=False)
     endpoint = orig_x[-1] - orig_x[0]
     ts_higher = 1.0 / Fs_higher
     numresamppts = int(endpoint // ts_higher + 1)
@@ -616,9 +585,7 @@ def dotwostepresample(
     init_freq = len(orig_x) / endpoint
     intermed_ts = 1.0 / intermed_freq
     numresamppts = int(endpoint // intermed_ts + 1)
-    intermed_x = intermed_ts * sp.linspace(
-        0.0, 1.0 * numresamppts, numresamppts, endpoint=False
-    )
+    intermed_x = intermed_ts * sp.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
     if debug:
         print(
@@ -649,9 +616,7 @@ def dotwostepresample(
     final_ts = 1.0 / final_freq
     numresamppts = int(np.ceil(endpoint / final_ts))
     # final_x = np.arange(0.0, final_ts * numresamppts, final_ts)
-    final_x = final_ts * sp.linspace(
-        0.0, 1.0 * numresamppts, numresamppts, endpoint=False
-    )
+    final_x = final_ts * sp.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
     resampled_y = doresample(intermed_x, antialias_y, final_x, method=method)
     if debug:
         print("downsampling took", time.time() - starttime, "seconds")
@@ -733,9 +698,7 @@ def calcsliceoffset(sotype, slicenum, numslices, tr, multiband=1):
                 slicetime = (tr / numslices) * (slicenum / 2)
             else:
                 # odd slice number
-                slicetime = (tr / numslices) * (
-                    (numslices + 1) / 2 + (slicenum - 1) / 2
-                )
+                slicetime = (tr / numslices) * ((numslices + 1) / 2 + (slicenum - 1) / 2)
 
     # Siemens multiband interleave format
     if sotype == 7:
@@ -789,14 +752,10 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False, debug=False):
     preshifted_y = np.zeros(
         thepaddedlen, dtype="float"
     )  # initialize the working buffer (with pad)
-    weights = np.zeros(
-        thepaddedlen, dtype="float"
-    )  # initialize the weight buffer (with pad)
+    weights = np.zeros(thepaddedlen, dtype="float")  # initialize the weight buffer (with pad)
 
     # now do the math
-    preshifted_y[padtrs : padtrs + thelen] = inputtc[
-        :
-    ]  # copy initial data into shift buffer
+    preshifted_y[padtrs : padtrs + thelen] = inputtc[:]  # copy initial data into shift buffer
     weights[padtrs : padtrs + thelen] = 1.0  # put in the weight vector
     revtc = inputtc[::-1]  # reflect data around ends to
     preshifted_y[0:padtrs] = revtc[-padtrs:]  # eliminate discontinuities

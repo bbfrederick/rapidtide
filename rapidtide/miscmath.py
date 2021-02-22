@@ -372,9 +372,7 @@ def corrnormalize(thedata, detrendorder=1, windowfunc="hamming"):
     """
     # detrend first
     if detrendorder > 0:
-        intervec = stdnormalize(
-            tide_fit.detrend(thedata, order=detrendorder, demean=True)
-        )
+        intervec = stdnormalize(tide_fit.detrend(thedata, order=detrendorder, demean=True))
     else:
         intervec = stdnormalize(thedata)
 

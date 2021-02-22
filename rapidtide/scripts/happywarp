@@ -272,9 +272,7 @@ if __name__ == "__main__":
             if values == "":
                 setattr(namespace, self.dest, "__EMPTY__")
             else:
-                setattr(
-                    namespace, self.dest, os.path.abspath(os.path.expanduser(values))
-                )
+                setattr(namespace, self.dest, os.path.abspath(os.path.expanduser(values)))
 
     def is_dir(dirname):
         """Checks if a path is an actual directory"""

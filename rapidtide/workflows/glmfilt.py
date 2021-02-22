@@ -51,9 +51,7 @@ def _get_parser():
         type=int,
         help="The number of points to skip at the beginning of the timecourse when fitting.",
     )
-    parser.add_argument(
-        "outputroot", type=str, help="The root name for all output files."
-    )
+    parser.add_argument("outputroot", type=str, help="The root name for all output files.")
     parser.add_argument(
         "--evfile",
         dest="evfile",
@@ -74,9 +72,7 @@ def glmfilt(inputfile, numskip, outputroot, evfilename):
     thesizes_ev = []
 
     # read the datafile and the evfiles
-    nim_input, nim_data, nim_header, thedims_in, thesizes_in = tide_io.readfromnifti(
-        inputfile
-    )
+    nim_input, nim_data, nim_header, thedims_in, thesizes_in = tide_io.readfromnifti(inputfile)
     xdim, ydim, slicedim, tr = tide_io.parseniftisizes(thesizes_in)
     print(xdim, ydim, slicedim, tr)
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims_in)
@@ -137,9 +133,7 @@ def glmfilt(inputfile, numskip, outputroot, evfilename):
                 exit()
         if timepoints - numskip != thedims_ev[j][4]:
             print("Input file and ev file ", j, " dimensions do not match")
-            print(
-                "dimension ", 4, ":", timepoints, "!= ", thedims_ev[j][4], "+", numskip
-            )
+            print("dimension ", 4, ":", timepoints, "!= ", thedims_ev[j][4], "+", numskip)
             exit()
 
     print("will perform GLM with ", numregressors, " regressors")
@@ -158,13 +152,8 @@ def glmfilt(inputfile, numskip, outputroot, evfilename):
                         regressorvec.append(evdata[j][x, y, z, :])
                     else:
                         regressorvec.append(evdata[j])
-                if (
-                    np.max(trimmeddata[x, y, z, :]) - np.min(trimmeddata[x, y, z, :])
-                    > 0.0
-                ):
-                    thefit, R = tide_fit.mlregress(
-                        regressorvec, trimmeddata[x, y, z, :]
-                    )
+                if np.max(trimmeddata[x, y, z, :]) - np.min(trimmeddata[x, y, z, :]) > 0.0:
+                    thefit, R = tide_fit.mlregress(regressorvec, trimmeddata[x, y, z, :])
                     meandata[x, y, z] = thefit[0, 0]
                     Rdata[x, y, z] = R
                     for j in range(0, numregressors):
@@ -185,31 +174,22 @@ def glmfilt(inputfile, numskip, outputroot, evfilename):
     theheader["dim"][4] = 1
     tide_io.savetonifti(meandata, theheader, outputroot + "_mean")
     for j in range(0, numregressors):
-        tide_io.savetonifti(
-            fitdata[:, :, :, j], theheader, outputroot + "_fit" + str(j)
-        )
+        tide_io.savetonifti(fitdata[:, :, :, j], theheader, outputroot + "_fit" + str(j))
     tide_io.savetonifti(Rdata, theheader, outputroot + "_R")
     Rdata = None
 
     print()
     print("Now constructing the array of data to remove")
     # datatoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip, numregressors), dtype='float')
-    totaltoremove = np.zeros(
-        (xsize, ysize, numslices, timepoints - numskip), dtype="float"
-    )
+    totaltoremove = np.zeros((xsize, ysize, numslices, timepoints - numskip), dtype="float")
     # filtereddata = 1.0 * totaltoremove
     for z in range(0, numslices):
         print("processing slice ", z)
         for y in range(0, ysize):
             for x in range(0, xsize):
-                if (
-                    np.max(trimmeddata[x, y, z, :]) - np.min(trimmeddata[x, y, z, :])
-                    > 0.0
-                ):
+                if np.max(trimmeddata[x, y, z, :]) - np.min(trimmeddata[x, y, z, :]) > 0.0:
                     for j in range(0, numregressors):
-                        totaltoremove[x, y, z, :] += (
-                            fitdata[x, y, z, j] * regressorvec[j]
-                        )
+                        totaltoremove[x, y, z, :] += fitdata[x, y, z, j] * regressorvec[j]
                 else:
                     totaltoremove[x, y, z, :] = 0.0
     print("Array construction done.  Saving files")

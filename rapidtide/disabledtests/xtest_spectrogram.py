@@ -179,25 +179,19 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
             allfilters.append(
                 {
                     "name": filtertype + " brickwall",
-                    "filter": noncausalfilter(
-                        filtertype=filtertype, transferfunc="brickwall"
-                    ),
+                    "filter": noncausalfilter(filtertype=filtertype, transferfunc="brickwall"),
                 }
             )
             allfilters.append(
                 {
                     "name": filtertype + " trapezoidal",
-                    "filter": noncausalfilter(
-                        filtertype=filtertype, transferfunc="trapezoidal"
-                    ),
+                    "filter": noncausalfilter(filtertype=filtertype, transferfunc="trapezoidal"),
                 }
             )
             allfilters.append(
                 {
                     "name": filtertype + " gausian",
-                    "filter": noncausalfilter(
-                        filtertype=filtertype, transferfunc="gaussian"
-                    ),
+                    "filter": noncausalfilter(filtertype=filtertype, transferfunc="gaussian"),
                 }
             )
 
@@ -264,8 +258,7 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
             for thefilter in allfilters:
                 plt.plot(
                     thewave["timeaxis"],
-                    offset
-                    + thefilter["filter"].apply(1.0 / sampletime, thewave["waveform"]),
+                    offset + thefilter["filter"].apply(1.0 / sampletime, thewave["waveform"]),
                 )
                 legend.append(thewave["name"] + ": " + thefilter["name"])
                 offset += 1.1
@@ -278,9 +271,7 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
 
 
 def test_filterprops(display=False):
-    eval_filterprops(
-        sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=display
-    )
+    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=display)
     eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100, display=display)
     eval_filterprops(sampletime=0.1, tclengthinsecs=1000.0, numruns=10, display=display)
 

@@ -32,9 +32,7 @@ def main():
     sourcelen = 1001
     sourceaxis = sp.linspace(starttime, endtime, num=sourcelen, endpoint=True)
 
-    optsigma = np.array(
-        [0.4241, 0.4927, 0.4839, 0.5063, 0.5516, 0.5695, 0.5682, 0.5974]
-    )
+    optsigma = np.array([0.4241, 0.4927, 0.4839, 0.5063, 0.5516, 0.5695, 0.5682, 0.5974])
     optbeta = np.array([1.9980, 2.3934, 3.3800, 4.2054, 4.9107, 5.7567, 6.6291, 7.4302])
     widths = np.array([1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0])
 

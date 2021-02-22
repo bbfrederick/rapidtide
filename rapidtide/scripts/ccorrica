@@ -54,9 +54,7 @@ def usage():
     print(
         "    --windowfunc=FUNC  - window function to apply before corrlation (default is hamming)"
     )
-    print(
-        "    --phat             - perform phase alignment transform (PHAT) rather than "
-    )
+    print("    --phat             - perform phase alignment transform (PHAT) rather than ")
     print("                         standard crosscorrelation")
     print(
         "    --liang            - perform phase alignment transform with Liang weighting function rather than "
@@ -66,16 +64,10 @@ def usage():
         "    --eckart           - perform phase alignment transform with Eckart weighting function rather than "
     )
     print("                         standard crosscorrelation")
-    print(
-        "    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is "
-    )
+    print("    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is ")
     print("                         +/-15)")
-    print(
-        "    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ."
-    )
-    print(
-        "                         LOWERSTOP and UPPERSTOP can be specified, or will be "
-    )
+    print("    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ.")
+    print("                         LOWERSTOP and UPPERSTOP can be specified, or will be ")
     print("                         calculated automatically")
     print("    -V                 - filter data and regressors to VLF band")
     print("    -L                 - filter data and regressors to LFO band")
@@ -247,11 +239,7 @@ def main():
 
     xcorrlen = 2 * tclen - 1
     sampletime = 1.0 / Fs
-    xcorr_x = (
-        np.r_[0.0:xcorrlen] * sampletime
-        - (xcorrlen * sampletime) / 2.0
-        + sampletime / 2.0
-    )
+    xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     searchrange = 15.0
     widthlimit = 15.0
 
@@ -277,9 +265,7 @@ def main():
                 weighting=corrweighting,
                 displayplots=debug,
             )
-            thepxcorr = pearsonr(
-                reformdata[component1, :] / tclen, reformdata[component2, :]
-            )
+            thepxcorr = pearsonr(reformdata[component1, :] / tclen, reformdata[component2, :])
             outputdata[component1, component2, 0, :] = thexcorr
             outputpdata[component1, component2, 0, :] = thepxcorr[0]
             (
@@ -308,9 +294,7 @@ def main():
             outputcorrmask[component1, component2, 0, 0] = maskval
 
     # symmetrize the matrices
-    outputcorrmax[:, :, 0, 0] = tide_stats.symmetrize(
-        outputcorrmax[:, :, 0, 0], zerodiagonal=True
-    )
+    outputcorrmax[:, :, 0, 0] = tide_stats.symmetrize(outputcorrmax[:, :, 0, 0], zerodiagonal=True)
     outputcorrlag[:, :, 0, 0] = tide_stats.symmetrize(
         outputcorrlag[:, :, 0, 0], antisymmetric=True
     )
@@ -321,9 +305,7 @@ def main():
 
     # show()
     outputaffine = np.eye(4)
-    out4d_hdr = nib.Nifti1Image(
-        outputdata[:, :, :, searchstart:searchend], outputaffine
-    ).header
+    out4d_hdr = nib.Nifti1Image(outputdata[:, :, :, searchstart:searchend], outputaffine).header
     out4d_hdr["pixdim"][4] = sampletime
     out4d_sizes = out4d_hdr["pixdim"]
     tide_io.savetonifti(

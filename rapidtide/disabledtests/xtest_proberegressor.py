@@ -42,9 +42,7 @@ def test_proberegressor(debug=False, display=False):
     validtimepoints = validend - validstart + 1
 
     skiptime = fmritr * (preprocskip)
-    reference_x = np.arange(0.0, numreference) * inputperiod - (
-        inputstarttime + offsettime
-    )
+    reference_x = np.arange(0.0, numreference) * inputperiod - (inputstarttime + offsettime)
     initial_fmri_x = np.arange(0.0, validtimepoints) * fmritr + skiptime
     os_fmri_x = (
         np.arange(0.0, (validtimepoints) * oversampfactor - (oversampfactor - 1))
@@ -64,9 +62,7 @@ def test_proberegressor(debug=False, display=False):
             inputvec[0:numreference], order=detrendorder, demean=True
         )
     else:
-        reference_y = invertfac * (
-            inputvec[0:numreference] - np.mean(inputvec[0:numreference])
-        )
+        reference_y = invertfac * (inputvec[0:numreference] - np.mean(inputvec[0:numreference]))
 
     if display:
         plt.figure()

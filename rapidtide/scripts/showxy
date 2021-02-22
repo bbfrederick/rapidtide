@@ -47,14 +47,7 @@ from matplotlib.pyplot import (
 
 
 def bland_altman_plot(
-    data1,
-    data2,
-    identifier=None,
-    fontscalefac=1.0,
-    xrange=None,
-    yrange=None,
-    *args,
-    **kwargs
+    data1, data2, identifier=None, fontscalefac=1.0, xrange=None, yrange=None, *args, **kwargs
 ):
     data1 = np.asarray(data1)
     data2 = np.asarray(data2)
@@ -327,9 +320,7 @@ def main():
             )
         else:
             if args.usepoints:
-                plot(
-                    xvecs[i], yvecs[i], color=colorlist[i], marker=".", linestyle="None"
-                )
+                plot(xvecs[i], yvecs[i], color=colorlist[i], marker=".", linestyle="None")
             else:
                 plot(xvecs[i], yvecs[i], color=colorlist[i])
             if args.xrange is not None:

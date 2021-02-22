@@ -108,16 +108,7 @@ def _procOneVoxelFitcorr(
     rt_floattype="float64",
 ):
 
-    (
-        maxindex,
-        maxlag,
-        maxval,
-        maxsigma,
-        maskval,
-        peakstart,
-        peakend,
-        failreason,
-    ) = onesimfuncfit(
+    (maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason,) = onesimfuncfit(
         corr_y,
         thefitter,
         disablethresholds=disablethresholds,
@@ -352,13 +343,9 @@ def fitcorr(
                     | thefitter.FML_FITAMPHIGH
                 ) & failreason:
                     ampfails += 1
-                if (
-                    thefitter.FML_INITWIDTHLOW | thefitter.FML_FITWIDTHLOW
-                ) & failreason:
+                if (thefitter.FML_INITWIDTHLOW | thefitter.FML_FITWIDTHLOW) & failreason:
                     lowwidthfails += 1
-                if (
-                    thefitter.FML_INITWIDTHHIGH | thefitter.FML_FITWIDTHHIGH
-                ) & failreason:
+                if (thefitter.FML_INITWIDTHHIGH | thefitter.FML_FITWIDTHHIGH) & failreason:
                     highwidthfails += 1
                 if (thefitter.FML_INITLAGLOW | thefitter.FML_INITLAGHIGH) & failreason:
                     lowlagfails += 1

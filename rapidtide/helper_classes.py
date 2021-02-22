@@ -81,9 +81,7 @@ class fmridata:
         )
 
     def byvol(self):
-        return self.thedata[:, :, :, self.numskip :].reshape(
-            (self.numvox, self.timepoints)
-        )
+        return self.thedata[:, :, :, self.numskip :].reshape((self.numvox, self.timepoints))
 
     def byvox(self):
         return self.thedata[:, :, :, self.numskip :]
@@ -135,8 +133,7 @@ class proberegressor:
     def maketargettimeaxis(self):
         self.targettimeaxis = np.linspace(
             self.targetperiod * self.targetstartpoint,
-            self.targetperiod * self.targetstartpoint
-            + self.targetperiod * self.targetpoints,
+            self.targetperiod * self.targetstartpoint + self.targetperiod * self.targetpoints,
             num=self.targetpoints,
             endpoint=True,
         )
@@ -233,7 +230,7 @@ class mutualinformationator(similarityfunctionator):
         bins=20,
         sigma=0.25,
         *args,
-        **kwargs
+        **kwargs,
     ):
         self.windowfunc = windowfunc
         self.norm = norm
@@ -369,9 +366,7 @@ class mutualinformationator(similarityfunctionator):
 
 
 class correlator(similarityfunctionator):
-    def __init__(
-        self, hpfreq=None, windowfunc="hamming", corrweighting="None", *args, **kwargs
-    ):
+    def __init__(self, hpfreq=None, windowfunc="hamming", corrweighting="None", *args, **kwargs):
         self.hpfreq = hpfreq
         self.windowfunc = windowfunc
         self.corrweighting = corrweighting
@@ -489,9 +484,7 @@ class coherer:
         self.freqmin = freqmin
         self.freqmax = freqmax
         if self.freqaxisvalid:
-            self.freqmininpts = np.max(
-                [0, tide_util.valtoindex(self.freqaxis, self.freqmin)]
-            )
+            self.freqmininpts = np.max([0, tide_util.valtoindex(self.freqaxis, self.freqmin)])
             self.freqmaxinpts = np.min(
                 [
                     tide_util.valtoindex(self.freqaxis, self.freqmax),
@@ -592,9 +585,7 @@ class coherer:
 
         if trim:
             if alt:
-                self.themax = np.argmax(
-                    self.thecoherence[self.freqmininpts : self.freqmaxinpts]
-                )
+                self.themax = np.argmax(self.thecoherence[self.freqmininpts : self.freqmaxinpts])
                 return (
                     self.trim(self.thecoherence),
                     self.trim(self.freqaxis),
@@ -604,9 +595,7 @@ class coherer:
                     self.trim(self.thecsdxy),
                 )
             else:
-                self.themax = np.argmax(
-                    self.thecoherence[self.freqmininpts : self.freqmaxinpts]
-                )
+                self.themax = np.argmax(self.thecoherence[self.freqmininpts : self.freqmaxinpts])
                 return (
                     self.trim(self.thecoherence),
                     self.trim(self.freqaxis),
@@ -767,13 +756,9 @@ class simfunc_fitter:
         while not done:
             flipfac = 1.0
             done = True
-            maxindex = (np.argmax(corrfunc[lowerlim:upperlim]) + lowerlim).astype(
-                "int32"
-            )
+            maxindex = (np.argmax(corrfunc[lowerlim:upperlim]) + lowerlim).astype("int32")
             if self.bipolar:
-                minindex = (np.argmax(-corrfunc[lowerlim:upperlim]) + lowerlim).astype(
-                    "int32"
-                )
+                minindex = (np.argmax(-corrfunc[lowerlim:upperlim]) + lowerlim).astype("int32")
                 if np.fabs(corrfunc[minindex]) > np.fabs(corrfunc[maxindex]):
                     maxindex = minindex
                     flipfac = -1.0
@@ -970,9 +955,7 @@ class simfunc_fitter:
             while peakstart > 2 and corrfunc[peakstart] == corrfunc[peakstart + 1]:
                 peakstart -= 1
             if self.debug:
-                print(
-                    "peakstart, peakend after flattop correction:", peakstart, peakend
-                )
+                print("peakstart, peakend after flattop correction:", peakstart, peakend)
                 print("\n")
                 for i in range(peakstart, peakend + 1):
                     print(self.corrtimeaxis[i], corrfunc[i])
@@ -990,11 +973,7 @@ class simfunc_fitter:
             # This is calculated from first principles, but it's always big by a factor or ~1.4.
             #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
             maxsigma_init = np.float64(
-                (
-                    (peakend - peakstart + 1)
-                    * binwidth
-                    / (2.0 * np.sqrt(-np.log(self.searchfrac)))
-                )
+                ((peakend - peakstart + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac))))
                 / np.sqrt(2.0)
             )
             if self.debug:
@@ -1026,16 +1005,12 @@ class simfunc_fitter:
             if peakend - peakstart < 2:
                 failreason |= self.FML_INITWIDTHLOW
                 maxsigma_init = np.float64(
-                    ((2 + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac))))
-                    / np.sqrt(2.0)
+                    ((2 + 1) * binwidth / (2.0 * np.sqrt(-np.log(self.searchfrac)))) / np.sqrt(2.0)
                 )
                 if self.debug:
                     print("bad initial width - too low")
             if (self.functype == "correlation") or (self.functype == "hybrid"):
-                if (
-                    not (self.lthreshval <= maxval_init <= self.uthreshval)
-                    and self.enforcethresh
-                ):
+                if not (self.lthreshval <= maxval_init <= self.uthreshval) and self.enforcethresh:
                     failreason |= self.FML_INITAMPLOW
                     if self.debug:
                         print(
@@ -1085,9 +1060,7 @@ class simfunc_fitter:
                 data = corrfunc[peakstart : peakend + 1]
                 # do a least squares fit over the top of the peak
                 # p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
-                p0 = np.array(
-                    [maxval_init, maxlag_init, maxsigma_init], dtype="float64"
-                )
+                p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype="float64")
                 if self.debug:
                     print("fit input array:", p0)
                 try:
@@ -1176,9 +1149,7 @@ class simfunc_fitter:
                     maxval = 1.0 * np.sign(maxval)
             else:
                 # different rules for mutual information peaks
-                if ((maxval - baseline) < self.lthreshval * baselinedev) or (
-                    maxval < baseline
-                ):
+                if ((maxval - baseline) < self.lthreshval * baselinedev) or (maxval < baseline):
                     failreason |= self.FML_FITAMPLOW
                     if self.debug:
                         if (maxval - baseline) < self.lthreshval * baselinedev:
@@ -1206,17 +1177,13 @@ class simfunc_fitter:
             if maxsigma > self.absmaxsigma:
                 failreason |= self.FML_FITWIDTHHIGH
                 if self.debug:
-                    print(
-                        "bad width after refinement:", maxsigma, ">", self.absmaxsigma
-                    )
+                    print("bad width after refinement:", maxsigma, ">", self.absmaxsigma)
                 maxsigma = self.absmaxsigma
                 fitfail = True
             if maxsigma < self.absminsigma:
                 failreason |= self.FML_FITWIDTHLOW
                 if self.debug:
-                    print(
-                        "bad width after refinement:", maxsigma, "<", self.absminsigma
-                    )
+                    print("bad width after refinement:", maxsigma, "<", self.absminsigma)
                 maxsigma = self.absminsigma
                 fitfail = True
             if fitfail:
@@ -1351,9 +1318,7 @@ class freqtrack:
             xend = centerindex + halfwidth
             if peakfreqs[i] > 0.0:
                 filtsignal = padx[xstart:xend]
-                numharmonics = np.min(
-                    [numharmonics, int((nyquistfreq // peakfreqs[i]) - 1)]
-                )
+                numharmonics = np.min([numharmonics, int((nyquistfreq // peakfreqs[i]) - 1)])
                 if self.debug:
                     print("numharmonics:", numharmonics, nyquistfreq // peakfreqs[i])
                 for j in range(numharmonics + 1):
@@ -1364,9 +1329,7 @@ class freqtrack:
                     wp = [workingfreq * 0.9, workingfreq * 1.1]
                     gpass = 1.0
                     gstop = 40.0
-                    b, a = sp.signal.iirdesign(
-                        wp, ws, gpass, gstop, ftype="cheby2", fs=fs
-                    )
+                    b, a = sp.signal.iirdesign(wp, ws, gpass, gstop, ftype="cheby2", fs=fs)
                     if self.debug:
                         print(
                             i,
@@ -1382,9 +1345,7 @@ class freqtrack:
                             len(a),
                             len(b),
                         )
-                    filtsignal = sp.signal.filtfilt(
-                        b, a, sp.signal.filtfilt(b, a, filtsignal)
-                    )
+                    filtsignal = sp.signal.filtfilt(b, a, sp.signal.filtfilt(b, a, filtsignal))
                 pady[xstart:xend] += filtsignal
             else:
                 pady[xstart:xend] += padx[xstart:xend]

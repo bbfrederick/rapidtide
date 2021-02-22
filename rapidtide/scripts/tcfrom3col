@@ -54,9 +54,7 @@ def main():
     inputdata = tide_io.readvecs(args.infilename)
     timeaxis = np.arange(0.0, args.numpoints * args.timestep, args.timestep)
     outputdata = 0.0 * timeaxis
-    outputdata = tide_util.maketcfrom3col(
-        inputdata, timeaxis, outputdata, debug=args.debug
-    )
+    outputdata = tide_util.maketcfrom3col(inputdata, timeaxis, outputdata, debug=args.debug)
     tide_io.writenpvecs(outputdata, args.outfilename)
 
 

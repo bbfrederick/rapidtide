@@ -35,9 +35,7 @@ def main():
         usage="%(prog)s inputfile outputfile outputtr [--noantialias]",
     )
 
-    parser.add_argument(
-        "inputfile", help="The name of the input nifti file, including extension"
-    )
+    parser.add_argument("inputfile", help="The name of the input nifti file, including extension")
     parser.add_argument(
         "outputfile", help="The name of the output nifti file, including extension"
     )
@@ -80,16 +78,13 @@ def main():
             numinputtrs,
         )
     input_x = (
-        np.linspace(0.0, inputtr * numinputtrs, num=numinputtrs, endpoint=False)
-        - inputstarttime
+        np.linspace(0.0, inputtr * numinputtrs, num=numinputtrs, endpoint=False) - inputstarttime
     )
 
     # prepare the output timepoint list
     outputstarttime = inputstarttime
     outputendtime = inputendtime
-    numoutputtrs = np.int(
-        np.ceil((outputendtime - outputstarttime) / args.outputtr) + 1
-    )
+    numoutputtrs = np.int(np.ceil((outputendtime - outputstarttime) / args.outputtr) + 1)
     if args.debug:
         print(
             "output start,end,tr,numtrs",
@@ -103,9 +98,7 @@ def main():
         - outputstarttime
     )
 
-    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(
-        args.inputfile
-    )
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)
     xsize = thedims[1]
     ysize = thedims[2]
     numslices = thedims[3]

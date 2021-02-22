@@ -58,9 +58,7 @@ def usage():
     print("usage: ", os.path.basename(sys.argv[0]), " niftifile")
     print("")
     print("required arguments:")
-    print(
-        "    niftifile:                3 or 4 dimensional nifti file containing MR data"
-    )
+    print("    niftifile:                3 or 4 dimensional nifti file containing MR data")
     print("")
     # print("optional arguments:")
     # print("    --debug                    - turn on debugging messages")

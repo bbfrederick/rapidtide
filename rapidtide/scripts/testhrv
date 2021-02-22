@@ -19,9 +19,7 @@ from matplotlib.pyplot import figure, plot, show, savefig, setp
 
 
 def main():
-    data = hp.get_data(
-        "../data/examples/dst/happy_flip_cardfromfmri_dlfiltered_25.0Hz.txt"
-    )
+    data = hp.get_data("../data/examples/dst/happy_flip_cardfromfmri_dlfiltered_25.0Hz.txt")
     Fs = 25.0
     filtered = hp.filtersignal(data, cutoff=5, sample_rate=Fs, order=3)
     working_data, measures = hp.process(

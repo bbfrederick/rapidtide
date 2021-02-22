@@ -121,9 +121,7 @@ def test_delayestimation(display=False, debug=False):
     pedestal = 100.0
 
     # set up the filter
-    theprefilter = tide_filt.noncausalfilter(
-        "arb", transferfunc="brickwall", debug=False
-    )
+    theprefilter = tide_filt.noncausalfilter("arb", transferfunc="brickwall", debug=False)
     theprefilter.setfreqs(0.009, 0.01, 0.15, 0.16)
 
     # construct the various test waveforms
@@ -199,9 +197,7 @@ def test_delayestimation(display=False, debug=False):
         debug=False,
     )
 
-    themutualinformationator.setreftc(
-        np.zeros((oversampfac * numpoints), dtype=np.float64)
-    )
+    themutualinformationator.setreftc(np.zeros((oversampfac * numpoints), dtype=np.float64))
     themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
 
     # set up thefitter

@@ -32,9 +32,7 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 
 
-def _procOneVoxelWiener(
-    vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype="float64"
-):
+def _procOneVoxelWiener(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype="float64"):
     thefit, R = tide_fit.mlregress(lagtc, inittc)
     fitcoff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoff * lagtc)
