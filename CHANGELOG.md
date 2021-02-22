@@ -1,6 +1,6 @@
 # History of changes
 
-## Version 2.0alpha13 (2/18/21)
+## Version 2.0alpha13 (2/22/21)
 * (package) Copied Taylor Salo's improvements to build and deployment from the master branch.
 * (all) Ran all python files through Black to give consistent formatting (really, truly this time).
 * (all) Implemented new, generalized text/tsv/bids text file reader with column selection (readvectorsfromtextfile).
