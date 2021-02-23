@@ -185,7 +185,7 @@ def postprocessfilteropts(args):
     try:
         thepadseconds = args.padseconds
     except AttributeError:
-        args.filtertype = DEFAULT_PAD_SECONDS
+        args.padseconds = DEFAULT_PAD_SECONDS
 
     # if arbvec is set, we are going set up an arbpass filter
     if args.arbvec is not None:
