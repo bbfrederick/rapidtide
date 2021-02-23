@@ -1335,36 +1335,39 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                         + ".json.  This is not BIDS compliant."
                     )
         if os.path.exists(thefileroot + ".tsv.gz"):
-            df = pd.read_csv(
-                thefileroot + ".tsv.gz",
-                compression="gzip",
-                names=columns,
-                header=None,
-                sep="\t",
-                quotechar='"',
-            )
-            compressed = True
+            compression = "gzip"
+            theextension = ".tsv.gz"
         else:
+            compression = None
+            theextension = ".tsv"
             if warn:
                 print(
                     "Warning - "
                     + thefileroot
                     + ".tsv is uncompressed.  This is not BIDS compliant."
                 )
-            df = pd.read_csv(
-                thefileroot + ".tsv",
-                compression=None,
-                names=columns,
-                header=None,
-                sep="\t",
-                quotechar='"',
-            )
-            compressed = False
+
+        df = pd.read_csv(
+            thefileroot + theextension,
+            compression=compression,
+            names=columns,
+            header=None,
+            sep="\t",
+            quotechar='"',
+        )
 
         # check for header line
         if any(df.iloc[0].apply(lambda x: isinstance(x, str))):
             headerlinefound = True
-            df = df[1:].reset_index(drop=True)
+            # reread the data, skipping the first row
+            df = pd.read_csv(
+                thefileroot + theextension,
+                compression=compression,
+                names=columns,
+                header=0,
+                sep="\t",
+                quotechar='"',
+            )
             if warn:
                 print(
                     "Warning - Column header line found in "
@@ -1382,14 +1385,20 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 starttime,
                 columns,
                 np.transpose(df.to_numpy()).shape,
-                compressed,
+                (compression == "gzip"),
                 warn,
                 headerlinefound,
             )
 
         # select a subset of columns if they were specified
         if colspec is None:
-            return samplerate, starttime, columns, np.transpose(df.to_numpy()), compressed
+            return (
+                samplerate,
+                starttime,
+                columns,
+                np.transpose(df.to_numpy()),
+                (compression == "gzip"),
+            )
         else:
             collist = colspec.split(",")
             try:
@@ -1403,7 +1412,7 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 starttime,
                 columns,
                 np.transpose(selectedcols.to_numpy()),
-                compressed,
+                (compression == "gzip"),
             )
     else:
         print("file pair does not exist")
