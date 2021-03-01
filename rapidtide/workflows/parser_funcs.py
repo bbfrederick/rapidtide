@@ -100,11 +100,46 @@ DEFAULT_FILTER_ORDER = 6
 DEFAULT_PAD_SECONDS = 30.0
 
 
-def addreqtextfile(parser, varname):
+def addreqinputniftifile(parser, varname):
     parser.add_argument(
         varname,
         type=str,
-        help="Text file containing a timeseries.  Select column COLNUM if multicolumn file",
+        help="Input NIFTI file.",
+    )
+
+
+def addreqoutputniftifile(parser, varname):
+    parser.add_argument(
+        varname,
+        type=str,
+        help="Output NIFTI file.",
+    )
+
+
+def addreqinputtextfile(parser, varname, onecol=False):
+    if onecol:
+        colspecline = (
+            "Use [:COLUMN] to select which column to use, where COLUMN is an "
+            "integer or a column name (if input file is BIDS)"
+        )
+    else:
+        colspecline = (
+            "Use [:COLSPEC] to select which column(s) to use, where COLSPEC is an "
+            "integer, a column separated list of ranges, or a comma "
+            "separated set of column names (if input file is BIDS)"
+        )
+    parser.add_argument(
+        varname,
+        type=str,
+        help="Text file containing one or more timeseries columns. " + colspecline,
+    )
+
+
+def addreqoutputtextfile(parser, varname):
+    parser.add_argument(
+        varname,
+        type=str,
+        help="Name of the output text file.",
     )
 
 
