@@ -528,7 +528,7 @@ def calcplethquality(
         # E_waveform[i] = entropy(dt_waveform[startpt:endpt + 1])
         r = 0.2 * np.std(dt_waveform[startpt : endpt + 1])
         E_waveform[i] = approximateentropy(dt_waveform[startpt : endpt + 1], 2, r)
-        if debug:
+        """if debug:
             print(
                 i,
                 startpt,
@@ -537,7 +537,7 @@ def calcplethquality(
                 S_waveform[i],
                 K_waveform[i],
                 E_waveform[i],
-            )
+            )"""
 
     S_sqi_mean = np.mean(S_waveform)
     S_sqi_std = np.std(S_waveform)
@@ -591,6 +591,7 @@ def getphysiofile(
     inputstart,
     slicetimeaxis,
     stdfreq,
+    stdpoints,
     envcutoff,
     envthresh,
     timings,
@@ -633,8 +634,27 @@ def getphysiofile(
         )
         + inputstart
     )
+    stdtimeaxis = (
+        np.linspace(0.0, (1.0 / stdfreq) * stdpoints, num=stdpoints, endpoint=False) + inputstart
+    )
+
     if debug:
-        print(inputtimeaxis)
+        print("getphysiofile: input time axis start, stop, step, freq, length")
+        print(
+            inputtimeaxis[0],
+            inputtimeaxis[-1],
+            inputtimeaxis[1] - inputtimeaxis[0],
+            1.0 / (inputtimeaxis[1] - inputtimeaxis[0]),
+            len(inputtimeaxis),
+        )
+        print("getphysiofile: slice time axis start, stop, step, freq, length")
+        print(
+            slicetimeaxis[0],
+            slicetimeaxis[-1],
+            slicetimeaxis[1] - slicetimeaxis[0],
+            1.0 / (slicetimeaxis[1] - slicetimeaxis[0]),
+            len(slicetimeaxis),
+        )
     if (inputtimeaxis[0] > slop) or (inputtimeaxis[-1] < slicetimeaxis[-1] - slop):
         print("getphysiofile: error - plethysmogram waveform does not cover the fmri time range")
         print("\tinputtimeaxis[0]:", inputtimeaxis[0])
@@ -684,8 +704,12 @@ def getphysiofile(
 
     # resample to standard resolution and save
     pleth_stdres = tide_math.madnormalize(
-        tide_resample.arbresample(
-            cleanpleth_fullres, inputfreq, stdfreq, decimate=True, debug=False
+        tide_resample.doresample(
+            inputtimeaxis,
+            cleanpleth_fullres,
+            stdtimeaxis,
+            method="univariate",
+            padlen=0,
         )
     )
     infodict["numplethpts_stdres"] = len(pleth_stdres)
@@ -1467,6 +1491,7 @@ def happy_main(argparsingfunc):
                 args.inputstart,
                 slicetimeaxis,
                 args.stdfreq,
+                len(cardfromfmri_stdres),
                 args.envcutoff,
                 args.envthresh,
                 timings,
@@ -1526,6 +1551,8 @@ def happy_main(argparsingfunc):
                     pleth_stdres, alignpts_stdres, int(10.0 * args.stdfreq)
                 )
             if thispass == numpasses - 1:
+                if args.debug:
+                    print("about to do the thing that causes the crash")
                 if args.bidsoutput:
                     tide_io.writebidstsv(
                         outputroot + "_desc-slicerescardfromfmri_timeseries",
