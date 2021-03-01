@@ -4,45 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import rapidtide.correlate as tide_corr
 import rapidtide.io as tide_io
-import rapidtide.workflows.parser_funcs as pf
-
-
-def _get_parser():
-    """
-    Argument parser for showarbcorr
-    """
-    parser = argparse.ArgumentParser(
-        prog="showarbcorr",
-        description=("Calculate and display " "crosscorrelation between two " "timeseries."),
-        usage="%(prog)s infile1 infile2 [options]",
-    )
-
-    # Required arguments
-    pf.addreqtextfile(parser, "infilename1")
-    pf.addreqtextfile(parser, "infilename2")
-
-    # add optional arguments
-    parser.add_argument(
-        "--samplerate1",
-        type=lambda x: pf.is_float(parser, x),
-        help="Sample rate of timecourse 1, in Hz",
-        default=None,
-    )
-    parser.add_argument(
-        "--samplerate2",
-        type=lambda x: pf.is_float(parser, x),
-        help="Sample rate of timecourse 2, in Hz",
-        default=None,
-    )
 
 
 def main():
-    # try:
-    #    args = _get_parser().parse_args()
-    # except SystemExit:
-    #    _get_parser().print_help()
-    #    raise
-
     infilename1 = "timecourse1.txt"
     infilename2 = "timecourse1.txt"
 
