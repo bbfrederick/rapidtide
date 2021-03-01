@@ -23,7 +23,6 @@
 from __future__ import print_function
 import argparse
 import rapidtide.io as tide_io
-import numpy as np
 import rapidtide.workflows.parser_funcs as pf
 
 
@@ -38,8 +37,8 @@ def _get_parser():
     )
 
     # Required arguments
-    pf.addreqtextfile(parser, "inputfile")
-    pf.addreqtextfile(parser, "outputfile")
+    pf.addreqinputtextfile(parser, "inputfile")
+    pf.addreqoutputtextfile(parser, "outputfile")
 
     # add optional arguments
     freq_group = parser.add_mutually_exclusive_group()

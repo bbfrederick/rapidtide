@@ -41,8 +41,8 @@ def _get_parser():
     )
 
     # Required arguments
-    pf.addreqtextfile(parser, "inputtemplatename")
-    pf.addreqtextfile(parser, "outputtemplatename")
+    pf.addreqinputniftifile(parser, "inputtemplatename")
+    pf.addreqoutputniftifile(parser, "outputtemplatename")
 
     # add optional arguments
     parser.add_argument(

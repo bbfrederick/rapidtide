@@ -23,61 +23,62 @@
 from __future__ import print_function
 import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
-import sys
 import numpy as np
-import getopt
+import argparse
+import rapidtide.workflows.parser_funcs as pf
 
 
-def usage():
-    print("usage: histtc inputfile outputroot [--numbins=BINS]")
-    print("")
-    print("required arguments:")
-    print("	inputfile	      - the name of the input text file")
-    print("	outputroot	      - the root of the output text file")
-    print("optional arguments:")
-    print(" --numbins=BINS    - Number of histogram bins (default is 101)")
+def _get_parser():
+    """
+    Argument parser for atlastool
+    """
+    parser = argparse.ArgumentParser(
+        prog="atlastool",
+        description=("Generate a histogram of the values in a timecourse"),
+        usage="%(prog)s inputfile outputroot [--numbins BINS]",
+    )
 
-    print("")
-    return ()
+    # Required arguments
+    pf.addreqinputtextfile(parser, "inputfilename", onecol=True)
+    pf.addreqoutputtextfile(parser, "outputroot")
+
+    # add optional arguments
+    parser.add_argument(
+        "--numbins",
+        dest="histlen",
+        action="store",
+        type=int,
+        metavar="BINS",
+        help=("Number of histogram bins (default is 101)"),
+        default=101,
+    )
+    return parser
 
 
 def main():
-    # set default variable values
-    histlen = 101
-
-    # get the command line parameters
-    if len(sys.argv) != 3:
-        usage()
-        exit()
-
-    # handle required args first
-    inputfilename = sys.argv[1]
-    outputroot = sys.argv[2]
-
-    # now check options
+    # grab the command line arguments then pass them off.
     try:
-        opts, args = getopt.getopt(sys.argv[2:], "x", ["numbins", "help"])
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
-        usage()
-        sys.exit(2)
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
-    for o, a in opts:
-        if o == "--numbins":
-            histlen = int(a)
-            print("using", histlen, "histogram bins")
-        else:
-            assert False, "unhandled option"
+    #inputdata = tide_io.readvec(args.inputfilename)
+        dummy,
+        dummy,
+        colnames,
+        inputdata,
+        compressed,
+        filetype,
+    ) = tide_io.readvectorsfromtextfile(args.inputfilename)
 
-    inputdata = tide_io.readvec(inputfilename)
 
     maxval = np.max(inputdata)
     minval = np.min(inputdata)
     therange = [minval, maxval]
     print("therange:", therange)
 
-    tide_stats.makeandsavehistogram(inputdata, histlen, 0, outputroot, therange=therange)
+    tide_stats.makeandsavehistogram(inputdata, args.histlen, 0, args.outputroot, therange=therange)
 
 
 if __name__ == "__main__":
