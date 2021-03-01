@@ -446,6 +446,8 @@ def arbresample(
     final_freq
     intermed_freq
     method
+    antialias
+    decimate
     debug
 
     Returns
