@@ -1,5 +1,37 @@
 #!/usr/bin/env bash
 
-samplerate=`cat sim_samplerate.txt`
+#samplerate=`cat sim_samplerate.txt`
 
-simdata fmri.nii.gz sim_mean.nii.gz ../dst/simdata_lfo simdata_slicetimes.txt --lfopctfile=lfopct.nii.gz --lfolagfile=lfolags.nii.gz --lforegressor=lforegressor.txt --lfosamprate=12.5
+#simdata \
+#	sub-RAPIDTIDETEST.nii.gz \
+#	sim_mean.nii.gz \
+#	../dst/simdata_lfo \
+#	simdata_slicetimes.txt \
+#	--lfopctfile lfopct.nii.gz \
+#	--lfolagfile lfolags.nii.gz \
+#	--lforegressor lforegressor.txt \
+#	--lfosamprate 12.5 
+
+rapidtide \
+	sub-RAPIDTIDETEST.nii.gz \
+	../dst/simdata-inputs \
+	--spatialfilt 2 \
+	--nprocs -1 \
+	--passes 3
+
+simdata \
+	sub-RAPIDTIDETEST.nii.gz \
+	../dst/simdata-inputs_desc-mean_map.nii.gz \
+	../dst/simfromfmri \
+	simdata_slicetimes.txt \
+	--lfopctfile ../dst/simdata-inputs_desc-maxcorrsq_map.nii.gz \
+	--lfolagfile ../dst/simdata-inputs_desc-maxtime_map.nii.gz \
+	--lforegressor ../dst/simdata-inputs_desc-movingregressor_timeseries.json:pass3 
+        --noiselevel 2.0
+
+rapidtide \
+	../dst/simfromfmri.nii.gz \
+        ../dst/sub-SIMDATA \
+        --spatialfilt 2 \
+        --nprocs -1 \
+        --passes 3 --noglm

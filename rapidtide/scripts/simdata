@@ -22,12 +22,13 @@
 #
 from __future__ import print_function
 import rapidtide.miscmath as tide_math
-import getopt
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
 from matplotlib.pyplot import *
 import scipy as sp
 import numpy as np
+import argparse
+import rapidtide.workflows.parser_funcs as pf
 
 
 def prepareband(
@@ -39,9 +40,41 @@ def prepareband(
     starttime,
     regressorname,
     padtime=30.0,
+    debug=False,
 ):
+
+    if debug:
+        print("fmridims:", fmridims)
+        print("pctfile:", pctfile)
+        print("lagfile:", lagfile)
+        print("regressorfile:", regressorfile)
+        print("regressorname:", regressorname)
+        print("padtime:", padtime)
+
+    (
+        insamprate,
+        instarttime,
+        colnames,
+        invec,
+        compressed,
+        filetype,
+    ) = tide_io.readvectorsfromtextfile(regressorfile, onecol=True)
+    rawvec = tide_math.stdnormalize(np.transpose(invec))
+
+    if starttime is None:
+        if instarttime is None:
+            starttime = 0.0
+        else:
+            starttime = instarttime
+    if samprate is None:
+        if insamprate is not None:
+            samprate = insamprate
+    if debug:
+        print("samprate:", samprate)
+        print("starttime:", starttime)
+
     # read in the timecourse to resample
-    rawvec = tide_math.stdnormalize(tide_io.readvec(regressorfile))
+    # rawvec = tide_math.stdnormalize(tide_io.readvec(regressorfile))
     regressorpts = len(rawvec)
 
     print("Input regressor has ", regressorpts, " points")
@@ -94,261 +127,167 @@ def fmrisignal(
 
     thesignal = np.zeros((len(times)), dtype=np.float)
     if dolfo:
-        thesignal += meanvalue * (lfomag / 100.0) * lfowave.yfromx(times + lfodelay)
+        thesignal += meanvalue * (lfomag / 100.0) * lfowave.yfromx(times - lfodelay)
     if doresp:
-        thesignal += meanvalue * (respmag / 100.0) * respwave.yfromx(times + respdelay)
+        thesignal += meanvalue * (respmag / 100.0) * respwave.yfromx(times - respdelay)
     if docardiac:
-        thesignal += meanvalue * (cardiacmag / 100.0) * cardiacwave.yfromx(times + cardiacdelay)
+        thesignal += meanvalue * (cardiacmag / 100.0) * cardiacwave.yfromx(times - cardiacdelay)
     return thesignal + meanvalue
 
 
-def usage():
-    print(
-        "usage: simdata fmrifilename immeanfilename outputname slicetimefile=FILENAME lagfilename regressor regressorsamprate numskip inputstarttime outputname noiselevel sliceorder"
-    )
-    print("")
-    print("required arguments:")
-    print("	fmrifilename                - the example BOLD fmri file")
-    print("	immeanfilename              - the 3D mean image file")
-    print("	outputname                  - the root name for the output files")
-    print(
-        "	slicetimefile               - slice acquisition time file, either FSL format or BIDS sidecar"
+def _get_parser():
+    """
+    Argument parser for simdata
+    """
+    parser = argparse.ArgumentParser(
+        prog="simdata",
+        description=("Generate simulated fMRI data with known correlation parameters"),
+        usage="%(prog)s fmrifilename immeanfilename outputroot slicetimefile [options]",
     )
 
-    print("")
-    print(
-        "variable arguments (at least one set of parameters - LFO, respiratory, or cardiac - must be specified):"
+    # Required arguments
+    pf.addreqinputniftifile(
+        parser, "fmrifilename", addedtext="An exemplar BOLD fMRI file with the target dimensions"
     )
-    print(
-        "	lfopctfile=FILENAME         - NIFTI file with the lfo amplitude in percent of mean at every point"
+    pf.addreqinputniftifile(
+        parser, "immeanfilename", addedtext="3D file with the mean value for each voxel"
     )
-    print(
-        "	lfolagfile=FILENAME         - NIFTI file with the lfo delay value in seconds at every point"
+    parser.add_argument("outputroot", type=str, help="Root name for the output files.")
+    parser.add_argument(
+        "slicetimefile",
+        type=str,
+        help="Slice acquisition time file, either FSL format or BIDS sidecar.",
     )
-    print("	lforegressor=FILENAME       - the name of the LFO regressor text file")
-    print("	lfosamprate=FREQ            - the sample rate of the LFO regressor file, in Hz")
-    print(
-        "	lfostarttime=TIME           - the time delay, in seconds, into the LFO regressor file that matches the start time of the fmrifile. Default is 0"
-    )
-    print(
-        "	resppctfile=FILENAME        - NIFTI file with the resp amplitude in percent of mean at every point"
-    )
-    print(
-        "	resplagfile=FILENAME        - NIFTI file with the resp delay value in seconds at every point"
-    )
-    print("	respregressor=FILENAME      - the name of the respiratory regressor text file")
-    print(
-        "	respsamprate=FREQ           - the sample rate of the respiratory regressor file, in Hz"
-    )
-    print(
-        "	respstarttime=TIME          - the time delay, in seconds, into the respiratory regressor file that matches the start time of the fmrifile. Default is 0"
-    )
-    print(
-        "	cardiacpctfile=FILENAME     - NIFTI file with the cardiac amplitude in percent of mean at every point"
-    )
-    print(
-        "	cardiaclagfile=FILENAME     - NIFTI file with the cardiac delay value in seconds at every point"
-    )
-    print("	cardiacregressor=FILENAME   - the name of the cardiac regressor text file")
-    print("	cardiacsamprate=FREQ        - the sample rate of the cardiac regressor file, in Hz")
-    print(
-        "	cardiacstarttime=TIME       - the time delay, in seconds, into the LFO regressor file that matches the start time of the fmrifile. Default is 0"
-    )
-    print("")
-    print("optional arguments:")
-    print("	numskip=SKIP                - use to simulate tr periods deleted during preprocessing")
-    print("	noiselevel=LEVEL            - the variance of the noise.  Default is 0.0")
-    """print("					0 : None")
-    print("					1 : Regular up (0, 1, 2, 3, ...)")
-    print("					2 : Regular down")
-    print("					3 : Use slice order file")
-    print("					4 : Use slice timings file")
-    print("					5 : Standard Interleaved (0, 2, 4 ... 1, 3, 5 ... )")
-    print("					6 : Siemens Interleaved (0, 2, 4 ... 1, 3, 5 ... for odd number of slices)")
-    print("					                        (1, 3, 5 ... 0, 2, 4 ... for even number of slices)")"""
 
-    return ()
+    for band in ["lfo", "resp", "cardiac"]:
+        parser.add_argument(
+            "--" + band + "pctfile",
+            dest=(band + "pctfile"),
+            action="store",
+            type=lambda x: pf.is_valid_file(parser, x),
+            metavar="FILE",
+            help=(
+                "3D NIFTI file with the " + band + " amplitude in percent of mean at every point"
+            ),
+            default=None,
+        )
+        parser.add_argument(
+            "--" + band + "lagfile",
+            dest=(band + "lagfile"),
+            action="store",
+            type=lambda x: pf.is_valid_file(parser, x),
+            metavar="FILE",
+            help=("3D NIFTI file with the " + band + " delay value in seconds at every point"),
+            default=None,
+        )
+        parser.add_argument(
+            "--" + band + "regressor",
+            dest=(band + "regressor"),
+            action="store",
+            type=lambda x: pf.is_valid_file(parser, x),
+            metavar="FILE",
+            help=("The LFO regressor text file"),
+            default=None,
+        )
+        parser.add_argument(
+            "--" + band + "samprate",
+            dest=(band + "samprate"),
+            action="store",
+            type=float,
+            metavar="SAMPRATE",
+            help=("The sample rate of the LFO regressor file, in Hz"),
+            default=None,
+        )
+        parser.add_argument(
+            "--" + band + "starttime",
+            dest=(band + "starttime"),
+            action="store",
+            type=float,
+            metavar="STARTTIME",
+            help=(
+                "The time delay, in seconds, into the "
+                + band
+                + " regressor file that matches the start time of the fmrifile. Default is 0.0"
+            ),
+            default=None,
+        )
+
+    # optional arguments
+    parser.add_argument(
+        "--numskip",
+        dest="numskip",
+        action="store",
+        type=int,
+        metavar="SKIP",
+        help=("Use to simulate tr periods deleted during preprocessing"),
+        default=0,
+    )
+    parser.add_argument(
+        "--noiselevel",
+        dest="noiselevel",
+        action="store",
+        type=float,
+        metavar="LEVEL",
+        help=("The variance of the noise.  Default is 0.0"),
+        default=0.0,
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Enable additional debugging output."),
+        default=False,
+    )
+
+    # Miscellaneous options
+
+    return parser
 
 
 def simdata_main(thearguments):
+    # get the command line parameters
+    try:
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
+
+    print(args)
+
     # set default variable values
-    displayplots = False
-    fastresample = True
-    debug = False
-
-    # handle required args first
-    fmrifilename = None
-    immeanfilename = None
-
-    lfopctfile = None
-    lfolagfile = None
     lfopctdata = None
     lfolagdata = None
-    lforegressor = None
-    lfosamprate = None
-    lfostarttime = 0.0
     lfogenerator = None
 
-    resppctfile = None
-    resplagfile = None
     resppctdata = None
     resplagdata = None
-    respregressor = None
-    respsamprate = None
-    respstarttime = 0.0
     respgenerator = None
 
-    cardiacpctfile = None
-    cardiaclagfile = None
-    cardiacctdata = None
+    cardiacpctdata = None
     cardiaclagdata = None
-    cardiacregressor = None
-    cardiacsamprate = None
-    cardiacstarttime = 0.0
     cardiacgenerator = None
-
-    noiselevel = 0.0
-    numskip = 0
-
-    #  scan for  arguments
-    reqnum = 8
-    if len(thearguments) < reqnum - 1:
-        print(
-            "Not enough arguments specified - got",
-            len(thearguments) - 1,
-            "expected",
-            reqnum,
-            " - exiting.",
-        )
-        usage()
-        sys.exit()
-
-    fmrifilename = thearguments[1]
-    immeanfilename = thearguments[2]
-    outputname = thearguments[3]
-    slicetimefile = thearguments[4]
-
-    optparsestart = 5
-    print(thearguments[optparsestart:])
-    try:
-        opts, args = getopt.getopt(
-            thearguments[optparsestart:],
-            "x",
-            [
-                "help",
-                "lfopctfile=",
-                "lfolagfile=",
-                "lforegressor=",
-                "lfosamprate=",
-                "lfostarttime=",
-                "resppctfile=",
-                "resplagfile=",
-                "respregressor=",
-                "respsamprate=",
-                "respstarttime=",
-                "cardiacpctfile=",
-                "cardiaclagfile=",
-                "cardiacregressor=",
-                "cardiacsamprate=",
-                "cardiacstarttime=",
-                "noiselevel=",
-                "numskip=",
-            ],
-        )
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -x not recognized"
-        usage()
-        sys.exit(2)
-
-    formattedcmdline = [thearguments[0] + " \\"]
-    for thearg in range(1, optparsestart):
-        formattedcmdline.append("\t" + thearguments[thearg] + " \\")
-
-    for o, a in opts:
-        linkchar = "="
-        if o == "-x":
-            print("Got an x")
-        elif o == "--lfopctfile":
-            lfopctfile = a
-            print("Using", lfopctfile, "as LFO percentage file")
-        elif o == "--lfolagfile":
-            lfolagfile = a
-            print("Using", lfolagfile, "as LFO lag file")
-        elif o == "--lforegressor":
-            lforegressor = a
-            print("Using", lforegressor, "as LFO regressor file")
-        elif o == "--lfosamprate":
-            lfosamprate = float(a)
-            print("Using", lfosamprate, "as LFO regressor sample rate")
-        elif o == "--lfosamprate":
-            lfosamprate = float(a)
-            print("Using", lfosamptime, "as LFO regressor samplerate")
-
-        elif o == "--resppctfile":
-            resppctfile = a
-            print("Using", resppctfile, "as respiratory percentage file")
-        elif o == "--resplagfile":
-            resplagfile = a
-            print("Using", resplagfile, "as respiratory lag file")
-        elif o == "--respregressor":
-            respregressor = a
-            print("Using", respregressor, "as respiratory regressor file")
-        elif o == "--respsamprate":
-            respsamprate = float(a)
-            print("Using", respsamprate, "as respiratory regressor sample rate")
-        elif o == "--respsamprate":
-            respsamprate = float(a)
-            print("Using", respsamptime, "as respiratory regressor samplerate")
-
-        elif o == "--cardiacpctfile":
-            cardiacpctfile = a
-            print("Using", cardiacpctfile, "as cardiac percentage file")
-        elif o == "--cardiaclagfile":
-            cardiaclagfile = a
-            print("Using", cardiaclagfile, "as cardiac lag file")
-        elif o == "--cardiacregressor":
-            cardiacregressor = a
-            print("Using", cardiacregressor, "as cardiac regressor file")
-        elif o == "--cardiacsamprate":
-            cardiacsamprate = float(a)
-            print("Using", cardiacsamprate, "as cardiac regressor sample rate")
-        elif o == "--cardiacsamprate":
-            cardiacsamprate = float(a)
-            print("Using", cardiacsamptime, "as cardiac regressor samplerate")
-
-        elif o == "--noiselevel":
-            noiselevel = float(a)
-            print("Noise level set to", noiselevel)
-        elif o == "--numskip":
-            numskip = int(a)
-            print("Numskip set to", numskip)
-
-        else:
-            assert False, "unhandled option: " + o
-        formattedcmdline.append("\t" + o + linkchar + a + " \\")
 
     # check for complete information
     if (
-        (lfopctfile is None)
-        or (lfolagfile is None)
-        or (lforegressor is None)
-        or (lfosamprate is None)
+        (args.lfopctfile is None)
+        or (args.lfolagfile is None)
+        or (args.lforegressor is None)
+        or ((args.lfosamprate is None) and (len(args.lforegressor.split(":")) < 2))
     ):
-        print("lfopctfile:", lfopctfile)
-        print("lfolagfile:", lfolagfile)
-        print("lforegressor:", lforegressor)
-        print("lfopctsamprate:", lfosamprate)
+        print("lfopctfile:", args.lfopctfile)
+        print("lfolagfile:", args.lfolagfile)
+        print("lforegressor:", args.lforegressor)
+        print("lfopctsamprate:", args.lfosamprate)
         dolfo = False
     else:
         dolfo = True
         print("LFO information is complete, will be included.")
 
     if (
-        (resppctfile is None)
-        or (resplagfile is None)
-        or (respregressor is None)
-        or (respsamprate is None)
+        (args.resppctfile is None)
+        or (args.resplagfile is None)
+        or (args.respregressor is None)
+        or ((args.respsamprate is None) and (len(args.respregressor.split(":")) < 2))
     ):
         doresp = False
     else:
@@ -356,10 +295,10 @@ def simdata_main(thearguments):
         print("Respiratory information is complete, will be included.")
 
     if (
-        (cardiacpctfile is None)
-        or (cardiaclagfile is None)
-        or (cardiacregressor is None)
-        or (cardiacsamprate is None)
+        (args.cardiacpctfile is None)
+        or (args.cardiaclagfile is None)
+        or (args.cardiacregressor is None)
+        or ((args.cardiacsamprate is None) and (len(args.cardiacregressor.split(":")) < 2))
     ):
         docardiac = False
     else:
@@ -369,19 +308,21 @@ def simdata_main(thearguments):
         print(
             "Must specify parameters for at least one of LFO, respiration, or cardiac signals - exiting"
         )
-        usage()
+        _get_parser().print_help()
         sys.exit()
 
-    sliceoffsettimes = tide_io.getslicetimesfromfile(slicetimefile)
+    sliceoffsettimes = tide_io.getslicetimesfromfile(args.slicetimefile)
 
-    fmritr, numtrs = tide_io.fmritimeinfo(fmrifilename)
-    nim_fmri, fmridata, fmriheader, fmridims, fmrisizes = tide_io.readfromnifti(fmrifilename)
+    fmritr, numtrs = tide_io.fmritimeinfo(args.fmrifilename)
+    nim_fmri, fmridata, fmriheader, fmridims, fmrisizes = tide_io.readfromnifti(args.fmrifilename)
     print("fmri data: ", numtrs, " timepoints, tr = ", fmritr)
 
     # prepare the output timepoints
     initial_fmri_x = (
-        sp.linspace(0.0, fmritr * (numtrs - numskip), num=(numtrs - numskip), endpoint=False)
-        + fmritr * numskip
+        sp.linspace(
+            0.0, fmritr * (numtrs - args.numskip), num=(numtrs - args.numskip), endpoint=False
+        )
+        + fmritr * args.numskip
     )
     print("length of fmri after removing skip:", len(initial_fmri_x))
     print(
@@ -401,7 +342,7 @@ def simdata_main(thearguments):
         immeanheader,
         immeandims,
         immeansizes,
-    ) = tide_io.readfromnifti(immeanfilename)
+    ) = tide_io.readfromnifti(args.immeanfilename)
     if not tide_io.checkspacedimmatch(immeandims, fmridims):
         print("immean file does not match")
         exit()
@@ -422,35 +363,38 @@ def simdata_main(thearguments):
     if dolfo:
         lfopctdata, lfolagdata, lfogenerator = prepareband(
             fmridims,
-            lfopctfile,
-            lfolagfile,
-            lforegressor,
-            lfosamprate,
-            lfostarttime,
+            args.lfopctfile,
+            args.lfolagfile,
+            args.lforegressor,
+            args.lfosamprate,
+            args.lfostarttime,
             "LFO",
             padtime=padtime,
+            debug=args.debug,
         )
     if doresp:
         resppctdata, resplagdata, respgenerator = prepareband(
             fmridims,
-            resppctfile,
-            resplagfile,
-            respregressor,
-            respsamprate,
-            respstarttime,
+            args.resppctfile,
+            args.resplagfile,
+            args.respregressor,
+            args.respsamprate,
+            args.respstarttime,
             "respiratory",
             padtime=padtime,
+            debug=args.debug,
         )
     if docardiac:
         cardiacpctdata, cardiaclagdata, cardiacgenerator = prepareband(
             fmridims,
-            cardiacpctfile,
-            cardiaclagfile,
-            cardiacregressor,
-            cardiacsamprate,
-            cardiacstarttime,
+            args.cardiacpctfile,
+            args.cardiaclagfile,
+            args.cardiacregressor,
+            args.cardiacsamprate,
+            args.cardiacstarttime,
             "cardiac",
             padtime=padtime,
+            debug=args.debug,
         )
 
     # loop over space
@@ -460,7 +404,7 @@ def simdata_main(thearguments):
         for j in range(0, ysize):
             for i in range(0, xsize):
                 # generate the noise
-                thenoise = noiselevel * np.random.standard_normal(len(initial_fmri_x))
+                thenoise = args.noiselevel * np.random.standard_normal(len(initial_fmri_x))
 
                 # add in the signals
                 if dolfo:
@@ -502,7 +446,7 @@ def simdata_main(thearguments):
                     + thenoise
                 )
 
-    tide_io.savetonifti(simdata, fmriheader, outputname)
+    tide_io.savetonifti(simdata, fmriheader, args.outputroot)
 
 
 if __name__ == "__main__":
