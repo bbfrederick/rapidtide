@@ -727,17 +727,17 @@ class RapidtideDataset:
             print("using ", self.fileroot + "meanvalue.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
             return True
-        elif os.path.isfile(self.fileroot + "desc-lfofilterMean_map.nii.gz"):
+        elif os.path.isfile(self.fileroot + "desc-mean_map.nii.gz"):
             thepath, thebase = os.path.split(self.fileroot)
             self.overlays["anatomic"] = overlay(
                 "anatomic",
-                self.fileroot + "desc-lfofilterMean_map.nii.gz",
+                self.fileroot + "desc-mean_map.nii.gz",
                 thebase,
                 init_LUT=self.init_LUT,
             )
             print(
                 "using ",
-                self.fileroot + "desc-lfofilterMean_map.nii.gz",
+                self.fileroot + "desc-mean_map.nii.gz",
                 " as background",
             )
             # allloadedmaps.append('anatomic')

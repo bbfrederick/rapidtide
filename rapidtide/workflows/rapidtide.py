@@ -2478,6 +2478,11 @@ def rapidtide_main(argparsingfunc):
                     nim_data = tide_io.readvecs(fmrifilename)
                 else:
                     nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
+
+            meanvalue = np.mean(
+                nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
+                axis=1,
+            )
             fmri_data_valid = (
                 nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
             )[validvoxels, :] + 0.0
@@ -2500,7 +2505,7 @@ def rapidtide_main(argparsingfunc):
 
         # now allocate the arrays needed for GLM filtering
         if optiondict["sharedmem"]:
-            meanvalue, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+            glmmean, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             rvalue, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             r2value, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             fitNorm, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
@@ -2508,7 +2513,7 @@ def rapidtide_main(argparsingfunc):
             movingsignal, dummy, dummy = allocshared(internalvalidfmrishape, rt_outfloatset)
             filtereddata, dummy, dummy = allocshared(internalvalidfmrishape, rt_outfloatset)
         else:
-            meanvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             fitNorm = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
@@ -2532,7 +2537,7 @@ def rapidtide_main(argparsingfunc):
             fmri_data_valid,
             threshval,
             lagtc,
-            meanvalue,
+            glmmean,
             rvalue,
             r2value,
             fitcoeff,
@@ -2562,8 +2567,10 @@ def rapidtide_main(argparsingfunc):
             nim_data = tide_io.readvecs(fmrifilename)
         else:
             nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
-        fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
-        meanvalue = np.mean(fmri_data, axis=1)
+        meanvalue = np.mean(
+            nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1], axis=1
+        )
+        # meanvalue = np.mean(fmri_data, axis=1)
 
     # Post refinement step 2 - make and save interesting histograms
     timings.append(["Start saving histograms", time.time(), None, None])
@@ -2733,7 +2740,6 @@ def rapidtide_main(argparsingfunc):
         for mapname, mapsuffix in [
             ("rvalue", "lfofilterR"),
             ("r2value", "lfofilterR2"),
-            ("meanvalue", "lfofilterMean"),
             ("fitcoeff", "lfofilterCoeff"),
             ("fitNorm", "lfofilterNorm"),
         ]:
@@ -2768,41 +2774,40 @@ def rapidtide_main(argparsingfunc):
                     )
         del rvalue
         del r2value
-        del meanvalue
         del fitcoeff
         del fitNorm
-    else:
-        for mapname, mapsuffix in [("meanvalue", "mean")]:
-            if optiondict["memprofile"]:
-                memcheckpoint("about to write " + mapname)
+
+    for mapname, mapsuffix in [("meanvalue", "mean")]:
+        if optiondict["memprofile"]:
+            memcheckpoint("about to write " + mapname)
+        else:
+            tide_util.logmem("about to write " + mapname, file=memfile)
+        outmaparray[:] = 0.0
+        outmaparray[:] = eval(mapname)[:]
+        if optiondict["textio"]:
+            tide_io.writenpvecs(
+                outmaparray.reshape(nativespaceshape),
+                outputname + "_" + mapsuffix + ".txt",
+            )
+        else:
+            if optiondict["bidsoutput"]:
+                savename = outputname + "_desc-" + mapsuffix + "_map"
+                bidsdict = bidsbasedict.copy()
+                tide_io.writedicttojson(bidsdict, savename + ".json")
             else:
-                tide_util.logmem("about to write " + mapname, file=memfile)
-            outmaparray[:] = 0.0
-            outmaparray = eval(mapname)[:]
-            if optiondict["textio"]:
-                tide_io.writenpvecs(
-                    outmaparray.reshape(nativespaceshape),
-                    outputname + "_" + mapsuffix + ".txt",
+                savename = outputname + "_" + mapname
+            if not fileiscifti:
+                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+            else:
+                tide_io.savetocifti(
+                    outmaparray,
+                    cifti_hdr,
+                    theheader,
+                    savename,
+                    isseries=False,
+                    names=[mapsuffix],
                 )
-            else:
-                if optiondict["bidsoutput"]:
-                    savename = outputname + "_desc-" + mapname + "_map"
-                    bidsdict = bidsbasedict.copy()
-                    tide_io.writedicttojson(bidsdict, savename + ".json")
-                else:
-                    savename = outputname + "_" + mapname
-                if not fileiscifti:
-                    tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
-                else:
-                    tide_io.savetocifti(
-                        outmaparray,
-                        cifti_hdr,
-                        theheader,
-                        savename,
-                        isseries=False,
-                        names=[mapsuffix],
-                    )
-        del meanvalue
+    del meanvalue
 
     if optiondict["numestreps"] > 0:
         for i in range(0, len(thepercentiles)):
