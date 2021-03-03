@@ -37,8 +37,13 @@ def is_valid_file(parser, arg):
     """
     Check if argument is existing file.
     """
-    if not op.isfile(arg) and arg is not None:
-        parser.error("The file {0} does not exist!".format(arg))
+    if arg is not None:
+        thefilename = arg.split(":")[0]
+    else:
+        thefilename = None
+
+    if not op.isfile(thefilename) and thefilename is not None:
+        parser.error("The file {0} does not exist!".format(thefilename))
 
     return arg
 
@@ -100,19 +105,19 @@ DEFAULT_FILTER_ORDER = 6
 DEFAULT_PAD_SECONDS = 30.0
 
 
-def addreqinputniftifile(parser, varname):
+def addreqinputniftifile(parser, varname, addedtext=""):
     parser.add_argument(
         varname,
-        type=str,
-        help="Input NIFTI file.",
+        type=lambda x: is_valid_file(parser, x),
+        help="Input NIFTI file name.  " + addedtext,
     )
 
 
-def addreqoutputniftifile(parser, varname):
+def addreqoutputniftifile(parser, varname, addedtext=""):
     parser.add_argument(
         varname,
         type=str,
-        help="Output NIFTI file.",
+        help="Output NIFTI file name.  " + addedtext,
     )
 
 
@@ -130,7 +135,7 @@ def addreqinputtextfile(parser, varname, onecol=False):
         )
     parser.add_argument(
         varname,
-        type=str,
+        type=lambda x: is_valid_file(parser, x),
         help="Text file containing one or more timeseries columns. " + colspecline,
     )
 

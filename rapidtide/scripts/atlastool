@@ -41,7 +41,12 @@ def _get_parser():
     )
 
     # Required arguments
-    pf.addreqinputniftifile(parser, "inputtemplatename")
+    pf.addreqinputniftifile(
+        parser,
+        "inputtemplatename",
+        addedtext="Must be either a 3D file with different regions specified by integer values, "
+        "or a 4D file with nonzero values indicating that a voxel is in the region.",
+    )
     pf.addreqoutputniftifile(parser, "outputtemplatename")
 
     # add optional arguments
