@@ -2740,6 +2740,7 @@ def rapidtide_main(argparsingfunc):
         for mapname, mapsuffix in [
             ("rvalue", "lfofilterR"),
             ("r2value", "lfofilterR2"),
+            ("glmmean", "lfofilterMean"),
             ("fitcoeff", "lfofilterCoeff"),
             ("fitNorm", "lfofilterNorm"),
         ]:
