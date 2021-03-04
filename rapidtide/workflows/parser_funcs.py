@@ -131,7 +131,7 @@ def addreqinputtextfile(parser, varname, onecol=False):
         colspecline = (
             "Use [:COLSPEC] to select which column(s) to use, where COLSPEC is an "
             "integer, a column separated list of ranges, or a comma "
-            "separated set of column names (if input file is BIDS)"
+            "separated set of column names (if input file is BIDS).  Default is to use all columns"
         )
     parser.add_argument(
         varname,
@@ -140,11 +140,15 @@ def addreqinputtextfile(parser, varname, onecol=False):
     )
 
 
-def addreqoutputtextfile(parser, varname):
+def addreqoutputtextfile(parser, varname, rootname=False):
+    if rootname:
+        helpline = "Root name for the output files"
+    else:
+        helpline = "Name of the output text file."
     parser.add_argument(
         varname,
         type=str,
-        help="Name of the output text file.",
+        help=helpline,
     )
 
 
