@@ -96,6 +96,7 @@ def main():
         raise
 
     args, thefilter = pf.postprocessfilteropts(args)
+
     # read in data
     (
         samplerate,
