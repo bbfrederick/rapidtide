@@ -32,6 +32,5 @@ simdata \
 rapidtide \
 	../dst/simfromfmri.nii.gz \
         ../dst/sub-SIMDATA \
-        --spatialfilt 2 \
         --nprocs -1 \
         --passes 3 --noglm
