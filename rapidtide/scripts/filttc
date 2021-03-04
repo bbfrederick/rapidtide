@@ -21,6 +21,7 @@
 #       $Id: showtc,v 1.16 2016/07/11 14:50:43 frederic Exp $
 #
 from __future__ import print_function
+import sys
 import argparse
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
@@ -109,7 +110,10 @@ def main():
 
     if samplerate is None:
         if args.samplerate == "auto":
-            samplerate = 1.0
+            print(
+                "sample rate must be specified, either by command line arguments or in the file header."
+            )
+            sys.exit()
         else:
             samplerate = args.samplerate
     else:
