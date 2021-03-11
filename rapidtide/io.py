@@ -510,6 +510,30 @@ if nibabelexists:
         else:
             return filename
 
+    def fmriheaderinfo(niftifilename):
+        r"""Retrieve the header information from a nifti file
+
+        Parameters
+        ----------
+        niftifilename : str
+            The name of the nifti file
+
+        Returns
+        -------
+        tr : float
+            The repetition time, in seconds
+        timepoints : int
+            The number of points along the time axis
+
+        """
+        nim = nib.load(niftifilename)
+        hdr = nim.header.copy()
+        thedims = hdr["dim"].copy()
+        thesizes = hdr["pixdim"].copy()
+        if hdr.get_xyzt_units()[1] == "msec":
+            thesizes[4] /= 1000.0
+        return thesizes, thedims
+
     def fmritimeinfo(niftifilename):
         r"""Retrieve the repetition time and number of timepoints from a nifti file
 
