@@ -11,7 +11,7 @@ band (rapidtide2) and now in the cardiac band (happy).
 
 Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
 
-|License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by NIH|
+|PyPi Latest Version| |PyPi - Python Versions| |License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by NIH|
 
 Why do I want to know about time lagged correlations?
 -----------------------------------------------------
@@ -372,6 +372,10 @@ Physiological noise identification and removal using time delay methods
    functional connectivity analysis. Front. Hum. Neurosci., 28 June 2016
    \| http://dx.doi.org/10.3389/fnhum.2016.00311
 
+.. |PyPi Latest Version| image:: https://img.shields.io/pypi/v/rapidtide.svg
+   :target: https://pypi.python.org/pypi/rapidtide/
+.. |PyPi - Python Versions| image:: https://img.shields.io/pypi/pyversions/rapidtide.svg
+   :target: https://pypi.python.org/pypi/rapidtide/
 .. |License| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
 .. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=latest
