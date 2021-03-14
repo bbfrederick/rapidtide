@@ -1,10 +1,1 @@
-recursive-include rapidtide *.py
-recursive-include rapidtide/data/examples/src fmri.nii.gz timecourse1.txt timecourse2.txt nirs.txt happyfmri.nii.gz happyfmri.json quartermask.nii.gz
-recursive-include rapidtide/scripts *
-recursive-include rapidtide/data/reference *.nii.gz *.txt
-recursive-include rapidtide/tests/testdata *.nii.gz *.txt
-recursive-include rapidtide/tests/testtargets *.nii.gz *.txt
-recursive-include rapidtide/tests/tmp .placeholder.txt
-recursive-include rapidtide/data/models *
 include versioneer.py
-include rapidtide/_version.py
