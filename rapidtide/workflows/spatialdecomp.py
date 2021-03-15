@@ -23,11 +23,13 @@
 from __future__ import print_function, division
 
 import argparse
+import sys
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
 from .parser_funcs import is_valid_file, is_float
+import numpy as np
 
-from matplotlib.pyplot import *
+# from matplotlib.pyplot import *
 from sklearn.decomposition import FastICA, PCA, SparsePCA
 
 
@@ -296,11 +298,11 @@ def main():
         args["pcacomponents"] = 0.5
         args["icacomponents"] = None
     elif args["ncomp"] < 1.0:
-        args["pcacomponents"] = inputnum
+        args["pcacomponents"] = args["ncomp"]
         args["icacomponents"] = None
     else:
-        args["pcacomponents"] = int(a)
-        args["icacomponents"] = pcacomponents
+        args["pcacomponents"] = int(args["ncomp"])
+        args["icacomponents"] = int(args["ncomp"])
 
     spatialdecomp_workflow(
         args["datafile"],
