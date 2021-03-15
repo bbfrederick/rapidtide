@@ -19,6 +19,7 @@ from __future__ import print_function
 import os.path as op
 
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 
@@ -30,10 +31,6 @@ import rapidtide.helper_classes as tide_classes
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.calcsimfunc as tide_calcsimfunc
-
-import matplotlib as mpl
-
-mpl.use("TkAgg")
 
 try:
     import mkl
@@ -411,4 +408,5 @@ def main():
 
 
 if __name__ == "__main__":
+    mpl.use("TkAgg")
     main()

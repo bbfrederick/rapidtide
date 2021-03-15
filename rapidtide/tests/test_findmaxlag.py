@@ -19,11 +19,8 @@ from __future__ import print_function
 import os.path as op
 
 import numpy as np
-import matplotlib.pyplot as plt
-
 import matplotlib as mpl
-
-mpl.use("TkAgg")
+import matplotlib.pyplot as plt
 
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
@@ -324,4 +321,5 @@ def main():
 
 
 if __name__ == "__main__":
+    mpl.use("TkAgg")
     main()

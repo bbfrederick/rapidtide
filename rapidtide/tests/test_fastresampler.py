@@ -15,18 +15,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
-
 from rapidtide.resample import fastresampler
 from rapidtide.tests.utils import mse
 
 
 def test_fastresampler(debug=False):
-    if debug:
-        import matplotlib as mpl
-
-        print("setting backend to TkAgg")
-        mpl.use("TkAgg")
     tr = 1.0
     padtime = 50.0
     testlen = 1000
@@ -86,4 +81,5 @@ def main():
 
 
 if __name__ == "__main__":
+    mpl.use("TkAgg")
     main()
