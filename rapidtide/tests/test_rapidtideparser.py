@@ -78,7 +78,7 @@ def main():
 
     # make the argument and results lists
     arglist = [
-        "../data/examples/src/fmri.nii.gz",
+        "../data/examples/src/sub-RAPIDTIDETEST.nii.gz",
         "../data/examples/dst/parsertestdummy",
     ]
     resultlist = []

@@ -56,20 +56,20 @@ def test_io(debug=True, display=False):
 
     # test fmritimeinfo
     fmritimeinfothresh = 1e-2
-    tr, timepoints = tide_io.fmritimeinfo(os.path.join(get_examples_path(), "happyfmri.nii.gz"))
+    tr, timepoints = tide_io.fmritimeinfo(os.path.join(get_examples_path(), "sub-HAPPYTEST.nii.gz"))
     assert np.fabs(tr - 1.16) < fmritimeinfothresh
     assert timepoints == 110
-    tr, timepoints = tide_io.fmritimeinfo(os.path.join(get_examples_path(), "fmri.nii.gz"))
+    tr, timepoints = tide_io.fmritimeinfo(os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"))
     assert np.fabs(tr - 1.5) < fmritimeinfothresh
     assert timepoints == 260
 
     # test niftifile reading
     sizethresh = 1e-3
     happy_img, happy_data, happy_hdr, happydims, happysizes = tide_io.readfromnifti(
-        os.path.join(get_examples_path(), "happyfmri.nii.gz")
+        os.path.join(get_examples_path(), "sub-HAPPYTEST.nii.gz")
     )
     fmri_img, fmri_data, fmri_hdr, fmridims, fmrisizes = tide_io.readfromnifti(
-        os.path.join(get_examples_path(), "fmri.nii.gz")
+        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz")
     )
     targetdims = [4, 65, 89, 64, 110, 1, 1, 1]
     targetsizes = [-1.00, 2.39583, 2.395830, 2.4, 1.16, 0.00, 0.00, 0.00]
@@ -85,7 +85,7 @@ def test_io(debug=True, display=False):
     # test file writing
     datathresh = 1e-3
     tide_io.savetonifti(
-        fmri_data, fmri_hdr, os.path.join(get_test_temp_path(), "fmri_copy.nii.gz")
+        fmri_data, fmri_hdr, os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST_copy.nii.gz")
     )
     (
         fmricopy_img,
@@ -93,7 +93,7 @@ def test_io(debug=True, display=False):
         fmricopy_hdr,
         fmricopydims,
         fmricopysizes,
-    ) = tide_io.readfromnifti(os.path.join(get_test_temp_path(), "fmri_copy.nii.gz"))
+    ) = tide_io.readfromnifti(os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST_copy.nii.gz"))
     assert tide_io.checkspacematch(fmri_hdr, fmricopy_hdr)
     assert tide_io.checktimematch(fmridims, fmridims)
     assert mse(fmri_data, fmricopy_data) < datathresh
