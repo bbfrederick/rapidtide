@@ -25,8 +25,8 @@ def test_fastresampler(debug=False):
     if debug:
         import matplotlib as mpl
 
-        print("setting backend to Qt5Agg")
-        mpl.use("Qt5Agg")
+        print("setting backend to TkAgg")
+        mpl.use("TkAgg")
     tr = 1.0
     padtime = 50.0
     testlen = 1000

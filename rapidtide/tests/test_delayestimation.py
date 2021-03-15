@@ -33,7 +33,7 @@ import rapidtide.calcsimfunc as tide_calcsimfunc
 
 import matplotlib as mpl
 
-mpl.use("Qt5Agg")
+mpl.use("TkAgg")
 
 try:
     import mkl

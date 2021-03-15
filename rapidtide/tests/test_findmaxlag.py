@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 
 import matplotlib as mpl
 
-mpl.use("Qt5Agg")
+mpl.use("TkAgg")
 
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
