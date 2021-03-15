@@ -30,7 +30,7 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser():
     """
-    Argument parser for atlastool
+    Argument parser for histtc
     """
     parser = argparse.ArgumentParser(
         prog="histtc",
