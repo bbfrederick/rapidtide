@@ -11,7 +11,7 @@ band (rapditide2) and now in the cardiac band (happy).
 
 Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
 
-|License| |Documentation Status| |Travis-CI| |Coverage| |DOI| |Funded by
+|PyPi Latest Version| |PyPi - Python Versions| |License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by NIH|
 NIH|
 
 Why do I want to know about time lagged correlations?
@@ -426,12 +426,16 @@ Physiological noise identification and removal using time delay methods
    Front Neurosci, 2019. 13: p. 787.
    \| http://dx.doi.org/10.3389/fnins.2019.00787
 
+.. |PyPi Latest Version| image:: https://img.shields.io/pypi/v/rapidtide.svg
+   :target: https://pypi.python.org/pypi/rapidtide/
+.. |PyPi - Python Versions| image:: https://img.shields.io/pypi/pyversions/rapidtide.svg
+   :target: https://pypi.python.org/pypi/rapidtide/
 .. |License| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
 .. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=latest
    :target: http://rapidtide.readthedocs.io/en/latest/?badge=latest
-.. |CircleCI| image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?style=shield?branch=dev
-   :target: https://circleci.com/gh/neurostuff/NiMARE
+.. |CircleCI| image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?branch=dev&style=shield
+   :target: https://circleci.com/gh/bbfrederick/rapidtide
 .. |Coverage| image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/dev/graph/badge.svg
    :target: https://codecov.io/gh/bbfrederick/rapidtide
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.814990.svg
