@@ -21,11 +21,74 @@
 #
 from __future__ import print_function, division
 
-import getopt
 import rapidtide.io as tide_io
 import matplotlib.pyplot as plt
-import sys
 import numpy as np
+import argparse
+
+
+def _get_parser():
+    """
+    Argument parser for pixelcomp
+    """
+    parser = argparse.ArgumentParser(
+        prog="pixelcomp",
+        description=("Compare two nifti files, voxel by voxel, in a contour plot"),
+        usage="%(prog)s inputfile1 maskfile1 inputfile2 maskfile2 outputfile [options]",
+    )
+
+    # Required arguments
+    parser.add_argument(
+        "inputfilename1", type=str, help="The name of the first input image nifti file."
+    )
+    parser.add_argument(
+        "maskfilename1", type=str, help="The name of the first input mask nifti file."
+    )
+    parser.add_argument(
+        "inputfilename2", type=str, help="The name of the second input image nifti file."
+    )
+    parser.add_argument(
+        "maskfilename2", type=str, help="The name of the second input mask nifti file."
+    )
+    parser.add_argument("outputroot", type=str, help="The root name of the output files.")
+
+    # add optional arguments
+    parser.add_argument(
+        "--scatter",
+        action="store_true",
+        help=("Do a scatter plot intstead of a contour plot."),
+        default=False,
+    )
+    parser.add_argument(
+        "--fitonly",
+        action="store_true",
+        help=("Perform fit only - do not generate graph."),
+        default=False,
+    )
+    parser.add_argument(
+        "--nodisplay",
+        dest="display",
+        action="store_false",
+        help=("Save graphs to file only - do not display."),
+        default=True,
+    )
+    parser.add_argument(
+        "--fitorder",
+        action="store",
+        type=int,
+        metavar="ORDER",
+        help=("Order of line fit - default is 1 (linear)."),
+        default=1,
+    )
+    parser.add_argument(
+        "--histbins",
+        action="store",
+        type=int,
+        metavar="NUM",
+        help=("Number of bins per dimension for the contour plot -Default is 51."),
+        default=51,
+    )
+    return parser
 
 
 def bland_altman_plot(data1, data2, *args, **kwargs):
@@ -42,63 +105,16 @@ def bland_altman_plot(data1, data2, *args, **kwargs):
     plt.axhline(md - 2 * sd, color="gray", linestyle="--")
 
 
-def usage():
-    print(
-        "usage: pixelcomp inputfile1 maskfile1 inputfile2 maskfile2 outputfile [-l] [-d] [--nodisplay]"
-    )
-    print("")
-    print("required arguments:")
-    print("	inputfile1	  - the name of the first input nifti file")
-    print("	maskfile1	  - the name of the first input nifti mask file")
-    print("	inputfile2	  - the name of the second input nifti file")
-    print("	maskfile2	  - the name of the second input nifti mask file")
-    print("	outputfile	  - the name of the output text file")
-    print("")
-    print("optional arguments:")
-    print("	-l		          - perform linear fit only")
-    print("	-d, --nodisplay   - save graphs to file only - do not display")
-    print("")
-    return ()
-
-
 def main():
-    # set default variable values
-    display = True
-    fastfilter = True
-    linfitonly = False
-    order = 3
-
-    # get the command line parameters
-    if len(sys.argv) < 6:
-        usage()
-        exit()
-
-    # handle required args first
-    inputfilename1 = sys.argv[1]
-    maskfilename1 = sys.argv[2]
-    inputfilename2 = sys.argv[3]
-    maskfilename2 = sys.argv[4]
-    outputfilename = sys.argv[5]
-
-    # now scan for optional arguments
+    # read the arguments
     try:
-        opts, args = getopt.getopt(sys.argv[6:], "ld", ["nodisplay", "help"])
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -x not recognized"
-        usage()
-        sys.exit(2)
-
-    for o, a in opts:
-        if o == "-l":
-            linfitonly = True
-        elif o == "-d" or o == "--nodisplay":
-            display = False
-        else:
-            assert False, "unhandled option"
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
     input1_img, input1_data, input1_hdr, thedims1, thesizes1 = tide_io.readfromnifti(
-        inputfilename1
+        args.inputfilename1
     )
     (
         mask1_img,
@@ -106,14 +122,14 @@ def main():
         mask1_hdr,
         themaskdims1,
         themasksizes1,
-    ) = tide_io.readfromnifti(maskfilename1)
+    ) = tide_io.readfromnifti(args.maskfilename1)
 
     if not tide_io.checkspacedimmatch(thedims1, themaskdims1):
         print("input image 1 dimensions do not match mask")
         exit()
 
     input2_img, input2_data, input2_hdr, thedims2, thesizes2 = tide_io.readfromnifti(
-        inputfilename2
+        args.inputfilename2
     )
     (
         mask2_img,
@@ -121,7 +137,7 @@ def main():
         mask2_hdr,
         themaskdims2,
         themasksizes2,
-    ) = tide_io.readfromnifti(maskfilename2)
+    ) = tide_io.readfromnifti(args.maskfilename2)
 
     if not tide_io.checkspacedimmatch(thedims2, themaskdims2):
         print("input image 2 dimensions do not match mask")
@@ -144,39 +160,44 @@ def main():
 
     thearray = np.asarray(pairlist)
 
-    # construct a 2d histogram
-    numbins = 100
-    H, xedges, yedges = np.histogram2d(thearray[:, 0], thearray[:, 1], bins=numbins, normed=True)
-    extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
     plt.figure()
-    cset = plt.contour(H, extent=extent)
-    # plt.plot(thearray[:,0], thearray[:,1], 'k.')
-    if display:
+    if args.scatter:
+        plt.plot(thearray[:, 0], thearray[:, 1], "k.")
+        theplotname = args.outputroot + "_scatterplot.png"
+    else:
+        # construct a 2d histogram
+        numbins = 100
+        H, xedges, yedges = np.histogram2d(
+            thearray[:, 0], thearray[:, 1], bins=args.histbins, normed=True
+        )
+        extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
+        plt.contour(H, extent=extent)
+        theplotname = args.outputroot + "_contourplot.png"
+    if args.display:
         plt.show()
     else:
-        plt.savefig(outputfilename + "_contourplot.png", bbox_inches="tight")
+        plt.savefig(theplotname, bbox_inches="tight")
 
     # now fit the line
-    fitorder = 1
     try:
-        thecoffs = np.polyfit(np.array(pairlist[0]), np.array(pairlist[1]), fitorder)
-    except RankWarning:
+        thecoffs = np.polyfit(np.array(pairlist[0]), np.array(pairlist[1]), args.fitorder)
+    except np.RankWarning:
         thecoffs = [0.0, 0.0]
     print("thecoffs=", thecoffs)
-    with open(outputfilename + "_linfit", "w") as file:
+    with open(f"{args.outputroot}_order_{args.fitorder}_fit", "w") as file:
         file.writelines(str(thecoffs))
 
-    if not linfitonly:
-        with open(outputfilename, "w") as file:
+    if not args.fitonly:
+        with open(args.outputroot, "w") as file:
             for pair in pairlist:
                 file.writelines(str(pair[0]) + "\t" + str(pair[1]) + "\n")
         plt.figure()
         bland_altman_plot(thearray[:, 0], thearray[:, 1])
         plt.title("Bland-Altman Plot")
-        if display:
+        if args.display:
             plt.show()
         else:
-            plt.savefig(outputfilename + "_blandaltman.png", bbox_inches="tight")
+            plt.savefig(args.outputroot + "_blandaltman.png", bbox_inches="tight")
 
 
 if __name__ == "__main__":
