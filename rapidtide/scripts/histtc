@@ -63,15 +63,10 @@ def main():
         _get_parser().print_help()
         raise
 
-    #inputdata = tide_io.readvec(args.inputfilename)
-        dummy,
-        dummy,
-        colnames,
-        inputdata,
-        compressed,
-        filetype,
-    ) = tide_io.readvectorsfromtextfile(args.inputfilename)
-
+    # inputdata = tide_io.readvec(args.inputfilename)
+    dummy, dummy, colnames, inputdata, compressed, filetype = tide_io.readvectorsfromtextfile(
+        args.inputfilename
+    )
 
     maxval = np.max(inputdata)
     minval = np.min(inputdata)
