@@ -1239,7 +1239,7 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
 
     if filetype == "text":
         # colspec can only be None or a list of integer ranges
-        thedata = readvecs(thefilename, colspec)
+        thedata = readvecs(thefilename, colspec, alt=True)
         if onecol and thedata.shape[0] > 1:
             print("specify a single column from", thefilename)
             sys.exit()
