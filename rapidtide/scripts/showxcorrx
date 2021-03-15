@@ -50,59 +50,93 @@ from matplotlib.pyplot import plot, legend, show, figure
 def printthresholds(pcts, thepercentiles, labeltext):
     print(labeltext)
     for i in range(0, len(pcts)):
-        print('\tp <', "{:.3f}".format(1.0 - thepercentiles[i]), ': ', pcts[i])
+        print("\tp <", "{:.3f}".format(1.0 - thepercentiles[i]), ": ", pcts[i])
 
 
 def usage(inputargs):
-    print(os.path.basename(inputargs[0]), "- calculate and display crosscorrelation between two timeseries")
+    print(
+        os.path.basename(inputargs[0]),
+        "- calculate and display crosscorrelation between two timeseries",
+    )
     print("")
-    print("usage: ", os.path.basename(inputargs[0]), " timecourse1[:COLNUM] timecourse2[:COLNUM] samplerate")
-    print(' '.join([
-        "[-l LABEL]",
-        "[-s STARTTIME]",
-        "[-D DURATION]",
-        "[-d]",
-        "[-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]]",
-        "[-V]",
-        "[-L]",
-        "[-R]",
-        "[-C]",
-        "[--nodetrend]",
-        "[--nowindow]",
-        "[-f]",
-        "[-o OUTPUTFILE]",
-        "[--phat]",
-        "[--liang]",
-        "[--eckart]",
-        "[--savecorr=FILE]",
-        "[-z FILENAME]",
-        "[-N TRIALS]"]))
+    print(
+        "usage: ",
+        os.path.basename(inputargs[0]),
+        " timecourse1[:COLNUM] timecourse2[:COLNUM] samplerate",
+    )
+    print(
+        " ".join(
+            [
+                "[-l LABEL]",
+                "[-s STARTTIME]",
+                "[-D DURATION]",
+                "[-d]",
+                "[-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]]",
+                "[-V]",
+                "[-L]",
+                "[-R]",
+                "[-C]",
+                "[--nodetrend]",
+                "[--nowindow]",
+                "[-f]",
+                "[-o OUTPUTFILE]",
+                "[--phat]",
+                "[--liang]",
+                "[--eckart]",
+                "[--savecorr=FILE]",
+                "[-z FILENAME]",
+                "[-N TRIALS]",
+            ]
+        )
+    )
     print("")
     print("required arguments:")
-    print("    timcoursefile1[:COLNUM]: text file containing a timeseries.  Select column COLNUM if multicolumn file")
-    print("    timcoursefile2[:COLNUM]: text file containing a timeseries.  Select column COLNUM if multicolumn file")
+    print(
+        "    timcoursefile1[:COLNUM]: text file containing a timeseries.  Select column COLNUM if multicolumn file"
+    )
+    print(
+        "    timcoursefile2[:COLNUM]: text file containing a timeseries.  Select column COLNUM if multicolumn file"
+    )
     print("    samplerate:              sample rate of the timecourses, in Hz")
     print("")
     print("optional arguments:")
     print("    --nodetrend        - do not detrend the data before correlation")
     print("    --nowindow         - do not prewindow data before corrlation")
     print("    --norefine         - do not refine correlation fit")
-    print("    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)")
-    print("    --cepstral         - check time delay using Choudhary's cepstral technique ")
-    print("    --phat             - perform phase alignment transform (PHAT) rather than ")
+    print(
+        "    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)"
+    )
+    print(
+        "    --cepstral         - check time delay using Choudhary's cepstral technique "
+    )
+    print(
+        "    --phat             - perform phase alignment transform (PHAT) rather than "
+    )
     print("                         standard crosscorrelation")
-    print("    --liang            - perform phase alignment transform with Liang weighting function rather than ")
+    print(
+        "    --liang            - perform phase alignment transform with Liang weighting function rather than "
+    )
     print("                         standard crosscorrelation")
-    print("    --eckart           - perform phase alignment transform with Eckart weighting function rather than ")
+    print(
+        "    --eckart           - perform phase alignment transform with Eckart weighting function rather than "
+    )
     print("                         standard crosscorrelation")
     print("    -l LABEL           - label for the delay value")
-    print("    -s STARTTIME       - time of first datapoint to use in seconds in the first file")
+    print(
+        "    -s STARTTIME       - time of first datapoint to use in seconds in the first file"
+    )
     print("    -D DURATION        - amount of data to use in seconds")
-    print("    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is ")
+    print(
+        "    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is "
+    )
     print("                         +/-15)")
     print("    -d                 - turns off display of graph")
-    print("    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ.")
-    print("                         LOWERSTOP and UPPERSTOP can be specified, or will be ")
+    print(
+        "    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ."
+    )
+    print(
+        "                         LOWERSTOP and UPPERSTOP can be specified, or will be "
+    )
     print("                         calculated automatically")
     print("    -V                 - filter data and regressors to VLF band")
     print("    -L                 - filter data and regressors to LFO band")
@@ -110,13 +144,21 @@ def usage(inputargs):
     print("    -C                 - filter data and regressors to cardiac band")
     print("    -T                 - trim data to match")
     print("    -A                 - print data on a single summary line")
-    print("    -a                 - if summary mode is on, add a header line showing what values ")
+    print(
+        "    -a                 - if summary mode is on, add a header line showing what values "
+    )
     print("                         mean")
     print("    -f                 - negate (flip) second regressor")
-    print("    -savecorr=FILE     - Save the correlation function to the file FILE in xy format")
-    print("    -z FILENAME        - use the columns of FILENAME as controlling variables and ")
+    print(
+        "    -savecorr=FILE     - Save the correlation function to the file FILE in xy format"
+    )
+    print(
+        "    -z FILENAME        - use the columns of FILENAME as controlling variables and "
+    )
     print("                         return the partial correlation")
-    print("    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS ")
+    print(
+        "    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS "
+    )
     print("                         repetition")
     print("    -o OUTPUTFILE      - Writes summary lines to OUTPUTFILE (sets -A)")
     print("")
@@ -129,9 +171,9 @@ def showxcorrx_main(inputargs):
     searchrange = 15.0
     uselabel = False
     display = True
-    corrweighting = 'none'
+    corrweighting = "none"
     prewindow = True
-    windowfunc = 'hamming'
+    windowfunc = "hamming"
     detrendorder = 1
     dopartial = False
     duration = 1000000.0
@@ -148,8 +190,8 @@ def showxcorrx_main(inputargs):
     calccepstraldelay = False
     debug = False
     numreps = 0
-    permutationmethod = 'shuffle'
-    findmaxtype = 'gauss'
+    permutationmethod = "shuffle"
+    findmaxtype = "gauss"
     showprogressbar = False
     dorefine = True
     absmaxsigma = 1000.0
@@ -171,13 +213,13 @@ def showxcorrx_main(inputargs):
 
     inputdata1 = np.transpose(tide_io.readvecs(infilename1, colspec=colspec1))
     if np.shape(inputdata1)[1] > 1:
-        print('specify only one column for input file 1')
+        print("specify only one column for input file 1")
         sys.exit()
     else:
         inputdata1 = inputdata1[:, 0]
     inputdata2 = np.transpose(tide_io.readvecs(infilename2, colspec=colspec2))
     if np.shape(inputdata2)[1] > 1:
-        print('specify only one column for input file 2')
+        print("specify only one column for input file 2")
         sys.exit()
     else:
         inputdata2 = inputdata2[:, 0]
@@ -185,20 +227,25 @@ def showxcorrx_main(inputargs):
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(inputargs[4:], "o:fN:r:z:aATtVLRCF:dl:s:D:w",
-                                   ["phat",
-                                    "liang",
-                                    "eckart",
-                                    "nodetrend",
-                                    "nowindow",
-                                    "windowfunc=",
-                                    "cepstral",
-                                    "savecorr=",
-                                    "progressbar",
-                                    "norefine",
-                                    "phaserandomize",
-                                    "debug",
-                                    "help"])
+        opts, args = getopt.getopt(
+            inputargs[4:],
+            "o:fN:r:z:aATtVLRCF:dl:s:D:w",
+            [
+                "phat",
+                "liang",
+                "eckart",
+                "nodetrend",
+                "nowindow",
+                "windowfunc=",
+                "cepstral",
+                "savecorr=",
+                "progressbar",
+                "norefine",
+                "phaserandomize",
+                "debug",
+                "help",
+            ],
+        )
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like "option -x not recognized"
@@ -209,118 +256,126 @@ def showxcorrx_main(inputargs):
         if o == "-d":
             display = False
             if verbose:
-                print('disable display')
+                print("disable display")
         elif o == "-T":
             trimdata = True
             if verbose:
-                print('trimming data to match')
+                print("trimming data to match")
         elif o == "--phaserandomize":
-            permutationmethod = 'phaserandom'
+            permutationmethod = "phaserandom"
             if verbose:
-                print('will show progress bar during null correlation calculation')
+                print("will show progress bar during null correlation calculation")
         elif o == "--progressbar":
             showprogressbar = True
             if verbose:
-                print('will show progress bar during null correlation calculation')
+                print("will show progress bar during null correlation calculation")
         elif o == "--cepstral":
             calccepstraldelay = True
             if verbose:
-                print('doing cepstral delay time check')
+                print("doing cepstral delay time check")
         elif o == "--liang":
-            corrweighting = 'Liang'
+            corrweighting = "Liang"
             if verbose:
-                print('doing Liang weighted correlation')
+                print("doing Liang weighted correlation")
         elif o == "--eckart":
-            corrweighting = 'Eckart'
+            corrweighting = "Eckart"
             if verbose:
-                print('doing Eckart weighted correlation')
+                print("doing Eckart weighted correlation")
         elif o == "--phat":
-            corrweighting = 'PHAT'
+            corrweighting = "PHAT"
             if verbose:
-                print('doing phase alignment transform')
+                print("doing phase alignment transform")
         elif o == "--debug":
             debug = True
             if verbose:
-                print('turning on debugging')
+                print("turning on debugging")
         elif o == "-f":
             flipfac *= -1.0
             if verbose:
-                print('negating second regressor')
+                print("negating second regressor")
         elif o == "-a":
             labelline = True
             if verbose:
-                print('turning on label line')
+                print("turning on label line")
         elif o == "-t":
-            print("DEPRECATION WARNING: detrending is now on by default.  Use --nodetrend to disable it")
+            print(
+                "DEPRECATION WARNING: detrending is now on by default.  Use --nodetrend to disable it"
+            )
         elif o == "--nodetrend":
             detrendorder = 0
             if verbose:
-                print('disabling detrending')
+                print("disabling detrending")
         elif o == "-w":
-            print("DEPRECATION WARNING: windowing is now on by default.  Use --nowindow to disable it")
+            print(
+                "DEPRECATION WARNING: windowing is now on by default.  Use --nowindow to disable it"
+            )
         elif o == "--savecorr":
             savecorrelation = True
             corroutputfile = a
             if verbose:
-                print('saving correlation function to', corroutputfile)
+                print("saving correlation function to", corroutputfile)
         elif o == "--norefine":
             dorefine = False
             if verbose:
-                print('disabling fit refinement')
+                print("disabling fit refinement")
         elif o == "--nowindow":
             prewindow = False
             if verbose:
-                print('disabling prewindowing')
+                print("disabling prewindowing")
         elif o == "--windowfunc":
             windowfunc = a
-            if (windowfunc != 'hamming') and (windowfunc != 'blackmanharris') and (windowfunc != 'hann') and (
-                    windowfunc != 'None'):
-                print('illegal window function')
+            if (
+                (windowfunc != "hamming")
+                and (windowfunc != "blackmanharris")
+                and (windowfunc != "hann")
+                and (windowfunc != "None")
+            ):
+                print("illegal window function")
                 sys.exit()
             if verbose:
-                print('using window function:', windowfunc)
+                print("using window function:", windowfunc)
         elif o == "-z":
             controlvariablefile = a
             dopartial = True
             if verbose:
-                print('performing partial correlations')
+                print("performing partial correlations")
         elif o == "-l":
             thelabel = a
             uselabel = True
             if verbose:
-                print('label set to', thelabel)
+                print("label set to", thelabel)
         elif o == "-N":
             numreps = int(a)
             if verbose:
-                print('estimating significance threshold with ', numreps, ' trials')
+                print("estimating significance threshold with ", numreps, " trials")
         elif o == "-r":
             searchrange = float(a)
             if verbose:
-                print('peak search restricted to +/-', searchrange, ' seconds')
+                print("peak search restricted to +/-", searchrange, " seconds")
         elif o == "-D":
             duration = float(a)
             if verbose:
-                print('duration set to', duration)
+                print("duration set to", duration)
         elif o == "-s":
             starttime = float(a)
             if verbose:
-                print('starttime set to', starttime)
+                print("starttime set to", starttime)
         elif o == "-V":
-            theprefilter.settype('vlf')
+            theprefilter.settype("vlf")
             if verbose:
-                print('prefiltering to vlf band')
+                print("prefiltering to vlf band")
         elif o == "-L":
-            theprefilter.settype('lfo')
+            theprefilter.settype("lfo")
             if verbose:
-                print('prefiltering to lfo band')
+                print("prefiltering to lfo band")
         elif o == "-R":
-            theprefilter.settype('resp')
+            theprefilter.settype("resp")
             if verbose:
-                print('prefiltering to respiratory band')
+                print("prefiltering to respiratory band")
         elif o == "-C":
-            theprefilter.settype('cardiac')
+            theprefilter.settype("cardiac")
             if verbose:
-                print('prefiltering to cardiac band')
+                print("prefiltering to cardiac band")
         elif o == "-o":
             verbose = False
             outputfile = a
@@ -329,7 +384,7 @@ def showxcorrx_main(inputargs):
             verbose = False
             summarymode = True
         elif o == "-F":
-            arbvec = a.split(',')
+            arbvec = a.split(",")
             if len(arbvec) != 2 and len(arbvec) != 4:
                 usage()
                 sys.exit()
@@ -343,10 +398,18 @@ def showxcorrx_main(inputargs):
                 arb_upper = float(arbvec[1])
                 arb_lowerstop = float(arbvec[2])
                 arb_upperstop = float(arbvec[3])
-            theprefilter.settype('arb')
+            theprefilter.settype("arb")
             theprefilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
             if verbose:
-                print('prefiltering to ', arb_lower, arb_upper, "(stops at ", arb_lowerstop, arb_upperstop, ")")
+                print(
+                    "prefiltering to ",
+                    arb_lower,
+                    arb_upper,
+                    "(stops at ",
+                    arb_lowerstop,
+                    arb_upperstop,
+                    ")",
+                )
         else:
             assert False, "unhandled option"
 
@@ -356,17 +419,17 @@ def showxcorrx_main(inputargs):
         dumpfiltered = False
     showpearson = True
 
-    if windowfunc == 'None':
+    if windowfunc == "None":
         usewindowfunc = False
     else:
         usewindowfunc = True
 
     startpoint1 = max([int(starttime * Fs), 0])
     if debug:
-        print('startpoint set to ', startpoint1)
+        print("startpoint set to ", startpoint1)
     endpoint1 = min([startpoint1 + int(duration * Fs), int(len(inputdata1))])
     if debug:
-        print('endpoint set to ', endpoint1)
+        print("endpoint set to ", endpoint1)
     endpoint2 = min([int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))])
     trimdata1 = inputdata1[startpoint1:endpoint1]
     trimdata2 = inputdata2[0:endpoint2]
@@ -377,17 +440,21 @@ def showxcorrx_main(inputargs):
         trimdata2 = trimdata2[0:minlen]
 
     # band limit the regressor if that is needed
-    if theprefilter.gettype() != 'none':
+    if theprefilter.gettype() != "none":
         if verbose:
             print("filtering to ", theprefilter.gettype(), " band")
-    filtereddata1 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
-                                            prewindow=prewindow,
-                                            detrendorder=detrendorder,
-                                            windowfunc=windowfunc)
-    filtereddata2 = tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
-                                            prewindow=prewindow,
-                                            detrendorder=detrendorder,
-                                            windowfunc=windowfunc)
+    filtereddata1 = tide_math.corrnormalize(
+        theprefilter.apply(Fs, trimdata1),
+        prewindow=prewindow,
+        detrendorder=detrendorder,
+        windowfunc=windowfunc,
+    )
+    filtereddata2 = tide_math.corrnormalize(
+        theprefilter.apply(Fs, trimdata2),
+        prewindow=prewindow,
+        detrendorder=detrendorder,
+        windowfunc=windowfunc,
+    )
     filtereddata2 *= flipfac
     if dumpfiltered:
         tide_io.writenpvecs(filtereddata1, "filtereddata1.txt")
@@ -397,21 +464,27 @@ def showxcorrx_main(inputargs):
         controlvars = tide_io.readnpvecs(controlvariablefile)
         regressorvec = []
         for j in range(0, numregressors):
-            regressorvec.append(tide_math.corrnormalize(theprefilter.apply(Fs, controlvars[j, :]),
-                                                        prewindow=prewindow,
-                                                        detrendorder=detrendorder,
-                                                        windowfunc=windowfunc))
+            regressorvec.append(
+                tide_math.corrnormalize(
+                    theprefilter.apply(Fs, controlvars[j, :]),
+                    prewindow=prewindow,
+                    detrendorder=detrendorder,
+                    windowfunc=windowfunc,
+                )
+            )
         if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
             thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
         if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
             thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
     # initialize the correlator
-    thecorrelator = tide_classes.correlator(Fs=Fs,
-                                            ncprefilter=theprefilter,
-                                            detrendorder=detrendorder,
-                                            windowfunc=windowfunc,
-                                            corrweighting=corrweighting)
+    thecorrelator = tide_classes.correlator(
+        Fs=Fs,
+        ncprefilter=theprefilter,
+        detrendorder=detrendorder,
+        windowfunc=windowfunc,
+        corrweighting=corrweighting,
+    )
     thecorrelator.setreftc(trimdata2 * flipfac)
 
     # do the correlation
@@ -419,144 +492,216 @@ def showxcorrx_main(inputargs):
     if dumpfiltered:
         tide_io.writenpvecs(thecorrelator.preptesttc, "correlator_filtereddata1.txt")
         tide_io.writenpvecs(thecorrelator.prepreftc, "correlator_filtereddata2.txt")
-    thecorrelator.setlimits(int((searchrange * Fs) - 0.5), int((searchrange * Fs) + 0.5))
+    thecorrelator.setlimits(
+        int((searchrange * Fs) - 0.5), int((searchrange * Fs) + 0.5)
+    )
     thexcorr_trim, xcorr_x_trim, globalmax = thecorrelator.getcorrelation(trim=True)
 
     if calccepstraldelay:
-        cepdelay = tide_corr.cepstraldelay(filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display)
-        cepcoff = tide_corr.delayedcorr(filtereddata1, filtereddata2, cepdelay, 1.0 / Fs)
-        print('cepstral delay time is', cepdelay, ', correlation is', cepcoff)
+        cepdelay = tide_corr.cepstraldelay(
+            filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display
+        )
+        cepcoff = tide_corr.delayedcorr(
+            filtereddata1, filtereddata2, cepdelay, 1.0 / Fs
+        )
+        print("cepstral delay time is", cepdelay, ", correlation is", cepcoff)
     thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
     # calculate the coherence
     f, Cxy = sp.signal.coherence(
-        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
-                                prewindow=prewindow,
-                                detrendorder=detrendorder,
-                                windowfunc=windowfunc),
-        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
-                                prewindow=prewindow,
-                                detrendorder=detrendorder,
-                                windowfunc=windowfunc),
-        Fs)
+        tide_math.corrnormalize(
+            theprefilter.apply(Fs, trimdata1),
+            prewindow=prewindow,
+            detrendorder=detrendorder,
+            windowfunc=windowfunc,
+        ),
+        tide_math.corrnormalize(
+            theprefilter.apply(Fs, trimdata2),
+            prewindow=prewindow,
+            detrendorder=detrendorder,
+            windowfunc=windowfunc,
+        ),
+        Fs,
+    )
 
     # calculate the cross spectral density
     f, Pxy = sp.signal.csd(
-        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata1),
-                                prewindow=prewindow,
-                                detrendorder=detrendorder,
-                                windowfunc=windowfunc),
-        tide_math.corrnormalize(theprefilter.apply(Fs, trimdata2),
-                                prewindow=prewindow,
-                                detrendorder=detrendorder,
-                                windowfunc=windowfunc),
-        Fs)
+        tide_math.corrnormalize(
+            theprefilter.apply(Fs, trimdata1),
+            prewindow=prewindow,
+            detrendorder=detrendorder,
+            windowfunc=windowfunc,
+        ),
+        tide_math.corrnormalize(
+            theprefilter.apply(Fs, trimdata2),
+            prewindow=prewindow,
+            detrendorder=detrendorder,
+            windowfunc=windowfunc,
+        ),
+        Fs,
+    )
 
     # intitialize the correlation fitter
-    thefitter = tide_classes.correlation_fitter(corrtimeaxis=xcorr_x,
-                                                lagmin=-searchrange,
-                                                lagmax=searchrange,
-                                                absmaxsigma=absmaxsigma,
-                                                absminsigma=absminsigma,
-                                                debug=debug,
-                                                findmaxtype=findmaxtype,
-                                                zerooutbadfit=zerooutbadfit,
-                                                refine=dorefine,
-                                                useguess=False,
-                                                fastgauss=False
-                                                )
+    thefitter = tide_classes.correlation_fitter(
+        corrtimeaxis=xcorr_x,
+        lagmin=-searchrange,
+        lagmax=searchrange,
+        absmaxsigma=absmaxsigma,
+        absminsigma=absminsigma,
+        debug=debug,
+        findmaxtype=findmaxtype,
+        zerooutbadfit=zerooutbadfit,
+        refine=dorefine,
+        useguess=False,
+        fastgauss=False,
+    )
 
     if debug:
-        print('searching for peak correlation over range ',
-              thecorrelator.corrorigin - thecorrelator.lagmininpts,
-              thecorrelator.corrorigin + thecorrelator.lagmaxinpts)
+        print(
+            "searching for peak correlation over range ",
+            thecorrelator.corrorigin - thecorrelator.lagmininpts,
+            thecorrelator.corrorigin + thecorrelator.lagmaxinpts,
+        )
     maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
     if debug:
-        print('maxdelay before refinement', maxdelay)
+        print("maxdelay before refinement", maxdelay)
 
-    maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend = thefitter.fit(thexcorr)
+    (
+        maxindex,
+        maxdelay,
+        maxval,
+        maxsigma,
+        maskval,
+        failreason,
+        peakstart,
+        peakend,
+    ) = thefitter.fit(thexcorr)
     if failreason > 0:
-        print('showxcorrx: FIT FAILED with reason', failreason)
+        print("showxcorrx: FIT FAILED with reason", failreason)
         print(thefitter.diagnosefail(failreason))
     if debug:
         print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
     R = maxval
     if debug:
-        print('maxdelay after refinement', maxdelay)
+        print("maxdelay after refinement", maxdelay)
 
     # set the significance threshold
     if numreps > 0:
         # generate a list of correlations from shuffled data
-        corrlist = tide_nullcorr.getNullDistributionDatax(filtereddata2,
-                                                    Fs,
-                                                    thecorrelator,
-                                                    thefitter,
-                                                    numestreps=numreps,
-                                                    despeckle_thresh=1000.0,
-                                                    showprogressbar=showprogressbar,
-                                                    permutationmethod=permutationmethod,
-                                                    fixdelay=False)
+        corrlist = tide_nullcorr.getNullDistributionDatax(
+            filtereddata2,
+            Fs,
+            thecorrelator,
+            thefitter,
+            numestreps=numreps,
+            despeckle_thresh=1000.0,
+            showprogressbar=showprogressbar,
+            permutationmethod=permutationmethod,
+            fixdelay=False,
+        )
 
         # calculate percentiles for the crosscorrelation from the distribution data
         histlen = 100
         thepercentiles = [0.95, 0.99, 0.995]
 
-        pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist, histlen, thepercentiles)
+        pcts, pcts_fit, histfit = tide_stats.sigFromDistributionData(
+            corrlist, histlen, thepercentiles
+        )
         if debug:
-            tide_stats.printthresholds(pcts, thepercentiles, 'Crosscorrelation significance thresholds from data:')
-            tide_stats.printthresholds(pcts_fit, thepercentiles, 'Crosscorrelation significance thresholds from fit:')
+            tide_stats.printthresholds(
+                pcts,
+                thepercentiles,
+                "Crosscorrelation significance thresholds from data:",
+            )
+            tide_stats.printthresholds(
+                pcts_fit,
+                thepercentiles,
+                "Crosscorrelation significance thresholds from fit:",
+            )
 
-        corrlist_pear = tide_nullcorr.getNullDistributionDatax(filtereddata2,
-                                                    Fs,
-                                                    thecorrelator,
-                                                    thefitter,
-                                                    numestreps=numreps,
-                                                    despeckle_thresh=1000.0,
-                                                    showprogressbar=showprogressbar,
-                                                    permutationmethod=permutationmethod,
-                                                    fixdelay=True)
+        corrlist_pear = tide_nullcorr.getNullDistributionDatax(
+            filtereddata2,
+            Fs,
+            thecorrelator,
+            thefitter,
+            numestreps=numreps,
+            despeckle_thresh=1000.0,
+            showprogressbar=showprogressbar,
+            permutationmethod=permutationmethod,
+            fixdelay=True,
+        )
 
         # calculate significance for the pearson correlation
-        pearpcts, pearpcts_fit, histfit = tide_stats.sigFromDistributionData(corrlist_pear, histlen, thepercentiles)
+        pearpcts, pearpcts_fit, histfit = tide_stats.sigFromDistributionData(
+            corrlist_pear, histlen, thepercentiles
+        )
         if debug:
-            tide_stats.printthresholds(pearpcts, thepercentiles, 'Pearson correlation significance thresholds from data:')
-            tide_stats.printthresholds(pearpcts_fit, thepercentiles,
-                                       'Pearson correlation significance thresholds from fit:')
+            tide_stats.printthresholds(
+                pearpcts,
+                thepercentiles,
+                "Pearson correlation significance thresholds from data:",
+            )
+            tide_stats.printthresholds(
+                pearpcts_fit,
+                thepercentiles,
+                "Pearson correlation significance thresholds from fit:",
+            )
 
         if writecorrlists:
             tide_io.writenpvecs(corrlist, "corrlist.txt")
             tide_io.writenpvecs(corrlist_pear, "corrlist_pear.txt")
-
 
     if debug:
         print(thepxcorr)
 
     if summarymode:
         if numreps > 0:
-            thelabelitems = ['pearson_R',       'pearson_R(p=0.05)',  'xcorr_R', 'xcorr_R(p=0.05)', 'xcorr_maxdelay']
-            thedataitems =  [ str(thepxcorr[0]), str(pearpcts_fit[0]), str(R),    str(pcts_fit[0]),  str(-maxdelay)]
+            thelabelitems = [
+                "pearson_R",
+                "pearson_R(p=0.05)",
+                "xcorr_R",
+                "xcorr_R(p=0.05)",
+                "xcorr_maxdelay",
+            ]
+            thedataitems = [
+                str(thepxcorr[0]),
+                str(pearpcts_fit[0]),
+                str(R),
+                str(pcts_fit[0]),
+                str(-maxdelay),
+            ]
         else:
-            thelabelitems = ['pearson_R',       'pearson_p',       'xcorr_R', 'xcorr_maxdelay']
-            thedataitems =  [ str(thepxcorr[0]), str(thepxcorr[1]), str(R),    str(-maxdelay)]
+            thelabelitems = ["pearson_R", "pearson_p", "xcorr_R", "xcorr_maxdelay"]
+            thedataitems = [
+                str(thepxcorr[0]),
+                str(thepxcorr[1]),
+                str(R),
+                str(-maxdelay),
+            ]
         if uselabel:
-            thelabelitems = ['thelabel'] + thelabelitems
-            thedataitems =  [thelabel] + thedataitems
+            thelabelitems = ["thelabel"] + thelabelitems
+            thedataitems = [thelabel] + thedataitems
         if labelline:
-            outputstring = '\t'.join(thelabelitems) + '\n' + '\t'.join(thedataitems)
+            outputstring = "\t".join(thelabelitems) + "\n" + "\t".join(thedataitems)
         else:
-            outputstring = '\t'.join(thedataitems)
+            outputstring = "\t".join(thedataitems)
         if outputfile is None:
             print(outputstring)
         else:
             with open(outputfile, "w") as text_file:
-                text_file.write(outputstring + '\n')
+                text_file.write(outputstring + "\n")
     else:
         # report the pearson correlation
         if showpearson:
-            print('Pearson_R:\t', thepxcorr[0])
+            print("Pearson_R:\t", thepxcorr[0])
             if numreps > 0:
                 for idx, percentile in enumerate(thepercentiles):
-                    print('    pear_p(', "{:.3f}".format(1.0 - percentile), '):\t', pearpcts[idx])
+                    print(
+                        "    pear_p(",
+                        "{:.3f}".format(1.0 - percentile),
+                        "):\t",
+                        pearpcts[idx],
+                    )
             print("")
         if uselabel:
             print(thelabel, ":\t", -maxdelay)
@@ -565,14 +710,21 @@ def showxcorrx_main(inputargs):
             print("Crosscorrelation_maxdelay:\t", -maxdelay)
             if numreps > 0:
                 for idx, percentile in enumerate(thepercentiles):
-                    print('    xc_p(', "{:.3f}".format(1.0 - percentile), '):\t', pcts[idx])
-            print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
+                    print(
+                        "    xc_p(",
+                        "{:.3f}".format(1.0 - percentile),
+                        "):\t",
+                        pcts[idx],
+                    )
+            print(
+                infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]"
+            )
 
     if display:
         fig = figure()
         ax = fig.add_subplot(111)
         # ax.set_title('GCC')
-        plot(xcorr_x, thexcorr, 'k')
+        plot(xcorr_x, thexcorr, "k")
         if debug:
             fig = figure()
             plot(f, Cxy)
@@ -585,7 +737,7 @@ def showxcorrx_main(inputargs):
         tide_io.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), corroutputfile)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # grab the command line arguments then pass them off.
     nargs = len(sys.argv)

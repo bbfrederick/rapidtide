@@ -50,12 +50,16 @@ def test_proberegressor(debug=False, display=False):
 
     skiptime = fmritr * (preprocskip + addedskip)
     reference_x = np.arange(0.0, numreference) * inputperiod - (
-        inputstarttime + offsettime)
-    initial_fmri_x = np.arange(0.0, validtimepoints - addedskip) * \
-        fmritr + skiptime
-    os_fmri_x = np.arange(0.0, (validtimepoints - addedskip) *
-                          oversampfactor - (oversampfactor - 1)) * \
-        oversamptr + skiptime
+        inputstarttime + offsettime
+    )
+    initial_fmri_x = np.arange(0.0, validtimepoints - addedskip) * fmritr + skiptime
+    os_fmri_x = (
+        np.arange(
+            0.0, (validtimepoints - addedskip) * oversampfactor - (oversampfactor - 1)
+        )
+        * oversamptr
+        + skiptime
+    )
 
     # invert the regressor if necessary
     if invertregressor:
@@ -65,9 +69,9 @@ def test_proberegressor(debug=False, display=False):
 
     # detrend the regressor if necessary
     if detrendorder > 0:
-        reference_y = invertfac * tide_fit.detrend(inputvec[:numreference],
-                                                   order=detrendorder,
-                                                   demean=True)
+        reference_y = invertfac * tide_fit.detrend(
+            inputvec[:numreference], order=detrendorder, demean=True
+        )
     else:
         reference_y = invertfac * (
             inputvec[:numreference] - np.mean(inputvec[:numreference])
@@ -81,5 +85,5 @@ def test_proberegressor(debug=False, display=False):
     assert True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_proberegressor(debug=True, display=True)

@@ -36,10 +36,14 @@ import matplotlib.pyplot as plt
 def usage():
     print("resamp1tc - resample a timeseries file")
     print("")
-    print("usage: resamp1tc infilename[:COLNUM] insamplerate outputfile outsamplerate [--nodisplay]")
+    print(
+        "usage: resamp1tc infilename[:COLNUM] insamplerate outputfile outsamplerate [--nodisplay]"
+    )
     print("")
     print("required arguments:")
-    print("\tinputfile[:COLNUM] - text file containing a timeseries.  Select column COLNUM if multicolumn file")
+    print(
+        "\tinputfile[:COLNUM] - text file containing a timeseries.  Select column COLNUM if multicolumn file"
+    )
     print("\tinsamplerate       - the sample rate of the input file in Hz")
     print("\toutputfile         - the name of the output text file")
     print("\toutsamplerate      - the sample rate of the output file in Hz")
@@ -67,20 +71,22 @@ def main():
 
     # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(sys.argv[5:], "s", ["nodisplay", "noantialias", "help"])
+        opts, args = getopt.getopt(
+            sys.argv[5:], "s", ["nodisplay", "noantialias", "help"]
+        )
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like "option -x not recognized"
         usage()
         sys.exit(2)
-    
+
     for o, a in opts:
         if o == "--nodisplay":
             display = False
-            print('turning display off')
+            print("turning display off")
         elif o == "--noantialias":
             antialias = False
-            print('turning off antialiasing')
+            print("turning off antialiasing")
         else:
             assert False, "unhandled option"
 
@@ -90,27 +96,34 @@ def main():
 
     inputdata = np.transpose(tide_io.readvecs(infilename, colspec=colspec))
     if np.shape(inputdata)[1] > 1:
-        print('specify only one column for input file 1')
+        print("specify only one column for input file 1")
         sys.exit()
     else:
         inputdata = inputdata[:, 0]
 
-    outputdata = tide_resample.arbresample(inputdata, insamplerate, outsamplerate, decimate=False, antialias=antialias)
-    in_t = intimestep * sp.linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True)
-    out_t = outtimestep * sp.linspace(0.0, len(outputdata), len(outputdata), endpoint=True)
+    outputdata = tide_resample.arbresample(
+        inputdata, insamplerate, outsamplerate, decimate=False, antialias=antialias
+    )
+    in_t = intimestep * sp.linspace(
+        0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True
+    )
+    out_t = outtimestep * sp.linspace(
+        0.0, len(outputdata), len(outputdata), endpoint=True
+    )
     if len(out_t) < len(outputdata):
-        outputdata = outputdata[0:len(out_t)]
+        outputdata = outputdata[0 : len(out_t)]
 
     if display:
-        plt.plot(in_t, inputdata, 'k')
+        plt.plot(in_t, inputdata, "k")
 
     tide_io.writevec(outputdata, outputfile)
     if display:
-        plt.plot(out_t, outputdata, 'r')
-        plt.legend(('original signal', 'resampled'))
+        plt.plot(out_t, outputdata, "r")
+        plt.legend(("original signal", "resampled"))
 
     if display:
         plt.show()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

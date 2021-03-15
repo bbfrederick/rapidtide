@@ -38,10 +38,18 @@ def usage():
     print("	outputroot	- the root name of the output nifti files")
     print("")
     print("optional arguments:")
-    print("	--dmask=DATAMASK   - use DATAMASK to specify which voxels in the data to use")
-    print("	--ncomp=NCOMPS     - the number of PCA/ICA components to return (default is to estimate the number")
-    print("	--smooth=SIGMA     - spatially smooth the input data with a SIGMA mm kernel")
-    print("	--type=TYPE        - type of decomposition to perform, 'pca', 'sparse' or 'ica' - default is 'pca'")
+    print(
+        "	--dmask=DATAMASK   - use DATAMASK to specify which voxels in the data to use"
+    )
+    print(
+        "	--ncomp=NCOMPS     - the number of PCA/ICA components to return (default is to estimate the number"
+    )
+    print(
+        "	--smooth=SIGMA     - spatially smooth the input data with a SIGMA mm kernel"
+    )
+    print(
+        "	--type=TYPE        - type of decomposition to perform, 'pca', 'sparse' or 'ica' - default is 'pca'"
+    )
     print("	--nodemean         - do not demean data prior to decomposition")
     print("	--novarnorm        - do not variance normalize data prior to decomposition")
     print("")
@@ -50,7 +58,7 @@ def usage():
 
 # set default variable values
 usedmask = False
-decomptype = 'pca'
+decomptype = "pca"
 pcacomponents = 0.5
 icacomponents = None
 varnorm = True
@@ -59,8 +67,11 @@ sigma = 0.0
 
 # parse command line arguments
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, 'h',
-                                   ["help", "nodemean", "novarnorm", "dmask=", "smooth=", "ncomp=", "type="])
+    opts, args = getopt.gnu_getopt(
+        sys.argv,
+        "h",
+        ["help", "nodemean", "novarnorm", "dmask=", "smooth=", "ncomp=", "type="],
+    )
 except getopt.GetoptError as err:
     # print(help information and exit:
     print(str(err))  # will print something like "option -a not recognized"
@@ -69,7 +80,7 @@ except getopt.GetoptError as err:
 
 # handle required args first
 if len(args) < 3:
-    print('spatial fit has 2 required arguments - ', len(args) - 1, 'found')
+    print("spatial fit has 2 required arguments - ", len(args) - 1, "found")
     usage()
     sys.exit()
 
@@ -80,7 +91,7 @@ for o, a in opts:
     if o == "--dmask":
         usedmask = True
         datamaskname = a
-        print('using', datamaskname, 'as data mask')
+        print("using", datamaskname, "as data mask")
     elif o == "--ncomp":
         inputnum = float(a)
         if inputnum < 1.0:
@@ -91,17 +102,17 @@ for o, a in opts:
             icacomponents = pcacomponents
     elif o == "--nodemean":
         demean = False
-        print('will not demean data prior to decomposition')
+        print("will not demean data prior to decomposition")
     elif o == "--novarnorm":
         varnorm = False
-        print('will not variance normalize data prior to decomposition')
+        print("will not variance normalize data prior to decomposition")
     elif o == "--smooth":
         sigma = float(a)
-        print('will smooth data with a', sigma, 'mm kernel')
+        print("will smooth data with a", sigma, "mm kernel")
     elif o == "--type":
         decomptype = a
-        if decomptype != 'pca' and decomptype != 'ica' and decomptype != 'sparse':
-            print('illegal decomposition mode - must be pca or ica')
+        if decomptype != "pca" and decomptype != "ica" and decomptype != "sparse":
+            print("illegal decomposition mode - must be pca or ica")
             sys.exit()
     elif o in ("-h", "--help"):
         usage()
@@ -109,17 +120,29 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
-print('Will perform', decomptype, 'analysis')
+print("Will perform", decomptype, "analysis")
 
 # save the command line
-tide_io.writevec([' '.join(sys.argv)], outputrootname + '_commandline.txt')
+tide_io.writevec([" ".join(sys.argv)], outputrootname + "_commandline.txt")
 
 # read in data
 print("reading in data arrays")
-datafile_img, datafile_data, datafile_hdr, datafiledims, datafilesizes = tide_io.readfromnifti(datafilename)
+(
+    datafile_img,
+    datafile_data,
+    datafile_hdr,
+    datafiledims,
+    datafilesizes,
+) = tide_io.readfromnifti(datafilename)
 
 if usedmask:
-    datamask_img, datamask_data, datamask_hdr, datamaskdims, datamasksizes = tide_io.readfromnifti(datamaskname)
+    (
+        datamask_img,
+        datamask_data,
+        datamask_hdr,
+        datamaskdims,
+        datamasksizes,
+    ) = tide_io.readfromnifti(datamaskname)
 
 xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
 xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
@@ -128,20 +151,22 @@ xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
 if usedmask:
     print("checking mask dimensions")
     if not tide_io.checkspacedimmatch(datafiledims, datamaskdims):
-        print('input mask spatial dimensions do not match image')
+        print("input mask spatial dimensions do not match image")
         exit()
     if not tide_io.checktimematch(datafiledims, datamaskdims):
-        print('input mask time dimension does not match image')
+        print("input mask time dimension does not match image")
         exit()
 
 # save the command line
-tide_io.writevec([' '.join(sys.argv)], outputrootname + '_commandline.txt')
+tide_io.writevec([" ".join(sys.argv)], outputrootname + "_commandline.txt")
 
 # smooth the data
 if sigma > 0.0:
-    print('smoothing data')
+    print("smoothing data")
     for i in range(timepoints):
-        datafile_data[:, :, :, i] = tide_filt.ssmooth(xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i])
+        datafile_data[:, :, :, i] = tide_filt.ssmooth(
+            xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i]
+        )
 
 # allocating arrays
 print("reshaping arrays")
@@ -153,7 +178,9 @@ if usedmask:
     if datamaskdims[4] == 1:
         proclocs = np.where(datamask_data.reshape(numspatiallocs) > 0.9)
     else:
-        proclocs = np.where(np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1) > 0.9)
+        proclocs = np.where(
+            np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1) > 0.9
+        )
         rs_mask = datamask_data.reshape((numspatiallocs, timepoints))[proclocs, :]
         rs_mask = np.where(rs_mask > 0.9, 1.0, 0.0)[0]
 else:
@@ -183,26 +210,32 @@ if datamaskdims[4] > 1:
     procdata *= rs_mask
 
 # now perform the decomposition
-if decomptype == 'ica':
-    print('performing ica decomposition')
+if decomptype == "ica":
+    print("performing ica decomposition")
     if icacomponents is None:
-        print('will return all significant components')
+        print("will return all significant components")
     else:
-        print('will return', icacomponents, 'components')
-    thefit = FastICA(n_components=icacomponents).fit(np.transpose(procdata))  # Reconstruct signals
+        print("will return", icacomponents, "components")
+    thefit = FastICA(n_components=icacomponents).fit(
+        np.transpose(procdata)
+    )  # Reconstruct signals
     if icacomponents is None:
         thecomponents = np.transpose(thefit.components_[:])
-        print(thecomponents.shape[1], 'components found')
+        print(thecomponents.shape[1], "components found")
     else:
         thecomponents = np.transpose(thefit.components_[0:icacomponents])
-        print('returning first', thecomponents.shape[1], 'components found')
+        print("returning first", thecomponents.shape[1], "components found")
 else:
-    print('performing pca decomposition')
+    print("performing pca decomposition")
     if pcacomponents < 1.0:
-        print('will return the components accounting for', pcacomponents * 100.0, '% of the variance')
+        print(
+            "will return the components accounting for",
+            pcacomponents * 100.0,
+            "% of the variance",
+        )
     else:
-        print('will return', pcacomponents, 'components')
-    if decomptype == 'pca':
+        print("will return", pcacomponents, "components")
+    if decomptype == "pca":
         thepca = PCA(n_components=pcacomponents)
     else:
         thepca = SparsePCA(n_components=pcacomponents)
@@ -211,34 +244,45 @@ else:
     theinvtrans = thepca.inverse_transform(thetransform)
     if pcacomponents < 1.0:
         thecomponents = np.transpose(thefit.components_[:])
-        print('returning', thecomponents.shape[1], 'components')
+        print("returning", thecomponents.shape[1], "components")
     else:
         thecomponents = np.transpose(thefit.components_[0:pcacomponents])
 
     # save the eigenvalues
-    print('variance explained by component:', 100.0 * thefit.explained_variance_ratio_)
-    tide_io.writenpvecs(100.0 * thefit.explained_variance_ratio_, outputrootname + '_explained_variance_pct.txt')
+    print("variance explained by component:", 100.0 * thefit.explained_variance_ratio_)
+    tide_io.writenpvecs(
+        100.0 * thefit.explained_variance_ratio_,
+        outputrootname + "_explained_variance_pct.txt",
+    )
 
     # save the component images
     print("writing component images")
     theheader = datafile_hdr
-    theheader['dim'][4] = thecomponents.shape[1]
-    tempout = np.zeros((numspatiallocs, thecomponents.shape[1]), dtype='float')
+    theheader["dim"][4] = thecomponents.shape[1]
+    tempout = np.zeros((numspatiallocs, thecomponents.shape[1]), dtype="float")
     tempout[proclocs, :] = thecomponents[:, :]
-    tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, thecomponents.shape[1])), datafile_hdr, datafilesizes,
-                        outputrootname + '_components')
+    tide_io.savetonifti(
+        tempout.reshape((xsize, ysize, numslices, thecomponents.shape[1])),
+        datafile_hdr,
+        datafilesizes,
+        outputrootname + "_components",
+    )
 
     # save the coefficients
     print("writing out the coefficients")
     coefficients = np.transpose(thetransform)
-    tide_io.writenpvecs(coefficients, outputrootname + '_coefficients.txt')
+    tide_io.writenpvecs(coefficients, outputrootname + "_coefficients.txt")
 
     # save the dimensionality reduced data
     invtransformeddata = np.transpose(theinvtrans)
     print("writing fit data")
     theheader = datafile_hdr
-    theheader['dim'][4] = invtransformeddata.shape[1]
-    tempout = np.zeros((numspatiallocs, invtransformeddata.shape[1]), dtype='float')
+    theheader["dim"][4] = invtransformeddata.shape[1]
+    tempout = np.zeros((numspatiallocs, invtransformeddata.shape[1]), dtype="float")
     tempout[proclocs, :] = invtransformeddata[:, :]
-    tide_io.savetonifti(tempout.reshape((xsize, ysize, numslices, invtransformeddata.shape[1])), datafile_hdr,
-                        datafilesizes, outputrootname + '_fit')
+    tide_io.savetonifti(
+        tempout.reshape((xsize, ysize, numslices, invtransformeddata.shape[1])),
+        datafile_hdr,
+        datafilesizes,
+        outputrootname + "_fit",
+    )

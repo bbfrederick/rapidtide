@@ -31,20 +31,16 @@ import argparse
 
 
 # get the command line parameters
-parser = argparse.ArgumentParser(description='Plots the data in text files.')
-parser.add_argument('infilename',
-                    help='the name of the input three column file')
-parser.add_argument('timestep',
-                    type=float,
-                    help='the time step of the output time course in seconds')
-parser.add_argument('numpoints',
-                    type=int,
-                    help='the number of output time points')
-parser.add_argument('outfilename',
-                    help='the name of the output time course file')
-parser.add_argument('--debug',
-                    action='store_true',
-                    help='turn on additional debugging output')
+parser = argparse.ArgumentParser(description="Plots the data in text files.")
+parser.add_argument("infilename", help="the name of the input three column file")
+parser.add_argument(
+    "timestep", type=float, help="the time step of the output time course in seconds"
+)
+parser.add_argument("numpoints", type=int, help="the number of output time points")
+parser.add_argument("outfilename", help="the name of the output time course file")
+parser.add_argument(
+    "--debug", action="store_true", help="turn on additional debugging output"
+)
 args = parser.parse_args()
 
 if args.debug:

@@ -12,8 +12,8 @@ num_filters = 10
 kernel_size = 5
 dropout_rate = 0.3
 dofft = False
-nettype = 'convautoencoder'
-activation = 'relu'
+nettype = "convautoencoder"
+activation = "relu"
 usebadpts = False
 countlim = None
 readlim = 10
@@ -28,158 +28,163 @@ encoding_dim = 16
 excludebysubject = False
 
 thiscomputer = os.uname().nodename
-print('thiscomputer:', thiscomputer)
-if thiscomputer.startswith('bbf-tbmbp'):
-    print('setting up to run on mac')
-    thedatadir = '/Users/frederic/Documents/MR_data/physioconn/timecourses'
-elif thiscomputer.startswith('DESKTOP'):
-    print('setting up to run on windows bash')
-    thedatadir = '/home/frederic/Dropbox/timecourses'
+print("thiscomputer:", thiscomputer)
+if thiscomputer.startswith("bbf-tbmbp"):
+    print("setting up to run on mac")
+    thedatadir = "/Users/frederic/Documents/MR_data/physioconn/timecourses"
+elif thiscomputer.startswith("DESKTOP"):
+    print("setting up to run on windows bash")
+    thedatadir = "/home/frederic/Dropbox/timecourses"
 else:
-    print('setting up to run on mclean cluster')
-    thedatadir = '/data1/frederic/physioconn/output_complete'
+    print("setting up to run on mclean cluster")
+    thedatadir = "/data1/frederic/physioconn/output_complete"
 
 
-
-if nettype == 'cnn':
+if nettype == "cnn":
     thefilter = dlfilter.cnn(
-                            num_epochs=num_epochs,
-                            startskip=startskip,
-                            endskip=endskip,
-                            step=step,
-                            excludethresh=excludethresh,
-                            excludebysubject=excludebysubject,
-                            window_size=window_size,
-                            num_layers=num_layers,
-                            dropout_rate=dropout_rate,
-                            usebadpts=usebadpts,
-                            readlim=readlim,
-                            readskip=readskip,
-                            countlim=countlim,
-                            thedatadir=thedatadir,
-                            inputfrag='cardfromfmri',
-                            targetfrag='normpleth',
-                            namesuffix='normaligned',
-                            activation=activation,
-                            num_filters=num_filters,
-                            kernel_size=kernel_size,
-                            debug=debug)
-elif nettype == 'convautoencoder':
+        num_epochs=num_epochs,
+        startskip=startskip,
+        endskip=endskip,
+        step=step,
+        excludethresh=excludethresh,
+        excludebysubject=excludebysubject,
+        window_size=window_size,
+        num_layers=num_layers,
+        dropout_rate=dropout_rate,
+        usebadpts=usebadpts,
+        readlim=readlim,
+        readskip=readskip,
+        countlim=countlim,
+        thedatadir=thedatadir,
+        inputfrag="cardfromfmri",
+        targetfrag="normpleth",
+        namesuffix="normaligned",
+        activation=activation,
+        num_filters=num_filters,
+        kernel_size=kernel_size,
+        debug=debug,
+    )
+elif nettype == "convautoencoder":
     num_filters = 256
     thefilter = dlfilter.convautoencoder(
-                            num_pretrain_epochs=num_pretrain_epochs,
-                            num_epochs=num_epochs,
-                            startskip=startskip,
-                            endskip=endskip,
-                            step=step,
-                            excludethresh=excludethresh,
-                            excludebysubject=excludebysubject,
-                            window_size=window_size,
-                            num_layers=num_layers,
-                            dropout_rate=dropout_rate,
-                            usebadpts=usebadpts,
-                            readlim=readlim,
-                            readskip=readskip,
-                            countlim=countlim,
-                            thedatadir=thedatadir,
-                            inputfrag='cardfromfmri',
-                            targetfrag='normpleth',
-                            namesuffix='normaligned',
-                            activation=activation,
-                            encoding_dim=encoding_dim,
-                            num_filters=num_filters,
-                            kernel_size=kernel_size,
-                            debug=debug)
-elif nettype == 'denseautoencoder':
+        num_pretrain_epochs=num_pretrain_epochs,
+        num_epochs=num_epochs,
+        startskip=startskip,
+        endskip=endskip,
+        step=step,
+        excludethresh=excludethresh,
+        excludebysubject=excludebysubject,
+        window_size=window_size,
+        num_layers=num_layers,
+        dropout_rate=dropout_rate,
+        usebadpts=usebadpts,
+        readlim=readlim,
+        readskip=readskip,
+        countlim=countlim,
+        thedatadir=thedatadir,
+        inputfrag="cardfromfmri",
+        targetfrag="normpleth",
+        namesuffix="normaligned",
+        activation=activation,
+        encoding_dim=encoding_dim,
+        num_filters=num_filters,
+        kernel_size=kernel_size,
+        debug=debug,
+    )
+elif nettype == "denseautoencoder":
     thefilter = dlfilter.denseautoencoder(
-                            num_pretrain_epochs=num_pretrain_epochs,
-                            num_epochs=num_epochs,
-                            startskip=startskip,
-                            endskip=endskip,
-                            step=step,
-                            excludethresh=excludethresh,
-                            excludebysubject=excludebysubject,
-                            window_size=window_size,
-                            num_layers=num_layers,
-                            dropout_rate=dropout_rate,
-                            usebadpts=usebadpts,
-                            readlim=readlim,
-                            readskip=readskip,
-                            countlim=countlim,
-                            thedatadir=thedatadir,
-                            inputfrag='cardfromfmri',
-                            targetfrag='normpleth',
-                            namesuffix='normaligned',
-                            activation=activation,
-                            encoding_dim=encoding_dim,
-                            debug=debug)
-elif nettype == 'sepcnn':
+        num_pretrain_epochs=num_pretrain_epochs,
+        num_epochs=num_epochs,
+        startskip=startskip,
+        endskip=endskip,
+        step=step,
+        excludethresh=excludethresh,
+        excludebysubject=excludebysubject,
+        window_size=window_size,
+        num_layers=num_layers,
+        dropout_rate=dropout_rate,
+        usebadpts=usebadpts,
+        readlim=readlim,
+        readskip=readskip,
+        countlim=countlim,
+        thedatadir=thedatadir,
+        inputfrag="cardfromfmri",
+        targetfrag="normpleth",
+        namesuffix="normaligned",
+        activation=activation,
+        encoding_dim=encoding_dim,
+        debug=debug,
+    )
+elif nettype == "sepcnn":
     thefilter = dlfilter.sepcnn(
-                            num_epochs=num_epochs,
-                            startskip=startskip,
-                            endskip=endskip,
-                            step=step,
-                            excludethresh=excludethresh,
-                            excludebysubject=excludebysubject,
-                            window_size=window_size,
-                            num_layers=num_layers,
-                            dropout_rate=dropout_rate,
-                            usebadpts=usebadpts,
-                            readlim=readlim,
-                            readskip=readskip,
-                            countlim=countlim,
-                            thedatadir=thedatadir,
-                            inputfrag='cardfromfmri',
-                            targetfrag='normpleth',
-                            namesuffix='normaligned',
-                            activation=activation,
-                            num_filters=num_filters,
-                            kernel_size=kernel_size,
-                            debug=debug)
-elif nettype == 'lstm':
+        num_epochs=num_epochs,
+        startskip=startskip,
+        endskip=endskip,
+        step=step,
+        excludethresh=excludethresh,
+        excludebysubject=excludebysubject,
+        window_size=window_size,
+        num_layers=num_layers,
+        dropout_rate=dropout_rate,
+        usebadpts=usebadpts,
+        readlim=readlim,
+        readskip=readskip,
+        countlim=countlim,
+        thedatadir=thedatadir,
+        inputfrag="cardfromfmri",
+        targetfrag="normpleth",
+        namesuffix="normaligned",
+        activation=activation,
+        num_filters=num_filters,
+        kernel_size=kernel_size,
+        debug=debug,
+    )
+elif nettype == "lstm":
     num_layers = 2
     thefilter = dlfilter.lstm(
-                            num_epochs=num_epochs,
-                            startskip=startskip,
-                            endskip=endskip,
-                            step=step,
-                            excludethresh=excludethresh,
-                            excludebysubject=excludebysubject,
-                            window_size=window_size,
-                            num_layers=num_layers,
-                            dropout_rate=dropout_rate,
-                            usebadpts=usebadpts,
-                            readlim=readlim,
-                            readskip=readskip,
-                            countlim=countlim,
-                            thedatadir=thedatadir,
-                            inputfrag='cardfromfmri',
-                            targetfrag='alignedpleth',
-                            num_units=num_units)
-elif nettype == 'hybrid':
+        num_epochs=num_epochs,
+        startskip=startskip,
+        endskip=endskip,
+        step=step,
+        excludethresh=excludethresh,
+        excludebysubject=excludebysubject,
+        window_size=window_size,
+        num_layers=num_layers,
+        dropout_rate=dropout_rate,
+        usebadpts=usebadpts,
+        readlim=readlim,
+        readskip=readskip,
+        countlim=countlim,
+        thedatadir=thedatadir,
+        inputfrag="cardfromfmri",
+        targetfrag="alignedpleth",
+        num_units=num_units,
+    )
+elif nettype == "hybrid":
     num_layers = 10
     thefilter = dlfilter.hybrid(
-                            num_epochs=num_epochs,
-                            startskip=startskip,
-                            endskip=endskip,
-                            step=step,
-                            excludethresh=excludethresh,
-                            excludebysubject=excludebysubject,
-                            window_size=window_size,
-                            num_layers=num_layers,
-                            dropout_rate=dropout_rate,
-                            usebadpts=usebadpts,
-                            readlim=readlim,
-                            readskip=readskip,
-                            countlim=countlim,
-                            thedatadir=thedatadir,
-                            inputfrag='cardfromfmri',
-                            targetfrag='alignedpleth',
-                            activation=activation,
-                            num_filters=num_filters,
-                            kernel_size=kernel_size,
-                            num_units=num_units,
-                            invert=invert)
+        num_epochs=num_epochs,
+        startskip=startskip,
+        endskip=endskip,
+        step=step,
+        excludethresh=excludethresh,
+        excludebysubject=excludebysubject,
+        window_size=window_size,
+        num_layers=num_layers,
+        dropout_rate=dropout_rate,
+        usebadpts=usebadpts,
+        readlim=readlim,
+        readskip=readskip,
+        countlim=countlim,
+        thedatadir=thedatadir,
+        inputfrag="cardfromfmri",
+        targetfrag="alignedpleth",
+        activation=activation,
+        num_filters=num_filters,
+        kernel_size=kernel_size,
+        num_units=num_units,
+        invert=invert,
+    )
 
 thefilter.initialize()
 thefilter.loaddata()

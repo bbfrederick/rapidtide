@@ -27,6 +27,5 @@ from __future__ import print_function, division
 import sys
 import rapidtide.workflows.rapidtide2x_trans as rapidtide2x_trans_workflow
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rapidtide2x_trans_workflow.rapidtide_main()
-

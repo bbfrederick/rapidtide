@@ -29,6 +29,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.resample as tide_resample
 import nibabel as nib
 
+
 def usage():
     print("usage: resamplenifti inputfile inputtr outputname outputtr [-a]")
     print("")
@@ -39,7 +40,9 @@ def usage():
     print("	outputtr	- the tr of the output file in seconds")
     print("")
     print("options:")
-    print("	-a		- disable antialiasing filter (only relevant if you are downsampling in time)")
+    print(
+        "	-a		- disable antialiasing filter (only relevant if you are downsampling in time)"
+    )
     return ()
 
 
@@ -76,14 +79,16 @@ def main():
     # check to see if we are upsampling or downsampling
     if inputtr > outputtr:  # we are upsampling - antialiasing is unnecessary
         antialias = False
-        print('upsampling - antialiasing disabled')
+        print("upsampling - antialiasing disabled")
 
     # prepare the input timepoint list
     inputfreq = 1.0 / inputtr
     inputstarttime = 0.0
     inputendtime = inputstarttime + inputtr * (numinputtrs - 1)
-    print("input start,end,tr,numtrs", inputstarttime, inputendtime, inputtr, numinputtrs)
-    input_x = r_[0.0:1.0 * numinputtrs] * inputtr - inputstarttime
+    print(
+        "input start,end,tr,numtrs", inputstarttime, inputendtime, inputtr, numinputtrs
+    )
+    input_x = r_[0.0 : 1.0 * numinputtrs] * inputtr - inputstarttime
     input_y = input_x * 0.0
 
     # prepare the output timepoint list
@@ -91,11 +96,19 @@ def main():
     outputstarttime = inputstarttime
     outputendtime = inputendtime
     numoutputtrs = np.ceil((outputendtime - outputstarttime) / outputtr) + 1
-    print("output start,end,tr,numtrs", outputstarttime, outputendtime, outputtr, numoutputtrs)
-    output_x = r_[0.0:1.0 * (numoutputtrs - 1)] * outputtr - outputstarttime
+    print(
+        "output start,end,tr,numtrs",
+        outputstarttime,
+        outputendtime,
+        outputtr,
+        numoutputtrs,
+    )
+    output_x = r_[0.0 : 1.0 * (numoutputtrs - 1)] * outputtr - outputstarttime
     output_y = output_x * 0.0
 
-    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(
+        inputfilename
+    )
     tr = thesizes[4]
     print("tr from header =", tr)
 
@@ -104,7 +117,7 @@ def main():
     numslices = thedims[3]
     timepoints = thedims[4]
 
-    resampledtcs = zeros((xsize, ysize, numslices, len(output_x)), dtype='float')
+    resampledtcs = zeros((xsize, ysize, numslices, len(output_x)), dtype="float")
 
     if antialias:
         aafiltfunc = tide_filt.getlpfftfunc(inputfreq, inputfreq / 2.5, input_x)
@@ -117,20 +130,23 @@ def main():
         for yloc in range(0, ysize):
             for xloc in range(0, xsize):
                 if antialias:
-                    #input_y = tide_filt.doprecalcfftfilt(aafiltfunc, input_data[xloc, yloc, zloc, :])
-                    input_y = tide_filt.transferfuncfilt(input_data[xloc, yloc, zloc, :], aafiltfunc)
+                    # input_y = tide_filt.doprecalcfftfilt(aafiltfunc, input_data[xloc, yloc, zloc, :])
+                    input_y = tide_filt.transferfuncfilt(
+                        input_data[xloc, yloc, zloc, :], aafiltfunc
+                    )
                 else:
                     input_y = input_data[xloc, yloc, zloc, :]
-                resampledtcs[xloc, yloc, zloc, :] = tide_resample.doresample(input_x, input_y, output_x)
+                resampledtcs[xloc, yloc, zloc, :] = tide_resample.doresample(
+                    input_x, input_y, output_x
+                )
 
     # now do the ones with other numbers of time points
     inputaffine = input_img.get_affine()
     resampled_img = nib.Nifti1Image(resampledtcs, inputaffine)
     resampled_hdr = resampled_img.header.copy()
-    resampled_hdr['pixdim'][4] = outputtr
+    resampled_hdr["pixdim"][4] = outputtr
     resampled_img.to_filename(outputfilename)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-

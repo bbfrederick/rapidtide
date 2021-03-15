@@ -33,51 +33,64 @@ import rapidtide.corrpass as tide_corrpass
 import rapidtide.corrfit as tide_corrfit
 
 
-def _procOneNullCorrelation(iteration, sourcetimecourse, filterfunc, Fs, corrscale, corrorigin, negbins,
-                           posbins, optiondict,
-                           rt_floatset=np.float64,
-                           rt_floattype='float64'
-                           ):
+def _procOneNullCorrelation(
+    iteration,
+    sourcetimecourse,
+    filterfunc,
+    Fs,
+    corrscale,
+    corrorigin,
+    negbins,
+    posbins,
+    optiondict,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+):
     # make a shuffled copy of the regressors
     permutedtc = np.random.permutation(sourcetimecourse)
 
     # crosscorrelate with original
-    thexcorr, dummy = tide_corrpass.onecorrelation(permutedtc,
-                                                   Fs,
-                                                   corrorigin,
-                                                   negbins,
-                                                   posbins,
-                                                   filterfunc,
-                                                   sourcetimecourse,
-                                                   usewindowfunc=optiondict['usewindowfunc'],
-                                                   detrendorder=optiondict['detrendorder'],
-                                                   windowfunc=optiondict['windowfunc'],
-                                                   corrweighting=optiondict['corrweighting'])
+    thexcorr, dummy = tide_corrpass.onecorrelation(
+        permutedtc,
+        Fs,
+        corrorigin,
+        negbins,
+        posbins,
+        filterfunc,
+        sourcetimecourse,
+        usewindowfunc=optiondict["usewindowfunc"],
+        detrendorder=optiondict["detrendorder"],
+        windowfunc=optiondict["windowfunc"],
+        corrweighting=optiondict["corrweighting"],
+    )
 
     # fit the correlation
-    maxindex, maxlag, maxval, maxsigma, maskval, failreason = \
-        tide_corrfit.onecorrfit(thexcorr, corrscale[corrorigin - negbins:corrorigin + posbins],
-                   optiondict,
-                   zerooutbadfit=True,
-                   rt_floatset=rt_floatset,
-                   rt_floattype=rt_floattype)
+    maxindex, maxlag, maxval, maxsigma, maskval, failreason = tide_corrfit.onecorrfit(
+        thexcorr,
+        corrscale[corrorigin - negbins : corrorigin + posbins],
+        optiondict,
+        zerooutbadfit=True,
+        rt_floatset=rt_floatset,
+        rt_floattype=rt_floattype,
+    )
 
     return maxval
 
 
-def getNullDistributionData(sourcetimecourse,
-                            corrscale,
-                            filterfunc,
-                            Fs,
-                            corrorigin,
-                            negbins,
-                            posbins,
-                            optiondict,
-                            rt_floatset=np.float64,
-                            rt_floattype='float64'
-                            ):
-    inputshape = np.asarray([optiondict['numestreps']])
-    if optiondict['nprocs'] > 1:
+def getNullDistributionData(
+    sourcetimecourse,
+    corrscale,
+    filterfunc,
+    Fs,
+    corrorigin,
+    negbins,
+    posbins,
+    optiondict,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+):
+    inputshape = np.asarray([optiondict["numestreps"]])
+    if optiondict["nprocs"] > 1:
         # define the consumer function here so it inherits most of the arguments
         def nullCorrelation_consumer(inQ, outQ):
             while True:
@@ -90,74 +103,97 @@ def getNullDistributionData(sourcetimecourse,
                         break
 
                     # process and send the data
-                    outQ.put(_procOneNullCorrelation(val,
-                                                     sourcetimecourse,
-                                                     filterfunc,
-                                                     Fs,
-                                                     corrscale,
-                                                     corrorigin,
-                                                     negbins,
-                                                     posbins,
-                                                     optiondict,
-                                                     rt_floatset=rt_floatset,
-                                                     rt_floattype=rt_floattype
-                                                     ))
+                    outQ.put(
+                        _procOneNullCorrelation(
+                            val,
+                            sourcetimecourse,
+                            filterfunc,
+                            Fs,
+                            corrscale,
+                            corrorigin,
+                            negbins,
+                            posbins,
+                            optiondict,
+                            rt_floatset=rt_floatset,
+                            rt_floattype=rt_floattype,
+                        )
+                    )
 
                 except Exception as e:
                     print("error!", e)
                     break
 
-        data_out = tide_multiproc.run_multiproc(nullCorrelation_consumer,
-                                                inputshape, None,
-                                                nprocs=optiondict['nprocs'],
-                                                showprogressbar=True,
-                                                chunksize=optiondict['mp_chunksize'])
+        data_out = tide_multiproc.run_multiproc(
+            nullCorrelation_consumer,
+            inputshape,
+            None,
+            nprocs=optiondict["nprocs"],
+            showprogressbar=True,
+            chunksize=optiondict["mp_chunksize"],
+        )
 
         # unpack the data
         volumetotal = 0
         corrlist = np.asarray(data_out, dtype=rt_floattype)
     else:
-        corrlist = np.zeros((optiondict['numestreps']), dtype=rt_floattype)
+        corrlist = np.zeros((optiondict["numestreps"]), dtype=rt_floattype)
 
-        for i in range(0, optiondict['numestreps']):
+        for i in range(0, optiondict["numestreps"]):
             # make a shuffled copy of the regressors
             permutedtc = np.random.permutation(sourcetimecourse)
 
             # crosscorrelate with original
-            thexcorr, dummy = tide_corrpass.onecorrelation(permutedtc,
-                                                           Fs,
-                                                           corrorigin,
-                                                           negbins,
-                                                           posbins,
-                                                           filterfunc,
-                                                           sourcetimecourse,
-                                                           usewindowfunc=optiondict['usewindowfunc'],
-                                                           detrendorder=optiondict['detrendorder'],
-                                                           windowfunc=optiondict['windowfunc'],
-                                                           corrweighting=optiondict['corrweighting'])
+            thexcorr, dummy = tide_corrpass.onecorrelation(
+                permutedtc,
+                Fs,
+                corrorigin,
+                negbins,
+                posbins,
+                filterfunc,
+                sourcetimecourse,
+                usewindowfunc=optiondict["usewindowfunc"],
+                detrendorder=optiondict["detrendorder"],
+                windowfunc=optiondict["windowfunc"],
+                corrweighting=optiondict["corrweighting"],
+            )
 
             # fit the correlation
-            maxindex, maxlag, maxval, maxsigma, maskval, failreason = \
-                tide_corrfit.onecorrfit(thexcorr,
-                           corrscale[corrorigin - negbins:corrorigin + posbins],
-                           optiondict,
-                           zerooutbadfit=True,
-                           rt_floatset=rt_floatset,
-                           rt_floattype=rt_floattype
-                           )
+            (
+                maxindex,
+                maxlag,
+                maxval,
+                maxsigma,
+                maskval,
+                failreason,
+            ) = tide_corrfit.onecorrfit(
+                thexcorr,
+                corrscale[corrorigin - negbins : corrorigin + posbins],
+                optiondict,
+                zerooutbadfit=True,
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
+            )
 
             # find and tabulate correlation coefficient at optimal lag
             corrlist[i] = maxval
 
             # progress
-            if optiondict['showprogressbar']:
-                tide_util.progressbar(i + 1, optiondict['numestreps'], label='Percent complete')
+            if optiondict["showprogressbar"]:
+                tide_util.progressbar(
+                    i + 1, optiondict["numestreps"], label="Percent complete"
+                )
 
         # jump to line after progress bar
         print()
 
     # return the distribution data
     numnonzero = len(np.where(corrlist != 0.0)[0])
-    print(numnonzero, 'non-zero correlations out of', len(corrlist), '(', 100.0 * numnonzero / len(corrlist), '%)')
+    print(
+        numnonzero,
+        "non-zero correlations out of",
+        len(corrlist),
+        "(",
+        100.0 * numnonzero / len(corrlist),
+        "%)",
+    )
     return corrlist
-

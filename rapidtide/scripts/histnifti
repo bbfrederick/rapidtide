@@ -24,28 +24,33 @@ from __future__ import print_function
 import rapidtide.io as tide_io
 import sys
 
-def usage():
-    print('usage: histnifti inputfile outputroot')
-    print('')
-    print('required arguments:')
-    print('	inputfile	- the name of the input nifti file')
-    print('	outputroot	- the root of the output nifti names')
-    print('')
-    return()
 
-def progressbar(thisval, end_val, label='Percent', barsize=60):
+def usage():
+    print("usage: histnifti inputfile outputroot")
+    print("")
+    print("required arguments:")
+    print("	inputfile	- the name of the input nifti file")
+    print("	outputroot	- the root of the output nifti names")
+    print("")
+    return ()
+
+
+def progressbar(thisval, end_val, label="Percent", barsize=60):
     percent = float(thisval) / end_val
-    hashes = '#' * int(round(percent * barsize))
-    spaces = ' ' * (barsize - len(hashes))
-    sys.stdout.write('\r{0}: [{1}] {2:.3f}%'.format(label, hashes + spaces, 100.0*percent))
+    hashes = "#" * int(round(percent * barsize))
+    spaces = " " * (barsize - len(hashes))
+    sys.stdout.write(
+        "\r{0}: [{1}] {2:.3f}%".format(label, hashes + spaces, 100.0 * percent)
+    )
     sys.stdout.flush()
 
+
 # set default variable values
-histlen=101
+histlen = 101
 thepercentiles = [0.95, 0.99, 0.995, 0.999]
 thepvalnames = []
 for thispercentile in thepercentiles:
-    thepvalnames.append(str(1.0 - thispercentile).replace('.', 'p'))
+    thepvalnames.append(str(1.0 - thispercentile).replace(".", "p"))
 
 # get the command line parameters
 if len(sys.argv) != 3:
@@ -53,41 +58,47 @@ if len(sys.argv) != 3:
     exit()
 
 # handle required args first
-inputfilename=sys.argv[1]
-outputroot=sys.argv[2]
+inputfilename = sys.argv[1]
+outputroot = sys.argv[2]
 
-print('loading data')
-input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
-tr=thesizes[4]
-Fs=1.0/tr
-print('tr from header =',tr,', sample frequency is ',Fs)
-    
-xsize=thedims[1]
-ysize=thedims[2]
-numslices=thedims[3]
-numtrials=thedims[4]
-    
+print("loading data")
+input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(
+    inputfilename
+)
+tr = thesizes[4]
+Fs = 1.0 / tr
+print("tr from header =", tr, ", sample frequency is ", Fs)
+
+xsize = thedims[1]
+ysize = thedims[2]
+numslices = thedims[3]
+numtrials = thedims[4]
+
 numspatiallocs = int(xsize) * int(ysize) * int(numslices)
-corr_data = input_data.reshape((numspatiallocs,numtrials))
+corr_data = input_data.reshape((numspatiallocs, numtrials))
 
-print('allocating arrays')
-sorteddata = zeros((numspatiallocs,numtrials),dtype='float')
-outputhists = zeros((numspatiallocs,histlen),dtype='float')
-outputhistfits = zeros((numspatiallocs,histlen),dtype='float')
-pcts_data = zeros((numspatiallocs,len(thepercentiles)),dtype='float')
-pcts_fit = zeros((numspatiallocs,len(thepercentiles)),dtype='float')
+print("allocating arrays")
+sorteddata = zeros((numspatiallocs, numtrials), dtype="float")
+outputhists = zeros((numspatiallocs, histlen), dtype="float")
+outputhistfits = zeros((numspatiallocs, histlen), dtype="float")
+pcts_data = zeros((numspatiallocs, len(thepercentiles)), dtype="float")
+pcts_fit = zeros((numspatiallocs, len(thepercentiles)), dtype="float")
 
 # cycle over all voxels
-#therange=(0,1.1*tide_stats.getfracvals(corr_data,[0.95],numbins=1000,nozero=True)[0])
-therange=(0,np.max(corr_data))
-print('the range is ',therange)
+# therange=(0,1.1*tide_stats.getfracvals(corr_data,[0.95],numbins=1000,nozero=True)[0])
+therange = (0, np.max(corr_data))
+print("the range is ", therange)
 
-print('now cycling over all voxels')
-for spatialloc in range(0,numspatiallocs):
-    sorteddata[spatialloc,:]=sort(corr_data[spatialloc,:])
+print("now cycling over all voxels")
+for spatialloc in range(0, numspatiallocs):
+    sorteddata[spatialloc, :] = sort(corr_data[spatialloc, :])
     if spatialloc % 100 == 0:
-        progressbar(spatialloc + 1, numspatiallocs, label='Percent complete')
-    
+        progressbar(spatialloc + 1, numspatiallocs, label="Percent complete")
+
 # now do the ones with other numbers of time points
-theheader=input_hdr
-tide_io.savetonifti(sorteddata.reshape((xsize,ysize,numslices,numtrials)), theheader, outputroot + '_sorted')
+theheader = input_hdr
+tide_io.savetonifti(
+    sorteddata.reshape((xsize, ysize, numslices, numtrials)),
+    theheader,
+    outputroot + "_sorted",
+)

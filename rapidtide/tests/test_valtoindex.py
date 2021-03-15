@@ -37,9 +37,10 @@ def test_valtoindex(debug=False):
         indclosest = valtoindex(xaxis, testval)
         print(testval, xaxis[indclosest])
 
+
 def main():
     test_valtoindex(debug=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

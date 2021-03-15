@@ -126,7 +126,9 @@ def polarfft(invec, samplerate):
         thevec = invec[:-1]
     else:
         thevec = invec
-    spec = fftpack.fft(tide_filt.hamming(np.shape(thevec)[0]) * thevec)[0:np.shape(thevec)[0] // 2]
+    spec = fftpack.fft(tide_filt.hamming(np.shape(thevec)[0]) * thevec)[
+        0 : np.shape(thevec)[0] // 2
+    ]
     magspec = abs(spec)
     phspec = phase(spec)
     maxfreq = samplerate / 2.0
@@ -355,7 +357,7 @@ def ppnormalize(vector):
 
 
 @conditionaljit()
-def corrnormalize(thedata, prewindow=True, detrendorder=1, windowfunc='hamming'):
+def corrnormalize(thedata, prewindow=True, detrendorder=1, windowfunc="hamming"):
     """
 
     Parameters
@@ -371,14 +373,17 @@ def corrnormalize(thedata, prewindow=True, detrendorder=1, windowfunc='hamming')
     """
     # detrend first
     if detrendorder > 0:
-        intervec = stdnormalize(tide_fit.detrend(thedata, order=detrendorder, demean=True))
+        intervec = stdnormalize(
+            tide_fit.detrend(thedata, order=detrendorder, demean=True)
+        )
     else:
         intervec = stdnormalize(thedata)
 
     # then window
     if prewindow:
-        return stdnormalize(tide_filt.windowfunction(np.shape(thedata)[0],
-                                                     type=windowfunc) * intervec) / np.sqrt(np.shape(thedata)[0])
+        return stdnormalize(
+            tide_filt.windowfunction(np.shape(thedata)[0], type=windowfunc) * intervec
+        ) / np.sqrt(np.shape(thedata)[0])
     else:
         return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
 
@@ -417,7 +422,7 @@ def envdetect(Fs, inputdata, cutoff=0.25):
     """
     demeaned = inputdata - np.mean(inputdata)
     sigabs = abs(demeaned)
-    theenvbpf = tide_filt.noncausalfilter(filtertype='arb')
+    theenvbpf = tide_filt.noncausalfilter(filtertype="arb")
     theenvbpf.setfreqs(0.0, 0.0, cutoff, 1.1 * cutoff)
     return theenvbpf.apply(Fs, sigabs)
 
@@ -443,7 +448,7 @@ def phasemod(phase, centric=True):
         return phase % (2.0 * np.pi)
 
 
-def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):  
+def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):
     """
 
     Parameters

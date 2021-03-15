@@ -36,7 +36,8 @@ import rapidtide.fit as tide_fit
 
 # this is here until numpy deals with their fft issue
 import warnings
-warnings.simplefilter(action='ignore', category=RuntimeWarning)
+
+warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 # ---------------------------------------- Global constants -------------------------------------------
 donotbeaggressive = True
@@ -88,7 +89,7 @@ def disablenumba():
 
 
 # --------------------------- Resampling and time shifting functions -------------------------------------------
-'''
+"""
 class congrid:
     def __init__(self, timeaxis, width, method='gauss', circular=True, upsampleratio=100, doplot=False, debug=False):
         self.upsampleratio = upsampleratio
@@ -119,14 +120,14 @@ class congrid:
             return None
         for i in range(len(xvals)):
         outindices = ((newtimeaxis - self.hiresstart) // self.hiresstep).astype(int)
-'''
+"""
 
 congridyvals = {}
-congridyvals['kernel'] = 'kaiser'
-congridyvals['width'] = 3.0
+congridyvals["kernel"] = "kaiser"
+congridyvals["width"] = 3.0
 
 
-def congrid(xaxis, loc, val, width, kernel='kaiser', cyclic=True, debug=False):
+def congrid(xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False):
     """
     Perform a convolution gridding operation with a Kaiser-Bessel or Gaussian kernel of width 'width'.  Grid
     parameters are cached for performance.
@@ -164,36 +165,42 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', cyclic=True, debug=False):
     """
     global congridyvals
 
-    if (congridyvals['kernel'] != kernel) or (congridyvals['width'] != width):
-        if congridyvals['kernel'] != kernel:
+    if (congridyvals["kernel"] != kernel) or (congridyvals["width"] != width):
+        if congridyvals["kernel"] != kernel:
             if debug:
-                print(congridyvals['kernel'], '!=', kernel)
-        if congridyvals['width'] != width:
+                print(congridyvals["kernel"], "!=", kernel)
+        if congridyvals["width"] != width:
             if debug:
-                print(congridyvals['width'],'!=', width)
+                print(congridyvals["width"], "!=", width)
         if debug:
-            print('(re)initializing congridyvals')
+            print("(re)initializing congridyvals")
         congridyvals = {}
-        congridyvals['kernel'] = kernel
-        congridyvals['width'] = width * 1.0
-    optsigma = np.array([0.4241, 0.4927, 0.4839, 0.5063, 0.5516, 0.5695, 0.5682, 0.5974])
-    optbeta  = np.array([1.9980, 2.3934, 3.3800, 4.2054, 4.9107, 5.7567, 6.6291, 7.4302])
+        congridyvals["kernel"] = kernel
+        congridyvals["width"] = width * 1.0
+    optsigma = np.array(
+        [0.4241, 0.4927, 0.4839, 0.5063, 0.5516, 0.5695, 0.5682, 0.5974]
+    )
+    optbeta = np.array([1.9980, 2.3934, 3.3800, 4.2054, 4.9107, 5.7567, 6.6291, 7.4302])
     xstep = xaxis[1] - xaxis[0]
     if (loc < xaxis[0] - xstep / 2.0 or loc > xaxis[-1] + xstep / 2.0) and not cyclic:
-        print('loc', loc, 'not in range', xaxis[0], xaxis[-1])
+        print("loc", loc, "not in range", xaxis[0], xaxis[-1])
 
     # choose the smoothing kernel based on the width
-    if kernel != 'old':
+    if kernel != "old":
         if not (1.5 <= width <= 5.0) or (np.fmod(width, 0.5) > 0.0):
-            print('congrid: width is', width)
-            print('congrid: width must be a half-integral value between 1.5 and 5.0 inclusive')
+            print("congrid: width is", width)
+            print(
+                "congrid: width must be a half-integral value between 1.5 and 5.0 inclusive"
+            )
             sys.exit()
         else:
             kernelindex = int((width - 1.5) // 0.5)
 
     # find the closest grid point to the target location, calculate relative offsets from this point
     center = tide_util.valtoindex(xaxis, loc)
-    offset = np.fmod(np.round((loc - xaxis[center]) / xstep, 3), 1.0)  # will vary from -0.5 to 0.5
+    offset = np.fmod(
+        np.round((loc - xaxis[center]) / xstep, 3), 1.0
+    )  # will vary from -0.5 to 0.5
     if cyclic:
         if center == len(xaxis) - 1 and offset > 0.5:
             center = 0
@@ -202,30 +209,39 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', cyclic=True, debug=False):
             center = len(xaxis) - 1
             offset += 1.0
     if not (-0.5 <= offset <= 0.5):
-        print('(loc, xstep, center, offset):', loc, xstep, center, offset)
-        print('xaxis:', xaxis)
+        print("(loc, xstep, center, offset):", loc, xstep, center, offset)
+        print("xaxis:", xaxis)
         sys.exit()
     offsetkey = str(offset)
 
-    if kernel == 'old':
+    if kernel == "old":
         if debug:
-            print('gridding with old kernel')
+            print("gridding with old kernel")
         widthinpts = int(np.round(width * 4.6 / xstep))
         widthinpts -= widthinpts % 2 - 1
         try:
             yvals = congridyvals[offsetkey]
         except KeyError:
             if debug:
-                print('new key:', offsetkey)
-            xvals = np.linspace(-xstep * (widthinpts // 2), xstep * (widthinpts // 2), num=widthinpts,
-                                endpoint=True) + offset
-            congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, width]))
+                print("new key:", offsetkey)
+            xvals = (
+                np.linspace(
+                    -xstep * (widthinpts // 2),
+                    xstep * (widthinpts // 2),
+                    num=widthinpts,
+                    endpoint=True,
+                )
+                + offset
+            )
+            congridyvals[offsetkey] = tide_fit.gauss_eval(
+                xvals, np.array([1.0, 0.0, width])
+            )
             yvals = congridyvals[offsetkey]
         startpt = int(center - widthinpts // 2)
         indices = range(startpt, startpt + widthinpts)
         indices = np.remainder(indices, len(xaxis))
         if debug:
-            print('center, offset, indices, yvals', center, offset, indices, yvals)
+            print("center, offset, indices, yvals", center, offset, indices, yvals)
         return val * yvals, yvals, indices
     else:
         offsetinpts = center + offset
@@ -236,100 +252,123 @@ def congrid(xaxis, loc, val, width, kernel='kaiser', cyclic=True, debug=False):
             yvals = congridyvals[offsetkey]
         except KeyError:
             if debug:
-                print('new key:', offsetkey)
+                print("new key:", offsetkey)
             xvals = indices - center + offset
-            if kernel == 'gauss':
+            if kernel == "gauss":
                 sigma = optsigma[kernelindex]
-                congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, sigma]))
-            elif kernel == 'kaiser':
+                congridyvals[offsetkey] = tide_fit.gauss_eval(
+                    xvals, np.array([1.0, 0.0, sigma])
+                )
+            elif kernel == "kaiser":
                 beta = optbeta[kernelindex]
-                congridyvals[offsetkey] = tide_fit.kaiserbessel_eval(xvals, np.array([beta, width / 2.0]))
+                congridyvals[offsetkey] = tide_fit.kaiserbessel_eval(
+                    xvals, np.array([beta, width / 2.0])
+                )
             else:
-                print('illegal kernel value in congrid - exiting')
+                print("illegal kernel value in congrid - exiting")
                 sys.exit()
             yvals = congridyvals[offsetkey]
             if debug:
-                print('xvals, yvals', xvals, yvals)
+                print("xvals, yvals", xvals, yvals)
         if debug:
-            print('center, offset, indices, yvals', center, offset, indices, yvals)
+            print("center, offset, indices, yvals", center, offset, indices, yvals)
         return val * yvals, yvals, indices
 
 
 class fastresampler:
-    def __init__(self, timeaxis, timecourse, padvalue=30.0, upsampleratio=100, doplot=False, debug=False,
-                 method='univariate'):
+    def __init__(
+        self,
+        timeaxis,
+        timecourse,
+        padvalue=30.0,
+        upsampleratio=100,
+        doplot=False,
+        debug=False,
+        method="univariate",
+    ):
         self.upsampleratio = upsampleratio
         self.padvalue = padvalue
         self.initstep = timeaxis[1] - timeaxis[0]
         self.initstart = timeaxis[0]
         self.initend = timeaxis[-1]
         self.hiresstep = self.initstep / np.float64(self.upsampleratio)
-        self.hires_x = np.arange(timeaxis[0] - self.padvalue, self.initstep * len(timeaxis) + self.padvalue,
-                                 self.hiresstep)
+        self.hires_x = np.arange(
+            timeaxis[0] - self.padvalue,
+            self.initstep * len(timeaxis) + self.padvalue,
+            self.hiresstep,
+        )
         self.hiresstart = self.hires_x[0]
         self.hiresend = self.hires_x[-1]
-        if method == 'poly':
+        if method == "poly":
             self.hires_y = 0.0 * self.hires_x
-            self.hires_y[int(self.padvalue // self.hiresstep) + 1:-(int(self.padvalue // self.hiresstep) + 1)] = \
-                signal.resample_poly(timecourse, np.int(self.upsampleratio * 10), 10)
-        elif method == 'fourier':
+            self.hires_y[
+                int(self.padvalue // self.hiresstep)
+                + 1 : -(int(self.padvalue // self.hiresstep) + 1)
+            ] = signal.resample_poly(timecourse, np.int(self.upsampleratio * 10), 10)
+        elif method == "fourier":
             self.hires_y = 0.0 * self.hires_x
-            self.hires_y[int(self.padvalue // self.hiresstep) + 1:-(int(self.padvalue // self.hiresstep) + 1)] = \
-                signal.resample(timecourse, self.upsampleratio * len(timeaxis))
+            self.hires_y[
+                int(self.padvalue // self.hiresstep)
+                + 1 : -(int(self.padvalue // self.hiresstep) + 1)
+            ] = signal.resample(timecourse, self.upsampleratio * len(timeaxis))
         else:
             self.hires_y = doresample(timeaxis, timecourse, self.hires_x, method=method)
-        self.hires_y[:int(self.padvalue // self.hiresstep)] = self.hires_y[int(self.padvalue // self.hiresstep)]
-        self.hires_y[-int(self.padvalue // self.hiresstep):] = self.hires_y[-int(self.padvalue // self.hiresstep)]
+        self.hires_y[: int(self.padvalue // self.hiresstep)] = self.hires_y[
+            int(self.padvalue // self.hiresstep)
+        ]
+        self.hires_y[-int(self.padvalue // self.hiresstep) :] = self.hires_y[
+            -int(self.padvalue // self.hiresstep)
+        ]
         if debug:
-            print('fastresampler __init__:')
-            print('    padvalue:, ', self.padvalue)
-            print('    initstep, hiresstep:', self.initstep, self.hiresstep)
-            print('    initial axis limits:', self.initstart, self.initend)
-            print('    hires axis limits:', self.hiresstart, self.hiresend)
+            print("fastresampler __init__:")
+            print("    padvalue:, ", self.padvalue)
+            print("    initstep, hiresstep:", self.initstep, self.hiresstep)
+            print("    initial axis limits:", self.initstart, self.initend)
+            print("    hires axis limits:", self.hiresstart, self.hiresend)
 
         # self.hires_y[:int(self.padvalue // self.hiresstep)] = 0.0
         # self.hires_y[-int(self.padvalue // self.hiresstep):] = 0.0
         if doplot:
             fig = pl.figure()
             ax = fig.add_subplot(111)
-            ax.set_title('fastresampler initial timecourses')
+            ax.set_title("fastresampler initial timecourses")
             pl.plot(timeaxis, timecourse, self.hires_x, self.hires_y)
-            pl.legend(('input', 'hires'))
+            pl.legend(("input", "hires"))
             pl.show()
 
     def yfromx(self, newtimeaxis, doplot=False, debug=False):
         if debug:
-            print('fastresampler: yfromx called with following parameters')
-            print('    padvalue:, ', self.padvalue)
-            print('    initstep, hiresstep:', self.initstep, self.hiresstep)
-            print('    initial axis limits:', self.initstart, self.initend)
-            print('    hires axis limits:', self.hiresstart, self.hiresend)
-            print('    requested axis limits:', newtimeaxis[0], newtimeaxis[-1])
+            print("fastresampler: yfromx called with following parameters")
+            print("    padvalue:, ", self.padvalue)
+            print("    initstep, hiresstep:", self.initstep, self.hiresstep)
+            print("    initial axis limits:", self.initstart, self.initend)
+            print("    hires axis limits:", self.hiresstart, self.hiresend)
+            print("    requested axis limits:", newtimeaxis[0], newtimeaxis[-1])
         outindices = ((newtimeaxis - self.hiresstart) // self.hiresstep).astype(int)
         if debug:
-            print('len(self.hires_y):', len(self.hires_y))
+            print("len(self.hires_y):", len(self.hires_y))
         try:
             out_y = self.hires_y[outindices]
         except IndexError:
-            print('')
-            print('indexing out of bounds in fastresampler')
-            print('    padvalue:, ', self.padvalue)
-            print('    initstep, hiresstep:', self.initstep, self.hiresstep)
-            print('    initial axis limits:', self.initstart, self.initend)
-            print('    hires axis limits:', self.hiresstart, self.hiresend)
-            print('    requested axis limits:', newtimeaxis[0], newtimeaxis[-1])
+            print("")
+            print("indexing out of bounds in fastresampler")
+            print("    padvalue:, ", self.padvalue)
+            print("    initstep, hiresstep:", self.initstep, self.hiresstep)
+            print("    initial axis limits:", self.initstart, self.initend)
+            print("    hires axis limits:", self.hiresstart, self.hiresend)
+            print("    requested axis limits:", newtimeaxis[0], newtimeaxis[-1])
             sys.exit()
         if doplot:
             fig = pl.figure()
             ax = fig.add_subplot(111)
-            ax.set_title('fastresampler timecourses')
+            ax.set_title("fastresampler timecourses")
             pl.plot(self.hires_x, self.hires_y, newtimeaxis, out_y)
-            pl.legend(('hires', 'output'))
+            pl.legend(("hires", "output"))
             pl.show()
         return out_y
 
 
-def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False):
+def doresample(orig_x, orig_y, new_x, method="cubic", padlen=0, antialias=False):
     """
     Resample data from one spacing to another.  By default, does not apply any antialiasing filter.
 
@@ -348,14 +387,18 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False)
     pad_y = tide_filt.padvec(orig_y, padlen=padlen)
     tstep = orig_x[1] - orig_x[0]
     if padlen > 0:
-        pad_x = np.concatenate((np.arange(orig_x[0] - padlen * tstep, orig_x[0], tstep),
-                                orig_x,
-                                np.arange(orig_x[-1] + tstep, orig_x[-1] + tstep * (padlen + 1), tstep)))
+        pad_x = np.concatenate(
+            (
+                np.arange(orig_x[0] - padlen * tstep, orig_x[0], tstep),
+                orig_x,
+                np.arange(orig_x[-1] + tstep, orig_x[-1] + tstep * (padlen + 1), tstep),
+            )
+        )
     else:
         pad_x = orig_x
     if padlen > 0:
-        print('padlen=', padlen)
-        print('tstep=', tstep)
+        print("padlen=", padlen)
+        print("tstep=", tstep)
         print(pad_x)
 
     # antialias and ringstop filter
@@ -363,32 +406,50 @@ def doresample(orig_x, orig_y, new_x, method='cubic', padlen=0, antialias=False)
     final_freq = len(new_x) / (new_x[-1] - new_x[0])
     if antialias and (init_freq > final_freq):
         aafilterfreq = final_freq / 2.0
-        aafilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False)
+        aafilter = tide_filt.noncausalfilter(filtertype="arb", usebutterworth=False)
         aafilter.setfreqs(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
         pad_y = aafilter.apply(init_freq, pad_y)
 
-    if method == 'cubic':
+    if method == "cubic":
         cj = signal.cspline1d(pad_y)
         return tide_filt.unpadvec(
-            np.float64(signal.cspline1d_eval(cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
-    elif method == 'quadratic':
+            np.float64(
+                signal.cspline1d_eval(
+                    cj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]
+                )
+            ),
+            padlen=padlen,
+        )
+    elif method == "quadratic":
         qj = signal.qspline1d(pad_y)
         return tide_filt.unpadvec(
-            np.float64(signal.qspline1d_eval(qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0])), padlen=padlen)
-    elif method == 'univariate':
-        interpolator = sp.interpolate.UnivariateSpline(pad_x, pad_y, k=3, s=0)  # s=0 interpolates
+            np.float64(
+                signal.qspline1d_eval(
+                    qj, new_x, dx=(orig_x[1] - orig_x[0]), x0=orig_x[0]
+                )
+            ),
+            padlen=padlen,
+        )
+    elif method == "univariate":
+        interpolator = sp.interpolate.UnivariateSpline(
+            pad_x, pad_y, k=3, s=0
+        )  # s=0 interpolates
         return tide_filt.unpadvec(np.float64(interpolator(new_x)), padlen=padlen)
     else:
-        print('invalid interpolation method')
+        print("invalid interpolation method")
         return None
 
 
-def arbresample(inputdata, init_freq, final_freq,
-                intermed_freq=0.0,
-                method='univariate',
-                antialias=True,
-                decimate=False,
-                debug=False):
+def arbresample(
+    inputdata,
+    init_freq,
+    final_freq,
+    intermed_freq=0.0,
+    method="univariate",
+    antialias=True,
+    decimate=False,
+    debug=False,
+):
     """
 
     Parameters
@@ -409,7 +470,9 @@ def arbresample(inputdata, init_freq, final_freq,
     if decimate:
         if final_freq > init_freq:
             # upsample only
-            upsampled = upsample(inputdata, init_freq, final_freq, method=method, debug=debug)
+            upsampled = upsample(
+                inputdata, init_freq, final_freq, method=method, debug=debug
+            )
             if debug:
                 print("arbresample - upsampled points:", len(upsampled))
             return upsampled
@@ -418,11 +481,22 @@ def arbresample(inputdata, init_freq, final_freq,
             intermed_freq = final_freq * np.ceil(init_freq / final_freq)
             q = int(intermed_freq // final_freq)
             if debug:
-               print('going from', init_freq, 'to', final_freq, ': upsampling to', intermed_freq, 'Hz, then decimating by,', q)
+                print(
+                    "going from",
+                    init_freq,
+                    "to",
+                    final_freq,
+                    ": upsampling to",
+                    intermed_freq,
+                    "Hz, then decimating by,",
+                    q,
+                )
             if intermed_freq == init_freq:
                 upsampled = inputdata
             else:
-                upsampled = upsample(inputdata, init_freq, intermed_freq, method=method, debug=debug)
+                upsampled = upsample(
+                    inputdata, init_freq, intermed_freq, method=method, debug=debug
+                )
             if debug:
                 print("arbresample - upsampled points:", len(upsampled))
             if antialias:
@@ -431,10 +505,18 @@ def arbresample(inputdata, init_freq, final_freq,
                     print("arbresample - downsampled points:", len(downsampled))
                 return downsampled
             else:
-                initaxis = sp.linspace(0, len(upsampled), len(upsampled), endpoint=False)
+                initaxis = sp.linspace(
+                    0, len(upsampled), len(upsampled), endpoint=False
+                )
                 print(len(initaxis), len(upsampled))
                 f = sp.interpolate.interp1d(initaxis, upsampled)
-                downsampled = f(q // 2 + q * sp.linspace(0, len(upsampled) // q, len(upsampled) // q, endpoint=False))
+                downsampled = f(
+                    q // 2
+                    + q
+                    * sp.linspace(
+                        0, len(upsampled) // q, len(upsampled) // q, endpoint=False
+                    )
+                )
                 return downsampled
         else:
             if debug:
@@ -443,21 +525,35 @@ def arbresample(inputdata, init_freq, final_freq,
     else:
         if intermed_freq <= 0.0:
             intermed_freq = np.max([2.0 * init_freq, 2.0 * final_freq])
-        orig_x = (1.0 / init_freq) * sp.linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=False)
-        resampled = dotwostepresample(orig_x, inputdata, intermed_freq, final_freq, method=method, antialias=antialias, debug=debug)
+        orig_x = (1.0 / init_freq) * sp.linspace(
+            0.0, 1.0 * len(inputdata), len(inputdata), endpoint=False
+        )
+        resampled = dotwostepresample(
+            orig_x,
+            inputdata,
+            intermed_freq,
+            final_freq,
+            method=method,
+            antialias=antialias,
+            debug=debug,
+        )
         if debug:
             print("arbresample - resampled points:", len(resampled))
         return resampled
 
 
-def upsample(inputdata, Fs_init, Fs_higher, method='univariate', intfac=False, debug=False):
+def upsample(
+    inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, debug=False
+):
     starttime = time.time()
     if Fs_higher <= Fs_init:
-        print('upsample: target frequency must be higher than initial frequency')
+        print("upsample: target frequency must be higher than initial frequency")
         sys.exit()
 
     # upsample
-    orig_x = sp.linspace(0.0, (1.0 / Fs_init) * len(inputdata), num=len(inputdata), endpoint=False)
+    orig_x = sp.linspace(
+        0.0, (1.0 / Fs_init) * len(inputdata), num=len(inputdata), endpoint=False
+    )
     endpoint = orig_x[-1] - orig_x[0]
     ts_higher = 1.0 / Fs_higher
     numresamppts = int(endpoint // ts_higher + 1)
@@ -467,16 +563,26 @@ def upsample(inputdata, Fs_init, Fs_higher, method='univariate', intfac=False, d
         numresamppts = int(endpoint // ts_higher + 1)
     upsampled_x = np.arange(0.0, ts_higher * numresamppts, ts_higher)
     upsampled_y = doresample(orig_x, inputdata, upsampled_x, method=method)
-    initfilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
+    initfilter = tide_filt.noncausalfilter(
+        filtertype="arb", usebutterworth=False, debug=debug
+    )
     stopfreq = np.min([1.1 * Fs_init / 2.0, Fs_higher / 2.0])
     initfilter.setfreqs(0.0, 0.0, Fs_init / 2.0, stopfreq)
     upsampled_y = initfilter.apply(Fs_higher, upsampled_y)
     if debug:
-        print('upsampling took', time.time() - starttime, 'seconds')
+        print("upsampling took", time.time() - starttime, "seconds")
     return upsampled_y
 
 
-def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univariate', antialias=True, debug=False):
+def dotwostepresample(
+    orig_x,
+    orig_y,
+    intermed_freq,
+    final_freq,
+    method="univariate",
+    antialias=True,
+    debug=False,
+):
     """
 
     Parameters
@@ -494,7 +600,7 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
 
     """
     if intermed_freq <= final_freq:
-        print('intermediate frequency must be higher than final frequency')
+        print("intermediate frequency must be higher than final frequency")
         sys.exit()
 
     # upsample
@@ -503,22 +609,31 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
     init_freq = len(orig_x) / endpoint
     intermed_ts = 1.0 / intermed_freq
     numresamppts = int(endpoint // intermed_ts + 1)
-    intermed_x = intermed_ts * sp.linspace(0.0,  1.0 * numresamppts, numresamppts, endpoint=False)
+    intermed_x = intermed_ts * sp.linspace(
+        0.0, 1.0 * numresamppts, numresamppts, endpoint=False
+    )
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
     if debug:
-        print('init_freq, intermed_freq, final_freq:', init_freq, intermed_freq, final_freq)
-        print('intermed_ts, numresamppts:', intermed_ts, numresamppts)
-        print('upsampling took', time.time() - starttime, 'seconds')
+        print(
+            "init_freq, intermed_freq, final_freq:",
+            init_freq,
+            intermed_freq,
+            final_freq,
+        )
+        print("intermed_ts, numresamppts:", intermed_ts, numresamppts)
+        print("upsampling took", time.time() - starttime, "seconds")
 
     # antialias and ringstop filter
     if antialias:
         starttime = time.time()
         aafilterfreq = np.min([final_freq, init_freq]) / 2.0
-        aafilter = tide_filt.noncausalfilter(filtertype='arb', usebutterworth=False, debug=debug)
+        aafilter = tide_filt.noncausalfilter(
+            filtertype="arb", usebutterworth=False, debug=debug
+        )
         aafilter.setfreqs(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
         antialias_y = aafilter.apply(intermed_freq, intermed_y)
         if debug:
-            print('antialiasing took', time.time() - starttime, 'seconds')
+            print("antialiasing took", time.time() - starttime, "seconds")
     else:
         antialias_y = intermed_y
 
@@ -526,11 +641,13 @@ def dotwostepresample(orig_x, orig_y, intermed_freq, final_freq, method='univari
     starttime = time.time()
     final_ts = 1.0 / final_freq
     numresamppts = np.ceil(endpoint / final_ts)
-    #final_x = np.arange(0.0, final_ts * numresamppts, final_ts)
-    final_x = final_ts * sp.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
+    # final_x = np.arange(0.0, final_ts * numresamppts, final_ts)
+    final_x = final_ts * sp.linspace(
+        0.0, 1.0 * numresamppts, numresamppts, endpoint=False
+    )
     resampled_y = doresample(intermed_x, antialias_y, final_x, method=method)
     if debug:
-        print('downsampling took', time.time() - starttime, 'seconds')
+        print("downsampling took", time.time() - starttime, "seconds")
     return resampled_y
 
 
@@ -609,7 +726,9 @@ def calcsliceoffset(sotype, slicenum, numslices, tr, multiband=1):
                 slicetime = (tr / numslices) * (slicenum / 2)
             else:
                 # odd slice number
-                slicetime = (tr / numslices) * ((numslices + 1) / 2 + (slicenum - 1) / 2)
+                slicetime = (tr / numslices) * (
+                    (numslices + 1) / 2 + (slicenum - 1) / 2
+                )
 
     # Siemens multiband interleave format
     if sotype == 7:
@@ -630,7 +749,9 @@ def calcsliceoffset(sotype, slicenum, numslices, tr, multiband=1):
                 slicetime = (tr / numberofshots) * (modslicenum / 2)
             else:
                 # odd slice number
-                slicetime = (tr / numberofshots) * ((numberofshots + 1) / 2 + (modslicenum - 1) / 2)
+                slicetime = (tr / numberofshots) * (
+                    (numberofshots + 1) / 2 + (modslicenum - 1) / 2
+                )
     return slicetime
 
 
@@ -654,25 +775,31 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False, debug=False):
     thelen = np.shape(inputtc)[0]
     thepaddedlen = thelen + 2 * padtrs
     if debug:
-        print('timesshift: thelen, padtrs, thepaddedlen=', thelen, padtrs, thepaddedlen)
-    imag = 1.j
+        print("timesshift: thelen, padtrs, thepaddedlen=", thelen, padtrs, thepaddedlen)
+    imag = 1.0j
 
     # initialize variables
-    preshifted_y = np.zeros(thepaddedlen, dtype='float')  # initialize the working buffer (with pad)
-    weights = np.zeros(thepaddedlen, dtype='float')  # initialize the weight buffer (with pad)
+    preshifted_y = np.zeros(
+        thepaddedlen, dtype="float"
+    )  # initialize the working buffer (with pad)
+    weights = np.zeros(
+        thepaddedlen, dtype="float"
+    )  # initialize the weight buffer (with pad)
 
     # now do the math
-    preshifted_y[padtrs:padtrs + thelen] = inputtc[:]  # copy initial data into shift buffer
-    weights[padtrs:padtrs + thelen] = 1.0  # put in the weight vector
+    preshifted_y[padtrs : padtrs + thelen] = inputtc[
+        :
+    ]  # copy initial data into shift buffer
+    weights[padtrs : padtrs + thelen] = 1.0  # put in the weight vector
     revtc = inputtc[::-1]  # reflect data around ends to
     preshifted_y[0:padtrs] = revtc[-padtrs:]  # eliminate discontinuities
-    preshifted_y[padtrs + thelen:] = revtc[0:padtrs]
+    preshifted_y[padtrs + thelen :] = revtc[0:padtrs]
 
     # finish initializations
     fftlen = np.shape(preshifted_y)[0]
 
     # create the phase modulation timecourse
-    initargvec = (np.arange(0.0, 2.0 * np.pi, 2.0 * np.pi / float(fftlen)) - np.pi)
+    initargvec = np.arange(0.0, 2.0 * np.pi, 2.0 * np.pi / float(fftlen)) - np.pi
     if len(initargvec) > fftlen:
         initargvec = initargvec[:fftlen]
     argvec = np.roll(initargvec * shifttrs, -int(fftlen // 2))
@@ -695,15 +822,19 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False, debug=False):
 
         fig = pl.figure()
         ax = fig.add_subplot(111)
-        ax.set_title('Initial vector')
+        ax.set_title("Initial vector")
         pl.plot(xvec, preshifted_y)
 
         fig = pl.figure()
         ax = fig.add_subplot(111)
-        ax.set_title('Initial and shifted vector')
+        ax.set_title("Initial and shifted vector")
         pl.plot(xvec, preshifted_y, xvec, shifted_y)
 
         pl.show()
 
-    return [shifted_y[padtrs:padtrs + thelen], shifted_weights[padtrs:padtrs + thelen], shifted_y,
-             shifted_weights]
+    return [
+        shifted_y[padtrs : padtrs + thelen],
+        shifted_weights[padtrs : padtrs + thelen],
+        shifted_y,
+        shifted_weights,
+    ]

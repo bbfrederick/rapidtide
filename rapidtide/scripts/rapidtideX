@@ -27,6 +27,5 @@ from __future__ import print_function, division
 import sys
 import rapidtide.workflows.rapidtideX as rapidtideX_workflow
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rapidtideX_workflow.rapidtide_main()
-

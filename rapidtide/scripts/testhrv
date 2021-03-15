@@ -18,24 +18,39 @@ import heartpy as hp
 import sys
 from matplotlib.pyplot import figure, plot, show, savefig, setp
 
-data = hp.get_data('../data/examples/dst/happy_flip_cardfromfmri_dlfiltered_25.0Hz.txt')
+data = hp.get_data("../data/examples/dst/happy_flip_cardfromfmri_dlfiltered_25.0Hz.txt")
 Fs = 25.0
 filtered = hp.filtersignal(data, cutoff=5, sample_rate=Fs, order=3)
-working_data, measures = hp.process(filtered, Fs,
-                                    calc_freq=True,
-                                    high_precision=True, high_precision_fs=1000)
+working_data, measures = hp.process(
+    filtered, Fs, calc_freq=True, high_precision=True, high_precision_fs=1000
+)
 
 hp.plotter(working_data, measures)
-peaktimes = working_data['peaklist'][1:] / Fs
+peaktimes = working_data["peaklist"][1:] / Fs
 
-plot(peaktimes, working_data['RR_list'] / 1000.0)
+plot(peaktimes, working_data["RR_list"] / 1000.0)
 show()
 print(measures)
 print(working_data)
-for metric in ['bpm', 'ibi', 'sdnn', 'sdsd', 'rmssd', 'pnn20', 'pnn50', 'hr_mad', 'breathingrate', 'lf', 'hf', 'lf/hf']:
-    print(metric + ':', measures[metric])
+for metric in [
+    "bpm",
+    "ibi",
+    "sdnn",
+    "sdsd",
+    "rmssd",
+    "pnn20",
+    "pnn50",
+    "hr_mad",
+    "breathingrate",
+    "lf",
+    "hf",
+    "lf/hf",
+]:
+    print(metric + ":", measures[metric])
 
-working_data, measures = hp.process_segmentwise(data, Fs, segment_width = 10, segment_overlap = 0.25)
-hp.segment_plotter(working_data, measures, title='Segmentwise plot', path='.')
-#print(measures)
-#print(working_data)
+working_data, measures = hp.process_segmentwise(
+    data, Fs, segment_width=10, segment_overlap=0.25
+)
+hp.segment_plotter(working_data, measures, title="Segmentwise plot", path=".")
+# print(measures)
+# print(working_data)

@@ -56,10 +56,10 @@ useylabel = False
 usetitle = False
 uselegend = False
 dobar = False
-thelegendlabel = ''
-thetitle = ''
-thexlabel = ''
-theylabel = ''
+thelegendlabel = ""
+thetitle = ""
+thexlabel = ""
+theylabel = ""
 outputfile = None
 
 
@@ -105,19 +105,19 @@ indata = tide_io.readvecs(textfilename)
 xvecs = indata[0, :]
 yvecs = indata[1, :]
 if dobar:
-    bar(xvecs, yvecs, width=(0.8 * (xvecs[1] - xvecs[0])), color='g')
+    bar(xvecs, yvecs, width=(0.8 * (xvecs[1] - xvecs[0])), color="g")
 else:
-    plot(xvecs, yvecs, 'r')
+    plot(xvecs, yvecs, "r")
 if uselegend:
     legend(thelegendlabel, loc=1)
 if usetitle:
     title(thetitle)
 if usexlabel:
-    xlabel(thexlabel, fontsize=16, fontweight='bold')
+    xlabel(thexlabel, fontsize=16, fontweight="bold")
 if useylabel:
-    ylabel(theylabel, fontsize=16, fontweight='bold')
+    ylabel(theylabel, fontsize=16, fontweight="bold")
 
 if outputfile is None:
     show()
 else:
-    savefig(outputfile, bbox_inches='tight')
+    savefig(outputfile, bbox_inches="tight")

@@ -35,7 +35,14 @@ import rapidtide.resample as tide_resample
 import rapidtide.correlate as tide_corr
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.glmpass as tide_glmpass
-from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path
+from rapidtide.tests.utils import (
+    get_test_data_path,
+    get_test_target_path,
+    get_test_temp_path,
+    get_examples_path,
+    get_rapidtide_root,
+    get_scripts_path,
+)
 
 
 import matplotlib.pyplot as plt
@@ -43,14 +50,14 @@ import matplotlib.pyplot as plt
 
 def eval_phaseanalysis(inname=None, outname=None, display=False):
     # read in some data
-    testwaveform = tide_io.readvec(inname + '.txt')
+    testwaveform = tide_io.readvec(inname + ".txt")
 
     # now calculate the phase waveform
     instantaneous_phase, amplitude_envelope = tide_fit.phaseanalysis(testwaveform)
-    tide_io.writevec(amplitude_envelope, outname + '_ampenv.txt')
-    tide_io.writevec(instantaneous_phase, outname + '_instphase_unwrapped.txt')
+    tide_io.writevec(amplitude_envelope, outname + "_ampenv.txt")
+    tide_io.writevec(instantaneous_phase, outname + "_instphase_unwrapped.txt")
     filtered_phase = tide_math.trendfilt(instantaneous_phase, order=3, ndevs=2.0)
-    tide_io.writevec(filtered_phase, outname + '_filtered_instphase_unwrapped.txt')
+    tide_io.writevec(filtered_phase, outname + "_filtered_instphase_unwrapped.txt")
     initialphase = instantaneous_phase[0]
 
     if display:
@@ -67,18 +74,23 @@ def test_phaseanalysis(debug=False, display=False):
     try:
         if debug:
             os.makedirs(get_test_temp_path())
-        print(get_test_temp_path(), 'created')
+        print(get_test_temp_path(), "created")
     except OSError:
         if debug:
-            print(get_test_temp_path(), 'exists')
+            print(get_test_temp_path(), "exists")
         else:
             pass
-    
-    eval_phaseanalysis(inname=os.path.join(get_test_data_path(), 'phasetest'), outname=os.path.join(get_test_temp_path(), 'phasetest'), display=display)
+
+    eval_phaseanalysis(
+        inname=os.path.join(get_test_data_path(), "phasetest"),
+        outname=os.path.join(get_test_temp_path(), "phasetest"),
+        display=display,
+    )
+
 
 def main():
     test_phaseanalysis(debug=True, display=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -22,12 +22,14 @@
 #
 from __future__ import print_function
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 import sys
 import os
 import getopt
 import matplotlib
-#matplotlib.use('TkAgg')
+
+# matplotlib.use('TkAgg')
 import matplotlib.cm as cm
 import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
@@ -40,34 +42,36 @@ import argparse
 from matplotlib.pyplot import figure, plot, show, savefig, setp
 
 
-
 def phase(mcv):
     return np.arctan2(mcv.imag, mcv.real)
 
+
 def parsearglist():
-    parser = argparse.ArgumentParser(description='Plots the data in text files.')
-    parser.add_argument('textfilename',
-                        help='A comma separated list of input files, with optional column specifications')
-    parser.add_argument('--nolegend',
-                        dest='dolegend',
-                        action='store_true',
-                        help='turn off legend label')
-    parser.add_argument('--transpose',
-                        action='store_false',
-                        dest='dotranspose',
-                        help='swap rows and columns in the input files')
-    parser.add_argument('--linewidth',
-                        dest='linewidth',
-                        type='float',
-                        help='set linewidth to LINEWIDTH')
-    parser.add_argument('--debug',
-                        action='store_false',
-                        help='output additional debugging information')
-    #parser.add_argument('pspec',
+    parser = argparse.ArgumentParser(description="Plots the data in text files.")
+    parser.add_argument(
+        "textfilename",
+        help="A comma separated list of input files, with optional column specifications",
+    )
+    parser.add_argument(
+        "--nolegend", dest="dolegend", action="store_true", help="turn off legend label"
+    )
+    parser.add_argument(
+        "--transpose",
+        action="store_false",
+        dest="dotranspose",
+        help="swap rows and columns in the input files",
+    )
+    parser.add_argument(
+        "--linewidth", dest="linewidth", type="float", help="set linewidth to LINEWIDTH"
+    )
+    parser.add_argument(
+        "--debug", action="store_false", help="output additional debugging information"
+    )
+    # parser.add_argument('pspec',
     #                    action='store_const',
     #                    specmode
 
-    ''' "phase",  "waterfall", "voffset=", "noxax",
+    """ "phase",  "waterfall", "voffset=", "noxax",
     "noyax",
     "debug",
     "xlabel=",
@@ -127,50 +131,78 @@ def parsearglist():
                         help='the name of the output time course file')
     parser.add_argument('--debug',
                         action='store_true',
-                        help='turn on additional debugging output')'''
+                        help='turn on additional debugging output')"""
     args = parser.parse_args()
 
     return args
+
 
 def usage():
     print("showtc - plots the data in text files")
     print("")
     print(
-        "usage: showtc texfilename[:col1,col2...,coln] [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate=Fs] [--sampletime=Ts]")
+        "usage: showtc texfilename[:col1,col2...,coln] [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate=Fs] [--sampletime=Ts]"
+    )
     print("")
     print("required arguments:")
-    print("    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line")
     print(
-        "                       A list of comma separated numbers following the filename and preceded by a colon is used to select columns to plot")
+        "    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line"
+    )
+    print(
+        "                       A list of comma separated numbers following the filename and preceded by a colon is used to select columns to plot"
+    )
     print("")
     print("optional arguments:")
     print("    --nolegend               - turn off legend label")
     print(
-        "    --pspec                  - show the power spectra magnitudes of the input data instead of the timecourses")
-    print("    --phase                  - show the power spectra phases of the input data instead of the timecourses")
+        "    --pspec                  - show the power spectra magnitudes of the input data instead of the timecourses"
+    )
+    print(
+        "    --phase                  - show the power spectra phases of the input data instead of the timecourses"
+    )
     print("    --transpose              - swap rows and columns in the input files")
     print("    --waterfall              - plot multiple timecourses as a waterfall")
     print(
-        "    --voffset=VOFFSET        - plot multiple timecourses as with VOFFSET between them (use negative VOFFSET to set automatically)")
-    print("    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)")
+        "    --voffset=VOFFSET        - plot multiple timecourses as with VOFFSET between them (use negative VOFFSET to set automatically)"
+    )
     print(
-        "    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)")
-    print("    --colors=C1,C2,..        - cycle through the list of colors specified by CN")
+        "    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)"
+    )
+    print(
+        "    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)"
+    )
+    print(
+        "    --colors=C1,C2,..        - cycle through the list of colors specified by CN"
+    )
     print("    --linewidth=LW           - set linewidth to LW points (default is 1)")
     print("    --fontscalefac=FAC       - scale all font sizes by FAC (default is 1.0)")
-    print("    --legends=L1,L2,..       - cycle through the list of legends specified by LN")
-    print("    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen")
-    print("    --saveres=DPI            - write figure to file at DPI dots per inch (default is 1000)")
+    print(
+        "    --legends=L1,L2,..       - cycle through the list of legends specified by LN"
+    )
+    print(
+        "    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen"
+    )
+    print(
+        "    --saveres=DPI            - write figure to file at DPI dots per inch (default is 1000)"
+    )
     print("    --title=TITLE            - use TITLE as the overall title of the graph")
     print("    --separate               - use a separate subplot for each timecourse")
-    print("    --separatelinked         - use a separate subplot for each timecourse, but use a common y scaling")
+    print(
+        "    --separatelinked         - use a separate subplot for each timecourse, but use a common y scaling"
+    )
     print("    --noxax                  - don't show x axis")
     print("    --noyax                  - don't show y axis")
     print("    --starttime=START        - start plot at START seconds")
     print("    --endtime=END            - end plot at END seconds")
-    print("    --legendloc=LOC          - Integer from 0 to 10 inclusive specifying legend location.  Legal values are:")
-    print("                               0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right,")
-    print("                               5: right, 6: center left, 7: center right, 8: lower center, 9: upper center,")
+    print(
+        "    --legendloc=LOC          - Integer from 0 to 10 inclusive specifying legend location.  Legal values are:"
+    )
+    print(
+        "                               0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right,"
+    )
+    print(
+        "                               5: right, 6: center left, 7: center right, 8: lower center, 9: upper center,"
+    )
     print("                               10: center.  Default is 2.")
     print("    --debug                  - print debugging information")
     return ()
@@ -185,7 +217,7 @@ dospectrum = False
 detrendorder = 1
 demean = False
 useHamming = True
-specmode = 'power'
+specmode = "power"
 samplerate = 1.0
 voffset = 0.0
 colornames = []
@@ -206,23 +238,44 @@ theendtime = 1000000.0
 fontscalefac = 1.0
 legendloc = 2
 saveres = 1000
-ylabel = ''
-xlabel = ''
+ylabel = ""
+xlabel = ""
 savespec = True
 
 # get the command line parameters
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, "F",
-                                   ["help", "nolegend", "pspec", "phase", "transpose", "waterfall", "voffset=", "noxax",
-                                    "noyax",
-                                    "debug",
-                                    "xlabel=",
-                                    "ylabel=",
-                                    "fontscalefac=",
-                                    "legendloc=",
-                                    "starttime=", "endtime=",
-                                    "samplerate=", "colors=", "linewidth=", "legends=", "title=",
-                                    "separatelinked", "separate", "sampletime=", "tofile=", "saveres="])
+    opts, args = getopt.gnu_getopt(
+        sys.argv,
+        "F",
+        [
+            "help",
+            "nolegend",
+            "pspec",
+            "phase",
+            "transpose",
+            "waterfall",
+            "voffset=",
+            "noxax",
+            "noyax",
+            "debug",
+            "xlabel=",
+            "ylabel=",
+            "fontscalefac=",
+            "legendloc=",
+            "starttime=",
+            "endtime=",
+            "samplerate=",
+            "colors=",
+            "linewidth=",
+            "legends=",
+            "title=",
+            "separatelinked",
+            "separate",
+            "sampletime=",
+            "tofile=",
+            "saveres=",
+        ],
+    )
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like 'option -a not recognized'
@@ -237,112 +290,112 @@ if nargs < 2:
 
 # now parse options
 for o, a in opts:
-    linkchar = ' '
+    linkchar = " "
     if o == "--nolegend":
         dolegend = False
-        print('turning off legend label')
-    elif o == '--debug':
+        print("turning off legend label")
+    elif o == "--debug":
         debug = True
-        print('turning debuggin on')
-    elif o == '--separate':
+        print("turning debuggin on")
+    elif o == "--separate":
         separate = True
         linky = False
-        print('put each plot in a separate window')
-    elif o == '--separatelinked':
+        print("put each plot in a separate window")
+    elif o == "--separatelinked":
         separate = True
         linky = True
-        print('put each plot in a separate window, with the same y scale')
-    elif o == '--pspec':
+        print("put each plot in a separate window, with the same y scale")
+    elif o == "--pspec":
         dospectrum = True
-        specmode = 'power'    
-        print('showing power spectra magnitude')
-    elif o == '--saveres':
+        specmode = "power"
+        print("showing power spectra magnitude")
+    elif o == "--saveres":
         saveres = int(a)
-        print('Writing output to file at', saveres, 'dpi')
-    elif o == '--tofile':
+        print("Writing output to file at", saveres, "dpi")
+    elif o == "--tofile":
         outputfile = a
-        print('Writing output to file', outputfile)
-    elif o == '--legends':
+        print("Writing output to file", outputfile)
+    elif o == "--legends":
         legendset = True
-        for thislegend in a.split(','):
+        for thislegend in a.split(","):
             legends.append(thislegend)
-        print('Colors used:', colornames)
-    elif o == '--fontscalefac':
+        print("Colors used:", colornames)
+    elif o == "--fontscalefac":
         fontscalefac = float(a)
-        print('Font scaling factor set to:', fontscalefac)
-    elif o == '--legendloc':
+        print("Font scaling factor set to:", fontscalefac)
+    elif o == "--legendloc":
         legendloc = int(a)
         if 0 <= legendloc <= 10:
-            print('Legend location set to:', legendloc)
+            print("Legend location set to:", legendloc)
         else:
-            print(legendloc, 'is not a valid legend location - exiting')
+            print(legendloc, "is not a valid legend location - exiting")
             sys.exit()
-    elif o == '--xlabel':
+    elif o == "--xlabel":
         xlabel = a
-        print('X label set to:', xlabel)
-    elif o == '--ylabel':
+        print("X label set to:", xlabel)
+    elif o == "--ylabel":
         ylabel = a
-        print('Y label set to:', ylabel)
-    elif o == '--starttime':
+        print("Y label set to:", ylabel)
+    elif o == "--starttime":
         thestarttime = float(a)
-        print('Start time set to:', thestarttime)
-    elif o == '--endtime':
+        print("Start time set to:", thestarttime)
+    elif o == "--endtime":
         theendtime = float(a)
-        print('End time set to:', theendtime)
-    elif o == '--linewidth':
+        print("End time set to:", theendtime)
+    elif o == "--linewidth":
         thelinewidth = []
-        inwidths = a.split(',')
+        inwidths = a.split(",")
         numlinewidths = len(inwidths)
         for i in range(numlinewidths):
             thelinewidth.append(float(inwidths[i]))
-        print('Linewidth set to:', thelinewidth)
-    elif o == '--colors':
-        for thiscolor in a.split(','):
+        print("Linewidth set to:", thelinewidth)
+    elif o == "--colors":
+        for thiscolor in a.split(","):
             colornames.append(thiscolor)
-        print('Colors used:', colornames)
-    elif o == '--phase':
+        print("Colors used:", colornames)
+    elif o == "--phase":
         dospectrum = True
-        specmode = 'phase'    
-        print('showing power spectra phase')
-    elif o == '--noyax':
+        specmode = "phase"
+        print("showing power spectra phase")
+    elif o == "--noyax":
         showyax = False
-        print('will not show y axis')
-    elif o == '--noxax':
+        print("will not show y axis")
+    elif o == "--noxax":
         showxax = False
-        print('will not show x axis')
-    elif o == '--waterfall':
+        print("will not show x axis")
+    elif o == "--waterfall":
         dowaterfall = True
-        print('making a waterfall plot')
-    elif o == '--transpose':
+        print("making a waterfall plot")
+    elif o == "--transpose":
         dotranspose = True
-        print('transposing input data')
-    elif o == '--samplerate':
+        print("transposing input data")
+    elif o == "--samplerate":
         samplerate = float(a)
-        linkchar = '='
-        print('Samplerate set to ', samplerate)
-    elif o == '--title':
+        linkchar = "="
+        print("Samplerate set to ", samplerate)
+    elif o == "--title":
         thetitle = a
-        linkchar = '='
-        print('Will use title', thetitle)
-    elif o == '--voffset':
+        linkchar = "="
+        print("Will use title", thetitle)
+    elif o == "--voffset":
         voffset = float(a)
-        linkchar = '='
-        print('Vertical offset set to ', voffset)
-    elif o == '--sampletime':
+        linkchar = "="
+        print("Vertical offset set to ", voffset)
+    elif o == "--sampletime":
         samplerate = 1.0 / float(a)
-        linkchar = '='
-        print('Samplerate set to ', samplerate)
-    elif o == '-F':
-        print('got the -F option')
-    elif o in ('-h', '--help'):
+        linkchar = "="
+        print("Samplerate set to ", samplerate)
+    elif o == "-F":
+        print("got the -F option")
+    elif o in ("-h", "--help"):
         usage()
         sys.exit()
     else:
-        assert False, 'unhandled option'
+        assert False, "unhandled option"
 
 # check range
 if thestarttime >= theendtime:
-    print('endtime must be greater then starttime;')
+    print("endtime must be greater then starttime;")
     sys.exit()
 
 # handle required args first
@@ -353,22 +406,24 @@ linelabels = []
 samplerates = []
 numfiles = 1
 numvecs = 0
-textfilename.append(args[1].split(':'))
+textfilename.append(args[1].split(":"))
 if nargs > 2:
     for i in range(2, nargs):
         numfiles += 1
-        textfilename.append(args[i].split(':'))
+        textfilename.append(args[i].split(":"))
 
 minlen = 100000000
 shortcolnames = True
 # read in all the data
 for i in range(0, numfiles):
-    print('filename ', i, textfilename[i])
+    print("filename ", i, textfilename[i])
 
     # check file type
     filebase, extension = os.path.splitext(textfilename[i][0])
-    if extension == '.json':
-        thissamplerate, thisstartoffset, colnames, invecs = tide_io.readbidstsv(textfilename[i][0])
+    if extension == ".json":
+        thissamplerate, thisstartoffset, colnames, invecs = tide_io.readbidstsv(
+            textfilename[i][0]
+        )
     else:
         invecs = tide_io.readvecs(textfilename[i][0])
         thissamplerate = samplerate
@@ -377,24 +432,24 @@ for i in range(0, numfiles):
     if dotranspose:
         invecs = np.transpose(invecs)
     if debug:
-        print('   ', invecs.shape[0], ' columns')
+        print("   ", invecs.shape[0], " columns")
     if len(textfilename[i]) == 2:
         collist = []
-        for column in (textfilename[i][1]).split(','):
+        for column in (textfilename[i][1]).split(","):
             if colnames is None:
                 collist.append(int(column))
             else:
                 if colnames.index(column) > 0:
                     collist.append(colnames.index(column))
                 else:
-                    print('no column named', column)
+                    print("no column named", column)
                     sys.exit()
     else:
         collist = range(0, invecs.shape[0])
         # for j in range(0, invecs.shape[0]):
     for j in collist:
         if debug:
-            print('appending vector number ', j)
+            print("appending vector number ", j)
         if dospectrum:
             if invecs.shape[1] % 2 == 1:
                 invec = invecs[j, :-1]
@@ -411,41 +466,64 @@ for i in range(0, numfiles):
                 nperseg = None
 
             if useHamming:
-               freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(invec)) * invec, Fs=thissamplerate, mode=specmode)
+                freqaxis, spectrum = tide_filt.spectrum(
+                    tide_filt.hamming(len(invec)) * invec,
+                    Fs=thissamplerate,
+                    mode=specmode,
+                )
             else:
-               freqaxis, spectrum = tide_filt.spectrum(invec, Fs = thissamplerate, mode=specmode)
+                freqaxis, spectrum = tide_filt.spectrum(
+                    invec, Fs=thissamplerate, mode=specmode
+                )
             if savespec:
-                tide_io.writenpvecs(np.transpose(np.stack([freqaxis, spectrum], axis=1)), "thespectrum.txt")
+                tide_io.writenpvecs(
+                    np.transpose(np.stack([freqaxis, spectrum], axis=1)),
+                    "thespectrum.txt",
+                )
             xvecs.append(freqaxis)
             yvecs.append(spectrum)
         else:
             yvecs.append(invecs[j] * 1.0)
-            xvecs.append(thisstartoffset + arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate)
+            xvecs.append(
+                thisstartoffset + arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate
+            )
         if len(yvecs[-1]) < minlen:
             minlen = len(yvecs[-1])
         if not legendset:
             if invecs.shape[0] > 1:
                 if colnames is None:
                     if shortcolnames:
-                        linelabels.append('column' + str(j).zfill(2))
+                        linelabels.append("column" + str(j).zfill(2))
                     else:
-                        linelabels.append(textfilename[i][0] + '_column' + str(j).zfill(2))
+                        linelabels.append(
+                            textfilename[i][0] + "_column" + str(j).zfill(2)
+                        )
 
                 else:
                     if shortcolnames:
                         linelabels.append(colnames[j])
                     else:
-                        linelabels.append(textfilename[i][0] + '_' + colnames[j])
+                        linelabels.append(textfilename[i][0] + "_" + colnames[j])
             else:
                 linelabels.append(textfilename[i][0])
         else:
             if invecs.shape[0] > 1:
-                linelabels.append(legends[i % len(legends)] + '_column' + str(j).zfill(2))
+                linelabels.append(
+                    legends[i % len(legends)] + "_column" + str(j).zfill(2)
+                )
             else:
                 linelabels.append(legends[i % len(legends)])
         samplerates.append(thissamplerate + 0.0)
         if debug:
-            print('timecourse:', j, ', len:', len(xvecs[-1]), ', timerange:', xvecs[-1][0], xvecs[-1][-1])
+            print(
+                "timecourse:",
+                j,
+                ", len:",
+                len(xvecs[-1]),
+                ", timerange:",
+                xvecs[-1][0],
+                xvecs[-1][-1],
+            )
         numvecs += 1
 
 thestartpoint = tide_util.valtoindex(xvecs[0], thestarttime)
@@ -453,8 +531,8 @@ theendpoint = tide_util.valtoindex(xvecs[0], theendtime)
 thestarttime = xvecs[0][thestartpoint]
 theendtime = xvecs[0][theendpoint]
 if debug:
-    print('full range (pts):',thestartpoint, theendpoint)
-    print('full range (time):',thestarttime, theendtime)
+    print("full range (pts):", thestartpoint, theendpoint)
+    print("full range (time):", thestarttime, theendtime)
 overallxmax = -1e38
 overallxmin = 1e38
 for thevec in xvecs:
@@ -464,8 +542,8 @@ xrange = (np.max([overallxmin, thestarttime]), np.min([overallxmax, theendtime])
 ymins = []
 ymaxs = []
 for thevec in yvecs:
-    ymins.append(np.min(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
-    ymaxs.append(np.max(np.asarray(thevec[thestartpoint:theendpoint], dtype='float')))
+    ymins.append(np.min(np.asarray(thevec[thestartpoint:theendpoint], dtype="float")))
+    ymaxs.append(np.max(np.asarray(thevec[thestartpoint:theendpoint], dtype="float")))
 overallymax = -1e38
 overallymin = 1e38
 for thevec in yvecs:
@@ -473,12 +551,12 @@ for thevec in yvecs:
     overallymin = np.min([np.min(thevec), overallymin])
 yrange = (overallymin, overallymax)
 if debug:
-    print('xrange:', xrange)
-    print('yrange:', yrange)
+    print("xrange:", xrange)
+    print("yrange:", yrange)
 if voffset < 0.0:
     voffset = yrange[1] - yrange[0]
 if debug:
-    print('voffset:', voffset)
+    print("voffset:", voffset)
 if not separate:
     for i in range(0, numvecs):
         yvecs[i] += (numvecs - i - 1) * voffset
@@ -535,8 +613,13 @@ else:
 for i in range(0, numvecs):
     if separate:
         ax = axlist[i]
-    ax.plot(xvecs[i], yvecs[i],
-            color=colorlist[i], label=linelabels[i], linewidth=thelinewidth[i % numlinewidths])
+    ax.plot(
+        xvecs[i],
+        yvecs[i],
+        color=colorlist[i],
+        label=linelabels[i],
+        linewidth=thelinewidth[i % numlinewidths],
+    )
     if dolegend:
         ax.legend(fontsize=thelegendfontsize, loc=legendloc)
     ax.set_xlim(xrange)
@@ -550,9 +633,9 @@ for i in range(0, numvecs):
         # print(themin, themax, thediff)
         ax.set_ylim(top=(themax + thediff / 20.0), bottom=(themin - thediff / 20.0))
     if showxax:
-        ax.tick_params(axis='x', labelsize=thexlabelfontsize, which='both')
+        ax.tick_params(axis="x", labelsize=thexlabelfontsize, which="both")
     if showyax:
-        ax.tick_params(axis='y', labelsize=theylabelfontsize, which='both')
+        ax.tick_params(axis="y", labelsize=theylabelfontsize, which="both")
 
     if separate:
         fig.subplots_adjust(hspace=0)
@@ -560,22 +643,22 @@ for i in range(0, numvecs):
 
     if dospectrum:
         if xlabel is None:
-            xlabel = 'Frequency (Hz)'
-        if specmode=='power':
+            xlabel = "Frequency (Hz)"
+        if specmode == "power":
             if ylabel is None:
-                ylabel = 'Signal power'
+                ylabel = "Signal power"
         else:
             if ylabel is None:
-                ylabel = 'Signal phase'
+                ylabel = "Signal phase"
     else:
         if xlabel is None:
-            xlabel = 'Time (s)'
+            xlabel = "Time (s)"
     if showxax:
-        ax.set_xlabel(xlabel, fontsize=thexlabelfontsize, fontweight='bold')
+        ax.set_xlabel(xlabel, fontsize=thexlabelfontsize, fontweight="bold")
     else:
         ax.xaxis.set_visible(False)
     if showyax:
-        ax.set_ylabel(ylabel, fontsize=theylabelfontsize, fontweight='bold')
+        ax.set_ylabel(ylabel, fontsize=theylabelfontsize, fontweight="bold")
     else:
         ax.yaxis.set_visible(False)
 
@@ -584,4 +667,4 @@ for i in range(0, numvecs):
 if outputfile is None:
     show()
 else:
-    savefig(outputfile, bbox_inches='tight', dpi=saveres)
+    savefig(outputfile, bbox_inches="tight", dpi=saveres)

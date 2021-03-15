@@ -30,49 +30,58 @@ import os
 import subprocess
 import rapidtide.util as tide_util
 
-fsldir = os.environ.get('FSLDIR')
+fsldir = os.environ.get("FSLDIR")
 if fsldir is not None:
-    fslsubcmd = os.path.join(fsldir, 'bin', 'fsl_sub')
-    flirtcmd = os.path.join(fsldir, 'bin', 'flirt')
-    applywarpcmd = os.path.join(fsldir, 'bin', 'applywarp')
+    fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
+    flirtcmd = os.path.join(fsldir, "bin", "flirt")
+    applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
 else:
-    print('FSL directory not found - aborting')
+    print("FSL directory not found - aborting")
     sys.exit()
 
 c3dexists = tide_util.isexecutable("c3d_affine_tool")
-print('c3dexists =', c3dexists)
+print("c3dexists =", c3dexists)
 antsexists = tide_util.isexecutable("antsApplyTransforms")
-print('antsexists =', antsexists)
+print("antsexists =", antsexists)
 
 
 def makefslcmd(theinputfile, reftarget, xform, outputname, warpfile=None):
     thecommand = []
     if warpfile is None:
-        print('doing linear transformation')
+        print("doing linear transformation")
         thecommand.append(fslsubcmd)
         thecommand.append(flirtcmd)
-        thecommand.append('-in')
+        thecommand.append("-in")
         thecommand.append(theinputfile)
-        thecommand.append('-ref')
+        thecommand.append("-ref")
         thecommand.append(reftarget)
-        thecommand.append('-applyxfm')
-        thecommand.append('-init')
+        thecommand.append("-applyxfm")
+        thecommand.append("-init")
         thecommand.append(xform)
-        thecommand.append('-out')
+        thecommand.append("-out")
         thecommand.append(outputname)
     else:
-        print('doing nonlinear transformation')
+        print("doing nonlinear transformation")
         thecommand.append(fslsubcmd)
         thecommand.append(applywarpcmd)
-        thecommand.append('--ref=' + reftarget)
-        thecommand.append('--in=' + theinputfile)
-        thecommand.append('--out=' + outputname)
-        thecommand.append('--warp=' + warpfile)
+        thecommand.append("--ref=" + reftarget)
+        thecommand.append("--in=" + theinputfile)
+        thecommand.append("--out=" + outputname)
+        thecommand.append("--warp=" + warpfile)
     return thecommand
 
 
-def transformmaps(thepath, subjroot, reftarget, xformfuncmat, warpfuncfile, thefmrimaps=None, theanatmaps=None, preponly=False):
-    print('entering transformmaps with:')
+def transformmaps(
+    thepath,
+    subjroot,
+    reftarget,
+    xformfuncmat,
+    warpfuncfile,
+    thefmrimaps=None,
+    theanatmaps=None,
+    preponly=False,
+):
+    print("entering transformmaps with:")
     print(thepath)
     print(subjroot)
     print(reftarget)
@@ -80,10 +89,22 @@ def transformmaps(thepath, subjroot, reftarget, xformfuncmat, warpfuncfile, thef
     print(warpfuncfile)
     if thefmrimaps is not None:
         for themap in thefmrimaps:
-            inputname = os.path.abspath(os.path.join(thepath, subjroot + '_' + themap + '.nii.gz'))
+            inputname = os.path.abspath(
+                os.path.join(thepath, subjroot + "_" + themap + ".nii.gz")
+            )
             if os.path.isfile(inputname):
-                outputname = os.path.abspath(os.path.join(theoutputdir, subjroot + outputtag + themap + '.nii.gz'))
-                thecommand = makefslcmd(inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile)
+                outputname = os.path.abspath(
+                    os.path.join(
+                        theoutputdir, subjroot + outputtag + themap + ".nii.gz"
+                    )
+                )
+                thecommand = makefslcmd(
+                    inputname,
+                    reftarget,
+                    xformfuncmat,
+                    outputname,
+                    warpfile=warpfuncfile,
+                )
 
                 if preponly:
                     print(" ".join(thecommand))
@@ -93,16 +114,27 @@ def transformmaps(thepath, subjroot, reftarget, xformfuncmat, warpfuncfile, thef
     if theanatmaps is not None:
         for themap in theanatmaps:
             try:
-                inputname = os.path.abspath(glob.glob(os.path.join(xformdir,
-                                                                   'reg', themap + '.nii.gz'))[0])
+                inputname = os.path.abspath(
+                    glob.glob(os.path.join(xformdir, "reg", themap + ".nii.gz"))[0]
+                )
                 if os.path.isfile(inputname):
                     outputname = os.path.abspath(
-                        os.path.join(theoutputdir, subjroot + outputtag + themap.replace('standard', 'anat') + '.nii.gz'))
+                        os.path.join(
+                            theoutputdir,
+                            subjroot
+                            + outputtag
+                            + themap.replace("standard", "anat")
+                            + ".nii.gz",
+                        )
+                    )
                     if aligntohires:
-                        thecommand = ['cp', inputname, outputname]
+                        thecommand = ["cp", inputname, outputname]
                     else:
-                        xform = os.path.abspath(glob.glob(os.path.join(xformdir,
-                                                                       'reg', 'highres2standard.mat'))[0])
+                        xform = os.path.abspath(
+                            glob.glob(
+                                os.path.join(xformdir, "reg", "highres2standard.mat")
+                            )[0]
+                        )
                         thecommand = makefslcmd(inputname, reftarget, xform, outputname)
 
                     if preponly:
@@ -110,25 +142,39 @@ def transformmaps(thepath, subjroot, reftarget, xformfuncmat, warpfuncfile, thef
                     else:
                         subprocess.call(thecommand)
             except:
-                print('no hires anatomic found - skipping')
+                print("no hires anatomic found - skipping")
 
 
 def usage():
-    print('happy2std:  register happy output maps to standard space')
-    print('')
-    print('usage: happy2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]')
-    print('')
-    print('required arguments:')
-    print('    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore')
-    print('    OUTPUTDIR          - The location for the output files')
-    print('    XFORMDIRECTORY     - Either a feat directory (x.feat) or an fmriprep derivatives anat directory where the')
-    print('                         information needed for registration to standard space can be found')
-    print('')
+    print("happy2std:  register happy output maps to standard space")
+    print("")
+    print("usage: happy2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]")
+    print("")
+    print("required arguments:")
+    print(
+        "    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore"
+    )
+    print("    OUTPUTDIR          - The location for the output files")
+    print(
+        "    XFORMDIRECTORY     - Either a feat directory (x.feat) or an fmriprep derivatives anat directory where the"
+    )
+    print(
+        "                         information needed for registration to standard space can be found"
+    )
+    print("")
     print("optional arguments:")
-    print("    --all              - also transform extra maps (warning - file may be huge)")
-    print("    --hires            - transform to match the high resolution anatomic image rather than the standard")
-    print("    --linear           - only do linear transformation, even if warpfile exists")
-    print("    --onefile=FILE     - align a single file, specified by name without extension (ignore INPUTFILEROOT)")
+    print(
+        "    --all              - also transform extra maps (warning - file may be huge)"
+    )
+    print(
+        "    --hires            - transform to match the high resolution anatomic image rather than the standard"
+    )
+    print(
+        "    --linear           - only do linear transformation, even if warpfile exists"
+    )
+    print(
+        "    --onefile=FILE     - align a single file, specified by name without extension (ignore INPUTFILEROOT)"
+    )
     print("    --fake             - output, but do not execute, alignment commands")
 
 
@@ -149,7 +195,9 @@ preponly = False
 
 # get the command line parameters
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, "F", ["help", "all", "fake", "onefile=", "hires", "linear"])
+    opts, args = getopt.gnu_getopt(
+        sys.argv, "F", ["help", "all", "fake", "onefile=", "hires", "linear"]
+    )
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like 'option -a not recognized'
@@ -164,27 +212,27 @@ if nargs < 4:
 
 # now parse options
 for o, a in opts:
-    linkchar = ' '
+    linkchar = " "
     if o == "--all":
         doall = True
-        print('will also transofrm corrout map')
-    elif o == '--onefile':
+        print("will also transofrm corrout map")
+    elif o == "--onefile":
         onefilename = a
-        print('will only align', onefilename)
-    elif o == '--fake':
+        print("will only align", onefilename)
+    elif o == "--fake":
         preponly = True
-        print('will output, but not execute, commands')
-    elif o == '--linear':
+        print("will output, but not execute, commands")
+    elif o == "--linear":
         forcelinear = True
-        print('forcing linear transformation')
-    elif o == '--hires':
+        print("forcing linear transformation")
+    elif o == "--hires":
         aligntohires = True
-        print('transforming to hires anatomic instead of MNI152')
-    elif o in ('-h', '--help'):
+        print("transforming to hires anatomic instead of MNI152")
+    elif o in ("-h", "--help"):
         usage()
         sys.exit()
     else:
-        assert False, 'unhandled option'
+        assert False, "unhandled option"
 
 fileroot = args[1]
 outputdir = args[2]
@@ -192,67 +240,78 @@ xformdir = args[3]
 
 # make sure the appropriate transformation matrix and targets exist
 if aligntohires:
-    reftarget = os.path.abspath(os.path.join(xformdir,
-                                             'reg', 'highres.nii.gz'))
-    warpfuncfile = ''
-    xformfuncmat = os.path.abspath(os.path.join(xformdir,
-                                                'reg', 'example_func2highres.mat'))
-    outputtag = '_hires_'
-    theanatmaps = ['highres']
+    reftarget = os.path.abspath(os.path.join(xformdir, "reg", "highres.nii.gz"))
+    warpfuncfile = ""
+    xformfuncmat = os.path.abspath(
+        os.path.join(xformdir, "reg", "example_func2highres.mat")
+    )
+    outputtag = "_hires_"
+    theanatmaps = ["highres"]
 else:
-    xformfuncmat = os.path.abspath(os.path.join(xformdir,
-                                                'reg', 'example_func2standard.mat'))
-    warpfuncfile = os.path.abspath(os.path.join(xformdir,
-                                                'reg', 'example_func2standard_warp.nii.gz'))
-    reftarget = os.path.join(fsldir, 'data', 'standard', 'MNI152_T1_2mm.nii.gz')
-    outputtag = '_std_'
-    theanatmaps = ['highres', 'standard']
+    xformfuncmat = os.path.abspath(
+        os.path.join(xformdir, "reg", "example_func2standard.mat")
+    )
+    warpfuncfile = os.path.abspath(
+        os.path.join(xformdir, "reg", "example_func2standard_warp.nii.gz")
+    )
+    reftarget = os.path.join(fsldir, "data", "standard", "MNI152_T1_2mm.nii.gz")
+    outputtag = "_std_"
+    theanatmaps = ["highres", "standard"]
 
 if forcelinear:
     warpfuncfile += "ridiculous_suffix"
 
 if os.path.isfile(xformfuncmat):
     if os.path.isfile(reftarget):
-        print('found alignment files - proceeding')
+        print("found alignment files - proceeding")
     else:
-        print('cannot find reference file', reftarget, ' - exiting')
+        print("cannot find reference file", reftarget, " - exiting")
         sys.exit(1)
     if os.path.isfile(warpfuncfile):
-        print('found warp file - will do nonlinear transformation')
+        print("found warp file - will do nonlinear transformation")
     else:
-        print('no warp file found - will do linear transformation')
+        print("no warp file found - will do linear transformation")
         warpfuncfile = None
 else:
-    print('cannot find transform matrix', xformfuncmat, ' - exiting')
+    print("cannot find transform matrix", xformfuncmat, " - exiting")
     sys.exit(1)
 
 if onefilename is not None:
-    inputname = os.path.abspath(onefilename + '.nii.gz')
+    inputname = os.path.abspath(onefilename + ".nii.gz")
     thepath, thebase = os.path.split(inputname)
     if os.path.isfile(inputname):
         outputname = os.path.abspath(os.path.join(thepath, outputtag[1:] + thebase))
-        thecommand = makefslcmd(inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile)
+        thecommand = makefslcmd(
+            inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile
+        )
 
         if preponly:
             print(" ".join(thecommand))
         else:
             subprocess.call(thecommand)
     else:
-        print('file', inputname, 'does not exist - exiting')
+        print("file", inputname, "does not exist - exiting")
     sys.exit(0)
 
-theoutputdir = os.path.join(os.path.abspath('.'), outputdir)
-thefileroot = glob.glob(os.path.join(fileroot + '*app.nii.gz'))[0]
+theoutputdir = os.path.join(os.path.abspath("."), outputdir)
+thefileroot = glob.glob(os.path.join(fileroot + "*app.nii.gz"))[0]
 
-thefmrimaps = ['arterymap', 'mask',  'normapp', 'veinmap', 'vesselmap', 'vesselmask']
+thefmrimaps = ["arterymap", "mask", "normapp", "veinmap", "vesselmap", "vesselmask"]
 if doall:
-    thefmrimaps += ['app', 'arteries', 'rawapp', 'veins', 'cine']
+    thefmrimaps += ["app", "arteries", "rawapp", "veins", "cine"]
 
 absname = os.path.abspath(thefileroot)
 thepath, thebase = os.path.split(absname)
 theprevpath, theprevbase = os.path.split(thepath)
 subjroot = thebase[:-11]
 
-transformmaps(thepath, subjroot, reftarget, xformfuncmat, warpfuncfile,
-              thefmrimaps=thefmrimaps, theanatmaps=theanatmaps, preponly=preponly)
-
+transformmaps(
+    thepath,
+    subjroot,
+    reftarget,
+    xformfuncmat,
+    warpfuncfile,
+    thefmrimaps=thefmrimaps,
+    theanatmaps=theanatmaps,
+    preponly=preponly,
+)

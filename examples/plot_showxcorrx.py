@@ -25,22 +25,22 @@ from rapidtide.workflows import showxcorrx_workflow
 # --------------------------------
 np.random.seed(314)
 dat1 = np.random.random(500)
-f1 = 'f1.txt'
+f1 = "f1.txt"
 np.savetxt(f1, dat1)
 
 np.random.seed(42)
 dat2 = np.random.random(500)
-f2 = 'f2.txt'
+f2 = "f2.txt"
 np.savetxt(f2, dat2)
 
-samplerate = 2.
+samplerate = 2.0
 
 ###############################################################################
 # Let's plot the timeseries first
 # --------------------------------
 fig, ax = plt.subplots(figsize=(16, 8))
-ax.plot(dat1, color='red', alpha=0.7)
-ax.plot(dat2, color='blue', alpha=0.7)
+ax.plot(dat1, color="red", alpha=0.7)
+ax.plot(dat2, color="blue", alpha=0.7)
 fig.show()
 
 ###############################################################################

@@ -74,7 +74,7 @@ def main():
             nperseg = int(sys.argv[3])
 
     for i in range(0, numfiles):
-        print('filename ', i, textfilename[i])
+        print("filename ", i, textfilename[i])
         yvecs.append(tide_io.readvec(textfilename[i]))
         xvecs.append(arange(0.0, len(yvecs[i]), 1.0) * timestep[i])
 
@@ -107,11 +107,11 @@ def ndplot(x, y, z, time, thelabel, nperseg=32):
     # -- Panel 1
     ax1 = fig.add_subplot(211)
     im, cbar = specgram(x, time, ax1, fig, nperseg=nperseg)
-    ax1.set_ylabel('X Freq. $(Hz)$')
+    ax1.set_ylabel("X Freq. $(Hz)$")
     ax1.set_title(thelabel)
 
     # -- Panel 2
-    #ax2 = fig.add_subplot(312, sharex=ax1)
+    # ax2 = fig.add_subplot(312, sharex=ax1)
     # im, cbar = specgram(y, time, ax2, fig)
     # ax2.set_ylabel('Y Freq. (Hz)')
 
@@ -120,8 +120,8 @@ def ndplot(x, y, z, time, thelabel, nperseg=32):
     # Plot the 3 source datasets
     # xline = ax3.plot(time, x, 'r-')
     # yline = ax3.plot(time, y, 'b-')
-    zline = ax3.plot(time, z, 'g-')
-    ax3.set_ylabel(r'Units $(seconds)$')
+    zline = ax3.plot(time, z, "g-")
+    ax3.set_ylabel(r"Units $(seconds)$")
 
     # Make an invisible spacer...
     cax = make_legend_axes(ax3)
@@ -134,7 +134,7 @@ def ndplot(x, y, z, time, thelabel, nperseg=32):
     #        bbox_to_anchor=(1.0, 0.5), frameon=False)
 
     # Set the labels to be rotated at 20 deg and aligned left to use less space
-    plt.setp(ax3.get_xticklabels(), rotation=-20, horizontalalignment='left')
+    plt.setp(ax3.get_xticklabels(), rotation=-20, horizontalalignment="left")
 
     # Remove space between subplots
     plt.subplots_adjust(hspace=0.0)
@@ -146,19 +146,21 @@ def specgram(x, time, ax, fig, nperseg=32):
     fs = 1.0 / dt
     NFFT = nperseg
 
-    spec_img, freq, _ = mlab.specgram(x,
-                                      Fs=fs,
-                                      detrend='linear',
-                                      NFFT=NFFT,
-                                      window=np.hamming(NFFT),
-                                      noverlap=(nperseg - 1))
+    spec_img, freq, _ = mlab.specgram(
+        x,
+        Fs=fs,
+        detrend="linear",
+        NFFT=NFFT,
+        window=np.hamming(NFFT),
+        noverlap=(nperseg - 1),
+    )
     print(spec_img.shape, freq.shape)
     freqtracker = tide_classes.freqtrack(nperseg=nperseg)
     thetimes, thefreqs = freqtracker.track(x, fs)
-    tide_io.writevec(thefreqs, 'peakfreaks.txt')
+    tide_io.writevec(thefreqs, "peakfreaks.txt")
     print(thefreqs)
     cleandata = freqtracker.clean(x, fs, thetimes, thefreqs)
-    tide_io.writevec(cleandata, 'cleaneddata.txt')
+    tide_io.writevec(cleandata, "cleaneddata.txt")
     t = np.linspace(time.min(), time.max(), spec_img.shape[1])
 
     # Log scaling for amplitude values
@@ -169,15 +171,15 @@ def specgram(x, time, ax, fig, nperseg=32):
     themin = themax - 6.0
 
     # Log scaling for frequency values (y-axis)
-    ax.set_yscale('log')
+    ax.set_yscale("log")
 
     # Plot amplitudes
     im = ax.pcolormesh(t, freq, spec_img, vmin=themin, vmax=themax)
 
     # Add the colorbar in a seperate axis
     cax = make_legend_axes(ax)
-    cbar = fig.colorbar(im, cax=cax, format=r'$10^{%0.1f}$')
-    cbar.set_label('Amplitude', rotation=-90)
+    cbar = fig.colorbar(im, cax=cax, format=r"$10^{%0.1f}$")
+    cbar.set_label("Amplitude", rotation=-90)
 
     ax.set_ylim([freq[1], freq.max()])
 
@@ -189,9 +191,9 @@ def specgram(x, time, ax, fig, nperseg=32):
 
 def make_legend_axes(ax):
     divider = make_axes_locatable(ax)
-    legend_ax = divider.append_axes('right', 0.4, pad=0.2)
+    legend_ax = divider.append_axes("right", 0.4, pad=0.2)
     return legend_ax
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -50,12 +50,18 @@ def test_calc_MI(display=False):
 
     if display:
         plt.figure()
-        #plt.ylim([-1.0, 3.0])
-        plt.plot(np.array(range(kstart, kend, 2)), np.array(linmivals), 'r')
-        plt.plot(np.array(range(kstart, kend, 2)), np.array(sqmivals), 'g')
-        plt.plot(np.array(range(kstart, kend, 2)), np.array(cubemivals), 'b')
-        #print('maximum occurs at offset', np.argmax(stdcorrelate_result) - midpoint + 1)
-        plt.legend(['Mutual information', 'Squared mutual information', 'Cubed mutual information'])
+        # plt.ylim([-1.0, 3.0])
+        plt.plot(np.array(range(kstart, kend, 2)), np.array(linmivals), "r")
+        plt.plot(np.array(range(kstart, kend, 2)), np.array(sqmivals), "g")
+        plt.plot(np.array(range(kstart, kend, 2)), np.array(cubemivals), "b")
+        # print('maximum occurs at offset', np.argmax(stdcorrelate_result) - midpoint + 1)
+        plt.legend(
+            [
+                "Mutual information",
+                "Squared mutual information",
+                "Cubed mutual information",
+            ]
+        )
         plt.show()
 
     aethresh = 10
@@ -66,5 +72,5 @@ def main():
     test_calc_MI(display=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

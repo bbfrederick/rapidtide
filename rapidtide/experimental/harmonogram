@@ -35,6 +35,7 @@ from scipy.signal import decimate
 
 from matplotlib.pyplot import figure, show, savefig, setp, imshow
 
+
 def makedivisible(number, highestfac, debug=False):
     notdivisible = True
     while notdivisible:
@@ -45,9 +46,9 @@ def makedivisible(number, highestfac, debug=False):
                 notdivisible = True
                 number += i - remainder
                 if debug:
-                    print('not divisible by', i, ', rounding up to', number)
+                    print("not divisible by", i, ", rounding up to", number)
     if debug:
-        print(number, 'is divisible by all factors')
+        print(number, "is divisible by all factors")
     return number
 
 
@@ -59,19 +60,31 @@ def undecimate(inputarray, factor, outlen):
     resampwidth = inlen * (factor + 1)
     xin = np.linspace(-1.0, 1.0, num=inlen, endpoint=True)
     xout = np.linspace(-1.0, 1.0, num=inlen * (factor + 1), endpoint=True)
-    f = interp1d(xin, inputarray, kind='cubic')
-    outputarray[centerloc - int(resampwidth // 2):centerloc + int(resampwidth // 2)] = f(xout)
-    weights[centerloc - int(resampwidth // 2):centerloc + int(resampwidth // 2)] = 1.0
+    f = interp1d(xin, inputarray, kind="cubic")
+    outputarray[
+        centerloc - int(resampwidth // 2) : centerloc + int(resampwidth // 2)
+    ] = f(xout)
+    weights[centerloc - int(resampwidth // 2) : centerloc + int(resampwidth // 2)] = 1.0
     return outputarray, weights
 
 
 def decimateandselect(inputarray, factor, outlen):
     dsarray = decimate(inputarray, factor + 1)
     centerloc = int(len(dsarray) // 2)
-    return dsarray[centerloc - int(outlen // 2):centerloc + int(outlen // 2)]
+    return dsarray[centerloc - int(outlen // 2) : centerloc + int(outlen // 2)]
 
 
-def harmonogram(input, Fs, reverse=False, n=5, log=False, numorders=3, useHamming=True, type='full', debug=False):
+def harmonogram(
+    input,
+    Fs,
+    reverse=False,
+    n=5,
+    log=False,
+    numorders=3,
+    useHamming=True,
+    type="full",
+    debug=False,
+):
     if reverse:
         n = input.shape[0]
         outlen = input.shape[1] * n
@@ -87,33 +100,32 @@ def harmonogram(input, Fs, reverse=False, n=5, log=False, numorders=3, useHammin
             phasespec, dummy = undecimate(np.unwrap(input[i, :, 0]), i, outlen)
             phasespec = fftpack.ifftshift(tide_math.phasemod(phasespec))
 
-
-            #magspec = fftpack.ifftshift(undecimate(input[i, :, 0], i, outlen))
-            #phasespec = fftpack.ifftshift(tide_math.phasemod(undecimate(np.unwrap(input[i, :, 0]), i, outlen)))
-            #magspec = undecimate(input[i, :, 0], i, outlen)
-            #phasespec = tide_math.phasemod(undecimate(np.unwrap(input[i, :, 0]), i, outlen))
-            destarray[i, :] = fftpack.ifft(np.square(magspec) * (np.cos(phasespec) + np.sin(phasespec) * 1j)).real * np.sqrt(len(destarray))
+            # magspec = fftpack.ifftshift(undecimate(input[i, :, 0], i, outlen))
+            # phasespec = fftpack.ifftshift(tide_math.phasemod(undecimate(np.unwrap(input[i, :, 0]), i, outlen)))
+            # magspec = undecimate(input[i, :, 0], i, outlen)
+            # phasespec = tide_math.phasemod(undecimate(np.unwrap(input[i, :, 0]), i, outlen))
+            destarray[i, :] = fftpack.ifft(
+                np.square(magspec) * (np.cos(phasespec) + np.sin(phasespec) * 1j)
+            ).real * np.sqrt(len(destarray))
             axlist.append(fig.add_subplot(n, 1, i + 1))
-            #axlist[-1].plot(destarray[i, :])
-            #axlist[-1].plot(60.0 * (freqaxis - freqaxis[int(outlen // 2)]), magspec)
+            # axlist[-1].plot(destarray[i, :])
+            # axlist[-1].plot(60.0 * (freqaxis - freqaxis[int(outlen // 2)]), magspec)
             axlist[-1].plot(60.0 * freqaxis, magspec)
         show()
-        return np.mean(destarray[1:,:], axis=0) / weights
+        return np.mean(destarray[1:, :], axis=0) / weights
     else:
         if useHamming:
-            freqaxis, spectrum = tide_filt.spectrum(tide_filt.hamming(len(input)) * input,
-                                                    Fs=Fs,
-                                                    mode='complex',
-                                                    trim=False)
+            freqaxis, spectrum = tide_filt.spectrum(
+                tide_filt.hamming(len(input)) * input, Fs=Fs, mode="complex", trim=False
+            )
         else:
-            freqaxis, spectrum = tide_filt.spectrum(input,
-                                                    Fs = thissamplerate,
-                                                    mode='complex',
-                                                    trim=False)
+            freqaxis, spectrum = tide_filt.spectrum(
+                input, Fs=thissamplerate, mode="complex", trim=False
+            )
         spectrum = fftpack.fftshift(spectrum)
         centerloc = int(len(spectrum) // 2)
         freqaxis = freqaxis - freqaxis[centerloc]
-        magspec = np.sqrt(np.absolute(spectrum)) # / np.sqrt(len(spectrum))
+        magspec = np.sqrt(np.absolute(spectrum))  # / np.sqrt(len(spectrum))
         phasespec = np.angle(spectrum)
         fig = figure()
         magax = fig.add_subplot(2, 1, 1)
@@ -131,19 +143,24 @@ def harmonogram(input, Fs, reverse=False, n=5, log=False, numorders=3, useHammin
         outlen = len(dsmagarray)
 
         destarray = np.zeros((n, int(len(magspec) // n), 2), dtype=float)
-        #destarray[0, :, 0] = decimateandselect(magspec, 0, outlen)
-        #destarray[0, :, 1] = tide_math.phasemod(decimateandselect(np.unwrap(phasespec), 0, outlen))
-        destfreqaxis = freqaxis[centerloc - int(outlen // 2):centerloc + int(outlen // 2)]
+        # destarray[0, :, 0] = decimateandselect(magspec, 0, outlen)
+        # destarray[0, :, 1] = tide_math.phasemod(decimateandselect(np.unwrap(phasespec), 0, outlen))
+        destfreqaxis = freqaxis[
+            centerloc - int(outlen // 2) : centerloc + int(outlen // 2)
+        ]
 
         fig = figure()
         axlist = []
         for i in range(n):
             destarray[i, :, 0] = decimateandselect(magspec, i, outlen)
-            destarray[i, :, 1] = tide_math.phasemod(decimateandselect(np.unwrap(phasespec), i, outlen))
+            destarray[i, :, 1] = tide_math.phasemod(
+                decimateandselect(np.unwrap(phasespec), i, outlen)
+            )
             axlist.append(fig.add_subplot(n, 1, i + 1))
             axlist[-1].plot(60.0 * destfreqaxis, destarray[i, :, 0])
         show()
         return destfreqaxis, destarray
+
 
 def phase(mcv):
     return np.arctan2(mcv.imag, mcv.real)
@@ -152,26 +169,37 @@ def phase(mcv):
 def usage():
     print("harmonogram - test the harmogram transform on a timeseries in a text file")
     print("")
-    print(
-        "usage: harmonogram textfilename")
+    print("usage: harmonogram textfilename")
     print("")
     print("required arguments:")
-    print("    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line")
     print(
-        "                       A list of comma separated numbers following the filename and preceded by a colon is used to select columns to plot")
+        "    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line"
+    )
+    print(
+        "                       A list of comma separated numbers following the filename and preceded by a colon is used to select columns to plot"
+    )
     print("")
     print("optional arguments:")
     print("    --transpose              - swap rows and columns in the input files")
-    print("    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)")
     print(
-        "    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)")
+        "    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)"
+    )
+    print(
+        "    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)"
+    )
     print("    --linewidth=LW           - set linewidth to LW points (default is 1)")
     print("    --fontscalefac=FAC       - scale all font sizes by FAC (default is 1.0)")
-    print("    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen")
-    print("    --saveres=DPI            - write figure to file at DPI dots per inch (default is 1000)")
+    print(
+        "    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen"
+    )
+    print(
+        "    --saveres=DPI            - write figure to file at DPI dots per inch (default is 1000)"
+    )
     print("    --title=TITLE            - use TITLE as the overall title of the graph")
     print("    --separate               - use a separate subplot for each timecourse")
-    print("    --separatelinked         - use a separate subplot for each timecourse, but use a common y scaling")
+    print(
+        "    --separatelinked         - use a separate subplot for each timecourse, but use a common y scaling"
+    )
     print("    --starttime=START        - start plot at START seconds")
     print("    --endtime=END            - end plot at END seconds")
     print("    --debug                  - print debugging information")
@@ -186,7 +214,7 @@ dowaterfall = False
 detrendorder = 1
 demean = False
 useHamming = True
-specmode = 'power'
+specmode = "power"
 samplerate = 1.0
 voffset = 0.0
 colornames = []
@@ -209,16 +237,35 @@ saveres = 1000
 
 # get the command line parameters
 try:
-    opts, args = getopt.gnu_getopt(sys.argv, "F",
-                                   ["help", "nolegend", "transpose", "waterfall", "voffset=", "noxax",
-                                    "noyax",
-                                    "nowindow",
-                                    "debug",
-                                    "fontscalefac=",
-                                    "legendloc=",
-                                    "starttime=", "endtime=",
-                                    "samplerate=", "colorlist=", "linewidth=", "legendlist=", "title=",
-                                    "separatelinked", "separate", "sampletime=", "tofile=", "saveres="])
+    opts, args = getopt.gnu_getopt(
+        sys.argv,
+        "F",
+        [
+            "help",
+            "nolegend",
+            "transpose",
+            "waterfall",
+            "voffset=",
+            "noxax",
+            "noyax",
+            "nowindow",
+            "debug",
+            "fontscalefac=",
+            "legendloc=",
+            "starttime=",
+            "endtime=",
+            "samplerate=",
+            "colorlist=",
+            "linewidth=",
+            "legendlist=",
+            "title=",
+            "separatelinked",
+            "separate",
+            "sampletime=",
+            "tofile=",
+            "saveres=",
+        ],
+    )
 except getopt.GetoptError as err:
     # print help information and exit:
     print(str(err))  # will print something like 'option -a not recognized'
@@ -233,97 +280,97 @@ if nargs < 2:
 
 # now parse options
 for o, a in opts:
-    linkchar = ' '
+    linkchar = " "
     if o == "--nolegend":
         dolegend = False
-        print('turning off legend label')
-    elif o == '--debug':
+        print("turning off legend label")
+    elif o == "--debug":
         debug = True
-        print('turning debuggin on')
-    elif o == '--nowindow':
+        print("turning debuggin on")
+    elif o == "--nowindow":
         useHamming = False
-        print('turning window off')
-    elif o == '--separate':
+        print("turning window off")
+    elif o == "--separate":
         separate = True
         linky = False
-        print('put each plot in a separate window')
-    elif o == '--separatelinked':
+        print("put each plot in a separate window")
+    elif o == "--separatelinked":
         separate = True
         linky = True
-        print('put each plot in a separate window, with the same y scale')
-    elif o == '--saveres':
+        print("put each plot in a separate window, with the same y scale")
+    elif o == "--saveres":
         saveres = int(a)
-        print('Writing output to file at', saveres, 'dpi')
-    elif o == '--tofile':
+        print("Writing output to file at", saveres, "dpi")
+    elif o == "--tofile":
         outputfile = a
-        print('Writing output to file', outputfile)
-    elif o == '--legendlist':
+        print("Writing output to file", outputfile)
+    elif o == "--legendlist":
         legendset = True
-        for thislegend in a.split(','):
+        for thislegend in a.split(","):
             legendlist.append(thislegend)
-        print('Colors used:', colornames)
-    elif o == '--fontscalefac':
+        print("Colors used:", colornames)
+    elif o == "--fontscalefac":
         fontscalefac = float(a)
-        print('Font scaling factor set to:', fontscalefac)
-    elif o == '--legendloc':
+        print("Font scaling factor set to:", fontscalefac)
+    elif o == "--legendloc":
         legendloc = int(a)
         if 0 <= legendloc <= 10:
-            print('Legend location set to:', legendloc)
+            print("Legend location set to:", legendloc)
         else:
-            print(legendloc, 'is not a valid legend location - exiting')
+            print(legendloc, "is not a valid legend location - exiting")
             sys.exit()
-    elif o == '--starttime':
+    elif o == "--starttime":
         thestarttime = float(a)
-        print('Start time set to:', thestarttime)
-    elif o == '--endtime':
+        print("Start time set to:", thestarttime)
+    elif o == "--endtime":
         theendtime = float(a)
-        print('End time set to:', theendtime)
-    elif o == '--linewidth':
+        print("End time set to:", theendtime)
+    elif o == "--linewidth":
         thelinewidth = float(a)
-        print('Linewidth set to:', thelinewidth)
-    elif o == '--colorlist':
-        for thiscolor in a.split(','):
+        print("Linewidth set to:", thelinewidth)
+    elif o == "--colorlist":
+        for thiscolor in a.split(","):
             colornames.append(thiscolor)
-        print('Colors used:', colornames)
-    elif o == '--noyax':
+        print("Colors used:", colornames)
+    elif o == "--noyax":
         showyax = False
-        print('will not show y axis')
-    elif o == '--noxax':
+        print("will not show y axis")
+    elif o == "--noxax":
         showxax = False
-        print('will not show x axis')
-    elif o == '--waterfall':
+        print("will not show x axis")
+    elif o == "--waterfall":
         dowaterfall = True
-        print('making a waterfall plot')
-    elif o == '--transpose':
+        print("making a waterfall plot")
+    elif o == "--transpose":
         dotranspose = True
-        print('transposing input data')
-    elif o == '--samplerate':
+        print("transposing input data")
+    elif o == "--samplerate":
         samplerate = float(a)
-        linkchar = '='
-        print('Samplerate set to ', samplerate)
-    elif o == '--title':
+        linkchar = "="
+        print("Samplerate set to ", samplerate)
+    elif o == "--title":
         thetitle = a
-        linkchar = '='
-        print('Will use title', thetitle)
-    elif o == '--voffset':
+        linkchar = "="
+        print("Will use title", thetitle)
+    elif o == "--voffset":
         voffset = float(a)
-        linkchar = '='
-        print('Vertical offset set to ', voffset)
-    elif o == '--sampletime':
+        linkchar = "="
+        print("Vertical offset set to ", voffset)
+    elif o == "--sampletime":
         samplerate = 1.0 / float(a)
-        linkchar = '='
-        print('Samplerate set to ', samplerate)
-    elif o == '-F':
-        print('got the -F option')
-    elif o in ('-h', '--help'):
+        linkchar = "="
+        print("Samplerate set to ", samplerate)
+    elif o == "-F":
+        print("got the -F option")
+    elif o in ("-h", "--help"):
         usage()
         sys.exit()
     else:
-        assert False, 'unhandled option'
+        assert False, "unhandled option"
 
 # check range
 if thestarttime >= theendtime:
-    print('endtime must be greater then starttime;')
+    print("endtime must be greater then starttime;")
     sys.exit()
 
 # handle required args first
@@ -334,23 +381,25 @@ linelabels = []
 samplerates = []
 numfiles = 1
 numvecs = 0
-textfilename.append(args[1].split(':'))
+textfilename.append(args[1].split(":"))
 if nargs > 2:
     for i in range(2, nargs):
         numfiles += 1
-        textfilename.append(args[i].split(':'))
+        textfilename.append(args[i].split(":"))
 
 numharmonics = 3
 minlen = 100000000
 shortcolnames = True
 # read in all the data
 for i in range(0, numfiles):
-    print('filename ', i, textfilename[i])
+    print("filename ", i, textfilename[i])
 
     # check file type
     filebase, extension = os.path.splitext(textfilename[i][0])
-    if extension == '.json':
-        thissamplerate, thisstartoffset, colnames, invecs = tide_io.readbidstsv(textfilename[i][0])
+    if extension == ".json":
+        thissamplerate, thisstartoffset, colnames, invecs = tide_io.readbidstsv(
+            textfilename[i][0]
+        )
     else:
         invecs = tide_io.readvecs(textfilename[i][0])
         thissamplerate = samplerate
@@ -359,39 +408,45 @@ for i in range(0, numfiles):
     if dotranspose:
         invecs = np.transpose(invecs)
     if debug:
-        print('   ', invecs.shape[0], ' columns')
+        print("   ", invecs.shape[0], " columns")
     if len(textfilename[i]) == 2:
         collist = []
-        for column in (textfilename[i][1]).split(','):
+        for column in (textfilename[i][1]).split(","):
             collist.append(int(column))
     else:
         collist = range(0, invecs.shape[0])
         # for j in range(0, invecs.shape[0]):
     for j in collist:
         if debug:
-            print('appending vector number ', j)
+            print("appending vector number ", j)
         yvecs.append(invecs[j] * 1.0)
-        xvecs.append(thisstartoffset + arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate)
+        xvecs.append(
+            thisstartoffset + arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate
+        )
         if len(yvecs[-1]) < minlen:
             minlen = len(yvecs[-1])
         if not legendset:
             if invecs.shape[0] > 1:
                 if colnames is None:
                     if shortcolnames:
-                        linelabels.append('column' + str(j).zfill(2))
+                        linelabels.append("column" + str(j).zfill(2))
                     else:
-                        linelabels.append(textfilename[i][0] + '_column' + str(j).zfill(2))
+                        linelabels.append(
+                            textfilename[i][0] + "_column" + str(j).zfill(2)
+                        )
 
                 else:
                     if shortcolnames:
                         linelabels.append(colnames[j])
                     else:
-                        linelabels.append(textfilename[i][0] + '_' + colnames[j])
+                        linelabels.append(textfilename[i][0] + "_" + colnames[j])
             else:
                 linelabels.append(textfilename[i][0])
         else:
             if invecs.shape[0] > 1:
-                linelabels.append(legendlist[i % len(legendlist)] + '_column' + str(j).zfill(2))
+                linelabels.append(
+                    legendlist[i % len(legendlist)] + "_column" + str(j).zfill(2)
+                )
             else:
                 linelabels.append(legendlist[i % len(legendlist)])
         samplerates.append(thissamplerate + 0.0)
@@ -402,16 +457,26 @@ log = False
 for i in range(0, numvecs):
     # check to make sure that the length is correct for the number of harmonics
     newlength = makedivisible(len(yvecs[i]), numharmonics + 1)
-    print('original length, new length:', len(yvecs[i]), newlength)
+    print("original length, new length:", len(yvecs[i]), newlength)
     inputvec = np.zeros((newlength), dtype=float)
-    inputvec[0:len(yvecs[i])] = yvecs[i]
-    freqaxis, theharm = harmonogram(inputvec, samplerates[i], n=(numharmonics + 1), log=log, useHamming=useHamming)
+    inputvec[0 : len(yvecs[i])] = yvecs[i]
+    freqaxis, theharm = harmonogram(
+        inputvec, samplerates[i], n=(numharmonics + 1), log=log, useHamming=useHamming
+    )
     freqaxis *= 60.0
     fig = figure()
     ax = fig.add_subplot(3, 1, 1)
-    ax.imshow(theharm[:, :, 0], aspect='auto', extent=[freqaxis[0], freqaxis[-1], numharmonics + 1, 0])
+    ax.imshow(
+        theharm[:, :, 0],
+        aspect="auto",
+        extent=[freqaxis[0], freqaxis[-1], numharmonics + 1, 0],
+    )
     ax2 = fig.add_subplot(3, 1, 2)
-    ax2.imshow(theharm[:, :, 1], aspect='auto', extent=[freqaxis[0], freqaxis[-1], numharmonics + 1, 0])
+    ax2.imshow(
+        theharm[:, :, 1],
+        aspect="auto",
+        extent=[freqaxis[0], freqaxis[-1], numharmonics + 1, 0],
+    )
 
     prod = theharm[0, :, 0]
     for j in range(1, numharmonics + 1):
@@ -421,7 +486,15 @@ for i in range(0, numvecs):
     ax3.plot(freqaxis, prod)
     show()
 
-    regenspec = harmonogram(theharm, samplerates[i], reverse=True, n=(numharmonics + 1), log=log, useHamming=useHamming, debug=True)
+    regenspec = harmonogram(
+        theharm,
+        samplerates[i],
+        reverse=True,
+        n=(numharmonics + 1),
+        log=log,
+        useHamming=useHamming,
+        debug=True,
+    )
     fig = figure()
     axinit = fig.add_subplot(2, 1, 1)
     axinit.plot(yvecs[i])

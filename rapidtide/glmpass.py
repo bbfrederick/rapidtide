@@ -34,37 +34,45 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
 
 
-def _procOneItemGLM(vox,
-                     theevs,
-                     thedata,
-                     rt_floatset=np.float64,
-                     rt_floattype='float64'):
+def _procOneItemGLM(
+    vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"
+):
     thefit, R = tide_fit.mlregress(theevs, thedata)
     fitcoff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoff * theevs)
-    return vox, rt_floatset(thefit[0, 0]), rt_floatset(R), rt_floatset(R * R), fitcoff, \
-           rt_floatset(thefit[0, 1] / thefit[0, 0]), datatoremove, rt_floatset(thedata - datatoremove)
+    return (
+        vox,
+        rt_floatset(thefit[0, 0]),
+        rt_floatset(R),
+        rt_floatset(R * R),
+        fitcoff,
+        rt_floatset(thefit[0, 1] / thefit[0, 0]),
+        datatoremove,
+        rt_floatset(thedata - datatoremove),
+    )
 
 
-def glmpass(numprocitems,
-            fmri_data,
-            threshval,
-            theevs,
-            meanvalue,
-            rvalue,
-            r2value,
-            fitcoff,
-            fitNorm,
-            datatoremove,
-            filtereddata,
-            reportstep=1000,
-            nprocs=1,
-            procbyvoxel=True,
-            showprogressbar=True,
-            addedskip=0,
-            mp_chunksize=1000,
-            rt_floatset=np.float64,
-            rt_floattype='float64'):
+def glmpass(
+    numprocitems,
+    fmri_data,
+    threshval,
+    theevs,
+    meanvalue,
+    rvalue,
+    r2value,
+    fitcoff,
+    fitNorm,
+    datatoremove,
+    filtereddata,
+    reportstep=1000,
+    nprocs=1,
+    procbyvoxel=True,
+    showprogressbar=True,
+    addedskip=0,
+    mp_chunksize=1000,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+):
     inputshape = np.shape(fmri_data)
     if threshval is None:
         themask = None
@@ -93,29 +101,39 @@ def glmpass(numprocitems,
 
                     # process and send the data
                     if procbyvoxel:
-                        outQ.put(_procOneItemGLM(val,
-                                                  theevs[val, :],
-                                                  fmri_data[val, addedskip:],
-                                                  rt_floatset=rt_floatset,
-                                                  rt_floattype=rt_floattype))
+                        outQ.put(
+                            _procOneItemGLM(
+                                val,
+                                theevs[val, :],
+                                fmri_data[val, addedskip:],
+                                rt_floatset=rt_floatset,
+                                rt_floattype=rt_floattype,
+                            )
+                        )
                     else:
-                        outQ.put(_procOneItemGLM(val,
-                                                  theevs[:, val],
-                                                  fmri_data[:, addedskip + val],
-                                                  rt_floatset=rt_floatset,
-                                                  rt_floattype=rt_floattype))
-
+                        outQ.put(
+                            _procOneItemGLM(
+                                val,
+                                theevs[:, val],
+                                fmri_data[:, addedskip + val],
+                                rt_floatset=rt_floatset,
+                                rt_floattype=rt_floattype,
+                            )
+                        )
 
                 except Exception as e:
                     print("error!", e)
                     break
 
-        data_out = tide_multiproc.run_multiproc(GLM_consumer,
-                                                inputshape, themask,
-                                                nprocs=nprocs,
-                                                procbyvoxel=procbyvoxel,
-                                                showprogressbar=showprogressbar,
-                                                chunksize=mp_chunksize)
+        data_out = tide_multiproc.run_multiproc(
+            GLM_consumer,
+            inputshape,
+            themask,
+            nprocs=nprocs,
+            procbyvoxel=procbyvoxel,
+            showprogressbar=showprogressbar,
+            chunksize=mp_chunksize,
+        )
 
         # unpack the data
         itemstotal = 0
@@ -145,63 +163,79 @@ def glmpass(numprocitems,
         itemstotal = 0
         if procbyvoxel:
             for vox in range(0, numprocitems):
-                if (vox % reportstep == 0 or vox == numprocitems - 1) and showprogressbar:
-                    tide_util.progressbar(vox + 1, numprocitems, label='Percent complete')
+                if (
+                    vox % reportstep == 0 or vox == numprocitems - 1
+                ) and showprogressbar:
+                    tide_util.progressbar(
+                        vox + 1, numprocitems, label="Percent complete"
+                    )
                 thedata = fmri_data[vox, addedskip:].copy()
                 if (themask is None) or (themask[vox] > 0):
-                    dummy, \
-                    meanvalue[vox],\
-                    rvalue[vox], \
-                    r2value[vox], \
-                    fitcoff[vox], \
-                    fitNorm[vox], \
-                    datatoremove[vox, :], \
-                    filtereddata[vox, :] = \
-                        _procOneItemGLM(vox,
-                                         theevs[vox, :],
-                                         thedata,
-                                         rt_floatset=rt_floatset,
-                                         rt_floattype=rt_floattype)
+                    (
+                        dummy,
+                        meanvalue[vox],
+                        rvalue[vox],
+                        r2value[vox],
+                        fitcoff[vox],
+                        fitNorm[vox],
+                        datatoremove[vox, :],
+                        filtereddata[vox, :],
+                    ) = _procOneItemGLM(
+                        vox,
+                        theevs[vox, :],
+                        thedata,
+                        rt_floatset=rt_floatset,
+                        rt_floattype=rt_floattype,
+                    )
                     itemstotal += 1
         else:
             for timepoint in range(0, numprocitems):
-                if (timepoint % reportstep == 0 or timepoint == numprocitems - 1) and showprogressbar:
-                    tide_util.progressbar(timepoint + 1, numprocitems, label='Percent complete')
+                if (
+                    timepoint % reportstep == 0 or timepoint == numprocitems - 1
+                ) and showprogressbar:
+                    tide_util.progressbar(
+                        timepoint + 1, numprocitems, label="Percent complete"
+                    )
                 thedata = fmri_data[:, addedskip + timepoint].copy()
                 if (themask is None) or (themask[timepoint] > 0):
-                    dummy, \
-                    meanvalue[timepoint], \
-                    rvalue[timepoint], \
-                    r2value[timepoint], \
-                    fitcoff[timepoint], \
-                    fitNorm[timepoint], \
-                    datatoremove[:, timepoint], \
-                    filtereddata[:, timepoint] = \
-                        _procOneItemGLM(timepoint,
-                                        theevs[:, timepoint],
-                                        thedata,
-                                        rt_floatset=rt_floatset,
-                                        rt_floattype=rt_floattype)
+                    (
+                        dummy,
+                        meanvalue[timepoint],
+                        rvalue[timepoint],
+                        r2value[timepoint],
+                        fitcoff[timepoint],
+                        fitNorm[timepoint],
+                        datatoremove[:, timepoint],
+                        filtereddata[:, timepoint],
+                    ) = _procOneItemGLM(
+                        timepoint,
+                        theevs[:, timepoint],
+                        thedata,
+                        rt_floatset=rt_floatset,
+                        rt_floattype=rt_floattype,
+                    )
                     itemstotal += 1
         if showprogressbar:
             print()
     return itemstotal
 
 
-def motionregress(themotionfilename,
-                  thedataarray,
-                  tr,
-                  orthogonalize=True,
-                  motstart=0,
-                  motend=-1,
-                  motionhp=None,
-                  motionlp=None,
-                  position=True,
-                  deriv=True,
-                  derivdelayed=False,
-                  debug=False):
-    print('regressing out motion')
-    splitfilename = themotionfilename.split(':')
+def motionregress(
+    themotionfilename,
+    thedataarray,
+    tr,
+    orthogonalize=True,
+    motstart=0,
+    motend=-1,
+    motionhp=None,
+    motionlp=None,
+    position=True,
+    deriv=True,
+    derivdelayed=False,
+    debug=False,
+):
+    print("regressing out motion")
+    splitfilename = themotionfilename.split(":")
     if len(splitfilename) == 1:
         themotionfilename = splitfilename[0]
         colspec = None
@@ -210,39 +244,46 @@ def motionregress(themotionfilename,
         colspec = splitfilename[1]
     motionregressors = tide_io.calcmotregressors(
         tide_io.readmotion(themotionfilename, colspec=colspec),
-        position=position, deriv=deriv, derivdelayed=derivdelayed)
+        position=position,
+        deriv=deriv,
+        derivdelayed=derivdelayed,
+    )
     if motend == -1:
         motionregressors = motionregressors[:, motstart:]
     else:
         motionregressors = motionregressors[:, motstart:motend]
     if (motionlp is not None) or (motionhp is not None):
-        mothpfilt = tide_filt.noncausalfilter(filtertype='arb')
+        mothpfilt = tide_filt.noncausalfilter(filtertype="arb")
         if motionlp is None:
             motionlp = 0.5 / tr
         else:
             motionlp = np.min([0.5 / tr, motionlp])
         if motionhp is None:
             motionhp = 0.0
-        mothpfilt.setfreqs(0.9 * motionhp, motionhp, motionlp, np.min([0.5 / tr, motionlp * 1.1]))
+        mothpfilt.setfreqs(
+            0.9 * motionhp, motionhp, motionlp, np.min([0.5 / tr, motionlp * 1.1])
+        )
         for i in range(motionregressors.shape[0]):
             motionregressors[i, :] = mothpfilt.apply(1.0 / tr, motionregressors[i, :])
     if orthogonalize:
         motionregressors = tide_fit.gram_schmidt(motionregressors)
 
-    print('start motion filtering')
+    print("start motion filtering")
     filtereddata = confoundglm(thedataarray, motionregressors, debug=debug)
     print()
-    print('motion filtering complete')
+    print("motion filtering complete")
     return motionregressors, filtereddata
 
 
-def confoundglm(data,
-                 regressors,
-                 debug=False,
-                 showprogressbar=True,
-                 reportstep=1000,
-                 rt_floatset=np.float64,
-                 rt_floattype='float64'):
+def confoundglm(
+    data,
+    regressors,
+    debug=False,
+    showprogressbar=True,
+    reportstep=1000,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+):
     r"""Filters multiple regressors out of an array of data in place
 
     Parameters
@@ -260,18 +301,24 @@ def confoundglm(data,
     -------
     """
     if debug:
-        print('data shape:', data.shape)
-        print('regressors shape:', regressors.shape)
+        print("data shape:", data.shape)
+        print("regressors shape:", regressors.shape)
     datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
     filtereddata = data * 0.0
     for i in range(data.shape[0]):
-        if showprogressbar and (i > 0) and (i % reportstep == 0 or i == data.shape[0] - 1):
-            tide_util.progressbar(i + 1, data.shape[0], label='Percent complete')
+        if (
+            showprogressbar
+            and (i > 0)
+            and (i % reportstep == 0 or i == data.shape[0] - 1)
+        ):
+            tide_util.progressbar(i + 1, data.shape[0], label="Percent complete")
         datatoremove *= 0.0
         thefit, R = tide_fit.mlregress(regressors, data[i, :])
         if i == 0 and debug:
-            print('fit shape:', thefit.shape)
+            print("fit shape:", thefit.shape)
         for j in range(regressors.shape[0]):
-            datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * regressors[j, :])
+            datatoremove += rt_floatset(
+                rt_floatset(thefit[0, 1 + j]) * regressors[j, :]
+            )
         filtereddata[i, :] = data[i, :] - datatoremove
     return filtereddata

@@ -58,7 +58,9 @@ def usage():
     print("usage: ", os.path.basename(sys.argv[0]), " niftifile")
     print("")
     print("required arguments:")
-    print("    niftifile:                3 or 4 dimensional nifti file containing MR data")
+    print(
+        "    niftifile:                3 or 4 dimensional nifti file containing MR data"
+    )
     print("")
     # print("optional arguments:")
     # print("    --debug                    - turn on debugging messages")
@@ -95,7 +97,7 @@ else:
     vollist.append(np.swapaxes(nim_data[:, :, :], 0, 2))
 
 # Prepare canvas
-canvas = scene.SceneCanvas(keys='interactive', size=(800, 600), show=True)
+canvas = scene.SceneCanvas(keys="interactive", size=(800, 600), show=True)
 canvas.measure_fps()
 
 # Set up a viewbox to display the image with interactive pan/zoom
@@ -114,19 +116,25 @@ fracval = 0.2
 clims = (datarobustmax * fracval, 2.0 * datarobustmax)
 
 for thevol in vollist:
-    volumelist.append(scene.visuals.Volume(thevol, parent=view.scene, threshold=0.2,
-                                           emulate_texture=emulate_texture, clim=clims))
+    volumelist.append(
+        scene.visuals.Volume(
+            thevol,
+            parent=view.scene,
+            threshold=0.2,
+            emulate_texture=emulate_texture,
+            clim=clims,
+        )
+    )
     volumelist[-1].transform = scene.STTransform(translate=transfacs)
     volumelist[-1].transform = scene.STTransform(scale=scalefacs)
     volumelist[-1].visible = False
 volumelist[activevol].visible = True
 
 # Create three cameras (Fly, Turntable and Arcball)
-fov = 60.
-cam1 = scene.cameras.FlyCamera(parent=view.scene, fov=fov, name='Fly')
-cam2 = scene.cameras.TurntableCamera(parent=view.scene, fov=fov,
-                                     name='Turntable')
-cam3 = scene.cameras.ArcballCamera(parent=view.scene, fov=fov, name='Arcball')
+fov = 60.0
+cam1 = scene.cameras.FlyCamera(parent=view.scene, fov=fov, name="Fly")
+cam2 = scene.cameras.TurntableCamera(parent=view.scene, fov=fov, name="Turntable")
+cam3 = scene.cameras.ArcballCamera(parent=view.scene, fov=fov, name="Arcball")
 view.camera = cam2  # Select turntable at first
 
 # Create an XYZAxis visual
@@ -171,7 +179,7 @@ def on_mouse_move(event):
         axis.transform.rotate(cam2.azimuth, (0, 1, 0))
 
         axis.transform.scale((50, 50, 0.001))
-        axis.transform.translate((50., 50.))
+        axis.transform.translate((50.0, 50.0))
         axis.update()
 
 
@@ -179,40 +187,40 @@ def on_mouse_move(event):
 @canvas.events.key_press.connect
 def on_key_press(event):
     global opaque_cmap, translucent_cmap, activevol
-    if event.text == '1':
+    if event.text == "1":
         cam_toggle = {cam1: cam2, cam2: cam3, cam3: cam1}
         view.camera = cam_toggle.get(view.camera, cam2)
-        print(view.camera.name + ' camera')
+        print(view.camera.name + " camera")
         if view.camera is cam2:
             axis.visible = True
         else:
             axis.visible = False
-    elif event.text == '2':
-        methods = ['mip', 'translucent', 'iso', 'additive']
+    elif event.text == "2":
+        methods = ["mip", "translucent", "iso", "additive"]
         method = methods[(methods.index(volumelist[activevol].method) + 1) % 4]
         print("Volume render method: %s" % method)
-        cmap = opaque_cmap if method in ['mip', 'iso'] else translucent_cmap
+        cmap = opaque_cmap if method in ["mip", "iso"] else translucent_cmap
         for thevolume in volumelist:
             thevolume.method = method
             thevolume.cmap = cmap
-    elif event.text == '3':
+    elif event.text == "3":
         incrementvolume(volumelist)
         # volumelist[activevol].visible = False
         # activevol = (activevol + 1) % len(volumelist)
         # print('activevol set to', activevol)
         # volumelist[activevol].visible = True
-    elif event.text == '4':
-        if volumelist[activevol].method in ['mip', 'iso']:
+    elif event.text == "4":
+        if volumelist[activevol].method in ["mip", "iso"]:
             cmap = opaque_cmap = next(opaque_cmaps)
         else:
             cmap = translucent_cmap = next(translucent_cmaps)
         for thevolume in volumelist:
             thevolume.cmap = cmap
-    elif event.text == '0':
+    elif event.text == "0":
         cam1.set_range()
         cam3.set_range()
-    elif event.text != '' and event.text in '[]':
-        s = -0.025 if event.text == '[' else 0.025
+    elif event.text != "" and event.text in "[]":
+        s = -0.025 if event.text == "[" else 0.025
         for thevolume in volumelist:
             thevolume.threshold += s
         th = volumelist[activevol].threshold
@@ -224,6 +232,6 @@ def on_key_press(event):
 # def on_draw(ev):
 # canvas.update()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(__doc__)
     app.run()
