@@ -23,7 +23,7 @@
 from __future__ import print_function, division
 import sys
 import argparse
-from .parser_funcs import is_valid_file, invert_float, is_float
+from .parser_funcs import is_valid_file, is_float
 
 import numpy as np
 import rapidtide.io as tide_io
@@ -298,11 +298,11 @@ def getparameters():
         args["pcacomponents"] = 0.5
         args["icacomponents"] = None
     elif args["ncomp"] < 1.0:
-        args["pcacomponents"] = inputnum
+        args["pcacomponents"] = args["ncomp"]
         args["icacomponents"] = None
     else:
-        args["pcacomponents"] = int(a)
-        args["icacomponents"] = pcacomponents
+        args["pcacomponents"] = int(args["ncomp"])
+        args["icacomponents"] = int(args["ncomp"])
 
     return args
 

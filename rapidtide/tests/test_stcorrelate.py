@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 from rapidtide.io import writenpvecs
 from rapidtide.filter import noncausalfilter
 from rapidtide.correlate import shorttermcorr_1D, shorttermcorr_2D
-from rapidtide.tests.utils import get_test_target_path, get_test_temp_path, create_dir
+from rapidtide.tests.utils import get_test_temp_path, create_dir
 
 
 def test_stcorrelate(debug=False):

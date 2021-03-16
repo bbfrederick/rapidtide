@@ -28,12 +28,7 @@ import rapidtide.helper_classes as tide_classes
 import matplotlib.pyplot as plt
 from rapidtide.tests.utils import (
     get_test_data_path,
-    get_test_target_path,
     get_test_temp_path,
-    get_examples_path,
-    get_rapidtide_root,
-    get_scripts_path,
-    create_dir,
 )
 import os
 

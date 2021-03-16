@@ -17,6 +17,7 @@
 from __future__ import print_function
 
 import os.path as op
+import sys
 
 import numpy as np
 import matplotlib as mpl
@@ -65,7 +66,6 @@ def test_findmaxlag(display=False, fittype="gauss", debug=False):
 
     # set default variable values
     searchfrac = 0.75
-    limitfit = False
 
     indata = tide_io.readvecs(textfilename)
     xvecs = indata[0, :]
@@ -84,16 +84,16 @@ def test_findmaxlag(display=False, fittype="gauss", debug=False):
     testmaxval = 0.8
     testmaxsigma = 5.0
     testlags = np.linspace(-25.0, 25.0, 50, endpoint=True)
-    testsigmas = np.full((len(testlags)), testmaxsigma, dtype=np.float)
-    testvals = np.full((len(testlags)), testmaxval, dtype=np.float)
+    testsigmas = np.full((len(testlags)), testmaxsigma, dtype=np.float64)
+    testvals = np.full((len(testlags)), testmaxval, dtype=np.float64)
 
-    fml_maxlags = np.zeros(len(testlags), dtype=np.float)
-    fml_maxsigmas = np.zeros(len(testlags), dtype=np.float)
-    fml_maxvals = np.zeros(len(testlags), dtype=np.float)
+    fml_maxlags = np.zeros(len(testlags), dtype=np.float64)
+    fml_maxsigmas = np.zeros(len(testlags), dtype=np.float64)
+    fml_maxvals = np.zeros(len(testlags), dtype=np.float64)
     fml_lfailreasons = np.zeros(len(testlags), dtype=np.uint16)
-    fmlc_maxlags = np.zeros(len(testlags), dtype=np.float)
-    fmlc_maxsigmas = np.zeros(len(testlags), dtype=np.float)
-    fmlc_maxvals = np.zeros(len(testlags), dtype=np.float)
+    fmlc_maxlags = np.zeros(len(testlags), dtype=np.float64)
+    fmlc_maxsigmas = np.zeros(len(testlags), dtype=np.float64)
+    fmlc_maxvals = np.zeros(len(testlags), dtype=np.float64)
     fmlc_lfailreasons = np.zeros(len(testlags), dtype=np.uint16)
 
     # initialize the correlation fitter
@@ -207,19 +207,19 @@ def test_findmaxlag(display=False, fittype="gauss", debug=False):
             2000.0,
         ]
     )
-    testlags = np.full((len(testsigmas)), testlag, dtype=np.float)
-    testvals = np.full((len(testsigmas)), testmaxval, dtype=np.float)
+    testlags = np.full((len(testsigmas)), testlag, dtype=np.float64)
+    testvals = np.full((len(testsigmas)), testmaxval, dtype=np.float64)
 
-    fml_maxlags = np.zeros(len(testsigmas), dtype=np.float)
-    fml_maxsigmas = np.zeros(len(testsigmas), dtype=np.float)
-    fml_maxvals = np.zeros(len(testsigmas), dtype=np.float)
+    fml_maxlags = np.zeros(len(testsigmas), dtype=np.float64)
+    fml_maxsigmas = np.zeros(len(testsigmas), dtype=np.float64)
+    fml_maxvals = np.zeros(len(testsigmas), dtype=np.float64)
     fml_wfailreasons = np.zeros(len(testsigmas), dtype=np.uint16)
-    fmlc_maxlags = np.zeros(len(testsigmas), dtype=np.float)
-    fmlc_maxsigmas = np.zeros(len(testsigmas), dtype=np.float)
-    fmlc_maxvals = np.zeros(len(testsigmas), dtype=np.float)
+    fmlc_maxlags = np.zeros(len(testsigmas), dtype=np.float64)
+    fmlc_maxsigmas = np.zeros(len(testsigmas), dtype=np.float64)
+    fmlc_maxvals = np.zeros(len(testsigmas), dtype=np.float64)
     fmlc_wfailreasons = np.zeros(len(testsigmas), dtype=np.uint16)
-    peakstartc = np.zeros(len(testsigmas), dtype=np.int)
-    peakendc = np.zeros(len(testsigmas), dtype=np.int)
+    peakstartc = np.zeros(len(testsigmas), dtype=np.int32)
+    peakendc = np.zeros(len(testsigmas), dtype=np.int32)
 
     for i in range(len(testsigmas)):
         yvecs = tide_fit.gauss_eval(xvecs, np.array([testvals[i], testlags[i], testsigmas[i]]))

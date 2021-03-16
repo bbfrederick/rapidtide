@@ -17,19 +17,13 @@
 from __future__ import print_function, division
 
 import numpy as np
-import scipy as sp
-import matplotlib.pyplot as plt
 import os
 
 from rapidtide.tests.utils import mse
 import rapidtide.io as tide_io
 from rapidtide.tests.utils import (
-    get_test_data_path,
-    get_test_target_path,
     get_test_temp_path,
     get_examples_path,
-    get_rapidtide_root,
-    get_scripts_path,
     create_dir,
 )
 

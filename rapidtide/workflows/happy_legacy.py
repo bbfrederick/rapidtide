@@ -22,7 +22,7 @@
 #
 from __future__ import print_function, division
 
-from matplotlib.pyplot import plot, scatter, show, figure
+from matplotlib.pyplot import plot, show, figure
 
 import time
 import sys

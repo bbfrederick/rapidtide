@@ -67,7 +67,7 @@ def test_congrid(debug=False, display=False):
 
         # initialize the test points
         numsamples = 200
-        testvals = np.zeros((numsamples), dtype=np.float)
+        testvals = np.zeros((numsamples), dtype=np.float64)
         for i in range(numsamples):
             testvals[i] = np.random.uniform() * (endtime - starttime) + starttime
 

@@ -20,8 +20,6 @@ import numpy as np
 import scipy as sp
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-
-from rapidtide.util import valtoindex
 from rapidtide.filter import noncausalfilter
 
 

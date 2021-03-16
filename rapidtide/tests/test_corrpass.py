@@ -20,8 +20,6 @@ import numpy as np
 
 import rapidtide.filter as tide_filt
 import rapidtide.correlate as tide_corr
-import rapidtide.stats as tide_stats
-import rapidtide.io as tide_io
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.resample as tide_resample
@@ -29,16 +27,6 @@ import rapidtide.helper_classes as tide_classes
 from rapidtide.tests.utils import mse
 
 import matplotlib.pyplot as plt
-from rapidtide.tests.utils import (
-    get_test_data_path,
-    get_test_target_path,
-    get_test_temp_path,
-    get_examples_path,
-    get_rapidtide_root,
-    get_scripts_path,
-    create_dir,
-)
-import os
 
 
 def test_calcsimfunc(debug=False, display=False):
@@ -57,8 +45,8 @@ def test_calcsimfunc(debug=False, display=False):
         0.0, numtimepoints * oversampfactor, numtimepoints * oversampfactor
     ) * (1.0 / oversampfreq)
 
-    theinputdata = np.zeros((numvoxels, numtimepoints), dtype=np.float)
-    meanval = np.zeros((numvoxels), dtype=np.float)
+    theinputdata = np.zeros((numvoxels, numtimepoints), dtype=np.float64)
+    meanval = np.zeros((numvoxels), dtype=np.float64)
 
     testfreq = 0.075
     msethresh = 1e-3
@@ -102,16 +90,16 @@ def test_calcsimfunc(debug=False, display=False):
     searchstart = int(np.round(corrzero + lagmin / tr))
     searchend = int(np.round(corrzero + lagmax / tr))
     numcorrpoints = lagmaxinpts + lagmininpts
-    corrout = np.zeros((numvoxels, numcorrpoints), dtype=np.float)
-    lagmask = np.zeros((numvoxels), dtype=np.float)
-    failimage = np.zeros((numvoxels), dtype=np.float)
-    lagtimes = np.zeros((numvoxels), dtype=np.float)
-    lagstrengths = np.zeros((numvoxels), dtype=np.float)
-    lagsigma = np.zeros((numvoxels), dtype=np.float)
-    gaussout = np.zeros((numvoxels, numcorrpoints), dtype=np.float)
-    windowout = np.zeros((numvoxels, numcorrpoints), dtype=np.float)
-    R2 = np.zeros((numvoxels), dtype=np.float)
-    lagtc = np.zeros((numvoxels, numtimepoints), dtype=np.float)
+    corrout = np.zeros((numvoxels, numcorrpoints), dtype=np.float64)
+    lagmask = np.zeros((numvoxels), dtype=np.float64)
+    failimage = np.zeros((numvoxels), dtype=np.float64)
+    lagtimes = np.zeros((numvoxels), dtype=np.float64)
+    lagstrengths = np.zeros((numvoxels), dtype=np.float64)
+    lagsigma = np.zeros((numvoxels), dtype=np.float64)
+    gaussout = np.zeros((numvoxels, numcorrpoints), dtype=np.float64)
+    windowout = np.zeros((numvoxels, numcorrpoints), dtype=np.float64)
+    R2 = np.zeros((numvoxels), dtype=np.float64)
+    lagtc = np.zeros((numvoxels, numtimepoints), dtype=np.float64)
 
     optiondict = {
         "numestreps": 10000,

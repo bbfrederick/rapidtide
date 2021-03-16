@@ -22,19 +22,11 @@
 #
 from __future__ import print_function, division
 
-import os
 import numpy as np
 import scipy as sp
 
 import rapidtide.miscmath as tide_math
-import rapidtide.util as tide_util
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.resample as tide_resample
-import rapidtide.correlate as tide_corr
-import rapidtide.multiproc as tide_multiproc
-import rapidtide.glmpass as tide_glmpass
 from rapidtide.tests.utils import mse
 
 import matplotlib.pyplot as plt
