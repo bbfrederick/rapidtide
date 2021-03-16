@@ -25,7 +25,6 @@ import rapidtide.miscmath as tide_math
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
 from matplotlib.pyplot import *
-import scipy as sp
 import numpy as np
 import argparse
 import rapidtide.workflows.parser_funcs as pf
@@ -79,7 +78,7 @@ def prepareband(
 
     print("Input regressor has ", regressorpts, " points")
     regressor_x = (
-        sp.linspace(0.0, (1.0 / samprate) * regressorpts, num=regressorpts, endpoint=False)
+        np.linspace(0.0, (1.0 / samprate) * regressorpts, num=regressorpts, endpoint=False)
         - starttime
     )
     regressor_y = rawvec[0:regressorpts]
@@ -319,7 +318,7 @@ def simdata_main(thearguments):
 
     # prepare the output timepoints
     initial_fmri_x = (
-        sp.linspace(
+        np.linspace(
             0.0, fmritr * (numtrs - args.numskip), num=(numtrs - args.numskip), endpoint=False
         )
         + fmritr * args.numskip

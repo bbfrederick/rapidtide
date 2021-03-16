@@ -30,7 +30,6 @@ import os
 import platform
 
 import numpy as np
-import scipy as sp
 import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
@@ -1155,7 +1154,7 @@ def happy_main(argparsingfunc):
             ]
         )
         infodict["cardfromfmri_normfac"] = cardfromfmri_normfac
-        slicetimeaxis = sp.linspace(
+        slicetimeaxis = np.linspace(
             0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False
         )
         if thispass == numpasses - 1:
@@ -1402,7 +1401,7 @@ def happy_main(argparsingfunc):
                 # downsample to sliceres from stdres
                 # cardfromfmri_sliceres = tide_math.madnormalize(
                 #    tide_resample.arbresample(dlfilteredcard_stdres, args.stdfreq, slicesamplerate, decimate=True, debug=False))
-                stdtimeaxis = (1.0 / args.stdfreq) * sp.linspace(
+                stdtimeaxis = (1.0 / args.stdfreq) * np.linspace(
                     0.0,
                     len(dlfilteredcard_stdres),
                     num=(len(dlfilteredcard_stdres)),
@@ -1840,7 +1839,7 @@ def happy_main(argparsingfunc):
             tide_io.writedict(infodict, outputroot + "_info.txt")
 
         # interpolate the instantaneous phase
-        upsampledslicetimeaxis = sp.linspace(
+        upsampledslicetimeaxis = np.linspace(
             0.0,
             tr * timepoints,
             num=(timepoints * numsteps * args.upsamplefac),
@@ -1886,7 +1885,7 @@ def happy_main(argparsingfunc):
         thetimes = []
         for theslice in range(numslices):
             thetimes.append(
-                sp.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False)
+                np.linspace(0.0, tr * timepoints, num=timepoints, endpoint=False)
                 + slicetimes[theslice]
             )
             phasevals[theslice, :] = tide_math.phasemod(
@@ -1938,9 +1937,9 @@ def happy_main(argparsingfunc):
         timings.append(["Output arrays allocated" + passstring, time.time(), None, None])
 
         if args.centric:
-            outphases = sp.linspace(-np.pi, np.pi, num=args.destpoints, endpoint=False)
+            outphases = np.linspace(-np.pi, np.pi, num=args.destpoints, endpoint=False)
         else:
-            outphases = sp.linspace(0.0, 2.0 * np.pi, num=args.destpoints, endpoint=False)
+            outphases = np.linspace(0.0, 2.0 * np.pi, num=args.destpoints, endpoint=False)
         phasestep = outphases[1] - outphases[0]
 
         #######################################################################################################
@@ -2037,7 +2036,7 @@ def happy_main(argparsingfunc):
             )
             * args.pulsereconstepsize
         )
-        outtimes = sp.linspace(
+        outtimes = np.linspace(
             0.0, maxtime, num=int(maxtime / args.pulsereconstepsize), endpoint=False
         )
         atp_bypoint = cardiaccycleaverage(

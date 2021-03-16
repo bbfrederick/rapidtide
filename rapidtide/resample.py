@@ -28,7 +28,6 @@ import scipy as sp
 from scipy import fftpack, signal
 import pylab as pl
 import sys
-import bisect
 
 import rapidtide.util as tide_util
 import rapidtide.filter as tide_filt
@@ -492,12 +491,12 @@ def arbresample(
                     print("arbresample - downsampled points:", len(downsampled))
                 return downsampled
             else:
-                initaxis = sp.linspace(0, len(upsampled), len(upsampled), endpoint=False)
+                initaxis = np.linspace(0, len(upsampled), len(upsampled), endpoint=False)
                 print(len(initaxis), len(upsampled))
                 f = sp.interpolate.interp1d(initaxis, upsampled)
                 downsampled = f(
                     q // 2
-                    + q * sp.linspace(0, len(upsampled) // q, len(upsampled) // q, endpoint=False)
+                    + q * np.linspace(0, len(upsampled) // q, len(upsampled) // q, endpoint=False)
                 )
                 return downsampled
         else:
@@ -507,7 +506,7 @@ def arbresample(
     else:
         if intermed_freq <= 0.0:
             intermed_freq = np.max([2.0 * init_freq, 2.0 * final_freq])
-        orig_x = (1.0 / init_freq) * sp.linspace(
+        orig_x = (1.0 / init_freq) * np.linspace(
             0.0, 1.0 * len(inputdata), len(inputdata), endpoint=False
         )
         resampled = dotwostepresample(
@@ -531,7 +530,7 @@ def upsample(inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, d
         sys.exit()
 
     # upsample
-    orig_x = sp.linspace(0.0, (1.0 / Fs_init) * len(inputdata), num=len(inputdata), endpoint=False)
+    orig_x = np.linspace(0.0, (1.0 / Fs_init) * len(inputdata), num=len(inputdata), endpoint=False)
     endpoint = orig_x[-1] - orig_x[0]
     ts_higher = 1.0 / Fs_higher
     numresamppts = int(endpoint // ts_higher + 1)
@@ -587,7 +586,7 @@ def dotwostepresample(
     init_freq = len(orig_x) / endpoint
     intermed_ts = 1.0 / intermed_freq
     numresamppts = int(endpoint // intermed_ts + 1)
-    intermed_x = intermed_ts * sp.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
+    intermed_x = intermed_ts * np.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
     if debug:
         print(
@@ -618,7 +617,7 @@ def dotwostepresample(
     final_ts = 1.0 / final_freq
     numresamppts = int(np.ceil(endpoint / final_ts))
     # final_x = np.arange(0.0, final_ts * numresamppts, final_ts)
-    final_x = final_ts * sp.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
+    final_x = final_ts * np.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
     resampled_y = doresample(intermed_x, antialias_y, final_x, method=method)
     if debug:
         print("downsampling took", time.time() - starttime, "seconds")

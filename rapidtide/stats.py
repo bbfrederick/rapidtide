@@ -418,7 +418,7 @@ def makehistogram(indata, histlen, binsize=None, therange=None, refine=False):
     if histlen is None and binsize is None:
         thebins = 10
     elif binsize is not None:
-        thebins = sp.linspace(
+        thebins = np.linspace(
             therange[0],
             therange[1],
             (therange[1] - therange[0]) / binsize + 1,

@@ -34,7 +34,6 @@ import gc
 import os
 
 import numpy as np
-import scipy as sp
 from matplotlib.pyplot import figure, plot, show
 from scipy import ndimage
 from nilearn import masking
@@ -794,7 +793,7 @@ def rapidtide_main(argparsingfunc):
         includemask=internalglobalmeanincludemask_valid,
         excludemask=internalglobalmeanexcludemask_valid,
     )
-    meanaxis = sp.linspace(0, len(meanvec) * meanperiod, num=len(meanvec), endpoint=False)
+    meanaxis = np.linspace(0, len(meanvec) * meanperiod, num=len(meanvec), endpoint=False)
 
     # now set the regressor that we'll use
     if optiondict["useglobalref"]:
