@@ -23,99 +23,101 @@
 
 from __future__ import print_function, division
 
-import sys
-import getopt
+import argparse
+import rapidtide.workflows.parser_funcs as pf
 
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
-import scipy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def usage():
-    print("resamp1tc - resample a timeseries file")
-    print("")
-    print(
-        "usage: resamp1tc infilename[:COLNUM] insamplerate outputfile outsamplerate [--nodisplay]"
+def _get_parser():
+    """
+    Argument parser for resamp1tc
+    """
+    parser = argparse.ArgumentParser(
+        prog="resamp1tc",
+        description=("Resample a timeseries file"),
+        usage="%(prog)s infilename insamplerate outputfile outsamplerate [options]",
     )
-    print("")
-    print("required arguments:")
-    print(
-        "\tinputfile[:COLNUM] - text file containing a timeseries.  Select column COLNUM if multicolumn file"
+
+    # Required arguments
+    pf.addreqinputtextfile(parser, "inputfile")
+    parser.add_argument(
+        "insamplerate",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        help=("Output sample rate in Hz."),
     )
-    print("\tinsamplerate       - the sample rate of the input file in Hz")
-    print("\toutputfile         - the name of the output text file")
-    print("\toutsamplerate      - the sample rate of the output file in Hz")
-    print("")
-    print(" options:")
-    print("\t--nodisplay        - do not plot the data (for noninteractive use)")
-    print("\t--noantialias      - disable antialiasing filter when downsampling)")
-    print("")
-    return ()
+    pf.addreqoutputtextfile(parser, "outputfile")
+
+    parser.add_argument(
+        "outsamplerate",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        help=("Output sample rate in Hz."),
+    )
+
+    # add optional arguments
+    parser.add_argument(
+        "--nodisplay",
+        dest="display",
+        action="store_false",
+        help=("Do not display data."),
+        default=True,
+    )
+
+    parser.add_argument(
+        "--noantialias",
+        dest="antialias",
+        action="store_false",
+        help=("Enable additional debugging output."),
+        default=True,
+    )
+
+    # Miscellaneous options
+
+    return parser
 
 
 def main():
-    display = True
-    antialias = True
-
-    # get the command line parameters
-    nargs = len(sys.argv)
-    if nargs < 5:
-        usage()
-        exit()
-    filename = sys.argv[1]
-    insamplerate = float(sys.argv[2])
-    outputfile = sys.argv[3]
-    outsamplerate = float(sys.argv[4])
-
-    # now scan for optional arguments
+    # grab the command line arguments then pass them off.
     try:
-        opts, args = getopt.getopt(sys.argv[5:], "s", ["nodisplay", "noantialias", "help"])
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -x not recognized"
-        usage()
-        sys.exit(2)
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
-    for o, a in opts:
-        if o == "--nodisplay":
-            display = False
-            print("turning display off")
-        elif o == "--noantialias":
-            antialias = False
-            print("turning off antialiasing")
-        else:
-            assert False, "unhandled option"
-
-    intimestep = 1.0 / insamplerate
-    outtimestep = 1.0 / outsamplerate
-    infilename, colspec = tide_io.parsefilespec(filename)
-
-    inputdata = np.transpose(tide_io.readvecs(infilename, colspec=colspec))
-    if np.shape(inputdata)[1] > 1:
-        print("specify only one column for input file 1")
-        sys.exit()
-    else:
-        inputdata = inputdata[:, 0]
+    intimestep = 1.0 / args.insamplerate
+    outtimestep = 1.0 / args.outsamplerate
+    (
+        dummy,
+        dummy,
+        dummy,
+        inputdata,
+        compressed,
+        filetype,
+    ) = tide_io.readvectorsfromtextfile(args.inputfile, onecol=True)
+    inputdata = inputdata[0, :]
 
     outputdata = tide_resample.arbresample(
-        inputdata, insamplerate, outsamplerate, decimate=False, antialias=antialias
+        inputdata, args.insamplerate, args.outsamplerate, decimate=False, antialias=args.antialias
     )
-    in_t = intimestep * sp.linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True)
-    out_t = outtimestep * sp.linspace(0.0, len(outputdata), len(outputdata), endpoint=True)
+    in_t = intimestep * np.linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True)
+    out_t = outtimestep * np.linspace(0.0, len(outputdata), len(outputdata), endpoint=True)
     if len(out_t) < len(outputdata):
         outputdata = outputdata[0 : len(out_t)]
 
-    if display:
+    if args.display:
         plt.plot(in_t, inputdata, "k")
 
-    tide_io.writevec(outputdata, outputfile)
-    if display:
+    tide_io.writevec(outputdata, args.outputfile)
+    if args.display:
         plt.plot(out_t, outputdata, "r")
         plt.legend(("original signal", "resampled"))
 
-    if display:
+    if args.display:
         plt.show()
 
 
