@@ -1590,7 +1590,7 @@ def getpeaks(xvals, yvals, xrange=None, bipolar=False, display=False):
     return procpeaks
 
 
-def parabfit(x_axis, y_axis, peakloc, peaksize):
+def parabfit(x_axis, y_axis, peakloc, points):
     """
 
     Parameters
@@ -1605,22 +1605,23 @@ def parabfit(x_axis, y_axis, peakloc, peaksize):
 
     """
     func = lambda x, a, tau, c: a * ((x - tau) ** 2) + c
-    fitted_peaks = []
     distance = abs(x_axis[peakloc[1][0]] - x_axis[peakloc[0][0]]) / 4
     index = peakloc
     x_data = x_axis[index - points // 2 : index + points // 2 + 1]
     y_data = y_axis[index - points // 2 : index + points // 2 + 1]
+
     # get a first approximation of tau (peak position in time)
     tau = x_axis[index]
+
     # get a first approximation of peak amplitude
     c = y_axis[index]
     a = np.sign(c) * (-1) * (np.sqrt(abs(c)) / distance) ** 2
     """Derived from ABC formula to result in a solution where A=(rot(c)/t)**2"""
 
     # build list of approximations
-
     p0 = (a, tau, c)
     popt, pcov = sp.optimize.curve_fit(func, x_data, y_data, p0)
+
     # retrieve tau and c i.e x and y value of peak
     x, y = popt[1:3]
     return x, y
