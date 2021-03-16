@@ -98,12 +98,12 @@ def stringtorange(thestring):
         sys.exit()
     try:
         themin = float(thelist[0])
-    except:
+    except ValueError:
         print("range setting requires two comma separated floats - exiting")
         sys.exit()
     try:
         themax = float(thelist[1])
-    except:
+    except ValueError:
         print("range setting requires two comma separated floats - exiting")
         sys.exit()
     return (themin, themax)

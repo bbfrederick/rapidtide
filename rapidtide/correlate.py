@@ -486,7 +486,7 @@ def cross_MI(
             print("negsteps, possteps, len(thexmi_y)", negsteps, possteps, len(thexmi_y))
         irange = range(negsteps, possteps + 1)
     else:
-        thexmi_y = np.zeros((len(locs)), dtype=np.float)
+        thexmi_y = np.zeros((len(locs)), dtype=np.float64)
         irange = np.asarray(locs)
     destloc = -1
     for i in irange:
@@ -531,7 +531,7 @@ def cross_MI(
     if returnaxis:
         if locs is None:
             thexmi_x = (
-                sp.linspace(0.0, len(thexmi_y) / Fs, num=len(thexmi_y), endpoint=False)
+                np.linspace(0.0, len(thexmi_y) / Fs, num=len(thexmi_y), endpoint=False)
                 + negsteps / Fs
             )
             return thexmi_x, thexmi_y, negsteps + 1
@@ -759,7 +759,7 @@ def arbcorr(
     norm2 = tide_math.corrnormalize(matchedinput2, detrendorder=1, windowfunc=windowfunc)
     thexcorr_y = signal.fftconvolve(norm1, norm2[::-1], mode="full")
     thexcorr_x = (
-        sp.linspace(0.0, len(thexcorr_y) / corrFs, num=len(thexcorr_y), endpoint=False)
+        np.linspace(0.0, len(thexcorr_y) / corrFs, num=len(thexcorr_y), endpoint=False)
         - (len(norm1) // 2 + len(norm2) // 2) / corrFs
         + start1
         - start2
@@ -819,7 +819,7 @@ def faststcorrelate(
         stcorr[:, i] /= normfacs[i]
 
     timestep = times[1] - times[0]
-    corrtimes = sp.linspace(
+    corrtimes = np.linspace(
         -timestep * (nperseg // 2),
         timestep * (nperseg // 2),
         num=nperseg,

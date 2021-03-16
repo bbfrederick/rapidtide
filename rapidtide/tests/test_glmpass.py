@@ -24,9 +24,9 @@ import rapidtide.glmpass as tide_glmpass
 
 
 def gen2d(xsize=150, xcycles=11, tsize=200, tcycles=13, mean=10.0):
-    thearray = np.zeros((xsize, tsize), dtype=np.float)
-    xwaves = np.zeros((xsize, tsize), dtype=np.float)
-    twaves = np.zeros((xsize, tsize), dtype=np.float)
+    thearray = np.zeros((xsize, tsize), dtype=np.float64)
+    xwaves = np.zeros((xsize, tsize), dtype=np.float64)
+    twaves = np.zeros((xsize, tsize), dtype=np.float64)
     xmax = 2.0 * np.pi * xcycles
     tmax = 2.0 * np.pi * tcycles
     xfreq = xmax / xsize

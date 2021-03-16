@@ -23,7 +23,6 @@
 from __future__ import print_function, division
 
 import numpy as np
-import scipy as sp
 
 import rapidtide.miscmath as tide_math
 import rapidtide.fit as tide_fit
@@ -34,7 +33,7 @@ import matplotlib.pyplot as plt
 
 def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, display=False):
     # read in some data
-    phases = sp.linspace(0.0, numpoints * phasestep, num=numpoints, endpoint=False)
+    phases = np.linspace(0.0, numpoints * phasestep, num=numpoints, endpoint=False)
     testwaveform = amplitude * np.cos(phases)
     if display:
         plt.figure()

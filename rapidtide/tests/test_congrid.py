@@ -17,7 +17,6 @@
 from __future__ import print_function, division
 
 import numpy as np
-import scipy as sp
 
 from rapidtide.resample import congrid
 from rapidtide.tests.utils import mse
@@ -34,13 +33,13 @@ def test_congrid(debug=False, display=False):
     starttime = 0.0
     endtime = 1.0
     sourcelen = 1000
-    sourceaxis = sp.linspace(starttime, endtime, num=sourcelen, endpoint=False)
+    sourceaxis = np.linspace(starttime, endtime, num=sourcelen, endpoint=False)
     if debug:
         print("sourceaxis range:", sourceaxis[0], sourceaxis[-1])
 
     # now make the destination
     gridlen = 32
-    gridaxis = sp.linspace(starttime, endtime, num=gridlen, endpoint=False)
+    gridaxis = np.linspace(starttime, endtime, num=gridlen, endpoint=False)
     if debug:
         print("gridaxis range:", gridaxis[0], gridaxis[-1])
 

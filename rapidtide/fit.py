@@ -1604,7 +1604,7 @@ def parabfit(x_axis, y_axis, peakloc, peaksize):
     """
     func = lambda x, a, tau, c: a * ((x - tau) ** 2) + c
     fitted_peaks = []
-    distance = abs(x_axis[raw_peaks[1][0]] - x_axis[raw_peaks[0][0]]) / 4
+    distance = abs(x_axis[peakloc[1][0]] - x_axis[peakloc[0][0]]) / 4
     index = peakloc
     x_data = x_axis[index - points // 2 : index + points // 2 + 1]
     y_data = y_axis[index - points // 2 : index + points // 2 + 1]
