@@ -1,64 +1,27 @@
 #!/bin/bash
 
-#rapidtide \
-        #sub-RAPIDTIDETEST.nii.gz \
-        #../dst/sub-RAPIDTIDETEST_standardnames \
-	#--spatialfilt 2 \
-        #--nprocs -1 \
-        #--legacyoutput \
-        #--passes 3 
-
-
-## denoising example
-#rapidtide \
-#	sub-RAPIDTIDETEST.nii.gz \
-#	../dst/sub-RAPIDTIDETEST_PCA0p5_1pass \
-#	--spatialfilt 2 \
-#        --nprocs -1 \
-#        --passes 1 \
-#        --noglm
-
-# denoising example
 rapidtide \
-	sub-RAPIDTIDETEST.nii.gz \
-	../dst/sub-RAPIDTIDETEST_PCA0p5 \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_sum \
+        --globalsignalmethod sum \
 	--spatialfilt 2 \
-        --pcacomponents 0.5 \
         --nprocs -1 \
         --passes 3 
 
-#rapidtide \
-	#sub-RAPIDTIDETEST.nii.gz \
-	#../dst/sub-RAPIDTIDETEST_PCAmle \
-	#--spatialfilt 2 \
-        #--pcacomponents -1 \
-        #--nprocs -1 \
-        #--passes 3 \
-        #--noglm
-#
-#rapidtide \
-	#sub-RAPIDTIDETEST.nii.gz \
-	#../dst/sub-RAPIDTIDETEST_PCA5 \
-	#--spatialfilt 2 \
-        #--pcacomponents 5.1 \
-        #--nprocs -1 \
-        #--passes 3 \
-        #--noglm
-#
-#rapidtide \
-	#sub-RAPIDTIDETEST.nii.gz \
-	#../dst/sub-RAPIDTIDETEST_converge_strict \
-	#--spatialfilt 2 \
-        #--nprocs -1 \
-        #--convergencethresh 0.0005 \
-        #--noglm
+rapidtide \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_meanscale \
+        --globalsignalmethod meanscale \
+	--spatialfilt 2 \
+        --nprocs -1 \
+        --passes 3 
 
-#rapidtide \
-	#sub-RAPIDTIDETEST.nii.gz \
-	#../dst/sub-RAPIDTIDETEST_converge_loose \
-	#--spatialfilt 2 \
-        #--nprocs -1 \
-        #--convergencethresh 0.005 \
-        #--noglm
+rapidtide \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_PCA \
+        --globalsignalmethod pca \
+	--spatialfilt 2 \
+        --nprocs -1 \
+        --passes 3 
 
 #diffmaps ../dst/sub-RAPIDTIDETEST_convergence ../dst/sub-RAPIDTIDETEST_3passes ../dst/diff_conv_vs_3
