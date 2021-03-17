@@ -1,5 +1,14 @@
 # History of changes
 
+## Version 2.0alpha15 (3/17/21)
+* (rapidtide) Added a new method for generating global signal using PCA.
+* (all) Further imports from master branch to improve deployment.
+* (simdata) Complete overhaul - new parser better checks, more flexible input formats.
+* (io.py) Improvements to readvecs to handle very large files.
+* (ccorrica, filttc, histtc, pixelcomp, resamp1tc) Facelift, cleanup, new parsers.
+* (testing) Removed python 2.7 CI build. 
+* (all) Addressed many linter issues, updated deprecated numpy and scipy calls.
+
 ## Version 2.0alpha14 (3/1/21)
 * (all) readvectorsfromtextfile now handles noncompliant BIDS timecourse files.
 * (happy) Fixed a very subtle bug when an externally supplied pleth waveform doesn't start at time 0.0 (fix to issue #59).
