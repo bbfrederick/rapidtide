@@ -607,7 +607,8 @@ def process_args():
     optiondict["startpoint"] = -1  # by default, analyze the entire length of the dataset
     optiondict["endpoint"] = 10000000  # by default, analyze the entire length of the dataset
     optiondict["preprocskip"] = 0  # number of trs skipped in preprocessing
-    optiondict["meanscaleglobal"] = False
+    optiondict["globalsignalmethod"] = "sum"
+    optiondict["globalpcacomponents"] = 0.8
     optiondict["globalmaskmethod"] = "mean"
     optiondict["globalmeanexcludename"] = None
     optiondict["globalmeanexcludevals"] = None  # list of integer values to use in the mask
@@ -1032,7 +1033,7 @@ def process_args():
                 )
                 sys.exit()
         elif o == "-m":
-            optiondict["meanscaleglobal"] = True
+            optiondict["globalsignalmethod"] = "meanscale"
             print("mean scale voxels prior to generating global mean")
         elif o == "--limitoutput":
             optiondict["savelagregressors"] = False

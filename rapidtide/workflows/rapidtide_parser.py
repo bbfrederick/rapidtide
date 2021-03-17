@@ -358,11 +358,31 @@ def _get_parser():
         default=False,
     )
     preproc.add_argument(
-        "--meanscale",
-        dest="meanscaleglobal",
-        action="store_true",
-        help=("Mean scale regressors during global mean estimation."),
-        default=False,
+        "--globalsignalmethod",
+        dest="globalsignalmethod",
+        action="store",
+        type=str,
+        choices=["sum", "meanscale", "pca"],
+        help=(
+            "The method for constructing the initial global signal regressor - straight summation (default), "
+            "mean scaling each voxel prior to summation, or MLE PCA of the voxels in the global signal mask."
+        ),
+        default="mean",
+    )
+    preproc.add_argument(
+        "--globalpcacomponents",
+        dest="globalpcacomponents",
+        action="store",
+        type=float,
+        metavar="VALUE",
+        help=(
+            "Number of PCA components used for estimating the global signal.  If VALUE >= 1, will retain this"
+            "many components.  If "
+            "0.0 < VALUE < 1.0, enough components will be retained to explain the fraction VALUE of the "
+            "total variance. If VALUE is negative, the number of components will be to retain will be selected "
+            "automatically using the MLE method.  Default is 0.8."
+        ),
+        default=0.8,
     )
     preproc.add_argument(
         "--slicetimes",

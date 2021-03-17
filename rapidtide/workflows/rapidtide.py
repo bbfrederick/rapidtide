@@ -61,6 +61,7 @@ import rapidtide.wiener as tide_wiener
 from rapidtide.tests.utils import mse
 
 from statsmodels.robust import mad
+from sklearn.decomposition import PCA
 
 import copy
 
@@ -183,7 +184,7 @@ def readamask(
     return maskarray
 
 
-def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
+def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcacomponents=0.8):
     # Start with all voxels
     themask = indata[:, 0] * 0 + 1
 
@@ -193,21 +194,40 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None):
     if excludemask is not None:
         themask = themask * (1 - excludemask)
 
-    # add up all the voxels
+    # combine all the voxels using one of the three methods
     global rt_floatset, rt_floattype
     globalmean = rt_floatset(indata[0, :])
     thesize = np.shape(themask)
-    numvoxelsused = 0
-    for vox in range(0, thesize[0]):
-        if themask[vox] > 0.0:
-            numvoxelsused += 1
-            if optiondict["meanscaleglobal"]:
-                themean = np.mean(indata, axis=1)
-                if themean != 0.0:
-                    globalmean = globalmean + indata[vox, :] / themean - 1.0
-            else:
-                globalmean = globalmean + indata[vox, :]
+    numvoxelsused = int(np.sum(np.where(themask > 0.0, 1, 0)))
+    selectedvoxels = indata[np.where(themask > 0.0), :][0]
     print()
+    print("constructing global mean signal using", optiondict["globalsignalmethod"])
+    if optiondict["globalsignalmethod"] == "sum":
+        globalmean = np.sum(selectedvoxels, axis=0)
+    elif optiondict["globalsignalmethod"] == "meanscale":
+        themean = np.mean(indata, axis=1)
+        for vox in range(0, thesize[0]):
+            if themask[vox] > 0.0:
+                if themean[vox] != 0.0:
+                    globalmean += indata[vox, :] / themean[vox] - 1.0
+    else:
+        try:
+            thefit = PCA(n_components=pcacomponents).fit(selectedvoxels)
+        except ValueError:
+            if pcacomponents == "mle":
+                print("mle estimation failed - falling back to pcacomponents=0.8")
+                thefit = PCA(n_components=0.8).fit(selectedvoxels)
+            else:
+                print("unhandled math exception in PCA refinement - exiting")
+                sys.exit()
+        print(
+            "Using ",
+            len(thefit.components_),
+            " components, accounting for ",
+            "{:.2f}% of the variance".format(
+                100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
+            ),
+        )
     print("used ", numvoxelsused, " voxels to calculate global mean signal")
     return tide_math.stdnormalize(globalmean), themask
 
@@ -792,6 +812,7 @@ def rapidtide_main(argparsingfunc):
         optiondict,
         includemask=internalglobalmeanincludemask_valid,
         excludemask=internalglobalmeanexcludemask_valid,
+        pcacomponents=optiondict["globalpcacomponents"],
     )
     meanaxis = np.linspace(0, len(meanvec) * meanperiod, num=len(meanvec), endpoint=False)
 
