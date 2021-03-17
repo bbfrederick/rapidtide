@@ -21,7 +21,7 @@ This comes out of work by our group (The Opto-Magnetic group at McLean
 Hospital - http://www.nirs-fmri.net) looking at the correlations between
 neuroimaging data (fMRI) and NIRS data recorded simultaneously, either
 in the brain or the periphery. We found that a large fraction of the
-“noise” we found at low frequency in fMRI data was due to real,
+\"noise\" we found at low frequency in fMRI data was due to real,
 random[*] fluctuations of blood oxygenation and volume (both of which
 affect the intensity of BOLD fMRI images) in the blood passing through
 the brain. More interestingly, because these characteristics of blood
@@ -31,8 +31,8 @@ itself, but also, this gives you a method for optimally modelling (and
 removing) in band physiological noise from fMRI data (see references
 below).
 
-After working with this for several years we’ve also found that you
-don’t need to used simultaneous NIRS to find this blood borne signal -
+After working with this for several years we\'ve also found that you
+don\'t need to used simultaneous NIRS to find this blood borne signal -
 you can get it from blood rich BOLD voxels for example in the superior
 sagittal sinus, or bootstrap it out of the global mean signal in the
 BOLD data. You can also track exogenously applied waveforms, such as
@@ -44,19 +44,19 @@ As an aside, some of these tools are just generally useful for looking
 at correlations between timecourses from other sources – for example
 doing PPI, or even some seed based analyses.
 
-[*] “random” in this context means “determined by something we don’t
-have any information about” - maybe EtCO2 variation, or sympathetic
+[*] \"random\" in this context means \"determined by something we don\'t
+have any information about\" - maybe EtCO2 variation, or sympathetic
 nervous system activity - so not really random.
 
 Correlation analysis is easy - why use this package?
 ----------------------------------------------------
 
-The simple answer is “correlation analysis is easy, but using a
+The simple answer is \"correlation analysis is easy, but using a
 prewritten package that handles file I/O, filtering, resampling,
-windowing, and the rest for you is even easier”. A slightly more complex
-answer is that while correlation analysis is pretty easy to do, it’s
+windowing, and the rest for you is even easier\". A slightly more complex
+answer is that while correlation analysis is pretty easy to do, it\'s
 hard to do right; there are lots and lots of ways to do it incorrectly.
-Fortunately, I’ve made most of those mistakes for you over the last 6
+Fortunately, I\'ve made most of those mistakes for you over the last 8
 years, and corrected my code accordingly. So rather than repeat my
 boring mistakes, why not make new, interesting mistakes? Explore your
 own, unique chunk of wrongspace…
@@ -64,24 +64,24 @@ own, unique chunk of wrongspace…
 Happy
 =====
 
-More recently, inspired by Henning Voss’ paper on hypersampling of
+More recently, inspired by Henning Voss\' paper on hypersampling of
 cardiac signals in fMRI, we developed a method to extract and clean
 cardiac waveforms from fMRI data, even when the fMRI TR is far too long
 to properly sample cardiac waveforms. This cardiac waveform can then be
 to track the pulsatile cardiac pressure wave through the brain in
 somewhat the same way that we track the LFO signals. Among other things,
 this allows you to get cardiac waveforms during scans even when either
-1) you didn’t use a plethysmograph, or 2) you did, but the recording was
+1) you didn\'t use a plethysmograph, or 2) you did, but the recording was
 of poor quality, which happens more than you might think.
 
-What does "happy" have to do with any of this?
-----------------------------------------------
+What does \"happy\" have to do with any of this?
+------------------------------------------------
 
-As to why happy is part of rapidtide, that's partially for practical reasons (the
+As to why happy is part of rapidtide, that\'s partially for practical reasons (the
 libraries in rapidtide have an awful lot of code that is reused in happy), and
-partially thematically - rapidtide has evolved from a "let's look at low
-frequency signals in fMRI data" package to a "let's look at everything in
-fMRI data EXCEPT neuronal activation", so happy fits right in...
+partially thematically - rapidtide has evolved from a \"let\'s look at low
+frequency signals in fMRI data\" package to a \"let\'s look at everything in
+fMRI data EXCEPT neuronal activation\", so happy fits right in.
 
 Why are you releasing your code?
 ================================
@@ -89,26 +89,26 @@ Why are you releasing your code?
 For a number of reasons.
 
 -  I want people to use it! I think if it were easier for people to do
-   time delay analysis, they’d be more likely to do it. I don’t have
+   time delay analysis, they\'d be more likely to do it. I don\'t have
    enough time or people in my group to do every experiment that I think
-   would be interesting, so I’m hoping other people will, so I can read
+   would be interesting, so I\'m hoping other people will, so I can read
    their papers and learn interesting things.
--  It’s the right way to do science – I can say lots of things, but if
-   nobody can replicate my results, nobody will believe it (we’ve gotten
-   that a lot, because some of the implications of what we’ve seen in
-   resting state data can be a little uncomfortable). We’ve reached a
+-  It\'s the right way to do science – I can say lots of things, but if
+   nobody can replicate my results, nobody will believe it (we\'ve gotten
+   that a lot, because some of the implications of what we\'ve seen in
+   resting state data can be a little uncomfortable). We\'ve reached a
    stage in fMRI where getting from data to results involves a huge
    amount of processing, so part of confirming results involves being
    able to see how the data were processed. If you had to do everything
-   from scratch, you’d never even try to confirm anybody’s results.
--  In any complicated processing scheme, it’s quite possible (or in my
+   from scratch, you\'d never even try to confirm anybody\'s results.
+-  In any complicated processing scheme, it\'s quite possible (or in my
    case, likely) to make dumb mistakes, either coding errors or
    conceptual errors, and I almost certainly have made some (although
    hopefully the worst ones have been dealt with at this point). More
    users and more eyes on the code make it more likely that they will be
-   found. As much as I’m queasy about somebody potentially finding a
-   mistake in my code, I’d rather that they did so, so I can fix it[‡].
--  It’s giving back to the community. I benefit from the generosity of a
+   found. As much as I\'m queasy about somebody potentially finding a
+   mistake in my code, I\'d rather that they did so, so I can fix it[‡].
+-  It\'s giving back to the community. I benefit from the generosity of a
    lot of authors who have made the open source tools I use for work and
    play, so I figure I can pony up too.
 
@@ -117,15 +117,15 @@ that benefits everybody…
 
 Stability, etc.
 ===============
-This is an evolving code base. I’m constantly tinkering with it. That
-said, now that I’ve sent this off into to the world, I’m being somewhat
+This is an evolving code base. I\'m constantly tinkering with it. That
+said, now that I\'ve sent this off into to the world, I\'m being somewhat
 more responsible about locking down stable release points. In between
-releases, however, I’ll be messing with things, although for the most
+releases, however, I\'ll be messing with things, although for the most
 part this will be restricted to the dev branch.
-**It’s very possible that at any given time the dev branch will be very broken,
+**It\'s very possible that at any given time the dev branch will be very broken,
 so stay away from it unless you have a good reason to be using it.**
-I’ve finally become a little more modern and started
-adding automated testing, so as time goes by hopefully the “in between”
+I\'ve finally become a little more modern and started
+adding automated testing, so as time goes by hopefully the \"in between\"
 releases will be somewhat more reliable.  That said, my tests routinely fail, even
 when things actually work.  Probably should deal with that. Check back often for exciting
 new features and bug fixes!
@@ -133,27 +133,27 @@ new features and bug fixes!
 Python version compatibility
 ============================
 I switched over a while ago to using Python 3 as my daily driver, so I know
-that everything works there. However, I know that a lot of people can’t
-or won’t switch from Python 2x, so I made every effort to write code
+that everything works there. However, I know that a lot of people can\'t
+or won\'t switch from Python 2x, so I made every effort to write code
 that works in both, and I have been testing in both.
 
 That said, the writing is on the wall, and since I depend on a number of
 packages that have dropped, Python 2.x support has ended. However,
-as of version 1.9.0 I'm also releasing the code in a docker
+as of version 1.9.0 I\'m also releasing the code in a docker
 container (fredericklab/rapidtide), which has everything nicely installed in
-a fully configured Python 3 environment, so there's really no need for me to do a 2.x
+a fully configured Python 3 environment, so there\'s really no need for me to do a 2.x
 installation anymore.
 
-Ok, I’m sold. What’s in here?
-=============================
+Ok, I\'m sold. What\'s in here?
+===============================
 
 -  **rapidtide** - This is the heart of the package - this is the
    workhorse program that will determine the time lagged correlations
-   between all the voxels in a NIFTI file and a temporal “probe”
+   between all the voxels in a NIFTI file and a temporal \"probe\"
    regressor (which can come from a number of places, including the data
    itself) - it rapidly determines time delays… There are a truly
    bewildering array of options, and just about everything can be
-   adjusted, however I’ve tried to pick a good set of default options
+   adjusted, however I\'ve tried to pick a good set of default options
    for the most basic processing to get you going. At a minimum, it
    requires a 4D NIFTI file as input, and a root name for all of the
    output files. It generates a number of 3D NIFTI file maps of various
@@ -179,21 +179,21 @@ Ok, I’m sold. What’s in here?
    filtering, windowing, and correlation options.
 
 -  **showxcorrx** - The bleeding edge version of showxcorr.  This has a lot
-   of new options and defaults; it's not really drop in compatible, so I'm
+   of new options and defaults; it\'s not really drop in compatible, so I\'m
    keeping it separate at the moment to avoid breaking existing workflows.
    With the 2.0 release, this will become showxcorr, and the current showxcorr
    will become showxcorr_legacy.
 
 -  **rapidtide2std** - This is a utility for registering rapidtide
-   output maps to standard coordinates. It’s usually much faster to run
+   output maps to standard coordinates. It\'s usually much faster to run
    rapidtide in native space then transform afterwards to MNI152 space.
    NB: this will only work if you have a working FSL installation.
 
 -  **happy2std** - Guess.
 
 -  **showtc** - A very simple command line utility that takes timecourses from text
-   files and plots the data in it in a matplotlib window. That’s it. A
-   good tool for quickly seeing what’s in a file. Has a number of options to
+   files and plots the data in it in a matplotlib window. That\'s it. A
+   good tool for quickly seeing what\'s in a file. Has a number of options to
    make the plot prettier.
 
 -  **showxy** - Another simple command line utility that displays the
@@ -308,7 +308,7 @@ General overview of systemic low frequency oscillations in fMRI data
 ````````````````````````````````````````````````````````````````````
 
 1) Tong Y, Hocke LM, Frederick BB. (2019) Low Frequency Systemic
-   Hemodynamic “Noise” in Resting State BOLD fMRI: Characteristics,
+   Hemodynamic \"Noise\" in Resting State BOLD fMRI: Characteristics,
    Causes, Implications, Mitigation Strategies, and Applications. Front.
    Neurosci., 14 August 2019 \| https://doi.org/10.3389/fnins.2019.00787
 
@@ -421,7 +421,7 @@ Physiological noise identification and removal using time delay methods
    \| http://dx.doi.org/10.3389/fnhum.2016.00311
 
 6) Tong, Y, Hocke, LM, and Frederick, BB, Low Frequency
-   Systemic Hemodynamic "Noise" in Resting State BOLD fMRI: Characteristics,
+   Systemic Hemodynamic \"Noise\" in Resting State BOLD fMRI: Characteristics,
    Causes, Implications, Mitigation Strategies, and Applications.
    Front Neurosci, 2019. 13: p. 787.
    \| http://dx.doi.org/10.3389/fnins.2019.00787
