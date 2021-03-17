@@ -1,9 +1,8 @@
 # History of changes
 
-## Version 1.9.5 (3/15/21)
-(package) T. Salo made a number of changes to allow pypi deployment
-
-## Version 1.9.4 (10/21/20)
+## Version 1.9.4 (3/17/21)
+* (package) T. Salo made a number of changes to allow pypi deployment.
+* (package) Fixed a problem in setup.py that causes installation to fail.
 * (rapidtide2x) Backported a critical fix from the dev version so that the refinement threshold is properly set with null correlations (the result is that the refine mask rejects fewer voxels, and gives a better regressor estimate).
 
 ## Version 1.9.3 (7/30/20)
