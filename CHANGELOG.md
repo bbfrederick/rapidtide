@@ -1,6 +1,9 @@
 # History of changes
 
-## Version 2.0alpha16 (3/17/21)
+## Version 2.0alpha18 (3/17/21)
+* (package) Trimmed the size of the installation bundle (really, truly, correctly this time).
+
+## Version 2.0alpha17 (3/17/21)
 * (package) Trimmed the size of the installation bundle (maybe even correctly this time).
 
 ## Version 2.0alpha16 (3/17/21)
