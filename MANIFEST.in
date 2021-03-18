@@ -1,6 +1,6 @@
 recursive-include rapidtide *.py
-recursive-include rapidtide/data/examples/src sub-RAPIDTIDETEST.* sub-HAPPYTEST.* timecourse1.txt timecourse2.txt
 recursive-include rapidtide/scripts *
+recursive-include rapidtide/workflows.py *
 recursive-include rapidtide/data/reference ASPECTS*
 recursive-include rapidtide/data/reference ATT*
 recursive-include rapidtide/data/reference HCP1200*
