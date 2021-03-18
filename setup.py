@@ -200,9 +200,13 @@ setup(
     zip_safe=False,
     package_data={
         "reference": [
-            "reference/*.txt",
-            "reference/*.nii.gz",
+            "reference/ASPECTS*",
+            "reference/ATT*",
+            "reference/HCP1200*",
+            "reference/MNI152*",
         ],
+    },
+    additional_packagedata={
         "testdata": [
             "tests/testdata/*.txt",
         ],
