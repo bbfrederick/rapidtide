@@ -180,7 +180,7 @@ workflows:
     jobs:
       - test_py36
       - build_py37
-      - test_py36
+      - test_py38
       - build_docs:
           requires:
             - build_py37
