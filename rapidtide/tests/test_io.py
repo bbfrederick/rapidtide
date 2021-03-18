@@ -81,7 +81,7 @@ def test_io(debug=True, display=False):
     assert mse(np.array(targetsizes), np.array(happysizes)) < sizethresh
 
     # test file writing
-    datathresh = 1e-3
+    datathresh = 2e-3  # relaxed threshold because sub-RAPIDTIDETEST has been converted to INT16
     tide_io.savetonifti(
         fmri_data, fmri_hdr, os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST_copy.nii.gz")
     )
