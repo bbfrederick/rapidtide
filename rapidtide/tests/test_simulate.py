@@ -79,7 +79,7 @@ def test_simulate(display=False):
     initial_fmri_y = genlagtc.yfromx(initial_fmri_x)
 
     if display:
-        fig = figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title("Regressors")
         plt.plot(nirs_x, nirs_y, initial_fmri_x, initial_fmri_y)

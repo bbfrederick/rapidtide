@@ -73,6 +73,7 @@ def makefslcmd(theinputfile, reftarget, xform, outputname, warpfile=None):
 
 def transformmaps(
     thepath,
+    theoutputdir,
     subjroot,
     reftarget,
     xformfuncmat,
@@ -291,6 +292,7 @@ def main():
 
     transformmaps(
         thepath,
+        outputdir,
         subjroot,
         reftarget,
         xformfuncmat,

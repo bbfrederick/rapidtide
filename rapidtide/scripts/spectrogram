@@ -27,10 +27,10 @@ import numpy as np
 import rapidtide.io as tide_io
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from scipy.signal import stft, istft, check_NOLA
+from scipy.signal import stft, check_NOLA
 import argparse
 
-from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float
+from rapidtide.workflows.parser_funcs import is_valid_file, is_float, is_int
 
 
 def _get_parser():

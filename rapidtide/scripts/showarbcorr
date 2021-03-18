@@ -23,26 +23,16 @@
 from __future__ import print_function, division
 
 import sys
-import os
 import numpy as np
-import scipy as sp
+from scipy.stats import pearsonr
 
 import argparse
 import rapidtide.miscmath as tide_math
-import rapidtide.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.peakeval as tide_peakeval
-import rapidtide.fit as tide_fit
 import rapidtide.correlate as tide_corr
-import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.helper_classes as tide_classes
 
 import rapidtide.workflows.parser_funcs as pf
-
-from scipy.signal import correlate
-from scipy.stats.stats import pearsonr
-
-from matplotlib.pyplot import plot, legend, show, figure
 
 
 def printthresholds(pcts, thepercentiles, labeltext):
@@ -331,9 +321,6 @@ def main():
 
     # do the correlation
     print("correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
-    if dumpfiltered:
-        tide_io.writenpvecs(thecorrelator.preptesttc, "correlator_filtereddata1.txt")
-        tide_io.writenpvecs(thecorrelator.prepreftc, "correlator_filtereddata2.txt")
     print("lagmin, lagmax", args.lagmin, args.lagmax)
     lowerlim = int((args.lagmin * corrFs) - 0.5) + zeroloc
     upperlim = int((args.lagmax * corrFs) + 0.5) + zeroloc
@@ -343,7 +330,7 @@ def main():
     thexcorr_trim = thexcorr[lowerlim:upperlim]
     print("trimmed correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
-    # thepxcorr = pearsonr(filtereddata1, filtereddata2)
+    thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
     # intitialize the correlation fitter
     thexsimfuncfitter = tide_classes.simfunc_fitter(
@@ -359,12 +346,6 @@ def main():
         useguess=False,
     )
 
-    if args.debug:
-        print(
-            "searching for peak correlation over range ",
-            thecorrelator.similarityfuncorigin - thecorrelator.lagmininpts,
-            thecorrelator.similarityfuncorigin + thecorrelator.lagmaxinpts,
-        )
     maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
     if args.debug:
         print("\n\nmaxdelay before refinement", maxdelay)
@@ -417,21 +398,9 @@ def main():
         else:
             print("Crosscorrelation_Rmax:\t", R)
             print("Crosscorrelation_maxdelay:\t", -maxdelay)
-            print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
-
-    if args.display:
-        fig = figure()
-        ax = fig.add_subplot(111)
-        ax.set_title("Similarity metrics over the search range")
-        ax.plot(xcorr_x_trim, thexcorr_trim, "k")
-        ax.legend(["Cross correlation"])
-        if args.debug:
-            fig = figure()
-            plot(f, Cxy)
-            fig = figure()
-            plot(f, np.sqrt(np.abs(Pxy)) / np.max(np.sqrt(np.abs(Pxy))))
-            plot(f, np.angle(Pxy) / (2.0 * sp.pi * f))
-        show()
+            print(
+                args.infilename1, "[0 seconds] == ", args.infilename2, "[", -maxdelay, " seconds]"
+            )
 
     if args.corroutputfile is not None:
         tide_io.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), args.corroutputfile)
