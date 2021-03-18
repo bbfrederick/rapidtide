@@ -28,7 +28,7 @@ import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import numpy as np
 
-from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float
+from rapidtide.workflows.parser_funcs import invert_float, is_float
 
 
 def phase(mcv):
@@ -159,7 +159,7 @@ def main():
     lookaheadval = int((args.samplerate * maxtime) / f)
     maxpeaks, minpeaks = tide_fit.peakdetect(yvec, lookahead=lookaheadval, delta=args.thethresh)
 
-    if isoxygen:
+    if args.isoxygen:
         peaklist = minpeaks
     else:
         peaklist = maxpeaks
