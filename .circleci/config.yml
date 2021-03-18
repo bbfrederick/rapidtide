@@ -92,6 +92,35 @@ jobs:
           paths:
             - "/opt/conda/envs/py37_env"
 
+  build_py38:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps9-{{ checksum "setup.py" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py38_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py38_env
+            else
+                conda create -n py38_env python=3.8 -yq
+                source activate py38_env
+                pip install -e .[tests,doc]
+            fi
+            python setup.py install --user
+      - save_cache:  # environment cache tied to requirements
+          key: deps9-{{ checksum "setup.py" }}
+          paths:
+            - "/opt/conda/envs/py38_env"
+
   build_docs:
     working_directory: /tmp/src/rapidtide
     docker:
