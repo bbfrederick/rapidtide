@@ -1,5 +1,9 @@
 # History of changes
 
+## Version 2.0alpha16 (3/17/21)
+* (package) Trimmed the size of the installation bundle.
+* (various) Cleaned up imports and unresolved references
+
 ## Version 2.0alpha15 (3/17/21)
 * (rapidtide) Added a new method for generating global signal using PCA.
 * (all) Further imports from master branch to improve deployment.
