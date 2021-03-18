@@ -424,9 +424,9 @@ def main():
         tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
 
     if args.controlvariablefile is not None:
-        controlvars = tide_io.readnpvecs(controlvariablefile)
+        controlvars = tide_io.readnpvecs(args.controlvariablefile)
         regressorvec = []
-        for j in range(0, numregressors):
+        for j in range(0, controlvars.shape[0]):
             regressorvec.append(
                 tide_math.corrnormalize(
                     theprefilter.apply(Fs, controlvars[j, :]),
@@ -482,7 +482,7 @@ def main():
 
     if args.cepstral:
         cepdelay = tide_corr.cepstraldelay(
-            filtereddata1, filtereddata2, 1.0 / Fs, displayplots=display
+            filtereddata1, filtereddata2, 1.0 / Fs, displayplots=args.display
         )
         cepcoff = tide_corr.delayedcorr(filtereddata1, filtereddata2, cepdelay, 1.0 / Fs)
         print("cepstral delay time is", cepdelay, ", correlation is", cepcoff)
