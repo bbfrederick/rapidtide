@@ -23,7 +23,6 @@
 from __future__ import print_function, division
 import sys
 import pandas as pd
-import getopt
 import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
@@ -36,7 +35,7 @@ import nibabel as nib
 import argparse
 import rapidtide.workflows.parser_funcs as pf
 
-from matplotlib.pyplot import plot, legend, show, figure
+import matplotlib.pyplot as plt
 
 
 def getNullDistributionData(
@@ -47,6 +46,7 @@ def getNullDistributionData(
     detrendorder,
     searchstart,
     searchend,
+    Fs,
     corrweighting="None",
     numreps=1000,
 ):
@@ -73,7 +73,7 @@ def getNullDistributionData(
         theshuffledxcorr = tide_corr.fastcorrelate(
             filteredindata,
             filteredshuffleddata,
-            usefft=dofftcorr,
+            usefft=True,
             weighting=corrweighting,
         )
 
@@ -212,7 +212,7 @@ def _get_parser():
         "--invert",
         dest="invert",
         action="store_true",
-        help=("Invert one timecourse prior to correlation. "),
+        help=("Invert second timecourse prior to correlation. "),
         default=False,
     )
     preproc.add_argument(
@@ -236,31 +236,6 @@ def usage():
     print(
         "usage: showstxcorr -i timecoursefile1 [-i timecoursefile2] --samplefreq=FREQ -o outputfile [-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [-nowindow] [-f] [--phat] [--liang] [--eckart] [-z FILENAME]"
     )
-    print("")
-    print("required arguments:")
-    print("    -i, --infile= timcoursefile1     - text file containing one or more timeseries")
-    print("    [-i, --infile= timcoursefile2]   - text file containing a timeseries")
-    print(
-        "                                       NB: if one timecourse file is specified, each column"
-    )
-    print(
-        "                                       is considered a timecourse, and there must be at least"
-    )
-    print(
-        "                                       2 columns in the file.  If two filenames are given, each"
-    )
-    print("                                       file must have only one column of data.")
-    print("")
-    print("    -o, --outfile=OUTNAME:           - the root name of the output files")
-    print("")
-    print("    --samplefreq=FREQ                - sample frequency of all timecourses is FREQ ")
-    print("           or")
-    print("    --sampletime=TSTEP               - time step of all timecourses is TSTEP ")
-    print(
-        "                                       NB: --samplefreq and --sampletime are two ways to specify"
-    )
-    print("                                       the same thing.")
-    print("")
     print("optional arguments:")
     print("    --nodetrend   - do not detrend the data before correlation")
     print("    --nowindow    - do not window data before corrlation")
@@ -303,12 +278,7 @@ def usage():
 def main():
     # get the command line parameters
     searchrange = 15.0
-    uselabel = False
     display = True
-    corrweighting = "None"
-    windowfunc = "hamming"
-    detrendorder = 1
-    dopartial = False
     duration = 1000000.0
     starttime = 0.0
     doplot = False
@@ -321,7 +291,6 @@ def main():
     window_upperfreq = 0.15
     stepsize = 25.0
     estimate_significance = False
-    flipregressor = False
     dumpfiltered = False
     matrixoutput = False
 
@@ -588,10 +557,10 @@ def main():
         filtereddata = tide_math.corrnormalize(
             theprefilter.apply(args.samplerate, reformdata[component, :]),
             windowfunc="None",
-            detrendorder=detrendorder,
+            detrendorder=args.detrendorder,
         )
         reformdata[component, :] = tide_math.stdnormalize(
-            tide_fit.detrend(tide_math.stdnormalize(filtereddata), order=detrendorder)
+            tide_fit.detrend(tide_math.stdnormalize(filtereddata), order=args.detrendorder)
         )
 
     xcorr_x = np.r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
@@ -601,7 +570,7 @@ def main():
     searchstart = int(int(tclen) // 2 - halfwindow)
     searchend = int(int(tclen) // 2 + halfwindow)
     xcorr_x_trim = xcorr_x[searchstart:searchend]
-    if flipregressor:
+    if args.invert:
         flipfac = -1.0
     else:
         flipfac = 1.0
@@ -619,7 +588,7 @@ def main():
             sampletime,
             windowtime,
             samplestep=int(stepsize // sampletime),
-            windowfunc=windowfunc,
+            windowfunc=args.windowfunc,
             detrendorder=0,
         )
         plength = len(times)
@@ -629,8 +598,8 @@ def main():
             sampletime,
             windowtime,
             samplestep=int(stepsize // sampletime),
-            weighting=corrweighting,
-            windowfunc=windowfunc,
+            weighting=args.corrweighting,
+            windowfunc=args.windowfunc,
             detrendorder=0,
             display=False,
         )
@@ -658,7 +627,7 @@ def main():
                     sampletime,
                     windowtime,
                     samplestep=int(stepsize // sampletime),
-                    windowfunc=windowfunc,
+                    windowfunc=args.windowfunc,
                     detrendorder=0,
                 )
                 (
@@ -673,14 +642,14 @@ def main():
                     sampletime,
                     windowtime,
                     samplestep=int(stepsize // sampletime),
-                    weighting=corrweighting,
-                    windowfunc=windowfunc,
+                    weighting=args.corrweighting,
+                    windowfunc=args.windowfunc,
                     detrendorder=0,
                     display=False,
                 )
 
         outputaffine = np.eye(4)
-        input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
+        # input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
         init_img = nib.Nifti1Image(corrpertime, outputaffine)
         init_hdr = init_img.header.copy()
         init_sizes = init_hdr["pixdim"].copy()
@@ -736,7 +705,7 @@ def main():
             sampletime,
             windowtime,
             samplestep=int(stepsize // sampletime),
-            windowfunc=windowfunc,
+            windowfunc=args.windowfunc,
             detrendorder=0,
         )
         times, xcorrpertime, Rvals, delayvals, valid = tide_corr.shorttermcorr_2D(
@@ -745,8 +714,8 @@ def main():
             sampletime,
             windowtime,
             samplestep=int(stepsize // sampletime),
-            weighting=corrweighting,
-            windowfunc=windowfunc,
+            weighting=args.corrweighting,
+            windowfunc=args.windowfunc,
             detrendorder=0,
             display=False,
         )
@@ -758,32 +727,30 @@ def main():
         filtereddata1 = tide_math.corrnormalize(
             theprefilter.apply(args.samplerate, trimmeddata[0, :]),
             windowfunc="None",
-            detrendorder=detrendorder,
+            detrendorder=args.detrendorder,
         )
         filtereddata2 = tide_math.corrnormalize(
             theprefilter.apply(args.samplerate, trimmeddata[1, :]),
             windowfunc="None",
-            detrendorder=detrendorder,
+            detrendorder=args.detrendorder,
         )
 
-    """
-        if display:
-            #timeaxis = np.r_[0.0:len(filtereddata1)] * sampletime
+        if args.display:
+            # timeaxis = np.r_[0.0:len(filtereddata1)] * sampletime
             fig, ax1 = plt.subplots()
-            ax1.plot(times, corrpertime, 'k')
-            ax1.set_ylabel('Pearson R', color='k')
+            ax1.plot(times, corrpertime, "k")
+            ax1.set_ylabel("Pearson R", color="k")
             ax2 = ax1.twinx()
-            ax2.plot(times, ppertime, 'r')
-            ax2.set_ylabel('p value', color='r')
+            ax2.plot(times, ppertime, "r")
+            ax2.set_ylabel("p value", color="r")
             fig, ax3 = plt.subplots()
-            ax3.plot(times, Rvals, 'k')
-            ax3.set_ylabel('Xcorr max R', color='k')
+            ax3.plot(times, Rvals, "k")
+            ax3.set_ylabel("Xcorr max R", color="k")
             ax4 = ax3.twinx()
-            ax4.plot(times,delayvals, 'r')
-            ax4.set_ylabel('Delay (s)', color='r')
+            ax4.plot(times, delayvals, "r")
+            ax4.set_ylabel("Delay (s)", color="r")
             # ax2.set_yscale('log')
             plt.show()
-    """
 
 
 if __name__ == "__main__":
