@@ -140,6 +140,26 @@ def addreqinputtextfile(parser, varname, onecol=False):
     )
 
 
+def addreqinputtextfiles(parser, varname, numreq="Two", nargs="*", onecol=False):
+    if onecol:
+        colspecline = (
+            "Use [:COLUMN] to select which column to use, where COLUMN is an "
+            "integer or a column name (if input file is BIDS)"
+        )
+    else:
+        colspecline = (
+            "Use [:COLSPEC] to select which column(s) to use, where COLSPEC is an "
+            "integer, a column separated list of ranges, or a comma "
+            "separated set of column names (if input file is BIDS).  Default is to use all columns"
+        )
+    parser.add_argument(
+        varname,
+        nargs=nargs,
+        type=lambda x: is_valid_file(parser, x),
+        help=numreq + " text files containing one or more timeseries columns. " + colspecline,
+    )
+
+
 def addreqoutputtextfile(parser, varname, rootname=False):
     if rootname:
         helpline = "Root name for the output files"

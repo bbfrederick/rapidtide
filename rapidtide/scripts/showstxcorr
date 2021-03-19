@@ -33,6 +33,8 @@ import rapidtide.correlate as tide_corr
 from scipy.stats.stats import pearsonr
 import numpy as np
 import nibabel as nib
+import argparse
+import rapidtide.workflows.parser_funcs as pf
 
 from matplotlib.pyplot import plot, legend, show, figure
 
@@ -103,24 +105,16 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="showstxcorr",
         description="Plots the data in text files.",
-        usage="%(prog)s texfilename[:col1,col2...,coln] [textfilename]... [options]",
+        usage="%(prog)s infilename1 infilename2 outfileroot [options]",
     )
 
+    pf.addreqinputtextfile(parser, "infilename1", onecol=True)
+    pf.addreqinputtextfile(parser, "infilename2", onecol=True)
     parser.add_argument(
-        "textfilenames",
-        type=str,
-        nargs="2",
-        help="One or more input files, with optional column specifications",
-    )
-
-    parser.add_argument(
-        "--outname",
-        dest="outname",
-        metavar="FILENAME",
+        "outfilename",
         type=str,
         action="store",
         help="The root name of the output files.",
-        default=None,
     )
 
     sampling = parser.add_mutually_exclusive_group()
@@ -129,7 +123,7 @@ def _get_parser():
         dest="samplerate",
         action="store",
         metavar="FREQ",
-        type=lambda x: is_float(parser, x),
+        type=lambda x: pf.is_float(parser, x),
         help=(
             "Set the sample rate of the data file to FREQ. "
             "If neither samplerate or sampletime is specified, sample rate is 1.0."
@@ -141,23 +135,95 @@ def _get_parser():
         dest="samplerate",
         action="store",
         metavar="TSTEP",
-        type=lambda x: invert_float(parser, x),
+        type=lambda x: pf.invert_float(parser, x),
         help=(
             "Set the sample rate of the data file to 1.0/TSTEP. "
             "If neither samplerate or sampletime is specified, sample rate is 1.0."
         ),
         default="auto",
     )
+    # add optional arguments
     parser.add_argument(
-        "--outname",
-        dest="outname",
-        metavar="FILENAME",
-        type=str,
-        action="store",
-        help="The root name of the output files.",
-        default=None,
+        "--nodisplay",
+        dest="display",
+        action="store_false",
+        help=("Do not plot the data (for noninteractive use)"),
+        default=True,
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Enable additional debugging output."),
+        default=False,
+    )
+    parser.add_argument(
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help=("Print out more debugging information"),
+        default=False,
+    )
+    pf.addsearchrangeopts(parser, details=True)
+    pf.addtimerangeopts(parser)
+    parser.add_argument(
+        "--trimdata",
+        dest="trimdata",
+        action="store_true",
+        help=("Trimming data to match"),
+        default=False,
     )
 
+    preproc = parser.add_argument_group()
+    preproc.add_argument(
+        "--detrendorder",
+        dest="detrendorder",
+        action="store",
+        type=int,
+        metavar="ORDER",
+        help=("Set order of trend removal (0 to disable, default is 1 - linear). "),
+        default=1,
+    )
+    # add window options
+    pf.addwindowopts(parser)
+
+    # Filter arguments
+    pf.addfilteropts(parser, "timecourses", details=True)
+
+    # Preprocessing options
+    preproc = parser.add_argument_group("Preprocessing options")
+    preproc.add_argument(
+        "--cepstral",
+        dest="cepstral",
+        action="store_true",
+        help="Check time delay using Choudhary's cepstral technique. ",
+        default=False,
+    )
+    preproc.add_argument(
+        "--corrweighting",
+        dest="corrweighting",
+        action="store",
+        type=str,
+        choices=["None", "phat", "liang", "eckart"],
+        help=("Method to use for cross-correlation " "weighting. Default is  None. "),
+        default="None",
+    )
+    preproc.add_argument(
+        "--invert",
+        dest="invert",
+        action="store_true",
+        help=("Invert one timecourse prior to correlation. "),
+        default=False,
+    )
+    preproc.add_argument(
+        "--label",
+        dest="label",
+        metavar="LABEL",
+        action="store",
+        type=str,
+        help=("Label for the delay value. "),
+        default="None",
+    )
     return parser
 
 
@@ -259,7 +325,7 @@ def main():
     dumpfiltered = False
     matrixoutput = False
 
-    # scan the command line arguments
+    """# scan the command line arguments
     try:
         opts, args = getopt.gnu_getopt(
             sys.argv[1:],
@@ -286,15 +352,27 @@ def main():
     if len(args) > 1:
         print("showstxcorr takes no unflagged arguments")
         usage()
-        exit()
+        exit()"""
+
+    # grab the command line arguments then pass them off.
+    try:
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
+
+    # finish up processing arguments
+    args, theprefilter = pf.postprocessfilteropts(args)
+    args = pf.postprocesssearchrangeopts(args)
+    args = pf.postprocesstimerangeopts(args)
 
     # unset all required arguments
-    infilename = []
-    sampletime = None
-    Fs = None
-    outfilename = None
+    # infilename = []
+    # sampletime = None
+    # Fs = None
+    # outfilename = None
 
-    theprefilter = tide_filt.noncausalfilter()
+    """theprefilter = tide_filt.noncausalfilter()
 
     # set the default characteristics
     print("setting default filter to pass", window_lowestfreq, "to", window_upperfreq)
@@ -467,52 +545,33 @@ def main():
                     ")",
                 )
         else:
-            assert False, "unhandled option"
+            #assert False, "unhandled option"
+            pass"""
 
     # check that required arguments are set
-    if outfilename is None:
-        print("outfile must be set")
+    if args.samplerate == "auto":
+        print("samplerate must be set")
         usage()
         sys.exit()
-
-    if sampletime is None:
-        print("sampletime must be set")
-        usage()
-        sys.exit()
+    sampletime = 1.0 / args.samplerate
 
     # read in the files and get everything trimmed to the right length
     stepsize = sampletime * np.round(stepsize / sampletime)
-    startpoint = max([int(starttime * Fs), 0])
-    if len(infilename) == 1:
-        # each column is a timecourse, each row is a timepoint
-        inputdata = tide_io.readvecs(infilename[0])
-        print("input data shape is ", inputdata.shape)
-        if inputdata.shape[0] > 2:
-            matrixoutput = True
-        numpoints = inputdata.shape[1]
-        endpoint = min([startpoint + int(duration * Fs), numpoints])
-        trimmeddata = inputdata[:, startpoint:endpoint]
-    elif len(infilename) == 2:
-        inputdata1 = tide_io.readvec(infilename[0])
-        numpoints = len(inputdata1)
-        inputdata2 = tide_io.readvec(infilename[1])
-        endpoint1 = min(
-            [
-                startpoint + int(duration * Fs),
-                int(len(inputdata1)),
-                int(len(inputdata2)),
-            ]
-        )
-        endpoint2 = min([int(duration * Fs), int(len(inputdata1)), int(len(inputdata2))])
-        trimmeddata = np.zeros((2, numpoints), dtype="float")
-        trimmeddata[0, :] = inputdata1[startpoint:endpoint1]
-        trimmeddata[1, :] = inputdata2[0:endpoint2]
-    else:
-        print(
-            "showstxcorr requires 1 multicolumn timecourse file or two single column timecourse files as input"
-        )
-        usage()
-        sys.exit()
+    startpoint = max([int(starttime * args.samplerate), 0])
+    inputdata1 = tide_io.readvec(args.infilename1)
+    numpoints = len(inputdata1)
+    inputdata2 = tide_io.readvec(args.infilename2)
+    endpoint1 = min(
+        [
+            startpoint + int(duration * args.samplerate),
+            int(len(inputdata1)),
+            int(len(inputdata2)),
+        ]
+    )
+    endpoint2 = min([int(duration * args.samplerate), int(len(inputdata1)), int(len(inputdata2))])
+    trimmeddata = np.zeros((2, numpoints), dtype="float")
+    trimmeddata[0, :] = inputdata1[startpoint:endpoint1]
+    trimmeddata[1, :] = inputdata2[0:endpoint2]
 
     # band limit the regressors if that is needed
     if theprefilter.gettype() != "None":
@@ -527,7 +586,7 @@ def main():
     print("preprocessing all timecourses")
     for component in range(0, numcomponents):
         filtereddata = tide_math.corrnormalize(
-            theprefilter.apply(Fs, reformdata[component, :]),
+            theprefilter.apply(args.samplerate, reformdata[component, :]),
             windowfunc="None",
             detrendorder=detrendorder,
         )
@@ -538,7 +597,7 @@ def main():
     xcorr_x = np.r_[0.0:tclen] * sampletime - (tclen * sampletime) / 2.0
     laglimit = 15.0
     widthlimit = 15.0
-    halfwindow = int(laglimit * Fs)
+    halfwindow = int(laglimit * args.samplerate)
     searchstart = int(int(tclen) // 2 - halfwindow)
     searchend = int(int(tclen) // 2 + halfwindow)
     xcorr_x_trim = xcorr_x[searchstart:searchend]
@@ -627,11 +686,11 @@ def main():
         init_sizes = init_hdr["pixdim"].copy()
         init_sizes[4] = sampletime
         init_hdr["toffset"] = times[0]
-        tide_io.savetonifti(corrpertime, init_hdr, outfilename + "_pearsonR")
-        tide_io.savetonifti(ppertime, init_hdr, outfilename + "_corrp")
-        tide_io.savetonifti(Rvals, init_hdr, outfilename + "_maxxcorr")
-        tide_io.savetonifti(delayvals, init_hdr, outfilename + "_delayvals")
-        tide_io.savetonifti(valid, init_hdr, outfilename + "_valid")
+        tide_io.savetonifti(corrpertime, init_hdr, args.outfilename + "_pearsonR")
+        tide_io.savetonifti(ppertime, init_hdr, args.outfilename + "_corrp")
+        tide_io.savetonifti(Rvals, init_hdr, args.outfilename + "_maxxcorr")
+        tide_io.savetonifti(delayvals, init_hdr, args.outfilename + "_delayvals")
+        tide_io.savetonifti(valid, init_hdr, args.outfilename + "_valid")
         rows = []
         cols = []
         for i in range(numcomponents):
@@ -641,32 +700,32 @@ def main():
             df = pd.DataFrame(data=corrpertime[:, :, 0, 0], columns=cols)
             df.insert(0, "sources", pd.Series(rows))
             df.to_csv(
-                outfilename + "_seg_" + str(segment).zfill(4) + "_pearsonR.csv",
+                args.outfilename + "_seg_" + str(segment).zfill(4) + "_pearsonR.csv",
                 index=False,
             )
             df = pd.DataFrame(data=ppertime[:, :, 0, 0], columns=cols)
             df.insert(0, "sources", pd.Series(rows))
             df.to_csv(
-                outfilename + "_seg_" + str(segment).zfill(4) + "_corrp.csv",
+                args.outfilename + "_seg_" + str(segment).zfill(4) + "_corrp.csv",
                 index=False,
             )
         for segment in range(xlength):
             df = pd.DataFrame(data=Rvals[:, :, 0, 0], columns=cols)
             df.insert(0, "sources", pd.Series(rows))
             df.to_csv(
-                outfilename + "_seg_" + str(segment).zfill(4) + "_maxxcorr.csv",
+                args.outfilename + "_seg_" + str(segment).zfill(4) + "_maxxcorr.csv",
                 index=False,
             )
             df = pd.DataFrame(data=delayvals[:, :, 0, 0], columns=cols)
             df.insert(0, "sources", pd.Series(rows))
             df.to_csv(
-                outfilename + "_seg_" + str(segment).zfill(4) + "_delayvals.csv",
+                args.outfilename + "_seg_" + str(segment).zfill(4) + "_delayvals.csv",
                 index=False,
             )
             df = pd.DataFrame(data=valid[:, :, 0, 0], columns=cols)
             df.insert(0, "sources", pd.Series(rows))
             df.to_csv(
-                outfilename + "_seg_" + str(segment).zfill(4) + "_valid.csv",
+                args.outfilename + "_seg_" + str(segment).zfill(4) + "_valid.csv",
                 index=False,
             )
 
@@ -691,18 +750,18 @@ def main():
             detrendorder=0,
             display=False,
         )
-        tide_io.writenpvecs(corrpertime, outfilename + "_pearson.txt")
-        tide_io.writenpvecs(ppertime, outfilename + "_pvalue.txt")
-        tide_io.writenpvecs(Rvals, outfilename + "_Rvalue.txt")
-        tide_io.writenpvecs(delayvals, outfilename + "_delay.txt")
-        tide_io.writenpvecs(valid, outfilename + "_mask.txt")
+        tide_io.writenpvecs(corrpertime, args.outfilename + "_pearson.txt")
+        tide_io.writenpvecs(ppertime, args.outfilename + "_pvalue.txt")
+        tide_io.writenpvecs(Rvals, args.outfilename + "_Rvalue.txt")
+        tide_io.writenpvecs(delayvals, args.outfilename + "_delay.txt")
+        tide_io.writenpvecs(valid, args.outfilename + "_mask.txt")
         filtereddata1 = tide_math.corrnormalize(
-            theprefilter.apply(Fs, trimmeddata[0, :]),
+            theprefilter.apply(args.samplerate, trimmeddata[0, :]),
             windowfunc="None",
             detrendorder=detrendorder,
         )
         filtereddata2 = tide_math.corrnormalize(
-            theprefilter.apply(Fs, trimmeddata[1, :]),
+            theprefilter.apply(args.samplerate, trimmeddata[1, :]),
             windowfunc="None",
             detrendorder=detrendorder,
         )
