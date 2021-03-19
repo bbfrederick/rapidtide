@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-input1 = tide_io.readvec('lf_HbO')
-input2 = tide_io.readvec('lt_HbO')
+input1 = tide_io.readvec("lf_HbO")
+input2 = tide_io.readvec("lt_HbO")
 corrtimes, wintimes, stcorr = tide_corr.faststcorrelate(input1, input2, nperseg=128)
 
 spec_img = stcorr
