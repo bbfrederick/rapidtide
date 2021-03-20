@@ -638,7 +638,7 @@ def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False
         maskmat = datamat[np.where(datamat != 0.0)]
         if len(maskmat) == 0:
             for thisfrac in thefracs:
-                thevals.appen(0.0)
+                thevals.append(0.0)
             return thevals
     else:
         maskmat = datamat
