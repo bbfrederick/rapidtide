@@ -22,11 +22,13 @@
 #
 from __future__ import print_function
 import rapidtide.io as tide_io
+import rapidtide.util as tide_util
 import rapidtide.stats as tide_stats
 import argparse
 import sys
 import numpy as np
 import rapidtide.workflows.parser_funcs as pf
+import copy
 
 
 def progressbar(thisval, end_val, label="Percent", barsize=60):
@@ -51,8 +53,8 @@ def _get_parser():
         dest="histlen",
         type=int,
         metavar="LEN",
-        help="Set histogram length to LEN (default is 101).",
-        default=101,
+        help="Set histogram length to LEN (default is to set automatically).",
+        default=None,
     )
     parser.add_argument(
         "--minval",
@@ -92,7 +94,7 @@ def _get_parser():
 
 def main():
     # set default variable values
-    thepercentiles = [0.95, 0.99, 0.995, 0.999]
+    thepercentiles = [0.2, 0.25, 0.5, 0.75, 0.98]
     thepvalnames = []
     for thispercentile in thepercentiles:
         thepvalnames.append(str(1.0 - thispercentile).replace(".", "p"))
@@ -105,8 +107,9 @@ def main():
         raise
 
     # load the data
-    print("loading data")
+    print("loading data...")
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)
+    print("done")
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
     if timepoints > 1:
         is4D = True
@@ -114,6 +117,7 @@ def main():
         is4D = False
 
     if args.maskfile is not None:
+        print("loading mask...")
         (
             mask_img,
             mask_data,
@@ -125,23 +129,31 @@ def main():
             print("Dimensions of " + args.maskfile + " mask do not match the input data - exiting")
             sys.exit()
     else:
+        print("generating mask...")
         mask_data = np.ones((xsize, ysize, numslices), dtype=np.float64)
+    print("done")
 
+    print("finding valid voxels...")
     numspatiallocs = int(xsize) * int(ysize) * int(numslices)
     maskasmatrix = mask_data.reshape((numspatiallocs))
     validvoxels = np.where(maskasmatrix > 0)[0]
     numvalidvoxels = len(validvoxels)
+    print("done")
 
+    print("reshaping matrices...")
     if is4D:
         dataasmatrix = input_data.reshape((numspatiallocs, timepoints))
         validdata = dataasmatrix[validvoxels, :]
     else:
         dataasmatrix = input_data.reshape((numspatiallocs))
         validdata = dataasmatrix[validvoxels]
+    print("dataasmatrix, validdata shapes:", dataasmatrix.shape, validdata.shape)
+    print("done")
 
     # set the histogram range
+    print("setting histogram range...")
     if args.robustrange:
-        histmin, histmax = tide_stats.getfracvals(validdata, [0.02, 0.98], numbins=101)[0]
+        histmin, histmax = tide_stats.getfracvals(validdata, [0.02, 0.98], numbins=101)
     else:
         if args.minval is None:
             histmin = np.min(validdata)
@@ -155,36 +167,80 @@ def main():
     print("the range is ", therange)
 
     if is4D:
+        if args.histlen is None:
+            thehistlen = 2 * int(np.floor(np.sqrt(timepoints))) + 1
+            print(f"histogram length set to {thehistlen}")
+        else:
+            thehistlen = args.histlen
+
         print("allocating arrays")
-        sorteddata = np.zeros((numvalidvoxels, timepoints), dtype="float")
-        outputhists = np.zeros((numspatiallocs, args.histlen), dtype="float")
-        outputhistfits = np.zeros((numspatiallocs, args.histlen), dtype="float")
-        pcts_data = np.zeros((numspatiallocs, len(thepercentiles)), dtype="float")
-        pcts_fit = np.zeros((numspatiallocs, len(thepercentiles)), dtype="float")
+        outputhists = np.zeros((numvalidvoxels, thehistlen), dtype="float")
+        pcts_data = np.zeros((numvalidvoxels, len(thepercentiles)), dtype="float")
 
-        # cycle over all voxels
-        print("now cycling over all voxels")
-        for spatialloc in range(0, validvoxels):
-            meanhist, bins = np.histogram(
-                validdata[spatialloc, :], bins=numbins, range=(histmin, histmax)
-            )
-            sorteddata[spatialloc, :] = np.sort(dataasmatrix[spatialloc, :])
-            if spatialloc % 100 == 0:
-                progressbar(spatialloc + 1, numspatiallocs, label="Percent complete")
-
-        # now do the ones with other numbers of time points
-        theheader = input_hdr
+        # calculate and save the sorted lists
+        sorteddata = np.sort(validdata, axis=1)
+        outmatrix = np.zeros((numspatiallocs, timepoints), dtype="float")
+        outmatrix[validvoxels, :] = sorteddata
+        outputimg = outmatrix.reshape((xsize, ysize, numslices, timepoints))
+        theheader = copy.deepcopy(input_hdr)
         tide_io.savetonifti(
-            sorteddata.reshape((xsize, ysize, numslices, timepoints)),
+            outputimg,
             theheader,
             args.outputroot + "_sorted",
         )
+
+        # now pull out and save the percentiles
+        for idx, thispercentile in enumerate(thepercentiles):
+            pctindex = int(np.round(timepoints * thispercentile, 0))
+            print(f"percentile {thispercentile} at index {pctindex}")
+            pcts_data[:, idx] = 1.0 * sorteddata[:, pctindex]
+        outmatrix = np.zeros((numspatiallocs, len(thepercentiles)), dtype="float")
+        outmatrix[validvoxels, :] = pcts_data
+        outputimg = outmatrix.reshape((xsize, ysize, numslices, len(thepercentiles)))
+        theheader = copy.deepcopy(input_hdr)
+        theheader["dim"][4] = len(thepercentiles)
+        theheader["pixdim"][4] = 1.0 / (len(thepercentiles) - 1)
+        theheader["toffset"] = 0.0
+        tide_io.savetonifti(
+            outputimg,
+            theheader,
+            args.outputroot + "_pcts",
+        )
+
+        # cycle over all voxels
+        print("now cycling over all voxels")
+        for spatialloc in range(0, numvalidvoxels):
+            outputhists[spatialloc, :], bins = np.histogram(
+                validdata[spatialloc, :], bins=thehistlen, range=(histmin, histmax)
+            )
+            if spatialloc % 1000 == 0:
+                progressbar(spatialloc + 1, numvalidvoxels, label="Percent complete")
+
+        # save the histogram data
+        outmatrix = np.zeros((numspatiallocs, thehistlen), dtype="float")
+        outmatrix[validvoxels, :] = outputhists
+        outputimg = outmatrix.reshape((xsize, ysize, numslices, thehistlen))
+        theheader = copy.deepcopy(input_hdr)
+        theheader["dim"][4] = thehistlen
+        theheader["pixdim"][4] = bins[1] - bins[0]
+        theheader["toffset"] = bins[0]
+        tide_io.savetonifti(
+            outputimg,
+            theheader,
+            args.outputroot + "_hists",
+        )
+
     else:
+        if args.histlen is None:
+            thehistlen = int(np.floor(np.sqrt(numvalidvoxels))) + 1
+            print(f"histogram length set to {thehistlen}")
+        else:
+            thehistlen = args.histlen
         dataasmatrix = input_data.reshape((numspatiallocs))
         validdata = dataasmatrix[validvoxels]
         tide_stats.makeandsavehistogram(
             validdata,
-            args.histlen,
+            thehistlen,
             0,
             args.outputroot + "_hist",
             displaytitle="Value histogram",
