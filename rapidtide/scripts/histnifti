@@ -194,6 +194,7 @@ def main():
             pctindex = int(np.round(timepoints * thispercentile, 0))
             print(f"percentile {thispercentile} at index {pctindex}")
             pcts_data[:, idx] = 1.0 * sorteddata[:, pctindex]
+        del sorteddata
         outmatrix = np.zeros((numspatiallocs, len(thepercentiles)), dtype="float")
         outmatrix[validvoxels, :] = pcts_data
         outputimg = outmatrix.reshape((xsize, ysize, numslices, len(thepercentiles)))
@@ -206,6 +207,7 @@ def main():
             theheader,
             args.outputroot + "_pcts",
         )
+        del pcts_data
 
         # cycle over all voxels
         print("now cycling over all voxels")
