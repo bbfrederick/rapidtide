@@ -91,7 +91,7 @@ script_list = [
     "rapidtide/scripts/histnifti",
     "rapidtide/scripts/atlastool",
     "rapidtide/scripts/atlasaverage",
-    "rapidtide/scripts/linfit",
+    "rapidtide/scripts/polyfitim",
     "rapidtide/scripts/happy_legacy",
     "rapidtide/scripts/happy",
     "rapidtide/scripts/happywarp",

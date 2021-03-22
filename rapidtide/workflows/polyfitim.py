@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
-#   Copyright 2016-2019 Blaise Frederick
+#   Copyright 2016-2021 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -16,10 +16,6 @@
 #   limitations under the License.
 #
 #
-#       $Author: frederic $
-#       $Date: 2016/06/14 12:04:50 $
-#       $Id: linfit,v 1.4 2016/06/14 12:04:50 frederic Exp $
-#
 from __future__ import print_function, division
 
 import argparse
@@ -33,10 +29,10 @@ import numpy as np
 
 def _get_parser():
     """
-    Argument parser for linfit
+    Argument parser for polyfitim
     """
     parser = argparse.ArgumentParser(
-        prog="linfit",
+        prog="polyfitim",
         description="Fit a spatial template to a 3D or 4D NIFTI file.",
         usage="%(prog)s datafile datamask templatefile templatmask outputroot [options]",
     )
@@ -82,7 +78,7 @@ def _get_parser():
     return parser
 
 
-def linfit(
+def polyfitim(
     datafile,
     datamask,
     templatefile,
@@ -326,7 +322,7 @@ def main():
 
     print(args)
 
-    linfit(
+    polyfitim(
         args["datafile"],
         args["datamask"],
         args["templatefile"],
