@@ -125,7 +125,7 @@ def addreqinputtextfile(parser, varname, onecol=False):
     if onecol:
         colspecline = (
             "Use [:COLUMN] to select which column to use, where COLUMN is an "
-            "integer or a column name (if input file is BIDS)"
+            "integer or a column name (if input file is BIDS)."
         )
     else:
         colspecline = (
@@ -144,13 +144,13 @@ def addreqinputtextfiles(parser, varname, numreq="Two", nargs="*", onecol=False)
     if onecol:
         colspecline = (
             "Use [:COLUMN] to select which column to use, where COLUMN is an "
-            "integer or a column name (if input file is BIDS)"
+            "integer or a column name (if input file is BIDS)."
         )
     else:
         colspecline = (
             "Use [:COLSPEC] to select which column(s) to use, where COLSPEC is an "
             "integer, a column separated list of ranges, or a comma "
-            "separated set of column names (if input file is BIDS).  Default is to use all columns"
+            "separated set of column names (if input file is BIDS).  Default is to use all columns."
         )
     parser.add_argument(
         varname,
