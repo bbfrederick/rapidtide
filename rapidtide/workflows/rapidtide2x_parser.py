@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
-#   Copyright 2016-2019 Blaise Frederick
+#   Copyright 2016-2021 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -16,13 +16,6 @@
 #   limitations under the License.
 #
 #
-# $Author: frederic $
-# $Date: 2016/07/11 14:50:43 $
-# $Id: rapidtide,v 1.161 2016/07/11 14:50:43 frederic Exp $
-#
-#
-#
-
 from __future__ import print_function, division
 
 import getopt
