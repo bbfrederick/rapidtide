@@ -17,14 +17,13 @@
 
 
 from __future__ import print_function, division
-import getopt
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import sys
-import glob
 from scipy.stats import skew
 import rapidtide.io as tide_io
+import argparse
+import rapidtide.workflows.parser_funcs as pf
 
 
 def plethquality(waveform, Fs, S_windowsecs=5.0, debug=False):
@@ -73,53 +72,62 @@ def plethquality(waveform, Fs, S_windowsecs=5.0, debug=False):
     return S_sqi_mean, S_sqi_std, S_waveform
 
 
-def usage():
-    print("usage: plethquality inputfile outputfile samplerate")
-    print("")
-    print("required arguments:")
-    print("    inputfile                 - the name of a text file containing a cardiac signal")
-    print("    outputfile                - the name of the output text file")
-    print("    samplerate                - data samplerate in Hz")
-    print("")
-    print("optional arguments:")
-    print("    --nodisp                  - do not plot quality waveform")
+def _get_parser():
+    """
+    Argument parser for plethquality
+    """
+    parser = argparse.ArgumentParser(
+        prog="plethquality",
+        description=("Calculate quality metrics from a cardiac text file."),
+        usage="%(prog)s infilename outfilename [options]",
+    )
+
+    # Required arguments
+    pf.addreqinputtextfile(parser, "infilename", onecol=True)
+    parser.add_argument("outfilename", help="The name of the output text file.")
+
+    # add optional arguments
+    parser.add_argument(
+        "--samplerate",
+        type=lambda x: pf.is_float(parser, x),
+        help="Sample rate of timecourse, in Hz (if not specified in input file).",
+        default=None,
+    )
+    parser.add_argument(
+        "--nodisplay",
+        dest="display",
+        action="store_false",
+        help=("Do not plot the data (for noninteractive use)."),
+        default=True,
+    )
+    return parser
 
 
 def main():
-    # handle required args first
-    if len(sys.argv) < 4:
-        usage()
-        sys.exit()
-    inputfile = sys.argv[1]
-    outputfile = sys.argv[2]
-    Fs = float(sys.argv[3])
-
-    display = True
-
-    # now scan for optional arguments
+    # grab the command line arguments then pass them off.
     try:
-        opts, args = getopt.getopt(sys.argv[4:], "", ["nodisp", "help"])
-    except getopt.GetoptError as err:
-        # print(help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
-        usage()
-        sys.exit(2)
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
-    for o, a in opts:
-        if o == "--nodisp":
-            display = False
-        else:
-            assert False, "unhandled option"
+    Fs, starttime, dummy, plethdata, dummy, dummy = tide_io.readvectorsfromtextfile(
+        args.infilename, onecol=True
+    )
+    plethdata = np.transpose(plethdata)
 
-    # read in the data
-    plethdata = tide_io.readvec(inputfile)
+    if args.samplerate is not None:
+        Fs = args.samplerate
+    elif Fs is None:
+        print("no samplerate found in file - must be set with the --samplerate option")
+        sys.exit()
 
     # calculate the quality score
     s_mean, s_std, quality = plethquality(plethdata, Fs)
-    print(inputfile, s_mean, "+/-", s_std)
-    tide_io.writevec(quality, outputfile)
+    print(args.infilename, s_mean, "+/-", s_std)
+    tide_io.writevec(quality, args.outfilename)
 
-    if display:
+    if args.display:
         plt.figure()
         plt.plot(quality)
         plt.show()
