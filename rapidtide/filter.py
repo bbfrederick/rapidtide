@@ -48,13 +48,6 @@ except ImportError:
     numbaexists = False
 numbaexists = False
 
-try:
-    import nibabel as nib
-
-    nibabelexists = True
-except ImportError:
-    nibabelexists = False
-
 donotusenumba = False
 
 try:
