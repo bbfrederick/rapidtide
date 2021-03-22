@@ -171,10 +171,10 @@ def main():
         dataasmatrix = input_data.reshape((numspatiallocs))
         validdata = dataasmatrix[validvoxels]
     print("dataasmatrix, validdata shapes:", dataasmatrix.shape, validdata.shape)
-    print("done")
+    print("done", flush=True)
 
     # set the histogram range
-    print("setting histogram range...")
+    print("setting histogram range...", flush=True)
     if args.robustrange:
         histmin, histmax = tide_stats.getfracvals(validdata, [0.02, 0.98], numbins=101)
     else:
@@ -187,20 +187,21 @@ def main():
         else:
             histmax = args.maxval
     therange = (histmin, histmax)
-    print("the range is ", therange)
+    print("the range is ", therange, flush=True)
 
     if is4D:
         if args.histlen is None:
             thehistlen = 2 * int(np.floor(np.sqrt(timepoints))) + 1
-            print(f"histogram length set to {thehistlen}")
+            print(f"histogram length set to {thehistlen}", flush=True)
         else:
             thehistlen = args.histlen
 
-        print("allocating arrays")
+        print("allocating arrays", flush=True)
         outputhists = np.zeros((numvalidvoxels, thehistlen), dtype="float")
         pcts_data = np.zeros((numvalidvoxels, len(thepercentiles)), dtype="float")
 
         # calculate and save the sorted lists
+        print("calculating sorted arrays", flush=True)
         sorteddata = np.sort(validdata, axis=1)
         outmatrix = np.zeros((numspatiallocs, timepoints), dtype="float")
         outmatrix[validvoxels, :] = sorteddata
@@ -213,6 +214,7 @@ def main():
         )
 
         # now pull out and save the percentiles
+        print("calculating percentiles", flush=True)
         if args.nozero:
             for spatialloc in range(0, numvalidvoxels):
                 pcts_data[spatialloc, :] = tide_stats.getfracvals(
@@ -245,7 +247,7 @@ def main():
         del pcts_data
 
         # cycle over all voxels
-        print("now cycling over all voxels")
+        print("calculating histograms", flush=True)
         for spatialloc in range(0, numvalidvoxels):
             if args.nozero:
                 inputarray = validdata[
