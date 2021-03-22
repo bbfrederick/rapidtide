@@ -488,6 +488,7 @@ def makeandsavehistogram(
     displayplots=False,
     refine=False,
     therange=None,
+    normalize=False,
     dictvarname=None,
     thedict=None,
     saveasbids=False,
@@ -506,6 +507,7 @@ def makeandsavehistogram(
     displayplots
     refine
     therange
+    normalize
     dictvarname
     thedict
 
@@ -519,6 +521,10 @@ def makeandsavehistogram(
     thestore = np.zeros((2, len(thehist[0])), dtype="float64")
     thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
     thestore[1, :] = thehist[0][-histlen:]
+    if normalize:
+        totalval = np.sum(thestore[1, :])
+        if totalval != 0.0:
+            thestore[1, :] /= totalval
     if dictvarname is None:
         varroot = outname
     else:
@@ -635,14 +641,16 @@ def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False
     thevals = []
 
     if nozero:
-        maskmat = datamat[np.where(datamat != 0.0)]
+        maskmat = np.sort(datamat[np.where(datamat != 0.0)])
         if len(maskmat) == 0:
             for thisfrac in thefracs:
                 thevals.append(0.0)
             return thevals
     else:
-        maskmat = datamat
-    (meanhist, bins) = np.histogram(maskmat, bins=numbins, range=(themin, themax))
+        maskmat = np.sort(datamat)
+    for thisfrac in thefracs:
+        thevals.append(maskmat[int(np.round(thisfrac * len(maskmat), 0))])
+    """(meanhist, bins) = np.histogram(maskmat, bins=numbins, range=(themin, themax))
     cummeanhist = np.cumsum(meanhist)
     if displayplots:
         fig = plt.figure()
@@ -656,7 +664,7 @@ def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False
         for i in range(0, numbins):
             if cummeanhist[i] >= target:
                 thevals[-1] = bins[i]
-                break
+                break"""
     return thevals
 
 

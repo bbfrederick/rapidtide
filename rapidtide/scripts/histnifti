@@ -82,6 +82,29 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--nozero",
+        dest="nozero",
+        action="store_true",
+        help=("Do not include values exactly equal to 0.0 in the histogram."),
+        default=False,
+    )
+    parser.add_argument(
+        "--nozerothresh",
+        dest="nozerothresh",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        metavar="THRESH",
+        help="Absolute values less than this are considered zero.  Default is 0.01.",
+        default=0.01,
+    )
+    parser.add_argument(
+        "--normhist",
+        dest="normhist",
+        action="store_true",
+        help=("Normalize histograms to sum to 1.0."),
+        default=False,
+    )
+    parser.add_argument(
         "--maskfile",
         dest="maskfile",
         type=str,
@@ -190,10 +213,22 @@ def main():
         )
 
         # now pull out and save the percentiles
-        for idx, thispercentile in enumerate(thepercentiles):
-            pctindex = int(np.round(timepoints * thispercentile, 0))
-            print(f"percentile {thispercentile} at index {pctindex}")
-            pcts_data[:, idx] = 1.0 * sorteddata[:, pctindex]
+        if args.nozero:
+            for spatialloc in range(0, numvalidvoxels):
+                pcts_data[spatialloc, :] = tide_stats.getfracvals(
+                    sorteddata[spatialloc, :], thepercentiles
+                )
+                if spatialloc % 1000 == 0:
+                    progressbar(
+                        spatialloc + 1, numvalidvoxels, label="Percentiles: percent complete"
+                    )
+            progressbar(spatialloc + 1, numvalidvoxels, label="Percentiles: percent complete")
+            print()
+        else:
+            for idx, thispercentile in enumerate(thepercentiles):
+                pctindex = int(np.round(timepoints * thispercentile, 0))
+                print(f"percentile {thispercentile} at index {pctindex}")
+                pcts_data[:, idx] = 1.0 * sorteddata[:, pctindex]
         del sorteddata
         outmatrix = np.zeros((numspatiallocs, len(thepercentiles)), dtype="float")
         outmatrix[validvoxels, :] = pcts_data
@@ -212,11 +247,23 @@ def main():
         # cycle over all voxels
         print("now cycling over all voxels")
         for spatialloc in range(0, numvalidvoxels):
+            if args.nozero:
+                inputarray = validdata[
+                    spatialloc, np.where(np.fabs(validdata[spatialloc, :]) > args.nozerothresh)[0]
+                ]
+            else:
+                inputarray = validdata[spatialloc, :]
             outputhists[spatialloc, :], bins = np.histogram(
-                validdata[spatialloc, :], bins=thehistlen, range=(histmin, histmax)
+                inputarray, bins=thehistlen, range=(histmin, histmax)
             )
+            if args.normhist:
+                totalval = np.sum(outputhists[spatialloc, :])
+                if totalval != 0.0:
+                    outputhists[spatialloc, :] /= totalval
             if spatialloc % 1000 == 0:
-                progressbar(spatialloc + 1, numvalidvoxels, label="Percent complete")
+                progressbar(spatialloc + 1, numvalidvoxels, label="Histograms: percent complete")
+        progressbar(spatialloc + 1, numvalidvoxels, label="Histograms: percent complete")
+        print()
 
         # save the histogram data
         outmatrix = np.zeros((numspatiallocs, thehistlen), dtype="float")
@@ -239,7 +286,12 @@ def main():
         else:
             thehistlen = args.histlen
         dataasmatrix = input_data.reshape((numspatiallocs))
-        validdata = dataasmatrix[validvoxels]
+        if args.nozero:
+            validdata = dataasmatrix[
+                np.where(np.fabs(dataasmatrix[validvoxels]) >= args.nozerothresh)[0]
+            ]
+        else:
+            validdata = dataasmatrix[validvoxels]
         tide_stats.makeandsavehistogram(
             validdata,
             thehistlen,
@@ -247,6 +299,7 @@ def main():
             args.outputroot + "_hist",
             displaytitle="Value histogram",
             displayplots=True,
+            normalize=args.normhist,
             refine=False,
         )
 
