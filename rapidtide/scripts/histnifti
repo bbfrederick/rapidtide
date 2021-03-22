@@ -176,7 +176,7 @@ def main():
     # set the histogram range
     print("setting histogram range...", flush=True)
     if args.robustrange:
-        histmin, histmax = tide_stats.getfracvals(np.flatten(validdata), [0.02, 0.98])
+        histmin, histmax = tide_stats.getfracvals(validdata.flatten(), [0.02, 0.98])
     else:
         if args.minval is None:
             histmin = np.min(validdata)
