@@ -85,7 +85,7 @@ def _get_parser():
         "--nozero",
         dest="nozero",
         action="store_true",
-        help=("Do not include values exactly equal to 0.0 in the histogram."),
+        help=("Do not include zero values in the histogram."),
         default=False,
     )
     parser.add_argument(
