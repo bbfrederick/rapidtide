@@ -229,26 +229,21 @@ def sigFromDistributionData(
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles) / 2.0
         print("thepercentiles adapted for two tailed distribution:", thepercentiles)
-    pcts_data = getfracvals(
-        vallist, thepercentiles, numbins=int(np.sqrt(len(vallist)) * 5.0), nozero=nozero
-    )
+    pcts_data = getfracvals(vallist, thepercentiles, nozero=nozero)
     if dosighistfit:
-        pcts_fit = getfracvalsfromfit(
-            histfit, thepercentiles, numbins=histlen, displayplots=displayplots
-        )
+        pcts_fit = getfracvalsfromfit(histfit, thepercentiles)
         return pcts_data, pcts_fit, histfit
     else:
         return pcts_data, 0, 0
 
 
-def rfromp(fitfile, thepercentiles, numbins=1000):
+def rfromp(fitfile, thepercentiles):
     """
 
     Parameters
     ----------
     fitfile
     thepercentiles
-    numbins
 
     Returns
     -------
@@ -256,7 +251,7 @@ def rfromp(fitfile, thepercentiles, numbins=1000):
     """
     thefit = np.array(tide_io.readvecs(fitfile)[0]).astype("float64")
     print("thefit = ", thefit)
-    return getfracvalsfromfit(thefit, thepercentiles, numbins=1000, displayplots=True)
+    return getfracvalsfromfit(thefit, thepercentiles)
 
 
 def tfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
@@ -605,30 +600,28 @@ def makepmask(rvals, pval, sighistfit, onesided=True):
 
 
 # Find the image intensity value which thefrac of the non-zero voxels in the image exceed
-def getfracval(datamat, thefrac, numbins=200, nozero=False):
+def getfracval(datamat, thefrac, nozero=False):
     """
 
     Parameters
     ----------
     datamat
     thefrac
-    numbins
 
     Returns
     -------
 
     """
-    return getfracvals(datamat, [thefrac], numbins=numbins, nozero=nozero)[0]
+    return getfracvals(datamat, [thefrac], nozero=nozero)[0]
 
 
-def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False):
+def getfracvals(datamat, thefracs, nozero=False):
     """
 
     Parameters
     ----------
     datamat
     thefracs
-    numbins
     displayplots
     nozero
 
@@ -636,8 +629,6 @@ def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False
     -------
 
     """
-    themax = datamat.max()
-    themin = datamat.min()
     thevals = []
 
     if nozero:
@@ -650,21 +641,7 @@ def getfracvals(datamat, thefracs, numbins=200, displayplots=False, nozero=False
         maskmat = np.sort(datamat)
     for thisfrac in thefracs:
         thevals.append(maskmat[int(np.round(thisfrac * len(maskmat), 0))])
-    """(meanhist, bins) = np.histogram(maskmat, bins=numbins, range=(themin, themax))
-    cummeanhist = np.cumsum(meanhist)
-    if displayplots:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title("cumulative mean sum of histogram")
-        plt.plot(bins[-numbins:], cummeanhist[-numbins:])
-        plt.show()
-    for thisfrac in thefracs:
-        target = cummeanhist[numbins - 1] * thisfrac
-        thevals.append(0.0)
-        for i in range(0, numbins):
-            if cummeanhist[i] >= target:
-                thevals[-1] = bins[i]
-                break"""
+
     return thevals
 
 
@@ -713,14 +690,13 @@ def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
     return thevals
 
 
-def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
+def getfracvalsfromfit(histfit, thefracs):
     """
 
     Parameters
     ----------
     histfit
     thefracs
-    numbins
     displayplots
 
     Returns
@@ -729,20 +705,6 @@ def getfracvalsfromfit(histfit, thefracs, numbins=2000, displayplots=True):
     """
     # print('entering getfracvalsfromfit: histfit=',histfit, ' thefracs=', thefracs)
     thedist = johnsonsb(histfit[0], histfit[1], histfit[2], histfit[3])
-    # print('froze the distribution')
-    if displayplots:
-        themin = 0.001
-        themax = 0.999
-        bins = np.arange(themin, themax, (themax - themin) / numbins)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title("probability histogram")
-        plt.plot(
-            bins,
-            johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3]),
-        )
-        plt.show()
-    # thevals = johnsonsb.ppf(thefracs, histfit[0], histfit[1], histfit[2], histfit[3])
     thevals = thedist.ppf(thefracs)
     return thevals
 

@@ -369,7 +369,6 @@ def findbadpts(
         lower, upper = tide_stats.getfracvals(
             thewaveform,
             [(1.0 - retainthresh) / 2.0, (1.0 + retainthresh) / 2.0],
-            numbins=200,
         )
         therange = upper - lower
         lowerthresh = lower - therange
@@ -2030,7 +2029,7 @@ def happy_main(argparsingfunc):
             np.ceil(
                 int(
                     1.02
-                    * tide_stats.getfracval(instantaneous_time, 0.98, 200)
+                    * tide_stats.getfracval(instantaneous_time, 0.98)
                     // args.pulsereconstepsize
                 )
             )
