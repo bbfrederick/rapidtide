@@ -17,8 +17,8 @@
 #
 #
 from __future__ import print_function, division
-import getopt
 import os
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import sys
 import rapidtide.io as tide_io
@@ -28,7 +28,64 @@ import rapidtide.correlate as tide_corr
 import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 import rapidtide.fit as tide_fit
+import argparse
+import rapidtide.workflows.parser_funcs as pf
 import numpy as np
+
+
+def _get_parser():
+    """
+    Argument parser for plethquality
+    """
+    parser = argparse.ArgumentParser(
+        prog="applydlfilter",
+        description=("Apply a deep learning filter to a timecourse."),
+        usage="%(prog)s infilename outfilename [options]",
+    )
+
+    # Required arguments
+    parser.add_argument(
+        "infilename",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help="The name of the input text file (or a list of names of input files).",
+    )
+    parser.add_argument(
+        "outfilename",
+        help="The name of the output text file (or a list of names of output files).",
+    )
+
+    # add optional arguments
+    parser.add_argument(
+        "--model",
+        dest="model",
+        action="store",
+        metavar="MODELROOT",
+        type=str,
+        help=("Use model named MODELROOT (default is model_revised)."),
+        default="model_revised",
+    )
+    parser.add_argument(
+        "--filesarelists",
+        dest="filesarelists",
+        action="store_true",
+        help=("Input file contains lists of filenames, rather than data."),
+        default=False,
+    )
+    parser.add_argument(
+        "--nodisplay",
+        dest="display",
+        action="store_false",
+        help=("Do not plot the data (for noninteractive use)."),
+        default=True,
+    )
+    parser.add_argument(
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help=("Print a lot of internal information."),
+        default=False,
+    )
+    return parser
 
 
 def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
@@ -89,82 +146,35 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
     return maxval, maxdelay, failreason
 
 
-def usage():
-    print("usage: applydlfilter inputfile outputfile [--model=MODELROOT] [--filesarelists]")
-    print("")
-    print("required arguments:")
-    print(
-        "	inputfile                 - the name of a text file containing 25.0Hz raw cardiac signal"
-    )
-    print("	outputfile                - the name of the output text file")
-    print("")
-    print("optional arguments:")
-    print("	--model=MODELROOT         - use model named MODELROOT (default is model)")
-    print("	--filesarelists           - input files contain lists of filenames, rather than data")
-    print("	--nodisplay               - disables display")
-
-
 def main():
-    # handle required args first
-    if len(sys.argv) < 3:
-        usage()
-        sys.exit()
-    fmrifilename = sys.argv[1]
-    display = False
-    verbose = False
-    predfilename = sys.argv[2]
-
-    modelname = "model_revised"
-    filesarelists = False
-
-    # now scan for optional arguments
+    # grab the command line arguments then pass them off.
     try:
-        opts, args = getopt.getopt(
-            sys.argv[3:], "x", ["model=", "nodisplay", "filesarelists", "help"]
-        )
-    except getopt.GetoptError as err:
-        # print(help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
-        usage()
-        sys.exit(2)
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
-    for o, a in opts:
-        if o == "--model":
-            modelname = a
-            if verbose:
-                print("will use", modelname)
-        elif o == "--nodisplay":
-            display = False
-            if verbose:
-                print("disabling display")
-        elif o == "--filesarelists":
-            filesarelists = True
-            if verbose:
-                print("will treat specified files as lists")
-        else:
-            assert False, "unhandled option"
-
-    if filesarelists:
-        fmrifilenamelist = []
-        with open(fmrifilename, "r") as f:
+    if args.filesarelists:
+        infilenamelist = []
+        with open(args.infilename, "r") as f:
             inputlist = f.readlines()
             for line in inputlist:
-                fmrifilenamelist.append(line.strip())
-                if verbose:
-                    print(fmrifilenamelist[-1])
-        predfilenamelist = []
-        with open(predfilename, "r") as f:
+                infilenamelist.append(line.strip())
+                if args.verbose:
+                    print(infilenamelist[-1])
+        outfilenamelist = []
+        with open(args.outfilename, "r") as f:
             inputlist = f.readlines()
             for line in inputlist:
-                predfilenamelist.append(line.strip())
-                if verbose:
-                    print(predfilenamelist[-1])
-        if len(fmrifilenamelist) != len(predfilenamelist):
+                outfilenamelist.append(line.strip())
+                if args.verbose:
+                    print(outfilenamelist[-1])
+        if len(infilenamelist) != len(outfilenamelist):
             print("list lengths do not match - exiting")
             sys.exit()
     else:
-        fmrifilenamelist = [fmrifilename]
-        predfilenamelist = [predfilename]
+        infilenamelist = [args.infilename]
+        outfilenamelist = [args.outfilename]
 
     # load the filter
     modelpath = os.path.join(
@@ -174,7 +184,7 @@ def main():
         "models",
     )
     thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
-    thedlfilter.loadmodel(modelname)
+    thedlfilter.loadmodel(args.model)
     model = thedlfilter.model
     window_size = thedlfilter.window_size
     usebadpts = thedlfilter.usebadpts
@@ -182,33 +192,33 @@ def main():
     badpts = None
     if usebadpts:
         try:
-            badpts = tide_io.readvec(fmrifilename.replace(".txt", "_badpts.txt"))
+            badpts = tide_io.readvec(args.infilename.replace(".txt", "_badpts.txt"))
         except:
             print(
                 "bad points file",
-                fmrifilename.replace(".txt", "_badpts.txt"),
+                args.infilename.replace(".txt", "_badpts.txt"),
                 "not found!",
             )
             sys.exit()
 
-    for idx, fmrifilename in enumerate(fmrifilenamelist):
+    for idx, infilename in enumerate(infilenamelist):
         # read in the data
-        if verbose:
-            print("reading in", fmrifilename)
-        fmridata = tide_io.readvec(fmrifilename)
+        if args.verbose:
+            print("reading in", infilename)
+        fmridata = tide_io.readvec(infilename)
 
-        if verbose:
+        if args.verbose:
             print("filtering...")
         predicteddata = thedlfilter.apply(fmridata, badpts=badpts)
 
-        if verbose:
-            print("writing to", predfilenamelist[idx])
-        tide_io.writevec(predicteddata, predfilenamelist[idx])
+        if args.verbose:
+            print("writing to", outfilenamelist[idx])
+        tide_io.writevec(predicteddata, outfilenamelist[idx])
 
         maxval, maxdelay, failreason = checkcardmatch(fmridata, predicteddata, 25.0, debug=False)
-        print(fmrifilename, "max correlation input to output:", maxval)
+        print(infilename, "max correlation input to output:", maxval)
 
-        if display:
+        if args.display:
             plt.figure()
             plt.plot(fmridata)
             plt.plot(predicteddata)
@@ -216,4 +226,5 @@ def main():
 
 
 if __name__ == "__main__":
+    mpl.use("TkAgg")
     main()
