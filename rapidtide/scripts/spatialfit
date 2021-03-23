@@ -17,83 +17,76 @@
 #
 #
 from __future__ import print_function, division
-import getopt
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
+import rapidtide.util as tide_util
+import argparse
+import rapidtide.workflows.parser_funcs as pf
 
 from matplotlib.pyplot import *
 
 
-def usage():
-    print(
-        "usage: spatialfit datafile [--dmask=DATAMASK] templatefile [--tmask=TEMPLATEMASK] outputroot [--order=ORDER]"
+def _get_parser():
+    # get the command line parameters
+    parser = argparse.ArgumentParser(
+        prog="spatialfit",
+        description="Fit a 3D or 4D NIFTI file to a spatial template.",
+        usage="%(prog)s datafile templatefile outputroot [options]",
     )
-    print("")
-    print("required arguments:")
-    print("	datafile	- the name of the 3 or 4 dimensional nifti file to fit")
-    print("	templatefile	- the name of the 3 dimensional nifti file to use as a template")
-    print("	outputroot	- the root name of the output nifti files")
-    print("")
-    print("optional arguments:")
-    print("	--dmask=DATAMASK	- use DATAMASK to specify which voxels in the data to use")
-    print(
-        "	--tmask=TEMPLATEMASK	- use TEMPLATEMASK to specify which voxels in the template to use"
+    parser.add_argument(
+        "datafile",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help="the name of the 3D or 4D input NIFTI file",
     )
-    print("	--order=ORDER   	- fit up to ORDER order - default is 1 - linear")
-    print("")
-    return ()
+    parser.add_argument(
+        "templatefile",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help="the name of the 3D template NIFTI file",
+    )
+    parser.add_argument("outputroot", help="the root of the output file names")
+    parser.add_argument(
+        "--datamask",
+        dest="dmask",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="DATAMASK",
+        help="DATAMASK specifies which voxels in the data to use.",
+        default=None,
+    )
+    parser.add_argument(
+        "--templatemask",
+        dest="tmask",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="TEMPLATEMASK",
+        help="TEMPLATEMASK specifies which voxels in the template to use.",
+        default=None,
+    )
+    parser.add_argument(
+        "--order",
+        dest="order",
+        action="store",
+        type=int,
+        metavar="ORDER",
+        help="The order of the fit to the template.",
+        default=1,
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Enable additional debugging output."),
+        default=False,
+    )
+
+    return parser
 
 
 def main():
-    # set default variable values
-    usedmask = False
-    usetmask = False
-    order = 1
-
-    # parse command line arguments
+    # get the command line parameters
     try:
-        opts, args = getopt.gnu_getopt(sys.argv, "h", ["help", "dmask=", "tmask=", "order="])
-    except getopt.GetoptError as err:
-        # print(help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
-        usage()
-        sys.exit(2)
-
-    # handle required args first
-    if len(args) != 4:
-        print("spatial fit has 3 required arguments - ", len(args) - 1, "found")
-        usage()
-        sys.exit()
-
-    datafilename = args[1]
-    templatefilename = args[2]
-    outputrootname = args[3]
-
-    print(datafilename, templatefilename, outputrootname)
-
-    for o, a in opts:
-        if o == "--dmask":
-            usedmask = True
-            datamaskname = a
-            print("using", datamaskname, "as data mask")
-        elif o == "--tmask":
-            usetmask = True
-            templatemaskname = a
-            print("using", templatemaskname, "as template mask")
-        elif o == "--order":
-            order = int(a)
-            if not (0 <= order <= 4):
-                print("order should be between 0 and 4")
-                sys.exit()
-            if order == 1:
-                print("fitting to 1st order")
-            else:
-                print("fitting to", order, "th order")
-        elif o in ("-h", "--help"):
-            usage()
-            sys.exit()
-        else:
-            assert False, "unhandled option"
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
     # read in data
     print("reading in data arrays")
@@ -103,35 +96,39 @@ def main():
         datafile_hdr,
         datafiledims,
         datafilesizes,
-    ) = tide_io.readfromnifti(datafilename)
-    if usedmask:
+    ) = tide_io.readfromnifti(args.datafile)
+    if args.dmask is not None:
         (
             datamask_img,
             datamask_data,
             datamask_hdr,
             datamaskdims,
             datamasksizes,
-        ) = tide_io.readfromnifti(datamaskname)
+        ) = tide_io.readfromnifti(args.dmask)
     (
         templatefile_img,
         templatefile_data,
         templatefile_hdr,
         templatefiledims,
         templatefilesizes,
-    ) = tide_io.readfromnifti(templatefilename)
-    if usetmask:
+    ) = tide_io.readfromnifti(args.templatefile)
+    if args.tmask is not None:
         (
             templatemask_img,
             templatemask_data,
             templatemask_hdr,
             templatemaskdims,
             templatemasksizes,
-        ) = tide_io.readfromnifti(templatemaskname)
+        ) = tide_io.readfromnifti(args.tmask)
 
     xsize = datafiledims[1]
     ysize = datafiledims[2]
     numslices = datafiledims[3]
     timepoints = datafiledims[4]
+
+    if args.debug:
+        print(datafiledims)
+        print(templatefiledims)
 
     # check dimensions
     print("checking dimensions")
@@ -142,7 +139,7 @@ def main():
         print("template file time dimension is not equal to 1")
         exit()
 
-    if usedmask:
+    if args.dmask is not None:
         if not tide_io.checkspacedimmatch(datafiledims, datamaskdims):
             print("input mask spatial dimensions do not match image")
             exit()
@@ -150,7 +147,7 @@ def main():
             print("input mask time dimension does not match image")
             exit()
 
-    if usetmask:
+    if args.tmask is not None:
         if not tide_io.checkspacedimmatch(datafiledims, templatemaskdims):
             print("template mask spatial dimensions do not match image")
             exit()
@@ -162,15 +159,15 @@ def main():
     print("allocating arrays")
     numspatiallocs = int(xsize) * int(ysize) * int(numslices)
     rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
-    if usedmask:
+    if args.dmask is not None:
         rs_datamask = datamask_data.reshape((numspatiallocs, timepoints))
     else:
         rs_datamask = np.ones((numspatiallocs, timepoints), dtype="float")
     bin_datamask = np.where(rs_datamask > 0.9, 1.0, 0.0)
 
-    rs_templatefile = templatefile_data.reshape((numspatiallocs))
-    if usetmask:
-        rs_templatemask = templatemask_data.reshape((numspatiallocs))
+    rs_templatefile = templatefile_data.reshape((numspatiallocs, 1))
+    if args.tmask is not None:
+        rs_templatemask = templatemask_data.reshape((numspatiallocs, 1))
     else:
         rs_templatemask = np.ones((numspatiallocs, timepoints), dtype="float")
 
@@ -179,37 +176,62 @@ def main():
     fitdata = np.zeros((numspatiallocs, timepoints), dtype="float")
     residuals = np.zeros((numspatiallocs, timepoints), dtype="float")
     normalized = np.zeros((numspatiallocs, timepoints), dtype="float")
-    newtemplate = np.zeros((numspatiallocs), dtype="float")
-    newmask = np.zeros((numspatiallocs), dtype="float")
+    newtemplate = np.zeros((numspatiallocs, 1), dtype="float")
+    newmask = np.zeros((numspatiallocs, 1), dtype="float")
     lincoffs = np.zeros((timepoints), dtype="float")
     offsets = np.zeros((timepoints), dtype="float")
     rvals = np.zeros((timepoints), dtype="float")
 
+    if args.debug:
+        print(fitdata.shape)
+        print(residuals.shape)
+        print(normalized.shape)
+        print(newtemplate.shape)
+        print(newmask.shape)
+        print(lincoffs.shape)
+        print(offsets.shape)
+        print(rvals.shape)
+
     # mask everything
     print("masking data and template")
+    if args.debug:
+        print(rs_datafile.shape, np.count_nonzero(np.isnan(rs_datafile)))
+        print(bin_datamask.shape, np.count_nonzero(np.isnan(bin_datamask)))
+        print(rs_templatefile.shape, np.count_nonzero(np.isnan(rs_templatefile)))
+        print(bin_templatemask.shape, np.count_nonzero(np.isnan(bin_templatemask)))
     maskeddata = rs_datafile * bin_datamask
+    if args.debug:
+        print(maskeddata.shape, np.count_nonzero(np.isnan(maskeddata)))
     maskedtemplate = rs_templatefile * bin_templatemask
+    if args.debug:
+        print(maskedtemplate.shape, np.count_nonzero(np.isnan(maskedtemplate)))
 
     # cycle over all images
     print("now cycling over all images")
     for thetime in range(0, timepoints):
-        thefit, R = tide_fit.mlregress(maskedtemplate, maskeddata[:, thetime])
+        if args.debug:
+            print("fitting")
+        thefit, R = tide_fit.mlregress(maskedtemplate[:, 0], maskeddata[:, thetime])
         lincoffs[thetime] = thefit[0, 1]
         offsets[thetime] = thefit[0, 0]
         rvals[thetime] = R
+        if args.debug:
+            print("generating fit data")
         fitdata[:, thetime] = lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
         newtemplate += (
             np.nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask[:, thetime]
         )
         newmask += rs_datamask[:, thetime] * bin_templatemask
         normalized[:, thetime] = (rs_datafile[:, thetime] - offsets[thetime]) / lincoffs[thetime]
+        tide_util.progressbar(thetime + 1, timepoints, label="Percent complete")
+    tide_util.progressbar(timepoints + 1, timepoints, label="Percent complete")
     residuals = rs_datafile - fitdata
 
     # write out the data files
     print("writing time series")
-    tide_io.writenpvecs(lincoffs, outputrootname + "_lincoffs.txt")
-    tide_io.writenpvecs(offsets, outputrootname + "_offsets.txt")
-    tide_io.writenpvecs(rvals, outputrootname + "_rvals.txt")
+    tide_io.writenpvecs(lincoffs, args.outputroot + "_lincoffs.txt")
+    tide_io.writenpvecs(offsets, args.outputroot + "_offsets.txt")
+    tide_io.writenpvecs(rvals, args.outputroot + "_rvals.txt")
     print("slope mean, std:", np.mean(lincoffs), np.std(lincoffs))
     print("offset mean, std:", np.mean(offsets), np.std(offsets))
 
@@ -217,23 +239,23 @@ def main():
     tide_io.savetonifti(
         fitdata.reshape((xsize, ysize, numslices, timepoints)),
         datafile_hdr,
-        outputrootname + "_fit",
+        args.outputroot + "_fit",
     )
     tide_io.savetonifti(
         residuals.reshape((xsize, ysize, numslices, timepoints)),
         datafile_hdr,
-        outputrootname + "_residuals",
+        args.outputroot + "_residuals",
     )
     tide_io.savetonifti(
         normalized.reshape((xsize, ysize, numslices, timepoints)),
         datafile_hdr,
-        outputrootname + "_normalized",
+        args.outputroot + "_normalized",
     )
     newtemplate = np.where(newmask > 0, newtemplate / newmask, 0.0)
     tide_io.savetonifti(
         newtemplate.reshape((xsize, ysize, numslices)),
         templatefile_hdr,
-        outputrootname + "_newtemplate",
+        args.outputroot + "_newtemplate",
     )
 
 
