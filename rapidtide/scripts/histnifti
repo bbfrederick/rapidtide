@@ -27,14 +27,6 @@ import rapidtide.workflows.parser_funcs as pf
 import copy
 
 
-def progressbar(thisval, end_val, label="Percent", barsize=60):
-    percent = float(thisval) / end_val
-    hashes = "#" * int(round(percent * barsize))
-    spaces = " " * (barsize - len(hashes))
-    sys.stdout.write("\r{0}: [{1}] {2:.3f}%".format(label, hashes + spaces, 100.0 * percent))
-    sys.stdout.flush()
-
-
 def _get_parser():
     # get the command line parameters
     parser = argparse.ArgumentParser(
@@ -103,7 +95,7 @@ def _get_parser():
     parser.add_argument(
         "--maskfile",
         dest="maskfile",
-        type=str,
+        type=lambda x: pf.is_valid_file(parser, x),
         metavar="MASK",
         help="Only process voxels within the 3D mask MASK.",
         default=None,
@@ -217,10 +209,12 @@ def main():
                     sorteddata[spatialloc, :], thepercentiles
                 )
                 if spatialloc % 1000 == 0:
-                    progressbar(
+                    tide_util.progressbar(
                         spatialloc + 1, numvalidvoxels, label="Percentiles: percent complete"
                     )
-            progressbar(spatialloc + 1, numvalidvoxels, label="Percentiles: percent complete")
+            tide_util.progressbar(
+                spatialloc + 1, numvalidvoxels, label="Percentiles: percent complete"
+            )
             print()
         else:
             for idx, thispercentile in enumerate(thepercentiles):
@@ -259,8 +253,10 @@ def main():
                 if totalval != 0.0:
                     outputhists[spatialloc, :] /= totalval
             if spatialloc % 1000 == 0:
-                progressbar(spatialloc + 1, numvalidvoxels, label="Histograms: percent complete")
-        progressbar(spatialloc + 1, numvalidvoxels, label="Histograms: percent complete")
+                tide_util.progressbar(
+                    spatialloc + 1, numvalidvoxels, label="Histograms: percent complete"
+                )
+        tide_util.progressbar(spatialloc + 1, numvalidvoxels, label="Histograms: percent complete")
         print()
 
         # save the histogram data
