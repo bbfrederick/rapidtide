@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import sys
 import glob
-import getopt
+import argparse
 import os
 import subprocess
 import rapidtide.util as tide_util
@@ -66,7 +66,65 @@ def makefslcmd(theinputfile, reftarget, xform, outputname, warpfile=None):
     return thecommand
 
 
-def usage():
+def _get_parser():
+    # get the command line parameters
+    parser = argparse.ArgumentParser(
+        prog="rapidtide2std",
+        description="Register rapidtide output maps to standard space.",
+        usage="%(prog)s inputfileroot outputdir featdirectory",
+    )
+    parser.add_argument(
+        "inputfileroot",
+        help="the root name of the input NIFTI files (up to but not including the underscore).",
+    )
+    parser.add_argument("outputdir", help="The location for the output files")
+    parser.add_argument(
+        "featdirectory",
+        help=(
+            "Either a feat directory (x.feat) or an fmriprep derivatives"
+            "anat directory where the information needed for registration to standard space can be found"
+        ),
+    )
+    parser.add_argument(
+        "--all",
+        dest="all",
+        action="store_true",
+        help=("Also transform the corrout file (warning - file may be huge)."),
+        default=False,
+    )
+    parser.add_argument(
+        "--hires",
+        dest="aligntohires",
+        action="store_true",
+        help=("Transform to match the high resolution anatomic image rather than the standard."),
+        default=False,
+    )
+    parser.add_argument(
+        "--linear",
+        dest="forcelinear",
+        action="store_true",
+        help=("Only do linear transformation, even if warpfile exists."),
+        default=False,
+    )
+    parser.add_argument(
+        "--onefile",
+        dest="onefilename",
+        type=str,
+        metavar="FILE",
+        help="Align a single file, specified by name without extension (ignore INPUTFILEROOT).",
+        default=None,
+    )
+    parser.add_argument(
+        "--fake",
+        dest="preponly",
+        action="store_true",
+        help=("Output, but do not execute, alignment commands."),
+        default=False,
+    )
+    return parser
+
+
+"""def usage():
     print("rapidtide2std:  register rapidtide output maps to standard space")
     print("")
     print("usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]")
@@ -93,86 +151,38 @@ def usage():
         "    --onefile=FILE     - align a single file, specified by name without extension (ignore INPUTFILEROOT)"
     )
     print("    --fake             - output, but do not execute, alignment commands")
+    """
 
 
 def main():
-    ##########################################################################################
-    ##########################################################################################
-    #
-    # control flow starts here
-    #
-    ##########################################################################################
-    ##########################################################################################
-
-    # option control
-    do4Dmaps = False
-    aligntohires = False
-    forcelinear = False
-    onefilename = None
-    preponly = False
-
     # get the command line parameters
     try:
-        opts, args = getopt.gnu_getopt(
-            sys.argv, "F", ["help", "all", "fake", "onefile=", "hires", "linear"]
-        )
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like 'option -a not recognized'
-        usage()
-        sys.exit(2)
-
-    # check for filename arguments
-    nargs = len(args)
-    if nargs < 4:
-        usage()
-        sys.exit(1)
-
-    # now parse options
-    for o, a in opts:
-        linkchar = " "
-        if o == "--all":
-            do4Dmaps = True
-            print("will also transofrm corrout map")
-        elif o == "--onefile":
-            onefilename = a
-            print("will only align", onefilename)
-        elif o == "--fake":
-            preponly = True
-            print("will output, but not execute, commands")
-        elif o == "--linear":
-            forcelinear = True
-            print("forcing linear transformation")
-        elif o == "--hires":
-            aligntohires = True
-            print("transforming to hires anatomic instead of MNI152")
-        elif o in ("-h", "--help"):
-            usage()
-            sys.exit()
-        else:
-            assert False, "unhandled option"
-
-    fileroot = args[1]
-    outputdir = args[2]
-    xformdir = args[3]
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
     # make sure the appropriate transformation matrix and targets exist
-    if aligntohires:
-        reftarget = os.path.abspath(os.path.join(xformdir, "reg", "highres.nii.gz"))
+    if args.aligntohires:
+        reftarget = os.path.abspath(os.path.join(args.featdirectory, "reg", "highres.nii.gz"))
         warpfuncfile = ""
-        xformfuncmat = os.path.abspath(os.path.join(xformdir, "reg", "example_func2highres.mat"))
+        xformfuncmat = os.path.abspath(
+            os.path.join(args.featdirectory, "reg", "example_func2highres.mat")
+        )
         outputtag = "_hires_"
         theanatmaps = ["highres"]
     else:
-        xformfuncmat = os.path.abspath(os.path.join(xformdir, "reg", "example_func2standard.mat"))
+        xformfuncmat = os.path.abspath(
+            os.path.join(args.featdirectory, "reg", "example_func2standard.mat")
+        )
         warpfuncfile = os.path.abspath(
-            os.path.join(xformdir, "reg", "example_func2standard_warp.nii.gz")
+            os.path.join(args.featdirectory, "reg", "example_func2standard_warp.nii.gz")
         )
         reftarget = os.path.join(fsldir, "data", "standard", "MNI152_T1_2mm.nii.gz")
         outputtag = "_std_"
         theanatmaps = ["highres", "standard"]
 
-    if forcelinear:
+    if args.forcelinear:
         warpfuncfile += "ridiculous_suffix"
 
     if os.path.isfile(xformfuncmat):
@@ -190,8 +200,8 @@ def main():
         print("cannot find transform matrix", xformfuncmat, " - exiting")
         sys.exit(1)
 
-    if onefilename is not None:
-        inputname = os.path.abspath(onefilename + ".nii.gz")
+    if args.onefilename is not None:
+        inputname = os.path.abspath(args.onefilename + ".nii.gz")
         thepath, thebase = os.path.split(inputname)
         if os.path.isfile(inputname):
             outputname = os.path.abspath(os.path.join(thepath, outputtag[1:] + thebase))
@@ -199,7 +209,7 @@ def main():
                 inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile
             )
 
-            if preponly:
+            if args.preponly:
                 print(" ".join(thecommand))
             else:
                 subprocess.call(thecommand)
@@ -207,8 +217,8 @@ def main():
             print("file", inputname, "does not exist - exiting")
         sys.exit(0)
 
-    theoutputdir = os.path.join(os.path.abspath("."), outputdir)
-    thefileroot = glob.glob(os.path.join(fileroot + "*corrout.nii.gz"))[0]
+    theoutputdir = os.path.join(os.path.abspath("."), args.outputdir)
+    thefileroot = glob.glob(os.path.join(args.inputfileroot + "*corrout.nii.gz"))[0]
 
     thefmrimaps = [
         "lagtimes",
@@ -226,7 +236,7 @@ def main():
         "p_lt_0p001_mask",
     ]
 
-    if do4Dmaps:
+    if args.all:
         thefmrimaps.append("corrout")
 
     absname = os.path.abspath(thefileroot)
@@ -244,7 +254,7 @@ def main():
                 inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile
             )
 
-            if preponly:
+            if args.preponly:
                 print(" ".join(thecommand))
             else:
                 subprocess.call(thecommand)
@@ -252,7 +262,7 @@ def main():
     for themap in theanatmaps:
         try:
             inputname = os.path.abspath(
-                glob.glob(os.path.join(xformdir, "reg", themap + ".nii.gz"))[0]
+                glob.glob(os.path.join(args.featdirectory, "reg", themap + ".nii.gz"))[0]
             )
             if os.path.isfile(inputname):
                 outputname = os.path.abspath(
@@ -261,15 +271,17 @@ def main():
                         subjroot + outputtag + themap.replace("standard", "anat") + ".nii.gz",
                     )
                 )
-                if aligntohires:
+                if args.aligntohires:
                     thecommand = ["cp", inputname, outputname]
                 else:
                     xform = os.path.abspath(
-                        glob.glob(os.path.join(xformdir, "reg", "highres2standard.mat"))[0]
+                        glob.glob(os.path.join(args.featdirectory, "reg", "highres2standard.mat"))[
+                            0
+                        ]
                     )
                     thecommand = makefslcmd(inputname, reftarget, xform, outputname)
 
-                if preponly:
+                if args.preponly:
                     print(" ".join(thecommand))
                 else:
                     subprocess.call(thecommand)
