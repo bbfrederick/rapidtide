@@ -1,0 +1,5 @@
+#!/bin/bash
+
+fslmaths sub-RAPIDTIDETEST.nii.gz -Tmean -thr 1000 -bin rapidmask.nii.gz
+histnifti sub-RAPIDTIDETEST.nii.gz ../dst/histniftitest --maskfile rapidmask.nii.gz --histlen 1000 --robustrange --nozero
+rm rapidmask.nii.gz
