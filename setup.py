@@ -66,7 +66,7 @@ script_list = [
     "rapidtide/scripts/rapidtide",
     "rapidtide/scripts/rapidtide2std",
     "rapidtide/scripts/happy2std",
-    "rapidtide/scripts/showxcorr",
+    "rapidtide/scripts/showxcorr_legacy",
     "rapidtide/scripts/aligntcs",
     "rapidtide/scripts/plethquality",
     "rapidtide/scripts/showxcorrx",

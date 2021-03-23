@@ -58,7 +58,7 @@ def main():
         "showhist",
         "showstxcorr",
         "showtc",
-        "showxcorr",
+        "showxcorr_legacy",
         "showxcorrx",
         "showxy",
         "simdata",
