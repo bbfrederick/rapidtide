@@ -176,8 +176,8 @@ def main():
     fitdata = np.zeros((numspatiallocs, timepoints), dtype="float")
     residuals = np.zeros((numspatiallocs, timepoints), dtype="float")
     normalized = np.zeros((numspatiallocs, timepoints), dtype="float")
-    newtemplate = np.zeros((numspatiallocs, 1), dtype="float")
-    newmask = np.zeros((numspatiallocs, 1), dtype="float")
+    newtemplate = np.zeros((numspatiallocs), dtype="float")
+    newmask = np.zeros((numspatiallocs), dtype="float")
     lincoffs = np.zeros((timepoints), dtype="float")
     offsets = np.zeros((timepoints), dtype="float")
     rvals = np.zeros((timepoints), dtype="float")
@@ -217,14 +217,21 @@ def main():
         rvals[thetime] = R
         if args.debug:
             print("generating fit data")
-        fitdata[:, thetime] = lincoffs[thetime] * maskedtemplate * bin_datamask[:, thetime]
+            print(
+                lincoffs[thetime].shape,
+                bin_datamask[:, thetime].shape,
+                maskedtemplate.flatten().shape,
+            )
+        fitdata[:, thetime] = (
+            lincoffs[thetime] * bin_datamask[:, thetime] * maskedtemplate.flatten()
+        )
         newtemplate += (
             np.nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask[:, thetime]
         )
-        newmask += rs_datamask[:, thetime] * bin_templatemask
+        newmask += rs_datamask[:, thetime].flatten() * bin_templatemask.flatten()
         normalized[:, thetime] = (rs_datafile[:, thetime] - offsets[thetime]) / lincoffs[thetime]
         tide_util.progressbar(thetime + 1, timepoints, label="Percent complete")
-    tide_util.progressbar(timepoints + 1, timepoints, label="Percent complete")
+    print()
     residuals = rs_datafile - fitdata
 
     # write out the data files
