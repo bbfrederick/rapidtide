@@ -1,3 +1,3 @@
 #!/bin/bash
 
-spatialfit ../dst/sub-RAPIDTIDETEST_PCA_desc-maxtime_map.nii.gz ../dst/sub-RAPIDTIDETEST_PCA_desc-maxtime_map.nii.gz ../dst/blah --debug
+spatialfit ../dst/sub-RAPIDTIDETEST_PCA_desc-maxtime_map.nii.gz ../dst/sub-RAPIDTIDETEST_PCA_desc-maxtime_map.nii.gz ../dst/blah
