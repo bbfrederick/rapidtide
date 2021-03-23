@@ -34,8 +34,8 @@ def _get_parser():
         description="Generates a histogram of the values in a NIFTI file.",
         usage="%(prog)s inputfile outputroot",
     )
-    parser.add_argument("inputfile", help="the name of the input NIFTI file")
-    parser.add_argument("outputroot", help="the root of the output file names")
+    parser.add_argument("inputfile", help="The name of the input NIFTI file.")
+    parser.add_argument("outputroot", help="The root of the output file names.")
     parser.add_argument(
         "--histlen",
         dest="histlen",
