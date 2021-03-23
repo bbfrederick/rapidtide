@@ -615,7 +615,7 @@ def getfracval(datamat, thefrac, nozero=False):
     return getfracvals(datamat, [thefrac], nozero=nozero)[0]
 
 
-def getfracvals(datamat, thefracs, nozero=False):
+def getfracvals(datamat, thefracs, nozero=False, debug=False):
     """
 
     Parameters
@@ -624,6 +624,7 @@ def getfracvals(datamat, thefracs, nozero=False):
     thefracs
     displayplots
     nozero
+    debug
 
     Returns
     -------
@@ -632,15 +633,24 @@ def getfracvals(datamat, thefracs, nozero=False):
     thevals = []
 
     if nozero:
-        maskmat = np.sort(datamat[np.where(datamat != 0.0)])
+        maskmat = np.sort(datamat[np.where(datamat != 0.0)].flatten())
         if len(maskmat) == 0:
             for thisfrac in thefracs:
                 thevals.append(0.0)
             return thevals
     else:
-        maskmat = np.sort(datamat)
+        maskmat = np.sort(datamat.flatten())
+    maxindex = len(maskmat)
+
     for thisfrac in thefracs:
-        thevals.append(maskmat[int(np.round(thisfrac * len(maskmat), 0))])
+        thevals.append(maskmat[int(np.round(thisfrac * maxindex, 0))])
+
+    if debug:
+        print("getfracvals: input datamat shape", datamat.shape)
+        print("getfracvals: maskmat shape", maskmat.shape)
+        print("getfracvals: thefracs", thefracs)
+        print("getfracvals: maxindex", maxindex)
+        print("getfracvals: thevals", thevals)
 
     return thevals
 
