@@ -36,14 +36,14 @@ def _get_parser():
     parser.add_argument(
         "datafile",
         type=lambda x: pf.is_valid_file(parser, x),
-        help="the name of the 3D or 4D input NIFTI file",
+        help="The name of the 3D or 4D input NIFTI file.",
     )
     parser.add_argument(
         "templatefile",
         type=lambda x: pf.is_valid_file(parser, x),
-        help="the name of the 3D template NIFTI file",
+        help="The name of the 3D template NIFTI file.",
     )
-    parser.add_argument("outputroot", help="the root of the output file names")
+    parser.add_argument("outputroot", help="The root of the output file names.")
     parser.add_argument(
         "--datamask",
         dest="dmask",
