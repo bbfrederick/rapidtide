@@ -124,36 +124,6 @@ def _get_parser():
     return parser
 
 
-"""def usage():
-    print("rapidtide2std:  register rapidtide output maps to standard space")
-    print("")
-    print("usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]")
-    print("")
-    print("required arguments:")
-    print(
-        "    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore"
-    )
-    print("    OUTPUTDIR          - The location for the output files")
-    print(
-        "    XFORMDIRECTORY     - Either a feat directory (x.feat) or an fmriprep derivatives anat directory where the"
-    )
-    print(
-        "                         information needed for registration to standard space can be found"
-    )
-    print("")
-    print("optional arguments:")
-    print("    --all              - also transform the corrout file (warning - file may be huge)")
-    print(
-        "    --hires            - transform to match the high resolution anatomic image rather than the standard"
-    )
-    print("    --linear           - only do linear transformation, even if warpfile exists")
-    print(
-        "    --onefile=FILE     - align a single file, specified by name without extension (ignore INPUTFILEROOT)"
-    )
-    print("    --fake             - output, but do not execute, alignment commands")
-    """
-
-
 def main():
     # get the command line parameters
     try:
