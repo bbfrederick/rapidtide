@@ -18,9 +18,10 @@
 #
 from __future__ import print_function
 import sys
-import getopt
+import argparse
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
+import rapidtide.workflows.parser_funcs as pf
 
 import numpy as np
 
@@ -46,95 +47,74 @@ def summarize(thevoxels, method="mean"):
     return regionsummary
 
 
-def usage():
-    print(
-        "usage: atlasaverage fmrifile templatefile outputfile [--stdnorm] [--pctnorm] [--ppnorm] [--varnorm] [--nonorm]"
+def _get_parser():
+    # get the command line parameters
+    parser = argparse.ArgumentParser(
+        prog="atlasaverage",
+        description="Average data within atlas regions.",
+        usage="%(prog)s datafile templatefile outputfile [options]",
     )
-    print("")
-    print("required arguments:")
-    print(
-        "    inputfile        - the name of the 3 or 4D nifti file with the data to be averaged over atlas regions"
+    parser.add_argument(
+        "datafile",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help="The name of the 3 or 4D nifti file with the data to be averaged over atlas regions.",
     )
-    print("    templatefile     - the name of the template region file")
-    print("    outputfile       - the name of the output text file")
-    print("")
-    print("optional arguments:")
-    print("    --nonorm         - don't normalize timecourses (default)")
-    print("    --pctnorm        - scale each timecourse to it's percentage of the mean over time")
-    print("    --varnorm        - scale each timecourse to have a variance over time of 1.0")
-    print(
-        "    --stdnorm        - scale each timecourse to have a standard deviation over time of 1.0"
+    parser.add_argument(
+        "templatefile",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help="The name of the atlas region NIFTI file",
     )
-    print(
-        "    --ppnorm         - scale each timecourse to have a peak to peak range over time of 1.0"
+    parser.add_argument("outputfile", help="The name of the output NIFTI file.")
+
+    # add optional arguments
+    parser.add_argument(
+        "--normmethod",
+        dest="normmethod",
+        action="store",
+        type=str,
+        choices=["none", "pct", "var", "std", "p2p"],
+        help=(
+            "Normalization to apply to input timecourses. Choices are "
+            "are 'none' (no normalization, default), 'pct' (divide by mean, set mean to zero), "
+            "'var' (unit variance, zero mean), 'std' (unit standard deviation, zero mean), "
+            "'p2p' (unit range, zero mean)."
+        ),
+        default=None,
     )
-    print("    --mean           - calculate the mean over each spatial region (default)")
-    print("    --nzmean         - calculate the mean over nonzero values in each spatial region")
-    print("    --mad            - calculate the median average deviate over each spatial region")
-    print(
-        "    --nzmad          - calculate the median average deviate over nonzero values in each spatial region"
+    parser.add_argument(
+        "--summarymethod",
+        dest="summarymethod",
+        action="store",
+        type=str,
+        choices=["mean", "median"],
+        help=("Method to summarize a region.  Choices are 'mean' (default), and 'median'."),
+        default=None,
     )
-    print("")
-    return ()
+
+    return parser
 
 
 def main():
     # get the command line parameters
-    if len(sys.argv) < 4:
-        usage()
-        exit()
-
-    # handle required args first
-    inputfilename = sys.argv[1]
-    templatefile = sys.argv[2]
-    outputfile = sys.argv[3]
-
-    normmethod = "None"
-    summarymethod = "mean"
-
-    # now scan for optional arguments
     try:
-        opts, args = getopt.getopt(
-            sys.argv[4:],
-            "h",
-            ["nonorm", "pctnorm", "varnorm", "stdnorm", "ppnorm", "help"],
-        )
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -x not recognized"
-        usage()
-        sys.exit(2)
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
-    for o, a in opts:
-        if o == "--nonorm":
-            normmethod = "None"
-        elif o == "--pctnorm":
-            normmethod = "pctnorm"
-        elif o == "--stdnorm":
-            normmethod = "stdnorm"
-        elif o == "--varnorm":
-            normmethod = "varnorm"
-        elif o == "--ppnorm":
-            normmethod = "ppnorm"
-        elif o == "-h" or o == "--help":
-            usage()
-            exit()
-        else:
-            assert False, "unhandled option"
-
-    if normmethod == "None":
+    if args.normmethod == "none":
         print("will not normalize timecourses")
-    elif normmethod == "pctnorm":
+    elif args.normmethod == "pct":
         print("will normalize timecourses to percentage of mean")
-    elif normmethod == "stdnorm":
+    elif args.normmethod == "std":
         print("will normalize timecourses to standard deviation of 1.0")
-    elif normmethod == "varnorm":
+    elif args.normmethod == "var":
         print("will normalize timecourses to variance of 1.0")
-    elif normmethod == "ppnorm":
+    elif args.normmethod == "p2p":
         print("will normalize timecourses to p-p deviation of 1.0")
 
     print("loading fmri data")
-    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(inputfilename)
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.datafile)
     print("loading template data")
     (
         template_img,
@@ -142,7 +122,7 @@ def main():
         template_hdr,
         templatedims,
         templatesizes,
-    ) = tide_io.readfromnifti(templatefile)
+    ) = tide_io.readfromnifti(args.templatefile)
 
     print("checking dimensions")
     if not tide_io.checkspacematch(input_hdr, template_hdr):
@@ -173,36 +153,35 @@ def main():
             )
             if thevoxels.shape[1] > 0:
                 # regiontimecourse = np.nan_to_num(np.mean(thevoxels, axis=1))
-                regiontimecourse = summarize(thevoxels, method=summarymethod)
+                regiontimecourse = summarize(thevoxels, method=args.summarymethod)
             else:
                 regiontimecourse = timecourses[0, :] * 0.0
-            if normmethod == "None":
+            if args.normmethod == "none":
                 timecourses[theregion - 1, :] = regiontimecourse - np.mean(regiontimecourse)
-            elif normmethod == "pctnorm":
+            elif args.normmethod == "pct":
                 timecourses[theregion - 1, :] = tide_math.pcnormalize(regiontimecourse)
-            elif normmethod == "varnorm":
+            elif args.normmethod == "var":
                 timecourses[theregion - 1, :] = tide_math.varnormalize(regiontimecourse)
-            elif normmethod == "stdnorm":
+            elif args.normmethod == "std":
                 timecourses[theregion - 1, :] = tide_math.stdnormalize(regiontimecourse)
-            elif normmethod == "ppnorm":
+            elif args.normmethod == "p2p":
                 timecourses[theregion - 1, :] = tide_math.ppnormalize(regiontimecourse)
             else:
                 print("illegal normalization method")
-                usage()
-                sys.exit()
-        tide_io.writenpvecs(timecourses, outputfile)
+                _get_parser().print_help()
+                raise
+        tide_io.writenpvecs(timecourses, args.outputfile)
     else:
         outputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
         for theregion in range(1, numregions + 1):
             thevoxels = inputvoxels[np.where(templatevoxels == theregion)]
-            # regionval = np.nan_to_num(np.mean(thevoxels))
-            regionval = summarize(thevoxels, method=summarymethod)
+            regionval = summarize(thevoxels, method=args.summarymethod)
             outputvoxels[np.where(templatevoxels == theregion)] = regionval
         template_hdr["dim"][4] = numregions
         tide_io.savetonifti(
             outputvoxels.reshape((xsize, ysize, numslices, numregions)),
             template_hdr,
-            outputfile,
+            args.outputfile,
         )
 
 
