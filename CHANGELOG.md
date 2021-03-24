@@ -1,5 +1,12 @@
 # History of changes
 
+## Version 2.0alpha19 (3/23/21)
+* (showxcorr) Renamed to showxcorr_legacy
+* (linfit) Renamed to polyfitim to better reflect it's function.
+* (histnifti) Major upgrade to functionality.
+* (atlasaverage, rapidtide2std, spatialfit, applydlfilter, plethquality, histnifti) Moved to argparse.
+* (package) Updated all headers and copyright lines.
+
 ## Version 2.0alpha18 (3/17/21)
 * (package) Trimmed the size of the installation bundle (really, truly, correctly this time).
 
