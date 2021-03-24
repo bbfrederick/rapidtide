@@ -316,6 +316,126 @@ def addwindowopts(parser):
     )
 
 
+def addplotopts(parser):
+    plotopts = parser.add_argument_group("General plot appearance options")
+    plotopts.add_argument(
+        "--title",
+        dest="thetitle",
+        metavar="TITLE",
+        type=str,
+        action="store",
+        help="Use TITLE as the overall title of the graph.",
+        default="",
+    )
+    plotopts.add_argument(
+        "--xlabel",
+        dest="xlabel",
+        metavar="LABEL",
+        type=str,
+        action="store",
+        help="Label for the plot x axis.",
+        default="",
+    )
+    plotopts.add_argument(
+        "--ylabel",
+        dest="ylabel",
+        metavar="LABEL",
+        type=str,
+        action="store",
+        help="Label for the plot y axis.",
+        default="",
+    )
+    plotopts.add_argument(
+        "--legends",
+        dest="legends",
+        metavar="LEGEND[,LEGEND[,LEGEND...]]",
+        type=str,
+        action="store",
+        help="Comma separated list of legends for each timecourse.",
+        default=None,
+    )
+
+    plotopts.add_argument(
+        "--legendloc",
+        dest="legendloc",
+        metavar="LOC",
+        type=int,
+        action="store",
+        help=(
+            "Integer from 0 to 10 inclusive specifying legend location.  Legal values are: "
+            "0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right, "
+            "5: right, 6: center left, 7: center right, 8: lower center, 9: upper center, "
+            "10: center.  Default is 2."
+        ),
+        default=2,
+    )
+    plotopts.add_argument(
+        "--colors",
+        dest="colors",
+        metavar="COLOR[,COLOR[,COLOR...]]",
+        type=str,
+        action="store",
+        help="Comma separated list of colors for each timecourse.",
+        default=None,
+    )
+    plotopts.add_argument(
+        "--nolegend",
+        dest="dolegend",
+        action="store_false",
+        help="Turn off legend label.",
+        default=True,
+    )
+    plotopts.add_argument(
+        "--noxax",
+        dest="showxax",
+        action="store_false",
+        help="Do not show x axis.",
+        default=True,
+    )
+    plotopts.add_argument(
+        "--noyax",
+        dest="showyax",
+        action="store_false",
+        help="Do not show y axis.",
+        default=True,
+    )
+    plotopts.add_argument(
+        "--linewidth",
+        dest="linewidths",
+        metavar="LINEWIDTH[,LINEWIDTH[,LINEWIDTH...]]",
+        type=str,
+        help="A comma separated list of linewidths (in points) for plots.  Default is 1.",
+        default=None,
+    )
+    plotopts.add_argument(
+        "--tofile",
+        dest="outputfile",
+        metavar="FILENAME",
+        type=str,
+        action="store",
+        help="Write figure to file FILENAME instead of displaying on the screen.",
+        default=None,
+    )
+    plotopts.add_argument(
+        "--fontscalefac",
+        dest="fontscalefac",
+        metavar="FAC",
+        type=float,
+        action="store",
+        help="Scaling factor for annotation fonts (default is 1.0).",
+        default=1.0,
+    )
+    plotopts.add_argument(
+        "--saveres",
+        dest="saveres",
+        metavar="DPI",
+        type=int,
+        action="store",
+        help="Write figure to file at DPI dots per inch (default is 1000).",
+        default=1000,
+    )
+
+
 def addpermutationopts(parser):
     permutationmethod = parser.add_mutually_exclusive_group()
     permutationmethod.add_argument(

@@ -23,7 +23,7 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 import sys
 import os
 import argparse
-from rapidtide.workflows.parser_funcs import is_valid_file, invert_float, is_float
+import rapidtide.workflows.parser_funcs as pf
 
 import matplotlib.cm as cm
 import rapidtide.io as tide_io
@@ -32,7 +32,7 @@ import rapidtide.fit as tide_fit
 import rapidtide.util as tide_util
 import numpy as np
 
-from matplotlib.pyplot import figure, plot, show, savefig, setp
+from matplotlib.pyplot import figure, show, savefig, setp
 
 
 def phase(mcv):
@@ -59,7 +59,7 @@ def _get_parser():
         dest="samplerate",
         action="store",
         metavar="FREQ",
-        type=lambda x: is_float(parser, x),
+        type=lambda x: pf.is_float(parser, x),
         help=(
             "Set the sample rate of the data file to FREQ. "
             "If neither samplerate or sampletime is specified, sample rate is 1.0."
@@ -71,7 +71,7 @@ def _get_parser():
         dest="samplerate",
         action="store",
         metavar="TSTEP",
-        type=lambda x: invert_float(parser, x),
+        type=lambda x: pf.invert_float(parser, x),
         help=(
             "Set the sample rate of the data file to 1.0/TSTEP. "
             "If neither samplerate or sampletime is specified, sample rate is 1.0."
@@ -106,135 +106,6 @@ def _get_parser():
         help="Display multiple timecourses in a waterfall plot.",
         default=False,
     )
-
-    parser.add_argument(
-        "--transpose",
-        action="store_true",
-        dest="dotranspose",
-        help="Swap rows and columns in the input files.",
-        default=False,
-    )
-
-    parser.add_argument(
-        "--title",
-        dest="thetitle",
-        metavar="TITLE",
-        type=str,
-        action="store",
-        help="Use TITLE as the overall title of the graph.",
-        default="",
-    )
-    parser.add_argument(
-        "--xlabel",
-        dest="xlabel",
-        metavar="LABEL",
-        type=str,
-        action="store",
-        help="Label for the plot x axis.",
-        default="",
-    )
-    parser.add_argument(
-        "--ylabel",
-        dest="ylabel",
-        metavar="LABEL",
-        type=str,
-        action="store",
-        help="Label for the plot y axis.",
-        default="",
-    )
-    parser.add_argument(
-        "--legends",
-        dest="legends",
-        metavar="LEGEND[,LEGEND[,LEGEND...]]",
-        type=str,
-        action="store",
-        help="Comma separated list of legends for each timecourse.",
-        default=None,
-    )
-
-    parser.add_argument(
-        "--legendloc",
-        dest="legendloc",
-        metavar="LOC",
-        type=int,
-        action="store",
-        help=(
-            "Integer from 0 to 10 inclusive specifying legend location.  Legal values are: "
-            "0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right, "
-            "5: right, 6: center left, 7: center right, 8: lower center, 9: upper center, "
-            "10: center.  Default is 2."
-        ),
-        default=2,
-    )
-
-    parser.add_argument(
-        "--colors",
-        dest="colors",
-        metavar="COLOR[,COLOR[,COLOR...]]",
-        type=str,
-        action="store",
-        help="Comma separated list of colors for each timecourse.",
-        default=None,
-    )
-
-    parser.add_argument(
-        "--nolegend",
-        dest="dolegend",
-        action="store_false",
-        help="Turn off legend label.",
-        default=True,
-    )
-    parser.add_argument(
-        "--noxax",
-        dest="showxax",
-        action="store_false",
-        help="Do not show x axis.",
-        default=True,
-    )
-    parser.add_argument(
-        "--noyax",
-        dest="showyax",
-        action="store_false",
-        help="Do not show y axis.",
-        default=True,
-    )
-
-    parser.add_argument(
-        "--linewidth",
-        dest="linewidths",
-        metavar="LINEWIDTH[,LINEWIDTH[,LINEWIDTH...]]",
-        type=str,
-        help="A comma separated list of linewidths (in points) for plots.  Default is 1.",
-        default=None,
-    )
-
-    parser.add_argument(
-        "--tofile",
-        dest="outputfile",
-        metavar="FILENAME",
-        type=str,
-        action="store",
-        help="Write figure to file FILENAME instead of displaying on the screen.",
-        default=None,
-    )
-    parser.add_argument(
-        "--fontscalefac",
-        dest="fontscalefac",
-        metavar="FAC",
-        type=float,
-        action="store",
-        help="Scaling factor for annotation fonts (default is 1.0).",
-        default=1.0,
-    )
-    parser.add_argument(
-        "--saveres",
-        dest="saveres",
-        metavar="DPI",
-        type=int,
-        action="store",
-        help="Write figure to file at DPI dots per inch (default is 1000).",
-        default=1000,
-    )
     parser.add_argument(
         "--voffset",
         dest="voffset",
@@ -244,6 +115,17 @@ def _get_parser():
         help="Plot multiple timecourses with OFFSET between them (use negative OFFSET to set automatically).",
         default=0.0,
     )
+
+    parser.add_argument(
+        "--transpose",
+        action="store_true",
+        dest="dotranspose",
+        help="Swap rows and columns in the input files.",
+        default=False,
+    )
+
+    # add plot appearance options
+    pf.addplotopts(parser)
 
     parser.add_argument(
         "--starttime",
@@ -283,23 +165,23 @@ def _get_parser():
 def showtc(args):
     # process the file list
     textfilename = []
-    for thefile in args["textfilenames"]:
+    for thefile in args.textfilenames:
         textfilename.append(thefile.split(":"))
 
     # set the sample rate
-    if args["samplerate"] == "auto":
+    if args.samplerate == "auto":
         samplerate = 1.0
     else:
-        samplerate = args["samplerate"]
+        samplerate = args.samplerate
 
     # set the appropriate display mode
-    if args["displaymode"] == "time":
+    if args.displaymode == "time":
         dospectrum = False
         specmode = "power"
-    elif args["displaymode"] == "power":
+    elif args.displaymode == "power":
         dospectrum = True
         specmode = "power"
-    elif args["displaymode"] == "phase":
+    elif args.displaymode == "phase":
         dospectrum = True
         specmode = "phase"
     else:
@@ -307,64 +189,46 @@ def showtc(args):
         sys.exit()
 
     # determine how to composite multiple plots
-    if args["plotformat"] == "overlaid":
+    if args.plotformat == "overlaid":
         separate = False
         linky = True
-    elif args["plotformat"] == "separate":
+    elif args.plotformat == "separate":
         separate = True
         linky = False
-    elif args["plotformat"] == "separatelinked":
+    elif args.plotformat == "separatelinked":
         separate = True
         linky = True
     else:
         print("illegal formatting mode")
         sys.exit()
-    voffset = args["voffset"]
 
     # set various cosmetic aspects of the plots
-    if args["colors"] is not None:
-        colornames = args["colors"].split(",")
+    if args.colors is not None:
+        colornames = args.colors.split(",")
     else:
         colornames = []
 
-    if args["legends"] is not None:
-        legends = args["legends"].split(",")
+    if args.legends is not None:
+        legends = args.legends.split(",")
         legendset = True
     else:
         legends = []
         legendset = False
-    dolegend = args["dolegend"]
+    dolegend = args.dolegend
 
-    if args["linewidths"] is not None:
+    if args.linewidths is not None:
         thelinewidth = []
-        for thestring in args["linewidths"].split(","):
+        for thestring in args.linewidths.split(","):
             thelinewidth.append(float(thestring))
     else:
         thelinewidth = [1.0]
     numlinewidths = len(thelinewidth)
 
-    thetitle = args["thetitle"]
-    xlabel = args["xlabel"]
-    ylabel = args["ylabel"]
-    showxax = args["showxax"]
-    showyax = args["showyax"]
-    thestarttime = args["thestarttime"]
-    theendtime = args["theendtime"]
-    fontscalefac = args["fontscalefac"]
-    if 0 <= args["legendloc"] <= 10:
-        legendloc = args["legendloc"]
+    if 0 <= args.legendloc <= 10:
+        legendloc = args.legendloc
     else:
-        print("illegal legend location:", args["legendloc"])
+        print("illegal legend location:", args.legendloc)
         sys.exit()
-
-    # set options for saving plots
-    saveres = args["saveres"]
-    outputfile = args["outputfile"]
-
-    # miscellaneous
-    dotranspose = args["dotranspose"]
-    dowaterfall = args["dowaterfall"]
-    debug = args["debug"]
 
     savespec = False
     detrendorder = 1
@@ -372,7 +236,7 @@ def showtc(args):
     useHamming = True
 
     # check range
-    if thestarttime >= theendtime:
+    if args.thestarttime >= args.theendtime:
         print("endtime must be greater then starttime;")
         sys.exit()
 
@@ -400,13 +264,13 @@ def showtc(args):
                 compressed,
             ) = tide_io.readbidstsv(textfilename[i][0])
         else:
-            invecs = tide_io.readvecs(textfilename[i][0], numskip=args["numskip"])
+            invecs = tide_io.readvecs(textfilename[i][0], numskip=args.numskip)
             thissamplerate = samplerate
             thisstartoffset = 0.0
             colnames = None
-        if dotranspose:
+        if args.dotranspose:
             invecs = np.transpose(invecs)
-        if debug:
+        if args.debug:
             print("   ", invecs.shape[0], " columns")
         if len(textfilename[i]) == 2:
             collist = []
@@ -424,7 +288,7 @@ def showtc(args):
             collist = range(0, invecs.shape[0])
             # for j in range(0, invecs.shape[0]):
         for j in collist:
-            if debug:
+            if args.debug:
                 print("appending vector number ", j)
             if dospectrum:
                 if invecs.shape[1] % 2 == 1:
@@ -487,7 +351,7 @@ def showtc(args):
                 else:
                     linelabels.append(legends[i % len(legends)])"""
             samplerates.append(thissamplerate + 0.0)
-            if debug:
+            if args.debug:
                 print(
                     "timecourse:",
                     j,
@@ -499,19 +363,19 @@ def showtc(args):
                 )
             numvecs += 1
 
-    thestartpoint = tide_util.valtoindex(xvecs[0], thestarttime)
-    theendpoint = tide_util.valtoindex(xvecs[0], theendtime)
-    thestarttime = xvecs[0][thestartpoint]
-    theendtime = xvecs[0][theendpoint]
-    if debug:
+    thestartpoint = tide_util.valtoindex(xvecs[0], args.thestarttime)
+    theendpoint = tide_util.valtoindex(xvecs[0], args.theendtime)
+    args.thestarttime = xvecs[0][thestartpoint]
+    args.theendtime = xvecs[0][theendpoint]
+    if args.debug:
         print("full range (pts):", thestartpoint, theendpoint)
-        print("full range (time):", thestarttime, theendtime)
+        print("full range (time):", args.thestarttime, args.theendtime)
     overallxmax = -1e38
     overallxmin = 1e38
     for thevec in xvecs:
         overallxmax = np.max([np.max(thevec), overallxmax])
         overallxmin = np.min([np.min(thevec), overallxmin])
-    xrange = (np.max([overallxmin, thestarttime]), np.min([overallxmax, theendtime]))
+    xrange = (np.max([overallxmin, args.thestarttime]), np.min([overallxmax, args.theendtime]))
     ymins = []
     ymaxs = []
     for thevec in yvecs:
@@ -523,16 +387,16 @@ def showtc(args):
         overallymax = np.max([np.max(thevec), overallymax])
         overallymin = np.min([np.min(thevec), overallymin])
     yrange = (overallymin, overallymax)
-    if debug:
+    if args.debug:
         print("xrange:", xrange)
         print("yrange:", yrange)
-    if voffset < 0.0:
-        voffset = yrange[1] - yrange[0]
-    if debug:
-        print("voffset:", voffset)
+    if args.voffset < 0.0:
+        args.voffset = yrange[1] - yrange[0]
+    if args.debug:
+        print("voffset:", args.voffset)
     if not separate:
         for i in range(0, numvecs):
-            yvecs[i] += (numvecs - i - 1) * voffset
+            yvecs[i] += (numvecs - i - 1) * args.voffset
         overallymax = -1e38
         overallymin = 1e38
         for thevec in yvecs:
@@ -540,7 +404,7 @@ def showtc(args):
             overallymin = np.min([np.min(thevec), overallymin])
         yrange = (overallymin, overallymax)
 
-        if dowaterfall:
+        if args.dowaterfall:
             xstep = (xrange[1] - xrange[0]) / numvecs
             ystep = yrange[1] - yrange[0]
             for i in range(numvecs):
@@ -549,21 +413,21 @@ def showtc(args):
 
     # now plot it out
     if separate:
-        thexaxfontsize = 6 * fontscalefac
-        theyaxfontsize = 6 * fontscalefac
-        thexlabelfontsize = 6 * fontscalefac
-        theylabelfontsize = 6 * fontscalefac
-        thelegendfontsize = 5 * fontscalefac
-        thetitlefontsize = 6 * fontscalefac
-        thesuptitlefontsize = 10 * fontscalefac
+        thexaxfontsize = 6 * args.fontscalefac
+        theyaxfontsize = 6 * args.fontscalefac
+        thexlabelfontsize = 6 * args.fontscalefac
+        theylabelfontsize = 6 * args.fontscalefac
+        thelegendfontsize = 5 * args.fontscalefac
+        thetitlefontsize = 6 * args.fontscalefac
+        thesuptitlefontsize = 10 * args.fontscalefac
     else:
-        thexaxfontsize = 10 * fontscalefac
-        theyaxfontsize = 10 * fontscalefac
-        thexlabelfontsize = 10 * fontscalefac
-        theylabelfontsize = 10 * fontscalefac
-        thelegendfontsize = 8 * fontscalefac
-        thetitlefontsize = 10 * fontscalefac
-        thesuptitlefontsize = 10 * fontscalefac
+        thexaxfontsize = 10 * args.fontscalefac
+        theyaxfontsize = 10 * args.fontscalefac
+        thexlabelfontsize = 10 * args.fontscalefac
+        theylabelfontsize = 10 * args.fontscalefac
+        thelegendfontsize = 8 * args.fontscalefac
+        thetitlefontsize = 10 * args.fontscalefac
+        thesuptitlefontsize = 10 * args.fontscalefac
 
     if len(colornames) > 0:
         colorlist = [colornames[i % len(colornames)] for i in range(numvecs)]
@@ -572,16 +436,16 @@ def showtc(args):
 
     fig = figure()
     if separate:
-        if thetitle is not None:
-            fig.suptitle(thetitle, fontsize=thesuptitlefontsize)
+        if args.thetitle is not None:
+            fig.suptitle(args.thetitle, fontsize=thesuptitlefontsize)
         if linky:
             axlist = fig.subplots(numvecs, sharex=True, sharey=True)[:]
         else:
             axlist = fig.subplots(numvecs, sharex=True, sharey=False)[:]
     else:
         ax = fig.add_subplot(1, 1, 1)
-        if thetitle is not None:
-            ax.set_title(thetitle, fontsize=thetitlefontsize)
+        if args.thetitle is not None:
+            ax.set_title(args.thetitle, fontsize=thetitlefontsize)
 
     for i in range(0, numvecs):
         if separate:
@@ -605,9 +469,9 @@ def showtc(args):
             thediff = themax - themin
             # print(themin, themax, thediff)
             ax.set_ylim(top=(themax + thediff / 20.0), bottom=(themin - thediff / 20.0))
-        if showxax:
+        if args.showxax:
             ax.tick_params(axis="x", labelsize=thexlabelfontsize, which="both")
-        if showyax:
+        if args.showyax:
             ax.tick_params(axis="y", labelsize=theylabelfontsize, which="both")
 
         if separate:
@@ -615,42 +479,43 @@ def showtc(args):
             setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
 
         if dospectrum:
-            if xlabel is None:
-                xlabel = "Frequency (Hz)"
+            if args.xlabel is None:
+                args.xlabel = "Frequency (Hz)"
             if specmode == "power":
-                if ylabel is None:
-                    ylabel = "Signal power"
+                if args.ylabel is None:
+                    args.ylabel = "Signal power"
             else:
-                if ylabel is None:
-                    ylabel = "Signal phase"
+                if args.ylabel is None:
+                    args.ylabel = "Signal phase"
         else:
-            if xlabel is None:
-                xlabel = "Time (s)"
-        if showxax:
-            ax.set_xlabel(xlabel, fontsize=thexlabelfontsize, fontweight="bold")
+            if args.xlabel is None:
+                args.xlabel = "Time (s)"
+        if args.showxax:
+            ax.set_xlabel(args.xlabel, fontsize=thexlabelfontsize, fontweight="bold")
         else:
             ax.xaxis.set_visible(False)
-        if showyax:
-            ax.set_ylabel(ylabel, fontsize=theylabelfontsize, fontweight="bold")
+        if args.showyax:
+            ax.set_ylabel(args.ylabel, fontsize=theylabelfontsize, fontweight="bold")
         else:
             ax.yaxis.set_visible(False)
 
     # fig.tight_layout()
 
-    if outputfile is None:
+    if args.outputfile is None:
         show()
     else:
-        savefig(outputfile, bbox_inches="tight", dpi=saveres)
+        savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)
 
 
 def main():
+    # get the command line parameters
     try:
-        args = vars(_get_parser().parse_args())
+        args = _get_parser().parse_args()
     except SystemExit:
         _get_parser().print_help()
         raise
 
-    if args["debug"]:
+    if args.debug:
         print(args)
 
     showtc(args)
