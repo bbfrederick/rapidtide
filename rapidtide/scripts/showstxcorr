@@ -286,8 +286,6 @@ def main():
     window_lowestfreq = 1.0 / windowtime
     window_upperfreq = 0.15
     stepsize = 25.0
-    estimate_significance = False
-    dumpfiltered = False
     matrixoutput = False
 
     """# scan the command line arguments
