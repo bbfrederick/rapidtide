@@ -41,7 +41,6 @@ def main():
         "happy2std",
         "happy_legacy",
         "happywarp",
-        "harmonogram",
         "histnifti",
         "histtc",
         "physiofreq",
