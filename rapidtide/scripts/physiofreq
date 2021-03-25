@@ -73,10 +73,6 @@ def parsearglist():
     return args
 
 
-def savgolsmooth(data, smoothlen=101, polyorder=3):
-    return savgol_filter(data, smoothlen, polyorder)
-
-
 def getwavefreq(
     thewaveform,
     thesamplerate,
@@ -126,7 +122,7 @@ def getwavefreq(
 
     # find the max
     if smooth:
-        ampspec = savgolsmooth(spectrum, smoothlen=smoothlen)
+        ampspec = tide_filt.savgolsmooth(spectrum, smoothlen=smoothlen)
     else:
         ampspec = spectrum
     peakfreq = freqaxis[np.argmax(ampspec)]

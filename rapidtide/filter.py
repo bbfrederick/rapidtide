@@ -28,7 +28,9 @@ from __future__ import print_function, division
 
 import numpy as np
 from scipy import fftpack, ndimage, signal
+from scipy.signal import savgol_filter
 import sys
+
 
 import matplotlib.pyplot as plt
 
@@ -1264,6 +1266,10 @@ def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False)
             setnotchfilter(thenotchfilter, notchfreq, notchwidth=notchwidth)
             filteredtc = thenotchfilter.apply(Fs, filteredtc)
     return filteredtc
+
+
+def savgolsmooth(data, smoothlen=101, polyorder=3):
+    return savgol_filter(data, smoothlen, polyorder)
 
 
 def csdfilter(obsdata, commondata, padlen=20, cyclic=False, debug=False):
