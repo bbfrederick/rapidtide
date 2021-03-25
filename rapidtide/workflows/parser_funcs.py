@@ -436,7 +436,7 @@ def addplotopts(parser):
     )
 
 
-def addpermutationopts(parser):
+def addpermutationopts(parser, numreps=10000):
     permutationmethod = parser.add_mutually_exclusive_group()
     permutationmethod.add_argument(
         "--permutationmethod",
@@ -455,10 +455,10 @@ def addpermutationopts(parser):
         metavar="NREPS",
         help=(
             "Estimate significance threshold by running "
-            "NREPS null correlations (default is 10000, "
+            f"NREPS null correlations (default is {numreps}, "
             "set to 0 to disable). "
         ),
-        default=10000,
+        default=numreps,
     )
     parser.add_argument(
         "--skipsighistfit",
