@@ -1,14 +1,34 @@
 #!/bin/bash
 
+showxcorrx \
+    lt_HbO \
+    rt_HbO \
+    --samplerate 12.5 \
+    --filterband lfo \
+    --invert \ 
+    --searchrange -15 15
+
 showstxcorr \
     lt_HbO \
     rt_HbO \
     ../dst/hoot \
     --samplerate 12.5 \
     --filterband lfo \
-    --windowwidth 60.0 \
-    --stepsize 5.0 \
+    --windowwidth 30.0 \
+    --stepsize 10.0 \
     --invert \
     --corrthresh 0.6 \
     --searchrange -15 15 \
     --detrendorder 1
+
+filttc rt_HbO ../dst/rt_HbO_filtered --samplerate 12.5 --filterfreqs 0.02 0.15
+showtc ../dst/rt_HbO_filtered ../dst/hoot_timewarped.txt --samplerate 12.5
+
+showxcorrx \
+    lt_HbO \
+    ../dst/rt_HbO_filtered \
+    --samplerate 12.5 \
+    --filterband lfo \
+    --invert \ 
+    --searchrange -15 15
+
