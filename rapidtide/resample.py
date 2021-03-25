@@ -807,8 +807,11 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False, debug=False):
     ]
 
 
-def timewarp(orig_x, orig_y, timeoffset, method="univariate", debug=False):
-    demeanedoffset = timeoffset - np.mean(timeoffset)
+def timewarp(orig_x, orig_y, timeoffset, demean=True, method="univariate", debug=False):
+    if demean:
+        demeanedoffset = timeoffset - np.mean(timeoffset)
+    else:
+        demeanedoffset = timeoffset
     sampletime = orig_x[1] - orig_x[0]
     maxdevs = (np.min(demeanedoffset), np.max(demeanedoffset))
     maxsamps = maxdevs / sampletime
