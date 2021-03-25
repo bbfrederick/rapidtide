@@ -450,14 +450,19 @@ def main():
 
         hirestimeaxis = np.linspace(0, sampletime * endpoint2, num=endpoint2, endpoint=False)
         highresdelayvals = np.poly1d(thefit)(hirestimeaxis)
-        print("len(hirestimeaxis):", len(hirestimeaxis))
-        print("len(highresdelayvals):", len(highresdelayvals))
-        print("len(reformdata[1, :]):", len(reformdata[1, :]))
+        if args.debug:
+            print("len(hirestimeaxis):", len(hirestimeaxis))
+            print("len(highresdelayvals):", len(highresdelayvals))
+            print("len(reformdata[1, :]):", len(reformdata[1, :]))
 
         timewarped = tide_resamp.timewarp(
-            hirestimeaxis, reformdata[1, :], highresdelayvals, debug=True
+            hirestimeaxis,
+            reformdata[1, :],
+            highresdelayvals,
+            debug=args.debug,
         )
         tide_io.writenpvecs(timewarped, args.outfilename + "_timewarped.txt")
+        tide_io.writenpvecs(highresdelayvals, args.outfilename + "_hiresdelayvals.txt")
 
         if args.display:
             # timeaxis = np.r_[0.0:len(filtereddata1)] * sampletime
