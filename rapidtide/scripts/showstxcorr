@@ -344,7 +344,7 @@ def main():
         _get_parser().print_help()
         raise
 
-    # finish up processing arguments
+    # finish up processing arguments, do initial filter setup
     args, theprefilter = pf.postprocessfilteropts(args)
     args = pf.postprocesssearchrangeopts(args)
     args = pf.postprocesstimerangeopts(args)
@@ -391,15 +391,15 @@ def main():
             if verbose:
                 print("Setting sample time step to ", sampletime)
         elif o == "--liang":
-            corrweighting = "Liang"
+            corrweighting = "liang"
             if verbose:
                 print("doing Liang weighted correlation")
         elif o == "--eckart":
-            corrweighting = "Eckart"
+            corrweighting = "eckart"
             if verbose:
                 print("doing Eckart weighted correlation")
         elif o == "--phat":
-            corrweighting = "PHAT"
+            corrweighting = "phat"
             if verbose:
                 print("doing phase alignment transform")
         elif o == "-I":
@@ -533,19 +533,21 @@ def main():
 
     # read in the files and get everything trimmed to the right length
     stepsize = sampletime * np.round(args.stepsize / sampletime)
-    thewindowfilter = tide_filt.noncausalfilter()
 
-    # set the default characteristics
+    # Now update the lower limit of the filter.
+    init_lowerstop, init_lowerpass, init_upperpass, init_upperstop = theprefilter.getfreqs()
     window_lowestfreq = 1.0 / args.windowwidth
-    window_upperfreq = -1.0
-    print("setting default filter to pass", window_lowestfreq, "to", window_upperfreq)
-    thewindowfilter.settype("arb")
-    thewindowfilter.setfreqs(
-        window_lowestfreq,
-        window_lowestfreq * 1.05,
-        window_upperfreq / 1.05,
-        window_upperfreq,
-    )
+    if window_lowestfreq > init_lowerpass:
+        print(
+            f"resetting lower limit of filter from {init_lowerpass} to {window_lowestfreq}Hz for window length {args.windowwidth}s"
+        )
+        theprefilter.settype("arb")
+        theprefilter.setfreqs(
+            window_lowestfreq,
+            window_lowestfreq,
+            init_upperpass,
+            init_upperstop,
+        )
 
     startpoint = max([int(args.starttime * args.samplerate), 0])
     inputdata1 = tide_io.readvec(args.infilename1)
