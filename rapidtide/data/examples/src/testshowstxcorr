@@ -8,4 +8,7 @@ showstxcorr \
     --filterband lfo \
     --windowwidth 60.0 \
     --stepsize 5.0 \
-    --corrweighting phat
+    --invert \
+    --corrthresh 0.6 \
+    --searchrange -15 15 \
+    --detrendorder 1
