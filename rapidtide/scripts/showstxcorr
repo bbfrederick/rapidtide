@@ -22,11 +22,13 @@ import pandas as pd
 import rapidtide.miscmath as tide_math
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
+import rapidtide.filter as tide_filt
 import rapidtide.correlate as tide_corr
 import numpy as np
 import nibabel as nib
 import argparse
 import rapidtide.workflows.parser_funcs as pf
+from scipy.interpolate import UnivariateSpline
 
 import matplotlib.pyplot as plt
 
@@ -309,7 +311,6 @@ def main():
             windowfunc=args.windowfunc,
             detrendorder=0,
             display=False,
-            debug=True,
         )
         xlength = len(times)
 
@@ -355,7 +356,6 @@ def main():
                     windowfunc=args.windowfunc,
                     detrendorder=0,
                     display=False,
-                    debug=True,
                 )
 
         outputaffine = np.eye(4)
@@ -429,7 +429,6 @@ def main():
             windowfunc=args.windowfunc,
             detrendorder=0,
             display=False,
-            debug=True,
         )
         tide_io.writenpvecs(corrpertime, args.outfilename + "_pearson.txt")
         tide_io.writenpvecs(ppertime, args.outfilename + "_pvalue.txt")
@@ -439,6 +438,15 @@ def main():
 
         # threshold by corrthresh
         validlocs = np.where(np.fabs(Rvals) > args.corrthresh)
+
+        # do a polynomial fit to the delay function
+        thefit = np.polyfit(
+            times[validlocs],
+            delayvals[validlocs],
+            7,
+            w=(Rvals[validlocs] * Rvals[validlocs]),
+        )
+        smoothdelayvals = np.poly1d(thefit)(times)
 
         if args.display:
             # timeaxis = np.r_[0.0:len(filtereddata1)] * sampletime
@@ -452,11 +460,12 @@ def main():
             ax3.plot(times[validlocs], Rvals[validlocs], "k")
             ax3.set_ylabel("Xcorr max R", color="k")
             ax4 = ax3.twinx()
-            ax4.plot(times[validlocs], delayvals[validlocs], "r")
+            ax4.plot(times[validlocs], delayvals[validlocs], marker=".", linestyle="None")
+            ax4.plot(times, smoothdelayvals, "g")
             ax4.set_ylabel("Delay (s)", color="r")
-            fig, ax5 = plt.subplots()
-            ax5.set_ylabel("Delay vs xcorr max R", color="k")
-            ax5.plot(Rvals, delayvals, "r", marker=".", linestyle="None")
+            # fig, ax5 = plt.subplots()
+            # ax5.set_ylabel("Delay vs xcorr max R", color="k")
+            # ax5.plot(Rvals, delayvals, "r", marker=".", linestyle="None")
             # ax2.set_yscale('log')
             plt.show()
 
