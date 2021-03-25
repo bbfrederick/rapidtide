@@ -810,6 +810,8 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False, debug=False):
 def timewarp(orig_x, orig_y, timeoffset, demean=True, method="univariate", debug=False):
     if demean:
         demeanedoffset = timeoffset - np.mean(timeoffset)
+        if debug:
+            print("mean delay of ", np.mean(timeoffset), "seconds removed prior to resampling")
     else:
         demeanedoffset = timeoffset
     sampletime = orig_x[1] - orig_x[0]
