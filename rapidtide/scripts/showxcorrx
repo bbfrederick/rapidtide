@@ -47,98 +47,6 @@ def printthresholds(pcts, thepercentiles, labeltext):
         print("\tp <", "{:.3f}".format(1.0 - thepercentiles[i]), ": ", pcts[i])
 
 
-def usage(inputargs):
-    print(
-        os.path.basename(inputargs[0]),
-        "- calculate and display crosscorrelation between two timeseries",
-    )
-    print("")
-    print(
-        "usage: ",
-        os.path.basename(inputargs[0]),
-        " timecourse1[:COLNUM] timecourse2[:COLNUM] samplerate",
-    )
-    print(
-        " ".join(
-            [
-                "[-l LABEL]",
-                "[-s STARTTIME]",
-                "[-D DURATION]",
-                "[-d]",
-                "[-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]]",
-                "[-V]",
-                "[-L]",
-                "[-R]",
-                "[-C]",
-                "[--nodetrend]",
-                "[--nowindow]",
-                "[-f]",
-                "[-o OUTPUTFILE]",
-                "[--phat]",
-                "[--liang]",
-                "[--eckart]",
-                "[--savecorr=FILE]",
-                "[-z FILENAME]",
-                "[-N TRIALS]",
-            ]
-        )
-    )
-    print("")
-    print("required arguments:")
-    print(
-        "    timcoursefile1[:COLNUM]: text file containing a timeseries.  Select column COLNUM if multicolumn file"
-    )
-    print(
-        "    timcoursefile2[:COLNUM]: text file containing a timeseries.  Select column COLNUM if multicolumn file"
-    )
-    print("    samplerate:              sample rate of the timecourses, in Hz")
-    print("")
-    print("optional arguments:")
-    print("    --nodetrend        - do not detrend the data before correlation")
-    print("    --nowindow         - do not window data before corrlation")
-    print(
-        "    --windowfunc=FUNC  - window function to apply before corrlation (default is Hamming)"
-    )
-    print("    --cepstral         - check time delay using Choudhary's cepstral technique ")
-    print("    --phat             - perform phase alignment transform (PHAT) rather than ")
-    print("                         standard crosscorrelation")
-    print(
-        "    --liang            - perform phase alignment transform with Liang weighting function rather than "
-    )
-    print("                         standard crosscorrelation")
-    print(
-        "    --eckart           - perform phase alignment transform with Eckart weighting function rather than "
-    )
-    print("                         standard crosscorrelation")
-    print("    -l LABEL           - label for the delay value")
-    print("    -s STARTTIME       - time of first datapoint to use in seconds in the first file")
-    print("    -D DURATION        - amount of data to use in seconds")
-    print("    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is ")
-    print("                         +/-15)")
-    print("    -d                 - turns off display of graph")
-    print("    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ.")
-    print("                         LOWERSTOP and UPPERSTOP can be specified, or will be ")
-    print("                         calculated automatically")
-    print("    -V                 - filter data and regressors to VLF band")
-    print("    -L                 - filter data and regressors to LFO band")
-    print("    -R                 - filter data and regressors to respiratory band")
-    print("    -C                 - filter data and regressors to cardiac band")
-    print("    -T                 - trim data to match")
-
-    print("    -A                 - print data on a single summary line")
-    print("    -a                 - if summary mode is on, add a header line showing what values ")
-    print("                         mean")
-    print("    -f                 - negate (flip) second regressor")
-    print("    -savecorr=FILE     - Save the correlation function to the file FILE in xy format")
-    print("    -z FILENAME        - use the columns of FILENAME as controlling variables and ")
-    print("                         return the partial correlation")
-    print("    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS ")
-    print("                         repetition")
-    print("    -o OUTPUTFILE      - Writes summary lines to OUTPUTFILE (sets -A)")
-    print("")
-    return ()
-
-
 def _get_parser():
     """
     Argument parser for showxcorrx
@@ -160,13 +68,33 @@ def _get_parser():
         type=str,
         help="Text file containing a timeseries.  Select column COLNUM if multicolumn file",
     )
-    parser.add_argument(
-        "samplerate",
-        type=lambda x: pf.is_float(parser, x),
-        help="Sample rate of the timecourses, in Hz",
-    )
 
     # add optional arguments
+    sampling = parser.add_mutually_exclusive_group()
+    sampling.add_argument(
+        "--samplerate",
+        dest="samplerate",
+        action="store",
+        metavar="FREQ",
+        type=lambda x: pf.is_float(parser, x),
+        help=(
+            "Set the sample rate of the data file to FREQ. "
+            "If neither samplerate or sampletime is specified, sample rate is 1.0."
+        ),
+        default="auto",
+    )
+    sampling.add_argument(
+        "--sampletime",
+        dest="samplerate",
+        action="store",
+        metavar="TSTEP",
+        type=lambda x: pf.invert_float(parser, x),
+        help=(
+            "Set the sample rate of the data file to 1.0/TSTEP. "
+            "If neither samplerate or sampletime is specified, sample rate is 1.0."
+        ),
+        default="auto",
+    )
     parser.add_argument(
         "--nodisplay",
         dest="display",
@@ -261,7 +189,7 @@ def _get_parser():
         default=None,
     )
 
-    pf.addpermutationopts(preproc)
+    pf.addpermutationopts(preproc, numreps=0)
 
     # similarity function options
     similarityopts = parser.add_argument_group("Similarity function options")
@@ -353,6 +281,11 @@ def main():
     args, theprefilter = pf.postprocessfilteropts(args)
     args = pf.postprocesssearchrangeopts(args)
     args = pf.postprocesstimerangeopts(args)
+
+    # check that required arguments are set
+    if args.samplerate == "auto":
+        print("samplerate must be set")
+        sys.exit()
 
     infilename1, colspec1 = tide_io.parsefilespec(args.infilename1)
     infilename2, colspec2 = tide_io.parsefilespec(args.infilename2)
