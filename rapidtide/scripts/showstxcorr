@@ -22,7 +22,7 @@ import pandas as pd
 import rapidtide.miscmath as tide_math
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
-import rapidtide.filter as tide_filt
+import rapidtide.resample as tide_resamp
 import rapidtide.correlate as tide_corr
 import numpy as np
 import nibabel as nib
@@ -447,6 +447,17 @@ def main():
             w=(Rvals[validlocs] * Rvals[validlocs]),
         )
         smoothdelayvals = np.poly1d(thefit)(times)
+
+        hirestimeaxis = np.linspace(0, sampletime * endpoint2, num=endpoint2, endpoint=False)
+        highresdelayvals = np.poly1d(thefit)(hirestimeaxis)
+        print("len(hirestimeaxis):", len(hirestimeaxis))
+        print("len(highresdelayvals):", len(highresdelayvals))
+        print("len(reformdata[1, :]):", len(reformdata[1, :]))
+
+        timewarped = tide_resamp.timewarp(
+            hirestimeaxis, reformdata[1, :], highresdelayvals, debug=True
+        )
+        tide_io.writenpvecs(timewarped, args.outfilename + "_timewarped.txt")
 
         if args.display:
             # timeaxis = np.r_[0.0:len(filtereddata1)] * sampletime

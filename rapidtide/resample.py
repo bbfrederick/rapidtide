@@ -805,3 +805,15 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False, debug=False):
         shifted_y,
         shifted_weights,
     ]
+
+
+def timewarp(orig_x, orig_y, timeoffset, method="univariate", debug=False):
+    demeanedoffset = timeoffset - np.mean(timeoffset)
+    sampletime = orig_x[1] - orig_x[0]
+    maxdevs = (np.min(demeanedoffset), np.max(demeanedoffset))
+    maxsamps = maxdevs / sampletime
+    padlen = np.min([int(len(orig_x) // 2), int(30.0 / sampletime)])
+    if debug:
+        print("maximum deviation in samples:", maxsamps)
+        print("padlen in samples:", padlen)
+    return doresample(orig_x, orig_y, orig_x + demeanedoffset, method=method, padlen=padlen)
