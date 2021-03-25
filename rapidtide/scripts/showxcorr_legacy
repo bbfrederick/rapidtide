@@ -65,7 +65,7 @@ def getNullDistributionData(
         # crosscorrelate with original
         if gccphat:
             theshuffledxcorr = tide_corr.fastcorrelate(
-                filteredindata, filteredshuffleddata, usefft=dofftcorr, weighting="PHAT"
+                filteredindata, filteredshuffleddata, usefft=dofftcorr, weighting="phat"
             )
 
         else:
@@ -348,7 +348,7 @@ def main():
 
     if gccphat:
         thexcorr = tide_corr.fastcorrelate(
-            filtereddata1, filtereddata2, usefft=dofftcorr, weighting="PHAT"
+            filtereddata1, filtereddata2, usefft=dofftcorr, weighting="phat"
         )
     else:
         thexcorr = tide_corr.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr)

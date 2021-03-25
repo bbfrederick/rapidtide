@@ -1006,16 +1006,16 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
         return product
 
     # calculate the weighting function
-    if weighting == "Liang":
+    if weighting == "liang":
         denom = np.square(
             np.sqrt(np.absolute(fft1 * np.conjugate(fft1)))
             + np.sqrt(np.absolute(fft2 * np.conjugate(fft2)))
         )
-    elif weighting == "Eckart":
+    elif weighting == "eckart":
         denom = np.sqrt(np.absolute(fft1 * np.conjugate(fft1))) * np.sqrt(
             np.absolute(fft2 * np.conjugate(fft2))
         )
-    elif weighting == "PHAT":
+    elif weighting == "phat":
         denom = np.absolute(product)
     else:
         print("illegal weighting function specified in gccproduct")

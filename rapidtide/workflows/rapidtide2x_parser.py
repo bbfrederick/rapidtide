@@ -954,13 +954,13 @@ def process_args():
             optiondict["verbose"] = True
             print("Turned on verbose mode")
         elif o == "--liang":
-            optiondict["corrweighting"] = "Liang"
+            optiondict["corrweighting"] = "liang"
             print("Enabled Liang weighted crosscorrelation")
         elif o == "--eckart":
-            optiondict["corrweighting"] = "Eckart"
+            optiondict["corrweighting"] = "eckart"
             print("Enabled Eckart weighted crosscorrelation")
         elif o == "--phat":
-            optiondict["corrweighting"] = "PHAT"
+            optiondict["corrweighting"] = "phat"
             print("Enabled GCC-PHAT fitting")
         elif o == "--weiner":
             print("It's spelled wiener, not weiner")
