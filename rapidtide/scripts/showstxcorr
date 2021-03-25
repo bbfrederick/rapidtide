@@ -23,6 +23,7 @@ import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
+import rapidtide.filter as tide_filt
 import rapidtide.correlate as tide_corr
 from scipy.stats.stats import pearsonr
 import numpy as np
@@ -139,6 +140,41 @@ def _get_parser():
     )
     # add optional arguments
     parser.add_argument(
+        "--windowwidth",
+        dest="windowwidth",
+        metavar="WINDOWWIDTH",
+        type=lambda x: pf.is_float(parser, x),
+        help="Use a window width of WINDOWWIDTH seconds (default is 50.0s).",
+        default=50.0,
+    )
+    parser.add_argument(
+        "--stepsize",
+        dest="stepsize",
+        metavar="STEPSIZE",
+        type=lambda x: pf.is_float(parser, x),
+        help=(
+            "Timestep between subsequent measurements (default is 25.0s).  "
+            "Will be rounded to the nearest sample time."
+        ),
+        default=25.0,
+    )
+    parser.add_argument(
+        "--starttime",
+        dest="starttime",
+        metavar="START",
+        type=float,
+        help="Start plotting at START seconds (default is 0.0).",
+        default=0.0,
+    )
+    parser.add_argument(
+        "--duration",
+        dest="duration",
+        metavar="DURATION",
+        type=float,
+        help="Amount of data, in seconds, to process after starttime (default is the entire timecourse).",
+        default=1000000.0,
+    )
+    parser.add_argument(
         "--nodisplay",
         dest="display",
         action="store_false",
@@ -187,13 +223,6 @@ def _get_parser():
 
     # Preprocessing options
     preproc = parser.add_argument_group("Preprocessing options")
-    preproc.add_argument(
-        "--cepstral",
-        dest="cepstral",
-        action="store_true",
-        help="Check time delay using Choudhary's cepstral technique. ",
-        default=False,
-    )
     preproc.add_argument(
         "--corrweighting",
         dest="corrweighting",
@@ -272,15 +301,7 @@ def usage():
 
 def main():
     # get the command line parameters
-    searchrange = 15.0
-    display = True
-    duration = 1000000.0
-    starttime = 0.0
-    doplot = False
-    thelabel = ""
     verbose = True
-    summarymode = False
-    labelline = False
     windowtime = 50.0
     window_lowestfreq = 1.0 / windowtime
     window_upperfreq = 0.15
@@ -327,12 +348,6 @@ def main():
     args, theprefilter = pf.postprocessfilteropts(args)
     args = pf.postprocesssearchrangeopts(args)
     args = pf.postprocesstimerangeopts(args)
-
-    # unset all required arguments
-    # infilename = []
-    # sampletime = None
-    # Fs = None
-    # outfilename = None
 
     """theprefilter = tide_filt.noncausalfilter()
 
@@ -513,24 +528,39 @@ def main():
     # check that required arguments are set
     if args.samplerate == "auto":
         print("samplerate must be set")
-        usage()
         sys.exit()
     sampletime = 1.0 / args.samplerate
 
     # read in the files and get everything trimmed to the right length
-    stepsize = sampletime * np.round(stepsize / sampletime)
-    startpoint = max([int(starttime * args.samplerate), 0])
+    stepsize = sampletime * np.round(args.stepsize / sampletime)
+    thewindowfilter = tide_filt.noncausalfilter()
+
+    # set the default characteristics
+    window_lowestfreq = 1.0 / args.windowwidth
+    window_upperfreq = -1.0
+    print("setting default filter to pass", window_lowestfreq, "to", window_upperfreq)
+    thewindowfilter.settype("arb")
+    thewindowfilter.setfreqs(
+        window_lowestfreq,
+        window_lowestfreq * 1.05,
+        window_upperfreq / 1.05,
+        window_upperfreq,
+    )
+
+    startpoint = max([int(args.starttime * args.samplerate), 0])
     inputdata1 = tide_io.readvec(args.infilename1)
     numpoints = len(inputdata1)
     inputdata2 = tide_io.readvec(args.infilename2)
     endpoint1 = min(
         [
-            startpoint + int(duration * args.samplerate),
+            startpoint + int(args.duration * args.samplerate),
             int(len(inputdata1)),
             int(len(inputdata2)),
         ]
     )
-    endpoint2 = min([int(duration * args.samplerate), int(len(inputdata1)), int(len(inputdata2))])
+    endpoint2 = min(
+        [int(args.duration * args.samplerate), int(len(inputdata1)), int(len(inputdata2))]
+    )
     trimmeddata = np.zeros((2, numpoints), dtype="float")
     trimmeddata[0, :] = inputdata1[startpoint:endpoint1]
     trimmeddata[1, :] = inputdata2[0:endpoint2]
