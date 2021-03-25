@@ -1,3 +1,11 @@
 #!/bin/bash
 
-showstxcorr lt_HbO rt_HbO ../dst/hoot --samplerate 12.5
+showstxcorr \
+    lt_HbO \
+    rt_HbO \
+    ../dst/hoot \
+    --samplerate 12.5 \
+    --filterband lfo \
+    --windowwidth 60.0 \
+    --stepsize 5.0 \
+    --corrweighting phat
