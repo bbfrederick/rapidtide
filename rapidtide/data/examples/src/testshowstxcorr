@@ -1,0 +1,3 @@
+#!/bin/bash
+
+showstxcorr lt_HbO rt_HbO ../dst/hoot --samplerate 12.5
