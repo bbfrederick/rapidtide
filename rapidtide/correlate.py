@@ -255,11 +255,12 @@ def shorttermcorr_2D(
     sampletime,
     windowtime,
     samplestep=1,
-    laglimit=None,
+    laglimits=None,
     weighting="None",
     windowfunc="None",
     detrendorder=0,
     display=False,
+    debug=False,
 ):
     """
 
@@ -270,11 +271,12 @@ def shorttermcorr_2D(
     sampletime
     windowtime
     samplestep
-    laglimit
+    laglimits
     weighting
     windowfunc
     detrendorder
     display
+    debug
 
     Returns
     -------
@@ -283,8 +285,15 @@ def shorttermcorr_2D(
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
 
-    if laglimit is None:
-        laglimit = windowtime / 2.0
+    if laglimits is not None:
+        lagmin = laglimits[0]
+        lagmax = laglimits[1]
+    else:
+        lagmin = -windowtime / 2.0
+        lagmax = windowtime / 2.0
+
+    if debug:
+        print("lag limits:", lagmin, lagmax)
 
     """dt = np.diff(time)[0]  # In days...
     fs = 1.0 / dt
@@ -333,8 +342,8 @@ def shorttermcorr_2D(
         ) = tide_fit.findmaxlag_gauss(
             xcorr_x,
             xcorrpertime[-1],
-            -laglimit,
-            laglimit,
+            lagmin,
+            lagmax,
             1000.0,
             refine=True,
             useguess=False,
