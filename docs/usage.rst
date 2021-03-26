@@ -483,7 +483,7 @@ BIDS Outputs:
    :widths: 15, 15, 30, 10
 
    "XXX_commandline", ".txt", "The command line used to run happy", "Always"
-   "XXX_formattedcommandline", ".txt", ""The command line used to run happy, attractively formatted", "Always"
+   "XXX_formattedcommandline", ".txt", "The command line used to run happy, attractively formatted", "Always"
    "XXX_desc-rawapp_info", ".nii.gz", "The analytic phase projection map of the cardiac waveform", "Always"
    "XXX_desc-app_info", ".nii.gz", "The analytic phase projection map of the cardiac waveform, voxelwise minimum subtracted", "Always"
    "XXX_desc-normapp_info", ".nii.gz", "The analytic phase projection map of the cardiac waveform, voxelwise minimum subtracted and normalized", "Always"
@@ -497,7 +497,7 @@ BIDS Outputs:
    "XXX_desc-cine_info", ".nii.gz", "Average image of the fMRI data over a single cardiac cycle", "Always"
    "XXX_desc-cycleaverage_timeseries", ".tsv.gz, .json", "Not sure", "Always"
    "XXX_desc-maxphase_map", ".nii.gz", "Map of the average phase where the maximum amplitude occurs for each voxel", "Always"
-   "XXX_desc-minphase_map", ".nii.gz", ""Map of the average phase where the minimum amplitude occurs for each voxel", "Always"
+   "XXX_desc-minphase_map", ".nii.gz", "Map of the average phase where the minimum amplitude occurs for each voxel", "Always"
    "XXX_desc-processvoxels_mask", ".nii.gz", "Map of all voxels used for analytic phase projection", "Always"
    "XXX_desc-vessels_map", ".nii.gz", "Amplitude of variance over a cardiac cycle (large values are assumed to be vessels)", "Always"
    "XXX_desc-vessels_mask", ".nii.gz", "Locations of voxels with variance over a cardiac cycle that exceeds a threshold (assumed to be vessels)", "Always"
@@ -508,44 +508,6 @@ BIDS Outputs:
    "XXX_runtimings", ".txt", "Detailed timing information", "Always"
 ..
 
-
-
-#		Waveforms
-#		XXX_cardfromfmri_sliceres.txt                         - The estimated cardiac waveform.  Sample rate is (1/TR) * number of slices / multiband factor.
-#		XXX_cardfromfmri_sliceres_badpts.txt                  - Points in the above waveform that are probably bad due to motion.
-#		XXX_cardfromfmri_sliceres_censored.txt                - The estimated waveform with the bad points zeroed out.
-#		XXX_cardfromfmri_25.0Hz.txt                           - The estimated cardiac waveform resampled to 25.0 Hz
-#		XXX_cardfromfmri_dlfiltered_25.0Hz.txt                - The above, after passing through the deep learning filter.
-#		XXX_cardfromfmri_dlfiltered_sliceres.txt              - The above, resample back to sliceres.
-#
-#		XXX_cardfromfmrienv_25.0Hz.txt                        - The envelope function of the estimated cardiac waveform.
-#		XXX_normcardfromfmri_25.0Hz.txt                       - Estimated cardiac waveform divided by the envelope function.
-#		XXX_normcardfromfmri_dlfiltered_25.0Hz.txt
-#		XXX_cardfromfmri_25.0Hz_badpts.txt
-#		XXX_overall_sliceres_badpts.txt
-#		XXX_cardiacfundamental.txt
-#		XXX_ampenv.txt
-#		XXX_instphase_unwrapped.txt
-#		XXX_filtered_instphase_unwrapped.txt
-#		XXX_orthogonalizedmotion.txt
-#		XXX_interpinstphase.txt
-#
-#		Histograms
-#		XXX_histogram_peak.txt
-#		XXX_histogram.txt
-#
-#                Images
-#		XXX_app.nii.gz                                        - The cardiac waveform over one cycle in each voxel.
-#		XXX_rawapp.nii.gz
-#		XXX_mask.nii.gz
-#		XXX_maskedapp.nii.gz
-#		XXX_vesselmask.nii.gz
-#		XXX_minphase.nii.gz
-#		XXX_maxphase.nii.gz
-#		XXX_arteries.nii.gz
-#		XXX_veins.nii.gz
-#		XXX_vesselmap.nii.gz
-#
 
 
 Usage:
