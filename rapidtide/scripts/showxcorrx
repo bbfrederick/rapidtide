@@ -634,7 +634,7 @@ def main():
     if args.debug:
         print(thepxcorr)
 
-    print(f"{infilename1}[0] = {infilename2}[{maxdelay} seconds]")
+    print(f"{infilename1}[0] = {infilename2}[{-maxdelay} seconds]")
     if args.summarymode:
         if args.numestreps > 0:
             thelabelitems = [
