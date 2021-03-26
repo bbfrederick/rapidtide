@@ -19,7 +19,6 @@
 from __future__ import print_function, division
 
 import sys
-import os
 import numpy as np
 import scipy as sp
 
@@ -31,6 +30,7 @@ import rapidtide.peakeval as tide_peakeval
 import rapidtide.fit as tide_fit
 import rapidtide.correlate as tide_corr
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
+import rapidtide.util as tide_util
 import rapidtide.helper_classes as tide_classes
 
 import rapidtide.workflows.parser_funcs as pf
@@ -102,20 +102,6 @@ def _get_parser():
         help=("Do not plot the data (for noninteractive use)"),
         default=True,
     )
-    parser.add_argument(
-        "--debug",
-        dest="debug",
-        action="store_true",
-        help=("Enable additional debugging output."),
-        default=False,
-    )
-    parser.add_argument(
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        help=("Print out more debugging information"),
-        default=False,
-    )
     pf.addsearchrangeopts(parser, details=True)
     pf.addtimerangeopts(parser)
     parser.add_argument(
@@ -144,13 +130,6 @@ def _get_parser():
 
     # Preprocessing options
     preproc = parser.add_argument_group("Preprocessing options")
-    preproc.add_argument(
-        "--cepstral",
-        dest="cepstral",
-        action="store_true",
-        help="Check time delay using Choudhary's cepstral technique. ",
-        default=False,
-    )
     preproc.add_argument(
         "--corrweighting",
         dest="corrweighting",
@@ -189,10 +168,45 @@ def _get_parser():
         default=None,
     )
 
+    additionalcalcs = parser.add_argument_group("Additional calculations")
+    additionalcalcs.add_argument(
+        "--cepstral",
+        dest="cepstral",
+        action="store_true",
+        help="Check time delay using Choudhary's cepstral technique. ",
+        default=False,
+    )
+    additionalcalcs.add_argument(
+        "--calccsd",
+        dest="calccsd",
+        action="store_true",
+        help="Calculate the cross-spectral density. ",
+        default=False,
+    )
+    additionalcalcs.add_argument(
+        "--calccoherence",
+        dest="calccoherence",
+        action="store_true",
+        help="Calculate the coherence. ",
+        default=False,
+    )
+
     pf.addpermutationopts(preproc, numreps=0)
 
     # similarity function options
     similarityopts = parser.add_argument_group("Similarity function options")
+    similarityopts.add_argument(
+        "--similaritymetric",
+        dest="similaritymetric",
+        action="store",
+        type=str,
+        choices=["correlation", "mutualinfo", "hybrid"],
+        help=(
+            "Similarity metric for finding delay values.  "
+            "Choices are 'correlation' (default), 'mutualinfo', and 'hybrid'."
+        ),
+        default="correlation",
+    )
     pf.addsimilarityopts(similarityopts)
 
     # Output options
@@ -260,6 +274,23 @@ def _get_parser():
         default=1,
     )
 
+    # debugging options
+    debugging = parser.add_argument_group("Miscellaneous options")
+    debugging.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Enable additional debugging output."),
+        default=False,
+    )
+    debugging.add_argument(
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help=("Print out more debugging information"),
+        default=False,
+    )
+
     return parser
 
 
@@ -282,14 +313,13 @@ def main():
     args = pf.postprocesssearchrangeopts(args)
     args = pf.postprocesstimerangeopts(args)
 
-    # check that required arguments are set
+    # Set the default samplerate if not set
     if args.samplerate == "auto":
-        print("samplerate must be set")
-        sys.exit()
+        print("samplerate not set - setting to 1.0 Hz")
+        args.samplerate = 1.0
 
     infilename1, colspec1 = tide_io.parsefilespec(args.infilename1)
     infilename2, colspec2 = tide_io.parsefilespec(args.infilename2)
-    Fs = args.samplerate
 
     inputdata1 = np.transpose(tide_io.readvecs(infilename1, colspec=colspec1))
     if np.shape(inputdata1)[1] > 1:
@@ -311,15 +341,17 @@ def main():
     showpearson = True
 
     print("startpoint, endpoint:", args.startpoint, args.endpoint)
-    print("thetime:", args.startpoint / Fs)
+    print("thetime:", args.startpoint / args.samplerate)
 
-    startpoint1 = np.max([int(args.startpoint / Fs), 0])
+    startpoint1 = np.max([int(args.startpoint / args.samplerate), 0])
     if args.debug:
         print("startpoint set to ", startpoint1)
-    endpoint1 = np.min([int(args.endpoint / Fs), int(len(inputdata1))])
+    endpoint1 = np.min([int(args.endpoint / args.samplerate), int(len(inputdata1))])
     if args.debug:
         print("endpoint set to ", endpoint1)
-    endpoint2 = np.min([int(args.endpoint / Fs), int(len(inputdata1)), int(len(inputdata2))])
+    endpoint2 = np.min(
+        [int(args.endpoint / args.samplerate), int(len(inputdata1)), int(len(inputdata2))]
+    )
     trimdata1 = inputdata1[startpoint1:endpoint1]
     trimdata2 = inputdata2[0:endpoint2]
 
@@ -338,12 +370,12 @@ def main():
         if args.verbose:
             print("filtering to ", theprefilter.gettype(), " band")
     filtereddata1 = tide_math.corrnormalize(
-        theprefilter.apply(Fs, trimdata1),
+        theprefilter.apply(args.samplerate, trimdata1),
         detrendorder=args.detrendorder,
         windowfunc=args.windowfunc,
     )
     filtereddata2 = tide_math.corrnormalize(
-        theprefilter.apply(Fs, trimdata2),
+        theprefilter.apply(args.samplerate, trimdata2),
         detrendorder=args.detrendorder,
         windowfunc=args.windowfunc,
     )
@@ -358,7 +390,7 @@ def main():
         for j in range(0, controlvars.shape[0]):
             regressorvec.append(
                 tide_math.corrnormalize(
-                    theprefilter.apply(Fs, controlvars[j, :]),
+                    theprefilter.apply(args.samplerate, controlvars[j, :]),
                     detrendorder=args.detrendorder,
                     windowfunc=args.windowfunc,
                 )
@@ -368,9 +400,9 @@ def main():
         if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
             thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
-    # initialize the correlator
+    # initialize the correlator and mutualinformationator
     thecorrelator = tide_classes.correlator(
-        Fs=Fs,
+        Fs=args.samplerate,
         ncprefilter=theprefilter,
         detrendorder=args.detrendorder,
         windowfunc=args.windowfunc,
@@ -378,7 +410,7 @@ def main():
     )
     thecorrelator.setreftc(trimdata2 * flipfac)
     themutualinformationator = tide_classes.mutualinformationator(
-        Fs=Fs,
+        Fs=args.samplerate,
         smoothingtime=args.smoothingtime,
         ncprefilter=theprefilter,
         detrendorder=args.detrendorder,
@@ -387,92 +419,106 @@ def main():
     )
     themutualinformationator.setreftc(trimdata2 * flipfac)
 
-    # do the correlation
-    thexcorr, xcorr_x, globalmax = thecorrelator.run(trimdata1, trim=False)
-    print("correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
-    if dumpfiltered:
-        tide_io.writenpvecs(thecorrelator.preptesttc, "correlator_filtereddata1.txt")
-        tide_io.writenpvecs(thecorrelator.prepreftc, "correlator_filtereddata2.txt")
-    thecorrelator.setlimits(int((-args.lagmin * Fs) - 0.5), int((args.lagmax * Fs) + 0.5))
-    thexcorr_trim, xcorr_x_trim, dummy = thecorrelator.getfunction(trim=True)
-    print("trimmed correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
-
-    # calculate the MI
-    theMI, MI_x, globalmax = themutualinformationator.run(trimdata1, trim=False, gettimeaxis=True)
-    print("mutualinformationator lengths (x, y):", len(MI_x), len(theMI))
-    if dumpfiltered:
-        tide_io.writenpvecs(themutualinformationator.preptesttc, "MI_filtereddata1.txt")
-        tide_io.writenpvecs(themutualinformationator.prepreftc, "MI_filtereddata2.txt")
-    themutualinformationator.setlimits(
-        int((-args.lagmin * Fs) - 0.5), int((args.lagmax * Fs) + 0.5)
-    )
-    theMI_trim, MI_x_trim, globalmax = themutualinformationator.getfunction(trim=True)
-    print("trimmed mutualinformationator lengths (x, y):", len(MI_x_trim), len(theMI_trim))
+    # calculate the similarity
+    if args.similaritymetric == "mutualinfo":
+        # calculate the MI
+        theMI, MI_x, globalmax = themutualinformationator.run(
+            trimdata1, trim=False, gettimeaxis=True
+        )
+        print("mutualinformationator lengths (x, y):", len(MI_x), len(theMI))
+        if dumpfiltered:
+            tide_io.writenpvecs(themutualinformationator.preptesttc, "MI_filtereddata1.txt")
+            tide_io.writenpvecs(themutualinformationator.prepreftc, "MI_filtereddata2.txt")
+        themutualinformationator.setlimits(
+            int((-args.lagmin * args.samplerate) - 0.5), int((args.lagmax * args.samplerate) + 0.5)
+        )
+        theMI_trim, MI_x_trim, globalmax = themutualinformationator.getfunction(trim=True)
+        print("trimmed mutualinformationator lengths (x, y):", len(MI_x_trim), len(theMI_trim))
+    else:
+        # do the correlation
+        thexcorr, xcorr_x, globalmax = thecorrelator.run(trimdata1, trim=False)
+        print("correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
+        if dumpfiltered:
+            tide_io.writenpvecs(thecorrelator.preptesttc, "correlator_filtereddata1.txt")
+            tide_io.writenpvecs(thecorrelator.prepreftc, "correlator_filtereddata2.txt")
+        thecorrelator.setlimits(
+            int((-args.lagmin * args.samplerate) - 0.5), int((args.lagmax * args.samplerate) + 0.5)
+        )
+        thexcorr_trim, xcorr_x_trim, dummy = thecorrelator.getfunction(trim=True)
+        print("trimmed correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
     if args.cepstral:
         cepdelay = tide_corr.cepstraldelay(
-            filtereddata1, filtereddata2, 1.0 / Fs, displayplots=args.display
+            filtereddata1, filtereddata2, 1.0 / args.samplerate, displayplots=args.display
         )
-        cepcoff = tide_corr.delayedcorr(filtereddata1, filtereddata2, cepdelay, 1.0 / Fs)
+        cepcoff = tide_corr.delayedcorr(
+            filtereddata1, filtereddata2, cepdelay, 1.0 / args.samplerate
+        )
         print("cepstral delay time is", cepdelay, ", correlation is", cepcoff)
     thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
-    # calculate the coherence
-    f, Cxy = sp.signal.coherence(
-        tide_math.corrnormalize(
-            theprefilter.apply(Fs, trimdata1),
-            detrendorder=args.detrendorder,
-            windowfunc=args.windowfunc,
-        ),
-        tide_math.corrnormalize(
-            theprefilter.apply(Fs, trimdata2),
-            detrendorder=args.detrendorder,
-            windowfunc=args.windowfunc,
-        ),
-        Fs,
-    )
+    if args.calccoherence:
+        # calculate the coherence
+        fC, Cxy = sp.signal.coherence(
+            tide_math.corrnormalize(
+                theprefilter.apply(args.samplerate, trimdata1),
+                detrendorder=args.detrendorder,
+                windowfunc=args.windowfunc,
+            ),
+            tide_math.corrnormalize(
+                theprefilter.apply(args.samplerate, trimdata2),
+                detrendorder=args.detrendorder,
+                windowfunc=args.windowfunc,
+            ),
+            args.samplerate,
+        )
 
-    # calculate the cross spectral density
-    f, Pxy = sp.signal.csd(
-        tide_math.corrnormalize(
-            theprefilter.apply(Fs, trimdata1),
-            detrendorder=args.detrendorder,
-            windowfunc=args.windowfunc,
-        ),
-        tide_math.corrnormalize(
-            theprefilter.apply(Fs, trimdata2),
-            detrendorder=args.detrendorder,
-            windowfunc=args.windowfunc,
-        ),
-        Fs,
-    )
+    if args.calccsd:
+        # calculate the cross spectral density
+        fP, Pxy = sp.signal.csd(
+            tide_math.corrnormalize(
+                theprefilter.apply(args.samplerate, trimdata1),
+                detrendorder=args.detrendorder,
+                windowfunc=args.windowfunc,
+            ),
+            tide_math.corrnormalize(
+                theprefilter.apply(args.samplerate, trimdata2),
+                detrendorder=args.detrendorder,
+                windowfunc=args.windowfunc,
+            ),
+            args.samplerate,
+        )
 
-    # intitialize the correlation fitter
-    thexsimfuncfitter = tide_classes.simfunc_fitter(
-        corrtimeaxis=xcorr_x,
-        lagmin=args.lagmin,
-        lagmax=args.lagmax,
-        absmaxsigma=absmaxsigma,
-        absminsigma=absminsigma,
-        debug=args.debug,
-        peakfittype=peakfittype,
-        functype="correlation",
-        zerooutbadfit=zerooutbadfit,
-        useguess=False,
-    )
-    # intitialize the correlation fitter
-    themifitter = tide_classes.simfunc_fitter(
-        corrtimeaxis=MI_x_trim,
-        lagmin=args.lagmin,
-        lagmax=args.lagmax,
-        absmaxsigma=absmaxsigma,
-        absminsigma=absminsigma,
-        debug=args.debug,
-        peakfittype="quad",
-        functype="mutualinfo",
-        zerooutbadfit=zerooutbadfit,
-        useguess=False,
-    )
+    if args.similaritymetric == "mutualinfo":
+        # intitialize the similarity function fitter
+        themifitter = tide_classes.simfunc_fitter(
+            corrtimeaxis=MI_x_trim,
+            lagmin=args.lagmin,
+            lagmax=args.lagmax,
+            absmaxsigma=absmaxsigma,
+            absminsigma=absminsigma,
+            debug=args.debug,
+            peakfittype="quad",
+            functype="mutualinfo",
+            zerooutbadfit=zerooutbadfit,
+            useguess=False,
+        )
+        maxdelaymi = MI_x_trim[np.argmax(theMI_trim)]
+    else:
+        # intitialize the correlation fitter
+        thexsimfuncfitter = tide_classes.simfunc_fitter(
+            corrtimeaxis=xcorr_x,
+            lagmin=args.lagmin,
+            lagmax=args.lagmax,
+            absmaxsigma=absmaxsigma,
+            absminsigma=absminsigma,
+            debug=args.debug,
+            peakfittype=peakfittype,
+            functype="correlation",
+            zerooutbadfit=zerooutbadfit,
+            useguess=False,
+        )
+        maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
 
     if args.debug:
         print(
@@ -480,74 +526,46 @@ def main():
             thecorrelator.similarityfuncorigin - thecorrelator.lagmininpts,
             thecorrelator.similarityfuncorigin + thecorrelator.lagmaxinpts,
         )
-    maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
+
     if args.debug:
         print("\n\nmaxdelay before refinement", maxdelay)
 
-    timeaxis = np.linspace(0, 1.0, num=len(trimdata1), endpoint=False) / Fs
+    timeaxis = np.linspace(0, 1.0, num=len(trimdata1), endpoint=False) / args.samplerate
     thetc = trimdata1 * 0.0
-    dummy, thepeaks = tide_peakeval._procOneVoxelPeaks(
-        0,
-        thetc,
-        themutualinformationator,
-        timeaxis,
-        trimdata1,
-        timeaxis,
-        xcorr_x,
-        thexcorr,
-        oversampfactor=1,
-    )
 
-    print("peaklist:")
-    print('peak\tloc\tR\tMI\t"R"')
-    for i in range(len(thepeaks)):
-        print(
-            "{0:2d}\t{1:3.2f}\t{2:3.2f}\t{3:3.2f}\t{4:3.2f}".format(
-                i,
-                thepeaks[i][0],
-                thepeaks[i][1],
-                thepeaks[i][2],
-                tide_corr.MI_to_R(thepeaks[i][2]),
-            )
+    if args.similaritymetric == "hybrid":
+        peakstartind = tide_util.valtoindex(xcorr_x, args.lagmin, discretization="floor")
+        peakendind = tide_util.valtoindex(xcorr_x, args.lagmax, discretization="ceiling") + 1
+        dummy, thepeaks = tide_peakeval._procOneVoxelPeaks(
+            0,
+            thetc,
+            themutualinformationator,
+            timeaxis,
+            trimdata1,
+            timeaxis,
+            xcorr_x[peakstartind:peakendind],
+            thexcorr[peakstartind:peakendind],
+            oversampfactor=1,
         )
 
-    (
-        maxindex,
-        maxdelay,
-        maxval,
-        maxsigma,
-        maskval,
-        failreason,
-        peakstart,
-        peakend,
-    ) = thexsimfuncfitter.fit(thexcorr)
-    if failreason > 0:
-        print("showxcorrx: FIT FAILED with reason:")
-        print(thexsimfuncfitter.diagnosefail(np.uint32(failreason)))
-    if args.debug:
-        print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
-    R = maxval
-    if args.debug:
-        print("maxdelay after refinement", maxdelay)
+        thesortedindices = np.argsort(np.asarray(thepeaks)[:, 2])[::-1]
+        print("peaklist:")
+        print('peak\tloc\tR\tMI\t"R"')
+        for i in range(len(thepeaks)):
+            print(
+                "{0:2d}\t{1:3.2f}\t{2:3.2f}\t{3:3.2f}\t{4:3.2f}".format(
+                    i,
+                    thepeaks[thesortedindices[i]][0],
+                    thepeaks[thesortedindices[i]][1],
+                    thepeaks[thesortedindices[i]][2],
+                    tide_corr.MI_to_R(thepeaks[thesortedindices[i]][2]),
+                )
+            )
 
-    maxdelaymi = xcorr_x_trim[np.argmax(thexcorr_trim)]
-    if args.debug:
-        print("\n\nmaxdelaymi before refinement", maxdelaymi)
-    (
-        maxindexmi,
-        maxdelaymi,
-        maxvalmi,
-        maxsigmami,
-        maskvalmi,
-        failreasonmi,
-        peakstartmi,
-        peakendmi,
-    ) = themifitter.fit(theMI_trim)
-    if failreasonmi > 0:
-        print("showxcorrx: FIT FAILED for mutual information with reason:")
-        print(themifitter.diagnosefail(np.uint32(failreasonmi)))
-    if args.debug:
-        print(
+    if args.similaritymetric == "mutualinfo":
+        if args.debug:
+            print("\n\nmaxdelaymi before refinement", maxdelaymi)
+        (
             maxindexmi,
             maxdelaymi,
             maxvalmi,
@@ -556,10 +574,43 @@ def main():
             failreasonmi,
             peakstartmi,
             peakendmi,
-        )
-    R = maxval
-    if args.debug:
-        print("maxdelay after refinement", maxdelay, "\n\n")
+        ) = themifitter.fit(theMI_trim)
+        if failreasonmi > 0:
+            print("showxcorrx: FIT FAILED for mutual information with reason:")
+            print(themifitter.diagnosefail(np.uint32(failreasonmi)))
+        if args.debug:
+            print(
+                maxindexmi,
+                maxdelaymi,
+                maxvalmi,
+                maxsigmami,
+                maskvalmi,
+                failreasonmi,
+                peakstartmi,
+                peakendmi,
+            )
+        R = maxvalmi
+        if args.debug:
+            print("maxdelay after refinement", maxdelaymi, "\n\n")
+    else:
+        (
+            maxindex,
+            maxdelay,
+            maxval,
+            maxsigma,
+            maskval,
+            failreason,
+            peakstart,
+            peakend,
+        ) = thexsimfuncfitter.fit(thexcorr)
+        if failreason > 0:
+            print("showxcorrx: FIT FAILED with reason:")
+            print(thexsimfuncfitter.diagnosefail(np.uint32(failreason)))
+        if args.debug:
+            print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
+        R = maxval
+        if args.debug:
+            print("maxdelay after refinement", maxdelay, "\n\n")
 
     # set the significance threshold
     if args.numestreps > 0:
@@ -567,7 +618,7 @@ def main():
         print("calculating null crosscorrelations")
         corrlist = tide_nullsimfunc.getNullDistributionDatax(
             filtereddata2,
-            Fs,
+            args.samplerate,
             thecorrelator,
             thexsimfuncfitter,
             numestreps=args.numestreps,
@@ -600,7 +651,7 @@ def main():
         print("calculating null Pearson correlations")
         corrlist_pear = tide_nullsimfunc.getNullDistributionDatax(
             filtereddata2,
-            Fs,
+            args.samplerate,
             thecorrelator,
             thexsimfuncfitter,
             numestreps=args.numestreps,
@@ -634,31 +685,52 @@ def main():
     if args.debug:
         print(thepxcorr)
 
-    print(f"{infilename1}[0] = {infilename2}[{-maxdelay} seconds]")
-    if args.summarymode:
-        if args.numestreps > 0:
-            thelabelitems = [
-                "pearson_R",
-                "pearson_R(p=0.05)",
-                "xcorr_R",
-                "xcorr_R(p=0.05)",
-                "xcorr_maxdelay",
-            ]
-            thedataitems = [
-                str(thepxcorr[0]),
-                str(pearpcts_fit[0]),
-                str(R),
-                str(pcts_fit[0]),
-                str(-maxdelay),
-            ]
-        else:
-            thelabelitems = ["pearson_R", "pearson_p", "xcorr_R", "xcorr_maxdelay"]
-            thedataitems = [
-                str(thepxcorr[0]),
-                str(thepxcorr[1]),
-                str(R),
-                str(-maxdelay),
-            ]
+    if args.similaritymetric == "mutualinfo":
+        print(f"{infilename1}[0] = {infilename2}[{-maxdelaymi} seconds]")
+        if args.summarymode:
+            if args.numestreps > 0:
+                thelabelitems = [
+                    "MI_R",
+                    "MI_R(p=0.05)",
+                    "MI_maxdelay",
+                ]
+                thedataitems = [
+                    str(maxvalmi),
+                    str(pcts_fit[0]),
+                    str(-maxdelaymi),
+                ]
+            else:
+                thelabelitems = ["xcorr_R", "xcorr_maxdelay"]
+                thedataitems = [
+                    str(maxvalmi),
+                    str(-maxdelaymi),
+                ]
+    else:
+        print(f"{infilename1}[0] = {infilename2}[{-maxdelay} seconds]")
+        if args.summarymode:
+            if args.numestreps > 0:
+                thelabelitems = [
+                    "pearson_R",
+                    "pearson_R(p=0.05)",
+                    "xcorr_R",
+                    "xcorr_R(p=0.05)",
+                    "xcorr_maxdelay",
+                ]
+                thedataitems = [
+                    str(thepxcorr[0]),
+                    str(pearpcts_fit[0]),
+                    str(R),
+                    str(pcts_fit[0]),
+                    str(-maxdelay),
+                ]
+            else:
+                thelabelitems = ["pearson_R", "pearson_p", "xcorr_R", "xcorr_maxdelay"]
+                thedataitems = [
+                    str(thepxcorr[0]),
+                    str(thepxcorr[1]),
+                    str(R),
+                    str(-maxdelay),
+                ]
         if args.label is not None:
             thelabelitems = ["thelabel"] + thelabelitems
             thedataitems = [args.label] + thedataitems
@@ -671,7 +743,7 @@ def main():
         else:
             with open(args.outputfile, "w") as text_file:
                 text_file.write(outputstring + "\n")
-    else:
+    """else:
         # report the pearson correlation
         if showpearson:
             print("Pearson_R:\t", thepxcorr[0])
@@ -698,27 +770,38 @@ def main():
                         pcts[idx],
                     )
             print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
+    """
 
     if args.display:
         fig = figure()
         ax = fig.add_subplot(111)
-        ax.set_title("Similarity metrics over the search range")
-        ax.plot(xcorr_x_trim, thexcorr_trim, "k")
-        # print(xcorr_x_trim)
-        ax.plot(MI_x_trim, theMI_trim, "r")
-        ax.legend(["Cross correlation", "Mutual Information"])
-        # print(MI_x_trim)
-        if args.debug:
+        thelegend = []
+        if args.similaritymetric == "mutualinfo":
+            ax.plot(MI_x_trim, theMI_trim, "r")
+            thelegend.append("Mutual Information")
+        else:
+            ax.plot(xcorr_x_trim, thexcorr_trim, "k")
+            thelegend.append("Cross correlation")
+        ax.legend(thelegend)
+        ax.set_title("Similarity metric over the search range")
+
+        if args.calccoherence:
             fig = figure()
-            plot(f, Cxy)
+            ax = fig.add_subplot(111)
+            # ax.plot(fC, Cxy, "b")
+            ax.plot(fC, np.sqrt(np.abs(Cxy)) / np.max(np.sqrt(np.abs(Cxy))), "b")
+            ax.set_title("Coherence")
+        if args.calccsd:
             fig = figure()
-            plot(f, np.sqrt(np.abs(Pxy)) / np.max(np.sqrt(np.abs(Pxy))))
-            plot(f, np.angle(Pxy) / (2.0 * sp.pi * f))
+            ax = fig.add_subplot(111)
+            ax.plot(fP, np.sqrt(np.abs(Pxy)) / np.max(np.sqrt(np.abs(Pxy))), "g")
+            # plot(fP, np.angle(Pxy) / (2.0 * sp.pi * fP))
+            ax.set_title("Cross-spectral density")
         show()
 
-    if args.corroutputfile is not None:
+    if args.similaritymetric == "correlation" and args.corroutputfile is not None:
         tide_io.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), args.corroutputfile)
-    if args.debug:
+    if args.similaritymetric == "mutualinfo" and args.debug:
         tide_io.writenpvecs(np.stack((MI_x_trim, theMI_trim), axis=0), "mifunc.txt")
 
 
