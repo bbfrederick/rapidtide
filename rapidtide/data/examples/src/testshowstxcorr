@@ -1,5 +1,12 @@
 #!/bin/bash
 
+showxcorr_legacy \
+    lt_HbO \
+    rt_HbO \
+    12.5 \
+    -L \
+    -f
+
 showxcorrx \
     lt_HbO \
     rt_HbO \
