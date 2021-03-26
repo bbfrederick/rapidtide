@@ -4,40 +4,10 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_bidsjsoncard \
-    --cardiacfile happystdres_bids.json:normcardiac_25.0Hz \
-    --mklthreads 8 \
-    --model model_revised \
-    --saveinfoastext
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
     ../dst/happy_bidstsvcard \
     --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
     --mklthreads 8 \
-    --model model_revised \
-    --saveinfoastext
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    ../dst/happy_plaintsvcard \
-    --cardiacfile happystdres_physio.tsv:normcardiac_25.0Hz \
-    --cardiacfreq 25.0 \
-    --mklthreads 8 \
-    --model model_revised \
-    --saveinfoastext
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    ../dst/happy_textcard \
-    --cardiacfile happystdres_text.txt:1 \
-    --cardiacfreq 25.0 \
-    --mklthreads 8 \
-    --model model_revised \
-    --saveinfoastext
+    --model model_revised
 
 
 #happy_legacy \
