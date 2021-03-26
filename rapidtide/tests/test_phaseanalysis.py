@@ -24,6 +24,7 @@ import rapidtide.miscmath as tide_math
 import rapidtide.fit as tide_fit
 from rapidtide.tests.utils import mse
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 
@@ -70,4 +71,5 @@ def main():
 
 
 if __name__ == "__main__":
+    mpl.use("TkAgg")
     main()

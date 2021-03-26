@@ -27,7 +27,9 @@ import rapidtide.io as tide_io
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.helper_classes as tide_classes
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+
 from rapidtide.tests.utils import (
     get_test_data_path,
     get_test_temp_path,
@@ -194,4 +196,5 @@ def test_nullsimfunc(debug=False, display=False):
 
 
 if __name__ == "__main__":
+    mpl.use("TkAgg")
     test_nullsimfunc(debug=True, display=True)

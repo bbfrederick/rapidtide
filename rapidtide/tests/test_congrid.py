@@ -23,6 +23,7 @@ import numpy as np
 from rapidtide.resample import congrid
 from rapidtide.tests.utils import mse
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 
@@ -165,4 +166,5 @@ def main():
 
 
 if __name__ == "__main__":
+    mpl.use("TkAgg")
     main()

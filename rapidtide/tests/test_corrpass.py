@@ -28,6 +28,7 @@ import rapidtide.resample as tide_resample
 import rapidtide.helper_classes as tide_classes
 from rapidtide.tests.utils import mse
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 
@@ -237,4 +238,5 @@ def test_calcsimfunc(debug=False, display=False):
 
 
 if __name__ == "__main__":
+    mpl.use("TkAgg")
     test_calcsimfunc(debug=True, display=True)
