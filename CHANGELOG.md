@@ -5,7 +5,7 @@
 * (showxcorr) Renamed to showxcorr_legacy
 * (linfit) Renamed to polyfitim to better reflect it's function.
 * (histnifti) Major upgrade to functionality.
-* (showxcorrx, atlasaverage, rapidtide2std, spatialfit, applydlfilter, plethquality, histnifti) Moved to argparse.
+* (showxcorrx, atlasaverage, happy2std, rapidtide2std, spatialfit, applydlfilter, plethquality, histnifti) Moved to argparse.
 * (package) Updated all headers and copyright lines.
 
 ## Version 2.0alpha18 (3/17/21)
