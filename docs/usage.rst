@@ -471,54 +471,79 @@ Happy needs a 4D BOLD fMRI data file (space by time) as input.  This can be Nift
 
 Outputs:
 ^^^^^^^^
-Outputs are space or space by time Nifti or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
-
-The following files are produced, assuming XXX is the outputname:
-
-    ::
-
-		Informational/diagnostic files
-		XXX_commandline.txt                                   - The command line used to run happy
-		XXX_info.txt (or XXX_info.json)                       - Various useful internal variables
-		XXX_memusage.csv                                      - Memory statistics for the program at various
-		XXX_runtimings.txt                                    - Detailed timing information
+Outputs are space or space by time Nifti or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  File formats and naming follow BIDS conventions for derivative data for fMRI input data.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
 
 
-		Waveforms
-		XXX_cardfromfmri_sliceres.txt                         - The estimated cardiac waveform.  Sample rate is (1/TR) * number of slices / multiband factor.
-		XXX_cardfromfmri_sliceres_badpts.txt                  - Points in the above waveform that are probably bad due to motion.
-		XXX_cardfromfmri_sliceres_censored.txt                - The estimated waveform with the bad points zeroed out.
-		XXX_cardfromfmri_25.0Hz.txt                           - The estimated cardiac waveform resampled to 25.0 Hz
-		XXX_cardfromfmri_dlfiltered_25.0Hz.txt                - The above, after passing through the deep learning filter.
-		XXX_cardfromfmri_dlfiltered_sliceres.txt              - The above, resample back to sliceres.
+BIDS Outputs:
+^^^^^^^^^^^^^
 
-		XXX_cardfromfmrienv_25.0Hz.txt                        - The envelope function of the estimated cardiac waveform.
-		XXX_normcardfromfmri_25.0Hz.txt                       - Estimated cardiac waveform divided by the envelope function.
-		XXX_normcardfromfmri_dlfiltered_25.0Hz.txt
-		XXX_cardfromfmri_25.0Hz_badpts.txt
-		XXX_overall_sliceres_badpts.txt
-		XXX_cardiacfundamental.txt
-		XXX_ampenv.txt
-		XXX_instphase_unwrapped.txt
-		XXX_filtered_instphase_unwrapped.txt
-		XXX_orthogonalizedmotion.txt
-		XXX_interpinstphase.txt
+.. csv-table::
+   :header: "Name", "Extension(s)", "Content", "When present"
+   :widths: 15, 15, 30, 10
 
-		Histograms
-		XXX_histogram_peak.txt
-		XXX_histogram.txt
+   "XXX_commandline", ".txt", "The command line used to run happy", "Always"
+   "XXX_formattedcommandline", ".txt", ""The command line used to run happy, attractively formatted", "Always"
+   "XXX_desc-rawapp_info", ".nii.gz", "The analytic phase projection map of the cardiac waveform", "Always"
+   "XXX_desc-app_info", ".nii.gz", "The analytic phase projection map of the cardiac waveform, voxelwise minimum subtracted", "Always"
+   "XXX_desc-normapp_info", ".nii.gz", "The analytic phase projection map of the cardiac waveform, voxelwise minimum subtracted and normalized", "Always"
+   "XXX_desc-apppeaks_hist", ".tsv.gz, .json", "Not sure", "Always"
+   "XXX_desc-apppeaks_hist_centerofmass", ".txt", "Not sure", "Always"
+   "XXX_desc-apppeaks_hist_peak", ".txt", "Not sure", "Always"
+   "XXX_desc-slicerescardfromfmri_timeseries", ".tsv.gz, .json", "Cardiac timeseries at the time resolution of slice acquisition ((1/TR * number of slices / multiband factor", "Always"
+   "XXX_desc-stdrescardfromfmri_timeseries", ".tsv.gz, .json", "Cardiac timeseries at standard time resolution (25.O Hz)", "Always"
+   "XXX_desc-cardpulsefromfmri_timeseries", ".tsv.gz, .json", "The average (over time from minimum) of the cardiac waveform over all voxels", "Always"
+   "XXX_desc-cardiaccyclefromfmri_timeseries", ".tsv.gz, .json", "The average (over a single cardiac cycle) of the cardiac waveform over all voxels", "Always"
+   "XXX_desc-cine_info", ".nii.gz", "Average image of the fMRI data over a single cardiac cycle", "Always"
+   "XXX_desc-cycleaverage_timeseries", ".tsv.gz, .json", "Not sure", "Always"
+   "XXX_desc-maxphase_map", ".nii.gz", "Map of the average phase where the maximum amplitude occurs for each voxel", "Always"
+   "XXX_desc-minphase_map", ".nii.gz", ""Map of the average phase where the minimum amplitude occurs for each voxel", "Always"
+   "XXX_desc-processvoxels_mask", ".nii.gz", "Map of all voxels used for analytic phase projection", "Always"
+   "XXX_desc-vessels_map", ".nii.gz", "Amplitude of variance over a cardiac cycle (large values are assumed to be vessels)", "Always"
+   "XXX_desc-vessels_mask", ".nii.gz", "Locations of voxels with variance over a cardiac cycle that exceeds a threshold (assumed to be vessels)", "Always"
+   "XXX_desc-arteries_map", ".nii.gz", "High variance vessels with early maximum values within the cardiac cycle", "Always"
+   "XXX_desc-veins_map", ".nii.gz", "High variance vessels with late maximum values within the cardiac cycle", "Always"
+   "XXX_info", ".json", "Run parameters and derived values found during the run (quality metrics, derived thresholds, etc.)", "Always"
+   "XXX_memusage", ".csv", "Memory statistics at multiple checkpoints over the course of the run", "Always"
+   "XXX_runtimings", ".txt", "Detailed timing information", "Always"
+..
 
-                Images
-		XXX_app.nii.gz                                        - The cardiac waveform over one cycle in each voxel.
-		XXX_rawapp.nii.gz
-		XXX_mask.nii.gz
-		XXX_maskedapp.nii.gz
-		XXX_vesselmask.nii.gz
-		XXX_minphase.nii.gz
-		XXX_maxphase.nii.gz
-		XXX_arteries.nii.gz
-		XXX_veins.nii.gz
-		XXX_vesselmap.nii.gz
+
+#		Waveforms
+#		XXX_cardfromfmri_sliceres.txt                         - The estimated cardiac waveform.  Sample rate is (1/TR) * number of slices / multiband factor.
+#		XXX_cardfromfmri_sliceres_badpts.txt                  - Points in the above waveform that are probably bad due to motion.
+#		XXX_cardfromfmri_sliceres_censored.txt                - The estimated waveform with the bad points zeroed out.
+#		XXX_cardfromfmri_25.0Hz.txt                           - The estimated cardiac waveform resampled to 25.0 Hz
+#		XXX_cardfromfmri_dlfiltered_25.0Hz.txt                - The above, after passing through the deep learning filter.
+#		XXX_cardfromfmri_dlfiltered_sliceres.txt              - The above, resample back to sliceres.
+#
+#		XXX_cardfromfmrienv_25.0Hz.txt                        - The envelope function of the estimated cardiac waveform.
+#		XXX_normcardfromfmri_25.0Hz.txt                       - Estimated cardiac waveform divided by the envelope function.
+#		XXX_normcardfromfmri_dlfiltered_25.0Hz.txt
+#		XXX_cardfromfmri_25.0Hz_badpts.txt
+#		XXX_overall_sliceres_badpts.txt
+#		XXX_cardiacfundamental.txt
+#		XXX_ampenv.txt
+#		XXX_instphase_unwrapped.txt
+#		XXX_filtered_instphase_unwrapped.txt
+#		XXX_orthogonalizedmotion.txt
+#		XXX_interpinstphase.txt
+#
+#		Histograms
+#		XXX_histogram_peak.txt
+#		XXX_histogram.txt
+#
+#                Images
+#		XXX_app.nii.gz                                        - The cardiac waveform over one cycle in each voxel.
+#		XXX_rawapp.nii.gz
+#		XXX_mask.nii.gz
+#		XXX_maskedapp.nii.gz
+#		XXX_vesselmask.nii.gz
+#		XXX_minphase.nii.gz
+#		XXX_maxphase.nii.gz
+#		XXX_arteries.nii.gz
+#		XXX_veins.nii.gz
+#		XXX_vesselmap.nii.gz
+#
 
 
 Usage:
