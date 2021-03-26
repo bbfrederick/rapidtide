@@ -1,6 +1,6 @@
 # History of changes
 
-## Version 2.0alpha19 (3/23/21)
+## Version 2.0alpha19 (3/26/21)
 * (showxcorrx) Significant cleanup for maximum flexibility and utility.
 * (showxcorr) Renamed to showxcorr_legacy
 * (linfit) Renamed to polyfitim to better reflect it's function.
