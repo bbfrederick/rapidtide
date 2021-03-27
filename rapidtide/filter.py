@@ -19,12 +19,10 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-"""This module constains all the filtering operations for the rapidtide
+"""This module contains all the filtering operations for the rapidtide
 package.
 
 """
-
-from __future__ import print_function, division
 
 import numpy as np
 from scipy import fftpack, ndimage, signal

@@ -19,8 +19,6 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-from __future__ import print_function, division
-
 import numpy as np
 from scipy import fftpack
 import matplotlib.pyplot as plt
@@ -49,13 +47,6 @@ try:
 except ImportError:
     numbaexists = False
 numbaexists = False
-
-try:
-    import nibabel as nib
-
-    nibabelexists = True
-except ImportError:
-    nibabelexists = False
 
 donotusenumba = False
 

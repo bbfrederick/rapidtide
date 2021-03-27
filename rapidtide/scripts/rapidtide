@@ -16,7 +16,6 @@
 #   limitations under the License.
 #
 #
-from __future__ import print_function, division
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
 
