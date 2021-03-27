@@ -201,7 +201,7 @@ setup(
             "reference/MNI152*",
         ],
     },
-     additional_packagedata={
+    additional_packagedata={
         "testdata": [
             "tests/testdata/*.txt",
         ],
