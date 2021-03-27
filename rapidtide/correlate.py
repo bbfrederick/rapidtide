@@ -389,12 +389,21 @@ def mutual_information_2d(
     ----------
     x : 1D array
         first variable
-
     y : 1D array
         second variable
-
-    sigma: float
-        sigma for Gaussian smoothing of the joint histogram
+    sigma : float, optional
+        Sigma for Gaussian smoothing of the joint histogram.
+        Default = 1.
+    bins : tuple, optional
+    fast : bool, optional
+    normalized : bool
+        If True, this will calculate the normalized mutual information from [1]_.
+        Default = False.
+    EPS : float, optional
+        Default = 1.0e-6.
+    debug : bool, optional
+        Whether to print extra information relevant for debugging or not.
+        Default = False.
 
     Returns
     -------
@@ -404,6 +413,12 @@ def mutual_information_2d(
     Notes
     -----
     From Ionnis Pappas
+
+    References
+    ----------
+    .. [1] Studholme,  jhill & jhawkes (1998).
+           "A normalized entropy measure of 3-D medical image alignment".
+           in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
     """
     if fast:
         xstart = bins[0][0]
@@ -437,10 +452,6 @@ def mutual_information_2d(
     HXcommaY = -np.sum(jh * np.log(jh))
     # normfac = np.min([HX, HY])
 
-    # Normalised Mutual Information of:
-    # Studholme,  jhill & jhawkes (1998).
-    # "A normalized entropy measure of 3-D medical image alignment".
-    # in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
     if normalized:
         mi = (HX + HY) / (HXcommaY) - 1.0
     else:
