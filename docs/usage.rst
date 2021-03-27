@@ -620,28 +620,46 @@ Usage:
 
 
 
-	These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
+	These options are somewhat self-explanatory.  I will be expanding this
+  section of the manual going forward, but I want to put something
+  here to get this out here.
 
-Examples:
+Example:
 ^^^^^^^^^
 
-Just getting the cardiac waveform from resting state data
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Extract the cardiac waveform and generate phase projections
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-The base command you'd use would be:
+Case 1: When you don't have a pleth recording
+'''''''''''''''''''''''''''''''''''''''''''''
+There are substantial improvements to the latest versions of happy.
+In the old versions, you actually had to run happy twice -
+the first time to estimate the vessel locations, and the second
+to actually derive the waveform.  Happy now combines these operations interpolation
+a single run with multiple passes - the first 
+pass locates voxels with high variance, labels them as vessels, then reruns
+the derivation, restricting the cardiac estimation to these high variance voxels.
+This gives substantially better results.
 
-	::
+Using the example data in the example directory, try the following:
 
-		happy inputfmrifile slicetimefile outputroot --cardcalconly --dodlfilter
+  ::
 
-This won't get you the best cardiac waveform however.  You really should use a vessel mask to do the averaging only over "important" voxels.  Fortunately, you can get this from happy!  So a better way to do this is to run:
+    happy \
+        rapidtide/data/examples/src/sub-HAPPYTEST.nii.gz \
+        rapidtide/data/examples/src/sub-HAPPYTEST.json \
+        rapidtide/data/examples/dst/happytest
 
-        ::
 
-	        happy inputfmrifile slicetimefile firstpassoutput --dodlfilter
-		happy inputfmrifile slicetimefile secondpassoutput --cardcalconly --dodlfilter --estmask=firstpassoutput_vesselmask.nii.gz
+This will perform a happy analysis on the example dataset.  To see the extracted
+cardiac waveform (original and filtered), you can use showtc (also part of them
+rapidtide package):
 
-This uses the vessel mask produced by the first pass to limit the cardiac waveform calculation to vessel voxels in the second pass, giving a better initial cardiac estimate, which in turn gives a better filtered output.  The 25Hz plethysmogram will be found in secondpassoutput_cardfromfmri_dlfiletered_25.0Hz.txt
+  ::
+
+    showtc \
+        rapidtide/data/examples/src/happytest_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered \
+        --format separate
 
 
 rapidtide2std
