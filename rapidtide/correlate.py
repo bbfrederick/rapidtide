@@ -918,7 +918,7 @@ def _centered(arr, newsize):
 
 
 def _check_valid_mode_shapes(shape1, shape2):
-    """Check that two shapes are 'valid' w.r.t. one another.
+    """Check that two shapes are 'valid' with respect to one another.
 
     Specifically, this checks that each item in one tuple is larger than or
     equal to corresponding item in another tuple.
