@@ -18,12 +18,12 @@
 # $Author: frederic $
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
-#
+"""Functions for calculating correlations and similar metrics between arrays."""
 from __future__ import print_function, division
 
 import numpy as np
 import scipy as sp
-from scipy import fftpack, signal
+from scipy import signal
 from numpy.fft import rfftn, irfftn
 import matplotlib.pyplot as plt
 
@@ -42,26 +42,12 @@ donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
 try:
-    from memory_profiler import profile
-
-    memprofilerexists = True
-except ImportError:
-    memprofilerexists = False
-
-try:
     from numba import jit
 
     numbaexists = True
 except ImportError:
     numbaexists = False
 numbaexists = False
-
-try:
-    import nibabel as nib
-
-    nibabelexists = True
-except ImportError:
-    nibabelexists = False
 
 donotusenumba = False
 
@@ -72,10 +58,14 @@ try:
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
 except ImportError:
+    from scipy import fftpack
+
     pyfftwexists = False
 
 
 def conditionaljit():
+    """Wrap functions in jit if numba is enabled."""
+
     def resdec(f):
         if (not numbaexists) or donotusenumba:
             return f
@@ -85,6 +75,8 @@ def conditionaljit():
 
 
 def conditionaljit2():
+    """Aggressively wrap functions in jit if number is enabled."""
+
     def resdec(f):
         if (not numbaexists) or donotusenumba or donotbeaggressive:
             return f
@@ -94,6 +86,7 @@ def conditionaljit2():
 
 
 def disablenumba():
+    """Set a global variable to disable numba."""
     global donotusenumba
     donotusenumba = True
 
@@ -109,7 +102,7 @@ def autocorrcheck(
     detrendorder=1,
     debug=False,
 ):
-    """
+    """Check for autocorrelation in an array.
 
     Parameters
     ----------
@@ -125,12 +118,12 @@ def autocorrcheck(
 
     Returns
     -------
-
+    sidelobetime
+    sidelobeamp
     """
     lookahead = 2
     peaks = tide_fit.peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
     maxpeaks = np.asarray(peaks[0], dtype="float64")
-    minpeaks = np.asarray(peaks[1], dtype="float64")
     if len(peaks[0]) > 0:
         if debug:
             print(peaks)
@@ -178,7 +171,7 @@ def autocorrcheck(
 
 
 def quickcorr(data1, data2, windowfunc="hamming"):
-    """
+    """Perform a sliding window correlation.
 
     Parameters
     ----------
@@ -188,7 +181,7 @@ def quickcorr(data1, data2, windowfunc="hamming"):
 
     Returns
     -------
-
+    thepcorr
     """
     thepcorr = sp.stats.stats.pearsonr(
         tide_math.corrnormalize(data1, detrendorder=1, windowfunc=windowfunc),
@@ -206,7 +199,7 @@ def shorttermcorr_1D(
     detrendorder=0,
     windowfunc="hamming",
 ):
-    """
+    """Calculate short-term sliding-window correlation between two 1D arrays.
 
     Parameters
     ----------
@@ -220,7 +213,9 @@ def shorttermcorr_1D(
 
     Returns
     -------
-
+    times
+    corrpertime
+    ppertime
     """
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
@@ -262,7 +257,7 @@ def shorttermcorr_2D(
     display=False,
     debug=False,
 ):
-    """
+    """Calculate short-term sliding-window correlation between two 2D arrays.
 
     Parameters
     ----------
@@ -280,7 +275,11 @@ def shorttermcorr_2D(
 
     Returns
     -------
-
+    times
+    xcorrpertime
+    Rvals
+    delayvals
+    valid
     """
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
@@ -311,7 +310,6 @@ def shorttermcorr_2D(
     xcorr_x = (
         np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     )
-    corrzero = int(xcorrlen // 2)
     xcorrpertime = []
     times = []
     Rvals = []
@@ -367,21 +365,25 @@ def shorttermcorr_2D(
     )
 
 
-# from https://stackoverflow.com/questions/20491028/optimal-way-to-compute-pairwise-mutual-information-using-numpy/20505476#20505476
 def calc_MI(x, y, bins=50):
+    """Calculate mutual information between two arrays.
+
+    Notes
+    -----
+    From https://stackoverflow.com/questions/20491028/
+    optimal-way-to-compute-pairwise-mutual-information-using-numpy/
+    20505476#20505476
+    """
     c_xy = np.histogram2d(x, y, bins)[0]
     mi = mutual_info_score(None, None, contingency=c_xy)
     return mi
 
 
-# From Ionnis Pappas
 @conditionaljit()
 def mutual_information_2d(
     x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, EPS=1.0e-6, debug=False
 ):
-    """
-    Computes (normalized) mutual information between two 1D variate from a
-    joint histogram.
+    """Compute (normalized) mutual information between two 1D variate from a joint histogram.
 
     Parameters
     ----------
@@ -399,6 +401,9 @@ def mutual_information_2d(
     nmi: float
         the computed similariy measure
 
+    Notes
+    -----
+    From Ionnis Pappas
     """
     if fast:
         xstart = bins[0][0]
@@ -464,6 +469,7 @@ def cross_MI(
     fast=True,
     debug=False,
 ):
+    """Calculate cross-mutual information between two 1D arrays."""
     normx = tide_math.corrnormalize(x, detrendorder=1, windowfunc=windowfunc)
     normy = tide_math.corrnormalize(y, detrendorder=1, windowfunc=windowfunc)
 
@@ -552,11 +558,12 @@ def cross_MI(
 
 
 def MI_to_R(themi, d=1):
+    """Convert mutual information to Pearson product-moment correlation."""
     return np.power(1.0 - np.exp(-2.0 * themi / d), -0.5)
 
 
 def delayedcorr(data1, data2, delayval, timestep):
-    """
+    """Calculate correlation between two 1D arrays, at specific delay.
 
     Parameters
     ----------
@@ -567,7 +574,7 @@ def delayedcorr(data1, data2, delayval, timestep):
 
     Returns
     -------
-
+    corr
     """
     return sp.stats.stats.pearsonr(
         data1, tide_resample.timeshift(data2, delayval / timestep, 30)[0]
@@ -575,7 +582,7 @@ def delayedcorr(data1, data2, delayval, timestep):
 
 
 def cepstraldelay(data1, data2, timestep, displayplots=True):
-    """
+    """Calculate something.
 
     Parameters
     ----------
@@ -586,11 +593,14 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
 
     Returns
     -------
+    arr
 
+    References
+    ----------
+    * Choudhary, H., Bahl, R. & Kumar, A.
+      Inter-sensor Time Delay Estimation using cepstrum of sum and difference signals in
+      underwater multipath environment. in 1-7 (IEEE, 2015). doi:10.1109/UT.2015.7108308
     """
-    # Choudhary, H., Bahl, R. & Kumar, A.
-    # Inter-sensor Time Delay Estimation using cepstrum of sum and difference signals in
-    #     underwater multipath environment. in 1-7 (IEEE, 2015). doi:10.1109/UT.2015.7108308
     ceps1, _ = tide_math.complex_cepstrum(data1)
     ceps2, _ = tide_math.complex_cepstrum(data2)
     additive_cepstrum, _ = tide_math.complex_cepstrum(data1 + data2)
@@ -626,7 +636,24 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
     return timestep * np.argmax(residual_cepstrum.real[0 : len(residual_cepstrum) // 2])
 
 
-class aliasedcorrelator:
+class aliasedcorrelator(object):
+    """An aliased correlator.
+
+    Parameters
+    ----------
+    hiressignal : 1D array
+        The unaliased waveform to match
+    hires_Fs : float
+        The sample rate of the unaliased waveform
+    lores_Fs : float
+        The sample rate of the aliased waveform
+    timerange : 1D array
+        The delays for which to calculate the correlation function
+    hiresstarttime : float, optional
+    loresstarttime : float, optional
+    padtime : float, optional
+    """
+
     def __init__(
         self,
         hiressignal,
@@ -637,20 +664,6 @@ class aliasedcorrelator:
         loresstarttime=0.0,
         padtime=30.0,
     ):
-        """
-
-        Parameters
-        ----------
-        hiressignal: 1D array
-            The unaliased waveform to match
-        hires_Fs: float
-            The sample rate of the unaliased waveform
-        lores_Fs: float
-            The sample rate of the aliased waveform
-        timerange: 1D array
-            The delays for which to calculate the correlation function
-
-        """
         self.hiressignal = hiressignal
         self.hires_Fs = hires_Fs
         self.hiresstarttime = hiresstarttime
@@ -667,7 +680,7 @@ class aliasedcorrelator:
         self.aliasedsignals = {}
 
     def apply(self, loressignal, extraoffset):
-        """
+        """Apply something.
 
         Parameters
         ----------
@@ -710,7 +723,7 @@ def aliasedcorrelate(
     lowresstarttime=0.0,
     padtime=30.0,
 ):
-    """
+    """Perform an aliased correlation.
 
     Parameters
     ----------
@@ -752,6 +765,7 @@ def arbcorr(
     method="univariate",
     debug=False,
 ):
+    """Calculate something."""
     if Fs1 > Fs2:
         corrFs = Fs1
         matchedinput1 = input1
@@ -785,6 +799,7 @@ def arbcorr(
 def faststcorrelate(
     input1, input2, windowtype="hann", nperseg=32, weighting="None", displayplots=False
 ):
+    """Perform correlation between short-time Fourier transformed arrays."""
     nfft = nperseg
     noverlap = nperseg - 1
     onesided = False
@@ -838,9 +853,8 @@ def faststcorrelate(
     return corrtimes, times, stcorr
 
 
-# http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python
 def fastcorrelate(input1, input2, usefft=True, weighting="None", displayplots=False):
-    """
+    """Perform a fast correlation between two arrays.
 
     Parameters
     ----------
@@ -852,7 +866,11 @@ def fastcorrelate(input1, input2, usefft=True, weighting="None", displayplots=Fa
 
     Returns
     -------
+    corr
 
+    Notes
+    -----
+    From http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python.
     """
     if usefft:
         # Do an array flipped convolution, which is a correlation.
@@ -871,7 +889,7 @@ def fastcorrelate(input1, input2, usefft=True, weighting="None", displayplots=Fa
 
 
 def _centered(arr, newsize):
-    """
+    """Return the center newsize portion of the array.
 
     Parameters
     ----------
@@ -880,9 +898,8 @@ def _centered(arr, newsize):
 
     Returns
     -------
-
+    arr
     """
-    # Return the center newsize portion of the array.
     newsize = np.asarray(newsize)
     currsize = np.array(arr.shape)
     startind = (currsize - newsize) // 2
@@ -892,16 +909,21 @@ def _centered(arr, newsize):
 
 
 def _check_valid_mode_shapes(shape1, shape2):
-    """
+    """Check that two shapes are 'valid' w.r.t. one another.
+
+    Specifically, this checks that each item in one tuple is larger than or
+    equal to corresponding item in another tuple.
 
     Parameters
     ----------
     shape1
     shape2
 
-    Returns
-    -------
-
+    Raises
+    ------
+    ValueError
+        If at least one item in the first shape is not larger than or equal to
+        the corresponding item in the second one.
     """
     for d1, d2 in zip(shape1, shape2):
         if not d1 >= d2:
@@ -913,11 +935,13 @@ def _check_valid_mode_shapes(shape1, shape2):
 
 def weightedfftconvolve(in1, in2, mode="full", weighting="None", displayplots=False):
     """Convolve two N-dimensional arrays using FFT.
+
     Convolve `in1` and `in2` using the fast Fourier transform method, with
     the output size determined by the `mode` argument.
     This is generally much faster than `convolve` for large arrays (n > ~500),
     but can be slower when only a few output values are needed, and can only
     output float arrays (int or object array inputs will be cast to float).
+
     Parameters
     ----------
     in1 : array_like
@@ -937,6 +961,7 @@ def weightedfftconvolve(in1, in2, mode="full", weighting="None", displayplots=Fa
         ``same``
            The output is the same size as `in1`, centered
            with respect to the 'full' output.
+
     Returns
     -------
     out : array
@@ -996,7 +1021,7 @@ def weightedfftconvolve(in1, in2, mode="full", weighting="None", displayplots=Fa
 
 
 def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
-    """Calculate product for generalized crosscorrelation
+    """Calculate product for generalized crosscorrelation.
 
     Parameters
     ----------
@@ -1008,7 +1033,7 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
 
     Returns
     -------
-
+    product
     """
     product = fft1 * fft2
     if weighting == "None":
