@@ -19,19 +19,19 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 """Functions for calculating correlations and similar metrics between arrays."""
+import sys
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
+from numpy.fft import irfftn, rfftn
 from scipy import signal
-from numpy.fft import rfftn, irfftn
-import matplotlib.pyplot as plt
-
-import sys
 from sklearn.metrics import mutual_info_score
 
-import rapidtide.util as tide_util
-import rapidtide.resample as tide_resample
 import rapidtide.fit as tide_fit
 import rapidtide.miscmath as tide_math
+import rapidtide.resample as tide_resample
+import rapidtide.util as tide_util
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
