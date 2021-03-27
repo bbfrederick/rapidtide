@@ -200,6 +200,8 @@ setup(
             "reference/HCP1200*",
             "reference/MNI152*",
         ],
+    },
+     additional_packagedata={
         "testdata": [
             "tests/testdata/*.txt",
         ],
