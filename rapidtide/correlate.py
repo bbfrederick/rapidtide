@@ -574,6 +574,10 @@ def delayedcorr(data1, data2, delayval, timestep):
 
 def cepstraldelay(data1, data2, timestep, displayplots=True):
     """
+    Estimate delay between two signals using Choudhary's cepstral analysis method
+    Choudhary, H., Bahl, R. & Kumar, A.
+    Inter-sensor Time Delay Estimation using cepstrum of sum and difference signals in
+        underwater multipath environment. in 1-7 (IEEE, 2015). doi:10.1109/UT.2015.7108308
 
     Parameters
     ----------
@@ -586,9 +590,6 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
     -------
 
     """
-    # Choudhary, H., Bahl, R. & Kumar, A.
-    # Inter-sensor Time Delay Estimation using cepstrum of sum and difference signals in
-    #     underwater multipath environment. in 1-7 (IEEE, 2015). doi:10.1109/UT.2015.7108308
     ceps1, _ = tide_math.complex_cepstrum(data1)
     ceps2, _ = tide_math.complex_cepstrum(data2)
     additive_cepstrum, _ = tide_math.complex_cepstrum(data1 + data2)
