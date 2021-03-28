@@ -12,16 +12,107 @@ command line.
    """""
    '''''
 
+Background
+----------
+Before talking about the individual programs, in the 2.0 release and going
+forward, I've tried to adhere to some common principals, across all program,
+to make them easier to understand and maintain, and more interoperable
+with other programs, and to simplify using the outputs.
+
+BIDS Outputs
+^^^^^^^^^^^^
+By default, all outputs are in BIDS compatible formats (this is most true
+for rapidtide and happy, which get the majority of the work, but the goal
+is to eventually make all the programs in the package conform to this).  The
+two major ramifications of this are that I have tried to follow BIDS naming
+conventions for NIFTI, json, and text files containing time series.  Also,
+all text files are by default BIDS continuous timeseries files - data is
+in compressed, tab separated column format (.tsv.gz), with the column names,
+sample rate, and start time, in the accompanying .json sidecar file.
+
+Text Inputs
+^^^^^^^^^^^
+A side effect of moving to BIDS is that I've now made a standardized interface
+for reading text data into programs in the package to handle many different
+types of file.  In general, now if you
+are asked for a timeseries, you can supply it in any of the following ways:
+
+A plain text file with one or more columns.
+"""""""""""""""""""""""""""""""""""""""""""
+You can specify any subset of
+columns in any order by adding ":colspec" to the end of the filename.  "colspec"
+is a column specification consisting of one or more comma separated "column
+ranges".  A "column range" is either a single column number or a hyphen
+separated minimum and maximum column number.  The first column in a file is
+column 0.
+
+For example specifying, "mytextfile.txt:5-6,2,0,10-12"
+
+would return an array containing all the timepoints from columns 5, 6, 2, 0, 10, 11, and 12
+from mytextfile.txt, in that order.  Not specifying ":colspec" returns all
+the columns in the file, in order.
+
+If the program in question requires the actual sample rate, this can be specified
+using the "--samplerate" or "--sampletime" flags.  Otherwise 1.0Hz is assumed.
+
+A BIDS continuous file with one or more columns.
+""""""""""""""""""""""""""""""""""""""""""""""""
+BIDS files have names for each column, so these are used in column specification.
+For these files, "colspec" is a comma separated list of one or more column
+names:
+
+"thefile_desc-interestingtimeseries_physio.json:cardiac,respiration"
+
+would return the two named columns "cardiac" and "respiration" from the
+accompanying .tsv.gz file.
+Not specifying ":colspec" returns all the columns in the file, in order.
+
+Because BIDS continuous files require sample rate and start time to be specified
+in the sidecar file, these quantities will now already be set.  Using the
+"--samplerate", "--sampletime" or "--starttime" flags will override any header
+values, if specified.
+
+Visualizing files
+^^^^^^^^^^^^^^^^^
+Any output NIFTI file can be visualized in your favorite NIFTI viewer.  I like
+FSLeyes, part of FSL.  It's flexible and fast, and has lots of options for
+displaying 3 and 4D NIFTI files.
+
+While there may be nice, general graphing tools for BIDS timeseries files, I
+wrote "showtc" many years ago, a matplotlib based file viewer with lots of
+nice tweaks to make pretty and informative graphs of various rapidtide input 
+and output files.  It's part of rapidtide, and pretty easy to learn.  Just
+type "showtc" with no arguments to get the options.
+
+As an example, after running happy, if you want to see the derived cardiac
+waveform, you'd run:
+
+::
+
+  showtc \
+      happytest_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered \
+      --format separate
+
+
+
 rapidtide
 ---------
 
 Description:
 ^^^^^^^^^^^^
 
-The central program in this package is rapidtide.  This is the program that calculates a similarity function between a "probe" signal and every voxel of a BOLD fMRI dataset.  It then determines the peak value, time delay, and wi
-dth of the similarity function to determine when and how strongly that probe signal appears in each voxel.
+The central program in this package is rapidtide.  This is the program that
+calculates a similarity function between a "probe" signal and every voxel of
+a BOLD fMRI dataset.  It then determines the peak value, time delay, and wi
+dth of the similarity function to determine when and how strongly that probe
+signal appears in each voxel.
 
-At its core, rapidtide is simply performing a full crosscorrelation between a "probe" timecourse and every voxel in an fMRI dataset (by “full” I mean over a range of time lags that account for any delays between the signals, rather than only at zero lag, as in a Pearson correlation).  As with many things, however, the devil is in the details, and so rapidtide provides a number of features which make it pretty good at this particular task.  A few highlights:
+At its core, rapidtide is simply performing a full crosscorrelation between a
+"probe" timecourse and every voxel in an fMRI dataset (by “full” I mean over
+a range of time lags that account for any delays between the signals, rather
+than only at zero lag, as in a Pearson correlation).  As with many things,
+however, the devil is in the details, and so rapidtide provides a number of
+features which make it pretty good at this particular task.  A few highlights:
 
 * There are lots of ways to do something even as simple as a cross-correlation in a nonoptimal way (not windowing, improper normalization, doing it in the time rather than frequency domain, etc.).  I'm pretty sure what rapidtide does by default is, if not the best way, at least a very good and very fast way.
 * rapidtide has been optimized and profiled to speed it up quite a bit; it has an optional dependency on numba – if it’s installed, some of the most heavily used routines will speed up significantly due to judicious use of @jit.
@@ -636,7 +727,7 @@ There are substantial improvements to the latest versions of happy.
 In the old versions, you actually had to run happy twice -
 the first time to estimate the vessel locations, and the second
 to actually derive the waveform.  Happy now combines these operations interpolation
-a single run with multiple passes - the first 
+a single run with multiple passes - the first
 pass locates voxels with high variance, labels them as vessels, then reruns
 the derivation, restricting the cardiac estimation to these high variance voxels.
 This gives substantially better results.
