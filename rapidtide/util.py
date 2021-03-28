@@ -51,7 +51,6 @@ except ImportError:
     memprofilerexists = False
 
 
-
 def checkimports(optiondict):
     from numpy.distutils.system_info import get_info
 
