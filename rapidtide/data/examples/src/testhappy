@@ -7,7 +7,8 @@ happy \
     ../dst/happy_bidstsvcard \
     --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
     --mklthreads 8 \
-    --model model_revised
+    --model model_revised \
+    --aliasedcorrelation
 
 
 #happy_legacy \
