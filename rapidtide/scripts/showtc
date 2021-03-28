@@ -163,9 +163,9 @@ def _get_parser():
 
 def showtc(args):
     # process the file list
-    textfilename = []
-    for thefile in args.textfilenames:
-        textfilename.append(thefile.split(":"))
+    # textfilename = []
+    # for thefile in args.textfilenames:
+    #    textfilename.append(thefile.split(":"))
 
     # set the sample rate
     if args.samplerate == "auto":
@@ -249,44 +249,28 @@ def showtc(args):
     minlen = 100000000
     shortcolnames = True
     # read in all the data
-    for i in range(0, len(textfilename)):
-        print("filename ", i, textfilename[i])
+    for i in range(0, len(args.textfilenames)):
+        thisfilename, thiscolspec = args.textfilenames[i].split(":")
+        print("filename ", i, thisfilename)
 
         # check file type
-        filebase, extension = os.path.splitext(textfilename[i][0])
-        if extension == ".json":
-            (
-                thissamplerate,
-                thisstartoffset,
-                colnames,
-                invecs,
-                compressed,
-            ) = tide_io.readbidstsv(textfilename[i][0])
-        else:
-            invecs = tide_io.readvecs(textfilename[i][0], numskip=args.numskip)
-            thissamplerate = samplerate
-            thisstartoffset = 0.0
-            colnames = None
+        (
+            thissamplerate,
+            thisstartoffset,
+            colnames,
+            invecs,
+            dummy,
+            dummy,
+        ) = tide_io.readvectorsfromtextfile(args.textfilenames[i], debug=args.debug)
+        if args.debug:
+            print(f"file {args.textfilenames[i]} colnames: {colnames}")
+
         if args.dotranspose:
             invecs = np.transpose(invecs)
         if args.debug:
             print("   ", invecs.shape[0], " columns")
-        if len(textfilename[i]) == 2:
-            collist = []
-            for column in (textfilename[i][1]).split(","):
-                if colnames is None:
-                    collist.append(int(column))
-                else:
-                    try:
-                        theindex = colnames.index(column)
-                        collist.append(theindex)
-                    except ValueError:
-                        print("no column named", column, "in", colnames)
-                        sys.exit()
-        else:
-            collist = range(0, invecs.shape[0])
-            # for j in range(0, invecs.shape[0]):
-        for j in collist:
+
+        for j in range(0, invecs.shape[0]):
             if args.debug:
                 print("appending vector number ", j)
             if dospectrum:
@@ -298,11 +282,6 @@ def showtc(args):
                     invec = tide_fit.detrend(invec, order=detrendorder, demean=True)
                 elif demean:
                     invec = invec - np.mean(invec)
-
-                if len(invec) >= 1024:
-                    nperseg = 1024
-                else:
-                    nperseg = None
 
                 if useHamming:
                     freqaxis, spectrum = tide_filt.spectrum(
@@ -334,15 +313,15 @@ def showtc(args):
                         if shortcolnames:
                             linelabels.append("column" + str(j).zfill(2))
                         else:
-                            linelabels.append(textfilename[i][0] + "_column" + str(j).zfill(2))
+                            linelabels.append(thisfilename + "_column" + str(j).zfill(2))
 
                     else:
                         if shortcolnames:
                             linelabels.append(colnames[j])
                         else:
-                            linelabels.append(textfilename[i][0] + "_" + colnames[j])
+                            linelabels.append(thisfilename + "_" + colnames[j])
                 else:
-                    linelabels.append(textfilename[i][0])
+                    linelabels.append(thisfilename)
             else:
                 linelabels.append(legends[i % len(legends)])
                 """if invecs.shape[0] > 1:
