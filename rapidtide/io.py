@@ -1226,17 +1226,17 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         print("thefileroot:", thefileroot)
         print("theext:", theext)
         print("colspec:", colspec)
-    if theext == ".json" or theext == ".tsv" or theext == ".tsv.gz":
-        if os.path.exists(thefileroot + ".json") and (
-            os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv")
-        ):
-            # now see if it is a physio or stim file
-            """if thefileroot[-5::] == "_stim" or thefileroot[-7:] == "_physio":
-                filetype = "bidscontinuous"
-            else:
-                filetype = "plaintsv"""
+    jsonexists = os.path.exists(thefileroot + ".json")
+    tsvexists = os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv")
+    compressed = os.path.exists(thefileroot + ".tsv.gz")
+    if debug:
+        print("jsonexists=", jsonexists)
+        print("tsvexists=", tsvexists)
+        print("compressed=", compressed)
+    if tsvexists:
+        if jsonexists:
             filetype = "bidscontinuous"
-        elif os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv"):
+        else:
             filetype = "plaintsv"
     else:
         filetype = "text"
@@ -1257,7 +1257,7 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     elif filetype == "bidscontinuous":
         # colspec can be None or a list of comma separated column names
         thesamplerate, thestarttime, thecolumns, thedata, compressed = readbidstsv(
-            thefilename, colspec=colspec, debug=False
+            thefilename, colspec=colspec, debug=debug
         )
         if onecol and thedata.shape[0] > 1:
             print("specify a single column from", thefilename)
@@ -1323,6 +1323,11 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
 
     """
     thefileroot, theext = os.path.splitext(inputfilename)
+    if theext == ".gz":
+        thefileroot, thenextext = os.path.splitext(thefileroot)
+        if thenextext is not None:
+            theext = thenextext + theext
+
     if debug:
         print("thefileroot:", thefileroot)
         print("theext:", theext)
