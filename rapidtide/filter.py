@@ -38,6 +38,10 @@ import pyfftw
 fftpack = pyfftw.interfaces.scipy_fftpack
 pyfftw.interfaces.cache.enable()
 
+# ---------------------------------------- Global constants -------------------------------------------
+donotusenumba = True
+
+# ----------------------------------------- Conditional imports ---------------------------------------
 try:
     from memory_profiler import profile
 
@@ -45,9 +49,8 @@ try:
 except ImportError:
     memprofilerexists = False
 
-donotusenumba = True
 
-
+# ----------------------------------------- Conditional jit handling ----------------------------------
 def conditionaljit():
     def resdec(f):
         global donotusenumba

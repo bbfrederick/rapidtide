@@ -35,6 +35,7 @@ pyfftw.interfaces.cache.enable()
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
+donotusenumba = True
 donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
@@ -45,9 +46,8 @@ try:
 except ImportError:
     memprofilerexists = False
 
-donotusenumba = False
 
-
+# ----------------------------------------- Conditional jit handling ----------------------------------
 def conditionaljit():
     def resdec(f):
         if donotusenumba:

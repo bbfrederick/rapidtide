@@ -39,6 +39,7 @@ pyfftw.interfaces.cache.enable()
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
+donotusenumba = True
 donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
@@ -49,25 +50,6 @@ try:
 except ImportError:
     memprofilerexists = False
 
-try:
-    from numba import jit
-
-    numbaexists = True
-except ImportError:
-    numbaexists = False
-numbaexists = False
-
-
-donotusenumba = False
-
-try:
-    import pyfftw
-
-    pyfftwexists = True
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-except ImportError:
-    pyfftwexists = False
 
 
 def checkimports(optiondict):
@@ -75,18 +57,6 @@ def checkimports(optiondict):
 
     optiondict["blas_opt"] = get_info("blas_opt")
     optiondict["lapack_opt"] = get_info("lapack_opt")
-
-    if pyfftwexists:
-        print("monkey patched scipy.fftpack to use pyfftw")
-    else:
-        print("using standard scipy.fftpack")
-    optiondict["pyfftwexists"] = pyfftwexists
-
-    if numbaexists:
-        print("numba exists")
-    else:
-        print("numba does not exist")
-    optiondict["numbaexists"] = numbaexists
 
     if memprofilerexists:
         print("memprofiler exists")
@@ -108,9 +78,10 @@ def checkimports(optiondict):
     optiondict["donotusenumba"] = donotusenumba
 
 
+# ----------------------------------------- Conditional jit handling ----------------------------------
 def conditionaljit():
     def resdec(f):
-        if (not numbaexists) or donotusenumba:
+        if donotusenumba:
             return f
         return jit(f, nopython=False)
 
@@ -119,7 +90,7 @@ def conditionaljit():
 
 def conditionaljit2():
     def resdec(f):
-        if (not numbaexists) or donotusenumba or donotbeaggressive:
+        if donotusenumba or donotbeaggressive:
             return f
         return jit(f, nopython=False)
 
