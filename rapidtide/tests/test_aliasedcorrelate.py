@@ -22,7 +22,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-import rapitide.miscmath as tide_math
+import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 from rapidtide.correlate import AliasedCorrelator
 
