@@ -37,6 +37,7 @@ import rapidtide.util as tide_util
 defaultbutterorder = 6
 MAXLINES = 10000000
 donotbeaggressive = True
+donotusenumba = False
 
 # ----------------------------------------- Conditional imports ---------------------------------------
 try:
@@ -46,8 +47,6 @@ try:
 except ImportError:
     numbaexists = False
 numbaexists = False
-
-donotusenumba = False
 
 try:
     import pyfftw
@@ -367,7 +366,7 @@ def calc_MI(x, y, bins=50):
 
 
 @conditionaljit()
-def mutual_information_2d(
+def mutual_info_2d(
     x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, EPS=1.0e-6, debug=False
 ):
     """Compute (normalized) mutual information between two 1D variate from a joint histogram.
@@ -450,7 +449,7 @@ def mutual_information_2d(
 
 
 @conditionaljit()
-def cross_mutual_information(
+def cross_mutual_info(
     x,
     y,
     returnaxis=False,
@@ -475,7 +474,7 @@ def cross_mutual_information(
     if bins < 1:
         bins = int(np.sqrt(len(x) / 5))
         if debug:
-            print("cross_mutual_information: bins set to", bins)
+            print("cross_mutual_info: bins set to", bins)
 
     # find the bin locations
     if prebin:
@@ -508,7 +507,7 @@ def cross_mutual_information(
         else:
             destloc += 1
         if i < 0:
-            thexmi_y[destloc] = mutual_information_2d(
+            thexmi_y[destloc] = mutual_info_2d(
                 normx[: i + len(normy)],
                 normy[-i:],
                 bins=bins2d,
@@ -518,7 +517,7 @@ def cross_mutual_information(
                 debug=debug,
             )
         elif i == 0:
-            thexmi_y[destloc] = mutual_information_2d(
+            thexmi_y[destloc] = mutual_info_2d(
                 normx,
                 normy,
                 bins=bins2d,
@@ -528,7 +527,7 @@ def cross_mutual_information(
                 debug=debug,
             )
         else:
-            thexmi_y[destloc] = mutual_information_2d(
+            thexmi_y[destloc] = mutual_info_2d(
                 normx[i:],
                 normy[: len(normy) - i],
                 bins=bins2d,
@@ -555,7 +554,7 @@ def cross_mutual_information(
         return thexmi_y
 
 
-def MI_to_R(themi, d=1):
+def mutual_info_to_r(themi, d=1):
     """Convert mutual information to Pearson product-moment correlation."""
     return np.power(1.0 - np.exp(-2.0 * themi / d), -0.5)
 
