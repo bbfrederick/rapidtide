@@ -450,7 +450,7 @@ def mutual_information_2d(
 
 
 @conditionaljit()
-def cross_MI(
+def cross_mutual_information(
     x,
     y,
     returnaxis=False,
@@ -475,7 +475,7 @@ def cross_MI(
     if bins < 1:
         bins = int(np.sqrt(len(x) / 5))
         if debug:
-            print("cross_MI: bins set to", bins)
+            print("cross_mutual_information: bins set to", bins)
 
     # find the bin locations
     if prebin:
