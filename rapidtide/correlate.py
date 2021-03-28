@@ -579,7 +579,8 @@ def delayedcorr(data1, data2, delayval, timestep):
 
 
 def cepstraldelay(data1, data2, timestep, displayplots=True):
-    """Calculate something.
+    """
+    Estimate delay between two signals using Choudhary's cepstral analysis method.
 
     Parameters
     ----------

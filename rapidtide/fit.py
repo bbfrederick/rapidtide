@@ -19,8 +19,6 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-from __future__ import print_function, division
-
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -31,6 +29,12 @@ import warnings
 from scipy.signal import hilbert, find_peaks
 
 import rapidtide.util as tide_util
+
+from numba import jit
+import pyfftw
+
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -45,36 +49,12 @@ try:
 except ImportError:
     memprofilerexists = False
 
-try:
-    from numba import jit
-
-    numbaexists = True
-except ImportError:
-    numbaexists = False
-numbaexists = False
-
-try:
-    import nibabel as nib
-
-    nibabelexists = True
-except ImportError:
-    nibabelexists = False
-
-donotusenumba = False
-
-try:
-    import pyfftw
-
-    pyfftwexists = True
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-except ImportError:
-    pyfftwexists = False
+donotusenumba = True
 
 
 def conditionaljit():
     def resdec(f):
-        if (not numbaexists) or donotusenumba:
+        if donotusenumba:
             return f
         return jit(f, nopython=False)
 
@@ -83,7 +63,7 @@ def conditionaljit():
 
 def conditionaljit2():
     def resdec(f):
-        if (not numbaexists) or donotusenumba or donotbeaggressive:
+        if donotusenumba or donotbeaggressive:
             return f
         return jit(f, nopython=False)
 

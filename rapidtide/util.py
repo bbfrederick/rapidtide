@@ -19,8 +19,6 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-from __future__ import print_function, division
-
 import numpy as np
 import time
 import sys
@@ -32,6 +30,11 @@ import matplotlib.pyplot as plt
 import rapidtide.io as tide_io
 import rapidtide._version as tide_versioneer
 
+from numba import jit
+import pyfftw
+
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -54,12 +57,6 @@ except ImportError:
     numbaexists = False
 numbaexists = False
 
-try:
-    import nibabel as nib
-
-    nibabelexists = True
-except ImportError:
-    nibabelexists = False
 
 donotusenumba = False
 
@@ -96,12 +93,6 @@ def checkimports(optiondict):
     else:
         print("memprofiler does not exist")
     optiondict["memprofilerexists"] = memprofilerexists
-
-    if nibabelexists:
-        print("nibabel exists")
-    else:
-        print("nibabel does not exist")
-    optiondict["nibabelexists"] = nibabelexists
 
     if donotbeaggressive:
         print("no aggressive optimization")

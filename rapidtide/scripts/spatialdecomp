@@ -16,7 +16,6 @@
 #   limitations under the License.
 #
 #
-from __future__ import print_function, division
 import rapidtide.workflows.spatialdecomp as spatialdecomp_workflow
 
 if __name__ == "__main__":

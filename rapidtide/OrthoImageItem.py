@@ -26,8 +26,6 @@
 A widget for orthographically displaying 3 and 4 dimensional data
 """
 
-from __future__ import print_function, division
-
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np

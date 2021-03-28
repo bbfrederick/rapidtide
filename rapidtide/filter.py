@@ -19,12 +19,10 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-"""This module constains all the filtering operations for the rapidtide
+"""This module contains all the filtering operations for the rapidtide
 package.
 
 """
-
-from __future__ import print_function, division
 
 import numpy as np
 from scipy import fftpack, ndimage, signal
@@ -34,6 +32,11 @@ import sys
 
 import matplotlib.pyplot as plt
 
+from numba import jit
+import pyfftw
+
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
 
 try:
     from memory_profiler import profile
@@ -42,29 +45,13 @@ try:
 except ImportError:
     memprofilerexists = False
 
-try:
-    from numba import jit
-
-    numbaexists = True
-except ImportError:
-    numbaexists = False
-numbaexists = False
-
-donotusenumba = False
-
-try:
-    import pyfftw
-
-    pyfftwexists = True
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-except ImportError:
-    pyfftwexists = False
+donotusenumba = True
 
 
 def conditionaljit():
     def resdec(f):
-        if (not numbaexists) or donotusenumba:
+        global donotusenumba
+        if donotusenumba:
             return f
         return jit(f, nopython=False)
 

@@ -16,8 +16,6 @@
 #   limitations under the License.
 #
 #
-from __future__ import print_function, division
-
 import argparse
 from .parser_funcs import is_valid_file
 
