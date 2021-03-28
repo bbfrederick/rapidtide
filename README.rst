@@ -9,7 +9,7 @@ analysis on functional imaging data to find time lagged correlations
 between the voxelwise time series and other time series, both in the LFO
 band (rapditide2) and now in the cardiac band (happy).
 
-Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
+Full documentation is at: http://rapidtide.readthedocs.io/en/dev/
 
 |PyPi Latest Version| |PyPi - Python Versions| |License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by NIH|
 NIH|
@@ -432,8 +432,8 @@ Physiological noise identification and removal using time delay methods
    :target: https://pypi.python.org/pypi/rapidtide/
 .. |License| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
-.. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=latest
-   :target: http://rapidtide.readthedocs.io/en/latest/?badge=latest
+.. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=dev
+   :target: http://rapidtide.readthedocs.io/en/dev/?badge=dev
 .. |CircleCI| image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?branch=dev&style=shield
    :target: https://circleci.com/gh/bbfrederick/rapidtide
 .. |Coverage| image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/dev/graph/badge.svg
