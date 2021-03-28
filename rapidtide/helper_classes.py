@@ -261,7 +261,7 @@ class mutualinformationator(similarityfunctionator):
         self.reftc = reftc + 0.0
         self.prepreftc = self.preptc(self.reftc, hpfreq=None)
 
-        self.timeaxis, dummy, self.similarityfuncorigin = tide_corr.cross_MI(
+        self.timeaxis, dummy, self.similarityfuncorigin = tide_corr.cross_mutual_info(
             self.prepreftc,
             self.prepreftc,
             Fs=self.Fs,
@@ -298,7 +298,7 @@ class mutualinformationator(similarityfunctionator):
 
         # now calculate the similarity function
         if trim:
-            retvals = tide_corr.cross_MI(
+            retvals = tide_corr.cross_mutual_info(
                 self.preptesttc,
                 self.prepreftc,
                 norm=self.norm,
@@ -313,7 +313,7 @@ class mutualinformationator(similarityfunctionator):
                 bins=self.bins,
             )
         else:
-            retvals = tide_corr.cross_MI(
+            retvals = tide_corr.cross_mutual_info(
                 self.preptesttc,
                 self.prepreftc,
                 norm=self.norm,

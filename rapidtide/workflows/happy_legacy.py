@@ -2511,7 +2511,7 @@ def happy_main(thearguments):
                 np.linspace(0.0, aliasedcorrelationwidth, num=aliasedcorrelationpts)
                 - aliasedcorrelationwidth / 2.0
             )
-            thecorrelator = tide_corr.aliasedcorrelator(
+            thecorrelator = tide_corr.AliasedCorrelator(
                 signal_stdres,
                 stdfreq,
                 mrsamplerate,

@@ -31,7 +31,7 @@ for windowfunc in ["None"]:
         for numbins in [10]:
             starttime = time.perf_counter()
             for i in range(numruns):
-                thex, thexmi, dummy = tide_corr.cross_MI(
+                thex, thexmi, dummy = tide_corr.cross_mutual_info(
                     input3,
                     input3,
                     negsteps=200,
@@ -47,13 +47,13 @@ for windowfunc in ["None"]:
                 )
             endtime = time.perf_counter()
             print(
-                "time per cross_MI call with no optimizations:",
+                "time per cross_mutual_info call with no optimizations:",
                 1000.0 * (endtime - starttime) / numruns,
                 "ms",
             )
             starttime = time.perf_counter()
             for i in range(numruns):
-                theprebinx, theprebinxmi, dummy = tide_corr.cross_MI(
+                theprebinx, theprebinxmi, dummy = tide_corr.cross_mutual_info(
                     input3,
                     input3,
                     negsteps=200,
@@ -69,13 +69,13 @@ for windowfunc in ["None"]:
                 )
             endtime = time.perf_counter()
             print(
-                "time per cross_MI call with prebinning:",
+                "time per cross_mutual_info call with prebinning:",
                 1000.0 * (endtime - starttime) / numruns,
                 "ms",
             )
             starttime = time.perf_counter()
             for i in range(numruns):
-                thefastx, thefastxmi, dummy = tide_corr.cross_MI(
+                thefastx, thefastxmi, dummy = tide_corr.cross_mutual_info(
                     input3,
                     input3,
                     negsteps=200,
@@ -91,7 +91,7 @@ for windowfunc in ["None"]:
                 )
             endtime = time.perf_counter()
             print(
-                "time per cross_MI call with prebinning and bincount:",
+                "time per cross_mutual_info call with prebinning and bincount:",
                 1000.0 * (endtime - starttime) / numruns,
                 "ms",
             )

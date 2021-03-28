@@ -20,7 +20,53 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from rapidtide.correlate import aliasedcorrelate, aliasedcorrelator
+import rapidtide.miscmath as tide_math
+import rapidtide.resample as tide_resample
+from rapidtide.correlate import AliasedCorrelator
+
+
+def aliasedcorrelate(
+    hiressignal,
+    hires_Fs,
+    lowressignal,
+    lowres_Fs,
+    timerange,
+    hiresstarttime=0.0,
+    lowresstarttime=0.0,
+    padtime=30.0,
+):
+    """Perform an aliased correlation.
+
+    This function is deprecated, and is retained here as a reference against
+    which to test AliasedCorrelator.
+
+    Parameters
+    ----------
+    hiressignal: 1D array
+        The unaliased waveform to match
+    hires_Fs: float
+        The sample rate of the unaliased waveform
+    lowressignal: 1D array
+        The aliased waveform to match
+    lowres_Fs: float
+        The sample rate of the aliased waveform
+    timerange: 1D array
+        The delays for which to calculate the correlation function
+
+    Returns
+    -------
+    corrfunc: 1D array
+        The correlation function evaluated at timepoints of timerange
+    """
+    highresaxis = np.arange(0.0, len(hiressignal)) * (1.0 / hires_Fs) - hiresstarttime
+    lowresaxis = np.arange(0.0, len(lowressignal)) * (1.0 / lowres_Fs) - lowresstarttime
+    tcgenerator = tide_resample.fastresampler(highresaxis, hiressignal, padtime=padtime)
+    targetsignal = tide_math.corrnormalize(lowressignal)
+    corrfunc = timerange * 0.0
+    for i in range(len(timerange)):
+        aliasedhiressignal = tide_math.corrnormalize(tcgenerator.yfromx(lowresaxis + timerange[i]))
+        corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
+    return corrfunc
 
 
 def test_aliasedcorrelate(display=False):
@@ -45,7 +91,7 @@ def test_aliasedcorrelate(display=False):
         sighi, Fs_hi, siglo, Fs_lo, timerange, padtime=width
     )
 
-    thecorrelator = aliasedcorrelator(sighi, Fs_hi, Fs_lo, timerange, padtime=width)
+    thecorrelator = AliasedCorrelator(sighi, Fs_hi, Fs_lo, timerange, padtime=width)
     aliasedcorrelate_result2 = thecorrelator.apply(siglo, 0.0)
 
     if display:
