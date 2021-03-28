@@ -1953,7 +1953,7 @@ def happy_main(thearguments):
                     "data",
                     "models",
                 )
-                thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
+                thedlfilter = tide_dlfilt.DeepLearningFilter(modelpath=modelpath)
                 thedlfilter.loadmodel(modelname)
                 infodict["dlfiltermodel"] = modelname
                 normdlfilteredcard = thedlfilter.apply(normcardfromfmri_stdres)

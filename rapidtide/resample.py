@@ -249,7 +249,7 @@ def congrid(xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False):
         return val * yvals, yvals, indices
 
 
-class fastresampler:
+class FastResampler:
     def __init__(
         self,
         timeaxis,
@@ -294,7 +294,7 @@ class fastresampler:
             -int(self.padtime // self.hiresstep)
         ]
         if debug:
-            print("fastresampler __init__:")
+            print("FastResampler __init__:")
             print("    padtime:, ", self.padtime)
             print("    initstep, hiresstep:", self.initstep, self.hiresstep)
             print("    initial axis limits:", self.initstart, self.initend)
@@ -307,14 +307,14 @@ class fastresampler:
 
             fig = pl.figure()
             ax = fig.add_subplot(111)
-            ax.set_title("fastresampler initial timecourses")
+            ax.set_title("FastResampler initial timecourses")
             pl.plot(timeaxis, timecourse, self.hires_x, self.hires_y)
             pl.legend(("input", "hires"))
             pl.show()
 
     def yfromx(self, newtimeaxis, doplot=False, debug=False):
         if debug:
-            print("fastresampler: yfromx called with following parameters")
+            print("FastResampler: yfromx called with following parameters")
             print("    padtime:, ", self.padtime)
             print("    initstep, hiresstep:", self.initstep, self.hiresstep)
             print("    initial axis limits:", self.initstart, self.initend)
@@ -327,7 +327,7 @@ class fastresampler:
             out_y = self.hires_y[outindices]
         except IndexError:
             print("")
-            print("indexing out of bounds in fastresampler")
+            print("indexing out of bounds in FastResampler")
             print("    padtime:, ", self.padtime)
             print("    initstep, hiresstep:", self.initstep, self.hiresstep)
             print("    initial axis limits:", self.initstart, self.initend)
@@ -337,7 +337,7 @@ class fastresampler:
         if doplot:
             fig = pl.figure()
             ax = fig.add_subplot(111)
-            ax.set_title("fastresampler timecourses")
+            ax.set_title("FastResampler timecourses")
             pl.plot(self.hires_x, self.hires_y, newtimeaxis, out_y)
             pl.legend(("hires", "output"))
             pl.show()

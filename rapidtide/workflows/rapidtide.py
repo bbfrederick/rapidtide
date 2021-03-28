@@ -1260,7 +1260,7 @@ def rapidtide_main(argparsingfunc):
     print("setting up fast resampling with padtime =", padtime)
     numpadtrs = int(padtime // fmritr)
     padtime = fmritr * numpadtrs
-    genlagtc = tide_resample.fastresampler(reference_x, reference_y, padtime=padtime)
+    genlagtc = tide_resample.FastResampler(reference_x, reference_y, padtime=padtime)
 
     # cycle over all voxels
     refine = True
@@ -2231,7 +2231,7 @@ def rapidtide_main(argparsingfunc):
 
             # reinitialize lagtc for resampling
             previousnormoutputdata = normoutputdata + 0.0
-            genlagtc = tide_resample.fastresampler(initial_fmri_x, normoutputdata, padtime=padtime)
+            genlagtc = tide_resample.FastResampler(initial_fmri_x, normoutputdata, padtime=padtime)
             nonosrefname = "_reference_fmrires_pass" + str(thepass + 1) + ".txt"
             osrefname = "_reference_resampres_pass" + str(thepass + 1) + ".txt"
             (

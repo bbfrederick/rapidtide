@@ -1443,7 +1443,7 @@ def arb_pass(
             )
 
 
-class plethfilter:
+class Plethfilter:
     def __init_(self, Fs, Fl, Fh, order=4, attenuation=20):
         self.Fs = Fs
         self.Fh = Fh

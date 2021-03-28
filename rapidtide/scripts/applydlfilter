@@ -182,7 +182,7 @@ def main():
         "data",
         "models",
     )
-    thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
+    thedlfilter = tide_dlfilt.DeepLearningFilter(modelpath=modelpath)
     thedlfilter.loadmodel(args.model)
     model = thedlfilter.model
     window_size = thedlfilter.window_size

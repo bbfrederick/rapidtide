@@ -71,7 +71,7 @@ def test_simulate(display=False):
     numpadtrs = int(padtime / fmritr)
     padtime = fmritr * numpadtrs
 
-    genlagtc = tide_res.fastresampler(nirs_x, nirs_y, padtime=padtime, doplot=False)
+    genlagtc = tide_res.FastResampler(nirs_x, nirs_y, padtime=padtime, doplot=False)
     initial_fmri_y = genlagtc.yfromx(initial_fmri_x)
 
     if display:

@@ -130,7 +130,7 @@ else:
     sys.exit()
 
 
-class dlfilter:
+class DeepLearningFilter:
     """Base class for deep learning filter"""
 
     thesuffix = "sliceres"
@@ -207,7 +207,7 @@ class dlfilter:
         self.thesuffix = thesuffix
         self.thedatadir = thedatadir
         self.modelpath = modelpath
-        print("modeldir from dlfilter:", self.modelpath)
+        print("modeldir from DeepLearningFilter:", self.modelpath)
         self.excludethresh = excludethresh
         self.readlim = readlim
         self.readskip = readskip
@@ -483,7 +483,7 @@ class dlfilter:
         return initscale * predicteddata / weightarray
 
 
-class multiscalecnn(dlfilter):
+class MultiscaleCNNDLFilter(DeepLearningFilter):
     # from keras.layers import Conv1D, Dense, Dropout, Input, Concatenate, GlobalMaxPooling1D
     # from keras.models import Model
     # this base model is one branch of the main model
@@ -576,7 +576,7 @@ class multiscalecnn(dlfilter):
         self.model.compile(optimizer=RMSprop(), loss="mse")
 
 
-class cnn(dlfilter):
+class CNNDLFilter(DeepLearningFilter):
     def __init__(self, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
         self.num_filters = num_filters
         self.kernel_size = kernel_size
@@ -652,7 +652,7 @@ class cnn(dlfilter):
         self.model.compile(optimizer=RMSprop(), loss="mse")
 
 
-class denseautoencoder(dlfilter):
+class DenseAutoencoderDLFilter(DeepLearningFilter):
     def __init__(self, encoding_dim=10, *args, **kwargs):
         self.encoding_dim = encoding_dim
         self.infodict["nettype"] = "autoencoder"
@@ -730,7 +730,7 @@ class denseautoencoder(dlfilter):
         self.model.compile(optimizer=RMSprop(), loss="mse")
 
 
-class convautoencoder(dlfilter):
+class ConvAutoencoderDLFilter(DeepLearningFilter):
     def __init__(
         self, encoding_dim=10, num_filters=5, kernel_size=5, dilation_rate=1, *args, **kwargs
     ):
@@ -874,7 +874,7 @@ class convautoencoder(dlfilter):
 
 
 """
-class sepcnn(dlfilter):
+class SepCNNDLFilter(DeepLearningFilter):
     def __init__(self, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
         self.num_filters = num_filters
         self.kernel_size = kernel_size
@@ -936,7 +936,7 @@ class sepcnn(dlfilter):
 """
 
 
-class lstm(dlfilter):
+class LSTMDLFilter(DeepLearningFilter):
     def __init__(self, num_units=16, *args, **kwargs):
         self.num_units = num_units
         self.infodict["nettype"] = "lstm"
@@ -988,7 +988,7 @@ class lstm(dlfilter):
         self.model.compile(optimizer="adam", loss="mse")
 
 
-class hybrid(dlfilter):
+class HybridDLFilter(DeepLearningFilter):
     def __init__(self, invert=False, num_filters=10, kernel_size=5, num_units=16, *args, **kwargs):
         self.invert = invert
         self.num_filters = num_filters

@@ -292,7 +292,7 @@ def test_delayestimation(display=False, debug=False):
             print("\n\ncalling fitter")
         thefitter.setfunctype(similaritymetric)
         thefitter.setcorrtimeaxis(trimmedcorrscale)
-        genlagtc = tide_resample.fastresampler(timepoints, waveforms[refnum, :])
+        genlagtc = tide_resample.FastResampler(timepoints, waveforms[refnum, :])
 
         if display:
             fig = plt.figure()

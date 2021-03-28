@@ -19,11 +19,11 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from rapidtide.resample import fastresampler
+from rapidtide.resample import FastResampler
 from rapidtide.tests.utils import mse
 
 
-def test_fastresampler(debug=False):
+def test_FastResampler(debug=False):
     tr = 1.0
     padtime = 50.0
     testlen = 1000
@@ -38,7 +38,7 @@ def test_fastresampler(debug=False):
     shiftlist = [-40, -30, -20, -10, 0, 10, 20, 30, 40]
 
     # generate the fast resampled regressor
-    genlaggedtc = fastresampler(timeaxis, timecoursein, padtime=padtime)
+    genlaggedtc = FastResampler(timeaxis, timecoursein, padtime=padtime)
 
     if debug:
         plt.figure()
@@ -79,7 +79,7 @@ def test_fastresampler(debug=False):
 
 
 def main():
-    test_fastresampler(debug=True)
+    test_FastResampler(debug=True)
 
 
 if __name__ == "__main__":

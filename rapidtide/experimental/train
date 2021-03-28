@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import rapidtide.dlfilter as dlfilter
+import rapidtide.dlfilter as tide_dlfilt
 import os
 
 num_pretrain_epochs = 5
@@ -41,7 +41,7 @@ else:
 
 
 if nettype == "cnn":
-    thefilter = dlfilter.cnn(
+    thefilter = tide_dlfilt.CNNDLFilter(
         num_epochs=num_epochs,
         startskip=startskip,
         endskip=endskip,
@@ -66,7 +66,7 @@ if nettype == "cnn":
     )
 elif nettype == "convautoencoder":
     num_filters = 256
-    thefilter = dlfilter.convautoencoder(
+    thefilter = tide_dlfilt.ConvAutoencoderDLFilter(
         num_pretrain_epochs=num_pretrain_epochs,
         num_epochs=num_epochs,
         startskip=startskip,
@@ -92,7 +92,7 @@ elif nettype == "convautoencoder":
         debug=debug,
     )
 elif nettype == "denseautoencoder":
-    thefilter = dlfilter.denseautoencoder(
+    thefilter = tide_dlfilt.DenseAutoencoderDLFilter(
         num_pretrain_epochs=num_pretrain_epochs,
         num_epochs=num_epochs,
         startskip=startskip,
@@ -116,7 +116,7 @@ elif nettype == "denseautoencoder":
         debug=debug,
     )
 elif nettype == "sepcnn":
-    thefilter = dlfilter.sepcnn(
+    thefilter = tide_dlfilt.SepCNNDLFilter(
         num_epochs=num_epochs,
         startskip=startskip,
         endskip=endskip,
@@ -141,7 +141,7 @@ elif nettype == "sepcnn":
     )
 elif nettype == "lstm":
     num_layers = 2
-    thefilter = dlfilter.lstm(
+    thefilter = tide_dlfilt.LSTMDLFilter(
         num_epochs=num_epochs,
         startskip=startskip,
         endskip=endskip,
@@ -162,7 +162,7 @@ elif nettype == "lstm":
     )
 elif nettype == "hybrid":
     num_layers = 10
-    thefilter = dlfilter.hybrid(
+    thefilter = tide_dlfilt.HybridDLFilter(
         num_epochs=num_epochs,
         startskip=startskip,
         endskip=endskip,

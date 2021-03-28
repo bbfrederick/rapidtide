@@ -229,7 +229,7 @@ API
 
     :template: class.rst
 
-    rapidtide.resample.fastresampler
+    rapidtide.resample.FastResampler
 
 
 .. _api_stats_ref:

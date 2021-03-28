@@ -60,7 +60,7 @@ def aliasedcorrelate(
     """
     highresaxis = np.arange(0.0, len(hiressignal)) * (1.0 / hires_Fs) - hiresstarttime
     lowresaxis = np.arange(0.0, len(lowressignal)) * (1.0 / lowres_Fs) - lowresstarttime
-    tcgenerator = tide_resample.fastresampler(highresaxis, hiressignal, padtime=padtime)
+    tcgenerator = tide_resample.FastResampler(highresaxis, hiressignal, padtime=padtime)
     targetsignal = tide_math.corrnormalize(lowressignal)
     corrfunc = timerange * 0.0
     for i in range(len(timerange)):

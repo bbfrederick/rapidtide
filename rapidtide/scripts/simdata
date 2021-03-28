@@ -96,7 +96,7 @@ def prepareband(
         print(regressorname, "lag file does not match fmri")
         exit()
 
-    generator = tide_resample.fastresampler(
+    generator = tide_resample.FastResampler(
         regressor_x, regressor_y, padtime=padtime, doplot=False
     )
     return pctdata, lagdata, generator

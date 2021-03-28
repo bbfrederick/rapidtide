@@ -652,7 +652,7 @@ class AliasedCorrelator:
             np.arange(0.0, len(self.hiressignal)) * (1.0 / self.hires_Fs) - self.hiresstarttime
         )
         self.padtime = padtime
-        self.tcgenerator = tide_resample.fastresampler(
+        self.tcgenerator = tide_resample.FastResampler(
             self.highresaxis, self.hiressignal, padtime=self.padtime
         )
         self.aliasedsignals = {}

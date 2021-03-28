@@ -1339,7 +1339,7 @@ def happy_main(argparsingfunc):
                     "data",
                     "models",
                 )
-                thedlfilter = tide_dlfilt.dlfilter(modelpath=modelpath)
+                thedlfilter = tide_dlfilt.DeepLearningFilter(modelpath=modelpath)
                 thedlfilter.loadmodel(args.modelname)
                 infodict["dlfiltermodel"] = args.modelname
                 normdlfilteredcard_stdres = thedlfilter.apply(normcardfromfmri_stdres)

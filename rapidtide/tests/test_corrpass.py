@@ -67,7 +67,7 @@ def test_calcsimfunc(debug=False, display=False):
         plt.figure()
         plt.plot(sourcedata)
         plt.show()
-    genlagtc = tide_resample.fastresampler(os_fmri_x, sourcedata)
+    genlagtc = tide_resample.FastResampler(os_fmri_x, sourcedata)
 
     thexcorr = tide_corr.fastcorrelate(sourcedata, sourcedata)
     xcorrlen = len(thexcorr)
