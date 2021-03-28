@@ -40,7 +40,7 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 def _procOneVoxelPeaks(
     vox,
     thetc,
-    themutualinformationator,
+    theMutualInformationator,
     fmri_x,
     fmritc,
     os_fmri_x,
@@ -60,7 +60,7 @@ def _procOneVoxelPeaks(
     peaklocs = []
     for thepeak in thepeaks:
         peaklocs.append(int(round(thepeak[2], 0)))
-    theMI_list = themutualinformationator.run(thetc, locs=peaklocs)
+    theMI_list = theMutualInformationator.run(thetc, locs=peaklocs)
     hybridpeaks = []
     for i in range(len(thepeaks)):
         hybridpeaks.append([thepeaks[i][0], thepeaks[i][1], theMI_list[i]])
@@ -74,7 +74,7 @@ def peakevalpass(
     referencetc,
     fmri_x,
     os_fmri_x,
-    themutualinformationator,
+    theMutualInformationator,
     xcorr_x,
     corrdata,
     nprocs=1,
@@ -93,7 +93,7 @@ def peakevalpass(
     ----------
     fmridata
     referencetc
-    thecorrelator
+    theCorrelator
     fmri_x
     os_fmri_x
     tr
@@ -113,7 +113,7 @@ def peakevalpass(
 
     """
     peakdict = {}
-    themutualinformationator.setreftc(referencetc)
+    theMutualInformationator.setreftc(referencetc)
 
     inputshape = np.shape(fmridata)
     volumetotal = 0
@@ -136,7 +136,7 @@ def peakevalpass(
                         _procOneVoxelPeaks(
                             val,
                             thetc,
-                            themutualinformationator,
+                            theMutualInformationator,
                             fmri_x,
                             fmridata[val, :],
                             os_fmri_x,
@@ -174,7 +174,7 @@ def peakevalpass(
             dummy, peakdict[str(vox)] = _procOneVoxelPeaks(
                 vox,
                 thetc,
-                themutualinformationator,
+                theMutualInformationator,
                 fmri_x,
                 fmridata[vox, :],
                 os_fmri_x,

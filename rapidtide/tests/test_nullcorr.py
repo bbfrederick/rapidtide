@@ -101,7 +101,7 @@ def test_nullsimfunc(debug=False, display=False):
         "hardlimit": True,
     }
     theprefilter = tide_filt.noncausalfilter("lfo")
-    thecorrelator = tide_classes.correlator(
+    theCorrelator = tide_classes.Correlator(
         Fs=Fs,
         ncprefilter=theprefilter,
         detrendorder=optiondict["detrendorder"],
@@ -109,7 +109,7 @@ def test_nullsimfunc(debug=False, display=False):
         corrweighting=optiondict["corrweighting"],
     )
 
-    thefitter = tide_classes.simfunc_fitter(
+    thefitter = tide_classes.SimilarityFunctionFitter(
         lagmod=optiondict["lagmod"],
         lthreshval=optiondict["lthreshval"],
         uthreshval=optiondict["uthreshval"],
@@ -128,9 +128,9 @@ def test_nullsimfunc(debug=False, display=False):
     if debug:
         print(optiondict)
 
-    thecorrelator.setlimits(lagmininpts, lagmaxinpts)
-    thecorrelator.setreftc(sourcedata)
-    dummy, trimmedcorrscale, dummy = thecorrelator.getfunction()
+    theCorrelator.setlimits(lagmininpts, lagmaxinpts)
+    theCorrelator.setreftc(sourcedata)
+    dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
     thefitter.setcorrtimeaxis(trimmedcorrscale)
     histograms = []
     for thenprocs in [1, -1]:
@@ -138,7 +138,7 @@ def test_nullsimfunc(debug=False, display=False):
             corrlist = tide_nullsimfunc.getNullDistributionDatax(
                 sourcedata,
                 Fs,
-                thecorrelator,
+                theCorrelator,
                 thefitter,
                 despeckle_thresh=5.0,
                 fixdelay=False,

@@ -134,7 +134,7 @@ def test_calcsimfunc(debug=False, display=False):
     }
 
     theprefilter = tide_filt.noncausalfilter("lfo")
-    thecorrelator = tide_classes.correlator(
+    theCorrelator = tide_classes.Correlator(
         Fs=oversampfreq,
         ncprefilter=theprefilter,
         detrendorder=optiondict["detrendorder"],
@@ -162,9 +162,9 @@ def test_calcsimfunc(debug=False, display=False):
     if debug:
         print(optiondict)
 
-    thecorrelator.setlimits(lagmininpts, lagmaxinpts)
-    thecorrelator.setreftc(sourcedata)
-    dummy, trimmedcorrscale, dummy = thecorrelator.getfunction()
+    theCorrelator.setlimits(lagmininpts, lagmaxinpts)
+    theCorrelator.setreftc(sourcedata)
+    dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
     thefitter.setcorrtimeaxis(trimmedcorrscale)
 
     for thenprocs in [1, -1]:
@@ -176,7 +176,7 @@ def test_calcsimfunc(debug=False, display=False):
             ) = tide_calcsimfunc.correlationpass(
                 theinputdata,
                 sourcedata,
-                thecorrelator,
+                theCorrelator,
                 init_fmri_x,
                 os_fmri_x,
                 lagmininpts,

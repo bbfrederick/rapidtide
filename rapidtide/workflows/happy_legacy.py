@@ -2511,7 +2511,7 @@ def happy_main(thearguments):
                 np.linspace(0.0, aliasedcorrelationwidth, num=aliasedcorrelationpts)
                 - aliasedcorrelationwidth / 2.0
             )
-            thecorrelator = tide_corr.AliasedCorrelator(
+            theAliasedCorrelator = tide_corr.AliasedCorrelator(
                 signal_stdres,
                 stdfreq,
                 mrsamplerate,
@@ -2590,7 +2590,7 @@ def happy_main(thearguments):
                 ) * appflips_byslice[validlocs, theslice, None] + timecoursemean
                 if doaliasedcorrelation and (thispass == numpasses - 1):
                     for theloc in validlocs:
-                        thecorrfunc_byslice[theloc, theslice, :] = thecorrelator.apply(
+                        thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
                             -appflips_byslice[theloc, theslice]
                             * demeandata_byslice[theloc, theslice, :],
                             -thetimes[theslice][0],
@@ -2606,7 +2606,7 @@ def happy_main(thearguments):
                 ]
                 if doaliasedcorrelation and (thispass == numpasses - 1):
                     for theloc in validlocs:
-                        thecorrfunc_byslice[theloc, theslice, :] = thecorrelator.apply(
+                        thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
                             -demeandata_byslice[theloc, theslice, :],
                             -thetimes[theslice][0],
                         )

@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 from rapidtide.util import valtoindex
 from rapidtide.filter import noncausalfilter
-from rapidtide.helper_classes import freqtrack
+from rapidtide.helper_classes import FrequencyTracker
 from rapidtide.io import writevec
 
 

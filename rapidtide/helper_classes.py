@@ -139,7 +139,7 @@ class proberegressor:
         #        self.targetoversample - 1)) * self.targetoversample * self.targetperiod + skiptime
 
 
-class similarityfunctionator:
+class SimilarityFunctionator:
     reftc = None
     prepreftc = None
     testtc = None
@@ -218,7 +218,7 @@ class similarityfunctionator:
                 return None, None, None
 
 
-class mutualinformationator(similarityfunctionator):
+class MutualInformationator(SimilarityFunctionator):
     def __init__(
         self,
         windowfunc="hamming",
@@ -242,7 +242,7 @@ class mutualinformationator(similarityfunctionator):
             self.smoothingfilter.setfreqs(
                 0.0, 0.0, 1.0 / self.smoothingtime, 1.0 / self.smoothingtime
             )
-        super(mutualinformationator, self).__init__(*args, **kwargs)
+        super(MutualInformationator, self).__init__(*args, **kwargs)
 
     def setlimits(self, lagmininpts, lagmaxinpts):
         self.lagmininpts = lagmininpts
@@ -276,8 +276,8 @@ class mutualinformationator(similarityfunctionator):
         self.timeaxisvalid = True
         self.datavalid = False
         if self.debug:
-            print("mutualinformationator setreftc:", len(self.timeaxis))
-            print("mutualinformationator setreftc:", self.timeaxis)
+            print("MutualInformationator setreftc:", len(self.timeaxis))
+            print("MutualInformationator setreftc:", self.timeaxis)
 
     def run(self, thetc, locs=None, trim=True, gettimeaxis=True):
         if len(thetc) != len(self.reftc):
@@ -363,7 +363,7 @@ class mutualinformationator(similarityfunctionator):
             return self.thesimfunc, self.timeaxis, self.theglobalmax
 
 
-class correlator(similarityfunctionator):
+class Correlator(SimilarityFunctionator):
     def __init__(self, hpfreq=None, windowfunc="hamming", corrweighting="None", *args, **kwargs):
         self.hpfreq = hpfreq
         self.windowfunc = windowfunc
@@ -371,7 +371,7 @@ class correlator(similarityfunctionator):
         if self.hpfreq is not None:
             self.hpfilt = tide_filt.noncausalfilter("arb")
             self.hpfilt.setfreqs(self.hpfreq, self.hpfreq, self.Fs, self.Fs)
-        super(correlator, self).__init__(*args, **kwargs)
+        super(Correlator, self).__init__(*args, **kwargs)
 
     def setlimits(self, lagmininpts, lagmaxinpts):
         self.lagmininpts = lagmininpts
@@ -426,7 +426,7 @@ class correlator(similarityfunctionator):
             return self.thesimfunc, self.timeaxis, self.theglobalmax
 
 
-class coherer:
+class Coherer:
     reftc = None
     prepreftc = None
     testtc = None
@@ -463,7 +463,7 @@ class coherer:
         if self.reftc is not None:
             self.setreftc(self.reftc)
         if self.debug:
-            print("coherer init:")
+            print("Coherer init:")
             print("\tFs:", self.Fs)
             print("\twindowfunc:", self.windowfunc)
             print("\tdetrendorder:", self.detrendorder)
@@ -616,7 +616,7 @@ class coherer:
                 return self.thecoherence, self.freqaxis, self.themax
 
 
-class simfunc_fitter:
+class SimilarityFunctionFitter:
     corrtimeaxis = None
     FML_NOERROR = np.uint32(0x0000)
 
@@ -1238,7 +1238,7 @@ class simfunc_fitter:
         )
 
 
-class freqtrack:
+class FrequencyTracker:
     freqs = None
     times = None
 
@@ -1272,7 +1272,7 @@ class freqtrack:
             print(self.times)
 
         # intitialize the peak fitter
-        thefitter = simfunc_fitter(
+        thefitter = SimilarityFunctionFitter(
             corrtimeaxis=self.freqs,
             lagmin=self.lowerlim,
             lagmax=self.upperlim,

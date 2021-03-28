@@ -39,7 +39,7 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 def _procOneVoxelCorrelation(
     vox,
     thetc,
-    thecorrelator,
+    theCorrelator,
     fmri_x,
     fmritc,
     os_fmri_x,
@@ -52,7 +52,7 @@ def _procOneVoxelCorrelation(
         thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
     else:
         thetc[:] = fmritc
-    thexcorr_y, thexcorr_x, theglobalmax = thecorrelator.run(thetc)
+    thexcorr_y, thexcorr_x, theglobalmax = theCorrelator.run(thetc)
 
     return vox, np.mean(thetc), thexcorr_y, thexcorr_x, theglobalmax
 
@@ -60,7 +60,7 @@ def _procOneVoxelCorrelation(
 def correlationpass(
     fmridata,
     referencetc,
-    thecorrelator,
+    theCorrelator,
     fmri_x,
     os_fmri_x,
     lagmininpts,
@@ -83,7 +83,7 @@ def correlationpass(
     ----------
     fmridata
     referencetc - the reference regressor, already oversampled
-    thecorrelator
+    theCorrelator
     fmri_x
     os_fmri_x
     tr
@@ -103,8 +103,8 @@ def correlationpass(
     -------
 
     """
-    thecorrelator.setreftc(referencetc)
-    thecorrelator.setlimits(lagmininpts, lagmaxinpts)
+    theCorrelator.setreftc(referencetc)
+    theCorrelator.setlimits(lagmininpts, lagmaxinpts)
 
     inputshape = np.shape(fmridata)
     volumetotal = 0
@@ -128,7 +128,7 @@ def correlationpass(
                         _procOneVoxelCorrelation(
                             val,
                             thetc,
-                            thecorrelator,
+                            theCorrelator,
                             fmri_x,
                             fmridata[val, :],
                             os_fmri_x,
@@ -175,7 +175,7 @@ def correlationpass(
             ) = _procOneVoxelCorrelation(
                 vox,
                 thetc,
-                thecorrelator,
+                theCorrelator,
                 fmri_x,
                 fmridata[vox, :],
                 os_fmri_x,

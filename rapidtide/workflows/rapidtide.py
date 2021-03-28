@@ -1105,20 +1105,20 @@ def rapidtide_main(argparsingfunc):
     if optiondict["verbose"]:
         print("corrtr=", corrtr)
 
-    # initialize the correlator
-    thecorrelator = tide_classes.correlator(
+    # initialize the Correlator
+    theCorrelator = tide_classes.Correlator(
         Fs=oversampfreq,
         ncprefilter=theprefilter,
         detrendorder=optiondict["detrendorder"],
         windowfunc=optiondict["windowfunc"],
         corrweighting=optiondict["corrweighting"],
-        hpfreq=optiondict["correlator_hpfreq"],
+        hpfreq=optiondict["Correlator_hpfreq"],
     )
-    thecorrelator.setreftc(
+    theCorrelator.setreftc(
         np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float)
     )
-    corrorigin = thecorrelator.similarityfuncorigin
-    dummy, corrscale, dummy = thecorrelator.getfunction(trim=False)
+    corrorigin = theCorrelator.similarityfuncorigin
+    dummy, corrscale, dummy = theCorrelator.getfunction(trim=False)
 
     lagmininpts = int((-optiondict["lagmin"] / corrtr) - 0.5)
     lagmaxinpts = int((optiondict["lagmax"] / corrtr) + 0.5)
@@ -1129,11 +1129,11 @@ def rapidtide_main(argparsingfunc):
         )
         sys.exit(1)
 
-    thecorrelator.setlimits(lagmininpts, lagmaxinpts)
-    dummy, trimmedcorrscale, dummy = thecorrelator.getfunction()
+    theCorrelator.setlimits(lagmininpts, lagmaxinpts)
+    dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
 
-    # initialize the mutualinformationator
-    themutualinformationator = tide_classes.mutualinformationator(
+    # initialize the MutualInformationator
+    theMutualInformationator = tide_classes.MutualInformationator(
         Fs=oversampfreq,
         smoothingtime=optiondict["smoothingtime"],
         ncprefilter=theprefilter,
@@ -1144,12 +1144,12 @@ def rapidtide_main(argparsingfunc):
         lagmaxinpts=lagmaxinpts,
         debug=optiondict["debug"],
     )
-    themutualinformationator.setreftc(
+    theMutualInformationator.setreftc(
         np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float)
     )
-    nummilags = themutualinformationator.similarityfunclen
-    themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
-    dummy, trimmedmiscale, dummy = themutualinformationator.getfunction()
+    nummilags = theMutualInformationator.similarityfunclen
+    theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
+    dummy, trimmedmiscale, dummy = theMutualInformationator.getfunction()
 
     if optiondict["verbose"]:
         print("trimmedcorrscale length:", len(trimmedcorrscale))
@@ -1273,7 +1273,7 @@ def rapidtide_main(argparsingfunc):
         print("edgebufferfrac set to ", optiondict["edgebufferfrac"])
 
     # intitialize the correlation fitter
-    thefitter = tide_classes.simfunc_fitter(
+    thefitter = tide_classes.SimilarityFunctionFitter(
         lagmod=optiondict["lagmod"],
         lthreshval=optiondict["lthreshval"],
         uthreshval=optiondict["uthreshval"],
@@ -1309,7 +1309,7 @@ def rapidtide_main(argparsingfunc):
         (voxelsprocessed_echo, theglobalmaxlist, trimmedcorrscale,) = calcsimilaritypass_func(
             fmri_data_valid[:, :],
             referencetc,
-            thecorrelator,
+            theCorrelator,
             initial_fmri_x,
             os_fmri_x,
             lagmininpts,
@@ -1392,7 +1392,7 @@ def rapidtide_main(argparsingfunc):
         dolagmod = True
         doreferencenotch = True
         if optiondict["respdelete"]:
-            resptracker = tide_classes.freqtrack(nperseg=64)
+            resptracker = tide_classes.FrequencyTracker(nperseg=64)
             thetimes, thefreqs = resptracker.track(resampref_y, 1.0 / oversamptr)
             if optiondict["bidsoutput"]:
                 tide_io.writevec(thefreqs, outputname + "_peakfreaks_pass" + str(thepass) + ".txt")
@@ -1418,9 +1418,9 @@ def rapidtide_main(argparsingfunc):
             lagindpad = corrorigin - 2 * np.max((lagmininpts, lagmaxinpts))
             acmininpts = lagmininpts + lagindpad
             acmaxinpts = lagmaxinpts + lagindpad
-            thecorrelator.setreftc(referencetc)
-            thecorrelator.setlimits(acmininpts, acmaxinpts)
-            thexcorr, accheckcorrscale, dummy = thecorrelator.run(resampref_y)
+            theCorrelator.setreftc(referencetc)
+            theCorrelator.setlimits(acmininpts, acmaxinpts)
+            thexcorr, accheckcorrscale, dummy = theCorrelator.run(resampref_y)
             thefitter.setcorrtimeaxis(accheckcorrscale)
             (
                 maxindex,
@@ -1634,16 +1634,16 @@ def rapidtide_main(argparsingfunc):
                     optiondict,
                     outputname + "_options_pregetnull_pass" + str(thepass) + ".json",
                 )
-            thecorrelator.setlimits(lagmininpts, lagmaxinpts)
-            thecorrelator.setreftc(cleaned_resampref_y)
-            themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
-            themutualinformationator.setreftc(cleaned_resampref_y)
-            dummy, trimmedcorrscale, dummy = thecorrelator.getfunction()
+            theCorrelator.setlimits(lagmininpts, lagmaxinpts)
+            theCorrelator.setreftc(cleaned_resampref_y)
+            theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
+            theMutualInformationator.setreftc(cleaned_resampref_y)
+            dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
             thefitter.setcorrtimeaxis(trimmedcorrscale)
             corrdistdata = getNullDistributionData_func(
                 cleaned_resampref_y,
                 oversampfreq,
-                thecorrelator,
+                theCorrelator,
                 thefitter,
                 numestreps=optiondict["numestreps"],
                 nprocs=optiondict["nprocs_getNullDist"],
@@ -1767,11 +1767,11 @@ def rapidtide_main(argparsingfunc):
         )
 
         if optiondict["similaritymetric"] == "mutualinfo":
-            themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
+            theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
             (voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale,) = calcsimilaritypass_func(
                 fmri_data_valid[:, :],
                 cleaned_referencetc,
-                themutualinformationator,
+                theMutualInformationator,
                 initial_fmri_x,
                 os_fmri_x,
                 lagmininpts,
@@ -1791,7 +1791,7 @@ def rapidtide_main(argparsingfunc):
             (voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale,) = calcsimilaritypass_func(
                 fmri_data_valid[:, :],
                 cleaned_referencetc,
-                thecorrelator,
+                theCorrelator,
                 initial_fmri_x,
                 os_fmri_x,
                 lagmininpts,
@@ -1875,7 +1875,7 @@ def rapidtide_main(argparsingfunc):
                 cleaned_referencetc,
                 initial_fmri_x,
                 os_fmri_x,
-                themutualinformationator,
+                theMutualInformationator,
                 trimmedcorrscale,
                 corrout,
                 nprocs=optiondict["nprocs_peakeval"],
@@ -2324,8 +2324,8 @@ def rapidtide_main(argparsingfunc):
         print("\n\nCoherence calculation")
         reportstep = 1000
 
-        # make the coherer
-        thecoherer = tide_classes.coherer(
+        # make the Coherer
+        theCoherer = tide_classes.Coherer(
             Fs=(1.0 / fmritr),
             reftc=cleaned_nonosreferencetc,
             freqmin=0.0,
@@ -2335,13 +2335,13 @@ def rapidtide_main(argparsingfunc):
             detrendorder=optiondict["detrendorder"],
             debug=False,
         )
-        thecoherer.setreftc(cleaned_nonosreferencetc)
+        theCoherer.setreftc(cleaned_nonosreferencetc)
         (
             coherencefreqstart,
             dummy,
             coherencefreqstep,
             coherencefreqaxissize,
-        ) = thecoherer.getaxisinfo()
+        ) = theCoherer.getaxisinfo()
         if optiondict["textio"]:
             nativecoherenceshape = (xsize, coherencefreqaxissize)
         else:
@@ -2371,7 +2371,7 @@ def rapidtide_main(argparsingfunc):
         )
         voxelsprocessed_coherence = coherencepass_func(
             fmri_data_valid,
-            thecoherer,
+            theCoherer,
             coherencefunc,
             coherencepeakval,
             coherencepeakfreq,

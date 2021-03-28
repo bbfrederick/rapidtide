@@ -91,8 +91,8 @@ def test_aliasedcorrelate(display=False):
         sighi, Fs_hi, siglo, Fs_lo, timerange, padtime=width
     )
 
-    thecorrelator = AliasedCorrelator(sighi, Fs_hi, Fs_lo, timerange, padtime=width)
-    aliasedcorrelate_result2 = thecorrelator.apply(siglo, 0.0)
+    theAliasedCorrelator = AliasedCorrelator(sighi, Fs_hi, Fs_lo, timerange, padtime=width)
+    aliasedcorrelate_result2 = theAliasedCorrelator.apply(siglo, 0.0)
 
     if display:
         plt.figure()

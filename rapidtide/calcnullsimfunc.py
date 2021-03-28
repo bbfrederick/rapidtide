@@ -36,7 +36,7 @@ def _procOneNullCorrelationx(
     rawtcfft_r,
     rawtcfft_ang,
     Fs,
-    thecorrelator,
+    theCorrelator,
     thefitter,
     despeckle_thresh=5.0,
     fixdelay=False,
@@ -57,10 +57,10 @@ def _procOneNullCorrelationx(
         sys.exit()
 
     # apply the appropriate filter
-    # permutedtc = thecorrelator.ncprefilter.apply(Fs, permutedtc)
+    # permutedtc = theCorrelator.ncprefilter.apply(Fs, permutedtc)
 
     # crosscorrelate with original
-    thexcorr_y, thexcorr_x, dummy = thecorrelator.run(permutedtc)
+    thexcorr_y, thexcorr_x, dummy = theCorrelator.run(permutedtc)
 
     # fit the correlation
     thefitter.setcorrtimeaxis(thexcorr_x)
@@ -81,7 +81,7 @@ def _procOneNullCorrelationx(
 def getNullDistributionDatax(
     rawtimecourse,
     Fs,
-    thecorrelator,
+    theCorrelator,
     thefitter,
     despeckle_thresh=5.0,
     fixdelay=False,
@@ -125,12 +125,12 @@ def getNullDistributionDatax(
     """
 
     inputshape = np.asarray([numestreps])
-    normalizedreftc = thecorrelator.ncprefilter.apply(
+    normalizedreftc = theCorrelator.ncprefilter.apply(
         Fs,
         tide_math.corrnormalize(
-            thecorrelator.reftc,
+            theCorrelator.reftc,
             windowfunc="None",
-            detrendorder=thecorrelator.detrendorder,
+            detrendorder=theCorrelator.detrendorder,
         ),
     )
     rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(normalizedreftc)
@@ -153,7 +153,7 @@ def getNullDistributionDatax(
                             rawtcfft_r,
                             rawtcfft_ang,
                             Fs,
-                            thecorrelator,
+                            theCorrelator,
                             thefitter,
                             despeckle_thresh=despeckle_thresh,
                             fixdelay=fixdelay,
@@ -200,7 +200,7 @@ def getNullDistributionDatax(
                 rawtcfft_r,
                 rawtcfft_ang,
                 Fs,
-                thecorrelator,
+                theCorrelator,
                 thefitter,
                 despeckle_thresh=despeckle_thresh,
                 fixdelay=fixdelay,

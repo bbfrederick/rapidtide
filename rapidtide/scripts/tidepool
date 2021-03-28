@@ -31,7 +31,7 @@ import argparse
 from rapidtide.OrthoImageItem import OrthoImageItem
 from rapidtide.RapidtideDataset import RapidtideDataset
 from rapidtide.Colortables import *
-from rapidtide.helper_classes import simfunc_fitter
+from rapidtide.helper_classes import SimilarityFunctionFitter
 import os
 import pandas as pd
 from statsmodels.robust.scale import mad
@@ -2003,7 +2003,7 @@ def main():
         simfuncCaption = pg.TextItem("placeholder", anchor=(0.5, 1.0))
         simfuncCaption.setParentItem(simfuncCurvePoint)
         simfuncCurve.scene().sigMouseClicked.connect(updateTimepoint)
-        simfuncFitter = simfunc_fitter()
+        simfuncFitter = SimilarityFunctionFitter()
     else:
         simfunc_ax = None
 

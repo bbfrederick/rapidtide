@@ -314,7 +314,7 @@ def main():
     )
 
     # do the correlation
-    print("correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
+    print("Correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
     print("lagmin, lagmax", args.lagmin, args.lagmax)
     lowerlim = int((args.lagmin * corrFs) - 0.5) + zeroloc
     upperlim = int((args.lagmax * corrFs) + 0.5) + zeroloc
@@ -322,12 +322,12 @@ def main():
     print("lowerlim, upperlim", lowerlim, upperlim)
     xcorr_x_trim = xcorr_x[lowerlim:upperlim]
     thexcorr_trim = thexcorr[lowerlim:upperlim]
-    print("trimmed correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
+    print("trimmed Correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
     thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
     # intitialize the correlation fitter
-    thexsimfuncfitter = tide_classes.simfunc_fitter(
+    thexsimfuncfitter = tide_classes.SimilarityFunctionFitter(
         corrtimeaxis=xcorr_x,
         lagmin=args.lagmin,
         lagmax=args.lagmax,

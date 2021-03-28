@@ -36,7 +36,7 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def _procOneVoxelCoherence(
-    vox, thecoherer, fmritc, alt=False, rt_floatset=np.float64, rt_floattype="float64"
+    vox, theCoherer, fmritc, alt=False, rt_floatset=np.float64, rt_floattype="float64"
 ):
     if alt:
         (
@@ -46,9 +46,9 @@ def _procOneVoxelCoherence(
             dummy,
             dummy,
             dummy,
-        ) = thecoherer.run(fmritc, trim=True, alt=True)
+        ) = theCoherer.run(fmritc, trim=True, alt=True)
     else:
-        thecoherence_y, thecoherence_x, globalmaxindex = thecoherer.run(fmritc, trim=True)
+        thecoherence_y, thecoherence_x, globalmaxindex = theCoherer.run(fmritc, trim=True)
     maxindex = np.argmax(thecoherence_y)
     return (
         vox,
@@ -61,7 +61,7 @@ def _procOneVoxelCoherence(
 
 def coherencepass(
     fmridata,
-    thecoherer,
+    theCoherer,
     coherencefunc,
     coherencepeakval,
     coherencepeakfreq,
@@ -79,7 +79,7 @@ def coherencepass(
     Parameters
     ----------
     fmridata
-    thecoherer
+    theCoherer
     coherencefunc
     coherencepeakval
     coherencepeakfreq
@@ -113,7 +113,7 @@ def coherencepass(
                     outQ.put(
                         _procOneVoxelCoherence(
                             val,
-                            thecoherer,
+                            theCoherer,
                             fmridata[val, :],
                             alt=alt,
                             rt_floatset=rt_floatset,
@@ -154,7 +154,7 @@ def coherencepass(
                 coherencepeakfreq[vox],
             ) = _procOneVoxelCoherence(
                 vox,
-                thecoherer,
+                theCoherer,
                 fmridata[vox, :],
                 alt=alt,
                 rt_floatset=rt_floatset,

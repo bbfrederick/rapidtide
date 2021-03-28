@@ -398,16 +398,16 @@ def main():
         if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
             thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
-    # initialize the correlator and mutualinformationator
-    thecorrelator = tide_classes.correlator(
+    # initialize the Correlator and MutualInformationator
+    theCorrelator = tide_classes.Correlator(
         Fs=args.samplerate,
         ncprefilter=theprefilter,
         detrendorder=args.detrendorder,
         windowfunc=args.windowfunc,
         corrweighting=args.corrweighting,
     )
-    thecorrelator.setreftc(trimdata2 * flipfac)
-    themutualinformationator = tide_classes.mutualinformationator(
+    theCorrelator.setreftc(trimdata2 * flipfac)
+    theMutualInformationator = tide_classes.MutualInformationator(
         Fs=args.samplerate,
         smoothingtime=args.smoothingtime,
         ncprefilter=theprefilter,
@@ -415,35 +415,35 @@ def main():
         norm=args.minorm,
         windowfunc=args.windowfunc,
     )
-    themutualinformationator.setreftc(trimdata2 * flipfac)
+    theMutualInformationator.setreftc(trimdata2 * flipfac)
 
     # calculate the similarity
     if args.similaritymetric == "mutualinfo":
         # calculate the MI
-        theMI, MI_x, globalmax = themutualinformationator.run(
+        theMI, MI_x, globalmax = theMutualInformationator.run(
             trimdata1, trim=False, gettimeaxis=True
         )
-        print("mutualinformationator lengths (x, y):", len(MI_x), len(theMI))
+        print("MutualInformationator lengths (x, y):", len(MI_x), len(theMI))
         if dumpfiltered:
-            tide_io.writenpvecs(themutualinformationator.preptesttc, "MI_filtereddata1.txt")
-            tide_io.writenpvecs(themutualinformationator.prepreftc, "MI_filtereddata2.txt")
-        themutualinformationator.setlimits(
+            tide_io.writenpvecs(theMutualInformationator.preptesttc, "MI_filtereddata1.txt")
+            tide_io.writenpvecs(theMutualInformationator.prepreftc, "MI_filtereddata2.txt")
+        theMutualInformationator.setlimits(
             int((-args.lagmin * args.samplerate) - 0.5), int((args.lagmax * args.samplerate) + 0.5)
         )
-        theMI_trim, MI_x_trim, globalmax = themutualinformationator.getfunction(trim=True)
-        print("trimmed mutualinformationator lengths (x, y):", len(MI_x_trim), len(theMI_trim))
+        theMI_trim, MI_x_trim, globalmax = theMutualInformationator.getfunction(trim=True)
+        print("trimmed MutualInformationator lengths (x, y):", len(MI_x_trim), len(theMI_trim))
     else:
         # do the correlation
-        thexcorr, xcorr_x, globalmax = thecorrelator.run(trimdata1, trim=False)
-        print("correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
+        thexcorr, xcorr_x, globalmax = theCorrelator.run(trimdata1, trim=False)
+        print("Correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
         if dumpfiltered:
-            tide_io.writenpvecs(thecorrelator.preptesttc, "correlator_filtereddata1.txt")
-            tide_io.writenpvecs(thecorrelator.prepreftc, "correlator_filtereddata2.txt")
-        thecorrelator.setlimits(
+            tide_io.writenpvecs(theCorrelator.preptesttc, "Correlator_filtereddata1.txt")
+            tide_io.writenpvecs(theCorrelator.prepreftc, "Correlator_filtereddata2.txt")
+        theCorrelator.setlimits(
             int((-args.lagmin * args.samplerate) - 0.5), int((args.lagmax * args.samplerate) + 0.5)
         )
-        thexcorr_trim, xcorr_x_trim, dummy = thecorrelator.getfunction(trim=True)
-        print("trimmed correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
+        thexcorr_trim, xcorr_x_trim, dummy = theCorrelator.getfunction(trim=True)
+        print("trimmed Correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
     if args.cepstral:
         cepdelay = tide_corr.cepstraldelay(
@@ -489,7 +489,7 @@ def main():
 
     if args.similaritymetric == "mutualinfo":
         # intitialize the similarity function fitter
-        themifitter = tide_classes.simfunc_fitter(
+        themifitter = tide_classes.SimilarityFunctionFitter(
             corrtimeaxis=MI_x_trim,
             lagmin=args.lagmin,
             lagmax=args.lagmax,
@@ -504,7 +504,7 @@ def main():
         maxdelaymi = MI_x_trim[np.argmax(theMI_trim)]
     else:
         # intitialize the correlation fitter
-        thexsimfuncfitter = tide_classes.simfunc_fitter(
+        thexsimfuncfitter = tide_classes.SimilarityFunctionFitter(
             corrtimeaxis=xcorr_x,
             lagmin=args.lagmin,
             lagmax=args.lagmax,
@@ -521,8 +521,8 @@ def main():
     if args.debug:
         print(
             "searching for peak correlation over range ",
-            thecorrelator.similarityfuncorigin - thecorrelator.lagmininpts,
-            thecorrelator.similarityfuncorigin + thecorrelator.lagmaxinpts,
+            theCorrelator.similarityfuncorigin - theCorrelator.lagmininpts,
+            theCorrelator.similarityfuncorigin + theCorrelator.lagmaxinpts,
         )
 
     if args.debug:
@@ -537,7 +537,7 @@ def main():
         dummy, thepeaks = tide_peakeval._procOneVoxelPeaks(
             0,
             thetc,
-            themutualinformationator,
+            theMutualInformationator,
             timeaxis,
             trimdata1,
             timeaxis,
@@ -617,7 +617,7 @@ def main():
         corrlist = tide_nullsimfunc.getNullDistributionDatax(
             filtereddata2,
             args.samplerate,
-            thecorrelator,
+            theCorrelator,
             thexsimfuncfitter,
             numestreps=args.numestreps,
             despeckle_thresh=1000.0,
@@ -650,7 +650,7 @@ def main():
         corrlist_pear = tide_nullsimfunc.getNullDistributionDatax(
             filtereddata2,
             args.samplerate,
-            thecorrelator,
+            theCorrelator,
             thexsimfuncfitter,
             numestreps=args.numestreps,
             despeckle_thresh=1000.0,

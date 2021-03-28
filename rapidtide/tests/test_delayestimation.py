@@ -154,10 +154,10 @@ def test_delayestimation(display=False, debug=False):
         referencetc, detrendorder=detrendorder, windowfunc=windowfunc
     )
 
-    # set up thecorrelator
+    # set up theCorrelator
     if debug:
-        print("\n\nsetting up thecorrelator")
-    thecorrelator = tide_classes.correlator(
+        print("\n\nsetting up theCorrelator")
+    theCorrelator = tide_classes.Correlator(
         Fs=oversampfreq,
         ncprefilter=theprefilter,
         detrendorder=detrendorder,
@@ -166,21 +166,21 @@ def test_delayestimation(display=False, debug=False):
         hpfreq=None,
         debug=True,
     )
-    thecorrelator.setreftc(np.zeros((oversampfac * numpoints), dtype=np.float64))
-    thecorrelator.setlimits(lagmininpts, lagmaxinpts)
-    dummy, trimmedcorrscale, dummy = thecorrelator.getfunction()
+    theCorrelator.setreftc(np.zeros((oversampfac * numpoints), dtype=np.float64))
+    theCorrelator.setlimits(lagmininpts, lagmaxinpts)
+    dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
     corroutlen = np.shape(trimmedcorrscale)[0]
     internalvalidcorrshape = (numlocs, corroutlen)
     corrout, dummy, dummy = allocshared(internalvalidcorrshape, np.float64)
     meanval, dummy, dummy = allocshared((numlocs), np.float64)
     if debug:
         print("corrout shape:", corrout.shape)
-        print("thecorrelator: corroutlen=", corroutlen)
+        print("theCorrelator: corroutlen=", corroutlen)
 
-    # set up themutualinformationator
+    # set up theMutualInformationator
     if debug:
-        print("\n\nsetting up themutualinformationator")
-    themutualinformationator = tide_classes.mutualinformationator(
+        print("\n\nsetting up theMutualInformationator")
+    theMutualInformationator = tide_classes.MutualInformationator(
         Fs=oversampfreq,
         smoothingtime=smoothingtime,
         ncprefilter=theprefilter,
@@ -192,8 +192,8 @@ def test_delayestimation(display=False, debug=False):
         debug=False,
     )
 
-    themutualinformationator.setreftc(np.zeros((oversampfac * numpoints), dtype=np.float64))
-    themutualinformationator.setlimits(lagmininpts, lagmaxinpts)
+    theMutualInformationator.setreftc(np.zeros((oversampfac * numpoints), dtype=np.float64))
+    theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
 
     # set up thefitter
     if debug:
@@ -239,7 +239,7 @@ def test_delayestimation(display=False, debug=False):
         ) = tide_calcsimfunc.correlationpass(
             waveforms[:, :],
             referencetc,
-            thecorrelator,
+            theCorrelator,
             timepoints,
             oversamptimepoints,
             lagmininpts,
@@ -271,7 +271,7 @@ def test_delayestimation(display=False, debug=False):
             referencetc,
             timepoints,
             oversamptimepoints,
-            themutualinformationator,
+            theMutualInformationator,
             trimmedcorrscale,
             corrout,
             nprocs=nprocs,

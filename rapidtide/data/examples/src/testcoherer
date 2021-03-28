@@ -13,25 +13,25 @@ thereftc = tide_io.readvec("mot1")
 thetesttc = tide_io.readvec("mot2")
 thefilter = tide_filt.noncausalfilter("lfo")
 
-print("setting up coherer")
-thecoherer = tide_classes.coherer(
+print("setting up Coherer")
+theCoherer = tide_classes.Coherer(
     Fs=(1.0 / 1.16), reftc=thereftc, freqmin=0.0, freqmax=0.2, ncprefilter=thefilter, debug=True
 )
-print("done setting up coherer")
+print("done setting up Coherer")
 
 
-print("running coherer")
-yaxis, xaxis, maxindex = thecoherer.run(thetesttc, trim=True)
-yaxis2, xaxis2, maxindex2, csdxy, csdxx, csdyy = thecoherer.run(thetesttc, trim=True, alt=True)
+print("running Coherer")
+yaxis, xaxis, maxindex = theCoherer.run(thetesttc, trim=True)
+yaxis2, xaxis2, maxindex2, csdxy, csdxx, csdyy = theCoherer.run(thetesttc, trim=True, alt=True)
 print(maxindex, maxindex2)
-print("done running coherer")
+print("done running Coherer")
 
 # dummy, xaxis2, yaxis2, dummy, dummy = tide_calccoherence._procOneVoxelCoherence(
 # 0,
-# thecoherer,
+# theCoherer,
 # thetesttc)
 
-print(thecoherer.freqmin, thecoherer.freqmininpts, thecoherer.freqmax, thecoherer.freqmaxinpts)
+print(theCoherer.freqmin, theCoherer.freqmininpts, theCoherer.freqmax, theCoherer.freqmaxinpts)
 
 # print(xaxis)
 # print(yaxis)
@@ -49,8 +49,8 @@ plt.figure()
 plt.plot(xaxis2, yaxis2)
 plt.show()
 
-preppedref = thecoherer.prepreftc
-preppeddata = thecoherer.preptesttc
+preppedref = theCoherer.prepreftc
+preppeddata = theCoherer.preptesttc
 
 plt.figure()
 plt.plot(preppedref)
