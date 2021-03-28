@@ -79,7 +79,7 @@ def disablenumba():
 
 
 # --------------------------- Correlation functions -------------------------------------------------
-def autocorrcheck(
+def check_autocorrelation(
     corrscale,
     thexcorr,
     delta=0.1,

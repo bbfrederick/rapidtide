@@ -37,7 +37,7 @@ API
     :toctree: generated/
     :template: function.rst
 
-    rapidtide.correlate.autocorrcheck
+    rapidtide.correlate.check_autocorrelation
     rapidtide.correlate.quickcorr
     rapidtide.correlate.shorttermcorr_1D
     rapidtide.correlate.shorttermcorr_2D
