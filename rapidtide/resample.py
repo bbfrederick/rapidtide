@@ -31,40 +31,27 @@ import rapidtide.util as tide_util
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 
+from numba import jit
+import pyfftw
+
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
+
 # this is here until numpy deals with their fft issue
 import warnings
 
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 # ---------------------------------------- Global constants -------------------------------------------
+donotusenumba = False
 donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
 
 
-try:
-    from numba import jit
-
-    numbaexists = True
-except ImportError:
-    numbaexists = False
-numbaexists = False
-
-donotusenumba = False
-
-try:
-    import pyfftw
-
-    pyfftwexists = True
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-except ImportError:
-    pyfftwexists = False
-
-
 def conditionaljit():
     def resdec(f):
-        if (not numbaexists) or donotusenumba:
+        if donotusenumba:
             return f
         return jit(f, nopython=False)
 
@@ -73,7 +60,7 @@ def conditionaljit():
 
 def conditionaljit2():
     def resdec(f):
-        if (not numbaexists) or donotusenumba or donotbeaggressive:
+        if donotusenumba or donotbeaggressive:
             return f
         return jit(f, nopython=False)
 

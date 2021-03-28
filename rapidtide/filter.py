@@ -32,6 +32,11 @@ import sys
 
 import matplotlib.pyplot as plt
 
+from numba import jit
+import pyfftw
+
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
 
 try:
     from memory_profiler import profile
@@ -40,29 +45,13 @@ try:
 except ImportError:
     memprofilerexists = False
 
-try:
-    from numba import jit
-
-    numbaexists = True
-except ImportError:
-    numbaexists = False
-numbaexists = False
-
-donotusenumba = False
-
-try:
-    import pyfftw
-
-    pyfftwexists = True
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-except ImportError:
-    pyfftwexists = False
+donotusenumba = True
 
 
 def conditionaljit():
     def resdec(f):
-        if (not numbaexists) or donotusenumba:
+        global donotusenumba
+        if donotusenumba:
             return f
         return jit(f, nopython=False)
 

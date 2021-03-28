@@ -29,6 +29,12 @@ from scipy.stats import johnsonsb, kurtosis, kurtosistest
 import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 
+from numba import jit
+import pyfftw
+
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
+
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
@@ -43,31 +49,17 @@ except ImportError:
     memprofilerexists = False
 
 
-try:
-    from numba import jit
-
-    numbaexists = True
-except ImportError:
-    numbaexists = False
-numbaexists = False
-
-
 donotusenumba = False
 
 
-try:
-    import pyfftw
-
-    pyfftwexists = True
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-except ImportError:
-    pyfftwexists = False
+def disablenumba():
+    global donotusenumba
+    donotusenumba = True
 
 
 def conditionaljit():
     def resdec(f):
-        if (not numbaexists) or donotusenumba:
+        if donotusenumba:
             return f
         return jit(f, nopython=False)
 
@@ -76,16 +68,11 @@ def conditionaljit():
 
 def conditionaljit2():
     def resdec(f):
-        if (not numbaexists) or donotusenumba or donotbeaggressive:
+        if donotusenumba or donotbeaggressive:
             return f
         return jit(f, nopython=False)
 
     return resdec
-
-
-def disablenumba():
-    global donotusenumba
-    donotusenumba = True
 
 
 # --------------------------- probability functions -------------------------------------------------

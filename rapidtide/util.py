@@ -30,6 +30,11 @@ import matplotlib.pyplot as plt
 import rapidtide.io as tide_io
 import rapidtide._version as tide_versioneer
 
+from numba import jit
+import pyfftw
+
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6

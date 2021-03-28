@@ -28,17 +28,14 @@ import sys
 from statsmodels.robust.scale import mad
 import glob
 from scipy import fftpack
+from numba import jit
+import pyfftw
 
-try:
-    import pyfftw
-
-    pyfftwexists = True
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-except ImportError:
-    pyfftwexists = False
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
 
 import rapidtide.io as tide_io
+
 
 print("setting backend to Agg")
 mpl.use("Agg")
