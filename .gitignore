@@ -9,7 +9,7 @@ changecalls
 safezone
 
 # experimental directory
-#rapidtide/experimental
+rapidtide/experimental
 
 # any generated test data
 rapidtide/data/examples/dst/*
