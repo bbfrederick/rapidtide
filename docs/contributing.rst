@@ -6,8 +6,8 @@ to rapidtide and code style conventions we follow within the project.
 For a more general guide to rapidtide development, please see our
 `contributing guide`_. Please also remember to follow our `code of conduct`_.
 
-.. _contributing guide: https://github.com/bbfrederick/rapidtide/blob/master/CONTRIBUTING.md
-.. _code of conduct: https://github.com/bbfrederick/rapidtide/blob/master/CODE_OF_CONDUCT.md
+.. _contributing guide: https://github.com/bbfrederick/rapidtide/blob/dev/CONTRIBUTING.md
+.. _code of conduct: https://github.com/bbfrederick/rapidtide/blob/dev/CODE_OF_CONDUCT.md
 
 Style Guide
 -----------
