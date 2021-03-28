@@ -16,8 +16,6 @@
 #   limitations under the License.
 #
 #
-from __future__ import print_function, division
-
 from os.path import expanduser, join as pjoin
 import os
 import sys

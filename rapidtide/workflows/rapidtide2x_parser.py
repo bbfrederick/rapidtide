@@ -16,8 +16,6 @@
 #   limitations under the License.
 #
 #
-from __future__ import print_function, division
-
 import getopt
 import os
 import sys

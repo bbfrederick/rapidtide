@@ -16,8 +16,6 @@
 #   limitations under the License.
 #
 #
-from __future__ import print_function, division
-
 from rapidtide.workflows.rapidtide_parser import process_args
 
 testlist = {}

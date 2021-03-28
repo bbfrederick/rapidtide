@@ -16,7 +16,6 @@
 #   limitations under the License.
 #
 #
-from __future__ import print_function, division
 import sys
 import rapidtide.workflows.happy as happy_workflow
 import rapidtide.workflows.happy_parser as happy_parser

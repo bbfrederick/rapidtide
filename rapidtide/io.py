@@ -19,653 +19,660 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-from __future__ import print_function, division
-
 import numpy as np
 import sys
 import os
 import pandas as pd
 import json
 import copy
+import nibabel as nib
 
 # ---------------------------------------- Global constants -------------------------------------------
 MAXLINES = 100000000
 
-# ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    import nibabel as nib
-
-    nibabelexists = True
-except ImportError:
-    nibabelexists = False
-
 # ---------------------------------------- NIFTI file manipulation ---------------------------
-if nibabelexists:
+def readfromnifti(inputfile):
+    r"""Open a nifti file and read in the various important parts
 
-    def readfromnifti(inputfile):
-        r"""Open a nifti file and read in the various important parts
+    Parameters
+    ----------
+    inputfile : str
+        The name of the nifti file.
 
-        Parameters
-        ----------
-        inputfile : str
-            The name of the nifti file.
+    Returns
+    -------
+    nim : nifti image structure
+    nim_data : array-like
+    nim_hdr : nifti header
+    thedims : int array
+    thesizes : float array
 
-        Returns
-        -------
-        nim : nifti image structure
-        nim_data : array-like
-        nim_hdr : nifti header
-        thedims : int array
-        thesizes : float array
+    """
+    if os.path.isfile(inputfile):
+        inputfilename = inputfile
+    elif os.path.isfile(inputfile + ".nii.gz"):
+        inputfilename = inputfile + ".nii.gz"
+    elif os.path.isfile(inputfile + ".nii"):
+        inputfilename = inputfile + ".nii"
+    else:
+        print("nifti file", inputfile, "does not exist")
+        sys.exit()
+    nim = nib.load(inputfilename)
+    nim_data = nim.get_fdata()
+    nim_hdr = nim.header.copy()
+    thedims = nim_hdr["dim"].copy()
+    thesizes = nim_hdr["pixdim"].copy()
+    return nim, nim_data, nim_hdr, thedims, thesizes
 
-        """
-        if os.path.isfile(inputfile):
-            inputfilename = inputfile
-        elif os.path.isfile(inputfile + ".nii.gz"):
-            inputfilename = inputfile + ".nii.gz"
-        elif os.path.isfile(inputfile + ".nii"):
-            inputfilename = inputfile + ".nii"
-        else:
-            print("nifti file", inputfile, "does not exist")
-            sys.exit()
-        nim = nib.load(inputfilename)
-        nim_data = nim.get_fdata()
-        nim_hdr = nim.header.copy()
-        thedims = nim_hdr["dim"].copy()
-        thesizes = nim_hdr["pixdim"].copy()
-        return nim, nim_data, nim_hdr, thedims, thesizes
 
-    def readfromcifti(inputfile, debug=False):
-        r"""Open a cifti file and read in the various important parts
+def readfromcifti(inputfile, debug=False):
+    r"""Open a cifti file and read in the various important parts
 
-        Parameters
-        ----------
-        inputfile : str
-            The name of the cifti file.
+    Parameters
+    ----------
+    inputfile : str
+        The name of the cifti file.
 
-        Returns
-        -------
-        nim : nifti image structure
-        nim_data : array-like
-        nim_hdr : nifti header
-        thedims : int array
-        thesizes : float array
+    Returns
+    -------
+    nim : nifti image structure
+    nim_data : array-like
+    nim_hdr : nifti header
+    thedims : int array
+    thesizes : float array
 
-        """
-        if os.path.isfile(inputfile):
-            inputfilename = inputfile
-        elif os.path.isfile(inputfile + ".nii"):
-            inputfilename = inputfile + ".nii"
-        else:
-            print("cifti file", inputfile, "does not exist")
-            sys.exit()
+    """
+    if os.path.isfile(inputfile):
+        inputfilename = inputfile
+    elif os.path.isfile(inputfile + ".nii"):
+        inputfilename = inputfile + ".nii"
+    else:
+        print("cifti file", inputfile, "does not exist")
+        sys.exit()
 
-        cifti = nib.load(inputfilename)
-        nifti_data = np.transpose(cifti.get_fdata(dtype=np.float32))
-        cifti_hdr = cifti.header
-        nifti_hdr = cifti.nifti_header
+    cifti = nib.load(inputfilename)
+    nifti_data = np.transpose(cifti.get_fdata(dtype=np.float32))
+    cifti_hdr = cifti.header
+    nifti_hdr = cifti.nifti_header
 
-        if nifti_hdr["intent_code"] == 3002:
-            timestep, starttime = getciftitr(cifti_hdr)
-        else:
-            timestep, starttime = None, None
-        axes = [cifti_hdr.get_axis(i) for i in range(cifti.ndim)]
+    if nifti_hdr["intent_code"] == 3002:
+        timestep, starttime = getciftitr(cifti_hdr)
+    else:
+        timestep, starttime = None, None
+    axes = [cifti_hdr.get_axis(i) for i in range(cifti.ndim)]
+    if debug:
+        for theaxis in axes:
+            print(theaxis)
+
+    thedims = nifti_hdr["dim"].copy()
+    thesizes = nifti_hdr["pixdim"].copy()
+    return cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, timestep
+
+
+def getciftitr(cifti_hdr):
+    seriesaxis = None
+    for theaxis in cifti_hdr.matrix.mapped_indices:
+        if isinstance(cifti_hdr.matrix.get_axis(theaxis), nib.cifti2.SeriesAxis):
+            seriesaxis = theaxis
+    if seriesaxis is not None:
+        timepoint1 = cifti_hdr.matrix.get_axis(seriesaxis).get_element(1)
+        starttime = cifti_hdr.matrix.get_axis(seriesaxis).get_element(0)
+        timestep = timepoint1 - starttime
+    else:
+        print("No series axis found!  Exiting")
+        sys.exit()
+    return timestep, starttime
+
+
+# dims are the array dimensions along each axis
+def parseniftidims(thedims):
+    r"""Split the dims array into individual elements
+
+    Parameters
+    ----------
+    thedims : int array
+        The nifti dims structure
+
+    Returns
+    -------
+    nx, ny, nz, nt : int
+        Number of points along each dimension
+    """
+    return thedims[1], thedims[2], thedims[3], thedims[4]
+
+
+# sizes are the mapping between voxels and physical coordinates
+def parseniftisizes(thesizes):
+    r"""Split the size array into individual elements
+
+    Parameters
+    ----------
+    thesizes : float array
+        The nifti voxel size structure
+
+    Returns
+    -------
+    dimx, dimy, dimz, dimt : float
+        Scaling from voxel number to physical coordinates
+    """
+    return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
+
+
+def savetonifti(thearray, theheader, thename):
+    r"""Save a data array out to a nifti file
+
+    Parameters
+    ----------
+    thearray : array-like
+        The data array to save.
+    theheader : nifti header
+        A valid nifti header
+    thepixdim : array
+        The pixel dimensions.
+    thename : str
+        The name of the nifti file to save
+
+    Returns
+    -------
+
+    """
+    outputaffine = theheader.get_best_affine()
+    qaffine, qcode = theheader.get_qform(coded=True)
+    saffine, scode = theheader.get_sform(coded=True)
+    if theheader["magic"] == "n+2":
+        output_nifti = nib.Nifti2Image(thearray, outputaffine, header=theheader)
+        suffix = ".nii"
+    else:
+        output_nifti = nib.Nifti1Image(thearray, outputaffine, header=theheader)
+        suffix = ".nii.gz"
+    output_nifti.set_qform(qaffine, code=int(qcode))
+    output_nifti.set_sform(saffine, code=int(scode))
+    thedtype = thearray.dtype
+    if thedtype == np.uint8:
+        theheader.datatype = 2
+    elif thedtype == np.int16:
+        theheader.datatype = 4
+    elif thedtype == np.int32:
+        theheader.datatype = 8
+    elif thedtype == np.float32:
+        theheader.datatype = 16
+    elif thedtype == np.complex64:
+        theheader.datatype = 32
+    elif thedtype == np.float64:
+        theheader.datatype = 64
+    elif thedtype == np.int8:
+        theheader.datatype = 256
+    elif thedtype == np.uint16:
+        theheader.datatype = 512
+    elif thedtype == np.uint32:
+        theheader.datatype = 768
+    elif thedtype == np.int64:
+        theheader.datatype = 1024
+    elif thedtype == np.uint64:
+        theheader.datatype = 1280
+    elif thedtype == np.float128:
+        theheader.datatype = 1536
+    elif thedtype == np.complex128:
+        theheader.datatype = 1792
+    elif thedtype == np.complex256:
+        theheader.datatype = 2048
+    else:
+        print("type", thedtype, "is not legal")
+        sys.exit()
+
+    output_nifti.to_filename(thename + suffix)
+    output_nifti = None
+
+
+def savetocifti(
+    thearray,
+    theciftiheader,
+    theniftiheader,
+    thename,
+    isseries=False,
+    names=["placeholder"],
+    start=0.0,
+    step=1.0,
+    debug=False,
+):
+    r"""Save a data array out to a cifti
+
+    Parameters
+    ----------
+    thearray : array-like
+        The data array to save.
+    theciftiheader : cifti header
+        A valid cifti header
+    theniftiheader : nifti header
+        A valid nifti header
+    thename : str
+        The name of the cifti file to save
+    isseries: bool
+        True if output is a dtseries, False if dtscalar
+    start: float
+        starttime in seconds
+    step: float
+        timestep in seconds
+    debug: bool
+        Print extended debugging information
+
+    Returns
+    -------
+
+    """
+    if debug:
+        print("savetocifti:", thename)
+    workingarray = np.transpose(thearray)
+    if len(workingarray.shape) == 1:
+        workingarray = workingarray.reshape((1, -1))
+
+    # find the BrainModelAxis from the input file
+    modelaxis = None
+    for theaxis in theciftiheader.matrix.mapped_indices:
+        if isinstance(theciftiheader.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis):
+            modelaxis = theaxis
+            if debug:
+                print("axis", theaxis, "is the BrainModelAxis")
+
+    # process things differently for dscalar and dtseries files
+    if isseries:
+        # make a proper series header
         if debug:
-            for theaxis in axes:
-                print(theaxis)
-
-        thedims = nifti_hdr["dim"].copy()
-        thesizes = nifti_hdr["pixdim"].copy()
-        return cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, timestep
-
-    def getciftitr(cifti_hdr):
-        seriesaxis = None
-        for theaxis in cifti_hdr.matrix.mapped_indices:
-            if isinstance(cifti_hdr.matrix.get_axis(theaxis), nib.cifti2.SeriesAxis):
-                seriesaxis = theaxis
-        if seriesaxis is not None:
-            timepoint1 = cifti_hdr.matrix.get_axis(seriesaxis).get_element(1)
-            starttime = cifti_hdr.matrix.get_axis(seriesaxis).get_element(0)
-            timestep = timepoint1 - starttime
+            print("dtseries path: workingarray shape", workingarray.shape)
+        theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES"
+        theintentname = "ConnDenseSeries"
+        if modelaxis is not None:
+            seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(start, step, workingarray.shape[0])
+            axislist = [seriesaxis, theciftiheader.matrix.get_axis(modelaxis)]
         else:
-            print("No series axis found!  Exiting")
+            print("no BrainModelAxis found in source file - exiting")
             sys.exit()
-        return timestep, starttime
-
-    # dims are the array dimensions along each axis
-    def parseniftidims(thedims):
-        r"""Split the dims array into individual elements
-
-        Parameters
-        ----------
-        thedims : int array
-            The nifti dims structure
-
-        Returns
-        -------
-        nx, ny, nz, nt : int
-            Number of points along each dimension
-        """
-        return thedims[1], thedims[2], thedims[3], thedims[4]
-
-    # sizes are the mapping between voxels and physical coordinates
-    def parseniftisizes(thesizes):
-        r"""Split the size array into individual elements
-
-        Parameters
-        ----------
-        thesizes : float array
-            The nifti voxel size structure
-
-        Returns
-        -------
-        dimx, dimy, dimz, dimt : float
-            Scaling from voxel number to physical coordinates
-        """
-        return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
-
-    def savetonifti(thearray, theheader, thename):
-        r"""Save a data array out to a nifti file
-
-        Parameters
-        ----------
-        thearray : array-like
-            The data array to save.
-        theheader : nifti header
-            A valid nifti header
-        thepixdim : array
-            The pixel dimensions.
-        thename : str
-            The name of the nifti file to save
-
-        Returns
-        -------
-
-        """
-        outputaffine = theheader.get_best_affine()
-        qaffine, qcode = theheader.get_qform(coded=True)
-        saffine, scode = theheader.get_sform(coded=True)
-        if theheader["magic"] == "n+2":
-            output_nifti = nib.Nifti2Image(thearray, outputaffine, header=theheader)
-            suffix = ".nii"
-        else:
-            output_nifti = nib.Nifti1Image(thearray, outputaffine, header=theheader)
-            suffix = ".nii.gz"
-        output_nifti.set_qform(qaffine, code=int(qcode))
-        output_nifti.set_sform(saffine, code=int(scode))
-        thedtype = thearray.dtype
-        if thedtype == np.uint8:
-            theheader.datatype = 2
-        elif thedtype == np.int16:
-            theheader.datatype = 4
-        elif thedtype == np.int32:
-            theheader.datatype = 8
-        elif thedtype == np.float32:
-            theheader.datatype = 16
-        elif thedtype == np.complex64:
-            theheader.datatype = 32
-        elif thedtype == np.float64:
-            theheader.datatype = 64
-        elif thedtype == np.int8:
-            theheader.datatype = 256
-        elif thedtype == np.uint16:
-            theheader.datatype = 512
-        elif thedtype == np.uint32:
-            theheader.datatype = 768
-        elif thedtype == np.int64:
-            theheader.datatype = 1024
-        elif thedtype == np.uint64:
-            theheader.datatype = 1280
-        elif thedtype == np.float128:
-            theheader.datatype = 1536
-        elif thedtype == np.complex128:
-            theheader.datatype = 1792
-        elif thedtype == np.complex256:
-            theheader.datatype = 2048
-        else:
-            print("type", thedtype, "is not legal")
+    else:
+        # make a proper scalar header
+        if debug:
+            print("dscalar path: workingarray shape", workingarray.shape)
+        theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS"
+        theintentname = "ConnDenseScalar"
+        if len(names) != workingarray.shape[0]:
+            print("savetocifti - number of supplied names does not match array size - exiting.")
             sys.exit()
+        if modelaxis is not None:
+            scalaraxis = nib.cifti2.cifti2_axes.ScalarAxis(names)
+            axislist = [scalaraxis, theciftiheader.matrix.get_axis(modelaxis)]
+        else:
+            print("no BrainModelAxis found in source file - exiting")
+            sys.exit()
+    # now create the output file structure
+    if debug:
+        print("about to create cifti image - nifti header is:", theniftiheader)
 
-        output_nifti.to_filename(thename + suffix)
-        output_nifti = None
+    img = nib.cifti2.Cifti2Image(dataobj=workingarray, header=axislist)
 
-    def savetocifti(
-        thearray,
-        theciftiheader,
-        theniftiheader,
-        thename,
-        isseries=False,
-        names=["placeholder"],
-        start=0.0,
-        step=1.0,
-        debug=False,
-    ):
-        r"""Save a data array out to a cifti
+    # make the header right
+    img.nifti_header.set_intent(theintent, name=theintentname)
+    img.update_headers()
 
-        Parameters
-        ----------
-        thearray : array-like
-            The data array to save.
-        theciftiheader : cifti header
-            A valid cifti header
-        theniftiheader : nifti header
-            A valid nifti header
-        thename : str
-            The name of the cifti file to save
-        isseries: bool
-            True if output is a dtseries, False if dtscalar
-        start: float
-            starttime in seconds
-        step: float
-            timestep in seconds
-        debug: bool
-            Print extended debugging information
-
-        Returns
-        -------
-
-        """
+    if isseries:
+        suffix = ".dtseries.nii"
         if debug:
-            print("savetocifti:", thename)
-        workingarray = np.transpose(thearray)
-        if len(workingarray.shape) == 1:
-            workingarray = workingarray.reshape((1, -1))
-
-        # find the BrainModelAxis from the input file
-        modelaxis = None
-        for theaxis in theciftiheader.matrix.mapped_indices:
-            if isinstance(theciftiheader.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis):
-                modelaxis = theaxis
-                if debug:
-                    print("axis", theaxis, "is the BrainModelAxis")
-
-        # process things differently for dscalar and dtseries files
-        if isseries:
-            # make a proper series header
-            if debug:
-                print("dtseries path: workingarray shape", workingarray.shape)
-            theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES"
-            theintentname = "ConnDenseSeries"
-            if modelaxis is not None:
-                seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(start, step, workingarray.shape[0])
-                axislist = [seriesaxis, theciftiheader.matrix.get_axis(modelaxis)]
-            else:
-                print("no BrainModelAxis found in source file - exiting")
-                sys.exit()
-        else:
-            # make a proper scalar header
-            if debug:
-                print("dscalar path: workingarray shape", workingarray.shape)
-            theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS"
-            theintentname = "ConnDenseScalar"
-            if len(names) != workingarray.shape[0]:
-                print(
-                    "savetocifti - number of supplied names does not match array size - exiting."
-                )
-                sys.exit()
-            if modelaxis is not None:
-                scalaraxis = nib.cifti2.cifti2_axes.ScalarAxis(names)
-                axislist = [scalaraxis, theciftiheader.matrix.get_axis(modelaxis)]
-            else:
-                print("no BrainModelAxis found in source file - exiting")
-                sys.exit()
-        # now create the output file structure
+            print("\tDENSE_SERIES")
+    else:
+        suffix = ".dscalar.nii"
         if debug:
-            print("about to create cifti image - nifti header is:", theniftiheader)
+            print("\tDENSE_SCALARS")
+    if debug:
+        print("after update_headers() - nifti header is:", theniftiheader)
 
-        img = nib.cifti2.Cifti2Image(dataobj=workingarray, header=axislist)
+    # save the data
+    nib.cifti2.save(img, thename + suffix)
 
-        # make the header right
-        img.nifti_header.set_intent(theintent, name=theintentname)
-        img.update_headers()
 
-        if isseries:
-            suffix = ".dtseries.nii"
-            if debug:
-                print("\tDENSE_SERIES")
-        else:
-            suffix = ".dscalar.nii"
-            if debug:
-                print("\tDENSE_SCALARS")
-        if debug:
-            print("after update_headers() - nifti header is:", theniftiheader)
+def checkifnifti(filename):
+    r"""Check to see if a file name is a valid nifti name.
 
-        # save the data
-        nib.cifti2.save(img, thename + suffix)
+    Parameters
+    ----------
+    filename : str
+        The file name
 
-    def checkifnifti(filename):
-        r"""Check to see if a file name is a valid nifti name.
+    Returns
+    -------
+    isnifti : bool
+        True if name is a valid nifti file name.
 
-        Parameters
-        ----------
-        filename : str
-            The file name
+    """
+    if filename.endswith(".nii") or filename.endswith(".nii.gz"):
+        return True
+    else:
+        return False
 
-        Returns
-        -------
-        isnifti : bool
-            True if name is a valid nifti file name.
 
-        """
-        if filename.endswith(".nii") or filename.endswith(".nii.gz"):
-            return True
-        else:
-            return False
+def niftisplitext(filename):
+    r"""Split nifti filename into name base and extensionn.
 
-    def niftisplitext(filename):
-        r"""Split nifti filename into name base and extensionn.
+    Parameters
+    ----------
+    filename : str
+        The file name
 
-        Parameters
-        ----------
-        filename : str
-            The file name
+    Returns
+    -------
+    name : str
+        Base name of the nifti file.
 
-        Returns
-        -------
-        name : str
-            Base name of the nifti file.
+    ext : str
+        Extension of the nifti file.
 
-        ext : str
-            Extension of the nifti file.
+    """
+    firstsplit = os.path.splitext(filename)
+    secondsplit = os.path.splitext(firstsplit[0])
+    if secondsplit[1] is not None:
+        return secondsplit[0], secondsplit[1] + firstsplit[1]
+    else:
+        return firstsplit[0], firstsplit[1]
 
-        """
-        firstsplit = os.path.splitext(filename)
-        secondsplit = os.path.splitext(firstsplit[0])
-        if secondsplit[1] is not None:
-            return secondsplit[0], secondsplit[1] + firstsplit[1]
-        else:
-            return firstsplit[0], firstsplit[1]
 
-    def niftisplit(inputfile, outputroot, axis=3):
-        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
-        theheader = copy.deepcopy(infile_hdr)
-        numpoints = infiledims[axis + 1]
-        print(infiledims)
-        theheader["dim"][axis + 1] = 1
-        for i in range(numpoints):
-            if infiledims[0] == 5:
-                if axis == 0:
-                    thisslice = infile_data[i : i + 1, :, :, :, :]
-                elif axis == 1:
-                    thisslice = infile_data[:, i : i + 1, :, :, :]
-                elif axis == 2:
-                    thisslice = infile_data[:, :, i : i + 1, :, :]
-                elif axis == 3:
-                    thisslice = infile_data[:, :, :, i : i + 1, :]
-                elif axis == 4:
-                    thisslice = infile_data[:, :, :, :, i : i + 1]
-                else:
-                    print("illegal axis")
-                    sys.exit()
-            elif infiledims[0] == 4:
-                if axis == 0:
-                    thisslice = infile_data[i : i + 1, :, :, :]
-                elif axis == 1:
-                    thisslice = infile_data[:, i : i + 1, :, :]
-                elif axis == 2:
-                    thisslice = infile_data[:, :, i : i + 1, :]
-                elif axis == 3:
-                    thisslice = infile_data[:, :, :, i : i + 1]
-                else:
-                    print("illegal axis")
-                    sys.exit()
-            savetonifti(thisslice, theheader, outputroot + str(i).zfill(4))
-
-    def niftimerge(inputlist, outputname, writetodisk=True, axis=3, returndata=False, debug=False):
-        inputdata = []
-        for thefile in inputlist:
-            if debug:
-                print("reading", thefile)
-            infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(thefile)
-            if infiledims[0] == 3:
-                inputdata.append(
-                    infile_data.reshape((infiledims[1], infiledims[2], infiledims[3], 1)) + 0.0
-                )
-            else:
-                inputdata.append(infile_data + 0.0)
-        theheader = copy.deepcopy(infile_hdr)
-        theheader["dim"][axis + 1] = len(inputdata)
-        output_data = np.concatenate(inputdata, axis=axis)
-        if writetodisk:
-            savetonifti(output_data, theheader, outputname)
-        if returndata:
-            return output_data, infile_hdr
-
-    def niftiroi(inputfile, outputfile, startpt, numpoints):
-        print(inputfile, outputfile, startpt, numpoints)
-        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
-        theheader = copy.deepcopy(infile_hdr)
-        theheader["dim"][4] = numpoints
+def niftisplit(inputfile, outputroot, axis=3):
+    infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
+    theheader = copy.deepcopy(infile_hdr)
+    numpoints = infiledims[axis + 1]
+    print(infiledims)
+    theheader["dim"][axis + 1] = 1
+    for i in range(numpoints):
         if infiledims[0] == 5:
-            output_data = infile_data[:, :, :, startpt : startpt + numpoints, :]
-        else:
-            output_data = infile_data[:, :, :, startpt : startpt + numpoints]
-        savetonifti(output_data, theheader, outputfile)
+            if axis == 0:
+                thisslice = infile_data[i : i + 1, :, :, :, :]
+            elif axis == 1:
+                thisslice = infile_data[:, i : i + 1, :, :, :]
+            elif axis == 2:
+                thisslice = infile_data[:, :, i : i + 1, :, :]
+            elif axis == 3:
+                thisslice = infile_data[:, :, :, i : i + 1, :]
+            elif axis == 4:
+                thisslice = infile_data[:, :, :, :, i : i + 1]
+            else:
+                print("illegal axis")
+                sys.exit()
+        elif infiledims[0] == 4:
+            if axis == 0:
+                thisslice = infile_data[i : i + 1, :, :, :]
+            elif axis == 1:
+                thisslice = infile_data[:, i : i + 1, :, :]
+            elif axis == 2:
+                thisslice = infile_data[:, :, i : i + 1, :]
+            elif axis == 3:
+                thisslice = infile_data[:, :, :, i : i + 1]
+            else:
+                print("illegal axis")
+                sys.exit()
+        savetonifti(thisslice, theheader, outputroot + str(i).zfill(4))
 
-    def checkifcifti(filename, debug=False):
-        r"""Check to see if the specified file is CIFTI format
 
-        Parameters
-        ----------
-        filename : str
-            The file name
-
-        Returns
-        -------
-        iscifti : bool
-            True if the file header indicates this is a CIFTI file
-
-        """
-        theimg = nib.load(filename)
-        thedict = vars(theimg)
+def niftimerge(inputlist, outputname, writetodisk=True, axis=3, returndata=False, debug=False):
+    inputdata = []
+    for thefile in inputlist:
         if debug:
-            print("thedict:", thedict)
-        try:
-            intent = thedict["_nifti_header"]["intent_code"]
-            if debug:
-                print("intent found")
-            return intent >= 3000 and intent < 3100
-        except KeyError:
-            if debug:
-                print("intent not found")
-            return False
-
-    def checkiftext(filename):
-        r"""Check to see if the specified filename ends in '.txt'
-
-        Parameters
-        ----------
-        filename : str
-            The file name
-
-        Returns
-        -------
-        istext : bool
-            True if filename ends with '.txt'
-
-        """
-        if filename.endswith(".txt"):
-            return True
-        else:
-            return False
-
-    def getniftiroot(filename):
-        r"""Strip a nifti filename down to the root with no extensions
-
-        Parameters
-        ----------
-        filename : str
-            The file name to strip
-
-        Returns
-        -------
-        strippedname : str
-            The file name without any nifti extensions
-
-        """
-        if filename.endswith(".nii"):
-            return filename[:-4]
-        elif filename.endswith(".nii.gz"):
-            return filename[:-7]
-        else:
-            return filename
-
-    def fmriheaderinfo(niftifilename):
-        r"""Retrieve the header information from a nifti file
-
-        Parameters
-        ----------
-        niftifilename : str
-            The name of the nifti file
-
-        Returns
-        -------
-        tr : float
-            The repetition time, in seconds
-        timepoints : int
-            The number of points along the time axis
-
-        """
-        nim = nib.load(niftifilename)
-        hdr = nim.header.copy()
-        thedims = hdr["dim"].copy()
-        thesizes = hdr["pixdim"].copy()
-        if hdr.get_xyzt_units()[1] == "msec":
-            thesizes[4] /= 1000.0
-        return thesizes, thedims
-
-    def fmritimeinfo(niftifilename):
-        r"""Retrieve the repetition time and number of timepoints from a nifti file
-
-        Parameters
-        ----------
-        niftifilename : str
-            The name of the nifti file
-
-        Returns
-        -------
-        tr : float
-            The repetition time, in seconds
-        timepoints : int
-            The number of points along the time axis
-
-        """
-        nim = nib.load(niftifilename)
-        hdr = nim.header.copy()
-        thedims = hdr["dim"].copy()
-        thesizes = hdr["pixdim"].copy()
-        if hdr.get_xyzt_units()[1] == "msec":
-            tr = thesizes[4] / 1000.0
-        else:
-            tr = thesizes[4]
-        timepoints = thedims[4]
-        return tr, timepoints
-
-    def checkspacematch(hdr1, hdr2):
-        r"""Check the headers of two nifti files to determine if the cover the same volume at the same resolution
-
-        Parameters
-        ----------
-        hdr1 : nifti header structure
-            The header of the first file
-        hdr2 : nifti header structure
-            The header of the second file
-
-        Returns
-        -------
-        ismatched : bool
-            True if the spatial dimensions and resolutions of the two files match.
-
-        """
-        dimmatch = checkspaceresmatch(hdr1["pixdim"], hdr2["pixdim"])
-        resmatch = checkspacedimmatch(hdr1["dim"], hdr2["dim"])
-        return dimmatch and resmatch
-
-    def checkspaceresmatch(sizes1, sizes2):
-        r"""Check the spatial pixdims of two nifti files to determine if they have the same resolution
-
-        Parameters
-        ----------
-        sizes1 : float array
-            The size array from the first nifti file
-        sizes2 : float array
-            The size array from the second nifti file
-
-        Returns
-        -------
-        ismatched : bool
-            True if the spatial resolutions of the two files match.
-
-        """
-        for i in range(1, 4):
-            if sizes1[i] != sizes2[i]:
-                print("File spatial resolutions do not match")
-                print("sizeension ", i, ":", sizes1[i], "!=", sizes2[i])
-                return False
-            else:
-                return True
-
-    def checkspacedimmatch(dims1, dims2):
-        r"""Check the dimension arrays of two nifti files to determine if the cover the same number of voxels in each dimension
-
-        Parameters
-        ----------
-        dims1 : int array
-            The dimension array from the first nifti file
-        dims2 : int array
-            The dimension array from the second nifti file
-
-        Returns
-        -------
-        ismatched : bool
-            True if the spatial dimensions of the two files match.
-        """
-        for i in range(1, 4):
-            if dims1[i] != dims2[i]:
-                print("File spatial voxels do not match")
-                print("dimension ", i, ":", dims1[i], "!=", dims2[i])
-                return False
-            else:
-                return True
-
-    def checktimematch(dims1, dims2, numskip1=0, numskip2=0):
-        r"""Check the dimensions of two nifti files to determine if the cover the same number of timepoints
-
-        Parameters
-        ----------
-        dims1 : int array
-            The dimension array from the first nifti file
-        dims2 : int array
-            The dimension array from the second nifti file
-        numskip1 : int, optional
-            Number of timepoints skipped at the beginning of file 1
-        numskip2 : int, optional
-            Number of timepoints skipped at the beginning of file 2
-
-        Returns
-        -------
-        ismatched : bool
-            True if the time dimension of the two files match.
-
-        """
-        if (dims1[4] - numskip1) != (dims2[4] - numskip2):
-            print("File numbers of timepoints do not match")
-            print(
-                "dimension ",
-                4,
-                ":",
-                dims1[4],
-                "(skip ",
-                numskip1,
-                ") !=",
-                dims2[4],
-                " (skip ",
-                numskip2,
-                ")",
+            print("reading", thefile)
+        infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(thefile)
+        if infiledims[0] == 3:
+            inputdata.append(
+                infile_data.reshape((infiledims[1], infiledims[2], infiledims[3], 1)) + 0.0
             )
+        else:
+            inputdata.append(infile_data + 0.0)
+    theheader = copy.deepcopy(infile_hdr)
+    theheader["dim"][axis + 1] = len(inputdata)
+    output_data = np.concatenate(inputdata, axis=axis)
+    if writetodisk:
+        savetonifti(output_data, theheader, outputname)
+    if returndata:
+        return output_data, infile_hdr
+
+
+def niftiroi(inputfile, outputfile, startpt, numpoints):
+    print(inputfile, outputfile, startpt, numpoints)
+    infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
+    theheader = copy.deepcopy(infile_hdr)
+    theheader["dim"][4] = numpoints
+    if infiledims[0] == 5:
+        output_data = infile_data[:, :, :, startpt : startpt + numpoints, :]
+    else:
+        output_data = infile_data[:, :, :, startpt : startpt + numpoints]
+    savetonifti(output_data, theheader, outputfile)
+
+
+def checkifcifti(filename, debug=False):
+    r"""Check to see if the specified file is CIFTI format
+
+    Parameters
+    ----------
+    filename : str
+        The file name
+
+    Returns
+    -------
+    iscifti : bool
+        True if the file header indicates this is a CIFTI file
+
+    """
+    theimg = nib.load(filename)
+    thedict = vars(theimg)
+    if debug:
+        print("thedict:", thedict)
+    try:
+        intent = thedict["_nifti_header"]["intent_code"]
+        if debug:
+            print("intent found")
+        return intent >= 3000 and intent < 3100
+    except KeyError:
+        if debug:
+            print("intent not found")
+        return False
+
+
+def checkiftext(filename):
+    r"""Check to see if the specified filename ends in '.txt'
+
+    Parameters
+    ----------
+    filename : str
+        The file name
+
+    Returns
+    -------
+    istext : bool
+        True if filename ends with '.txt'
+
+    """
+    if filename.endswith(".txt"):
+        return True
+    else:
+        return False
+
+
+def getniftiroot(filename):
+    r"""Strip a nifti filename down to the root with no extensions
+
+    Parameters
+    ----------
+    filename : str
+        The file name to strip
+
+    Returns
+    -------
+    strippedname : str
+        The file name without any nifti extensions
+
+    """
+    if filename.endswith(".nii"):
+        return filename[:-4]
+    elif filename.endswith(".nii.gz"):
+        return filename[:-7]
+    else:
+        return filename
+
+
+def fmriheaderinfo(niftifilename):
+    r"""Retrieve the header information from a nifti file
+
+    Parameters
+    ----------
+    niftifilename : str
+        The name of the nifti file
+
+    Returns
+    -------
+    tr : float
+        The repetition time, in seconds
+    timepoints : int
+        The number of points along the time axis
+
+    """
+    nim = nib.load(niftifilename)
+    hdr = nim.header.copy()
+    thedims = hdr["dim"].copy()
+    thesizes = hdr["pixdim"].copy()
+    if hdr.get_xyzt_units()[1] == "msec":
+        thesizes[4] /= 1000.0
+    return thesizes, thedims
+
+
+def fmritimeinfo(niftifilename):
+    r"""Retrieve the repetition time and number of timepoints from a nifti file
+
+    Parameters
+    ----------
+    niftifilename : str
+        The name of the nifti file
+
+    Returns
+    -------
+    tr : float
+        The repetition time, in seconds
+    timepoints : int
+        The number of points along the time axis
+
+    """
+    nim = nib.load(niftifilename)
+    hdr = nim.header.copy()
+    thedims = hdr["dim"].copy()
+    thesizes = hdr["pixdim"].copy()
+    if hdr.get_xyzt_units()[1] == "msec":
+        tr = thesizes[4] / 1000.0
+    else:
+        tr = thesizes[4]
+    timepoints = thedims[4]
+    return tr, timepoints
+
+
+def checkspacematch(hdr1, hdr2):
+    r"""Check the headers of two nifti files to determine if the cover the same volume at the same resolution
+
+    Parameters
+    ----------
+    hdr1 : nifti header structure
+        The header of the first file
+    hdr2 : nifti header structure
+        The header of the second file
+
+    Returns
+    -------
+    ismatched : bool
+        True if the spatial dimensions and resolutions of the two files match.
+
+    """
+    dimmatch = checkspaceresmatch(hdr1["pixdim"], hdr2["pixdim"])
+    resmatch = checkspacedimmatch(hdr1["dim"], hdr2["dim"])
+    return dimmatch and resmatch
+
+
+def checkspaceresmatch(sizes1, sizes2):
+    r"""Check the spatial pixdims of two nifti files to determine if they have the same resolution
+
+    Parameters
+    ----------
+    sizes1 : float array
+        The size array from the first nifti file
+    sizes2 : float array
+        The size array from the second nifti file
+
+    Returns
+    -------
+    ismatched : bool
+        True if the spatial resolutions of the two files match.
+
+    """
+    for i in range(1, 4):
+        if sizes1[i] != sizes2[i]:
+            print("File spatial resolutions do not match")
+            print("sizeension ", i, ":", sizes1[i], "!=", sizes2[i])
             return False
         else:
             return True
+
+
+def checkspacedimmatch(dims1, dims2):
+    r"""Check the dimension arrays of two nifti files to determine if the cover the same number of voxels in each dimension
+
+    Parameters
+    ----------
+    dims1 : int array
+        The dimension array from the first nifti file
+    dims2 : int array
+        The dimension array from the second nifti file
+
+    Returns
+    -------
+    ismatched : bool
+        True if the spatial dimensions of the two files match.
+    """
+    for i in range(1, 4):
+        if dims1[i] != dims2[i]:
+            print("File spatial voxels do not match")
+            print("dimension ", i, ":", dims1[i], "!=", dims2[i])
+            return False
+        else:
+            return True
+
+
+def checktimematch(dims1, dims2, numskip1=0, numskip2=0):
+    r"""Check the dimensions of two nifti files to determine if the cover the same number of timepoints
+
+    Parameters
+    ----------
+    dims1 : int array
+        The dimension array from the first nifti file
+    dims2 : int array
+        The dimension array from the second nifti file
+    numskip1 : int, optional
+        Number of timepoints skipped at the beginning of file 1
+    numskip2 : int, optional
+        Number of timepoints skipped at the beginning of file 2
+
+    Returns
+    -------
+    ismatched : bool
+        True if the time dimension of the two files match.
+
+    """
+    if (dims1[4] - numskip1) != (dims2[4] - numskip2):
+        print("File numbers of timepoints do not match")
+        print(
+            "dimension ",
+            4,
+            ":",
+            dims1[4],
+            "(skip ",
+            numskip1,
+            ") !=",
+            dims2[4],
+            " (skip ",
+            numskip2,
+            ")",
+        )
+        return False
+    else:
+        return True
 
 
 # --------------------------- non-NIFTI file I/O functions ------------------------------------------
