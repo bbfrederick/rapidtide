@@ -46,7 +46,7 @@ API
     rapidtide.correlate.fastcorrelate
     rapidtide.correlate._centered
     rapidtide.correlate._check_valid_mode_shapes
-    rapidtide.correlate.weightedfftconvolve
+    rapidtide.correlate.convolve_weighted_fft
     rapidtide.correlate.gccproduct
 
 

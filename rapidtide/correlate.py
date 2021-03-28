@@ -677,7 +677,7 @@ class AliasedCorrelator:
         self.aliasedsignals = {}
 
     def apply(self, loressignal, extraoffset):
-        """Apply something.
+        """Apply correlator to aliased waveform.
 
         Parameters
         ----------
@@ -833,7 +833,7 @@ def fastcorrelate(input1, input2, usefft=True, weighting="None", displayplots=Fa
         if weighting == "None":
             return signal.fftconvolve(input1, input2[::-1], mode="full")
         else:
-            return weightedfftconvolve(
+            return convolve_weighted_fft(
                 input1,
                 input2[::-1],
                 mode="full",
@@ -889,7 +889,7 @@ def _check_valid_mode_shapes(shape1, shape2):
             )
 
 
-def weightedfftconvolve(in1, in2, mode="full", weighting="None", displayplots=False):
+def convolve_weighted_fft(in1, in2, mode="full", weighting="None", displayplots=False):
     """Convolve two N-dimensional arrays using FFT.
 
     Convolve `in1` and `in2` using the fast Fourier transform method, with
