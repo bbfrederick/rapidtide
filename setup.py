@@ -171,13 +171,13 @@ setup(
         "pyfftw",
         "pyqtgraph>=0.11.0",
         "statsmodels",
+        "numba",
     ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        "jit": ["numba"],
         "doc": [
             "sphinx>=1.5.3",
             "sphinx_rtd_theme",
