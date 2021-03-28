@@ -1,8 +1,0 @@
-#!/bin/csh -f
-
-applydlfilter \
-    hcpinputlist \
-    hcpoutputlist \
-    --filesarelists \
-    --nodisplay \
-    --model=../data/models/model_cnn_w128_l10_fn10_fl5_d0.3_e10_t4.0_relu_normaligned

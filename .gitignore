@@ -8,6 +8,9 @@ changecalls
 
 safezone
 
+# experimental directory
+#rapidtide/experimental
+
 # any generated test data
 rapidtide/data/examples/dst/*
 rapidtide/tests/tmp/*
@@ -19,11 +22,6 @@ rapidtide/data/examples/src/*trimmed*
 rapidtide/data/examples/src/sub-01*
 rapidtide/data/examples/src/testhappyx
 rapidtide/data/examples/src/filtereddata*
-#rapidtide/experimental/batch/*
-rapidtide/experimental/__pycache__
-#rapidtide/experimental/.*
-#rapidtide/experimental/the*txt
-#rapidtide/experimental/model_*
 test.nii.gz
 *junk*
 
