@@ -1,9 +1,10 @@
 #!/bin/csh -f
 
 showxcorrx \
-    tc1 \
-    tc2 \
+    lt_HbO \
+    rt_HbO \
+    --samplerate 12.5 \
     --filterband lfo \
-    --numnull 0 \
-    --nonorm \
-    12.5
+    --invert \
+    --searchrange -15 15 \
+    --similaritymetric mutualinfo
