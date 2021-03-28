@@ -37,7 +37,7 @@ API
     :toctree: generated/
     :template: function.rst
 
-    rapidtide.correlate.autocorrcheck
+    rapidtide.correlate.check_autocorrelation
     rapidtide.correlate.quickcorr
     rapidtide.correlate.shorttermcorr_1D
     rapidtide.correlate.shorttermcorr_2D
@@ -46,7 +46,7 @@ API
     rapidtide.correlate.fastcorrelate
     rapidtide.correlate._centered
     rapidtide.correlate._check_valid_mode_shapes
-    rapidtide.correlate.weightedfftconvolve
+    rapidtide.correlate.convolve_weighted_fft
     rapidtide.correlate.gccproduct
 
 

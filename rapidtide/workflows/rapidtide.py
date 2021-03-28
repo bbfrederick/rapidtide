@@ -1464,7 +1464,7 @@ def rapidtide_main(argparsingfunc):
                 thelagthresh,
                 "s",
             )
-            sidelobetime, sidelobeamp = tide_corr.autocorrcheck(
+            sidelobetime, sidelobeamp = tide_corr.check_autocorrelation(
                 accheckcorrscale,
                 thexcorr,
                 acampthresh=theampthresh,
@@ -1481,7 +1481,7 @@ def rapidtide_main(argparsingfunc):
                 )
                 optiondict["acsidelobeamp" + passsuffix] = sidelobeamp
                 print(
-                    "\n\nWARNING: autocorrcheck found bad sidelobe at",
+                    "\n\nWARNING: check_autocorrelation found bad sidelobe at",
                     sidelobetime,
                     "seconds (",
                     1.0 / sidelobetime,

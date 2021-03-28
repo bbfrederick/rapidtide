@@ -556,7 +556,7 @@ def main():
                     thepeaks[thesortedindices[i]][0],
                     thepeaks[thesortedindices[i]][1],
                     thepeaks[thesortedindices[i]][2],
-                    tide_corr.MI_to_R(thepeaks[thesortedindices[i]][2]),
+                    tide_corr.mutual_info_to_r(thepeaks[thesortedindices[i]][2]),
                 )
             )
 

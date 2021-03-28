@@ -48,7 +48,7 @@ for windowfunc in ["None"]:
             for wave1 in [combo]:
                 j = 0
                 for offset in np.linspace(-3.0, 3.0, num=7, endpoint=True):
-                    thefastx, thefastxmi, dummy = tide_corr.cross_MI(
+                    thefastx, thefastxmi, dummy = tide_corr.cross_mutual_info(
                         wave1,
                         addresp(lfowave, samplefreq, respfreq, respamp, offset),
                         negsteps=200,
@@ -79,7 +79,7 @@ for windowfunc in ["None"]:
             for wave1 in [combo]:
                 j = 0
                 for offset in np.linspace(-3.0, 3.0, num=7, endpoint=True):
-                    thecorrx, thecorry, dummy = tide_corr.cross_MI(
+                    thecorrx, thecorry, dummy = tide_corr.cross_mutual_info(
                         wave1,
                         addresp(lfowave, samplefreq, respfreq, respamp, offset),
                         negsteps=200,
