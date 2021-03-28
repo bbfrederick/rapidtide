@@ -634,7 +634,7 @@ def cepstraldelay(data1, data2, timestep, displayplots=True):
     return timestep * np.argmax(residual_cepstrum.real[0 : len(residual_cepstrum) // 2])
 
 
-class aliasedcorrelator:
+class AliasedCorrelator:
     """An aliased correlator.
 
     Parameters

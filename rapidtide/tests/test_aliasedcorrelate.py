@@ -22,7 +22,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from rapidtide.correlate import aliasedcorrelate, aliasedcorrelator
+from rapidtide.correlate import aliasedcorrelate, AliasedCorrelator
 
 
 def test_aliasedcorrelate(display=False):
@@ -47,7 +47,7 @@ def test_aliasedcorrelate(display=False):
         sighi, Fs_hi, siglo, Fs_lo, timerange, padtime=width
     )
 
-    thecorrelator = aliasedcorrelator(sighi, Fs_hi, Fs_lo, timerange, padtime=width)
+    thecorrelator = AliasedCorrelator(sighi, Fs_hi, Fs_lo, timerange, padtime=width)
     aliasedcorrelate_result2 = thecorrelator.apply(siglo, 0.0)
 
     if display:
