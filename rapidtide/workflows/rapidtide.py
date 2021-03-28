@@ -1112,7 +1112,7 @@ def rapidtide_main(argparsingfunc):
         detrendorder=optiondict["detrendorder"],
         windowfunc=optiondict["windowfunc"],
         corrweighting=optiondict["corrweighting"],
-        hpfreq=optiondict["Correlator_hpfreq"],
+        hpfreq=optiondict["correlator_hpfreq"],
     )
     theCorrelator.setreftc(
         np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float)

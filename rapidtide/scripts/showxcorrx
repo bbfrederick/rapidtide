@@ -437,8 +437,8 @@ def main():
         thexcorr, xcorr_x, globalmax = theCorrelator.run(trimdata1, trim=False)
         print("Correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
         if dumpfiltered:
-            tide_io.writenpvecs(theCorrelator.preptesttc, "Correlator_filtereddata1.txt")
-            tide_io.writenpvecs(theCorrelator.prepreftc, "Correlator_filtereddata2.txt")
+            tide_io.writenpvecs(theCorrelator.preptesttc, "correlator_filtereddata1.txt")
+            tide_io.writenpvecs(theCorrelator.prepreftc, "correlator_filtereddata2.txt")
         theCorrelator.setlimits(
             int((-args.lagmin * args.samplerate) - 0.5), int((args.lagmax * args.samplerate) + 0.5)
         )
