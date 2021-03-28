@@ -711,47 +711,6 @@ class AliasedCorrelator:
         return corrfunc
 
 
-def aliasedcorrelate(
-    hiressignal,
-    hires_Fs,
-    lowressignal,
-    lowres_Fs,
-    timerange,
-    hiresstarttime=0.0,
-    lowresstarttime=0.0,
-    padtime=30.0,
-):
-    """Perform an aliased correlation.
-
-    Parameters
-    ----------
-    hiressignal: 1D array
-        The unaliased waveform to match
-    hires_Fs: float
-        The sample rate of the unaliased waveform
-    lowressignal: 1D array
-        The aliased waveform to match
-    lowres_Fs: float
-        The sample rate of the aliased waveform
-    timerange: 1D array
-        The delays for which to calculate the correlation function
-
-    Returns
-    -------
-    corrfunc: 1D array
-        The correlation function evaluated at timepoints of timerange
-    """
-    highresaxis = np.arange(0.0, len(hiressignal)) * (1.0 / hires_Fs) - hiresstarttime
-    lowresaxis = np.arange(0.0, len(lowressignal)) * (1.0 / lowres_Fs) - lowresstarttime
-    tcgenerator = tide_resample.fastresampler(highresaxis, hiressignal, padtime=padtime)
-    targetsignal = tide_math.corrnormalize(lowressignal)
-    corrfunc = timerange * 0.0
-    for i in range(len(timerange)):
-        aliasedhiressignal = tide_math.corrnormalize(tcgenerator.yfromx(lowresaxis + timerange[i]))
-        corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
-    return corrfunc
-
-
 def arbcorr(
     input1,
     Fs1,
