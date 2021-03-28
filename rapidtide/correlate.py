@@ -72,17 +72,6 @@ def conditionaljit():
     return resdec
 
 
-def conditionaljit2():
-    """Aggressively wrap functions in jit if number is enabled."""
-
-    def resdec(f):
-        if (not numbaexists) or donotusenumba or donotbeaggressive:
-            return f
-        return jit(f, nopython=False)
-
-    return resdec
-
-
 def disablenumba():
     """Set a global variable to disable numba."""
     global donotusenumba
