@@ -11,7 +11,7 @@ thereftc = tide_io.readvec("lf_HbO")
 thetesttc = tide_io.readvec("lt_HbO")
 thereftc = tide_io.readvec("mot1")
 thetesttc = tide_io.readvec("mot2")
-thefilter = tide_filt.noncausalfilter("lfo")
+thefilter = tide_filt.NoncausalFilter("lfo")
 
 print("setting up Coherer")
 theCoherer = tide_classes.Coherer(

@@ -461,7 +461,7 @@ def getfundamental(inputdata, Fs, fundfreq):
     arb_upper = 1.4 * fundfreq
     arb_lowerstop = 0.9 * arb_lower
     arb_upperstop = 1.1 * arb_upper
-    thefundfilter = tide_filt.noncausalfilter(filtertype="arb")
+    thefundfilter = tide_filt.NoncausalFilter(filtertype="arb")
     thefundfilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
     return thefundfilter.apply(Fs, inputdata)
 
@@ -543,7 +543,7 @@ def cleancardiac(Fs, plethwaveform, cutoff=0.4, thresh=0.2, nyquist=None, debug=
     # first bandpass the cardiac signal to calculate the envelope
     if debug:
         print("entering cleancardiac")
-    plethfilter = tide_filt.noncausalfilter("cardiac")
+    plethfilter = tide_filt.NoncausalFilter("cardiac")
     print("filtering")
     print("envelope detection")
     envelope = tide_math.envdetect(
@@ -945,7 +945,7 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
     failreason: flag
         Reason why the fit failed (0 if no failure)
     """
-    thecardfilt = tide_filt.noncausalfilter(filtertype="cardiac")
+    thecardfilt = tide_filt.NoncausalFilter(filtertype="cardiac")
     trimlength = np.min([len(reference), len(candidate)])
     thexcorr = tide_corr.fastcorrelate(
         tide_math.corrnormalize(
@@ -1601,12 +1601,12 @@ def happy_main(thearguments):
     # set up cardiac filter
     arb_lower = minhrfilt / 60.0
     arb_upper = maxhrfilt / 60.0
-    thecardbandfilter = tide_filt.noncausalfilter()
+    thecardbandfilter = tide_filt.NoncausalFilter()
     thecardbandfilter.settype("arb")
     arb_lowerstop = arb_lower * 0.9
     arb_upperstop = arb_upper * 1.1
     thecardbandfilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-    therespbandfilter = tide_filt.noncausalfilter()
+    therespbandfilter = tide_filt.NoncausalFilter()
     therespbandfilter.settype("resp")
     infodict["filtermaxbpm"] = arb_upper * 60.0
     infodict["filterminbpm"] = arb_lower * 60.0
@@ -2008,7 +2008,7 @@ def happy_main(thearguments):
                 arb_lowerpass = 0.0
                 arb_upperpass = slicesamplerate / 2.0
                 arb_upperstop = slicesamplerate / 2.0
-                theaafilter = tide_filt.noncausalfilter(filtertype="arb")
+                theaafilter = tide_filt.NoncausalFilter(filtertype="arb")
                 theaafilter.setfreqs(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
 
                 cardfromfmri_sliceres = tide_math.madnormalize(
@@ -2498,7 +2498,7 @@ def happy_main(thearguments):
         # make a lowpass filter for the projected data. Limit frequency to 3 cycles per 2pi (1/6th Fs)
         phaseFs = 1.0 / phasestep
         phaseFc = phaseFs / 6.0
-        appsmoothingfilter = tide_filt.noncausalfilter("arb", cyclic=True, padtime=0.0)
+        appsmoothingfilter = tide_filt.NoncausalFilter("arb", cyclic=True, padtime=0.0)
         appsmoothingfilter.setfreqs(0.0, 0.0, phaseFc, phaseFc)
 
         # setup for aliased correlation if we're going to do it

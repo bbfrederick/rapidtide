@@ -24,7 +24,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from rapidtide.io import writenpvecs
-from rapidtide.filter import noncausalfilter
+from rapidtide.filter import NoncausalFilter
 from rapidtide.correlate import shorttermcorr_1D, shorttermcorr_2D
 from rapidtide.tests.utils import get_test_temp_path, create_dir
 
@@ -44,7 +44,7 @@ def test_stcorrelate(debug=False):
     dodetrend = True
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
 
-    testfilter = noncausalfilter(filtertype="lfo")
+    testfilter = NoncausalFilter(filtertype="lfo")
     sig1 = testfilter.apply(1.0 / tr, np.random.random(testlen))
     sig2 = np.float64(np.roll(sig1, int(shiftdist)))
 

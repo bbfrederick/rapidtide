@@ -81,7 +81,7 @@ def main():
 
     # cycle over all voxels
     print("now cycling over all voxels")
-    theprefilter = tide_filt.noncausalfilter()
+    theprefilter = tide_filt.NoncausalFilter()
     theprefilter.settype("arb")
     theprefilter.setfreqs(args.lowestfreq, args.lowestfreq, args.highestfreq, args.highestfreq)
 

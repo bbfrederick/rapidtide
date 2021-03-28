@@ -95,7 +95,7 @@ def filterintime(filelist, extractedfile, workdir, filtcycles, dumpinput=False):
     thedims = filterdata.shape
     print(thedims)
     numvoxels = thedims[0] * thedims[1] * thedims[2]
-    thefilter = tide_filt.noncausalfilter(filtertype="arb")
+    thefilter = tide_filt.NoncausalFilter(filtertype="arb")
     hcutoff = 1.0 / 2.0
     lcutoff = 1.0 / 32.0
     thefilter.setfreqs(lcutoff, lcutoff, hcutoff, hcutoff)

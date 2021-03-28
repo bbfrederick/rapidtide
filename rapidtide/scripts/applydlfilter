@@ -88,7 +88,7 @@ def _get_parser():
 
 
 def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
-    thecardfilt = tide_filt.noncausalfilter(filtertype="cardiac")
+    thecardfilt = tide_filt.NoncausalFilter(filtertype="cardiac")
     trimlength = np.min([len(reference), len(candidate)])
     thexcorr = tide_corr.fastcorrelate(
         tide_math.corrnormalize(

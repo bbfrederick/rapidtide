@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 
 def test_calcsimfunc(debug=False, display=False):
     # make the lfo filter
-    lfofilter = tide_filt.noncausalfilter(filtertype="lfo")
+    lfofilter = tide_filt.NoncausalFilter(filtertype="lfo")
 
     # make some data
     oversampfactor = 2
@@ -133,7 +133,7 @@ def test_calcsimfunc(debug=False, display=False):
         "hardlimit": True,
     }
 
-    theprefilter = tide_filt.noncausalfilter("lfo")
+    theprefilter = tide_filt.NoncausalFilter("lfo")
     theCorrelator = tide_classes.Correlator(
         Fs=oversampfreq,
         ncprefilter=theprefilter,

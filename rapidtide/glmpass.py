@@ -237,7 +237,7 @@ def motionregress(
     else:
         motionregressors = motionregressors[:, motstart:motend]
     if (motionlp is not None) or (motionhp is not None):
-        mothpfilt = tide_filt.noncausalfilter(filtertype="arb", transferfunc="trapezoidal")
+        mothpfilt = tide_filt.NoncausalFilter(filtertype="arb", transferfunc="trapezoidal")
         if motionlp is None:
             motionlp = 0.5 / tr
         else:

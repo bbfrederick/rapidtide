@@ -91,7 +91,7 @@ API
 
     :template: class.rst
 
-    rapidtide.filter.noncausalfilter
+    rapidtide.filter.NoncausalFilter
 
 
 .. _api_fit_ref:

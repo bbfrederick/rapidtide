@@ -454,7 +454,7 @@ def showxcorrx_workflow(
 
     savecorrelation = bool(corroutputfile)
 
-    theprefilter = tide_filt.noncausalfilter(transferfunc=transferfunc)
+    theprefilter = tide_filt.NoncausalFilter(transferfunc=transferfunc)
 
     if arbvec is not None and filtertype != "arb":
         raise ValueError("Argument arbvec must be None if filtertype is " "not arb")

@@ -21,7 +21,7 @@ import scipy as sp
 import matplotlib.pyplot as plt
 
 from rapidtide.util import valtoindex
-from rapidtide.filter import noncausalfilter
+from rapidtide.filter import NoncausalFilter
 from rapidtide.helper_classes import FrequencyTracker
 from rapidtide.io import writevec
 
@@ -173,25 +173,25 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
 
     # construct all the filters
     for filtertype in ["lfo", "resp", "cardiac"]:
-        testfilter = noncausalfilter(filtertype=filtertype)
+        testfilter = NoncausalFilter(filtertype=filtertype)
         lstest, lptest, uptest, ustest = testfilter.getfreqs()
         if lptest < nyquist:
             allfilters.append(
                 {
                     "name": filtertype + " brickwall",
-                    "filter": noncausalfilter(filtertype=filtertype, transferfunc="brickwall"),
+                    "filter": NoncausalFilter(filtertype=filtertype, transferfunc="brickwall"),
                 }
             )
             allfilters.append(
                 {
                     "name": filtertype + " trapezoidal",
-                    "filter": noncausalfilter(filtertype=filtertype, transferfunc="trapezoidal"),
+                    "filter": NoncausalFilter(filtertype=filtertype, transferfunc="trapezoidal"),
                 }
             )
             allfilters.append(
                 {
-                    "name": filtertype + " gausian",
-                    "filter": noncausalfilter(filtertype=filtertype, transferfunc="gaussian"),
+                    "name": filtertype + " gaussian",
+                    "filter": NoncausalFilter(filtertype=filtertype, transferfunc="gaussian"),
                 }
             )
 

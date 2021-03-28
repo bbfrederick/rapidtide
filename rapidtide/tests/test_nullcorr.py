@@ -37,7 +37,7 @@ import os
 
 def test_nullsimfunc(debug=False, display=False):
     # make the lfo filter
-    lfofilter = tide_filt.noncausalfilter(filtertype="lfo")
+    lfofilter = tide_filt.NoncausalFilter(filtertype="lfo")
 
     # make the starting regressor
     timestep = 1.5
@@ -100,7 +100,7 @@ def test_nullsimfunc(debug=False, display=False):
         "permutationmethod": "shuffle",
         "hardlimit": True,
     }
-    theprefilter = tide_filt.noncausalfilter("lfo")
+    theprefilter = tide_filt.NoncausalFilter("lfo")
     theCorrelator = tide_classes.Correlator(
         Fs=Fs,
         ncprefilter=theprefilter,

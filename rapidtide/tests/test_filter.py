@@ -20,7 +20,7 @@ import numpy as np
 import scipy as sp
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from rapidtide.filter import noncausalfilter
+from rapidtide.filter import NoncausalFilter
 
 
 def spectralfilterprops(thefilter, debug=False):
@@ -99,14 +99,14 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
 
     # construct all the physiological filters
     for filtertype in ["lfo", "resp", "cardiac"]:
-        testfilter = noncausalfilter(filtertype=filtertype)
+        testfilter = NoncausalFilter(filtertype=filtertype)
         lstest, lptest, uptest, ustest = testfilter.getfreqs()
         if lptest < nyquist:
             for transferfunc in transferfunclist:
                 allfilters.append(
                     {
                         "name": filtertype + " " + transferfunc,
-                        "filter": noncausalfilter(
+                        "filter": NoncausalFilter(
                             filtertype=filtertype,
                             transferfunc=transferfunc,
                             debug=False,
@@ -116,7 +116,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
 
     """'# make the lowpass filters
     for transferfunc in transferfunclist:
-        testfilter = noncausalfilter(
+        testfilter = NoncausalFilter(
                         filtertype='arb',
                         transferfunc=transferfunc,
                         initlowerstop=0.0, initlowerpass=0.0,
@@ -126,7 +126,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
             allfilters.append(
                 {
                     'name': '0.1Hz LP ' + transferfunc,
-                    'filter': noncausalfilter(
+                    'filter': NoncausalFilter(
                                 filtertype='arb',
                                 transferfunc=transferfunc,
                                 initlowerstop=0.0, initlowerpass=0.0,
@@ -135,7 +135,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
 
     # make the highpass filters
     for transferfunc in transferfunclist:
-        testfilter = noncausalfilter(
+        testfilter = NoncausalFilter(
                         filtertype='arb',
                         transferfunc=transferfunc,
                         initlowerstop=0.09, initlowerpass=0.1,
@@ -145,7 +145,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
             allfilters.append(
                 {
                     'name': '0.1Hz HP ' + transferfunc,
-                    'filter': noncausalfilter(
+                    'filter': NoncausalFilter(
                                 filtertype='arb',
                                 transferfunc=transferfunc,
                                 initlowerstop=0.09, initlowerpass=0.1,

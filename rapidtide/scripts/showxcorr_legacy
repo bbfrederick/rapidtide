@@ -168,7 +168,7 @@ def main():
     infilename2 = sys.argv[2]
     Fs = float(sys.argv[3])
 
-    theprefilter = tide_filt.noncausalfilter()
+    theprefilter = tide_filt.NoncausalFilter()
 
     inputdata1 = tide_io.readvec(infilename1)
     inputdata2 = tide_io.readvec(infilename2)

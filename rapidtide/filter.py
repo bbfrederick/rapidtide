@@ -1190,7 +1190,7 @@ def setnotchfilter(thefilter, thefreq, notchwidth=1.0):
 
     Parameters
     ----------
-    thefilter: noncausalfilter function
+    thefilter: NoncausalFilter function
         The filter function to use
     thefreq: float
         Frequency of the notch
@@ -1237,7 +1237,7 @@ def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False)
         maxharmonic = int(maxpass // stopfreq)
         if debug:
             print("highest harmonic is", maxharmonic, "(", maxharmonic * stopfreq, "Hz)")
-        thenotchfilter = noncausalfilter()
+        thenotchfilter = NoncausalFilter()
         for harmonic in range(1, maxharmonic + 1):
             notchfreq = harmonic * stopfreq
             if debug:
@@ -1465,7 +1465,7 @@ class plethfilter:
         return signal.filtfilt(self.b, self.a, data, axis=-1, padtype="odd", padlen=None)
 
 
-class noncausalfilter:
+class NoncausalFilter:
     def __init__(
         self,
         filtertype="None",
@@ -1633,7 +1633,7 @@ class noncausalfilter:
     def setfreqs(self, lowerstop, lowerpass, upperpass, upperstop):
         if lowerstop > lowerpass:
             print(
-                "noncausalfilter error: lowerstop (",
+                "NoncausalFilter error: lowerstop (",
                 lowerstop,
                 ") must be <= lowerpass (",
                 lowerpass,
@@ -1642,7 +1642,7 @@ class noncausalfilter:
             sys.exit()
         if upperpass > upperstop:
             print(
-                "noncausalfilter error: upperstop (",
+                "NoncausalFilter error: upperstop (",
                 upperstop,
                 ") must be >= upperpass (",
                 upperpass,
@@ -1651,7 +1651,7 @@ class noncausalfilter:
             sys.exit()
         if (lowerpass > upperpass) and (upperpass >= 0.0):
             print(
-                "noncausalfilter error: lowerpass (",
+                "NoncausalFilter error: lowerpass (",
                 lowerpass,
                 ") must be < upperpass (",
                 upperpass,
@@ -1692,7 +1692,7 @@ class noncausalfilter:
         # first see if entire range is out of bounds
         if self.lowerpass >= nyquistlimit:
             print(
-                "noncausalfilter error: filter lower pass ",
+                "NoncausalFilter error: filter lower pass ",
                 self.lowerpass,
                 " exceeds nyquist frequency ",
                 nyquistlimit,
@@ -1700,7 +1700,7 @@ class noncausalfilter:
             sys.exit()
         if self.lowerstop >= nyquistlimit:
             print(
-                "noncausalfilter error: filter lower stop ",
+                "NoncausalFilter error: filter lower stop ",
                 self.lowerstop,
                 " exceeds nyquist frequency ",
                 nyquistlimit,
@@ -1708,7 +1708,7 @@ class noncausalfilter:
             sys.exit()
         if -1.0 < self.upperpass <= lowestfreq:
             print(
-                "noncausalfilter error: filter upper pass ",
+                "NoncausalFilter error: filter upper pass ",
                 self.upperpass,
                 " is below minimum frequency ",
                 lowestfreq,
@@ -1716,7 +1716,7 @@ class noncausalfilter:
             sys.exit()
         if -1.0 < self.upperstop <= lowestfreq:
             print(
-                "noncausalfilter error: filter upper stop ",
+                "NoncausalFilter error: filter upper stop ",
                 self.upperstop,
                 " is below minimum frequency ",
                 lowestfreq,
@@ -1729,7 +1729,7 @@ class noncausalfilter:
                 self.upperpass = nyquistlimit
             else:
                 print(
-                    "noncausalfilter error: filter upper pass ",
+                    "NoncausalFilter error: filter upper pass ",
                     self.upperpass,
                     " exceeds nyquist frequency ",
                     nyquistlimit,
@@ -1740,7 +1740,7 @@ class noncausalfilter:
                 self.upperstop = nyquistlimit
             else:
                 print(
-                    "noncausalfilter error: filter upper stop ",
+                    "NoncausalFilter error: filter upper stop ",
                     self.upperstop,
                     " exceeds nyquist frequency ",
                     nyquistlimit,
@@ -1751,7 +1751,7 @@ class noncausalfilter:
                 self.lowerpass = lowestfreq
             else:
                 print(
-                    "noncausalfilter error: filter lower pass ",
+                    "NoncausalFilter error: filter lower pass ",
                     self.lowerpass,
                     " is below minimum frequency ",
                     lowestfreq,
@@ -1762,7 +1762,7 @@ class noncausalfilter:
                 self.lowerstop = lowestfreq
             else:
                 print(
-                    "noncausalfilter error: filter lower stop ",
+                    "NoncausalFilter error: filter lower stop ",
                     self.lowerstop,
                     " is below minimum frequency ",
                     lowestfreq,

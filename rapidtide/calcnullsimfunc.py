@@ -108,7 +108,7 @@ def getNullDistributionDatax(
         The time axis of the cross correlation function.
 
     filterfunc: function
-        This is a preconfigured noncausalfilter function which is used to filter data to the desired bandwidth
+        This is a preconfigured NoncausalFilter function which is used to filter data to the desired bandwidth
 
     Fs: float
         The sample frequency of rawtimecourse, in Hz

@@ -388,7 +388,7 @@ def doresample(orig_x, orig_y, new_x, method="cubic", padlen=0, antialias=False,
     final_freq = len(new_x) / (new_x[-1] - new_x[0])
     if antialias and (init_freq > final_freq):
         aafilterfreq = final_freq / 2.0
-        aafilter = tide_filt.noncausalfilter(filtertype="arb", transferfunc="trapezoidal")
+        aafilter = tide_filt.NoncausalFilter(filtertype="arb", transferfunc="trapezoidal")
         aafilter.setfreqs(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)
         pad_y = aafilter.apply(init_freq, pad_y)
 
@@ -525,7 +525,7 @@ def upsample(inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, d
         numresamppts = int(endpoint // ts_higher + 1)
     upsampled_x = np.arange(0.0, ts_higher * numresamppts, ts_higher)
     upsampled_y = doresample(orig_x, inputdata, upsampled_x, method=method)
-    initfilter = tide_filt.noncausalfilter(
+    initfilter = tide_filt.NoncausalFilter(
         filtertype="arb", transferfunc="trapezoidal", debug=debug
     )
     stopfreq = np.min([1.1 * Fs_init / 2.0, Fs_higher / 2.0])
@@ -587,7 +587,7 @@ def dotwostepresample(
     if antialias:
         starttime = time.time()
         aafilterfreq = np.min([final_freq, init_freq]) / 2.0
-        aafilter = tide_filt.noncausalfilter(
+        aafilter = tide_filt.NoncausalFilter(
             filtertype="arb", transferfunc="trapezoidal", debug=debug
         )
         aafilter.setfreqs(0.0, 0.0, 0.95 * aafilterfreq, aafilterfreq)

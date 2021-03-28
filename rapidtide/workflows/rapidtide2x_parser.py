@@ -794,7 +794,7 @@ def process_args():
     optiondict["memprofilerexists"] = memprofilerexists
 
     realtr = 0.0
-    theprefilter = tide_filt.noncausalfilter()
+    theprefilter = tide_filt.NoncausalFilter()
     theprefilter.setbutterorder(optiondict["filtorder"])
 
     # start the clock!

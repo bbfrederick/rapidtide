@@ -237,7 +237,7 @@ class MutualInformationator(SimilarityFunctionator):
         self.sigma = sigma
         self.hpfreq = None
         self.smoothingtime = smoothingtime
-        self.smoothingfilter = tide_filt.noncausalfilter(filtertype="arb")
+        self.smoothingfilter = tide_filt.NoncausalFilter(filtertype="arb")
         if self.smoothingtime > 0.0:
             self.smoothingfilter.setfreqs(
                 0.0, 0.0, 1.0 / self.smoothingtime, 1.0 / self.smoothingtime
@@ -369,7 +369,7 @@ class Correlator(SimilarityFunctionator):
         self.windowfunc = windowfunc
         self.corrweighting = corrweighting
         if self.hpfreq is not None:
-            self.hpfilt = tide_filt.noncausalfilter("arb")
+            self.hpfilt = tide_filt.NoncausalFilter("arb")
             self.hpfilt.setfreqs(self.hpfreq, self.hpfreq, self.Fs, self.Fs)
         super(Correlator, self).__init__(*args, **kwargs)
 
