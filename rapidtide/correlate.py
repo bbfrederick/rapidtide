@@ -156,26 +156,6 @@ def check_autocorrelation(
     return None, None
 
 
-def quickcorr(data1, data2, windowfunc="hamming"):
-    """Perform a sliding window correlation.
-
-    Parameters
-    ----------
-    data1
-    data2
-    windowfunc
-
-    Returns
-    -------
-    thepcorr
-    """
-    thepcorr = sp.stats.stats.pearsonr(
-        tide_math.corrnormalize(data1, detrendorder=1, windowfunc=windowfunc),
-        tide_math.corrnormalize(data2, detrendorder=1, windowfunc=windowfunc),
-    )
-    return thepcorr
-
-
 def shorttermcorr_1D(
     data1,
     data2,
