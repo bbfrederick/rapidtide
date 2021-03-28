@@ -40,7 +40,7 @@ atlases = {
 }
 
 
-class timecourse:
+class Timecourse:
     "Store a timecourse and some information about it"
 
     def __init__(
@@ -71,7 +71,7 @@ class timecourse:
             self.label = label
         self.report = report
         if self.verbose:
-            print("reading timecourse ", self.name, " from ", self.filename, "...")
+            print("reading Timecourse ", self.name, " from ", self.filename, "...")
         self.readTimeData(self.label)
 
     def readTimeData(self, thename):
@@ -95,9 +95,9 @@ class timecourse:
         self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(self.timedata)
 
         if self.verbose:
-            print("timecourse data range:", np.min(self.timedata), np.max(self.timedata))
+            print("Timecourse data range:", np.min(self.timedata), np.max(self.timedata))
             print("sample rate:", self.samplerate)
-            print("timecourse length:", self.length)
+            print("Timecourse length:", self.length)
             print("timeaxis length:", len(self.timeaxis))
             print("kurtosis:", self.kurtosis)
             print("kurtosis_z:", self.kurtosis_z)
@@ -107,7 +107,7 @@ class timecourse:
 
     def summarize(self):
         print()
-        print("timecourse name:      ", self.name)
+        print("Timecourse name:      ", self.name)
         print("    label:            ", self.label)
         print("    filename:         ", self.filename)
         print("    namebase:         ", self.namebase)
@@ -118,7 +118,7 @@ class timecourse:
         print("    kurtosis_p:       ", self.kurtosis_p)
 
 
-class overlay:
+class Overlay:
     "Store a data overlay and some information about it"
 
     def __init__(
@@ -190,7 +190,7 @@ class overlay:
 
         if self.verbose:
             print(
-                "overlay initialized:",
+                "Overlay initialized:",
                 self.name,
                 self.filename,
                 self.minval,
@@ -201,7 +201,7 @@ class overlay:
         self.summarize()
 
     def duplicate(self, newname, newlabel):
-        return overlay(
+        return Overlay(
             newname,
             self.filename,
             self.namebase,
@@ -255,15 +255,15 @@ class overlay:
             self.data[np.where(self.data < 0.5)] = 0.0
             self.data[np.where(self.data > 0.5)] = 1.0
         if self.verbose:
-            print("overlay data range:", np.min(self.data), np.max(self.data))
+            print("Overlay data range:", np.min(self.data), np.max(self.data))
             print("header", self.header)
         self.xdim, self.ydim, self.zdim, self.tdim = tide_io.parseniftidims(self.dims)
         self.xsize, self.ysize, self.zsize, self.tr = tide_io.parseniftisizes(self.sizes)
         self.toffset = self.header["toffset"]
         if self.verbose:
-            print("overlay dims:", self.xdim, self.ydim, self.zdim, self.tdim)
-            print("overlay sizes:", self.xsize, self.ysize, self.zsize, self.tr)
-            print("overlay toffset:", self.toffset)
+            print("Overlay dims:", self.xdim, self.ydim, self.zdim, self.tdim)
+            print("Overlay sizes:", self.xsize, self.ysize, self.zsize, self.tr)
+            print("Overlay toffset:", self.toffset)
 
     def setLabel(self, label):
         self.label = label
@@ -369,7 +369,7 @@ class overlay:
 
     def summarize(self):
         print()
-        print("overlay name:         ", self.name)
+        print("Overlay name:         ", self.name)
         print("    label:            ", self.label)
         print("    filename:         ", self.filename)
         print("    namebase:         ", self.namebase)
@@ -481,7 +481,7 @@ class RapidtideDataset:
             if os.path.isfile(self.fileroot + thisregressor[2]):
                 print("file: ", self.fileroot + thisregressor[2], " exists - reading...")
                 thepath, thebase = os.path.split(self.fileroot + thisregressor[2])
-                theregressor = timecourse(
+                theregressor = Timecourse(
                     thisregressor[0],
                     self.fileroot + thisregressor[2],
                     thebase,
@@ -517,7 +517,7 @@ class RapidtideDataset:
                     " exists - reading...",
                 )
                 thepath, thebase = os.path.split(self.fileroot)
-                self.overlays[mapname] = overlay(
+                self.overlays[mapname] = Overlay(
                     mapname,
                     self.fileroot + mapfilename + ".nii.gz",
                     thebase,
@@ -558,7 +558,7 @@ class RapidtideDataset:
         for maskname, maskfilename in self.funcmasks:
             if os.path.isfile(self.fileroot + maskfilename + ".nii.gz"):
                 thepath, thebase = os.path.split(self.fileroot)
-                self.overlays[maskname] = overlay(
+                self.overlays[maskname] = Overlay(
                     maskname,
                     self.fileroot + maskfilename + ".nii.gz",
                     thebase,
@@ -578,7 +578,7 @@ class RapidtideDataset:
         if self.geommaskname is not None:
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
-                self.overlays["geommask"] = overlay(
+                self.overlays["geommask"] = Overlay(
                     "geommask",
                     self.geommaskname,
                     thebase,
@@ -605,7 +605,7 @@ class RapidtideDataset:
                 )
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
-                self.overlays["geommask"] = overlay(
+                self.overlays["geommask"] = Overlay(
                     "geommask",
                     self.geommaskname,
                     thebase,
@@ -632,7 +632,7 @@ class RapidtideDataset:
             print("using user input anatomic name")
             if os.path.isfile(self.anatname):
                 thepath, thebase = os.path.split(self.anatname)
-                self.overlays["anatomic"] = overlay(
+                self.overlays["anatomic"] = Overlay(
                     "anatomic", self.anatname, thebase, init_LUT=self.init_LUT
                 )
                 print("using ", self.anatname, " as background")
@@ -644,7 +644,7 @@ class RapidtideDataset:
         elif os.path.isfile(self.fileroot + "highres_head.nii.gz"):
             print("using hires_head anatomic name")
             thepath, thebase = os.path.split(self.fileroot)
-            self.overlays["anatomic"] = overlay(
+            self.overlays["anatomic"] = Overlay(
                 "anatomic",
                 self.fileroot + "highres_head.nii.gz",
                 thebase,
@@ -656,7 +656,7 @@ class RapidtideDataset:
         elif os.path.isfile(self.fileroot + "highres.nii.gz"):
             print("using hires anatomic name")
             thepath, thebase = os.path.split(self.fileroot)
-            self.overlays["anatomic"] = overlay(
+            self.overlays["anatomic"] = Overlay(
                 "anatomic",
                 self.fileroot + "highres.nii.gz",
                 thebase,
@@ -675,7 +675,7 @@ class RapidtideDataset:
                 print("using 3mm MNI anatomic name")
                 mniname = os.path.join(self.referencedir, "MNI152_T1_3mm.nii.gz")
             if os.path.isfile(mniname):
-                self.overlays["anatomic"] = overlay(
+                self.overlays["anatomic"] = Overlay(
                     "anatomic", mniname, "MNI152", init_LUT=self.init_LUT
                 )
                 print("using ", mniname, " as background")
@@ -696,7 +696,7 @@ class RapidtideDataset:
                 print("using 1mm MNI anatomic name")
                 mniname = os.path.join(self.referencedir, "mni_icbm152_nlin_asym_09c_1mm.nii.gz")
             if os.path.isfile(mniname):
-                self.overlays["anatomic"] = overlay(
+                self.overlays["anatomic"] = Overlay(
                     "anatomic", mniname, "MNI152NLin2009cAsym", init_LUT=self.init_LUT
                 )
                 print("using ", mniname, " as background")
@@ -707,7 +707,7 @@ class RapidtideDataset:
                 print("MNI template brain ", mniname, " not loaded")
         elif os.path.isfile(self.fileroot + "mean.nii.gz"):
             thepath, thebase = os.path.split(self.fileroot)
-            self.overlays["anatomic"] = overlay(
+            self.overlays["anatomic"] = Overlay(
                 "anatomic",
                 self.fileroot + "mean.nii.gz",
                 thebase,
@@ -718,7 +718,7 @@ class RapidtideDataset:
             return True
         elif os.path.isfile(self.fileroot + "meanvalue.nii.gz"):
             thepath, thebase = os.path.split(self.fileroot)
-            self.overlays["anatomic"] = overlay(
+            self.overlays["anatomic"] = Overlay(
                 "anatomic",
                 self.fileroot + "meanvalue.nii.gz",
                 thebase,
@@ -729,7 +729,7 @@ class RapidtideDataset:
             return True
         elif os.path.isfile(self.fileroot + "desc-mean_map.nii.gz"):
             thepath, thebase = os.path.split(self.fileroot)
-            self.overlays["anatomic"] = overlay(
+            self.overlays["anatomic"] = Overlay(
                 "anatomic",
                 self.fileroot + "desc-mean_map.nii.gz",
                 thebase,
@@ -1066,14 +1066,14 @@ class RapidtideDataset:
                     atlasmaskniftiname = os.path.join(referencedir, atlasname + '_nlin_asym_09c_2mm_mask.nii.gz')"""
             if self.atlasniftiname is not None:
                 if os.path.isfile(self.atlasniftiname):
-                    self.overlays["atlas"] = overlay(
+                    self.overlays["atlas"] = Overlay(
                         "atlas",
                         self.atlasniftiname,
                         self.atlasname,
                         report=True,
                         init_LUT=self.init_LUT,
                     )
-                    self.overlays["atlasmask"] = overlay(
+                    self.overlays["atlasmask"] = Overlay(
                         "atlasmask",
                         self.atlasmaskniftiname,
                         self.atlasname,

@@ -34,7 +34,7 @@ import rapidtide.correlate as tide_corr
 from statsmodels.robust import mad
 
 
-class FmriData:
+class fMRIDataset:
     thedata = None
     theshape = None
     xsize = None

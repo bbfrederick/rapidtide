@@ -74,7 +74,7 @@ def disablenumba():
 
 # --------------------------- Resampling and time shifting functions -------------------------------------------
 """
-class congrid:
+class ConvolutionGridder:
     def __init__(self, timeaxis, width, method='gauss', circular=True, upsampleratio=100, doplot=False, debug=False):
         self.upsampleratio = upsampleratio
         self.initstep = timeaxis[1] - timeaxis[0]

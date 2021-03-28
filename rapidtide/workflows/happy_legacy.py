@@ -1616,7 +1616,7 @@ def happy_main(thearguments):
     # read in the image data
     tide_util.logmem("before reading in fmri data", file=memfile)
     nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
-    input_data = tide_classes.fmridata(nim_data, numskip=numskip)
+    input_data = tide_classes.fMRIDataset(nim_data, numskip=numskip)
     timepoints = input_data.timepoints
     xsize = input_data.xsize
     ysize = input_data.ysize
