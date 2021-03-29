@@ -142,7 +142,7 @@ def test_calcsimfunc(debug=False, display=False):
         corrweighting=optiondict["corrweighting"],
     )
 
-    thefitter = tide_classes.simfunc_fitter(
+    thefitter = tide_classes.SimilarityFunctionFitter(
         lagmod=optiondict["lagmod"],
         lthreshval=optiondict["lthreshval"],
         uthreshval=optiondict["uthreshval"],

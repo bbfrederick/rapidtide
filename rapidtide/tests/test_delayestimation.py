@@ -198,7 +198,7 @@ def test_delayestimation(display=False, debug=False):
     # set up thefitter
     if debug:
         print("\n\nsetting up thefitter")
-    thefitter = tide_classes.simfunc_fitter(
+    thefitter = tide_classes.SimilarityFunctionFitter(
         lagmod=lagmod,
         lthreshval=0.0,
         uthreshval=1.0,
