@@ -20,6 +20,8 @@ import argparse
 
 import matplotlib as mpl
 
+mpl.use("Agg")
+import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.io as tide_io
@@ -112,11 +114,7 @@ def main():
         raise
 
     if args.display:
-        mpl.use("Agg")
-        import matplotlib.pyplot as plt
-    else:
         mpl.use("TkAgg")
-        import matplotlib.pyplot as plt
 
     input1_img, input1_data, input1_hdr, thedims1, thesizes1 = tide_io.readfromnifti(
         args.inputfilename1
