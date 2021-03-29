@@ -1,5 +1,12 @@
 # History of changes
 
+## Version 2.0alpha20 (3/28/21)
+* (package) Python 2.7 support is now officially ended.  Cleaned out compatiblity code.
+* (package) Made pyfftw and numba requirements.
+* (docs) Wrote general description of text input functions, enhanced description of happy, include examples.
+* (style) Began effort with T. Salo to address linter errors and generally improve PEP8 conformance - remove dead code, rationalize imports, improve docstrings, convert class names to CamelCase, use snake_case for functions.
+* (showtc) Converted text inputs to standardized code.
+
 ## Version 2.0alpha19 (3/26/21)
 * (showxcorrx) Significant cleanup for maximum flexibility and utility.
 * (showxcorr) Renamed to showxcorr_legacy

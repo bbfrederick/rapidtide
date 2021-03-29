@@ -134,15 +134,15 @@ Python version compatibility
 ============================
 I switched over a while ago to using Python 3 as my daily driver, so I know
 that everything works there. However, I know that a lot of people can\'t
-or won\'t switch from Python 2x, so I made every effort to write code
-that works in both, and I have been testing in both.
+or won\'t switch from Python 2x, so I kept Python 2.7 compoatibility for
+quite some time.
 
 That said, the writing is on the wall, and since I depend on a number of
-packages that have dropped, Python 2.x support has ended. However,
+packages that have dropped Python 2.x support, as of 2.0, so has rapidtide. However,
 as of version 1.9.0 I\'m also releasing the code in a docker
 container (fredericklab/rapidtide), which has everything nicely installed in
-a fully configured Python 3 environment, so there\'s really no need for me to do a 2.x
-installation anymore.
+a fully configured Python 3 environment, so there\'s really no need for me continue 2.x
+support.  So now it's f-strings all the way, kids!
 
 Ok, I\'m sold. What\'s in here?
 ===============================
