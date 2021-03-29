@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pyfftw
 from numba import jit
+from scipy import fftpack
 
 import rapidtide._version as tide_versioneer
 import rapidtide.io as tide_io
