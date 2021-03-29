@@ -27,7 +27,7 @@ import pyfftw
 import scipy as sp
 from numba import jit
 from numpy.fft import irfftn, rfftn
-from scipy import signal
+from scipy import fftpack, signal
 from sklearn.metrics import mutual_info_score
 
 import rapidtide.fit as tide_fit
