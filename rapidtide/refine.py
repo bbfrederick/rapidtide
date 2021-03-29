@@ -262,7 +262,7 @@ def refineregressor(
             print(
                 "\nChange include/exclude masks or relax ampthresh, delaythresh, or sigmathresh - exiting"
             )
-        sys.exit()
+        return 0, None, None, locationfails, ampfails, lagfails, sigmafails
 
     if optiondict["cleanrefined"]:
         shiftmask = locationmask
@@ -553,4 +553,4 @@ def refineregressor(
     collected = gc.collect()
     print("Garbage collector: collected %d objects." % collected)
 
-    return volumetotal, outputdata, refinemask
+    return volumetotal, outputdata, refinemask, locationfails, ampfails, lagfails, sigmafails
