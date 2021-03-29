@@ -19,19 +19,19 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-import numpy as np
-import time
-import sys
 import bisect
 import os
 import resource
+import sys
+import time
+
 import matplotlib.pyplot as plt
-
-import rapidtide.io as tide_io
-import rapidtide._version as tide_versioneer
-
-from numba import jit
+import numpy as np
 import pyfftw
+from numba import jit
+
+import rapidtide._version as tide_versioneer
+import rapidtide.io as tide_io
 
 fftpack = pyfftw.interfaces.scipy_fftpack
 pyfftw.interfaces.cache.enable()

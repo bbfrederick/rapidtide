@@ -16,20 +16,21 @@
 #   limitations under the License.
 #
 #
-import numpy as np
-import matplotlib.pyplot as plt
 import os
 from shutil import copyfile
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 # from rapidtide.tests.utils import get_test_data_path, get_test_target_path, get_test_temp_path, get_examples_path, get_rapidtide_root, get_scripts_path, create_dir
 from utils import (
-    get_test_data_path,
-    get_test_target_path,
-    get_test_temp_path,
+    create_dir,
     get_examples_path,
     get_rapidtide_root,
     get_scripts_path,
-    create_dir,
+    get_test_data_path,
+    get_test_target_path,
+    get_test_temp_path,
 )
 
 for phase in ["happy_"]:

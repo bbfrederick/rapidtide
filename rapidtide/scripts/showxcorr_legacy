@@ -16,19 +16,21 @@
 #   limitations under the License.
 #
 #
-import sys
-import numpy as np
 import getopt
-import rapidtide.miscmath as tide_math
-import rapidtide.stats as tide_stats
-import rapidtide.io as tide_io
+import sys
+
+import numpy as np
+from matplotlib.pyplot import figure, plot, show
+from numpy import argmax, r_, zeros
+from numpy.random import permutation
+from scipy.stats.stats import pearsonr
+
+import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.correlate as tide_corr
-from scipy.stats.stats import pearsonr
-from numpy import r_, argmax, zeros
-from numpy.random import permutation
-from matplotlib.pyplot import plot, show, figure
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.stats as tide_stats
 
 
 def getNullDistributionData(

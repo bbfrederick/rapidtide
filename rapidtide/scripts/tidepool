@@ -20,23 +20,22 @@
 A simple GUI for looking at the results of a rapidtide analysis
 """
 
-from pyqtgraph.Qt import QtGui, QtCore
-
-import pyqtgraph as pg
-import numpy as np
-
-import rapidtide.util as tide_util
-import sys
 import argparse
-from rapidtide.OrthoImageItem import OrthoImageItem
-from rapidtide.RapidtideDataset import RapidtideDataset
-from rapidtide.Colortables import *
-from rapidtide.helper_classes import SimilarityFunctionFitter
 import os
+import sys
+
+import numpy as np
 import pandas as pd
+import pyqtgraph as pg
+from nibabel.affines import apply_affine
+from pyqtgraph.Qt import QtCore, QtGui
 from statsmodels.robust.scale import mad
 
-from nibabel.affines import apply_affine
+import rapidtide.util as tide_util
+from rapidtide.Colortables import *
+from rapidtide.helper_classes import SimilarityFunctionFitter
+from rapidtide.OrthoImageItem import OrthoImageItem
+from rapidtide.RapidtideDataset import RapidtideDataset
 
 os.environ["QT_MAC_WANTS_LAYER"] = "1"
 

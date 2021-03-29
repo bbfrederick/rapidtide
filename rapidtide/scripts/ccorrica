@@ -19,17 +19,19 @@
 import warnings
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
-import sys
-import rapidtide.miscmath as tide_math
-import rapidtide.io as tide_io
-import rapidtide.stats as tide_stats
-import rapidtide.fit as tide_fit
-import rapidtide.correlate as tide_corr
-import rapidtide.resample as tide_resample
-from scipy.stats.stats import pearsonr
-import numpy as np
-import nibabel as nib
 import argparse
+import sys
+
+import nibabel as nib
+import numpy as np
+from scipy.stats.stats import pearsonr
+
+import rapidtide.correlate as tide_corr
+import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.resample as tide_resample
+import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
 
 

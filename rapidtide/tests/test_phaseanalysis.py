@@ -16,14 +16,13 @@
 #   limitations under the License.
 #
 #
-import numpy as np
-
-import rapidtide.miscmath as tide_math
-import rapidtide.fit as tide_fit
-from rapidtide.tests.utils import mse
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
+
+import rapidtide.fit as tide_fit
+import rapidtide.miscmath as tide_math
+from rapidtide.tests.utils import mse
 
 
 def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, display=False):

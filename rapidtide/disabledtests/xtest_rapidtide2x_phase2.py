@@ -14,24 +14,23 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from __future__ import print_function
-
-import numpy as np
-import matplotlib.pyplot as plt
 import os
 
-import rapidtide.io as tide_io
+import matplotlib.pyplot as plt
+import numpy as np
+
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 import rapidtide.workflows.rapidtide2x as rapidtide2x_workflow
 from rapidtide.tests.utils import (
-    get_test_data_path,
-    get_test_target_path,
-    get_test_temp_path,
+    create_dir,
     get_examples_path,
     get_rapidtide_root,
     get_scripts_path,
-    create_dir,
+    get_test_data_path,
+    get_test_target_path,
+    get_test_temp_path,
 )
 
 

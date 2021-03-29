@@ -19,24 +19,22 @@
 #       $Date: 2016/07/11 14:50:43 $
 #       $Id: showxcorr,v 1.41 2016/07/11 14:50:43 frederic Exp $
 #
-from __future__ import print_function, division
-
 import argparse
-import scipy as sp
-from numpy import pi
-from scipy.stats.stats import pearsonr
-import numpy as np
-from numpy import r_, argmax, zeros
-from numpy.random import permutation
-import matplotlib.pyplot as plt
 
-import rapidtide.miscmath as tide_math
-import rapidtide.stats as tide_stats
-import rapidtide.io as tide_io
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy as sp
+from numpy import argmax, pi, r_, zeros
+from numpy.random import permutation
+from scipy.stats.stats import pearsonr
+
+import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.correlate as tide_corr
-from rapidtide.workflows.parser_funcs import is_valid_file, is_float
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.stats as tide_stats
+from rapidtide.workflows.parser_funcs import is_float, is_valid_file
 
 
 def _get_null_distribution(

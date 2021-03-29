@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-import rapidtide.io as tide_io
 import numpy as np
+
+import rapidtide.io as tide_io
 
 newdata = np.random.rand(400)
 

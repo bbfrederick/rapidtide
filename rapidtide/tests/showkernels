@@ -16,12 +16,11 @@
 #   limitations under the License.
 #
 #
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.fit as tide_fit
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 
 
 def main():

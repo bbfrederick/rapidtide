@@ -16,13 +16,12 @@
 #   limitations under the License.
 #
 #
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 
 from rapidtide.resample import congrid
 from rapidtide.tests.utils import mse
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 
 
 def funcvalue2(x, frequency=1.0, phase=0.0, amplitude=1.5):

@@ -16,17 +16,18 @@
 #   limitations under the License.
 #
 #
-from os.path import expanduser, join as pjoin
+import argparse
 import os
 import sys
-import pandas as pd
-import numpy as np
-
-import argparse
 from argparse import RawTextHelpFormatter
+from os.path import expanduser
+from os.path import join as pjoin
 
-import rapidtide.io as tide_io
+import numpy as np
+import pandas as pd
+
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 
 
 def fingerprint_main(

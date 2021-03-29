@@ -16,23 +16,19 @@
 #   limitations under the License.
 #
 #
-import numpy as np
-
-import rapidtide.filter as tide_filt
-import rapidtide.correlate as tide_corr
-import rapidtide.stats as tide_stats
-import rapidtide.io as tide_io
-import rapidtide.calcnullsimfunc as tide_nullsimfunc
-import rapidtide.helper_classes as tide_classes
+import os
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 
-from rapidtide.tests.utils import (
-    get_test_data_path,
-    get_test_temp_path,
-)
-import os
+import rapidtide.calcnullsimfunc as tide_nullsimfunc
+import rapidtide.correlate as tide_corr
+import rapidtide.filter as tide_filt
+import rapidtide.helper_classes as tide_classes
+import rapidtide.io as tide_io
+import rapidtide.stats as tide_stats
+from rapidtide.tests.utils import get_test_data_path, get_test_temp_path
 
 
 def test_nullsimfunc(debug=False, display=False):

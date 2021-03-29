@@ -16,16 +16,16 @@
 #   limitations under the License.
 #
 #
+import argparse
 import sys
+
+import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy.signal import check_NOLA, stft
 
 import rapidtide.io as tide_io
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from scipy.signal import stft, check_NOLA
-import argparse
-
-from rapidtide.workflows.parser_funcs import is_valid_file, is_float, is_int
+from rapidtide.workflows.parser_funcs import is_float, is_int, is_valid_file
 
 
 def _get_parser():

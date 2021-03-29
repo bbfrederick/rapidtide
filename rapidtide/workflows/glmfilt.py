@@ -17,11 +17,12 @@
 #
 #
 import argparse
-from .parser_funcs import is_valid_file
 
 import numpy as np
-import rapidtide.io as tide_io
+
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
+from rapidtide.workflows.parser_funcs import is_valid_file
 
 
 def _get_parser():

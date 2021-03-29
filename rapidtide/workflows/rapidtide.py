@@ -17,45 +17,41 @@
 #
 #
 import bisect
+import copy
+import gc
 import multiprocessing as mp
+import os
 import platform
 import sys
 import time
 import warnings
-import gc
-import os
 
 import numpy as np
 from matplotlib.pyplot import figure, plot, show
-from scipy import ndimage
 from nilearn import masking
+from scipy import ndimage
+from sklearn.decomposition import PCA
+from statsmodels.robust import mad
 
+import rapidtide.calccoherence as tide_calccoherence
+import rapidtide.calcnullsimfunc as tide_nullsimfunc
+import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.glmpass as tide_glmpass
+import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.resample as tide_resample
-import rapidtide.stats as tide_stats
-import rapidtide.util as tide_util
-
-import rapidtide.calcnullsimfunc as tide_nullsimfunc
-import rapidtide.calcsimfunc as tide_calcsimfunc
-import rapidtide.calccoherence as tide_calccoherence
-import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.refine as tide_refine
-import rapidtide.glmpass as tide_glmpass
-import rapidtide.helper_classes as tide_classes
+import rapidtide.resample as tide_resample
+import rapidtide.simfuncfit as tide_simfuncfit
+import rapidtide.stats as tide_stats
+import rapidtide.util as tide_util
 import rapidtide.wiener as tide_wiener
-
 from rapidtide.tests.utils import mse
-
-from statsmodels.robust import mad
-from sklearn.decomposition import PCA
-
-import copy
 
 try:
     import mkl

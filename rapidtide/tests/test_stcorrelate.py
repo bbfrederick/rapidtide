@@ -18,15 +18,14 @@
 #
 import os.path as op
 
-import numpy as np
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 
-from rapidtide.io import writenpvecs
-from rapidtide.filter import NoncausalFilter
 from rapidtide.correlate import shorttermcorr_1D, shorttermcorr_2D
-from rapidtide.tests.utils import get_test_temp_path, create_dir
+from rapidtide.filter import NoncausalFilter
+from rapidtide.io import writenpvecs
+from rapidtide.tests.utils import create_dir, get_test_temp_path
 
 
 def test_stcorrelate(debug=False):

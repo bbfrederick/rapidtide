@@ -16,9 +16,11 @@
 #   limitations under the License.
 #
 #
-import rapidtide.io as tide_io
-from matplotlib.pyplot import plot, xlabel, ylabel, title, legend, show, savefig, bar
 import argparse
+
+from matplotlib.pyplot import bar, legend, plot, savefig, show, title, xlabel, ylabel
+
+import rapidtide.io as tide_io
 
 
 def _get_parser():

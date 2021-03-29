@@ -20,22 +20,22 @@ Created on Sat Jul 28 23:01:07 2018
 
 @author: neuro
 """
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import numpy as np
+import glob
 import os
 import sys
-from statsmodels.robust.scale import mad
-import glob
-from scipy import fftpack
-from numba import jit
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
 import pyfftw
+from numba import jit
+from scipy import fftpack
+from statsmodels.robust.scale import mad
 
 fftpack = pyfftw.interfaces.scipy_fftpack
 pyfftw.interfaces.cache.enable()
 
 import rapidtide.io as tide_io
-
 
 print("setting backend to Agg")
 mpl.use("Agg")
@@ -47,25 +47,24 @@ try:
     plaidml.keras.install_backend("plaidml")
     tfversion = 0
     print("using plaidml keras")
-    from keras.models import Sequential, Model
-    from keras.optimizers import RMSprop
+    from keras.callbacks import ModelCheckpoint, TerminateOnNaN
     from keras.layers import (
-        Input,
-        Concatenate,
+        LSTM,
+        Activation,
+        BatchNormalization,
         Bidirectional,
+        Concatenate,
         Conv1D,
         Dense,
-        Activation,
         Dropout,
-        BatchNormalization,
-        LSTM,
-        TimeDistributed,
-        MaxPooling1D,
-        UpSampling1D,
         GlobalMaxPool1D,
+        Input,
+        MaxPooling1D,
+        TimeDistributed,
+        UpSampling1D,
     )
-    from keras.callbacks import TerminateOnNaN, ModelCheckpoint
-    from keras.models import load_model
+    from keras.models import Model, Sequential, load_model
+    from keras.optimizers import RMSprop
 except ImportError:
     print("import plaidml.keras failed: falling back to standard tensorflow keras")
 
@@ -85,46 +84,44 @@ if tfversion == -1:
 if tfversion == 2:
     print("using tensorflow v2x")
     tf.disable_v2_behavior()
-    from tensorflow.keras.models import Sequential
-    from tensorflow.keras.optimizers import RMSprop
+    from tensorflow.keras.callbacks import ModelCheckpoint, TerminateOnNaN
     from tensorflow.keras.layers import (
+        LSTM,
+        Activation,
+        BatchNormalization,
         Bidirectional,
         Convolution1D,
         Dense,
-        Activation,
         Dropout,
-        BatchNormalization,
-        LSTM,
-        TimeDistributed,
-        MaxPooling1D,
-        UpSampling1D,
         GlobalMaxPool1D,
+        MaxPooling1D,
+        TimeDistributed,
+        UpSampling1D,
     )
-    from tensorflow.keras.callbacks import TerminateOnNaN, ModelCheckpoint
-    from tensorflow.keras.models import load_model
+    from tensorflow.keras.models import Sequential, load_model
+    from tensorflow.keras.optimizers import RMSprop
 
     print("tensorflow version: >>>{}<<<".format(tf.__version__))
 elif tfversion == 1:
     print("using tensorflow v1x")
-    from keras.models import Sequential, Model
-    from keras.optimizers import RMSprop
+    from keras.callbacks import ModelCheckpoint, TerminateOnNaN
     from keras.layers import (
-        Input,
-        Concatenate,
+        LSTM,
+        Activation,
+        BatchNormalization,
         Bidirectional,
+        Concatenate,
         Conv1D,
         Dense,
-        Activation,
         Dropout,
-        BatchNormalization,
-        LSTM,
-        TimeDistributed,
-        MaxPooling1D,
-        UpSampling1D,
         GlobalMaxPool1D,
+        Input,
+        MaxPooling1D,
+        TimeDistributed,
+        UpSampling1D,
     )
-    from keras.callbacks import TerminateOnNaN, ModelCheckpoint
-    from keras.models import load_model, model_from_json
+    from keras.models import Model, Sequential, load_model, model_from_json
+    from keras.optimizers import RMSprop
 
     print("tensorflow version: >>>{}<<<".format(tf.__version__))
 elif tfversion == 0:

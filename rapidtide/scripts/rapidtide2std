@@ -16,11 +16,12 @@
 #   limitations under the License.
 #
 #
-import sys
-import glob
 import argparse
+import glob
 import os
 import subprocess
+import sys
+
 import rapidtide.util as tide_util
 
 fsldir = os.environ.get("FSLDIR")

@@ -17,6 +17,7 @@
 #
 #
 import sys
+
 import rapidtide.workflows.glmfilt as glmfilt_workflow
 
 if __name__ == "__main__":

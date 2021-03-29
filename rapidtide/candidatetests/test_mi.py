@@ -14,13 +14,10 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from __future__ import print_function, division
-
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 import rapidtide.io as tide_io
-
 from rapidtide.correlate import calc_MI
 
 

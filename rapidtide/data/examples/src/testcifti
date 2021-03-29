@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
-import rapidtide.io as tide_io
+import sys
+
 import nibabel as nib
 import numpy as np
-import sys
+
+import rapidtide.io as tide_io
 
 infile = "/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii"
 outfile = "../dst/test"

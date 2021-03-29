@@ -16,10 +16,12 @@
 #   limitations under the License.
 #
 #
-import rapidtide.io as tide_io
+import argparse
+
 import matplotlib.pyplot as plt
 import numpy as np
-import argparse
+
+import rapidtide.io as tide_io
 
 
 def _get_parser():

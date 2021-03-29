@@ -16,14 +16,15 @@
 #   limitations under the License.
 #
 #
-import sys
 import argparse
-from .parser_funcs import is_valid_file, is_float
+import sys
 
 import numpy as np
-import rapidtide.io as tide_io
+from sklearn.decomposition import PCA, FastICA, SparsePCA
+
 import rapidtide.filter as tide_filt
-from sklearn.decomposition import FastICA, PCA, SparsePCA
+import rapidtide.io as tide_io
+from rapidtide.workflows.parser_funcs import is_float, is_valid_file
 
 
 def _get_parser():

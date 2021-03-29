@@ -19,13 +19,14 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-import numpy as np
-import sys
-import os
-import pandas as pd
-import json
 import copy
+import json
+import os
+import sys
+
 import nibabel as nib
+import numpy as np
+import pandas as pd
 
 # ---------------------------------------- Global constants -------------------------------------------
 MAXLINES = 100000000

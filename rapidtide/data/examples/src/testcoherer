@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-import rapidtide.helper_classes as tide_classes
-import rapidtide.calccoherence as tide_calccoherence
 import matplotlib.pyplot as plt
 import numpy as np
+
+import rapidtide.calccoherence as tide_calccoherence
+import rapidtide.filter as tide_filt
+import rapidtide.helper_classes as tide_classes
+import rapidtide.io as tide_io
 
 thereftc = tide_io.readvec("lf_HbO")
 thetesttc = tide_io.readvec("lt_HbO")

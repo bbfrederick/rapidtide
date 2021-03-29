@@ -19,19 +19,19 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-import matplotlib.pyplot as plt
+import sys
+import warnings
 
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
-import warnings
-import sys
-
-import rapidtide.util as tide_util
-import rapidtide.fit as tide_fit
-import rapidtide.filter as tide_filt
-import rapidtide.miscmath as tide_math
-import rapidtide.correlate as tide_corr
 from statsmodels.robust import mad
+
+import rapidtide.correlate as tide_corr
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+import rapidtide.miscmath as tide_math
+import rapidtide.util as tide_util
 
 
 class fMRIDataset:

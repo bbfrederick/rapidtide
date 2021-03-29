@@ -19,8 +19,8 @@
 """
 Functions for parsers.
 """
-import os.path as op
 import argparse
+import os.path as op
 
 import rapidtide.filter as tide_filt
 

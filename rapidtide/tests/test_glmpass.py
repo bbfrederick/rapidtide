@@ -16,12 +16,12 @@
 #   limitations under the License.
 #
 #
-import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 
-from rapidtide.tests.utils import mse
 import rapidtide.glmpass as tide_glmpass
+from rapidtide.tests.utils import mse
 
 
 def gen2d(xsize=150, xcycles=11, tsize=200, tcycles=13, mean=10.0):

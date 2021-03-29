@@ -18,13 +18,13 @@
 #
 import argparse
 import sys
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-from .parser_funcs import is_valid_file, is_float
-import numpy as np
 
-# from matplotlib.pyplot import *
-from sklearn.decomposition import FastICA, PCA, SparsePCA
+import numpy as np
+from sklearn.decomposition import PCA, FastICA, SparsePCA
+
+import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
+from rapidtide.workflows.parser_funcs import is_float, is_valid_file
 
 
 def _get_parser():

@@ -28,7 +28,6 @@ import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
-
 LGR = logging.getLogger(__name__)
 
 

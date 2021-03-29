@@ -38,17 +38,17 @@ With fly camera:
 * IJKL or mouse - look around
 """
 
+import os
+import sys
 from itertools import cycle
 
-import sys
-import os
 import numpy as np
-import rapidtide.stats as tide_stats
-import rapidtide.io as tide_io
-
 from vispy import app, scene
-from vispy.color import get_colormaps, BaseColormap
+from vispy.color import BaseColormap, get_colormaps
 from vispy.visuals.transforms import STTransform
+
+import rapidtide.io as tide_io
+import rapidtide.stats as tide_stats
 
 
 def usage():

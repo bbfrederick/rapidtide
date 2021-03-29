@@ -17,7 +17,7 @@
 #
 #
 import heartpy as hp
-from matplotlib.pyplot import figure, plot, show, savefig, setp
+from matplotlib.pyplot import figure, plot, savefig, setp, show
 
 
 def main():

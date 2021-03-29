@@ -17,6 +17,7 @@
 #
 #
 import sys
+
 import rapidtide.workflows.happy_legacy as happy_workflow
 
 if __name__ == "__main__":

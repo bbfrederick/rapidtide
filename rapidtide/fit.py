@@ -19,19 +19,17 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-import matplotlib.pyplot as plt
-
-import numpy as np
-import scipy as sp
-import scipy.special as sps
 import warnings
 
-from scipy.signal import hilbert, find_peaks
+import matplotlib.pyplot as plt
+import numpy as np
+import pyfftw
+import scipy as sp
+import scipy.special as sps
+from numba import jit
+from scipy.signal import find_peaks, hilbert
 
 import rapidtide.util as tide_util
-
-from numba import jit
-import pyfftw
 
 fftpack = pyfftw.interfaces.scipy_fftpack
 pyfftw.interfaces.cache.enable()

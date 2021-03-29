@@ -16,9 +16,10 @@
 #   limitations under the License.
 #
 #
-import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
+
 from rapidtide.resample import FastResampler
 from rapidtide.tests.utils import mse
 

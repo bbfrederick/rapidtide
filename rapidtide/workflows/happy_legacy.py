@@ -16,34 +16,32 @@
 #   limitations under the License.
 #
 #
-from matplotlib.pyplot import plot, show, figure
-
-import time
-import sys
+import copy
+import getopt
 import os
 import platform
+import sys
+import time
+import warnings
 
 import numpy as np
 import scipy as sp
-import getopt
-import rapidtide.miscmath as tide_math
-import rapidtide.stats as tide_stats
-import rapidtide.util as tide_util
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-import rapidtide.fit as tide_fit
-import rapidtide.resample as tide_resample
-import rapidtide.correlate as tide_corr
-import rapidtide.multiproc as tide_multiproc
-import rapidtide.glmpass as tide_glmpass
-import rapidtide.helper_classes as tide_classes
-
-from scipy.signal import welch, savgol_filter
+from matplotlib.pyplot import figure, plot, show
+from scipy.signal import savgol_filter, welch
 from scipy.stats import kurtosis, skew
 from statsmodels.robust import mad
-import copy
 
-import warnings
+import rapidtide.correlate as tide_corr
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+import rapidtide.glmpass as tide_glmpass
+import rapidtide.helper_classes as tide_classes
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.multiproc as tide_multiproc
+import rapidtide.resample as tide_resample
+import rapidtide.stats as tide_stats
+import rapidtide.util as tide_util
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 

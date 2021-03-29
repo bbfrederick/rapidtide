@@ -19,20 +19,19 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
+import sys
 import time
 
 import numpy as np
-import scipy as sp
-from scipy import fftpack, signal
+import pyfftw
 import pylab as pl
-import sys
+import scipy as sp
+from numba import jit
+from scipy import fftpack, signal
 
-import rapidtide.util as tide_util
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-
-from numba import jit
-import pyfftw
+import rapidtide.util as tide_util
 
 fftpack = pyfftw.interfaces.scipy_fftpack
 pyfftw.interfaces.cache.enable()

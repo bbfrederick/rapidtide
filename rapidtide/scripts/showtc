@@ -19,19 +19,19 @@
 import warnings
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
-import sys
-import os
 import argparse
-import rapidtide.workflows.parser_funcs as pf
+import os
+import sys
 
 import matplotlib.cm as cm
-import rapidtide.io as tide_io
+import numpy as np
+from matplotlib.pyplot import figure, savefig, setp, show
+
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 import rapidtide.util as tide_util
-import numpy as np
-
-from matplotlib.pyplot import figure, show, savefig, setp
+import rapidtide.workflows.parser_funcs as pf
 
 
 def phase(mcv):

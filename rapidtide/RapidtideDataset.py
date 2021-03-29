@@ -21,18 +21,19 @@
 # $Id: OrthoImageItem.py,v 1.13 2016/04/07 21:46:54 frederic Exp $
 #
 # -*- coding: utf-8 -*-
+import copy
 import os
 import sys
-from rapidtide.Colortables import *
-import rapidtide.stats as tide_stats
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-import rapidtide.miscmath as tide_math
+
+import nibabel as nib
 import numpy as np
 import pyqtgraph as pg
-import copy
-import nibabel as nib
 
+import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.stats as tide_stats
+from rapidtide.Colortables import *
 
 atlases = {
     "ASPECTS": {"atlasname": "ASPECTS"},

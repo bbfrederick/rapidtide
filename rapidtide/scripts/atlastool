@@ -16,13 +16,15 @@
 #   limitations under the License.
 #
 #
-import sys
+import argparse
 import os
 import subprocess
-import argparse
-import rapidtide.workflows.parser_funcs as pf
+import sys
+
 import numpy as np
+
 import rapidtide.io as tide_io
+import rapidtide.workflows.parser_funcs as pf
 
 
 def _get_parser():

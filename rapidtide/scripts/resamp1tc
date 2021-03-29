@@ -17,12 +17,13 @@
 #
 #
 import argparse
-import rapidtide.workflows.parser_funcs as pf
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
-import numpy as np
-import matplotlib.pyplot as plt
+import rapidtide.workflows.parser_funcs as pf
 
 
 def _get_parser():

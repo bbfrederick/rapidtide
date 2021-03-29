@@ -18,6 +18,7 @@
 #
 import argparse
 import sys
+
 import numpy as np
 
 import rapidtide.io as tide_io

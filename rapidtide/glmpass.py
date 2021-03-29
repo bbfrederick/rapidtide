@@ -24,8 +24,8 @@
 #
 import numpy as np
 
-import rapidtide.fit as tide_fit
 import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util

@@ -16,19 +16,20 @@
 #   limitations under the License.
 #
 #
-import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import multiprocessing as mp
 
-import rapidtide.miscmath as tide_math
-import rapidtide.glmpass as tide_glmpass
-import rapidtide.peakeval as tide_peakeval
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+
+import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.filter as tide_filt
+import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
+import rapidtide.miscmath as tide_math
+import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
-import rapidtide.calcsimfunc as tide_calcsimfunc
 
 try:
     import mkl

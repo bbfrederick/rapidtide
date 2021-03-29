@@ -16,18 +16,17 @@
 #   limitations under the License.
 #
 #
-import numpy as np
-
-import rapidtide.filter as tide_filt
-import rapidtide.correlate as tide_corr
-import rapidtide.calcsimfunc as tide_calcsimfunc
-import rapidtide.simfuncfit as tide_simfuncfit
-import rapidtide.resample as tide_resample
-import rapidtide.helper_classes as tide_classes
-from rapidtide.tests.utils import mse
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
+
+import rapidtide.calcsimfunc as tide_calcsimfunc
+import rapidtide.correlate as tide_corr
+import rapidtide.filter as tide_filt
+import rapidtide.helper_classes as tide_classes
+import rapidtide.resample as tide_resample
+import rapidtide.simfuncfit as tide_simfuncfit
+from rapidtide.tests.utils import mse
 
 
 def test_calcsimfunc(debug=False, display=False):

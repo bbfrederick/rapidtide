@@ -22,12 +22,14 @@
 #
 #
 #
+import sys
+
 import numpy as np
+
+import rapidtide.filter as tide_filt
+import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
-import rapidtide.miscmath as tide_math
-import rapidtide.filter as tide_filt
-import sys
 
 
 # note: rawtimecourse has been filtered, but NOT windowed

@@ -17,15 +17,16 @@
 #
 #
 import argparse
-import rapidtide.workflows.parser_funcs as pf
 
-import rapidtide.io as tide_io
-import rapidtide.resample as tide_resample
-import rapidtide.miscmath as tide_math
-import rapidtide.fit as tide_fit
-import rapidtide.correlate as tide_corr
 import numpy as np
-from matplotlib.pyplot import plot, show, figure
+from matplotlib.pyplot import figure, plot, show
+
+import rapidtide.correlate as tide_corr
+import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.resample as tide_resample
+import rapidtide.workflows.parser_funcs as pf
 
 
 def main():

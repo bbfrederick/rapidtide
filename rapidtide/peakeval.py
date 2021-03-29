@@ -23,16 +23,14 @@
 #
 #
 import gc
+import warnings
 
 import numpy as np
 
+import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
-import rapidtide.fit as tide_fit
-
-# this is here until numpy deals with their fft issue
-import warnings
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 

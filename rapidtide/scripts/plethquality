@@ -16,12 +16,14 @@
 #   limitations under the License.
 #
 #
+import argparse
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
 from scipy.stats import skew
+
 import rapidtide.io as tide_io
-import argparse
 import rapidtide.workflows.parser_funcs as pf
 
 

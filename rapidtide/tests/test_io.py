@@ -16,16 +16,12 @@
 #   limitations under the License.
 #
 #
-import numpy as np
 import os
 
-from rapidtide.tests.utils import mse
+import numpy as np
+
 import rapidtide.io as tide_io
-from rapidtide.tests.utils import (
-    get_test_temp_path,
-    get_examples_path,
-    create_dir,
-)
+from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
 
 def test_io(debug=True, display=False):

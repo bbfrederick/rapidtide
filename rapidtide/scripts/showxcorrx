@@ -16,27 +16,25 @@
 #   limitations under the License.
 #
 #
+import argparse
 import sys
+
 import numpy as np
 import scipy as sp
-
-import argparse
-import rapidtide.miscmath as tide_math
-import rapidtide.stats as tide_stats
-import rapidtide.io as tide_io
-import rapidtide.peakeval as tide_peakeval
-import rapidtide.fit as tide_fit
-import rapidtide.correlate as tide_corr
-import rapidtide.calcnullsimfunc as tide_nullsimfunc
-import rapidtide.util as tide_util
-import rapidtide.helper_classes as tide_classes
-
-import rapidtide.workflows.parser_funcs as pf
-
+from matplotlib.pyplot import figure, legend, plot, show
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 
-from matplotlib.pyplot import plot, legend, show, figure
+import rapidtide.calcnullsimfunc as tide_nullsimfunc
+import rapidtide.correlate as tide_corr
+import rapidtide.fit as tide_fit
+import rapidtide.helper_classes as tide_classes
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.peakeval as tide_peakeval
+import rapidtide.stats as tide_stats
+import rapidtide.util as tide_util
+import rapidtide.workflows.parser_funcs as pf
 
 
 def printthresholds(pcts, thepercentiles, labeltext):

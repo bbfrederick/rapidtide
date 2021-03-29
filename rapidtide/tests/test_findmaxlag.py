@@ -19,13 +19,13 @@
 import os.path as op
 import sys
 
-import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 
-import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import rapidtide.helper_classes as tide_classes
+import rapidtide.io as tide_io
 from rapidtide.tests.utils import get_test_data_path
 
 

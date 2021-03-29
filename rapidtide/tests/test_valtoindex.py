@@ -17,6 +17,7 @@
 #
 #
 import numpy as np
+
 from rapidtide.util import valtoindex
 
 
