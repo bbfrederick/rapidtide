@@ -7,34 +7,6 @@ orbs:
   codecov: codecov/codecov@1.0.5
 jobs:
 
-#  test_py27:
-#    working_directory: /tmp/src/rapidtide
-#    docker:
-#      - image: continuumio/miniconda3
-#    steps:
-#      - checkout
-#      - persist_to_workspace:
-#          root: /tmp
-#          paths:
-#              - src/rapidtide
-#      - run:  # will overwrite rapidtide installation each time
-#          name: Generate environment
-#          command:  |
-#            if [[ -e /opt/conda/envs/py27_env ]]; then
-#                echo "Restoring environment from cache"
-#                source activate py27_env
-#            else
-#                conda create -n py27_env python=2.7 -yq
-#                source activate py27_env
-#                pip install -e .[tests,doc]
-#            fi
-#            python setup.py install --user
-#      - run:
-#          name: Run Py2.7 tests
-#          command: |
-#            source activate py27_env
-#            py.test --ignore=rapidtide/candidatetests rapidtide
-
   test_py36:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -121,6 +93,35 @@ jobs:
           paths:
             - "/opt/conda/envs/py38_env"
 
+  build_py39:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps9-{{ checksum "setup.py" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py39_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py39_env
+            else
+                conda create -n py39_env python=3.8 -yq
+                source activate py39_env
+                pip install -e .[tests,doc]
+            fi
+            python setup.py install --user
+      - save_cache:  # environment cache tied to requirements
+          key: deps9-{{ checksum "setup.py" }}
+          paths:
+            - "/opt/conda/envs/py39_env"
+
   build_docs:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -181,6 +182,7 @@ workflows:
       - test_py36
       - build_py37
       - build_py38
+      - build_py39
       - build_docs:
           requires:
             - build_py37
