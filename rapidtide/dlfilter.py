@@ -29,7 +29,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pyfftw
 from numba import jit
-from scipy import fftpack
 from statsmodels.robust.scale import mad
 
 fftpack = pyfftw.interfaces.scipy_fftpack

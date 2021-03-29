@@ -23,7 +23,9 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pyfftw
 import scipy as sp
+from numba import jit
 from numpy.fft import irfftn, rfftn
 from scipy import signal
 from sklearn.metrics import mutual_info_score
@@ -33,6 +35,9 @@ import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
 
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
+
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
@@ -40,31 +45,11 @@ donotbeaggressive = True
 donotusenumba = False
 
 # ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    from numba import jit
-
-    numbaexists = True
-except ImportError:
-    numbaexists = False
-numbaexists = False
-
-try:
-    import pyfftw
-
-    pyfftwexists = True
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-except ImportError:
-    from scipy import fftpack
-
-    pyfftwexists = False
-
-
 def conditionaljit():
     """Wrap functions in jit if numba is enabled."""
 
     def resdec(f):
-        if (not numbaexists) or donotusenumba:
+        if donotusenumba:
             return f
         return jit(f, nopython=False)
 
@@ -446,7 +431,52 @@ def cross_mutual_info(
     fast=True,
     debug=False,
 ):
-    """Calculate cross-mutual information between two 1D arrays."""
+    """Calculate cross-mutual information between two 1D arrays.
+    Parameters
+    ----------
+    x : 1D array
+        first variable
+    y : 1D array
+        second variable
+    returnaxis : bool
+        set to True to return the time axis
+    negstaps: int
+    possteps: int
+    locs : list
+        a set of offsets at which to calculate the cross mutual information
+    Fs=1.0,
+    norm : bool
+        calculate normalized MI at each offset
+    madnorm : bool
+        set to True to normalize cross MI waveform by it's median average deviate
+    windowfunc : str
+        name of the window function to apply to input vectors prior to MI calculation
+    bins : int
+        number of bins in each dimension of the 2D histogram.  Set to -1 to set automatically
+    prebin : bool
+        set to true to cache 2D histogram for all offsets
+    sigma : float
+        histogram smoothing kernel
+    fast: bool
+        apply speed optimizations
+    debug : bool
+        set to True to output additional debugging information
+
+    Returns
+    -------
+    if returnaxis is True:
+        thexmi_x : 1D array
+            the set of offsets at which cross mutual information is calcuated
+        thexmi_y : 1D array
+            the set of cross mutual information values
+        len(thexmi_x): int
+            the number of cross mutual information values returned
+    else:
+        thexmi_y : 1D array
+            the set of cross mutual information values
+
+    """
+
     normx = tide_math.corrnormalize(x, detrendorder=1, windowfunc=windowfunc)
     normy = tide_math.corrnormalize(y, detrendorder=1, windowfunc=windowfunc)
 
