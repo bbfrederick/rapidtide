@@ -47,11 +47,13 @@ try:
     plaidml.keras.install_backend("plaidml")
     tfversion = 0
     print("using plaidml keras")
-    from keras.models import Sequential
+    from keras.models import Sequential, Model
     from keras.optimizers import RMSprop
     from keras.layers import (
+        Input,
+        Concatenate,
         Bidirectional,
-        Convolution1D,
+        Conv1D,
         Dense,
         Activation,
         Dropout,
@@ -104,11 +106,13 @@ if tfversion == 2:
     print("tensorflow version: >>>{}<<<".format(tf.__version__))
 elif tfversion == 1:
     print("using tensorflow v1x")
-    from keras.models import Sequential
+    from keras.models import Sequential, Model
     from keras.optimizers import RMSprop
     from keras.layers import (
+        Input,
+        Concatenate,
         Bidirectional,
-        Convolution1D,
+        Conv1D,
         Dense,
         Activation,
         Dropout,
@@ -120,7 +124,7 @@ elif tfversion == 1:
         GlobalMaxPool1D,
     )
     from keras.callbacks import TerminateOnNaN, ModelCheckpoint
-    from keras.models import load_model
+    from keras.models import load_model, model_from_json
 
     print("tensorflow version: >>>{}<<<".format(tf.__version__))
 elif tfversion == 0:
@@ -508,7 +512,7 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         self.infodict["kernel_sizes"] = self.kernel_sizes
         self.infodict["input_lens"] = self.input_lens
         self.infodict["input_width"] = self.input_width
-        super(multiscalecnn, self).__init__(*args, **kwargs)
+        super(MultiscaleCNNDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
         self.modelname = "_".join(
@@ -562,9 +566,9 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         input_origseq = Input(shape=(self.inputs_lens[2], self.input_width))
 
         # the more down-sampled the time series, the shorter the corresponding filter
-        base_net_small = makesubnet(self.inputs_lens[0], self.kernel_sizes[0])
-        base_net_med = makesubnet(self.inputs_lens[1], self.kernel_sizes[1])
-        base_net_original = makesubnet(self.inputs_lens[2], self.kernel_sizes[2])
+        base_net_small = self.makesubnet(self.inputs_lens[0], self.kernel_sizes[0])
+        base_net_med = self.makesubnet(self.inputs_lens[1], self.kernel_sizes[1])
+        base_net_original = self.makesubnet(self.inputs_lens[2], self.kernel_sizes[2])
         embedding_small = base_net_small(input_smallseq)
         embedding_med = base_net_med(input_medseq)
         embedding_original = base_net_original(input_origseq)
@@ -584,7 +588,7 @@ class CNNDLFilter(DeepLearningFilter):
         self.infodict["nettype"] = "cnn"
         self.infodict["num_filters"] = self.num_filters
         self.infodict["kernel_size"] = self.kernel_size
-        super(cnn, self).__init__(*args, **kwargs)
+        super(CNNDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
         self.modelname = "_".join(
@@ -657,7 +661,7 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
         self.encoding_dim = encoding_dim
         self.infodict["nettype"] = "autoencoder"
         self.infodict["encoding_dim"] = self.encoding_dim
-        super(denseautoencoder, self).__init__(*args, **kwargs)
+        super(DenseAutoencoderDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
         self.modelname = "_".join(
@@ -742,7 +746,7 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.infodict["kernel_size"] = self.kernel_size
         self.infodict["nettype"] = "autoencoder"
         self.infodict["encoding_dim"] = self.encoding_dim
-        super(convautoencoder, self).__init__(*args, **kwargs)
+        super(ConvAutoencoderDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
         self.modelname = "_".join(
@@ -941,7 +945,7 @@ class LSTMDLFilter(DeepLearningFilter):
         self.num_units = num_units
         self.infodict["nettype"] = "lstm"
         self.infodict["num_units"] = self.num_units
-        super(lstm, self).__init__(*args, **kwargs)
+        super(LSTMDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
         self.modelname = "_".join(
@@ -999,7 +1003,7 @@ class HybridDLFilter(DeepLearningFilter):
         self.infodict["kernel_size"] = self.kernel_size
         self.infodict["invert"] = self.invert
         self.infodict["num_units"] = self.num_units
-        super(hybrid, self).__init__(*args, **kwargs)
+        super(HybridDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
         self.modelname = "_".join(
@@ -1590,6 +1594,7 @@ def prep(
 
         x = x[:, cleansubjs]
         y = y[:, cleansubjs]
+        cleannames = []
         for theindex in cleansubjs:
             cleannames.append(names[theindex])
         if usebadpts:
