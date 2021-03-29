@@ -1365,6 +1365,7 @@ def rapidtide_main(argparsingfunc):
     # --------------------- Main pass loop ---------------------
     # loop over all passes
     stoprefining = False
+    refinestopreason = "passesreached"
     if optiondict["convergencethresh"] is None:
         numpasses = optiondict["passes"]
     else:
@@ -2113,7 +2114,15 @@ def rapidtide_main(argparsingfunc):
                 memfile,
                 "before refineregressor",
             )
-            voxelsprocessed_rr, outputdata, refinemask = refineregressor_func(
+            (
+                voxelsprocessed_rr,
+                outputdata,
+                refinemask,
+                locationfails,
+                ampfails,
+                lagfails,
+                sigmafails,
+            ) = refineregressor_func(
                 fmri_data_valid,
                 fmritr,
                 shiftedtcs,
@@ -2132,133 +2141,149 @@ def rapidtide_main(argparsingfunc):
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
             )
-            normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
-            normunfilteredoutputdata = tide_math.stdnormalize(outputdata)
-            if optiondict["bidsoutput"]:
-                tide_io.writebidstsv(
-                    outputname + "_desc-refinedmovingregressor_timeseries",
-                    normunfilteredoutputdata,
-                    1.0 / fmritr,
-                    columns=["unfiltered_pass" + str(thepass)],
-                    append=(thepass > 1),
-                )
-                tide_io.writebidstsv(
-                    outputname + "_desc-refinedmovingregressor_timeseries",
-                    normoutputdata,
-                    1.0 / fmritr,
-                    columns=["filtered_pass" + str(thepass)],
-                    append=True,
-                )
-            else:
-                tide_io.writenpvecs(
-                    normoutputdata,
-                    outputname + "_refinedregressor_pass" + str(thepass) + ".txt",
-                )
-                tide_io.writenpvecs(
-                    normunfilteredoutputdata,
-                    outputname + "_unfilteredrefinedregressor_pass" + str(thepass) + ".txt",
-                )
             optiondict["refinemasksize_pass" + str(thepass)] = voxelsprocessed_rr
             optiondict["refinemaskpct_pass" + str(thepass)] = (
                 100.0 * voxelsprocessed_rr / optiondict["corrmasksize"]
             )
+            optiondict["refinelocationfails_pass" + str(thepass)] = locationfails
+            optiondict["refineampfails_pass" + str(thepass)] = ampfails
+            optiondict["refinelagfails_pass" + str(thepass)] = lagfails
+            optiondict["refinesigmafails_pass" + str(thepass)] = sigmafails
+            if voxelsprocessed_rr > 0:
+                normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
+                normunfilteredoutputdata = tide_math.stdnormalize(outputdata)
+                if optiondict["bidsoutput"]:
+                    tide_io.writebidstsv(
+                        outputname + "_desc-refinedmovingregressor_timeseries",
+                        normunfilteredoutputdata,
+                        1.0 / fmritr,
+                        columns=["unfiltered_pass" + str(thepass)],
+                        append=(thepass > 1),
+                    )
+                    tide_io.writebidstsv(
+                        outputname + "_desc-refinedmovingregressor_timeseries",
+                        normoutputdata,
+                        1.0 / fmritr,
+                        columns=["filtered_pass" + str(thepass)],
+                        append=True,
+                    )
+                else:
+                    tide_io.writenpvecs(
+                        normoutputdata,
+                        outputname + "_refinedregressor_pass" + str(thepass) + ".txt",
+                    )
+                    tide_io.writenpvecs(
+                        normunfilteredoutputdata,
+                        outputname + "_unfilteredrefinedregressor_pass" + str(thepass) + ".txt",
+                    )
 
-            # check for convergence
-            regressormse = mse(normoutputdata, previousnormoutputdata)
-            optiondict["regressormse_pass" + str(thepass).zfill(2)] = regressormse
-            print(
-                "regressor difference at end of pass {:d} is {:.6f}".format(thepass, regressormse)
-            )
-            if optiondict["convergencethresh"] is not None:
-                if thepass >= optiondict["maxpasses"]:
-                    print("refinement ended (maxpasses reached")
+                # check for convergence
+                regressormse = mse(normoutputdata, previousnormoutputdata)
+                optiondict["regressormse_pass" + str(thepass).zfill(2)] = regressormse
+                print(
+                    "regressor difference at end of pass {:d} is {:.6f}".format(
+                        thepass, regressormse
+                    )
+                )
+                if optiondict["convergencethresh"] is not None:
+                    if thepass >= optiondict["maxpasses"]:
+                        print("refinement ended (maxpasses reached")
+                        stoprefining = True
+                        refinestopreason = "maxpassesreached"
+                    elif regressormse < optiondict["convergencethresh"]:
+                        print("refinement ended (refinement has converged")
+                        stoprefining = True
+                        refinestopreason = "convergence"
+                    else:
+                        stoprefining = False
+                elif thepass >= optiondict["passes"]:
                     stoprefining = True
-                elif regressormse < optiondict["convergencethresh"]:
-                    print("refinement ended (refinement has converged")
-                    stoprefining = True
+                    refinestopreason = "passesreached"
                 else:
                     stoprefining = False
-            elif thepass >= optiondict["passes"]:
-                stoprefining = True
-            else:
-                stoprefining = False
 
-            if optiondict["detrendorder"] > 0:
-                resampnonosref_y = tide_fit.detrend(
-                    tide_resample.doresample(
+                if optiondict["detrendorder"] > 0:
+                    resampnonosref_y = tide_fit.detrend(
+                        tide_resample.doresample(
+                            initial_fmri_x,
+                            normoutputdata,
+                            initial_fmri_x,
+                            method=optiondict["interptype"],
+                        ),
+                        order=optiondict["detrendorder"],
+                        demean=optiondict["dodemean"],
+                    )
+                    resampref_y = tide_fit.detrend(
+                        tide_resample.doresample(
+                            initial_fmri_x,
+                            normoutputdata,
+                            os_fmri_x,
+                            method=optiondict["interptype"],
+                        ),
+                        order=optiondict["detrendorder"],
+                        demean=optiondict["dodemean"],
+                    )
+                else:
+                    resampnonosref_y = tide_resample.doresample(
                         initial_fmri_x,
                         normoutputdata,
                         initial_fmri_x,
                         method=optiondict["interptype"],
-                    ),
-                    order=optiondict["detrendorder"],
-                    demean=optiondict["dodemean"],
-                )
-                resampref_y = tide_fit.detrend(
-                    tide_resample.doresample(
+                    )
+                    resampref_y = tide_resample.doresample(
                         initial_fmri_x,
                         normoutputdata,
                         os_fmri_x,
                         method=optiondict["interptype"],
-                    ),
-                    order=optiondict["detrendorder"],
-                    demean=optiondict["dodemean"],
-                )
-            else:
-                resampnonosref_y = tide_resample.doresample(
-                    initial_fmri_x,
-                    normoutputdata,
-                    initial_fmri_x,
-                    method=optiondict["interptype"],
-                )
-                resampref_y = tide_resample.doresample(
-                    initial_fmri_x,
-                    normoutputdata,
-                    os_fmri_x,
-                    method=optiondict["interptype"],
-                )
-            if optiondict["tmaskname"] is not None:
-                resampnonosref_y *= tmask_y
-                thefit, R = tide_fit.mlregress(tmask_y, resampnonosref_y)
-                resampnonosref_y -= thefit[0, 1] * tmask_y
-                resampref_y *= tmaskos_y
-                thefit, R = tide_fit.mlregress(tmaskos_y, resampref_y)
-                resampref_y -= thefit[0, 1] * tmaskos_y
+                    )
+                if optiondict["tmaskname"] is not None:
+                    resampnonosref_y *= tmask_y
+                    thefit, R = tide_fit.mlregress(tmask_y, resampnonosref_y)
+                    resampnonosref_y -= thefit[0, 1] * tmask_y
+                    resampref_y *= tmaskos_y
+                    thefit, R = tide_fit.mlregress(tmaskos_y, resampref_y)
+                    resampref_y -= thefit[0, 1] * tmaskos_y
 
-            # reinitialize lagtc for resampling
-            previousnormoutputdata = normoutputdata + 0.0
-            genlagtc = tide_resample.FastResampler(initial_fmri_x, normoutputdata, padtime=padtime)
-            nonosrefname = "_reference_fmrires_pass" + str(thepass + 1) + ".txt"
-            osrefname = "_reference_resampres_pass" + str(thepass + 1) + ".txt"
-            (
-                optiondict["kurtosis_reference_pass" + str(thepass + 1)],
-                optiondict["kurtosisz_reference_pass" + str(thepass + 1)],
-                optiondict["kurtosisp_reference_pass" + str(thepass + 1)],
-            ) = tide_stats.kurtosisstats(resampref_y)
-            if not stoprefining:
-                if optiondict["bidsoutput"]:
-                    tide_io.writebidstsv(
-                        outputname + "_desc-movingregressor_timeseries",
-                        tide_math.stdnormalize(resampnonosref_y),
-                        1.0 / fmritr,
-                        columns=["pass" + str(thepass + 1)],
-                        append=True,
-                    )
-                    tide_io.writebidstsv(
-                        outputname + "_desc-oversampledmovingregressor_timeseries",
-                        tide_math.stdnormalize(resampref_y),
-                        oversampfreq,
-                        columns=["pass" + str(thepass + 1)],
-                        append=True,
-                    )
-                else:
-                    tide_io.writenpvecs(
-                        tide_math.stdnormalize(resampnonosref_y),
-                        outputname + nonosrefname,
-                    )
-                    tide_io.writenpvecs(
-                        tide_math.stdnormalize(resampref_y), outputname + osrefname
-                    )
+                # reinitialize lagtc for resampling
+                previousnormoutputdata = normoutputdata + 0.0
+                genlagtc = tide_resample.FastResampler(
+                    initial_fmri_x, normoutputdata, padtime=padtime
+                )
+                nonosrefname = "_reference_fmrires_pass" + str(thepass + 1) + ".txt"
+                osrefname = "_reference_resampres_pass" + str(thepass + 1) + ".txt"
+                (
+                    optiondict["kurtosis_reference_pass" + str(thepass + 1)],
+                    optiondict["kurtosisz_reference_pass" + str(thepass + 1)],
+                    optiondict["kurtosisp_reference_pass" + str(thepass + 1)],
+                ) = tide_stats.kurtosisstats(resampref_y)
+                if not stoprefining:
+                    if optiondict["bidsoutput"]:
+                        tide_io.writebidstsv(
+                            outputname + "_desc-movingregressor_timeseries",
+                            tide_math.stdnormalize(resampnonosref_y),
+                            1.0 / fmritr,
+                            columns=["pass" + str(thepass + 1)],
+                            append=True,
+                        )
+                        tide_io.writebidstsv(
+                            outputname + "_desc-oversampledmovingregressor_timeseries",
+                            tide_math.stdnormalize(resampref_y),
+                            oversampfreq,
+                            columns=["pass" + str(thepass + 1)],
+                            append=True,
+                        )
+                    else:
+                        tide_io.writenpvecs(
+                            tide_math.stdnormalize(resampnonosref_y),
+                            outputname + nonosrefname,
+                        )
+                        tide_io.writenpvecs(
+                            tide_math.stdnormalize(resampref_y), outputname + osrefname
+                        )
+            else:
+                print(f"refinement failed - terminating at end of pass {thepass}")
+                stoprefining = True
+                refinestopreason = "emptymask"
             timings.append(
                 [
                     "Regressor refinement end, pass " + str(thepass),
@@ -2313,6 +2338,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["actual_passes"] = optiondict["passes"]
     else:
         optiondict["actual_passes"] = thepass - 1
+    optiondict["refinestopreason"] = refinestopreason
 
     # Post refinement step -1 - Coherence calculation
     if optiondict["calccoherence"]:
@@ -2845,7 +2871,7 @@ def rapidtide_main(argparsingfunc):
                         names=["p_lt_" + thepvalnames[i] + "_mask"],
                     )
 
-    if optiondict["passes"] > 1:
+    if optiondict["passes"] > 1 and optiondict["refinestopreason"] != "emptymask":
         outmaparray[:] = 0.0
         outmaparray[validvoxels] = refinemask[:]
         if optiondict["textio"]:
