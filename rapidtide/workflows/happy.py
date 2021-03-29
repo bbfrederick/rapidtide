@@ -926,6 +926,15 @@ def happy_main(argparsingfunc):
 
     print("running version", infodict["release_version"], "on host", infodict["hostname"])
 
+    # construct the BIDS base dictionary
+    outputpath = os.path.dirname(infodict["outputroot"])
+    rawsources = [os.path.relpath(infodict["fmrifilename"], start=outputpath)]
+    bidsbasedict = {
+        "RawSources": rawsources,
+        "Units": "arbitrary",
+        "CommandLineArgs": args.commandline,
+    }
+
     # save the information file
     if args.saveinfoasjson:
         tide_io.writedicttojson(infodict, outputroot + "_info.json")
@@ -995,6 +1004,8 @@ def happy_main(argparsingfunc):
     if args.outputlevel > 0:
         if args.bidsoutput:
             maskfilename = outputroot + "_desc-processvoxels_mask"
+            bidsdict = bidsbasedict.copy()
+            tide_io.writedicttojson(bidsdict, maskfilename + ".json")
         else:
             maskfilename = outputroot + "_mask"
         tide_io.savetonifti(mask.reshape((xsize, ysize, numslices)), theheader, maskfilename)
@@ -1046,6 +1057,9 @@ def happy_main(argparsingfunc):
         if args.savemotionglmfilt:
             if args.bidsoutput:
                 motionfilteredfilename = outputroot + "_desc-motionfiltered_bold"
+                bidsdict = bidsbasedict.copy()
+                bidsdict["Units"] = "second"
+                tide_io.writedicttojson(bidsdict, motionfilteredfilename + ".json")
             else:
                 motionfilteredfilename = outputroot + "_motionfiltered"
             tide_io.savetonifti(
@@ -2211,6 +2225,13 @@ def happy_main(argparsingfunc):
                 normappfilename = outputroot + "_desc-normapp_info"
                 cinefilename = outputroot + "_desc-cine_info"
                 rawappfilename = outputroot + "_desc-rawapp_info"
+                bidsdict = bidsbasedict.copy()
+                bidsdict["Units"] = "second"
+                tide_io.writedicttojson(bidsdict, appfilename + ".json")
+                tide_io.writedicttojson(bidsdict, normappfilename + ".json")
+                tide_io.writedicttojson(bidsdict, cinefilename + ".json")
+                if args.outputlevel > 0:
+                    tide_io.writedicttojson(bidsdict, rawappfilename + ".json")
             else:
                 appfilename = outputroot + "_app"
                 normappfilename = outputroot + "_normapp"
@@ -2233,6 +2254,11 @@ def happy_main(argparsingfunc):
                 corrfuncfilename = outputroot + "_desc-corrfunc_info"
                 wavedelayfilename = outputroot + "_desc-wavedelay_map"
                 waveampfilename = outputroot + "_desc-waveamp_map"
+                bidsdict = bidsbasedict.copy()
+                tide_io.writedicttojson(bidsdict, waveampfilename + ".json")
+                bidsdict["Units"] = "second"
+                tide_io.writedicttojson(bidsdict, corrfuncfilename + ".json")
+                tide_io.writedicttojson(bidsdict, wavedelayfilename + ".json")
             else:
                 corrfuncfilename = outputroot + "_corrfunc"
                 wavedelayfilename = outputroot + "_wavedelay"
@@ -2284,6 +2310,9 @@ def happy_main(argparsingfunc):
             if thispass == numpasses - 1:
                 if args.bidsoutput:
                     maskedappfilename = outputroot + "_desc-maskedapp_info"
+                    bidsdict = bidsbasedict.copy()
+                    bidsdict["Units"] = "second"
+                    tide_io.writedicttojson(bidsdict, maskedappfilename + ".json")
                 else:
                     maskedappfilename = outputroot + "_maskedapp"
                 tide_io.savetonifti(
@@ -2322,6 +2351,14 @@ def happy_main(argparsingfunc):
                 maxphasefilename = outputroot + "_desc-maxphase_map"
                 arterymapfilename = outputroot + "_desc-arteries_map"
                 veinmapfilename = outputroot + "_desc-veins_map"
+                bidsdict = bidsbasedict.copy()
+                tide_io.writedicttojson(bidsdict, vesselmaskfilename + ".json")
+                if args.outputlevel > 0:
+                    tide_io.writedicttojson(bidsdict, arterymapfilename + ".json")
+                    tide_io.writedicttojson(bidsdict, veinmapfilename + ".json")
+                    bidsdict["Units"] = "radians"
+                    tide_io.writedicttojson(bidsdict, minphasefilename + ".json")
+                    tide_io.writedicttojson(bidsdict, maxphasefilename + ".json")
             else:
                 vesselmaskfilename = outputroot + "_vesselmask"
                 minphasefilename = outputroot + "_minphase"
