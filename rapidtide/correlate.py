@@ -42,7 +42,7 @@ pyfftw.interfaces.cache.enable()
 defaultbutterorder = 6
 MAXLINES = 10000000
 donotbeaggressive = True
-donotusenumba = False
+donotusenumba = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
 def conditionaljit():
