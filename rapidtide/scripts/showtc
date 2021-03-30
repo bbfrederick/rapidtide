@@ -250,8 +250,7 @@ def showtc(args):
     shortcolnames = True
     # read in all the data
     for i in range(0, len(args.textfilenames)):
-        thisfilename, thiscolspec = args.textfilenames[i].split(":")
-        print("filename ", i, thisfilename)
+        thisfilename = args.textfilenames[i].split(":")[0]
 
         # check file type
         (
@@ -262,6 +261,13 @@ def showtc(args):
             dummy,
             dummy,
         ) = tide_io.readvectorsfromtextfile(args.textfilenames[i], debug=args.debug)
+
+        if thissamplerate is None:
+            thissamplerate = samplerate
+
+        if thisstartoffset is None:
+            thisstartoffset = args.thestarttime
+
         if args.debug:
             print(f"file {args.textfilenames[i]} colnames: {colnames}")
 
