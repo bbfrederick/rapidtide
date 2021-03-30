@@ -20,7 +20,6 @@ import warnings
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 import argparse
-import os
 import sys
 
 import matplotlib.cm as cm
@@ -132,7 +131,7 @@ def _get_parser():
         metavar="START",
         type=float,
         help="Start plotting at START seconds.",
-        default=-1000000.0,
+        default=0.0,
     )
     parser.add_argument(
         "--endtime",
@@ -140,7 +139,7 @@ def _get_parser():
         metavar="END",
         type=float,
         help="Finish plotting at END seconds.",
-        default=1000000.0,
+        default=None,
     )
     parser.add_argument(
         "--numskip",
@@ -235,6 +234,8 @@ def showtc(args):
     useHamming = True
 
     # check range
+    if args.theendtime is None:
+        args.theendtime = 100000000.0
     if args.thestarttime >= args.theendtime:
         print("endtime must be greater then starttime;")
         sys.exit()
