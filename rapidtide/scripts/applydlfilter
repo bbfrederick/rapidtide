@@ -20,8 +20,6 @@ import argparse
 import os
 import sys
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.correlate as tide_corr
@@ -155,6 +153,12 @@ def main():
         _get_parser().print_help()
         raise
 
+    if args.display:
+        import matplotlib as mpl
+
+        mpl.use("TkAgg")
+        import matplotlib.pyplot as plt
+
     if args.filesarelists:
         infilenamelist = []
         with open(args.infilename, "r") as f:
@@ -227,5 +231,4 @@ def main():
 
 
 if __name__ == "__main__":
-    mpl.use("TkAgg")
     main()

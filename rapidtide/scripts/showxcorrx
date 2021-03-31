@@ -21,7 +21,6 @@ import sys
 
 import numpy as np
 import scipy as sp
-from matplotlib.pyplot import figure, legend, plot, show
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 
@@ -308,6 +307,12 @@ def main():
     args, theprefilter = pf.postprocessfilteropts(args)
     args = pf.postprocesssearchrangeopts(args)
     args = pf.postprocesstimerangeopts(args)
+
+    if args.display:
+        import matplotlib as mpl
+
+        mpl.use("TkAgg")
+        import matplotlib.pyplot as plt
 
     # Set the default samplerate if not set
     if args.samplerate == "auto":
@@ -769,7 +774,7 @@ def main():
     """
 
     if args.display:
-        fig = figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         thelegend = []
         if args.similaritymetric == "mutualinfo":
@@ -782,18 +787,18 @@ def main():
         ax.set_title("Similarity metric over the search range")
 
         if args.calccoherence:
-            fig = figure()
+            fig = plt.figure()
             ax = fig.add_subplot(111)
             # ax.plot(fC, Cxy, "b")
             ax.plot(fC, np.sqrt(np.abs(Cxy)) / np.max(np.sqrt(np.abs(Cxy))), "b")
             ax.set_title("Coherence")
         if args.calccsd:
-            fig = figure()
+            fig = plt.figure()
             ax = fig.add_subplot(111)
             ax.plot(fP, np.sqrt(np.abs(Pxy)) / np.max(np.sqrt(np.abs(Pxy))), "g")
             # plot(fP, np.angle(Pxy) / (2.0 * sp.pi * fP))
             ax.set_title("Cross-spectral density")
-        show()
+        plt.show()
 
     if args.similaritymetric == "correlation" and args.corroutputfile is not None:
         tide_io.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), args.corroutputfile)

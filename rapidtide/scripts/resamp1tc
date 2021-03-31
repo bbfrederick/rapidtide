@@ -18,7 +18,6 @@
 #
 import argparse
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.io as tide_io
@@ -83,6 +82,12 @@ def main():
         _get_parser().print_help()
         raise
 
+    if args.display:
+        import matplotlib as mpl
+
+        mpl.use("TkAgg")
+        import matplotlib.pyplot as plt
+
     intimestep = 1.0 / args.insamplerate
     outtimestep = 1.0 / args.outsamplerate
     (
@@ -103,15 +108,11 @@ def main():
     if len(out_t) < len(outputdata):
         outputdata = outputdata[0 : len(out_t)]
 
-    if args.display:
-        plt.plot(in_t, inputdata, "k")
-
     tide_io.writevec(outputdata, args.outputfile)
     if args.display:
+        plt.plot(in_t, inputdata, "k")
         plt.plot(out_t, outputdata, "r")
         plt.legend(("original signal", "resampled"))
-
-    if args.display:
         plt.show()
 
 

@@ -19,7 +19,6 @@
 import argparse
 import sys
 
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import skew
 
@@ -111,6 +110,12 @@ def main():
     except SystemExit:
         _get_parser().print_help()
         raise
+
+    if args.display:
+        import matplotlib as mpl
+
+        mpl.use("TkAgg")
+        import matplotlib.pyplot as plt
 
     Fs, starttime, dummy, plethdata, dummy, dummy = tide_io.readvectorsfromtextfile(
         args.infilename, onecol=True

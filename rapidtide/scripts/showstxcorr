@@ -19,7 +19,6 @@
 import argparse
 import sys
 
-import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
 import pandas as pd
@@ -210,6 +209,12 @@ def main():
     args, theprefilter = pf.postprocessfilteropts(args)
     args = pf.postprocesssearchrangeopts(args)
     args = pf.postprocesstimerangeopts(args)
+
+    if args.display:
+        import matplotlib as mpl
+
+        mpl.use("TkAgg")
+        import matplotlib.pyplot as plt
 
     # check that required arguments are set
     if args.samplerate == "auto":

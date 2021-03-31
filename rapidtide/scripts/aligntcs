@@ -19,7 +19,6 @@
 import argparse
 
 import numpy as np
-from matplotlib.pyplot import figure, plot, show
 
 import rapidtide.correlate as tide_corr
 import rapidtide.fit as tide_fit
@@ -86,6 +85,12 @@ def main():
     except SystemExit:
         parser.print_help()
         raise
+
+    if args.display:
+        import matplotlib as mpl
+
+        mpl.use("TkAgg")
+        import matplotlib.pyplot as plt
 
     args = pf.postprocesssearchrangeopts(args)
     args, theprefilter = pf.postprocessfilteropts(args)
@@ -162,16 +167,16 @@ def main():
     tide_io.writevec(aligneddata2, args.outputfile)
 
     if args.display:
-        fig = figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         # ax.set_title('GCC')
-        plot(xcorr_x, thexcorr, "k")
-        show()
-        fig = figure()
-        plot(timeaxis1, inputdata1)
-        plot(timeaxis1, aligneddata2)
-        plot()
-        show()
+        plt.plot(xcorr_x, thexcorr, "k")
+        plt.show()
+        fig = plt.figure()
+        plt.plot(timeaxis1, inputdata1)
+        plt.plot(timeaxis1, aligneddata2)
+        plt.plot()
+        plt.show()
 
 
 if __name__ == "__main__":
