@@ -1,0 +1,8 @@
+#!/bin/bash
+
+pixelcomp \
+    ../dst/sub-RAPIDTIDETEST_desc-maxtime_map.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_desc-corrfit_mask.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_desc-maxcorr_map.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_desc-corrfit_mask.nii.gz \
+    ../dst/pixelcompout --nodisplay
