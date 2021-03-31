@@ -1247,7 +1247,7 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
 
     if filetype == "text":
         # colspec can only be None or a list of integer ranges
-        thedata = readvecs(thefilename, colspec, alt=True)
+        thedata = readvecs(thefilename, colspec=colspec, alt=True, debug=debug)
         if onecol and thedata.shape[0] > 1:
             print("specify a single column from", thefilename)
             sys.exit()
@@ -1582,7 +1582,7 @@ def readcolfromtextfile(inputfilename):
         return inputdata[:, 0]
 
 
-def readvecs(inputfilename, colspec=None, numskip=0, alt=False):
+def readvecs(inputfilename, colspec=None, numskip=0, alt=False, debug=False):
     r"""
 
     Parameters
@@ -1596,10 +1596,11 @@ def readvecs(inputfilename, colspec=None, numskip=0, alt=False):
     if alt:
         dataarray = pd.read_table(inputfilename, header=None)
         if colspec is None:
-            numvecs = len(dataarray.columns)
-            collist = range(0, numvecs)
+            collist = range(len(dataarray.columns) - 1)
         else:
-            collist = colspectolist(colspec)
+            collist = colspectolist(colspec, debug=debug)
+        if debug:
+            print("using collist:", collist)
         if len(collist) > len(dataarray.columns):
             print("READVECS: too many columns requested - exiting")
             sys.exit()
@@ -1607,8 +1608,11 @@ def readvecs(inputfilename, colspec=None, numskip=0, alt=False):
             print("READVECS: requested column number", max(collist), "too large - exiting")
             sys.exit()
         numvals = len(dataarray[numskip:])
+        numvecs = len(collist)
         inputvec = np.zeros((numvecs, numvals), dtype="float64")
         outcol = 0
+        if debug:
+            print(f"numvals = {numvals}, numvecs = {numvecs}")
         for vecnum in collist:
             inputvec[outcol, :] = dataarray[vecnum][numskip:]
             outcol += 1
