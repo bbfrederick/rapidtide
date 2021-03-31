@@ -65,13 +65,6 @@ def _get_parser():
 
     # add optional arguments
     parser.add_argument(
-        "--nodisplay",
-        dest="display",
-        action="store_false",
-        help=("Do not plot the data (for noninteractive use)"),
-        default=True,
-    )
-    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
