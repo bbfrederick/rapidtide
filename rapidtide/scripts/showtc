@@ -263,6 +263,9 @@ def showtc(args):
             dummy,
         ) = tide_io.readvectorsfromtextfile(args.textfilenames[i], debug=args.debug)
 
+        if args.debug:
+            print("input data dimensions:", invecs.shape)
+
         if thissamplerate is None:
             thissamplerate = samplerate
 
