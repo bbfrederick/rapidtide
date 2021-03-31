@@ -1362,7 +1362,7 @@ def happy_main(argparsingfunc):
                             outputroot + "_desc-stdrescardfromfmri_timeseries",
                             normdlfilteredcard_stdres,
                             args.stdfreq,
-                            columns=["normcardiacfromfmri_dlfiltered" + str(args.stdfreq) + "Hz"],
+                            columns=["normcardiacfromfmri_dlfiltered_" + str(args.stdfreq) + "Hz"],
                             append=True,
                             debug=args.debug,
                         )
@@ -1370,7 +1370,7 @@ def happy_main(argparsingfunc):
                             outputroot + "_desc-stdrescardfromfmri_timeseries",
                             dlfilteredcard_stdres,
                             args.stdfreq,
-                            columns=["cardiacfromfmri_dlfiltered" + str(args.stdfreq) + "Hz"],
+                            columns=["cardiacfromfmri_dlfiltered_" + str(args.stdfreq) + "Hz"],
                             append=True,
                             debug=args.debug,
                         )
