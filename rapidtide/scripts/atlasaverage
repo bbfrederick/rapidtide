@@ -22,7 +22,6 @@ import sys
 import numpy as np
 
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.workflows.parser_funcs as pf
 
 
@@ -35,13 +34,16 @@ def summarize(thevoxels, method="mean"):
 
     if method == "mean":
         themethod = np.mean
+    elif method == "sum":
+        themethod = np.sum
     elif method == "median":
         themethod = np.median
     else:
-        print("illegal summary method in summarize")
+        print(f"illegal summary method {method} in summarize")
         sys.exit()
+
     if numtimepoints > 1:
-        regionsummary = np.nan_to_num(themethod(thevoxels, axis=1))
+        regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
     else:
         regionsummary = np.nan_to_num(themethod(thevoxels))
     return regionsummary
@@ -74,12 +76,11 @@ def _get_parser():
         type=str,
         choices=["none", "pct", "var", "std", "p2p"],
         help=(
-            "Normalization to apply to input timecourses. Choices are "
-            "are 'none' (no normalization, default), 'pct' (divide by mean, set mean to zero), "
-            "'var' (unit variance, zero mean), 'std' (unit standard deviation, zero mean), "
-            "'p2p' (unit range, zero mean)."
+            "Normalization to apply to input timecourses (in addition to demeaning) prior to "
+            "combining. Choices are 'none' (no normalization, default), 'pct' (divide by mean), "
+            "'var' (unit variance), 'std' (unit standard deviation), and 'p2p' (unit range)."
         ),
-        default=None,
+        default="none",
     )
     parser.add_argument(
         "--summarymethod",
@@ -87,8 +88,15 @@ def _get_parser():
         action="store",
         type=str,
         choices=["mean", "median"],
-        help=("Method to summarize a region.  Choices are 'mean' (default), and 'median'."),
-        default=None,
+        help=("Method to summarize a region.  Choices are 'mean' (default), 'median', and 'sum'."),
+        default="mean",
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Output additional debugging information.",
+        default=False,
     )
 
     return parser
@@ -115,7 +123,8 @@ def main():
 
     print("loading fmri data")
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.datafile)
-    print("loading template data")
+    if args.debug:
+        print("loading template data")
     (
         template_img,
         template_data,
@@ -140,10 +149,12 @@ def main():
     numregions = np.max(templatevoxels)
     timecourses = np.zeros((numregions, numtimepoints), dtype="float")
 
+    print("reshaped inputdata shape", inputvoxels.shape)
+
     if numtimepoints > 1:
         print("processing 4D input file")
         for theregion in range(1, numregions + 1):
-            theregionvoxels = inputvoxels[np.where(templatevoxels == theregion), :]
+            theregionvoxels = inputvoxels[np.where(templatevoxels == theregion)[0], :] + 0.0
             print(
                 "extracting",
                 theregionvoxels.shape[1],
@@ -152,25 +163,36 @@ def main():
                 "of",
                 numregions,
             )
-            if theregionvoxels.shape[1] > 0:
-                # regiontimecourse = np.nan_to_num(np.mean(theregionvoxels, axis=1))
-                regiontimecourse = summarize(theregioinvoxels, method=args.summarymethod)
-            else:
-                regiontimecourse = timecourses[0, :] * 0.0
+
+            # demean
+            themeans = np.mean(theregionvoxels, axis=1)
+            theregionvoxels -= themeans[:, None]
+
             if args.normmethod == "none":
-                timecourses[theregion - 1, :] = regiontimecourse - np.mean(regiontimecourse)
+                thenormfac = themeans * 0.0 + 1.0
             elif args.normmethod == "pct":
-                timecourses[theregion - 1, :] = tide_math.pcnormalize(regiontimecourse)
+                thenormfac = themeans
             elif args.normmethod == "var":
-                timecourses[theregion - 1, :] = tide_math.varnormalize(regiontimecourse)
+                thenormfac = np.var(theregionvoxels, axis=1)
             elif args.normmethod == "std":
-                timecourses[theregion - 1, :] = tide_math.stdnormalize(regiontimecourse)
+                thenormfac = np.std(theregionvoxels, axis=1)
             elif args.normmethod == "p2p":
-                timecourses[theregion - 1, :] = tide_math.ppnormalize(regiontimecourse)
+                thenormfac = np.max(theregionvoxels, axis=1) - np.min(theregionvoxels, axis=1)
             else:
-                print("illegal normalization method")
+                print("illegal normalization method", args.normmethod)
                 _get_parser().print_help()
                 raise
+            if args.debug:
+                print(theregionvoxels.shape, thenormfac.shape)
+            for theloc in range(theregionvoxels.shape[0]):
+                if thenormfac[theloc] != 0.0:
+                    theregionvoxels[theloc, :] /= thenormfac[theloc]
+            if theregionvoxels.shape[1] > 0:
+                timecourses[theregion - 1, :] = summarize(
+                    theregionvoxels, method=args.summarymethod
+                )
+        if args.debug:
+            print("timecourses shape:", timecourses.shape)
         tide_io.writenpvecs(timecourses, args.outputfile)
     else:
         print("processing 3D input file")
