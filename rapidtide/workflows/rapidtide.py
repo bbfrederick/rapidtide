@@ -408,11 +408,7 @@ def rapidtide_main(argparsingfunc):
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
             LGR.info(
-                "cifti file has",
-                timepoints,
-                "timepoints, ",
-                numspatiallocs,
-                "numspatiallocs",
+                f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs"
             )
             slicesize = numspatiallocs
         else:
@@ -671,14 +667,14 @@ def rapidtide_main(argparsingfunc):
     LGR.info("validvoxels shape =", numvalidspatiallocs)
     fmri_data_valid = fmri_data[validvoxels, :] + 0.0
     LGR.info(
-        f"original size = {np.shape(fmri_data)}, " f"trimmed size = {np.shape(fmri_data_valid)}"
+        f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}"
     )
     if internalglobalmeanincludemask is not None:
         internalglobalmeanincludemask_valid = 1.0 * internalglobalmeanincludemask[validvoxels]
         del internalglobalmeanincludemask
         LGR.info(
-            "internalglobalmeanincludemask_valid has size:",
-            internalglobalmeanincludemask_valid.size,
+            "internalglobalmeanincludemask_valid has size: "
+            f"{internalglobalmeanincludemask_valid.size}"
         )
     else:
         internalglobalmeanincludemask_valid = None
@@ -686,8 +682,8 @@ def rapidtide_main(argparsingfunc):
         internalglobalmeanexcludemask_valid = 1.0 * internalglobalmeanexcludemask[validvoxels]
         del internalglobalmeanexcludemask
         LGR.info(
-            "internalglobalmeanexcludemask_valid has size:",
-            internalglobalmeanexcludemask_valid.size,
+            "internalglobalmeanexcludemask_valid has size: "
+            f"{internalglobalmeanexcludemask_valid.size}"
         )
     else:
         internalglobalmeanexcludemask_valid = None
@@ -695,8 +691,8 @@ def rapidtide_main(argparsingfunc):
         internalrefineincludemask_valid = 1.0 * internalrefineincludemask[validvoxels]
         del internalrefineincludemask
         LGR.info(
-            "internalrefineincludemask_valid has size:",
-            internalrefineincludemask_valid.size,
+            "internalrefineincludemask_valid has size: "
+            f"{internalrefineincludemask_valid.size}"
         )
     else:
         internalrefineincludemask_valid = None
@@ -704,8 +700,8 @@ def rapidtide_main(argparsingfunc):
         internalrefineexcludemask_valid = 1.0 * internalrefineexcludemask[validvoxels]
         del internalrefineexcludemask
         LGR.info(
-            "internalrefineexcludemask_valid has size:",
-            internalrefineexcludemask_valid.size,
+            "internalrefineexcludemask_valid has size: "
+            f"{internalrefineexcludemask_valid.size}"
         )
     else:
         internalrefineexcludemask_valid = None
@@ -838,8 +834,8 @@ def rapidtide_main(argparsingfunc):
         inputfreq = optiondict["inputfreq"]
         inputstarttime = optiondict["inputstarttime"]
         if inputfreq is None:
-            LGR.warning("no regressor frequency specified - defaulting to 1/tr")
             inputfreq = 1.0 / fmritr
+            LGR.warning(f"no regressor frequency specified - defaulting to {inputfreq} (1/tr)")
         if inputstarttime is None:
             LGR.warning("no regressor start time specified - defaulting to 0.0")
             inputstarttime = 0.0
@@ -904,7 +900,7 @@ def rapidtide_main(argparsingfunc):
     if os_fmri_x[0] < reference_x[0]:
         LGR.warning(
             f"WARNING: extrapolating {os_fmri_x[0] - reference_x[0]} "
-            "seconds of data at beginning of timecourse",
+            "seconds of data at beginning of timecourse"
         )
     if os_fmri_x[-1] > reference_x[-1]:
         LGR.warning(
@@ -1135,7 +1131,7 @@ def rapidtide_main(argparsingfunc):
     LGR.verbose(f"corrorigin at point {corrorigin} {corrscale[corrorigin]}")
     LGR.verbose(
         f"corr range from {corrorigin - lagmininpts} ({corrscale[corrorigin - lagmininpts]}) "
-        f"to {corrorigin + lagmaxinpts} ({corrscale[corrorigin + lagmaxinpts]})",
+        f"to {corrorigin + lagmaxinpts} ({corrscale[corrorigin + lagmaxinpts]})"
     )
 
     if optiondict["savecorrtimes"]:
@@ -3058,7 +3054,7 @@ def rapidtide_main(argparsingfunc):
         timings, outputfile=outputname + "_runtimings.txt", extraheader=nodeline
     )
     optiondict["totalruntime"] = timings[-1][1] - timings[0][1]
-    optiondict["maxrss"] = tide_util.logmem("status", file=None).split(",")[1]
+    tide_util.logmem("status")
 
     # do a final save of the options file
     if optiondict["bidsoutput"]:
