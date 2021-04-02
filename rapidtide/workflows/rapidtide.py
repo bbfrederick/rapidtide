@@ -19,6 +19,7 @@
 import bisect
 import copy
 import gc
+import logging
 import multiprocessing as mp
 import os
 import platform
@@ -52,6 +53,7 @@ import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.wiener as tide_wiener
 from rapidtide.tests.utils import mse
+from .utils import setup_logger
 
 try:
     import mkl
@@ -66,6 +68,9 @@ try:
     memprofilerexists = True
 except ImportError:
     memprofilerexists = False
+
+LGR = logging.getLogger(__name__)
+TimingLGR = logging.getLogger("TIMING")
 
 
 def conditionalprofile():
@@ -90,7 +95,7 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
         if theshape[1] == len(timeaxis):
             maskvector = np.where(inputdata[0, :] > 0.0, 1.0, 0.0)
         else:
-            print("tmask length does not match fmri data")
+            LGR.error("tmask length does not match fmri data")
             sys.exit(1)
     else:
         maskvector *= 0.0
@@ -100,7 +105,7 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
             startindex = np.max((bisect.bisect_left(timeaxis, starttime), 0))
             endindex = np.min((bisect.bisect_right(timeaxis, endtime), len(maskvector) - 1))
             maskvector[startindex:endindex] = 1.0
-            print(starttime, startindex, endtime, endindex)
+            LGR.info(starttime, startindex, endtime, endindex)
     if debug:
         fig = figure()
         ax = fig.add_subplot(111)
@@ -148,25 +153,25 @@ def readamask(
     verbose=False,
 ):
     if verbose:
-        print("readamask called with filename:", maskfilename, "vals:", valslist)
+        LGR.info(f"readamask called with filename: {maskfilename} vals: {valslist}")
     if istext:
         maskarray = tide_io.readvecs(maskfilename).astype("int16")
         theshape = np.shape(maskarray)
         theincludexsize = theshape[0]
         if not theincludexsize == xsize:
-            print("Dimensions of " + maskname + " mask do not match the fmri data - exiting")
+            LGR.error(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
             sys.exit()
     else:
         themask, maskarray, mask_hdr, maskdims, masksizes = tide_io.readfromnifti(maskfilename)
         maskarray = np.round(maskarray, 0).astype("int16")
         if not tide_io.checkspacematch(mask_hdr, nim_hdr):
-            print("Dimensions of " + maskname + " mask do not match the fmri data - exiting")
+            LGR.error(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
             sys.exit()
     if valslist is not None:
         tempmask = (0 * maskarray).astype("int16")
         for theval in valslist:
             if verbose:
-                print("looking for voxels matching", theval)
+                LGR.info(f"looking for voxels matching {theval}")
             tempmask[np.where(np.fabs(maskarray - theval) < 0.1)] += 1
         maskarray = np.where(tempmask > 0, 1, 0)
     return maskarray
@@ -188,8 +193,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
     thesize = np.shape(themask)
     numvoxelsused = int(np.sum(np.where(themask > 0.0, 1, 0)))
     selectedvoxels = indata[np.where(themask > 0.0), :][0]
-    print()
-    print("constructing global mean signal using", optiondict["globalsignalmethod"])
+    LGR.info(f"constructing global mean signal using {optiondict['globalsignalmethod']}")
     if optiondict["globalsignalmethod"] == "sum":
         globalmean = np.sum(selectedvoxels, axis=0)
     elif optiondict["globalsignalmethod"] == "meanscale":
@@ -203,12 +207,12 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
             thefit = PCA(n_components=pcacomponents).fit(selectedvoxels)
         except ValueError:
             if pcacomponents == "mle":
-                print("mle estimation failed - falling back to pcacomponents=0.8")
+                LGR.warning("mle estimation failed - falling back to pcacomponents=0.8")
                 thefit = PCA(n_components=0.8).fit(selectedvoxels)
             else:
-                print("unhandled math exception in PCA refinement - exiting")
+                LGR.warning("unhandled math exception in PCA refinement - exiting")
                 sys.exit()
-        print(
+        LGR.info(
             "Using ",
             len(thefit.components_),
             " components, accounting for ",
@@ -216,15 +220,15 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
                 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
             ),
         )
-    print("used ", numvoxelsused, " voxels to calculate global mean signal")
+    LGR.info("used ", numvoxelsused, " voxels to calculate global mean signal")
     return tide_math.stdnormalize(globalmean), themask
 
 
-def addmemprofiling(thefunc, memprofile, memfile, themessage):
+def addmemprofiling(thefunc, memprofile, themessage):
     if memprofile:
         return profile(thefunc, precision=2)
     else:
-        tide_util.logmem(themessage, file=memfile)
+        tide_util.logmem(themessage)
         return thefunc
 
 
@@ -278,6 +282,16 @@ def rapidtide_main(argparsingfunc):
     outputname = optiondict["outputname"]
     filename = optiondict["regressorfile"]
 
+    # Set up loggers for workflow
+    setup_logger(
+        logger_filename=f"{outputname}_log.txt",
+        timing_filename=f"{outputname}_runtimings.tsv",
+        memory_filename=f"{outputname}_memusage.tsv",
+        verbose=optiondict["verbose"],
+        debug=optiondict["debug"],
+    )
+    TimingLGR.info("Start")
+
     # construct the BIDS base dictionary
     outputpath = os.path.dirname(optiondict["outputname"])
     rawsources = [os.path.relpath(optiondict["in_file"], start=outputpath)]
@@ -289,12 +303,12 @@ def rapidtide_main(argparsingfunc):
         "CommandLineArgs": optiondict["commandlineargs"],
     }
 
-    timings.append(["Argument parsing done", time.time(), None, None])
+    TimingLGR.info("Argument parsing done")
 
     # don't use shared memory if there is only one process
     if (optiondict["nprocs"] == 1) and not optiondict["alwaysmultiproc"]:
         optiondict["sharedmem"] = False
-        print("running single process - disabled shared memory use")
+        LGR.info("running single process - disabled shared memory use")
 
     # disable numba now if we're going to do it (before any jits)
     if optiondict["nonumba"]:
@@ -303,21 +317,21 @@ def rapidtide_main(argparsingfunc):
     # set the internal precision
     global rt_floatset, rt_floattype
     if optiondict["internalprecision"] == "double":
-        print("setting internal precision to double")
+        LGR.info("setting internal precision to double")
         rt_floattype = "float64"
         rt_floatset = np.float64
     else:
-        print("setting internal precision to single")
+        LGR.info("setting internal precision to single")
         rt_floattype = "float32"
         rt_floatset = np.float32
 
     # set the output precision
     if optiondict["outputprecision"] == "double":
-        print("setting output precision to double")
+        LGR.info("setting output precision to double")
         rt_outfloattype = "float64"
         rt_outfloatset = np.float64
     else:
-        print("setting output precision to single")
+        LGR.info("setting output precision to single")
         rt_outfloattype = "float32"
         rt_outfloatset = np.float32
 
@@ -354,19 +368,18 @@ def rapidtide_main(argparsingfunc):
     if mklexists:
         mkl.set_num_threads(optiondict["mklthreads"])
 
-    # open up the memory usage file
+    # Generate MemoryLGR output file with column names
     if not optiondict["memprofile"]:
-        memfile = open(outputname + "_memusage.csv", "w")
-        tide_util.logmem(None, file=memfile)
+        tide_util.logmem()
 
     # open the fmri datafile
-    tide_util.logmem("before reading in fmri data", file=memfile)
+    tide_util.logmem("before reading in fmri data")
     if tide_io.checkiftext(fmrifilename):
-        print("input file is text - all I/O will be to text files")
+        LGR.info("input file is text - all I/O will be to text files")
         optiondict["textio"] = True
         if optiondict["gausssigma"] > 0.0:
             optiondict["gausssigma"] = 0.0
-            print("gaussian spatial filter disabled for text input files")
+            LGR.info("gaussian spatial filter disabled for text input files")
     else:
         optiondict["textio"] = False
 
@@ -384,7 +397,7 @@ def rapidtide_main(argparsingfunc):
     else:
         fileiscifti = tide_io.checkifcifti(fmrifilename)
         if fileiscifti:
-            print("input file is CIFTI")
+            LGR.info("input file is CIFTI")
             (
                 cifti,
                 cifti_hdr,
@@ -397,7 +410,7 @@ def rapidtide_main(argparsingfunc):
             optiondict["isgrayordinate"] = True
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
-            print(
+            LGR.info(
                 "cifti file has",
                 timepoints,
                 "timepoints, ",
@@ -406,14 +419,14 @@ def rapidtide_main(argparsingfunc):
             )
             slicesize = numspatiallocs
         else:
-            print("input file is NIFTI")
+            LGR.info("input file is NIFTI")
             nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
             optiondict["isgrayordinate"] = False
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
             slicesize = numspatiallocs / int(numslices)
         xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
-    tide_util.logmem("after reading in fmri data", file=memfile)
+    tide_util.logmem("after reading in fmri data")
 
     # correct some fields if necessary
     if fileiscifti:
@@ -421,7 +434,7 @@ def rapidtide_main(argparsingfunc):
     else:
         if optiondict["textio"]:
             if optiondict["realtr"] <= 0.0:
-                print("for text file data input, you must use the -t option to set the timestep")
+                LGR.info("for text file data input, you must use the -t option to set the timestep")
                 sys.exit()
         else:
             if nim_hdr.get_xyzt_units()[1] == "msec":
@@ -434,19 +447,12 @@ def rapidtide_main(argparsingfunc):
     # check to see if we need to adjust the oversample factor
     if optiondict["oversampfactor"] < 0:
         optiondict["oversampfactor"] = int(np.max([np.ceil(fmritr / 0.5), 1]))
-        print("oversample factor set to", optiondict["oversampfactor"])
+        LGR.info(f"oversample factor set to {optiondict['oversampfactor']}")
 
     oversamptr = fmritr / optiondict["oversampfactor"]
-    if optiondict["verbose"]:
-        print(
-            "fmri data: ",
-            timepoints,
-            " timepoints, tr = ",
-            fmritr,
-            ", oversamptr =",
-            oversamptr,
-        )
-    print(numspatiallocs, " spatial locations, ", timepoints, " timepoints")
+    LGR.verbose(f"fmri data: {timepoints} timepoints, tr = {fmritr}, oversamptr = {oversamptr}")
+    LGR.info(f"{numspatiallocs} spatial locations, {timepoints} timepoints")
+    TimingLGR.info("Finish reading fmrifile")
     timings.append(["Finish reading fmrifile", time.time(), None, None])
 
     # if the user has specified start and stop points, limit check, then use these numbers
@@ -454,17 +460,13 @@ def rapidtide_main(argparsingfunc):
         timepoints, optiondict["startpoint"], optiondict["endpoint"]
     )
     if abs(optiondict["lagmin"]) > (validend - validstart + 1) * fmritr / 2.0:
-        print(
-            "magnitude of lagmin exceeds",
-            (validend - validstart + 1) * fmritr / 2.0,
-            " - invalid",
+        LGR.warning(
+            f"magnitude of lagmin exceeds {(validend - validstart + 1) * fmritr / 2.0} - invalid"
         )
         sys.exit()
     if abs(optiondict["lagmax"]) > (validend - validstart + 1) * fmritr / 2.0:
-        print(
-            "magnitude of lagmax exceeds",
-            (validend - validstart + 1) * fmritr / 2.0,
-            " - invalid",
+        LGR.warning(
+            f"magnitude of lagmax exceeds {(validend - validstart + 1) * fmritr / 2.0} - invalid"
         )
         sys.exit()
 
@@ -473,13 +475,9 @@ def rapidtide_main(argparsingfunc):
         # set gausssigma automatically
         optiondict["gausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
     if optiondict["gausssigma"] > 0.0:
-        print(
-            "applying gaussian spatial filter to timepoints ",
-            validstart,
-            " to ",
-            validend,
-            " with sigma=",
-            optiondict["gausssigma"],
+        LGR.info(
+            f"applying gaussian spatial filter to timepoints {validstart} "
+            f"to {validend} with sigma={optiondict['gausssigma']}"
         )
         reportstep = 10
         for i in range(validstart, validend + 1):
@@ -496,8 +494,8 @@ def rapidtide_main(argparsingfunc):
                 optiondict["gausssigma"],
                 nim_data[:, :, :, i],
             )
+        TimingLGR.info("End 3D smoothing")
         timings.append(["End 3D smoothing", time.time(), None, None])
-        print()
 
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
@@ -506,21 +504,22 @@ def rapidtide_main(argparsingfunc):
     # detect zero mean data
     optiondict["dataiszeromean"] = checkforzeromean(fmri_data)
     if optiondict["dataiszeromean"]:
-        print(
-            "WARNING: dataset is zero mean - forcing variance masking and no refine prenormalization.  Consider specifying a global mean and correlation mask."
+        LGR.warning(
+            "WARNING: dataset is zero mean - forcing variance masking and no refine prenormalization. "
+            "Consider specifying a global mean and correlation mask."
         )
         optiondict["refineprenorm"] = "None"
         optiondict["globalmaskmethod"] = "variance"
 
     # read in the optional masks
-    tide_util.logmem("before setting masks", file=memfile)
+    tide_util.logmem("before setting masks")
     internalglobalmeanincludemask = None
     internalglobalmeanexcludemask = None
     internalrefineincludemask = None
     internalrefineexcludemask = None
 
     if optiondict["globalmeanincludename"] is not None:
-        print("constructing global mean include mask")
+        LGR.info("constructing global mean include mask")
         theglobalmeanincludemask = readamask(
             optiondict["globalmeanincludename"],
             nim_hdr,
@@ -531,11 +530,11 @@ def rapidtide_main(argparsingfunc):
         )
         internalglobalmeanincludemask = theglobalmeanincludemask.reshape(numspatiallocs)
         if tide_stats.getmasksize(internalglobalmeanincludemask) == 0:
-            print("ERROR: there are no voxels in the global mean include mask - exiting")
+            LGR.error("ERROR: there are no voxels in the global mean include mask - exiting")
             sys.exit()
 
     if optiondict["globalmeanexcludename"] is not None:
-        print("constructing global mean exclude mask")
+        LGR.info("constructing global mean exclude mask")
         theglobalmeanexcludemask = readamask(
             optiondict["globalmeanexcludename"],
             nim_hdr,
@@ -546,7 +545,7 @@ def rapidtide_main(argparsingfunc):
         )
         internalglobalmeanexcludemask = theglobalmeanexcludemask.reshape(numspatiallocs)
         if tide_stats.getmasksize(internalglobalmeanexcludemask) == numspatiallocs:
-            print("ERROR: the global mean exclude mask does not leave any voxels - exiting")
+            LGR.error("ERROR: the global mean exclude mask does not leave any voxels - exiting")
             sys.exit()
 
     if (internalglobalmeanincludemask is not None) and (internalglobalmeanexcludemask is not None):
@@ -556,13 +555,13 @@ def rapidtide_main(argparsingfunc):
             )
             == 0
         ):
-            print(
+            LGR.error(
                 "ERROR: the global mean include and exclude masks not leave any voxels between them - exiting"
             )
             sys.exit()
 
     if optiondict["refineincludename"] is not None:
-        print("constructing refine include mask")
+        LGR.info("constructing refine include mask")
         therefineincludemask = readamask(
             optiondict["refineincludename"],
             nim_hdr,
@@ -573,11 +572,11 @@ def rapidtide_main(argparsingfunc):
         )
         internalrefineincludemask = therefineincludemask.reshape(numspatiallocs)
         if tide_stats.getmasksize(internalrefineincludemask) == 0:
-            print("ERROR: there are no voxels in the refine include mask - exiting")
+            LGR.error("ERROR: there are no voxels in the refine include mask - exiting")
             sys.exit()
 
     if optiondict["refineexcludename"] is not None:
-        print("constructing refine exclude mask")
+        LGR.info("constructing refine exclude mask")
         therefineexcludemask = readamask(
             optiondict["refineexcludename"],
             nim_hdr,
@@ -588,15 +587,15 @@ def rapidtide_main(argparsingfunc):
         )
         internalrefineexcludemask = therefineexcludemask.reshape(numspatiallocs)
         if tide_stats.getmasksize(internalrefineexcludemask) == numspatiallocs:
-            print("ERROR: the refine exclude mask does not leave any voxels - exiting")
+            LGR.error("ERROR: the refine exclude mask does not leave any voxels - exiting")
             sys.exit()
 
-    tide_util.logmem("after setting masks", file=memfile)
+    tide_util.logmem("after setting masks")
 
     # read or make a mask of where to calculate the correlations
-    tide_util.logmem("before selecting valid voxels", file=memfile)
+    tide_util.logmem("before selecting valid voxels")
     threshval = tide_stats.getfracvals(fmri_data[:, :], [0.98])[0] / 25.0
-    print("constructing correlation mask")
+    LGR.info("constructing correlation mask")
     if optiondict["corrmaskincludename"] is not None:
         thecorrmask = readamask(
             optiondict["corrmaskincludename"],
@@ -616,15 +615,15 @@ def rapidtide_main(argparsingfunc):
             corrmask = np.uint(nim_data[:, 0] * 0 + 1)
         else:
             if np.mean(stdim) < np.mean(meanim):
-                print("generating correlation mask from mean image")
+                LGR.info("generating correlation mask from mean image")
                 corrmask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
             else:
-                print("generating correlation mask from std image")
+                LGR.info("generating correlation mask from std image")
                 corrmask = np.uint16(
                     tide_stats.makemask(stdim, threshpct=optiondict["corrmaskthreshpct"])
                 )
     if tide_stats.getmasksize(corrmask) == 0:
-        print("ERROR: there are no voxels in the correlation mask - exiting")
+        LGR.error("ERROR: there are no voxels in the correlation mask - exiting")
         sys.exit()
     optiondict["corrmasksize"] = tide_stats.getmasksize(corrmask)
     if internalrefineincludemask is not None:
@@ -635,20 +634,20 @@ def rapidtide_main(argparsingfunc):
                 )
                 == 0
             ):
-                print(
+                LGR.error(
                     "ERROR: the refine include and exclude masks not leave any voxels in the corrmask - exiting"
                 )
                 sys.exit()
         else:
             if tide_stats.getmasksize(corrmask * internalrefineincludemask) == 0:
-                print(
+                LGR.error(
                     "ERROR: the refine include mask does not leave any voxels in the corrmask - exiting"
                 )
                 sys.exit()
     else:
         if internalrefineexcludemask is not None:
             if tide_stats.getmasksize(corrmask * (1 - internalrefineexcludemask)) == 0:
-                print(
+                LGR.error(
                     "ERROR: the refine exclude mask does not leave any voxels in the corrmask - exiting"
                 )
                 sys.exit()
@@ -667,22 +666,19 @@ def rapidtide_main(argparsingfunc):
             savename = outputname + "_corrmask"
         tide_io.savetonifti(corrmask.reshape(xsize, ysize, numslices), theheader, savename)
 
-    if optiondict["verbose"]:
-        print("image threshval =", threshval)
+    LGR.verbose(f"image threshval = {threshval}")
     validvoxels = np.where(corrmask > 0)[0]
     numvalidspatiallocs = np.shape(validvoxels)[0]
-    print("validvoxels shape =", numvalidspatiallocs)
+    LGR.info("validvoxels shape =", numvalidspatiallocs)
     fmri_data_valid = fmri_data[validvoxels, :] + 0.0
-    print(
-        "original size =",
-        np.shape(fmri_data),
-        ", trimmed size =",
-        np.shape(fmri_data_valid),
+    LGR.info(
+        f"original size = {np.shape(fmri_data)}, "
+        f"trimmed size = {np.shape(fmri_data_valid)}"
     )
     if internalglobalmeanincludemask is not None:
         internalglobalmeanincludemask_valid = 1.0 * internalglobalmeanincludemask[validvoxels]
         del internalglobalmeanincludemask
-        print(
+        LGR.info(
             "internalglobalmeanincludemask_valid has size:",
             internalglobalmeanincludemask_valid.size,
         )
@@ -691,7 +687,7 @@ def rapidtide_main(argparsingfunc):
     if internalglobalmeanexcludemask is not None:
         internalglobalmeanexcludemask_valid = 1.0 * internalglobalmeanexcludemask[validvoxels]
         del internalglobalmeanexcludemask
-        print(
+        LGR.info(
             "internalglobalmeanexcludemask_valid has size:",
             internalglobalmeanexcludemask_valid.size,
         )
@@ -700,7 +696,7 @@ def rapidtide_main(argparsingfunc):
     if internalrefineincludemask is not None:
         internalrefineincludemask_valid = 1.0 * internalrefineincludemask[validvoxels]
         del internalrefineincludemask
-        print(
+        LGR.info(
             "internalrefineincludemask_valid has size:",
             internalrefineincludemask_valid.size,
         )
@@ -709,34 +705,34 @@ def rapidtide_main(argparsingfunc):
     if internalrefineexcludemask is not None:
         internalrefineexcludemask_valid = 1.0 * internalrefineexcludemask[validvoxels]
         del internalrefineexcludemask
-        print(
+        LGR.info(
             "internalrefineexcludemask_valid has size:",
             internalrefineexcludemask_valid.size,
         )
     else:
         internalrefineexcludemask_valid = None
-    tide_util.logmem("after selecting valid voxels", file=memfile)
+    tide_util.logmem("after selecting valid voxels")
 
     # move fmri_data_valid into shared memory
     if optiondict["sharedmem"]:
-        print("moving fmri data to shared memory")
+        LGR.info("moving fmri data to shared memory")
         timings.append(["Start moving fmri_data to shared memory", time.time(), None, None])
         numpy2shared_func = addmemprofiling(
-            numpy2shared, optiondict["memprofile"], memfile, "before fmri data move"
+            numpy2shared, optiondict["memprofile"], "before fmri data move"
         )
         fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
         timings.append(["End moving fmri_data to shared memory", time.time(), None, None])
 
     # get rid of memory we aren't using
-    tide_util.logmem("before purging full sized fmri data", file=memfile)
+    tide_util.logmem("before purging full sized fmri data")
     del fmri_data
     del nim_data
     gc.collect()
-    tide_util.logmem("after purging full sized fmri data", file=memfile)
+    tide_util.logmem("after purging full sized fmri data")
 
     # filter out motion regressors here
     if optiondict["motionfilename"] is not None:
-        print("regressing out motion")
+        LGR.info("regressing out motion")
 
         timings.append(["Motion filtering start", time.time(), None, None])
         (motionregressors, motionregressorlabels, fmri_data_valid,) = tide_glmpass.motionregress(
@@ -764,7 +760,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict["memprofile"]:
             memcheckpoint("...done")
         else:
-            tide_util.logmem("after motion glm filter", file=memfile)
+            tide_util.logmem("after motion glm filter")
 
         if optiondict["savemotionfiltered"]:
             outfmriarray = np.zeros((numspatiallocs, validtimepoints), dtype=rt_floattype)
@@ -788,7 +784,7 @@ def rapidtide_main(argparsingfunc):
     # read in the timecourse to resample
     timings.append(["Start of reference prep", time.time(), None, None])
     if filename is None:
-        print("no regressor file specified - will use the global mean regressor")
+        LGR.info("no regressor file specified - will use the global mean regressor")
         optiondict["useglobalref"] = True
 
     # calculate the global mean whether we intend to use it or not
@@ -806,7 +802,7 @@ def rapidtide_main(argparsingfunc):
 
     # now set the regressor that we'll use
     if optiondict["useglobalref"]:
-        print("using global mean as probe regressor")
+        LGR.info("using global mean as probe regressor")
         inputfreq = meanfreq
         inputperiod = meanperiod
         inputstarttime = meanstarttime
@@ -840,30 +836,29 @@ def rapidtide_main(argparsingfunc):
 
         optiondict["preprocskip"] = 0
     else:
-        print("using externally supplied probe regressor")
+        LGR.info("using externally supplied probe regressor")
         inputfreq = optiondict["inputfreq"]
         inputstarttime = optiondict["inputstarttime"]
         if inputfreq is None:
-            print("no regressor frequency specified - defaulting to 1/tr")
+            LGR.warning("no regressor frequency specified - defaulting to 1/tr")
             inputfreq = 1.0 / fmritr
         if inputstarttime is None:
-            print("no regressor start time specified - defaulting to 0.0")
+            LGR.warning("no regressor start time specified - defaulting to 0.0")
             inputstarttime = 0.0
         inputperiod = 1.0 / inputfreq
         inputvec = tide_io.readvec(filename)
     numreference = len(inputvec)
     optiondict["inputfreq"] = inputfreq
     optiondict["inputstarttime"] = inputstarttime
-    print(
+    LGR.info(
         "Regressor start time, end time, and step: {:.3f}, {:.3f}, {:.3f}".format(
             -inputstarttime, inputstarttime + numreference * inputperiod, inputperiod
         )
     )
-    if optiondict["verbose"]:
-        print("Input vector")
-        print("\tlength: {:d}".format(len(inputvec)))
-        print("\tinput freq: {:d}".format(inputfreq))
-        print("\tinput start time: {:.3f}".format(inputstarttime))
+    LGR.verbose("Input vector")
+    LGR.verbose(f"length: {len(inputvec)}")
+    LGR.verbose(f"input freq: {inputfreq}")
+    LGR.verbose(f"input start time: {inputstarttime:.3f}")
 
     if not optiondict["useglobalref"]:
         globalcorrx, globalcorry, dummy, dummy = tide_corr.arbcorr(
@@ -875,24 +870,23 @@ def rapidtide_main(argparsingfunc):
             optiondict["offsettime_total"] = synctime
     else:
         synctime = 0.0
-    print("synctime is", synctime)
+    LGR.info(f"synctime is {synctime}")
 
     reference_x = np.arange(0.0, numreference) * inputperiod - (
         inputstarttime - optiondict["offsettime"]
     )
-    print("total probe regressor offset is", inputstarttime + optiondict["offsettime"])
+    LGR.info(f"total probe regressor offset is {inputstarttime + optiondict['offsettime']}")
 
     # Print out initial information
-    if optiondict["verbose"]:
-        print("there are ", numreference, " points in the original regressor")
-        print("the timepoint spacing is ", 1.0 / inputfreq)
-        print("the input timecourse start time is ", inputstarttime)
+    LGR.verbose(f"there are {numreference} points in the original regressor")
+    LGR.verbose(f"the timepoint spacing is {1.0 / inputfreq}")
+    LGR.verbose(f"the input timecourse start time is {inputstarttime}")
 
     # generate the time axes
     fmrifreq = 1.0 / fmritr
     optiondict["fmrifreq"] = fmrifreq
     skiptime = fmritr * (optiondict["preprocskip"])
-    print("first fMRI point is at ", skiptime, " seconds relative to time origin")
+    LGR.info(f"first fMRI point is at {skiptime} seconds relative to time origin")
     initial_fmri_x = np.arange(0.0, validtimepoints) * fmritr + skiptime
     os_fmri_x = (
         np.arange(
@@ -903,24 +897,21 @@ def rapidtide_main(argparsingfunc):
         + skiptime
     )
 
-    if optiondict["verbose"]:
-        print(np.shape(os_fmri_x)[0])
-        print(np.shape(initial_fmri_x)[0])
+    LGR.verbose(f"os_fmri_x dim-0 shape: {np.shape(os_fmri_x)[0]}")
+    LGR.verbose(f"initial_fmri_x dim-0 shape: {np.shape(initial_fmri_x)[0]}")
 
     # generate the comparison regressor from the input timecourse
     # correct the output time points
     # check for extrapolation
     if os_fmri_x[0] < reference_x[0]:
-        print(
-            "WARNING: extrapolating ",
-            os_fmri_x[0] - reference_x[0],
-            " seconds of data at beginning of timecourse",
+        LGR.warning(
+            f"WARNING: extrapolating {os_fmri_x[0] - reference_x[0]} "
+            "seconds of data at beginning of timecourse",
         )
     if os_fmri_x[-1] > reference_x[-1]:
-        print(
-            "WARNING: extrapolating ",
-            os_fmri_x[-1] - reference_x[-1],
-            " seconds of data at end of timecourse",
+        LGR.warning(
+            f"WARNING: extrapolating {os_fmri_x[-1] - reference_x[-1]} "
+            "seconds of data at end of timecourse"
         )
 
     # invert the regressor if necessary
@@ -953,7 +944,7 @@ def rapidtide_main(argparsingfunc):
         tide_io.writenpvecs(reference_y, outputname + "_reference_origres_prefilt.txt")
 
     # band limit the regressor if that is needed
-    print("filtering to ", theprefilter.gettype(), " band")
+    LGR.info(f"filtering to {theprefilter.gettype()} band")
     (
         optiondict["lowerstop"],
         optiondict["lowerpass"],
@@ -980,8 +971,7 @@ def rapidtide_main(argparsingfunc):
 
     # filter the input data for antialiasing
     if optiondict["antialias"]:
-        if optiondict["debug"]:
-            print("applying trapezoidal antialiasing filter")
+        LGR.debug("applying trapezoidal antialiasing filter")
         reference_y_filt = tide_filt.dolptrapfftfilt(
             inputfreq,
             0.25 * fmrifreq,
@@ -1039,15 +1029,11 @@ def rapidtide_main(argparsingfunc):
             padlen=int(oversampfreq * optiondict["padseconds"]),
             method=optiondict["interptype"],
         )
-    print(
-        len(
-            os_fmri_x,
-        ),
-        len(resampref_y),
-        len(
-            initial_fmri_x,
-        ),
-        len(resampnonosref_y),
+    LGR.info(
+        f"{len(os_fmri_x)} "
+        f"{len(resampref_y)} "
+        f"{len(initial_fmri_x)} "
+        f"{len(resampnonosref_y)}"
     )
     previousnormoutputdata = resampnonosref_y + 0.0
 
@@ -1098,8 +1084,7 @@ def rapidtide_main(argparsingfunc):
     timings.append(["End of reference prep", time.time(), None, None])
 
     corrtr = oversamptr
-    if optiondict["verbose"]:
-        print("corrtr=", corrtr)
+    LGR.verbose(f"corrtr={corrtr}")
 
     # initialize the Correlator
     theCorrelator = tide_classes.Correlator(
@@ -1120,7 +1105,7 @@ def rapidtide_main(argparsingfunc):
     lagmaxinpts = int((optiondict["lagmax"] / corrtr) + 0.5)
 
     if (lagmaxinpts + lagmininpts) < 3:
-        print(
+        LGR.info(
             "correlation search range is too narrow - decrease lagmin, increase lagmax, or increase oversample factor"
         )
         sys.exit(1)
@@ -1147,21 +1132,13 @@ def rapidtide_main(argparsingfunc):
     theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
     dummy, trimmedmiscale, dummy = theMutualInformationator.getfunction()
 
-    if optiondict["verbose"]:
-        print("trimmedcorrscale length:", len(trimmedcorrscale))
-        print("trimmedmiscale length:", len(trimmedmiscale), nummilags)
-        print("corrorigin at point ", corrorigin, corrscale[corrorigin])
-        print(
-            "corr range from ",
-            corrorigin - lagmininpts,
-            "(",
-            corrscale[corrorigin - lagmininpts],
-            ") to ",
-            corrorigin + lagmaxinpts,
-            "(",
-            corrscale[corrorigin + lagmaxinpts],
-            ")",
-        )
+    LGR.verbose(f"trimmedcorrscale length: {len(trimmedcorrscale)}")
+    LGR.verbose(f"trimmedmiscale length: {len(trimmedmiscale)} {nummilags}")
+    LGR.verbose(f"corrorigin at point {corrorigin} {corrscale[corrorigin]}")
+    LGR.verbose(
+        f"corr range from {corrorigin - lagmininpts} ({corrscale[corrorigin - lagmininpts]}) "
+        f"to {corrorigin + lagmaxinpts} ({corrscale[corrorigin + lagmaxinpts]})",
+    )
 
     if optiondict["savecorrtimes"]:
         if optiondict["bidsoutput"]:
@@ -1172,7 +1149,7 @@ def rapidtide_main(argparsingfunc):
             tide_io.writenpvecs(trimmedmiscale, outputname + "_mitimes.txt")
 
     # allocate all of the data arrays
-    tide_util.logmem("before main array allocation", file=memfile)
+    tide_util.logmem("before main array allocation")
     if optiondict["textio"]:
         nativespaceshape = xsize
     else:
@@ -1190,7 +1167,7 @@ def rapidtide_main(argparsingfunc):
     failreason = np.zeros(internalvalidspaceshape, dtype="uint32")
     R2 = np.zeros(internalvalidspaceshape, dtype=rt_floattype)
     outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
-    tide_util.logmem("after main array allocation", file=memfile)
+    tide_util.logmem("after main array allocation")
 
     corroutlen = np.shape(trimmedcorrscale)[0]
     if optiondict["textio"]:
@@ -1202,10 +1179,8 @@ def rapidtide_main(argparsingfunc):
             nativecorrshape = (xsize, ysize, numslices, corroutlen)
     internalcorrshape = (numspatiallocs, corroutlen)
     internalvalidcorrshape = (numvalidspatiallocs, corroutlen)
-    print(
-        "allocating memory for correlation arrays",
-        internalcorrshape,
-        internalvalidcorrshape,
+    LGR.info(
+        f"allocating memory for correlation arrays {internalcorrshape} {internalvalidcorrshape}"
     )
     if optiondict["sharedmem"]:
         corrout, dummy, dummy = allocshared(internalvalidcorrshape, rt_floatset)
@@ -1217,7 +1192,7 @@ def rapidtide_main(argparsingfunc):
         gaussout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
         windowout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
         outcorrarray = np.zeros(internalcorrshape, dtype=rt_floattype)
-    tide_util.logmem("after correlation array allocation", file=memfile)
+    tide_util.logmem("after correlation array allocation")
 
     if optiondict["textio"]:
         nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
@@ -1232,7 +1207,7 @@ def rapidtide_main(argparsingfunc):
         lagtc, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
     else:
         lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-    tide_util.logmem("after lagtc array allocation", file=memfile)
+    tide_util.logmem("after lagtc array allocation")
 
     if optiondict["passes"] > 1 or optiondict["convergencethresh"] is not None:
         if optiondict["sharedmem"]:
@@ -1241,7 +1216,7 @@ def rapidtide_main(argparsingfunc):
         else:
             shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-        tide_util.logmem("after refinement array allocation", file=memfile)
+        tide_util.logmem("after refinement array allocation")
     if optiondict["sharedmem"]:
         outfmriarray, dummy, dummy = allocshared(internalfmrishape, rt_floatset)
     else:
@@ -1253,20 +1228,18 @@ def rapidtide_main(argparsingfunc):
         + 30.0
         + np.abs(optiondict["offsettime"])
     )
-    print("setting up fast resampling with padtime =", padtime)
+    LGR.info(f"setting up fast resampling with padtime = {padtime}")
     numpadtrs = int(padtime // fmritr)
     padtime = fmritr * numpadtrs
     genlagtc = tide_resample.FastResampler(reference_x, reference_y, padtime=padtime)
 
     # cycle over all voxels
     refine = True
-    if optiondict["verbose"]:
-        print("refine is set to ", refine)
+    LGR.verbose(f"refine is set to {refine}")
     optiondict["edgebufferfrac"] = max(
         [optiondict["edgebufferfrac"], 2.0 / np.shape(corrscale)[0]]
     )
-    if optiondict["verbose"]:
-        print("edgebufferfrac set to ", optiondict["edgebufferfrac"])
+    LGR.verbose(f"edgebufferfrac set to {optiondict['edgebufferfrac']}")
 
     # intitialize the correlation fitter
     thefitter = tide_classes.SimilarityFunctionFitter(
@@ -1287,12 +1260,11 @@ def rapidtide_main(argparsingfunc):
 
     # Preprocessing - echo cancellation
     if optiondict["echocancel"]:
-        print("\n\n" + "Echo cancellation")
+        LGR.info("\n\nEcho cancellation")
         timings.append(["Echo cancellation start", time.time(), None, None])
         calcsimilaritypass_func = addmemprofiling(
             tide_calcsimfunc.correlationpass,
             optiondict["memprofile"],
-            memfile,
             "before correlationpass",
         )
 
@@ -1344,7 +1316,7 @@ def rapidtide_main(argparsingfunc):
 
         # Now find and regress out the echo
         echooffset, echoratio = tide_stats.echoloc(np.asarray(theglobalmaxlist), len(corrscale))
-        print("Echooffset, echoratio:", echooffset, echoratio)
+        LGR.info(f"Echooffset, echoratio: {echooffset} {echoratio}")
         echoremovedtc, echofit, echoR = echocancel(
             resampref_y, echooffset, oversamptr, outputname, numpadtrs
         )
@@ -1376,8 +1348,8 @@ def rapidtide_main(argparsingfunc):
 
         # initialize the pass
         if optiondict["passes"] > 1:
-            print("\n\n*********************")
-            print("Pass number ", thepass)
+            LGR.info("\n\n*********************")
+            LGR.info(f"Pass number {thepass}")
 
         referencetc = tide_math.corrnormalize(
             resampref_y,
@@ -1410,7 +1382,7 @@ def rapidtide_main(argparsingfunc):
                 windowfunc=optiondict["windowfunc"],
             )
         if optiondict["check_autocorrelation"]:
-            print("checking reference regressor autocorrelation properties")
+            LGR.info("checking reference regressor autocorrelation properties")
             optiondict["lagmod"] = 1000.0
             lagindpad = corrorigin - 2 * np.max((lagmininpts, lagmaxinpts))
             acmininpts = lagmininpts + lagindpad
@@ -1454,12 +1426,9 @@ def rapidtide_main(argparsingfunc):
                 )
             thelagthresh = np.max((abs(optiondict["lagmin"]), abs(optiondict["lagmax"])))
             theampthresh = 0.1
-            print(
-                "searching for sidelobes with amplitude >",
-                theampthresh,
-                "with abs(lag) <",
-                thelagthresh,
-                "s",
+            LGR.info(
+                f"searching for sidelobes with amplitude > {theampthresh} "
+                f"with abs(lag) < {thelagthresh} s"
             )
             sidelobetime, sidelobeamp = tide_corr.check_autocorrelation(
                 accheckcorrscale,
@@ -1477,12 +1446,9 @@ def rapidtide_main(argparsingfunc):
                     [optiondict["despeckle_thresh"], sidelobetime / 2.0]
                 )
                 optiondict["acsidelobeamp" + passsuffix] = sidelobeamp
-                print(
-                    "\n\nWARNING: check_autocorrelation found bad sidelobe at",
-                    sidelobetime,
-                    "seconds (",
-                    1.0 / sidelobetime,
-                    "Hz)...",
+                LGR.warning(
+                    f"\n\nWARNING: check_autocorrelation found bad sidelobe at {sidelobetime} "
+                    f"seconds ({1.0 / sidelobetime} Hz)..."
                 )
                 if optiondict["bidsoutput"]:
                     tide_io.writenpvecs(
@@ -1495,12 +1461,12 @@ def rapidtide_main(argparsingfunc):
                         outputname + "_autocorr_sidelobetime" + passsuffix + ".txt",
                     )
                 if optiondict["fix_autocorrelation"]:
-                    print("Removing sidelobe")
+                    LGR.info("Removing sidelobe")
                     if dolagmod:
-                        print("subjecting lag times to modulus")
+                        LGR.info("subjecting lag times to modulus")
                         optiondict["lagmod"] = sidelobetime / 2.0
                     if doreferencenotch:
-                        print("removing spectral component at sidelobe frequency")
+                        LGR.info("removing spectral component at sidelobe frequency")
                         acstopfreq = 1.0 / sidelobetime
                         acfixfilter = tide_filt.NoncausalFilter(
                             transferfunc=optiondict["transferfunc"],
@@ -1567,7 +1533,7 @@ def rapidtide_main(argparsingfunc):
                     cleaned_referencetc = 1.0 * referencetc
                     cleaned_nonosreferencetc = 1.0 * resampnonosref_y
             else:
-                print("no sidelobes found in range")
+                LGR.info("no sidelobes found in range")
                 cleaned_resampref_y = 1.0 * tide_math.corrnormalize(
                     resampref_y,
                     windowfunc="None",
@@ -1592,20 +1558,14 @@ def rapidtide_main(argparsingfunc):
                     None,
                 ]
             )
-            print("\n\nSignificance estimation, pass " + str(thepass))
-            if optiondict["verbose"]:
-                print(
-                    "calling getNullDistributionData with args:",
-                    oversampfreq,
-                    fmritr,
-                    corrorigin,
-                    lagmininpts,
-                    lagmaxinpts,
-                )
+            LGR.info(f"\n\nSignificance estimation, pass {thepass}")
+            LGR.verbose(
+                "calling getNullDistributionData with args: "
+                f"{oversampfreq} {fmritr} {corrorigin} {lagmininpts} {lagmaxinpts}"
+            )
             getNullDistributionData_func = addmemprofiling(
                 tide_nullsimfunc.getNullDistributionDatax,
                 optiondict["memprofile"],
-                memfile,
                 "before getnulldistristributiondata",
             )
             if optiondict["checkpoint"]:
@@ -1693,9 +1653,8 @@ def rapidtide_main(argparsingfunc):
                     optiondict["sigfit"] = sigfit
             if optiondict["ampthreshfromsig"]:
                 if pcts is not None:
-                    print(
-                        "setting ampthresh to the p < {:.3f}".format(1.0 - thepercentiles[0]),
-                        " threshhold",
+                    LGR.info(
+                        f"setting ampthresh to the p < {1.0 - thepercentiles[0]:.3f} threshhold"
                     )
                     optiondict["ampthresh"] = pcts[0]
                     tide_stats.printthresholds(
@@ -1728,7 +1687,7 @@ def rapidtide_main(argparsingfunc):
                             thedict=optiondict,
                         )
                 else:
-                    print("leaving ampthresh unchanged")
+                    LGR.info("leaving ampthresh unchanged")
 
             del corrdistdata
             timings.append(
@@ -1747,7 +1706,7 @@ def rapidtide_main(argparsingfunc):
             similaritytype = "Correlation"
         else:
             similaritytype = "MI enhanced correlation"
-        print("\n\n" + similaritytype + " calculation, pass " + str(thepass))
+        LGR.info(f"\n\n{similaritytype} calculation, pass {thepass}")
         timings.append(
             [
                 similaritytype + " calculation start, pass " + str(thepass),
@@ -1759,7 +1718,6 @@ def rapidtide_main(argparsingfunc):
         calcsimilaritypass_func = addmemprofiling(
             tide_calcsimfunc.correlationpass,
             optiondict["memprofile"],
-            memfile,
             "before correlationpass",
         )
 
@@ -1851,7 +1809,7 @@ def rapidtide_main(argparsingfunc):
 
         # Step 1b.  Do a peak prefit
         if optiondict["similaritymetric"] == "hybrid":
-            print("\n\nPeak prefit calculation, pass " + str(thepass))
+            LGR.info(f"\n\nPeak prefit calculation, pass {thepass}")
             timings.append(
                 [
                     "Peak prefit calculation start, pass " + str(thepass),
@@ -1863,7 +1821,6 @@ def rapidtide_main(argparsingfunc):
             peakevalpass_func = addmemprofiling(
                 tide_peakeval.peakevalpass,
                 optiondict["memprofile"],
-                memfile,
                 "before peakevalpass",
             )
 
@@ -1902,12 +1859,12 @@ def rapidtide_main(argparsingfunc):
             thepeakdict = None
 
         # Step 2 - similarity function fitting and time lag estimation
-        print("\n\nTime lag estimation pass " + str(thepass))
+        LGR.info(f"\n\nTime lag estimation pass {thepass}")
         timings.append(
             ["Time lag estimation start, pass " + str(thepass), time.time(), None, None]
         )
         fitcorr_func = addmemprofiling(
-            tide_simfuncfit.fitcorr, optiondict["memprofile"], memfile, "before fitcorr"
+            tide_simfuncfit.fitcorr, optiondict["memprofile"], "before fitcorr"
         )
         thefitter.setfunctype(optiondict["similaritymetric"])
         thefitter.setcorrtimeaxis(trimmedcorrscale)
@@ -1956,8 +1913,8 @@ def rapidtide_main(argparsingfunc):
 
         # Step 2b - Correlation time despeckle
         if optiondict["despeckle_passes"] > 0:
-            print("\n\nCorrelation despeckling pass " + str(thepass))
-            print("\tUsing despeckle_thresh = {:.3f}".format(optiondict["despeckle_thresh"]))
+            LGR.info(f"\n\nCorrelation despeckling pass {thepass}")
+            LGR.info(f"\tUsing despeckle_thresh = {optiondict['despeckle_thresh']:.3f}")
             timings.append(
                 [
                     "Correlation despeckle start, pass " + str(thepass),
@@ -1971,7 +1928,7 @@ def rapidtide_main(argparsingfunc):
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
             for despecklepass in range(optiondict["despeckle_passes"]):
-                print("\n\nCorrelation despeckling subpass " + str(despecklepass + 1))
+                LGR.info(f"\n\nCorrelation despeckling subpass {despecklepass + 1}")
                 outmaparray *= 0.0
                 outmaparray[validvoxels] = eval("lagtimes")[:]
                 medianlags = ndimage.median_filter(
@@ -2022,7 +1979,7 @@ def rapidtide_main(argparsingfunc):
                 else:
                     despecklingdone = True
                 if despecklingdone:
-                    print("Nothing left to do! Terminating despeckling")
+                    LGR.info("Nothing left to do! Terminating despeckling")
                     break
 
             if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
@@ -2064,12 +2021,9 @@ def rapidtide_main(argparsingfunc):
                         isseries=False,
                         names=["despecklemask"],
                     )
-            print(
-                "\n\n",
-                voxelsprocessed_fc_ds,
-                "voxels despeckled in",
-                optiondict["despeckle_passes"],
-                "passes",
+            LGR.info(
+                f"\n\n{voxelsprocessed_fc_ds} voxels despeckled in ",
+                f"{optiondict['despeckle_passes']} passes"
             )
             timings.append(
                 [
@@ -2082,7 +2036,7 @@ def rapidtide_main(argparsingfunc):
 
         # Step 3 - regressor refinement for next pass
         if thepass < optiondict["passes"] or optiondict["convergencethresh"] is not None:
-            print("\n\nRegressor refinement, pass" + str(thepass))
+            LGR.info(f"\n\nRegressor refinement, pass {thepass}")
             timings.append(
                 [
                     "Regressor refinement start, pass " + str(thepass),
@@ -2100,18 +2054,15 @@ def rapidtide_main(argparsingfunc):
                 )
                 optiondict["offsettime"] = peaklag
                 optiondict["offsettime_total"] += peaklag
-                print(
-                    "offset time set to",
-                    "{:.3f}".format(optiondict["offsettime"]),
-                    ", total is",
-                    "{:.3f}".format(optiondict["offsettime_total"]),
+                LGR.info(
+                    f"offset time set to {optiondict['offsettime']:.3f}, "
+                    f"total is {optiondict['offsettime_total']:.3f}"
                 )
 
             # regenerate regressor for next pass
             refineregressor_func = addmemprofiling(
                 tide_refine.refineregressor,
                 optiondict["memprofile"],
-                memfile,
                 "before refineregressor",
             )
             (
@@ -2180,18 +2131,16 @@ def rapidtide_main(argparsingfunc):
                 # check for convergence
                 regressormse = mse(normoutputdata, previousnormoutputdata)
                 optiondict["regressormse_pass" + str(thepass).zfill(2)] = regressormse
-                print(
-                    "regressor difference at end of pass {:d} is {:.6f}".format(
-                        thepass, regressormse
-                    )
+                LGR.info(
+                    f"regressor difference at end of pass {thepass:d} is {regressormse:.6f}"
                 )
                 if optiondict["convergencethresh"] is not None:
                     if thepass >= optiondict["maxpasses"]:
-                        print("refinement ended (maxpasses reached")
+                        LGR.info("refinement ended (maxpasses reached")
                         stoprefining = True
                         refinestopreason = "maxpassesreached"
                     elif regressormse < optiondict["convergencethresh"]:
-                        print("refinement ended (refinement has converged")
+                        LGR.info("refinement ended (refinement has converged")
                         stoprefining = True
                         refinestopreason = "convergence"
                     else:
@@ -2281,7 +2230,7 @@ def rapidtide_main(argparsingfunc):
                             tide_math.stdnormalize(resampref_y), outputname + osrefname
                         )
             else:
-                print(f"refinement failed - terminating at end of pass {thepass}")
+                LGR.warning(f"refinement failed - terminating at end of pass {thepass}")
                 stoprefining = True
                 refinestopreason = "emptymask"
             timings.append(
@@ -2306,7 +2255,7 @@ def rapidtide_main(argparsingfunc):
                 if optiondict["memprofile"]:
                     memcheckpoint("about to write " + mapname + "to" + mapsuffix)
                 else:
-                    tide_util.logmem("about to write " + mapname + "to" + mapsuffix, file=memfile)
+                    tide_util.logmem("about to write " + mapname + "to" + mapsuffix)
                 outmaparray[:] = 0.0
                 outmaparray[validvoxels] = eval(mapname)[:]
                 if optiondict["textio"]:
@@ -2343,7 +2292,7 @@ def rapidtide_main(argparsingfunc):
     # Post refinement step -1 - Coherence calculation
     if optiondict["calccoherence"]:
         timings.append(["Coherence calculation start", time.time(), None, None])
-        print("\n\nCoherence calculation")
+        LGR.info("\n\nCoherence calculation")
         reportstep = 1000
 
         # make the Coherer
@@ -2388,7 +2337,6 @@ def rapidtide_main(argparsingfunc):
         coherencepass_func = addmemprofiling(
             tide_calccoherence.coherencepass,
             optiondict["memprofile"],
-            memfile,
             "before coherencepass",
         )
         voxelsprocessed_coherence = coherencepass_func(
@@ -2457,7 +2405,7 @@ def rapidtide_main(argparsingfunc):
     # Post refinement step 0 - Wiener deconvolution
     if optiondict["dodeconv"]:
         timings.append(["Wiener deconvolution start", time.time(), None, None])
-        print("\n\nWiener deconvolution")
+        LGR.info("\n\nWiener deconvolution")
         reportstep = 1000
 
         # now allocate the arrays needed for Wiener deconvolution
@@ -2471,7 +2419,6 @@ def rapidtide_main(argparsingfunc):
         wienerpass_func = addmemprofiling(
             tide_wiener.wienerpass,
             optiondict["memprofile"],
-            memfile,
             "before wienerpass",
         )
         voxelsprocessed_wiener = wienerpass_func(
@@ -2491,14 +2438,12 @@ def rapidtide_main(argparsingfunc):
     # Post refinement step 1 - GLM fitting to remove moving signal
     if optiondict["doglmfilt"]:
         timings.append(["GLM filtering start", time.time(), None, None])
-        print("\n\nGLM filtering")
+        LGR.info("\n\nGLM filtering")
         reportstep = 1000
         if (optiondict["gausssigma"] > 0.0) or (optiondict["glmsourcefile"] is not None):
             if optiondict["glmsourcefile"] is not None:
-                print(
-                    "reading in ",
-                    optiondict["glmsourcefile"],
-                    "for GLM filter, please wait",
+                LGR.info(
+                    f"reading in {optiondict['glmsourcefile']} for GLM filter, please wait"
                 )
                 if optiondict["textio"]:
                     nim_data = tide_io.readvecs(optiondict["glmsourcefile"])
@@ -2507,7 +2452,7 @@ def rapidtide_main(argparsingfunc):
                         optiondict["glmsourcefile"]
                     )
             else:
-                print("rereading", fmrifilename, " for GLM filter, please wait")
+                LGR.info(f"rereading {fmrifilename} for GLM filter, please wait")
                 if optiondict["textio"]:
                     nim_data = tide_io.readvecs(fmrifilename)
                 else:
@@ -2523,14 +2468,13 @@ def rapidtide_main(argparsingfunc):
 
             # move fmri_data_valid into shared memory
             if optiondict["sharedmem"]:
-                print("moving fmri data to shared memory")
+                LGR.info("moving fmri data to shared memory")
                 timings.append(
                     ["Start moving fmri_data to shared memory", time.time(), None, None]
                 )
                 numpy2shared_func = addmemprofiling(
                     numpy2shared,
                     optiondict["memprofile"],
-                    memfile,
                     "before movetoshared (glm)",
                 )
                 fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
@@ -2558,13 +2502,13 @@ def rapidtide_main(argparsingfunc):
         if optiondict["memprofile"]:
             memcheckpoint("about to start glm noise removal...")
         else:
-            tide_util.logmem("before glm", file=memfile)
+            tide_util.logmem("before glm")
 
         if optiondict["preservefiltering"]:
             for i in range(len(validvoxels)):
                 fmri_data_valid[i] = theprefilter.apply(optiondict["fmrifreq"], fmri_data_valid[i])
         glmpass_func = addmemprofiling(
-            tide_glmpass.glmpass, optiondict["memprofile"], memfile, "before glmpass"
+            tide_glmpass.glmpass, optiondict["memprofile"], "before glmpass"
         )
         voxelsprocessed_glm = glmpass_func(
             numvalidspatiallocs,
@@ -2592,11 +2536,11 @@ def rapidtide_main(argparsingfunc):
         if optiondict["memprofile"]:
             memcheckpoint("...done")
         else:
-            tide_util.logmem("after glm filter", file=memfile)
-        print("")
+            tide_util.logmem("after glm filter")
+        LGR.info("")
     else:
         # get the original data to calculate the mean
-        print("rereading", fmrifilename, " to calculate mean value, please wait")
+        LGR.info(f"rereading {fmrifilename} to calculate mean value, please wait")
         if optiondict["textio"]:
             nim_data = tide_io.readvecs(fmrifilename)
         else:
@@ -2736,7 +2680,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict["memprofile"]:
             memcheckpoint("about to write " + mapname + "to" + mapsuffix)
         else:
-            tide_util.logmem("about to write " + mapname + "to" + mapsuffix, file=memfile)
+            tide_util.logmem("about to write " + mapname + "to" + mapsuffix)
         outmaparray[:] = 0.0
         outmaparray[validvoxels] = eval(mapname)[:]
         if optiondict["textio"]:
@@ -2781,7 +2725,7 @@ def rapidtide_main(argparsingfunc):
             if optiondict["memprofile"]:
                 memcheckpoint("about to write " + mapname)
             else:
-                tide_util.logmem("about to write " + mapname, file=memfile)
+                tide_util.logmem("about to write " + mapname)
             outmaparray[:] = 0.0
             outmaparray[validvoxels] = eval(mapname)[:]
             if optiondict["textio"]:
@@ -2816,7 +2760,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict["memprofile"]:
             memcheckpoint("about to write " + mapname)
         else:
-            tide_util.logmem("about to write " + mapname, file=memfile)
+            tide_util.logmem("about to write " + mapname)
         outmaparray[:] = 0.0
         outmaparray[:] = eval(mapname)[:]
         if optiondict["textio"]:
@@ -3099,8 +3043,7 @@ def rapidtide_main(argparsingfunc):
         del filtereddata
 
     timings.append(["Finished saving maps", time.time(), None, None])
-    memfile.close()
-    print("done")
+    LGR.info("done")
 
     if optiondict["displayplots"]:
         show()
