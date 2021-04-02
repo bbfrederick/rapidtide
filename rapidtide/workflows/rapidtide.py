@@ -212,15 +212,12 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
             else:
                 LGR.warning("unhandled math exception in PCA refinement - exiting")
                 sys.exit()
+        varex = 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
         LGR.info(
-            "Using ",
-            len(thefit.components_),
-            " components, accounting for ",
-            "{:.2f}% of the variance".format(
-                100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
-            ),
+            f"Using {len(thefit.components_)} components, accounting for "
+            f"{varex:.2f}% of the variance"
         )
-    LGR.info("used ", numvoxelsused, " voxels to calculate global mean signal")
+    LGR.info(f"used {numvoxelsused} voxels to calculate global mean signal")
     return tide_math.stdnormalize(globalmean), themask
 
 
@@ -434,7 +431,9 @@ def rapidtide_main(argparsingfunc):
     else:
         if optiondict["textio"]:
             if optiondict["realtr"] <= 0.0:
-                LGR.info("for text file data input, you must use the -t option to set the timestep")
+                LGR.error(
+                    "for text file data input, you must use the -t option to set the timestep"
+                )
                 sys.exit()
         else:
             if nim_hdr.get_xyzt_units()[1] == "msec":
@@ -672,8 +671,7 @@ def rapidtide_main(argparsingfunc):
     LGR.info("validvoxels shape =", numvalidspatiallocs)
     fmri_data_valid = fmri_data[validvoxels, :] + 0.0
     LGR.info(
-        f"original size = {np.shape(fmri_data)}, "
-        f"trimmed size = {np.shape(fmri_data_valid)}"
+        f"original size = {np.shape(fmri_data)}, " f"trimmed size = {np.shape(fmri_data_valid)}"
     )
     if internalglobalmeanincludemask is not None:
         internalglobalmeanincludemask_valid = 1.0 * internalglobalmeanincludemask[validvoxels]
@@ -1105,7 +1103,7 @@ def rapidtide_main(argparsingfunc):
     lagmaxinpts = int((optiondict["lagmax"] / corrtr) + 0.5)
 
     if (lagmaxinpts + lagmininpts) < 3:
-        LGR.info(
+        LGR.error(
             "correlation search range is too narrow - decrease lagmin, increase lagmax, or increase oversample factor"
         )
         sys.exit(1)
@@ -2022,7 +2020,7 @@ def rapidtide_main(argparsingfunc):
                         names=["despecklemask"],
                     )
             LGR.info(
-                f"\n\n{voxelsprocessed_fc_ds} voxels despeckled in ",
+                f"\n\n{voxelsprocessed_fc_ds} voxels despeckled in "
                 f"{optiondict['despeckle_passes']} passes"
             )
             timings.append(
@@ -2131,9 +2129,7 @@ def rapidtide_main(argparsingfunc):
                 # check for convergence
                 regressormse = mse(normoutputdata, previousnormoutputdata)
                 optiondict["regressormse_pass" + str(thepass).zfill(2)] = regressormse
-                LGR.info(
-                    f"regressor difference at end of pass {thepass:d} is {regressormse:.6f}"
-                )
+                LGR.info(f"regressor difference at end of pass {thepass:d} is {regressormse:.6f}")
                 if optiondict["convergencethresh"] is not None:
                     if thepass >= optiondict["maxpasses"]:
                         LGR.info("refinement ended (maxpasses reached")
@@ -2442,9 +2438,7 @@ def rapidtide_main(argparsingfunc):
         reportstep = 1000
         if (optiondict["gausssigma"] > 0.0) or (optiondict["glmsourcefile"] is not None):
             if optiondict["glmsourcefile"] is not None:
-                LGR.info(
-                    f"reading in {optiondict['glmsourcefile']} for GLM filter, please wait"
-                )
+                LGR.info(f"reading in {optiondict['glmsourcefile']} for GLM filter, please wait")
                 if optiondict["textio"]:
                     nim_data = tide_io.readvecs(optiondict["glmsourcefile"])
                 else:
