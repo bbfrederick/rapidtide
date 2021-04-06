@@ -4,12 +4,12 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_bidstsvcard \
-    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
+    ../dst/happy \
     --mklthreads 8 \
     --model model_revised \
     --aliasedcorrelation
 
+#    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
 
 #happy_legacy \
     #sub-HAPPYTEST.nii.gz \
