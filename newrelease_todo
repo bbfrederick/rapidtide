@@ -10,8 +10,7 @@
 
 + Sync everything to github.
 
-+ Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging) 
-  and push to github:
++ Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging) and push to github:
 
     git tag -a v2.0alpha20 -m "v2.0alpha20"
     git push origin v2.0alpha20
