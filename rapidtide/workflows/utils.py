@@ -23,8 +23,14 @@ class ContextFilter(logging.Filter):
 
 class TimingFormatter(logging.Formatter):
     def format(self, record):
-        record.message2 = record.args.get("message2")
-        record.message3 = record.args.get("message3")
+        try:
+            record.message2 = record.args.get("message2")
+        except KeyError:
+            record.message2 = None
+        try:
+            record.message3 = record.args.get("message3")
+        except KeyError:
+            record.message3 = None
         return super().format(record)
 
 
@@ -87,10 +93,24 @@ def setup_logger(logger_filename, timing_filename, memory_filename, verbose=Fals
     logging.root.addHandler(stream_handler)
 
     # A timing logger
-    timing_formatter = logging.Formatter(
-        "%(asctime)s\t%(message)s\t%(message2)s\t%(message3)s",
-        datefmt="%Y-%m-%dT%H:%M:%S",
-    )
+    try:
+        message2
+        try:
+            message3
+            timing_formatter = logging.Formatter(
+                "%(asctime)s\t%(message)s\t%(message2)s\t%(message3)s",
+                datefmt="%Y-%m-%dT%H:%M:%S",
+            )
+        except NameError:
+            timing_formatter = logging.Formatter(
+                "%(asctime)s\t%(message)s\t%(message2)s",
+                datefmt="%Y-%m-%dT%H:%M:%S",
+            )
+    except NameError:
+        timing_formatter = logging.Formatter(
+            "%(asctime)s\t%(message)s",
+            datefmt="%Y-%m-%dT%H:%M:%S",
+        )
     timing_handler = logging.FileHandler(timing_filename)
     timing_handler.setFormatter(timing_formatter)
     TimingLGR.setLevel(logging.INFO)
