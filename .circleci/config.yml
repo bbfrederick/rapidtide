@@ -20,18 +20,14 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            if [[ -e /opt/conda/envs/py36_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py36_env
-            else
-                conda create -n py36_env python=3.6 -yq
-                source activate py36_env
-                pip install -e .[tests,doc]
-            fi
+            conda create -n py36_env python=3.6 -yq
+            source activate py36_env
+            pip install -e .[tests,doc]
             python setup.py install --user
       - run:
-          name: Run Py3.6 tests
-          command: |
+          name: Run tests
+          command:  |
+            apt-get install -yqq make
             source activate py36_env
             py.test --ignore=rapidtide/candidatetests rapidtide
 
@@ -46,7 +42,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps1-{{ checksum "setup.py" }}
+          key: deps2-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -60,11 +56,11 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps1-{{ checksum "setup.py" }}
+          key: deps2-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py37_env"
 
-  build_py38:
+  test_py38:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -74,26 +70,21 @@ jobs:
           root: /tmp
           paths:
               - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps1-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            if [[ -e /opt/conda/envs/py38_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py38_env
-            else
-                conda create -n py38_env python=3.8 -yq
-                source activate py38_env
-                pip install -e .[tests,doc]
-            fi
+            conda create -n py38_env python=3.8 -yq
+            source activate py38_env
+            pip install -e .[tests,doc]
             python setup.py install --user
-      - save_cache:  # environment cache tied to requirements
-          key: deps1-{{ checksum "setup.py" }}
-          paths:
-            - "/opt/conda/envs/py38_env"
+      - run:
+          name: Run tests
+          command:  |
+            apt-get install -yqq make
+            source activate py38_env
+            py.test --ignore=rapidtide/candidatetests rapidtide
 
-  build_py39:
+  test_py39:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -103,24 +94,19 @@ jobs:
           root: /tmp
           paths:
               - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps1-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            if [[ -e /opt/conda/envs/py39_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py39_env
-            else
-                conda create -n py39_env python=3.8 -yq
-                source activate py39_env
-                pip install -e .[tests,doc]
-            fi
+            conda create -n py39_env python=3.9 -yq
+            source activate py39_env
+            pip install -e .[tests,doc]
             python setup.py install --user
-      - save_cache:  # environment cache tied to requirements
-          key: deps1-{{ checksum "setup.py" }}
-          paths:
-            - "/opt/conda/envs/py39_env"
+      - run:
+          name: Run tests
+          command:  |
+            apt-get install -yqq make
+            source activate py39_env
+            py.test --ignore=rapidtide/candidatetests rapidtide
 
   build_docs:
     working_directory: /tmp/src/rapidtide
@@ -130,7 +116,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps1-{{ checksum "setup.py" }}
+          key: deps2-{{ checksum "setup.py" }}
       - run:
           name: Build documentation
           command: |
@@ -148,7 +134,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps1-{{ checksum "setup.py" }}
+          key: deps2-{{ checksum "setup.py" }}
       - run:
           name: Linting
           command:  |
@@ -165,7 +151,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps1-{{ checksum "setup.py" }}
+          key: deps2-{{ checksum "setup.py" }}
       - run:
           name: Coverage
           command:  |
@@ -181,8 +167,8 @@ workflows:
     jobs:
       - test_py36
       - build_py37
-      - build_py38
-      - build_py39
+      - test_py38
+      - test_py39
       - build_docs:
           requires:
             - build_py37
