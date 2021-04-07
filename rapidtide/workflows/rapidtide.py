@@ -95,7 +95,7 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
         if theshape[1] == len(timeaxis):
             maskvector = np.where(inputdata[0, :] > 0.0, 1.0, 0.0)
         else:
-            LGR.error("tmask length does not match fmri data")
+            raise ValueError("tmask length does not match fmri data")
     else:
         maskvector *= 0.0
         for idx in range(0, theshape[1]):
@@ -149,12 +149,12 @@ def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, masknam
         theshape = np.shape(maskarray)
         theincludexsize = theshape[0]
         if not theincludexsize == xsize:
-            LGR.error(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
+            raise ValueError(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
     else:
         themask, maskarray, mask_hdr, maskdims, masksizes = tide_io.readfromnifti(maskfilename)
         maskarray = np.round(maskarray, 0).astype("int16")
         if not tide_io.checkspacematch(mask_hdr, nim_hdr):
-            LGR.error(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
+            raise ValueError(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
 
     if valslist is not None:
         tempmask = (0 * maskarray).astype("int16")
@@ -198,7 +198,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
                 LGR.warning("mle estimation failed - falling back to pcacomponents=0.8")
                 thefit = PCA(n_components=0.8).fit(selectedvoxels)
             else:
-                LGR.error("unhandled math exception in PCA refinement - exiting")
+                raise ValueError("unhandled math exception in PCA refinement - exiting")
 
         varex = 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
         LGR.info(
@@ -414,7 +414,7 @@ def rapidtide_main(argparsingfunc):
     else:
         if optiondict["textio"]:
             if optiondict["realtr"] <= 0.0:
-                LGR.error(
+                raise ValueError(
                     "for text file data input, you must use the -t option to set the timestep"
                 )
         else:
@@ -440,12 +440,12 @@ def rapidtide_main(argparsingfunc):
         timepoints, optiondict["startpoint"], optiondict["endpoint"]
     )
     if abs(optiondict["lagmin"]) > (validend - validstart + 1) * fmritr / 2.0:
-        LGR.error(
+        raise ValueError(
             f"magnitude of lagmin exceeds {(validend - validstart + 1) * fmritr / 2.0} - invalid"
         )
 
     if abs(optiondict["lagmax"]) > (validend - validstart + 1) * fmritr / 2.0:
-        LGR.error(
+        raise ValueError(
             f"magnitude of lagmax exceeds {(validend - validstart + 1) * fmritr / 2.0} - invalid"
         )
 
@@ -508,7 +508,7 @@ def rapidtide_main(argparsingfunc):
         )
         internalglobalmeanincludemask = theglobalmeanincludemask.reshape(numspatiallocs)
         if tide_stats.getmasksize(internalglobalmeanincludemask) == 0:
-            LGR.error("ERROR: there are no voxels in the global mean include mask - exiting")
+            raise ValueError("ERROR: there are no voxels in the global mean include mask - exiting")
 
     if optiondict["globalmeanexcludename"] is not None:
         LGR.info("constructing global mean exclude mask")
@@ -522,7 +522,7 @@ def rapidtide_main(argparsingfunc):
         )
         internalglobalmeanexcludemask = theglobalmeanexcludemask.reshape(numspatiallocs)
         if tide_stats.getmasksize(internalglobalmeanexcludemask) == numspatiallocs:
-            LGR.error("ERROR: the global mean exclude mask does not leave any voxels - exiting")
+            raise ValueError("ERROR: the global mean exclude mask does not leave any voxels - exiting")
 
     if (internalglobalmeanincludemask is not None) and (internalglobalmeanexcludemask is not None):
         if (
@@ -531,7 +531,7 @@ def rapidtide_main(argparsingfunc):
             )
             == 0
         ):
-            LGR.error(
+            raise ValueError(
                 "ERROR: the global mean include and exclude masks not leave any voxels between them - exiting"
             )
 
@@ -547,7 +547,7 @@ def rapidtide_main(argparsingfunc):
         )
         internalrefineincludemask = therefineincludemask.reshape(numspatiallocs)
         if tide_stats.getmasksize(internalrefineincludemask) == 0:
-            LGR.error("ERROR: there are no voxels in the refine include mask - exiting")
+            raise ValueError("ERROR: there are no voxels in the refine include mask - exiting")
 
     if optiondict["refineexcludename"] is not None:
         LGR.info("constructing refine exclude mask")
@@ -561,7 +561,7 @@ def rapidtide_main(argparsingfunc):
         )
         internalrefineexcludemask = therefineexcludemask.reshape(numspatiallocs)
         if tide_stats.getmasksize(internalrefineexcludemask) == numspatiallocs:
-            LGR.error("ERROR: the refine exclude mask does not leave any voxels - exiting")
+            raise ValueError("ERROR: the refine exclude mask does not leave any voxels - exiting")
 
     tide_util.logmem("after setting masks")
 
@@ -596,7 +596,7 @@ def rapidtide_main(argparsingfunc):
                     tide_stats.makemask(stdim, threshpct=optiondict["corrmaskthreshpct"])
                 )
     if tide_stats.getmasksize(corrmask) == 0:
-        LGR.error("ERROR: there are no voxels in the correlation mask - exiting")
+        raise ValueError("ERROR: there are no voxels in the correlation mask - exiting")
 
     optiondict["corrmasksize"] = tide_stats.getmasksize(corrmask)
     if internalrefineincludemask is not None:
@@ -607,18 +607,18 @@ def rapidtide_main(argparsingfunc):
                 )
                 == 0
             ):
-                LGR.error(
+                raise ValueError(
                     "ERROR: the refine include and exclude masks not leave any voxels in the corrmask - exiting"
                 )
         else:
             if tide_stats.getmasksize(corrmask * internalrefineincludemask) == 0:
-                LGR.error(
+                raise ValueError(
                     "ERROR: the refine include mask does not leave any voxels in the corrmask - exiting"
                 )
     else:
         if internalrefineexcludemask is not None:
             if tide_stats.getmasksize(corrmask * (1 - internalrefineexcludemask)) == 0:
-                LGR.error(
+                raise ValueError(
                     "ERROR: the refine exclude mask does not leave any voxels in the corrmask - exiting"
                 )
 
@@ -1080,7 +1080,7 @@ def rapidtide_main(argparsingfunc):
     lagmaxinpts = int((optiondict["lagmax"] / corrtr) + 0.5)
 
     if (lagmaxinpts + lagmininpts) < 3:
-        LGR.error(
+        raise ValueError(
             "correlation search range is too narrow - decrease lagmin, increase lagmax, or increase oversample factor"
         )
 
