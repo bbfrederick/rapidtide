@@ -2156,7 +2156,7 @@ def rapidtide_main(argparsingfunc):
                 stoprefining = True
                 refinestopreason = "emptymask"
 
-            TimingLGR(
+            TimingLGR.info(
                 f"Regressor refinement end, pass {thepass}",
                 {
                     "message2": voxelsprocessed_rr,
