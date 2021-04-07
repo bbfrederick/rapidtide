@@ -105,7 +105,7 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
             startindex = np.max((bisect.bisect_left(timeaxis, starttime), 0))
             endindex = np.min((bisect.bisect_right(timeaxis, endtime), len(maskvector) - 1))
             maskvector[startindex:endindex] = 1.0
-            LGR.info(starttime, startindex, endtime, endindex)
+            LGR.info(f"{starttime}, {startindex}, {endtime}, {endindex}")
     if debug:
         fig = figure()
         ax = fig.add_subplot(111)
@@ -143,17 +143,8 @@ def allocshared(theshape, thetype):
     return outarray, outarray_shared, theshape
 
 
-def readamask(
-    maskfilename,
-    nim_hdr,
-    xsize,
-    istext=False,
-    valslist=None,
-    maskname="the",
-    verbose=False,
-):
-    if verbose:
-        LGR.info(f"readamask called with filename: {maskfilename} vals: {valslist}")
+def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, maskname="the"):
+    LGR.verbose(f"readamask called with filename: {maskfilename} vals: {valslist}")
     if istext:
         maskarray = tide_io.readvecs(maskfilename).astype("int16")
         theshape = np.shape(maskarray)
@@ -170,8 +161,7 @@ def readamask(
     if valslist is not None:
         tempmask = (0 * maskarray).astype("int16")
         for theval in valslist:
-            if verbose:
-                LGR.info(f"looking for voxels matching {theval}")
+            LGR.verbose(f"looking for voxels matching {theval}")
             tempmask[np.where(np.fabs(maskarray - theval) < 0.1)] += 1
         maskarray = np.where(tempmask > 0, 1, 0)
     return maskarray
@@ -664,7 +654,7 @@ def rapidtide_main(argparsingfunc):
     LGR.verbose(f"image threshval = {threshval}")
     validvoxels = np.where(corrmask > 0)[0]
     numvalidspatiallocs = np.shape(validvoxels)[0]
-    LGR.info("validvoxels shape =", numvalidspatiallocs)
+    LGR.info(f"validvoxels shape = {numvalidspatiallocs}")
     fmri_data_valid = fmri_data[validvoxels, :] + 0.0
     LGR.info(
         f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}"
