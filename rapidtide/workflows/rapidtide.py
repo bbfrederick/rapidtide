@@ -2188,15 +2188,11 @@ def rapidtide_main(argparsingfunc):
                 else:
                     if optiondict["bidsoutput"]:
                         if mapname == "fitmask":
-                            savename = outputname + "_pass-" + passsuffix + "_desc-corrfit_mask"
+                            savename = outputname + passsuffix + "_desc-corrfit_mask"
                         elif mapname == "failreason":
-                            savename = (
-                                outputname + "_pass-" + passsuffix + "_desc-corrfitfailreason_info"
-                            )
+                            savename = outputname + passsuffix + "_desc-corrfitfailreason_info"
                         else:
-                            savename = (
-                                outputname + "_pass-" + passsuffix + "_desc-" + mapsuffix + "_map"
-                            )
+                            savename = outputname + passsuffix + "_desc-" + mapsuffix + "_map"
                         bidsdict = bidsbasedict.copy()
                         if mapname == "lagtimes" or mapname == "lagsigma":
                             bidsdict["Units"] = "second"
