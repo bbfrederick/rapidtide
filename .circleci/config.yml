@@ -97,7 +97,8 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            conda create -n py39_env python=3.9 'setuptools>=54' -yq
+            conda create -n py39_env python=3.9 -yq
+            pip install -U "setuptools>=54"
             source activate py39_env
             pip install -e .[tests,doc]
             python setup.py install --user
