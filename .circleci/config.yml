@@ -46,7 +46,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps9-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -60,7 +60,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps9-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py37_env"
 
@@ -75,7 +75,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps9-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -89,7 +89,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps9-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py38_env"
 
@@ -104,7 +104,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps9-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -118,7 +118,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps9-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py39_env"
 
@@ -130,7 +130,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps9-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.py" }}
       - run:
           name: Build documentation
           command: |
@@ -148,7 +148,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps9-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.py" }}
       - run:
           name: Linting
           command:  |
@@ -165,7 +165,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps9-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.py" }}
       - run:
           name: Coverage
           command:  |
