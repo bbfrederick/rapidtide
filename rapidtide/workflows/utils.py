@@ -21,6 +21,13 @@ class ContextFilter(logging.Filter):
             return True
 
 
+class TimingFormatter(logging.Formatter):
+    def format(self, record):
+        record.message2 = record.args.get("message2")
+        record.message3 = record.args.get("message3")
+        return super().format(record)
+
+
 def setup_logger(logger_filename, timing_filename, memory_filename, verbose=False, debug=False):
     """Set up a set of loggers.
 
@@ -64,10 +71,7 @@ def setup_logger(logger_filename, timing_filename, memory_filename, verbose=Fals
         logging.root.setLevel(logging.INFO)
 
     # Set up handler for main logger's output file
-    log_formatter = logging.Formatter(
-        "%(asctime)s\t%(name)-12s\t%(levelname)-8s\t%(message)s",
-        datefmt="%Y-%m-%dT%H:%M:%S",
-    )
+    log_formatter = logging.Formatter("%(message)s")
     log_handler = logging.FileHandler(logger_filename)
     log_handler.setFormatter(log_formatter)
 
@@ -84,7 +88,7 @@ def setup_logger(logger_filename, timing_filename, memory_filename, verbose=Fals
 
     # A timing logger
     timing_formatter = logging.Formatter(
-        "%(asctime)s\t%(message)s",
+        "%(asctime)s\t%(message)s\t%(message2)s\t%(message3)s",
         datefmt="%Y-%m-%dT%H:%M:%S",
     )
     timing_handler = logging.FileHandler(timing_filename)
