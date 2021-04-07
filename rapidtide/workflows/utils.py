@@ -64,10 +64,7 @@ def setup_logger(logger_filename, timing_filename, memory_filename, verbose=Fals
         logging.root.setLevel(logging.INFO)
 
     # Set up handler for main logger's output file
-    log_formatter = logging.Formatter(
-        "%(asctime)s\t%(name)-12s\t%(levelname)-8s\t%(message)s",
-        datefmt="%Y-%m-%dT%H:%M:%S",
-    )
+    log_formatter = logging.Formatter("%(message)s")
     log_handler = logging.FileHandler(logger_filename)
     log_handler.setFormatter(log_formatter)
 
