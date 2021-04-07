@@ -391,7 +391,7 @@ def rapidtide_main(argparsingfunc):
         timepoints = theshape[1]
         thesizes = [0, int(xsize), 1, 1, int(timepoints)]
         numspatiallocs = int(xsize)
-        # slicesize = numspatiallocs
+        slicesize = numspatiallocs
     else:
         fileiscifti = tide_io.checkifcifti(fmrifilename)
         if fileiscifti:
@@ -409,14 +409,14 @@ def rapidtide_main(argparsingfunc):
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
             LGR.info(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
-            # slicesize = numspatiallocs
+            slicesize = numspatiallocs
         else:
             LGR.info("input file is NIFTI")
             nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
             optiondict["isgrayordinate"] = False
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
-            # slicesize = numspatiallocs / int(numslices)
+            slicesize = numspatiallocs / int(numslices)
         xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
     tide_util.logmem("after reading in fmri data")
 
