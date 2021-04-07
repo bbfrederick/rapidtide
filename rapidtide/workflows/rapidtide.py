@@ -53,6 +53,7 @@ import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.wiener as tide_wiener
 from rapidtide.tests.utils import mse
+
 from .utils import setup_logger
 
 try:
@@ -390,7 +391,7 @@ def rapidtide_main(argparsingfunc):
         timepoints = theshape[1]
         thesizes = [0, int(xsize), 1, 1, int(timepoints)]
         numspatiallocs = int(xsize)
-        slicesize = numspatiallocs
+        # slicesize = numspatiallocs
     else:
         fileiscifti = tide_io.checkifcifti(fmrifilename)
         if fileiscifti:
@@ -407,17 +408,15 @@ def rapidtide_main(argparsingfunc):
             optiondict["isgrayordinate"] = True
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
-            LGR.info(
-                f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs"
-            )
-            slicesize = numspatiallocs
+            LGR.info(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
+            # slicesize = numspatiallocs
         else:
             LGR.info("input file is NIFTI")
             nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
             optiondict["isgrayordinate"] = False
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
-            slicesize = numspatiallocs / int(numslices)
+            # slicesize = numspatiallocs / int(numslices)
         xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
     tide_util.logmem("after reading in fmri data")
 
@@ -666,9 +665,7 @@ def rapidtide_main(argparsingfunc):
     numvalidspatiallocs = np.shape(validvoxels)[0]
     LGR.info("validvoxels shape =", numvalidspatiallocs)
     fmri_data_valid = fmri_data[validvoxels, :] + 0.0
-    LGR.info(
-        f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}"
-    )
+    LGR.info(f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}")
     if internalglobalmeanincludemask is not None:
         internalglobalmeanincludemask_valid = 1.0 * internalglobalmeanincludemask[validvoxels]
         del internalglobalmeanincludemask
@@ -691,8 +688,7 @@ def rapidtide_main(argparsingfunc):
         internalrefineincludemask_valid = 1.0 * internalrefineincludemask[validvoxels]
         del internalrefineincludemask
         LGR.info(
-            "internalrefineincludemask_valid has size: "
-            f"{internalrefineincludemask_valid.size}"
+            "internalrefineincludemask_valid has size: " f"{internalrefineincludemask_valid.size}"
         )
     else:
         internalrefineincludemask_valid = None
@@ -700,8 +696,7 @@ def rapidtide_main(argparsingfunc):
         internalrefineexcludemask_valid = 1.0 * internalrefineexcludemask[validvoxels]
         del internalrefineexcludemask
         LGR.info(
-            "internalrefineexcludemask_valid has size: "
-            f"{internalrefineexcludemask_valid.size}"
+            "internalrefineexcludemask_valid has size: " f"{internalrefineexcludemask_valid.size}"
         )
     else:
         internalrefineexcludemask_valid = None
