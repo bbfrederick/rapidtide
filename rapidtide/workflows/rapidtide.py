@@ -200,7 +200,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
 
         varex = 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
         LGR.info(
-            f"Using {len(thefit.components_)} components, accounting for "
+            f"Using {len(thefit.components_)} component(s), accounting for "
             f"{varex:.2f}% of the variance"
         )
     LGR.info(f"used {numvoxelsused} voxels to calculate global mean signal")

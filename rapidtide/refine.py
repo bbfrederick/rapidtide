@@ -490,7 +490,7 @@ def refineregressor(
         print(
             "Using ",
             len(thefit.components_),
-            " components, accounting for ",
+            " component(s), accounting for ",
             "{:.2f}% of the variance".format(
                 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
             ),
