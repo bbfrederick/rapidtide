@@ -20,6 +20,7 @@
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
 import bisect
+import logging
 import os
 import resource
 import sys
@@ -28,13 +29,16 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import pyfftw
+import pyfftw.interfaces.scipy_fftpack as fftpack
 from numba import jit
-from scipy import fftpack
 
 import rapidtide._version as tide_versioneer
 import rapidtide.io as tide_io
 
-fftpack = pyfftw.interfaces.scipy_fftpack
+LGR = logging.getLogger(__name__)
+TimingLGR = logging.getLogger("TIMING")
+MemoryLGR = logging.getLogger("MEMORY")
+
 pyfftw.interfaces.cache.enable()
 
 # ---------------------------------------- Global constants -------------------------------------------
@@ -103,39 +107,39 @@ def disablenumba():
 
 
 # --------------------------- Utility functions -------------------------------------------------
-def logmem(msg, file=None):
-    """
+def logmem(msg=None):
+    """Log memory usage with a logging object.
 
     Parameters
     ----------
-    msg
-    file
-
-    Returns
-    -------
-
+    msg : str or None, optional
+        A message to include in the first column.
+        If None, the column headers are logged.
+        Default is None.
     """
     global lastmaxrss_parent, lastmaxrss_child
     if msg is None:
+        outvals = [
+            "",
+            "Self Max RSS",
+            "Self Diff RSS",
+            "Self Shared Mem",
+            "Self Unshared Mem",
+            "Self Unshared Stack",
+            "Self Non IO Page Fault",
+            "Self IO Page Fault",
+            "Self Swap Out",
+            "Children Max RSS",
+            "Children Diff RSS",
+            "Children Shared Mem",
+            "Children Unshared Mem",
+            "Children Unshared Stack",
+            "Children Non IO Page Fault",
+            "Children IO Page Fault",
+            "Children Swap Out",
+        ]
         lastmaxrss_parent = 0
         lastmaxrss_child = 0
-        logline = ",".join(
-            [
-                "",
-                "Self Max RSS",
-                "Self Diff RSS",
-                "Self Shared Mem",
-                "Self Unshared Mem",
-                "Self Unshared Stack",
-                "Self Non IO Page Fault" "Self IO Page Fault" "Self Swap Out",
-                "Children Max RSS",
-                "Children Diff RSS",
-                "Children Shared Mem",
-                "Children Unshared Mem",
-                "Children Unshared Stack",
-                "Children Non IO Page Fault" "Children IO Page Fault" "Children Swap Out",
-            ]
-        )
     else:
         rcusage = resource.getrusage(resource.RUSAGE_SELF)
         outvals = [msg]
@@ -158,11 +162,8 @@ def logmem(msg, file=None):
         outvals.append(str(rcusage.ru_minflt))
         outvals.append(str(rcusage.ru_majflt))
         outvals.append(str(rcusage.ru_nswap))
-        logline = ",".join(outvals)
-    if file is None:
-        return logline
-    else:
-        file.writelines(logline + "\n")
+
+    MemoryLGR.info("\t".join(outvals))
 
 
 def findexecutable(command):
