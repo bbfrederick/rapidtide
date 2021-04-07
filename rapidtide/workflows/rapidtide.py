@@ -53,6 +53,7 @@ import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.wiener as tide_wiener
 from rapidtide.tests.utils import mse
+
 from .utils import setup_logger
 
 try:
@@ -407,9 +408,7 @@ def rapidtide_main(argparsingfunc):
             optiondict["isgrayordinate"] = True
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
-            LGR.info(
-                f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs"
-            )
+            LGR.info(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
             slicesize = numspatiallocs
         else:
             LGR.info("input file is NIFTI")
@@ -666,9 +665,7 @@ def rapidtide_main(argparsingfunc):
     numvalidspatiallocs = np.shape(validvoxels)[0]
     LGR.info("validvoxels shape =", numvalidspatiallocs)
     fmri_data_valid = fmri_data[validvoxels, :] + 0.0
-    LGR.info(
-        f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}"
-    )
+    LGR.info(f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}")
     if internalglobalmeanincludemask is not None:
         internalglobalmeanincludemask_valid = 1.0 * internalglobalmeanincludemask[validvoxels]
         del internalglobalmeanincludemask
@@ -691,8 +688,7 @@ def rapidtide_main(argparsingfunc):
         internalrefineincludemask_valid = 1.0 * internalrefineincludemask[validvoxels]
         del internalrefineincludemask
         LGR.info(
-            "internalrefineincludemask_valid has size: "
-            f"{internalrefineincludemask_valid.size}"
+            "internalrefineincludemask_valid has size: " f"{internalrefineincludemask_valid.size}"
         )
     else:
         internalrefineincludemask_valid = None
@@ -700,8 +696,7 @@ def rapidtide_main(argparsingfunc):
         internalrefineexcludemask_valid = 1.0 * internalrefineexcludemask[validvoxels]
         del internalrefineexcludemask
         LGR.info(
-            "internalrefineexcludemask_valid has size: "
-            f"{internalrefineexcludemask_valid.size}"
+            "internalrefineexcludemask_valid has size: " f"{internalrefineexcludemask_valid.size}"
         )
     else:
         internalrefineexcludemask_valid = None
