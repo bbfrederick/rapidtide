@@ -392,6 +392,7 @@ def rapidtide_main(argparsingfunc):
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
             LGR.info(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
+            slicesize = numspatiallocs
         else:
             LGR.info("input file is NIFTI")
             nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
