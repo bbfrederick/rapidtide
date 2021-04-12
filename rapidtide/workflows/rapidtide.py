@@ -2010,6 +2010,7 @@ def rapidtide_main(argparsingfunc):
                 R2,
                 theprefilter,
                 optiondict,
+                bipolar=optiondict["bipolar"],
                 padtrs=numpadtrs,
                 includemask=internalrefineincludemask_valid,
                 excludemask=internalrefineexcludemask_valid,

@@ -129,6 +129,7 @@ def refineregressor(
     theprefilter,
     optiondict,
     padtrs=60,
+    bipolar=False,
     includemask=None,
     excludemask=None,
     debug=False,
@@ -187,7 +188,14 @@ def refineregressor(
     """
     inputshape = np.shape(fmridata)
     if optiondict["ampthresh"] < 0.0:
-        theampthresh = tide_stats.getfracval(lagstrengths, -optiondict["ampthresh"], nozero=True)
+        if bipolar:
+            theampthresh = tide_stats.getfracval(
+                np.fabs(lagstrengths), -optiondict["ampthresh"], nozero=True
+            )
+        else:
+            theampthresh = tide_stats.getfracval(
+                lagstrengths, -optiondict["ampthresh"], nozero=True
+            )
         print(
             "setting ampthresh to the",
             -100.0 * optiondict["ampthresh"],
@@ -195,11 +203,12 @@ def refineregressor(
             theampthresh,
             ")",
         )
+    else:
+        theampthresh = optiondict["ampthresh"]
+    if bipolar:
         ampmask = np.where(np.fabs(lagstrengths) >= theampthresh, np.int16(1), np.int16(0))
     else:
-        ampmask = np.where(
-            np.fabs(lagstrengths) >= optiondict["ampthresh"], np.int16(1), np.int16(0)
-        )
+        ampmask = np.where(lagstrengths >= theampthresh, np.int16(1), np.int16(0))
     if optiondict["lagmaskside"] == "upper":
         delaymask = np.where(
             (lagtimes - optiondict["offsettime"]) > optiondict["lagminthresh"],
@@ -377,6 +386,10 @@ def refineregressor(
     # now generate the refined timecourse(s)
     validlist = np.where(refinemask > 0)[0]
     refinevoxels = shiftedtcs[validlist]
+    if bipolar:
+        for thevoxel in validlist:
+            if lagstrengths[thevoxel] < 0.0:
+                refinevoxels[thevoxel] *= -1.0
     refineweights = weights[validlist]
     weightsum = np.sum(refineweights, axis=0) / volumetotal
     averagedata = np.sum(refinevoxels, axis=0) / volumetotal

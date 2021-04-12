@@ -1,12 +1,12 @@
 #!/bin/bash
 
-rapidtide \
-        sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_refinefail \
-	--spatialfilt 2 \
-        --ampthresh 0.99 \
-        --nprocs -1 \
-        --passes 3 
+#rapidtide \
+#        sub-RAPIDTIDETEST.nii.gz \
+#        ../dst/sub-RAPIDTIDETEST_refinefail \
+#	--spatialfilt 2 \
+#        --ampthresh 0.99 \
+#        --nprocs -1 \
+#        --passes 3 
 
 rapidtide \
 	--spatialfilt 2 \
@@ -14,6 +14,14 @@ rapidtide \
         --passes 3 \
         sub-RAPIDTIDETEST.nii.gz \
         ../dst/sub-RAPIDTIDETEST
+
+rapidtide \
+	--spatialfilt 2 \
+        --nprocs -1 \
+        --passes 3 \
+        --bipolar \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_bipolar
 
 #rapidtide \
         #sub-RAPIDTIDETEST.nii.gz \
