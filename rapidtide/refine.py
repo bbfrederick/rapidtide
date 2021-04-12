@@ -385,11 +385,11 @@ def refineregressor(
 
     # now generate the refined timecourse(s)
     validlist = np.where(refinemask > 0)[0]
-    refinevoxels = shiftedtcs[validlist]
+    refinevoxels = shiftedtcs[validlist, :]
     if bipolar:
-        for thevoxel in validlist:
-            if lagstrengths[thevoxel] < 0.0:
-                refinevoxels[thevoxel] *= -1.0
+        for thevoxel in range(len(validlist)):
+            if lagstrengths[validlist][thevoxel] < 0.0:
+                refinevoxels[thevoxel, :] *= -1.0
     refineweights = weights[validlist]
     weightsum = np.sum(refineweights, axis=0) / volumetotal
     averagedata = np.sum(refinevoxels, axis=0) / volumetotal
