@@ -56,14 +56,6 @@ def onesimfuncfit(
     else:
         thefitter.setlthresh(lthreshval)
 
-    if thefitter.bipolar:
-        if max(correlationfunc) < -1.0 * min(correlationfunc):
-            flipfac = rt_floatset(-1.0)
-        else:
-            flipfac = rt_floatset(1.0)
-    else:
-        flipfac = rt_floatset(1.0)
-
     if not fixdelay:
         (
             maxindex,
@@ -75,13 +67,12 @@ def onesimfuncfit(
             peakstart,
             peakend,
         ) = thefitter.fit(correlationfunc)
-        maxval *= flipfac
     else:
         # do something different
         failreason = np.uint32(0)
         maxlag = rt_floatset(fixeddelayvalue)
         maxindex = np.int16(bisect.bisect_left(thefitter.corrtimeaxis, fixeddelayvalue))
-        maxval = rt_floatset(flipfac * correlationfunc[maxindex])
+        maxval = rt_floatset(correlationfunc[maxindex])
         maxsigma = rt_floatset(1.0)
         maskval = np.uint16(1)
         peakstart = maxindex
