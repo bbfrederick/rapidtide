@@ -1,5 +1,18 @@
 # History of changes
 
+## Version 2.0alpha21 (4/12/21)
+* (rapidtide) Gracefully handle refinement failure.
+* (happy) Fixed some output timecourse naming.
+* (atlastool) Major fixes to functionality with 4D template files.
+* (aligntcs, applydlfilter, pixelcomp, plethquality, resamp1tc, showstxcorr, showxcorrx) Fixed matplotlib backend initialization to allow headless operation.
+* (package) General cleanup and rationalization of imports.  isort now used by default.
+* (package) Dropped support for python 3.3-3.5
+* (package) Fixed a stupid bug that surfaced when reading in all columns of a text file as input.
+* (package) Merged tsalo's PR starting transition to new logging output.
+* (package) Fixed environment for py39 testing.
+* (package) Started to phase out sys.exit() calls in favor of raising exceptions.
+* (rapidtide) Corrected BIDS naming of intermediate maps.
+
 ## Version 2.0alpha20 (3/28/21)
 * (package) Python 2.7 support is now officially ended.  Cleaned out compatiblity code.
 * (package) Made pyfftw and numba requirements.
