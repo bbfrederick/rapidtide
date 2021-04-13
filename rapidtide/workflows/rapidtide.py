@@ -797,7 +797,7 @@ def rapidtide_main(argparsingfunc):
             )
         else:
             theheader["dim"][0] = 3
-            theheader["dim"][4] = numspatiallocs
+            theheader["dim"][4] = 1
             tide_io.savetonifti(
                 fullmeanmask.reshape((xsize, ysize, numslices)), theheader, savename
             )
