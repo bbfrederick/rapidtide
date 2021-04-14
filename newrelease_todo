@@ -12,8 +12,8 @@
 
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging) and push to github:
 
-    git tag -a v2.0alpha23 -m "v2.0alpha23"
-    git push origin v2.0alpha23
+    git tag -a v2.0alpha24 -m "v2.0alpha24"
+    git push origin v2.0alpha24
 
 
 + Edit the release notes on github

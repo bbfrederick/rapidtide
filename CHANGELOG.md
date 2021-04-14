@@ -1,5 +1,8 @@
 # History of changes
 
+## Version 2.0alpha24 (4/14/21)
+* (rapidtide) Added the '--negativegradient' option in response to https://github.com/bbfrederick/rapidtide/issues/67
+
 ## Version 2.0alpha23 (4/14/21)
 * (happy) Fixed logmem calls to work with new logging structure (and not crash immediately).
 

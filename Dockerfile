@@ -151,7 +151,7 @@ LABEL org.label-schema.name="rapidtide" \
       org.label-schema.description="rapidtide - a set of tools for delay processing" \
       org.label-schema.url="http://nirs-fmri.net" \
       org.label-schema.vcs-url="https://github.com/bbfrederick/rapidtide" \
-      org.label-schema.version="2.0alpha23"
+      org.label-schema.version="2.0alpha24"
 
 # this is nominally the correct way to do this, but it doesn't work
 ARG VERSION
