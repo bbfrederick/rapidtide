@@ -1,5 +1,8 @@
 # History of changes
 
+## Version 2.0alpha23 (4/14/21)
+* (happy) Fixed logmem calls to work with new logging structure (and not crash immediately).
+
 ## Version 2.0alpha22 (4/13/21)
 * (rapidtide, tidepool) Fixed reading and writing the globalmean mask.
 * (package) Fixed a stupid bug that surfaced when reading in all columns of a text file as input (really, this time).
