@@ -41,6 +41,8 @@ import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 
+from .utils import setup_logger
+
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 try:
@@ -892,6 +894,15 @@ def happy_main(argparsingfunc):
     slicetimename = args.slicetimename
     outputroot = args.outputroot
 
+    # Set up loggers for workflow
+    setup_logger(
+        logger_filename=f"{outputroot}_log.txt",
+        timing_filename=f"{outputroot}_runtimings.tsv",
+        memory_filename=f"{outputroot}_memusage.tsv",
+        verbose=args.verbose,
+        debug=args.debug,
+    )
+
     timings.append(["Argument parsing done", time.time(), None, None])
 
     """print(
@@ -941,8 +952,8 @@ def happy_main(argparsingfunc):
     else:
         tide_io.writedict(infodict, outputroot + "_info.txt")
 
-    memfile = open(outputroot + "_memusage.csv", "w")
-    tide_util.logmem(None, file=memfile)
+    tide_util.logmem()
+    tide_util.logmem("Start")
 
     # set the number of MKL threads to use
     if mklexists:
@@ -969,7 +980,7 @@ def happy_main(argparsingfunc):
     timings.append(["Argument parsing done", time.time(), None, None])
 
     # read in the image data
-    tide_util.logmem("before reading in fmri data", file=memfile)
+    tide_util.logmem("before reading in fmri data")
     nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
     input_data = tide_classes.fMRIDataset(nim_data, numskip=args.numskip)
     timepoints = input_data.timepoints
@@ -993,7 +1004,7 @@ def happy_main(argparsingfunc):
     del nim_data
 
     # make and save a mask of the voxels to process based on image intensity
-    tide_util.logmem("before mask creation", file=memfile)
+    tide_util.logmem("before mask creation")
     mask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
     # mask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, :], axis=1),
     #                                     threshpct=args.maskthreshpct))
@@ -1014,7 +1025,7 @@ def happy_main(argparsingfunc):
 
     # read in projection mask if present otherwise fall back to intensity mask
     if args.projmaskname is not None:
-        tide_util.logmem("before reading in projmask", file=memfile)
+        tide_util.logmem("before reading in projmask")
         projmask_byslice = readextmask(
             args.projmaskname, nim_hdr, xsize, ysize, numslices
         ) * np.float64(mask_byslice)
@@ -1074,7 +1085,7 @@ def happy_main(argparsingfunc):
     timings.append(["Slice times determined", time.time(), None, None])
 
     # normalize the input data
-    tide_util.logmem("before normalization", file=memfile)
+    tide_util.logmem("before normalization")
     normdata, demeandata, means = normalizevoxels(
         fmri_data,
         args.detrendorder,
@@ -1090,7 +1101,7 @@ def happy_main(argparsingfunc):
     if args.debug:
         print(args.estmaskname)
     if args.estmaskname is not None:
-        tide_util.logmem("before reading in estmask", file=memfile)
+        tide_util.logmem("before reading in estmask")
         estmask_byslice = readextmask(
             args.estmaskname, nim_hdr, xsize, ysize, numslices
         ) * np.float64(mask_byslice)
@@ -1120,7 +1131,7 @@ def happy_main(argparsingfunc):
             passstring = ""
         # now get an estimate of the cardiac signal
         print("estimating cardiac signal from fmri data")
-        tide_util.logmem("before cardiacfromimage", file=memfile)
+        tide_util.logmem("before cardiacfromimage")
         (
             cardfromfmri_sliceres,
             cardfromfmri_normfac,
@@ -1488,7 +1499,7 @@ def happy_main(argparsingfunc):
 
         # get the cardiac signal from a file, if specified
         if args.cardiacfilename is not None:
-            tide_util.logmem("before cardiacfromfile", file=memfile)
+            tide_util.logmem("before cardiacfromfile")
             pleth_sliceres, pleth_stdres = getphysiofile(
                 args.cardiacfilename,
                 args.inputfreq,
@@ -1778,7 +1789,7 @@ def happy_main(argparsingfunc):
                     )
 
         # now calculate the phase waveform
-        tide_util.logmem("before analytic phase analysis", file=memfile)
+        tide_util.logmem("before analytic phase analysis")
         instantaneous_phase, amplitude_envelope = tide_fit.phaseanalysis(filthiresfund)
         if args.outputlevel > 0:
             if thispass == numpasses - 1:
@@ -1882,7 +1893,7 @@ def happy_main(argparsingfunc):
             tide_util.proctiminginfo(
                 timings, outputfile=outputroot + "_runtimings.txt", extraheader=nodeline
             )
-            tide_util.logmem("final", file=memfile)
+            tide_util.logmem("final")
             sys.exit()
 
         # find the phase values for all timepoints in all slices
@@ -1923,7 +1934,7 @@ def happy_main(argparsingfunc):
         )
 
         # construct the destination arrays
-        tide_util.logmem("before making destination arrays", file=memfile)
+        tide_util.logmem("before making destination arrays")
         app = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
         app_byslice = app.reshape((xsize * ysize, numslices, args.destpoints))
         cine = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
@@ -2290,7 +2301,7 @@ def happy_main(argparsingfunc):
             )
 
         # find vessel threshholds
-        tide_util.logmem("before making vessel masks", file=memfile)
+        tide_util.logmem("before making vessel masks")
         hardvesselthresh = tide_stats.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
         softvesselthresh = args.softvesselfrac * hardvesselthresh
         print(
@@ -2405,7 +2416,7 @@ def happy_main(argparsingfunc):
     if args.dotemporalglm or args.dospatialglm:
         # generate the signals
         timings.append(["Cardiac signal regression started", time.time(), None, None])
-        tide_util.logmem("before cardiac regression", file=memfile)
+        tide_util.logmem("before cardiac regression")
         print("Generating cardiac regressors")
         cardiacnoise = fmri_data * 0.0
         cardiacnoise_byslice = cardiacnoise.reshape((xsize * ysize, numslices, timepoints))
@@ -2443,7 +2454,7 @@ def happy_main(argparsingfunc):
             timings.append(["Cardiac signal saved", time.time(), None, None])
 
         # now remove them
-        tide_util.logmem("before cardiac removal", file=memfile)
+        tide_util.logmem("before cardiac removal")
         print("Removing cardiac signal with GLM")
         filtereddata = 0.0 * fmri_data
         validlocs = np.where(mask > 0)[0]
@@ -2605,7 +2616,7 @@ def happy_main(argparsingfunc):
         timings, outputfile=outputroot + "_runtimings.txt", extraheader=nodeline
     )
 
-    tide_util.logmem("final", file=memfile)
+    tide_util.logmem("final")
 
 
 if __name__ == "__main__":
