@@ -1596,7 +1596,7 @@ def readvecs(inputfilename, colspec=None, numskip=0, alt=False, debug=False):
     if alt:
         dataarray = pd.read_table(inputfilename, header=None)
         if colspec is None:
-            collist = range(len(dataarray.columns) - 1)
+            collist = range(len(dataarray.columns))
         else:
             collist = colspectolist(colspec, debug=debug)
         if debug:

@@ -511,6 +511,8 @@ class RapidtideDataset:
         ydim = 0
         zdim = 0
         for mapname, mapfilename in self.funcmaps:
+            if self.verbose:
+                print(f"loading {mapname} from {mapfilename}")
             if os.path.isfile(self.fileroot + mapfilename + ".nii.gz"):
                 print(
                     "file: ",
@@ -557,6 +559,8 @@ class RapidtideDataset:
     def _loadfuncmasks(self):
         self.loadedfuncmasks = []
         for maskname, maskfilename in self.funcmasks:
+            if self.verbose:
+                print(f"loading {maskname} from {maskfilename}")
             if os.path.isfile(self.fileroot + maskfilename + ".nii.gz"):
                 thepath, thebase = os.path.split(self.fileroot)
                 self.overlays[maskname] = Overlay(
@@ -999,7 +1003,7 @@ class RapidtideDataset:
             self.funcmasks = [
                 ["lagmask", "desc-corrfit_mask"],
                 ["refinemask", "desc-refine_mask"],
-                ["meanmask", "desc-meanmask_mask"],
+                ["meanmask", "desc-globalmean_mask"],
                 ["p_lt_0p050_mask", "desc-plt0p050_mask"],
                 ["p_lt_0p010_mask", "desc-plt0p010_mask"],
                 ["p_lt_0p005_mask", "desc-plt0p005_mask"],
