@@ -805,16 +805,30 @@ def rapidtide_main(argparsingfunc):
         optiondict["preprocskip"] = 0
     else:
         LGR.info("using externally supplied probe regressor")
+        (
+            fileinputfreq,
+            filestarttime,
+            dummy,
+            inputvec,
+            dummy,
+            dummy,
+        ) = tide_io.readvectorsfromtextfile(filename, onecol=True)
         inputfreq = optiondict["inputfreq"]
         inputstarttime = optiondict["inputstarttime"]
         if inputfreq is None:
-            inputfreq = 1.0 / fmritr
+            if fileinputfreq is not None:
+                inputfreq = fileinputfreq
+            else:
+                inputfreq = 1.0 / fmritr
             LGR.warning(f"no regressor frequency specified - defaulting to {inputfreq} (1/tr)")
         if inputstarttime is None:
-            LGR.warning("no regressor start time specified - defaulting to 0.0")
-            inputstarttime = 0.0
+            if filestarttime is not None:
+                inputstarttime = filestarttime
+            else:
+                LGR.warning("no regressor start time specified - defaulting to 0.0")
+                inputstarttime = 0.0
         inputperiod = 1.0 / inputfreq
-        inputvec = tide_io.readvec(filename)
+        # inputvec = tide_io.readvec(filename)
     numreference = len(inputvec)
     optiondict["inputfreq"] = inputfreq
     optiondict["inputstarttime"] = inputstarttime
@@ -920,7 +934,10 @@ def rapidtide_main(argparsingfunc):
         optiondict["upperstop"],
     ) = theprefilter.getfreqs()
     reference_y_classfilter = theprefilter.apply(inputfreq, reference_y)
-    reference_y = reference_y_classfilter
+    if optiondict["negativegradregressor"]:
+        reference_y = -np.gradient(reference_y_classfilter)
+    else:
+        reference_y = reference_y_classfilter
 
     # write out the reference regressor used
     if optiondict["bidsoutput"]:
@@ -1058,6 +1075,7 @@ def rapidtide_main(argparsingfunc):
     theCorrelator = tide_classes.Correlator(
         Fs=oversampfreq,
         ncprefilter=theprefilter,
+        negativegradient=optiondict["negativegradient"],
         detrendorder=optiondict["detrendorder"],
         windowfunc=optiondict["windowfunc"],
         corrweighting=optiondict["corrweighting"],
@@ -1085,6 +1103,7 @@ def rapidtide_main(argparsingfunc):
         Fs=oversampfreq,
         smoothingtime=optiondict["smoothingtime"],
         ncprefilter=theprefilter,
+        negativegradient=optiondict["negativegradient"],
         detrendorder=optiondict["detrendorder"],
         windowfunc=optiondict["windowfunc"],
         madnorm=False,

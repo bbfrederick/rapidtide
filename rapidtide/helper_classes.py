@@ -157,6 +157,7 @@ class SimilarityFunctionator:
         lagmininpts=0,
         lagmaxinpts=0,
         ncprefilter=None,
+        negativegradient=False,
         reftc=None,
         detrendorder=1,
         debug=False,
@@ -166,29 +167,33 @@ class SimilarityFunctionator:
         self.lagmininpts = lagmininpts
         self.lagmaxinpts = lagmaxinpts
         self.ncprefilter = ncprefilter
+        self.negativegradient = negativegradient
         self.reftc = reftc
         self.detrendorder = detrendorder
         self.debug = debug
         if self.reftc is not None:
             self.setreftc(self.reftc)
 
-    def preptc(self, thetc, hpfreq=None):
+    def preptc(self, thetc, isreftc=False, hpfreq=None):
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function
-        if hpfreq is None:
-            return tide_math.corrnormalize(
+        if isreftc or (not self.negativegradient):
+            thenormtc = tide_math.corrnormalize(
                 self.ncprefilter.apply(self.Fs, thetc),
                 detrendorder=self.detrendorder,
                 windowfunc=self.windowfunc,
             )
         else:
-            return self.hpfilt.apply(
-                self.Fs,
+            thenormtc = -np.gradient(
                 tide_math.corrnormalize(
                     self.ncprefilter.apply(self.Fs, thetc),
                     detrendorder=self.detrendorder,
                     windowfunc=self.windowfunc,
-                ),
+                )
             )
+        if hpfreq is None:
+            return thenormtc
+        else:
+            return self.hpfilt.apply(self.Fs, thenormtc)
 
     def trim(self, vector):
         return vector[
@@ -259,7 +264,7 @@ class MutualInformationator(SimilarityFunctionator):
 
     def setreftc(self, reftc, offset=0.0):
         self.reftc = reftc + 0.0
-        self.prepreftc = self.preptc(self.reftc, hpfreq=None)
+        self.prepreftc = self.preptc(self.reftc, isreftc=True, hpfreq=None)
 
         self.timeaxis, dummy, self.similarityfuncorigin = tide_corr.cross_mutual_info(
             self.prepreftc,
@@ -379,7 +384,7 @@ class Correlator(SimilarityFunctionator):
 
     def setreftc(self, reftc, offset=0.0):
         self.reftc = reftc + 0.0
-        self.prepreftc = self.preptc(self.reftc, hpfreq=self.hpfreq)
+        self.prepreftc = self.preptc(self.reftc, isreftc=True, hpfreq=self.hpfreq)
         self.similarityfunclen = len(self.reftc) * 2 - 1
         self.similarityfuncorigin = self.similarityfunclen // 2 + 1
 

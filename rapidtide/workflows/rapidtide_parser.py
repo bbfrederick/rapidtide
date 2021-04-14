@@ -1078,6 +1078,23 @@ def _get_parser():
         default=None,
     )
     experimental.add_argument(
+        "--negativegradient",
+        dest="negativegradient",
+        action="store_true",
+        help=(
+            "Calculate the negative gradient of the fmri data after spectral filtering "
+            "so you can look for CSF flow a la https://www.biorxiv.org/content/10.1101/2021.03.29.437406v1.full. "
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--negativegradregressor",
+        dest="negativegradregressor",
+        action="store_true",
+        help=("Calculate the negative gradient of the input regressor after spectral filtering. "),
+        default=False,
+    )
+    experimental.add_argument(
         "--cleanrefined",
         dest="cleanrefined",
         action="store_true",

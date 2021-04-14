@@ -789,6 +789,8 @@ def process_args():
 
     # experimental options
     optiondict["echocancel"] = False
+    optiondict["negativegradient"] = False
+    optiondict["negativegradregressor"] = False
 
     # package options
     optiondict["memprofilerexists"] = memprofilerexists
