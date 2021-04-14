@@ -2,6 +2,7 @@
 
 ## Version 2.0alpha22 (4/13/21)
 * (rapidtide, tidepool) Fixed reading and writing the globalmean mask.
+* (package) Fixed a stupid bug that surfaced when reading in all columns of a text file as input (really, this time).
 
 ## Version 2.0alpha21 (4/12/21)
 * (rapidtide) Gracefully handle refinement failure.
