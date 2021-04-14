@@ -8,6 +8,13 @@
 #        --nprocs -1 \
 #        --passes 3 
 
+#rapidtide \
+#	--spatialfilt 2 \
+#        --nprocs -1 \
+#        --passes 3 \
+#        sub-RAPIDTIDETEST.nii.gz \
+#        ../dst/sub-RAPIDTIDETEST
+
 rapidtide \
         --regressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 \
         --negativegradregressor \
