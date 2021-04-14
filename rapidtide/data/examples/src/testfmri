@@ -15,13 +15,13 @@ rapidtide \
         sub-RAPIDTIDETEST.nii.gz \
         ../dst/sub-RAPIDTIDETEST
 
-rapidtide \
-	--spatialfilt 2 \
-        --nprocs -1 \
-        --passes 3 \
-        --bipolar \
-        sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_bipolar
+#rapidtide \
+#	--spatialfilt 2 \
+#        --nprocs -1 \
+#        --passes 3 \
+#        --bipolar \
+#        sub-RAPIDTIDETEST.nii.gz \
+#        ../dst/sub-RAPIDTIDETEST_bipolar
 
 #rapidtide \
         #sub-RAPIDTIDETEST.nii.gz \
