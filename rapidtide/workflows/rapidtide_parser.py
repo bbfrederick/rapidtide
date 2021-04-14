@@ -1091,7 +1091,7 @@ def _get_parser():
         "--negativegradregressor",
         dest="negativegradregressor",
         action="store_true",
-        help=("Calculate the negative gradient of the input regressor after spectral filtering. "),
+        help=argparse.SUPPRESS,
         default=False,
     )
     experimental.add_argument(
