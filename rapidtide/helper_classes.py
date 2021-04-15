@@ -183,12 +183,10 @@ class SimilarityFunctionator:
                 windowfunc=self.windowfunc,
             )
         else:
-            thenormtc = -np.gradient(
-                tide_math.corrnormalize(
-                    self.ncprefilter.apply(self.Fs, thetc),
-                    detrendorder=self.detrendorder,
-                    windowfunc=self.windowfunc,
-                )
+            thenormtc = tide_math.corrnormalize(
+                -np.gradient(self.ncprefilter.apply(self.Fs, thetc)),
+                detrendorder=self.detrendorder,
+                windowfunc=self.windowfunc,
             )
         if hpfreq is None:
             return thenormtc
