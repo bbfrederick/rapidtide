@@ -417,7 +417,6 @@ def cross_mutual_info(
     prebin=True,
     sigma=0.25,
     fast=True,
-    debug=False,
 ):
     """Calculate cross-mutual information between two 1D arrays.
     Parameters
@@ -447,8 +446,6 @@ def cross_mutual_info(
         histogram smoothing kernel
     fast: bool
         apply speed optimizations
-    debug : bool
-        set to True to output additional debugging information
 
     Returns
     -------
@@ -510,7 +507,6 @@ def cross_mutual_info(
                 normalized=norm,
                 fast=fast,
                 sigma=sigma,
-                debug=debug,
             )
         elif i == 0:
             thexmi_y[destloc] = mutual_info_2d(
@@ -520,7 +516,6 @@ def cross_mutual_info(
                 normalized=norm,
                 fast=fast,
                 sigma=sigma,
-                debug=debug,
             )
         else:
             thexmi_y[destloc] = mutual_info_2d(
@@ -530,7 +525,6 @@ def cross_mutual_info(
                 normalized=norm,
                 fast=fast,
                 sigma=sigma,
-                debug=debug,
             )
 
     if madnorm:
