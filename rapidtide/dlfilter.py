@@ -36,7 +36,7 @@ pyfftw.interfaces.cache.enable()
 
 import rapidtide.io as tide_io
 
-LGR = logging.getLogger(__name__)
+LGR = logging.getLogger("GENERAL")
 LGR.debug("setting backend to Agg")
 mpl.use("Agg")
 

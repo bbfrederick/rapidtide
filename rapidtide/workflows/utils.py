@@ -2,7 +2,7 @@
 import logging
 import os
 
-LGR = logging.getLogger(__name__)
+LGR = logging.getLogger("GENERAL")
 TimingLGR = logging.getLogger("TIMING")
 MemoryLGR = logging.getLogger("MEMORY")
 
@@ -22,14 +22,16 @@ class ContextFilter(logging.Filter):
 
 
 class TimingFormatter(logging.Formatter):
+    """A formatter to allow optional extra fields (message2 and message3) in a logger.
+
+    The fields must be passed as a dictionary, without a keyword.
+    """
     def format(self, record):
-        try:
-            record.message2 = record.args.get("message2")
-        except KeyError:
+        if isinstance(record.args, dict):
+            record.message2 = record.args.get("message2", None)
+            record.message3 = record.args.get("message3", None)
+        else:
             record.message2 = None
-        try:
-            record.message3 = record.args.get("message3")
-        except KeyError:
             record.message3 = None
         return super().format(record)
 
@@ -83,34 +85,22 @@ def setup_logger(logger_filename, timing_filename, memory_filename, verbose=Fals
 
     # A handler for the console
     stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(log_formatter)
 
     # Removing handlers after basicConfig doesn't work, so we use filters
     # for the relevant handlers themselves.
     log_handler.addFilter(ContextFilter())
     stream_handler.addFilter(ContextFilter())
 
-    logging.root.addHandler(log_handler)
-    logging.root.addHandler(stream_handler)
+    LGR.addHandler(log_handler)
+    LGR.addHandler(stream_handler)
+    LGR.propagate = False  # do not print to console, except for messages for StreamHandler
 
     # A timing logger
-    try:
-        message2
-        try:
-            message3
-            timing_formatter = logging.Formatter(
-                "%(asctime)s\t%(message)s\t%(message2)s\t%(message3)s",
-                datefmt="%Y-%m-%dT%H:%M:%S",
-            )
-        except NameError:
-            timing_formatter = logging.Formatter(
-                "%(asctime)s\t%(message)s\t%(message2)s",
-                datefmt="%Y-%m-%dT%H:%M:%S",
-            )
-    except NameError:
-        timing_formatter = logging.Formatter(
-            "%(asctime)s\t%(message)s",
-            datefmt="%Y-%m-%dT%H:%M:%S",
-        )
+    timing_formatter = TimingFormatter(
+        "%(asctime)s\t%(message)s\t%(message2)s\t%(message3)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+    )
     timing_handler = logging.FileHandler(timing_filename)
     timing_handler.setFormatter(timing_formatter)
     TimingLGR.setLevel(logging.INFO)

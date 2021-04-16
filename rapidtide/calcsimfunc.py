@@ -33,7 +33,7 @@ import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
-LGR = logging.getLogger(__name__)
+LGR = logging.getLogger("GENERAL")
 
 
 def _procOneVoxelCorrelation(
