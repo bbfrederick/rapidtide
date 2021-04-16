@@ -23,6 +23,7 @@
 #
 #
 import gc
+import logging
 import warnings
 
 import numpy as np
@@ -32,6 +33,7 @@ import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
+LGR = logging.getLogger(__name__)
 
 
 def _procOneVoxelCorrelation(
@@ -73,7 +75,6 @@ def correlationpass(
     chunksize=1000,
     rt_floatset=np.float64,
     rt_floattype="float64",
-    debug=False,
 ):
     """
 
@@ -184,10 +185,10 @@ def correlationpass(
             )
             theglobalmaxlist.append(theglobalmax + 0)
             volumetotal += 1
-    print("\nCorrelation performed on " + str(volumetotal) + " voxels")
+    LGR.info(f"\nCorrelation performed on {volumetotal} voxels")
 
     # garbage collect
     collected = gc.collect()
-    print("Garbage collector: collected %d objects." % collected)
+    LGR.info(f"Garbage collector: collected {collected} objects.")
 
     return volumetotal, theglobalmaxlist, thecorrscale
