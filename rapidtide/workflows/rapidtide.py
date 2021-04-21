@@ -2701,20 +2701,13 @@ def rapidtide_main(argparsingfunc):
         del fitcoeff
         del fitNorm
 
-    temp = {
-        "meanvalue": {
-            "data": meanvalue,
-            "suffix": "mean",
-        }
-    }
-    for mapname, temp_dict in temp.items():
-        outmaparray = temp_dict["data"]
-        mapsuffix = temp_dict["suffix"]
-
+    for mapname, mapsuffix in [("meanvalue", "mean")]:
         if optiondict["memprofile"]:
             memcheckpoint("about to write " + mapname)
         else:
             tide_util.logmem("about to write " + mapname)
+        outmaparray[:] = 0.0
+        outmaparray[:] = eval(mapname)[:]
 
         if optiondict["textio"]:
             tide_io.writenpvecs(
