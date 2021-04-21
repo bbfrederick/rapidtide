@@ -8,23 +8,34 @@
 #        --nprocs -1 \
 #        --passes 3 
 
-#rapidtide \
-#	--spatialfilt 2 \
-#        --nprocs -1 \
-#        --passes 3 \
-#        sub-RAPIDTIDETEST.nii.gz \
-#        ../dst/sub-RAPIDTIDETEST
-
 rapidtide \
-        --regressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 \
-        --negativegradregressor \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_noautoreg \
 	--spatialfilt 2 \
         --nprocs -1 \
-        --passes 1 \
-        --despecklepasses 0 \
-        --negativegradient \
+        --passes 3 \
+        --filterfreqs 0.05 0.15
+
+
+rapidtide \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST-negativegradient
+        ../dst/sub-RAPIDTIDETEST_tozero \
+	--spatialfilt 2 \
+        --nprocs -1 \
+        --passes 3 \
+        --filterfreqs 0.0 0.15
+
+
+#rapidtide \
+#        --regressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 \
+#        --negativegradregressor \
+#	--spatialfilt 2 \
+#        --nprocs -1 \
+#        --passes 1 \
+#        --despecklepasses 0 \
+#        --negativegradient \
+#        sub-RAPIDTIDETEST.nii.gz \
+#        ../dst/sub-RAPIDTIDETEST-negativegradient
 
 #rapidtide \
 #	--spatialfilt 2 \
