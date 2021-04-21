@@ -1407,15 +1407,17 @@ def prep(
     # normalize input and output data
     LGR.info("normalizing data")
     LGR.info(f"count: {x.shape[1]}")
-    for thesubj in range(x.shape[1]):
-        LGR.debug(
-            f"prenorm sub {thesubj} min, max, mean, std, MAD x, y: "
-            f"{thesubj} "
-            f"{np.min(x[:, thesubj])} {np.max(x[:, thesubj])} {np.mean(x[:, thesubj])} "
-            f"{np.std(x[:, thesubj])} {mad(x[:, thesubj])} {np.min(y[:, thesubj])} "
-            f"{np.max(y[:, thesubj])} {np.mean(y[:, thesubj])} {np.std(x[:, thesubj])} "
-            f"{mad(y[:, thesubj])}"
-        )
+    if LGR.getEffectiveLevel() <= logging.DEBUG:
+        # Only take these steps if the logger is set to DEBUG.
+        for thesubj in range(x.shape[1]):
+            LGR.debug(
+                f"prenorm sub {thesubj} min, max, mean, std, MAD x, y: "
+                f"{thesubj} "
+                f"{np.min(x[:, thesubj])} {np.max(x[:, thesubj])} {np.mean(x[:, thesubj])} "
+                f"{np.std(x[:, thesubj])} {mad(x[:, thesubj])} {np.min(y[:, thesubj])} "
+                f"{np.max(y[:, thesubj])} {np.mean(y[:, thesubj])} {np.std(x[:, thesubj])} "
+                f"{mad(y[:, thesubj])}"
+            )
 
     y -= np.mean(y, axis=0)
     themad = mad(y, axis=0)
@@ -1429,15 +1431,17 @@ def prep(
         if themad[thesubj] > 0.0:
             x[:, thesubj] /= themad[thesubj]
 
-        for thesubj in range(x.shape[1]):
-            LGR.debug(
-                f"postnorm sub {thesubj} min, max, mean, std, MAD x, y: "
-                f"{thesubj} "
-                f"{np.min(x[:, thesubj])} {np.max(x[:, thesubj])} {np.mean(x[:, thesubj])} "
-                f"{np.std(x[:, thesubj])} {mad(x[:, thesubj])} {np.min(y[:, thesubj])} "
-                f"{np.max(y[:, thesubj])} {np.mean(y[:, thesubj])} {np.std(x[:, thesubj])} "
-                f"{mad(y[:, thesubj])}"
-            )
+        if LGR.getEffectiveLevel() <= logging.DEBUG:
+            # Only take these steps if the logger is set to DEBUG.
+            for thesubj in range(x.shape[1]):
+                LGR.debug(
+                    f"postnorm sub {thesubj} min, max, mean, std, MAD x, y: "
+                    f"{thesubj} "
+                    f"{np.min(x[:, thesubj])} {np.max(x[:, thesubj])} {np.mean(x[:, thesubj])} "
+                    f"{np.std(x[:, thesubj])} {mad(x[:, thesubj])} {np.min(y[:, thesubj])} "
+                    f"{np.max(y[:, thesubj])} {np.mean(y[:, thesubj])} {np.std(x[:, thesubj])} "
+                    f"{mad(y[:, thesubj])}"
+                )
 
     # now decide what to keep and what to exclude
     thefabs = np.fabs(x)
