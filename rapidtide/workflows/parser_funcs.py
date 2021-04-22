@@ -501,7 +501,7 @@ def postprocesssearchrangeopts(args):
     try:
         test = args.fixeddelayvalue
     except:
-        args.fixdelayvalue = None
+        args.fixeddelayvalue = None
     if args.fixeddelayvalue is not None:
         args.fixdelay = True
         args.lag_extrema = (args.fixeddelayvalue - 10.0, args.fixeddelayvalue + 10.0)
