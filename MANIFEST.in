@@ -1,5 +1,6 @@
 recursive-include rapidtide *.py
 recursive-include rapidtide/scripts *
+recursive-include rapidtide/tests/tmp *
 recursive-include rapidtide/workflows.py *
 recursive-include rapidtide/data/reference ASPECTS*
 recursive-include rapidtide/data/reference ATT*

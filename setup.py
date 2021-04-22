@@ -203,14 +203,14 @@ setup(
         "testdata": [
             "tests/testdata/*.txt",
         ],
+        "tmpdata": [
+            "tests/tmp/.placeholder.txt",
+        ],
     },
     additional_packagedata={
         "testtargets": [
             "tests/testtargets/*.txt",
             "tests/testtargets/*.nii.gz",
-        ],
-        "tmpdata": [
-            "tests/tmp/.placeholder.txt",
         ],
     },
     # To provide executable scripts, use entry points in preference to the

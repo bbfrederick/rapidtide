@@ -16,9 +16,11 @@
 #   limitations under the License.
 #
 #
+import os
 import matplotlib as mpl
 import argparse
 
+from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 import rapidtide.workflows.aligntcs as aligntcs
 
 
@@ -27,12 +29,12 @@ def test_smoke(debug=False, display=False):
     aligntcsargs.arbvec = None
     aligntcsargs.display = False
     aligntcsargs.filterband = "lfo"
-    aligntcsargs.infile1 = "../data/examples/src/lforegressor.txt"
-    aligntcsargs.infile2 = "../data/examples/src/lforegressor.txt"
+    aligntcsargs.infile1 = os.path.join(get_examples_path(), "timecourse1.txt")
+    aligntcsargs.infile2 = os.path.join(get_examples_path(), "timecourse2.txt")
     aligntcsargs.insamplerate1 = 12.5
     aligntcsargs.insamplerate2 = 12.5
     aligntcsargs.lag_extrema = (-30.0, 30.0)
-    aligntcsargs.outputfile = "../data/examples/dst/hoot"
+    aligntcsargs.outputfile = os.path.join(get_test_temp_path(), "hoot")
     aligntcsargs.verbose = False
     aligntcs.main(aligntcsargs)
 
