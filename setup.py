@@ -51,6 +51,7 @@ modules_list = [
     "rapidtide/refine",
     "rapidtide/_version",
     "rapidtide/workflows/parser_funcs",
+    "rapidtide/workflows/aligntcs",
     "rapidtide/workflows/happy_parser",
     "rapidtide/workflows/rapidtide_parser",
     "rapidtide/workflows/rapidtide2x_parser",
