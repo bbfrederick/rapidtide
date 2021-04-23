@@ -256,7 +256,7 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
 
 
 def rapidtide_main(argparsingfunc):
-    optiondict, theprefilter = argparsingfunc()
+    optiondict, theprefilter = argparsingfunc
 
     optiondict["nodename"] = platform.node()
 
@@ -3014,9 +3014,3 @@ def rapidtide_main(argparsingfunc):
         tide_io.writedicttojson(optiondict, outputname + "_desc-runoptions_info.json")
     else:
         tide_io.writedicttojson(optiondict, outputname + "_options.json")
-
-
-if __name__ == "__main__":
-    from rapidtide.workflows.rapidtide_parser import process_args
-
-    rapidtide_main(process_args)

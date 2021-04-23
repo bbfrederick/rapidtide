@@ -35,4 +35,4 @@ if __name__ == "__main__":
     print(
         "*********************************************************************************************************"
     )
-    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args)
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=None))

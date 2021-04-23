@@ -575,7 +575,7 @@ def usage():
     return ()
 
 
-def process_args():
+def process_args(inputargs=None):
     nargs = len(sys.argv)
     if nargs < 3:
         usage()

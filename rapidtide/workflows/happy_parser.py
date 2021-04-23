@@ -640,15 +640,6 @@ def process_args(inputargs=None):
         print("after postprocessing")
         print(args)
 
-    """if args.cardiacfilename is not None:
-        args.cardiacfilename, thecolnum = tide_io.processnamespec(
-            args.cardiacfilename, "Using column in ", "as cardiac timecourse."
-        )
-        if thecolnum is not None:
-            args.colnum = thecolnum[0]
-        else:
-            args.colnum = None"""
-
     # start the clock!
     # tide_util.checkimports(args)
 

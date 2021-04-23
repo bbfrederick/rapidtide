@@ -22,4 +22,4 @@ import rapidtide.workflows.happy as happy_workflow
 import rapidtide.workflows.happy_parser as happy_parser
 
 if __name__ == "__main__":
-    happy_workflow.happy_main(happy_parser.process_args)
+    happy_workflow.happy_main(happy_parser.process_args(inputargs=None))

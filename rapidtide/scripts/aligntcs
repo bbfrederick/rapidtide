@@ -25,8 +25,8 @@ import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
-import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.aligntcs as aligntcs_main
+import rapidtide.workflows.parser_funcs as pf
 
 
 def _get_parser():
@@ -84,8 +84,9 @@ def _get_parser():
     return parser
 
 
-def main(args):
-    print(args)
+def main(inputargs=None):
+    args, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
+
     if args.display:
         import matplotlib as mpl
 
@@ -180,10 +181,10 @@ def main(args):
 
 
 if __name__ == "__main__":
-    try:
+    """try:
         args = _get_parser().parse_args()
     except SystemExit:
         _get_parser().print_help()
-        raise
+        raise"""
 
-    aligntcs_main(args)
+    aligntcs_main(inputargs=None)

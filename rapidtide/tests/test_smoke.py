@@ -16,15 +16,22 @@
 #   limitations under the License.
 #
 #
-import os
-import matplotlib as mpl
 import argparse
+import os
 
+import matplotlib as mpl
+
+import rapidtide.workflows.happy as happy_workflow
+import rapidtide.workflows.happy_parser as happy_parser
+import rapidtide.workflows.rapidtide as rapidtide_workflow
+import rapidtide.workflows.rapidtide_parser as rapidtide_parser
+
+# import rapidtide.workflows.aligntcs as aligntcs
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
-import rapidtide.workflows.aligntcs as aligntcs
 
 
 def test_smoke(debug=False, display=False):
+    """
     aligntcsargs = argparse.Namespace
     aligntcsargs.arbvec = None
     aligntcsargs.display = False
@@ -37,6 +44,33 @@ def test_smoke(debug=False, display=False):
     aligntcsargs.outputfile = os.path.join(get_test_temp_path(), "hoot")
     aligntcsargs.verbose = False
     aligntcs.main(aligntcsargs)
+    """
+
+    # run happy
+    inputargs = [
+        os.path.join(get_examples_path(), "sub-HAPPYTEST.nii.gz"),
+        os.path.join(get_examples_path(), "sub-HAPPYTEST.json"),
+        os.path.join(get_test_temp_path(), "happyout"),
+        "--mklthreads",
+        "8",
+        "--model",
+        "model_revised",
+        "--aliasedcorrelation",
+    ]
+    happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
+
+    # run rapidtide
+    inputargs = [
+        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST"),
+        "--spatialfilt",
+        "2",
+        "--nprocs",
+        "-1",
+        "--passes",
+        "3",
+    ]
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
 
 def main():

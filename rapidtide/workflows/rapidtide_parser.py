@@ -1186,24 +1186,8 @@ def process_args(inputargs=None):
     """
     Compile arguments for rapidtide workflow.
     """
-    if inputargs is None:
-        LGR.info("processing command line arguments")
-        # write out the command used
-        try:
-            args = vars(_get_parser().parse_args())
-            argstowrite = sys.argv
-        except SystemExit:
-            _get_parser().print_help()
-            raise
-    else:
-        LGR.info("processing passed argument list:")
-        LGR.info(inputargs)
-        try:
-            args = vars(_get_parser().parse_args(inputargs))
-            argstowrite = inputargs
-        except SystemExit:
-            _get_parser().print_help()
-            raise
+    inargs, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
+    args = vars(inargs)
 
     sh = logging.StreamHandler()
     if args["debug"]:

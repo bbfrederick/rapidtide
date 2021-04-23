@@ -887,7 +887,7 @@ def happy_main(argparsingfunc):
     timings = [["Start", time.time(), None, None]]
 
     # get the command line parameters
-    args = argparsingfunc()
+    args = argparsingfunc
     infodict = vars(args)
 
     fmrifilename = args.fmrifilename
@@ -2617,9 +2617,3 @@ def happy_main(argparsingfunc):
     )
 
     tide_util.logmem("final")
-
-
-if __name__ == "__main__":
-    from rapidtide.workflows.happy_parser import process_args
-
-    happy_main(process_args)

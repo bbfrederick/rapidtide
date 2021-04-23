@@ -21,6 +21,7 @@ Functions for parsers.
 """
 import argparse
 import os.path as op
+import sys
 
 import rapidtide.filter as tide_filt
 
@@ -561,3 +562,30 @@ def addsimilarityopts(parser):
         ),
         default=3.0,
     )
+
+
+def setargs(thegetparserfunc, inputargs=None):
+    """
+    Compile arguments for rapidtide workflow.
+    """
+    if inputargs is None:
+        # get arguments from the command line
+        # LGR.info("processing command line arguments")
+        try:
+            args = thegetparserfunc().parse_args()
+            argstowrite = sys.argv
+        except SystemExit:
+            thegetparserfunc().print_help()
+            raise
+    else:
+        # get arguments from the passed list
+        # LGR.info("processing passed argument list:")
+        # LGR.info(inputargs)
+        try:
+            args = thegetparserfunc().parse_args(inputargs)
+            argstowrite = inputargs
+        except SystemExit:
+            thegetparserfunc().print_help()
+            raise
+
+    return args, argstowrite

@@ -20,4 +20,4 @@ import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
 
 if __name__ == "__main__":
-    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args)
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=None))
