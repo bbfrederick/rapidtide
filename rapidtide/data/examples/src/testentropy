@@ -62,7 +62,6 @@ for windowfunc in ["None"]:
                         returnaxis=True,
                         fast=True,
                         prebin=True,
-                        debug=True,
                     )
                     ax.plot(
                         thefastx,
@@ -93,7 +92,6 @@ for windowfunc in ["None"]:
                         returnaxis=True,
                         fast=True,
                         prebin=True,
-                        debug=True,
                     )
                     ax.plot(
                         thecorrx,

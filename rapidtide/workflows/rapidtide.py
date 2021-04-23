@@ -67,7 +67,7 @@ try:
 except ImportError:
     memprofilerexists = False
 
-LGR = logging.getLogger(__name__)
+LGR = logging.getLogger("GENERAL")
 TimingLGR = logging.getLogger("TIMING")
 
 
@@ -711,7 +711,7 @@ def rapidtide_main(argparsingfunc):
 
         TimingLGR.info(
             "Motion filtering end",
-            {
+            extra={
                 "message2": fmri_data_valid.shape[0],
                 "message3": "voxels",
             },
@@ -2708,6 +2708,7 @@ def rapidtide_main(argparsingfunc):
             tide_util.logmem("about to write " + mapname)
         outmaparray[:] = 0.0
         outmaparray[:] = eval(mapname)[:]
+
         if optiondict["textio"]:
             tide_io.writenpvecs(
                 outmaparray.reshape(nativespaceshape),
