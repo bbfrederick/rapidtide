@@ -19,15 +19,16 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 """Functions for calculating correlations and similar metrics between arrays."""
-import sys
+import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pyfftw
+import pyfftw.interfaces.scipy_fftpack as fftpack
 import scipy as sp
 from numba import jit
 from numpy.fft import irfftn, rfftn
-from scipy import fftpack, signal
+from scipy import signal
 from sklearn.metrics import mutual_info_score
 
 import rapidtide.fit as tide_fit
@@ -35,14 +36,15 @@ import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
 
-fftpack = pyfftw.interfaces.scipy_fftpack
 pyfftw.interfaces.cache.enable()
+LGR = logging.getLogger("GENERAL")
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
 donotbeaggressive = True
 donotusenumba = True
+
 
 # ----------------------------------------- Conditional imports ---------------------------------------
 def conditionaljit():
@@ -71,7 +73,6 @@ def check_autocorrelation(
     aclagthresh=10.0,
     displayplots=False,
     detrendorder=1,
-    debug=False,
 ):
     """Check for autocorrelation in an array.
 
@@ -85,7 +86,6 @@ def check_autocorrelation(
     displayplots
     windowfunc
     detrendorder
-    debug
 
     Returns
     -------
@@ -96,8 +96,7 @@ def check_autocorrelation(
     peaks = tide_fit.peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
     maxpeaks = np.asarray(peaks[0], dtype="float64")
     if len(peaks[0]) > 0:
-        if debug:
-            print(peaks)
+        LGR.debug(peaks)
         zeropkindex = np.argmin(abs(maxpeaks[:, 0]))
         for i in range(zeropkindex + 1, maxpeaks.shape[0]):
             if maxpeaks[i, 0] > aclagthresh:
@@ -206,7 +205,6 @@ def shorttermcorr_2D(
     windowfunc="None",
     detrendorder=0,
     display=False,
-    debug=False,
 ):
     """Calculate short-term sliding-window correlation between two 2D arrays.
 
@@ -222,7 +220,6 @@ def shorttermcorr_2D(
     windowfunc
     detrendorder
     display
-    debug
 
     Returns
     -------
@@ -242,8 +239,7 @@ def shorttermcorr_2D(
         lagmin = -windowtime / 2.0
         lagmax = windowtime / 2.0
 
-    if debug:
-        print("lag limits:", lagmin, lagmax)
+    LGR.debug(f"lag limits: {lagmin} {lagmax}")
 
     """dt = np.diff(time)[0]  # In days...
     fs = 1.0 / dt
@@ -331,9 +327,7 @@ def calc_MI(x, y, bins=50):
 
 
 @conditionaljit()
-def mutual_info_2d(
-    x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, EPS=1.0e-6, debug=False
-):
+def mutual_info_2d(x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, EPS=1.0e-6):
     """Compute (normalized) mutual information between two 1D variate from a joint histogram.
 
     Parameters
@@ -352,9 +346,6 @@ def mutual_info_2d(
         Default = False.
     EPS : float, optional
         Default = 1.0e-6.
-    debug : bool, optional
-        Whether to print extra information relevant for debugging or not.
-        Default = False.
 
     Returns
     -------
@@ -383,11 +374,8 @@ def mutual_info_2d(
         c += ((y[cuts] - ystart) / (yend - ystart) * numybins).astype(np.int_) * numxbins
         jh = np.bincount(c, minlength=numxbins * numybins).reshape(numxbins, numybins)
     else:
-        if debug:
-            jh, xbins, ybins = np.histogram2d(x, y, bins=bins)
-            print(xbins, ybins)
-        else:
-            jh = np.histogram2d(x, y, bins=bins)[0]
+        jh, xbins, ybins = np.histogram2d(x, y, bins=bins)
+        LGR.debug(f"{xbins} {ybins}")
 
     # smooth the jh with a gaussian filter of given sigma
     sp.ndimage.gaussian_filter(jh, sigma=sigma, mode="constant", output=jh)
@@ -407,8 +395,8 @@ def mutual_info_2d(
         mi = (HX + HY) / (HXcommaY) - 1.0
     else:
         mi = -(HXcommaY - HX - HY)
-    if debug:
-        print(HX, HY, HXcommaY, mi)
+
+    LGR.debug(f"{HX} {HY} {HXcommaY} {mi}")
 
     return mi
 
@@ -429,7 +417,6 @@ def cross_mutual_info(
     prebin=True,
     sigma=0.25,
     fast=True,
-    debug=False,
 ):
     """Calculate cross-mutual information between two 1D arrays.
     Parameters
@@ -459,8 +446,6 @@ def cross_mutual_info(
         histogram smoothing kernel
     fast: bool
         apply speed optimizations
-    debug : bool
-        set to True to output additional debugging information
 
     Returns
     -------
@@ -483,8 +468,7 @@ def cross_mutual_info(
     # see if we are using the default number of bins
     if bins < 1:
         bins = int(np.sqrt(len(x) / 5))
-        if debug:
-            print("cross_mutual_info: bins set to", bins)
+        LGR.debug(f"cross_mutual_info: bins set to {bins}")
 
     # find the bin locations
     if prebin:
@@ -504,8 +488,7 @@ def cross_mutual_info(
         possteps = possteps
     if locs is None:
         thexmi_y = np.zeros((-negsteps + possteps + 1))
-        if debug:
-            print("negsteps, possteps, len(thexmi_y)", negsteps, possteps, len(thexmi_y))
+        LGR.debug(f"negsteps, possteps, len(thexmi_y): {negsteps} {possteps} {len(thexmi_y)}")
         irange = range(negsteps, possteps + 1)
     else:
         thexmi_y = np.zeros((len(locs)), dtype=np.float64)
@@ -524,7 +507,6 @@ def cross_mutual_info(
                 normalized=norm,
                 fast=fast,
                 sigma=sigma,
-                debug=debug,
             )
         elif i == 0:
             thexmi_y[destloc] = mutual_info_2d(
@@ -534,7 +516,6 @@ def cross_mutual_info(
                 normalized=norm,
                 fast=fast,
                 sigma=sigma,
-                debug=debug,
             )
         else:
             thexmi_y[destloc] = mutual_info_2d(
@@ -544,7 +525,6 @@ def cross_mutual_info(
                 normalized=norm,
                 fast=fast,
                 sigma=sigma,
-                debug=debug,
             )
 
     if madnorm:
@@ -710,9 +690,9 @@ class AliasedCorrelator:
             offsetkey = "{:.3f}".format(theoffset)
             try:
                 aliasedhiressignal = self.aliasedsignals[offsetkey]
-                # print(offsetkey, ' - cache hit')
+                # LGR.info(f"{offsetkey} - cache hit")
             except KeyError:
-                # print(offsetkey, ' - cache miss')
+                # LGR.info(f"{offsetkey} - cache miss")
                 self.aliasedsignals[offsetkey] = tide_math.corrnormalize(
                     self.tcgenerator.yfromx(loresaxis + theoffset)
                 )
@@ -755,11 +735,10 @@ def arbcorr(
         - start2
     )
     zeroloc = int(np.argmin(np.fabs(thexcorr_x)))
-    if debug:
-        print("len(norm1) = ", len(norm1))
-        print("len(norm2) = ", len(norm2))
-        print("len(thexcorr_y)", len(thexcorr_y))
-        print("zeroloc =", zeroloc)
+    LGR.debug(f"len(norm1) = {len(norm1)}")
+    LGR.debug(f"len(norm2) = {len(norm2)}")
+    LGR.debug(f"len(thexcorr_y) = {len(thexcorr_y)}")
+    LGR.debug(f"zeroloc = {zeroloc}")
     return thexcorr_x, thexcorr_y, corrFs, zeroloc
 
 
@@ -1019,8 +998,7 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
     elif weighting == "phat":
         denom = np.absolute(product)
     else:
-        print("illegal weighting function specified in gccproduct")
-        sys.exit()
+        raise ValueError("illegal weighting function specified in gccproduct")
 
     if displayplots:
         xvec = range(0, len(denom))
