@@ -31,10 +31,14 @@ def test_fullrunrapidtide(debug=False, display=False):
     inputargs = [
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
         os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST"),
-        "--spatialfilt",
-        "2",
+        "--tmask",
+        os.path.join(get_examples_path(), "tmask3.txt"),
+        "--corrmask",
+        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_mask.nii.gz"),
+        "----globalmeaninclude",
+        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_mask.nii.gz"),
         "--nprocs",
-        "-1",
+        "1",
         "--passes",
         "2",
     ]
