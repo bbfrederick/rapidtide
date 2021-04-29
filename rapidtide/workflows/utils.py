@@ -26,6 +26,7 @@ class TimingFormatter(logging.Formatter):
 
     The fields must be passed as a dictionary, without a keyword.
     """
+
     def format(self, record):
         if isinstance(record.args, dict):
             record.message2 = record.args.get("message2", None)

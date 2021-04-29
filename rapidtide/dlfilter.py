@@ -1159,9 +1159,7 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="
     # make sure all files exist
     matchedfilelist = []
     for targetname in fromfile:
-        if os.path.isfile(
-            targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag)
-        ):
+        if os.path.isfile(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag)):
             if usebadpts:
                 if os.path.isfile(
                     tobadpts(targetname.replace("alignedpleth", "pleth"))
@@ -1244,13 +1242,17 @@ def readindata(
             nanfound = True
             nanfiles.append(matchedfilelist[i])
         if np.any(np.isnan(tempx)):
-            nan_fname = targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag)
+            nan_fname = targettoinput(
+                matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
+            )
             LGR.info(f"NaN found in file {nan_fname} - discarding")
             nanfound = True
             nanfiles.append(nan_fname)
         strangefound = False
         if not (0.5 < np.std(tempx) < 20.0):
-            strange_fname = targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag)
+            strange_fname = targettoinput(
+                matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
+            )
             LGR.info(f"file {strange_fname} has an extreme standard deviation - discarding")
             strangefound = True
             strangemagfiles.append(strange_fname)
@@ -1262,7 +1264,9 @@ def readindata(
         ntempx = tempx.shape[0]
         ntempy = tempy.shape[0]
         if ntempx < tclen:
-            short_fname = targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag)
+            short_fname = targettoinput(
+                matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
+            )
             LGR.info(f"file {short_fname} is short - discarding")
             shortfound = True
             shortfiles.append(short_fname)
