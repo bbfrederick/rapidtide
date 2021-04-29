@@ -1348,7 +1348,6 @@ def process_args(inputargs=None):
 
     if args["ampthresh"] < 0.0:
         args["ampthresh"] = 0.3
-        args["ampthreshfromsig"] = True
     else:
         args["ampthreshfromsig"] = False
 
