@@ -40,6 +40,8 @@ def test_fullrunrapidtide(debug=False, display=False):
         "pca",
         "--convergencethresh",
         "0.5",
+        "--globalsignalmethod",
+        "pca",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 

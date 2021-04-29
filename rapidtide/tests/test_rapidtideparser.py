@@ -16,8 +16,9 @@
 #   limitations under the License.
 #
 #
-from rapidtide.workflows.rapidtide_parser import process_args
 import numpy as np
+
+from rapidtide.workflows.rapidtide_parser import process_args
 
 testlist = {}
 testlist["searchrange"] = {

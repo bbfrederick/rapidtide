@@ -188,7 +188,7 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
             if themask[vox] > 0.0:
                 if themean[vox] != 0.0:
                     globalmean += indata[vox, :] / themean[vox] - 1.0
-    else:
+    elif optiondict["globalsignalmethod"] == "pca":
         try:
             thefit = PCA(n_components=pcacomponents).fit(selectedvoxels)
         except ValueError:
@@ -203,6 +203,9 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
             f"Using {len(thefit.components_)} component(s), accounting for "
             f"{varex:.2f}% of the variance"
         )
+    else:
+        dummy = optiondict["globalsignalmethod"]
+        raise ValueError(f"illegal globalsignalmethod: {dummy}")
     LGR.info(f"used {numvoxelsused} voxels to calculate global mean signal")
     return tide_math.stdnormalize(globalmean), themask
 
