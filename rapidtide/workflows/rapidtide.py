@@ -688,6 +688,10 @@ def rapidtide_main(argparsingfunc):
 
     # get rid of memory we aren't using
     tide_util.logmem("before purging full sized fmri data")
+    meanvalue = np.mean(
+        nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
+        axis=1,
+    )
     del fmri_data
     del nim_data
     gc.collect()
@@ -2401,10 +2405,10 @@ def rapidtide_main(argparsingfunc):
                 else:
                     nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
 
-            meanvalue = np.mean(
+            """meanvalue = np.mean(
                 nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
                 axis=1,
-            )
+            )"""
             fmri_data_valid = (
                 nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
             )[validvoxels, :] + 0.0
@@ -2492,10 +2496,9 @@ def rapidtide_main(argparsingfunc):
             nim_data = tide_io.readvecs(fmrifilename)
         else:
             nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
-        meanvalue = np.mean(
+        """meanvalue = np.mean(
             nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1], axis=1
-        )
-        # meanvalue = np.mean(fmri_data, axis=1)
+        )"""
 
     # Post refinement step 2 - make and save interesting histograms
     TimingLGR.info("Start saving histograms")

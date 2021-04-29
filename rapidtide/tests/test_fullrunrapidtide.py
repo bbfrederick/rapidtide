@@ -35,12 +35,14 @@ def test_fullrunrapidtide(debug=False, display=False):
         os.path.join(get_examples_path(), "tmask3.txt"),
         "--corrmask",
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_mask.nii.gz"),
-        "----globalmeaninclude",
+        "--globalmeaninclude",
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_mask.nii.gz"),
         "--nprocs",
         "1",
         "--passes",
         "2",
+        "--numnull",
+        "0",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
