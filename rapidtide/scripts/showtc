@@ -130,15 +130,15 @@ def _get_parser():
         dest="thestarttime",
         metavar="START",
         type=float,
-        help="Start plotting at START seconds.",
-        default=0.0,
+        help="Start plotting at START seconds (default is the start of the data).",
+        default=None,
     )
     parser.add_argument(
         "--endtime",
         dest="theendtime",
         metavar="END",
         type=float,
-        help="Finish plotting at END seconds.",
+        help="Finish plotting at END seconds (default is the end of the data).",
         default=None,
     )
     parser.add_argument(
@@ -236,9 +236,10 @@ def showtc(args):
     # check range
     if args.theendtime is None:
         args.theendtime = 100000000.0
-    if args.thestarttime >= args.theendtime:
-        print("endtime must be greater then starttime;")
-        sys.exit()
+    if args.thestarttime is not None:
+        if args.thestarttime >= args.theendtime:
+            print("endtime must be greater then starttime;")
+            sys.exit()
 
     # handle required args first
     xvecs = []
@@ -264,13 +265,32 @@ def showtc(args):
         ) = tide_io.readvectorsfromtextfile(args.textfilenames[i], debug=args.debug)
 
         if args.debug:
+            print("On return from readvectorsfromtextfile:")
+            print("\tthissamplerate:", thissamplerate)
+            print("\tthisstartoffset:", thisstartoffset)
+
+        if args.debug:
             print("input data dimensions:", invecs.shape)
 
         if thissamplerate is None:
             thissamplerate = samplerate
 
         if thisstartoffset is None:
+            print("thisstartoffset is None")
+            if args.thestarttime is None:
+                print("args.thestarttime is None")
+                args.thestarttime = 0.0
+            else:
+                print(f"args.thestarttime is {args.thestarttime}")
             thisstartoffset = args.thestarttime
+        else:
+            print(f"thisstartoffset is {thisstartoffset}")
+            if args.thestarttime is None:
+                print("args.thestarttime is None")
+                args.thestarttime = thisstartoffset
+            else:
+                print(f"args.thestarttime is {args.thestarttime}")
+                thisstartoffset = args.thestarttime
 
         if args.debug:
             print(f"file {args.textfilenames[i]} colnames: {colnames}")
