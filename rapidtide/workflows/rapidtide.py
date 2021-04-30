@@ -147,7 +147,9 @@ def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, masknam
         theshape = np.shape(maskarray)
         theincludexsize = theshape[0]
         if not theincludexsize == xsize:
-            raise ValueError(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
+            raise ValueError(
+                f"Dimensions of {maskname} mask do not match the input data - exiting"
+            )
     else:
         themask, maskarray, mask_hdr, maskdims, masksizes = tide_io.readfromnifti(maskfilename)
         maskarray = np.round(maskarray, 0).astype("int16")
@@ -370,6 +372,7 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict["textio"]:
         nim_data = tide_io.readvecs(fmrifilename)
+        nim_hdr = None
         theshape = np.shape(nim_data)
         xsize = theshape[0]
         ysize = 1
@@ -627,7 +630,7 @@ def rapidtide_main(argparsingfunc):
         corrmask *= 0
         corrmask += 1
         threshval = -10000000.0
-    if optiondict["savecorrmask"] and not fileiscifti:
+    if optiondict["savecorrmask"] and not (fileiscifti or optiondict["textio"]):
         theheader = copy.deepcopy(nim_hdr)
         theheader["dim"][0] = 3
         theheader["dim"][4] = 1
@@ -784,12 +787,12 @@ def rapidtide_main(argparsingfunc):
         inputvec = meanvec
         fullmeanmask = np.zeros((numspatiallocs), dtype=rt_floattype)
         fullmeanmask[validvoxels] = meanmask[:]
-        theheader = copy.deepcopy(nim_hdr)
         if optiondict["bidsoutput"]:
             savename = outputname + "_desc-globalmean_mask"
         else:
             savename = outputname + "_meanmask"
         if fileiscifti:
+            theheader = copy.deepcopy(nim_hdr)
             timeindex = theheader["dim"][0] - 1
             spaceindex = theheader["dim"][0]
             theheader["dim"][timeindex] = 1
@@ -802,7 +805,13 @@ def rapidtide_main(argparsingfunc):
                 isseries=False,
                 names=["meanmask"],
             )
+        elif optiondict["textio"]:
+            tide_io.writenpvecs(
+                fullmeanmask,
+                savename + ".txt",
+            )
         else:
+            theheader = copy.deepcopy(nim_hdr)
             theheader["dim"][0] = 3
             theheader["dim"][4] = 1
             tide_io.savetonifti(

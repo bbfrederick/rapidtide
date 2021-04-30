@@ -1449,6 +1449,7 @@ def process_args(inputargs=None):
         args["ampthresh"] = 0.7
         args["ampthreshfromsig"] = False
         args["lagmaskthresh"] = 0.1
+        args["despeckle_passes"] = 0
 
     if args["delaymapping"]:
         pf.setifnotset(args, "despeckle_passes", 4)
