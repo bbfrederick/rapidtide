@@ -42,6 +42,7 @@ def test_fullrunrapidtide(debug=False, display=False):
         "0",
         "--numnull",
         "1000",
+        "--respdelete",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
