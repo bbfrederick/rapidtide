@@ -1003,7 +1003,7 @@ def _get_parser():
         "--memprofile",
         dest="memprofile",
         action="store_true",
-        help=("Enable memory profiling for debugging - " "warning: this slows things down a lot."),
+        help=("Enable memory profiling - " "warning: this slows things down a lot."),
         default=False,
     )
     misc.add_argument(
@@ -1033,20 +1033,6 @@ def _get_parser():
         dest="printversion",
         action="store_true",
         help=("Print version information and exit."),
-        default=False,
-    )
-    misc.add_argument(
-        "--debug",
-        dest="debug",
-        action="store_true",
-        help=("Enable additional debugging output."),
-        default=False,
-    )
-    misc.add_argument(
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        help=("Enable additional runtime information output."),
         default=False,
     )
 
@@ -1120,13 +1106,6 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
-        "--alwaysmultiproc",
-        dest="alwaysmultiproc",
-        action="store_true",
-        help=("Use the multiprocessing code path even when nprocs=1."),
-        default=False,
-    )
-    experimental.add_argument(
         "--tmask",
         dest="tmaskname",
         action="store",
@@ -1143,6 +1122,27 @@ def _get_parser():
 
     # Debugging options
     debugging = parser.add_argument_group("Debugging options")
+    debugging.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Enable additional debugging output."),
+        default=False,
+    )
+    debugging.add_argument(
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help=("Enable additional runtime information output."),
+        default=False,
+    )
+    debugging.add_argument(
+        "--alwaysmultiproc",
+        dest="alwaysmultiproc",
+        action="store_true",
+        help=("Use the multiprocessing code path even when nprocs=1."),
+        default=False,
+    )
     debugging.add_argument(
         "--singleproc_getNullDist",
         dest="singleproc_getNullDist",
