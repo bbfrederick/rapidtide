@@ -103,12 +103,6 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
             endindex = np.min((bisect.bisect_right(timeaxis, endtime), len(maskvector) - 1))
             maskvector[startindex:endindex] = 1.0
             LGR.info(f"{starttime}, {startindex}, {endtime}, {endindex}")
-    if debug:
-        fig = figure()
-        ax = fig.add_subplot(111)
-        ax.set_title("temporal mask vector")
-        plot(timeaxis, maskvector)
-        show()
     return maskvector
 
 
@@ -1311,7 +1305,6 @@ def rapidtide_main(argparsingfunc):
             0,
             outputname + namesuffix,
             displaytitle="lagtime histogram",
-            displayplots=optiondict["displayplots"],
             therange=(corrscale[0], corrscale[-1]),
             refine=False,
             dictvarname="globallaghist_preechocancel",
@@ -1636,7 +1629,6 @@ def rapidtide_main(argparsingfunc):
                 optiondict["sighistlen"],
                 thepercentiles,
                 twotail=optiondict["bipolar"],
-                displayplots=optiondict["displayplots"],
                 nozero=optiondict["nohistzero"],
                 dosighistfit=optiondict["dosighistfit"],
             )
@@ -1676,7 +1668,6 @@ def rapidtide_main(argparsingfunc):
                             0,
                             outputname + namesuffix,
                             displaytitle="Null correlation histogram, pass" + str(thepass),
-                            displayplots=optiondict["displayplots"],
                             refine=False,
                             dictvarname="nullsimfunchist_pass" + str(thepass),
                             saveasbids=optiondict["bidsoutput"],
@@ -1764,7 +1755,6 @@ def rapidtide_main(argparsingfunc):
             0,
             outputname + namesuffix,
             displaytitle="lagtime histogram",
-            displayplots=optiondict["displayplots"],
             therange=(corrscale[0], corrscale[-1]),
             refine=False,
             dictvarname="globallaghist_pass" + str(thepass),
@@ -2527,7 +2517,6 @@ def rapidtide_main(argparsingfunc):
         0,
         outputname + namesuffix,
         displaytitle="lagtime histogram",
-        displayplots=optiondict["displayplots"],
         refine=False,
         dictvarname="laghist",
         saveasbids=optiondict["bidsoutput"],
@@ -2543,7 +2532,6 @@ def rapidtide_main(argparsingfunc):
         0,
         outputname + namesuffix,
         displaytitle="lagstrength histogram",
-        displayplots=optiondict["displayplots"],
         therange=(0.0, 1.0),
         dictvarname="strengthhist",
         saveasbids=optiondict["bidsoutput"],
@@ -2559,7 +2547,6 @@ def rapidtide_main(argparsingfunc):
         1,
         outputname + namesuffix,
         displaytitle="lagsigma histogram",
-        displayplots=optiondict["displayplots"],
         dictvarname="widthhist",
         saveasbids=optiondict["bidsoutput"],
         thedict=optiondict,
@@ -2575,7 +2562,6 @@ def rapidtide_main(argparsingfunc):
             1,
             outputname + namesuffix,
             displaytitle="correlation R2 histogram",
-            displayplots=optiondict["displayplots"],
             dictvarname="R2hist",
             saveasbids=optiondict["bidsoutput"],
             thedict=optiondict,
@@ -3009,8 +2995,6 @@ def rapidtide_main(argparsingfunc):
     TimingLGR.info("Finished saving maps")
     LGR.info("done")
 
-    if optiondict["displayplots"]:
-        show()
     TimingLGR.info("Done")
 
     # Post refinement step 5 - process and save timing information
