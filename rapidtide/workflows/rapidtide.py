@@ -2622,8 +2622,8 @@ def rapidtide_main(argparsingfunc):
             ("coherencepeakval", "coherencepeakval"),
             ("coherencepeakfreq", "coherencepeakfreq"),
         ]
-    if optiondict["similaritymetric"] == "mutualinfo":
-        savelist += [("baseline", "baseline"), ("baselinedev", "baselinedev")]
+    # if optiondict["similaritymetric"] == "mutualinfo":
+    #    savelist += [("baseline", "baseline"), ("baselinedev", "baselinedev")]
     for mapname, mapsuffix in savelist:
         if optiondict["memprofile"]:
             memcheckpoint("about to write " + mapname + "to" + mapsuffix)
