@@ -51,6 +51,11 @@ def test_fullrunrapidtide(debug=False, display=False):
         "--spcalculation",
         "--globalsignalmethod",
         "pca",
+        "--regressor",
+        os.path.join(
+            get_examples_path(),
+            "sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3",
+        ),
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
