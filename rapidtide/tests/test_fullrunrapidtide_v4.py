@@ -31,8 +31,8 @@ def test_fullrunrapidtide(debug=False, display=False):
     inputargs = [
         os.path.join(get_examples_path(), "sub-NIRSRAPIDTIDETEST.txt"),
         os.path.join(get_test_temp_path(), "sub-NIRSRAPIDTIDETEST"),
-        "--corrmask",
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_restrictedmask.nii.gz:1"),
+        "--globalmeaninclude",
+        os.path.join(get_examples_path(), "sub-NIRSRAPIDTIDETEST_mask.txt"),
         "--nirs",
         "--datatstep",
         "0.2560",
@@ -40,8 +40,6 @@ def test_fullrunrapidtide(debug=False, display=False):
         "variance",
         "--despecklepasses",
         "0",
-        "--globalmeaninclude",
-        os.path.join(get_examples_path(), "sub-NIRSRAPIDTIDETEST_mask.txt"),
         "--numnull",
         "1000",
     ]
