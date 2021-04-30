@@ -49,6 +49,8 @@ def test_fullrunrapidtide(debug=False, display=False):
         "mutualinfo",
         "--dpoutput",
         "--spcalculation",
+        "--globalsignalmethod",
+        "pca",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 

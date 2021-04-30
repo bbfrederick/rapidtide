@@ -359,7 +359,7 @@ def _get_parser():
             "The method for constructing the initial global signal regressor - straight summation (default), "
             "mean scaling each voxel prior to summation, or MLE PCA of the voxels in the global signal mask."
         ),
-        default="mean",
+        default="sum",
     )
     preproc.add_argument(
         "--globalpcacomponents",
