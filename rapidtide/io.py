@@ -1632,7 +1632,6 @@ def readvecs(inputfilename, colspec=None, numskip=0, alt=False, debug=False):
         for line in lines[numskip:]:
             if len(line) > 1:
                 thetokens = line.split()
-                inputvec.append(thetokens)
                 thisvec = []
                 for vecnum in collist:
                     thisvec.append(np.float64(thetokens[vecnum]))
