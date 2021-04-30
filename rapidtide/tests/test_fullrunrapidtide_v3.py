@@ -31,6 +31,8 @@ def test_fullrunrapidtide(debug=False, display=False):
     inputargs = [
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
         os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST"),
+        "--corrmask",
+        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_restrictedmask.nii.gz:1"),
         "--legacyoutput",
         "--maxpasses",
         "2",
@@ -40,6 +42,13 @@ def test_fullrunrapidtide(debug=False, display=False):
         "pca",
         "--convergencethresh",
         "0.5",
+        "--noglm",
+        "--nprocs",
+        "-1",
+        "--similaritymetric",
+        "mutualinfo",
+        "--dpoutput",
+        "--spcalculation",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 

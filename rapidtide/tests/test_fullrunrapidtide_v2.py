@@ -34,13 +34,13 @@ def test_fullrunrapidtide(debug=False, display=False):
         "--tmask",
         os.path.join(get_examples_path(), "tmask3.txt"),
         "--corrmask",
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_mask.nii.gz"),
+        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_restrictedmask.nii.gz"),
         "--globalmeaninclude",
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_mask.nii.gz"),
+        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_brainmask.nii.gz"),
         "--globalmeanexclude",
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_nullmask.nii.gz"),
         "--refineinclude",
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_mask.nii.gz"),
+        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_brainmask.nii.gz"),
         "--refineexclude",
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_nullmask.nii.gz"),
         "--savelags",
@@ -54,6 +54,8 @@ def test_fullrunrapidtide(debug=False, display=False):
         "2",
         "--numnull",
         "0",
+        "--similaritymetric",
+        "hybrid",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
