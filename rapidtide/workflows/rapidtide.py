@@ -473,6 +473,7 @@ def rapidtide_main(argparsingfunc):
                 optiondict["gausssigma"],
                 nim_data[:, :, :, i],
             )
+        print()
         TimingLGR.info("End 3D smoothing")
 
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
@@ -765,6 +766,8 @@ def rapidtide_main(argparsingfunc):
     if filename is None:
         LGR.info("no regressor file specified - will use the global mean regressor")
         optiondict["useglobalref"] = True
+    else:
+        optiondict["useglobalref"] = False
 
     # calculate the global mean whether we intend to use it or not
     meanfreq = 1.0 / fmritr
@@ -820,7 +823,7 @@ def rapidtide_main(argparsingfunc):
 
         optiondict["preprocskip"] = 0
     else:
-        LGR.info("using externally supplied probe regressor")
+        LGR.info(f"using externally supplied probe regressor {filename}")
         (
             fileinputfreq,
             filestarttime,
@@ -2095,7 +2098,7 @@ def rapidtide_main(argparsingfunc):
                 LGR.info(f"regressor difference at end of pass {thepass:d} is {regressormse:.6f}")
                 if optiondict["convergencethresh"] is not None:
                     if thepass >= optiondict["maxpasses"]:
-                        LGR.info("refinement ended (maxpasses reached")
+                        LGR.info("refinement ended (maxpasses reached)")
                         stoprefining = True
                         refinestopreason = "maxpassesreached"
                     elif regressormse < optiondict["convergencethresh"]:
