@@ -28,9 +28,6 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 
-# ---------------------------------------- Global constants -------------------------------------------
-MAXLINES = 100000000
-
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 def readfromnifti(inputfile):
     r"""Open a nifti file and read in the various important parts
@@ -1594,7 +1591,7 @@ def readvecs(inputfilename, colspec=None, numskip=0, alt=False, debug=False):
 
     """
     if alt:
-        dataarray = pd.read_table(inputfilename, header=None)
+        dataarray = pd.read_table(inputfilename, sep=None, header=None)
         if colspec is None:
             collist = range(len(dataarray.columns))
         else:
@@ -1631,18 +1628,17 @@ def readvecs(inputfilename, colspec=None, numskip=0, alt=False, debug=False):
             if max(collist) > len(lines[0].split()) - 1:
                 print("READVECS: requested column", max(collist), "too large - exiting")
                 sys.exit()
-            numvecs = len(collist)
-        inputvec = np.zeros((numvecs, MAXLINES), dtype="float64")
-        numvals = 0
+        inputvec = []
         for line in lines[numskip:]:
             if len(line) > 1:
-                numvals += 1
                 thetokens = line.split()
-                outloc = 0
+                inputvec.append(thetokens)
+                thisvec = []
                 for vecnum in collist:
-                    inputvec[outloc, numvals - 1] = np.float64(thetokens[vecnum])
-                    outloc += 1
-        return 1.0 * inputvec[:, 0:numvals]
+                    thisvec.append(np.float64(thetokens[vecnum]))
+                inputvec.append(thisvec)
+        theoutarray = np.transpose(np.asarray(inputvec, dtype=float))
+        return theoutarray
 
 
 def readvec(inputfilename, numskip=0):
@@ -1659,15 +1655,13 @@ def readvec(inputfilename, numskip=0):
         The data from the file
 
     """
-    inputvec = np.zeros(MAXLINES, dtype="float64")
-    numvals = 0
+    inputvec = []
     with open(inputfilename, "r") as thefile:
         lines = thefile.readlines()
         for line in lines[numskip:]:
             if len(line) > 1:
-                numvals += 1
-                inputvec[numvals - 1] = np.float64(line)
-    return 1.0 * inputvec[0:numvals]
+                inputvec.append(np.float64(line))
+    return np.asarray(inputvec, dtype=float)
 
 
 def readtc(inputfilename, colnum=None, colname=None, debug=False):
