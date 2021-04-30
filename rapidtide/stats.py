@@ -617,7 +617,8 @@ def getfracvals(datamat, thefracs, nozero=False, debug=False):
     maxindex = len(maskmat)
 
     for thisfrac in thefracs:
-        thevals.append(maskmat[int(np.round(thisfrac * maxindex, 0))])
+        theindex = np.min([int(np.round(thisfrac * maxindex, 0)), len(maskmat) - 1])
+        thevals.append(maskmat[theindex])
 
     if debug:
         print("getfracvals: input datamat shape", datamat.shape)
