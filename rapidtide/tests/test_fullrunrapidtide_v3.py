@@ -37,7 +37,7 @@ def test_fullrunrapidtide(debug=False, display=False):
         "--maxpasses",
         "2",
         "--numnull",
-        "0",
+        "100",
         "--refinetype",
         "pca",
         "--convergencethresh",
