@@ -1,5 +1,17 @@
 # History of changes
 
+## Version 2.0alpha25 (5/3/21)
+* (rapidtide) Fixed text file (nirs) processing.
+* (rapidtide) Fixed a search range setting error.
+* (rapidtide) Fixed the default method for global mean signal generation.
+* (rapidtide) Fixed a crash when using the mutualinfo similarity metric.
+* (rapidtide, io) Significant improvement to CIFTI handling - now properly read and write parcellated scalars and time series.
+* (io) Vastly improved reading in arbitrarily large text files.
+* (stats) Fixed a bug in getfracvals when you try to find the maximum value.
+* (package) Began aggressive implementation of smoke tests (excercise as many code paths as possible to find crashers in neglected code - this is how the above bugs were found).
+* (package) More logging refinement.
+
+
 ## Version 2.0alpha24 (4/14/21)
 * (rapidtide) Added the '--negativegradient' option in response to https://github.com/bbfrederick/rapidtide/issues/67
 * (rapidtide) Added flexibility to regressor input (can use multicolumn and BIDS text files).
