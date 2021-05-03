@@ -2535,8 +2535,10 @@ def happy_main(argparsingfunc):
                 procbyvoxel=True,
                 nprocs=args.nprocs,
             )
-            datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
-            filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove
+            datatoremove[validlocs, :] = np.multiply(
+                cardiacnoise[validlocs, :], fitcoffs[validlocs, None]
+            )
+            filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
             timings.append(
                 [
                     "Cardiac signal temporal regression finished",
