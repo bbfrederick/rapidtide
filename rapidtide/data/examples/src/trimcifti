@@ -13,7 +13,9 @@ outfile = "../dst/sub-RAPIDTIDETEST_cifti.dtseries.nii"
 
 
 if tide_io.checkifcifti(infile):
-    cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, fmritr = tide_io.readfromcifti(infile)
+    cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, fmritr = tide_io.readfromcifti(
+        infile
+    )
 
     print(nifti_data.shape)
     numoutspace = np.shape(nifti_data)[0]

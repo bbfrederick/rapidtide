@@ -7,7 +7,7 @@ import numpy as np
 
 import rapidtide.io as tide_io
 
-#infile = "/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii"
+# infile = "/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii"
 infile = "/Users/frederic/Dropbox_PHC/connectome_quality/100307_r1_LR_Cparc.ptseries.nii"
 outfile = "../dst/test"
 
@@ -51,14 +51,14 @@ filenames = [
     "/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii",
     "/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas_hp2000_clean.dtseries.nii",
     "/Users/frederic/Dropbox_PHC/connectome_quality/100307_r1_LR_Cparc.ptseries.nii",
-    ]
-    #"../dst/fix_desc-corrout_info.dtseries.nii",
-    #"../dst/nofix_desc-corrout_info.dtseries.nii",
-    #"../dst/fix_desc-maxtime_map.dscalar.nii",
-    #"../dst/nofix_desc-maxtime_map.dscalar.nii",
-    #"../dst/fix_desc-lfofilterCleaned_bold.dtseries.nii",
-    #"../dst/nofix_desc-lfofilterCleaned_bold.dtseries.nii",
-#]
+]
+# "../dst/fix_desc-corrout_info.dtseries.nii",
+# "../dst/nofix_desc-corrout_info.dtseries.nii",
+# "../dst/fix_desc-maxtime_map.dscalar.nii",
+# "../dst/nofix_desc-maxtime_map.dscalar.nii",
+# "../dst/fix_desc-lfofilterCleaned_bold.dtseries.nii",
+# "../dst/nofix_desc-lfofilterCleaned_bold.dtseries.nii",
+# ]
 
 for thefile in filenames:
     cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, fmritr = ciftidump(thefile)
