@@ -720,7 +720,7 @@ def getphysiofile(
     return pleth_sliceres, pleth_stdres
 
 
-def readextmask(thefilename, nim_hdr, xsize, ysize, numslices):
+def readextmask(thefilename, nim_hdr, xsize, ysize, numslices, debug=False):
     (
         extmask,
         extmask_data,
@@ -734,6 +734,10 @@ def readextmask(thefilename, nim_hdr, xsize, ysize, numslices):
         numslices_extmask,
         timepoints_extmask,
     ) = tide_io.parseniftidims(theextmaskdims)
+    if debug:
+        print(
+            f"Mask dimensions: {xsize_extmask}, {ysize_extmask}, {numslices_extmask}, {timepoints_extmask}"
+        )
     if not tide_io.checkspacematch(nim_hdr, extmask_hdr):
         print("Dimensions of mask do not match the fmri data - exiting")
         sys.exit()
@@ -1015,7 +1019,7 @@ def happy_main(argparsingfunc):
     if args.projmaskname is not None:
         tide_util.logmem("before reading in projmask")
         projmask_byslice = readextmask(
-            args.projmaskname, nim_hdr, xsize, ysize, numslices
+            args.projmaskname, nim_hdr, xsize, ysize, numslices, args.debug
         ) * np.float64(mask_byslice)
     else:
         projmask_byslice = mask_byslice
@@ -1091,7 +1095,7 @@ def happy_main(argparsingfunc):
     if args.estmaskname is not None:
         tide_util.logmem("before reading in estmask")
         estmask_byslice = readextmask(
-            args.estmaskname, nim_hdr, xsize, ysize, numslices
+            args.estmaskname, nim_hdr, xsize, ysize, numslices, args.debug
         ) * np.float64(mask_byslice)
         print("using estmask from file", args.estmaskname)
         numpasses = 1
