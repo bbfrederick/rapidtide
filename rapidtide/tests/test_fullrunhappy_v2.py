@@ -41,7 +41,7 @@ def test_fullrunhappy(debug=False, display=False):
         "--model",
         "model_revised",
         "--fliparteries",
-        "--spatialglm",
+        "--temporalglm",
         "--cardiacfile",
         os.path.join(
             get_examples_path(),
