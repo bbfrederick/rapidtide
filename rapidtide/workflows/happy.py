@@ -871,18 +871,6 @@ def circularderivs(timecourse):
     )
 
 
-def findphasecuts(phases):
-    max_peaks = []
-    min_peaks = []
-    thisval = phases[0]
-    for i in range(1, len(phases)):
-        if thisval - phases[i] > np.pi:
-            max_peaks.append([i - 1, thisval])
-            min_peaks.append([i, phases[i]])
-        thisval = phases[i]
-    return max_peaks, min_peaks
-
-
 def happy_main(argparsingfunc):
     timings = [["Start", time.time(), None, None]]
 
@@ -2017,7 +2005,6 @@ def happy_main(argparsingfunc):
         if len(max_peaks) > len(min_peaks):
             max_peaks = max_peaks[:-1]
 
-        # max_peaks, min_peaks = findphasecuts(tide_math.phasemod(instantaneous_phase, centric=args.centric))
         zerophaselocs = []
         for idx, peak in enumerate(max_peaks):
             minloc = min_peaks[idx][0]
