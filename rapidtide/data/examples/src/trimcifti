@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+
+import sys
+import copy
+
+import nibabel as nib
+import numpy as np
+
+import rapidtide.io as tide_io
+
+infile = "/Users/frederic/Dropbox_PHC/connectome_quality/rfMRI_REST1_LR_Atlas.dtseries.nii"
+outfile = "../dst/sub-RAPIDTIDETEST_cifti.dtseries.nii"
+
+
+if tide_io.checkifcifti(infile):
+    cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, fmritr = tide_io.readfromcifti(infile)
+
+    print(nifti_data.shape)
+    numoutspace = np.shape(nifti_data)[0]
+    numouttime = 100
+    theheader = copy.deepcopy(nifti_hdr)
+    timeindex = theheader["dim"][0] - 1
+    spaceindex = theheader["dim"][0]
+    theheader["dim"][timeindex] = numouttime
+    theheader["dim"][spaceindex] = numoutspace
+    tide_io.savetocifti(
+        nifti_data[0:numoutspace, 0:numouttime],
+        cifti_hdr,
+        theheader,
+        outfile,
+        isseries=True,
+        start=0.0,
+        step=0.72,
+    )
