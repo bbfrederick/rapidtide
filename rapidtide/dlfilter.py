@@ -41,6 +41,7 @@ LGR.debug("setting backend to Agg")
 mpl.use("Agg")
 
 tfversion = -1
+print("Loc1: tfversion:", tfversion)
 try:
     import plaidml.keras
 
@@ -66,8 +67,11 @@ try:
     from keras.models import Model, Sequential, load_model
     from keras.optimizers import RMSprop
 except ImportError:
+    tfversion = -1
     LGR.warning("import plaidml.keras failed: falling back to standard tensorflow keras")
 
+print("Loc2: tfversion:", tfversion)
+LGR.warning(f"tfversion is {tfversion}")
 if tfversion == -1:
     try:
         import tensorflow.compat.v1 as tf
@@ -76,10 +80,13 @@ if tfversion == -1:
             tfversion = 2
         elif tf.__version__[0] == "1":
             tfversion = 1
+        else:
+            LGR.warning(f"could not interpret {tf.__version__[0]}")
         LGR.debug(f"tensorflow version is {tfversion}")
     except ImportError:
         raise ImportError("no backend found - exiting")
 
+print("Loc3: tfversion:", tfversion)
 if tfversion == 2:
     LGR.debug("using tensorflow v2x")
     tf.disable_v2_behavior()
@@ -127,6 +134,7 @@ elif tfversion == 0:
     pass
 else:
     raise ImportError("could not find backend - exiting")
+print("Loc4: tfversion:", tfversion)
 
 
 class DeepLearningFilter:
