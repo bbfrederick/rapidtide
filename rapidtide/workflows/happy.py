@@ -515,16 +515,6 @@ def calcplethquality(
         # E_waveform[i] = entropy(dt_waveform[startpt:endpt + 1])
         r = 0.2 * np.std(dt_waveform[startpt : endpt + 1])
         E_waveform[i] = approximateentropy(dt_waveform[startpt : endpt + 1], 2, r)
-        """if debug:
-            print(
-                i,
-                startpt,
-                endpt,
-                endpt - startpt + 1,
-                S_waveform[i],
-                K_waveform[i],
-                E_waveform[i],
-            )"""
 
     S_sqi_mean = np.mean(S_waveform)
     S_sqi_std = np.std(S_waveform)
