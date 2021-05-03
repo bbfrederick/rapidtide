@@ -221,7 +221,6 @@ def getcardcoeffs(
     maxhr=140.0,
     smoothlen=101,
     debug=False,
-    display=False,
 ):
     if len(cardiacwaveform) > 1024:
         thex, they = welch(cardiacwaveform, slicesamplerate, nperseg=1024)
@@ -247,10 +246,6 @@ def getcardcoeffs(
 
     # find the max
     ampspec = savgolsmooth(np.abs(spectrum), smoothlen=smoothlen)
-    if display:
-        figure()
-        plot(freqaxis, ampspec, "r")
-        show()
     peakfreq = freqaxis[np.argmax(ampspec)]
     if debug:
         print("Cardiac fundamental frequency is", np.round(peakfreq * 60.0, 2), "BPM")

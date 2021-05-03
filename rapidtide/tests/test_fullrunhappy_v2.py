@@ -47,6 +47,8 @@ def test_fullrunhappy(debug=False, display=False):
             get_examples_path(),
             "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri_dlfiltered",
         ),
+        "--increaseoutputlevel",
+        "--increaseoutputlevel",
     ]
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
 
