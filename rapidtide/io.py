@@ -28,6 +28,7 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 
+
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 def readfromnifti(inputfile):
     r"""Open a nifti file and read in the various important parts
@@ -264,33 +265,51 @@ def savetocifti(
     if len(workingarray.shape) == 1:
         workingarray = workingarray.reshape((1, -1))
 
-    # find the BrainModelAxis from the input file
+    # find the ModelAxis from the input file
     modelaxis = None
     for theaxis in theciftiheader.matrix.mapped_indices:
         if isinstance(theciftiheader.matrix.get_axis(theaxis), nib.cifti2.BrainModelAxis):
             modelaxis = theaxis
+            parcellated = False
             if debug:
                 print("axis", theaxis, "is the BrainModelAxis")
+        elif isinstance(theciftiheader.matrix.get_axis(theaxis), nib.cifti2.ParcelsAxis):
+            modelaxis = theaxis
+            parcellated = True
+            if debug:
+                print("axis", theaxis, "is the ParcelsAxis")
 
     # process things differently for dscalar and dtseries files
     if isseries:
         # make a proper series header
-        if debug:
-            print("dtseries path: workingarray shape", workingarray.shape)
-        theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES"
-        theintentname = "ConnDenseSeries"
+        if parcellated:
+            if debug:
+                print("ptseries path: workingarray shape", workingarray.shape)
+            theintent = "NIFTI_INTENT_CONNECTIVITY_PARCELLATED_SERIES"
+            theintentname = "ConnParcelSries"
+        else:
+            if debug:
+                print("dtseries path: workingarray shape", workingarray.shape)
+            theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES"
+            theintentname = "ConnDenseSeries"
         if modelaxis is not None:
             seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(start, step, workingarray.shape[0])
             axislist = [seriesaxis, theciftiheader.matrix.get_axis(modelaxis)]
         else:
-            print("no BrainModelAxis found in source file - exiting")
+            print("no ModelAxis found in source file - exiting")
             sys.exit()
     else:
         # make a proper scalar header
-        if debug:
-            print("dscalar path: workingarray shape", workingarray.shape)
-        theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS"
-        theintentname = "ConnDenseScalar"
+        if parcellated:
+            if debug:
+                print("pscalar path: workingarray shape", workingarray.shape)
+            theintent = "NIFTI_INTENT_CONNECTIVITY_PARCELLATED_SCALAR"
+            theintentname = "ConnParcelScalr"
+        else:
+            if debug:
+                print("dscalar path: workingarray shape", workingarray.shape)
+            theintent = "NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS"
+            theintentname = "ConnDenseScalar"
         if len(names) != workingarray.shape[0]:
             print("savetocifti - number of supplied names does not match array size - exiting.")
             sys.exit()
@@ -298,7 +317,7 @@ def savetocifti(
             scalaraxis = nib.cifti2.cifti2_axes.ScalarAxis(names)
             axislist = [scalaraxis, theciftiheader.matrix.get_axis(modelaxis)]
         else:
-            print("no BrainModelAxis found in source file - exiting")
+            print("no ModelAxis found in source file - exiting")
             sys.exit()
     # now create the output file structure
     if debug:
@@ -311,13 +330,24 @@ def savetocifti(
     img.update_headers()
 
     if isseries:
-        suffix = ".dtseries.nii"
-        if debug:
-            print("\tDENSE_SERIES")
+        if parcellated:
+            suffix = ".ptseries.nii"
+            if debug:
+                print("\tPARCELLATED_SERIES")
+        else:
+            suffix = ".dtseries.nii"
+            if debug:
+                print("\tDENSE_SERIES")
     else:
-        suffix = ".dscalar.nii"
-        if debug:
-            print("\tDENSE_SCALARS")
+        if parcellated:
+            suffix = ".pscalar.nii"
+            if debug:
+                print("\tPARCELLATED_SCALARS")
+        else:
+            suffix = ".dscalar.nii"
+            if debug:
+                print("\tDENSE_SCALARS")
+
     if debug:
         print("after update_headers() - nifti header is:", theniftiheader)
 
