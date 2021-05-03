@@ -6,8 +6,7 @@ happy \
     sub-HAPPYTEST.json \
     ../dst/happy \
     --mklthreads 8 \
-    --model model_revised \
-    --aliasedcorrelation
+    --model model_revised
 
 #    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
 
