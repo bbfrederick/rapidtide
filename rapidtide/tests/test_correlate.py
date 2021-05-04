@@ -42,9 +42,12 @@ def test_fastcorrelate(display=False):
         plt.legend(["Fast correlate", "Standard correlate"])
         plt.show()
 
-    # assert (fastcorrelate_result == stdcorrelate_result).all
     aethresh = 10
     np.testing.assert_almost_equal(fastcorrelate_result, stdcorrelate_result, aethresh)
+
+    # smoke test the weighted correlations
+    for weighting in ["None", "liang", "eckart", "phat"]:
+        weighted_result = fastcorrelate(sig2, sig1, weighting=weighting)
 
 
 def main():
