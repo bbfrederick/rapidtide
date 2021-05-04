@@ -2462,7 +2462,7 @@ def happy_main(argparsingfunc):
                 nprocs=args.nprocs,
             )
             print(datatoremove.shape, cardiacnoise.shape, fitcoffs.shape)
-            datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
+            # datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
             filtereddata = fmri_data - datatoremove
             timings.append(
                 [
@@ -2524,9 +2524,9 @@ def happy_main(argparsingfunc):
                 procbyvoxel=True,
                 nprocs=args.nprocs,
             )
-            datatoremove[validlocs, :] = np.multiply(
-                cardiacnoise[validlocs, :], fitcoffs[validlocs, None]
-            )
+            # datatoremove[validlocs, :] = np.multiply(
+            #    cardiacnoise[validlocs, :], fitcoffs[validlocs, None]
+            # )
             filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
             timings.append(
                 [

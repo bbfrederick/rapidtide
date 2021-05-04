@@ -34,6 +34,7 @@ def test_fullrunhappy(debug=False, display=False):
         os.path.join(get_test_temp_path(), "happyout"),
         "--mklthreads",
         "-1",
+        "--spatialglm",
         "--model",
         "model_revised",
         "--aliasedcorrelation",

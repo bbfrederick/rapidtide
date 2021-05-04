@@ -275,7 +275,7 @@ def confoundglm(
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
-    r"""Filters multiple regressors out of an array of data in place
+    r"""Filters multiple regressors out of an array of data
 
     Parameters
     ----------
