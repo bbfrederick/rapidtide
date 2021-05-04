@@ -36,7 +36,7 @@ def test_fullrunrapidtide(debug=False, display=False):
         "--nprocs",
         "-1",
         "--passes",
-        "2",
+        "1",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 

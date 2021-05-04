@@ -43,6 +43,8 @@ def test_fullrunrapidtide(debug=False, display=False):
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_brainmask.nii.gz"),
         "--refineexclude",
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_nullmask.nii.gz"),
+        "--spatialfilt",
+        "-1",
         "--savelags",
         "--checkpoint",
         "--saveintermediatemaps",

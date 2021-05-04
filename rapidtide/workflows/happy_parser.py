@@ -571,7 +571,6 @@ def process_args(inputargs=None):
             raise
     else:
         print("processing passed argument list:")
-        print(inputargs)
         try:
             args = _get_parser().parse_args(inputargs)
             argstowrite = inputargs
