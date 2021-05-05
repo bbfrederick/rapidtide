@@ -1278,7 +1278,7 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
 
     if filetype == "text":
         # colspec can only be None or a list of integer ranges
-        thedata = readvecs(thefilename, colspec=colspec, alt=True, debug=debug)
+        thedata = readvecs(thefilename, colspec=colspec, debug=debug)
         if onecol and thedata.shape[0] > 1:
             print("specify a single column from", thefilename)
             sys.exit()
@@ -1613,7 +1613,7 @@ def readcolfromtextfile(inputfilename):
         return inputdata[:, 0]
 
 
-def readvecs(inputfilename, colspec=None, numskip=0, alt=False, debug=False):
+def readvecs(inputfilename, colspec=None, numskip=0, debug=False):
     r"""
 
     Parameters
@@ -1624,7 +1624,7 @@ def readvecs(inputfilename, colspec=None, numskip=0, alt=False, debug=False):
     -------
 
     """
-    if alt:
+    if False:
         dataarray = pd.read_table(inputfilename, sep=None, header=None)
         if colspec is None:
             collist = range(len(dataarray.columns))
