@@ -40,15 +40,8 @@ def test_fullrunhappy(debug=False, display=False):
         "-1",
         "--model",
         "model_revised",
-        "--fliparteries",
-        "--temporalglm",
-        "--cardiacfile",
-        os.path.join(
-            get_examples_path(),
-            "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri_dlfiltered",
-        ),
-        "--increaseoutputlevel",
-        "--increaseoutputlevel",
+        "--motionfile",
+        os.path.join(get_examples_path(), "sub-HAPPYTEST_mcf.par"),
     ]
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
 
