@@ -1,5 +1,11 @@
 # History of changes
 
+## Version 2.0alpha26 (5/5/21)
+* (happy, rapidtide) Now properly handle negative mklthreads specification.
+* (Dockerfile) Update package versions.
+* (Docker container) Added happy test.
+* (package) Further increased test coverage.
+
 ## Version 2.0alpha25 (5/3/21)
 * (rapidtide) Fixed text file (nirs) processing.
 * (rapidtide) Fixed a search range setting error.
