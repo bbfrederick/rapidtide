@@ -22,6 +22,20 @@ docker run \
 docker run \
     --rm \
     --ipc host \
+    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
+    -it \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -u rapidtide fredericklab/rapidtide_dev:latest \
+    happy \
+        /data/src/sub-HAPPYTEST.nii.gz \
+        /data/src/sub-HAPPYTEST.json \
+        /data/dst/sub-HAPPYTEST \
+        --model model_revised \
+        --mklthreads -1 
+
+docker run \
+    --rm \
+    --ipc host \
     --network host\
     --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
     -it \
