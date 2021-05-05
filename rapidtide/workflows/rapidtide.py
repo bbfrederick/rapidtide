@@ -347,6 +347,9 @@ def rapidtide_main(argparsingfunc):
 
     # set the number of MKL threads to use
     if mklexists:
+        mklmaxthreads = mkl.get_max_threads()
+        if not (1 <= optiondict["mklthreads"] <= mklmaxthreads):
+            optiondict["mklthreads"] = mklmaxthreads
         mkl.set_num_threads(optiondict["mklthreads"])
 
     # Generate MemoryLGR output file with column names

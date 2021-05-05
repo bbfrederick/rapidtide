@@ -934,6 +934,9 @@ def happy_main(argparsingfunc):
 
     # set the number of MKL threads to use
     if mklexists:
+        mklmaxthreads = mkl.get_max_threads()
+        if not (1 <= args.mklthreads <= mklmaxthreads):
+            args.mklthreads = mklmaxthreads
         mkl.set_num_threads(args.mklthreads)
 
     # if we are going to do a glm, make sure we are generating app matrix
