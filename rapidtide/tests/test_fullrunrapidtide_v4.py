@@ -26,7 +26,7 @@ import rapidtide.workflows.rapidtide_parser as rapidtide_parser
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
 
-def test_fullrunrapidtide(debug=False, display=False):
+def test_fullrunrapidtide_v4(debug=False, display=False):
     # run rapidtide
     inputargs = [
         os.path.join(get_examples_path(), "sub-NIRSRAPIDTIDETEST.txt"),
@@ -49,7 +49,7 @@ def test_fullrunrapidtide(debug=False, display=False):
 
 
 def main():
-    test_fullrunrapidtide(debug=True, display=True)
+    test_fullrunrapidtide_v4(debug=True, display=True)
 
 
 if __name__ == "__main__":
