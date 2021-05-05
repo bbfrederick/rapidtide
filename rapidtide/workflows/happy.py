@@ -24,7 +24,6 @@ import time
 import warnings
 
 import numpy as np
-from matplotlib.pyplot import figure, plot, show
 from nilearn import masking
 from scipy.signal import savgol_filter, welch
 from scipy.stats import kurtosis, skew
@@ -66,7 +65,7 @@ def rrifromphase(timeaxis, thephase):
     return None
 
 
-def cardiacsig(thisphase, amps=[1.0, 0.0, 0.0], phases=None, overallphase=0.0):
+def cardiacsig(thisphase, amps=(1.0, 0.0, 0.0), phases=None, overallphase=0.0):
     total = 0.0
     if phases is None:
         phases = amps * 0.0
