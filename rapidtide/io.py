@@ -1233,13 +1233,17 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     Returns
     -------
         samplerate : float
-            Sample rate in Hz
+            Sample rate in Hz.  None if not knowable.
         starttime : float
-            Time of first point, in seconds
+            Time of first point, in seconds. None if not knowable.
         columns : str array
-            Names of the timecourses contained in the file
+            Names of the timecourses contained in the file. None if not knowable.
         data : 2D numpy array
             Timecourses from the file
+        compressed: bool
+            True if time data is gzipped (as in a .tsv.gz file).
+        filetype: str
+            One of "text", "plaintsv", "bidscontinuous".
 
     NOTE:  If file does not exist or is not valid, all return values are None"""
 
