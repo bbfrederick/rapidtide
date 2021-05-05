@@ -49,6 +49,8 @@ def test_fullrunhappy(debug=False, display=False):
         ),
         "--increaseoutputlevel",
         "--increaseoutputlevel",
+        "--motionfile",
+        os.path.join(get_examples_path(), "sub-HAPPYTEST_mcf.par"),
     ]
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
 
