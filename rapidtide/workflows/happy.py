@@ -374,8 +374,7 @@ def findbadpts(
             nameroot,
         )
     else:
-        print("findbadpts error: Bad thresholding type")
-        sys.exit()
+        raise ValueError("findbadpts error: Bad thresholding type")
 
     # now fill in gaps
     streakthresh = int(np.round(mingap * samplerate))
@@ -632,7 +631,6 @@ def getphysiofile(
             len(slicetimeaxis),
         )
     if (inputtimeaxis[0] > slop) or (inputtimeaxis[-1] < slicetimeaxis[-1] - slop):
-        print("getphysiofile: error - plethysmogram waveform does not cover the fmri time range")
         print("\tinputtimeaxis[0]:", inputtimeaxis[0])
         print("\tinputtimeaxis[-1]:", inputtimeaxis[-1])
         print("\tslicetimeaxis[0]:", slicetimeaxis[0])
@@ -646,7 +644,9 @@ def getphysiofile(
                 "<",
                 slicetimeaxis[-1] - slop,
             )
-        sys.exit()
+        raise ValueError(
+            "getphysiofile: error - plethysmogram waveform does not cover the fmri time range"
+        )
     if debug:
         print("pleth_fullres: len=", len(pleth_fullres), "vals=", pleth_fullres)
         print("inputfreq =", inputfreq)
@@ -723,11 +723,9 @@ def readextmask(thefilename, nim_hdr, xsize, ysize, numslices, debug=False):
             f"Mask dimensions: {xsize_extmask}, {ysize_extmask}, {numslices_extmask}, {timepoints_extmask}"
         )
     if not tide_io.checkspacematch(nim_hdr, extmask_hdr):
-        print("Dimensions of mask do not match the fmri data - exiting")
-        sys.exit()
+        raise ValueError("Dimensions of mask do not match the fmri data - exiting")
     if timepoints_extmask > 1:
-        print("Mask must have only 3 dimensions - exiting")
-        sys.exit()
+        raise ValueError("Mask must have only 3 dimensions - exiting")
     return extmask_data.reshape(xsize * ysize, numslices)
 
 
@@ -1873,7 +1871,6 @@ def happy_main(argparsingfunc):
                 timings, outputfile=outputroot + "_runtimings.txt", extraheader=nodeline
             )
             tide_util.logmem("final")
-            sys.exit()
 
         # find the phase values for all timepoints in all slices
         phasevals = np.zeros((numslices, timepoints), dtype=np.float64)
