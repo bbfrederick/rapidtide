@@ -38,11 +38,16 @@ API
     :template: function.rst
 
     rapidtide.correlate.check_autocorrelation
-    rapidtide.correlate.quickcorr
     rapidtide.correlate.shorttermcorr_1D
     rapidtide.correlate.shorttermcorr_2D
+    rapidtide.correlate.calc_MI
+    rapidtide.correlate.mutual_info_2d
+    rapidtide.correlate.cross_mutual_info
+    rapidtide.correlate.mutual_info_to_r
     rapidtide.correlate.delayedcorr
     rapidtide.correlate.cepstraldelay
+    rapidtide.correlate.arbcorr
+    rapidtide.correlate.faststcorrelate
     rapidtide.correlate.fastcorrelate
     rapidtide.correlate._centered
     rapidtide.correlate._check_valid_mode_shapes
@@ -152,25 +157,51 @@ API
     :template: function.rst
 
     rapidtide.io.readfromnifti
+    rapidtide.io.readfromcifti
+    rapidtide.io.getciftitr
     rapidtide.io.parseniftidims
     rapidtide.io.parseniftisizes
     rapidtide.io.savetonifti
+    rapidtide.io.savetocifti
     rapidtide.io.checkifnifti
+    rapidtide.io.niftisplitext
+    rapidtide.io.niftisplit
+    rapidtide.io.niftimerge
+    rapidtide.io.niftiroi
+    rapidtide.io.checkifcifti
     rapidtide.io.checkiftext
     rapidtide.io.getniftiroot
+    rapidtide.io.fmriheaderinfo
     rapidtide.io.fmritimeinfo
     rapidtide.io.checkspacematch
     rapidtide.io.checkspaceresmatch
     rapidtide.io.checkspacedimmatch
     rapidtide.io.checktimematch
     rapidtide.io.checkifparfile
+    rapidtide.io.readparfile
+    rapidtide.io.readmotion
+    rapidtide.io.calcmotregressors
+    rapidtide.io.sliceinfo
+    rapidtide.io.getslicetimesfromfile
     rapidtide.io.readbidssidecar
+    rapidtide.io.writedicttojson
+    rapidtide.io.readdictfromjson
+    rapidtide.io.readlabelledtsv
+    rapidtide.io.readoptionsfile
+    rapidtide.io.writebidstsv
+    rapidtide.io.readvectorsfromtextfile
     rapidtide.io.readbidstsv
     rapidtide.io.readcolfrombidstsv
+    rapidtide.io.parsefilespec
+    rapidtide.io.colspectolist
+    rapidtide.io.processnamespec
+    rapidtide.io.readcolfromtextfile
     rapidtide.io.readvecs
     rapidtide.io.readvec
+    rapidtide.io.readtc
     rapidtide.io.readlabels
     rapidtide.io.writedict
+    rapidtide.io.readdict
     rapidtide.io.writevec
     rapidtide.io.writenpvecs
 
