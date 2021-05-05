@@ -93,10 +93,11 @@ RUN df -h
 RUN conda clean --all
 #RUN conda build purge-all
 RUN df -h
-RUN conda install -y python=3.7.10 \
+RUN conda install -y python=3.7.6 \
                      pip \
                      scipy \
                      numpy \
+                     matplotlib \
                      mkl \
                      mkl-service \
                      statsmodels \
@@ -106,12 +107,11 @@ RUN conda install -y python=3.7.10 \
                      nilearn \
                      keras=2.2.4 \
                      h5py=2.10.0 \
-                     tensorflow=1.14.0 \
+                     "tensorflow<1.15.0" \
                      pyqtgraph \
                      pyfftw \
                      pandas \
                      versioneer \
-                     matplotlib \
                      numba; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
     chmod +x /usr/local/miniconda/bin/*; sync && \
