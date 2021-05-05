@@ -40,7 +40,7 @@ def test_fullrunhappy_v3(debug=False, display=False):
         "-1",
         "--model",
         "model_revised",
-        "--cardestonly",
+        "--cardcalconly",
         "--motionfile",
         os.path.join(get_examples_path(), "sub-HAPPYTEST_mcf.par"),
     ]
