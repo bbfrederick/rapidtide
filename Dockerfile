@@ -93,13 +93,12 @@ RUN df -h
 RUN conda clean --all
 #RUN conda build purge-all
 RUN df -h
-RUN conda install -y python=3.10.0 \
+RUN conda install -y python=3.7.10 \
                      pip \
                      scipy \
                      numpy \
                      mkl \
                      mkl-service \
-                     matplotlib \
                      statsmodels \
                      scikit-image \
                      scikit-learn \
@@ -112,6 +111,7 @@ RUN conda install -y python=3.10.0 \
                      pyfftw \
                      pandas \
                      versioneer \
+                     matplotlib \
                      numba; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
     chmod +x /usr/local/miniconda/bin/*; sync && \
