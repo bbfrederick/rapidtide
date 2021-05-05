@@ -41,8 +41,6 @@ def test_fullrunhappy_v4(debug=False, display=False):
         "-1",
         "--model",
         "model_revised",
-        "--motionfile",
-        os.path.join(get_examples_path(), "sub-HAPPYTEST_mcf.par"),
     ]
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
 
