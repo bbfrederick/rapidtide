@@ -37,7 +37,7 @@ def test_fullrunrapidtide_v1(debug=False, display=False):
         "-1",
         "--passes",
         "1",
-        "--despeckle_passes",
+        "--despecklepasses",
         "3",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
