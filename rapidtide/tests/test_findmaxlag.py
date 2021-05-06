@@ -26,7 +26,7 @@ import numpy as np
 import rapidtide.fit as tide_fit
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
-from rapidtide.tests.utils import get_test_data_path
+from rapidtide.tests.utils import get_examples_path
 
 
 def dumplists(results, targets, failflags):
@@ -62,12 +62,12 @@ def eval_fml_result(absmin, absmax, testvalues, foundvalues, failflags, toleranc
 
 
 def test_findmaxlag(display=False, fittype="gauss", debug=False):
-    textfilename = op.join(get_test_data_path(), "lt_rt.txt")
+    textfilename = op.join(get_examples_path(), "lt_rt.txt")
 
     # set default variable values
     searchfrac = 0.75
 
-    indata = tide_io.readvecs(textfilename)
+    indata = tide_io.readvecs(textfilename, debug=debug)
     xvecs = indata[0, :]
     yvecs = indata[1, :]
 
