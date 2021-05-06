@@ -54,8 +54,7 @@ def readfromnifti(inputfile):
     elif os.path.isfile(inputfile + ".nii"):
         inputfilename = inputfile + ".nii"
     else:
-        print("nifti file", inputfile, "does not exist")
-        sys.exit()
+        raise FileNotFoundError("nifti file", inputfile, "does not exist")
     nim = nib.load(inputfilename)
     nim_data = nim.get_fdata()
     nim_hdr = nim.header.copy()
@@ -86,8 +85,7 @@ def readfromcifti(inputfile, debug=False):
     elif os.path.isfile(inputfile + ".nii"):
         inputfilename = inputfile + ".nii"
     else:
-        print("cifti file", inputfile, "does not exist")
-        sys.exit()
+        raise FileNotFoundError("cifti file", inputfile, "does not exist")
 
     cifti = nib.load(inputfilename)
     nifti_data = np.transpose(cifti.get_fdata(dtype=np.float32))
@@ -216,8 +214,7 @@ def savetonifti(thearray, theheader, thename):
     elif thedtype == np.complex256:
         theheader.datatype = 2048
     else:
-        print("type", thedtype, "is not legal")
-        sys.exit()
+        raise TypeError("type", thedtype, "is not legal")
 
     output_nifti.to_filename(thename + suffix)
     output_nifti = None
@@ -296,8 +293,7 @@ def savetocifti(
             seriesaxis = nib.cifti2.cifti2_axes.SeriesAxis(start, step, workingarray.shape[0])
             axislist = [seriesaxis, theciftiheader.matrix.get_axis(modelaxis)]
         else:
-            print("no ModelAxis found in source file - exiting")
-            sys.exit()
+            raise KeyError("no ModelAxis found in source file - exiting")
     else:
         # make a proper scalar header
         if parcellated:
@@ -317,8 +313,7 @@ def savetocifti(
             scalaraxis = nib.cifti2.cifti2_axes.ScalarAxis(names)
             axislist = [scalaraxis, theciftiheader.matrix.get_axis(modelaxis)]
         else:
-            print("no ModelAxis found in source file - exiting")
-            sys.exit()
+            raise KeyError("no ModelAxis found in source file - exiting")
     # now create the output file structure
     if debug:
         print("about to create cifti image - nifti header is:", theniftiheader)
@@ -419,8 +414,7 @@ def niftisplit(inputfile, outputroot, axis=3):
             elif axis == 4:
                 thisslice = infile_data[:, :, :, :, i : i + 1]
             else:
-                print("illegal axis")
-                sys.exit()
+                raise ValueError("illegal axis")
         elif infiledims[0] == 4:
             if axis == 0:
                 thisslice = infile_data[i : i + 1, :, :, :]
@@ -431,8 +425,7 @@ def niftisplit(inputfile, outputroot, axis=3):
             elif axis == 3:
                 thisslice = infile_data[:, :, :, i : i + 1]
             else:
-                print("illegal axis")
-                sys.exit()
+                raise ValueError("illegal axis")
         savetonifti(thisslice, theheader, outputroot + str(i).zfill(4))
 
 
@@ -1181,14 +1174,13 @@ def writebidstsv(
             columns.append("col_" + str(i + startcol).zfill(2))
     else:
         if len(columns) != reshapeddata.shape[0]:
-            print(
+            raise ValueError(
                 "number of column names (",
                 len(columns),
                 ") does not match number of columns (",
                 reshapeddata.shape[1],
                 ") in data",
             )
-            sys.exit()
     if startcol > 0:
         df = pd.DataFrame(data=np.transpose(indata), columns=incolumns)
         for i in range(len(columns)):
@@ -1624,7 +1616,7 @@ def readvecs(inputfilename, colspec=None, numskip=0, debug=False):
     -------
 
     """
-    if False:
+    """if False:
         dataarray = pd.read_table(inputfilename, sep=None, header=None)
         if colspec is None:
             collist = range(len(dataarray.columns))
@@ -1648,20 +1640,19 @@ def readvecs(inputfilename, colspec=None, numskip=0, debug=False):
             inputvec[outcol, :] = dataarray[vecnum][numskip:]
             outcol += 1
         return 1.0 * inputvec[:, 0:numvals]
+    else:"""
+    with open(inputfilename, "r") as thefile:
+        lines = thefile.readlines()
+    if colspec is None:
+        numvecs = len(lines[0].split())
+        collist = range(0, numvecs)
     else:
-        with open(inputfilename, "r") as thefile:
-            lines = thefile.readlines()
-        if colspec is None:
-            numvecs = len(lines[0].split())
-            collist = range(0, numvecs)
-        else:
-            collist = colspectolist(colspec)
-            if collist[-1] > len(lines[0].split()):
-                print("READVECS: too many columns requested - exiting")
-                sys.exit()
-            if max(collist) > len(lines[0].split()) - 1:
-                print("READVECS: requested column", max(collist), "too large - exiting")
-                sys.exit()
+        collist = colspectolist(colspec)
+        if collist[-1] > len(lines[0].split()):
+            print("READVECS: too many columns requested - exiting")
+            sys.exit()
+        if max(collist) > len(lines[0].split()) - 1:
+            raise ValueError("READVECS: requested column", max(collist), "too large - exiting")
         inputvec = []
         for line in lines[numskip:]:
             if len(line) > 1:
@@ -1707,11 +1698,11 @@ def readtc(inputfilename, colnum=None, colname=None, debug=False):
         print("extension:", extension)
     if extension == ".json":
         if (colnum is None) and (colname is None):
-            print("You must specify a column name or number to read a bidstsv file")
-            sys.exit()
+            raise ValueError("You must specify a column name or number to read a bidstsv file")
         if (colnum is not None) and (colname is not None):
-            print("You must specify a column name or number, but not both, to read a bidstsv file")
-            sys.exit()
+            raise ValueError(
+                "You must specify a column name or number, but not both, to read a bidstsv file"
+            )
         inputfreq, inputstart, timecourse = readcolfrombidstsv(
             inputfilename, columnname=colname, columnnum=colnum, debug=debug
         )
@@ -1721,10 +1712,9 @@ def readtc(inputfilename, colnum=None, colname=None, debug=False):
             print(timecourse.shape)
         if len(timecourse.shape) != 1:
             if (colnum is None) or (colname is not None):
-                print(
+                raise TypeError(
                     "You must specify a column number (not a name) to read a column from a multicolumn file"
                 )
-                sys.exit()
             timecourse = timecourse[:, colnum]
 
     return timecourse, inputfreq, inputstart

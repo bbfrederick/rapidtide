@@ -38,20 +38,6 @@ def setifnotset(thedict, thekey, theval):
         thedict[thekey] = theval
 
 
-def is_valid_filespec(parser, arg):
-    """
-    Check if argument is existing file.
-    """
-    if arg is None:
-        parser.error("No file specified")
-
-    thesplit = arg.split(":")
-    if not op.isfile(thesplit[0]):
-        parser.error("The file {0} does not exist!".format(thesplit[0]))
-
-    return arg
-
-
 def is_valid_file(parser, arg):
     """
     Check if argument is existing file.
@@ -71,11 +57,7 @@ def invert_float(parser, arg):
     """
     Check if argument is float or auto.
     """
-    if arg != "auto":
-        try:
-            arg = float(arg)
-        except parser.error:
-            parser.error('Value {0} is not a float or "auto"'.format(arg))
+    arg = is_float(parser, arg)
 
     if arg != "auto":
         arg = 1.0 / arg
