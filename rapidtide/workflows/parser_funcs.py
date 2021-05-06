@@ -571,3 +571,31 @@ def setargs(thegetparserfunc, inputargs=None):
             raise
 
     return args, argstowrite
+
+
+def generic_init(theparser, themain, inputargs=None):
+    """
+    Compile arguments either from the command line, or from an argument list.
+    """
+    if inputargs is None:
+        print("processing command line arguments")
+        # write out the command used
+        try:
+            args = theparser().parse_args()
+            argstowrite = sys.argv
+        except SystemExit:
+            theparser().print_help()
+            raise
+    else:
+        print("processing passed argument list:")
+        try:
+            args = theparser().parse_args(inputargs)
+            argstowrite = inputargs
+        except SystemExit:
+            theparser().print_help()
+            raise
+
+    # save the raw and formatted command lines
+    args.commandline = " ".join(argstowrite)
+
+    themain(args)

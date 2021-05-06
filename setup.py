@@ -55,12 +55,14 @@ modules_list = [
     "rapidtide/workflows/happy_parser",
     "rapidtide/workflows/rapidtide_parser",
     "rapidtide/workflows/rapidtide2x_parser",
+    "rapidtide/workflows/showtc",
 ]
 
 if addtidepool:
     modules_list.append("rapidtide/tidepoolTemplate")
     modules_list.append("rapidtide/tidepoolTemplate_alt")
     modules_list.append("rapidtide/OrthoImageItem")
+
 
 script_list = [
     "rapidtide/scripts/aligntcs",

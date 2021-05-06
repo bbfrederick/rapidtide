@@ -16,8 +16,31 @@
 #   limitations under the License.
 #
 #
-import rapidtide.workflows.showtc as theworkflow
-import rapidtide.workflows.parser_funcs as pf
+import argparse
+import os
+
+import matplotlib as mpl
+
+import rapidtide.scripts.showtc as showtc
+from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
+
+
+def test_runmisc(debug=False, display=False):
+    # run showtc
+    inputargs = [
+        os.path.join(get_examples_path(), "lt_rt.txt"),
+        "--sampletime",
+        "12.5",
+        "--tofile",
+        "showtcout.jpg",
+    ]
+    showtc.main(showtc.processargs(inputargs=inputargs))
+
+
+def main():
+    test_runmisc(debug=True, display=True)
+
 
 if __name__ == "__main__":
-    pf.generic_init(theworkflow._get_parser, theworkflow.showtc)
+    mpl.use("TkAgg")
+    main()
