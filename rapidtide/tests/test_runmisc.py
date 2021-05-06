@@ -21,20 +21,21 @@ import os
 
 import matplotlib as mpl
 
-import rapidtide.scripts.showtc as showtc
+import rapidtide.workflows.showtc as showtc
+import rapidtide.workflows.parser_funcs as pf
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
 
 def test_runmisc(debug=False, display=False):
     # run showtc
     inputargs = [
-        os.path.join(get_examples_path(), "lt_rt.txt"),
+        os.path.join(get_examples_path(), "lt_rt.txt:1"),
         "--sampletime",
         "12.5",
         "--tofile",
         "showtcout.jpg",
     ]
-    showtc.main(showtc.processargs(inputargs=inputargs))
+    pf.generic_init(showtc._get_parser, showtc.showtc, inputargs=inputargs)
 
 
 def main():
