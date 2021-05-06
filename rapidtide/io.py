@@ -1641,6 +1641,10 @@ def readvecs(inputfilename, colspec=None, numskip=0, debug=False):
             outcol += 1
         return 1.0 * inputvec[:, 0:numvals]
     else:"""
+    if debug:
+        print(f"inputfilename: {inputfilename}")
+        print(f"colspec: {colspec}")
+        print(f"numskip: {numskip}")
     with open(inputfilename, "r") as thefile:
         lines = thefile.readlines()
     if colspec is None:
@@ -1653,16 +1657,16 @@ def readvecs(inputfilename, colspec=None, numskip=0, debug=False):
             sys.exit()
         if max(collist) > len(lines[0].split()) - 1:
             raise ValueError("READVECS: requested column", max(collist), "too large - exiting")
-        inputvec = []
-        for line in lines[numskip:]:
-            if len(line) > 1:
-                thetokens = line.split()
-                thisvec = []
-                for vecnum in collist:
-                    thisvec.append(np.float64(thetokens[vecnum]))
-                inputvec.append(thisvec)
-        theoutarray = np.transpose(np.asarray(inputvec, dtype=float))
-        return theoutarray
+    inputvec = []
+    for line in lines[numskip:]:
+        if len(line) > 1:
+            thetokens = line.split()
+            thisvec = []
+            for vecnum in collist:
+                thisvec.append(np.float64(thetokens[vecnum]))
+            inputvec.append(thisvec)
+    theoutarray = np.transpose(np.asarray(inputvec, dtype=float))
+    return theoutarray
 
 
 def readvec(inputfilename, numskip=0):
