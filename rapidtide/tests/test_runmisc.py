@@ -21,26 +21,34 @@ import os
 
 import matplotlib as mpl
 
-import rapidtide.workflows.showtc as showtc
 import rapidtide.workflows.parser_funcs as pf
+import rapidtide.workflows.showtc as showtc
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
 
 def test_runmisc(debug=False, display=False):
     # run showtc
     inputargs = [
-        os.path.join(get_examples_path(), "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered"),
+        os.path.join(
+            get_examples_path(),
+            "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered",
+        ),
         "--sampletime",
         "12.5",
         "--tofile",
         "showtcout1.jpg",
-        "--starttime", "100",
-        "--endtime", "800",
+        "--starttime",
+        "100",
+        "--endtime",
+        "800",
     ]
     pf.generic_init(showtc._get_parser, showtc.showtc, inputargs=inputargs)
 
     inputargs = [
-        os.path.join(get_examples_path(), "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered"),
+        os.path.join(
+            get_examples_path(),
+            "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered",
+        ),
         "--format",
         "separate",
         "--sampletime",
@@ -52,20 +60,30 @@ def test_runmisc(debug=False, display=False):
         "--noxax",
         "--noyax",
         "--nolegend",
-        "--linewidth", "0.75",
-        "--saveres", "400",
-        "--title", "thetitle",
-        "--xlabel", "thexlabel",
-        "--ylabel", "theylabel",
-        "--legends", "lf_HbO,rf_HbO",
-        "--legendloc", "5",
-        "--colors", "red,green",
-
+        "--linewidth",
+        "0.75",
+        "--saveres",
+        "400",
+        "--title",
+        "thetitle",
+        "--xlabel",
+        "thexlabel",
+        "--ylabel",
+        "theylabel",
+        "--legends",
+        "lf_HbO,rf_HbO",
+        "--legendloc",
+        "5",
+        "--colors",
+        "red,green",
     ]
     pf.generic_init(showtc._get_parser, showtc.showtc, inputargs=inputargs)
 
     inputargs = [
-        os.path.join(get_examples_path(), "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered"),
+        os.path.join(
+            get_examples_path(),
+            "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered",
+        ),
         "--format",
         "separatelinked",
         "--sampletime",

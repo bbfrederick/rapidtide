@@ -16,8 +16,8 @@
 #   limitations under the License.
 #
 #
-import rapidtide.workflows.showtc as theworkflow
 import rapidtide.workflows.parser_funcs as pf
+import rapidtide.workflows.showtc as theworkflow
 
 if __name__ == "__main__":
     pf.generic_init(theworkflow._get_parser, theworkflow.showtc)
