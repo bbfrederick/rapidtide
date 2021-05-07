@@ -29,11 +29,51 @@ from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_p
 def test_runmisc(debug=False, display=False):
     # run showtc
     inputargs = [
-        os.path.join(get_examples_path(), "lt_rt.txt:1"),
+        os.path.join(get_examples_path(), "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered"),
         "--sampletime",
         "12.5",
         "--tofile",
-        "showtcout.jpg",
+        "showtcout1.jpg",
+        "--starttime", "100",
+        "--endtime", "800",
+    ]
+    pf.generic_init(showtc._get_parser, showtc.showtc, inputargs=inputargs)
+
+    inputargs = [
+        os.path.join(get_examples_path(), "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered"),
+        "--format",
+        "separate",
+        "--sampletime",
+        "12.5",
+        "--displaytype",
+        "power",
+        "--tofile",
+        "showtcout2.jpg",
+        "--noxax",
+        "--noyax",
+        "--nolegend",
+        "--linewidth", "0.75",
+        "--saveres", "400",
+        "--title", "thetitle",
+        "--xlabel", "thexlabel",
+        "--ylabel", "theylabel",
+        "--legends", "lf_HbO,rf_HbO",
+        "--legendloc", "5",
+        "--colors", "red,green",
+
+    ]
+    pf.generic_init(showtc._get_parser, showtc.showtc, inputargs=inputargs)
+
+    inputargs = [
+        os.path.join(get_examples_path(), "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered"),
+        "--format",
+        "separatelinked",
+        "--sampletime",
+        "12.5",
+        "--displaytype",
+        "phase",
+        "--tofile",
+        "showtcout3.jpg",
     ]
     pf.generic_init(showtc._get_parser, showtc.showtc, inputargs=inputargs)
 
