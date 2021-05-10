@@ -1055,15 +1055,6 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
-        "--correlatorhpfreq",
-        dest="correlator_hpfreq",
-        action="store",
-        metavar="HPFREQ",
-        type=float,
-        help=("High pass filter the correlation function to get rid of baseline " "problems."),
-        default=None,
-    )
-    experimental.add_argument(
         "--negativegradient",
         dest="negativegradient",
         action="store_true",

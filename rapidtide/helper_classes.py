@@ -174,7 +174,7 @@ class SimilarityFunctionator:
         if self.reftc is not None:
             self.setreftc(self.reftc)
 
-    def preptc(self, thetc, isreftc=False, hpfreq=None):
+    def preptc(self, thetc, isreftc=False):
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function
         if isreftc or (not self.negativegradient):
             thenormtc = tide_math.corrnormalize(
@@ -188,10 +188,7 @@ class SimilarityFunctionator:
                 detrendorder=self.detrendorder,
                 windowfunc=self.windowfunc,
             )
-        if hpfreq is None:
-            return thenormtc
-        else:
-            return self.hpfilt.apply(self.Fs, thenormtc)
+        return thenormtc
 
     def trim(self, vector):
         return vector[
@@ -238,7 +235,6 @@ class MutualInformationator(SimilarityFunctionator):
         self.madnorm = madnorm
         self.bins = bins
         self.sigma = sigma
-        self.hpfreq = None
         self.smoothingtime = smoothingtime
         self.smoothingfilter = tide_filt.NoncausalFilter(filtertype="arb")
         if self.smoothingtime > 0.0:
@@ -262,7 +258,7 @@ class MutualInformationator(SimilarityFunctionator):
 
     def setreftc(self, reftc, offset=0.0):
         self.reftc = reftc + 0.0
-        self.prepreftc = self.preptc(self.reftc, isreftc=True, hpfreq=None)
+        self.prepreftc = self.preptc(self.reftc, isreftc=True)
 
         self.timeaxis, dummy, self.similarityfuncorigin = tide_corr.cross_mutual_info(
             self.prepreftc,
@@ -367,13 +363,9 @@ class MutualInformationator(SimilarityFunctionator):
 
 
 class Correlator(SimilarityFunctionator):
-    def __init__(self, hpfreq=None, windowfunc="hamming", corrweighting="None", *args, **kwargs):
-        self.hpfreq = hpfreq
+    def __init__(self, windowfunc="hamming", corrweighting="None", *args, **kwargs):
         self.windowfunc = windowfunc
         self.corrweighting = corrweighting
-        if self.hpfreq is not None:
-            self.hpfilt = tide_filt.NoncausalFilter("arb")
-            self.hpfilt.setfreqs(self.hpfreq, self.hpfreq, self.Fs, self.Fs)
         super(Correlator, self).__init__(*args, **kwargs)
 
     def setlimits(self, lagmininpts, lagmaxinpts):
@@ -382,11 +374,11 @@ class Correlator(SimilarityFunctionator):
 
     def setreftc(self, reftc, offset=0.0):
         self.reftc = reftc + 0.0
-        self.prepreftc = self.preptc(self.reftc, isreftc=True, hpfreq=self.hpfreq)
+        self.prepreftc = self.preptc(self.reftc, isreftc=True)
         self.similarityfunclen = len(self.reftc) * 2 - 1
         self.similarityfuncorigin = self.similarityfunclen // 2 + 1
 
-        # make the time axis
+        # make the reference time axis
         self.timeaxis = (
             np.arange(0.0, self.similarityfunclen) * (1.0 / self.Fs)
             - ((self.similarityfunclen - 1) * (1.0 / self.Fs)) / 2.0

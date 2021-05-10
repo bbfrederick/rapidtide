@@ -1613,7 +1613,4 @@ def process_args(inputargs=None):
         ]
     )
 
-    # define variables for compatiblity with new features of rapidtide
-    optiondict["correlator_hpfreq"] = None
-
     return optiondict, theprefilter
