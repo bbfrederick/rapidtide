@@ -186,16 +186,29 @@ def addfilteropts(parser, filtertarget, details=False):
     )
     filt_opts.add_argument(
         "--filterfreqs",
-        dest="arbvec",
+        dest="passvec",
         action="store",
-        nargs="+",
-        type=lambda x: is_float(parser, x),
-        metavar=("LOWERPASS UPPERPASS", "LOWERSTOP UPPERSTOP"),
+        nargs=2,
+        type=float,
+        metavar=("LOWERPASS UPPERPASS"),
         help=(
             "Filter " + filtertarget + " to retain LOWERPASS to "
-            "UPPERPASS. LOWERSTOP and UPPERSTOP can also "
-            "be specified, or will be calculated "
+            "UPPERPASS. If --filterstopfreqs is not also specified, "
+            "LOWERSTOP and UPPERSTOP will be calculated "
             "automatically. "
+        ),
+        default=None,
+    )
+    filt_opts.add_argument(
+        "--filterstopfreqs",
+        dest="stopvec",
+        action="store",
+        nargs=2,
+        type=float,
+        metavar=("LOWERSTOP UPPERSTOP"),
+        help=(
+            "Filter " + filtertarget + " to with stop frequencies LOWERSTOP and UPPERSTOP. "
+            "Using this argument requires the use of --filterpassfreqs"
         ),
         default=None,
     )
@@ -252,13 +265,22 @@ def postprocessfilteropts(args):
     except AttributeError:
         args.padseconds = DEFAULT_PAD_SECONDS
 
-    # if arbvec is set, we are going set up an arbpass filter
+    # if passvec, or passvec and stopvec, are set, we are going set up an arbpass filter
+    args.arbvec = None
+    if args.stopvec is not None:
+        if args.passvec is not None:
+            args.arbvec = [args.passvec[0], args.passvec[1], args.stopvec[0], args.stopvec[1]]
+        else:
+            raise ValueError("--filterfreqs must be used if --filterstopfreqs is specified")
+    else:
+        if args.passvec is not None:
+            args.arbvec = [
+                args.passvec[0],
+                args.passvec[1],
+                args.passvec[0] * 0.95,
+                args.passvec[1] * 1.05,
+            ]
     if args.arbvec is not None:
-        if len(args.arbvec) == 2:
-            args.arbvec.append(args.arbvec[0] * 0.95)
-            args.arbvec.append(args.arbvec[1] * 1.05)
-        elif len(args.arbvec) != 4:
-            raise ValueError("Argument '--arb' must be either two or four " "floats.")
         # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
         # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
         theprefilter = tide_filt.NoncausalFilter(
@@ -267,7 +289,11 @@ def postprocessfilteropts(args):
         )
         theprefilter.setfreqs(args.arbvec[2], args.arbvec[0], args.arbvec[1], args.arbvec[3])
     else:
-        theprefilter = tide_filt.NoncausalFilter(args.filterband, transferfunc=args.filtertype)
+        theprefilter = tide_filt.NoncausalFilter(
+            args.filterband,
+            transferfunc=args.filtertype,
+            padtime=args.padseconds,
+        )
 
     # set the butterworth order
     theprefilter.setbutterorder(args.filtorder)

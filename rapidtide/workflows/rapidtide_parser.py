@@ -19,6 +19,7 @@
 import argparse
 import logging
 import sys
+from argparse import Namespace
 
 import nibabel as nib
 import numpy as np
@@ -1268,38 +1269,8 @@ def process_args(inputargs=None):
     args["python_version"] = str(sys.version_info)
 
     # configure the filter
-    # if arbvec is set, we are going set up an arbpass filter
-    if args["arbvec"] is not None:
-        if len(args["arbvec"]) == 2:
-            args["arbvec"].append(args["arbvec"][0] * 0.95)
-            args["arbvec"].append(args["arbvec"][1] * 1.05)
-        elif len(args["arbvec"]) != 4:
-            raise ValueError("Argument '--arb' must be either two or four " "floats.")
-        # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
-        # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
-        theprefilter = tide_filt.NoncausalFilter(
-            "arb", transferfunc=args["filtertype"], debug=args["debug"]
-        )
-        theprefilter.setfreqs(
-            args["arbvec"][2],
-            args["arbvec"][0],
-            args["arbvec"][1],
-            args["arbvec"][3],
-        )
-    else:
-        theprefilter = tide_filt.NoncausalFilter(
-            args["filterband"],
-            transferfunc=args["filtertype"],
-            debug=args["debug"],
-        )
-
-    theprefilter.setbutterorder(args["filtorder"])
-    (
-        args["lowerstop"],
-        args["lowerpass"],
-        args["upperpass"],
-        args["upperstop"],
-    ) = theprefilter.getfreqs()
+    theobj, theprefilter = pf.postprocessfilteropts(Namespace(**args))
+    args = vars(theobj)
 
     # Additional argument parsing not handled by argparse
     args["despeckle_passes"] = np.max([args["despeckle_passes"], 0])

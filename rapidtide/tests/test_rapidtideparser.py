@@ -37,13 +37,9 @@ testlist["filtertype"] = {
     "command": ["--filtertype", "trapezoidal"],
     "results": [["filtertype", "trapezoidal"]],
 }
-testlist["filterfreqs1"] = {
+testlist["filterfreqs"] = {
     "command": ["--filterfreqs", "0.1", "0.2"],
     "results": [["arbvec", [0.1, 0.2, 0.095, 0.21], "isfloat"]],
-}
-testlist["filterfreqs2"] = {
-    "command": ["--filterfreqs", "0.1", "0.2", "0.91", "2.3"],
-    "results": [["arbvec", [0.1, 0.2, 0.91, 2.3], "isfloat"]],
 }
 testlist["pickleft"] = {"command": ["--pickleft"], "results": [["pickleft", True]]}
 testlist["corrweighting"] = {
@@ -146,7 +142,7 @@ def main():
 
     # construct the second test vector
     testvec = []
-    testvec.append("filterfreqs1")
+    testvec.append("filterfreqs")
     testvec.append("datatstep")
     testvec.append("timerange")
     testvec.append("numnull")
