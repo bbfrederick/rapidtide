@@ -85,7 +85,11 @@ def main():
         elif thecommand[0] == "xyzzy":
             subprocess.call("/bin/bash")
         else:
-            print(thecommand[0], "is a rapidtide script, but is not installed in ", execdir)
+            print(
+                thecommand[0],
+                "is a rapidtide script, but is not installed in ",
+                execdir,
+            )
     else:
         print(thecommand[0], "is not a script in the rapidtide package")
 

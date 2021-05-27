@@ -30,12 +30,16 @@ import subprocess
 def main():
     # get the command line parameters
     therapidtidecmd = sys.argv[1:]
-    thewrappercmd = ['docker', 'run',
-                        '-m', '8g',
-                        '--volume=/Users/frederic:/data',
-                        'rapidtide:latest']
+    thewrappercmd = [
+        "docker",
+        "run",
+        "-m",
+        "8g",
+        "--volume=/Users/frederic:/data",
+        "rapidtide:latest",
+    ]
     subprocess.call(thewrappercmd + therapidtidecmd)
-    
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
