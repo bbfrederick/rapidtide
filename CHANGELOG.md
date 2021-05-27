@@ -1,5 +1,11 @@
 # History of changes
 
+## Version 2.0alpha27 (5/27/21)
+* (rapidtide, showxcorrx, showarbcorr, showstxcorr, ccorrica, aligntcs, filttc) Changed argument handling for arbitrary filters.  Specify pass freqs with --filterfreqs, stop freqs with --filterstopfreqs.
+* (happy) Code cleanup, improved tensorflow selection.
+* (testing) Increased coverage.
+* (packaging) Multiple corrections in support files.
+
 ## Version 2.0alpha26 (5/5/21)
 * (happy, rapidtide) Now properly handle negative mklthreads specification.
 * (Dockerfile) Update package versions.
