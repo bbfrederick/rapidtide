@@ -30,7 +30,10 @@ import subprocess
 
 def main():
     # get the command line parameters
-    execdir = sys.path[0]
+    if os.getenv("IS_DOCKER_8395080871") is not None:
+        execdir = "/usr/local/miniconda/bin"
+    else:
+        execdir = sys.path[0]
     validcommands = [
         "aligntcs",
         "applydlfilter",
@@ -82,7 +85,7 @@ def main():
         elif thecommand[0] == "xyzzy":
             subprocess.call("/bin/bash")
         else:
-            print(thecommand[0], "is a rapidtide script, but is not installed")
+            print(thecommand[0], "is a rapidtide script, but is not installed in ", execdir)
     else:
         print(thecommand[0], "is not a script in the rapidtide package")
 

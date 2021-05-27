@@ -71,7 +71,6 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-4.7.12.1-Linux-x86
     bash Miniconda3-4.7.12.1-Linux-x86_64.sh -b -p /usr/local/miniconda && \
     rm Miniconda3-4.7.12.1-Linux-x86_64.sh
 
-
 # Set CPATH for packages relying on compiled libs (e.g. indexed_gzip)
 ENV PATH="/usr/local/miniconda/bin:$PATH" \
     CPATH="/usr/local/miniconda/include/:$CPATH" \
@@ -83,6 +82,7 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
 # Installing precomputed python packages
 RUN df -h
 RUN conda config --add channels conda-forge
+RUN conda update -n base -c defaults conda
 RUN df -h
 RUN conda clean --all
 RUN df -h
@@ -127,7 +127,6 @@ RUN cd /src/rapidtide && \
     python setup.py install && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
 
-
 ENV IS_DOCKER_8395080871=1
 
 RUN ldconfig
@@ -153,8 +152,8 @@ ARG VCS_REF
 
 LABEL org.label-schema.build-date="$BUILD_DATE" \
       org.label-schema.name="rapidtide" \
+      org.label-schema.vcs-ref="$VCS_REF" \
       org.label-schema.description="rapidtide - a set of tools for delay processing" \
       org.label-schema.url="http://nirs-fmri.net" \
-      org.label-schema.vcs-ref="$VCS_REF" \
       org.label-schema.vcs-url="https://github.com/bbfrederick/rapidtide" \
-      org.label-schema.version="$VERSION"
+      org.label-schema.version=$VERSION
