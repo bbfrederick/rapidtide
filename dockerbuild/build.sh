@@ -4,7 +4,7 @@
 git pull
 
 # bump version
-VERSION=`cat VERSION | sed 's/+/ /g' | awk '{print $1}'`-dev
+VERSION=`cat VERSION | sed 's/+/ /g' | sed 's/v//g' | awk '{print $1}'`
 BUILD_DATE=`cat DATE`
 echo "version: ${VERSION}"
 echo "date:    ${BUILD_DATE}"
