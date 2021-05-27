@@ -164,7 +164,6 @@ def test_delayestimation(display=False, debug=False):
         detrendorder=detrendorder,
         windowfunc=windowfunc,
         corrweighting=corrweighting,
-        hpfreq=None,
         debug=True,
     )
     theCorrelator.setreftc(np.zeros((oversampfac * numpoints), dtype=np.float64))
