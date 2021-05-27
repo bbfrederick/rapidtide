@@ -1,5 +1,8 @@
 # History of changes
 
+## Version 1.9.5 (5/27/21)
+* (Docker) Fixed some problems with task dispatch and container versioning.
+
 ## Version 1.9.4 (3/17/21)
 * (package) T. Salo made a number of changes to allow pypi deployment.
 * (package) Fixed a problem in setup.py that causes installation to fail.
