@@ -3,6 +3,7 @@
 ## Version 2.0alpha27 (5/27/21)
 * (rapidtide, showxcorrx, showarbcorr, showstxcorr, ccorrica, aligntcs, filttc) Changed argument handling for arbitrary filters.  Specify pass freqs with --filterfreqs, stop freqs with --filterstopfreqs.
 * (happy) Code cleanup, improved tensorflow selection.
+* (Docker) Improvements to version specification, entry point.
 * (testing) Increased coverage.
 * (packaging) Multiple corrections in support files.
 

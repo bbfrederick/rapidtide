@@ -158,10 +158,10 @@ ARG VERSION
 ARG BUILD_DATE
 ARG VCS_REF
 
-LABEL org.label-schema.build-date="$BUILD_DATE" \
+LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="rapidtide" \
       org.label-schema.description="rapidtide - a set of tools for delay processing" \
       org.label-schema.url="http://nirs-fmri.net" \
-      org.label-schema.vcs-ref="$VCS_REF" \
+      org.label-schema.vcs-ref=$VCS_REF \
       org.label-schema.vcs-url="https://github.com/bbfrederick/rapidtide" \
-      org.label-schema.version="$VERSION"
+      org.label-schema.version=$VERSION

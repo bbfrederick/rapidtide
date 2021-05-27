@@ -23,7 +23,10 @@ import sys
 
 def main():
     # get the command line parameters
-    execdir = sys.path[0]
+    if os.getenv("IS_DOCKER_8395080871") is not None:
+        execdir = "/usr/local/miniconda/bin"
+    else:
+        execdir = sys.path[0]
     validcommands = [
         "aligntcs",
         "applydlfilter",

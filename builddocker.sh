@@ -12,7 +12,7 @@ IMAGE=rapidtide_dev
 git pull
 
 # bump version
-version=`cat VERSION | sed 's/+/ /g' | awk '{print $1}'`
+version=`cat VERSION | sed 's/+/ /g' | sed 's/v//g' | awk '{print $1}'`
 echo "version: $version"
 
 # run build
@@ -22,11 +22,6 @@ docker build . -t $IMAGE \
     --build-arg VCS_REF=`git rev-parse HEAD`
 
 # tag it
-#git add -A
-#git commit -m "version $version"
-#git tag -a "$version" -m "version $version"
-#git push
-#git push --tags
 docker tag $IMAGE:latest $USERNAME/$IMAGE:latest
 docker tag $IMAGE:latest $USERNAME/$IMAGE:$version
 
