@@ -12,6 +12,7 @@ rapidtide/experimental
 # any generated test data
 rapidtide/data/examples/dst/*
 rapidtide/tests/tmp/[abcdefghijklmnopqrstuvwxyz]*
+rapidtide/tests/*.jpg
 
 # some local test data
 rapidtide/data/examples/src/*.jpg
