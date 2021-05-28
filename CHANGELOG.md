@@ -1,5 +1,8 @@
 # History of changes
 
+## Version 2.0alpha28 (5/27/21)
+* (testing) Synced function calls with some internal changes to Correlator to fix the tests crashing.
+
 ## Version 2.0alpha27 (5/27/21)
 * (rapidtide, showxcorrx, showarbcorr, showstxcorr, ccorrica, aligntcs, filttc) Changed argument handling for arbitrary filters.  Specify pass freqs with --filterfreqs, stop freqs with --filterstopfreqs.
 * (happy) Code cleanup, improved tensorflow selection.

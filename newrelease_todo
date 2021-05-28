@@ -1,10 +1,9 @@
 + Fix the version numbers in files:
 
-    vi Dockerfile newrelease_todo
+    vi newrelease_todo
 
-    Dockerfile
-        search for 'org.label-schema.schema-version='
-
+    newrelease_todo
+        fix tag numbers in this file
 
 + Edit CHANGELOG.md (use git log to get the history)
 
@@ -12,8 +11,8 @@
 
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging) and push to github:
 
-    git tag -a v2.0alpha27 -m "v2.0alpha27"
-    git push origin v2.0alpha27
+    git tag -a v2.0alpha28 -m "v2.0alpha28"
+    git push origin v2.0alpha28
 
 
 + Edit the release notes on github
