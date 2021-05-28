@@ -242,7 +242,7 @@ sphinx_gallery_conf = {
     # Modules for which function level galleries are created.  In
     # this case sphinx_gallery and numpy in a tuple of strings.
     "doc_module": ("rapidtide"),
-    "ignore_pattern": ["utils/"],
+    "ignore_patterns": ["utils/"],
     "reference_url": {
         # The module you locally document uses None
         "rapidtide": None,
