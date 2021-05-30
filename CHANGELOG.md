@@ -3,6 +3,9 @@
 ## Version 2.0alpha28 (5/27/21)
 * (testing) Synced function calls with some internal changes to Correlator to fix the tests crashing.
 
+## Version 1.9.5 (5/27/21)
+* (Docker) Fixed some problems with task dispatch and container versioning.
+
 ## Version 2.0alpha27 (5/27/21)
 * (rapidtide, showxcorrx, showarbcorr, showstxcorr, ccorrica, aligntcs, filttc) Changed argument handling for arbitrary filters.  Specify pass freqs with --filterfreqs, stop freqs with --filterstopfreqs.
 * (happy) Code cleanup, improved tensorflow selection.
@@ -26,7 +29,6 @@
 * (stats) Fixed a bug in getfracvals when you try to find the maximum value.
 * (package) Began aggressive implementation of smoke tests (excercise as many code paths as possible to find crashers in neglected code - this is how the above bugs were found).
 * (package) More logging refinement.
-
 
 ## Version 2.0alpha24 (4/14/21)
 * (rapidtide) Added the '--negativegradient' option in response to https://github.com/bbfrederick/rapidtide/issues/67
@@ -69,6 +71,12 @@
 
 ## Version 2.0alpha18 (3/17/21)
 * (package) Trimmed the size of the installation bundle (really, truly, correctly this time).
+
+## Version 1.9.4 (3/17/21)
+* (package) T. Salo made a number of changes to allow pypi deployment.
+* (package) Fixed a problem in setup.py that causes installation to fail.
+* (rapidtide2x) Backported a critical fix from the dev version so that the refinement threshold is properly set with null correlations (the result is that the refine mask rejects fewer voxels, and gives a better regressor estimate).
+
 
 ## Version 2.0alpha17 (3/17/21)
 * (package) Trimmed the size of the installation bundle (maybe even correctly this time).
