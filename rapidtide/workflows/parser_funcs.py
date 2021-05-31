@@ -104,6 +104,9 @@ def is_range(parser, arg):
 
 DEFAULT_FILTER_ORDER = 6
 DEFAULT_PAD_SECONDS = 30.0
+DEFAULT_PERMUTATIONMETHOD = "shuffle"
+DEFAULT_FILTERBAND = "lfo"
+DEFAULT_FILTERTYPE = "trapezoidal"
 
 
 def addreqinputniftifile(parser, varname, addedtext=""):
@@ -182,11 +185,10 @@ def addfilteropts(parser, filtertarget, details=False):
         type=str,
         choices=["None", "vlf", "lfo", "resp", "cardiac", "lfo_legacy"],
         help=(
-            "Filter "
-            + filtertarget
-            + ' to specific band. Use "None" to disable filtering.  Default is "lfo".'
+            f'Filter {filtertarget} to specific band. Use "None" to disable filtering.  '
+            f'Default is "{DEFAULT_FILTERBAND}".'
         ),
-        default="lfo",
+        default=DEFAULT_FILTERBAND,
     )
     filt_opts.add_argument(
         "--filterfreqs",
@@ -225,12 +227,12 @@ def addfilteropts(parser, filtertarget, details=False):
             type=str,
             choices=["trapezoidal", "brickwall", "butterworth"],
             help=(
-                "Filter "
-                + filtertarget
-                + " using a trapezoidal FFT filter (default), brickwall, or "
-                "butterworth bandpass."
+                f"Filter {filtertarget} "
+                "using a trapezoidal FFT, brickwall FFT, or "
+                "butterworth bandpass filter. "
+                f'Default is "{DEFAULT_FILTERTYPE}".'
             ),
-            default="trapezoidal",
+            default=DEFAULT_FILTERTYPE,
         )
         filt_opts.add_argument(
             "--butterorder",
@@ -462,8 +464,11 @@ def addpermutationopts(parser, numreps=10000):
         action="store",
         type=str,
         choices=["shuffle", "phaserandom"],
-        help=("Permutation method for significance testing.  " "Default is shuffle."),
-        default="shuffle",
+        help=(
+            "Permutation method for significance testing. "
+            f'Default is "{DEFAULT_PERMUTATIONMETHOD}".'
+        ),
+        default=DEFAULT_PERMUTATIONMETHOD,
     )
     parser.add_argument(
         "--numnull",

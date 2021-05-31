@@ -51,7 +51,7 @@ from mytextfile.txt, in that order.  Not specifying ":colspec" returns all
 the columns in the file, in order.
 
 If the program in question requires the actual sample rate, this can be specified
-using the "--samplerate" or "--sampletime" flags.  Otherwise 1.0Hz is assumed.
+using the ``--samplerate`` or ``--sampletime`` flags.  Otherwise 1.0Hz is assumed.
 
 A BIDS continuous file with one or more columns.
 """"""""""""""""""""""""""""""""""""""""""""""""
@@ -67,7 +67,7 @@ Not specifying ":colspec" returns all the columns in the file, in order.
 
 Because BIDS continuous files require sample rate and start time to be specified
 in the sidecar file, these quantities will now already be set.  Using the
-"--samplerate", "--sampletime" or "--starttime" flags will override any header
+``--samplerate``, ``--sampletime`` or ``--starttime`` flags will override any header
 values, if specified.
 
 Visualizing files
@@ -78,7 +78,7 @@ displaying 3 and 4D NIFTI files.
 
 While there may be nice, general graphing tools for BIDS timeseries files, I
 wrote "showtc" many years ago, a matplotlib based file viewer with lots of
-nice tweaks to make pretty and informative graphs of various rapidtide input 
+nice tweaks to make pretty and informative graphs of various rapidtide input
 and output files.  It's part of rapidtide, and pretty easy to learn.  Just
 type "showtc" with no arguments to get the options.
 
@@ -132,7 +132,7 @@ At a minimum, rapidtide needs a data file to work on (space by time), which is g
 
 The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a time by voxel array for simplicity.
 
-The file you input here should be the result of any preprocessing you intend to do.  The expectation is that rapidtide will be run as the last preprocessing step before resting state or task based analysis.  So any slice time correction, motion correction, spike removal, etc. should already have been done.  If you use FSL, this means that if you've run preprocessing, you would use the filtered_func_data.nii.gz file as input.  Temporal and spatial filtering are the two (partial) exceptions here.  Generally rapidtide is most useful for looking at low frequency oscillations, so when you run it, you usually use the "--filterband lfo" option or some other to limit the analysis to the detection and removal of low frequency systemic physiological oscillations.  So rapidtide will generally apply it's own temporal filtering on top of whatever you do in preprocessing.  Also, you have the option of doing spatial smoothing in rapidtide to boost the SNR of the analysis; the hemodynamic signals rapidtide looks for are often very smooth, so you rather than smooth your functional data excessively, you can do it within rapidtide so that only the hemodynamic data is smoothed at that level.
+The file you input here should be the result of any preprocessing you intend to do.  The expectation is that rapidtide will be run as the last preprocessing step before resting state or task based analysis.  So any slice time correction, motion correction, spike removal, etc. should already have been done.  If you use FSL, this means that if you've run preprocessing, you would use the filtered_func_data.nii.gz file as input.  Temporal and spatial filtering are the two (partial) exceptions here.  Generally rapidtide is most useful for looking at low frequency oscillations, so when you run it, you usually use the ``--filterband lfo`` option or some other to limit the analysis to the detection and removal of low frequency systemic physiological oscillations.  So rapidtide will generally apply it's own temporal filtering on top of whatever you do in preprocessing.  Also, you have the option of doing spatial smoothing in rapidtide to boost the SNR of the analysis; the hemodynamic signals rapidtide looks for are often very smooth, so you rather than smooth your functional data excessively, you can do it within rapidtide so that only the hemodynamic data is smoothed at that level.
 
 Outputs:
 ^^^^^^^^
@@ -435,7 +435,7 @@ For compatibility with old workflows, rapidtide can be called using legacy synta
 
 These options are somewhat self-explanatory.  I will be expanding this section of the manual going forward, but I want to put something here to get this out here.
 
-When using the legacy interface, file names will be output using the old, non-BIDS names and formats.  rapidtide can be forced to use the old style outputs with the "--legacyoutput" flag.
+When using the legacy interface, file names will be output using the old, non-BIDS names and formats.  rapidtide can be forced to use the old style outputs with the ``--legacyoutput`` flag.
 
 Equivalence between BIDS and legacy outputs:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -506,7 +506,7 @@ The base command you'd use would be:
 
 		rapidtide inputfmrifile outputname --frequencyband lfo --passes 3
 
-This will do a fairly simple analysis.  First, the -L option means that rapidtide will prefilter the data to the LFO band (0.009-0.15Hz). It will then construct a regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor is specified), and then use crosscorrelation to determine the time delay in each voxel.  The --refinepasses=3 option directs rapidtide to to perform the delay analysis 3 times, each time generating a new estimate of the global noise signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The --refineoffset flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.  After the three passes are complete, it will then use a GLM filter to remove a lagged copy of the final mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also a number of maps output with the prefix `"outputname_"` of delay, correlation strength and so on.
+This will do a fairly simple analysis.  First, the -L option means that rapidtide will prefilter the data to the LFO band (0.009-0.15Hz). It will then construct a regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor is specified), and then use crosscorrelation to determine the time delay in each voxel.  The ``--passes=3`` option directs rapidtide to to perform the delay analysis 3 times, each time generating a new estimate of the global noise signal by aligning all of the timecourses in the data to bring the global signal in phase prior to averaging.  The ``--refineoffset`` flag recenters the peak of the delay distribution on zero during the refinement process, which should make datasets easier to compare.  After the three passes are complete, it will then use a GLM filter to remove a lagged copy of the final mean regressor that from the data - this denoised data will be in the file "outputname_filtereddata.nii.gz".  There will also a number of maps output with the prefix `"outputname_"` of delay, correlation strength and so on.
 
 Mapping long time delays in response to a gas challenge experiment:
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -519,15 +519,15 @@ For this type of analysis, a good place to start is the following:
 
 		rapidtide inputfmrifile outputname --numnull 0 --searchrange -10 140 --filterfreqs 0.0 0.1 --ampthresh 0.2 --noglm --nofitfilt
 
-The first option (--numnull 0), shuts off the calculation of the null correlation distribution.  This is used to determine the significance threshold, but the method currently implemented in rapidtide is a bit simplistic - it assumes that all the time points in the data are exchangable.  This is certainly true for resting state data (see above), but it is very much NOT true for block paradigm gas challenges.  To properly analyze those, I need to consider what time points are 'equivalent', and up to now, I don't, so setting the number of iterations in the Monte Carlo analysis to zero omits this step.
+The first option (``--numnull 0``), shuts off the calculation of the null correlation distribution.  This is used to determine the significance threshold, but the method currently implemented in rapidtide is a bit simplistic - it assumes that all the time points in the data are exchangable.  This is certainly true for resting state data (see above), but it is very much NOT true for block paradigm gas challenges.  To properly analyze those, I need to consider what time points are 'equivalent', and up to now, I don't, so setting the number of iterations in the Monte Carlo analysis to zero omits this step.
 
-The second option (--searchrange -10 140) is fairly obvious - this extends the detectable delay range out to 140 seconds.  Note that this is somewhat larger than the maximum delays we frequently see, but to find the correlation peak with maximum precision, you need sufficient additional delay values so that the correlation can come to a peak and then come down enough that you can properly fit it.
+The second option (``--searchrange -10 140``) is fairly obvious - this extends the detectable delay range out to 140 seconds.  Note that this is somewhat larger than the maximum delays we frequently see, but to find the correlation peak with maximum precision, you need sufficient additional delay values so that the correlation can come to a peak and then come down enough that you can properly fit it.
 
-Setting --filterfreqs 0.0 0.1 is VERY important.  By default, rapidtide assumes you are looking at endogenous low frequency oscillations, which typically between 0.09 and 0.15 Hz.  However, gas challenge paradigms are usually MUCH lower frequency (90 seconds off, 90 seconds on corresponds to 1/180s = ~0.006Hz).  So if you use the default frequency settings, you will completely filter out your stimulus, and presumably, your response.  If you are processing one of these experiments and get no results whatsoever, this is almost certainly the problem.
+Setting ``--filterfreqs 0.0 0.1`` is VERY important.  By default, rapidtide assumes you are looking at endogenous low frequency oscillations, which typically between 0.09 and 0.15 Hz.  However, gas challenge paradigms are usually MUCH lower frequency (90 seconds off, 90 seconds on corresponds to 1/180s = ~0.006Hz).  So if you use the default frequency settings, you will completely filter out your stimulus, and presumably, your response.  If you are processing one of these experiments and get no results whatsoever, this is almost certainly the problem.
 
-The --noglm option disables data filtering.  If you are using rapidtide to estimate and remove low frequency noise from resting state or task fMRI data, the last step is to use a glm filter to remove this circulatory signal, leaving "pure" neuronal signal, which you'll use in further analyses.  That's not relevant here - the signal you'd be removing is the one you care about. So this option skips that step to save time and disk space.
+The ``--noglm`` option disables data filtering.  If you are using rapidtide to estimate and remove low frequency noise from resting state or task fMRI data, the last step is to use a glm filter to remove this circulatory signal, leaving "pure" neuronal signal, which you'll use in further analyses.  That's not relevant here - the signal you'd be removing is the one you care about. So this option skips that step to save time and disk space.
 
---nofitfilt skips a step after peak estimation.  Estimating the delay and correlation amplitude in each voxel is a two step process. First you make a quick estimate (where is the maximum point of the correlation function, and what is its amplitude?), then you refine it by fitting a Gaussian function to the peak to improve the estimate.  If this step fails, which it can if the peak is too close to the end of the lag range, or strangely shaped, the default behavior is to mark the point as bad and zero out the parameters for the voxel.  The nofitfilt option means that if the fit fails, output the initial estimates rather than all zeros.   This means that you get some information, even if it's not fully refined.  In my experience it does tend to make the maps for the gas challenge experiments a lot cleaner to use this option since the correlation function is pretty well behaved.
+``--nofitfilt`` skips a step after peak estimation.  Estimating the delay and correlation amplitude in each voxel is a two step process. First you make a quick estimate (where is the maximum point of the correlation function, and what is its amplitude?), then you refine it by fitting a Gaussian function to the peak to improve the estimate.  If this step fails, which it can if the peak is too close to the end of the lag range, or strangely shaped, the default behavior is to mark the point as bad and zero out the parameters for the voxel.  The nofitfilt option means that if the fit fails, output the initial estimates rather than all zeros.   This means that you get some information, even if it's not fully refined.  In my experience it does tend to make the maps for the gas challenge experiments a lot cleaner to use this option since the correlation function is pretty well behaved.
 
 
 Denoising NIRS data (NEW)
