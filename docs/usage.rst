@@ -1,5 +1,3 @@
-Usage
-=====
 For more information about how the rapidtide library can be used, please
 see the API page. Common rapidtide workflows can also be called from the
 command line.

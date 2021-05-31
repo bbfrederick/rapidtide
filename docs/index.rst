@@ -56,6 +56,12 @@ Contents
    :caption: Installation:
 
    installation.rst
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Usage:
+
    usage.rst
    candidate_usage.md
    api.rst
@@ -67,7 +73,6 @@ Contents
    :maxdepth: 2
    :caption: Digging deeper:
 
-   practicalities.rst
    theoryofoperation.rst
 
 
