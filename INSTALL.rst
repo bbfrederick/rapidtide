@@ -144,7 +144,6 @@ package directory and do a git pull first:
 Docker installation
 -------------------
 As of 1.9.0, there is now a Docker container with a full rapidtide installation.  To use this,
-
 first make sure you have docker installed and properly configured, then run the following:
 ::
 
@@ -165,10 +164,10 @@ If you like to live on the edge, just use:
 This will use the most recent version on dockerhub.
 
 Now that the file is downloaded, you can run and rapidtide command in the Docker container.  For example, to run a simple
-rapidtide2x analysis, you would use the following command (you can do this all in one step - it will just integrate the
+rapidtide analysis, you would use the following command (you can do this all in one step - it will just integrate the
 first pull into the run time if the version you request hasn't already been downloaded).
 
-Docker runs completely in it's own selfcontained environment.  If you want to be able to interact with disks outside of
+Docker runs completely in it's own self-contained environment.  If you want to be able to interact with disks outside of
 container, you map the volume to a mount point in the container using the --volume=EXTERNALDIR:MOUNTPOINT[,ANOTHERDIR:ANOTHERMOUNTPOINT]
 option to docker.
 ::
@@ -177,10 +176,12 @@ option to docker.
         --mount type=bind,source=INPUTDIRECTORY,destination=/data_in \
         --mount type=bind,source=OUTPUTDIRECTORY,destination=/data_out \
         fredericklab/rapidtide:VERSIONNUMBER \
-            rapidtide2x \
+            rapidtide \
                 /data_in/YOURNIFTIFILE.nii.gz \
                 /data_out/outputname \
-                -L -r -15,15 --passes=3
+                --filterband lfo \
+                --searchrange -15 15 \
+                --passes 3
 
 NOTE: If you want to run this on the test data, like the examples above for the bare metal installation, the example data is
 in the Docker container in the /src/rapidtide/rapidtide/data/examples/src directory.  So to run the first example, you could just do:
@@ -189,13 +190,15 @@ in the Docker container in the /src/rapidtide/rapidtide/data/examples/src direct
     docker run \
         --mount type=bind,source=OUTPUTDIRECTORY,destination=/data_out \
         fredericklab/rapidtide:latest \
-            rapidtide2x \
+            rapidtide \
                 /src/rapidtide/rapidtide/data/examples/src/fmri.nii.gz \
                 /data_out/dgsr \
-                -L -r -15,15 --passes=3
+                --filterband lfo \
+                --searchrange -15 15 \
+                --passes 3
 
 
-You can replace the rapidtide2x blah blah blah command with any program in the package - after the fredericklab/rapidtide:latest,
+You can replace the ``rapidtide blah blah blah`` command with any program in the package - after the fredericklab/rapidtide:latest,
 just specify the command and arguments as you usually would.  If you're running a program that displays anything,
 you'll have to add a few extra arguments to the docker call.  Docker is a little weird about X forwarding - the easiest thing to
 do is find the IP address of the machine you're running on (lets call it MYIPADDRESS), and do the following:
@@ -251,10 +254,12 @@ For example, to run the simple rapidtide2x analysis above, type the following:
         --cleanenv \
         -B INPUTDIRECTORY:/data_in,OUTPUTDIRECTORY:/data_out \
         rapidtide-VERSIONNUMBER.simg \
-            rapidtide2x \
+            rapidtide \
                 /data_in/YOURNIFTIFILE.nii.gz \
                 /data_out/outputname \
-                -L -r -15,15 --passes=3
+                --filterband lfo \
+                --searchrange -15 15 \
+                --passes 3
 
 
 To run a GUI application, you need to disable x security on your host (see comment about this above):
