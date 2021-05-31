@@ -69,7 +69,7 @@ boring mistakes, why not make new, interesting mistakes? Explore your
 own, unique chunk of wrongspace…
 
 Happy
-=====
+-----
 
 More recently, inspired by Henning Voss\' paper on hypersampling of
 cardiac signals in fMRI, we developed a method to extract and clean

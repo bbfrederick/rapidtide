@@ -199,6 +199,7 @@ Usage:
    Debugging options : @skip
       skip debugging options
 
+
 Legacy interface:
 ^^^^^^^^^^^^^^^^^
 For compatibility with old workflows, rapidtide can be called using legacy syntax by using "rapidtide2x_legacy".  Although the underlying code is the same, not all options are settable from the legacy interface.  This interface is deprecated and will be removed in a future version of rapidtide, so please convert existing workflows.
@@ -809,6 +810,106 @@ Usage:
    Debugging options : @skip
       skip debugging options
 
+
+
+glmfilt
+-------
+
+Description:
+^^^^^^^^^^^^
+Uses a GLM filter to remove timecourses (1D text files or 4D NIFTI files) from 4D NIFTI files.
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^
+
+Usage:
+^^^^^^
+
+.. argparse::
+   :ref: rapidtide.workflows.glmfilt._get_parser
+   :prog: glmfilt
+   :func: _get_parser
+
+   Debugging options : @skip
+      skip debugging options
+
+
+
+temporaldecomp
+--------------
+
+Description:
+^^^^^^^^^^^^
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^
+
+Usage:
+^^^^^^
+
+.. argparse::
+   :ref: rapidtide.workflows.temporaldecomp._get_parser
+   :prog: temporaldecomp
+   :func: _get_parser
+
+   Debugging options : @skip
+      skip debugging options
+
+
+
+spatialdecomp
+-------------
+
+Description:
+^^^^^^^^^^^^
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^
+
+Usage:
+^^^^^^
+
+.. argparse::
+   :ref: rapidtide.workflows.spatialdecomp._get_parser
+   :prog: spatialdecomp
+   :func: _get_parser
+
+   Debugging options : @skip
+      skip debugging options
+
+
+
+polyfitim
+---------
+
+Description:
+^^^^^^^^^^^^
+
+Inputs:
+^^^^^^^
+
+Outputs:
+^^^^^^^
+
+Usage:
+^^^^^^
+
+.. argparse::
+   :ref: rapidtide.workflows.polyfitim._get_parser
+   :prog: polyfitim
+   :func: _get_parser
+
+   Debugging options : @skip
+      skip debugging options
 
 
 histnifti
