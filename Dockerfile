@@ -136,15 +136,6 @@ ENTRYPOINT ["/usr/local/miniconda/bin/rapidtide_dispatcher"]
 # set a non-root user
 USER rapidtide
 
-#ENV VERSION=`cat VERSION | sed 's/+/ /g' | awk '{print $1}'`
-#ENV BUILD_DATE=`cat DATE`
-
-#LABEL org.label-schema.name="rapidtide" \
-#      org.label-schema.description="rapidtide - a set of tools for delay processing" \
-#      org.label-schema.url="http://nirs-fmri.net" \
-#      org.label-schema.vcs-url="https://github.com/bbfrederick/rapidtide" \
-#      org.label-schema.version="1.9.4"
-
 # this is nominally the correct way to do this, but it doesn't work
 ARG VERSION
 ARG BUILD_DATE
