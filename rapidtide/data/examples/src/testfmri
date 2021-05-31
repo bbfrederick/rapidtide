@@ -12,10 +12,9 @@ rapidtide \
 	--spatialfilt 2 \
         --nprocs -1 \
         --passes 3 \
-        --filterfreqs 0.01 0.15 \
-        --filterstopfreqs 0.01 0.15 \
+        --filterband lfo \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_4freq 
+        ../dst/sub-RAPIDTIDETEST
 
 #rapidtide \
 #        sub-RAPIDTIDETEST.nii.gz \
