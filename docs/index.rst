@@ -39,10 +39,18 @@ Contents
 ========
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Introduction:
 
    introduction.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: History:
    whats_new.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Installation:
    installation.rst
    usage.rst
    candidate_usage.md
