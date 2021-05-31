@@ -12,7 +12,6 @@ band (rapditide2) and now in the cardiac band (happy).
 Full documentation is at: http://rapidtide.readthedocs.io/en/dev/
 
 |PyPi Latest Version| |PyPi - Python Versions| |License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by NIH|
-NIH|
 
 Why do I want to know about time lagged correlations?
 -----------------------------------------------------
