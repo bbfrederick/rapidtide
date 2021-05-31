@@ -43,14 +43,18 @@ Contents
 
    introduction.rst
 
+
 .. toctree::
    :maxdepth: 2
    :caption: History:
+
    whats_new.rst
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Installation:
+
    installation.rst
    usage.rst
    candidate_usage.md
@@ -58,12 +62,14 @@ Contents
    auto_examples/index
    contributing.rst
 
+
 .. toctree::
-   :hidden:
-   :name: hiddentoc
+   :maxdepth: 2
+   :caption: Digging deeper:
 
    practicalities.rst
    theoryofoperation.rst
+
 
 Indices and tables
 ==================
