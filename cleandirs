@@ -1,0 +1,3 @@
+#!/bin/bash
+
+rm -r build dist rapidtide.egg-info __pycache__ */__pycache__ */*/__pycache__
