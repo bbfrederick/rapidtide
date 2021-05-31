@@ -151,7 +151,7 @@ first make sure you have docker installed and properly configured, then run the 
 
 
 This will download the docker container from dockerhub.
-It's around 2GB, so it may take some time, but it caches the file locally, so you won't have to do this again
+It's around 4GB, so it may take some time, but it caches the file locally, so you won't have to do this again
 unless the container updates.  To use a particular version, replace VERSIONNUMBER with the version of the
 container you want.
 
