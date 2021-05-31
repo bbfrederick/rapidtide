@@ -42,14 +42,20 @@ Contents
    :caption: Introduction:
 
    introduction.rst
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Usage:
+
    installation.rst
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Usage:
 
    usage.rst
-   candidate_usage.md
    api.rst
    auto_examples/index
    contributing.rst
