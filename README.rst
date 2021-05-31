@@ -1,20 +1,28 @@
-Rapidtide
-=========
+The rapidtide package
+=====================
 
-What is this package?
----------------------
-
-Rapidtide is a suite of Python programs used to perform rapid time delay
-analysis on functional imaging data to find time lagged correlations
-between the voxelwise time series and other time series, both in the LFO
-band (rapditide2) and now in the cardiac band (happy).
+Rapidtide is a suite of Python programs used to model, characterize, 
+visualize, and remove time varying, physiological blood signals from fMRI and fNIRS 
+datasets.  The primary workhorses of the package are the rapidtide program, 
+which characterizes bulk blood flow, and happy, which focusses on the cardiac
+band.
 
 Full documentation is at: http://rapidtide.readthedocs.io/en/dev/
 
 |PyPi Latest Version| |PyPi - Python Versions| |License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by NIH|
 
+The rapidtide program
+---------------------
+
+Rapidtide is also the name of the first program in the package, which is
+used to perform rapid time delay
+analysis on functional imaging data to find time lagged correlations
+between the voxelwise time series and other time series, primarily in the LFO
+band.
+
+
 Why do I want to know about time lagged correlations?
------------------------------------------------------
+`````````````````````````````````````````````````````
 
 This comes out of work by our group (The Opto-Magnetic group at McLean
 Hospital - http://www.nirs-fmri.net) looking at the correlations between
@@ -48,7 +56,7 @@ have any information about\" - maybe EtCO2 variation, or sympathetic
 nervous system activity - so not really random.
 
 Correlation analysis is easy - why use this package?
-----------------------------------------------------
+````````````````````````````````````````````````````
 
 The simple answer is \"correlation analysis is easy, but using a
 prewritten package that handles file I/O, filtering, resampling,
@@ -74,7 +82,7 @@ this allows you to get cardiac waveforms during scans even when either
 of poor quality, which happens more than you might think.
 
 What does \"happy\" have to do with any of this?
-------------------------------------------------
+````````````````````````````````````````````````
 
 As to why happy is part of rapidtide, that\'s partially for practical reasons (the
 libraries in rapidtide have an awful lot of code that is reused in happy), and
@@ -82,8 +90,9 @@ partially thematically - rapidtide has evolved from a \"let\'s look at low
 frequency signals in fMRI data\" package to a \"let\'s look at everything in
 fMRI data EXCEPT neuronal activation\", so happy fits right in.
 
-Why are you releasing your code?
-================================
+
+Why are you releasing this package?
+===================================
 
 For a number of reasons.
 
@@ -171,17 +180,17 @@ Ok, I\'m sold. What\'s in here?
    signal to construct a cardiac pulsation map over a single
    cycle of the cardiac waveform, a la Voss.
 
--  **showxcorr** - Like rapidtide, but for single time courses. Takes
+-  **showxcorrx** - Like rapidtide, but for single time courses. Takes
    two text files as input, calculates and displays the time lagged
    cross correlation between them, fits the maximum time lag, and
    estimates the significance of the correlation. It has a range of
    filtering, windowing, and correlation options.
 
--  **showxcorrx** - The bleeding edge version of showxcorr.  This has a lot
-   of new options and defaults; it\'s not really drop in compatible, so I\'m
-   keeping it separate at the moment to avoid breaking existing workflows.
-   With the 2.0 release, this will become showxcorr, and the current showxcorr
-   will become showxcorr_legacy.
+-  **rapidtide2x_legacy**, **happy_legacy**, **showxcorr_legacy** - The
+   older versions of the similarly named programs.  These use the old calling
+   conventions, for compatibility with older workflows.  These will go away
+   eventually, and they don't really get updates or bugfixes, so if you're
+   using them, change to the new ones, and if you're not using them, don't.
 
 -  **rapidtide2std** - This is a utility for registering rapidtide
    output maps to standard coordinates. It\'s usually much faster to run
@@ -216,29 +225,15 @@ Ok, I\'m sold. What\'s in here?
    out the root name and pull in all of the other associated data. Works
    in native or standard space.
 
--  **correlate.py, simfuncfit.py, dlfilter.py, filter.py, fit.py, io.py,
-   miscmath.py, multiproc.py, refine.py, resample.py, stats.py,
-   util.py, helper_classes.py** - These are the libraries of the various helper routines
-   that are used by pretty much every program in here for correlation,
-   resampling, filtering, normalization, significance estimation, file
-   I/O, etc.
-
--  **OrthoImageItem.py** - This is a class that implements the
-   orthographic projection module that is used to display all of the
-   maps in tidepool. It uses pyqtgraph to do all the heavy lifting. None
-   of the built-ins in pyqtgraph did exactly what I wanted in terms of
-   allowing 3D selection, overlays and the like, so I cobbled this
-   together. It may be generally useful to anybody wanting to display
-   functional data.
 
 Financial Support
------------------
+=================
 
 This code base is being developed and supported by a grant from the US
 NIH (`1R01 NS097512 <http://grantome.com/grant/NIH/R01-NS097512-02>`__).
 
 Additional packages used
-------------------------
+========================
 
 Rapidtide would not be possible without many additional open source packages.
 These include:
