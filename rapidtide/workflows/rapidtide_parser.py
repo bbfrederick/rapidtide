@@ -271,7 +271,7 @@ def _get_parser():
             "Window function to use prior to correlation. "
             'Options are "hamming", "hann", '
             '"blackmanharris", and "None". '
-            f"Default is {DEFAULT_WINDOW_TYPE}."
+            f'Default is "{DEFAULT_WINDOW_TYPE}".'
         ),
         default=DEFAULT_WINDOW_TYPE,
     )
@@ -290,9 +290,7 @@ def _get_parser():
         action="store",
         type=int,
         metavar="ORDER",
-        help=(
-            "Set order of trend removal (0 to disable), " f"default is {DEFAULT_DETREND_ORDER}."
-        ),
+        help=(f"Set order of trend removal (0 to disable). Default is {DEFAULT_DETREND_ORDER}."),
         default=DEFAULT_DETREND_ORDER,
     )
     preproc.add_argument(
@@ -329,7 +327,7 @@ def _get_parser():
         help=(
             "Select whether to use timecourse mean or variance to "
             "mask voxels prior to generating global mean. "
-            f"Default is {DEFAULT_GLOBALMASK_METHOD}."
+            f'Default is "{DEFAULT_GLOBALMASK_METHOD}".'
         ),
         default=DEFAULT_GLOBALMASK_METHOD,
     )
@@ -584,7 +582,7 @@ def _get_parser():
         choices=["correlation", "mutualinfo", "hybrid"],
         help=(
             "Similarity metric for finding delay values.  "
-            'Choices are "correlation" (default), "mutualinfo", and "hybrid". '
+            'Choices are "correlation", "mutualinfo", and "hybrid". '
             f"Default is {DEFAULT_SIMILARITYMETRIC}."
         ),
         default=DEFAULT_SIMILARITYMETRIC,
@@ -804,7 +802,7 @@ def _get_parser():
         type=float,
         help=(
             "For refinement, exclude voxels with widths "
-            f"greater than SIGMA seconds (default is {DEFAULT_SIGMATHRESH} seconds)."
+            f"greater than SIGMA seconds. Default is {DEFAULT_SIGMATHRESH} seconds."
         ),
         default=DEFAULT_SIGMATHRESH,
     )
