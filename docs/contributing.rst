@@ -54,7 +54,9 @@ have been tested fairly extensively to get rid of the stupidest bugs.  I find
 new bugs all the time, but most of the showstoppers seem to be gone.  The
 second result is that the coding style is all over the place.  When I started
 writing this, I had just moved over from C, and it was basically a mental port
-of how I would write it in C, and was extremely unpythonic (I’ve been told by a
+of how I would write it in C (and I do mean just "C".  Not C++, C#, or anything like
+that.  You can literally say my old code has no Class (heh heh)), 
+and was extremely unpythonic (I’ve been told by a
 somewhat reliable source that looking over some of my early python efforts
 “made his eyes bleed”).  Over the years, as I've gone back and added functions,
 I periodically get embarrassed and upgrade things to a somewhat more modern
