@@ -604,110 +604,14 @@ BIDS Outputs:
 Usage:
 ^^^^^^
 
-	::
+.. argparse::
+   :ref: rapidtide.workflows.happy_parser._get_parser
+   :prog: happy
+   :func: _get_parser
 
-		happy - Hypersampling by Analytic Phase Projection - Yay!
+   Debugging options : @skip
+      skip debugging options
 
-		usage:  happy  fmrifile slicetimefile outputroot
-
-		required arguments:
-		    fmrifile:                      - NIFTI file containing BOLD fmri data
-		    slicetimefile:                 - Text file containing the offset time in seconds of each slice relative
-						     to the start of the TR, one value per line, OR the BIDS sidecar JSON file
-						     for the fmrifile (contains the SliceTiming field
-		    outputroot:                    - Base name for all output files
-
-		optional arguments:
-
-		Processing steps:
-		    --cardcalconly                 - Stop after all cardiac regressor calculation steps (before phase projection).
-		    --dodlfilter                   - Refine cardiac waveform from the fMRI data using a deep learning filter.
-						     NOTE: this will only work if you have a working Keras installation;
-						     if not, this option is ignored.
-						     OTHER NOTE: Some versions of tensorflow seem to have some weird conflict
-						     with MKL which I can't seem to be able to fix.  If the dl filter bombs
-						     complaining about multiple openmp libraries, try rerunning with the
-						     secret and inadvisable '--usesuperdangerousworkaround' flag.  Good luck!
-		    --model=MODELNAME              - Use model MODELNAME for dl filter (default is model_revised - from the revised NeuroImage paper.)
-
-		Performance:
-		    --mklthreads=NTHREADS          - Use NTHREADS MKL threads to accelerate processing (defaults to 1 - more
-						     threads up to the number of cores can accelerate processing a lot, but
-						     can really kill you on clusters unless you're very careful.  Use at your
-						     own risk.)
-
-		Preprocessing:
-		    --numskip=SKIP                 - Skip SKIP tr's at the beginning of the fmri file (default is 0).
-		    --motskip=SKIP                 - Skip SKIP tr's at the beginning of the motion regressor file (default is 0).
-		    --motionfile=MOTFILE[:COLSPEC] - Read 6 columns of motion regressors out of MOTFILE text file.
-						     (with timepoints rows) and regress them, their derivatives,
-						     and delayed derivatives out of the data prior to analysis.
-						     If COLSPEC is present, use the comma separated list of ranges to
-						     specify X, Y, Z, RotX, RotY, and RotZ, in that order.  For
-						     example, :3-5,7,0,9 would use columns 3, 4, 5, 7, 0 and 9
-						     for X, Y, Z, RotX, RotY, RotZ, respectively
-		    --motionhp=HPFREQ              - Highpass filter motion regressors to HPFREQ Hz prior to regression
-		    --motionlp=LPFREQ              - Lowpass filter motion regressors to HPFREQ Hz prior to regression
-
-		Cardiac estimation tuning:
-		    --varmaskthreshpct=PCT         - Only include voxels with MAD over time in the PCTth percentile and higher in
-						     the generation of the cardiac waveform (default is no variance masking.)
-		    --estmask=MASKNAME             - Generation of cardiac waveform from data will be restricted to
-						     voxels in MASKNAME and weighted by the mask intensity (overrides
-						     normal variance mask.)
-		    --minhr=MINHR                  - Limit lower cardiac frequency search range to MINHR BPM (default is 40)
-		    --maxhr=MAXHR                  - Limit upper cardiac frequency search range to MAXHR BPM (default is 140)
-		    --minhrfilt=MINHR              - Highpass filter cardiac waveform estimate to MINHR BPM (default is 40)
-		    --maxhrfilt=MAXHR              - Lowpass filter cardiac waveform estimate to MAXHR BPM (default is 1000)
-		    --envcutoff=CUTOFF             - Lowpass filter cardiac normalization envelope to CUTOFF Hz (default is 0.4)
-		    --notchwidth=WIDTH             - Set the width of the notch filter, in percent of the notch frequency
-						     (default is 1.5)
-
-		External cardiac waveform options:
-		    --cardiacfile=FILE[:COL]       - Read the cardiac waveform from file FILE.  If COL is an integer,
-						     format json file, use column named COL (if no file is specified
-						     is specified, estimate cardiac signal from data)
-		    --cardiacfreq=FREQ             - Cardiac waveform in cardiacfile has sample frequency FREQ
-						     (default is 32Hz). NB: --cardiacfreq and --cardiactstep
-						     are two ways to specify the same thing
-		    --cardiactstep=TSTEP           - Cardiac waveform in file has sample time step TSTEP
-						     (default is 0.03125s) NB: --cardiacfreq and --cardiactstep
-						     are two ways to specify the same thing
-		    --cardiacstart=START           - The time delay in seconds into the cardiac file, corresponding
-						     in the first TR of the fmri file (default is 0.0)
-		    --stdfreq=FREQ                 - Frequency to which the cardiac signals are resampled for output.
-						     Default is 25.
-		    --forcehr=BPM                  - Force heart rate fundamental detector to be centered at BPM
-						     (overrides peak frequencies found from spectrum).  Useful
-						     if there is structured noise that confuses the peak finder.
-
-		Phase projection tuning:
-		    --outputbins=BINS              - Number of output phase bins (default is 32)
-		    --gridbins=BINS                - Width of the gridding kernel in output phase bins (default is 3.0)
-		    --gridkernel=KERNEL            - Convolution gridding kernel.  Options are 'old', 'gauss', and 'kaiser'
-						     (default is 'kaiser')
-		    --projmask=MASKNAME            - Phase projection will be restricted to voxels in MASKNAME
-						     (overrides normal intensity mask.)
-		    --projectwithraw               - Use fmri derived cardiac waveform as phase source for projection, even
-						     if a plethysmogram is supplied
-
-		Debugging arguments (probably not of interest to users):
-		    --debug                        - Turn on debugging information
-		    --nodetrend                    - Disable data detrending
-		    --noorthog                     - Disable orthogonalization of motion confound regressors
-		    --normalize                    - Normalize fmri data
-		    --nodemean                     - Do not demean fmri data
-		    --disablenotch                 - Disable subharmonic notch filter
-		    --nomask                       - Disable data masking for calculating cardiac waveform
-		    --nocensor                     - Bad points will not be excluded from analytic phase projection
-		    --noappsmooth                  - Disable smoothing app file in the phase direction
-		    --nophasefilt                  - Disable the phase trend filter (probably not a good idea)
-		    --nocardiacalign               - Disable alignment of pleth signal to fmri derived cardiac signal.
-						     to blood vessels
-		    --saveinfoasjson               - Save the info file in json format rather than text.  Will eventually
-		    --trimcorrelations             - Some physiological timecourses don't cover the entire length of the
-						     fMRI experiment.  Use this option to trim other waveforms to match
-						     when calculating correlations.
 
 
 
@@ -789,8 +693,8 @@ Usage:
 		    --linear           - only do linear transformation, even if warpfile exists
 
 
-showxcorr
----------
+showxcorr_legacy
+----------------
 
 Description:
 ^^^^^^^^^^^^
@@ -798,7 +702,7 @@ Description:
 	Like rapidtide, but for single time courses.  Takes two text files as input, calculates and displays
 	the time lagged crosscorrelation between them, fits the maximum time lag, and estimates
 	the significance of the correlation.  It has a range of filtering,
-	windowing, and correlation options.
+	windowing, and correlation options.  This is the old interface - for new analyses you should use showxcorrx.
 
 Inputs:
 ^^^^^^^
@@ -866,53 +770,14 @@ Outputs:
 Usage:
 ^^^^^^
 
-	::
+.. argparse::
+   :ref: rapidtide.workflows.showxcorrx._get_parser
+   :prog: showxcorrx
+   :func: _get_parser
 
-		showxcorrx - calculate and display crosscorrelation between two timeseries
+   Debugging options : @skip
+      skip debugging options
 
-		usage:  showxcorrx  timecourse1 timecourse2 samplerate
-		[-l LABEL] [-s STARTTIME] [-D DURATION] [-d] [-F LOWERFREQ,UPPERFREQ[,LOWERSTOP,UPPERSTOP]] [-V] [-L] [-R] [-C] [--nodetrend] [--nowindow] [-f] [-o OUTPUTFILE] [--phat] [--liang] [--eckart] [--savecorr=FILE] [-z FILENAME] [-N TRIALS]
-
-		required arguments:
-		    timcoursefile1: text file containing a timeseries
-		    timcoursefile2: text file containing a timeseries
-		    samplerate:     the sample rate of the timecourses, in Hz
-
-		optional arguments:
-		    --nodetrend        - do not detrend the data before correlation
-		    --nowindow         - do not prewindow data before corrlation
-		    --windowfunc=FUNC  - window function to apply before corrlation (default is hamming)
-		    --cepstral         - check time delay using Choudhary's cepstral technique
-		    --phat             - perform phase alignment transform (PHAT) rather than
-					 standard crosscorrelation
-		    --liang            - perform phase alignment transform with Liang weighting function rather than
-					 standard crosscorrelation
-		    --eckart           - perform phase alignment transform with Eckart weighting function rather than
-					 standard crosscorrelation
-		    -l LABEL           - label for the delay value
-		    -s STARTTIME       - time of first datapoint to use in seconds in the first file
-		    -D DURATION        - amount of data to use in seconds
-		    -r RANGE           - restrict peak search range to +/- RANGE seconds (default is
-					 +/-15)
-		    -d                 - turns off display of graph
-		    -F                 - filter data and regressors from LOWERFREQ to UPPERFREQ.
-					 LOWERSTOP and UPPERSTOP can be specified, or will be
-					 calculated automatically
-		    -V                 - filter data and regressors to VLF band
-		    -L                 - filter data and regressors to LFO band
-		    -R                 - filter data and regressors to respiratory band
-		    -C                 - filter data and regressors to cardiac band
-		    -T                 - trim data to match
-		    -A                 - print data on a single summary line
-		    -a                 - if summary mode is on, add a header line showing what values
-					 mean
-		    -f                 - negate (flip) second regressor
-		    -savecorr=FILE     - Save the correlation function to the file FILE in xy format
-		    -z FILENAME        - use the columns of FILENAME as controlling variables and
-					 return the partial correlation
-		    -N TRIALS          - estimate significance thresholds by Monte Carlo with TRIALS
-					 repetition
-		    -o OUTPUTFILE      - Writes summary lines to OUTPUTFILE (sets -A)
 
 
 showtc
@@ -936,42 +801,15 @@ Outputs:
 Usage:
 ^^^^^^
 
-	::
+.. argparse::
+   :ref: rapidtide.workflows.showtc._get_parser
+   :prog: showtc
+   :func: _get_parser
 
-		showtc - plots the data in text files
+   Debugging options : @skip
+      skip debugging options
 
-		usage: showtc texfilename[:col1,col2...,coln] [textfilename]... [--nolegend] [--pspec] [--phase] [--samplerate=Fs] [--sampletime=Ts]
 
-		required arguments:
-		    textfilename	- a text file containing whitespace separated timecourses, one timepoint per line
-				       A list of comma separated numbers following the filename and preceded by a colon is used to select columns to plot
-
-		optional arguments:
-		    --nolegend               - turn off legend label
-		    --pspec                  - show the power spectra magnitudes of the input data instead of the timecourses
-		    --phase                  - show the power spectra phases of the input data instead of the timecourses
-		    --transpose              - swap rows and columns in the input files
-		    --waterfall              - plot multiple timecourses as a waterfall
-		    --voffset=VOFFSET        - plot multiple timecourses as with VOFFSET between them (use negative VOFFSET to set automatically)
-		    --samplerate=Fs          - the sample rate of the input data is Fs Hz (default is 1Hz)
-		    --sampletime=Ts          - the sample time (1/samplerate) of the input data is Ts seconds (default is 1s)
-		    --colorlist=C1,C2,..     - cycle through the list of colors specified by CN
-		    --linewidth=LW           - set linewidth to LW points (default is 1)
-		    --fontscalefac=FAC       - scale all font sizes by FAC (default is 1.0)
-		    --legendlist=L1,L2,..    - cycle through the list of legends specified by LN
-		    --tofile=FILENAME        - write figure to file FILENAME instead of displaying on the screen
-		    --title=TITLE            - use TITLE as the overall title of the graph
-		    --separate               - use a separate subplot for each timecourse
-		    --separatelinked         - use a separate subplot for each timecourse, but use a common y scaling
-		    --noxax                  - don't show x axis
-		    --noyax                  - don't show y axis
-		    --starttime=START        - start plot at START seconds
-		    --endtime=END            - end plot at END seconds
-		    --legendloc=LOC          - Integer from 0 to 10 inclusive specifying legend location.  Legal values are:
-					       0: best, 1: upper right, 2: upper left, 3: lower left, 4: lower right,
-					       5: right, 6: center left, 7: center right, 8: lower center, 9: upper center,
-					       10: center.  Default is 2.
-		    --debug                  - print debugging information
 
 histnifti
 ---------
