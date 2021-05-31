@@ -1,4 +1,4 @@
-# History of changes
+# Release history
 
 ## Version 2.0alpha28 (5/27/21)
 * (testing) Synced function calls with some internal changes to Correlator to fix the tests crashing.
@@ -226,7 +226,7 @@ Much thanks to Taylor Salo for his continuing contributions, with several substa
 * (docker): Cleaned up container build.
 * (tidepool): Various fixes and improvements backported from the development version.
 
-# Version 1.9 (1/6/20)
+## Version 1.9 (1/6/20)
 * (all): Now compatible with nibabel 3.x
 * (all): Significantly expanded test suite.  Code coverage is now at 47%.
 * (documentation): Added instructions for installing the deep learning filter code
