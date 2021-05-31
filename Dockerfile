@@ -53,19 +53,17 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
 
 
 # Update to the newest version of conda
+RUN conda config --add channels conda-forge
 RUN conda update -n base -c defaults conda
+
+
+# Install mamba so we can install packages before the heat death of the universe
+RUN conda install -y mamba
+RUN conda clean --all
 
 
 # Installing precomputed python packages
-RUN df -h
-RUN conda config --add channels conda-forge
-RUN df -h
-RUN conda update -n base -c defaults conda
-RUN df -h
-RUN conda clean --all
-#RUN conda build purge-all
-RUN df -h
-RUN conda install -y python=3.7.6 \
+RUN mamba install -y python=3.7.10 \
                      pip \
                      scipy \
                      numpy \
