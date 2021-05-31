@@ -31,39 +31,11 @@ RUN apt-get install -y --reinstall libdouble-conversion1
 RUN apt-get install -y --reinstall libxcb-xinerama0
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-#ENV FSL_DIR="/usr/share/fsl/5.0" \
-#    OS="Linux" \
-#    FS_OVERRIDE=0 \
-#    FIX_VERTEX_AREA="" \
-#    FSF_OUTPUT_FORMAT="nii.gz" \
-#    FREESURFER_HOME="/opt/freesurfer"
 
 # Installing Neurodebian packages (FSL)
 RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /usr/local/etc/neurodebian.gpg && \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
-
-#RUN apt-get update && \
-#    apt-get install -y --no-install-recommends \
-#                    fsl-core=5.0.9-5~nd16.04+1 \
-#                    fsl-mni152-templates=5.0.7-2 && \
-#    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-#ENV FSLDIR="/usr/share/fsl/5.0" \
-#    FSLOUTPUTTYPE="NIFTI_GZ" \
-#    FSLMULTIFILEQUIT="TRUE" \
-#    POSSUMDIR="/usr/share/fsl/5.0" \
-#    LD_LIBRARY_PATH="/usr/lib/fsl/5.0:$LD_LIBRARY_PATH" \
-#    FSLTCLSH="/usr/bin/tclsh" \
-#    FSLWISH="/usr/bin/wish" \
-#ENV PATH="/usr/lib/fsl/5.0:$PATH"
-
-## Installing ANTs 2.2.0 (NeuroDocker build)
-#ENV ANTSPATH=/usr/lib/ants
-#RUN mkdir -p $ANTSPATH && \
-#    curl -sSL "https://dl.dropbox.com/s/2f4sui1z6lcgyek/ANTs-Linux-centos5_x86_64-v2.2.0-0740f91.tar.gz" \
-#    | tar -xzC $ANTSPATH --strip-components 1
-#ENV PATH=$ANTSPATH:$PATH
 
 
 # Installing and setting up miniconda
