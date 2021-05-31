@@ -38,19 +38,11 @@ Citing rapidtide
 Contents
 ========
 .. toctree::
-   :numbered:
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Introduction:
 
    introduction.rst
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Installation:
-
    installation.rst
-
 
 .. toctree::
    :maxdepth: 2
