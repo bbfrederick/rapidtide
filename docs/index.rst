@@ -38,17 +38,11 @@ Citing rapidtide
 Contents
 ========
 .. toctree::
+   :numbered:
    :maxdepth: 2
    :caption: Introduction:
 
    introduction.rst
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: History:
-
-   whats_new.rst
 
 
 .. toctree::
@@ -74,6 +68,13 @@ Contents
    :caption: Digging deeper:
 
    theoryofoperation.rst
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: History:
+
+   whats_new.rst
 
 
 Indices and tables
