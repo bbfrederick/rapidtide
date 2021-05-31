@@ -31,6 +31,45 @@ import rapidtide.workflows.parser_funcs as pf
 
 LGR = logging.getLogger(__name__)
 
+# Some default settings
+DEFAULT_HISTLEN = 101
+DEFAULT_DETREND_ORDER = 3
+DEFAULT_GLOBAL_PCACOMPONENTS = 0.8
+DEFAULT_CORRMASK_THRESHPCT = 1.0
+DEFAULT_MUTUALINFO_SMOOTHINGTIME = 3.0
+DEFAULT_LAGMIN = -30.0
+DEFAULT_LAGMAX = 30.0
+DEFAULT_SIGMALIMIT = 1000.0
+DEFAULT_DESPECKLE_PASSES = 4
+DEFAULT_DESPECKLE_THRESH = 5.0
+DEFAULT_PASSES = 3
+DEFAULT_LAGMIN_THRESH = 0.5
+DEFAULT_LAGMAX_THRESH = 5.0
+DEFAULT_AMPTHRESH = 0.3
+DEFAULT_PICKLEFT_THRESH = 0.33
+DEFAULT_SIGMATHRESH = 100.0
+DEFAULT_REFINE_PCACOMPONENTS = 0.8
+DEFAULT_MAXPASSES = 15
+DEFAULT_REFINE_TYPE = "pca"
+DEFAULT_INTERPTYPE = "univariate"
+DEFAULT_WINDOW_TYPE = "hamming"
+DEFAULT_GLOBALMASK_METHOD = "mean"
+DEFAULT_GLOBALSIGNAL_METHOD = "sum"
+DEFAULT_CORRWEIGHTING = "None"
+DEFAULT_SIMILARITYMETRIC = "correlation"
+DEFAULT_PEAKFIT_TYPE = "gauss"
+DEFAULT_REFINE_PRENORM = "mean"
+DEFAULT_REFINE_WEIGHTING = "R2"
+
+DEFAULT_DENOISING_LAGMIN = -10.0
+DEFAULT_DENOISING_LAGMAX = 10.0
+DEFAULT_DENOISING_DESPECKLE_PASSES = 4
+DEFAULT_DENOISING_PEAKFITTYPE = "gauss"
+
+DEFAULT_DELAYMAPPING_LAGMIN = -10.0
+DEFAULT_DELAYMAPPING_LAGMAX = 30.0
+DEFAULT_DELAYMAPPING_DESPECKLE_PASSES = 4
+
 
 def _get_parser():
     """
@@ -45,7 +84,7 @@ def _get_parser():
     parser.add_argument(
         "in_file",
         type=lambda x: pf.is_valid_file(parser, x),
-        help="The input data file (BOLD fMRI file or NIRS text file)",
+        help="The input data file (BOLD fMRI file or NIRS text file).",
     )
     parser.add_argument(
         "outputname",
@@ -74,10 +113,11 @@ def _get_parser():
         action="store_true",
         help=(
             "Preset for hemodynamic denoising - this is a macro that "
-            "sets lagmin=-15.0, lagmax=15.0, passes=3, despeckle_passes=4, "
-            "refineoffset=True, peakfittype=fastquad, doglmfilt=True. "
+            f"sets lagmin={DEFAULT_DENOISING_LAGMIN}, lagmax={DEFAULT_DENOISING_LAGMAX}, "
+            f"passes=3, despeckle_passes={DEFAULT_DENOISING_DESPECKLE_PASSES}, "
+            f"refineoffset=True, peakfittype={DEFAULT_DENOISING_PEAKFITTYPE}, doglmfilt=True. "
             "Any of these options can be overridden with the appropriate "
-            "additional arguments"
+            "additional arguments."
         ),
         default=False,
     )
@@ -87,11 +127,12 @@ def _get_parser():
         action="store_true",
         help=(
             "Preset for delay mapping analysis - this is a macro that "
-            "sets lagmin=-10.0, lagmax=30.0, passes=3, despeckle_passes=4, "
+            f"sets lagmin={DEFAULT_DELAYMAPPING_LAGMIN}, lagmax={DEFAULT_DELAYMAPPING_LAGMAX}, "
+            f"passes=3, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
             "refineoffset=True, pickleft=True, limitoutput=True, "
             "doglmfilt=False. "
             "Any of these options can be overridden with the appropriate "
-            "additional arguments"
+            "additional arguments."
         ),
         default=False,
     )
@@ -187,10 +228,10 @@ def _get_parser():
         choices=["univariate", "cubic", "quadratic"],
         help=(
             "Use specified interpolation type. Options "
-            "are 'cubic', 'quadratic', and 'univariate' "
-            "(default). "
+            'are "cubic", "quadratic", and "univariate". '
+            f"Default is {DEFAULT_INTERPTYPE}. "
         ),
-        default="univariate",
+        default=DEFAULT_INTERPTYPE,
     )
     preproc.add_argument(
         "--offsettime",
@@ -228,10 +269,11 @@ def _get_parser():
         choices=["hamming", "hann", "blackmanharris", "None"],
         help=(
             "Window function to use prior to correlation. "
-            "Options are hamming (default), hann, "
-            "blackmanharris, and None."
+            'Options are "hamming", "hann", '
+            '"blackmanharris", and "None". '
+            f"Default is {DEFAULT_WINDOW_TYPE}."
         ),
-        default="hamming",
+        default=DEFAULT_WINDOW_TYPE,
     )
     wfunc.add_argument(
         "--nowindow",
@@ -239,7 +281,7 @@ def _get_parser():
         action="store_const",
         const="None",
         help="Disable precorrelation windowing.",
-        default="hamming",
+        default=DEFAULT_WINDOW_TYPE,
     )
 
     preproc.add_argument(
@@ -248,8 +290,10 @@ def _get_parser():
         action="store",
         type=int,
         metavar="ORDER",
-        help=("Set order of trend removal (0 to disable, " "default is 1 - linear)."),
-        default=3,
+        help=(
+            "Set order of trend removal (0 to disable), " f"default is {DEFAULT_DETREND_ORDER}."
+        ),
+        default=DEFAULT_DETREND_ORDER,
     )
     preproc.add_argument(
         "--spatialfilt",
@@ -283,10 +327,11 @@ def _get_parser():
         type=str,
         choices=["mean", "variance"],
         help=(
-            "Select whether to use timecourse mean (default) or variance to "
-            "mask voxels prior to generating global mean."
+            "Select whether to use timecourse mean or variance to "
+            "mask voxels prior to generating global mean. "
+            f"Default is {DEFAULT_GLOBALMASK_METHOD}."
         ),
-        default="mean",
+        default=DEFAULT_GLOBALMASK_METHOD,
     )
     preproc.add_argument(
         "--globalmeaninclude",
@@ -357,10 +402,11 @@ def _get_parser():
         type=str,
         choices=["sum", "meanscale", "pca"],
         help=(
-            "The method for constructing the initial global signal regressor - straight summation (default), "
-            "mean scaling each voxel prior to summation, or MLE PCA of the voxels in the global signal mask."
+            "The method for constructing the initial global signal regressor - straight summation, "
+            "mean scaling each voxel prior to summation, or MLE PCA of the voxels in the global signal mask. "
+            f'Default is "{DEFAULT_GLOBALSIGNAL_METHOD}."'
         ),
-        default="sum",
+        default=DEFAULT_GLOBALSIGNAL_METHOD,
     )
     preproc.add_argument(
         "--globalpcacomponents",
@@ -373,9 +419,9 @@ def _get_parser():
             "many components.  If "
             "0.0 < VALUE < 1.0, enough components will be retained to explain the fraction VALUE of the "
             "total variance. If VALUE is negative, the number of components will be to retain will be selected "
-            "automatically using the MLE method.  Default is 0.8."
+            f"automatically using the MLE method.  Default is {DEFAULT_GLOBAL_PCACOMPONENTS}."
         ),
-        default=0.8,
+        default=DEFAULT_GLOBAL_PCACOMPONENTS,
     )
     preproc.add_argument(
         "--slicetimes",
@@ -498,8 +544,11 @@ def _get_parser():
         action="store",
         type=str,
         choices=["None", "phat", "liang", "eckart"],
-        help=("Method to use for cross-correlation weighting. " "Default is 'None'."),
-        default="None",
+        help=(
+            "Method to use for cross-correlation weighting. "
+            f'Default is "{DEFAULT_CORRWEIGHTING}".'
+        ),
+        default=DEFAULT_CORRWEIGHTING,
     )
 
     mask_group = corr.add_mutually_exclusive_group()
@@ -511,10 +560,10 @@ def _get_parser():
         metavar="PCT",
         help=(
             "Do correlations in voxels where the mean "
-            "exceeds this percentage of the robust max "
-            "(default is 1.0). "
+            "exceeds this percentage of the robust max. "
+            f"Default is {DEFAULT_CORRMASK_THRESHPCT}. "
         ),
-        default=1.0,
+        default=DEFAULT_CORRMASK_THRESHPCT,
     )
     mask_group.add_argument(
         "--corrmask",
@@ -535,9 +584,10 @@ def _get_parser():
         choices=["correlation", "mutualinfo", "hybrid"],
         help=(
             "Similarity metric for finding delay values.  "
-            "Choices are 'correlation' (default), 'mutualinfo', and 'hybrid'."
+            'Choices are "correlation" (default), "mutualinfo", and "hybrid". '
+            f"Default is {DEFAULT_SIMILARITYMETRIC}."
         ),
-        default="correlation",
+        default=DEFAULT_SIMILARITYMETRIC,
     )
     corr.add_argument(
         "--mutualinfosmoothingtime",
@@ -548,10 +598,10 @@ def _get_parser():
         help=(
             "Time constant of a temporal smoothing function to apply to the "
             "mutual information function. "
-            "Default is 3.0 seconds.  "
+            f"Default is {DEFAULT_MUTUALINFO_SMOOTHINGTIME} seconds.  "
             "TAU <=0.0 disables smoothing."
         ),
-        default=3.0,
+        default=DEFAULT_MUTUALINFO_SMOOTHINGTIME,
     )
 
     # Correlation fitting options
@@ -576,9 +626,9 @@ def _get_parser():
         metavar=("LAGMIN", "LAGMAX"),
         help=(
             "Limit fit to a range of lags from LAGMIN to "
-            "LAGMAX.  Default is -30.0 to 30.0 seconds. "
+            f"LAGMAX.  Default is {DEFAULT_LAGMIN} to {DEFAULT_LAGMAX} seconds. "
         ),
-        default=(-30.0, 30.0),
+        default=(DEFAULT_LAGMIN, DEFAULT_LAGMAX),
     )
     corr_fit.add_argument(
         "--sigmalimit",
@@ -586,8 +636,11 @@ def _get_parser():
         action="store",
         type=float,
         metavar="SIGMALIMIT",
-        help=("Reject lag fits with linewidth wider than " "SIGMALIMIT Hz. Default is 100.0."),
-        default=100.0,
+        help=(
+            "Reject lag fits with linewidth wider than "
+            f"SIGMALIMIT Hz. Default is {DEFAULT_SIGMALIMIT} Hz."
+        ),
+        default=DEFAULT_SIGMALIMIT,
     )
     corr_fit.add_argument(
         "--bipolar",
@@ -611,10 +664,12 @@ def _get_parser():
         choices=["gauss", "fastgauss", "quad", "fastquad", "COM", "None"],
         help=(
             "Method for fitting the peak of the similarity function "
-            "(default is 'gauss'). 'quad' and 'fastquad' use a quadratic fit. "
-            "Faster but not as well tested. "
+            '"gauss" performs a Gaussian fit, and is most accurate. '
+            '"quad" and "fastquad" use a quadratic fit, '
+            "which is faster, but not as well tested. "
+            f'Default is "{DEFAULT_PEAKFIT_TYPE}".'
         ),
-        default="gauss",
+        default=DEFAULT_PEAKFIT_TYPE,
     )
     corr_fit.add_argument(
         "--despecklepasses",
@@ -625,10 +680,10 @@ def _get_parser():
         help=(
             "Detect and refit suspect correlations to "
             "disambiguate peak locations in PASSES "
-            "passes.  Default is to perform 4 passes. "
+            f"passes.  Default is to perform {DEFAULT_DESPECKLE_PASSES} passes. "
             "Set to 0 to disable."
         ),
-        default=4,
+        default=DEFAULT_DESPECKLE_PASSES,
     )
     corr_fit.add_argument(
         "--despecklethresh",
@@ -637,9 +692,11 @@ def _get_parser():
         type=float,
         metavar="VAL",
         help=(
-            "Refit correlation if median discontinuity " "magnitude exceeds VAL (default is 5.0s)."
+            "Refit correlation if median discontinuity "
+            "magnitude exceeds VAL. "
+            f"Default is {DEFAULT_DESPECKLE_THRESH} seconds."
         ),
-        default=5.0,
+        default=DEFAULT_DESPECKLE_THRESH,
     )
 
     # Regressor refinement options
@@ -652,9 +709,10 @@ def _get_parser():
         choices=["None", "mean", "var", "std", "invlag"],
         help=(
             "Apply TYPE prenormalization to each "
-            "timecourse prior to refinement. Default is 'mean'."
+            "timecourse prior to refinement. "
+            f'Default is "{DEFAULT_REFINE_PRENORM}".'
         ),
-        default="mean",
+        default=DEFAULT_REFINE_PRENORM,
     )
     reg_ref.add_argument(
         "--refineweighting",
@@ -664,9 +722,9 @@ def _get_parser():
         choices=["None", "NIRS", "R", "R2"],
         help=(
             "Apply TYPE weighting to each timecourse prior "
-            "to refinement. Default is 'R2' (r-squared)."
+            f'to refinement. Default is "{DEFAULT_REFINE_WEIGHTING}".'
         ),
-        default="R2",
+        default=DEFAULT_REFINE_WEIGHTING,
     )
     reg_ref.add_argument(
         "--passes",
@@ -674,8 +732,8 @@ def _get_parser():
         action="store",
         type=int,
         metavar="PASSES",
-        help=("Set the number of processing passes to PASSES.  " "Default is 3."),
-        default=3,
+        help=("Set the number of processing passes to PASSES.  " f"Default is {DEFAULT_PASSES}."),
+        default=DEFAULT_PASSES,
     )
     reg_ref.add_argument(
         "--refineinclude",
@@ -705,8 +763,11 @@ def _get_parser():
         action="store",
         metavar="MIN",
         type=float,
-        help=("For refinement, exclude voxels with delays " "less than MIN (default is 0.25s). "),
-        default=0.5,
+        help=(
+            "For refinement, exclude voxels with delays "
+            f"less than MIN. Default is {DEFAULT_LAGMIN_THRESH} seconds. "
+        ),
+        default=DEFAULT_LAGMIN_THRESH,
     )
     reg_ref.add_argument(
         "--lagmaxthresh",
@@ -714,8 +775,11 @@ def _get_parser():
         action="store",
         metavar="MAX",
         type=float,
-        help=("For refinement, exclude voxels with delays " "greater than MAX (default is 5s). "),
-        default=5.0,
+        help=(
+            "For refinement, exclude voxels with delays "
+            f"greater than MAX. Default is {DEFAULT_LAGMAX_THRESH} seconds. "
+        ),
+        default=DEFAULT_LAGMAX_THRESH,
     )
     reg_ref.add_argument(
         "--ampthresh",
@@ -725,7 +789,7 @@ def _get_parser():
         type=float,
         help=(
             "For refinement, exclude voxels with correlation "
-            "coefficients less than AMP (default is 0.3).  "
+            f"coefficients less than AMP (default is {DEFAULT_AMPTHRESH}).  "
             "NOTE: ampthresh will automatically be set to the p<0.05 "
             "significance level determined by the --numnull option if NREPS "
             "is set greater than 0 and this is not manually specified."
@@ -740,9 +804,9 @@ def _get_parser():
         type=float,
         help=(
             "For refinement, exclude voxels with widths "
-            "greater than SIGMA seconds (default is 100s)."
+            f"greater than SIGMA seconds (default is {DEFAULT_SIGMATHRESH} seconds)."
         ),
-        default=100.0,
+        default=DEFAULT_SIGMATHRESH,
     )
     reg_ref.add_argument(
         "--norefineoffset",
@@ -773,9 +837,9 @@ def _get_parser():
         type=float,
         help=(
             "Threshhold value (fraction of maximum) in a histogram "
-            "to be considered the start of a peak.  Default is 0.33."
+            f"to be considered the start of a peak.  Default is {DEFAULT_PICKLEFT_THRESH}."
         ),
-        default=0.33,
+        default=DEFAULT_PICKLEFT_THRESH,
     )
 
     refine = reg_ref.add_mutually_exclusive_group()
@@ -801,8 +865,11 @@ def _get_parser():
         action="store",
         type=str,
         choices=["pca", "ica", "weighted_average", "unweighted_average"],
-        help=("Method with which to derive refined regressor (default is 'pca'"),
-        default="pca",
+        help=(
+            "Method with which to derive refined regressor. "
+            f'Default is "{DEFAULT_REFINE_TYPE}".'
+        ),
+        default=DEFAULT_REFINE_TYPE,
     )
     reg_ref.add_argument(
         "--pcacomponents",
@@ -814,9 +881,9 @@ def _get_parser():
             "Number of PCA components used for refinement.  If VALUE >= 1, will retain this many components.  If "
             "0.0 < VALUE < 1.0, enough components will be retained to explain the fraction VALUE of the "
             "total variance. If VALUE is negative, the number of components will be to retain will be selected "
-            "automatically using the MLE method.  Default is 0.8."
+            f"automatically using the MLE method.  Default is {DEFAULT_REFINE_PCACOMPONENTS}."
         ),
-        default=0.8,
+        default=DEFAULT_REFINE_PCACOMPONENTS,
     )
     reg_ref.add_argument(
         "--convergencethresh",
@@ -826,7 +893,7 @@ def _get_parser():
         metavar="THRESH",
         help=(
             "Continue refinement until the MSE between regressors becomes <= THRESH.  "
-            "By default, this is not set, so refinement will run for the specified number of passes"
+            "By default, this is not set, so refinement will run for the specified number of passes. "
         ),
         default=None,
     )
@@ -837,9 +904,10 @@ def _get_parser():
         type=int,
         metavar="MAXPASSES",
         help=(
-            "Terminate refinement after MAXPASSES passes, whether or not convergence has occured. Default is 15"
+            "Terminate refinement after MAXPASSES passes, whether or not convergence has occured. "
+            f"Default is {DEFAULT_MAXPASSES}."
         ),
-        default=15,
+        default=DEFAULT_MAXPASSES,
     )
 
     # Output options
@@ -864,8 +932,8 @@ def _get_parser():
         action="store",
         type=int,
         metavar="HISTLEN",
-        help=("Change the histogram length to HISTLEN (default is 100)."),
-        default=100,
+        help=(f"Change the histogram length to HISTLEN.  Default is {DEFAULT_HISTLEN}."),
+        default=DEFAULT_HISTLEN,
     )
     output.add_argument(
         "--glmsourcefile",
@@ -1113,7 +1181,9 @@ def _get_parser():
     )
 
     # Debugging options
-    debugging = parser.add_argument_group("Debugging options")
+    debugging = parser.add_argument_group(
+        "Debugging options.  You probably don't want to use any of these unless I ask you to to help diagnose a problem."
+    )
     debugging.add_argument(
         "--debug",
         dest="debug",
@@ -1292,7 +1362,7 @@ def process_args(inputargs=None):
     reg_ref_used = (
         (args["lagminthresh"] != 0.5)
         or (args["lagmaxthresh"] != 5.0)
-        or (args["ampthresh"] != 0.3)
+        or (args["ampthresh"] != DEFAULT_AMPTHRESH)
         or (args["sigmathresh"] != 100.0)
         or (args["refineoffset"])
     )
@@ -1309,7 +1379,7 @@ def process_args(inputargs=None):
         args["ampthreshfromsig"] = True
 
     if args["ampthresh"] < 0.0:
-        args["ampthresh"] = 0.3
+        args["ampthresh"] = DEFAULT_AMPTHRESH
     else:
         args["ampthreshfromsig"] = False
 
@@ -1396,7 +1466,7 @@ def process_args(inputargs=None):
         args["motionfilename"] = None
 
     if args["venousrefine"]:
-        LGR.warning("Using 'venousrefine' macro. Overriding any affected arguments.")
+        LGR.warning('Using "venousrefine" macro. Overriding any affected arguments.')
         args["lagminthresh"] = 2.5
         args["lagmaxthresh"] = 6.0
         args["ampthresh"] = 0.5
@@ -1404,7 +1474,7 @@ def process_args(inputargs=None):
         args["lagmaskside"] = "upper"
 
     if args["nirs"]:
-        LGR.warning("Using 'nirs' macro. Overriding any affected arguments.")
+        LGR.warning('Using "nirs" macro. Overriding any affected arguments.')
         args["nothresh"] = False
         args["preservefiltering"] = True
         args["refineprenorm"] = "var"
@@ -1415,8 +1485,8 @@ def process_args(inputargs=None):
 
     if args["delaymapping"]:
         pf.setifnotset(args, "despeckle_passes", 4)
-        pf.setifnotset(args, "lagmin", -10.0)
-        pf.setifnotset(args, "lagmax", 30.0)
+        pf.setifnotset(args, "lagmin", DEFAULT_DELAYMAPPING_LAGMIN)
+        pf.setifnotset(args, "lagmax", DEFAULT_DELAYMAPPING_LAGMAX)
         args["passes"] = 3
         args["refineoffset"] = True
         args["pickleft"] = True
@@ -1425,9 +1495,9 @@ def process_args(inputargs=None):
 
     if args["denoising"]:
         pf.setifnotset(args, "despeckle_passes", 4)
-        pf.setifnotset(args, "lagmin", -10.0)
-        pf.setifnotset(args, "lagmax", 10.0)
-        pf.setifnotset(args, "peakfittype", "gauss")
+        pf.setifnotset(args, "lagmin", DEFAULT_DENOISING_LAGMIN)
+        pf.setifnotset(args, "lagmax", DEFAULT_DENOISING_LAGMAX)
+        pf.setifnotset(args, "peakfittype", DEFAULT_DENOISING_PEAKFITTYPE)
         args["passes"] = 3
         args["refineoffset"] = True
         args["doglmfilt"] = True

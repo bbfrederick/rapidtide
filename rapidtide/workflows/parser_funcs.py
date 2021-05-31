@@ -180,8 +180,12 @@ def addfilteropts(parser, filtertarget, details=False):
         dest="filterband",
         action="store",
         type=str,
-        choices=["vlf", "lfo", "resp", "cardiac", "lfo_legacy"],
-        help=("Filter " + filtertarget + " to specific band. "),
+        choices=["None", "vlf", "lfo", "resp", "cardiac", "lfo_legacy"],
+        help=(
+            "Filter "
+            + filtertarget
+            + ' to specific band. Use "None" to disable filtering.  Default is "lfo".'
+        ),
         default="lfo",
     )
     filt_opts.add_argument(
@@ -190,7 +194,7 @@ def addfilteropts(parser, filtertarget, details=False):
         action="store",
         nargs=2,
         type=float,
-        metavar=("LOWERPASS UPPERPASS"),
+        metavar=("LOWERPASS", "UPPERPASS"),
         help=(
             "Filter " + filtertarget + " to retain LOWERPASS to "
             "UPPERPASS. If --filterstopfreqs is not also specified, "
@@ -205,10 +209,11 @@ def addfilteropts(parser, filtertarget, details=False):
         action="store",
         nargs=2,
         type=float,
-        metavar=("LOWERSTOP UPPERSTOP"),
+        metavar=("LOWERSTOP", "UPPERSTOP"),
         help=(
             "Filter " + filtertarget + " to with stop frequencies LOWERSTOP and UPPERSTOP. "
-            "Using this argument requires the use of --filterpassfreqs"
+            "LOWERSTOP must be <= LOWERPASS, UPPERSTOP must be >= UPPERPASS. "
+            "Using this argument requires the use of --filterfreqs."
         ),
         default=None,
     )
@@ -233,7 +238,9 @@ def addfilteropts(parser, filtertarget, details=False):
             action="store",
             type=int,
             metavar="ORDER",
-            help=("Set order of butterworth filter (if used)."),
+            help=(
+                "Set order of butterworth filter (if used). " f"Default is {DEFAULT_FILTER_ORDER}."
+            ),
             default=DEFAULT_FILTER_ORDER,
         )
         filt_opts.add_argument(
@@ -243,7 +250,9 @@ def addfilteropts(parser, filtertarget, details=False):
             type=float,
             metavar="SECONDS",
             help=(
-                "The number of seconds of padding to add to each end of a " "filtered timecourse. "
+                "The number of seconds of padding to add to each end of a "
+                "filtered timecourse "
+                f"to reduce end effects.  Default is {DEFAULT_PAD_SECONDS}."
             ),
             default=DEFAULT_PAD_SECONDS,
         )
