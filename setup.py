@@ -23,17 +23,15 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as f:
 
 
 # Write version number out to VERSION file
-version = versioneer.get_version()
 date = versioneer.get_versions()["date"]
-try:
+if getenv("IS_DOCKER_8395080871") is not None:
+    print("we are in Docker - reading existing version file")
+    with open(path.join(here, "VERSION"), "r", encoding="utf-8") as f:
+        f.read(version).replace("\n", "")
+else:
+    version = versioneer.get_version()
     with open(path.join(here, "VERSION"), "w", encoding="utf-8") as f:
         f.write(version)
-except PermissionError:
-    print("can't write to VERSION file - moving on")
-    if getenv("IS_DOCKER_8395080871") is not None:
-        print("we are in Docker - reading existing version file")
-        with open(path.join(here, "VERSION"), "r", encoding="utf-8") as f:
-            f.read(version).replace("\n", "")
 
 
 addtidepool = True
