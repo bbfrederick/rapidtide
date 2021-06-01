@@ -23,15 +23,26 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as f:
 
 
 # Write version number out to VERSION file
-date = versioneer.get_versions()["date"]
 if getenv("IS_DOCKER_8395080871") is not None:
     print("we are in Docker - reading existing version file")
     with open(path.join(here, "VERSION"), "r", encoding="utf-8") as f:
-        f.read(version).replace("\n", "")
+        version = f.read().replace("\n", "")
+    date = ""
 else:
     version = versioneer.get_version()
+    date = versioneer.get_versions()["date"]
     with open(path.join(here, "VERSION"), "w", encoding="utf-8") as f:
         f.write(version)
+
+
+def robustversion():
+    if getenv("IS_DOCKER_8395080871") is not None:
+        print("we are in Docker - reading existing version file")
+        with open(path.join(here, "VERSION"), "r", encoding="utf-8") as f:
+            version = f.read().replace("\n", "")
+    else:
+        version = versioneer.get_version()
+    return version
 
 
 addtidepool = True
@@ -118,7 +129,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=versioneer.get_version(),
+    version=robustversion(),
     cmdclass=versioneer.get_cmdclass(),
     description="Tools for performing correlation analysis on fMRI data.",
     long_description=long_description,

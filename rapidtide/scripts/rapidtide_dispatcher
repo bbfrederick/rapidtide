@@ -32,7 +32,7 @@ def main():
     # get the command line parameters
     if os.getenv("IS_DOCKER_8395080871") is not None:
         isdocker = True
-        execdir = sys.path[0]
+        execdir = "/usr/local/miniconda/bin"
         versionfile = "/src/rapidtide/VERSION"
     else:
         isdocker = False
