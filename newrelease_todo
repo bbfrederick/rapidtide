@@ -11,8 +11,8 @@
 
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging) and push to github:
 
-    git tag -a v2.0alpha28 -m "v2.0alpha28"
-    git push origin v2.0alpha28
+    git tag -a v2.0alpha29 -m "v2.0alpha29"
+    git push origin v2.0alpha29
 
 
 + Edit the release notes on github

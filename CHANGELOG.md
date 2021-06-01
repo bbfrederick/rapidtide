@@ -1,5 +1,16 @@
 # Release history
 
+## Version 2.0alpha29 (6/1/21)
+* (Docker) Fixed some problems with task dispatch and container versioning.
+* (rapidtide) Pulled a number of default values into global variables so that defaults and help strings will stay in sync.
+* (documentation) Reorganization and significant updates.
+* (documentation) Fixed errors in documentation files that caused errors building in readthedocs.
+* (package) Updated versioneer.
+
+## Version 1.9.6 (6/1/21)
+* (Docker) ACTUALLY fixed some problems with task dispatch and container versioning.
+* (package) Updated versioneer.
+
 ## Version 2.0alpha28 (5/27/21)
 * (testing) Synced function calls with some internal changes to Correlator to fix the tests crashing.
 
