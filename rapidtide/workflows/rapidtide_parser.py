@@ -76,8 +76,7 @@ def _get_parser():
     Argument parser for rapidtide
     """
     parser = argparse.ArgumentParser(
-        prog="rapidtide",
-        description=("Perform a RIPTiDe time delay analysis on a dataset."),
+        prog="rapidtide", description=("Perform a RIPTiDe time delay analysis on a dataset."),
     )
 
     # Required arguments
@@ -1336,6 +1335,14 @@ def process_args(inputargs=None):
     ) = tide_util.version()
     args["python_version"] = str(sys.version_info)
 
+    if args["printversion"]:
+        print(f"release version: {args['release_version']}")
+        print(f"git_longtag: {args['git_longtag']}")
+        print(f"git_date: {args['git_date']}")
+        print(f"git_isdirty: {args['git_isdirty']}")
+        print(f"python_version: {args['python_version']}")
+        sys.exit()
+
     # configure the filter
     theobj, theprefilter = pf.postprocessfilteropts(Namespace(**args))
     args = vars(theobj)
@@ -1418,9 +1425,7 @@ def process_args(inputargs=None):
     # mask processing
     if args["corrmaskincludespec"] is not None:
         (args["corrmaskincludename"], args["corrmaskincludevals"],) = tide_io.processnamespec(
-            args["corrmaskincludespec"],
-            "Including voxels where ",
-            "in correlation calculations.",
+            args["corrmaskincludespec"], "Including voxels where ", "in correlation calculations.",
         )
     else:
         args["corrmaskincludename"] = None
@@ -1434,9 +1439,7 @@ def process_args(inputargs=None):
 
     if args["globalmeanexcludespec"] is not None:
         (args["globalmeanexcludename"], args["globalmeanexcludevals"],) = tide_io.processnamespec(
-            args["globalmeanexcludespec"],
-            "Excluding voxels where ",
-            "from global mean.",
+            args["globalmeanexcludespec"], "Excluding voxels where ", "from global mean.",
         )
     else:
         args["globalmeanexcludename"] = None
