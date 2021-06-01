@@ -30,6 +30,10 @@ try:
         f.write(version)
 except PermissionError:
     print("can't write to VERSION file - moving on")
+    if os.getenv("IS_DOCKER_8395080871") is not None:
+        print("wer are in docker - reading existing version file")
+        with open(path.join(here, "VERSION"), "r", encoding="utf-8") as f:
+            f.read(version).replace("\n", "")
 
 
 addtidepool = True

@@ -16,19 +16,20 @@
 #   limitations under the License.
 #
 #
-from __future__ import print_function, division
-
-from os.path import expanduser, join as pjoin
-import os
-import sys
-import pandas as pd
-import numpy as np
+from __future__ import division, print_function
 
 import argparse
+import os
+import sys
 from argparse import RawTextHelpFormatter
+from os.path import expanduser
+from os.path import join as pjoin
 
-import rapidtide.io as tide_io
+import numpy as np
+import pandas as pd
+
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 
 
 def fingerprint_main(

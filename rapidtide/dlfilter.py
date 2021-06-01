@@ -52,9 +52,19 @@ except ImportError:
     print("falling back to standard keras")
 
 from keras.callbacks import ModelCheckpoint, TerminateOnNaN
-from keras.layers import (LSTM, Activation, BatchNormalization, Bidirectional,
-                          Convolution1D, Dense, Dropout, GlobalMaxPool1D,
-                          MaxPooling1D, TimeDistributed, UpSampling1D)
+from keras.layers import (
+    LSTM,
+    Activation,
+    BatchNormalization,
+    Bidirectional,
+    Convolution1D,
+    Dense,
+    Dropout,
+    GlobalMaxPool1D,
+    MaxPooling1D,
+    TimeDistributed,
+    UpSampling1D,
+)
 from keras.models import Sequential, load_model
 from keras.optimizers import RMSprop
 

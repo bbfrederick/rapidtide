@@ -29,9 +29,21 @@ import sys
 import matplotlib
 import matplotlib.cm as cm
 import numpy as np
-from matplotlib.pyplot import (annotate, axhline, bar, legend, plot, savefig,
-                               scatter, show, title, xlabel, xlim, ylabel,
-                               ylim)
+from matplotlib.pyplot import (
+    annotate,
+    axhline,
+    bar,
+    legend,
+    plot,
+    savefig,
+    scatter,
+    show,
+    title,
+    xlabel,
+    xlim,
+    ylabel,
+    ylim,
+)
 from scipy import arange
 from scipy.stats import linregress
 

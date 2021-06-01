@@ -1,15 +1,17 @@
 #!/usr/bin/env python
-from os.path import expanduser, join as pjoin
-import os
 import argparse
-from argparse import RawTextHelpFormatter
-import sys
-from pathlib import Path
-import subprocess
-import glob
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
 import copy
+import glob
+import os
+import subprocess
+import sys
+from argparse import RawTextHelpFormatter
+from os.path import expanduser
+from os.path import join as pjoin
+from pathlib import Path
+
+import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
 
 
 def runcmd(thecmd, fake=False, debug=False):
