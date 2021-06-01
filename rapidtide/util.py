@@ -401,9 +401,17 @@ def version():
         return "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"
 
     version = versioninfo["version"]
+    if version is None:
+        version = "UNKNOWN"
     longgittag = versioninfo["full-revisionid"]
+    if longgittag is None:
+        longgittag = "UNKNOWN"
     thedate = versioninfo["date"]
+    if thedate is None:
+        thedate = "UNKNOWN"
     isdirty = versioninfo["dirty"]
+    if isdirty is None:
+        isdirty = "UNKNOWN"
     return version, longgittag, thedate, isdirty
 
 

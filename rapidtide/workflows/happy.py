@@ -23,7 +23,6 @@
 from __future__ import division, print_function
 
 import copy
-
 # import gc
 import getopt
 import os
@@ -34,7 +33,6 @@ import warnings
 
 import numpy as np
 import scipy as sp
-
 # import matplotlib
 # matplotlib.use('pdf')
 from matplotlib.pyplot import figure, plot, scatter, show

@@ -28,11 +28,8 @@ import pylab as pl
 import scipy as sp
 from numpy.fft import irfftn, rfftn
 from scipy import fftpack, signal
-from sklearn.metrics import (
-    adjusted_mutual_info_score,
-    mutual_info_score,
-    normalized_mutual_info_score,
-)
+from sklearn.metrics import (adjusted_mutual_info_score, mutual_info_score,
+                             normalized_mutual_info_score)
 
 import rapidtide.fit as tide_fit
 import rapidtide.miscmath as tide_math
