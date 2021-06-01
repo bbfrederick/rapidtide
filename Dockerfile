@@ -121,6 +121,10 @@ ARG VERSION
 ARG BUILD_DATE
 ARG VCS_REF
 
+RUN echo $VERSION
+RUN echo $BUILD_DATE
+RUN echo $VCS_REF
+
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="rapidtide" \
       org.label-schema.description="rapidtide - a set of tools for delay processing" \
