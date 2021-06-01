@@ -31,8 +31,10 @@ import subprocess
 def main():
     # get the command line parameters
     if os.getenv("IS_DOCKER_8395080871") is not None:
-        execdir = "/usr/local/miniconda/bin"
+        isdocker = True
+        execdir = sys.path[0]
     else:
+        isdocker = False
         execdir = sys.path[0]
     validcommands = [
         "aligntcs",
@@ -84,6 +86,16 @@ def main():
             subprocess.call(thecommand)
         elif thecommand[0] == "xyzzy":
             subprocess.call("/bin/bash")
+        elif thecommand[0] == "info":
+            print(f"isdocker: {isdocker}")
+            print(f"execdir: {execdir}")
+            print(f"cwd: {os.getcwd()}")
+            with open("/src/rapidtide/VERSION", "r") as f:
+                theversion = f.read().replace("\n", "")
+            print(f"version: {theversion}")
+            print("valid commands:")
+            for thecommand in validcommands:
+                print(f"\t{thecommand}")
         else:
             print(
                 thecommand[0],

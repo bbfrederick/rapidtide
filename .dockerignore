@@ -7,6 +7,7 @@ changecalls
 
 # any generated test data
 rapidtide/data/examples/dst/*
+rapidtide/disabledtests/*
 rapidtide/tests/tmp/*
 
 # some local test data
@@ -30,7 +31,7 @@ wavedecomp
 getphase.py
 
 # git files
-.git
+.git/objects/pack
 
 # PyCharm files
 .idea
