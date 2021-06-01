@@ -24,7 +24,6 @@ from argparse import Namespace
 import nibabel as nib
 import numpy as np
 
-import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
