@@ -1,9 +1,6 @@
 + Fix the version numbers in files:
 
-    vi Dockerfile newrelease_todo
-
-    Dockerfile
-        search for 'org.label-schema.schema-version='
+    vi newrelease_todo
 
     newrelease_todo
         search for ' v'
@@ -22,8 +19,8 @@
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging)
   and push the tag to github
 
-    git tag -a v1.9.5 -m "v1.9.5"
-    git push origin v1.9.5
+    git tag -a v1.9.6 -m "v1.9.6"
+    git push origin v1.9.6
 
 
 + Rebuild Docker container and push

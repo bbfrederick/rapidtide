@@ -1,5 +1,9 @@
 # History of changes
 
+## Version 1.9.6 (6/1/21)
+* (Docker) ACTUALLY fixed some problems with task dispatch and container versioning.
+* (package) Updated versioneer.
+
 ## Version 1.9.5 (5/27/21)
 * (Docker) Fixed some problems with task dispatch and container versioning.
 
