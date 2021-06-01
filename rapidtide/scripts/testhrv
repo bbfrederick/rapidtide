@@ -14,9 +14,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import heartpy as hp
 import sys
-from matplotlib.pyplot import figure, plot, show, savefig, setp
+
+import heartpy as hp
+from matplotlib.pyplot import figure, plot, savefig, setp, show
 
 data = hp.get_data("../data/examples/dst/happy_flip_cardfromfmri_dlfiltered_25.0Hz.txt")
 Fs = 25.0

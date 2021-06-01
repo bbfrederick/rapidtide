@@ -23,14 +23,14 @@
 #
 #
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 import numpy as np
+
+import rapidtide.corrfit as tide_corrfit
+import rapidtide.corrpass as tide_corrpass
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
-
-import rapidtide.corrpass as tide_corrpass
-import rapidtide.corrfit as tide_corrfit
 
 
 def _procOneNullCorrelation(

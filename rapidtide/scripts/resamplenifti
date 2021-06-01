@@ -21,13 +21,16 @@
 #       $Id: resamplenifti,v 1.19 2016/07/11 14:50:43 frederic Exp $
 #
 
-from __future__ import print_function, division
-import sys
+from __future__ import division, print_function
+
 import getopt
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-import rapidtide.resample as tide_resample
+import sys
+
 import nibabel as nib
+
+import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.resample as tide_resample
 
 
 def usage():

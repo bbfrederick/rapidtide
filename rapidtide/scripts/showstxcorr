@@ -20,21 +20,23 @@
 #       $Date: 2016/06/14 12:04:51 $
 #       $Id: showstxcorr,v 1.11 2016/06/14 12:04:51 frederic Exp $
 #
-from __future__ import print_function, division
-import sys
-import pandas as pd
+from __future__ import division, print_function
+
 import getopt
-import rapidtide.miscmath as tide_math
-import rapidtide.util as tide_util
-import rapidtide.io as tide_io
+import sys
+
+import nibabel as nib
+import numpy as np
+import pandas as pd
+from matplotlib.pyplot import figure, legend, plot, show
+from scipy.stats.stats import pearsonr
+
+import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.correlate as tide_corr
-from scipy.stats.stats import pearsonr
-import numpy as np
-import nibabel as nib
-
-from matplotlib.pyplot import plot, legend, show, figure
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.util as tide_util
 
 
 def getNullDistributionData(

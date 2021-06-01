@@ -16,8 +16,10 @@ Calculate and display crosscorrelation between two random timeseries.
 # Start with the necessary imports
 # --------------------------------
 from os import remove
+
 import matplotlib.pyplot as plt
 import numpy as np
+
 from rapidtide.workflows import showxcorrx_workflow
 
 ###############################################################################

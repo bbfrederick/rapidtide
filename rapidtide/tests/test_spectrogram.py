@@ -14,16 +14,16 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from __future__ import print_function, division
+from __future__ import division, print_function
 
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
-import matplotlib.pyplot as plt
 
-from rapidtide.util import valtoindex
 from rapidtide.filter import noncausalfilter
 from rapidtide.helper_classes import freqtrack
 from rapidtide.io import writevec
+from rapidtide.util import valtoindex
 
 
 def spectralfilterprops(thefilter, debug=False):

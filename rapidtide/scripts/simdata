@@ -21,13 +21,16 @@
 #       $Id: simdata,v 1.18 2016/06/14 12:04:51 frederic Exp $
 #
 from __future__ import print_function
-import rapidtide.miscmath as tide_math
+
 import getopt
-import rapidtide.io as tide_io
-import rapidtide.resample as tide_resample
-from matplotlib.pyplot import *
-import scipy as sp
+
 import numpy as np
+import scipy as sp
+from matplotlib.pyplot import *
+
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.resample as tide_resample
 
 
 def prepareband(

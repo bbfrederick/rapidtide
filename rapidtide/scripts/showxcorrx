@@ -20,31 +20,29 @@
 #       $Date: 2016/07/11 14:50:43 $
 #       $Id: showxcorr,v 1.41 2016/07/11 14:50:43 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-import warnings
-import sys
+import getopt
 import os
 import platform
+import sys
+import warnings
 
 import matplotlib
 import numpy as np
 import scipy as sp
-
-import getopt
-import rapidtide.miscmath as tide_math
-import rapidtide.stats as tide_stats
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-import rapidtide.fit as tide_fit
-import rapidtide.correlate as tide_corr
-import rapidtide.nullcorrpassx as tide_nullcorr
-import rapidtide.helper_classes as tide_classes
-
+from matplotlib.pyplot import figure, legend, plot, show
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
 
-from matplotlib.pyplot import plot, legend, show, figure
+import rapidtide.correlate as tide_corr
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+import rapidtide.helper_classes as tide_classes
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.nullcorrpassx as tide_nullcorr
+import rapidtide.stats as tide_stats
 
 
 def printthresholds(pcts, thepercentiles, labeltext):

@@ -24,12 +24,12 @@ package.
 
 """
 
-from __future__ import print_function, division
+from __future__ import division, print_function
+
+import sys
 
 import numpy as np
 from scipy import fftpack, ndimage, signal
-import sys
-
 
 try:
     from memory_profiler import profile

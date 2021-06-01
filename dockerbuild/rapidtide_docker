@@ -21,10 +21,10 @@
 #       $Id: resamp1tc,v 1.12 2016/07/11 14:50:43 frederic Exp $
 #
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-import sys
 import subprocess
+import sys
 
 
 def main():

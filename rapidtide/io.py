@@ -19,14 +19,15 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
+
+import copy
+import json
+import os
+import sys
 
 import numpy as np
-import sys
-import os
 import pandas as pd
-import json
-import copy
 
 # ---------------------------------------- Global constants -------------------------------------------
 MAXLINES = 10000000

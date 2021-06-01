@@ -26,13 +26,14 @@
 A widget for orthographically displaying 3 and 4 dimensional data
 """
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-from pyqtgraph.Qt import QtGui, QtCore
-from PyQt5.QtWidgets import *
-import pyqtgraph as pg
-import numpy as np
 import os
+
+import numpy as np
+import pyqtgraph as pg
+from PyQt5.QtWidgets import *
+from pyqtgraph.Qt import QtCore, QtGui
 
 try:
     from PIL import Image

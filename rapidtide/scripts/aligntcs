@@ -21,19 +21,20 @@
 #       $Id: resamp1tc,v 1.12 2016/07/11 14:50:43 frederic Exp $
 #
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-import sys
 import getopt
+import sys
 
-import rapidtide.io as tide_io
-import rapidtide.resample as tide_resample
-import rapidtide.miscmath as tide_math
+import numpy as np
+from matplotlib.pyplot import figure, plot, show
+
+import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.correlate as tide_corr
-import numpy as np
-from matplotlib.pyplot import plot, show, figure
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.resample as tide_resample
 
 
 def usage():

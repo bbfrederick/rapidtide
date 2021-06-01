@@ -19,13 +19,15 @@
 #       $Date: 2016/01/25 20:17:55 $
 #       $Id: pixelcomp,v 1.4 2016/01/25 20:17:55 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 import getopt
-import rapidtide.io as tide_io
-import matplotlib.pyplot as plt
 import sys
+
+import matplotlib.pyplot as plt
 import numpy as np
+
+import rapidtide.io as tide_io
 
 
 def bland_altman_plot(data1, data2, *args, **kwargs):

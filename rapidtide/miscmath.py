@@ -19,15 +19,15 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import fftpack
-import matplotlib.pyplot as plt
+from statsmodels.robust import mad
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-from statsmodels.robust import mad
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6

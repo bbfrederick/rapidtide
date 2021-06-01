@@ -26,27 +26,26 @@
 A simple GUI for looking at the results of a rapidtide analysis
 """
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-from pyqtgraph.Qt import QtGui, QtCore
-
-import pyqtgraph as pg
-import numpy as np
-
-import rapidtide.tidepoolTemplate_qt5 as uiTemplate
-import rapidtide.stats as tide_stats
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-import rapidtide.miscmath as tide_math
-import sys
-import getopt
 import argparse
-from rapidtide.OrthoImageItem import OrthoImageItem
+import getopt
 import os
+import sys
+
+import numpy as np
 import pandas as pd
+import pyqtgraph as pg
+from nibabel.affines import apply_affine
+from pyqtgraph.Qt import QtCore, QtGui
 from statsmodels.robust.scale import mad
 
-from nibabel.affines import apply_affine
+import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.stats as tide_stats
+import rapidtide.tidepoolTemplate_qt5 as uiTemplate
+from rapidtide.OrthoImageItem import OrthoImageItem
 
 # some predefined colortables
 g2y2r_state = {

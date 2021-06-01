@@ -19,24 +19,22 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
+
+import sys
 
 import numpy as np
-import scipy as sp
-from scipy import fftpack, signal
-from numpy.fft import rfftn, irfftn
 import pylab as pl
-import sys
-from sklearn.metrics import (
-    mutual_info_score,
-    normalized_mutual_info_score,
-    adjusted_mutual_info_score,
-)
+import scipy as sp
+from numpy.fft import irfftn, rfftn
+from scipy import fftpack, signal
+from sklearn.metrics import (adjusted_mutual_info_score, mutual_info_score,
+                             normalized_mutual_info_score)
 
-import rapidtide.util as tide_util
-import rapidtide.resample as tide_resample
 import rapidtide.fit as tide_fit
 import rapidtide.miscmath as tide_math
+import rapidtide.resample as tide_resample
+import rapidtide.util as tide_util
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6

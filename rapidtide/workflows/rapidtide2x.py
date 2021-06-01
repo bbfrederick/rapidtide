@@ -23,9 +23,10 @@
 #
 #
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 import bisect
+import copy
 import getopt
 import multiprocessing as mp
 import os
@@ -40,24 +41,21 @@ from scipy import ndimage
 from statsmodels.tsa.stattools import pacf_yw
 
 import rapidtide.correlate as tide_corr
+import rapidtide.corrfitx as tide_corrfit
+import rapidtide.corrpassx as tide_corrpass
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.glmpass as tide_glmpass
+import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
+import rapidtide.nullcorrpassx as tide_nullcorr
+import rapidtide.refine as tide_refine
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-
-import rapidtide.nullcorrpassx as tide_nullcorr
-import rapidtide.corrpassx as tide_corrpass
-import rapidtide.corrfitx as tide_corrfit
-import rapidtide.refine as tide_refine
-import rapidtide.glmpass as tide_glmpass
-import rapidtide.helper_classes as tide_classes
 import rapidtide.wiener as tide_wiener
-
-import copy
 
 try:
     import mkl

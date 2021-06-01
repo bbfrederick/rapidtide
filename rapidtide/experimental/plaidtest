@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-import numpy as np
 import os
 import time
+
+import numpy as np
 
 os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
 

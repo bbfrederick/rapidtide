@@ -21,43 +21,39 @@
 #
 #
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 import argparse
-import time
+import bisect
+import copy
 import multiprocessing as mp
 import platform
-import warnings
 import sys
+import time
+import warnings
 
+import nibabel as nib
 import numpy as np
 from scipy import ndimage
 
 import rapidtide.correlate as tide_corr
+import rapidtide.corrfitx as tide_corrfit
+import rapidtide.corrpassx as tide_corrpass
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.glmpass as tide_glmpass
+import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
+import rapidtide.nullcorrpassx as tide_nullcorr
+import rapidtide.refine as tide_refine
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-
-import rapidtide.nullcorrpassx as tide_nullcorr
-import rapidtide.corrpassx as tide_corrpass
-import rapidtide.corrfitx as tide_corrfit
-import rapidtide.refine as tide_refine
-import rapidtide.glmpass as tide_glmpass
-import rapidtide.helper_classes as tide_classes
 import rapidtide.wiener as tide_wiener
 
-import nibabel as nib
-
-import copy
-
-import bisect
-
-from .parser_funcs import is_valid_file, invert_float, is_float
+from .parser_funcs import invert_float, is_float, is_valid_file
 
 try:
     import mkl

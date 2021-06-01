@@ -20,40 +20,37 @@
 #       $Date: 2016/07/11 14:50:43 $
 #       $Id: showxcorr,v 1.41 2016/07/11 14:50:43 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-# import matplotlib
-# matplotlib.use('pdf')
-from matplotlib.pyplot import plot, scatter, show, figure
-
-import time
-import sys
+import copy
+# import gc
+import getopt
 import os
 import platform
+import sys
+import time
+import warnings
 
 import numpy as np
 import scipy as sp
-
-# import gc
-import getopt
-import rapidtide.miscmath as tide_math
-import rapidtide.stats as tide_stats
-import rapidtide.util as tide_util
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-import rapidtide.fit as tide_fit
-import rapidtide.resample as tide_resample
-import rapidtide.correlate as tide_corr
-import rapidtide.multiproc as tide_multiproc
-import rapidtide.glmpass as tide_glmpass
-import rapidtide.helper_classes as tide_classes
-
-from scipy.signal import welch, savgol_filter
+# import matplotlib
+# matplotlib.use('pdf')
+from matplotlib.pyplot import figure, plot, scatter, show
+from scipy.signal import savgol_filter, welch
 from scipy.stats import kurtosis, skew
 from statsmodels.robust import mad
-import copy
 
-import warnings
+import rapidtide.correlate as tide_corr
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+import rapidtide.glmpass as tide_glmpass
+import rapidtide.helper_classes as tide_classes
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.multiproc as tide_multiproc
+import rapidtide.resample as tide_resample
+import rapidtide.stats as tide_stats
+import rapidtide.util as tide_util
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 

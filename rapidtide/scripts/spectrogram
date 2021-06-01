@@ -20,19 +20,20 @@
 #       $Date: 2016/06/14 12:04:51 $
 #       $Id: spectrogram,v 1.5 2016/06/14 12:04:51 frederic Exp $
 #
-from __future__ import print_function, division
-import sys
+from __future__ import division, print_function
+
 import datetime
+import sys
 
-import numpy as np
 import matplotlib as mpl
-
-import rapidtide.io as tide_io
-import rapidtide.helper_classes as tide_classes
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import mlab
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy import arange
+
+import rapidtide.helper_classes as tide_classes
+import rapidtide.io as tide_io
 
 
 def usage():

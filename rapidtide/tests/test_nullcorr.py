@@ -14,28 +14,23 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from __future__ import print_function, division
+from __future__ import division, print_function
 
+import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 
-import rapidtide.filter as tide_filt
 import rapidtide.correlate as tide_corr
-import rapidtide.stats as tide_stats
+import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.nullcorrpass as tide_nullcorr
 import rapidtide.nullcorrpassx as tide_nullcorrx
-
-import matplotlib.pyplot as plt
-from rapidtide.tests.utils import (
-    get_test_data_path,
-    get_test_target_path,
-    get_test_temp_path,
-    get_examples_path,
-    get_rapidtide_root,
-    get_scripts_path,
-    create_dir,
-)
-import os
+import rapidtide.stats as tide_stats
+from rapidtide.tests.utils import (create_dir, get_examples_path,
+                                   get_rapidtide_root, get_scripts_path,
+                                   get_test_data_path, get_test_target_path,
+                                   get_test_temp_path)
 
 
 def test_nullcorr(debug=False, display=False):

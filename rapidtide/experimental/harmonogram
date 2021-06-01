@@ -20,20 +20,22 @@
 #       $Id: showtc,v 1.16 2016/07/11 14:50:43 frederic Exp $
 #
 from __future__ import print_function
-import sys
-import os
+
 import getopt
+import os
+import sys
+
 import matplotlib.cm as cm
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
-import rapidtide.fit as tide_fit
-import rapidtide.miscmath as tide_math
 import numpy as np
+from matplotlib.pyplot import figure, imshow, savefig, setp, show
 from scipy import arange, fftpack
 from scipy.interpolate import interp1d
 from scipy.signal import decimate
 
-from matplotlib.pyplot import figure, show, savefig, setp, imshow
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 
 
 def makedivisible(number, highestfac, debug=False):

@@ -14,15 +14,14 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from __future__ import print_function, division
+from __future__ import division, print_function
 
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 
 from rapidtide.resample import congrid
 from rapidtide.tests.utils import mse
-
-import matplotlib.pyplot as plt
 
 
 def funcvalue2(x, frequency=1.0, phase=0.0, amplitude=1.5):

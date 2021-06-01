@@ -182,10 +182,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "outputroot",
-        help="name root for output files",
-        action=FullPaths,
-        type=str,
+        "outputroot", help="name root for output files", action=FullPaths, type=str,
     )
 
     parser.add_argument(
@@ -204,10 +201,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--fitorder",
-        help="order of polynomial fit to template\n",
-        type=int,
-        default=1,
+        "--fitorder", help="order of polynomial fit to template\n", type=int, default=1,
     )
 
     parser.add_argument(
@@ -226,9 +220,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--debug",
-        help="output additionnal debugging information",
-        action="store_true",
+        "--debug", help="output additionnal debugging information", action="store_true",
     )
 
     args = parser.parse_args()

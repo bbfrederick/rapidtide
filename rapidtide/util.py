@@ -19,18 +19,19 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-import numpy as np
-import time
-import sys
 import bisect
 import os
 import resource
-import matplotlib.pyplot as plt
+import sys
+import time
 
-import rapidtide.io as tide_io
+import matplotlib.pyplot as plt
+import numpy as np
+
 import rapidtide._version as tide_versioneer
+import rapidtide.io as tide_io
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6

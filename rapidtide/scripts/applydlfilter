@@ -16,18 +16,21 @@
 #   limitations under the License.
 
 
-from __future__ import print_function, division
+from __future__ import division, print_function
+
 import getopt
-import matplotlib.pyplot as plt
 import sys
-import rapidtide.io as tide_io
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+import rapidtide.correlate as tide_corr
 import rapidtide.dlfilter as dlfilter
 import rapidtide.filter as tide_filt
-import rapidtide.correlate as tide_corr
+import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
-import rapidtide.fit as tide_fit
-import numpy as np
 
 
 def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):

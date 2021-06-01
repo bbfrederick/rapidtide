@@ -16,24 +16,20 @@
 #   limitations under the License.
 from __future__ import print_function
 
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import arange
 import os
 
-import rapidtide.io as tide_io
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import arange
+
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 import rapidtide.workflows.rapidtide2x as rapidtide2x_workflow
-from rapidtide.tests.utils import (
-    get_test_data_path,
-    get_test_target_path,
-    get_test_temp_path,
-    get_examples_path,
-    get_rapidtide_root,
-    get_scripts_path,
-    create_dir,
-)
+from rapidtide.tests.utils import (create_dir, get_examples_path,
+                                   get_rapidtide_root, get_scripts_path,
+                                   get_test_data_path, get_test_target_path,
+                                   get_test_temp_path)
 
 
 def test_rapidtide2x(debug=False):

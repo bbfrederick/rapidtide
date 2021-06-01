@@ -21,11 +21,14 @@
 #       $Id: histnifti,v 1.8 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function
+
+import getopt
+import sys
+
+import numpy as np
+
 import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
-import sys
-import numpy as np
-import getopt
 
 
 def usage():

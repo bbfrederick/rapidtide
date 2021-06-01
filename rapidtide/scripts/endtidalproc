@@ -21,13 +21,16 @@
 #       $Id: showtc,v 1.16 2016/07/11 14:50:43 frederic Exp $
 #
 from __future__ import print_function
-import sys
-import getopt
+
 import bisect
-import rapidtide.io as tide_io
-import rapidtide.fit as tide_fit
+import getopt
+import sys
+
 import numpy as np
 from scipy import arange
+
+import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 
 
 def phase(mcv):

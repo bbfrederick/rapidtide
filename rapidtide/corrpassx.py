@@ -23,9 +23,11 @@
 #
 #
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 import gc
+# this is here until numpy deals with their fft issue
+import warnings
 
 import numpy as np
 
@@ -34,9 +36,6 @@ import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
-
-# this is here until numpy deals with their fft issue
-import warnings
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 

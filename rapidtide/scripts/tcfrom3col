@@ -20,15 +20,16 @@
 #       $Date: 2016/07/11 14:50:43 $
 #       $Id: showxcorr,v 1.41 2016/07/11 14:50:43 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
 
+import argparse
 import bisect
+
 import numpy as np
 from matplotlib.pyplot import figure, plot, show
+
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
-import argparse
-
 
 # get the command line parameters
 parser = argparse.ArgumentParser(description="Plots the data in text files.")

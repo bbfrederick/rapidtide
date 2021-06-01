@@ -23,17 +23,18 @@
 #
 #
 
-from __future__ import print_function, division
+from __future__ import division, print_function
+
+import sys
 
 import numpy as np
+
+import rapidtide.corrfitx as tide_corrfit
+import rapidtide.corrpassx as tide_corrpass
+import rapidtide.filter as tide_filt
+import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.util as tide_util
-import rapidtide.miscmath as tide_math
-import rapidtide.filter as tide_filt
-
-import rapidtide.corrpassx as tide_corrpass
-import rapidtide.corrfitx as tide_corrfit
-import sys
 
 
 # note: rawtimecourse has been filtered, but NOT windowed

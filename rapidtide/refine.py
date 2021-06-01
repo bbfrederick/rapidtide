@@ -23,24 +23,24 @@
 #
 #
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 import gc
 import sys
 
-import rapidtide.miscmath as tide_math
-import rapidtide.util as tide_util
-import rapidtide.io as tide_io
+import numpy as np
+from scipy.signal import welch
+from scipy.stats.stats import pearsonr
+from sklearn.decomposition import PCA, FastICA
+
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
-
-from sklearn.decomposition import FastICA, PCA
-import numpy as np
-from scipy.stats.stats import pearsonr
-from scipy.signal import welch
+import rapidtide.util as tide_util
 
 
 def _procOneVoxelTimeShift(

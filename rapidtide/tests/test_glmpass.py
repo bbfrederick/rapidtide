@@ -14,14 +14,14 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from __future__ import print_function, division
+from __future__ import division, print_function
 
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
-import matplotlib.pyplot as plt
 
-from rapidtide.tests.utils import mse
 import rapidtide.glmpass as tide_glmpass
+from rapidtide.tests.utils import mse
 
 
 def gen2d(xsize=150, xcycles=11, tsize=200, tcycles=13, mean=10.0):

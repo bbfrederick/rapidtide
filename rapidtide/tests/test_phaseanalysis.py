@@ -20,32 +20,26 @@
 #       $Date: 2016/07/11 14:50:43 $
 #       $Id: showxcorr,v 1.41 2016/07/11 14:50:43 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 
-import rapidtide.miscmath as tide_math
-import rapidtide.util as tide_util
-import rapidtide.io as tide_io
+import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.resample as tide_resample
-import rapidtide.correlate as tide_corr
-import rapidtide.multiproc as tide_multiproc
 import rapidtide.glmpass as tide_glmpass
-from rapidtide.tests.utils import (
-    get_test_data_path,
-    get_test_target_path,
-    get_test_temp_path,
-    get_examples_path,
-    get_rapidtide_root,
-    get_scripts_path,
-)
-
-
-import matplotlib.pyplot as plt
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.multiproc as tide_multiproc
+import rapidtide.resample as tide_resample
+import rapidtide.util as tide_util
+from rapidtide.tests.utils import (get_examples_path, get_rapidtide_root,
+                                   get_scripts_path, get_test_data_path,
+                                   get_test_target_path, get_test_temp_path)
 
 
 def eval_phaseanalysis(inname=None, outname=None, display=False):

@@ -21,13 +21,16 @@
 #       $Id: showtc,v 1.16 2016/07/11 14:50:43 frederic Exp $
 #
 from __future__ import print_function
-import sys
-import os
+
 import getopt
-import rapidtide.io as tide_io
-import rapidtide.filter as tide_filt
+import os
+import sys
+
 import numpy as np
 from scipy import arange, fftpack, linspace
+
+import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
 
 
 def usage():

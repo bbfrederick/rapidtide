@@ -18,13 +18,13 @@ from __future__ import print_function
 
 import os.path as op
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import arange
 
-import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
 import rapidtide.helper_classes as tide_classes
+import rapidtide.io as tide_io
 from rapidtide.tests.utils import get_test_data_path
 
 

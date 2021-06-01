@@ -23,8 +23,10 @@
 #
 #
 
-from __future__ import print_function, division
+from __future__ import division, print_function
+
 import sys
+
 import rapidtide.workflows.rapidtideX as rapidtideX_workflow
 
 if __name__ == "__main__":

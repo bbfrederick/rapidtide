@@ -20,12 +20,15 @@
 #       $Date: 2016/06/14 12:04:50 $
 #       $Id: linfit,v 1.4 2016/06/14 12:04:50 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
+
 import getopt
+import sys
+
+import numpy as np
+
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import sys
-import numpy as np
 
 
 def usage():

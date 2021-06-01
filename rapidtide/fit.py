@@ -19,15 +19,14 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
+
+import warnings
 
 import matplotlib.pyplot as pl
-
 import numpy as np
 import scipy as sp
 import scipy.special as sps
-import warnings
-
 from scipy.signal import hilbert
 
 import rapidtide.util as tide_util

@@ -23,13 +23,14 @@ Created on Sat Jul 28 23:01:07 2018
 import matplotlib as mpl
 
 mpl.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
+import glob
 import os
 import sys
-from statsmodels.robust.scale import mad
-import glob
+
+import matplotlib.pyplot as plt
+import numpy as np
 from scipy import fftpack
+from statsmodels.robust.scale import mad
 
 try:
     import pyfftw
@@ -50,23 +51,12 @@ try:
 except ImportError:
     print("falling back to standard keras")
 
-from keras.models import Sequential
+from keras.callbacks import ModelCheckpoint, TerminateOnNaN
+from keras.layers import (LSTM, Activation, BatchNormalization, Bidirectional,
+                          Convolution1D, Dense, Dropout, GlobalMaxPool1D,
+                          MaxPooling1D, TimeDistributed, UpSampling1D)
+from keras.models import Sequential, load_model
 from keras.optimizers import RMSprop
-from keras.layers import (
-    Bidirectional,
-    Convolution1D,
-    Dense,
-    Activation,
-    Dropout,
-    BatchNormalization,
-    LSTM,
-    TimeDistributed,
-    MaxPooling1D,
-    UpSampling1D,
-    GlobalMaxPool1D,
-)
-from keras.callbacks import TerminateOnNaN, ModelCheckpoint
-from keras.models import load_model
 
 
 class dlfilter:

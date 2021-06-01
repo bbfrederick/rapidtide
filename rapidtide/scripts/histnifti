@@ -21,8 +21,10 @@
 #       $Id: histnifti,v 1.8 2016/06/14 12:04:50 frederic Exp $
 #
 from __future__ import print_function
-import rapidtide.io as tide_io
+
 import sys
+
+import rapidtide.io as tide_io
 
 
 def usage():
