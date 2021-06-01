@@ -21,11 +21,11 @@
 #       $Id: resamp1tc,v 1.12 2016/07/11 14:50:43 frederic Exp $
 #
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-import sys
 import os
 import subprocess
+import sys
 
 
 def main():
@@ -33,9 +33,11 @@ def main():
     if os.getenv("IS_DOCKER_8395080871") is not None:
         isdocker = True
         execdir = sys.path[0]
+        versionfile = "/src/rapidtide/VERSION"
     else:
         isdocker = False
         execdir = sys.path[0]
+        versionfile = "./VERSION"
     validcommands = [
         "aligntcs",
         "applydlfilter",
@@ -77,6 +79,7 @@ def main():
         "threeD",
         "tidepool",
         "xyzzy",
+        "info",
     ]
 
     thecommand = sys.argv[1:]
@@ -90,7 +93,7 @@ def main():
             print(f"isdocker: {isdocker}")
             print(f"execdir: {execdir}")
             print(f"cwd: {os.getcwd()}")
-            with open("/src/rapidtide/VERSION", "r") as f:
+            with open(versionfile, "r") as f:
                 theversion = f.read().replace("\n", "")
             print(f"version: {theversion}")
             print("valid commands:")
