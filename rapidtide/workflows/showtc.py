@@ -310,9 +310,7 @@ def showtc(args):
 
                 if useHamming:
                     freqaxis, spectrum = tide_filt.spectrum(
-                        tide_filt.hamming(len(invec)) * invec,
-                        Fs=thissamplerate,
-                        mode=specmode,
+                        tide_filt.hamming(len(invec)) * invec, Fs=thissamplerate, mode=specmode,
                     )
                 else:
                     freqaxis, spectrum = tide_filt.spectrum(
@@ -320,8 +318,7 @@ def showtc(args):
                     )
                 if savespec:
                     tide_io.writenpvecs(
-                        np.transpose(np.stack([freqaxis, spectrum], axis=1)),
-                        "thespectrum.txt",
+                        np.transpose(np.stack([freqaxis, spectrum], axis=1)), "thespectrum.txt",
                     )
                 xvecs.append(freqaxis)
                 yvecs.append(spectrum)

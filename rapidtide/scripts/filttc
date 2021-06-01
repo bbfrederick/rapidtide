@@ -95,14 +95,9 @@ def main():
     args, thefilter = pf.postprocessfilteropts(args)
 
     # read in data
-    (
-        samplerate,
-        dummy,
-        colnames,
-        invecs,
-        compressed,
-        filetype,
-    ) = tide_io.readvectorsfromtextfile(args.inputfile)
+    (samplerate, dummy, colnames, invecs, compressed, filetype,) = tide_io.readvectorsfromtextfile(
+        args.inputfile
+    )
 
     if samplerate is None:
         if args.samplerate == "auto":

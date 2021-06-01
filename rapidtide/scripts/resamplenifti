@@ -44,10 +44,7 @@ def main():
         default=True,
     )
     parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Print debugging information",
-        default=False,
+        "--debug", action="store_true", help="Print debugging information", default=False,
     )
 
     args = parser.parse_args()
@@ -67,11 +64,7 @@ def main():
     inputendtime = inputstarttime + inputtr * (numinputtrs - 1)
     if args.debug:
         print(
-            "input start,end,tr,numtrs",
-            inputstarttime,
-            inputendtime,
-            inputtr,
-            numinputtrs,
+            "input start,end,tr,numtrs", inputstarttime, inputendtime, inputtr, numinputtrs,
         )
     input_x = (
         np.linspace(0.0, inputtr * numinputtrs, num=numinputtrs, endpoint=False) - inputstarttime
@@ -109,10 +102,7 @@ def main():
         for yloc in range(0, ysize):
             for xloc in range(0, xsize):
                 resampledtcs[xloc, yloc, zloc, :] = tide_resample.doresample(
-                    input_x,
-                    input_data[xloc, yloc, zloc, :],
-                    output_x,
-                    antialias=args.antialias,
+                    input_x, input_data[xloc, yloc, zloc, :], output_x, antialias=args.antialias,
                 )
 
     # now do the ones with other numbers of time points

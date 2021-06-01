@@ -332,13 +332,9 @@ def simdata_main(thearguments):
 
     # read in the immean file
     print("reading in source files")
-    (
-        nim_immean,
-        immeandata,
-        immeanheader,
-        immeandims,
-        immeansizes,
-    ) = tide_io.readfromnifti(args.immeanfilename)
+    (nim_immean, immeandata, immeanheader, immeandims, immeansizes,) = tide_io.readfromnifti(
+        args.immeanfilename
+    )
     if not tide_io.checkspacedimmatch(immeandims, fmridims):
         print("immean file does not match")
         exit()

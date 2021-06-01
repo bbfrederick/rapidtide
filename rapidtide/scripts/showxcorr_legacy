@@ -34,14 +34,7 @@ import rapidtide.stats as tide_stats
 
 
 def getNullDistributionData(
-    indata,
-    xcorr_x,
-    thefilter,
-    windowfunc,
-    detrendorder,
-    searchstart,
-    searchend,
-    numreps=1000,
+    indata, xcorr_x, thefilter, windowfunc, detrendorder, searchstart, searchend, numreps=1000,
 ):
     print("estimating significance distribution using ", numreps, " repetitions")
     corrlist = zeros(numreps, dtype="float")
@@ -57,9 +50,7 @@ def getNullDistributionData(
 
         # filter it
         filteredshuffleddata = tide_math.corrnormalize(
-            thefilter.apply(Fs, shuffleddata),
-            windowfunc=windowfunc,
-            detrendorder=detrendorder,
+            thefilter.apply(Fs, shuffleddata), windowfunc=windowfunc, detrendorder=detrendorder,
         )
 
         # crosscorrelate with original
@@ -315,14 +306,10 @@ def main():
         if verbose:
             print("filtering to ", theprefilter.gettype(), " band")
     filtereddata1 = tide_math.corrnormalize(
-        theprefilter.apply(Fs, trimdata1),
-        windowfunc=windowfunc,
-        detrendorder=detrendorder,
+        theprefilter.apply(Fs, trimdata1), windowfunc=windowfunc, detrendorder=detrendorder,
     )
     filtereddata2 = tide_math.corrnormalize(
-        theprefilter.apply(Fs, trimdata2),
-        windowfunc=windowfunc,
-        detrendorder=detrendorder,
+        theprefilter.apply(Fs, trimdata2), windowfunc=windowfunc, detrendorder=detrendorder,
     )
     if flipregressor:
         filtereddata2 *= -1.0
@@ -423,14 +410,10 @@ def main():
         )
         if debug:
             tide_stats.printthresholds(
-                pcts,
-                thepercentiles,
-                "Crosscorrelation significance thresholds from data:",
+                pcts, thepercentiles, "Crosscorrelation significance thresholds from data:",
             )
             tide_stats.printthresholds(
-                pcts_fit,
-                thepercentiles,
-                "Crosscorrelation significance thresholds from fit:",
+                pcts_fit, thepercentiles, "Crosscorrelation significance thresholds from fit:",
             )
 
         # calculate significance for the pearson correlation
@@ -439,9 +422,7 @@ def main():
         )
         if debug:
             tide_stats.printthresholds(
-                pearpcts,
-                thepercentiles,
-                "Pearson correlation significance thresholds from data:",
+                pearpcts, thepercentiles, "Pearson correlation significance thresholds from data:",
             )
             tide_stats.printthresholds(
                 pearpcts_fit,
@@ -459,10 +440,7 @@ def main():
         if estimate_significance:
             for idx, percentile in enumerate(thepercentiles):
                 print(
-                    "    pear_p(",
-                    "{:.3f}".format(1.0 - percentile),
-                    "):\t",
-                    pearpcts[idx],
+                    "    pear_p(", "{:.3f}".format(1.0 - percentile), "):\t", pearpcts[idx],
                 )
         print("")
 
@@ -478,10 +456,7 @@ def main():
             if estimate_significance:
                 for idx, percentile in enumerate(thepercentiles):
                     print(
-                        "    xc_p(",
-                        "{:.3f}".format(1.0 - percentile),
-                        "):\t",
-                        pcts[idx],
+                        "    xc_p(", "{:.3f}".format(1.0 - percentile), "):\t", pcts[idx],
                     )
             print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
 
@@ -512,11 +487,7 @@ def main():
             if uselabel:
                 if labelline:
                     print(
-                        "thelabel",
-                        "pearson_r",
-                        "pearson_p",
-                        "xcorr_R",
-                        "xcorr_maxdelay",
+                        "thelabel", "pearson_r", "pearson_p", "xcorr_R", "xcorr_maxdelay",
                     )
                 print(thelabel, thepxcorr[0], thepxcorr[1], R, -maxdelay)
             else:

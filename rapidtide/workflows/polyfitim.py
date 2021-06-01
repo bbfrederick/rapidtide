@@ -77,13 +77,7 @@ def _get_parser():
 
 
 def polyfitim(
-    datafile,
-    datamask,
-    templatefile,
-    templatemask,
-    outputroot,
-    regionatlas=None,
-    order=1,
+    datafile, datamask, templatefile, templatemask, outputroot, regionatlas=None, order=1,
 ):
 
     # read in data
@@ -223,16 +217,12 @@ def polyfitim(
                 voxelstoreconstruct = np.where(regionvoxels[:, region] > 0.5)
                 if order == 2:
                     thefit, R = tide_fit.mlregress(
-                        [
-                            rs_templatefile[voxelstofit],
-                            np.square(rs_templatefile[voxelstofit]),
-                        ],
+                        [rs_templatefile[voxelstofit], np.square(rs_templatefile[voxelstofit]),],
                         rs_datafile[voxelstofit, thetime][0],
                     )
                 else:
                     thefit, R = tide_fit.mlregress(
-                        rs_templatefile[voxelstofit],
-                        rs_datafile[voxelstofit, thetime][0],
+                        rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0],
                     )
                 lincoffs[region, thetime] = thefit[0, 1]
                 offsets[region, thetime] = thefit[0, 0]
@@ -299,9 +289,7 @@ def polyfitim(
 
     print("writing nifti series")
     tide_io.savetonifti(
-        fitdata.reshape((xsize, ysize, numslices, timepoints)),
-        datafile_hdr,
-        outputroot + "_fit",
+        fitdata.reshape((xsize, ysize, numslices, timepoints)), datafile_hdr, outputroot + "_fit",
     )
     tide_io.savetonifti(
         residuals.reshape((xsize, ysize, numslices, timepoints)),

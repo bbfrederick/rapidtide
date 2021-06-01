@@ -115,11 +115,7 @@ clims = (datarobustmax * fracval, 2.0 * datarobustmax)
 for thevol in vollist:
     volumelist.append(
         scene.visuals.Volume(
-            thevol,
-            parent=view.scene,
-            threshold=0.2,
-            emulate_texture=emulate_texture,
-            clim=clims,
+            thevol, parent=view.scene, threshold=0.2, emulate_texture=emulate_texture, clim=clims,
         )
     )
     volumelist[-1].transform = scene.STTransform(translate=transfacs)

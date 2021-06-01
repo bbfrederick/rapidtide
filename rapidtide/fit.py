@@ -193,11 +193,7 @@ def kaiserbessel_eval(x, p):
     normfac = sps.i0(p[0] * np.sqrt(1.0 - np.square((0.0 / p[1])))) / p[1]
     sqrtargs = 1.0 - np.square((x / p[1]))
     sqrtargs[np.where(sqrtargs < 0.0)] = 0.0
-    return np.where(
-        np.fabs(x) <= p[1],
-        sps.i0(p[0] * np.sqrt(sqrtargs)) / p[1] / normfac,
-        0.0,
-    )
+    return np.where(np.fabs(x) <= p[1], sps.i0(p[0] * np.sqrt(sqrtargs)) / p[1] / normfac, 0.0,)
 
 
 @conditionaljit()
@@ -860,12 +856,7 @@ def findmaxlag_gauss(
         ax.set_title("Data and fit")
         hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
         plt.plot(
-            X,
-            data,
-            "ro",
-            hiresx,
-            gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])),
-            "b-",
+            X, data, "ro", hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), "b-",
         )
         plt.show()
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend
@@ -1193,12 +1184,7 @@ def findmaxlag_gauss_rev(
         ax.set_title("Data and fit")
         hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
         plt.plot(
-            X,
-            data,
-            "ro",
-            hiresx,
-            gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])),
-            "b-",
+            X, data, "ro", hiresx, gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])), "b-",
         )
         plt.show()
     return (

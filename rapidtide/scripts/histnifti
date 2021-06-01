@@ -130,13 +130,9 @@ def main():
 
     if args.maskfile is not None:
         print("loading mask...")
-        (
-            mask_img,
-            mask_data,
-            mask_hdr,
-            themaskdims,
-            themasksizes,
-        ) = tide_io.readfromnifti(args.maskfile)
+        (mask_img, mask_data, mask_hdr, themaskdims, themasksizes,) = tide_io.readfromnifti(
+            args.maskfile
+        )
         if not tide_io.checkspacematch(mask_hdr, input_hdr):
             print("Dimensions of " + args.maskfile + " mask do not match the input data - exiting")
             sys.exit()
@@ -197,9 +193,7 @@ def main():
         outputimg = outmatrix.reshape((xsize, ysize, numslices, timepoints))
         theheader = copy.deepcopy(input_hdr)
         tide_io.savetonifti(
-            outputimg,
-            theheader,
-            args.outputroot + "_sorted",
+            outputimg, theheader, args.outputroot + "_sorted",
         )
 
         # now pull out and save the percentiles
@@ -231,9 +225,7 @@ def main():
         theheader["pixdim"][4] = 1.0 / (len(thepercentiles) - 1)
         theheader["toffset"] = 0.0
         tide_io.savetonifti(
-            outputimg,
-            theheader,
-            args.outputroot + "_pcts",
+            outputimg, theheader, args.outputroot + "_pcts",
         )
         del pcts_data
 
@@ -269,9 +261,7 @@ def main():
         theheader["pixdim"][4] = bins[1] - bins[0]
         theheader["toffset"] = bins[0]
         tide_io.savetonifti(
-            outputimg,
-            theheader,
-            args.outputroot + "_hists",
+            outputimg, theheader, args.outputroot + "_hists",
         )
 
     else:

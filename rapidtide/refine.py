@@ -453,8 +453,7 @@ def refineregressor(
             optiondict["outputname"] + "_dispersioncalcspecphase_pass" + str(passnum) + ".txt",
         )
         tide_io.writenpvecs(
-            freqs,
-            optiondict["outputname"] + "_dispersioncalcfreqs_pass" + str(passnum) + ".txt",
+            freqs, optiondict["outputname"] + "_dispersioncalcfreqs_pass" + str(passnum) + ".txt",
         )
 
     if optiondict["pcacomponents"] < 0.0:

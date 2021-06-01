@@ -639,14 +639,10 @@ def main():
         )
         if args.debug:
             tide_stats.printthresholds(
-                pcts,
-                thepercentiles,
-                "Crosscorrelation significance thresholds from data:",
+                pcts, thepercentiles, "Crosscorrelation significance thresholds from data:",
             )
             tide_stats.printthresholds(
-                pcts_fit,
-                thepercentiles,
-                "Crosscorrelation significance thresholds from fit:",
+                pcts_fit, thepercentiles, "Crosscorrelation significance thresholds from fit:",
             )
 
         print("calculating null Pearson correlations")
@@ -669,9 +665,7 @@ def main():
         )
         if args.debug:
             tide_stats.printthresholds(
-                pearpcts,
-                thepercentiles,
-                "Pearson correlation significance thresholds from data:",
+                pearpcts, thepercentiles, "Pearson correlation significance thresholds from data:",
             )
             tide_stats.printthresholds(
                 pearpcts_fit,

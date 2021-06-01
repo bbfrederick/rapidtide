@@ -128,11 +128,7 @@ def wienerpass(
                     datatoremove[vox],
                     filtereddata[vox],
                 ) = _procOneVoxelWiener(
-                    vox,
-                    lagtc[vox, :],
-                    inittc,
-                    rt_floatset=rt_floatset,
-                    t_floattype=rt_floattype,
+                    vox, lagtc[vox, :], inittc, rt_floatset=rt_floatset, t_floattype=rt_floattype,
                 )
             volumetotal += 1
 

@@ -90,11 +90,7 @@ def transformmaps(
                     os.path.join(theoutputdir, subjroot + outputtag + themap + ".nii.gz")
                 )
                 thecommand = makefslcmd(
-                    inputname,
-                    reftarget,
-                    xformfuncmat,
-                    outputname,
-                    warpfile=warpfuncfile,
+                    inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile,
                 )
 
                 if preponly:

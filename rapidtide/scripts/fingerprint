@@ -79,13 +79,9 @@ def fingerprint_main(
     ) = tide_io.readfromnifti(thetemplatename)
     atlas, atlas_data, atlas_hdr, atlasdims, atlassizes = tide_io.readfromnifti(theatlasname)
     atlaslabels = pd.read_csv(theatlasregionsname, delimiter="\t", header=None, names=["Region"])
-    (
-        themap,
-        themap_data,
-        themap_hdr,
-        themapdims,
-        thetemplatesizes,
-    ) = tide_io.readfromnifti(themapname)
+    (themap, themap_data, themap_hdr, themapdims, thetemplatesizes,) = tide_io.readfromnifti(
+        themapname
+    )
     if themaskname is None:
         themask_data = None
     else:
@@ -173,17 +169,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "outputroot",
-        help="name root for output files",
-        action=FullPaths,
-        type=str,
+        "outputroot", help="name root for output files", action=FullPaths, type=str,
     )
 
     parser.add_argument(
-        "--maskname",
-        help="mask defining voxels with valid values",
-        type=is_file,
-        default=None,
+        "--maskname", help="mask defining voxels with valid values", type=is_file, default=None,
     )
 
     parser.add_argument(
@@ -195,10 +185,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--fitorder",
-        help="order of polynomial fit to template\n",
-        type=int,
-        default=1,
+        "--fitorder", help="order of polynomial fit to template\n", type=int, default=1,
     )
 
     parser.add_argument(
@@ -217,9 +204,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--debug",
-        help="output additionnal debugging information",
-        action="store_true",
+        "--debug", help="output additionnal debugging information", action="store_true",
     )
 
     args = parser.parse_args()

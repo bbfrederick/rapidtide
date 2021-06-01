@@ -74,9 +74,7 @@ testlist["numnull"] = {
 }
 testlist["fixdelay"] = {
     "command": ["--fixdelay", "0.0"],
-    "results": [
-        ["fixeddelayvalue", 0.0, "isfloat"],
-    ],
+    "results": [["fixeddelayvalue", 0.0, "isfloat"],],
 }
 
 

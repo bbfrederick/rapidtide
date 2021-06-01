@@ -37,10 +37,7 @@ def parsearglist():
         "textfilename", help="A text input files, with optional column specification"
     )
     parser.add_argument(
-        "--display",
-        dest="display",
-        action="store_true",
-        help="display the fit spectrum",
+        "--display", dest="display", action="store_true", help="display the fit spectrum",
     )
     parser.add_argument(
         "--samplerate",
@@ -96,10 +93,7 @@ def getwavefreq(
         plt.figure()
         plt.plot(thex, they, "k")
         plt.plot(
-            [initpeakfreq / 60.0, initpeakfreq / 60.0],
-            [np.min(they), np.max(they)],
-            "r-",
-            lw=2,
+            [initpeakfreq / 60.0, initpeakfreq / 60.0], [np.min(they), np.max(they)], "r-", lw=2,
         )
         plt.show()
     if initpeakfreq > maxpermin:
@@ -147,13 +141,9 @@ def main():
     textfileinfo = theargs.textfilename.split(":")
     filebase, extension = os.path.splitext(textfileinfo[0])
     if extension == ".json":
-        (
-            thissamplerate,
-            thisstartoffset,
-            colnames,
-            invec,
-            compressed,
-        ) = tide_io.readbidstsv(textfileinfo[0])
+        (thissamplerate, thisstartoffset, colnames, invec, compressed,) = tide_io.readbidstsv(
+            textfileinfo[0]
+        )
     else:
         invec = tide_io.readvecs(textfileinfo[0])[0]
         thissamplerate = theargs.samplerate

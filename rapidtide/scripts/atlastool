@@ -202,9 +202,7 @@ def main():
                 outputvoxels[i] = np.argmax(templatevoxels[i, :]) + 1
         template_hdr["dim"][4] = 1
         tide_io.savetonifti(
-            outputvoxels.reshape((xsize, ysize, numslices)),
-            template_hdr,
-            args.outputtemplatename,
+            outputvoxels.reshape((xsize, ysize, numslices)), template_hdr, args.outputtemplatename,
         )
 
 

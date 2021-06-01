@@ -39,8 +39,7 @@ def _get_parser():
         usage="%(prog)s infilename outfilename [options]",
     )
     parser.add_argument(
-        "infilename",
-        help="a text file containing a single gas trace, one timepoint per line",
+        "infilename", help="a text file containing a single gas trace, one timepoint per line",
     )
     parser.add_argument("outfilename", help="a text file for the interpolated data")
     parser.add_argument(

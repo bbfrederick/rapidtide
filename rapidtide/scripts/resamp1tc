@@ -90,14 +90,9 @@ def main():
 
     intimestep = 1.0 / args.insamplerate
     outtimestep = 1.0 / args.outsamplerate
-    (
-        dummy,
-        dummy,
-        dummy,
-        inputdata,
-        compressed,
-        filetype,
-    ) = tide_io.readvectorsfromtextfile(args.inputfile, onecol=True)
+    (dummy, dummy, dummy, inputdata, compressed, filetype,) = tide_io.readvectorsfromtextfile(
+        args.inputfile, onecol=True
+    )
     inputdata = inputdata[0, :]
 
     outputdata = tide_resample.arbresample(

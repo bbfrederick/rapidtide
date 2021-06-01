@@ -116,9 +116,7 @@ def main():
     )
 
     tide_io.savetonifti(
-        theaslimage,
-        thedataset.overlays["lagstrengths"].header,
-        args.outputfilename + "_ASL",
+        theaslimage, thedataset.overlays["lagstrengths"].header, args.outputfilename + "_ASL",
     )
     tide_io.savetonifti(
         tagdecayfac,
@@ -126,34 +124,22 @@ def main():
         args.outputfilename + "_tagdecayfac",
     )
     tide_io.savetonifti(
-        oxyfac,
-        thedataset.overlays["lagstrengths"].header,
-        args.outputfilename + "_oxyfac",
+        oxyfac, thedataset.overlays["lagstrengths"].header, args.outputfilename + "_oxyfac",
     )
     tide_io.savetonifti(
-        cbvfac,
-        thedataset.overlays["lagstrengths"].header,
-        args.outputfilename + "_cbvfac",
+        cbvfac, thedataset.overlays["lagstrengths"].header, args.outputfilename + "_cbvfac",
     )
     tide_io.savetonifti(
-        calcmask,
-        thedataset.overlays["lagstrengths"].header,
-        args.outputfilename + "_calcmask",
+        calcmask, thedataset.overlays["lagstrengths"].header, args.outputfilename + "_calcmask",
     )
     tide_io.savetonifti(
-        offsets,
-        thedataset.overlays["lagstrengths"].header,
-        args.outputfilename + "_offsets",
+        offsets, thedataset.overlays["lagstrengths"].header, args.outputfilename + "_offsets",
     )
     tide_io.savetonifti(
-        themask,
-        thedataset.overlays["lagstrengths"].header,
-        args.outputfilename + "_lagmask",
+        themask, thedataset.overlays["lagstrengths"].header, args.outputfilename + "_lagmask",
     )
     tide_io.savetonifti(
-        thelags,
-        thedataset.overlays["lagstrengths"].header,
-        args.outputfilename + "_lagtimes",
+        thelags, thedataset.overlays["lagstrengths"].header, args.outputfilename + "_lagtimes",
     )
     tide_io.savetonifti(
         thestrengths,

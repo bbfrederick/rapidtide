@@ -292,12 +292,7 @@ def main():
     for i in range(0, len(textfilename)):
         if args.dobars:
             bar(
-                xvecs[i],
-                yvecs[i],
-                width=1.5,
-                color="lightgray",
-                align="center",
-                edgecolor=None,
+                xvecs[i], yvecs[i], width=1.5, color="lightgray", align="center", edgecolor=None,
             )
             if args.xrange is not None:
                 xlim(args.xrange)
