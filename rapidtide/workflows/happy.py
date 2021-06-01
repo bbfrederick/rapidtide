@@ -2335,7 +2335,7 @@ def happy_main(argparsingfunc):
         if args.savecardiacnoise:
             if args.bidsoutput:
                 cardiacnoisefilename = outputroot + "_desc-cardiacnoise_info"
-                phaseindexfilename = outputroot + "_-descphaseindices_info"
+                phaseindexfilename = outputroot + "_desc-phaseindices_info"
             else:
                 cardiacnoisefilename = outputroot + "_cardiacnoise"
                 phaseindexfilename = outputroot + "_phaseindices"
