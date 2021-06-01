@@ -25,8 +25,11 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as f:
 # Write version number out to VERSION file
 version = versioneer.get_version()
 date = versioneer.get_versions()["date"]
-with open(path.join(here, "VERSION"), "w", encoding="utf-8") as f:
-    f.write(version)
+try:
+    with open(path.join(here, "VERSION"), "w", encoding="utf-8") as f:
+        f.write(version)
+except PermissionError:
+    print("can't write to VERSION file - moving on")
 
 
 addtidepool = True
