@@ -79,14 +79,17 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
     PYTHONNOUSERSITE=1
 
 
-# Installing precomputed python packages
-RUN df -h
+# Update to the newest version of conda
 RUN conda config --add channels conda-forge
 RUN conda update -n base -c defaults conda
-RUN df -h
+
+
+# Install mamba so we can install packages before the heat death of the universe
+RUN conda install -y mamba
 RUN conda clean --all
-RUN df -h
-RUN conda install -y python=3.7.3 \
+
+
+RUN mamba install -y python=3.7.3 \
                      pip=19.3.1 \
                      scipy=1.4.1 \
                      numpy=1.17.3 \
