@@ -24,7 +24,8 @@ import sys
 def main():
     # get the command line parameters
     if os.getenv("IS_DOCKER_8395080871") is not None:
-        execdir = "/usr/local/miniconda/bin"
+        #execdir = "/usr/local/miniconda/bin"
+        execdir = sys.path[0]
     else:
         execdir = sys.path[0]
     validcommands = [
@@ -80,6 +81,7 @@ def main():
         if os.path.isfile(os.path.join(execdir, thecommand[0])):
             subprocess.call(thecommand)
         elif thecommand[0] == "xyzzy":
+            print("command xyzzy given, launching shell...")
             subprocess.call("/bin/bash")
         else:
             print(thecommand[0], "is a rapidtide script, but is not installed")
