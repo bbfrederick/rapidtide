@@ -11,16 +11,15 @@
 
 + Sync everything to github.
 
-+ Install the newest version to trigger versioneer
-
-    python setup.py install
-
-
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging)
   and push the tag to github
 
     git tag -a v1.9.6 -m "v1.9.6"
     git push origin v1.9.6
+
++ Install the newest version to trigger versioneer
+
+    python setup.py install
 
 
 + Rebuild Docker container and push
