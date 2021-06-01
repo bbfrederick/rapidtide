@@ -191,7 +191,7 @@ in the Docker container in the /src/rapidtide/rapidtide/data/examples/src direct
         --mount type=bind,source=OUTPUTDIRECTORY,destination=/data_out \
         fredericklab/rapidtide:latest \
             rapidtide \
-                /src/rapidtide/rapidtide/data/examples/src/fmri.nii.gz \
+                /src/rapidtide/rapidtide/data/examples/src/sub-RAPIDTIDETEST.nii.gz \
                 /data_out/dgsr \
                 --filterband lfo \
                 --searchrange -15 15 \
