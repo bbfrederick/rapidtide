@@ -6,7 +6,7 @@ set -ex
 # docker hub username
 USERNAME=fredericklab
 # image name
-IMAGE=rapidtide_dev
+IMAGE=rapidtide
 
 # ensure we're up to date
 git pull

@@ -7,7 +7,7 @@ datasets.  The primary workhorses of the package are the rapidtide program,
 which characterizes bulk blood flow, and happy, which focusses on the cardiac
 band.
 
-Full documentation is at: http://rapidtide.readthedocs.io/en/dev/
+Full documentation is at: http://rapidtide.readthedocs.io/en/latest/
 
 |PyPi Latest Version| |PyPi - Python Versions| |License| |Documentation Status| |CircleCI| |Coverage| |DOI| |Funded by NIH|
 
@@ -426,11 +426,11 @@ Physiological noise identification and removal using time delay methods
    :target: https://pypi.python.org/pypi/rapidtide/
 .. |License| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
-.. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=dev
-   :target: http://rapidtide.readthedocs.io/en/dev/?badge=dev
-.. |CircleCI| image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?branch=dev&style=shield
+.. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=main
+   :target: http://rapidtide.readthedocs.io/en/main/?badge=main
+.. |CircleCI| image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?branch=main&style=shield
    :target: https://circleci.com/gh/bbfrederick/rapidtide
-.. |Coverage| image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/dev/graph/badge.svg
+.. |Coverage| image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/bbfrederick/rapidtide
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.814990.svg
    :target: https://doi.org/10.5281/zenodo.814990
