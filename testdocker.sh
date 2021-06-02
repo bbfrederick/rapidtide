@@ -11,7 +11,7 @@ docker run \
     --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
     -it \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide_dev:latest \
+    -u rapidtide fredericklab/rapidtide:latest \
     rapidtide \
         /data/src/sub-RAPIDTIDETEST.nii.gz \
         /data/dst/sub-RAPIDTIDETEST \
@@ -25,7 +25,7 @@ docker run \
     --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
     -it \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide_dev:latest \
+    -u rapidtide fredericklab/rapidtide:latest \
     happy \
         /data/src/sub-HAPPYTEST.nii.gz \
         /data/src/sub-HAPPYTEST.json \
@@ -41,5 +41,5 @@ docker run \
     -it \
     -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide_dev:latest \
+    -u rapidtide fredericklab/rapidtide:latest \
     tidepool --dataset /data/dst/sub-RAPIDTIDETEST_
