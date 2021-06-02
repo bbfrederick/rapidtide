@@ -1,5 +1,137 @@
 # Release history
 
+## Version 2.0 (6/2/21)
+Much thanks to Taylor Salo for his continuing contributions, with several substantive improvements to code, documentation, and automatic testing, and generally helping devise a sensible release roadmap that made this version possible.
+
+This release is a big one - there are many new programs, new capabilities in existing programs, and workflow breaking syntax changes.  However, this was all with the purpose of making a beter package with much more consistent interfaces that allow you to figure out pretty quickly how to get the programs to do exactly what you want.
+The biggest change is to rapidtide itself. For several years, there have been two versions of rapidtide; rapidtide2 (the traditional version), and rapidtide2x (the experimental version for testing new features).  When features became stable, I migrated them back to rapidtide2, more and more quickly as time went by, so they became pretty much the same.  I took the 2.0 release as an opportunity to do some cleanup.
+As of now, there is only one version of rapidtide, with two parsers.  If you call "rapidtide", you get the spiffy new option parser and much more rational and consistent option naming and specification.  This is a substantial, but simple, change.
+For compatibility with old workflows, I preserved the old parser, which is called "rapidtide2x_legacy".  This accepts options just as rapidtide2 and rapidtide2x did in version 1.9.6.
+There is only one rapidtide routine.  Once the arguments are all read in and processed, "rapidtide" and "rapidtide2x_legacy" call the same processing workflow.  However, in addition to the new parser, there are completely new options and capabilities in rapidtide, but you can only get to them using the new parser.  This is my way of subtly forcing you to change your workflows if you want the new shiny, without pulling the rug out from under you.  "rapidtide2x_legacy" WILL be going away though, so change over when you can.
+Also - all outputs now conform to BIDS naming conventions to improve compatibility with other packages.  Use the "--legacyoutput" flag to get the old output file names.
+* (rapidtide2x_legacy): Added deprecation warning.
+* (rapidtide): The correlation function has been replaced by a more flexible "similarity function".  There are currently 3 options: "correlation" (the old method), "mutualinfo", which uses a cross mutual information function, and "hybrid", which uses the correlation function, but disambiguates which peak to use by comparing the mutual information for each peak.
+* (rapidtide) Pulled a number of default values into global variables so that defaults and help strings will stay in sync.
+* (rapidtide) Fixed text file (nirs) processing.
+* (rapidtide) Fixed a search range setting error.
+* (rapidtide) Fixed the default method for global mean signal generation.
+* (rapidtide) Added the '--negativegradient' option in response to https://github.com/bbfrederick/rapidtide/issues/67
+* (rapidtide) Added flexibility to regressor input (can use multicolumn and BIDS text files).
+* (rapidtide, tidepool) Fixed reading and writing the globalmean mask.
+* (rapidtide) Gracefully handle refinement failure.
+* (rapidtide) Added a new method for generating global signal using PCA.
+* (rapidtide) Did some prep work to implement echo cancellation.
+* (rapidtide) Added workaround for occasional MLE PCA component estimation failure (this seems to be an unresolved scikit-learn problem as of 0.23.2)
+* (rapidtide) Significant enhancement to PCA refinement options.
+* (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154–165 (2019).
+* (rapidtide) The PCA refinement algorithm has been improved to match the method described in Champagne, et al., and is now the default.
+* (rapidtide, io) Significant improvement to CIFTI handling - now properly read and write parcellated scalars and time series.
+* (rapidtide) Completely revamped CIFTI I/O.  Should now read and write native CIFTI2 files (do not need to convert to NIFTI-2 in workbench).
+* (rapidtide) Better handling of motion files.
+* (rapidtide) Added coherence calculation.  Not quite working right yet.
+* (rapidtide, happy) Switched to using nilearn's mask generator for automatic mask generation, since it's much more sophisticated.  It seems to be a big improvement, and handles data processed by fmriprep and SPM with no fiddling.
+* (rapidtide, happy) General improvement of output of floating point numbers.  Limit to 3 decimal places.
+* (rapidtide) Use logging module for output.
+* (rapidtide, rapidtide_legacy) Options file is now always saved as a json.
+* (rapidtide) Added ability to autochoose an appropriate spatial filter by setting --spatialfilt to a negative value.
+* (rapidtide, rapidtide2x_legacy) The options file is now always saved in .json format.
+* (rapidtide) BIDS format output naming and file structures have been updated to be more compliant with the standard.
+* (rapidtide) Fixed a longstanding bug which used an unnecessarily stringent amplitude threshold for selecting voxels to use for refinement.
+* (rapidtide) Improvements to processing in "bipolar" mode.
+* (rapidtide): The getopt argument parser has been completely rewritten using argparse.  The way you specify many (most?) options has changed.
+* (rapidtide): Any option that takes additional values (numbers, file names, etc.) is now specified as '--option VALUE [VALUE [VALUE...]]' rather than as '--option=VALUE[,VALUE[,VALUE...]]'.
+* (rapidtide): After a lot of use over the years, I've reset a lot of defaults to reflect typical usage.  You can still do any analysis you were doing before, but it may now require changes to scripts and workflows to get the old default behavior.  For most cases you can get good analyses with a minimum set of command line options now.
+* (rapidtide): There are two new macros, --denoise and --delaymapping, which will set defaults to good values for those use cases in subjects without vascular pathology.  Any of the preset values for these macros can be overridden with command line options.
+* (rapidtide, rapidtide2x_legacy): Regressor and data filtering has been changed significantly.  While the nominal filter passbands are the same, the transitions to the stopbands have been tightened up quite a bit.  This is most noticable in the LFO band.  The pasband is still from 0.01-0.15Hz with a trapezoidal rolloff, but the upper stopband now starts at 0.1575Hz instead of 0.20Hz.  The wide transition band was letting in a significant amount of respiratory signal for subjects with low respiratory rates (about half of my subjects seem to breath slower than the nominal adult minimum rate of 12 breaths/minute).
+* (rapidtide): The -V, -L, -R and -C filter band specifiers have been retired.  Filter bands are now specified with '--filterband XXX', where XXX is vlf, lfo, lfo_legacy, resp, cardiac, or None.  'lfo' is selected by default (LFO band with sharp transition bands). To skip filtering, use '--filterband None'.  '--filterband lfo_legacy' will filter to the LFO band with the old, wide transition bands.
+* (rapidtide): To specify an arbitrary filter, specify the pass freqs with --filterfreqs, and then optionally the stop freqs with --filterstopfreqs (otherwise the stop freqs will be calculated automatically from the pass freqs).
+* (rapidtide): The method for specifying the lag search range has changed.  '-r LAGMIN,LAGMAX' has been removed.  You now use '--searchrange LAGMIN LAGMAX'
+* (rapidtide): The method for specifying bipolar correlation search has changed.  '-B' is replaced by '--bipolar'.
+* (rapidtide): The method for specifying a fixed delay (no correlation lag search) has changed.  '-Z DELAYVAL' is replaced by '--fixdelay DELAYVAL'.
+* (rapidtide,rapidtide2x_legacy): The 'timerange' option is now handled properly.  This can be used to restrict processing to a portion of the datafile.  This is useful to get past initial transients if you didn't remove them in preprocessing, or to see if parameters change over the course of a long acquisition.
+* (rapidtide): The multiprocessing code path can be forced on, even on a single processor.
+* (rapidtide): Multiprocessing can be disabled on a per-routine basis.
+
+Happy also got a new parser and BIDS outputs.  You can call happy with the old interface by calling "happy_legacy".
+* (happy) Output files now follow BIDS naming convention.
+* (happy) Code cleanup, improved tensorflow selection.
+* (happy) Fixed logmem calls to work with new logging structure (and not crash immediately).
+* (happy) Fixed a very subtle bug when an externally supplied pleth waveform doesn't start at time 0.0 (fix to issue #59).
+* (happy) General formatting improvements.
+* (happy) Added new tools for slice time generation.
+* (happy) Added support for scans where there is circulating contrast.
+
+General Changes to the entire package:
+* (package) Python 2.7 support is now officially ended.  Cleaned out compatiblity code.
+* (package) Dropped support for python 3.3-3.5 and added 3.9.
+* (package) Made pyfftw and numba requirements.
+* (package) Significantly increased test coverage by including smoke tests (exercise as many code paths as possible to find crashers in neglected code - this is how the above bugs were found).
+* (package) Automated consistent formatting.  black now runs automatically on file updates.
+* (package) General cleanup and rationalization of imports.  isort now runs automatically on file updates.
+* (package) Fixed a stupid bug that surfaced when reading in all columns of a text file as input.
+* (package) Merged tsalo's PR starting transition to new logging output.
+* (package) Started to phase out sys.exit() calls in favor of raising exceptions.
+* (package) Updated all headers and copyright lines.
+* (package) Trimmed the size of the installation bundle to allow deployment on pypi.
+* (package) Copied Taylor Salo's improvements to build and deployment from the master branch.
+* (package) Renamed some test data for consistency.
+* (package) Began effort with T. Salo to address linter errors and generally improve PEP8 conformance - remove dead code, rationalize imports, improve docstrings, convert class names to CamelCase, use snake_case for functions.
+* (package) Cleaned up imports and unresolved references
+* (package) Addressed many linter issues, updated deprecated numpy and scipy calls.
+* (package) readvectorsfromtextfile now handles noncompliant BIDS timecourse files.
+* (package) Implemented new, generalized text/tsv/bids text file reader with column selection (readvectorsfromtextfile).
+* (package) Significant internal changes to noncausalfilter.
+* (package) CircleCI config files changed to keep tests from stepping on each other's caches (thanks to Taylor Salo).
+
+Changes to the Docker container builds:
+* (Docker) Fixed some problems with task dispatch and container versioning.
+* (Docker) Improvements to version specification, entry point.
+* (Docker) Update package versions.
+* (Docker) Install python with mamba for ~10x speedup.
+* (Docker) Switched to current method for specifying external mounts in the documentation.
+* (Docker) Improved build scripts.
+* (Docker) Containers are now automatically pushed to dockerhub after build.
+
+Documentation changes:
+* (documentation) Fixed errors in documentation files that caused errors building in readthedocs.
+* (documentation) New "theory of operation" section for rapidtide.  Still working on it.
+* (documentation) The documentation has been expanded and revised to reflect the current state of rapidtide with significant reorganization, reformatting, cleanup and additions
+
+Tidepool:
+* (tidepool) Reorganized interface, ability to show dynamic correlation movies, much clearer histogram graphs.
+* (tidepool) Tidepool now gracefully handles runs with more than 4 passes.  The timecourses displayed are prefilt, postfilt, pass1, pass2, pass(N-1) and pass(N).
+* (tidepool) Fixed to work with Big Sur (macOS 11).
+* (tidepool) Corrected sample rate for regressor timecourses.
+* (tidepool) Revised to properly handle new BIDS naming conventions for output files.
+* (tidepool) You can now turn out-of-range map transparency on and off (it's off by default).
+* (tidepool) Internal colortable code is now much cleaner.
+* (tidepool): Now properly handles missing timecourses properly.  Some cosmetic fixes.
+
+Miscellaneous changes:
+* (aligntcs, applydlfilter, pixelcomp, plethquality, resamp1tc, showstxcorr, showxcorrx) Fixed matplotlib backend initialization to allow headless operation.
+* (glmfilt, linfit, temporaldecomp, spatialdecomp): Argument parsers were rewritten in argparse, main routines were moved into workflows.
+* (applydlfilter, atlasaverage, ccorrica, filttc, happy2std, histnifti, histtc, pixelcomp, plethquality, rapidtide2std, resamp1tc, showarbcorr, showtc, showxcorrx, simdata, spatialfit) Argument parsers were rewritten in argparse.
+* (rapidtide, showxcorrx, showarbcorr, showstxcorr, ccorrica, aligntcs, filttc) Changed argument handling for arbitrary filters.  Specify pass freqs with --filterfreqs, stop freqs with --filterstopfreqs.
+* (happy, rapidtide) Now properly handle negative mklthreads specification.
+* (physiofreq): New program to get the average frequency of a physiological waveform.
+* (showtc): Some cleanup in option specification.
+* (showtc) Converted text inputs to standardized code.
+* (atlastool) Major fixes to functionality with 4D template files.
+* (atlastool) Fixed some import and syntax issues with numpy.
+* (showxcorrx) Significant cleanup for maximum flexibility and utility.
+* (showxcorr) Renamed to showxcorr_legacy
+* (linfit) Renamed to polyfitim to better reflect it's function.
+* (histnifti) Major upgrade to functionality.
+* (showarbcorr) New program to do crosscorrelations on timecourses with different samplerates.
+* (polyfitim) New program to fit a spatial template to a 3D or 4D NIFTI file.
+* (endtidalproc) New program to extract end tidal CO2 or O2 waveforms from a gas exhalation recording.
+* (dlfilter) Made diagnostics more informative to help get dlfilter enabled.
+* (simdata) Complete overhaul - new parser better checks, more flexible input formats.
+* (io.py) Vastly improved reading in arbitrarily large text files.
+* (stats.py) Fixed a bug in getfracvals when you try to find the maximum value.
+* (RapidtideDataset.py) Better handling of different file names.
+
+
 ## Version 2.0alpha29 (6/1/21)
 * (Docker) Fixed some problems with task dispatch and container versioning.
 * (rapidtide) Pulled a number of default values into global variables so that defaults and help strings will stay in sync.
