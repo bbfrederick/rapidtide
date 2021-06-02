@@ -205,11 +205,18 @@ setup(
             "reference/HCP1200*",
             "reference/MNI152*",
         ],
-        "testdata": ["tests/testdata/*.txt",],
-        "tmpdata": ["tests/tmp/.placeholder.txt",],
+        "testdata": [
+            "tests/testdata/*.txt",
+        ],
+        "tmpdata": [
+            "tests/tmp/.placeholder.txt",
+        ],
     },
     additional_packagedata={
-        "testtargets": ["tests/testtargets/*.txt", "tests/testtargets/*.nii.gz",],
+        "testtargets": [
+            "tests/testtargets/*.txt",
+            "tests/testtargets/*.nii.gz",
+        ],
     },
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow

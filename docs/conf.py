@@ -347,9 +347,7 @@ texinfo_documents = [
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "rapidtide",
-    u"https://github.com/bbfrederick/"
-    "rapidtide/blob/{revision}/"
-    "{package}/{path}#L{lineno}",
+    "https://github.com/bbfrederick/" "rapidtide/blob/{revision}/" "{package}/{path}#L{lineno}",
 )
 
 # Example configuration for intersphinx: refer to the Python standard library.
