@@ -314,15 +314,10 @@ def main():
         mpl.use("TkAgg")
         import matplotlib.pyplot as plt
 
-    # Set the default samplerate if not set
-    if args.samplerate == "auto":
-        print("samplerate not set - setting to 1.0 Hz")
-        args.samplerate = 1.0
-
     infilename1, colspec1 = tide_io.parsefilespec(args.infilename1)
     infilename2, colspec2 = tide_io.parsefilespec(args.infilename2)
 
-    inputdata1 = np.transpose(tide_io.readvecs(infilename1, colspec=colspec1))
+    '''inputdata1 = np.transpose(tide_io.readvecs(infilename1, colspec=colspec1))
     if np.shape(inputdata1)[1] > 1:
         print("specify only one column for input file 1")
         sys.exit()
@@ -333,7 +328,43 @@ def main():
         print("specify only one column for input file 2")
         sys.exit()
     else:
-        inputdata2 = inputdata2[:, 0]
+        inputdata2 = inputdata2[:, 0]'''
+
+    (
+        samplerate1,
+        startoffset1,
+        colnames1,
+        inputdata1,
+        dummy,
+        dummy,
+    ) = tide_io.readvectorsfromtextfile(args.infilename1, onecol=True, debug=args.debug)
+
+    (
+        samplerate2,
+        startoffset2,
+        colnames2,
+        inputdata2,
+        dummy,
+        dummy,
+    ) = tide_io.readvectorsfromtextfile(args.infilename2, onecol=True, debug=args.debug)
+
+    if samplerate1 != samplerate2:
+        print("time courses must have the same sample rate")
+        sys.exit()
+    if samplerate1 is not None:
+        args.samplerate = samplerate1
+        args.startpoint = startoffset1
+
+    # Set the default samplerate if not set
+    if args.samplerate == "auto":
+        print("samplerate not set - setting to 1.0 Hz")
+        args.samplerate = 1.0
+
+    if args.debug:
+        print(args.samplerate)
+        print(args.startpoint)
+        print(inputdata1)
+        print(inputdata2)
 
     if args.debug:
         dumpfiltered = True
