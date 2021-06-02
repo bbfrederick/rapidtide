@@ -40,4 +40,4 @@ docker run \
     -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide fredericklab/rapidtide:latest \
-    tidepool --dataset /data/dst/sub-RAPIDTIDETEST_
+    tidepool --dataset /data/code/rapidtide/rapidtide/data/examples/dst/sub-RAPIDTIDETEST_

@@ -1,5 +1,5 @@
-# Use Ubuntu 18.04 LTS
-FROM ubuntu:18.04
+# Use Ubuntu 20.04 LTS
+FROM ubuntu:20.04
 
 # Pre-cache neurodebian key
 COPY ./dockerbuild/neurodebian.gpg /usr/local/etc/neurodebian.gpg
@@ -22,13 +22,19 @@ RUN apt-get install -y --no-install-recommends \
                     libx11-xcb1 \
                     lsb-release \
                     git
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Moscow
+RUN apt-get install -y tzdata
 RUN apt-get install -y --reinstall libqt5dbus5 
 RUN apt-get install -y --reinstall libqt5widgets5 
 RUN apt-get install -y --reinstall libqt5network5 
+RUN apt-get remove qtchooser
 RUN apt-get install -y --reinstall libqt5gui5 
 RUN apt-get install -y --reinstall libqt5core5a 
-RUN apt-get install -y --reinstall libdouble-conversion1 
+RUN apt-get install -y --reinstall libxkbcommon-x11-0
 RUN apt-get install -y --reinstall libxcb-xinerama0
+
+
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 
@@ -109,6 +115,9 @@ RUN cd /src/rapidtide && \
 
 
 ENV IS_DOCKER_8395080871=1
+#ENV QT_QPA_PLATFORM=offscreen
+RUN apt-get install -y --reinstall libxcb-xinerama0
+
 
 RUN ldconfig
 WORKDIR /tmp/
