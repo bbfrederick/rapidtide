@@ -1293,6 +1293,9 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     else:
         print("illegal file type:", filetype)
 
+    if onecol:
+        thedata = thedata[0, :]
+
     if debug:
         print("\tthesamplerate:", thesamplerate)
         print("\tthestarttime:", thestarttime)
