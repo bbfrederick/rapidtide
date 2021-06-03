@@ -426,8 +426,8 @@ Physiological noise identification and removal using time delay methods
    :target: https://pypi.python.org/pypi/rapidtide/
 .. |License| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
-.. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=main
-   :target: http://rapidtide.readthedocs.io/en/main/?badge=main
+.. |Documentation Status| image:: https://readthedocs.org/projects/rapidtide/badge/?version=stable
+   :target: http://rapidtide.readthedocs.io/en/stable/?badge=stable
 .. |CircleCI| image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?branch=main&style=shield
    :target: https://circleci.com/gh/bbfrederick/rapidtide
 .. |Coverage| image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/main/graph/badge.svg
