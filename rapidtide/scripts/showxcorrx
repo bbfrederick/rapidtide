@@ -212,7 +212,16 @@ def _get_parser():
         action="store",
         type=str,
         metavar="FILE",
-        help=("Write results to FILE. "),
+        help=("Save output to FILE. "),
+        default=None,
+    )
+    output.add_argument(
+        "--figoutputfile",
+        dest="figoutputfile",
+        action="store",
+        type=str,
+        metavar="FILE",
+        help=("Save similarity metric graph to FILE. "),
         default=None,
     )
     output.add_argument(
@@ -797,6 +806,12 @@ def main():
             thelegend.append("Cross correlation")
         ax.legend(thelegend)
         ax.set_title("Similarity metric over the search range")
+
+        if args.figoutputfile is None:
+            plt.show()
+        else:
+            plt.savefig(args.figoutputfile, bbox_inches="tight")
+            # savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)
 
         if args.calccoherence:
             fig = plt.figure()
