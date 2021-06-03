@@ -813,7 +813,6 @@ def rapidtide_main(argparsingfunc):
             dummy,
             dummy,
         ) = tide_io.readvectorsfromtextfile(filename, onecol=True)
-        inputvec = inputvec[0, :]
         inputfreq = optiondict["inputfreq"]
         inputstarttime = optiondict["inputstarttime"]
         if inputfreq is None:

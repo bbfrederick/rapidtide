@@ -579,7 +579,6 @@ def getphysiofile(
     filefreq, filestart, dummy, pleth_fullres, dummy, dummy = tide_io.readvectorsfromtextfile(
         cardiacfile, onecol=True, debug=debug
     )
-    pleth_fullres = pleth_fullres[0, :]
     if inputfreq < 0.0:
         if filefreq is not None:
             inputfreq = filefreq

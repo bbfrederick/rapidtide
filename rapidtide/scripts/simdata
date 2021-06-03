@@ -55,7 +55,7 @@ def prepareband(
         compressed,
         filetype,
     ) = tide_io.readvectorsfromtextfile(regressorfile, onecol=True)
-    rawvec = tide_math.stdnormalize(np.transpose(invec))
+    rawvec = tide_math.stdnormalize(invec)
 
     if starttime is None:
         if instarttime is None:

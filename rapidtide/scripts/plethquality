@@ -120,7 +120,6 @@ def main():
     Fs, starttime, dummy, plethdata, dummy, dummy = tide_io.readvectorsfromtextfile(
         args.infilename, onecol=True
     )
-    plethdata = np.transpose(plethdata)
 
     if args.samplerate is not None:
         Fs = args.samplerate
