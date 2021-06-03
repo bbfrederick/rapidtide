@@ -99,7 +99,8 @@ def setup_logger(logger_filename, timing_filename, memory_filename, verbose=Fals
 
     # A timing logger
     timing_formatter = TimingFormatter(
-        "%(asctime)s\t%(message)s\t%(message2)s\t%(message3)s", datefmt="%Y-%m-%dT%H:%M:%S",
+        "%(asctime)s\t%(message)s\t%(message2)s\t%(message3)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
     )
     timing_handler = logging.FileHandler(timing_filename)
     timing_handler.setFormatter(timing_formatter)

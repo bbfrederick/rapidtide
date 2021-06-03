@@ -102,7 +102,7 @@ def _get_parser():
     pf.addwindowopts(parser)
 
     # Filter arguments
-    pf.addfilteropts(parser, "timecourses", details=True)
+    pf.addfilteropts(parser, filtertarget="timecourses", details=True)
 
     # Preprocessing options
     preproc = parser.add_argument_group("Preprocessing options")

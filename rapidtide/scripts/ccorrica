@@ -87,7 +87,7 @@ def _get_parser():
     pf.addsearchrangeopts(parser)
 
     # Filter arguments
-    pf.addfilteropts(parser, "timecourses")
+    pf.addfilteropts(parser, filtertarget="timecourses")
 
     parser.add_argument(
         "--corrweighting",

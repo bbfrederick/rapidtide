@@ -424,7 +424,10 @@ class DeepLearningFilter:
                     epochs=self.num_pretrain_epochs,
                     shuffle=True,
                     verbose=1,
-                    callbacks=[TerminateOnNaN(), ModelCheckpoint(self.intermediatemodelpath),],
+                    callbacks=[
+                        TerminateOnNaN(),
+                        ModelCheckpoint(self.intermediatemodelpath),
+                    ],
                     validation_data=(self.val_y, self.val_y),
                 )
             self.history = self.model.fit(
@@ -434,7 +437,10 @@ class DeepLearningFilter:
                 epochs=self.num_epochs,
                 shuffle=True,
                 verbose=1,
-                callbacks=[TerminateOnNaN(), ModelCheckpoint(self.intermediatemodelpath),],
+                callbacks=[
+                    TerminateOnNaN(),
+                    ModelCheckpoint(self.intermediatemodelpath),
+                ],
                 validation_data=(self.val_x, self.val_y),
             )
         self.savemodel(usehdf=True)
@@ -805,7 +811,9 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             LGR.info(f"input layer size: {layersize}")
             self.model.add(
                 Convolution1D(
-                    filters=self.num_filters, kernel_size=self.kernel_size, padding="same",
+                    filters=self.num_filters,
+                    kernel_size=self.kernel_size,
+                    padding="same",
                 )
             )
             self.model.add(BatchNormalization())
@@ -817,7 +825,9 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             LGR.info(f"input layer size: {layersize}")
             self.model.add(
                 Convolution1D(
-                    filters=self.num_filters, kernel_size=self.kernel_size, padding="same",
+                    filters=self.num_filters,
+                    kernel_size=self.kernel_size,
+                    padding="same",
                 )
             )
             self.model.add(BatchNormalization())
@@ -842,7 +852,9 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             LGR.info(f"input layer size: {layersize}")
             self.model.add(
                 Convolution1D(
-                    filters=self.num_filters, kernel_size=self.kernel_size, padding="same",
+                    filters=self.num_filters,
+                    kernel_size=self.kernel_size,
+                    padding="same",
                 )
             )
             self.model.add(BatchNormalization())
@@ -1035,7 +1047,9 @@ class HybridDLFilter(DeepLearningFilter):
             for layer in range(self.num_layers - 2):
                 self.model.add(
                     Convolution1D(
-                        filters=self.num_filters, kernel_size=self.kernel_size, padding="same",
+                        filters=self.num_filters,
+                        kernel_size=self.kernel_size,
+                        padding="same",
                     )
                 )
                 self.model.add(BatchNormalization())
@@ -1076,7 +1090,9 @@ class HybridDLFilter(DeepLearningFilter):
             for layer in range(self.num_layers - 2):
                 self.model.add(
                     Convolution1D(
-                        filters=self.num_filters, kernel_size=self.kernel_size, padding="same",
+                        filters=self.num_filters,
+                        kernel_size=self.kernel_size,
+                        padding="same",
                     )
                 )
                 self.model.add(BatchNormalization())
@@ -1092,7 +1108,13 @@ class HybridDLFilter(DeepLearningFilter):
 
 
 def filtscale(
-    data, scalefac=1.0, reverse=False, hybrid=False, lognormalize=True, epsilon=1e-10, numorders=6,
+    data,
+    scalefac=1.0,
+    reverse=False,
+    hybrid=False,
+    lognormalize=True,
+    epsilon=1e-10,
+    numorders=6,
 ):
     if not reverse:
         specvals = fftpack.fft(data)
@@ -1146,7 +1168,11 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="
                     tobadpts(targetname.replace("alignedpleth", "pleth"))
                 ) and os.path.isfile(
                     tobadpts(
-                        targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag,)
+                        targettoinput(
+                            targetname,
+                            targetfrag=targetfrag,
+                            inputfrag=inputfrag,
+                        )
                     )
                 ):
                     matchedfilelist.append(targetname)
@@ -1208,7 +1234,11 @@ def readindata(
         LGR.info(f"processing {matchedfilelist[i]}")
         tempy = np.loadtxt(matchedfilelist[i])
         tempx = np.loadtxt(
-            targettoinput(matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag,)
+            targettoinput(
+                matchedfilelist[i],
+                targetfrag=targetfrag,
+                inputfrag=inputfrag,
+            )
         )
         if np.any(np.isnan(tempy)):
             LGR.info(f"NaN found in file {matchedfilelist[i]} - discarding")
@@ -1264,7 +1294,9 @@ def readindata(
                 tempbad2 = np.loadtxt(
                     tobadpts(
                         targettoinput(
-                            matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag,
+                            matchedfilelist[i],
+                            targetfrag=targetfrag,
+                            inputfrag=inputfrag,
                         )
                     )
                 )
@@ -1347,7 +1379,10 @@ def prep(
 
     # find matched files
     matchedfilelist, tclen = getmatchedfiles(
-        searchstring, usebadpts=usebadpts, targetfrag=targetfrag, inputfrag=inputfrag,
+        searchstring,
+        usebadpts=usebadpts,
+        targetfrag=targetfrag,
+        inputfrag=inputfrag,
     )
 
     # read in the data from the matched files
@@ -1438,7 +1473,10 @@ def prep(
             for windownumber in range(windowspersubject):
                 if (
                     np.max(
-                        thefabs[step * windownumber : (step * windownumber + window_size), subj,]
+                        thefabs[
+                            step * windownumber : (step * windownumber + window_size),
+                            subj,
+                        ]
                     )
                     <= excludethresh
                 ):
@@ -1470,7 +1508,8 @@ def prep(
                     ]
                     if usebadpts:
                         Xb_withbad[thiswindow, :, 0] = bad[
-                            step * windownumber : (step * windownumber + window_size), subj,
+                            step * windownumber : (step * windownumber + window_size),
+                            subj,
                         ]
                     thiswindow += 1
 
@@ -1569,12 +1608,14 @@ def prep(
         for j in range(N_subjs):
             LGR.info(f"transforming subject {j}")
             for i in range((N_pts - window_size - 1)):
-                (Xb_fourier[j * windowspersubject + i, :, :], Xscale_fourier[j, i],) = filtscale(
-                    X[0, step * i : (step * i + window_size), j]
-                )
-                (Yb_fourier[j * windowspersubject + i, :, :], Yscale_fourier[j, i],) = filtscale(
-                    Y[0, step * i : (step * i + window_size), j]
-                )
+                (
+                    Xb_fourier[j * windowspersubject + i, :, :],
+                    Xscale_fourier[j, i],
+                ) = filtscale(X[0, step * i : (step * i + window_size), j])
+                (
+                    Yb_fourier[j * windowspersubject + i, :, :],
+                    Yscale_fourier[j, i],
+                ) = filtscale(Y[0, step * i : (step * i + window_size), j])
 
     limit = np.int64(0.8 * Xb.shape[0])
     LGR.info(f"limit: {limit} out of {len(subjectstarts)}")

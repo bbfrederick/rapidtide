@@ -219,6 +219,33 @@ def largestfac(n):
 
 
 # --------------------------- Normalization functions -------------------------------------------------
+def normalize(vector, method="stddev"):
+    """
+
+    Parameters
+    ----------
+    vector
+
+    Returns
+    -------
+
+    """
+    if method == "None":
+        return vector - np.mean(vector)
+    elif method == "percent":
+        return pcnormalize(vector)
+    elif method == "variance":
+        return varnormalize(vector)
+    elif method == "stddev" or method == "z":
+        return stdnormalize(vector)
+    elif method == "p2p":
+        return ppnormalize(vector)
+    elif method == "mad":
+        return madnormalize(vector)
+    else:
+        raise ValueError("Illegal normalization type")
+
+
 def znormalize(vector):
     """
 
