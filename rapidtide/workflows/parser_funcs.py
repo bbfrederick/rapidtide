@@ -322,7 +322,7 @@ def addwindowopts(parser):
     )
 
 
-def addplotopts(parser):
+def addplotopts(parser, multiline=True):
     plotopts = parser.add_argument_group("General plot appearance options")
     plotopts.add_argument(
         "--title",
@@ -351,16 +351,26 @@ def addplotopts(parser):
         help="Label for the plot y axis.",
         default="",
     )
-    plotopts.add_argument(
-        "--legends",
-        dest="legends",
-        metavar="LEGEND[,LEGEND[,LEGEND...]]",
-        type=str,
-        action="store",
-        help="Comma separated list of legends for each timecourse.",
-        default=None,
-    )
-
+    if multiline:
+        plotopts.add_argument(
+            "--legends",
+            dest="legends",
+            metavar="LEGEND[,LEGEND[,LEGEND...]]",
+            type=str,
+            action="store",
+            help="Comma separated list of legends for each timecourse.",
+            default=None,
+        )
+    else:
+        plotopts.add_argument(
+            "--legend",
+            dest="legends",
+            metavar="LEGEND",
+            type=str,
+            action="store",
+            help="Legends for the timecourse.",
+            default=None,
+        )
     plotopts.add_argument(
         "--legendloc",
         dest="legendloc",
@@ -375,15 +385,26 @@ def addplotopts(parser):
         ),
         default=2,
     )
-    plotopts.add_argument(
-        "--colors",
-        dest="colors",
-        metavar="COLOR[,COLOR[,COLOR...]]",
-        type=str,
-        action="store",
-        help="Comma separated list of colors for each timecourse.",
-        default=None,
-    )
+    if multiline:
+        plotopts.add_argument(
+            "--colors",
+            dest="colors",
+            metavar="COLOR[,COLOR[,COLOR...]]",
+            type=str,
+            action="store",
+            help="Comma separated list of colors for each timecourse.",
+            default=None,
+        )
+    else:
+        plotopts.add_argument(
+            "--color",
+            dest="colors",
+            metavar="COLOR",
+            type=str,
+            action="store",
+            help="Color of the timecourse plot.",
+            default=None,
+        )
     plotopts.add_argument(
         "--nolegend",
         dest="dolegend",
@@ -397,14 +418,24 @@ def addplotopts(parser):
     plotopts.add_argument(
         "--noyax", dest="showyax", action="store_false", help="Do not show y axis.", default=True,
     )
-    plotopts.add_argument(
-        "--linewidth",
-        dest="linewidths",
-        metavar="LINEWIDTH[,LINEWIDTH[,LINEWIDTH...]]",
-        type=str,
-        help="A comma separated list of linewidths (in points) for plots.  Default is 1.",
-        default=None,
-    )
+    if multiline:
+        plotopts.add_argument(
+            "--linewidth",
+            dest="linewidths",
+            metavar="LINEWIDTH[,LINEWIDTH[,LINEWIDTH...]]",
+            type=str,
+            help="A comma separated list of linewidths (in points) for plots.  Default is 1.",
+            default=None,
+        )
+    else:
+        plotopts.add_argument(
+            "--linewidth",
+            dest="linewidths",
+            metavar="LINEWIDTH",
+            type=str,
+            help="Linewidth (in points) for plot.  Default is 1.",
+            default=None,
+        )
     plotopts.add_argument(
         "--tofile",
         dest="outputfile",

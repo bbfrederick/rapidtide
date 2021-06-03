@@ -23,6 +23,7 @@ import numpy as np
 import scipy as sp
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
+import matplotlib.cm as cm
 
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.correlate as tide_corr
@@ -248,6 +249,9 @@ def _get_parser():
         default="False",
     )
 
+    # add plot appearance options
+    pf.addplotopts(parser, multiline=False)
+
     # Miscellaneous options
     misc = parser.add_argument_group("Miscellaneous options")
     misc.add_argument(
@@ -326,8 +330,7 @@ def main():
     # get the filenames and read in the data
     infilename1, colspec1 = tide_io.parsefilespec(args.infilename1)
     infilename2, colspec2 = tide_io.parsefilespec(args.infilename2)
-    (
-        samplerate1,
+    (   samplerate1,
         startoffset1,
         colnames1,
         inputdata1,
@@ -793,38 +796,83 @@ def main():
                     )
             print(infilename1, "[0 seconds] == ", infilename2, "[", -maxdelay, " seconds]")
     """
+    thexaxfontsize = 10 * args.fontscalefac
+    theyaxfontsize = 10 * args.fontscalefac
+    thexlabelfontsize = 10 * args.fontscalefac
+    theylabelfontsize = 10 * args.fontscalefac
+    thelegendfontsize = 8 * args.fontscalefac
+    thetitlefontsize = 10 * args.fontscalefac
+    thesuptitlefontsize = 10 * args.fontscalefac
+
+    # set various cosmetic aspects of the plots
+    if args.colors is not None:
+        colornames = args.colors.split(",")
+    else:
+        colornames = []
+    if len(colornames) > 0:
+        colorlist = [colornames[0]]
+    else:
+        colorlist = [cm.nipy_spectral(float(0))]
+
+    if args.linewidths is not None:
+        thelinewidth = []
+        for thestring in args.linewidths.split(","):
+            thelinewidth.append(float(thestring))
+    else:
+        thelinewidth = [1.0]
+
+    if 0 <= args.legendloc <= 10:
+        pass
+    else:
+        print("illegal legend location:", args.legendloc)
+        sys.exit()
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    thelegend = []
+    if args.legends is not None:
+        thelegend.append = args.legends
+    else:
+        if args.similaritymetric == "mutualinfo":
+            thelegend.append("Mutual Information")
+            ax.plot(MI_x_trim, theMI_trim,
+                    color=colorlist[0],
+                    label=thelegend[0],
+                    linewidth=thelinewidth[0],
+                    )
+        else:
+            thelegend.append("Cross correlation")
+            ax.plot(xcorr_x_trim, thexcorr_trim,
+                    color=colorlist[0],
+                    label=thelegend[0],
+                    linewidth=thelinewidth[0],
+                    )
+    if args.dolegend:
+        ax.legend(thelegend, fontsize=thelegendfontsize, loc=args.legendloc)
+    ax.set_title("Similarity metric over the search range", fontsize=thetitlefontsize)
+    if args.showxax:
+        ax.tick_params(axis="x", labelsize=thexlabelfontsize, which="both")
+    if args.showyax:
+        ax.tick_params(axis="y", labelsize=theylabelfontsize, which="both")
 
     if args.display:
+        plt.show()
+    if args.figoutputfile is not None:
+        plt.savefig(args.figoutputfile, bbox_inches="tight", dpi=args.saveres)
+
+    if args.calccoherence:
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        thelegend = []
-        if args.similaritymetric == "mutualinfo":
-            ax.plot(MI_x_trim, theMI_trim, "r")
-            thelegend.append("Mutual Information")
-        else:
-            ax.plot(xcorr_x_trim, thexcorr_trim, "k")
-            thelegend.append("Cross correlation")
-        ax.legend(thelegend)
-        ax.set_title("Similarity metric over the search range")
+        ax.plot(fC, np.sqrt(np.abs(Cxy)) / np.max(np.sqrt(np.abs(Cxy))), "b")
+        ax.set_title("Coherence")
 
-        if args.figoutputfile is None:
-            plt.show()
-        else:
-            plt.savefig(args.figoutputfile, bbox_inches="tight")
-            # savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)
+    if args.calccsd:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(fP, np.sqrt(np.abs(Pxy)) / np.max(np.sqrt(np.abs(Pxy))), "g")
+        ax.set_title("Cross-spectral density")
 
-        if args.calccoherence:
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            # ax.plot(fC, Cxy, "b")
-            ax.plot(fC, np.sqrt(np.abs(Cxy)) / np.max(np.sqrt(np.abs(Cxy))), "b")
-            ax.set_title("Coherence")
-        if args.calccsd:
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            ax.plot(fP, np.sqrt(np.abs(Pxy)) / np.max(np.sqrt(np.abs(Pxy))), "g")
-            # plot(fP, np.angle(Pxy) / (2.0 * sp.pi * fP))
-            ax.set_title("Cross-spectral density")
+    if args.display and (args.calccoherence or args.calccsd):
         plt.show()
 
     if args.similaritymetric == "correlation" and args.corroutputfile is not None:
