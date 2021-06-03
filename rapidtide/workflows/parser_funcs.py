@@ -105,6 +105,7 @@ def is_range(parser, arg):
 DEFAULT_FILTER_ORDER = 6
 DEFAULT_PAD_SECONDS = 30.0
 DEFAULT_PERMUTATIONMETHOD = "shuffle"
+DEFAULT_NORMTYPE = "stddev"
 DEFAULT_FILTERBAND = "lfo"
 DEFAULT_FILTERTYPE = "trapezoidal"
 
@@ -119,7 +120,9 @@ def addreqinputniftifile(parser, varname, addedtext=""):
 
 def addreqoutputniftifile(parser, varname, addedtext=""):
     parser.add_argument(
-        varname, type=str, help="Output NIFTI file name.  " + addedtext,
+        varname,
+        type=str,
+        help="Output NIFTI file name.  " + addedtext,
     )
 
 
@@ -168,11 +171,38 @@ def addreqoutputtextfile(parser, varname, rootname=False):
     else:
         helpline = "Name of the output text file."
     parser.add_argument(
-        varname, type=str, help=helpline,
+        varname,
+        type=str,
+        help=helpline,
     )
 
 
-def addfilteropts(parser, filtertarget, details=False):
+def addnormalizationopts(parser, normtarget="timecourse", defaultmethod=DEFAULT_NORMTYPE):
+    norm_opts = parser.add_argument_group("Normalization options")
+    norm_opts.add_argument(
+        "--normmethod",
+        dest="normmethod",
+        action="store",
+        type=str,
+        choices=["None", "percent", "variance", "stddev", "z", "p2p", "mad"],
+        help=(
+            f"Demean and normalize {normtarget} "
+            "using one of the following methods: "
+            '"None" - demean only; '
+            '"percent" - divide by mean; '
+            '"variance" - divide by variance; '
+            '"stddev" or "z" - divide by standard deviation; '
+            '"p2p" - divide by range; '
+            '"mad" - divide by median absolute deviation. '
+            f'Default is "{defaultmethod}".'
+        ),
+        default=defaultmethod,
+    )
+
+
+def addfilteropts(
+    parser, filtertarget="timecourses", defaultmethod=DEFAULT_FILTERBAND, details=False
+):
     filt_opts = parser.add_argument_group("Filtering options")
     filt_opts.add_argument(
         "--filterband",
@@ -182,9 +212,9 @@ def addfilteropts(parser, filtertarget, details=False):
         choices=["None", "vlf", "lfo", "resp", "cardiac", "lfo_legacy"],
         help=(
             f'Filter {filtertarget} to specific band. Use "None" to disable filtering.  '
-            f'Default is "{DEFAULT_FILTERBAND}".'
+            f'Default is "{defaultmethod}".'
         ),
-        default=DEFAULT_FILTERBAND,
+        default=defaultmethod,
     )
     filt_opts.add_argument(
         "--filterfreqs",
@@ -290,17 +320,27 @@ def postprocessfilteropts(args):
     if args.arbvec is not None:
         # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
         # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
-        theprefilter = tide_filt.NoncausalFilter("arb", transferfunc=args.filtertype,)
+        theprefilter = tide_filt.NoncausalFilter(
+            "arb",
+            transferfunc=args.filtertype,
+        )
         theprefilter.setfreqs(args.arbvec[2], args.arbvec[0], args.arbvec[1], args.arbvec[3])
     else:
         theprefilter = tide_filt.NoncausalFilter(
-            args.filterband, transferfunc=args.filtertype, padtime=args.padseconds,
+            args.filterband,
+            transferfunc=args.filtertype,
+            padtime=args.padseconds,
         )
 
     # set the butterworth order
     theprefilter.setbutterorder(args.filtorder)
 
-    (args.lowerstop, args.lowerpass, args.upperpass, args.upperstop,) = theprefilter.getfreqs()
+    (
+        args.lowerstop,
+        args.lowerpass,
+        args.upperpass,
+        args.upperstop,
+    ) = theprefilter.getfreqs()
 
     return args, theprefilter
 
@@ -413,10 +453,18 @@ def addplotopts(parser, multiline=True):
         default=True,
     )
     plotopts.add_argument(
-        "--noxax", dest="showxax", action="store_false", help="Do not show x axis.", default=True,
+        "--noxax",
+        dest="showxax",
+        action="store_false",
+        help="Do not show x axis.",
+        default=True,
     )
     plotopts.add_argument(
-        "--noyax", dest="showyax", action="store_false", help="Do not show y axis.", default=True,
+        "--noyax",
+        dest="showyax",
+        action="store_false",
+        help="Do not show y axis.",
+        default=True,
     )
     if multiline:
         plotopts.add_argument(

@@ -164,8 +164,6 @@ def savetonifti(thearray, theheader, thename):
         The data array to save.
     theheader : nifti header
         A valid nifti header
-    thepixdim : array
-        The pixel dimensions.
     thename : str
         The name of the nifti file to save
 
@@ -782,10 +780,18 @@ def readmotion(filename):
         motiondict["yrot"] = allmotion[1, :] * 1.0
         motiondict["zrot"] = allmotion[2, :] * 1.0
         motiondict["maxrot"] = np.max(
-            [np.max(motiondict["xrot"]), np.max(motiondict["yrot"]), np.max(motiondict["zrot"]),]
+            [
+                np.max(motiondict["xrot"]),
+                np.max(motiondict["yrot"]),
+                np.max(motiondict["zrot"]),
+            ]
         )
         motiondict["minrot"] = np.min(
-            [np.min(motiondict["xrot"]), np.min(motiondict["yrot"]), np.min(motiondict["zrot"]),]
+            [
+                np.min(motiondict["xrot"]),
+                np.min(motiondict["yrot"]),
+                np.min(motiondict["zrot"]),
+            ]
         )
     elif extension == ".tsv":
         allmotion = readlabelledtsv(filebase)
@@ -811,10 +817,18 @@ def readmotion(filename):
         motiondict["yrot"] = allmotion["rot_y"] * 1.0
         motiondict["zrot"] = allmotion["rot_z"] * 1.0
         motiondict["maxrot"] = np.max(
-            [np.max(motiondict["xrot"]), np.max(motiondict["yrot"]), np.max(motiondict["zrot"]),]
+            [
+                np.max(motiondict["xrot"]),
+                np.max(motiondict["yrot"]),
+                np.max(motiondict["zrot"]),
+            ]
         )
         motiondict["minrot"] = np.min(
-            [np.min(motiondict["xrot"]), np.min(motiondict["yrot"]), np.min(motiondict["zrot"]),]
+            [
+                np.min(motiondict["xrot"]),
+                np.min(motiondict["yrot"]),
+                np.min(motiondict["zrot"]),
+            ]
         )
     else:
         print("cannot read files with extension", extension)
@@ -1074,6 +1088,7 @@ def writebidstsv(
     append=False,
     colsinjson=True,
     colsintsv=False,
+    omitjson=False,
     debug=False,
 ):
     """
@@ -1094,6 +1109,7 @@ def writebidstsv(
     :param append:
     :param colsinjson:
     :param colsintsv:
+    :param omitjson:
     :param debug:
     :return:
     """
@@ -1188,10 +1204,13 @@ def writebidstsv(
         else:
             headerdict["Columns"] = incolumns + columns
 
-    with open(outputfileroot + ".json", "wb") as fp:
-        fp.write(
-            json.dumps(headerdict, sort_keys=True, indent=4, separators=(",", ":")).encode("utf-8")
-        )
+    if not omitjson:
+        with open(outputfileroot + ".json", "wb") as fp:
+            fp.write(
+                json.dumps(headerdict, sort_keys=True, indent=4, separators=(",", ":")).encode(
+                    "utf-8"
+                )
+            )
 
 
 def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
@@ -1495,7 +1514,10 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
         # we can only get here if columnname is undefined
         if not (0 < columnnum < len(columns)):
             print(
-                "specified column number", columnnum, "is out of range in", inputfilename,
+                "specified column number",
+                columnnum,
+                "is out of range in",
+                inputfilename,
             )
             return None, None, None
         else:
@@ -1828,6 +1850,49 @@ def writevec(thevec, outputfile, lineend=""):
     with open(outputfile, openmode) as FILE:
         for i in thevec:
             FILE.writelines(str(i) + thelineending)
+
+
+def writevectorstotextfile(
+    thevecs,
+    outputfile,
+    samplerate=1.0,
+    starttime=0.0,
+    columns=None,
+    compressed=True,
+    filetype="text",
+    lineend="",
+):
+    if filetype == "text":
+        writenpvecs(thevecs, outputfile, lineend=lineend)
+    elif filetype == "bidscontinuous":
+        writebidstsv(
+            outputfile.split(".")[0],
+            thevecs,
+            samplerate,
+            compressed=compressed,
+            columns=columns,
+            starttime=starttime,
+            append=False,
+            colsinjson=True,
+            colsintsv=False,
+            debug=False,
+        )
+    elif filetype == "plaintsv":
+        writebidstsv(
+            outputfile.split(".")[0],
+            thevecs,
+            samplerate,
+            compressed=compressed,
+            columns=columns,
+            starttime=starttime,
+            append=False,
+            colsinjson=False,
+            colsintsv=True,
+            omitjson=True,
+            debug=False,
+        )
+    else:
+        raise ValueError("illegal file type")
 
 
 # rewritten to guarantee file closure, combines writenpvec and writenpvecs

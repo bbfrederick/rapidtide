@@ -20,6 +20,7 @@ import argparse
 import sys
 
 import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 import rapidtide.workflows.parser_funcs as pf
 
 
@@ -69,7 +70,10 @@ def _get_parser():
     )
 
     # Filter arguments
-    pf.addfilteropts(parser, "timecourses")
+    pf.addfilteropts(parser, filtertarget="timecourses")
+
+    # Normalization arguments
+    pf.addnormalizationopts(parser, normtarget="timecourses", defaultmethod="None")
 
     parser.add_argument(
         "--debug",
@@ -95,7 +99,7 @@ def main():
     args, thefilter = pf.postprocessfilteropts(args)
 
     # read in data
-    (samplerate, dummy, colnames, invecs, compressed, filetype,) = tide_io.readvectorsfromtextfile(
+    (samplerate, starttime, colnames, invecs, compressed, filetype,) = tide_io.readvectorsfromtextfile(
         args.inputfile
     )
 
@@ -120,9 +124,11 @@ def main():
     print("samplerate is", samplerate)
     outvecs = invecs * 0.0
     for i in range(numvecs):
-        outvecs[i, :] = thefilter.apply(samplerate, invecs[i, :])
+        outvecs[i, :] = tide_math.normalize(thefilter.apply(samplerate, invecs[i, :]), method=args.normmethod)
 
-    tide_io.writenpvecs(outvecs, args.outputfile)
+    tide_io.writevectorstotextfile(outvecs, args.outputfile, samplerate=samplerate, starttime=starttime, columns=colnames, compressed=compressed,
+                           filetype=filetype)
+    #tide_io.writenpvecs(outvecs, args.outputfile)
 
 
 if __name__ == "__main__":
