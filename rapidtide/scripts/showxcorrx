@@ -19,11 +19,11 @@
 import argparse
 import sys
 
+import matplotlib.cm as cm
 import numpy as np
 import scipy as sp
 from scipy.signal import correlate
 from scipy.stats.stats import pearsonr
-import matplotlib.cm as cm
 
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.correlate as tide_corr
@@ -139,7 +139,7 @@ def _get_parser():
         "--invert",
         dest="invert",
         action="store_true",
-        help=("Invert one timecourse prior to correlation. "),
+        help=("Invert the second timecourse prior to calculating similarity. "),
         default=False,
     )
     preproc.add_argument(
@@ -330,13 +330,18 @@ def main():
     # get the filenames and read in the data
     infilename1, colspec1 = tide_io.parsefilespec(args.infilename1)
     infilename2, colspec2 = tide_io.parsefilespec(args.infilename2)
-    (   samplerate1,
+    (
+        samplerate1,
         startoffset1,
         colnames1,
         inputdata1,
         dummy,
         dummy,
     ) = tide_io.readvectorsfromtextfile(args.infilename1, onecol=True, debug=args.debug)
+    if colnames1 is not None:
+        tcname1 = colnames1
+    else:
+        tcname1 = infilename1 + "_" + colspec1
 
     (
         samplerate2,
@@ -346,6 +351,10 @@ def main():
         dummy,
         dummy,
     ) = tide_io.readvectorsfromtextfile(args.infilename2, onecol=True, debug=args.debug)
+    if colnames2 is not None:
+        tcname2 = colnames2
+    else:
+        tcname2 = infilename2 + "_" + colspec2
 
     if samplerate1 != samplerate2:
         print("time courses must have the same sample rate")
@@ -711,7 +720,7 @@ def main():
         print(thepxcorr)
 
     if args.similaritymetric == "mutualinfo":
-        print(f"{infilename1}[0] = {infilename2}[{-maxdelaymi} seconds]")
+        print(f"{tcname1}[0] = {tcname2}[{-maxdelaymi} seconds]")
         if args.summarymode:
             if args.numestreps > 0:
                 thelabelitems = [
@@ -731,7 +740,7 @@ def main():
                     str(-maxdelaymi),
                 ]
     else:
-        print(f"{infilename1}[0] = {infilename2}[{-maxdelay} seconds]")
+        print(f"{tcname1}[0] = {tcname2}[{-maxdelay} seconds]")
         if args.summarymode:
             if args.numestreps > 0:
                 thelabelitems = [
@@ -835,18 +844,22 @@ def main():
     else:
         if args.similaritymetric == "mutualinfo":
             thelegend.append("Mutual Information")
-            ax.plot(MI_x_trim, theMI_trim,
-                    color=colorlist[0],
-                    label=thelegend[0],
-                    linewidth=thelinewidth[0],
-                    )
+            ax.plot(
+                MI_x_trim,
+                theMI_trim,
+                color=colorlist[0],
+                label=thelegend[0],
+                linewidth=thelinewidth[0],
+            )
         else:
             thelegend.append("Cross correlation")
-            ax.plot(xcorr_x_trim, thexcorr_trim,
-                    color=colorlist[0],
-                    label=thelegend[0],
-                    linewidth=thelinewidth[0],
-                    )
+            ax.plot(
+                xcorr_x_trim,
+                thexcorr_trim,
+                color=colorlist[0],
+                label=thelegend[0],
+                linewidth=thelinewidth[0],
+            )
     if args.dolegend:
         ax.legend(thelegend, fontsize=thelegendfontsize, loc=args.legendloc)
     ax.set_title("Similarity metric over the search range", fontsize=thetitlefontsize)
