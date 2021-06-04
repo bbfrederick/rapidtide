@@ -780,10 +780,18 @@ def readmotion(filename):
         motiondict["yrot"] = allmotion[1, :] * 1.0
         motiondict["zrot"] = allmotion[2, :] * 1.0
         motiondict["maxrot"] = np.max(
-            [np.max(motiondict["xrot"]), np.max(motiondict["yrot"]), np.max(motiondict["zrot"]),]
+            [
+                np.max(motiondict["xrot"]),
+                np.max(motiondict["yrot"]),
+                np.max(motiondict["zrot"]),
+            ]
         )
         motiondict["minrot"] = np.min(
-            [np.min(motiondict["xrot"]), np.min(motiondict["yrot"]), np.min(motiondict["zrot"]),]
+            [
+                np.min(motiondict["xrot"]),
+                np.min(motiondict["yrot"]),
+                np.min(motiondict["zrot"]),
+            ]
         )
     elif extension == ".tsv":
         allmotion = readlabelledtsv(filebase)
@@ -809,10 +817,18 @@ def readmotion(filename):
         motiondict["yrot"] = allmotion["rot_y"] * 1.0
         motiondict["zrot"] = allmotion["rot_z"] * 1.0
         motiondict["maxrot"] = np.max(
-            [np.max(motiondict["xrot"]), np.max(motiondict["yrot"]), np.max(motiondict["zrot"]),]
+            [
+                np.max(motiondict["xrot"]),
+                np.max(motiondict["yrot"]),
+                np.max(motiondict["zrot"]),
+            ]
         )
         motiondict["minrot"] = np.min(
-            [np.min(motiondict["xrot"]), np.min(motiondict["yrot"]), np.min(motiondict["zrot"]),]
+            [
+                np.min(motiondict["xrot"]),
+                np.min(motiondict["yrot"]),
+                np.min(motiondict["zrot"]),
+            ]
         )
     else:
         print("cannot read files with extension", extension)
@@ -1498,7 +1514,10 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
         # we can only get here if columnname is undefined
         if not (0 < columnnum < len(columns)):
             print(
-                "specified column number", columnnum, "is out of range in", inputfilename,
+                "specified column number",
+                columnnum,
+                "is out of range in",
+                inputfilename,
             )
             return None, None, None
         else:

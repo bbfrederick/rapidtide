@@ -536,7 +536,13 @@ def upsample(inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, d
 
 
 def dotwostepresample(
-    orig_x, orig_y, intermed_freq, final_freq, method="univariate", antialias=True, debug=False,
+    orig_x,
+    orig_y,
+    intermed_freq,
+    final_freq,
+    method="univariate",
+    antialias=True,
+    debug=False,
 ):
     """
 
@@ -568,7 +574,10 @@ def dotwostepresample(
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
     if debug:
         print(
-            "init_freq, intermed_freq, final_freq:", init_freq, intermed_freq, final_freq,
+            "init_freq, intermed_freq, final_freq:",
+            init_freq,
+            intermed_freq,
+            final_freq,
         )
         print("intermed_ts, numresamppts:", intermed_ts, numresamppts)
         print("upsampling took", time.time() - starttime, "seconds")

@@ -287,7 +287,8 @@ class Overlay:
 
     def vox2real(self, xpos, ypos, zpos, tpos):
         return np.concatenate(
-            (nib.apply_affine(self.affine, [xpos, ypos, zpos]), [self.tr2real(tpos)]), axis=0,
+            (nib.apply_affine(self.affine, [xpos, ypos, zpos]), [self.tr2real(tpos)]),
+            axis=0,
         )
 
     def setXYZpos(self, xpos, ypos, zpos):
@@ -351,7 +352,10 @@ class Overlay:
             theticks = [lut_state["ticks"][0]]
             for theelement in lut_state["ticks"][1:-1]:
                 theticks.append(
-                    (theelement[0], (theelement[1][0], theelement[1][1], theelement[1][2], alpha),)
+                    (
+                        theelement[0],
+                        (theelement[1][0], theelement[1][1], theelement[1][2], alpha),
+                    )
                 )
             theticks.append(lut_state["ticks"][-1])
             print("setLUT alpha adjustment:\n", theticks)
@@ -446,7 +450,10 @@ class RapidtideDataset:
         self.offsettime = offsettime
         self.init_LUT = init_LUT
         self.referencedir = os.path.join(
-            os.path.split(os.path.split(__file__)[0])[0], "rapidtide", "data", "reference",
+            os.path.split(os.path.split(__file__)[0])[0],
+            "rapidtide",
+            "data",
+            "reference",
         )
 
         # check which naming style the dataset has
@@ -493,7 +500,9 @@ class RapidtideDataset:
                     self.focusregressor = thisregressor[0]
             else:
                 print(
-                    "file: ", self.fileroot + thisregressor[2], " does not exist - skipping...",
+                    "file: ",
+                    self.fileroot + thisregressor[2],
+                    " does not exist - skipping...",
                 )
 
     def _loadfuncmaps(self):
@@ -506,7 +515,9 @@ class RapidtideDataset:
                 print(f"loading {mapname} from {mapfilename}")
             if os.path.isfile(self.fileroot + mapfilename + ".nii.gz"):
                 print(
-                    "file: ", self.fileroot + mapfilename + ".nii.gz", " exists - reading...",
+                    "file: ",
+                    self.fileroot + mapfilename + ".nii.gz",
+                    " exists - reading...",
                 )
                 thepath, thebase = os.path.split(self.fileroot)
                 self.overlays[mapname] = Overlay(
@@ -562,7 +573,9 @@ class RapidtideDataset:
                 self.loadedfuncmasks.append(maskname)
             else:
                 print(
-                    "mask: ", self.fileroot + maskfilename + ".nii.gz", " does not exist!",
+                    "mask: ",
+                    self.fileroot + maskfilename + ".nii.gz",
+                    " does not exist!",
                 )
         print(self.loadedfuncmasks)
 
@@ -571,7 +584,11 @@ class RapidtideDataset:
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
                 self.overlays["geommask"] = Overlay(
-                    "geommask", self.geommaskname, thebase, init_LUT=self.init_LUT, isaMask=True,
+                    "geommask",
+                    self.geommaskname,
+                    thebase,
+                    init_LUT=self.init_LUT,
+                    isaMask=True,
                 )
                 print("using ", self.geommaskname, " as geometric mask")
                 # allloadedmaps.append('geommask')
@@ -594,7 +611,11 @@ class RapidtideDataset:
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
                 self.overlays["geommask"] = Overlay(
-                    "geommask", self.geommaskname, thebase, init_LUT=self.init_LUT, isaMask=True,
+                    "geommask",
+                    self.geommaskname,
+                    thebase,
+                    init_LUT=self.init_LUT,
+                    isaMask=True,
                 )
                 print("using ", self.geommaskname, " as background")
                 # allloadedmaps.append('geommask')
@@ -629,7 +650,10 @@ class RapidtideDataset:
             print("using hires_head anatomic name")
             thepath, thebase = os.path.split(self.fileroot)
             self.overlays["anatomic"] = Overlay(
-                "anatomic", self.fileroot + "highres_head.nii.gz", thebase, init_LUT=self.init_LUT,
+                "anatomic",
+                self.fileroot + "highres_head.nii.gz",
+                thebase,
+                init_LUT=self.init_LUT,
             )
             print("using ", self.fileroot + "highres_head.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
@@ -638,7 +662,10 @@ class RapidtideDataset:
             print("using hires anatomic name")
             thepath, thebase = os.path.split(self.fileroot)
             self.overlays["anatomic"] = Overlay(
-                "anatomic", self.fileroot + "highres.nii.gz", thebase, init_LUT=self.init_LUT,
+                "anatomic",
+                self.fileroot + "highres.nii.gz",
+                thebase,
+                init_LUT=self.init_LUT,
             )
             print("using ", self.fileroot + "highres.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
@@ -686,7 +713,10 @@ class RapidtideDataset:
         elif os.path.isfile(self.fileroot + "mean.nii.gz"):
             thepath, thebase = os.path.split(self.fileroot)
             self.overlays["anatomic"] = Overlay(
-                "anatomic", self.fileroot + "mean.nii.gz", thebase, init_LUT=self.init_LUT,
+                "anatomic",
+                self.fileroot + "mean.nii.gz",
+                thebase,
+                init_LUT=self.init_LUT,
             )
             print("using ", self.fileroot + "mean.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
@@ -694,7 +724,10 @@ class RapidtideDataset:
         elif os.path.isfile(self.fileroot + "meanvalue.nii.gz"):
             thepath, thebase = os.path.split(self.fileroot)
             self.overlays["anatomic"] = Overlay(
-                "anatomic", self.fileroot + "meanvalue.nii.gz", thebase, init_LUT=self.init_LUT,
+                "anatomic",
+                self.fileroot + "meanvalue.nii.gz",
+                thebase,
+                init_LUT=self.init_LUT,
             )
             print("using ", self.fileroot + "meanvalue.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
@@ -708,7 +741,9 @@ class RapidtideDataset:
                 init_LUT=self.init_LUT,
             )
             print(
-                "using ", self.fileroot + "desc-mean_map.nii.gz", " as background",
+                "using ",
+                self.fileroot + "desc-mean_map.nii.gz",
+                " as background",
             )
             # allloadedmaps.append('anatomic')
             return True
@@ -1054,7 +1089,9 @@ class RapidtideDataset:
                     self.dispmaps.append("atlas")
                 else:
                     print(
-                        self.atlasname + " template: ", self.atlasniftiname, " does not exist!",
+                        self.atlasname + " template: ",
+                        self.atlasniftiname,
+                        " does not exist!",
                     )
 
         try:

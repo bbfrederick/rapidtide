@@ -106,7 +106,11 @@ def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
         plt.show()
 
     testwaves.append(
-        {"name": "sinusoidal modulated", "timeaxis": 1.0 * timeaxis, "waveform": np.cos(timeaxis),}
+        {
+            "name": "sinusoidal modulated",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": np.cos(timeaxis),
+        }
     )
     if display:
         plt.figure()
@@ -232,7 +236,11 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
     scratch[int(tclen / 5) : int(2 * tclen / 5)] = 1.0
     scratch[int(3 * tclen / 5) : int(4 * tclen / 5)] = 1.0
     testwaves.append(
-        {"name": "block regressor", "timeaxis": 1.0 * timeaxis, "waveform": 1.0 * scratch,}
+        {
+            "name": "block regressor",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": 1.0 * scratch,
+        }
     )
 
     # show the end effects waveforms
