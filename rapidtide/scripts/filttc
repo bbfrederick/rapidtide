@@ -99,9 +99,14 @@ def main():
     args, thefilter = pf.postprocessfilteropts(args)
 
     # read in data
-    (samplerate, starttime, colnames, invecs, compressed, filetype,) = tide_io.readvectorsfromtextfile(
-        args.inputfile
-    )
+    (
+        samplerate,
+        starttime,
+        colnames,
+        invecs,
+        compressed,
+        filetype,
+    ) = tide_io.readvectorsfromtextfile(args.inputfile)
 
     if samplerate is None:
         if args.samplerate == "auto":
@@ -124,11 +129,20 @@ def main():
     print("samplerate is", samplerate)
     outvecs = invecs * 0.0
     for i in range(numvecs):
-        outvecs[i, :] = tide_math.normalize(thefilter.apply(samplerate, invecs[i, :]), method=args.normmethod)
+        outvecs[i, :] = tide_math.normalize(
+            thefilter.apply(samplerate, invecs[i, :]), method=args.normmethod
+        )
 
-    tide_io.writevectorstotextfile(outvecs, args.outputfile, samplerate=samplerate, starttime=starttime, columns=colnames, compressed=compressed,
-                           filetype=filetype)
-    #tide_io.writenpvecs(outvecs, args.outputfile)
+    tide_io.writevectorstotextfile(
+        outvecs,
+        args.outputfile,
+        samplerate=samplerate,
+        starttime=starttime,
+        columns=colnames,
+        compressed=compressed,
+        filetype=filetype,
+    )
+    # tide_io.writenpvecs(outvecs, args.outputfile)
 
 
 if __name__ == "__main__":
