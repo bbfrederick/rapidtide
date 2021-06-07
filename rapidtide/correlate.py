@@ -202,6 +202,7 @@ def shorttermcorr_2D(
     samplestep=1,
     laglimits=None,
     weighting="None",
+    padding=0,
     windowfunc="None",
     detrendorder=0,
     display=False,
@@ -217,6 +218,7 @@ def shorttermcorr_2D(
     samplestep
     laglimits
     weighting
+    padding
     windowfunc
     detrendorder
     display
@@ -252,7 +254,7 @@ def shorttermcorr_2D(
     dataseg2 = tide_math.corrnormalize(
         data2[0 : 2 * halfwindow], detrendorder=detrendorder, windowfunc=windowfunc
     )
-    thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting)
+    thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting, padding=padding)
     xcorrlen = np.shape(thexcorr)[0]
     xcorr_x = (
         np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
@@ -274,7 +276,9 @@ def shorttermcorr_2D(
             windowfunc=windowfunc,
         )
         times.append(i * sampletime)
-        xcorrpertime.append(fastcorrelate(dataseg1, dataseg2, weighting=weighting))
+        xcorrpertime.append(
+            fastcorrelate(dataseg1, dataseg2, weighting=weighting, padding=padding)
+        )
         (
             maxindex,
             thedelayval,
@@ -799,7 +803,7 @@ def faststcorrelate(
     return corrtimes, times, stcorr
 
 
-def fastcorrelate(input1, input2, usefft=True, weighting="None", displayplots=False):
+def fastcorrelate(input1, input2, usefft=True, padding=0, weighting="None", displayplots=False):
     """Perform a fast correlation between two arrays.
 
     Parameters
@@ -807,6 +811,7 @@ def fastcorrelate(input1, input2, usefft=True, weighting="None", displayplots=Fa
     input1
     input2
     usefft
+    padding
     weighting
     displayplots
 
@@ -818,20 +823,48 @@ def fastcorrelate(input1, input2, usefft=True, weighting="None", displayplots=Fa
     -----
     From http://stackoverflow.com/questions/12323959/fast-cross-correlation-method-in-python.
     """
+    len1 = len(input1)
+    len2 = len(input2)
+    outlen = len1 + len2 - 1
+    if padding < 0:
+        # autopad
+        newlen1 = len1 * 2
+        newlen2 = len2 * 2
+        paddedinput1 = np.zeros((newlen1), dtype=float)
+        paddedinput2 = np.zeros((newlen2), dtype=float)
+        paddedinput1[0:len1] = input1
+        paddedinput2[0:len2] = input2
+        startpt = (len1 + len2) // 2
+    elif padding > 0:
+        # explicit pad
+        newlen1 = len1 + padding
+        newlen2 = len2 + padding
+        paddedinput1 = np.zeros((newlen1), dtype=float)
+        paddedinput2 = np.zeros((newlen2), dtype=float)
+        paddedinput1[0:len1] = input1
+        paddedinput2[0:len2] = input2
+        startpt = padding
+    else:
+        # no pad
+        paddedinput1 = input1
+        paddedinput2 = input2
+        startpt = 0
     if usefft:
         # Do an array flipped convolution, which is a correlation.
         if weighting == "None":
-            return signal.fftconvolve(input1, input2[::-1], mode="full")
+            return signal.fftconvolve(paddedinput1, paddedinput2[::-1], mode="full")[
+                startpt : startpt + outlen
+            ]
         else:
             return convolve_weighted_fft(
-                input1,
-                input2[::-1],
+                paddedinput1,
+                paddedinput2[::-1],
                 mode="full",
                 weighting=weighting,
                 displayplots=displayplots,
-            )
+            )[startpt : startpt + outlen]
     else:
-        return np.correlate(input1, input2, mode="full")
+        return np.correlate(paddedinput1, paddedinput2, mode="full")
 
 
 def _centered(arr, newsize):

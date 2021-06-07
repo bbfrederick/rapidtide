@@ -132,7 +132,7 @@ def main(inputargs=None):
     )
 
     # now paddeddata1 and 2 are on the same timescales
-    thexcorr = tide_corr.fastcorrelate(paddeddata1, paddeddata2)
+    thexcorr = tide_corr.fastcorrelate(paddeddata1, paddeddata2, padding=0)
     xcorrlen = len(thexcorr)
     xcorr_x = (
         np.r_[0.0:xcorrlen] * intimestep1 - (xcorrlen * intimestep1) / 2.0 + intimestep1 / 2.0

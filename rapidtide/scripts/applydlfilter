@@ -87,17 +87,22 @@ def _get_parser():
     return parser
 
 
-def checkcardmatch(reference, candidate, samplerate, refine=True, debug=False):
+def checkcardmatch(reference, candidate, samplerate, refine=True, padding=0, debug=False):
     thecardfilt = tide_filt.NoncausalFilter(filtertype="cardiac")
     trimlength = np.min([len(reference), len(candidate)])
     thexcorr = tide_corr.fastcorrelate(
         tide_math.corrnormalize(
-            thecardfilt.apply(samplerate, reference), detrendorder=3, windowfunc="hamming",
+            thecardfilt.apply(samplerate, reference),
+            detrendorder=3,
+            windowfunc="hamming",
         )[:trimlength],
         tide_math.corrnormalize(
-            thecardfilt.apply(samplerate, candidate), detrendorder=3, windowfunc="hamming",
+            thecardfilt.apply(samplerate, candidate),
+            detrendorder=3,
+            windowfunc="hamming",
         )[:trimlength],
         usefft=True,
+        padding=padding,
     )
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / samplerate
@@ -196,7 +201,9 @@ def main():
             badpts = tide_io.readvec(args.infilename.replace(".txt", "_badpts.txt"))
         except:
             print(
-                "bad points file", args.infilename.replace(".txt", "_badpts.txt"), "not found!",
+                "bad points file",
+                args.infilename.replace(".txt", "_badpts.txt"),
+                "not found!",
             )
             sys.exit()
 

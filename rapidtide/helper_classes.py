@@ -363,9 +363,10 @@ class MutualInformationator(SimilarityFunctionator):
 
 
 class Correlator(SimilarityFunctionator):
-    def __init__(self, windowfunc="hamming", corrweighting="None", *args, **kwargs):
+    def __init__(self, windowfunc="hamming", corrweighting="None", corrpadding=0, *args, **kwargs):
         self.windowfunc = windowfunc
         self.corrweighting = corrweighting
+        self.corrpadding = corrpadding
         super(Correlator, self).__init__(*args, **kwargs)
 
     def setlimits(self, lagmininpts, lagmaxinpts):
@@ -402,7 +403,11 @@ class Correlator(SimilarityFunctionator):
 
         # now actually do the correlation
         self.thesimfunc = tide_corr.fastcorrelate(
-            self.preptesttc, self.prepreftc, usefft=True, weighting=self.corrweighting
+            self.preptesttc,
+            self.prepreftc,
+            usefft=True,
+            weighting=self.corrweighting,
+            padding=self.corrpadding,
         )
         self.similarityfunclen = len(self.thesimfunc)
         self.similarityfuncorigin = self.similarityfunclen // 2 + 1

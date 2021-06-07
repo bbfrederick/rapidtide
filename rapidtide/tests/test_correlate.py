@@ -30,20 +30,30 @@ def test_fastcorrelate(display=False):
     sig2 = np.zeros((inlen), dtype="float")
     sig1[int(inlen // 2) + 1] = 1.0
     sig2[int(inlen // 2) + offset + 1] = 1.0
-    fastcorrelate_result = fastcorrelate(sig2, sig1)
+    fastcorrelate_result_pad0 = fastcorrelate(sig2, sig1, padding=0)
+    fastcorrelate_result_padneg1 = fastcorrelate(sig2, sig1, padding=-1)
+    fastcorrelate_result_pad100 = fastcorrelate(sig2, sig1, padding=100)
+    print(
+        "lengths:",
+        len(fastcorrelate_result_pad0),
+        len(fastcorrelate_result_padneg1),
+        len(fastcorrelate_result_pad100),
+    )
     stdcorrelate_result = np.correlate(sig2, sig1, mode="full")
     midpoint = int(len(stdcorrelate_result) // 2) + 1
     if display:
         plt.figure()
         plt.ylim([-1.0, 3.0])
-        plt.plot(fastcorrelate_result + 1.0)
+        plt.plot(fastcorrelate_result_pad100 + 3.0)
+        plt.plot(fastcorrelate_result_padneg1 + 2.0)
+        plt.plot(fastcorrelate_result_pad0 + 1.0)
         plt.plot(stdcorrelate_result)
         print("maximum occurs at offset", np.argmax(stdcorrelate_result) - midpoint + 1)
         plt.legend(["Fast correlate", "Standard correlate"])
         plt.show()
 
     aethresh = 10
-    np.testing.assert_almost_equal(fastcorrelate_result, stdcorrelate_result, aethresh)
+    np.testing.assert_almost_equal(fastcorrelate_result_pad0, stdcorrelate_result, aethresh)
 
     # smoke test the weighted correlations
     for weighting in ["None", "liang", "eckart", "phat"]:
