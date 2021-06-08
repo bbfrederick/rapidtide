@@ -7,4 +7,15 @@ showxcorrx \
     --filterband lfo \
     --invert \
     --searchrange -15 15 \
-    --similaritymetric mutualinfo
+    --similaritymetric correlation \
+    --zeropad 0 --debug
+
+showxcorrx \
+    lt_HbO \
+    rt_HbO \
+    --samplerate 12.5 \
+    --filterband lfo \
+    --invert \
+    --searchrange -15 15 \
+    --similaritymetric correlation \
+    --zeropad -1 --debug
