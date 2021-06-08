@@ -17,6 +17,7 @@ rapidtide/tests/*.jpg
 
 # some local test data
 rapidtide/data/examples/src/*.jpg
+rapidtide/data/examples/src/tc1*
 rapidtide/data/examples/src/*corrfunc*
 rapidtide/data/examples/src/*trimmed*
 rapidtide/data/examples/src/sub-01*
