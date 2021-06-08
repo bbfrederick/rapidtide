@@ -341,7 +341,10 @@ def main():
     if colnames1 is not None:
         tcname1 = colnames1
     else:
-        tcname1 = infilename1 + "_" + colspec1
+        if colspec1 is not None:
+            tcname1 = infilename1 + "_" + colspec1
+        else:
+            tcname1 = infilename1
 
     (
         samplerate2,
@@ -354,7 +357,10 @@ def main():
     if colnames2 is not None:
         tcname2 = colnames2
     else:
-        tcname2 = infilename2 + "_" + colspec2
+        if colspec2 is not None:
+            tcname2 = infilename2 + "_" + colspec2
+        else:
+            tcname2 = infilename2
 
     if samplerate1 != samplerate2:
         print("time courses must have the same sample rate")
@@ -447,6 +453,8 @@ def main():
         detrendorder=args.detrendorder,
         windowfunc=args.windowfunc,
         corrweighting=args.corrweighting,
+        corrpadding=args.zeropadding,
+        debug=args.debug,
     )
     theCorrelator.setreftc(trimdata2 * flipfac)
     theMutualInformationator = tide_classes.MutualInformationator(
