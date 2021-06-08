@@ -1,5 +1,12 @@
 # Release history
 
+## Version 2.0.1 (6/8/21)
+* (showxcorrx, plethquality, resamp1tc, simdata, happy, rapidtide) Cleaned up, improved, and unified text file reading and writing.
+* (showxcorrx) Various functionality improvements.
+* (package) Added options for timecourse normalization and zeropadding correlations.
+* (documentation) Further cleanup.
+* (Docker) Various fixes to versioning and other internals.
+
 ## Version 2.0 (6/2/21)
 Much thanks to Taylor Salo for his continuing contributions, with several substantive improvements to code, documentation, and automatic testing, and generally helping devise a sensible release roadmap that made this version possible.
 
