@@ -87,7 +87,7 @@ def _get_parser():
     return parser
 
 
-def checkcardmatch(reference, candidate, samplerate, refine=True, padding=0, debug=False):
+def checkcardmatch(reference, candidate, samplerate, refine=True, zeropadding=0, debug=False):
     thecardfilt = tide_filt.NoncausalFilter(filtertype="cardiac")
     trimlength = np.min([len(reference), len(candidate)])
     thexcorr = tide_corr.fastcorrelate(
@@ -102,7 +102,7 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, padding=0, deb
             windowfunc="hamming",
         )[:trimlength],
         usefft=True,
-        padding=padding,
+        zeropadding=zeropadding,
     )
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / samplerate

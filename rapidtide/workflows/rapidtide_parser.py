@@ -259,29 +259,8 @@ def _get_parser():
     # Add permutation options
     pf.addpermutationopts(parser)
 
-    wfunc = preproc.add_mutually_exclusive_group()
-    wfunc.add_argument(
-        "--windowfunc",
-        dest="windowfunc",
-        action="store",
-        type=str,
-        choices=["hamming", "hann", "blackmanharris", "None"],
-        help=(
-            "Window function to use prior to correlation. "
-            'Options are "hamming", "hann", '
-            '"blackmanharris", and "None". '
-            f'Default is "{DEFAULT_WINDOW_TYPE}".'
-        ),
-        default=DEFAULT_WINDOW_TYPE,
-    )
-    wfunc.add_argument(
-        "--nowindow",
-        dest="windowfunc",
-        action="store_const",
-        const="None",
-        help="Disable precorrelation windowing.",
-        default=DEFAULT_WINDOW_TYPE,
-    )
+    # add window options
+    pf.addwindowopts(parser, windowtype=DEFAULT_WINDOW_TYPE)
 
     preproc.add_argument(
         "--detrendorder",

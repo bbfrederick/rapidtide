@@ -613,6 +613,7 @@ def process_args(inputargs=None):
     optiondict["dodemean"] = True  # remove the mean from signals prior to correlation
     optiondict["detrendorder"] = 1  # remove linear trends prior to correlation
     optiondict["windowfunc"] = "hamming"  # the particular window function to use for correlation
+    optiondict["zeropadding"] = 0  # by default, padding is 0 (circular correlation)
     optiondict[
         "corrweighting"
     ] = "None"  # use a standard unweighted crosscorrelation for calculate time delays

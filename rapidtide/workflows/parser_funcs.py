@@ -108,6 +108,8 @@ DEFAULT_PERMUTATIONMETHOD = "shuffle"
 DEFAULT_NORMTYPE = "stddev"
 DEFAULT_FILTERBAND = "lfo"
 DEFAULT_FILTERTYPE = "trapezoidal"
+DEFAULT_PADVAL = 0
+DEFAULT_WINDOWFUNC = "hamming"
 
 
 def addreqinputniftifile(parser, varname, addedtext=""):
@@ -345,7 +347,7 @@ def postprocessfilteropts(args):
     return args, theprefilter
 
 
-def addwindowopts(parser):
+def addwindowopts(parser, windowtype=DEFAULT_WINDOWFUNC):
     wfunc = parser.add_argument_group("Windowing options")
     wfunc.add_argument(
         "--windowfunc",
@@ -355,10 +357,31 @@ def addwindowopts(parser):
         choices=["hamming", "hann", "blackmanharris", "None"],
         help=(
             "Window function to use prior to correlation. "
-            "Options are hamming (default), hann, "
-            "blackmanharris, and None. "
+            "Options are hamming, hann, "
+            f"blackmanharris, and None. Default is {windowtype}"
         ),
-        default="hamming",
+        default=windowtype,
+    )
+    wfunc.add_argument(
+        "--nowindow",
+        dest="windowfunc",
+        action="store_const",
+        const="None",
+        help="Disable precorrelation windowing.",
+        default=windowtype,
+    )
+    wfunc.add_argument(
+        "--zeropadding",
+        dest="zeropadding",
+        action="store",
+        type=int,
+        metavar="PADVAL",
+        help=(
+            "Pad input functions to correlation with PADVAL zeros on each side. "
+            "A PADVAL of 0 does circular correlations, positive values reduce edge artifacts. "
+            f"Set PADVAL < 0 to set automatically. Default is {DEFAULT_PADVAL}."
+        ),
+        default=DEFAULT_PADVAL,
     )
 
 

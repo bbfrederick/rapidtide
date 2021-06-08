@@ -218,7 +218,7 @@ def main():
                 reformdata[component2, :],
                 usefft=True,
                 weighting=args.corrweighting,
-                padding=0,
+                zeropadding=0,
                 displayplots=args.debug,
             )
             thepxcorr = pearsonr(reformdata[component1, :] / tclen, reformdata[component2, :])

@@ -202,7 +202,7 @@ def shorttermcorr_2D(
     samplestep=1,
     laglimits=None,
     weighting="None",
-    padding=0,
+    zeropadding=0,
     windowfunc="None",
     detrendorder=0,
     display=False,
@@ -218,7 +218,7 @@ def shorttermcorr_2D(
     samplestep
     laglimits
     weighting
-    padding
+    zeropadding
     windowfunc
     detrendorder
     display
@@ -254,7 +254,7 @@ def shorttermcorr_2D(
     dataseg2 = tide_math.corrnormalize(
         data2[0 : 2 * halfwindow], detrendorder=detrendorder, windowfunc=windowfunc
     )
-    thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting, padding=padding)
+    thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting, zeropadding=zeropadding)
     xcorrlen = np.shape(thexcorr)[0]
     xcorr_x = (
         np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
@@ -277,7 +277,7 @@ def shorttermcorr_2D(
         )
         times.append(i * sampletime)
         xcorrpertime.append(
-            fastcorrelate(dataseg1, dataseg2, weighting=weighting, padding=padding)
+            fastcorrelate(dataseg1, dataseg2, weighting=weighting, zeropadding=zeropadding)
         )
         (
             maxindex,
@@ -803,7 +803,15 @@ def faststcorrelate(
     return corrtimes, times, stcorr
 
 
-def fastcorrelate(input1, input2, usefft=True, padding=0, weighting="None", displayplots=False):
+def fastcorrelate(
+    input1,
+    input2,
+    usefft=True,
+    zeropadding=0,
+    weighting="None",
+    displayplots=False,
+    debug=False,
+):
     """Perform a fast correlation between two arrays.
 
     Parameters
@@ -811,9 +819,10 @@ def fastcorrelate(input1, input2, usefft=True, padding=0, weighting="None", disp
     input1
     input2
     usefft
-    padding
+    zeropadding
     weighting
     displayplots
+    debug
 
     Returns
     -------
@@ -826,7 +835,7 @@ def fastcorrelate(input1, input2, usefft=True, padding=0, weighting="None", disp
     len1 = len(input1)
     len2 = len(input2)
     outlen = len1 + len2 - 1
-    if padding < 0:
+    if zeropadding < 0:
         # autopad
         newlen1 = len1 * 2
         newlen2 = len2 * 2
@@ -835,20 +844,23 @@ def fastcorrelate(input1, input2, usefft=True, padding=0, weighting="None", disp
         paddedinput1[0:len1] = input1
         paddedinput2[0:len2] = input2
         startpt = (len1 + len2) // 2
-    elif padding > 0:
+    elif zeropadding > 0:
         # explicit pad
-        newlen1 = len1 + padding
-        newlen2 = len2 + padding
+        newlen1 = len1 + zeropadding
+        newlen2 = len2 + zeropadding
         paddedinput1 = np.zeros((newlen1), dtype=float)
         paddedinput2 = np.zeros((newlen2), dtype=float)
         paddedinput1[0:len1] = input1
         paddedinput2[0:len2] = input2
-        startpt = padding
+        startpt = zeropadding
     else:
         # no pad
         paddedinput1 = input1
         paddedinput2 = input2
         startpt = 0
+    if debug:
+        print(f"FASTCORRELATE - padding: {zeropadding}, startpt: {startpt}, outlen: {outlen}")
+
     if usefft:
         # Do an array flipped convolution, which is a correlation.
         if weighting == "None":

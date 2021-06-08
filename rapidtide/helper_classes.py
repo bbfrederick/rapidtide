@@ -407,7 +407,8 @@ class Correlator(SimilarityFunctionator):
             self.prepreftc,
             usefft=True,
             weighting=self.corrweighting,
-            padding=self.corrpadding,
+            zeropadding=self.corrpadding,
+            debug=self.debug,
         )
         self.similarityfunclen = len(self.thesimfunc)
         self.similarityfuncorigin = self.similarityfunclen // 2 + 1

@@ -728,7 +728,7 @@ def readextmask(thefilename, nim_hdr, xsize, ysize, numslices, debug=False):
     return extmask_data.reshape(xsize * ysize, numslices)
 
 
-def checkcardmatch(reference, candidate, samplerate, refine=True, padding=0, debug=False):
+def checkcardmatch(reference, candidate, samplerate, refine=True, zeropadding=0, debug=False):
     """
 
     Parameters
@@ -741,7 +741,7 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, padding=0, deb
         The sample rate of the data in Hz
     refine: bool, optional
         Whether to refine the peak fit.  Default is True.
-    padding: int, optional
+    zeropadding: int, optional
         Specify the length of correlation padding to use.
     debug: bool, optional
         Output additional information for debugging
@@ -769,7 +769,7 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, padding=0, deb
             windowfunc="hamming",
         )[:trimlength],
         usefft=True,
-        padding=padding,
+        zeropadding=zeropadding,
     )
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / samplerate

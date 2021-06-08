@@ -30,9 +30,9 @@ def test_fastcorrelate(display=False):
     sig2 = np.zeros((inlen), dtype="float")
     sig1[int(inlen // 2) + 1] = 1.0
     sig2[int(inlen // 2) + offset + 1] = 1.0
-    fastcorrelate_result_pad0 = fastcorrelate(sig2, sig1, padding=0)
-    fastcorrelate_result_padneg1 = fastcorrelate(sig2, sig1, padding=-1)
-    fastcorrelate_result_pad100 = fastcorrelate(sig2, sig1, padding=100)
+    fastcorrelate_result_pad0 = fastcorrelate(sig2, sig1, zeropadding=0)
+    fastcorrelate_result_padneg1 = fastcorrelate(sig2, sig1, zeropadding=-1)
+    fastcorrelate_result_pad100 = fastcorrelate(sig2, sig1, zeropadding=100)
     print(
         "lengths:",
         len(fastcorrelate_result_pad0),
