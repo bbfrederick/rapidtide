@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+
+import numpy as np
+import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
+
+
+def sinseg(thetimes, thevals, starttime, duration, thefreq, theamp):
+    timestep = thetimes[1] - thetimes[0]
+    startpoint = int(np.round(starttime / timestep, 0))
+    endpoint = int(np.round((starttime + duration) / timestep, 0))
+    thevals[startpoint:endpoint] += theamp * np.sin(
+        2.0 * np.pi * thefreq * thetimes[startpoint:endpoint]
+    )
+
+
+def rando(thetimes, thevals, theamp, lo=0.0, hi=0.15):
+    fs = 1.0 / (thetimes[1] - thetimes[0])
+    thefilter = tide_filt.NoncausalFilter("arb")
+    thefilter.setfreqs(lo, lo, hi, hi)
+    thevals += thefilter.apply(fs, theamp * np.random.normal(size=len(thevals)))
+
+
+def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=False):
+    tclen = int(tclengthinsecs // sampletime)
+    lowestfreq = 1.0 / (sampletime * tclen)
+    nyquist = 0.5 / sampletime
+    print(
+        "    sampletime=",
+        sampletime,
+        ", timecourse length=",
+        tclengthinsecs,
+        "s,  possible frequency range:",
+        lowestfreq,
+        nyquist,
+        "tclen=",
+        tclen,
+    )
+    timeaxis = np.arange(0.0, 1.0 * tclen) * sampletime
+    values = timeaxis * 0.0
+    # sinseg(timeaxis, values, 50.0, 30.0, 0.1, 1.0)
+    # sinseg(timeaxis, values, 150.0, 30.0, 0.2, 0.5)
+    # sinseg(timeaxis, values, 100.0, 100.0, 0.15, 0.5)
+    rando(timeaxis, values, 0.1)
+
+    return timeaxis, values
+
+
+thefreq = 0.1
+thesampletime = 0.72
+thexaxis, theyaxis = eval_filterprops(sampletime=thesampletime)
+
+theyaxissq = np.square(theyaxis)
+theyaxiscubed = np.power(theyaxis, 3)
+
+tide_io.writevectorstotextfile(
+    theyaxis,
+    "tc1",
+    samplerate=(1.0 / thesampletime),
+    starttime=0.0,
+    columns=["vals"],
+    compressed=True,
+    filetype="bidscontinuous",
+)
+tide_io.writevectorstotextfile(
+    theyaxissq,
+    "tc1sq",
+    samplerate=(1.0 / thesampletime),
+    starttime=0.0,
+    columns=["vals"],
+    compressed=True,
+    filetype="bidscontinuous",
+)
+tide_io.writevectorstotextfile(
+    theyaxiscubed,
+    "tc1cubed",
+    samplerate=(1.0 / thesampletime),
+    starttime=0.0,
+    columns=["vals"],
+    compressed=True,
+    filetype="bidscontinuous",
+)
