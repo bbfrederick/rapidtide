@@ -4,6 +4,7 @@ set rec1=$1
 set rec2=$2
 set dest=$3
 
-foreach map ( lagmask lagtimes lagstrengths lagsigma mean MTT R2 refinemask corrout gaussout filtereddata fitNorm fitR fitR2 fitcoff p_lt_0p001_mask p_lt_0p005_mask p_lt_0p010_mask p_lt_0p050_mask )
+foreach map ( desc-maxcorr_map desc-maxcorrsq_map desc-maxtime_map desc-maxwidth_map desc-MTT_map desc-corrfit_mask desc-corrout_info desc-despeckle_mask desc-gaussout_info desc-globalmean_mask desc-lfofilterCleaned_bold desc-lfofilterCoeff_map desc-lfofilterMean_map desc-lfofilterNorm_map desc-lfofilterR2_map desc-lfofilterR_map desc-mean_map desc-plt0p001_mask desc-plt0p005_mask desc-plt0p010_mask desc-plt0p050_mask desc-processed_mask desc-refine_mask )
     fslmaths $rec1'_'$map'.nii.gz' -sub $rec2'_'$map'.nii.gz' $dest'_'$map
     end
+
