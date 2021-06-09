@@ -81,9 +81,9 @@ RUN mamba install -y python=3.7.10 \
                      scikit-learn \
                      nibabel \
                      nilearn \
-                     keras=2.2.4 \
+                     keras \
                      h5py=2.10.0 \
-                     "tensorflow<1.15.0" \
+                     "tensorflow>=2.4.0" \
                      pyqtgraph \
                      pyfftw \
                      pandas \
