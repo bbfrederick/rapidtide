@@ -1,5 +1,11 @@
 # Release history
 
+## Version 2.0.2 (6/10/21)
+* (rapidtide) Did you know that in python 3.8 and above, the default multiprocessing method is "spawn" rather than "fork"?  Did you know the subtle differences?  Do you know that that breaks rapidtide?  I didn't, now I do, and now it doesn't.
+* (rapidtide) Made some tweaks to the timing logger to improve output formatting.
+* (rapidtide, happy) Tested on M1.  The tests run more than twice as fast on an M1 mac mini with 8GB of RAM as on a 2017 MBP with a 2.9 GHz Quad-Core Intel Core i7.  Emulated.  Yow.  When I get a native anaconda installation going, watch out.
+* (happy, Docker) Now require tensorflow 2.4.0 or above to address a security issue.
+
 ## Version 2.0.1 (6/8/21)
 * (showxcorrx, plethquality, resamp1tc, simdata, happy, rapidtide) Cleaned up, improved, and unified text file reading and writing.
 * (showxcorrx) Various functionality improvements.
