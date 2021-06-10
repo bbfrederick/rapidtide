@@ -103,7 +103,7 @@ def run_multiproc(
     n_workers = nprocs
     versioninfo = python_version().split(".")
     if (versioninfo[0] == "3") and (versioninfo[1] >= "8"):
-        ctx = mp.get_context('fork')
+        ctx = mp.get_context("fork")
         inQ = ctx.Queue()
         outQ = ctx.Queue()
         workers = [ctx.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
