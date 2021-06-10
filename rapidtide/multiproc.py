@@ -25,6 +25,7 @@
 import multiprocessing as mp
 import sys
 import threading as thread
+from platform import python_version
 
 try:
     import queue as thrQueue
@@ -100,9 +101,16 @@ def run_multiproc(
 ):
     # initialize the workers and the queues
     n_workers = nprocs
-    inQ = mp.Queue()
-    outQ = mp.Queue()
-    workers = [mp.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
+    versioninfo = python_version().split(".")
+    if (versioninfo[0] == "3") and (versioninfo[1] >= "8"):
+        ctx = mp.get_context('fork')
+        inQ = ctx.Queue()
+        outQ = ctx.Queue()
+        workers = [ctx.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
+    else:
+        inQ = mp.Queue()
+        outQ = mp.Queue()
+        workers = [mp.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
     for i, w in enumerate(workers):
         w.start()
 
