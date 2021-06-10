@@ -267,12 +267,7 @@ def startendcheck(timepoints, startpoint, endpoint):
 
 
 def valtoindex(
-    thearray,
-    thevalue,
-    evenspacing=True,
-    discrete=True,
-    discretization="round",
-    debug=False,
+    thearray, thevalue, evenspacing=True, discrete=True, discretization="round", debug=False,
 ):
     """
 
@@ -305,8 +300,7 @@ def valtoindex(
             print("\tarraymax:", thearray[-1])
             print("\tlimval:", limval)
             print(
-                "\tindex:",
-                int(np.round((limval - thearray[0]) / (thearray[1] - thearray[0]), 0)),
+                "\tindex:", int(np.round((limval - thearray[0]) / (thearray[1] - thearray[0]), 0)),
             )
         if discrete:
             if discretization == "round":
@@ -632,20 +626,12 @@ def comparerapidtideruns(root1, root2):
         maskname1 = root1 + "_lagmask.nii.gz"
         filename2 = root2 + "_" + map + ".nii.gz"
         maskname2 = root2 + "_lagmask.nii.gz"
-        (
-            masknim1,
-            maskdata1,
-            maskhdr1,
-            themaskdims1,
-            themasksizes1,
-        ) = tide_io.readfromnifti(maskname1)
-        (
-            masknim2,
-            maskdata2,
-            maskhdr2,
-            themaskdims2,
-            themasksizes2,
-        ) = tide_io.readfromnifti(maskname2)
+        (masknim1, maskdata1, maskhdr1, themaskdims1, themasksizes1,) = tide_io.readfromnifti(
+            maskname1
+        )
+        (masknim2, maskdata2, maskhdr2, themaskdims2, themasksizes2,) = tide_io.readfromnifti(
+            maskname2
+        )
         if tide_io.checkspacematch(maskhdr1, maskhdr2):
             mask = maskdata1 * maskdata2
             if os.path.isfile(filename1) and os.path.isfile(filename2):
@@ -685,20 +671,12 @@ def comparehappyruns(root1, root2, debug=False):
         maskname1 = root1 + "_mask.nii.gz"
         filename2 = root2 + "_" + map + ".nii.gz"
         maskname2 = root2 + "_mask.nii.gz"
-        (
-            masknim1,
-            maskdata1,
-            maskhdr1,
-            themaskdims1,
-            themasksizes1,
-        ) = tide_io.readfromnifti(maskname1)
-        (
-            masknim2,
-            maskdata2,
-            maskhdr2,
-            themaskdims2,
-            themasksizes2,
-        ) = tide_io.readfromnifti(maskname2)
+        (masknim1, maskdata1, maskhdr1, themaskdims1, themasksizes1,) = tide_io.readfromnifti(
+            maskname1
+        )
+        (masknim2, maskdata2, maskhdr2, themaskdims2, themasksizes2,) = tide_io.readfromnifti(
+            maskname2
+        )
         if tide_io.checkspacematch(maskhdr1, maskhdr2):
             mask = maskdata1 * maskdata2
             if os.path.isfile(filename1) and os.path.isfile(filename2):

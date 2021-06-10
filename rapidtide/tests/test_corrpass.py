@@ -224,11 +224,7 @@ def test_calcsimfunc(debug=False, display=False):
             if debug:
                 for i in range(numvoxels):
                     print(
-                        voxelshifts[i],
-                        lagtimes[i],
-                        lagstrengths[i],
-                        lagsigma[i],
-                        failimage[i],
+                        voxelshifts[i], lagtimes[i], lagstrengths[i], lagsigma[i], failimage[i],
                     )
 
             assert mse(voxelshifts, lagtimes) < msethresh

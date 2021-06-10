@@ -37,14 +37,9 @@ def _procOneVoxelCoherence(
     vox, theCoherer, fmritc, alt=False, rt_floatset=np.float64, rt_floattype="float64"
 ):
     if alt:
-        (
-            thecoherence_y,
-            thecoherence_x,
-            globalmaxindex,
-            dummy,
-            dummy,
-            dummy,
-        ) = theCoherer.run(fmritc, trim=True, alt=True)
+        (thecoherence_y, thecoherence_x, globalmaxindex, dummy, dummy, dummy,) = theCoherer.run(
+            fmritc, trim=True, alt=True
+        )
     else:
         thecoherence_y, thecoherence_x, globalmaxindex = theCoherer.run(fmritc, trim=True)
     maxindex = np.argmax(thecoherence_y)

@@ -54,11 +54,7 @@ def test_doresample(debug=False):
 
         # generate the fast resampled regressor
         tcshifted = doresample(
-            timeaxis,
-            timecoursein,
-            timeaxis - shiftdist,
-            method="univariate",
-            padlen=padlen,
+            timeaxis, timecoursein, timeaxis - shiftdist, method="univariate", padlen=padlen,
         )
 
         # print out all elements
