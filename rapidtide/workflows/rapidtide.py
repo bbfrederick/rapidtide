@@ -711,8 +711,7 @@ def rapidtide_main(argparsingfunc):
         )
 
         TimingLGR.info(
-            "Motion filtering end",
-            extra={"message2": fmri_data_valid.shape[0], "message3": "voxels",},
+            "Motion filtering end", {"message2": fmri_data_valid.shape[0], "message3": "voxels",},
         )
         if optiondict["bidsoutput"]:
             tide_io.writebidstsv(
