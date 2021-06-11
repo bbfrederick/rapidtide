@@ -13,9 +13,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
 from datetime import datetime
+
 from m2r import MdInclude
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -25,6 +26,7 @@ sys.path.insert(0, os.path.abspath("sphinxext"))
 sys.path.insert(0, os.path.abspath("../rapidtide"))
 
 from github_link import make_linkcode_resolve
+
 import rapidtide
 
 # -- General configuration ------------------------------------------------
@@ -57,8 +59,9 @@ extensions = [
     "sphinx_gallery.gen_gallery",
 ]
 
-import sphinx
 from distutils.version import LooseVersion
+
+import sphinx
 
 if LooseVersion(sphinx.__version__) < LooseVersion("1.4"):
     extensions.append("sphinx.ext.pngmath")
