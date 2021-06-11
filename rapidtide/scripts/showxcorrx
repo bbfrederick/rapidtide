@@ -209,20 +209,11 @@ def _get_parser():
     output = parser.add_argument_group("Output options")
     output.add_argument(
         "--outputfile",
-        dest="outputfile",
+        dest="resoutputfile",
         action="store",
         type=str,
         metavar="FILE",
-        help=("Save output to FILE. "),
-        default=None,
-    )
-    output.add_argument(
-        "--figoutputfile",
-        dest="figoutputfile",
-        action="store",
-        type=str,
-        metavar="FILE",
-        help=("Save similarity metric graph to FILE. "),
+        help=("Save results to FILE. "),
         default=None,
     )
     output.add_argument(
@@ -780,10 +771,10 @@ def main():
             outputstring = "\t".join(thelabelitems) + "\n" + "\t".join(thedataitems)
         else:
             outputstring = "\t".join(thedataitems)
-        if args.outputfile is None:
+        if args.resoutputfile is None:
             print(outputstring)
         else:
-            with open(args.outputfile, "w") as text_file:
+            with open(args.resoutputfile, "w") as text_file:
                 text_file.write(outputstring + "\n")
     """else:
         # report the pearson correlation
@@ -877,9 +868,10 @@ def main():
         ax.tick_params(axis="y", labelsize=theylabelfontsize, which="both")
 
     if args.display:
-        plt.show()
-    if args.figoutputfile is not None:
-        plt.savefig(args.figoutputfile, bbox_inches="tight", dpi=args.saveres)
+        if args.outputfile is not None:
+            plt.savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)
+        else:
+            plt.show()
 
     if args.calccoherence:
         fig = plt.figure()
