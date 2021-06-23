@@ -100,7 +100,7 @@ def _get_parser():
     return parser
 
 
-def temporaldecomp(
+def temporaldecomp_workflow(
     datafile,
     outputroot,
     datamaskname=None,
@@ -111,6 +111,8 @@ def temporaldecomp(
     demean=True,
     sigma=0.0,
 ):
+
+    print("Will perform", decomptype, "analysis")
 
     # save the command line
     tide_io.writevec([" ".join(sys.argv)], outputroot + "_commandline.txt")
@@ -124,6 +126,7 @@ def temporaldecomp(
         datafiledims,
         datafilesizes,
     ) = tide_io.readfromnifti(datafile)
+
     if datamaskname is not None:
         (
             datamask_img,
@@ -145,6 +148,9 @@ def temporaldecomp(
         if not (tide_io.checktimematch(datafiledims, datamaskdims) or datamaskdims[4] == 1):
             print("input mask time dimension does not match image")
             exit()
+
+    # save the command line
+    tide_io.writevec([" ".join(sys.argv)], outputroot + "_commandline.txt")
 
     # smooth the data
     if sigma > 0.0:
@@ -185,6 +191,8 @@ def temporaldecomp(
         print("shape of mean", themean.shape)
         for i in range(procdata.shape[0]):
             procdata[i, :] -= themean[i]
+    else:
+        themean = np.ones(procdata.shape[0])
 
     if varnorm:
         print("variance normalizing array")
@@ -193,6 +201,8 @@ def temporaldecomp(
         for i in range(procdata.shape[0]):
             procdata[i, :] /= thevar[i]
         procdata = np.nan_to_num(procdata)
+    else:
+        thevar = np.ones(procdata.shape[0])
 
     # applying mask
     if datamaskdims[4] > 1:
@@ -305,7 +315,7 @@ def getparameters():
 def main():
     args = getparameters()
 
-    temporaldecomp(
+    temporaldecomp_workflow(
         args["datafile"],
         args["outputroot"],
         datamaskname=args["datamaskname"],
