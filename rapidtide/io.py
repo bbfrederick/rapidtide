@@ -49,12 +49,12 @@ def readfromnifti(inputfile):
     """
     if os.path.isfile(inputfile):
         inputfilename = inputfile
-    elif os.path.isfile(inputfile + ".nii.gz"):
-        inputfilename = inputfile + ".nii.gz"
-    elif os.path.isfile(inputfile + ".nii"):
-        inputfilename = inputfile + ".nii"
+    elif os.path.isfile(f"{inputfile}.nii.gz"):
+        inputfilename = f"{inputfile}.nii.gz"
+    elif os.path.isfile(f"{inputfile}.nii"):
+        inputfilename = f"{inputfile}.nii"
     else:
-        raise FileNotFoundError("nifti file", inputfile, "does not exist")
+        raise FileNotFoundError(f"nifti file {inputfile} does not exist")
     nim = nib.load(inputfilename)
     nim_data = nim.get_fdata()
     nim_hdr = nim.header.copy()
@@ -82,10 +82,10 @@ def readfromcifti(inputfile, debug=False):
     """
     if os.path.isfile(inputfile):
         inputfilename = inputfile
-    elif os.path.isfile(inputfile + ".nii"):
-        inputfilename = inputfile + ".nii"
+    elif os.path.isfile(f"{inputfile}.nii"):
+        inputfilename = f"{inputfile}.nii"
     else:
-        raise FileNotFoundError("cifti file", inputfile, "does not exist")
+        raise FileNotFoundError(f"cifti file {inputfile} does not exist")
 
     cifti = nib.load(inputfilename)
     nifti_data = np.transpose(cifti.get_fdata(dtype=np.float32))
@@ -1155,15 +1155,12 @@ def writebidstsv(
     if columns is None:
         columns = []
         for i in range(reshapeddata.shape[0]):
-            columns.append("col_" + str(i + startcol).zfill(2))
+            columns.append(f"col_{(i + startcol).zfill(2)}")
     else:
         if len(columns) != reshapeddata.shape[0]:
             raise ValueError(
-                "number of column names (",
-                len(columns),
-                ") does not match number of columns (",
-                reshapeddata.shape[1],
-                ") in data",
+                f"number of column names ({len(columns)}) ",
+                f"does not match number of columns ({reshapeddata.shape[1]}) in data",
             )
     if startcol > 0:
         df = pd.DataFrame(data=np.transpose(indata), columns=incolumns)
