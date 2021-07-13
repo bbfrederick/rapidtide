@@ -145,7 +145,7 @@ def spatialdecomp_workflow(
         if not tide_io.checkspacedimmatch(datafiledims, datamaskdims):
             print("input mask spatial dimensions do not match image")
             exit()
-        if not tide_io.checktimematch(datafiledims, datamaskdims):
+        if not (tide_io.checktimematch(datafiledims, datamaskdims) or datamaskdims[4] == 1):
             print("input mask time dimension does not match image")
             exit()
 
@@ -190,6 +190,8 @@ def spatialdecomp_workflow(
         themean = np.mean(procdata, axis=0)
         for i in range(timepoints):
             procdata[:, i] -= themean[i]
+    else:
+        themean = np.ones(procdata.shape[1])
 
     if varnorm:
         print("variance normalizing array")
@@ -197,6 +199,8 @@ def spatialdecomp_workflow(
         for i in range(timepoints):
             procdata[:, i] /= thevar[i]
         procdata = np.nan_to_num(procdata)
+    else:
+        thevar = np.ones(procdata.shape[1])
 
     if datamaskdims[4] > 1:
         procdata *= rs_mask
@@ -265,6 +269,8 @@ def spatialdecomp_workflow(
 
         # save the dimensionality reduced data
         invtransformeddata = np.transpose(theinvtrans)
+        for i in range(timepoints):
+            theinvtrans[:, i] = thevar[i] * theinvtrans[:, i] + themean[i]
         print("writing fit data")
         theheader = datafile_hdr
         theheader["dim"][4] = invtransformeddata.shape[1]
@@ -277,7 +283,7 @@ def spatialdecomp_workflow(
         )
 
 
-def main():
+def getparameters():
     try:
         args = vars(_get_parser().parse_args())
     except SystemExit:
@@ -296,6 +302,12 @@ def main():
     else:
         args["pcacomponents"] = int(args["ncomp"])
         args["icacomponents"] = int(args["ncomp"])
+
+    return args
+
+
+def main():
+    args = getparameters()
 
     spatialdecomp_workflow(
         args["datafile"],
