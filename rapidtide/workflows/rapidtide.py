@@ -59,6 +59,7 @@ try:
     mklexists = True
 except ImportError:
     mklexists = False
+print("mklexists:", mklexists)
 
 try:
     from memory_profiler import profile
@@ -351,6 +352,7 @@ def rapidtide_main(argparsingfunc):
         if not (1 <= optiondict["mklthreads"] <= mklmaxthreads):
             optiondict["mklthreads"] = mklmaxthreads
         mkl.set_num_threads(optiondict["mklthreads"])
+        print(f"using {optiondict['mklthreads']} MKL threads")
 
     # Generate MemoryLGR output file with column names
     if not optiondict["memprofile"]:
