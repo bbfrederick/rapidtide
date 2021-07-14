@@ -154,10 +154,10 @@ def coherencepass(
                 rt_floattype=rt_floattype,
             )
             volumetotal += 1
-    print("\nCoherence performed on " + str(volumetotal) + " voxels")
+    print(f"\nCoherence performed on {volumetotal} voxels")
 
     # garbage collect
     collected = gc.collect()
-    print("Garbage collector: collected %d objects." % collected)
+    print(f"Garbage collector: collected {collected} objects.")
 
     return volumetotal
