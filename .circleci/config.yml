@@ -27,6 +27,7 @@ jobs:
       - run:
           name: Run tests
           command:  |
+            apt-get update
             apt-get install -yqq make
             source activate py36_env
             py.test --ignore=rapidtide/candidatetests rapidtide
@@ -80,6 +81,7 @@ jobs:
       - run:
           name: Run tests
           command:  |
+            apt-get update
             apt-get install -yqq make
             source activate py38_env
             py.test --ignore=rapidtide/candidatetests rapidtide
@@ -107,6 +109,7 @@ jobs:
       - run:
           name: Run tests
           command:  |
+            apt-get update
             apt-get install -yqq make
             source activate py39_env
             py.test --ignore=rapidtide/candidatetests rapidtide
@@ -123,6 +126,7 @@ jobs:
       - run:
           name: Build documentation
           command: |
+            apt-get update
             apt-get install -yqq make
             source activate py37_env
             make -C docs html
@@ -158,6 +162,7 @@ jobs:
       - run:
           name: Coverage
           command:  |
+            apt-get update
             apt-get install -yqq curl
             source activate py37_env
             py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
