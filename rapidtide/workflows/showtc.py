@@ -274,7 +274,7 @@ def showtc(args):
             thissamplerate = samplerate
 
         if thisstartoffset is None:
-            print("thisstartoffset is None")
+            #print("thisstartoffset is None")
             if args.thestarttime is None:
                 print("args.thestarttime is None")
                 args.thestarttime = 0.0
@@ -282,7 +282,7 @@ def showtc(args):
                 print(f"args.thestarttime is {args.thestarttime}")
             thisstartoffset = args.thestarttime
         else:
-            print(f"thisstartoffset is {thisstartoffset}")
+            #print(f"thisstartoffset is {thisstartoffset}")
             if args.thestarttime is None:
                 print("args.thestarttime is None")
                 args.thestarttime = thisstartoffset
