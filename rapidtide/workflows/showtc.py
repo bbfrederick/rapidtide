@@ -164,6 +164,7 @@ def showtc(args):
     # set the sample rate
     if args.samplerate == "auto":
         samplerate = 1.0
+        args.samplerate = samplerate
     else:
         samplerate = args.samplerate
 
