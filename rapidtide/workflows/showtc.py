@@ -261,8 +261,10 @@ def showtc(args):
 
         if args.debug:
             print("On return from readvectorsfromtextfile:")
-            print("\tthissamplerate:", thissamplerate)
-            print("\tthisstartoffset:", thisstartoffset)
+            print(f"\targs.samplerate: {args.samplerate}")
+            print(f"\tthissamplerate: {thissamplerate}")
+            print(f"\targs.thestarttime: {args.thestarttime}")
+            print(f"\tthisstartoffset: {thisstartoffset}")
 
         if args.debug:
             print("input data dimensions:", invecs.shape)
@@ -286,6 +288,13 @@ def showtc(args):
             else:
                 print(f"args.thestarttime is {args.thestarttime}")
                 thisstartoffset = args.thestarttime
+
+        if args.debug:
+            print("After preprocessing time variables:")
+            print(f"\targs.samplerate: {args.samplerate}")
+            print(f"\tthissamplerate: {thissamplerate}")
+            print(f"\targs.thestarttime: {args.thestarttime}")
+            print(f"\tthisstartoffset: {thisstartoffset}")
 
         if args.debug:
             print(f"file {args.textfilenames[i]} colnames: {colnames}")
