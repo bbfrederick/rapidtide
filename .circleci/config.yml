@@ -130,6 +130,7 @@ jobs:
             apt-get install -yqq make
             source activate py37_env
             pip install -e .[tests,doc]
+            pip install numpydoc
             make -C docs html
       - store_artifacts:
           path: /tmp/src/rapidtide/docs/_build/html
