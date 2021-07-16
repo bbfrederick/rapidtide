@@ -1,5 +1,15 @@
 # Release history
 
+## Version 2.0.3 (7/16/21)
+* (spatialdecomp, temporaldecomp) Improved the consistency between the programs.
+* (showxcorrx) Fixed some command line options.
+* (package) Began to clean up and unify text output formatting.
+* (package) Addressed some numpy deprecation warnings.
+* (all scripts) Corrected file permissions (this may matter on Windows installations).
+* (docs) Fixed some typos.
+* (showtc) Enhanced debugging output.
+* (testing) Tweaked circleci configuration file to update environment prior to installation.
+
 ## Version 2.0.2 (6/10/21)
 * (rapidtide) Did you know that in python 3.8 and above, the default multiprocessing method is "spawn" rather than "fork"?  Did you know the subtle differences?  Do you know that that breaks rapidtide?  I didn't, now I do, and now it doesn't.
 * (rapidtide) Made some tweaks to the timing logger to improve output formatting.
