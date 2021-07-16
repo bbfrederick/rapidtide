@@ -2024,9 +2024,9 @@ def happy_main(argparsingfunc):
             thecorrfunc_byslice = thecorrfunc.reshape(
                 (xsize * ysize, numslices, args.aliasedcorrelationpts)
             )
-            wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float)
+            wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float64)
             wavedelay_byslice = wavedelay.reshape((xsize * ysize, numslices))
-            waveamp = np.zeros((xsize, ysize, numslices), dtype=np.float)
+            waveamp = np.zeros((xsize, ysize, numslices), dtype=np.float64)
             waveamp_byslice = waveamp.reshape((xsize * ysize, numslices))
 
         # now project the data

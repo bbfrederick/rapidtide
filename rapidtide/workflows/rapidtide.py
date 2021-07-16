@@ -1083,7 +1083,7 @@ def rapidtide_main(argparsingfunc):
         corrpadding=optiondict["zeropadding"],
     )
     theCorrelator.setreftc(
-        np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float)
+        np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float64)
     )
     corrorigin = theCorrelator.similarityfuncorigin
     dummy, corrscale, dummy = theCorrelator.getfunction(trim=False)
@@ -1113,7 +1113,7 @@ def rapidtide_main(argparsingfunc):
         debug=optiondict["debug"],
     )
     theMutualInformationator.setreftc(
-        np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float)
+        np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float64)
     )
     nummilags = theMutualInformationator.similarityfunclen
     theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
