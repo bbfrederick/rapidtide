@@ -16,20 +16,23 @@
 #
 
 import argparse
+import sys
+
+import numpy as np
+
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.workflows.parser_funcs as pf
 
-from pylab import *
 
 def _get_parser():
     """
-    Argument parser for filttc
+    Argument parser for roisummarize
     """
     parser = argparse.ArgumentParser(
         prog="filttc",
-        description=("Filter timecourse data in text files"),
-        usage="%(prog)s inputfile outputfile [options]",
+        description=("Extract summary timecourses from the regions in an atlas"),
+        usage="%(prog)s inputfilename templatefile outputfile [options]",
     )
 
     # Required arguments
@@ -103,17 +106,19 @@ def roisummarize(args):
 
     args, thefilter = pf.postprocessfilteropts(args, debug=args.debug)
 
-    print('loading fmri data')
+    print("loading fmri data")
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfilename)
-    print('loading template data')
-    template_img, template_data, template_hdr, templatedims, templatesizes = tide_io.readfromnifti(args.templatefile)
+    print("loading template data")
+    template_img, template_data, template_hdr, templatedims, templatesizes = tide_io.readfromnifti(
+        args.templatefile
+    )
 
-    print('checking dimensions')
+    print("checking dimensions")
     if not tide_io.checkspacematch(input_hdr, template_hdr):
-        print('template file does not match spatial coverage of input fmri file')
+        print("template file does not match spatial coverage of input fmri file")
         sys.exit()
 
-    print('reshaping')
+    print("reshaping")
     xsize = thedims[1]
     ysize = thedims[2]
     numslices = thedims[3]
@@ -122,12 +127,12 @@ def roisummarize(args):
     templatevoxels = np.reshape(template_data, numvoxels).astype(int)
     inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
     numregions = np.max(templatevoxels)
-    timecourses = np.zeros((numregions, numtimepoints), dtype='float')
+    timecourses = np.zeros((numregions, numtimepoints), dtype="float")
 
     if numtimepoints > 1:
         for theregion in range(1, numregions + 1):
             thevoxels = inputvoxels[np.where(templatevoxels == theregion), :][0]
-            print('extracting', thevoxels.shape[0], 'voxels from region', theregion)
+            print("extracting", thevoxels.shape[0], "voxels from region", theregion)
             if thevoxels.shape[1] > 0:
                 regiontimecourse = np.nan_to_num(np.mean(thevoxels, axis=0))
             else:
@@ -135,14 +140,17 @@ def roisummarize(args):
             if args.debug:
                 print("thevoxels, data shape are:", thevoxels.shape, regiontimecourse.shape)
             timecourses[theregion - 1, :] = tide_math.normalize(
-                thefilter.apply(args.samplerate, regiontimecourse), method=args.normmethod)
+                thefilter.apply(args.samplerate, regiontimecourse), method=args.normmethod
+            )
         tide_io.writenpvecs(timecourses, args.outputfile)
     else:
         outputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
         for theregion in range(1, numregions + 1):
             regionval = np.nan_to_num(np.mean(inputvoxels[np.where(templatevoxels == theregion)]))
             outputvoxels[np.where(templatevoxels == theregion)] = regionval
-        template_hdr['dim'][4] = numregions
-        tide_io.savetonifti(outputvoxels.reshape((xsize, ysize, numslices, numregions)),
-                            template_hdr,
-                            args.outputfile)
+        template_hdr["dim"][4] = numregions
+        tide_io.savetonifti(
+            outputvoxels.reshape((xsize, ysize, numslices, numregions)),
+            template_hdr,
+            args.outputfile,
+        )
