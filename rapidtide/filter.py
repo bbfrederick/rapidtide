@@ -1652,6 +1652,10 @@ class NoncausalFilter:
         filtereddata : 1D float array
             The filtered data
         """
+        # if filterband is None, just return the data
+        if self.filtertype == "None":
+            return data
+
         # do some bounds checking
         nyquistlimit = 0.5 * Fs
         lowestfreq = 2.0 * Fs / np.shape(data)[0]

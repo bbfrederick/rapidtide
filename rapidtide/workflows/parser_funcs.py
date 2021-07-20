@@ -284,7 +284,7 @@ def addfilteropts(
         )
 
 
-def postprocessfilteropts(args):
+def postprocessfilteropts(args, debug=False):
     # configure the filter
     # set the trapezoidal flag, if using
     try:
@@ -302,6 +302,12 @@ def postprocessfilteropts(args):
 
     # if passvec, or passvec and stopvec, are set, we are going set up an arbpass filter
     args.arbvec = None
+    if debug:
+        print("before preprocessing")
+        print("\targs.arbvec:", args.arbvec)
+        print("\targs.passvec:", args.passvec)
+        print("\targs.stopvec:", args.stopvec)
+        print("\targs.filterband:", args.filterband)
     if args.stopvec is not None:
         if args.passvec is not None:
             args.arbvec = [args.passvec[0], args.passvec[1], args.stopvec[0], args.stopvec[1]]
@@ -328,7 +334,18 @@ def postprocessfilteropts(args):
     # set the butterworth order
     theprefilter.setbutterorder(args.filtorder)
 
+    if debug:
+        print("before preprocessing")
+        print("\targs.arbvec:", args.arbvec)
+        print("\targs.passvec:", args.passvec)
+        print("\targs.stopvec:", args.stopvec)
+        print("\targs.filterband:", args.filterband)
+
     (args.lowerstop, args.lowerpass, args.upperpass, args.upperstop,) = theprefilter.getfreqs()
+
+    if debug:
+        print("after getfreqs")
+        print("\targs.arbvec:", args.arbvec)
 
     return args, theprefilter
 
