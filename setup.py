@@ -59,6 +59,7 @@ modules_list = [
     "rapidtide/workflows/rapidtide_parser",
     "rapidtide/workflows/rapidtide2x_parser",
     "rapidtide/workflows/showtc",
+    "rapidtide/workflows/roisummarize",
 ]
 
 if addtidepool:
@@ -94,6 +95,7 @@ script_list = [
     "rapidtide/scripts/rapidtide_dispatcher",
     "rapidtide/scripts/resamp1tc",
     "rapidtide/scripts/resamplenifti",
+    "rapidtide/scripts/roisummarize",
     "rapidtide/scripts/showarbcorr",
     "rapidtide/scripts/showhist",
     "rapidtide/scripts/showtc",
