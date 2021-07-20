@@ -9,17 +9,20 @@
 
 + Sync everything to github.
 
++ Build rapidtide
+
+    python setup.py install
+
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging) and push to github:
 
     git tag -a v2.0.3 -m "v2.0.3"
     git push origin v2.0.3
 
-
-+ Edit the release notes on github
-
 + Build rapidtide
 
     python setup.py install
+
++ Edit the release notes on github
 
 + Build and sync new docker images
 
