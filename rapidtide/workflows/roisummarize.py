@@ -77,9 +77,7 @@ def _get_parser():
         action="store",
         type=int,
         metavar="NPTS",
-        help=(
-            "Skip NPTS initial points to get past T1 relaxation "
-        ),
+        help=("Skip NPTS initial points to get past T1 relaxation. "),
         default=0,
     )
 
@@ -121,12 +119,16 @@ def summarize4Dbylabel(inputvoxels, templatevoxels, normmethod="z", debug=False)
 
 def summarize3Dbylabel(inputvoxels, templatevoxels, debug=False):
     numregions = np.max(templatevoxels)
-    outputvoxels = 1.0 * input_data
+    outputvoxels = 0.0 * inputvoxels
+    regionstats = []
     for theregion in range(1, numregions + 1):
-        regionval = np.nan_to_num(np.mean(inputvoxels[np.where(templatevoxels == theregion)]))
-        outputvoxels[np.where(templatevoxels == theregion)] = regionval
-    template_hdr["dim"][4] = numregions
-    return outputvoxels
+        thevoxels = inputvoxels[np.where(templatevoxels == theregion)][0]
+        regionmean = np.nan_to_num(np.mean(thevoxels))
+        regionstd = np.nan_to_num(np.std(thevoxels))
+        regionmedian = np.nan_to_num(np.median(thevoxels))
+        regionstats.append([regionmean, regionstd, regionmedian])
+        outputvoxels[np.where(templatevoxels == theregion)] = regionmean
+    return outputvoxels, regionstats
 
 
 def roisummarize(args):
@@ -164,9 +166,9 @@ def roisummarize(args):
     numtimepoints = thedims[4]
     numvoxels = int(xsize) * int(ysize) * int(numslices)
     templatevoxels = np.reshape(template_data, numvoxels).astype(int)
-    inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))[:, args.numskip:]
 
     if numtimepoints > 1:
+        inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))[:, args.numskip :]
         print("filtering")
         for thevoxel in range(numvoxels):
             if templatevoxels[thevoxel] > 0:
@@ -180,14 +182,17 @@ def roisummarize(args):
         )
 
         print("writing data")
-        tide_io.writenpvecs(timecourses, args.outputfile)
+        tide_io.writenpvecs(timecourses, args.outputfile + "_timecourses")
     else:
+        inputvoxels = np.reshape(input_data, (numvoxels))
         numregions = np.max(templatevoxels)
-        template_hdr["dim"][4] = nnumregions
-        tide_io.savetonifti(
-            summarize3Dbylabel(inputvoxels, templatevoxels, debug=args.debug).reshape(
-                (xsize, ysize, numslices, numregions)
-            ),
-            template_hdr,
-            args.outputfile,
+        template_hdr["dim"][4] = numregions
+        outputvoxels, regionstats = summarize3Dbylabel(
+            inputvoxels, templatevoxels, debug=args.debug
         )
+        tide_io.savetonifti(
+            outputvoxels.reshape((xsize, ysize, numslices)),
+            template_hdr,
+            args.outputfile + "_meanvals",
+        )
+        tide_io.writenpvecs(np.array(regionstats), args.outputfile + "_regionstats.txt")
