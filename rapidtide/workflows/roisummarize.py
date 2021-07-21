@@ -154,14 +154,18 @@ def roisummarize(args):
     templatevoxels = np.reshape(template_data, numvoxels).astype(int)
     inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
 
-
     if numtimepoints > 1:
         print("filtering")
         for thevoxel in range(numvoxels):
-            inputvoxels[thevoxel, :] = thefilter.apply(args.samplerate, inputvoxels[thevoxel, :])
+            if templatevoxels[thevoxel] > 0:
+                inputvoxels[thevoxel, :] = thefilter.apply(
+                    args.samplerate, inputvoxels[thevoxel, :]
+                )
 
         print("summarizing")
-        timecourses = summarize4Dbylabel(inputvoxels, templatevoxels, normmethod=args.normmethod, debug=args.debug)
+        timecourses = summarize4Dbylabel(
+            inputvoxels, templatevoxels, normmethod=args.normmethod, debug=args.debug
+        )
 
         print("writing data")
         tide_io.writenpvecs(timecourses, args.outputfile)
@@ -169,7 +173,9 @@ def roisummarize(args):
         numregions = np.max(templatevoxels)
         template_hdr["dim"][4] = nnumregions
         tide_io.savetonifti(
-            summarize3Dbylabel(inputvoxels, templatevoxels, debug=args.debug).reshape((xsize, ysize, numslices, numregions)),
+            summarize3Dbylabel(inputvoxels, templatevoxels, debug=args.debug).reshape(
+                (xsize, ysize, numslices, numregions)
+            ),
             template_hdr,
             args.outputfile,
         )
