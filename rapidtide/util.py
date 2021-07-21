@@ -22,15 +22,13 @@
 import bisect
 import logging
 import os
+import platform
 import resource
 import sys
 import time
-import platform
 
 import matplotlib.pyplot as plt
 import numpy as np
-#import pyfftw
-#import pyfftw.interfaces.scipy_fftpack as fftpack
 from numba import jit
 
 import rapidtide._version as tide_versioneer
@@ -40,7 +38,6 @@ LGR = logging.getLogger(__name__)
 TimingLGR = logging.getLogger("TIMING")
 MemoryLGR = logging.getLogger("MEMORY")
 
-#pyfftw.interfaces.cache.enable()
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
