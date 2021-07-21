@@ -25,11 +25,12 @@ import os
 import resource
 import sys
 import time
+import platform
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pyfftw
-import pyfftw.interfaces.scipy_fftpack as fftpack
+#import pyfftw
+#import pyfftw.interfaces.scipy_fftpack as fftpack
 from numba import jit
 
 import rapidtide._version as tide_versioneer
@@ -39,7 +40,7 @@ LGR = logging.getLogger(__name__)
 TimingLGR = logging.getLogger("TIMING")
 MemoryLGR = logging.getLogger("MEMORY")
 
-pyfftw.interfaces.cache.enable()
+#pyfftw.interfaces.cache.enable()
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -118,50 +119,53 @@ def logmem(msg=None):
         Default is None.
     """
     global lastmaxrss_parent, lastmaxrss_child
-    if msg is None:
-        outvals = [
-            "",
-            "Self Max RSS",
-            "Self Diff RSS",
-            "Self Shared Mem",
-            "Self Unshared Mem",
-            "Self Unshared Stack",
-            "Self Non IO Page Fault",
-            "Self IO Page Fault",
-            "Self Swap Out",
-            "Children Max RSS",
-            "Children Diff RSS",
-            "Children Shared Mem",
-            "Children Unshared Mem",
-            "Children Unshared Stack",
-            "Children Non IO Page Fault",
-            "Children IO Page Fault",
-            "Children Swap Out",
-        ]
-        lastmaxrss_parent = 0
-        lastmaxrss_child = 0
+    if platform.system() != "Windows":
+        if msg is None:
+            outvals = [
+                "",
+                "Self Max RSS",
+                "Self Diff RSS",
+                "Self Shared Mem",
+                "Self Unshared Mem",
+                "Self Unshared Stack",
+                "Self Non IO Page Fault",
+                "Self IO Page Fault",
+                "Self Swap Out",
+                "Children Max RSS",
+                "Children Diff RSS",
+                "Children Shared Mem",
+                "Children Unshared Mem",
+                "Children Unshared Stack",
+                "Children Non IO Page Fault",
+                "Children IO Page Fault",
+                "Children Swap Out",
+            ]
+            lastmaxrss_parent = 0
+            lastmaxrss_child = 0
+        else:
+            rcusage = resource.getrusage(resource.RUSAGE_SELF)
+            outvals = [msg]
+            outvals.append(str(rcusage.ru_maxrss))
+            outvals.append(str(rcusage.ru_maxrss - lastmaxrss_parent))
+            lastmaxrss_parent = rcusage.ru_maxrss
+            outvals.append(str(rcusage.ru_ixrss))
+            outvals.append(str(rcusage.ru_idrss))
+            outvals.append(str(rcusage.ru_isrss))
+            outvals.append(str(rcusage.ru_minflt))
+            outvals.append(str(rcusage.ru_majflt))
+            outvals.append(str(rcusage.ru_nswap))
+            rcusage = resource.getrusage(resource.RUSAGE_CHILDREN)
+            outvals.append(str(rcusage.ru_maxrss))
+            outvals.append(str(rcusage.ru_maxrss - lastmaxrss_child))
+            lastmaxrss_child = rcusage.ru_maxrss
+            outvals.append(str(rcusage.ru_ixrss))
+            outvals.append(str(rcusage.ru_idrss))
+            outvals.append(str(rcusage.ru_isrss))
+            outvals.append(str(rcusage.ru_minflt))
+            outvals.append(str(rcusage.ru_majflt))
+            outvals.append(str(rcusage.ru_nswap))
     else:
-        rcusage = resource.getrusage(resource.RUSAGE_SELF)
-        outvals = [msg]
-        outvals.append(str(rcusage.ru_maxrss))
-        outvals.append(str(rcusage.ru_maxrss - lastmaxrss_parent))
-        lastmaxrss_parent = rcusage.ru_maxrss
-        outvals.append(str(rcusage.ru_ixrss))
-        outvals.append(str(rcusage.ru_idrss))
-        outvals.append(str(rcusage.ru_isrss))
-        outvals.append(str(rcusage.ru_minflt))
-        outvals.append(str(rcusage.ru_majflt))
-        outvals.append(str(rcusage.ru_nswap))
-        rcusage = resource.getrusage(resource.RUSAGE_CHILDREN)
-        outvals.append(str(rcusage.ru_maxrss))
-        outvals.append(str(rcusage.ru_maxrss - lastmaxrss_child))
-        lastmaxrss_child = rcusage.ru_maxrss
-        outvals.append(str(rcusage.ru_ixrss))
-        outvals.append(str(rcusage.ru_idrss))
-        outvals.append(str(rcusage.ru_isrss))
-        outvals.append(str(rcusage.ru_minflt))
-        outvals.append(str(rcusage.ru_majflt))
-        outvals.append(str(rcusage.ru_nswap))
+        outvals = ["Not available on Windows"]
 
     MemoryLGR.info("\t".join(outvals))
 
