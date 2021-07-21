@@ -71,6 +71,18 @@ def _get_parser():
         default="auto",
     )
 
+    parser.add_argument(
+        "--numskip",
+        dest="numskip",
+        action="store",
+        type=int,
+        metavar="NPTS",
+        help=(
+            "Skip NPTS initial points to get past T1 relaxation "
+        ),
+        default=0,
+    )
+
     # Filter arguments
     pf.addfilteropts(parser, defaultmethod="None", filtertarget="timecourses")
 
@@ -152,7 +164,7 @@ def roisummarize(args):
     numtimepoints = thedims[4]
     numvoxels = int(xsize) * int(ysize) * int(numslices)
     templatevoxels = np.reshape(template_data, numvoxels).astype(int)
-    inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
+    inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))[:, args.numskip:]
 
     if numtimepoints > 1:
         print("filtering")
