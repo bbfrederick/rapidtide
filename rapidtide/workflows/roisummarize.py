@@ -90,6 +90,33 @@ def _get_parser():
     return parser
 
 
+def summarize4Dbylabel(inputvoxels, templatevoxels, normmethod="z", debug=False):
+    numregions = np.max(templatevoxels)
+    numtimepoints = inputvoxels.shape[1]
+    timecourses = np.zeros((numregions, numtimepoints), dtype="float")
+    for theregion in range(1, numregions + 1):
+        thevoxels = inputvoxels[np.where(templatevoxels == theregion), :][0]
+        print("extracting", thevoxels.shape[0], "voxels from region", theregion)
+        if thevoxels.shape[1] > 0:
+            regiontimecourse = np.nan_to_num(np.mean(thevoxels, axis=0))
+        else:
+            regiontimecourse = timecourses[0, :] * 0.0
+        if debug:
+            print("thevoxels, data shape are:", thevoxels.shape, regiontimecourse.shape)
+        timecourses[theregion - 1, :] = tide_math.normalize(regiontimecourse, method=normmethod)
+    return timecourses
+
+
+def summarize3Dbylabel(inputvoxels, templatevoxels, debug=False):
+    numregions = np.max(templatevoxels)
+    outputvoxels = 1.0 * input_data
+    for theregion in range(1, numregions + 1):
+        regionval = np.nan_to_num(np.mean(inputvoxels[np.where(templatevoxels == theregion)]))
+        outputvoxels[np.where(templatevoxels == theregion)] = regionval
+    template_hdr["dim"][4] = numregions
+    return outputvoxels
+
+
 def roisummarize(args):
     # grab the command line arguments then pass them off.
     try:
@@ -126,31 +153,23 @@ def roisummarize(args):
     numvoxels = int(xsize) * int(ysize) * int(numslices)
     templatevoxels = np.reshape(template_data, numvoxels).astype(int)
     inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
-    numregions = np.max(templatevoxels)
-    timecourses = np.zeros((numregions, numtimepoints), dtype="float")
+
 
     if numtimepoints > 1:
-        for theregion in range(1, numregions + 1):
-            thevoxels = inputvoxels[np.where(templatevoxels == theregion), :][0]
-            print("extracting", thevoxels.shape[0], "voxels from region", theregion)
-            if thevoxels.shape[1] > 0:
-                regiontimecourse = np.nan_to_num(np.mean(thevoxels, axis=0))
-            else:
-                regiontimecourse = timecourses[0, :] * 0.0
-            if args.debug:
-                print("thevoxels, data shape are:", thevoxels.shape, regiontimecourse.shape)
-            timecourses[theregion - 1, :] = tide_math.normalize(
-                thefilter.apply(args.samplerate, regiontimecourse), method=args.normmethod
-            )
+        print("filtering")
+        for thevoxel in range(numvoxels):
+            inputvoxels[thevoxel, :] = thefilter.apply(args.samplerate, inputvoxels[thevoxel, :])
+
+        print("summarizing")
+        timecourses = summarize4Dbylabel(inputvoxels, templatevoxels, normmethod=args.normmethod, debug=args.debug)
+
+        print("writing data")
         tide_io.writenpvecs(timecourses, args.outputfile)
     else:
-        outputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
-        for theregion in range(1, numregions + 1):
-            regionval = np.nan_to_num(np.mean(inputvoxels[np.where(templatevoxels == theregion)]))
-            outputvoxels[np.where(templatevoxels == theregion)] = regionval
-        template_hdr["dim"][4] = numregions
+        numregions = np.max(templatevoxels)
+        template_hdr["dim"][4] = nnumregions
         tide_io.savetonifti(
-            outputvoxels.reshape((xsize, ysize, numslices, numregions)),
+            summarize3Dbylabel(inputvoxels, templatevoxels, debug=args.debug).reshape((xsize, ysize, numslices, numregions)),
             template_hdr,
             args.outputfile,
         )
