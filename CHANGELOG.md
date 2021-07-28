@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.0.4 (7/28/21)
+(package) Fixed a problem where any program using util.py wouldn't run on Windows.
+(roisummarize) New addition to the package.
+(CI) Fixed a bug in the document environment.
+
 ## Version 2.0.3 (7/16/21)
 * (spatialdecomp, temporaldecomp) Improved the consistency between the programs.
 * (showxcorrx) Fixed some command line options.
