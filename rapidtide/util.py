@@ -23,7 +23,6 @@ import bisect
 import logging
 import os
 import platform
-import resource
 import sys
 import time
 
@@ -117,6 +116,8 @@ def logmem(msg=None):
     """
     global lastmaxrss_parent, lastmaxrss_child
     if platform.system() != "Windows":
+        import resource
+
         if msg is None:
             outvals = [
                 "",
