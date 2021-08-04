@@ -16,17 +16,17 @@ rapidtide \
         sub-RAPIDTIDETEST.nii.gz \
         ../dst/sub-RAPIDTIDETEST
 
-#rapidtide \
-#        sub-RAPIDTIDETEST.nii.gz \
-#        ../dst/sub-RAPIDTIDETEST-seg3 \
-#	--spatialfilt 2 \
-#        --nprocs -1 \
-#        --passes 1 \
-#        --despecklepasses 0 \
-#        --regressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 \
-#        --regressorstart 45 \
-#        --searchrange -10 10 \
-#        --timerange 30 70
+rapidtide \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST-seg3 \
+	--spatialfilt 2 \
+        --nprocs -1 \
+        --passes 1 \
+        --despecklepasses 0 \
+        --regressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 \
+        --regressorstart 45 \
+        --searchrange -10 10 \
+        --timerange 30 70
 
 
 #rapidtide \

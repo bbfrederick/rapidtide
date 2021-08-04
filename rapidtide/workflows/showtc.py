@@ -248,7 +248,7 @@ def showtc(args):
     shortcolnames = True
     # read in all the data
     for i in range(0, len(args.textfilenames)):
-        thisfilename = args.textfilenames[i].split(":")[0]
+        thisfilename, thiscolspec = tide_io.parsefilespec(args.textfilenames[i])
 
         # check file type
         (

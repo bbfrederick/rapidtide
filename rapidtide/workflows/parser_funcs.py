@@ -24,6 +24,7 @@ import os.path as op
 import sys
 
 import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
 
 
 class IndicateSpecifiedAction(argparse.Action):
@@ -43,7 +44,7 @@ def is_valid_file(parser, arg):
     Check if argument is existing file.
     """
     if arg is not None:
-        thefilename = arg.split(":")[0]
+        thefilename, colspec = tide_io.parsefilespec(arg)
     else:
         thefilename = None
 

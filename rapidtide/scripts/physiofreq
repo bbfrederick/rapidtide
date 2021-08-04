@@ -138,7 +138,7 @@ def getwavefreq(
 
 def main():
     theargs = parsearglist()
-    textfileinfo = theargs.textfilename.split(":")
+    textfileinfo, textfilecolspec = tide_io.parsefilespec(theargs.textfilename)
     filebase, extension = os.path.splitext(textfileinfo[0])
     if extension == ".json":
         (thissamplerate, thisstartoffset, colnames, invec, compressed,) = tide_io.readbidstsv(

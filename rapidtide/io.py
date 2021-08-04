@@ -23,6 +23,7 @@ import copy
 import json
 import os
 import sys
+import platform
 
 import nibabel as nib
 import numpy as np
@@ -1502,13 +1503,30 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
             return samplerate, starttime, data[columnnum, :]
 
 
-def parsefilespec(filespec):
+def parsefilespec(filespec, debug=False):
     inputlist = filespec.split(":")
-    thefilename = inputlist[0]
-    if len(inputlist) > 1:
-        return thefilename, inputlist[1]
+    if debug:
+        print(f"PARSEFILESPEC: input string >>>{filespec}<<<")
+        print(f"PARSEFILESPEC: platform is {platform.system()}")
+    if filespec[1] == ":" and platform.system() == "Windows":
+        thefilename = ":".join([inputlist[0], inputlist[1]])
+        if len(inputlist) == 3:
+            thecolspec = inputlist[2]
+        elif len(inputlist) == 2:
+            thecolspec = None
+        else:
+            raise ValueError(f"PARSEFILESPEC: Badly formed file specification {filespec} - exiting")
     else:
-        return thefilename, None
+        thefilename = inputlist[0]
+        if len(inputlist) == 2:
+            thecolspec = inputlist[1]
+        elif len(inputlist) == 1:
+            thecolspec = None
+        else:
+            raise ValueError(f"PARSEFILESPEC: Badly formed file specification {filespec} - exiting")
+    if debug:
+        print(f"PARSEFILESPEC: thefilename is >>>{filespec}<<<, thecolspec is >>>{thecolspec}<<<")
+    return thefilename, thecolspec
 
 
 def colspectolist(colspec, debug=False):
@@ -1560,7 +1578,7 @@ def processnamespec(maskspec, spectext1, spectext2):
     return thename, thevals
 
 
-def readcolfromtextfile(inputfilename):
+def readcolfromtextfile(inputfilespec):
     r"""
 
     Parameters
@@ -1571,14 +1589,9 @@ def readcolfromtextfile(inputfilename):
     Returns
     -------
     """
-    splitname = inputfilename.split(":")
-    if len(splitname) == 1:
-        colspec = None
-    elif len(splitname) == 2:
-        inputfilename = splitname[0]
-        colspec = splitname[1]
-    else:
-        print("Badly formed file specification", inputfilename, "- exiting")
+    inputfilename, colspec = parsefilespec(inputfilespec)
+    if inputfilename is None:
+        print("Badly formed file specification", inputfilespec, "- exiting")
         sys.exit()
 
     inputdata = np.transpose(readvecs(inputfilename, colspec=colspec))

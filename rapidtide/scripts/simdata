@@ -268,7 +268,7 @@ def simdata_main(thearguments):
         (args.lfopctfile is None)
         or (args.lfolagfile is None)
         or (args.lforegressor is None)
-        or ((args.lfosamprate is None) and (len(args.lforegressor.split(":")) < 2))
+        or ((args.lfosamprate is None) and (tide_io.parsefilespec(args.lforegressor)[1] is None))
     ):
         print("lfopctfile:", args.lfopctfile)
         print("lfolagfile:", args.lfolagfile)
@@ -283,7 +283,7 @@ def simdata_main(thearguments):
         (args.resppctfile is None)
         or (args.resplagfile is None)
         or (args.respregressor is None)
-        or ((args.respsamprate is None) and (len(args.respregressor.split(":")) < 2))
+        or ((args.respsamprate is None) and (tide_io.parsefilespec(args.respregressor)[1] is None))
     ):
         doresp = False
     else:
@@ -294,7 +294,7 @@ def simdata_main(thearguments):
         (args.cardiacpctfile is None)
         or (args.cardiaclagfile is None)
         or (args.cardiacregressor is None)
-        or ((args.cardiacsamprate is None) and (len(args.cardiacregressor.split(":")) < 2))
+        or ((args.cardiacsamprate is None) and (tide_io.parsefilespec(args.cardiacregressor)[1] is None))
     ):
         docardiac = False
     else:
