@@ -1515,7 +1515,9 @@ def parsefilespec(filespec, debug=False):
         elif len(inputlist) == 2:
             thecolspec = None
         else:
-            raise ValueError(f"PARSEFILESPEC: Badly formed file specification {filespec} - exiting")
+            raise ValueError(
+                f"PARSEFILESPEC: Badly formed file specification {filespec} - exiting"
+            )
     else:
         thefilename = inputlist[0]
         if len(inputlist) == 2:
@@ -1523,7 +1525,9 @@ def parsefilespec(filespec, debug=False):
         elif len(inputlist) == 1:
             thecolspec = None
         else:
-            raise ValueError(f"PARSEFILESPEC: Badly formed file specification {filespec} - exiting")
+            raise ValueError(
+                f"PARSEFILESPEC: Badly formed file specification {filespec} - exiting"
+            )
     if debug:
         print(f"PARSEFILESPEC: thefilename is >>>{filespec}<<<, thecolspec is >>>{thecolspec}<<<")
     return thefilename, thecolspec

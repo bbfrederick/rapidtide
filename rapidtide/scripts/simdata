@@ -294,7 +294,10 @@ def simdata_main(thearguments):
         (args.cardiacpctfile is None)
         or (args.cardiaclagfile is None)
         or (args.cardiacregressor is None)
-        or ((args.cardiacsamprate is None) and (tide_io.parsefilespec(args.cardiacregressor)[1] is None))
+        or (
+            (args.cardiacsamprate is None)
+            and (tide_io.parsefilespec(args.cardiacregressor)[1] is None)
+        )
     ):
         docardiac = False
     else:

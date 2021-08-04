@@ -700,7 +700,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict["motionfilename"] is not None:
         LGR.info("regressing out motion")
 
-        TimingLGR("Motion filtering start")
+        TimingLGR.info("Motion filtering start")
         (motionregressors, motionregressorlabels, fmri_data_valid,) = tide_glmpass.motionregress(
             optiondict["motionfilename"],
             fmri_data_valid,
@@ -776,7 +776,7 @@ def rapidtide_main(argparsingfunc):
         inputperiod = meanperiod
         inputstarttime = meanstarttime
         inputvec = meanvec
-        fullmeanmask = np.zeros((numspatiallocs), dtype=rt_floattype)
+        fullmeanmask = np.zeros(numspatiallocs, dtype=rt_floattype)
         fullmeanmask[validvoxels] = meanmask[:]
         if optiondict["bidsoutput"]:
             savename = f"{outputname}_desc-globalmean_mask"
