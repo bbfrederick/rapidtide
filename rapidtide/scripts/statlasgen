@@ -24,6 +24,7 @@ import sys
 import numpy as np
 
 import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
 import rapidtide.workflows.parser_funcs as pf
 
 
@@ -60,6 +61,20 @@ def _get_parser():
         help=("Return a 4d file with one region per volume"),
     )
     parser.add_argument(
+        "--spatialfilt",
+        dest="gausssigma",
+        action="store",
+        type=float,
+        metavar="GAUSSSIGMA",
+        help=(
+            "Spatially filter value histogram "
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to have it set to half the mean voxel "
+            "dimension (a rule of thumb for a good value)."
+        ),
+        default=0.0,
+    )
+    parser.add_argument(
         "--targetfile",
         dest="targetfile",
         action="store",
@@ -68,6 +83,14 @@ def _get_parser():
         help=("Match the resolution of TARGET"),
         default=None,
     )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Output additional debugging information."),
+        default=False,
+    )
+
     return parser
 
 
@@ -79,59 +102,55 @@ def main():
         _get_parser().print_help()
         raise
 
-    print(args)
-
     print("loading input data")
     (
-        template_img,
-        template_data,
-        template_hdr,
-        templatedims,
-        templatesizes,
+        input_img,
+        input_data,
+        input_hdr,
+        inputdims,
+        inputsizes,
     ) = tide_io.readfromnifti(args.inputname)
 
     print("reshaping")
-    xsize = templatedims[1]
-    ysize = templatedims[2]
-    numslices = templatedims[3]
-    numtimepoints = templatedims[4]
+    xsize, ysize, numslices, numtimepoints = tide_io.parseniftidims(inputdims)
+    xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(inputsizes)
     numvoxels = int(xsize) * int(ysize) * int(numslices)
 
     # make a 4d array
     if numtimepoints > 1:
         # array is already 4d, just reshape it
-        numregions = numtimepoints
-        templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints))
+        numregions = np.floor(np.max(input_data)).astype(np.uint16)
+        inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
+        outputhistogram = np.zeros((numvoxels, numregions), dtype=float)
+        histmask = np.zeros((numvoxels), dtype=int)
     else:
-        # file is 3d, construct a 4d array
-        slop = 0.1
-        print("going from 3d to 4d")
-        numregions = np.floor(np.max(template_data)).astype(np.uint16)
-        rs_template = np.reshape(template_data, numvoxels)
-        templatevoxels = np.zeros((numvoxels, numregions))
-        for theregion in range(1, numregions + 1):
-            templatevoxels[:, theregion - 1] = np.where(
-                np.fabs(rs_template - theregion) <= slop, 1, 0
-            )
+        print("input file must be 4 dimensional.  Exiting.")
+        sys.exit()
+        
 
-    # now we have a 4d file, regardless of what we started with
-    if args.dosplit:
-        print("splitting left right")
-        tempvoxels = np.reshape(templatevoxels, (xsize, ysize, numslices, numregions)).astype(
-            np.uint16
+    # make histograms for all voxels
+    for thevoxel in range(numvoxels):
+        if np.max(inputvoxels[thevoxel, :]) > 0:
+            thehist, thebins = np.histogram(inputvoxels[thevoxel, :], bins=(numregions+1), range=[0, numregions], density=True)
+            if args.debug:
+                print(len(thebins), thebins)
+                print(len(thehist), thehist)
+            outputhistogram[thevoxel, :] = thehist[1:]
+            histmask[thevoxel] = 1
+
+    # do spatial filtering if requested
+    if args.gausssigma < 0.0:
+        # set gausssigma automatically
+        args.gausssigma = np.mean([xdim, ydim, slicethickness]) / 2.0
+    if args.gausssigma > 0.0:
+        print(
+            f"applying gaussian spatial filter with sigma={args.gausssigma}"
         )
-        tempvoxels[int(xsize // 2) + 1 :, :, :, :] *= 2
-        templatevoxels = np.reshape(tempvoxels, (numvoxels, numregions))
-        newtemplatevoxels = np.zeros((numvoxels, numregions * 2), dtype=np.uint16)
-        for theregion in range(1, numregions + 1):
-            newtemplatevoxels[:, theregion - 1] = np.where(
-                templatevoxels[:, theregion - 1] == 1, 1, 0
+        rs_outputhistogram = outputhistogram.reshape((xsize, ysize, numslices, numregions))
+        for i in range(0, numregions):
+            rs_outputhistogram[:, :, :, i] = tide_filt.ssmooth(
+                xdim, ydim, slicethickness, args.gausssigma, rs_outputhistogram[:, :, :, i],
             )
-            newtemplatevoxels[:, theregion + numregions - 1] = np.where(
-                templatevoxels[:, theregion - 1] == 2, 1, 0
-            )
-        numregions *= 2
-        templatevoxels = np.reshape(newtemplatevoxels, (numvoxels, numregions))
 
     if args.targetfile is not None:
         # do the resampling here
@@ -139,11 +158,11 @@ def main():
         fsldir = os.environ.get("FSLDIR")
         if fsldir is not None:
             # first write out a temp file with the data
-            outputvoxels = templatevoxels
-            template_hdr["dim"][4] = numregions
+            outputvoxels = inputvoxels
+            input_hdr["dim"][4] = numregions
             tide_io.savetonifti(
                 outputvoxels.reshape((xsize, ysize, numslices, numregions)),
-                template_hdr,
+                input_hdr,
                 "temppre",
             )
             flirtcmd = os.path.join(fsldir, "bin", "flirt")
@@ -160,18 +179,18 @@ def main():
             thecommand.append("temppost")
             subprocess.call(thecommand)
             (
-                template_img,
-                template_data,
-                template_hdr,
-                templatedims,
-                templatesizes,
+                input_img,
+                input_data,
+                input_hdr,
+                inputdims,
+                inputsizes,
             ) = tide_io.readfromnifti("temppost")
-            xsize = templatedims[1]
-            ysize = templatedims[2]
-            numslices = templatedims[3]
-            numregions = templatedims[4]
+            xsize = inputdims[1]
+            ysize = inputdims[2]
+            numslices = inputdims[3]
+            numregions = inputdims[4]
             numvoxels = int(xsize) * int(ysize) * int(numslices)
-            templatevoxels = np.around(np.reshape(template_data, (numvoxels, numregions))).astype(
+            inputvoxels = np.around(np.reshape(input_data, (numvoxels, numregions))).astype(
                 "int"
             )
         else:
@@ -179,22 +198,22 @@ def main():
             sys.exit()
 
     if args.volumeperregion:
-        outputvoxels = templatevoxels
-        template_hdr["dim"][4] = numregions
+        outputvoxels = outputhistogram
+        input_hdr["dim"][4] = numregions
         tide_io.savetonifti(
             outputvoxels.reshape((xsize, ysize, numslices, numregions)),
-            template_hdr,
+            input_hdr,
             args.outputtemplatename,
         )
     else:
         print("collapsing back to 3d")
-        outputvoxels = templatevoxels[:, 0] * 0
+        outputvoxels = outputhistogram[:, 0] * 0
         for i in range(numvoxels):
-            if np.max(templatevoxels[i, :]) > 0.5:
-                outputvoxels[i] = np.argmax(templatevoxels[i, :]) + 1
-        template_hdr["dim"][4] = 1
+            if histmask[i] > 0:
+                outputvoxels[i] = np.argmax(outputhistogram[i, :]) + 1
+        input_hdr["dim"][4] = 1
         tide_io.savetonifti(
-            outputvoxels.reshape((xsize, ysize, numslices)), template_hdr, args.outputtemplatename,
+            outputvoxels.reshape((xsize, ysize, numslices)), input_hdr, args.outputtemplatename,
         )
 
 
