@@ -23,8 +23,8 @@ import sys
 
 import numpy as np
 
-import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 
 
@@ -103,13 +103,9 @@ def main():
         raise
 
     print("loading input data")
-    (
-        input_img,
-        input_data,
-        input_hdr,
-        inputdims,
-        inputsizes,
-    ) = tide_io.readfromnifti(args.inputname)
+    (input_img, input_data, input_hdr, inputdims, inputsizes,) = tide_io.readfromnifti(
+        args.inputname
+    )
 
     print("reshaping")
     xsize, ysize, numslices, numtimepoints = tide_io.parseniftidims(inputdims)
@@ -126,12 +122,16 @@ def main():
     else:
         print("input file must be 4 dimensional.  Exiting.")
         sys.exit()
-        
 
     # make histograms for all voxels
     for thevoxel in range(numvoxels):
         if np.max(inputvoxels[thevoxel, :]) > 0:
-            thehist, thebins = np.histogram(inputvoxels[thevoxel, :], bins=(numregions+1), range=[0, numregions], density=True)
+            thehist, thebins = np.histogram(
+                inputvoxels[thevoxel, :],
+                bins=(numregions + 1),
+                range=[0, numregions],
+                density=True,
+            )
             if args.debug:
                 print(len(thebins), thebins)
                 print(len(thehist), thehist)
@@ -143,9 +143,7 @@ def main():
         # set gausssigma automatically
         args.gausssigma = np.mean([xdim, ydim, slicethickness]) / 2.0
     if args.gausssigma > 0.0:
-        print(
-            f"applying gaussian spatial filter with sigma={args.gausssigma}"
-        )
+        print(f"applying gaussian spatial filter with sigma={args.gausssigma}")
         rs_outputhistogram = outputhistogram.reshape((xsize, ysize, numslices, numregions))
         for i in range(0, numregions):
             rs_outputhistogram[:, :, :, i] = tide_filt.ssmooth(
@@ -161,9 +159,7 @@ def main():
             outputvoxels = inputvoxels
             input_hdr["dim"][4] = numregions
             tide_io.savetonifti(
-                outputvoxels.reshape((xsize, ysize, numslices, numregions)),
-                input_hdr,
-                "temppre",
+                outputvoxels.reshape((xsize, ysize, numslices, numregions)), input_hdr, "temppre",
             )
             flirtcmd = os.path.join(fsldir, "bin", "flirt")
             thecommand = []
@@ -178,21 +174,15 @@ def main():
             thecommand.append("-out")
             thecommand.append("temppost")
             subprocess.call(thecommand)
-            (
-                input_img,
-                input_data,
-                input_hdr,
-                inputdims,
-                inputsizes,
-            ) = tide_io.readfromnifti("temppost")
+            (input_img, input_data, input_hdr, inputdims, inputsizes,) = tide_io.readfromnifti(
+                "temppost"
+            )
             xsize = inputdims[1]
             ysize = inputdims[2]
             numslices = inputdims[3]
             numregions = inputdims[4]
             numvoxels = int(xsize) * int(ysize) * int(numslices)
-            inputvoxels = np.around(np.reshape(input_data, (numvoxels, numregions))).astype(
-                "int"
-            )
+            inputvoxels = np.around(np.reshape(input_data, (numvoxels, numregions))).astype("int")
         else:
             print("FSL directory not found - aborting")
             sys.exit()
