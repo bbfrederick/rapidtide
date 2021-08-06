@@ -67,6 +67,7 @@ def main():
         "spatialdecomp",
         "spatialfit",
         "spectrogram",
+        "statlasgen",
         "synthASL",
         "tcfrom3col",
         "temporaldecomp",

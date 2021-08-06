@@ -1,0 +1,202 @@
+#!/usr/bin/env python
+# -*- coding: latin-1 -*-
+#
+#   Copyright 2016-2021 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+import argparse
+import os
+import subprocess
+import sys
+
+import numpy as np
+
+import rapidtide.io as tide_io
+import rapidtide.workflows.parser_funcs as pf
+
+
+def _get_parser():
+    """
+    Argument parser for atlastool
+    """
+    parser = argparse.ArgumentParser(
+        prog="statlasgen",
+        description=("A tool to generate atlases from value histograms"),
+        usage="%(prog)s inputname outputtemplatename [options]",
+    )
+
+    # Required arguments
+    pf.addreqinputniftifile(
+        parser,
+        "inputname",
+        addedtext="Must be a 4D file with each timepoint being a sample segmentation. ",
+    )
+    pf.addreqoutputniftifile(parser, "outputtemplatename")
+
+    # add optional arguments
+    parser.add_argument(
+        "--3d",
+        dest="volumeperregion",
+        action="store_false",
+        help=("Return a 3d file with regions encoded as integers"),
+        default=False,
+    )
+    parser.add_argument(
+        "--4d",
+        dest="volumeperregion",
+        action="store_true",
+        help=("Return a 4d file with one region per volume"),
+    )
+    parser.add_argument(
+        "--targetfile",
+        dest="targetfile",
+        action="store",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="TARGET",
+        help=("Match the resolution of TARGET"),
+        default=None,
+    )
+    return parser
+
+
+def main():
+    # get the command line parameters
+    try:
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
+
+    print(args)
+
+    print("loading input data")
+    (
+        template_img,
+        template_data,
+        template_hdr,
+        templatedims,
+        templatesizes,
+    ) = tide_io.readfromnifti(args.inputname)
+
+    print("reshaping")
+    xsize = templatedims[1]
+    ysize = templatedims[2]
+    numslices = templatedims[3]
+    numtimepoints = templatedims[4]
+    numvoxels = int(xsize) * int(ysize) * int(numslices)
+
+    # make a 4d array
+    if numtimepoints > 1:
+        # array is already 4d, just reshape it
+        numregions = numtimepoints
+        templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints))
+    else:
+        # file is 3d, construct a 4d array
+        slop = 0.1
+        print("going from 3d to 4d")
+        numregions = np.floor(np.max(template_data)).astype(np.uint16)
+        rs_template = np.reshape(template_data, numvoxels)
+        templatevoxels = np.zeros((numvoxels, numregions))
+        for theregion in range(1, numregions + 1):
+            templatevoxels[:, theregion - 1] = np.where(
+                np.fabs(rs_template - theregion) <= slop, 1, 0
+            )
+
+    # now we have a 4d file, regardless of what we started with
+    if args.dosplit:
+        print("splitting left right")
+        tempvoxels = np.reshape(templatevoxels, (xsize, ysize, numslices, numregions)).astype(
+            np.uint16
+        )
+        tempvoxels[int(xsize // 2) + 1 :, :, :, :] *= 2
+        templatevoxels = np.reshape(tempvoxels, (numvoxels, numregions))
+        newtemplatevoxels = np.zeros((numvoxels, numregions * 2), dtype=np.uint16)
+        for theregion in range(1, numregions + 1):
+            newtemplatevoxels[:, theregion - 1] = np.where(
+                templatevoxels[:, theregion - 1] == 1, 1, 0
+            )
+            newtemplatevoxels[:, theregion + numregions - 1] = np.where(
+                templatevoxels[:, theregion - 1] == 2, 1, 0
+            )
+        numregions *= 2
+        templatevoxels = np.reshape(newtemplatevoxels, (numvoxels, numregions))
+
+    if args.targetfile is not None:
+        # do the resampling here
+        print("resampling to new resolution")
+        fsldir = os.environ.get("FSLDIR")
+        if fsldir is not None:
+            # first write out a temp file with the data
+            outputvoxels = templatevoxels
+            template_hdr["dim"][4] = numregions
+            tide_io.savetonifti(
+                outputvoxels.reshape((xsize, ysize, numslices, numregions)),
+                template_hdr,
+                "temppre",
+            )
+            flirtcmd = os.path.join(fsldir, "bin", "flirt")
+            thecommand = []
+            thecommand.append(flirtcmd)
+            thecommand.append("-in")
+            thecommand.append("temppre")
+            thecommand.append("-ref")
+            thecommand.append(args.targetfile)
+            thecommand.append("-applyxfm")
+            thecommand.append("-init")
+            thecommand.append(os.path.join(fsldir, "data", "atlases", "bin", "eye.mat"))
+            thecommand.append("-out")
+            thecommand.append("temppost")
+            subprocess.call(thecommand)
+            (
+                template_img,
+                template_data,
+                template_hdr,
+                templatedims,
+                templatesizes,
+            ) = tide_io.readfromnifti("temppost")
+            xsize = templatedims[1]
+            ysize = templatedims[2]
+            numslices = templatedims[3]
+            numregions = templatedims[4]
+            numvoxels = int(xsize) * int(ysize) * int(numslices)
+            templatevoxels = np.around(np.reshape(template_data, (numvoxels, numregions))).astype(
+                "int"
+            )
+        else:
+            print("FSL directory not found - aborting")
+            sys.exit()
+
+    if args.volumeperregion:
+        outputvoxels = templatevoxels
+        template_hdr["dim"][4] = numregions
+        tide_io.savetonifti(
+            outputvoxels.reshape((xsize, ysize, numslices, numregions)),
+            template_hdr,
+            args.outputtemplatename,
+        )
+    else:
+        print("collapsing back to 3d")
+        outputvoxels = templatevoxels[:, 0] * 0
+        for i in range(numvoxels):
+            if np.max(templatevoxels[i, :]) > 0.5:
+                outputvoxels[i] = np.argmax(templatevoxels[i, :]) + 1
+        template_hdr["dim"][4] = 1
+        tide_io.savetonifti(
+            outputvoxels.reshape((xsize, ysize, numslices)), template_hdr, args.outputtemplatename,
+        )
+
+
+if __name__ == "__main__":
+    main()
