@@ -107,7 +107,6 @@ script_list = [
     "rapidtide/scripts/spatialdecomp",
     "rapidtide/scripts/spatialfit",
     "rapidtide/scripts/spectrogram",
-    "rapidtide/scripts/statlasgen",
     "rapidtide/scripts/synthASL",
     "rapidtide/scripts/tcfrom3col",
     "rapidtide/scripts/temporaldecomp",
