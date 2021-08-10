@@ -27,15 +27,24 @@ import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_float, is_valid_file
 
 
-def _get_parser():
+def _get_parser(decompaxis):
     """
-    Argument parser for temporaldecomp
+    Argument parser for spatialdecomp and temporaldecomp
     """
-    parser = argparse.ArgumentParser(
-        prog="temporaldecomp",
-        description="Perform PCA or ICA decomposition on a data file in the time dimension.",
-        usage="%(prog)s datafile outputroot [options]",
-    )
+    if decompaxis == "temporal":
+        parser = argparse.ArgumentParser(
+            prog="temporaldecomp",
+            description="Perform PCA or ICA decomposition on a data file in the time dimension.",
+            usage="%(prog)s datafile outputroot [options]",
+        )
+    elif decompaxis == "spatial":
+        parser = argparse.ArgumentParser(
+            prog="spatialdecomp",
+            description="Perform PCA or ICA decomposition on a data file in the spatial dimension.",
+            usage="%(prog)s datafile outputroot [options]",
+        )
+    else:
+        raise ValueError(f"Illegal decomposition type: {type}")
 
     # Required arguments
     parser.add_argument(
@@ -100,7 +109,8 @@ def _get_parser():
     return parser
 
 
-def temporaldecomp_workflow(
+def niftidecomp_workflow(
+    decompaxis,
     datafile,
     outputroot,
     datamaskname=None,
@@ -112,7 +122,14 @@ def temporaldecomp_workflow(
     sigma=0.0,
 ):
 
-    print("Will perform", decomptype, "analysis")
+    print(f"Will perform {decomptype} analysis along the {decompaxis} axis")
+
+    if decompaxis == "temporal":
+        decompaxisnum = 1
+        transposeifspatial = lambda *a, **k: None
+    else:
+        decompaxisnum = 0
+        transposeifspatial = np.transpose
 
     # save the command line
     tide_io.writevec([" ".join(sys.argv)], outputroot + "_commandline.txt")
@@ -168,13 +185,13 @@ def temporaldecomp_workflow(
     print("masking arrays")
     if datamaskname is not None:
         if datamaskdims[4] == 1:
-            proclocs = np.where(datamask_data.reshape(numspatiallocs) > 0.9)
+            proclocs = np.where(datamask_data.reshape(numspatiallocs) > 0.5)
         else:
             proclocs = np.where(
-                np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1) > 0.9
+                np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1) > 0.5
             )
             rs_mask = datamask_data.reshape((numspatiallocs, timepoints))[proclocs, :]
-            rs_mask = np.where(rs_mask > 0.9, 1.0, 0.0)[0]
+            rs_mask = np.where(rs_mask > 0.5, 1.0, 0.0)[0]
     else:
         datamaskdims = [1, xsize, ysize, numslices, 1]
         themaxes = np.max(rs_datafile, axis=1)
@@ -187,22 +204,28 @@ def temporaldecomp_workflow(
     # normalize the individual images
     if demean:
         print("demeaning array")
-        themean = np.mean(procdata, axis=1)
+        themean = np.mean(procdata, axis=decompaxisnum)
         print("shape of mean", themean.shape)
-        for i in range(procdata.shape[0]):
-            procdata[i, :] -= themean[i]
+        for i in range(procdata.shape[1 - decompaxisnum]):
+            if decompaxisnum == 1:
+                procdata[i, :] -= themean[i]
+            else:
+                procdata[:, i] -= themean[i]
     else:
-        themean = np.ones(procdata.shape[0])
+        themean = np.ones(procdata.shape[1 - decompaxisnum])
 
     if varnorm:
         print("variance normalizing array")
-        thevar = np.var(procdata, axis=1)
-        print("shape of mean", themean.shape)
-        for i in range(procdata.shape[0]):
-            procdata[i, :] /= thevar[i]
+        thevar = np.var(procdata, axis=decompaxisnum)
+        print("shape of var", thevar.shape)
+        for i in range(procdata.shape[1 - decompaxisnum]):
+            if decompaxisnum == 1:
+                procdata[i, :] /= thevar[i]
+            else:
+                procdata[:, i] /= thevar[i]
         procdata = np.nan_to_num(procdata)
     else:
-        thevar = np.ones(procdata.shape[0])
+        thevar = np.ones(procdata.shape[1 - decompaxisnum])
 
     # applying mask
     if datamaskdims[4] > 1:
@@ -215,12 +238,14 @@ def temporaldecomp_workflow(
             print("will return all significant components")
         else:
             print("will return", icacomponents, "components")
-        thefit = FastICA(n_components=icacomponents).fit(procdata)  # Reconstruct signals
+        thefit = FastICA(n_components=icacomponents).fit(
+            transposeifspatial(procdata)
+        )  # Reconstruct signals
         if icacomponents is None:
-            thecomponents = thefit.components_[:]
+            thecomponents = transposeifspatial(thefit.components_[:])
             print(thecomponents.shape[1], "components found")
         else:
-            thecomponents = thefit.components_[0:icacomponents]
+            thecomponents = transposeifspatial(thefit.components_[0:icacomponents])
             print("returning first", thecomponents.shape[1], "components found")
     else:
         print("performing pca decomposition")
@@ -236,16 +261,14 @@ def temporaldecomp_workflow(
             thepca = PCA(n_components=pcacomponents)
         else:
             thepca = SparsePCA(n_components=pcacomponents)
-        thefit = thepca.fit(procdata)
-        thetransform = thepca.transform(procdata)
-        theinvtrans = thepca.inverse_transform(thetransform)
+        thefit = thepca.fit(transposeifspatial(procdata))
+        thetransform = thepca.transform(transposeifspatial(procdata))
+        theinvtrans = transposeifspatial(thepca.inverse_transform(thetransform))
         if pcacomponents < 1.0:
-            thecomponents = thefit.components_[:]
-            thesingvals = thefit.singular_values_[:]
+            thecomponents = transposeifspatial(thefit.components_[:])
             print("returning", thecomponents.shape[1], "components")
         else:
-            thecomponents = thefit.components_[0:pcacomponents]
-            thesingvals = thefit.singular_values_[:pcacomponents]
+            thecomponents = transposeifspatial(thefit.components_[0:pcacomponents])
 
         # save the eigenvalues
         print("variance explained by component:", 100.0 * thefit.explained_variance_ratio_)
@@ -253,51 +276,72 @@ def temporaldecomp_workflow(
             100.0 * thefit.explained_variance_ratio_, outputroot + "_explained_variance_pct.txt",
         )
 
-        # save the components
-        print("writing component timecourses")
-        tide_io.writenpvecs(thecomponents, outputroot + "_components.txt")
+        if decompaxis == "temporal":
+            # save the components
+            print("writing component timecourses")
+            tide_io.writenpvecs(thecomponents, outputroot + "_components.txt")
 
-        # save the singular values
-        print("writing singular values")
-        tide_io.writenpvecs(np.transpose(thesingvals), outputroot + "_singvals.txt")
+            # save the singular values
+            print("writing singular values")
+            tide_io.writenpvecs(np.transpose(thesingvals), outputroot + "_singvals.txt")
 
-        # save the coefficients
-        print("writing out the coefficients")
-        coefficients = thetransform
-        print("coefficients shape:", coefficients.shape)
-        theheader = datafile_hdr
-        theheader["dim"][4] = coefficients.shape[1]
-        tempout = np.zeros((numspatiallocs, coefficients.shape[1]), dtype="float")
-        tempout[proclocs, :] = coefficients[:, :]
-        tide_io.savetonifti(
-            tempout.reshape((xsize, ysize, numslices, coefficients.shape[1])),
-            datafile_hdr,
-            outputroot + "_coefficients",
-        )
+            # save the coefficients
+            print("writing out the coefficients")
+            coefficients = thetransform
+            print("coefficients shape:", coefficients.shape)
+            theheader = datafile_hdr
+            theheader["dim"][4] = coefficients.shape[1]
+            tempout = np.zeros((numspatiallocs, coefficients.shape[1]), dtype="float")
+            tempout[proclocs, :] = coefficients[:, :]
+            tide_io.savetonifti(
+                tempout.reshape((xsize, ysize, numslices, coefficients.shape[1])),
+                datafile_hdr,
+                outputroot + "_coefficients",
+            )
+            # unnormalize the dimensionality reduced data
+            for i in range(numspatiallocs):
+                theinvtrans[i, :] = thevar[i] * theinvtrans[i, :] + themean[i]
 
-        # save the dimensionality reduced data
-        invtransformeddata = theinvtrans
+        else:
+            # save the component images
+            print("writing component images")
+            theheader = datafile_hdr
+            theheader["dim"][4] = thecomponents.shape[1]
+            tempout = np.zeros((numspatiallocs, thecomponents.shape[1]), dtype="float")
+            tempout[proclocs, :] = thecomponents[:, :]
+            tide_io.savetonifti(
+                tempout.reshape((xsize, ysize, numslices, thecomponents.shape[1])),
+                datafile_hdr,
+                outputroot + "_components",
+            )
+
+            # save the coefficients
+            print("writing out the coefficients")
+            coefficients = np.transpose(thetransform)
+            tide_io.writenpvecs(coefficients, outputroot + "_coefficients.txt")
+
+            # unnormalize the dimensionality reduced data
+            for i in range(timepoints):
+                theinvtrans[:, i] = thevar[i] * theinvtrans[:, i] + themean[i]
+
         print("writing fit data")
         theheader = datafile_hdr
-        theheader["dim"][4] = invtransformeddata.shape[1]
-        tempout = np.zeros((numspatiallocs, invtransformeddata.shape[1]), dtype="float")
-        tempout[proclocs, :] = invtransformeddata[:, :]
+        theheader["dim"][4] = theinvtrans.shape[1]
+        tempout = np.zeros((numspatiallocs, theinvtrans.shape[1]), dtype="float")
+        tempout[proclocs, :] = theinvtrans[:, :]
         tide_io.savetonifti(
-            tempout.reshape((xsize, ysize, numslices, invtransformeddata.shape[1])),
+            tempout.reshape((xsize, ysize, numslices, theinvtrans.shape[1])),
             datafile_hdr,
             outputroot + "_fit",
         )
 
 
-def getparameters():
+def getparameters(decompaxis):
     try:
-        args = vars(_get_parser().parse_args())
+        args = vars(_get_parser(decompaxis).parse_args())
     except SystemExit:
-        _get_parser().print_help()
+        _get_parser(decompaxis).print_help()
         raise
-    print()
-    print("before postprocessing")
-    print(args)
 
     if args["ncomp"] < 0.0:
         args["pcacomponents"] = 0.5
@@ -312,10 +356,11 @@ def getparameters():
     return args
 
 
-def main():
-    args = getparameters()
+def main(decompaxis):
+    args = getparameters(decompaxis)
 
-    temporaldecomp_workflow(
+    niftidecomp_workflow(
+        decompaxis,
         args["datafile"],
         args["outputroot"],
         datamaskname=args["datamaskname"],
@@ -329,4 +374,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main("spatial")

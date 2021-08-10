@@ -16,7 +16,7 @@
 #   limitations under the License.
 #
 #
-import rapidtide.workflows.temporaldecomp as temporaldecomp_workflow
+import rapidtide.workflows.niftidecomp as niftidecomp_workflow
 
 if __name__ == "__main__":
-    temporaldecomp_workflow.main()
+    niftidecomp_workflow.main("temporal")

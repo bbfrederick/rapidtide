@@ -16,7 +16,7 @@
 #   limitations under the License.
 #
 #
-import rapidtide.workflows.spatialdecomp as spatialdecomp_workflow
+import rapidtide.workflows.niftidecomp as niftidecomp_workflow
 
 if __name__ == "__main__":
-    spatialdecomp_workflow.main()
+    niftidecomp_workflow.main("spatial")
