@@ -85,6 +85,7 @@ script_list = [
     "rapidtide/scripts/happywarp",
     "rapidtide/scripts/histnifti",
     "rapidtide/scripts/histtc",
+    "rapidtide/scripts/pairwisemergenifti",
     "rapidtide/scripts/physiofreq",
     "rapidtide/scripts/pixelcomp",
     "rapidtide/scripts/plethquality",
