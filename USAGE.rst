@@ -2,16 +2,16 @@ Usage
 =====
 Execute any of the commands to run rapidtide on the sample data:
 
-a) Run rapidtide2 to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
+a) Run rapidtide to perform dynamic global signal regression (dGSR) on an fMRI file[1]:
 ::
 
-    rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/dgsr -L -r -15,15 --passes=3
+    rapidtide rapidtide/data/examples/src/sub-RAPIDTIDETEST rapidtide/data/examples/dst/sub-RAPIDTIDETEST_dgsr --searchrange -15 15 
 
 
-b) Run rapidtide2 to perform static global signal regression (sGSR) on an fMRI file[1] (this is just global mean regression):
+b) Run rapidtide to perform static global signal regression (sGSR) on an fMRI file[1] (this is just global mean regression):
 ::
 
-    rapidtide2 rapidtide/data/examples/src/fmri.nii.gz rapidtide/data/examples/dst/sgsr -L -Z 0.0
+    rapidtide rapidtide/data/examples/src/sub-RAPIDTIDETEST rapidtide/data/examples/dst/sub-RAPIDTIDETEST_sgsr --fixdelay 0.0 --passes 1
 
 
 c) Run tidepool to look at all the interesting maps and timecourses from a):
@@ -22,7 +22,7 @@ c) Run tidepool to look at all the interesting maps and timecourses from a):
 
 (then select the file rapidtide/data/examples/dst/dgsr_lagtimes.nii.gz to load the dataset):
 
-d) Look at the refined regressors produced during dGSR: (the "dgsr_pass1" regressor is the initial global mean before refinement) in their own window.
+d) Look at the regressors produced and used during dGSR: (the "pass1" regressor is the initial global mean before refinement) in their own window.
 ::
 
-    showtc rapidtide/data/examples/dst/dgsr_reference_fmrires_pass[123].txt
+    showtc rapidtide/data/examples/dst/sub-RAPIDTIDETEST_dgsr_desc-movingregressor_timeseries.json
