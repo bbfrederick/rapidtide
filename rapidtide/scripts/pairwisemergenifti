@@ -52,6 +52,7 @@ def main():
     )
 
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
+    numspatiallocs = int(xsize) * int(ysize) * int(numslices)
 
     # check dimensions
     if not tide_io.checkspacedimmatch(thedims, themaskdims):
@@ -64,28 +65,39 @@ def main():
         print("input file must have an even number in the time dimension")
         exit()
 
+    # sanitize input
+    print("sanitizing input data")
+    input_data = np.nan_to_num(input_data)
+    print("sanitizing mask data")
+    mask_data = np.nan_to_num(mask_data)
+
     # make the output array
-    output_data = np.zeros((xsize, ysize, numslices, timepoints // 2), dtype="float")
+    output_data = np.zeros((numspatiallocs, timepoints // 2), dtype="float")
 
     # cycle over timepoints
     print("now cycling over all images")
     for thepair in range(0, timepoints // 2):
         print(f"processing pair {thepair}")
+        masksum = (mask_data[:, :, :, thepair * 2] + mask_data[:, :, :, thepair * 2 + 1]).reshape(
+            numspatiallocs
+        )
         if args.maskmerge:
-            thesum = input_data[:, :, :, thepair * 2] + input_data[:, :, :, thepair * 2 + 1]
-            thesum[np.where(thesum > 0)] = 1
-            output_data[:, :, :, thepair] = thesum + 0.0
+            masksum[np.where(masksum > 0)] = 1
+            output_data[:, thepair] = masksum + 0.0
         else:
-            output_data[:, :, :, thepair] = np.nan_to_num(
-                (input_data[:, :, :, thepair * 2] + input_data[:, :, :, thepair * 2 + 1])
-                / (mask_data[:, :, :, thepair * 2] + mask_data[:, :, :, thepair * 2 + 1])
-            )
+            dataavg = (
+                input_data[:, :, :, thepair * 2] + input_data[:, :, :, thepair * 2 + 1]
+            ).reshape(numspatiallocs)
+            dataavg = np.divide(dataavg, masksum, out=np.zeros_like(dataavg), where=masksum > 0)
+            output_data[:, thepair] = np.nan_to_num(dataavg)
 
     # now do the ones with other numbers of time points
     output_hdr = input_hdr.copy()
     output_hdr["pixdim"][4] = timepoints // 2
     outputroot, dummy = tide_io.niftisplitext(args.outputfile)
-    tide_io.savetonifti(output_data, output_hdr, outputroot)
+    tide_io.savetonifti(
+        output_data.reshape((xsize, ysize, numslices, timepoints // 2)), output_hdr, outputroot
+    )
 
 
 if __name__ == "__main__":
