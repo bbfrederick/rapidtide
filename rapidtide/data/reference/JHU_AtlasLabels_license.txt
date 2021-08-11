@@ -1,0 +1,39 @@
+Digital 3D Brain MRI Arterial Territories Atlas						
+© 2021 The Johns Hopkins University						
+This Atlas is free: you can redistribute it and/or modify it under the terms of the Creative Commons Attribution-ShareAlike 4.0 International license. You should have received a copy of this license along with this program. If not, see https://creativecommons.org/licenses/by/4.0/legalcode.					
+This Atlas is distributed in the hope that it will be useful,but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+									
+aterial territories	Level1_intensity	Level1_lables	Level2_intensity	Level2_labels	level2_bilateral	major_territories
+anterior cerebral artery left	1	ACAL	1	ACAL	ACA	Anterior
+anterior cerebral artery right	2	ACAR	2	ACAR	ACA	Anterior
+medial lenticulostriate left	3	MLSL	1	ACAL	ACA	Anterior
+medial lenticulostriate right	4	MLSR	2	ACAR	ACA	Anterior
+lateral lenticulostriate left	5	LLSL	3	MCAL	MCA	Anterior
+lateral lenticulostriate right	6	LLSR	4	MCAR	MCA	Anterior
+frontal pars of middle cerebral artery left	7	MCAFL	3	MCAL	MCA	Anterior
+frontal pars of middle cerebral artery right	8	MCAFR	4	MCAR	MCA	Anterior
+parietal pars of middle cerebral artery left	9	MCAPL	3	MCAL	MCA	Anterior
+parietal pars of middle cerebral artery right	10	MCAPL	4	MCAR	MCA	Anterior
+temporal pars of middle cerebral artery left	11	MCATL	3	MCAL	MCA	Anterior
+temporal pars of middle cerebral artery right	12	MCATL	4	MCAR	MCA	Anterior
+occipital pars of middle cerebral artery left	13	MCAOL	3	MCAL	MCA	Anterior
+occipital pars of middle cerebral artery right	14	MCAOL	4	MCAR	MCA	Anterior
+insular pars of middle cerebral artery left	15	MCAIL	3	MCAL	MCA	Anterior
+insular pars of middle cerebral artery right	16	MCAIL	4	MCAR	MCA	Anterior
+temporal pars of posterior cerebral artery left	17	PCATL	5	PCAR	PCA	Posterior
+temporal pars of posterior cerebral artery right	18	PCATR	6	PCAL	PCA	Posterior
+occipital pars of posterior cerebral artery left	19	PCAOL	5	PCAL	PCA	Posterior
+occipital pars of posterior cerebral artery right	20	PCAOR	6	PCAR	PCA	Posterior
+posterior choroidal and thalamoperfurators left	21	PCTPL	5	PCAL	PCA	Posterior
+posterior choroidal and thalamoperfurators right	22	PCTPR	6	PCAR	PCA	Posterior
+anteior choroidal and thalamoperfurators left	23	ACTPL	5	PCAL	PCA	Posterior
+anterior choroidal and thalamoperfurators right	24	ACTPR	6	PCAR	PCA	Posterior
+basilar left	25	BL	7	VBL	VB	Posterior
+basilar right	26	BR	8	VBR	VB	Posterior
+superior cerebellar left	27	SCL	7	VBL	VB	Posterior
+superior cerebellar right	28	SCR	8	VBR	VB	Posterior
+inferior cerebellar left	29	ICL	7	VBL	VB	Posterior
+inferior cerebellar right	30	ICR	8	VBR	VB	Posterior
+lateral ventricle left	31	LVL	9	LVL	LV	Ventricle
+lateral ventricle right	32	LVR	10	LVR	LV	Ventricle
