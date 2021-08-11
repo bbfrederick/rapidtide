@@ -36,10 +36,16 @@ def main():
         "outputfile", help="The name of the output nifti file, including extension"
     )
     parser.add_argument(
-        "--maskmerge", action="store_true", help="Input is a mask", default=False,
+        "--maskmerge",
+        action="store_true",
+        help="Input is a mask",
+        default=False,
     )
     parser.add_argument(
-        "--debug", action="store_true", help="Print debugging information", default=False,
+        "--debug",
+        action="store_true",
+        help="Print debugging information",
+        default=False,
     )
 
     args = parser.parse_args()
