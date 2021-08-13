@@ -2,7 +2,7 @@
 
 ## Version 2.0.5 (8/9/21)
 (package) Further Windows compatibility fixes.
-(documentation) Updated USAGE.rst for the current naming an syntax of rapidtide.
+(documentation) Updated USAGE.rst for the current naming and syntax of rapidtide.
 
 ## Version 2.0.4 (7/28/21)
 (package) Fixed a problem where any program using util.py wouldn't run on Windows.
