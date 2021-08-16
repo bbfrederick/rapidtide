@@ -1104,7 +1104,7 @@ def _get_parser():
         action="store_true",
         help=(
             "Calculate the negative gradient of the fmri data after spectral filtering "
-            "so you can look for CSF flow a la https://www.biorxiv.org/content/10.1101/2021.03.29.437406v1.full. "
+            "so you can look for CSF flow à la https://www.biorxiv.org/content/10.1101/2021.03.29.437406v1.full. "
         ),
         default=False,
     )
