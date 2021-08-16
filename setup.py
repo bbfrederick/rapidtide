@@ -181,6 +181,9 @@ setup(
         "pyqtgraph>=0.11.0",
         "statsmodels",
         "numba",
+        "keras",
+        "h5py==2.10.0",
+        "tensorflow>=2.4.0",
     ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -195,7 +198,14 @@ setup(
             "m2r",
             "recommonmark",
         ],
-        "tests": ["codecov", "coverage", "coveralls", "flake8-black", "pytest", "pytest-cov"],
+        "tests": [
+            "codecov",
+            "coverage",
+            "coveralls",
+            "flake8-black",
+            "pytest",
+            "pytest-cov",
+        ],
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
