@@ -188,7 +188,7 @@ setup(
     # $ pip install -e .[dev,test]
     extras_require={
         "doc": [
-            "sphinx>=1.5.3",
+            "sphinx>=1.8.0",
             "sphinx_rtd_theme",
             "sphinx-argparse",
             "sphinx-gallery",
