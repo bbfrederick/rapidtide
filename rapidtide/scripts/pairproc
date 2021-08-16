@@ -22,6 +22,7 @@ import numpy as np
 from scipy.stats import pearsonr
 
 import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 from rapidtide.workflows.parser_funcs import is_valid_file
 
@@ -94,30 +95,36 @@ def main():
         thediffs = (themaxes - themins).reshape(numspatiallocs)
         proclocs = np.where(thediffs > 0.0)
     procdata = rs_datafile[proclocs, :][0]
-    numvalid = len(proclocs)
+    numvalid = procdata.shape[0]
     print(rs_datafile.shape, procdata.shape)
 
     # make the output array
-    evenims = procdata[:, 0:timepoints:2]
-    oddims = procdata[:, 1 : timepoints + 1 : 2]
+    numsubjects = timepoints // 2
+    evenims = np.zeros((numvalid, numsubjects), dtype=np.double)
+    oddims = np.zeros((numvalid, numsubjects), dtype=np.double)
     if args.debug:
         print(f"evenshape: {evenims.shape}")
         print(f"oddshape: {oddims.shape}")
-
-    numsubjects = timepoints // 2
+    for subject in range(numsubjects):
+        evenims[:, subject] = procdata[:, 2 * subject]
+        oddims[:, subject] = procdata[:, 2 * subject + 1]
+    # evenims = procdata[:, 0:timepoints:2]
+    # oddims = procdata[:, 1 : timepoints + 1 : 2]
 
     # cycle over all voxels
     reportstep = 1000
     print("Calculating temporal correlation over all voxels")
-    temporalcorrelations = np.zeros((numvalid), dtype=float)
-    temporalpvalues = np.zeros((numvalid), dtype=float)
+    temporalcorrelations = np.zeros((numvalid), dtype=np.double)
+    temporalpvalues = np.zeros((numvalid), dtype=np.double)
     for vox in range(numvalid):
-        temporalcorrelations[vox], temporalpvalues[vox] = pearsonr(evenims[vox, :], oddims[vox, :])
+        temporalcorrelations[vox], temporalpvalues[vox] = pearsonr(
+            tide_math.stdnormalize(evenims[vox, :]), tide_math.stdnormalize(oddims[vox, :])
+        )
         if vox % reportstep == 0 or vox == numvalid - 1:
             tide_util.progressbar(vox + 1, numvalid, label="Percent complete")
     print()
 
-    outarray = np.zeros((xsize, ysize, numslices), dtype=float)
+    outarray = np.zeros((xsize, ysize, numslices), dtype=np.double)
     temporal_hdr = input_hdr.copy()
     temporal_hdr["pixdim"][4]
     outarray.reshape((numspatiallocs))[proclocs] = temporalcorrelations
@@ -128,14 +135,14 @@ def main():
     # cycle over all timepoints
     reportstep = 10
     print("Calculating spatial correlation over all subjects")
-    spatialcorrelations = np.zeros((numsubjects), dtype=float)
-    spatialpvalues = np.zeros((numsubjects), dtype=float)
+    spatialcorrelations = np.zeros((numsubjects), dtype=np.double)
+    spatialpvalues = np.zeros((numsubjects), dtype=np.double)
     for subject in range(numsubjects):
         spatialcorrelations[subject], spatialpvalues[subject] = pearsonr(
-            evenims[:, subject], oddims[:, subject]
+            tide_math.stdnormalize(evenims[:, subject]), tide_math.stdnormalize(oddims[:, subject])
         )
         if subject % reportstep == 0 or subject == numsubjects - 1:
-            tide_util.progressbar(vox + 1, numsubjects, label="Percent complete")
+            tide_util.progressbar(subject + 1, numsubjects, label="Percent complete")
     print()
 
     tide_io.writenpvecs(spatialcorrelations, f"{args.outputroot}_r1r2spatialcorrelations.txt")
