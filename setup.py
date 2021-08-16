@@ -181,10 +181,9 @@ setup(
         "pyqtgraph>=0.11.0",
         "statsmodels",
         "numba",
-        "keras",
-        "h5py==2.10.0",
-        "tensorflow>=2.4.0",
     ],
+        #"keras",
+        #"tensorflow>=2.4.0",
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
