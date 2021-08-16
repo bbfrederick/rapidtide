@@ -42,14 +42,16 @@ def main():
     args = parser.parse_args()
 
     # read in the data files
+    print("reading input file")
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
+    print(f"inputshape: {input_data.shape}")
     if timepoints % 2 != 0:
         raise ValueError("pairproc requires an even number of points in the time dimension")
 
     # make the output array
-    evenims = input_data(:, :, :, 0: timepoints : 2)
-    oddims =  input_data(:, :, :, 1: timepoints : 2)
+    evenims = input_data[:, :, :, 0: timepoints : 2]
+    oddims =  input_data[:, :, :, 1: timepoints + 1: 2]
     print(f"evenshape: {evenims.shape}")
     print(f"oddshape: {oddims.shape}")
     sys.exit()
