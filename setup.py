@@ -196,6 +196,7 @@ setup(
             "sphinx-argparse",
             "sphinx-gallery",
             "m2r",
+            "numpydoc",
             "recommonmark",
         ],
         "tests": [
