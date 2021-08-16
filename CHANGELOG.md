@@ -1,6 +1,6 @@
 # Release history
 
-## Version 2.0.5 (8/16/21)
+## Version 2.0.6 (8/16/21)
 * (package) Merged Taylor Salo's PR that fixes the documentation builds on readthedocs (THANK YOU!) and cleans up and centralizes requirement specifications.
 
 ## Version 2.0.5 (8/9/21)
