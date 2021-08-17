@@ -48,6 +48,12 @@ def main():
         default=None,
     )
     parser.add_argument(
+        "--getdist",
+        action="store_true",
+        help="Get the distribution of false correlations",
+        default=False,
+    )
+    parser.add_argument(
         "--debug", action="store_true", help="Print debugging information", default=False,
     )
 
@@ -74,7 +80,7 @@ def main():
     # check dimensions
     if args.datamaskname is not None:
         print("checking mask dimensions")
-        if not tide_io.checkspacedimmatch(thedims, args.datamaskdims):
+        if not tide_io.checkspacedimmatch(thedims, datamaskdims):
             print("input mask spatial dimensions do not match image")
             exit()
         if datamaskdims[4] != 1:
@@ -98,7 +104,7 @@ def main():
     numvalid = procdata.shape[0]
     print(rs_datafile.shape, procdata.shape)
 
-    # make the output array
+    # split the pairs
     numsubjects = timepoints // 2
     evenims = np.zeros((numvalid, numsubjects), dtype=np.double)
     oddims = np.zeros((numvalid, numsubjects), dtype=np.double)
@@ -108,45 +114,57 @@ def main():
     for subject in range(numsubjects):
         evenims[:, subject] = procdata[:, 2 * subject]
         oddims[:, subject] = procdata[:, 2 * subject + 1]
-    # evenims = procdata[:, 0:timepoints:2]
-    # oddims = procdata[:, 1 : timepoints + 1 : 2]
 
-    # cycle over all voxels
-    reportstep = 1000
-    print("Calculating temporal correlation over all voxels")
-    temporalcorrelations = np.zeros((numvalid), dtype=np.double)
-    temporalpvalues = np.zeros((numvalid), dtype=np.double)
-    for vox in range(numvalid):
-        temporalcorrelations[vox], temporalpvalues[vox] = pearsonr(
-            tide_math.stdnormalize(evenims[vox, :]), tide_math.stdnormalize(oddims[vox, :])
+    if args.getdist:
+        runlist = ["real", "shifted"]
+    else:
+        runlist = ["real"]
+
+    for therun in runlist:
+        if therun == "shifted":
+            oddims = np.roll(oddims, 1, axis=1)
+
+        # cycle over all voxels
+        reportstep = 1000
+        print("Calculating temporal correlation over all voxels")
+        temporalcorrelations = np.zeros((numvalid), dtype=np.double)
+        temporalpvalues = np.zeros((numvalid), dtype=np.double)
+        for vox in range(numvalid):
+            temporalcorrelations[vox], temporalpvalues[vox] = pearsonr(
+                tide_math.stdnormalize(evenims[vox, :]), tide_math.stdnormalize(oddims[vox, :])
+            )
+            if vox % reportstep == 0 or vox == numvalid - 1:
+                tide_util.progressbar(vox + 1, numvalid, label="Percent complete")
+        print()
+
+        outarray = np.zeros((xsize, ysize, numslices), dtype=np.double)
+        temporal_hdr = input_hdr.copy()
+        temporal_hdr["pixdim"][4]
+        outarray.reshape((numspatiallocs))[proclocs] = temporalcorrelations
+        tide_io.savetonifti(
+            outarray, temporal_hdr, f"{args.outputroot}_temporalcorrelations_{therun}"
         )
-        if vox % reportstep == 0 or vox == numvalid - 1:
-            tide_util.progressbar(vox + 1, numvalid, label="Percent complete")
-    print()
+        outarray.reshape((numspatiallocs))[proclocs] = temporalpvalues
+        tide_io.savetonifti(outarray, temporal_hdr, f"{args.outputroot}_temporalpvalues_{therun}")
 
-    outarray = np.zeros((xsize, ysize, numslices), dtype=np.double)
-    temporal_hdr = input_hdr.copy()
-    temporal_hdr["pixdim"][4]
-    outarray.reshape((numspatiallocs))[proclocs] = temporalcorrelations
-    tide_io.savetonifti(outarray, temporal_hdr, f"{args.outputroot}_temporalcorrelations")
-    outarray.reshape((numspatiallocs))[proclocs] = temporalpvalues
-    tide_io.savetonifti(outarray, temporal_hdr, f"{args.outputroot}_temporalpvalues")
+        # cycle over all timepoints
+        reportstep = 10
+        print("Calculating spatial correlation over all subjects")
+        spatialcorrelations = np.zeros((numsubjects), dtype=np.double)
+        spatialpvalues = np.zeros((numsubjects), dtype=np.double)
+        for subject in range(numsubjects):
+            spatialcorrelations[subject], spatialpvalues[subject] = pearsonr(
+                tide_math.stdnormalize(evenims[:, subject]),
+                tide_math.stdnormalize(oddims[:, subject]),
+            )
+            if subject % reportstep == 0 or subject == numsubjects - 1:
+                tide_util.progressbar(subject + 1, numsubjects, label="Percent complete")
+        print()
 
-    # cycle over all timepoints
-    reportstep = 10
-    print("Calculating spatial correlation over all subjects")
-    spatialcorrelations = np.zeros((numsubjects), dtype=np.double)
-    spatialpvalues = np.zeros((numsubjects), dtype=np.double)
-    for subject in range(numsubjects):
-        spatialcorrelations[subject], spatialpvalues[subject] = pearsonr(
-            tide_math.stdnormalize(evenims[:, subject]), tide_math.stdnormalize(oddims[:, subject])
+        tide_io.writenpvecs(
+            spatialcorrelations, f"{args.outputroot}_r1r2spatialcorrelations_{therun}.txt"
         )
-        if subject % reportstep == 0 or subject == numsubjects - 1:
-            tide_util.progressbar(subject + 1, numsubjects, label="Percent complete")
-    print()
-
-    tide_io.writenpvecs(spatialcorrelations, f"{args.outputroot}_r1r2spatialcorrelations.txt")
-    tide_io.writenpvecs(spatialpvalues, f"{args.outputroot}_r1r2spatialpvalues.txt")
+        tide_io.writenpvecs(spatialpvalues, f"{args.outputroot}_r1r2spatialpvalues_{therun}.txt")
 
 
 if __name__ == "__main__":
