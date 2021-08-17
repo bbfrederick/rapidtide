@@ -128,7 +128,7 @@ def main():
     temporal_hdr = input_hdr.copy()
     temporal_hdr["pixdim"][4]
     outarray.reshape((numspatiallocs))[proclocs] = temporalcorrelations
-    tide_io.savetonifti(outarray, temporal_hdr, f"{args.outputroot}_temporalcorralations")
+    tide_io.savetonifti(outarray, temporal_hdr, f"{args.outputroot}_temporalcorrelations")
     outarray.reshape((numspatiallocs))[proclocs] = temporalpvalues
     tide_io.savetonifti(outarray, temporal_hdr, f"{args.outputroot}_temporalpvalues")
 
