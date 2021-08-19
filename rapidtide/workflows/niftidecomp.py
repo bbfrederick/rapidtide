@@ -273,7 +273,8 @@ def niftidecomp_workflow(
         # save the eigenvalues
         print("variance explained by component:", 100.0 * thefit.explained_variance_ratio_)
         tide_io.writenpvecs(
-            100.0 * thefit.explained_variance_ratio_, outputroot + "_explained_variance_pct.txt",
+            100.0 * thefit.explained_variance_ratio_,
+            outputroot + "_explained_variance_pct.txt",
         )
 
         if decompaxis == "temporal":

@@ -75,7 +75,8 @@ def _get_parser():
     Argument parser for rapidtide
     """
     parser = argparse.ArgumentParser(
-        prog="rapidtide", description=("Perform a RIPTiDe time delay analysis on a dataset."),
+        prog="rapidtide",
+        description=("Perform a RIPTiDe time delay analysis on a dataset."),
     )
 
     # Required arguments
@@ -1403,7 +1404,9 @@ def process_args(inputargs=None):
     # mask processing
     if args["corrmaskincludespec"] is not None:
         (args["corrmaskincludename"], args["corrmaskincludevals"],) = tide_io.processnamespec(
-            args["corrmaskincludespec"], "Including voxels where ", "in correlation calculations.",
+            args["corrmaskincludespec"],
+            "Including voxels where ",
+            "in correlation calculations.",
         )
     else:
         args["corrmaskincludename"] = None
@@ -1417,7 +1420,9 @@ def process_args(inputargs=None):
 
     if args["globalmeanexcludespec"] is not None:
         (args["globalmeanexcludename"], args["globalmeanexcludevals"],) = tide_io.processnamespec(
-            args["globalmeanexcludespec"], "Excluding voxels where ", "from global mean.",
+            args["globalmeanexcludespec"],
+            "Excluding voxels where ",
+            "from global mean.",
         )
     else:
         args["globalmeanexcludename"] = None
