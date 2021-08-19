@@ -15,8 +15,8 @@
 
 + Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging) and push to github:
 
-    git tag -a v2.0.6 -m "v2.0.6"
-    git push origin v2.0.6
+    git tag -a v2.0.7 -m "v2.0.7"
+    git push origin v2.0.7
 
 + Build rapidtide
 
