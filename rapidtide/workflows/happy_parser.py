@@ -30,7 +30,8 @@ def _get_parser():
     Argument parser for happy
     """
     parser = argparse.ArgumentParser(
-        prog="happy", description="Hypersampling by Analytic Phase Projection - Yay!.",
+        prog="happy",
+        description="Hypersampling by Analytic Phase Projection - Yay!.",
     )
 
     # Required arguments
