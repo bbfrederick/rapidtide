@@ -485,7 +485,10 @@ class Coherer:
         if self.freqaxisvalid:
             self.freqmininpts = np.max([0, tide_util.valtoindex(self.freqaxis, self.freqmin)])
             self.freqmaxinpts = np.min(
-                [tide_util.valtoindex(self.freqaxis, self.freqmax), len(self.freqaxis) - 1,]
+                [
+                    tide_util.valtoindex(self.freqaxis, self.freqmax),
+                    len(self.freqaxis) - 1,
+                ]
             )
         if self.debug:
             print("setlimits:")
@@ -560,7 +563,10 @@ class Coherer:
                 scaling="spectrum",
             )
             self.freqaxis, self.thecsdxx = sp.signal.csd(
-                10000.0 * self.prepreftc, 10000.0 * self.prepreftc, fs=self.Fs, scaling="spectrum",
+                10000.0 * self.prepreftc,
+                10000.0 * self.prepreftc,
+                fs=self.Fs,
+                scaling="spectrum",
             )
             self.freqaxis, self.thecsdyy = sp.signal.csd(
                 10000.0 * self.preptesttc,
@@ -878,7 +884,10 @@ class SimilarityFunctionFitter:
         maxval_init = corrfunc[maxindex].astype("float64")
         if self.debug:
             print(
-                "maxindex, maxlag_init, maxval_init:", maxindex, maxlag_init, maxval_init,
+                "maxindex, maxlag_init, maxval_init:",
+                maxindex,
+                maxlag_init,
+                maxval_init,
             )
 
         # set the baseline and baselinedev levels
@@ -907,12 +916,14 @@ class SimilarityFunctionFitter:
                     )  # mask for places where correlation exceeds searchfrac*maxval_init
                 else:
                     peakpoints = np.where(
-                        corrfunc > self.searchfrac * maxval_init, 1, 0
+                        corrfunc > (baseline + self.searchfrac * (maxval_init - baseline)), 1, 0
                     )  # mask for places where correlation exceeds searchfrac*maxval_init
             else:
                 # for mutual information, there is a flattish, nonzero baseline, so we want the difference from that.
                 peakpoints = np.where(
-                    corrfunc > (baseline + self.searchfrac * (maxval_init - baseline)), 1, 0,
+                    corrfunc > (baseline + self.searchfrac * (maxval_init - baseline)),
+                    1,
+                    0,
                 )
 
             peakpoints[0] = 0
@@ -1002,7 +1013,10 @@ class SimilarityFunctionFitter:
                     failreason |= self.FML_INITAMPLOW
                     if self.debug:
                         print(
-                            "bad initial amp:", maxval_init, "is less than", self.lthreshval,
+                            "bad initial amp:",
+                            maxval_init,
+                            "is less than",
+                            self.lthreshval,
                         )
                 if maxval_init < 0.0:
                     failreason |= self.FML_INITAMPLOW
@@ -1126,7 +1140,9 @@ class SimilarityFunctionFitter:
                         failreason |= self.FML_FITAMPHIGH
                         if self.debug:
                             print(
-                                "bad fit amp: magnitude of", maxval, "is greater than 1.0",
+                                "bad fit amp: magnitude of",
+                                maxval,
+                                "is greater than 1.0",
                             )
                         fitfail = True
                     maxval = 1.0 * np.sign(maxval)
@@ -1239,7 +1255,8 @@ class FrequencyTracker:
 
         self.freqs, self.times, thespectrogram = sp.signal.spectrogram(
             np.concatenate(
-                [np.zeros(int(self.nperseg // 2)), x, np.zeros(int(self.nperseg // 2))], axis=0,
+                [np.zeros(int(self.nperseg // 2)), x, np.zeros(int(self.nperseg // 2))],
+                axis=0,
             ),
             fs=fs,
             detrend="constant",
