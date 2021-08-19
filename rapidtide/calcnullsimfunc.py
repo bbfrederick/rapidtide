@@ -66,9 +66,16 @@ def _procOneNullCorrelationx(
 
     # fit the correlation
     thefitter.setcorrtimeaxis(thexcorr_x)
-    (maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend,) = thefitter.fit(
-        thexcorr_y
-    )
+    (
+        maxindex,
+        maxlag,
+        maxval,
+        maxsigma,
+        maskval,
+        failreason,
+        peakstart,
+        peakend,
+    ) = thefitter.fit(thexcorr_y)
 
     return maxval
 
@@ -123,7 +130,9 @@ def getNullDistributionDatax(
     normalizedreftc = theCorrelator.ncprefilter.apply(
         Fs,
         tide_math.corrnormalize(
-            theCorrelator.reftc, windowfunc="None", detrendorder=theCorrelator.detrendorder,
+            theCorrelator.reftc,
+            windowfunc="None",
+            detrendorder=theCorrelator.detrendorder,
         ),
     )
     rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(normalizedreftc)
