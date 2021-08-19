@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.0.7 (8/19/21)
+* (reference) Include the new JHU digital arterial territory atlas.
+* (Docker) Updated container to Python 3.9.
+* (package) General cleanup of imports.
+
 ## Version 2.0.6 (8/16/21)
 * (package) Merged Taylor Salo's PR that fixes the documentation builds on readthedocs (THANK YOU!) and cleans up and centralizes requirement specifications.
 
