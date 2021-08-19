@@ -16,7 +16,6 @@
 #   limitations under the License.
 #
 #
-import argparse
 import os
 
 import matplotlib as mpl

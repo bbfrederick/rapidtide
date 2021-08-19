@@ -16,14 +16,13 @@
 #   limitations under the License.
 #
 #
-import argparse
 import os
 
 import matplotlib as mpl
 
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
-from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
+from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
 def test_fullrunrapidtide_v4(debug=False, display=False):

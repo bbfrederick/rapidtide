@@ -16,14 +16,13 @@
 #   limitations under the License.
 #
 #
-import argparse
 import os
 
 import matplotlib as mpl
 
 import rapidtide.workflows.happy as happy_workflow
 import rapidtide.workflows.happy_parser as happy_parser
-from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
+from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
 def test_fullrunhappy_v3(debug=False, display=False):
