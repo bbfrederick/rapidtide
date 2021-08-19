@@ -310,6 +310,33 @@ def kurtosisstats(timecourse):
     return kurtosis(timecourse), testres[0], testres[1]
 
 
+def icc(set1, set2, bysubject=True, demean=False):
+    theshape = set1.shape
+    if set2.shape != set1.shape:
+        raise ValueError("Incompatible array sizes")
+    if demean:
+        if bysubject:
+            set1mean = np.mean(set1, axis=0)
+            set2mean = np.mean(set2, axis=0)
+            for i in range(theshape[0]):
+                set1[i, :] -= set1mean[i]
+                set2[i, :] -= set2mean[i]
+        else:
+            set1mean = np.mean(set1, axis=1)
+            set2mean = np.mean(set2, axis=1)
+            for i in range(theshape[1]):
+                set1[:, i] -= set1mean[i]
+                set2[:, i] -= set2mean[i]
+
+    nb_conditions = 2
+    nb_subjects = theshape[1]
+    dfc = nb_conditions - 1
+    dfe = (nb_subjects - 1) * dfc
+    dfr = nb_subjects - 1
+
+    thediffs = set2 - set1
+
+
 # --------------------------- histogram functions -------------------------------------------------
 def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False, peakthresh=0.33):
     """

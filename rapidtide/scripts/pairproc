@@ -54,6 +54,12 @@ def main():
         default=False,
     )
     parser.add_argument(
+        "--demean",
+        action="store_true",
+        help="Remove the mean from each image prior to processing",
+        default=False,
+    )
+    parser.add_argument(
         "--debug", action="store_true", help="Print debugging information", default=False,
     )
 
@@ -112,8 +118,14 @@ def main():
         print(f"evenshape: {evenims.shape}")
         print(f"oddshape: {oddims.shape}")
     for subject in range(numsubjects):
-        evenims[:, subject] = procdata[:, 2 * subject]
-        oddims[:, subject] = procdata[:, 2 * subject + 1]
+        if args.demean:
+            evenims[:, subject] = procdata[:, 2 * subject] - np.mean(procdata[:, 2 * subject])
+            oddims[:, subject] = procdata[:, 2 * subject + 1] - np.mean(
+                procdata[:, 2 * subject + 1]
+            )
+        else:
+            evenims[:, subject] = procdata[:, 2 * subject]
+            oddims[:, subject] = procdata[:, 2 * subject + 1]
 
     if args.getdist:
         runlist = ["real", "shifted"]
