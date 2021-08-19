@@ -69,7 +69,7 @@ RUN conda clean --all
 
 
 # Installing precomputed python packages
-RUN mamba install -y python=3.7.10 \
+RUN mamba install -y python=3.9.6 \
                      pip \
                      scipy \
                      numpy \
@@ -82,7 +82,7 @@ RUN mamba install -y python=3.7.10 \
                      nibabel \
                      nilearn \
                      keras \
-                     h5py=2.10.0 \
+                     h5py \
                      "tensorflow>=2.4.0" \
                      pyqtgraph \
                      pyfftw \
