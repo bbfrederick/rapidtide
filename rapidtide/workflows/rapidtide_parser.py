@@ -77,6 +77,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="rapidtide",
         description=("Perform a RIPTiDe time delay analysis on a dataset."),
+        allow_abbrev=False,
     )
 
     # Required arguments
