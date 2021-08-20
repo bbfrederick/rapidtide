@@ -266,8 +266,6 @@ def showtc(args):
             print(f"\tthissamplerate: {thissamplerate}")
             print(f"\targs.thestarttime: {args.thestarttime}")
             print(f"\tthisstartoffset: {thisstartoffset}")
-
-        if args.debug:
             print("input data dimensions:", invecs.shape)
 
         if thissamplerate is None:
@@ -276,18 +274,22 @@ def showtc(args):
         if thisstartoffset is None:
             # print("thisstartoffset is None")
             if args.thestarttime is None:
-                print("args.thestarttime is None")
+                if args.debug:
+                    print("args.thestarttime is None")
                 args.thestarttime = 0.0
             else:
-                print(f"args.thestarttime is {args.thestarttime}")
+                if args.debug:
+                    print(f"args.thestarttime is {args.thestarttime}")
             thisstartoffset = args.thestarttime
         else:
             # print(f"thisstartoffset is {thisstartoffset}")
             if args.thestarttime is None:
-                print("args.thestarttime is None")
+                if args.debug:
+                    print("args.thestarttime is None")
                 args.thestarttime = thisstartoffset
             else:
-                print(f"args.thestarttime is {args.thestarttime}")
+                if args.debug:
+                    print(f"args.thestarttime is {args.thestarttime}")
                 thisstartoffset = args.thestarttime
 
         if args.debug:
