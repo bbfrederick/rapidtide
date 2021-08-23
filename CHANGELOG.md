@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.0.8 (8/20/21)
+* (rapidtide) Disabled processing of abbreviated arguments.
+* (showtc) Suppressed some unnecessary output when not in debug mode.
+* (Docker) Added automatic build and push as a github action.
+
 ## Version 2.0.7 (8/19/21)
 * (reference) Include the new JHU digital arterial territory atlas.
 * (Docker) Updated container to Python 3.9.
