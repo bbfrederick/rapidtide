@@ -141,13 +141,7 @@ def check_autocorrelation(
 
 
 def shorttermcorr_1D(
-    data1,
-    data2,
-    sampletime,
-    windowtime,
-    samplestep=1,
-    detrendorder=0,
-    windowfunc="hamming",
+    data1, data2, sampletime, windowtime, samplestep=1, detrendorder=0, windowfunc="hamming",
 ):
     """Calculate short-term sliding-window correlation between two 1D arrays.
 
@@ -514,12 +508,7 @@ def cross_mutual_info(
             )
         elif i == 0:
             thexmi_y[destloc] = mutual_info_2d(
-                normx,
-                normy,
-                bins=bins2d,
-                normalized=norm,
-                fast=fast,
-                sigma=sigma,
+                normx, normy, bins=bins2d, normalized=norm, fast=fast, sigma=sigma,
             )
         else:
             thexmi_y[destloc] = mutual_info_2d(
@@ -794,23 +783,14 @@ def faststcorrelate(
 
     timestep = times[1] - times[0]
     corrtimes = np.linspace(
-        -timestep * (nperseg // 2),
-        timestep * (nperseg // 2),
-        num=nperseg,
-        endpoint=False,
+        -timestep * (nperseg // 2), timestep * (nperseg // 2), num=nperseg, endpoint=False,
     )
 
     return corrtimes, times, stcorr
 
 
 def fastcorrelate(
-    input1,
-    input2,
-    usefft=True,
-    zeropadding=0,
-    weighting="None",
-    displayplots=False,
-    debug=False,
+    input1, input2, usefft=True, zeropadding=0, weighting="None", displayplots=False, debug=False,
 ):
     """Perform a fast correlation between two arrays.
 

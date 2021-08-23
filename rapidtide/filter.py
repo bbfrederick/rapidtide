@@ -228,8 +228,7 @@ def dolpfiltfilt(Fs, upperpass, inputdata, order, padlen=20, cyclic=False, debug
         )
     [b, a] = signal.butter(order, 2.0 * upperpass / Fs)
     return unpadvec(
-        signal.filtfilt(b, a, padvec(inputdata, padlen=padlen, cyclic=cyclic)).real,
-        padlen=padlen,
+        signal.filtfilt(b, a, padvec(inputdata, padlen=padlen, cyclic=cyclic)).real, padlen=padlen,
     ).astype(np.float64)
 
 
@@ -285,8 +284,7 @@ def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, cyclic=False, debug
         )
     [b, a] = signal.butter(order, 2.0 * lowerpass / Fs, "highpass")
     return unpadvec(
-        signal.filtfilt(b, a, padvec(inputdata, padlen=padlen, cyclic=cyclic)).real,
-        padlen=padlen,
+        signal.filtfilt(b, a, padvec(inputdata, padlen=padlen, cyclic=cyclic)).real, padlen=padlen,
     )
 
 
@@ -349,8 +347,7 @@ def dobpfiltfilt(Fs, lowerpass, upperpass, inputdata, order, padlen=20, cyclic=F
         )
     [b, a] = signal.butter(order, [2.0 * lowerpass / Fs, 2.0 * upperpass / Fs], "bandpass")
     return unpadvec(
-        signal.filtfilt(b, a, padvec(inputdata, padlen=padlen, cyclic=cyclic)).real,
-        padlen=padlen,
+        signal.filtfilt(b, a, padvec(inputdata, padlen=padlen, cyclic=cyclic)).real, padlen=padlen,
     )
 
 
@@ -408,10 +405,7 @@ def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
     cutoffbin = int((upperpass / Fs) * np.shape(transferfunc)[0])
     if debug:
         print(
-            "getlpfftfunc - Fs, upperpass, len(inputdata):",
-            Fs,
-            upperpass,
-            np.shape(inputdata)[0],
+            "getlpfftfunc - Fs, upperpass, len(inputdata):", Fs, upperpass, np.shape(inputdata)[0],
         )
     transferfunc[cutoffbin:-cutoffbin] = 0.0
     return transferfunc
@@ -677,12 +671,7 @@ def gethptransfunc(Fs, inputdata, lowerstop=None, lowerpass=None, type="brickwal
         sys.exit()
     if type == "trapezoidal":
         transferfunc = 1.0 - getlptransfunc(
-            Fs,
-            inputdata,
-            upperpass=lowerstop,
-            upperstop=lowerpass,
-            type=type,
-            debug=debug,
+            Fs, inputdata, upperpass=lowerstop, upperstop=lowerpass, type=type, debug=debug,
         )
     else:
         transferfunc = 1.0 - getlptransfunc(
@@ -880,17 +869,9 @@ def dobptransfuncfilt(
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = (
-        getlptransfunc(
-            Fs,
-            padinputdata,
-            upperpass=upperpass,
-            upperstop=upperstop,
-            type=type,
-            debug=False,
-        )
-        * gethptransfunc(Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type)
-    )
+    transferfunc = getlptransfunc(
+        Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type, debug=False,
+    ) * gethptransfunc(Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type)
     if debug:
         freqaxis = (
             np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype="float64")
@@ -1364,13 +1345,7 @@ def arb_pass(
         # set up for lowpass
         if transferfunc == "butterworth":
             retvec = dolpfiltfilt(
-                Fs,
-                upperpass,
-                inputdata,
-                butterorder,
-                padlen=padlen,
-                cyclic=False,
-                debug=debug,
+                Fs, upperpass, inputdata, butterorder, padlen=padlen, cyclic=False, debug=debug,
             )
             return retvec
         else:
@@ -1388,13 +1363,7 @@ def arb_pass(
         # set up for highpass
         if transferfunc == "butterworth":
             return dohpfiltfilt(
-                Fs,
-                lowerpass,
-                inputdata,
-                butterorder,
-                padlen=padlen,
-                cyclic=False,
-                debug=debug,
+                Fs, lowerpass, inputdata, butterorder, padlen=padlen, cyclic=False, debug=debug,
             )
         else:
             return dohptransfuncfilt(

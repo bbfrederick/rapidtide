@@ -947,9 +947,7 @@ def process_args(inputargs=None):
             optiondict["windowfunc"] = thewindow
             linkchar = "="
             print(
-                "Will use",
-                optiondict["windowfunc"],
-                "as the window function for correlation",
+                "Will use", optiondict["windowfunc"], "as the window function for correlation",
             )
         elif o == "-v":
             optiondict["verbose"] = True
@@ -1402,8 +1400,7 @@ def process_args(inputargs=None):
         elif o == "--pickleftthresh":
             optiondict["pickleftthresh"] = float(a)
             print(
-                "Threshhold value for leftmost peak height set to",
-                optiondict["pickleftthresh"],
+                "Threshhold value for leftmost peak height set to", optiondict["pickleftthresh"],
             )
             if optiondict["passes"] == 1:
                 print(
@@ -1441,9 +1438,7 @@ def process_args(inputargs=None):
             optiondict["ampthreshfromsig"] = False
             if optiondict["ampthresh"] < 0.0:
                 print(
-                    "Setting ampthresh to the",
-                    -100.0 * optiondict["ampthresh"],
-                    "th percentile",
+                    "Setting ampthresh to the", -100.0 * optiondict["ampthresh"], "th percentile",
                 )
             else:
                 print("Using ampthresh of ", optiondict["ampthresh"])

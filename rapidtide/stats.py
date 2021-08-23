@@ -89,10 +89,7 @@ def printthresholds(pcts, thepercentiles, labeltext):
     print(labeltext)
     for i in range(0, len(pcts)):
         print(
-            "\tp <",
-            "{:.3f}".format(1.0 - thepercentiles[i]),
-            ": ",
-            "{:.3f}".format(pcts[i]),
+            "\tp <", "{:.3f}".format(1.0 - thepercentiles[i]), ": ", "{:.3f}".format(pcts[i]),
         )
 
 
@@ -415,10 +412,7 @@ def makehistogram(indata, histlen, binsize=None, therange=None, refine=False):
         thebins = 10
     elif binsize is not None:
         thebins = np.linspace(
-            therange[0],
-            therange[1],
-            (therange[1] - therange[0]) / binsize + 1,
-            endpoint=True,
+            therange[0], therange[1], (therange[1] - therange[0]) / binsize + 1, endpoint=True,
         )
     else:
         thebins = histlen
@@ -753,12 +747,7 @@ def makemask(image, threshpct=25.0, verbose=False, nozero=False, noneg=False):
     print("old style threshval:", threshval, "new style threshval:", pctthresh)
     if verbose:
         print(
-            "fracval:",
-            pctthresh,
-            " threshpct:",
-            threshpct,
-            " mask threshhold:",
-            threshval,
+            "fracval:", pctthresh, " threshpct:", threshpct, " mask threshhold:", threshval,
         )
     themask = np.where(image > threshval, np.int16(1), np.int16(0))
     return themask
