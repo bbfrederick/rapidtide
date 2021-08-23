@@ -28,19 +28,8 @@ jobs:
 
       -
         name: Get version number
-        run: |
-          IMAGE_ID=fredericklab/rapidtide
-
-          # Change all uppercase to lowercase
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-          # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-          # Strip "v" prefix from tag name
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-          # Use Docker `latest` tag convention
-          #[ "$VERSION" == "main" ] && VERSION=latest
-          echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
       -
         name: Build and push
@@ -48,4 +37,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: fredericklab/rapidtide:${VERSION}, fredericklab/rapidtide:latest
+          tags: [ fredericklab/rapidtide:${{ steps.get_version.outputs.VERSION }}, fredericklab/rapidtide:latest ]
