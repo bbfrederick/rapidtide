@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.0.9 (8/20/26)
+* (rapidtide) Fixed a strange edge case that could lead to "hot pixels" in the maxcorr map.
+* (io) Added a "tolerance" for spatial mapping of niftis to account for rounding errors in header creation.
+
 ## Version 2.0.8 (8/20/21)
 * (rapidtide) Disabled processing of abbreviated arguments.
 * (showtc) Suppressed some unnecessary output when not in debug mode.
