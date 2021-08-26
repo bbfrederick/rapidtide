@@ -27,7 +27,7 @@ if __name__ == "__main__":
         "*********************************************************************************************************"
     )
     print(
-        "WARNING: rapidtide2x_legacy isdeprecated.  Convert your calling options and use 'rapidtide' going forward"
+        "WARNING: rapidtide2x_legacy is deprecated.  Convert your calling options and use 'rapidtide' going forward"
     )
     print(
         "*********************************************************************************************************"
