@@ -663,7 +663,7 @@ class SimilarityFunctionFitter:
         searchfrac=0.5,
         lagmod=1000.0,
         enforcethresh=True,
-        allowhighfitamps=True,
+        allowhighfitamps=False,
         displayplots=False,
         functype="correlation",
         peakfittype="gauss",
