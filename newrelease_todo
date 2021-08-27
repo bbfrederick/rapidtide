@@ -2,6 +2,10 @@
 
 + Sync everything to GitHub
 
-+ Create a new release on GitHub
++ Create a new release
+    git tag -a vX.Y.Z -m "vX.Y.Z"
+    git push origin vX.Y.Z
+    
++ Edit new tag on GitHub
 
 + Check the DockerHub and PyPi deployment Actions
