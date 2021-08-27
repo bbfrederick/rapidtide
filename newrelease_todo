@@ -1,29 +1,11 @@
-+ Fix the version numbers in files:
-
-    vi newrelease_todo
-
-    newrelease_todo
-        fix tag numbers in this file
-
 + Edit CHANGELOG.md (use git log to get the history)
 
-+ Sync everything to github.
++ Sync everything to GitHub
 
-+ Build rapidtide
++ Create a new release
+    git tag -a vX.Y.Z -m "vX.Y.Z"
+    git push origin vX.Y.Z
+    
++ Edit new tag on GitHub
 
-    python setup.py install
-
-+ Create a new tag (instructions from https://git-scm.com/book/en/v2/Git-Basics-Tagging) and push to github:
-
-    git tag -a v2.0.9 -m "v2.0.9"
-    git push origin v2.0.9
-
-+ Build rapidtide
-
-    python setup.py install
-
-+ Edit the release notes on github
-
-+ Build and sync new docker images
-
-    builddocker.sh
++ Check the DockerHub and PyPi deployment Actions
