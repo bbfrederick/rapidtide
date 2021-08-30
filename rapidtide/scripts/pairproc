@@ -60,7 +60,10 @@ def main():
         default=False,
     )
     parser.add_argument(
-        "--debug", action="store_true", help="Print debugging information", default=False,
+        "--debug",
+        action="store_true",
+        help="Print debugging information",
+        default=False,
     )
 
     args = parser.parse_args()
