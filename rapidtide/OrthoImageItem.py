@@ -157,7 +157,10 @@ class OrthoImageItem(QtGui.QWidget):
             print("    FOVs:", self.xfov, self.yfov, self.zfov)
             print("    Maxfov, imgsize:", self.maxfov, self.imgsize)
             print(
-                "    Scale factors:", self.impixpervoxx, self.impixpervoxy, self.impixpervoxz,
+                "    Scale factors:",
+                self.impixpervoxx,
+                self.impixpervoxy,
+                self.impixpervoxz,
             )
             print("    Offsets:", self.offsetx, self.offsety, self.offsetz)
         self.buttonisdown = False
@@ -513,11 +516,18 @@ class OrthoImageItem(QtGui.QWidget):
         therectwin.scale(maximpervox, maximpervox)
         therectwin.setImage(np.zeros((maxdim // 10, maxdim), dtype=float), autoLevels=True)
 
-        (thecolorbarfgwin, thecolorbarbgwin, thecolorbarviewbox, colorbarvals,) = newColorbar(
-            0, 0, maximpervox, maximpervox, maxdim
-        )
+        (
+            thecolorbarfgwin,
+            thecolorbarbgwin,
+            thecolorbarviewbox,
+            colorbarvals,
+        ) = newColorbar(0, 0, maximpervox, maximpervox, maxdim)
         cbim = self.applyLUT(
-            colorbarvals, (colorbarvals * 0 + 1).astype("int"), self.map.theLUT, 0.0, 1.0,
+            colorbarvals,
+            (colorbarvals * 0 + 1).astype("int"),
+            self.map.theLUT,
+            0.0,
+            1.0,
         )
         thecolorbarfgwin.setImage(cbim.astype("float"))
         thecolorbarbgwin.setImage(cbim.astype("float"), autoLevels=True)

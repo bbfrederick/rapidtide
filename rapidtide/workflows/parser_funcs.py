@@ -123,7 +123,9 @@ def addreqinputniftifile(parser, varname, addedtext=""):
 
 def addreqoutputniftifile(parser, varname, addedtext=""):
     parser.add_argument(
-        varname, type=str, help="Output NIFTI file name.  " + addedtext,
+        varname,
+        type=str,
+        help="Output NIFTI file name.  " + addedtext,
     )
 
 
@@ -172,7 +174,9 @@ def addreqoutputtextfile(parser, varname, rootname=False):
     else:
         helpline = "Name of the output text file."
     parser.add_argument(
-        varname, type=str, help=helpline,
+        varname,
+        type=str,
+        help=helpline,
     )
 
 
@@ -325,11 +329,16 @@ def postprocessfilteropts(args, debug=False):
     if args.arbvec is not None:
         # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
         # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
-        theprefilter = tide_filt.NoncausalFilter("arb", transferfunc=args.filtertype,)
+        theprefilter = tide_filt.NoncausalFilter(
+            "arb",
+            transferfunc=args.filtertype,
+        )
         theprefilter.setfreqs(args.arbvec[2], args.arbvec[0], args.arbvec[1], args.arbvec[3])
     else:
         theprefilter = tide_filt.NoncausalFilter(
-            args.filterband, transferfunc=args.filtertype, padtime=args.padseconds,
+            args.filterband,
+            transferfunc=args.filtertype,
+            padtime=args.padseconds,
         )
 
     # set the butterworth order
@@ -342,7 +351,12 @@ def postprocessfilteropts(args, debug=False):
         print("\targs.stopvec:", args.stopvec)
         print("\targs.filterband:", args.filterband)
 
-    (args.lowerstop, args.lowerpass, args.upperpass, args.upperstop,) = theprefilter.getfreqs()
+    (
+        args.lowerstop,
+        args.lowerpass,
+        args.upperpass,
+        args.upperstop,
+    ) = theprefilter.getfreqs()
 
     if debug:
         print("after getfreqs")
@@ -480,10 +494,18 @@ def addplotopts(parser, multiline=True):
         default=True,
     )
     plotopts.add_argument(
-        "--noxax", dest="showxax", action="store_false", help="Do not show x axis.", default=True,
+        "--noxax",
+        dest="showxax",
+        action="store_false",
+        help="Do not show x axis.",
+        default=True,
     )
     plotopts.add_argument(
-        "--noyax", dest="showyax", action="store_false", help="Do not show y axis.", default=True,
+        "--noyax",
+        dest="showyax",
+        action="store_false",
+        help="Do not show y axis.",
+        default=True,
     )
     if multiline:
         plotopts.add_argument(
