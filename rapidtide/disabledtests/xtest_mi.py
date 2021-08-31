@@ -48,7 +48,11 @@ def test_calc_MI(display=False):
         plt.plot(np.array(range(kstart, kend, 2)), np.array(cubemivals), "b")
         # print('maximum occurs at offset', np.argmax(stdcorrelate_result) - midpoint + 1)
         plt.legend(
-            ["Mutual information", "Squared mutual information", "Cubed mutual information",]
+            [
+                "Mutual information",
+                "Squared mutual information",
+                "Cubed mutual information",
+            ]
         )
         plt.show()
 
