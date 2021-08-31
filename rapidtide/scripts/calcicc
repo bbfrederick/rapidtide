@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+import copy
 
 import numpy as np
 from nipype.algorithms import icc
 
 import rapidtide.io as tide_io
+import rapidtide.util as tide_util
 
 
 def main():
@@ -60,7 +62,14 @@ def main():
     e_var_in_valid = np.zeros((numvalid), dtype=float)
 
     print("calculating ICC")
+    reportstep = 100
     for voxel in range(numvalid):
+        if voxel % reportstep == 0 or voxel == numvalid - 1:
+            tide_util.progressbar(
+                voxel + 1,
+                numvalid,
+                label="Percent complete",
+            )
         (
             ICC_in_valid[voxel],
             r_var_in_valid[voxel],
@@ -68,7 +77,7 @@ def main():
             session_effect_F,
             dfc,
             dfe,
-        ) = icc.ICC_rep_anova(validinvms[voxel, :, :])
+        ) = icc.ICC_rep_anova(np.transpose(validinvms[voxel, :, :]))
 
     outarray_in_vox = mask_in_vox * 0.0
 
