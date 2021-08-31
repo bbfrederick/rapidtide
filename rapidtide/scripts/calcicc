@@ -1,14 +1,81 @@
 #!/usr/bin/env python
-import copy
 import argparse
+import copy
 import sys
 
 import numpy as np
-from nipype.algorithms import icc
+from scipy.linalg import pinv
 
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 from rapidtide.workflows.parser_funcs import is_valid_file
+
+
+def fast_ICC_rep_anova(Y):
+    """
+    the data Y are entered as a 'table' ie subjects are in rows and repeated
+    measures in columns
+    One Sample Repeated measure ANOVA
+    Y = XB + E with X = [FaTor / Subjects]
+
+    This is a hacked up version of ICC_rep_anova from nipype that caches most of the expensive operations if you're
+    going to run it multiple times.
+    """
+    global icc_inited
+    global dfc, dfe, dfr
+    global nb_subjects, nb_conditions
+    global x, x0, X
+    global centerbit
+
+    if not icc_inited:
+        [nb_subjects, nb_conditions] = Y.shape
+        dfc = nb_conditions - 1
+        dfe = (nb_subjects - 1) * dfc
+        dfr = nb_subjects - 1
+
+    # Compute the repeated measure effect
+    # ------------------------------------
+
+    # Sum Square Total
+    mean_Y = np.mean(Y)
+    SST = ((Y - mean_Y) ** 2).sum()
+
+    # create the design matrix for the different levels
+    if not icc_inited:
+        x = np.kron(np.eye(nb_conditions), np.ones((nb_subjects, 1)))  # sessions
+        x0 = np.tile(np.eye(nb_subjects), (nb_conditions, 1))  # subjects
+        X = np.hstack([x, x0])
+        centerbit = np.dot(np.dot(X, pinv(np.dot(X.T, X))), X.T)
+
+    # Sum Square Error
+    predicted_Y = np.dot(centerbit, Y.flatten("F"))
+    residuals = Y.flatten("F") - predicted_Y
+    SSE = (residuals ** 2).sum()
+
+    residuals.shape = Y.shape
+
+    MSE = SSE / dfe
+
+    # Sum square session effect - between columns/sessions
+    SSC = ((np.mean(Y, 0) - mean_Y) ** 2).sum() * nb_subjects
+    MSC = SSC / dfc / nb_subjects
+
+    session_effect_F = MSC / MSE
+
+    # Sum Square subject effect - between rows/subjects
+    SSR = SST - SSC - SSE
+    MSR = SSR / dfr
+
+    # ICC(3,1) = (mean square subjeT - mean square error) / (mean square subjeT + (k-1)*-mean square error)
+    ICC = np.nan_to_num((MSR - MSE) / (MSR + dfc * MSE))
+
+    e_var = MSE  # variance of error
+    r_var = (MSR - MSE) / nb_conditions  # variance between subjects
+
+    icc_inited = True
+
+    return ICC, r_var, e_var, session_effect_F
+
 
 def _get_parser():
     parser = argparse.ArgumentParser(
@@ -35,16 +102,27 @@ def _get_parser():
         help=("Use DATAMASK to specify which voxels in the data to use."),
         default=None,
     )
+    parser.add_argument(
+        "--notranspose",
+        dest="transpose",
+        action="store_false",
+        help=("Don't transpose data."),
+        default=True,
+    )
 
     return parser
 
+
 def main():
+    global icc_inited, dfc, dfe
+
+    icc_inited = False
+
     try:
         args = _get_parser().parse_args()
     except SystemExit:
         _get_parser().print_help()
         raise
-
 
     nummeas = 2
     datafile = args.datafile
@@ -98,6 +176,7 @@ def main():
     ICC_in_valid = np.zeros((numvalid), dtype=float)
     r_var_in_valid = np.zeros((numvalid), dtype=float)
     e_var_in_valid = np.zeros((numvalid), dtype=float)
+    session_effect_F_in_valid = np.zeros((numvalid), dtype=float)
 
     print("calculating ICC")
     reportstep = 100
@@ -108,14 +187,22 @@ def main():
                 numvalid,
                 label="Percent complete",
             )
-        (
-            ICC_in_valid[voxel],
-            r_var_in_valid[voxel],
-            e_var_in_valid[voxel],
-            session_effect_F,
-            dfc,
-            dfe,
-        ) = icc.ICC_rep_anova(np.transpose(validinvms[voxel, :, :]))
+        if args.transpose:
+            (
+                ICC_in_valid[voxel],
+                r_var_in_valid[voxel],
+                e_var_in_valid[voxel],
+                session_effect_F_in_valid[voxel],
+            ) = fast_ICC_rep_anova(np.transpose(validinvms[voxel, :, :]))
+        else:
+            (
+                ICC_in_valid[voxel],
+                r_var_in_valid[voxel],
+                e_var_in_valid[voxel],
+                session_effect_F_in_valid[voxel],
+            ) = fast_ICC_rep_anova(validinvms[voxel, :, :])
+
+    print(f"dfc: {dfc}, dfe: {dfe}")
 
     outarray_in_vox = mask_in_vox * 0.0
 
@@ -134,6 +221,12 @@ def main():
     outarray_in_vox[validvoxels] = e_var_in_valid[:]
     tide_io.savetonifti(
         outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{args.outputroot}_e_var"
+    )
+    outarray_in_vox[validvoxels] = session_effect_F_in_valid[:]
+    tide_io.savetonifti(
+        outarray_in_vox.reshape(xsize, ysize, numslices),
+        theheader,
+        f"{args.outputroot}_session_effect_F",
     )
 
 
