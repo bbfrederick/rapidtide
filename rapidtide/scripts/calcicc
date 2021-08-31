@@ -103,11 +103,11 @@ def _get_parser():
         default=None,
     )
     parser.add_argument(
-        "--notranspose",
-        dest="transpose",
-        action="store_false",
-        help=("Don't transpose data."),
-        default=True,
+        "--demedian",
+        dest="demedian",
+        action="store_true",
+        help=("Subtract the median value from each map prior to ICC calculation."),
+        default=False,
     )
 
     return parser
@@ -170,13 +170,34 @@ def main():
     valid_in_voxacq = data_in_voxacq[validvoxels, :]
 
     print("reshaping to validvox by nummeas by numsubjects")
-    validinvms = valid_in_voxacq.reshape((numvalid, nummeas, numsubjs))
+    validinvms = valid_in_voxacq.reshape((numvalid, numsubjs, nummeas))
     print(validinvms.shape)
 
     ICC_in_valid = np.zeros((numvalid), dtype=float)
     r_var_in_valid = np.zeros((numvalid), dtype=float)
     e_var_in_valid = np.zeros((numvalid), dtype=float)
     session_effect_F_in_valid = np.zeros((numvalid), dtype=float)
+
+    # remove median from each map, if requested
+    if args.demedian:
+        mediandiffs = np.zeros((numsubjs), dtype=np.float64)
+        print("removing median difference values")
+        for thesubj in range(numsubjs):
+            mediandiffs[thesubj] = np.median(validinvms[:, thesubj, 1] - validinvms[:, thesubj, 0])
+            validinvms[:, thesubj, 1] -= mediandiffs[thesubj]
+        print("done removing median values")
+
+        # write out results
+        print("writing median corrected data")
+        tide_io.writenpvecs(mediandiffs, f"{args.outputroot}_mediandiffs.txt")
+        outarray_in_voxacq = data_in_voxacq * 0.0
+        outarray_in_voxacq[validvoxels, :] = valid_in_voxacq[:, :]
+        tide_io.savetonifti(
+            outarray_in_voxacq.reshape(xsize, ysize, numslices, timepoints),
+            datafile_hdr,
+            f"{args.outputroot}_demediandiffed",
+        )
+        print("done writing median corrected data")
 
     print("calculating ICC")
     reportstep = 100
@@ -187,20 +208,17 @@ def main():
                 numvalid,
                 label="Percent complete",
             )
-        if args.transpose:
-            (
-                ICC_in_valid[voxel],
-                r_var_in_valid[voxel],
-                e_var_in_valid[voxel],
-                session_effect_F_in_valid[voxel],
-            ) = fast_ICC_rep_anova(np.transpose(validinvms[voxel, :, :]))
-        else:
-            (
-                ICC_in_valid[voxel],
-                r_var_in_valid[voxel],
-                e_var_in_valid[voxel],
-                session_effect_F_in_valid[voxel],
-            ) = fast_ICC_rep_anova(validinvms[voxel, :, :])
+
+        # get the voxel data matrix
+        Y = validinvms[voxel, :, :]
+
+        # calculate ICC(3,1)
+        (
+            ICC_in_valid[voxel],
+            r_var_in_valid[voxel],
+            e_var_in_valid[voxel],
+            session_effect_F_in_valid[voxel],
+        ) = fast_ICC_rep_anova(Y)
 
     print(f"dfc: {dfc}, dfe: {dfe}")
 
