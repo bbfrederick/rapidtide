@@ -74,6 +74,7 @@ script_list = [
     "rapidtide/scripts/applydlfilter",
     "rapidtide/scripts/atlasaverage",
     "rapidtide/scripts/atlastool",
+    "rapidtide/scripts/calcicc",
     "rapidtide/scripts/ccorrica",
     "rapidtide/scripts/endtidalproc",
     "rapidtide/scripts/filtnifti",

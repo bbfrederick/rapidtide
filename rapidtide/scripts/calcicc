@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+
+import numpy as np
+from nipype.algorithms import icc
+
+import rapidtide.io as tide_io
+
+
+def main():
+    nummeas = 2
+    thefile = "lagstrengths_LRmerged"
+    datafile = f"{thefile}.nii.gz"
+
+    datamaskname = "/usr/local/fsl-6.0.4/data/standard/MNI152_T1_2mm_brain_mask.nii.gz"
+    # read in data
+    print("reading in data array")
+    (
+        datafile_img,
+        datafile_data,
+        datafile_hdr,
+        datafiledims,
+        datafilesizes,
+    ) = tide_io.readfromnifti(datafile)
+    print("done reading in data array")
+
+    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
+
+    if datamaskname is not None:
+        print("reading in mask array")
+        (
+            datamask_img,
+            datamask_data,
+            datamask_hdr,
+            datamaskdims,
+            datamasksizes,
+        ) = tide_io.readfromnifti(datamaskname)
+        print("done reading in mask array")
+    else:
+        datamask_data = datafile_data[:, :, :, 0] * 0.0 + 1.0
+
+    # now reformat from x, y, z, time to voxelnumber, measurement, subject
+    numvoxels = int(xsize) * int(ysize) * int(numslices)
+    numsubjs = int(timepoints // nummeas)
+
+    print("reshaping to voxel by timepoint")
+    data_in_voxacq = datafile_data.reshape((numvoxels, timepoints))
+    mask_in_vox = datamask_data.reshape((numvoxels))
+
+    print("finding valid voxels")
+    validvoxels = np.where(mask_in_vox > 0)[0]
+    numvalid = int(len(validvoxels))
+    valid_in_voxacq = data_in_voxacq[validvoxels, :]
+
+    print("reshaping to validvox by nummeas by numsubjects")
+    validinvms = valid_in_voxacq.reshape((numvalid, nummeas, numsubjs))
+    print(validinvms.shape)
+
+    ICC_in_valid = np.zeros((numvalid), dtype=float)
+    r_var_in_valid = np.zeros((numvalid), dtype=float)
+    e_var_in_valid = np.zeros((numvalid), dtype=float)
+
+    print("calculating ICC")
+    for voxel in range(numvalid):
+        (
+            ICC_in_valid[voxel],
+            r_var_in_valid[voxel],
+            e_var_in_valid[voxel],
+            session_effect_F,
+            dfc,
+            dfe,
+        ) = icc.ICC_rep_anova(validinvms[voxel, :, :])
+
+    outarray_in_vox = mask_in_vox * 0.0
+
+    theheader = copy.deepcopy(datafile_hdr)
+    theheader["dim"][0] = 3
+    theheader["dim"][4] = 1
+
+    outarray_in_vox[validvoxels] = ICC_in_valid[:]
+    tide_io.savetonifti(
+        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{thefile}_ICC"
+    )
+    outarray_in_vox[validvoxels] = r_var_in_valid[:]
+    tide_io.savetonifti(
+        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{thefile}_r_var"
+    )
+    outarray_in_vox[validvoxels] = e_var_in_valid[:]
+    tide_io.savetonifti(
+        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{thefile}_e_var"
+    )
+
+
+if __name__ == "__main__":
+    main()
