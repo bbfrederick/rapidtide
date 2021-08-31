@@ -1,21 +1,56 @@
 #!/usr/bin/env python
 import copy
+import argparse
+import sys
 
 import numpy as np
 from nipype.algorithms import icc
 
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
+from rapidtide.workflows.parser_funcs import is_valid_file
 
+def _get_parser():
+    parser = argparse.ArgumentParser(
+        prog="calcicc",
+        description="Calculate per-voxel ICC(3,1) on a set of nifti files.",
+        usage="%(prog)s datafile outputroot [options]",
+    )
+
+    # Required arguments
+    parser.add_argument(
+        "datafile",
+        type=lambda x: is_valid_file(parser, x),
+        help="The name of the 4 dimensional nifti file.",
+    )
+    parser.add_argument("outputroot", help="The root name for the output nifti files.")
+
+    # Optional arguments
+    parser.add_argument(
+        "--dmask",
+        dest="datamaskname",
+        type=lambda x: is_valid_file(parser, x),
+        action="store",
+        metavar="DATAMASK",
+        help=("Use DATAMASK to specify which voxels in the data to use."),
+        default=None,
+    )
+
+    return parser
 
 def main():
-    nummeas = 2
-    thefile = "lagstrengths_LRmerged"
-    datafile = f"{thefile}.nii.gz"
+    try:
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
-    datamaskname = "/usr/local/fsl-6.0.4/data/standard/MNI152_T1_2mm_brain_mask.nii.gz"
+
+    nummeas = 2
+    datafile = args.datafile
+
     # read in data
-    print("reading in data array")
+    print("reading in data arrays")
     (
         datafile_img,
         datafile_data,
@@ -27,7 +62,7 @@ def main():
 
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
 
-    if datamaskname is not None:
+    if args.datamaskname is not None:
         print("reading in mask array")
         (
             datamask_img,
@@ -35,7 +70,10 @@ def main():
             datamask_hdr,
             datamaskdims,
             datamasksizes,
-        ) = tide_io.readfromnifti(datamaskname)
+        ) = tide_io.readfromnifti(args.datamaskname)
+        if not tide_io.checkspacematch(datafile_hdr, datamask_hdr):
+            print("Data and mask dimensions do not match - exiting.")
+            sys.exit()
         print("done reading in mask array")
     else:
         datamask_data = datafile_data[:, :, :, 0] * 0.0 + 1.0
@@ -87,15 +125,15 @@ def main():
 
     outarray_in_vox[validvoxels] = ICC_in_valid[:]
     tide_io.savetonifti(
-        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{thefile}_ICC"
+        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{args.outputroot}_ICC"
     )
     outarray_in_vox[validvoxels] = r_var_in_valid[:]
     tide_io.savetonifti(
-        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{thefile}_r_var"
+        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{args.outputroot}_r_var"
     )
     outarray_in_vox[validvoxels] = e_var_in_valid[:]
     tide_io.savetonifti(
-        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{thefile}_e_var"
+        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{args.outputroot}_e_var"
     )
 
 
