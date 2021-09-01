@@ -6,9 +6,10 @@ import sys
 import numpy as np
 from scipy.linalg import pinv
 
+import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
-from rapidtide.workflows.parser_funcs import is_valid_file
+from rapidtide.workflows.parser_funcs import is_float, is_valid_file
 
 
 def fast_ICC_rep_anova(Y, reinit=True):
@@ -106,6 +107,15 @@ def _get_parser():
         default=None,
     )
     parser.add_argument(
+        "--smooth",
+        dest="sigma",
+        type=lambda x: is_float(parser, x),
+        action="store",
+        metavar="SIGMA",
+        help=("Spatially smooth the input data with a SIGMA mm kernel."),
+        default=0.0,
+    )
+    parser.add_argument(
         "--demedian",
         dest="demedian",
         action="store_true",
@@ -142,6 +152,15 @@ def main():
     print("done reading in data array")
 
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
+    xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
+
+    # smooth the data
+    if args.sigma > 0.0:
+        print("smoothing data")
+        for i in range(timepoints):
+            datafile_data[:, :, :, i] = tide_filt.ssmooth(
+                xdim, ydim, slicethickness, args.sigma, datafile_data[:, :, :, i]
+            )
 
     if args.datamaskname is not None:
         print("reading in mask array")
