@@ -11,7 +11,7 @@ import rapidtide.util as tide_util
 from rapidtide.workflows.parser_funcs import is_valid_file
 
 
-def fast_ICC_rep_anova(Y):
+def fast_ICC_rep_anova(Y, reinit=True):
     """
     the data Y are entered as a 'table' ie subjects are in rows and repeated
     measures in columns
@@ -26,6 +26,9 @@ def fast_ICC_rep_anova(Y):
     global nb_subjects, nb_conditions
     global x, x0, X
     global centerbit
+
+    if reinit:
+        icc_inited = False
 
     if not icc_inited:
         [nb_subjects, nb_conditions] = Y.shape
@@ -218,7 +221,7 @@ def main():
             r_var_in_valid[voxel],
             e_var_in_valid[voxel],
             session_effect_F_in_valid[voxel],
-        ) = fast_ICC_rep_anova(Y)
+        ) = fast_ICC_rep_anova(Y, reinit=False)
 
     print(f"dfc: {dfc}, dfe: {dfe}")
 
