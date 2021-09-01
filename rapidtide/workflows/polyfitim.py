@@ -17,6 +17,7 @@
 #
 #
 import argparse
+import sys
 
 import numpy as np
 
@@ -62,7 +63,7 @@ def _get_parser():
         metavar="ATLASFILE",
         dest="regionatlas",
         type=lambda x: is_valid_file(parser, x),
-        help="Do individual fits to every region in ATLASFILE.",
+        help="Do individual fits to every region in ATLASFILE (3D NIFTI file).",
         default=None,
     )
     parser.add_argument(
@@ -85,6 +86,10 @@ def polyfitim(
     regionatlas=None,
     order=1,
 ):
+    # check the order
+    if order < 1:
+        print("order must be >= 1")
+        sys.exit()
 
     # read in data
     print("reading in data arrays")
@@ -179,17 +184,17 @@ def polyfitim(
     if regionatlas is not None:
         rs_regionatlas = regionatlas_data.reshape(numspatiallocs)
         numregions = int(np.max(rs_regionatlas))
+        print(f"atlas file {regionatlas} has {numregions} regions.")
 
     fitdata = np.zeros((numspatiallocs, timepoints), dtype="float")
     # residuals = np.zeros((numspatiallocs, timepoints), dtype='float')
     # newtemplate = np.zeros((numspatiallocs), dtype='float')
     # newmask = np.zeros((numspatiallocs), dtype='float')
     if regionatlas is not None:
-        lincoffs = np.zeros((numregions, timepoints), dtype="float")
-        sqrcoffs = np.zeros((numregions, timepoints), dtype="float")
-        offsets = np.zeros((numregions, timepoints), dtype="float")
+        polycoffs = np.zeros((numregions, order + 1, timepoints), dtype="float")
         rvals = np.zeros((numregions, timepoints), dtype="float")
     else:
+        polycoffs = np.zeros((order + 1, timepoints), dtype="float")
         lincoffs = np.zeros(timepoints, dtype="float")
         sqrcoffs = np.zeros(timepoints, dtype="float")
         offsets = np.zeros(timepoints, dtype="float")
@@ -221,81 +226,55 @@ def polyfitim(
             for region in range(0, numregions):
                 voxelstofit = np.where(regionvoxels[:, region] * thisdatamask > 0.5)
                 voxelstoreconstruct = np.where(regionvoxels[:, region] > 0.5)
-                if order == 2:
-                    thefit, R = tide_fit.mlregress(
-                        [
-                            rs_templatefile[voxelstofit],
-                            np.square(rs_templatefile[voxelstofit]),
-                        ],
-                        rs_datafile[voxelstofit, thetime][0],
+                evlist = []
+                for i in range(1, order + 1):
+                    evlist.append((rs_templatefile[voxelstofit]) ** i)
+                thefit, R = tide_fit.mlregress(
+                    evlist,
+                    rs_datafile[voxelstofit, thetime][0],
+                )
+                for i in range(order + 1):
+                    polycoffs[region, i, thetime] = thefit[0, i]
+                fitdata[voxelstoreconstruct, thetime] = polycoffs[region, 0, thetime]
+                for i in range(1, order + 1):
+                    fitdata[voxelstoreconstruct, thetime] += polycoffs[region, i, thetime] * (
+                        rs_templatefile[voxelstoreconstruct] ** i
                     )
-                else:
-                    thefit, R = tide_fit.mlregress(
-                        rs_templatefile[voxelstofit],
-                        rs_datafile[voxelstofit, thetime][0],
-                    )
-                lincoffs[region, thetime] = thefit[0, 1]
-                offsets[region, thetime] = thefit[0, 0]
                 rvals[region, thetime] = R
-                if order == 2:
-                    sqrcoffs[region, thetime] = thefit[0, 2]
-                    fitdata[voxelstoreconstruct, thetime] += (
-                        sqrcoffs[region, thetime] * np.square(rs_templatefile[voxelstoreconstruct])
-                        + lincoffs[region, thetime] * rs_templatefile[voxelstoreconstruct]
-                        + offsets[region, thetime]
-                    )
-                else:
-                    fitdata[voxelstoreconstruct, thetime] += (
-                        lincoffs[region, thetime] * rs_templatefile[voxelstoreconstruct]
-                        + offsets[region, thetime]
-                    )
-                # newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[region, thetime]) * rs_datamask
-                # newmask += rs_datamask * rs_templatemask_bin
         else:
             voxelstofit = np.where(thisdatamask > 0.5)
             voxelstoreconstruct = np.where(rs_templatemask > 0.5)
-            thefit, R = tide_fit.mlregress(
-                rs_templatefile[voxelstofit], rs_datafile[voxelstofit, thetime][0]
-            )
-            lincoffs[thetime] = thefit[0, 1]
-            offsets[thetime] = thefit[0, 0]
+            evlist = []
+            for i in range(1, order + 1):
+                evlist.append((rs_templatefile[voxelstofit]) ** i)
+            thefit, R = tide_fit.mlregress(evlist, rs_datafile[voxelstofit, thetime][0])
+            for i in range(order + 1):
+                polycoffs[i, thetime] = thefit[0, i]
+            fitdata[voxelstoreconstruct, thetime] = polycoffs[0, thetime]
+            for i in range(1, order + 1):
+                fitdata[voxelstoreconstruct, thetime] += polycoffs[i, thetime] * (
+                    rs_templatefile[voxelstoreconstruct] ** i
+                )
             rvals[thetime] = R
-            fitdata[voxelstoreconstruct, thetime] = (
-                lincoffs[thetime] * rs_templatefile[voxelstoreconstruct] + offsets[thetime]
-            )
-            # if datamask3d:
-            #    newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask
-            # else:
-            #    newtemplate += nan_to_num(maskeddata[:, thetime] / lincoffs[thetime]) * rs_datamask[:, thetime]
-            # newmask += rs_datamask[:, thetime] * rs_templatemask_bin
     residuals = rs_datafile - fitdata
 
     # write out the data files
     print("writing time series")
-    if order == 2:
-        tide_io.writenpvecs(sqrcoffs, outputroot + "_sqrcoffs.txt")
-    tide_io.writenpvecs(lincoffs, outputroot + "_lincoffs.txt")
-    tide_io.writenpvecs(offsets, outputroot + "_offsets.txt")
+
     tide_io.writenpvecs(rvals, outputroot + "_rvals.txt")
     if regionatlas is not None:
         for region in range(0, numregions):
-            print(
-                "region",
-                region + 1,
-                "slope mean, std:",
-                np.mean(lincoffs[:, region]),
-                np.std(lincoffs[:, region]),
-            )
-            print(
-                "region",
-                region + 1,
-                "offset mean, std:",
-                np.mean(offsets[:, region]),
-                np.std(offsets[:, region]),
-            )
+            outstring = f"region {region + 1}:"
+            for i in range(order + 1):
+                tide_io.writenpvecs(polycoffs[i, :], outputroot + "_O_i_coffs.txt")
+                outstring += f" O_{i} mean, std {np.mean(polycoffs[region, i, :])}, {np.std(polycoffs[region, i, :])}"
+            print(outstring)
     else:
-        print("slope mean, std:", np.mean(lincoffs), np.std(lincoffs))
-        print("offset mean, std:", np.mean(offsets), np.std(offsets))
+        outstring = ""
+        for i in range(order + 1):
+            tide_io.writenpvecs(polycoffs[:], outputroot + f"_O_{i}_coffs.txt")
+            outstring += f" O_{i} mean, std {np.mean(polycoffs[i, :])}, {np.std(polycoffs[i, :])}"
+        print(outstring)
 
     print("writing nifti series")
     tide_io.savetonifti(
@@ -313,7 +292,7 @@ def polyfitim(
 def main():
 
     try:
-        args = vars(_get_parser().parse_args())
+        args = _get_parser().parse_args()
     except SystemExit:
         _get_parser().print_help()
         raise
@@ -321,13 +300,13 @@ def main():
     print(args)
 
     polyfitim(
-        args["datafile"],
-        args["datamask"],
-        args["templatefile"],
-        args["templatemask"],
-        args["outputroot"],
-        regionatlas=args["regionatlas"],
-        order=args["order"],
+        args.datafile,
+        args.datamask,
+        args.templatefile,
+        args.templatemask,
+        args.outputroot,
+        regionatlas=args.regionatlas,
+        order=args.order,
     )
 
 
