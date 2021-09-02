@@ -2,6 +2,7 @@
 import argparse
 import copy
 import sys
+import time
 
 import numpy as np
 from scipy.linalg import pinv
@@ -12,27 +13,36 @@ import rapidtide.util as tide_util
 from rapidtide.workflows.parser_funcs import is_float, is_valid_file
 
 
-def fast_ICC_rep_anova(Y, reinit=True):
+def fast_ICC_rep_anova(Y, nocache=False):
     """
     the data Y are entered as a 'table' ie subjects are in rows and repeated
     measures in columns
     One Sample Repeated measure ANOVA
     Y = XB + E with X = [FaTor / Subjects]
 
-    This is a hacked up version of ICC_rep_anova from nipype that caches most of the expensive operations if you're
-    going to run it multiple times.
+    This is a hacked up (but fully compatible) version of ICC_rep_anova from nipype that caches some very expensive
+    operations that depend only on the input array shape - if you're going to run the routine multiple times (like,
+    on every voxel of an image), this gives you a HUGE speed boost for large input arrays.  If you change the
+    dimensions of Y, it will reinitialize automatially.  Set nocache to True to get the original, much slower behavior.
+    No, actually, don't do that.
     """
     global icc_inited
+    global current_Y_shape
     global dfc, dfe, dfr
     global nb_subjects, nb_conditions
     global x, x0, X
     global centerbit
 
-    if reinit:
+    try:
+        current_Y_shape
+        if nocache or (current_Y_shape != Y.shape):
+            icc_inited = False
+    except NameError:
         icc_inited = False
 
     if not icc_inited:
         [nb_subjects, nb_conditions] = Y.shape
+        current_Y_shape = Y.shape
         dfc = nb_conditions - 1
         dfe = (nb_subjects - 1) * dfc
         dfr = nb_subjects - 1
@@ -78,7 +88,7 @@ def fast_ICC_rep_anova(Y, reinit=True):
 
     icc_inited = True
 
-    return ICC, r_var, e_var, session_effect_F
+    return ICC, r_var, e_var, session_effect_F, dfc, dfe
 
 
 def _get_parser():
@@ -122,15 +132,20 @@ def _get_parser():
         help=("Subtract the median value from each map prior to ICC calculation."),
         default=False,
     )
+    parser.add_argument(
+        "--nocache",
+        dest="nocache",
+        action="store_true",
+        help=(
+            "Disable caching for the ICC calculation.  This is a terrible idea.  Don't do this."
+        ),
+        default=False,
+    )
 
     return parser
 
 
 def main():
-    global icc_inited, dfc, dfe
-
-    icc_inited = False
-
     try:
         args = _get_parser().parse_args()
     except SystemExit:
@@ -223,6 +238,7 @@ def main():
 
     print("calculating ICC")
     reportstep = 100
+    starttime = time.time()
     for voxel in range(numvalid):
         if voxel % reportstep == 0 or voxel == numvalid - 1:
             tide_util.progressbar(
@@ -240,9 +256,16 @@ def main():
             r_var_in_valid[voxel],
             e_var_in_valid[voxel],
             session_effect_F_in_valid[voxel],
-        ) = fast_ICC_rep_anova(Y, reinit=False)
+            dfc,
+            dfe,
+        ) = fast_ICC_rep_anova(Y, nocache=args.nocache)
+    duration = time.time() - starttime
 
-    print(f"dfc: {dfc}, dfe: {dfe}")
+    print(f"\ndfc: {dfc}, dfe: {dfe}")
+
+    print(
+        f"ICC calculation time: {1000.0 * duration / numvalid:.3f} ms per voxel.  nocache={args.nocache}"
+    )
 
     outarray_in_vox = mask_in_vox * 0.0
 
