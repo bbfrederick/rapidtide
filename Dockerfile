@@ -115,7 +115,6 @@ RUN cd /src/rapidtide && \
 
 
 ENV IS_DOCKER_8395080871=1
-#ENV QT_QPA_PLATFORM=offscreen
 RUN apt-get install -y --reinstall libxcb-xinerama0
 
 
