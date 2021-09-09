@@ -23,7 +23,7 @@ RUN apt-get install -y --no-install-recommends \
                     lsb-release \
                     git
 ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ=Europe/Moscow
+ENV TZ=America/New_York
 RUN apt-get install -y tzdata
 RUN apt-get install -y --reinstall libqt5dbus5 
 RUN apt-get install -y --reinstall libqt5widgets5 
