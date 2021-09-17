@@ -110,6 +110,7 @@ script_list = [
     "rapidtide/scripts/simdata",
     "rapidtide/scripts/spatialdecomp",
     "rapidtide/scripts/spatialfit",
+    "rapidtide/scripts/spatialmi",
     "rapidtide/scripts/spectrogram",
     "rapidtide/scripts/synthASL",
     "rapidtide/scripts/tcfrom3col",
