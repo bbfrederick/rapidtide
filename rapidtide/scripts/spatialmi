@@ -17,11 +17,14 @@
 #
 #
 import argparse
+import sys
 
 import matplotlib as mpl
 import numpy as np
 
+import rapidtide.correlate as tide_corr
 import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 
 mpl.use("Agg")
 import matplotlib.pyplot as plt
@@ -54,22 +57,17 @@ def _get_parser():
 
     # add optional arguments
     parser.add_argument(
-        "--nonorm",
-        action="store_true",
-        help=("Do not normalize neighborhood by the variance."),
-        default=False,
-    )
-    parser.add_argument(
-        "--fitonly",
-        action="store_true",
-        help=("Perform fit only - do not generate graph."),
-        default=False,
-    )
-    parser.add_argument(
-        "--nodisplay",
-        dest="display",
+        "--noprebin",
+        dest="prebin",
         action="store_false",
-        help=("Save graphs to file only - do not display."),
+        help=("Dynamically calculate histogram bins for each voxel (slower)."),
+        default=True,
+    )
+    parser.add_argument(
+        "--nonorm",
+        dest="norm",
+        action="store_false",
+        help=("Do not normalize neighborhood by the variance."),
         default=True,
     )
     parser.add_argument(
@@ -79,9 +77,16 @@ def _get_parser():
         metavar="RADIUS",
         help=(
             "Radius of the comparison, in voxels.  Comparison neighborhood is (2 * RADIUS - 1)^3."
-            "Must be 2 (default) or greater."
+            "Must be 2 or greater.  Default is 3"
         ),
         default=3,
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Print additional internal information.",
+        default=False,
     )
     return parser
 
@@ -100,16 +105,79 @@ def bland_altman_plot(data1, data2, *args, **kwargs):
     plt.axhline(md - 2 * sd, color="gray", linestyle="--")
 
 
+def getneighborhood(indata, xloc, yloc, zloc, xsize, ysize, zsize, radius):
+    return indata[
+        np.max([0, xloc - radius + 1]) : np.min([xsize - 1, xloc + radius]),
+        np.max([0, yloc - radius + 1]) : np.min([ysize - 1, yloc + radius]),
+        np.max([0, zloc - radius + 1]) : np.min([zsize - 1, zloc + radius]),
+    ].flatten()
+
+
+def getMI(x, y, norm=True, bins=-1, init=False, prebin=True, sigma=0.25, debug=False):
+    global thebins
+
+    if norm:
+        normx = tide_math.stdnormalize(x)
+        normy = tide_math.stdnormalize(y)
+    else:
+        normx = x
+        normy = y
+
+    # see if we are using the default number of bins
+    if bins < 1:
+        bins = np.max([int(np.sqrt(len(x) / 5)), 3])
+        if debug:
+            print(f"cross_mutual_info: bins set to {bins}")
+
+    if init or thebins is None:
+        # find the bin locations
+        if prebin:
+            bins0 = np.linspace(-2.0, 2.0, bins, True)
+            if debug:
+                print(bins0, bins1)
+            bins2d = (1.0 * bins0, 1.0 * bins0)
+        else:
+            bins2d = (bins + 0, bins + 0)
+        thebins = bins2d
+
+    if prebin:
+        fast = True
+    else:
+        fast = False
+
+    if debug:
+        print(f"fast: {fast}")
+        print(f"thebins: {thebins}")
+        print(f"bins: {bins}")
+        print(f"norm: {norm}")
+        print(
+            f"normx min, max, mean, std: {np.min(normx)}, {np.max(normx)}, {np.mean(normx)}, {np.std(normx)}"
+        )
+        print(
+            f"normy min, max, mean, std: {np.min(normy)}, {np.max(normy)}, {np.mean(normy)}, {np.std(normy)}"
+        )
+
+    return tide_corr.mutual_info_2d(
+        normx,
+        normy,
+        bins=thebins,
+        normalized=norm,
+        fast=fast,
+        sigma=sigma,
+        debug=debug,
+    )
+
+
 def main():
+    global thebins
+    thebins = None
+
     # read the arguments
     try:
         args = _get_parser().parse_args()
     except SystemExit:
         _get_parser().print_help()
         raise
-
-    if args.display:
-        mpl.use("TkAgg")
 
     input1_img, input1_data, input1_hdr, thedims1, thesizes1 = tide_io.readfromnifti(
         args.inputfilename1
@@ -146,56 +214,32 @@ def main():
         exit()
 
     totalmask = mask1_data * mask2_data
-    nonzeropoints = np.where(totalmask > 0)
-    pairlist = []
-    for i in range(0, len(nonzeropoints[0])):
-        pairlist.append(
-            [
-                input1_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]],
-                input2_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]],
-            ]
-        )
+    print(f"totalmask.shape = {totalmask.shape}")
+    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims1)
+    outputdata = input1_data * 0
 
-    thearray = np.asarray(pairlist)
+    # loop over all voxels
+    for zloc in range(numslices):
+        print("processing slice ", zloc)
+        for yloc in range(ysize):
+            for xloc in range(xsize):
+                if totalmask[xloc, yloc, zloc] > 0.5:
+                    neighborhood1 = getneighborhood(
+                        input1_data, xloc, yloc, zloc, xsize, ysize, numslices, args.radius
+                    )
+                    neighborhood2 = getneighborhood(
+                        input2_data, xloc, yloc, zloc, xsize, ysize, numslices, args.radius
+                    )
+                    outputdata[xloc, yloc, zloc] = getMI(
+                        neighborhood1,
+                        neighborhood2,
+                        norm=args.norm,
+                        prebin=args.prebin,
+                        debug=args.debug,
+                    )
 
-    plt.figure()
-    if args.scatter:
-        plt.plot(thearray[:, 0], thearray[:, 1], "k.")
-        theplotname = args.outputroot + "_scatterplot.png"
-    else:
-        # construct a 2d histogram
-        numbins = 100
-        H, xedges, yedges = np.histogram2d(
-            thearray[:, 0], thearray[:, 1], bins=args.histbins, normed=True
-        )
-        extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
-        plt.contour(H, extent=extent)
-        theplotname = args.outputroot + "_contourplot.png"
-    if args.display:
-        plt.show()
-    else:
-        plt.savefig(theplotname, bbox_inches="tight")
-
-    # now fit the line
-    try:
-        thecoffs = np.polyfit(np.array(pairlist[0]), np.array(pairlist[1]), args.fitorder)
-    except np.RankWarning:
-        thecoffs = [0.0, 0.0]
-    print("thecoffs=", thecoffs)
-    with open(f"{args.outputroot}_order_{args.fitorder}_fit", "w") as file:
-        file.writelines(str(thecoffs))
-
-    if not args.fitonly:
-        with open(args.outputroot, "w") as file:
-            for pair in pairlist:
-                file.writelines(str(pair[0]) + "\t" + str(pair[1]) + "\n")
-        plt.figure()
-        bland_altman_plot(thearray[:, 0], thearray[:, 1])
-        plt.title("Bland-Altman Plot")
-        if args.display:
-            plt.show()
-        else:
-            plt.savefig(args.outputroot + "_blandaltman.png", bbox_inches="tight")
+    print("made it to here")
+    tide_io.savetonifti(outputdata, input1_hdr, f"{args.outputroot}_result")
 
 
 if __name__ == "__main__":

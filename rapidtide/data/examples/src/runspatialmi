@@ -1,0 +1,51 @@
+#!/bin/csh
+
+spatialmi \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    ../../reference/HCP1200_strength_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    --radius 3 \
+    fastradius3
+
+spatialmi \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    ../../reference/HCP1200_strength_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    --radius 2 \
+    fastradius2
+
+spatialmi \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    ../../reference/HCP1200_strength_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    --radius 3 \
+    --noprebin \
+    radius3
+
+spatialmi \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    ../../reference/HCP1200_strength_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    --radius 2 \
+    --noprebin \
+    radius2
+
+spatialmi \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    ../../reference/HCP1200_strength_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    --radius 4 \
+    fastradius4
+
+spatialmi \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    ../../reference/HCP1200_strength_2mm.nii.gz \
+    ../../reference/HCP1200_mask_2mm.nii.gz	\
+    --radius 5 \
+    fastradius5

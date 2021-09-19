@@ -331,7 +331,9 @@ def calc_MI(x, y, bins=50):
 
 
 @conditionaljit()
-def mutual_info_2d(x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, EPS=1.0e-6):
+def mutual_info_2d(
+    x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, EPS=1.0e-6, debug=False
+):
     """Compute (normalized) mutual information between two 1D variate from a joint histogram.
 
     Parameters
@@ -379,7 +381,8 @@ def mutual_info_2d(x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, 
         jh = np.bincount(c, minlength=numxbins * numybins).reshape(numxbins, numybins)
     else:
         jh, xbins, ybins = np.histogram2d(x, y, bins=bins)
-        LGR.debug(f"{xbins} {ybins}")
+        if debug:
+            print(f"{xbins} {ybins}")
 
     # smooth the jh with a gaussian filter of given sigma
     sp.ndimage.gaussian_filter(jh, sigma=sigma, mode="constant", output=jh)
