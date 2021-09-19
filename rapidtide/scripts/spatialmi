@@ -239,7 +239,7 @@ def main():
                     )
 
     print("made it to here")
-    tide_io.savetonifti(outputdata, input1_hdr, f"{args.outputroot}_result")
+    tide_io.savetonifti(np.nan_to_num(outputdata), input1_hdr, f"{args.outputroot}_result")
 
 
 if __name__ == "__main__":
