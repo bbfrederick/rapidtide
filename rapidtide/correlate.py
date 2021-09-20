@@ -356,16 +356,17 @@ def mutual_info_2d(
     Returns
     -------
     nmi: float
-        the computed similariy measure
+        the computed similarity measure
 
     Notes
     -----
     From Ionnis Pappas
+    BBF added the precaching (fast) option
 
     References
     ----------
-    .. [1] Studholme,  jhill & jhawkes (1998).
-           "A normalized entropy measure of 3-D medical image alignment".
+    .. [1] Colin Studholme, David John Hawkes, Derek L.G. Hill (1998).
+           "Normalized entropy measure for multimodality image alignment".
            in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
     """
     if fast:
@@ -403,7 +404,8 @@ def mutual_info_2d(
     else:
         mi = -(HXcommaY - HX - HY)
 
-    LGR.debug(f"{HX} {HY} {HXcommaY} {mi}")
+    if debug:
+        print(f"{HX} {HY} {HXcommaY} {mi}")
 
     return mi
 
