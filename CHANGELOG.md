@@ -1,6 +1,12 @@
 # Release history
 
-## Version 2.0.9 (8/20/26)
+## Version 2.1.0 (9/21/21)
+* (spatialmi) Added new program to calculate local mutual information between 3D images.
+* (calcicc) Tool to calculate ICC(3,1) - quickly - for a set of 3D images.
+* (correlate.py) Fixed the reference for mutual_info_2d.
+* (package) Simplified and cleaned up release process.
+
+## Version 2.0.9 (8/26/21)
 * (rapidtide) Fixed a strange edge case that could lead to "hot pixels" in the maxcorr map.
 * (io) Added a "tolerance" for spatial mapping of niftis to account for rounding errors in header creation.
 
