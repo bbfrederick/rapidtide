@@ -134,7 +134,7 @@ def getMI(x, y, norm=True, bins=-1, init=False, prebin=True, sigma=0.25, debug=F
         if prebin:
             bins0 = np.linspace(-2.0, 2.0, bins, True)
             if debug:
-                print(bins0, bins1)
+                print(bins0, bins0)
             bins2d = (1.0 * bins0, 1.0 * bins0)
         else:
             bins2d = (bins + 0, bins + 0)
@@ -178,6 +178,9 @@ def main():
     except SystemExit:
         _get_parser().print_help()
         raise
+
+    if args.debug:
+        print(f"Arguments: {args}")
 
     input1_img, input1_data, input1_hdr, thedims1, thesizes1 = tide_io.readfromnifti(
         args.inputfilename1
