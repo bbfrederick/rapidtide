@@ -20,11 +20,13 @@ def fast_ICC_rep_anova(Y, nocache=False):
     One Sample Repeated measure ANOVA
     Y = XB + E with X = [FaTor / Subjects]
 
-    This is a hacked up (but fully compatible) version of ICC_rep_anova from nipype that caches some very expensive
-    operations that depend only on the input array shape - if you're going to run the routine multiple times (like,
-    on every voxel of an image), this gives you a HUGE speed boost for large input arrays.  If you change the
-    dimensions of Y, it will reinitialize automatially.  Set nocache to True to get the original, much slower behavior.
-    No, actually, don't do that.
+    This is a hacked up (but fully compatible) version of ICC_rep_anova
+    from nipype that caches some very expensive operations that depend
+    only on the input array shape - if you're going to run the routine
+    multiple times (like, on every voxel of an image), this gives you a
+    HUGE speed boost for large input arrays.  If you change the dimensions
+    of Y, it will reinitialize automatially.  Set nocache to True to get
+    the original, much slower behavior.  No, actually, don't do that.
     """
     global icc_inited
     global current_Y_shape
