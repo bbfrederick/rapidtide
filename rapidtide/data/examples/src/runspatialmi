@@ -14,6 +14,41 @@ spatialmi \
     ../../reference/HCP1200_strength_2mm.nii.gz \
     ../../reference/HCP1200_binmask_2mm.nii.gz	\
     --radius 3 \
+    --sigma 0.5 \
+    ../dst/fastradius3_0p5
+
+spatialmi \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/HCP1200_binmask_2mm.nii.gz	\
+    ../../reference/HCP1200_strength_2mm.nii.gz \
+    ../../reference/HCP1200_binmask_2mm.nii.gz	\
+    --radius 3 \
+    --sigma 1.0 \
+    ../dst/fastradius3_1p0
+
+spatialmi \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/HCP1200_binmask_2mm.nii.gz	\
+    ../../reference/HCP1200_strength_2mm.nii.gz \
+    ../../reference/HCP1200_binmask_2mm.nii.gz	\
+    --radius 3 \
+    --sigma 1.5 \
+    ../dst/fastradius3_1p5
+
+spatialmi \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/HCP1200_binmask_2mm.nii.gz	\
+    ../../reference/HCP1200_strength_2mm.nii.gz \
+    ../../reference/HCP1200_binmask_2mm.nii.gz	\
+    --radius 3 \
+    ../dst/fastradius3
+
+spatialmi \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/HCP1200_binmask_2mm.nii.gz	\
+    ../../reference/HCP1200_strength_2mm.nii.gz \
+    ../../reference/HCP1200_binmask_2mm.nii.gz	\
+    --radius 3 \
     --noprebin \
     ../dst/radius3
 
