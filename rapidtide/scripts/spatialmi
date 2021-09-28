@@ -17,6 +17,7 @@
 #
 #
 import argparse
+import sys
 
 import matplotlib as mpl
 import numpy as np
@@ -73,13 +74,13 @@ def _get_parser():
     parser.add_argument(
         "--radius",
         action="store",
-        type=int,
+        type=float,
         metavar="RADIUS",
         help=(
-            "Radius of the comparison, in voxels.  Comparison neighborhood is (2 * RADIUS - 1)^3."
-            "Must be 2 or greater.  Default is 3"
+            "Radius of the comparison, in voxels.  If not spherical, comparison neighborhood is "
+            "cubic with (2 * RADIUS + 1)^3 voxels.  Must be 1.0 or greater.  Default is 2.0"
         ),
-        default=3,
+        default=2.0,
     )
     parser.add_argument(
         "--sigma",
@@ -128,9 +129,15 @@ def getneighborhood(
 ):
     if not spherical:
         return indata[
-            np.max([0, xloc - radius + 1]) : np.min([xsize - 1, xloc + radius]),
-            np.max([0, yloc - radius + 1]) : np.min([ysize - 1, yloc + radius]),
-            np.max([0, zloc - radius + 1]) : np.min([zsize - 1, zloc + radius]),
+            np.max([0, int(np.ceil(xloc - radius))]) : np.min(
+                [xsize, int(np.floor(xloc + radius + 1))]
+            ),
+            np.max([0, int(np.ceil(yloc - radius))]) : np.min(
+                [ysize, int(np.floor(yloc + radius + 1))]
+            ),
+            np.max([0, int(np.ceil(zloc - radius))]) : np.min(
+                [zsize, int(np.floor(zloc + radius + 1))]
+            ),
         ].flatten()
     else:
         global indexlist, usedradius
@@ -141,12 +148,11 @@ def getneighborhood(
             indexlist = None
         if radius != usedradius or indexlist is None:
             indexlist = []
-            for xval in range(-radius, radius + 1):
-                for yval in range(-radius, radius + 1):
-                    for zval in range(-radius, radius + 1):
+            for xval in range(-int(np.floor(radius)), int(np.ceil(radius + 1))):
+                for yval in range(-int(np.floor(radius)), int(np.ceil(radius + 1))):
+                    for zval in range(-int(np.floor(radius)), int(np.ceil(radius + 1))):
                         if np.sqrt(xval * xval + yval * yval + zval * zval) <= radius + slop:
                             indexlist.append([xval, yval, zval])
-
             print(f"index list initialized for radius {radius}")
             print(indexlist)
         outdata = []
@@ -229,6 +235,10 @@ def main():
     if args.debug:
         print(f"Arguments: {args}")
 
+    if args.radius < 1.0:
+        print("radius must be >= 1.0")
+        sys.exit()
+
     input1_img, input1_data, input1_hdr, thedims1, thesizes1 = tide_io.readfromnifti(
         args.inputfilename1
     )
@@ -285,6 +295,23 @@ def main():
             args.sigma,
             input2_data[:, :, :],
         )
+
+    # get the neighborhood size
+    testneighborhood = getneighborhood(
+        input1_data,
+        int(xsize // 2),
+        int(ysize // 2),
+        int(numslices // 2),
+        xsize,
+        ysize,
+        numslices,
+        args.radius,
+        spherical=args.spherical,
+    )
+    print("Neighborhood:")
+    print(f"\tspherical: {args.spherical}")
+    print(f"\tradius:    {args.radius}")
+    print(f"\tsize:      {len(testneighborhood)}")
 
     # loop over all voxels
     for zloc in range(numslices):
