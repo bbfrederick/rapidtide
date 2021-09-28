@@ -17,12 +17,12 @@
 #
 #
 import argparse
-import sys
 
 import matplotlib as mpl
 import numpy as np
 
 import rapidtide.correlate as tide_corr
+import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 
@@ -82,6 +82,24 @@ def _get_parser():
         default=3,
     )
     parser.add_argument(
+        "--sigma",
+        action="store",
+        type=float,
+        metavar="SIGMA",
+        help=(
+            "Width, in voxels, of a gaussian smoothing filter to apply to each input dataset.  "
+            "Default is no filteriing."
+        ),
+        default=None,
+    )
+    parser.add_argument(
+        "--spherical",
+        dest="spherical",
+        action="store_true",
+        help="Use a spherical (rather than cubical) neighborhood (much slower).",
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -105,12 +123,41 @@ def bland_altman_plot(data1, data2, *args, **kwargs):
     plt.axhline(md - 2 * sd, color="gray", linestyle="--")
 
 
-def getneighborhood(indata, xloc, yloc, zloc, xsize, ysize, zsize, radius):
-    return indata[
-        np.max([0, xloc - radius + 1]) : np.min([xsize - 1, xloc + radius]),
-        np.max([0, yloc - radius + 1]) : np.min([ysize - 1, yloc + radius]),
-        np.max([0, zloc - radius + 1]) : np.min([zsize - 1, zloc + radius]),
-    ].flatten()
+def getneighborhood(
+    indata, xloc, yloc, zloc, xsize, ysize, zsize, radius, spherical=False, slop=0.01
+):
+    if not spherical:
+        return indata[
+            np.max([0, xloc - radius + 1]) : np.min([xsize - 1, xloc + radius]),
+            np.max([0, yloc - radius + 1]) : np.min([ysize - 1, yloc + radius]),
+            np.max([0, zloc - radius + 1]) : np.min([zsize - 1, zloc + radius]),
+        ].flatten()
+    else:
+        global indexlist, usedradius
+        try:
+            usedradius
+        except NameError:
+            usedradius = radius
+            indexlist = None
+        if radius != usedradius or indexlist is None:
+            indexlist = []
+            for xval in range(-radius, radius + 1):
+                for yval in range(-radius, radius + 1):
+                    for zval in range(-radius, radius + 1):
+                        if np.sqrt(xval * xval + yval * yval + zval * zval) <= radius + slop:
+                            indexlist.append([xval, yval, zval])
+
+            print(f"index list initialized for radius {radius}")
+            print(indexlist)
+        outdata = []
+        for position in indexlist:
+            if (
+                (0 <= xloc + position[0] < xsize)
+                and (0 <= yloc + position[1] < ysize)
+                and (0 <= zloc + position[2] < zsize)
+            ):
+                outdata.append(indata[xloc + position[0], yloc + position[1], zloc + position[2]])
+        return np.array(outdata)
 
 
 def getMI(x, y, norm=True, bins=-1, init=False, prebin=True, sigma=0.25, debug=False):
@@ -221,6 +268,24 @@ def main():
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims1)
     outputdata = input1_data * 0
 
+    # spatial filter if desired
+    if args.sigma is not None:
+        print(f"filtering with sigma = {args.sigma}")
+        input1_data[:, :, :] = tide_filt.ssmooth(
+            1.0,
+            1.0,
+            1.0,
+            args.sigma,
+            input1_data[:, :, :],
+        )
+        input2_data[:, :, :] = tide_filt.ssmooth(
+            1.0,
+            1.0,
+            1.0,
+            args.sigma,
+            input2_data[:, :, :],
+        )
+
     # loop over all voxels
     for zloc in range(numslices):
         print("processing slice ", zloc)
@@ -228,10 +293,26 @@ def main():
             for xloc in range(xsize):
                 if totalmask[xloc, yloc, zloc] > 0.5:
                     neighborhood1 = getneighborhood(
-                        input1_data, xloc, yloc, zloc, xsize, ysize, numslices, args.radius
+                        input1_data,
+                        xloc,
+                        yloc,
+                        zloc,
+                        xsize,
+                        ysize,
+                        numslices,
+                        args.radius,
+                        spherical=args.spherical,
                     )
                     neighborhood2 = getneighborhood(
-                        input2_data, xloc, yloc, zloc, xsize, ysize, numslices, args.radius
+                        input2_data,
+                        xloc,
+                        yloc,
+                        zloc,
+                        xsize,
+                        ysize,
+                        numslices,
+                        args.radius,
+                        spherical=args.spherical,
                     )
                     outputdata[xloc, yloc, zloc] = getMI(
                         neighborhood1,
