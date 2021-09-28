@@ -125,7 +125,7 @@ def bland_altman_plot(data1, data2, *args, **kwargs):
 
 
 def getneighborhood(
-    indata, xloc, yloc, zloc, xsize, ysize, zsize, radius, spherical=False, slop=0.01
+    indata, xloc, yloc, zloc, xsize, ysize, zsize, radius, spherical=False, slop=0.01, debug=False
 ):
     if not spherical:
         return indata[
@@ -153,8 +153,9 @@ def getneighborhood(
                     for zval in range(-int(np.floor(radius)), int(np.ceil(radius + 1))):
                         if np.sqrt(xval * xval + yval * yval + zval * zval) <= radius + slop:
                             indexlist.append([xval, yval, zval])
-            print(f"index list initialized for radius {radius}")
-            print(indexlist)
+            if debug:
+                print(f"index list initialized for radius {radius}")
+                print(indexlist)
         outdata = []
         for position in indexlist:
             if (
@@ -307,6 +308,7 @@ def main():
         numslices,
         args.radius,
         spherical=args.spherical,
+        debug=args.debug,
     )
     print("Neighborhood:")
     print(f"\tspherical: {args.spherical}")
@@ -348,8 +350,6 @@ def main():
                         prebin=args.prebin,
                         debug=args.debug,
                     )
-
-    print("made it to here")
     tide_io.savetonifti(np.nan_to_num(outputdata), input1_hdr, f"{args.outputroot}_result")
 
 
