@@ -19,16 +19,13 @@
 import argparse
 import sys
 
-import matplotlib as mpl
 import numpy as np
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
-
-mpl.use("Agg")
-import matplotlib.pyplot as plt
 
 
 def _get_parser():
@@ -94,6 +91,14 @@ def _get_parser():
         default=None,
     )
     parser.add_argument(
+        "--kernelwidth",
+        action="store",
+        type=float,
+        metavar="WIDTH",
+        help=("Kernel width, in voxels, of gaussian neighborhood limit. Default is no kernel."),
+        default=None,
+    )
+    parser.add_argument(
         "--spherical",
         dest="spherical",
         action="store_true",
@@ -110,35 +115,71 @@ def _get_parser():
     return parser
 
 
-def bland_altman_plot(data1, data2, *args, **kwargs):
-    data1 = np.asarray(data1)
-    data2 = np.asarray(data2)
-    mean = np.mean([data1, data2], axis=0)
-    diff = data1 - data2  # Difference between data1 and data2
-    md = np.mean(diff)  # Mean of the difference
-    sd = np.std(diff, axis=0)  # Standard deviation of the difference
-
-    plt.scatter(mean, diff, *args, **kwargs)
-    plt.axhline(md, color="gray", linestyle="--")
-    plt.axhline(md + 2 * sd, color="gray", linestyle="--")
-    plt.axhline(md - 2 * sd, color="gray", linestyle="--")
-
-
 def getneighborhood(
-    indata, xloc, yloc, zloc, xsize, ysize, zsize, radius, spherical=False, slop=0.01, debug=False
+    indata,
+    xloc,
+    yloc,
+    zloc,
+    xsize,
+    ysize,
+    zsize,
+    radius,
+    spherical=False,
+    kernelwidth=1.5,
+    slop=0.01,
+    debug=False,
 ):
     if not spherical:
-        return indata[
-            np.max([0, int(np.ceil(xloc - radius))]) : np.min(
-                [xsize, int(np.floor(xloc + radius + 1))]
-            ),
-            np.max([0, int(np.ceil(yloc - radius))]) : np.min(
-                [ysize, int(np.floor(yloc + radius + 1))]
-            ),
-            np.max([0, int(np.ceil(zloc - radius))]) : np.min(
-                [zsize, int(np.floor(zloc + radius + 1))]
-            ),
-        ].flatten()
+        global usedwidth, kernel
+        try:
+            kernel
+        except NameError:
+            usedwidth = kernelwidth
+            kernel = None
+        if kernelwidth != usedwidth or kernel is None:
+            kernel = np.zeros(
+                (2 * int(radius) + 1, 2 * int(radius) + 1, 2 * int(radius) + 1), dtype=float
+            )
+            if kernelwidth is not None:
+                for xval in range(-int(np.floor(radius)), int(np.ceil(radius + 1))):
+                    for yval in range(-int(np.floor(radius)), int(np.ceil(radius + 1))):
+                        for zval in range(-int(np.floor(radius)), int(np.ceil(radius + 1))):
+                            kernel[xval, yval, zval] = tide_fit.gauss_eval(
+                                np.sqrt(xval * xval + yval * yval + zval * zval),
+                                [1.0, 0.0, kernelwidth],
+                            )
+            else:
+                kernel[:, :, :] = 1.0
+        if (
+            (radius <= xloc < xsize - radius)
+            and (radius <= yloc < ysize - radius)
+            and (radius <= zloc < zsize - radius)
+        ):
+            fullrange = True
+        else:
+            fullrange = False
+
+        if fullrange:
+            return (
+                kernel
+                * indata[
+                    int(xloc - radius) : int(xloc + radius + 1),
+                    int(yloc - radius) : int(yloc + radius + 1),
+                    int(zloc - radius) : int(zloc + radius + 1),
+                ]
+            ).flatten()
+        else:
+            return indata[
+                np.max([0, int(np.ceil(xloc - radius))]) : np.min(
+                    [xsize, int(np.floor(xloc + radius + 1))]
+                ),
+                np.max([0, int(np.ceil(yloc - radius))]) : np.min(
+                    [ysize, int(np.floor(yloc + radius + 1))]
+                ),
+                np.max([0, int(np.ceil(zloc - radius))]) : np.min(
+                    [zsize, int(np.floor(zloc + radius + 1))]
+                ),
+            ].flatten()
     else:
         global indexlist, usedradius
         try:
@@ -308,6 +349,7 @@ def main():
         numslices,
         args.radius,
         spherical=args.spherical,
+        kernelwidth=args.kernelwidth,
         debug=args.debug,
     )
     print("Neighborhood:")
@@ -331,6 +373,7 @@ def main():
                         numslices,
                         args.radius,
                         spherical=args.spherical,
+                        kernelwidth=args.kernelwidth,
                     )
                     neighborhood2 = getneighborhood(
                         input2_data,
@@ -342,6 +385,7 @@ def main():
                         numslices,
                         args.radius,
                         spherical=args.spherical,
+                        kernelwidth=args.kernelwidth,
                     )
                     outputdata[xloc, yloc, zloc] = getMI(
                         neighborhood1,
