@@ -183,15 +183,16 @@ def niftidecomp_workflow(
     rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
 
     print("masking arrays")
+    maskthresh = 0.25
     if datamaskname is not None:
         if datamaskdims[4] == 1:
-            proclocs = np.where(datamask_data.reshape(numspatiallocs) > 0.5)
+            proclocs = np.where(datamask_data.reshape(numspatiallocs) > maskthresh)
         else:
             proclocs = np.where(
-                np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1) > 0.5
+                np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1) > maskthresh
             )
             rs_mask = datamask_data.reshape((numspatiallocs, timepoints))[proclocs, :]
-            rs_mask = np.where(rs_mask > 0.5, 1.0, 0.0)[0]
+            rs_mask = np.where(rs_mask > maskthresh, 1.0, 0.0)[0]
     else:
         datamaskdims = [1, xsize, ysize, numslices, 1]
         themaxes = np.max(rs_datafile, axis=1)
