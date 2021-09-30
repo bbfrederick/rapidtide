@@ -106,6 +106,28 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--index1",
+        action="store",
+        type=int,
+        metavar="INDEX1",
+        help=(
+            "If input file 1 is 4 dimensional, select timepoint INDEX1 for spatial mutual information calculation."
+            "If not specified, the first image will be used."
+        ),
+        default=0,
+    )
+    parser.add_argument(
+        "--index2",
+        action="store",
+        type=int,
+        metavar="INDEX2",
+        help=(
+            "If input file 2 is 4 dimensional, select timepoint INDEX2 for spatial mutual information calculation."
+            "If not specified, the first image will be used."
+        ),
+        default=0,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -296,6 +318,12 @@ def main():
         print("input image 1 dimensions do not match mask")
         exit()
 
+    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims1)
+    if timepoints > 1:
+        image1 = input1_data[:, :, :, args.index1]
+    else:
+        image1 = input1_data
+
     input2_img, input2_data, input2_hdr, thedims2, thesizes2 = tide_io.readfromnifti(
         args.inputfilename2
     )
@@ -315,32 +343,38 @@ def main():
         print("input images 1 and 2 dimensions do not match")
         exit()
 
+    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims2)
+    if timepoints > 1:
+        image2 = input2_data[:, :, :, args.index2]
+    else:
+        image2 = input2_data
+
     totalmask = mask1_data * mask2_data
     print(f"totalmask.shape = {totalmask.shape}")
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims1)
-    outputdata = input1_data * 0
+    outputdata = image1 * 0
 
     # spatial filter if desired
     if args.sigma is not None:
         print(f"filtering with sigma = {args.sigma}")
-        input1_data[:, :, :] = tide_filt.ssmooth(
+        image1[:, :, :] = tide_filt.ssmooth(
             1.0,
             1.0,
             1.0,
             args.sigma,
-            input1_data[:, :, :],
+            image1[:, :, :],
         )
-        input2_data[:, :, :] = tide_filt.ssmooth(
+        image2[:, :, :] = tide_filt.ssmooth(
             1.0,
             1.0,
             1.0,
             args.sigma,
-            input2_data[:, :, :],
+            image2[:, :, :],
         )
 
     # get the neighborhood size
     testneighborhood = getneighborhood(
-        input1_data,
+        image1,
         int(xsize // 2),
         int(ysize // 2),
         int(numslices // 2),
@@ -364,7 +398,7 @@ def main():
             for xloc in range(xsize):
                 if totalmask[xloc, yloc, zloc] > 0.5:
                     neighborhood1 = getneighborhood(
-                        input1_data,
+                        image1,
                         xloc,
                         yloc,
                         zloc,
@@ -376,7 +410,7 @@ def main():
                         kernelwidth=args.kernelwidth,
                     )
                     neighborhood2 = getneighborhood(
-                        input2_data,
+                        image2,
                         xloc,
                         yloc,
                         zloc,
@@ -394,7 +428,9 @@ def main():
                         prebin=args.prebin,
                         debug=args.debug,
                     )
-    tide_io.savetonifti(np.nan_to_num(outputdata), input1_hdr, f"{args.outputroot}_result")
+    theoutheader = input1_hdr
+    theoutheader["dim"][4] = 1
+    tide_io.savetonifti(np.nan_to_num(outputdata), theoutheader, f"{args.outputroot}_result")
 
 
 if __name__ == "__main__":
