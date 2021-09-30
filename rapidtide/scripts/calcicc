@@ -103,10 +103,13 @@ def _get_parser():
     # Required arguments
     parser.add_argument(
         "datafile",
-        type=lambda x: is_valid_file(parser, x),
-        help="The name of the 4 dimensional nifti file.",
+        type=str,
+        help=(
+            "A comma separated list of 2 or more 4 dimensional nifti files (3 spatial dimensions and a "
+            "subject dimension).  Each file is a measurement.  The subject dimension in each file must be the same."
+        ),
     )
-    parser.add_argument("outputroot", help="The root name for the output nifti files.")
+    parser.add_argument("outputroot", type=str, help="The root name for the output nifti files.")
 
     # Optional arguments
     parser.add_argument(
@@ -154,31 +157,51 @@ def main():
         _get_parser().print_help()
         raise
 
-    nummeas = 2
-    datafile = args.datafile
+    datafiles = (args.datafile).split(",")
+    nummeas = len(datafiles)
+    if nummeas < 2:
+        print(
+            "ICC requires at least two measurements per subject - specify at least two datafiles."
+        )
+        sys.exit()
 
-    # read in data
+    # check the data headers first
+    print("checking headers")
+    sizelist = []
+    dimlist = []
+    for thefile in datafiles:
+        thesizes, thedims = tide_io.fmriheaderinfo(thefile)
+        sizelist.append(thesizes[1:5].copy())
+        dimlist.append(thedims[1:5].copy())
+    for i in range(1, len(sizelist)):
+        if not (sizelist[i] == sizelist[0]).all() or not (dimlist[i] == dimlist[0]).all():
+            print(f"data file {i + 1} does not match first file")
+            sys.exit()
+    xsize, ysize, numslices, numsubjs = dimlist[0]
+    xdim, ydim, slicethickness, tr = sizelist[0]
+
+    # now read in the data
     print("reading in data arrays")
-    (
-        datafile_img,
-        datafile_data,
-        datafile_hdr,
-        datafiledims,
-        datafilesizes,
-    ) = tide_io.readfromnifti(datafile)
-    print("done reading in data array")
-
-    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
-    xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
+    datafile_data = np.zeros((xsize, ysize, numslices, numsubjs * nummeas), dtype=float)
+    for i in range(nummeas):
+        print(f"reading measurement {i + 1}")
+        (
+            _,
+            datafile_data[:, :, :, i::nummeas],
+            datafile_hdr,
+            _,
+            _,
+        ) = tide_io.readfromnifti(datafiles[i])
+    print("done reading in data")
 
     # smooth the data
     if args.sigma > 0.0:
         print("smoothing data")
-        for i in range(timepoints):
+        for i in range(numsubjs * nummeas):
             datafile_data[:, :, :, i] = tide_filt.ssmooth(
                 xdim, ydim, slicethickness, args.sigma, datafile_data[:, :, :, i]
             )
-
+        print("done smoothing data")
     if args.datamaskname is not None:
         print("reading in mask array")
         (
@@ -197,10 +220,9 @@ def main():
 
     # now reformat from x, y, z, time to voxelnumber, measurement, subject
     numvoxels = int(xsize) * int(ysize) * int(numslices)
-    numsubjs = int(timepoints // nummeas)
 
-    print("reshaping to voxel by timepoint")
-    data_in_voxacq = datafile_data.reshape((numvoxels, timepoints))
+    print("reshaping to voxel by (numsubjs * nummeas)")
+    data_in_voxacq = datafile_data.reshape((numvoxels, numsubjs * nummeas))
     mask_in_vox = datamask_data.reshape((numvoxels))
 
     print("finding valid voxels")
@@ -219,11 +241,14 @@ def main():
 
     # remove median from each map, if requested
     if args.demedian:
-        mediandiffs = np.zeros((numsubjs), dtype=np.float64)
+        mediandiffs = np.zeros((numsubjs, nummeas), dtype=np.float64)
         print("removing median difference values")
         for thesubj in range(numsubjs):
-            mediandiffs[thesubj] = np.median(validinvms[:, thesubj, 1] - validinvms[:, thesubj, 0])
-            validinvms[:, thesubj, 1] -= mediandiffs[thesubj]
+            for themeas in range(1, nummeas):
+                mediandiffs[thesubj, themeas - 1] = np.median(
+                    validinvms[:, thesubj, themeas] - validinvms[:, thesubj, 0]
+                )
+            validinvms[:, thesubj, themeas] -= mediandiffs[thesubj, themeas - 1]
         print("done removing median values")
 
         # write out results
@@ -231,11 +256,11 @@ def main():
         tide_io.writenpvecs(mediandiffs, f"{args.outputroot}_mediandiffs.txt")
         outarray_in_voxacq = data_in_voxacq * 0.0
         outarray_in_voxacq[validvoxels, :] = valid_in_voxacq[:, :]
-        tide_io.savetonifti(
-            outarray_in_voxacq.reshape(xsize, ysize, numslices, timepoints),
-            datafile_hdr,
-            f"{args.outputroot}_demediandiffed",
-        )
+        # tide_io.savetonifti(
+        #    outarray_in_voxacq.reshape(xsize, ysize, numslices, numsubjs * nummeas),
+        #    datafile_hdr,
+        #    f"{args.outputroot}_demediandiffed",
+        # )
         print("done writing median corrected data")
 
     print("calculating ICC")
