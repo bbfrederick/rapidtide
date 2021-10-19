@@ -116,6 +116,7 @@ script_list = [
     "rapidtide/scripts/tcfrom3col",
     "rapidtide/scripts/temporaldecomp",
     "rapidtide/scripts/threeD",
+    "rapidtide/scripts/variabilityizer",
 ]
 
 if addtidepool:
