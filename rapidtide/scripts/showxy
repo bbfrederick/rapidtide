@@ -42,7 +42,7 @@ import rapidtide.io as tide_io
 
 
 def bland_altman_plot(
-    data1, data2, identifier=None, fontscalefac=1.0, xrange=None, yrange=None, *args, **kwargs
+    data1, data2, identifier=None, fontscalefac=1.0, xrange=None, yrange=None, doannotate=True, *args, **kwargs
 ):
     data1 = np.asarray(data1)
     data2 = np.asarray(data2)
@@ -67,14 +67,15 @@ def bland_altman_plot(
     print("std difference:", sd)
     mdstring = "Mean diff: " + format(md, ".3f")
     sdstring = "Std diff: " + format(sd, ".3f")
-    annotate(
-        mdstring + "\n" + sdstring,
-        xy=(0.65, 0.90),
-        xycoords="figure fraction",
-        horizontalalignment="left",
-        verticalalignment="top",
-        fontsize=fontscalefac * 16,
-    )
+    if doannotate:
+        annotate(
+            mdstring + "\n" + sdstring,
+            xy=(0.45, 0.75),
+            xycoords="figure fraction",
+            horizontalalignment="left",
+            verticalalignment="top",
+            fontsize=fontscalefac * 16,
+        )
 
     scatter(mean, diff, facecolors="none", edgecolors="b", *args, **kwargs)
     axhline(md, color="gray", linestyle="--")
@@ -226,6 +227,13 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--noannotate",
+        dest="doannotate",
+        action="store_false",
+        help="Hide annotation on Bland-Altman plots.",
+        default=True,
+    )
+    parser.add_argument(
         "--usepoints",
         dest="usepoints",
         action="store_true",
@@ -307,6 +315,7 @@ def main():
                 fontscalefac=args.fontscalefac,
                 xrange=args.xrange,
                 yrange=args.yrange,
+                doannotate=args.doannotate,
             )
         else:
             if args.usepoints:
