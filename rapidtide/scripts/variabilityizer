@@ -73,9 +73,9 @@ def main():
     else:
         tr = thesizes[4]
     winsize = int(np.round(args.windowlength / tr))
-    winsize += (1 - (winsize % 2))  # make odd
+    winsize += 1 - (winsize % 2)  # make odd
     windowhalfwidth = winsize // 2
-    print(f"window size in trs = {2 * windowhalfwidth + 1} ({(2 * windowhalfwidth * tr} seconds)")
+    print(f"window size in trs = {2 * windowhalfwidth + 1} ({2 * windowhalfwidth * tr} seconds)")
 
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
     stdtcs = np.zeros((xsize, ysize, numslices, timepoints), dtype="float")
