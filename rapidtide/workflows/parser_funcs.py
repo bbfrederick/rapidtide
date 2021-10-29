@@ -662,7 +662,7 @@ def addtimerangeopts(parser):
 def postprocesstimerangeopts(args):
     args.startpoint = int(args.timerange[0])
     if args.timerange[1] == -1:
-        args.endpoint = 100000000
+        args.endpoint = 10000000000
     else:
         args.endpoint = int(args.timerange[1])
     return args

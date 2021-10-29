@@ -231,7 +231,7 @@ def showtc(args):
 
     # check range
     if args.theendtime is None:
-        args.theendtime = 100000000.0
+        args.theendtime = 1.0e38
     if args.thestarttime is not None:
         if args.thestarttime >= args.theendtime:
             print("endtime must be greater then starttime;")
@@ -378,8 +378,8 @@ def showtc(args):
                 )
             numvecs += 1
 
-    thestartpoint = tide_util.valtoindex(xvecs[0], args.thestarttime)
-    theendpoint = tide_util.valtoindex(xvecs[0], args.theendtime)
+    thestartpoint = tide_util.valtoindex(xvecs[0], args.thestarttime, debug=args.debug)
+    theendpoint = tide_util.valtoindex(xvecs[0], args.theendtime, debug=args.debug)
     args.thestarttime = xvecs[0][thestartpoint]
     args.theendtime = xvecs[0][theendpoint]
     if args.debug:
