@@ -226,8 +226,8 @@ def main():
         if not (sizelist[i] == sizelist[0]).all() or not (dimlist[i] == dimlist[0]).all():
             print(f"data file {i + 1} does not match first file")
             sys.exit()
-    xsize, ysize, numslices, numsubjs = dimlist[0]
-    xdim, ydim, slicethickness, tr = sizelist[0]
+    xsize, ysize, numslices, dummy = dimlist[0]
+    xdim, ydim, slicethickness, dummy = sizelist[0]
 
     # now read in the data
     print("reading in data files")
