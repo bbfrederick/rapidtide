@@ -25,8 +25,9 @@ def fast_ICC_rep_anova(Y, nocache=False):
     only on the input array shape - if you're going to run the routine
     multiple times (like, on every voxel of an image), this gives you a
     HUGE speed boost for large input arrays.  If you change the dimensions
-    of Y, it will reinitialize automatially.  Set nocache to True to get
-    the original, much slower behavior.  No, actually, don't do that.
+    of Y, it will reinitialize automatically.  Set nocache to True to get
+    the original, much slower behavior.  No, actually, don't do that. That would
+    be silly.
     """
     global icc_inited
     global current_Y_shape
@@ -96,8 +97,8 @@ def fast_ICC_rep_anova(Y, nocache=False):
 def _get_parser():
     parser = argparse.ArgumentParser(
         prog="calcicc",
-        description="Calculate per-voxel ICC(3,1) on a set of nifti files.",
-        usage="%(prog)s datafile outputroot [options]",
+        description="Calculate per-voxel ICC(3,1) on a set of nifti images.",
+        usage="%(prog)s datafile pairlist outputroot [options]",
     )
 
     # Required arguments
@@ -107,6 +108,14 @@ def _get_parser():
         help=(
             "A comma separated list of 2 or more 4 dimensional nifti files (3 spatial dimensions and a "
             "subject dimension).  Each file is a measurement.  The subject dimension in each file must be the same."
+        ),
+    )
+    parser.add_argument(
+        "measurementlist",
+        type=lambda x: is_valid_file(parser, x),
+        help=(
+            "A multicolumn tab separated value file of integers specifying which images to compare.  Each row is a "
+            "subject, each column is a measurement.  The first image in the nifti file is image 0."
         ),
     )
     parser.add_argument("outputroot", type=str, help="The root name for the output nifti files.")
@@ -146,8 +155,42 @@ def _get_parser():
         ),
         default=False,
     )
-
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Print out additional debugging information."),
+        default=False,
+    )
     return parser
+
+
+def parsemeasurementlist(measlist, numfiles, debug=False):
+    nummeas, numsubjs = measlist.shape[0], measlist.shape[1]
+    filesel = np.zeros((nummeas, numsubjs), dtype=int)
+    volumesel = np.zeros((nummeas, numsubjs), dtype=int)
+    for thesubj in range(numsubjs):
+        for themeas in range(nummeas):
+            thecomponents = str(measlist[themeas, thesubj]).split(",")
+            if len(thecomponents) == 2:
+                filesel[themeas, thesubj] = int(thecomponents[0])
+                volumesel[themeas, thesubj] = int(thecomponents[1])
+            elif len(thecomponents) == 1:
+                filesel[themeas, thesubj] = 0
+                volumesel[themeas, thesubj] = int(thecomponents[0])
+            else:
+                print(
+                    f"Error in element {themeas, thesubj}: each table entry has a maximum of 1 comma."
+                )
+                sys.exit()
+            if filesel[themeas, thesubj] > numfiles - 1:
+                print(f"Error in element {themeas, thesubj}: illegal file number.")
+                sys.exit()
+            if debug:
+                print(
+                    f"element {themeas, thesubj}: {filesel[themeas, thesubj]}, {volumesel[themeas, thesubj]}"
+                )
+    return filesel, volumesel
 
 
 def main():
@@ -158,12 +201,18 @@ def main():
         raise
 
     datafiles = (args.datafile).split(",")
-    nummeas = len(datafiles)
+    numfiles = len(datafiles)
+    measlist = tide_io.readvecs(args.measurementlist, thedtype=str)
+
+    print(f"measurementlist shape: {measlist.shape}")
+    (nummeas, numsubjs) = measlist.shape[0], measlist.shape[1]
     if nummeas < 2:
         print(
-            "ICC requires at least two measurements per subject - specify at least two datafiles."
+            "ICC requires at least two measurements per subject - specify at least two measurements."
         )
         sys.exit()
+
+    filesel, volumesel = parsemeasurementlist(measlist, numfiles, debug=args.debug)
 
     # check the data headers first
     print("checking headers")
@@ -181,17 +230,25 @@ def main():
     xdim, ydim, slicethickness, tr = sizelist[0]
 
     # now read in the data
-    print("reading in data arrays")
+    print("reading in data files")
     datafile_data = np.zeros((xsize, ysize, numslices, numsubjs * nummeas), dtype=float)
-    for i in range(nummeas):
-        print(f"reading measurement {i + 1}")
+    for thisfile in range(numfiles):
+        print(f"reading datafile {thisfile + 1}")
         (
             _,
-            datafile_data[:, :, :, i::nummeas],
+            inputfile_data,
             datafile_hdr,
             _,
             _,
-        ) = tide_io.readfromnifti(datafiles[i])
+        ) = tide_io.readfromnifti(datafiles[thisfile])
+        thisfilelocs = np.where(filesel == thisfile)
+        for i in range(len(thisfilelocs[0])):
+            themeas = thisfilelocs[0][i]
+            thesubject = thisfilelocs[1][i]
+            datafile_data[:, :, :, thesubject * nummeas + themeas] = inputfile_data[
+                :, :, :, thesubject
+            ].copy()
+            print(f"copying meas = {thisfilelocs[0][i]}, subject = {thisfilelocs[1][i]}")
     print("done reading in data")
 
     # smooth the data
