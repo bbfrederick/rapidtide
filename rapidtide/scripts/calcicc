@@ -248,8 +248,10 @@ def main():
             datafile_data[:, :, :, thesubject * nummeas + themeas] = inputfile_data[
                 :, :, :, thesubject
             ].copy()
-            print(f"copying meas = {thisfilelocs[0][i]}, subject = {thisfilelocs[1][i]}")
+            if args.debug:
+                print(f"copying meas = {thisfilelocs[0][i]}, subject = {thisfilelocs[1][i]}")
     print("done reading in data")
+    del inputfile_data
 
     # smooth the data
     if args.sigma > 0.0:
