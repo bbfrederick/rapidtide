@@ -231,6 +231,8 @@ def main():
 
     # now read in the data
     print("reading in data files")
+    if args.debug:
+        print(f"target array size is {xsize, ysize, numslices, numsubjs * nummeas}")
     datafile_data = np.zeros((xsize, ysize, numslices, numsubjs * nummeas), dtype=float)
     for thisfile in range(numfiles):
         print(f"reading datafile {thisfile + 1}")
@@ -250,7 +252,7 @@ def main():
             ].copy()
             if args.debug:
                 print(f"copying meas = {thisfilelocs[0][i]}, subject = {thisfilelocs[1][i]}")
-    print("done reading in data")
+    print(f"Done reading in data for {nummeas} measurements on {numsubjs} subjects")
     del inputfile_data
 
     # smooth the data
