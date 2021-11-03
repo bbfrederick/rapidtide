@@ -1627,7 +1627,7 @@ def readcolfromtextfile(inputfilespec):
         return inputdata[:, 0]
 
 
-def readvecs(inputfilename, colspec=None, numskip=0, debug=False):
+def readvecs(inputfilename, colspec=None, numskip=0, debug=False, thedtype=float):
     r"""
 
     Parameters
@@ -1685,9 +1685,9 @@ def readvecs(inputfilename, colspec=None, numskip=0, debug=False):
             thetokens = line.split()
             thisvec = []
             for vecnum in collist:
-                thisvec.append(np.float64(thetokens[vecnum]))
+                thisvec.append(thedtype(thetokens[vecnum]))
             inputvec.append(thisvec)
-    theoutarray = np.transpose(np.asarray(inputvec, dtype=float))
+    theoutarray = np.transpose(np.asarray(inputvec, dtype=thedtype))
     return theoutarray
 
 
