@@ -251,7 +251,9 @@ def main():
                 :, :, :, thesubject
             ].copy()
             if args.debug:
-                print(f"copying meas = {thisfilelocs[0][i]}, subject = {thisfilelocs[1][i]}")
+                print(
+                    f"copying meas = {themeas}, subject = {thesubject} to volume {thesubject * nummeas + themeas}"
+                )
     print(f"Done reading in data for {nummeas} measurements on {numsubjs} subjects")
     del inputfile_data
 
