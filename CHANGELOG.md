@@ -1,5 +1,12 @@
 # Release history
 
+## Version 2.1.1 (11/4/21)
+* (spatialmi, calcicc) Major improvements in performance, stability, and flexibility.
+* (showtc) Added support for files with large star time offsets.
+* (showxy) Some appearance tweaks.
+* (niftidecomp) Improved mask generation.
+* (variabilityizer) New progam to transform fMRI datasets to variability measures.
+
 ## Version 2.1.0 (9/21/21)
 * (spatialmi) Added new program to calculate local mutual information between 3D images.
 * (calcicc) Tool to calculate ICC(3,1) - quickly - for a set of 3D images.
