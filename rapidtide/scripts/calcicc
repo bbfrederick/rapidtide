@@ -204,9 +204,14 @@ def parsemeasurementlist(measlist, numfiles, debug=False):
     return filesel, volumesel
 
 
-def makdcommandlinelist(arglist):
+def makdcommandlinelist(arglist, starttime, endtime, extra=None):
     # get the processing date
-    dateline = "# Processed on " + time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.localtime())
+    dateline = (
+        "# Processed on "
+        + time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.localtime(starttime))
+        + "."
+    )
+    timeline = f"# Processing took {endtime - starttime:.3f} seconds."
 
     # diagnostic information about version
     (
@@ -230,7 +235,10 @@ def makdcommandlinelist(arglist):
     # and the actual command issued
     commandline = " ".join(arglist)
 
-    return [dateline, nodeline, commandline]
+    if extra is not None:
+        return [dateline, timeline, nodeline, "# " + extra, commandline]
+    else:
+        return [dateline, timeline, nodeline, commandline]
 
 
 def main():
@@ -240,7 +248,7 @@ def main():
         _get_parser().print_help()
         raise
 
-    tide_io.writevec(makdcommandlinelist(sys.argv), args.outputroot + "_commandline.txt")
+    runstarttime = time.time()
 
     datafiles = (args.datafile).split(",")
     numfiles = len(datafiles)
@@ -370,7 +378,7 @@ def main():
 
     print("calculating ICC")
     reportstep = 100
-    starttime = time.time()
+    iccstarttime = time.time()
     for voxel in range(numvalid):
         if not args.deepdebug:
             if voxel % reportstep == 0 or voxel == numvalid - 1:
@@ -397,13 +405,12 @@ def main():
             dfc,
             dfe,
         ) = fast_ICC_rep_anova(Y, nocache=args.nocache)
-    duration = time.time() - starttime
+    iccduration = time.time() - iccstarttime
 
     print(f"\ndfc: {dfc}, dfe: {dfe}")
 
-    print(
-        f"ICC calculation time: {1000.0 * duration / numvalid:.3f} ms per voxel.  nocache={args.nocache}"
-    )
+    extraline = f"ICC calculation time: {1000.0 * iccduration / numvalid:.3f} ms per voxel.  nocache={args.nocache}"
+    print(extraline)
 
     outarray_in_vox = mask_in_vox * 0.0
 
@@ -429,6 +436,10 @@ def main():
         theheader,
         f"{args.outputroot}_session_effect_F",
     )
+
+    runendtime = time.time()
+    thecommandfilelines = makdcommandlinelist(sys.argv, runstarttime, runendtime, extra=extraline)
+    tide_io.writevec(thecommandfilelines, args.outputroot + "_commandline.txt")
 
 
 if __name__ == "__main__":
