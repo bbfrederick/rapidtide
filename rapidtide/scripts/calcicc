@@ -3,6 +3,7 @@ import argparse
 import copy
 import sys
 import time
+import platform
 
 import numpy as np
 from scipy.linalg import pinv
@@ -203,6 +204,35 @@ def parsemeasurementlist(measlist, numfiles, debug=False):
     return filesel, volumesel
 
 
+def makdcommandlinelist(arglist):
+    # get the processing date
+    dateline = "# Processed on " + time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.localtime())
+
+    # diagnostic information about version
+    (
+        release_version,
+        dummy,
+        git_date,
+        dummy,
+    ) = tide_util.version()
+
+    nodeline = "# " + " ".join(
+        [
+            "Using",
+            platform.node(),
+            "(",
+            release_version + ",",
+            git_date,
+            ")",
+        ]
+    )
+
+    # and the actual command issued
+    commandline = " ".join(arglist)
+
+    return [dateline, nodeline, commandline]
+
+
 def main():
     try:
         args = _get_parser().parse_args()
@@ -210,8 +240,7 @@ def main():
         _get_parser().print_help()
         raise
 
-    args.commandline = " ".join(sys.argv)
-    tide_io.writevec([args.commandline], args.outputroot + "_commandline.txt")
+    tide_io.writevec(makdcommandlinelist(sys.argv), args.outputroot + "_commandline.txt")
 
     datafiles = (args.datafile).split(",")
     numfiles = len(datafiles)
