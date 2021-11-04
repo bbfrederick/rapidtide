@@ -210,6 +210,9 @@ def main():
         _get_parser().print_help()
         raise
 
+    args.commandline = " ".join(sys.argv)
+    tide_io.writevec([args.commandline], args.outputroot + "_commandline.txt")
+
     datafiles = (args.datafile).split(",")
     numfiles = len(datafiles)
     measlist = tide_io.readvecs(args.measurementlist, thedtype=str)
