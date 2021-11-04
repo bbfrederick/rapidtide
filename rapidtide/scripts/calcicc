@@ -151,6 +151,13 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--demean",
+        dest="demean",
+        action="store_true",
+        help=("Subtract the mean value from each map prior to ICC calculation."),
+        default=False,
+    )
+    parser.add_argument(
         "--nocache",
         dest="nocache",
         action="store_true",
@@ -354,27 +361,19 @@ def main():
 
     # remove median from each map, if requested
     if args.demedian:
-        mediandiffs = np.zeros((numsubjs, nummeas), dtype=np.float64)
-        print("removing median difference values")
+        print("removing median map values")
         for thesubj in range(numsubjs):
-            for themeas in range(1, nummeas):
-                mediandiffs[thesubj, themeas - 1] = np.median(
-                    validinvms[:, thesubj, themeas] - validinvms[:, thesubj, 0]
-                )
-            validinvms[:, thesubj, themeas] -= mediandiffs[thesubj, themeas - 1]
+            for themeas in range(0, nummeas):
+                validinvms[:, thesubj, themeas] -= np.median(validinvms[:, thesubj, themeas])
         print("done removing median values")
 
-        # write out results
-        print("writing median corrected data")
-        tide_io.writenpvecs(mediandiffs, f"{args.outputroot}_mediandiffs.txt")
-        outarray_in_voxacq = data_in_voxacq * 0.0
-        outarray_in_voxacq[validvoxels, :] = valid_in_voxacq[:, :]
-        # tide_io.savetonifti(
-        #    outarray_in_voxacq.reshape(xsize, ysize, numslices, numsubjs * nummeas),
-        #    datafile_hdr,
-        #    f"{args.outputroot}_demediandiffed",
-        # )
-        print("done writing median corrected data")
+    # remove mean from each map, if requested
+    if args.demean:
+        print("removing mean map values")
+        for thesubj in range(numsubjs):
+            for themeas in range(0, nummeas):
+                validinvms[:, thesubj, themeas] -= np.mean(validinvms[:, thesubj, themeas])
+        print("done removing median values")
 
     print("calculating ICC")
     reportstep = 100
