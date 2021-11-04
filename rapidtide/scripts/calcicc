@@ -162,6 +162,13 @@ def _get_parser():
         help=("Print out additional debugging information."),
         default=False,
     )
+    parser.add_argument(
+        "--deepdebug",
+        dest="deepdebug",
+        action="store_true",
+        help=("Print out insane additional debugging information."),
+        default=False,
+    )
     return parser
 
 
@@ -330,15 +337,20 @@ def main():
     reportstep = 100
     starttime = time.time()
     for voxel in range(numvalid):
-        if voxel % reportstep == 0 or voxel == numvalid - 1:
-            tide_util.progressbar(
-                voxel + 1,
-                numvalid,
-                label="Percent complete",
-            )
+        if not args.deepdebug:
+            if voxel % reportstep == 0 or voxel == numvalid - 1:
+                tide_util.progressbar(
+                    voxel + 1,
+                    numvalid,
+                    label="Percent complete",
+                )
 
         # get the voxel data matrix
         Y = validinvms[voxel, :, :]
+
+        if args.deepdebug:
+            print(f"shape of Y: {Y.shape}")
+            print(f"Y: {Y}")
 
         # calculate ICC(3,1)
         (
