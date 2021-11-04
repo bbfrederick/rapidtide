@@ -45,6 +45,9 @@ def fast_ICC_rep_anova(Y, nocache=False):
 
     if not icc_inited:
         [nb_subjects, nb_conditions] = Y.shape
+        print(
+            f"fast_ICC_rep_anova inited with nb_subjects = {nb_subjects}, nb_conditions = {nb_conditions}"
+        )
         current_Y_shape = Y.shape
         dfc = nb_conditions - 1
         dfe = (nb_subjects - 1) * dfc
@@ -254,12 +257,12 @@ def main():
         for i in range(len(thisfilelocs[0])):
             themeas = thisfilelocs[0][i]
             thesubject = thisfilelocs[1][i]
-            datafile_data[:, :, :, thesubject * nummeas + themeas] = inputfile_data[
-                :, :, :, thesubject
-            ].copy()
+            datafile_data[:, :, :, thesubject * nummeas + themeas] = np.nan_to_num(
+                inputfile_data[:, :, :, volumesel[themeas, thesubject]]
+            )
             if args.debug:
                 print(
-                    f"copying meas = {themeas}, subject = {thesubject} to volume {thesubject * nummeas + themeas}"
+                    f"copying file:{thisfile}, volume:{volumesel[themeas, thesubject]} (meas:{themeas}, subject:{thesubject}) to volume {thesubject * nummeas + themeas}"
                 )
     print(f"Done reading in data for {nummeas} measurements on {numsubjs} subjects")
     del inputfile_data
@@ -300,7 +303,7 @@ def main():
     numvalid = int(len(validvoxels))
     valid_in_voxacq = data_in_voxacq[validvoxels, :]
 
-    print("reshaping to validvox by nummeas by numsubjects")
+    print("reshaping to validvox by numsubjects by nummeas")
     validinvms = valid_in_voxacq.reshape((numvalid, numsubjs, nummeas))
     print(validinvms.shape)
 
@@ -350,7 +353,8 @@ def main():
 
         if args.deepdebug:
             print(f"shape of Y: {Y.shape}")
-            print(f"Y: {Y}")
+            for thevolume in range(Y.shape[1]):
+                print(f"\tY: {Y[:, thevolume]}")
 
         # calculate ICC(3,1)
         (
