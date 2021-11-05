@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import argparse
 import copy
+import platform
 import sys
 import time
-import platform
 
 import numpy as np
 from scipy.linalg import pinv
