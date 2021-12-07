@@ -76,6 +76,14 @@ def _get_parser():
         help=("Match the resolution of TARGET"),
         default=None,
     )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Output debugging information"),
+        default=False,
+    )
+
     return parser
 
 
@@ -117,10 +125,10 @@ def main():
         numregions = np.floor(np.max(template_data)).astype(np.uint16)
         rs_template = np.reshape(template_data, numvoxels)
         templatevoxels = np.zeros((numvoxels, numregions))
-        for theregion in range(1, numregions + 1):
-            templatevoxels[:, theregion - 1] = np.where(
-                np.fabs(rs_template - theregion) <= slop, 1, 0
-            )
+        validvoxels = np.where(rs_template > 0)[0]
+        print(f"{len(validvoxels)} valid voxels")
+        for thevoxel in validvoxels:
+            templatevoxels[thevoxel, int(round(rs_template[thevoxel], 0)) - 1] = 1
 
     # now we have a 4d file, regardless of what we started with
     if args.dosplit:
@@ -149,11 +157,15 @@ def main():
             # first write out a temp file with the data
             outputvoxels = templatevoxels
             template_hdr["dim"][4] = numregions
+
+            if args.debug:
+                print(f"writing out temp file")
             tide_io.savetonifti(
                 outputvoxels.reshape((xsize, ysize, numslices, numregions)),
                 template_hdr,
                 "temppre",
             )
+
             flirtcmd = os.path.join(fsldir, "bin", "flirt")
             thecommand = []
             thecommand.append(flirtcmd)
@@ -166,7 +178,13 @@ def main():
             thecommand.append(os.path.join(fsldir, "data", "atlases", "bin", "eye.mat"))
             thecommand.append("-out")
             thecommand.append("temppost")
+            if args.debug:
+                thecommand.append("-v")
+                print(f"executing: {' '.join(thecommand)}")
             subprocess.call(thecommand)
+
+            if args.debug:
+                print(f"reading back FLIRTed file")
             (
                 template_img,
                 template_data,
@@ -202,7 +220,9 @@ def main():
                 outputvoxels[i] = np.argmax(templatevoxels[i, :]) + 1
         template_hdr["dim"][4] = 1
         tide_io.savetonifti(
-            outputvoxels.reshape((xsize, ysize, numslices)), template_hdr, args.outputtemplatename,
+            outputvoxels.reshape((xsize, ysize, numslices)),
+            template_hdr,
+            args.outputtemplatename,
         )
 
 
