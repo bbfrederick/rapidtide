@@ -154,17 +154,23 @@ def main():
         print("resampling to new resolution")
         fsldir = os.environ.get("FSLDIR")
         if fsldir is not None:
-            # first write out a temp file with the data
-            outputvoxels = templatevoxels
-            template_hdr["dim"][4] = numregions
+            for thisregion in range(numregions):
+                # first write out a temp file with the data
+                outputvoxels = templatevoxels[:, thisregion].reshape((xsize, ysize, numslices))
+                template_hdr["dim"][4] = 1
 
-            if args.debug:
-                print(f"writing out temp file")
-            tide_io.savetonifti(
-                outputvoxels.reshape((xsize, ysize, numslices, numregions)),
-                template_hdr,
-                "temppre",
-            )
+                if args.debug:
+                    print(f"writing out temp file {thisregion}")
+                """tide_io.savetonifti(
+                    outputvoxels,
+                    template_hdr,
+                    f"temppre_{str(thisregion).zfill(4)}",
+                )"""
+
+            mergecmd = os.path.join(fsldir, "bin", "fslmerge")
+            thecommand = []
+            thecommand.append(mergecmd)
+            sys.exit()
 
             flirtcmd = os.path.join(fsldir, "bin", "flirt")
             thecommand = []
