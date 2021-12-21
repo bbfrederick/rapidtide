@@ -258,13 +258,13 @@ def main():
     dimlist = []
     for thefile in datafiles:
         thedims = tide_io.readvecs(thefile).shape
-        dimlist.append(thedims.copy())
+        dimlist.append([thedims[0] + 0, thedims[1] + 0])
     for i in range(1, len(dimlist)):
         if not (dimlist[i] == dimlist[0]).all():
             print(f"data file {i + 1} does not match first file")
             sys.exit()
-    numvals = dimlist[0]
-    numsubjs = dimlist[1]
+    numvals = dimlist[0][0]
+    numsubjs = dimlist[0][1]
     print(f"numvals={numvals}, numsubjs={numsubjs}")
     sys.exit()
 
@@ -275,7 +275,7 @@ def main():
     datafile_data = np.zeros((xsize, ysize, numslices, numsubjs * nummeas), dtype=float)
     for thisfile in range(numfiles):
         print(f"reading datafile {thisfile + 1}")
-        (inputfile_data,) = tide_io.readvecs(datafiles[thisfile])
+        inputfile_data = tide_io.readvecs(datafiles[thisfile])
         thisfilelocs = np.where(filesel == thisfile)
         for i in range(len(thisfilelocs[0])):
             themeas = thisfilelocs[0][i]
@@ -290,32 +290,8 @@ def main():
     print(f"Done reading in data for {nummeas} measurements on {numsubjs} subjects")
     del inputfile_data
 
-    # smooth the data
-    if args.sigma > 0.0:
-        print("smoothing data")
-        for i in range(numsubjs * nummeas):
-            datafile_data[:, :, :, i] = tide_filt.ssmooth(
-                xdim, ydim, slicethickness, args.sigma, datafile_data[:, :, :, i]
-            )
-        print("done smoothing data")
-    if args.datamaskname is not None:
-        print("reading in mask array")
-        (
-            datamask_img,
-            datamask_data,
-            datamask_hdr,
-            datamaskdims,
-            datamasksizes,
-        ) = tide_io.readfromnifti(args.datamaskname)
-        if not tide_io.checkspacematch(datafile_hdr, datamask_hdr):
-            print("Data and mask dimensions do not match - exiting.")
-            sys.exit()
-        print("done reading in mask array")
-    else:
-        datamask_data = datafile_data[:, :, :, 0] * 0.0 + 1.0
-
     # now reformat from x, y, z, time to voxelnumber, measurement, subject
-    numvoxels = int(xsize) * int(ysize) * int(numslices)
+    numvoxels = int(numvals)
 
     print("reshaping to voxel by (numsubjs * nummeas)")
     data_in_voxacq = datafile_data.reshape((numvoxels, numsubjs * nummeas))
