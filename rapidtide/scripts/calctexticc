@@ -266,13 +266,12 @@ def main():
     numvals = dimlist[0][0]
     numsubjs = dimlist[0][1]
     print(f"numvals={numvals}, numsubjs={numsubjs}")
-    sys.exit()
 
     # now read in the data
     print("reading in data files")
     if args.debug:
-        print(f"target array size is {xsize, ysize, numslices, numsubjs * nummeas}")
-    datafile_data = np.zeros((xsize, ysize, numslices, numsubjs * nummeas), dtype=float)
+        print(f"target array size is {numvals, numsubjs * nummeas}")
+    datafile_data = np.zeros((numvals, numsubjs * nummeas), dtype=float)
     for thisfile in range(numfiles):
         print(f"reading datafile {thisfile + 1}")
         inputfile_data = tide_io.readvecs(datafiles[thisfile])
@@ -280,8 +279,8 @@ def main():
         for i in range(len(thisfilelocs[0])):
             themeas = thisfilelocs[0][i]
             thesubject = thisfilelocs[1][i]
-            datafile_data[:, :, :, thesubject * nummeas + themeas] = np.nan_to_num(
-                inputfile_data[:, :, :, volumesel[themeas, thesubject]]
+            datafile_data[:, thesubject * nummeas + themeas] = np.nan_to_num(
+                inputfile_data[:, volumesel[themeas, thesubject]]
             )
             if args.debug:
                 print(
@@ -290,15 +289,14 @@ def main():
     print(f"Done reading in data for {nummeas} measurements on {numsubjs} subjects")
     del inputfile_data
 
-    # now reformat from x, y, z, time to voxelnumber, measurement, subject
+    # now reformat to voxelnumber, measurement, subject
     numvoxels = int(numvals)
 
     print("reshaping to voxel by (numsubjs * nummeas)")
     data_in_voxacq = datafile_data.reshape((numvoxels, numsubjs * nummeas))
-    mask_in_vox = datamask_data.reshape((numvoxels))
 
     print("finding valid voxels")
-    validvoxels = np.where(mask_in_vox > 0)[0]
+    validvoxels = range(numvoxels)
     numvalid = int(len(validvoxels))
     valid_in_voxacq = data_in_voxacq[validvoxels, :]
 
