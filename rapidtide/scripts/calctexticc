@@ -290,24 +290,21 @@ def main():
     del inputfile_data
 
     # now reformat to voxelnumber, measurement, subject
-    numvoxels = int(numvals)
-
     print("reshaping to voxel by (numsubjs * nummeas)")
-    data_in_voxacq = datafile_data.reshape((numvoxels, numsubjs * nummeas))
+    data_in_voxacq = datafile_data.reshape((numvals, numsubjs * nummeas))
 
     print("finding valid voxels")
-    validvoxels = range(numvoxels)
-    numvalid = int(len(validvoxels))
+    validvoxels = range(numvals)
     valid_in_voxacq = data_in_voxacq[validvoxels, :]
 
     print("reshaping to validvox by numsubjects by nummeas")
-    validinvms = valid_in_voxacq.reshape((numvalid, numsubjs, nummeas))
+    validinvms = valid_in_voxacq.reshape((numvals, numsubjs, nummeas))
     print(validinvms.shape)
 
-    ICC_in_valid = np.zeros((numvalid), dtype=float)
-    r_var_in_valid = np.zeros((numvalid), dtype=float)
-    e_var_in_valid = np.zeros((numvalid), dtype=float)
-    session_effect_F_in_valid = np.zeros((numvalid), dtype=float)
+    ICC_in_valid = np.zeros((numvals), dtype=float)
+    r_var_in_valid = np.zeros((numvals), dtype=float)
+    e_var_in_valid = np.zeros((numvals), dtype=float)
+    session_effect_F_in_valid = np.zeros((numvals), dtype=float)
 
     # remove median from each map, if requested
     if args.demedian:
@@ -326,17 +323,9 @@ def main():
         print("done removing median values")
 
     print("calculating ICC")
-    reportstep = 100
+    reportstep = 1
     iccstarttime = time.time()
-    for voxel in range(numvalid):
-        if not args.deepdebug:
-            if voxel % reportstep == 0 or voxel == numvalid - 1:
-                tide_util.progressbar(
-                    voxel + 1,
-                    numvalid,
-                    label="Percent complete",
-                )
-
+    for voxel in range(numvals):
         # get the voxel data matrix
         Y = validinvms[voxel, :, :]
 
@@ -358,32 +347,21 @@ def main():
 
     print(f"\ndfc: {dfc}, dfe: {dfe}")
 
-    extraline = f"ICC calculation time: {1000.0 * iccduration / numvalid:.3f} ms per voxel.  nocache={args.nocache}"
+    extraline = f"ICC calculation time: {1000.0 * iccduration / numvals:.3f} ms per voxel.  nocache={args.nocache}"
     print(extraline)
 
-    outarray_in_vox = mask_in_vox * 0.0
-
-    theheader = copy.deepcopy(datafile_hdr)
-    theheader["dim"][0] = 3
-    theheader["dim"][4] = 1
+    outarray_in_vox = np.zeros((numvals), dtype=float)
 
     outarray_in_vox[validvoxels] = ICC_in_valid[:]
-    tide_io.savetonifti(
-        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{args.outputroot}_ICC"
-    )
+    tide_io.writenpvecs(outarray_in_vox, f"{args.outputroot}_ICC.txt")
     outarray_in_vox[validvoxels] = r_var_in_valid[:]
-    tide_io.savetonifti(
-        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{args.outputroot}_r_var"
-    )
+    tide_io.writenpvecs(outarray_in_vox, f"{args.outputroot}_r_var.txt")
     outarray_in_vox[validvoxels] = e_var_in_valid[:]
-    tide_io.savetonifti(
-        outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{args.outputroot}_e_var"
-    )
+    tide_io.writenpvecs(outarray_in_vox, f"{args.outputroot}_e_var.txt")
     outarray_in_vox[validvoxels] = session_effect_F_in_valid[:]
-    tide_io.savetonifti(
-        outarray_in_vox.reshape(xsize, ysize, numslices),
-        theheader,
-        f"{args.outputroot}_session_effect_F",
+    tide_io.writenpvecs(
+        outarray_in_vox,
+        f"{args.outputroot}_session_effect_F.txt",
     )
 
     runendtime = time.time()
