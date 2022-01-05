@@ -202,6 +202,7 @@ setup(
             "m2r",
             "numpydoc",
             "recommonmark",
+            "mistune==0.8.4",
         ],
         "tests": [
             "codecov",
