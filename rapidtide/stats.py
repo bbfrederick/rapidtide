@@ -313,31 +313,89 @@ def kurtosisstats(timecourse):
     return kurtosis(timecourse), testres[0], testres[1]
 
 
-def icc(set1, set2, bysubject=True, demean=False):
-    theshape = set1.shape
-    if set2.shape != set1.shape:
-        raise ValueError("Incompatible array sizes")
-    if demean:
-        if bysubject:
-            set1mean = np.mean(set1, axis=0)
-            set2mean = np.mean(set2, axis=0)
-            for i in range(theshape[0]):
-                set1[i, :] -= set1mean[i]
-                set2[i, :] -= set2mean[i]
-        else:
-            set1mean = np.mean(set1, axis=1)
-            set2mean = np.mean(set2, axis=1)
-            for i in range(theshape[1]):
-                set1[:, i] -= set1mean[i]
-                set2[:, i] -= set2mean[i]
+def fast_ICC_rep_anova(Y, nocache=False, debug=False):
+    """
+    the data Y are entered as a 'table' ie subjects are in rows and repeated
+    measures in columns
+    One Sample Repeated measure ANOVA
+    Y = XB + E with X = [FaTor / Subjects]
 
-    nb_conditions = 2
-    nb_subjects = theshape[1]
-    dfc = nb_conditions - 1
-    dfe = (nb_subjects - 1) * dfc
-    dfr = nb_subjects - 1
+    This is a hacked up (but fully compatible) version of ICC_rep_anova
+    from nipype that caches some very expensive operations that depend
+    only on the input array shape - if you're going to run the routine
+    multiple times (like, on every voxel of an image), this gives you a
+    HUGE speed boost for large input arrays.  If you change the dimensions
+    of Y, it will reinitialize automatically.  Set nocache to True to get
+    the original, much slower behavior.  No, actually, don't do that. That would
+    be silly.
+    """
+    global icc_inited
+    global current_Y_shape
+    global dfc, dfe, dfr
+    global nb_subjects, nb_conditions
+    global x, x0, X
+    global centerbit
 
-    thediffs = set2 - set1
+    try:
+        current_Y_shape
+        if nocache or (current_Y_shape != Y.shape):
+            icc_inited = False
+    except NameError:
+        icc_inited = False
+
+    if not icc_inited:
+        [nb_subjects, nb_conditions] = Y.shape
+        if debug:
+            print(
+                f"fast_ICC_rep_anova inited with nb_subjects = {nb_subjects}, nb_conditions = {nb_conditions}"
+            )
+        current_Y_shape = Y.shape
+        dfc = nb_conditions - 1
+        dfe = (nb_subjects - 1) * dfc
+        dfr = nb_subjects - 1
+
+    # Compute the repeated measure effect
+    # ------------------------------------
+
+    # Sum Square Total
+    mean_Y = np.mean(Y)
+    SST = ((Y - mean_Y) ** 2).sum()
+
+    # create the design matrix for the different levels
+    if not icc_inited:
+        x = np.kron(np.eye(nb_conditions), np.ones((nb_subjects, 1)))  # sessions
+        x0 = np.tile(np.eye(nb_subjects), (nb_conditions, 1))  # subjects
+        X = np.hstack([x, x0])
+        centerbit = np.dot(np.dot(X, np.linalg.pinv(np.dot(X.T, X))), X.T)
+
+    # Sum Square Error
+    predicted_Y = np.dot(centerbit, Y.flatten("F"))
+    residuals = Y.flatten("F") - predicted_Y
+    SSE = (residuals ** 2).sum()
+
+    residuals.shape = Y.shape
+
+    MSE = SSE / dfe
+
+    # Sum square session effect - between columns/sessions
+    SSC = ((np.mean(Y, 0) - mean_Y) ** 2).sum() * nb_subjects
+    MSC = SSC / dfc / nb_subjects
+
+    session_effect_F = MSC / MSE
+
+    # Sum Square subject effect - between rows/subjects
+    SSR = SST - SSC - SSE
+    MSR = SSR / dfr
+
+    # ICC(3,1) = (mean square subjeT - mean square error) / (mean square subjeT + (k-1)*-mean square error)
+    ICC = np.nan_to_num((MSR - MSE) / (MSR + dfc * MSE))
+
+    e_var = MSE  # variance of error
+    r_var = (MSR - MSE) / nb_conditions  # variance between subjects
+
+    icc_inited = True
+
+    return ICC, r_var, e_var, session_effect_F, dfc, dfe
 
 
 # --------------------------- histogram functions -------------------------------------------------

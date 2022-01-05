@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import copy
 import platform
 import sys
 import time
@@ -8,94 +7,10 @@ import time
 import numpy as np
 from scipy.linalg import pinv
 
-import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
+import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-from rapidtide.workflows.parser_funcs import is_float, is_valid_file
-
-
-def fast_ICC_rep_anova(Y, nocache=False):
-    """
-    the data Y are entered as a 'table' ie subjects are in rows and repeated
-    measures in columns
-    One Sample Repeated measure ANOVA
-    Y = XB + E with X = [FaTor / Subjects]
-
-    This is a hacked up (but fully compatible) version of ICC_rep_anova
-    from nipype that caches some very expensive operations that depend
-    only on the input array shape - if you're going to run the routine
-    multiple times (like, on every voxel of an image), this gives you a
-    HUGE speed boost for large input arrays.  If you change the dimensions
-    of Y, it will reinitialize automatically.  Set nocache to True to get
-    the original, much slower behavior.  No, actually, don't do that. That would
-    be silly.
-    """
-    global icc_inited
-    global current_Y_shape
-    global dfc, dfe, dfr
-    global nb_subjects, nb_conditions
-    global x, x0, X
-    global centerbit
-
-    try:
-        current_Y_shape
-        if nocache or (current_Y_shape != Y.shape):
-            icc_inited = False
-    except NameError:
-        icc_inited = False
-
-    if not icc_inited:
-        [nb_subjects, nb_conditions] = Y.shape
-        print(
-            f"fast_ICC_rep_anova inited with nb_subjects = {nb_subjects}, nb_conditions = {nb_conditions}"
-        )
-        current_Y_shape = Y.shape
-        dfc = nb_conditions - 1
-        dfe = (nb_subjects - 1) * dfc
-        dfr = nb_subjects - 1
-
-    # Compute the repeated measure effect
-    # ------------------------------------
-
-    # Sum Square Total
-    mean_Y = np.mean(Y)
-    SST = ((Y - mean_Y) ** 2).sum()
-
-    # create the design matrix for the different levels
-    if not icc_inited:
-        x = np.kron(np.eye(nb_conditions), np.ones((nb_subjects, 1)))  # sessions
-        x0 = np.tile(np.eye(nb_subjects), (nb_conditions, 1))  # subjects
-        X = np.hstack([x, x0])
-        centerbit = np.dot(np.dot(X, pinv(np.dot(X.T, X))), X.T)
-
-    # Sum Square Error
-    predicted_Y = np.dot(centerbit, Y.flatten("F"))
-    residuals = Y.flatten("F") - predicted_Y
-    SSE = (residuals ** 2).sum()
-
-    residuals.shape = Y.shape
-
-    MSE = SSE / dfe
-
-    # Sum square session effect - between columns/sessions
-    SSC = ((np.mean(Y, 0) - mean_Y) ** 2).sum() * nb_subjects
-    MSC = SSC / dfc / nb_subjects
-
-    session_effect_F = MSC / MSE
-
-    # Sum Square subject effect - between rows/subjects
-    SSR = SST - SSC - SSE
-    MSR = SSR / dfr
-
-    # ICC(3,1) = (mean square subjeT - mean square error) / (mean square subjeT + (k-1)*-mean square error)
-    ICC = np.nan_to_num((MSR - MSE) / (MSR + dfc * MSE))
-
-    e_var = MSE  # variance of error
-    r_var = (MSR - MSE) / nb_conditions  # variance between subjects
-
-    icc_inited = True
-
-    return ICC, r_var, e_var, session_effect_F, dfc, dfe
+from rapidtide.workflows.parser_funcs import is_valid_file
 
 
 def _get_parser():
@@ -110,7 +25,7 @@ def _get_parser():
         "datafile",
         type=str,
         help=(
-            "A comma separated list of 2 or more 2 dimensional text files (a value dimension (columns) and a "
+            "A comma separated list of 1 or more 2 dimensional text files (a value dimension (columns) and a "
             "subject dimension(rows)).  Each file is a measurement.  The subject dimension in each file must be the same."
         ),
     )
@@ -119,7 +34,7 @@ def _get_parser():
         type=lambda x: is_valid_file(parser, x),
         help=(
             "A multicolumn tab separated value file of integers specifying which images to compare.  Each row is a "
-            "subject, each column is a measurement.  The first image in the nifti file is image 0."
+            "subject, each column is a measurement.  Subject and measurement numbering starts at 0."
         ),
     )
     parser.add_argument("outputroot", type=str, help="The root name for the output nifti files.")
@@ -342,7 +257,7 @@ def main():
             session_effect_F_in_valid[voxel],
             dfc,
             dfe,
-        ) = fast_ICC_rep_anova(Y, nocache=args.nocache)
+        ) = tide_stats.fast_ICC_rep_anova(Y, nocache=args.nocache, debug=args.debug)
     iccduration = time.time() - iccstarttime
 
     print(f"\ndfc: {dfc}, dfe: {dfe}")
