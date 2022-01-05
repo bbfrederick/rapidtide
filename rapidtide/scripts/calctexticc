@@ -25,7 +25,7 @@ def _get_parser():
         "datafile",
         type=str,
         help=(
-            "A comma separated list of 1 or more 2 dimensional text files (a value dimension (columns) and a "
+            "A comma separated list of 1 or more 2 dimensional text files (a measurement dimension (columns) and a "
             "subject dimension(rows)).  Each file is a measurement.  The subject dimension in each file must be the same."
         ),
     )
@@ -33,8 +33,8 @@ def _get_parser():
         "measurementlist",
         type=lambda x: is_valid_file(parser, x),
         help=(
-            "A multicolumn tab separated value file of integers specifying which images to compare.  Each row is a "
-            "subject, each column is a measurement.  Subject and measurement numbering starts at 0."
+            "A multicolumn tab separated value file of integers specifying which measurements to include.  "
+            "Each row is a subject, each column is a measurement.  Subject and measurement numbering starts at 0."
         ),
     )
     parser.add_argument("outputroot", type=str, help="The root name for the output nifti files.")
