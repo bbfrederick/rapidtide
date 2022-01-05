@@ -16,7 +16,7 @@ from rapidtide.workflows.parser_funcs import is_valid_file
 def _get_parser():
     parser = argparse.ArgumentParser(
         prog="calcicc",
-        description="Calculate per-voxel ICC(3,1) on a set of nifti images.",
+        description="Calculate per-column ICC(3,1) on a set of text files.",
         usage="%(prog)s datafile pairlist outputroot [options]",
     )
 
@@ -25,19 +25,27 @@ def _get_parser():
         "datafile",
         type=str,
         help=(
-            "A comma separated list of 1 or more 2 dimensional text files (a measurement dimension (columns) and a "
-            "subject dimension(rows)).  Each file is a measurement.  The subject dimension in each file must be the same."
+            "A comma separated list of 1 or more 2 dimensional text files.  Each column is a distinct quantity.  Each"
+            "line in the file is a measurement on a subject."
         ),
     )
     parser.add_argument(
         "measurementlist",
         type=lambda x: is_valid_file(parser, x),
         help=(
-            "A multicolumn tab separated value file of integers specifying which measurements to include.  "
-            "Each row is a subject, each column is a measurement.  Subject and measurement numbering starts at 0."
+            "A multicolumn value file of integers specifying how to group measurements.  "
+            "Each row is a subject, each column specifies the line numbers of the repeated measurement.  "
+            "Subject and measurement numbering starts at 0."
         ),
     )
-    parser.add_argument("outputroot", type=str, help="The root name for the output nifti files.")
+    parser.add_argument(
+        "outputroot",
+        type=str,
+        help=(
+            "The root name for the output text files.  Each distinct quantity "
+            "will be in a separate row corresponding to the input file(s) columns."
+        ),
+    )
 
     # Optional arguments
     parser.add_argument(
@@ -80,7 +88,8 @@ def _get_parser():
     return parser
 
 
-def parsemeasurementlist(measlist, numfiles, debug=False):
+def parsetextmeasurementlist(measlist, numfiles, debug=False):
+    # how do we get the number of subjects?
     nummeas, numsubjs = measlist.shape[0], measlist.shape[1]
     filesel = np.zeros((nummeas, numsubjs), dtype=int)
     volumesel = np.zeros((nummeas, numsubjs), dtype=int)
@@ -160,13 +169,13 @@ def main():
 
     print(f"measurementlist shape: {measlist.shape}")
     (nummeas, numsubjs) = measlist.shape[0], measlist.shape[1]
-    if nummeas < 2:
-        print(
-            "ICC requires at least two measurements per subject - specify at least two measurements."
-        )
-        sys.exit()
 
-    filesel, volumesel = parsemeasurementlist(measlist, numfiles, debug=args.debug)
+    print(f"numsubjs: {numsubjs}, nummeas: {nummeas}")
+
+    filesel, volumesel = parsetextmeasurementlist(measlist, numfiles, debug=args.debug)
+    if args.debug:
+        for i in range(len(filesel)):
+            print(filesel[i], volumesel[i])
 
     # check the data headers first
     print("checking headers")
@@ -174,12 +183,9 @@ def main():
     for thefile in datafiles:
         thedims = tide_io.readvecs(thefile).shape
         dimlist.append([thedims[0] + 0, thedims[1] + 0])
-    for i in range(1, len(dimlist)):
-        if not (dimlist[i] == dimlist[0]).all():
-            print(f"data file {i + 1} does not match first file")
-            sys.exit()
+        if args.debug:
+            print(f"dimensions for file {thefile}: {thedims[1]} rows, {thedims[0]} columns")
     numvals = dimlist[0][0]
-    numsubjs = dimlist[0][1]
     print(f"numvals={numvals}, numsubjs={numsubjs}")
 
     # now read in the data
