@@ -114,6 +114,34 @@ jobs:
             source activate py39_env
             py.test --ignore=rapidtide/candidatetests rapidtide
 
+  test_py310:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            conda create -n py310_env python=3.10 -yq
+            pip install --upgrade "setuptools>=54"
+            pip install --upgrade pip
+            pip install --upgrade distlib
+            source activate py310_env
+            pip install -e .[tests,doc]
+            python setup.py install --user
+      - run:
+          name: Run tests
+          command:  |
+            apt-get update
+            apt-get install -yqq make
+            source activate py310_env
+            py.test --ignore=rapidtide/candidatetests rapidtide
+
   build_docs:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -175,6 +203,8 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
+      - test_py39
+      - test_py310
       - test_py36
       - build_py37
       - test_py38

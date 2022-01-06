@@ -70,7 +70,7 @@ RUN conda update -n base -c defaults conda
 
 
 # Installing precomputed python packages
-RUN mamba install -y python=3.9.6 \
+RUN mamba install -y python=3.9 \
                      pip \
                      scipy \
                      numpy \
