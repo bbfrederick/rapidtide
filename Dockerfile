@@ -58,14 +58,15 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
     PYTHONNOUSERSITE=1
 
 
-# Update to the newest version of conda
+# add the conda-forge channel
 RUN conda config --add channels conda-forge
-RUN conda update -n base -c defaults conda
-
 
 # Install mamba so we can install packages before the heat death of the universe
 RUN conda install -y mamba
 RUN conda clean --all
+
+# Update to the newest version of conda
+RUN conda update -n base -c defaults conda
 
 
 # Installing precomputed python packages
