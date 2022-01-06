@@ -321,6 +321,7 @@ def niftidecomp_workflow(
             print("writing out the coefficients")
             coefficients = np.transpose(thetransform)
             tide_io.writenpvecs(coefficients, outputroot + "_coefficients.txt")
+            tide_io.writenpvecs(coefficients * thevar[i], outputroot + "_denormcoefficients.txt")
 
             # unnormalize the dimensionality reduced data
             for i in range(timepoints):
