@@ -62,11 +62,14 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
 RUN conda config --add channels conda-forge
 
 # Install mamba so we can install packages before the heat death of the universe
-RUN conda install -y mamba conda-build
+RUN conda install -y mamba
 RUN conda clean --all
 
+# install conda-build
+RUN conda install -y conda-build
+
 # Update to the newest version of conda
-RUN conda update -n base -c defaults conda
+RUN conda update -n base -c defaults conda conda-build
 
 
 # Installing precomputed python packages
