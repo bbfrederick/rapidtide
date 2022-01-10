@@ -62,7 +62,7 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
 RUN conda config --add channels conda-forge
 
 # Install mamba so we can install packages before the heat death of the universe
-RUN conda install -y mamba
+RUN conda install -y mamba conda-build
 RUN conda clean --all
 
 # Update to the newest version of conda
@@ -92,7 +92,7 @@ RUN mamba install -y python=3.9 \
                      numba; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
     chmod +x /usr/local/miniconda/bin/*; sync && \
-    conda build purge-all; sync && \
+    conda-build purge-all; sync && \
     conda clean -tipsy && sync
 RUN df -h
 
