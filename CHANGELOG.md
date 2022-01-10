@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.1.2 (1/10/22)
+* (calcicc, calctexticc) Some fixes to indexing.
+
 ## Version 2.1.1 (11/4/21)
 * (spatialmi, calcicc) Major improvements in performance, stability, and flexibility.
 * (showtc) Added support for files with large star time offsets.
