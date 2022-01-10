@@ -100,9 +100,9 @@ jobs:
           name: Generate environment
           command:  |
             conda create -n py39_env python=3.9 -yq
-            #pip install --upgrade "setuptools>=54"
-            #pip install --upgrade pip
-            #pip install --upgrade distlib
+            pip install --upgrade "setuptools>=54"
+            pip install --upgrade pip
+            pip install --upgrade distlib
             source activate py39_env
             pip install -e .[tests,doc]
             python setup.py install --user
@@ -128,9 +128,9 @@ jobs:
           name: Generate environment
           command:  |
             conda create -n py310_env python=3.10 -yq
-            #pip install --upgrade "setuptools>=54"
-            #pip install --upgrade pip
-            #pip install --upgrade distlib
+            pip install --upgrade "setuptools>=54"
+            pip install --upgrade pip
+            pip install --upgrade distlib
             source activate py310_env
             pip install -e .[tests,doc]
             python setup.py install --user
