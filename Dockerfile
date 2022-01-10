@@ -37,6 +37,7 @@ RUN apt-get install -y --reinstall libxcb-xinerama0
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+RUN git config --global init.defaultBranch main
 
 # Installing Neurodebian packages (FSL)
 RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> /etc/apt/sources.list.d/neurodebian.sources.list && \
