@@ -296,6 +296,10 @@ def risetime_eval(x, p):
         return p[1] * (1.0 - np.exp(-corrx / p[2]))
 
 
+def gasboxcar(data, samplerate, firstpeakstart, firstpeakend, secondpeakstart, secondpeakend, risetime=3.0, falltime=3.0):
+    return None
+
+
 def locpeak(data, samplerate, lastpeaktime, winsizeinsecs=5.0, thresh=0.75, hysteresissecs=0.4):
     """
 
