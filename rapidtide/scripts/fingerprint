@@ -70,6 +70,8 @@ def fingerprint_main(
         print("illegal atlas:", whichatlas)
         sys.exit()
 
+    if debug:
+        print(f"reading atlas file {theatlasname}")
     (
         thetemplate,
         thetemplate_data,
@@ -78,13 +80,24 @@ def fingerprint_main(
         thetemplatesizes,
     ) = tide_io.readfromnifti(thetemplatename)
     atlas, atlas_data, atlas_hdr, atlasdims, atlassizes = tide_io.readfromnifti(theatlasname)
-    atlaslabels = pd.read_csv(theatlasregionsname, delimiter="\t", header=None, names=["Region"])
-    (themap, themap_data, themap_hdr, themapdims, thetemplatesizes,) = tide_io.readfromnifti(
-        themapname
+    atlaslabelsinput = pd.read_csv(
+        theatlasregionsname, delimiter="\t", header=None, names=["Region"]
     )
+
+    if debug:
+        print(f"reading map file {themapname}")
+    (
+        themap,
+        themap_data,
+        themap_hdr,
+        themapdims,
+        thetemplatesizes,
+    ) = tide_io.readfromnifti(themapname)
     if themaskname is None:
         themask_data = None
     else:
+        if debug:
+            print(f"reading mask file {themaskname}")
         (
             themask,
             themask_data,
@@ -93,11 +106,24 @@ def fingerprint_main(
             thetemplatesizes,
         ) = tide_io.readfromnifti(themaskname)
 
+    # check for compatible dimensions
+    if not tide_io.checkspacematch(thetemplate_hdr, themap_hdr):
+        raise ValueError(f"Dimensions of {themapname} do not match the atlas dimensions - exiting")
+    if themask_data is not None:
+        if not tide_io.checkspacematch(themask_hdr, themap_hdr):
+            raise ValueError(
+                f"Dimensions of {themaskname} and {themapname} do not match - exiting"
+            )
+
     # do the fit
+    nx, ny, nz, nummaps = tide_io.parseniftidims(themapdims)
+    if debug:
+        print("starting decomposition")
     thefitmap, thecoffs, theRs = tide_fit.territorydecomp(
         themap_data,
         thetemplate_data,
         atlas_data.astype(int),
+        nummaps,
         inputmask=themask_data,
         fitorder=fitorder,
         intercept=intercept,
@@ -105,20 +131,22 @@ def fingerprint_main(
     )
 
     # present the data
-    atlaslabels["R"] = theRs
-    newcols = pd.DataFrame(np.asarray(thecoffs))
-    columnnames = []
-    if intercept:
-        startpt = 0
-    else:
-        startpt = 1
-    for i in range(startpt, fitorder + 1):
-        columnnames += str(i)
-    newcols.columns = columnnames
-    atlaslabels = pd.concat([atlaslabels, newcols], axis=1)
-    atlaslabels.to_csv(outputroot + "_fits.tsv", sep="\t")
-    if debug:
-        print(atlaslabels)
+    for whichmap in range(nummaps):
+        atlaslabels = atlaslabelsinput.copy()
+        atlaslabels["R"] = theRs[whichmap]
+        newcols = pd.DataFrame(thecoffs[whichmap, :, :])
+        columnnames = []
+        if intercept:
+            startpt = 0
+        else:
+            startpt = 1
+        for i in range(startpt, fitorder + 1):
+            columnnames += str(i)
+        newcols.columns = columnnames
+        atlaslabels = pd.concat([atlaslabels, newcols], axis=1)
+        atlaslabels.to_csv(f"{outputroot}_{str(whichmap).zfill(4)}_fits.tsv", sep="\t")
+        if debug:
+            print(atlaslabels)
 
     # save the data
     tide_io.savetonifti(thefitmap, themap_hdr, outputroot + "_fit")
@@ -169,11 +197,17 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "outputroot", help="name root for output files", action=FullPaths, type=str,
+        "outputroot",
+        help="name root for output files",
+        action=FullPaths,
+        type=str,
     )
 
     parser.add_argument(
-        "--maskname", help="mask defining voxels with valid values", type=is_file, default=None,
+        "--maskname",
+        help="mask defining voxels with valid values",
+        type=is_file,
+        default=None,
     )
 
     parser.add_argument(
@@ -185,7 +219,10 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--fitorder", help="order of polynomial fit to template\n", type=int, default=1,
+        "--fitorder",
+        help="order of polynomial fit to template (default is 1).",
+        type=int,
+        default=1,
     )
 
     parser.add_argument(
@@ -204,7 +241,9 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--debug", help="output additionnal debugging information", action="store_true",
+        "--debug",
+        help="output additionnal debugging information",
+        action="store_true",
     )
 
     args = parser.parse_args()

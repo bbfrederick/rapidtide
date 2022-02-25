@@ -296,7 +296,16 @@ def risetime_eval(x, p):
         return p[1] * (1.0 - np.exp(-corrx / p[2]))
 
 
-def gasboxcar(data, samplerate, firstpeakstart, firstpeakend, secondpeakstart, secondpeakend, risetime=3.0, falltime=3.0):
+def gasboxcar(
+    data,
+    samplerate,
+    firstpeakstart,
+    firstpeakend,
+    secondpeakstart,
+    secondpeakend,
+    risetime=3.0,
+    falltime=3.0,
+):
     return None
 
 
@@ -550,7 +559,7 @@ def findrisetimefunc(
 
 
 def territorydecomp(
-    inputmap, template, atlas, inputmask=None, intercept=True, fitorder=1, debug=False
+    inputmap, template, atlas, nummaps, inputmask=None, intercept=True, fitorder=1, debug=False
 ):
     """
 
@@ -566,27 +575,36 @@ def territorydecomp(
     -------
 
     """
-    if inputmask is None:
-        inputmask = inputmap * 0.0 + 1.0
+    if nummaps > 1:
+        if inputmask is None:
+            inputmask = inputmap[:, :, :, 0] * 0.0 + 1.0
+    else:
+        if inputmask is None:
+            inputmask = inputmap * 0.0 + 1.0
 
     tempmask = np.where(inputmask > 0.0, 1, 0)
 
     fitmap = inputmap * 0.0
 
-    thecoffs = []
-    theRs = []
-    for i in range(1, np.max(atlas) + 1):
-        if debug:
-            print("fitting territory", i)
-        maskedvoxels = np.where(atlas * tempmask == i)
-        territoryvoxels = np.where(atlas == i)
-        evs = []
-        for order in range(1, fitorder + 1):
-            evs.append(np.power(template[maskedvoxels], order))
-        thefit, R = mlregress(evs, inputmap[maskedvoxels], intercept=intercept)
-        thecoffs.append(np.asarray(thefit[0]).reshape((-1)))
-        theRs.append(R)
-        fitmap[territoryvoxels] = mlproject(thecoffs[-1], evs, intercept)
+    thecoffs = np.zeros((nummaps, np.max(atlas), fitorder + 1))
+    theRs = np.zeros((nummaps, np.max(atlas)))
+    for whichmap in range(nummaps):
+        thismap = inputmap[:, :, :, whichmap]
+        thisfit = fitmap[:, :, :, whichmap]
+        if nummaps > 1:
+            print(f"decomposing map {whichmap + 1} of {nummaps}")
+        for i in range(1, np.max(atlas) + 1):
+            if debug:
+                print("fitting territory", i)
+            maskedvoxels = np.where(atlas * tempmask == i)
+            territoryvoxels = np.where(atlas == i)
+            evs = []
+            for order in range(1, fitorder + 1):
+                evs.append(np.power(template[maskedvoxels], order))
+            thefit, R = mlregress(evs, thismap[maskedvoxels], intercept=intercept)
+            thecoffs[whichmap, i - 1, :] = np.asarray(thefit[0]).reshape((-1))
+            theRs[whichmap, i - 1] = 1.0 * R
+            thisfit[territoryvoxels] = mlproject(thecoffs[whichmap, i - 1, :], evs, intercept)
 
     return fitmap, thecoffs, theRs
 
