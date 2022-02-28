@@ -81,6 +81,13 @@ def _get_parser():
         default=1,
     )
     parser.add_argument(
+        "--usex",
+        dest="usex",
+        action="store_true",
+        help="Use x instead of (y + x)/2 in Bland-Altman plot.",
+        default=False,
+    )
+    parser.add_argument(
         "--histbins",
         action="store",
         type=int,
@@ -91,11 +98,15 @@ def _get_parser():
     return parser
 
 
-def bland_altman_plot(data1, data2, *args, **kwargs):
+def bland_altman_plot(data1, data2, usex=False, *args, **kwargs):
+    # data1 is X, data2 is Y
     data1 = np.asarray(data1)
     data2 = np.asarray(data2)
-    mean = np.mean([data1, data2], axis=0)
-    diff = data1 - data2  # Difference between data1 and data2
+    if usex:
+        mean = np.mean(data1)
+    else:
+        mean = np.mean([data1, data2], axis=0)
+    diff = data2 - data1  # Difference between data1 and data2
     md = np.mean(diff)  # Mean of the difference
     sd = np.std(diff, axis=0)  # Standard deviation of the difference
 
@@ -119,9 +130,13 @@ def main():
     input1_img, input1_data, input1_hdr, thedims1, thesizes1 = tide_io.readfromnifti(
         args.inputfilename1
     )
-    (mask1_img, mask1_data, mask1_hdr, themaskdims1, themasksizes1,) = tide_io.readfromnifti(
-        args.maskfilename1
-    )
+    (
+        mask1_img,
+        mask1_data,
+        mask1_hdr,
+        themaskdims1,
+        themasksizes1,
+    ) = tide_io.readfromnifti(args.maskfilename1)
 
     if not tide_io.checkspacedimmatch(thedims1, themaskdims1):
         print("input image 1 dimensions do not match mask")
@@ -130,9 +145,13 @@ def main():
     input2_img, input2_data, input2_hdr, thedims2, thesizes2 = tide_io.readfromnifti(
         args.inputfilename2
     )
-    (mask2_img, mask2_data, mask2_hdr, themaskdims2, themasksizes2,) = tide_io.readfromnifti(
-        args.maskfilename2
-    )
+    (
+        mask2_img,
+        mask2_data,
+        mask2_hdr,
+        themaskdims2,
+        themasksizes2,
+    ) = tide_io.readfromnifti(args.maskfilename2)
 
     if not tide_io.checkspacedimmatch(thedims2, themaskdims2):
         print("input image 2 dimensions do not match mask")
