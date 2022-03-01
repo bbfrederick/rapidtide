@@ -586,7 +586,10 @@ def territorydecomp(
 
     fitmap = inputmap * 0.0
 
-    thecoffs = np.zeros((nummaps, np.max(atlas), fitorder + 1))
+    if intercept:
+        thecoffs = np.zeros((nummaps, np.max(atlas), fitorder + 1))
+    else:
+        thecoffs = np.zeros((nummaps, np.max(atlas), fitorder))
     theRs = np.zeros((nummaps, np.max(atlas)))
     for whichmap in range(nummaps):
         thismap = inputmap[:, :, :, whichmap]
