@@ -20,8 +20,7 @@ import argparse
 import os
 import sys
 from argparse import RawTextHelpFormatter
-from os.path import expanduser
-from os.path import join as pjoin
+import copy
 
 import numpy as np
 import pandas as pd
@@ -131,10 +130,19 @@ def fingerprint_main(
     )
 
     # present the data
+    numregions = len(atlaslabelsinput)
+    if intercept:
+        numcoffs = fitorder + 1
+    else:
+        numcoffs = fitorder
+    R_array = np.zeros((numregions, nummaps), dtype="float")
+    coff_array = np.zeros((numcoffs, numregions, nummaps), dtype="float")
     for whichmap in range(nummaps):
         atlaslabels = atlaslabelsinput.copy()
+        R_array[:, whichmap] = theRs[whichmap]
         atlaslabels["R"] = theRs[whichmap]
         newcols = pd.DataFrame(thecoffs[whichmap, :, :])
+        coff_array[:, :, whichmap] = np.transpose(thecoffs[whichmap, :, :])
         columnnames = []
         if intercept:
             startpt = 0
@@ -148,12 +156,63 @@ def fingerprint_main(
         if debug:
             print(atlaslabels)
 
-    # save the data
+    # save the Rs as tsv
+    newcols = pd.DataFrame(np.transpose(R_array[:, :]))
+    newcols.columns = atlaslabelsinput["Region"]
+    newcols.to_csv(f"{outputroot}_allRs.tsv", index=False, sep="\t")
+
+    # save the fits
+    if intercept:
+        startpt = 0
+    else:
+        startpt = 1
+    for i in range(startpt, fitorder + 1):
+        newcols = pd.DataFrame(np.transpose(coff_array[i, :, :]))
+        newcols.columns = atlaslabelsinput["Region"]
+        newcols.to_csv(f"{outputroot}_fit_O{str(i)}.tsv", index=False, sep="\t")
+
+    # save the fit data
     tide_io.savetonifti(thefitmap, themap_hdr, outputroot + "_fit")
     maskmap = 0.0 * themap_data[:, :, :, 0]
     maskmap[np.where(atlas_data > 0)] = 1.0
+
+    # save the fit error
     diffmap = (themap_data - thefitmap) * maskmap[:, :, :, None]
     tide_io.savetonifti(diffmap, themap_hdr, outputroot + "_fitdiff")
+
+    # save the Rs as nifti
+    thehdr = copy.deepcopy(themap_hdr)
+    print(f"shape of R_array: {R_array.shape}")
+    print(f"thehdr before: {thehdr['dim']}")
+    thehdr["dim"][0] = 2
+    thehdr["dim"][1] = R_array.shape[0]
+    thehdr["dim"][2] = R_array.shape[1]
+    thehdr["dim"][3] = 1
+    thehdr["dim"][4] = 1
+    print(f"thehdr after: {thehdr['dim']}")
+    thehdr["pixdim"][0] = 1.0
+    thehdr["pixdim"][1] = 1.0
+    thehdr["pixdim"][2] = 1.0
+    thehdr["pixdim"][3] = 1.0
+    thehdr["pixdim"][4] = 1.0
+    tide_io.savetonifti(R_array, thehdr, outputroot + "_allRs")
+
+    # save the fits as nifti
+    thehdr = copy.deepcopy(themap_hdr)
+    print(f"shape of coff_array: {coff_array.shape}")
+    print(f"thehdr before: {thehdr['dim']}")
+    thehdr["dim"][0] = 3
+    thehdr["dim"][1] = coff_array.shape[0]
+    thehdr["dim"][2] = coff_array.shape[1]
+    thehdr["dim"][3] = coff_array.shape[2]
+    thehdr["dim"][4] = 1
+    print(f"thehdr after: {thehdr['dim']}")
+    thehdr["pixdim"][0] = 1.0
+    thehdr["pixdim"][1] = 1.0
+    thehdr["pixdim"][2] = 1.0
+    thehdr["pixdim"][3] = 1.0
+    thehdr["pixdim"][4] = 1.0
+    tide_io.savetonifti(coff_array, thehdr, outputroot + "_allcoffs")
 
 
 if __name__ == "__main__":
