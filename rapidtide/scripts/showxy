@@ -50,6 +50,7 @@ def bland_altman_plot(
     xrange=None,
     yrange=None,
     doannotate=True,
+    debug=False,
     *args,
     **kwargs,
 ):
@@ -58,10 +59,14 @@ def bland_altman_plot(
     data2 = np.asarray(data2)
     slope, intercept, r_value, p_value, std_err = linregress(data1, data2)
     if usex:
+        if debug:
+            print("using X as the X axis")
         diff_slope, diff_intercept, diff_r_value, diff_p_value, diff_std_err = linregress(
             data1, data2 - data1
         )
     else:
+        if debug:
+            print("using (Y + X)/2 as the X axis")
         diff_slope, diff_intercept, diff_r_value, diff_p_value, diff_std_err = linregress(
             (data2 + data1) / 2.0, data2 - data1
         )
@@ -344,6 +349,7 @@ def main():
                 xrange=args.xrange,
                 yrange=args.yrange,
                 doannotate=args.doannotate,
+                debug=args.debug,
             )
         else:
             if args.usepoints:
