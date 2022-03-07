@@ -64,13 +64,14 @@ def bland_altman_plot(
         diff_slope, diff_intercept, diff_r_value, diff_p_value, diff_std_err = linregress(
             data1, data2 - data1
         )
+        mean = data1
     else:
         if debug:
             print("using (Y + X)/2 as the X axis")
         diff_slope, diff_intercept, diff_r_value, diff_p_value, diff_std_err = linregress(
             (data2 + data1) / 2.0, data2 - data1
         )
-    mean = np.mean([data1, data2], axis=0)
+        mean = np.mean([data1, data2], axis=0)
     diff = data2 - data1  # Difference between data1 and data2
     md = np.mean(diff)  # Mean of the difference
     sd = np.std(diff, axis=0)  # Standard deviation of the difference
