@@ -634,6 +634,7 @@ def rapidtide_main(argparsingfunc):
         theheader = copy.deepcopy(nim_hdr)
         theheader["dim"][0] = 3
         theheader["dim"][4] = 1
+        theheader["pixdim"][4] = 1.0
         if optiondict["bidsoutput"]:
             savename = f"{outputname}_desc-processed_mask"
         else:
@@ -816,6 +817,7 @@ def rapidtide_main(argparsingfunc):
             theheader = copy.deepcopy(nim_hdr)
             theheader["dim"][0] = 3
             theheader["dim"][4] = 1
+            theheader["pixdim"][4] = 1.0
             tide_io.savetonifti(
                 fullmeanmask.reshape((xsize, ysize, numslices)), theheader, savename
             )
@@ -1949,6 +1951,7 @@ def rapidtide_main(argparsingfunc):
             if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
                 theheader = copy.deepcopy(nim_hdr)
                 theheader["dim"][4] = 1
+                theheader["pixdim"][4] = 1.0
                 if optiondict["bidsoutput"]:
                     savename = f"{outputname}_desc-despeckle_mask"
                 else:
@@ -2607,6 +2610,7 @@ def rapidtide_main(argparsingfunc):
         else:
             theheader["dim"][0] = 3
             theheader["dim"][4] = 1
+            theheader["pixdim"][4] = 1.0
 
     # Prepare extra maps
     savelist = [
