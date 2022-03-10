@@ -2019,7 +2019,7 @@ def rapidtide_main(argparsingfunc):
                     f"total is {optiondict['offsettime_total']:.3f}"
                 )
 
-            if optiondict["refinedespeckled"]:
+            if optiondict["refinedespeckled"] or (optiondict["despeckle_passes"] == 0):
                 thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
             else:
                 if internalrefineexcludemask_valid is None:
