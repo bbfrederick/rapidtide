@@ -1900,6 +1900,7 @@ def rapidtide_main(argparsingfunc):
                 medianlags = ndimage.median_filter(
                     outmaparray.reshape(nativespaceshape), 3
                 ).reshape(numspatiallocs)
+                # voxels that we're happy with have initlags set to -1000000.0
                 initlags = np.where(
                     np.abs(outmaparray - medianlags) > optiondict["despeckle_thresh"],
                     medianlags,
@@ -1933,6 +1934,7 @@ def rapidtide_main(argparsingfunc):
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
+
                         voxelsprocessed_fc_ds += voxelsprocessed_thispass
                         optiondict[
                             "despecklemasksize_pass" + str(thepass) + "_d" + str(despecklepass + 1)
