@@ -1950,11 +1950,11 @@ def rapidtide_main(argparsingfunc):
                     LGR.info("Nothing left to do! Terminating despeckling")
                     break
 
-            internaldespeckleincludemask_valid = np.where(
+            internaldespeckleincludemask = np.where(
                 np.abs(outmaparray - medianlags) > optiondict["despeckle_thresh"],
                 medianlags,
                 0.0,
-            )[validvoxels]
+            )
             if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
                 theheader = copy.deepcopy(nim_hdr)
                 theheader["dim"][4] = 1
@@ -2023,10 +2023,11 @@ def rapidtide_main(argparsingfunc):
                 thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
             else:
                 if internalrefineexcludemask_valid is None:
-                    thisinternalrefineexcludemask_valid = internaldespeckleincludemask_valid
+                    thisinternalrefineexcludemask_valid = internaldespeckleincludemask[validvoxels]
                 else:
                     thisinternalrefineexcludemask_valid = np.where(
-                        internalrefineexcludemask_valid + internaldespeckleincludemask_valid != 0.0
+                        internalrefineexcludemask_valid + internaldespeckleincludemask[validvoxels]
+                        != 0.0
                     )
 
             # regenerate regressor for next pass
