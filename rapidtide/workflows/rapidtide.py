@@ -1966,7 +1966,7 @@ def rapidtide_main(argparsingfunc):
                 if not fileiscifti:
                     theheader["dim"][0] = 3
                     tide_io.savetonifti(
-                        internaldespeckleincludemask_valid.reshape(nativespaceshape),
+                        internaldespeckleincludemask.reshape(nativespaceshape),
                         theheader,
                         savename,
                     )
