@@ -188,7 +188,7 @@ def fitcorr(
     if initiallags is None:
         themask = None
     else:
-        themask = np.where(initiallags > -1000000.0, 1, 0)
+        themask = np.where(initiallags > -100000.0, 1, 0)
     reportstep = 1000
     (
         volumetotal,
