@@ -1954,7 +1954,7 @@ def rapidtide_main(argparsingfunc):
                 np.abs(outmaparray - medianlags) > optiondict["despeckle_thresh"],
                 medianlags,
                 0.0,
-            )
+            )[validvoxels]
             if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
                 theheader = copy.deepcopy(nim_hdr)
                 theheader["dim"][4] = 1
