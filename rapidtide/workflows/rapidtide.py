@@ -1950,6 +1950,11 @@ def rapidtide_main(argparsingfunc):
                     LGR.info("Nothing left to do! Terminating despeckling")
                     break
 
+            internaldespeckleincludemask_valid = np.where(
+                np.abs(outmaparray - medianlags) > optiondict["despeckle_thresh"],
+                medianlags,
+                0.0,
+            )
             if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
                 theheader = copy.deepcopy(nim_hdr)
                 theheader["dim"][4] = 1
@@ -1961,13 +1966,7 @@ def rapidtide_main(argparsingfunc):
                 if not fileiscifti:
                     theheader["dim"][0] = 3
                     tide_io.savetonifti(
-                        (
-                            np.where(
-                                np.abs(outmaparray - medianlags) > optiondict["despeckle_thresh"],
-                                medianlags,
-                                0.0,
-                            )
-                        ).reshape(nativespaceshape),
+                        internaldespeckleincludemask_valid.reshape(nativespaceshape),
                         theheader,
                         savename,
                     )
@@ -2020,6 +2019,13 @@ def rapidtide_main(argparsingfunc):
                     f"total is {optiondict['offsettime_total']:.3f}"
                 )
 
+            if optiondict["refinedespeckled"]:
+                thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
+            else:
+                thisinternalrefineexcludemask_valid = np.where(
+                    internalrefineexcludemask_valid + internaldespeckleincludemask_valid != 0.0
+                )
+
             # regenerate regressor for next pass
             refineregressor_func = addmemprofiling(
                 tide_refine.refineregressor,
@@ -2050,7 +2056,7 @@ def rapidtide_main(argparsingfunc):
                 bipolar=optiondict["bipolar"],
                 padtrs=numpadtrs,
                 includemask=internalrefineincludemask_valid,
-                excludemask=internalrefineexcludemask_valid,
+                excludemask=thisinternalrefineexcludemask_valid,
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
             )

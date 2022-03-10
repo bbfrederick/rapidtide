@@ -735,6 +735,13 @@ def _get_parser():
         default=None,
     )
     reg_ref.add_argument(
+        "--norefinedespeckled",
+        dest="refinedespeckled",
+        action="store_false",
+        help=("Do not use despeckled pixels in calculating the refined regressor."),
+        default=True,
+    )
+    reg_ref.add_argument(
         "--lagminthresh",
         dest="lagminthresh",
         action="store",
