@@ -2022,9 +2022,12 @@ def rapidtide_main(argparsingfunc):
             if optiondict["refinedespeckled"]:
                 thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
             else:
-                thisinternalrefineexcludemask_valid = np.where(
-                    internalrefineexcludemask_valid + internaldespeckleincludemask_valid != 0.0
-                )
+                if internalrefineexcludemask_valid is None:
+                    thisinternalrefineexcludemask_valid = internaldespeckleincludemask_valid
+                else:
+                    thisinternalrefineexcludemask_valid = np.where(
+                        internalrefineexcludemask_valid + internaldespeckleincludemask_valid != 0.0
+                    )
 
             # regenerate regressor for next pass
             refineregressor_func = addmemprofiling(
