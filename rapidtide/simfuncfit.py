@@ -171,6 +171,7 @@ def fitcorr(
     gaussout,
     windowout,
     R2,
+    despeckling=False,
     peakdict=None,
     nprocs=1,
     alwaysmultiproc=False,
@@ -253,16 +254,6 @@ def fitcorr(
         # unpack the data
         volumetotal = 0
         for voxel in data_out:
-            volumetotal += voxel[1]
-            lagtc[voxel[0], :] = voxel[2]
-            lagtimes[voxel[0]] = voxel[3]
-            lagstrengths[voxel[0]] = voxel[4]
-            lagsigma[voxel[0]] = voxel[5]
-            gaussout[voxel[0], :] = voxel[6]
-            windowout[voxel[0], :] = voxel[7]
-            R2[voxel[0]] = voxel[8]
-            lagmask[voxel[0]] = voxel[9]
-            failimage[voxel[0]] = voxel[10] & 0xFFFF
             if (
                 thefitter.FML_INITAMPLOW
                 | thefitter.FML_INITAMPHIGH
@@ -282,6 +273,19 @@ def fitcorr(
                 initfails += 1
             if thefitter.FML_FITFAIL & voxel[10]:
                 fitfails += 1
+
+            # if this is a despeckle pass, only accept the new values if the fit did not fail
+            if (voxel[10] == 0) or not despeckling:
+                volumetotal += voxel[1]
+                lagtc[voxel[0], :] = voxel[2]
+                lagtimes[voxel[0]] = voxel[3]
+                lagstrengths[voxel[0]] = voxel[4]
+                lagsigma[voxel[0]] = voxel[5]
+                gaussout[voxel[0], :] = voxel[6]
+                windowout[voxel[0], :] = voxel[7]
+                R2[voxel[0]] = voxel[8]
+                lagmask[voxel[0]] = voxel[9]
+                failimage[voxel[0]] = voxel[10] & 0xFFFF
 
         del data_out
     else:
