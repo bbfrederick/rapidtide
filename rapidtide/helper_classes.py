@@ -135,8 +135,6 @@ class ProbeRegressor:
             num=self.targetpoints,
             endpoint=True,
         )
-        # os_fmri_x = np.arange(0.0, validtimepoints * self.targetoversample - (
-        #        self.targetoversample - 1)) * self.targetoversample * self.targetperiod + skiptime
 
 
 class SimilarityFunctionator:
@@ -875,7 +873,7 @@ class SimilarityFunctionFitter:
         corrfunc = incorrfunc + 0.0
         if self.useguess:
             maxindex = tide_util.valtoindex(self.corrtimeaxis, self.maxguess)
-            if corrfunc[maxindex] < 0.0:
+            if (corrfunc[maxindex] < 0.0) and self.bipolar:
                 flipfac = -1.0
         else:
             maxindex, flipfac = self._maxindex_noedge(corrfunc)
