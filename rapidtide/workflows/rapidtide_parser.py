@@ -1166,7 +1166,7 @@ def _get_parser():
 
     # Debugging options
     debugging = parser.add_argument_group(
-        "Debugging options.  You probably don't want to use any of these unless I ask you to to help diagnose a problem."
+        "Debugging options.  You probably don't want to use any of these unless I ask you to to help diagnose a problem"
     )
     debugging.add_argument(
         "--debug",
