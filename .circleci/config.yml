@@ -101,7 +101,8 @@ jobs:
           command:  |
             conda create -n py39_env python=3.9 -yq
             source activate py39_env
-            conda update setuptools pip distlib
+            conda update setuptools pip
+            conda install distlib
             #pip install --upgrade "setuptools>=54"
             #pip install --upgrade pip
             #pip install --upgrade distlib
