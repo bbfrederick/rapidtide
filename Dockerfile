@@ -108,8 +108,8 @@ ENV HOME="/home/rapidtide"
 
 
 # Precaching fonts, set 'Agg' as default backend for matplotlib
-RUN python -c "from matplotlib import font_manager" && \
-    sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
+#RUN python -c "from matplotlib import font_manager" && \
+#    sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
 
 
 # Installing rapidtide
