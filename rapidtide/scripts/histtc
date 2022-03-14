@@ -49,10 +49,73 @@ def _get_parser():
         help=("Number of histogram bins (default is 101)"),
         default=101,
     )
+    parser.add_argument(
+        "--minval",
+        dest="minval",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        metavar="MINVAL",
+        help="Minimum bin value in histogram.",
+        default=None,
+    )
+    parser.add_argument(
+        "--maxval",
+        dest="maxval",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        metavar="MAXVAL",
+        help="Maximum bin value in histogram.",
+        default=None,
+    )
+    parser.add_argument(
+        "--robustrange",
+        dest="robustrange",
+        action="store_true",
+        help=("Set histogram limits to the data's robust range (2nd to 98th percentile)."),
+        default=False,
+    )
+    parser.add_argument(
+        "--nozero",
+        dest="nozero",
+        action="store_true",
+        help=("Do not include zero values in the histogram."),
+        default=False,
+    )
+    parser.add_argument(
+        "--nozerothresh",
+        dest="nozerothresh",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        metavar="THRESH",
+        help="Absolute values less than this are considered zero.  Default is 0.01.",
+        default=0.01,
+    )
+    parser.add_argument(
+        "--normhist",
+        dest="normhist",
+        action="store_true",
+        help=("Return a probability density instead of raw counts."),
+        default=False,
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Print additional debugging information."),
+        default=False,
+    )
+
     return parser
 
 
 def main():
+    # set default variable values
+    thepercentiles = [0.2, 0.25, 0.5, 0.75, 0.98]
+    thepvalnames = []
+    for thispercentile in thepercentiles:
+        thepvalnames.append(str(1.0 - thispercentile).replace(".", "p"))
+    pcts_data = np.zeros((len(thepercentiles)), dtype="float")
+
     # grab the command line arguments then pass them off.
     try:
         args = _get_parser().parse_args()
@@ -60,16 +123,51 @@ def main():
         _get_parser().print_help()
         raise
 
+    if args.debug:
+        print(args)
+
     dummy, dummy, colnames, inputdata, compressed, filetype = tide_io.readvectorsfromtextfile(
         args.inputfilename
     )
 
-    maxval = np.max(inputdata)
-    minval = np.min(inputdata)
-    therange = [minval, maxval]
-    print("therange:", therange)
+    inputdata = inputdata[0]
 
-    tide_stats.makeandsavehistogram(inputdata, args.histlen, 0, args.outputroot, therange=therange)
+    if args.debug:
+        print(inputdata)
+
+    if args.nozero:
+        inputdata = inputdata[np.where(np.fabs(inputdata) > args.nozerothresh)]
+
+    if args.debug:
+        print(inputdata)
+
+    pcts_data[:] = tide_stats.getfracvals(inputdata, thepercentiles)
+    for idx, thispercentile in enumerate(thepercentiles):
+        print(f"percentile {thispercentile} is {pcts_data[idx]}")
+
+    if args.robustrange:
+        histmin, histmax = tide_stats.getfracvals(inputdata, [0.02, 0.98])
+    else:
+        if args.minval is None:
+            histmin = np.min(inputdata)
+        else:
+            histmin = args.minval
+        if args.maxval is None:
+            histmax = np.max(inputdata)
+        else:
+            histmax = args.maxval
+    therange = (histmin, histmax)
+    print("the range is ", therange, flush=True)
+
+    tide_stats.makeandsavehistogram(
+        inputdata,
+        args.histlen,
+        0,
+        args.outputroot,
+        therange=therange,
+        normalize=args.normhist,
+        debug=args.debug,
+    )
 
 
 if __name__ == "__main__":

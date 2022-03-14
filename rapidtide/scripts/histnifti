@@ -90,7 +90,7 @@ def _get_parser():
         "--normhist",
         dest="normhist",
         action="store_true",
-        help=("Normalize histograms to sum to 1.0."),
+        help=("Return a probability density instead of raw counts.),
         default=False,
     )
     parser.add_argument(
@@ -241,10 +241,10 @@ def main():
             outputhists[spatialloc, :], bins = np.histogram(
                 inputarray, bins=thehistlen, range=(histmin, histmax)
             )
-            if args.normhist:
-                totalval = np.sum(outputhists[spatialloc, :])
-                if totalval != 0.0:
-                    outputhists[spatialloc, :] /= totalval
+            #if args.normhist:
+            #    totalval = np.sum(outputhists[spatialloc, :])
+            #    if totalval != 0.0:
+            #        outputhists[spatialloc, :] /= totalval
             if spatialloc % 1000 == 0:
                 tide_util.progressbar(
                     spatialloc + 1, numvalidvoxels, label="Histograms: percent complete"

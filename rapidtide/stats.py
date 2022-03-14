@@ -371,7 +371,7 @@ def fast_ICC_rep_anova(Y, nocache=False, debug=False):
     # Sum Square Error
     predicted_Y = np.dot(centerbit, Y.flatten("F"))
     residuals = Y.flatten("F") - predicted_Y
-    SSE = (residuals ** 2).sum()
+    SSE = (residuals**2).sum()
 
     residuals.shape = Y.shape
 
@@ -453,7 +453,7 @@ def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False, p
     return peaklag, peakheight, peakwidth
 
 
-def makehistogram(indata, histlen, binsize=None, therange=None, refine=False):
+def makehistogram(indata, histlen, binsize=None, therange=None, refine=False, normalize=False):
     """
 
     Parameters
@@ -462,6 +462,8 @@ def makehistogram(indata, histlen, binsize=None, therange=None, refine=False):
     histlen
     binsize
     therange
+    refine
+    normalize
 
     Returns
     -------
@@ -480,11 +482,12 @@ def makehistogram(indata, histlen, binsize=None, therange=None, refine=False):
         )
     else:
         thebins = histlen
-    thehist = np.histogram(indata, thebins, therange)
+    thehist = np.histogram(indata, thebins, therange, density=normalize)
 
     thestore = np.zeros((2, len(thehist[0])), dtype="float64")
     thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
     thestore[1, :] = thehist[0][-histlen:]
+
     # get starting values for the peak, ignoring first and last point of histogram
     peakindex = np.argmax(thestore[1, 1:-2])
     peakloc = thestore[0, peakindex + 1]
@@ -570,15 +573,19 @@ def makeandsavehistogram(
 
     """
     thehist, peakheight, peakloc, peakwidth, centerofmass = makehistogram(
-        indata, histlen, binsize=binsize, therange=therange, refine=refine
+        indata,
+        histlen,
+        binsize=binsize,
+        therange=therange,
+        refine=refine,
+        normalize=normalize,
     )
     thestore = np.zeros((2, len(thehist[0])), dtype="float64")
     thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
+    thebinsizes = np.diff(thehist[1][:])
     thestore[1, :] = thehist[0][-histlen:]
-    if normalize:
-        totalval = np.sum(thestore[1, :])
-        if totalval != 0.0:
-            thestore[1, :] /= totalval
+    if debug:
+        print(f"histlen: {len(thestore[1, :])}, sizelen: {len(thebinsizes)}")
     if dictvarname is None:
         varroot = outname
     else:
