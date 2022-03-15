@@ -12,6 +12,7 @@ rapidtide \
 	--spatialfilt 2 \
         --nprocs -1 \
         --passes 3 \
+        --norefinedespeckled \
         --filterband lfo \
         sub-RAPIDTIDETEST.nii.gz \
         ../dst/sub-RAPIDTIDETEST

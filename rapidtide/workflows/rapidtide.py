@@ -2022,15 +2022,27 @@ def rapidtide_main(argparsingfunc):
                 )
 
             if optiondict["refinedespeckled"] or (optiondict["despeckle_passes"] == 0):
+                # if refinedespeckled is true, or there is no despeckling, masks are unaffected
                 thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
             else:
+                # if refinedespeckled is false and there is despeckling, need to make a proper mask
                 if internalrefineexcludemask_valid is None:
+                    # if there is currently no exclude mask, set exclude mask = despeckle mask
                     thisinternalrefineexcludemask_valid = internaldespeckleincludemask[validvoxels]
                 else:
-                    thisinternalrefineexcludemask_valid = np.where(
-                        internalrefineexcludemask_valid + internaldespeckleincludemask[validvoxels]
-                        != 0.0
+                    # if there is a current exclude mask, add any voxels that are being despeckled
+                    thisinternalrefineexcludemask_valid = np.where((internalrefineexcludemask_valid != 0) and (internaldespeckleincludemask[validvoxels] != 0.0))
+                # now check that we won't end up excluding all voxels from refinement before accepting mask
+                overallmask = np.uint16(fitmask)
+                if internalrefineincludemask_valid is not None:
+                    overallmask[np.where(internalrefineincludemask_valid == 0)] = 0
+                if thisinternalrefineexcludemask_valid is not None:
+                    overallmask[np.where(thisinternalrefineexcludemask_valid != 0.0)] = 0
+                if tide_stats.getmasksize(overallmask) == 0:
+                    print(
+                        "NB: cannot exclude despeckled voxels from refinement - including for this pass"
                     )
+                    thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
 
             # regenerate regressor for next pass
             refineregressor_func = addmemprofiling(
