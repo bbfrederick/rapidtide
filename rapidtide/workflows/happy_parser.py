@@ -181,7 +181,7 @@ def _get_parser():
         "--nomotderivdelayed",
         dest="motfilt_derivdelayed",
         action="store_false",
-        help=("Do not use motion derivative regressors. "),
+        help=("Do not use delayed motion derivative regressors. "),
         default=True,
     )
     preprocessing_opts.add_argument(

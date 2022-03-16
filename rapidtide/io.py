@@ -920,12 +920,14 @@ def getslicetimesfromfile(slicetimename):
             slicetimes = np.zeros((len(slicetimelist)), dtype=np.float64)
             for idx, thetime in enumerate(slicetimelist):
                 slicetimes[idx] = float(thetime)
+            normalizedtotr = False
         except KeyError:
             print(slicetimename, "is not a valid BIDS sidecar file")
             sys.exit()
     else:
         slicetimes = readvec(slicetimename)
-    return slicetimes
+        normalizedtotr = True
+    return slicetimes, normalizedtotr
 
 
 def readbidssidecar(inputfilename):

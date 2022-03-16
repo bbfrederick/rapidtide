@@ -1060,7 +1060,10 @@ def happy_main(argparsingfunc):
             timings.append(["Motion filtered data saved", time.time(), numspatiallocs, "voxels"])
 
     # get slice times
-    slicetimes = tide_io.getslicetimesfromfile(slicetimename)
+    slicetimes, normalizedtotr = tide_io.getslicetimesfromfile(slicetimename)
+    if normalizedtotr:
+        slicetimes *= tr
+
     timings.append(["Slice times determined", time.time(), None, None])
 
     # normalize the input data
