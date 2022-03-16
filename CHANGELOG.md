@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.2.1 (3/16/22)
+* (histtc, histnifti) Harmonized options between the programs.
+* (Docker) Updated Dockerfile to fix a bug that caused automatic build to fail.
+
 ## Version 2.2.0 (3/11/22)
 * (rapidtide) Major rethink of despeckling.  Despeckling no longer causes negative correlation values when bipolar fitting is not enabled, and voxel parameters are only updated in a despeckled voxel if the correlation fit succeeds.  This results in better fits without mysteriously unfit voxels.
 * (showxy) Bland-Altman plots can now use alternative formatting, as per Krouwer, J. S. Why Bland–Altman plots should use X, not (Y+X)/2 when X is a reference method. Stat Med 27, 778–780 (2008).
