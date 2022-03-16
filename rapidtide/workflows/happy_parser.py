@@ -46,6 +46,8 @@ def _get_parser():
         help=(
             "Text file containing the offset time in seconds of each slice relative "
             "to the start of the TR, one value per line, OR the BIDS sidecar JSON file."
+            "NB: FSL slicetimes files give slice times in fractions of a TR, BIDS sidecars "
+            "give slice times in seconds. Non-json files are assumed to be the former."
         ),
     )
     parser.add_argument("outputroot", help="The root name for the output files")
