@@ -1,6 +1,7 @@
 # Release history
 
 ## Version 2.2.1 (3/16/22)
+* (rapidtide) Tweaked mask checking logic to address a bug introduced by despeckling changes.
 * (histtc, histnifti) Harmonized options between the programs.
 * (Docker) Updated Dockerfile to fix a bug that caused automatic build to fail.
 
