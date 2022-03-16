@@ -2031,7 +2031,10 @@ def rapidtide_main(argparsingfunc):
                     thisinternalrefineexcludemask_valid = internaldespeckleincludemask[validvoxels]
                 else:
                     # if there is a current exclude mask, add any voxels that are being despeckled
-                    thisinternalrefineexcludemask_valid = np.where((internalrefineexcludemask_valid != 0) and (internaldespeckleincludemask[validvoxels] != 0.0))
+                    thisinternalrefineexcludemask_valid = np.where(
+                        (internalrefineexcludemask_valid != 0)
+                        and (internaldespeckleincludemask[validvoxels] != 0.0)
+                    )
                 # now check that we won't end up excluding all voxels from refinement before accepting mask
                 overallmask = np.uint16(fitmask)
                 if internalrefineincludemask_valid is not None:
