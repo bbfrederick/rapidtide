@@ -1,7 +1,7 @@
 # Release history
 
 ## Version 2.2.2 (3/16/22)
-* (happy, happy_legacy, simdata) This release corrects a flaw (or ambiguity) in slice time specification.  In FSL slicetime files, slicetimes are specified in fractions of a TR. In .json sidecars, they are specified in seconds. This is now detected on file read, and slicetime files are now converted to seconds.  Until now, happy and simdata assumed all slice times were in seconds.  This will fix behavior when FSL-style (fractional TR) slicetime files are used.  Behavior with .json sidecars is not changed.  All non-json slice time files are assumed to be fractional TR files.
+* (happy, happy_legacy, simdata) This release corrects a flaw (or ambiguity) in slice time specification.  In FSL slicetime files, slicetimes are specified in fractions of a TR. In .json sidecars, they are specified in seconds. This is now detected on file read, and slicetime files are now converted to seconds.  Until now, happy and simdata assumed all slice times were in seconds.  This will fix behavior when FSL-style (fractional TR) slicetime files are used.  Behavior with .json sidecars is not changed.  Non-json files are assumed to be the FSL style (fractions of a TR) UNLESS the --slicetimesareinseconds flag is used.
 
 ## Version 2.2.1 (3/16/22)
 * (rapidtide) Tweaked mask checking logic to address a bug introduced by despeckling changes.

@@ -1689,7 +1689,7 @@ def happy_main(thearguments):
 
     # get slice times
     slicetimes, normalizedtotr = tide_io.getslicetimesfromfile(slicetimename)
-    if normalizedtotr:
+    if normalizedtotr and not args.slicetimesareinseconds:
         slicetimes *= tr
 
     timings.append(["Slice times determined", time.time(), None, None])

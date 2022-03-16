@@ -46,8 +46,9 @@ def _get_parser():
         help=(
             "Text file containing the offset time in seconds of each slice relative "
             "to the start of the TR, one value per line, OR the BIDS sidecar JSON file."
-            "NB: FSL slicetimes files give slice times in fractions of a TR, BIDS sidecars "
-            "give slice times in seconds. Non-json files are assumed to be the former."
+            "NB: FSL slicetime files give slice times in fractions of a TR, BIDS sidecars "
+            "give slice times in seconds. Non-json files are assumed to be the FSL style "
+            "(fractions of a TR) UNLESS the --slicetimesareinseconds flag is used."
         ),
     )
     parser.add_argument("outputroot", help="The root name for the output files")
@@ -77,6 +78,17 @@ def _get_parser():
             "I don't seem to be able to fix.  If the dl filter bombs complaining about "
             "multiple openmp libraries, try rerunning with the secret and inadvisable "
             "'--usesuperdangerousworkaround' flag.  Good luck! "
+        ),
+        default=False,
+    )
+    processing_steps.add_argument(
+        "--slicetimesareinseconds",
+        action="store_true",
+        help=(
+            "If a non-json slicetime file is specified, happy assumes the file is FSL style "
+            "(slice times are specified in fractions of a TR).  Setting this flag overrides this "
+            "assumption, and interprets the slice time file as being in seconds.  This does "
+            "nothing when the slicetime file is a .json BIDS sidecar."
         ),
         default=False,
     )
