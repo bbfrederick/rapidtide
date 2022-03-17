@@ -1957,40 +1957,47 @@ def rapidtide_main(argparsingfunc):
                 medianlags,
                 0.0,
             )
-            if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
-                theheader = copy.deepcopy(nim_hdr)
-                theheader["dim"][4] = 1
-                theheader["pixdim"][4] = 1.0
-                if optiondict["bidsoutput"]:
-                    savename = f"{outputname}_desc-despeckle_mask"
-                else:
-                    savename = f"{outputname}_despecklemask"
-                if not fileiscifti:
-                    theheader["dim"][0] = 3
-                    tide_io.savetonifti(
-                        internaldespeckleincludemask.reshape(nativespaceshape),
-                        theheader,
-                        savename,
-                    )
-                else:
-                    timeindex = theheader["dim"][0] - 1
-                    spaceindex = theheader["dim"][0]
-                    theheader["dim"][timeindex] = 1
-                    theheader["dim"][spaceindex] = numspatiallocs
-                    tide_io.savetocifti(
-                        (
-                            np.where(
-                                np.abs(outmaparray - medianlags) > optiondict["despeckle_thresh"],
-                                medianlags,
-                                0.0,
-                            )
-                        ),
-                        cifti_hdr,
-                        theheader,
-                        savename,
-                        isseries=False,
-                        names=["despecklemask"],
-                    )
+            if optiondict["savedespecklemasks"]:
+                despecklesavemask = np.where(
+                    internaldespeckleincludemask[validvoxels] == 0.0, 0, 1
+                )
+                if thepass == optiondict["passes"]:
+                    theheader = copy.deepcopy(nim_hdr)
+                    theheader["dim"][4] = 1
+                    theheader["pixdim"][4] = 1.0
+                    if optiondict["bidsoutput"]:
+                        savename = f"{outputname}_desc-despeckle_mask"
+                    else:
+                        savename = f"{outputname}_despecklemask"
+                    if not fileiscifti:
+                        theheader["dim"][0] = 3
+                        tide_io.savetonifti(
+                            np.where(internaldespeckleincludemask == 0.0, 0, 1).reshape(
+                                nativespaceshape
+                            ),
+                            theheader,
+                            savename,
+                        )
+                    else:
+                        timeindex = theheader["dim"][0] - 1
+                        spaceindex = theheader["dim"][0]
+                        theheader["dim"][timeindex] = 1
+                        theheader["dim"][spaceindex] = numspatiallocs
+                        tide_io.savetocifti(
+                            (
+                                np.where(
+                                    np.abs(outmaparray - medianlags)
+                                    > optiondict["despeckle_thresh"],
+                                    medianlags,
+                                    0.0,
+                                )
+                            ),
+                            cifti_hdr,
+                            theheader,
+                            savename,
+                            isseries=False,
+                            names=["despecklemask"],
+                        )
             LGR.info(
                 f"\n\n{voxelsprocessed_fc_ds} voxels despeckled in "
                 f"{optiondict['despeckle_passes']} passes"
@@ -2028,7 +2035,9 @@ def rapidtide_main(argparsingfunc):
                 # if refinedespeckled is false and there is despeckling, need to make a proper mask
                 if internalrefineexcludemask_valid is None:
                     # if there is currently no exclude mask, set exclude mask = despeckle mask
-                    thisinternalrefineexcludemask_valid = internaldespeckleincludemask[validvoxels]
+                    thisinternalrefineexcludemask_valid = np.where(
+                        internaldespeckleincludemask[validvoxels] == 0.0, 0, 1
+                    )
                 else:
                     # if there is a current exclude mask, add any voxels that are being despeckled
                     thisinternalrefineexcludemask_valid = np.where(
@@ -2236,6 +2245,8 @@ def rapidtide_main(argparsingfunc):
                 ("fitmask", "fitmask"),
                 ("failreason", "corrfitfailreason"),
             ]
+            if optiondict["savedespecklemasks"]:
+                maplist.append(("despecklesavemask", "despecklemask"))
             if thepass < optiondict["passes"]:
                 maplist.append(("refinemask", "refinemask"))
             for mapname, mapsuffix in maplist:
