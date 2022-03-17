@@ -311,6 +311,16 @@ def _get_parser():
         default=DEFAULT_GLOBALMASK_METHOD,
     )
     preproc.add_argument(
+        "--globalpreselect",
+        dest="globalpreselect",
+        action="store_true",
+        help=(
+            "Do an initial pass to locate good candidate voxels for global mean "
+            "regressor generation, then use only these voxels for mean generation."
+        ),
+        default=False,
+    )
+    preproc.add_argument(
         "--globalmeaninclude",
         dest="globalmeanincludespec",
         metavar="MASK[:VALSPEC]",
