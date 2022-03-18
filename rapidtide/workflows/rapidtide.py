@@ -138,7 +138,7 @@ def allocshared(theshape, thetype):
 def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, maskname="the"):
     LGR.verbose(f"readamask called with filename: {maskfilename} vals: {valslist}")
     if istext:
-        maskarray = tide_io.readvecs(maskfilename).astype("int16")
+        maskarray = tide_io.readvecs(maskfilename).astype("uint16")
         theshape = np.shape(maskarray)
         theincludexsize = theshape[0]
         if not theincludexsize == xsize:
@@ -147,17 +147,70 @@ def readamask(maskfilename, nim_hdr, xsize, istext=False, valslist=None, masknam
             )
     else:
         themask, maskarray, mask_hdr, maskdims, masksizes = tide_io.readfromnifti(maskfilename)
-        maskarray = np.round(maskarray, 0).astype("int16")
+        maskarray = np.round(maskarray, 0).astype("uint16")
         if not tide_io.checkspacematch(mask_hdr, nim_hdr):
             raise ValueError(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
 
     if valslist is not None:
-        tempmask = (0 * maskarray).astype("int16")
+        tempmask = (0 * maskarray).astype("uint16")
         for theval in valslist:
             LGR.verbose(f"looking for voxels matching {theval}")
-            tempmask[np.where(np.fabs(maskarray - theval) < 0.1)] += 1
+            tempmask[np.where(maskarray - theval == 0)] += 1
         maskarray = np.where(tempmask > 0, 1, 0)
     return maskarray
+
+
+def getmaskset(
+    maskname,
+    includename,
+    includevals,
+    excludename,
+    excludevals,
+    datahdr,
+    numspatiallocs,
+    istext=False,
+):
+    internalincludemask = None
+    internalexcludemask = None
+
+    if includename is not None:
+        LGR.info(f"constructing {maskname} include mask")
+        theincludemask = readamask(
+            includename,
+            datahdr,
+            numspatiallocs,
+            istext=istext,
+            valslist=includevals,
+            maskname=f"{maskname} include",
+        )
+        internalincludemask = theincludemask.reshape(numspatiallocs)
+        if tide_stats.getmasksize(internalincludemask) == 0:
+            raise ValueError(
+                f"ERROR: there are no voxels in the {maskname} include mask - exiting"
+            )
+
+    if excludename is not None:
+        LGR.info(f"constructing {maskname} exclude mask")
+        theexcludemask = readamask(
+            excludename,
+            datahdr,
+            numspatiallocs,
+            istext=istext,
+            valslist=excludevals,
+            maskname=f"{maskname} exclude",
+        )
+        internalexcludemask = theexcludemask.reshape(numspatiallocs)
+        if tide_stats.getmasksize(internalexcludemask) == numspatiallocs:
+            raise ValueError(
+                f"ERROR: the {maskname} exclude mask does not leave any voxels - exiting"
+            )
+
+    if (internalincludemask is not None) and (internalexcludemask is not None):
+        if tide_stats.getmasksize(internalincludemask * (1 - internalexcludemask)) == 0:
+            raise ValueError(
+                f"ERROR: the {maskname} include and exclude masks not leave any voxels between them - exiting"
+            )
+    return internalincludemask, internalexcludemask
 
 
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcacomponents=0.8):
@@ -491,81 +544,28 @@ def rapidtide_main(argparsingfunc):
 
     # read in the optional masks
     tide_util.logmem("before setting masks")
-    internalglobalmeanincludemask = None
-    internalglobalmeanexcludemask = None
-    internalrefineincludemask = None
-    internalrefineexcludemask = None
 
-    if optiondict["globalmeanincludename"] is not None:
-        LGR.info("constructing global mean include mask")
-        theglobalmeanincludemask = readamask(
-            optiondict["globalmeanincludename"],
-            nim_hdr,
-            xsize,
-            istext=optiondict["textio"],
-            valslist=optiondict["globalmeanincludevals"],
-            maskname="global mean include",
-        )
-        internalglobalmeanincludemask = theglobalmeanincludemask.reshape(numspatiallocs)
-        if tide_stats.getmasksize(internalglobalmeanincludemask) == 0:
-            raise ValueError(
-                "ERROR: there are no voxels in the global mean include mask - exiting"
-            )
+    internalglobalmeanincludemask, internalglobalmeanexcludemask = getmaskset(
+        "global mean",
+        optiondict["globalmeanincludename"],
+        optiondict["globalmeanincludevals"],
+        optiondict["globalmeanexcludename"],
+        optiondict["globalmeanexcludevals"],
+        nim_hdr,
+        numspatiallocs,
+        istext=optiondict["textio"],
+    )
 
-    if optiondict["globalmeanexcludename"] is not None:
-        LGR.info("constructing global mean exclude mask")
-        theglobalmeanexcludemask = readamask(
-            optiondict["globalmeanexcludename"],
-            nim_hdr,
-            xsize,
-            istext=optiondict["textio"],
-            valslist=optiondict["globalmeanexcludevals"],
-            maskname="global mean exclude",
-        )
-        internalglobalmeanexcludemask = theglobalmeanexcludemask.reshape(numspatiallocs)
-        if tide_stats.getmasksize(internalglobalmeanexcludemask) == numspatiallocs:
-            raise ValueError(
-                "ERROR: the global mean exclude mask does not leave any voxels - exiting"
-            )
-
-    if (internalglobalmeanincludemask is not None) and (internalglobalmeanexcludemask is not None):
-        if (
-            tide_stats.getmasksize(
-                internalglobalmeanincludemask * (1 - internalglobalmeanexcludemask)
-            )
-            == 0
-        ):
-            raise ValueError(
-                "ERROR: the global mean include and exclude masks not leave any voxels between them - exiting"
-            )
-
-    if optiondict["refineincludename"] is not None:
-        LGR.info("constructing refine include mask")
-        therefineincludemask = readamask(
-            optiondict["refineincludename"],
-            nim_hdr,
-            xsize,
-            istext=optiondict["textio"],
-            valslist=optiondict["refineincludevals"],
-            maskname="refine include",
-        )
-        internalrefineincludemask = therefineincludemask.reshape(numspatiallocs)
-        if tide_stats.getmasksize(internalrefineincludemask) == 0:
-            raise ValueError("ERROR: there are no voxels in the refine include mask - exiting")
-
-    if optiondict["refineexcludename"] is not None:
-        LGR.info("constructing refine exclude mask")
-        therefineexcludemask = readamask(
-            optiondict["refineexcludename"],
-            nim_hdr,
-            xsize,
-            istext=optiondict["textio"],
-            valslist=optiondict["refineexcludevals"],
-            maskname="refine exclude",
-        )
-        internalrefineexcludemask = therefineexcludemask.reshape(numspatiallocs)
-        if tide_stats.getmasksize(internalrefineexcludemask) == numspatiallocs:
-            raise ValueError("ERROR: the refine exclude mask does not leave any voxels - exiting")
+    internalrefineincludemask, internalrefineexcludemask = getmaskset(
+        "refine",
+        optiondict["refineincludename"],
+        optiondict["refineincludevals"],
+        optiondict["refineexcludename"],
+        optiondict["refineexcludevals"],
+        nim_hdr,
+        numspatiallocs,
+        istext=optiondict["textio"],
+    )
 
     tide_util.logmem("after setting masks")
 
@@ -2041,9 +2041,12 @@ def rapidtide_main(argparsingfunc):
                 else:
                     # if there is a current exclude mask, add any voxels that are being despeckled
                     thisinternalrefineexcludemask_valid = np.where(
-                        (internalrefineexcludemask_valid != 0)
-                        and (internaldespeckleincludemask[validvoxels] != 0.0)
+                        internalrefineexcludemask_valid > 0, 1, 0
                     )
+                    thisinternalrefineexcludemask_valid[
+                        np.where(internaldespeckleincludemask[validvoxels] != 0.0)
+                    ] = 1
+
                 # now check that we won't end up excluding all voxels from refinement before accepting mask
                 overallmask = np.uint16(fitmask)
                 if internalrefineincludemask_valid is not None:

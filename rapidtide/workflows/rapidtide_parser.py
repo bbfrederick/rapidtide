@@ -315,8 +315,8 @@ def _get_parser():
         dest="globalpreselect",
         action="store_true",
         help=(
-            "Do an initial pass to locate good candidate voxels for global mean "
-            "regressor generation, then use only these voxels for mean generation."
+            "Treat this run as an initial pass to locate good candidate voxels for global mean "
+            "regressor generation."
         ),
         default=False,
     )
@@ -1435,6 +1435,7 @@ def process_args(inputargs=None):
         )
     else:
         args["globalmeanincludename"] = None
+        args["globalmeanincludevals"] = None
 
     if args["globalmeanexcludespec"] is not None:
         (args["globalmeanexcludename"], args["globalmeanexcludevals"],) = tide_io.processnamespec(
@@ -1444,6 +1445,7 @@ def process_args(inputargs=None):
         )
     else:
         args["globalmeanexcludename"] = None
+        args["globalmeanexcludevals"] = None
 
     if args["refineincludespec"] is not None:
         (args["refineincludename"], args["refineincludevals"],) = tide_io.processnamespec(
@@ -1451,6 +1453,7 @@ def process_args(inputargs=None):
         )
     else:
         args["refineincludename"] = None
+        args["refineincludevals"] = None
 
     if args["refineexcludespec"] is not None:
         (args["refineexcludename"], args["refineexcludevals"],) = tide_io.processnamespec(
@@ -1458,6 +1461,7 @@ def process_args(inputargs=None):
         )
     else:
         args["refineexcludename"] = None
+        args["refineexcludevals"] = None
 
     # motion processing
     if args["motionfilespec"] is not None:

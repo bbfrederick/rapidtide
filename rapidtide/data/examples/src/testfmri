@@ -8,15 +8,28 @@
 #        --nprocs -1 \
 #        --passes 3 
 
+#rapidtide \
+#	--spatialfilt 2 \
+#        --nprocs -1 \
+#        --passes 3 \
+#        --norefinedespeckled \
+#        --saveintermediatemaps \
+#        --filterband lfo \
+#        sub-RAPIDTIDETEST.nii.gz \
+#        ../dst/sub-RAPIDTIDETEST
+
 rapidtide \
 	--spatialfilt 2 \
         --nprocs -1 \
         --passes 3 \
         --norefinedespeckled \
-        --saveintermediatemaps \
+        --globalmeaninclude preselectmask.nii.gz \
+        --globalmeanexclude despecklemask.nii.gz \
+        --refineinclude preselectmask.nii.gz \
+        --refineexclude despecklemask.nii.gz \
         --filterband lfo \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST
+        ../dst/sub-RAPIDTIDETEST_preselected
 
 #rapidtide \
         #sub-RAPIDTIDETEST.nii.gz \
