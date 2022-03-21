@@ -26,6 +26,16 @@ rapidtide \
         --globalpreselect \
         --filterband lfo \
         sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST
+
+rapidtide \
+	--spatialfilt 2 \
+        --nprocs -1 \
+        --passes 3 \
+        --norefinedespeckled \
+        --globalmeaninclude ../dst/sub-RAPIDTIDETEST_desc-globalmeanpreselect_mask.nii.gz \
+        --filterband lfo \
+        sub-RAPIDTIDETEST.nii.gz \
         ../dst/sub-RAPIDTIDETEST_preselected
 
 #rapidtide \
@@ -37,7 +47,7 @@ rapidtide \
         #--despecklepasses 0 \
         #--regressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 \
         #--regressorstart 45 \
-        --searchrange -10 10 \
+        #--searchrange -10 10 \
         #--timerange 30 70
 
 

@@ -1004,6 +1004,7 @@ class RapidtideDataset:
                 ["lagmask", "desc-corrfit_mask"],
                 ["refinemask", "desc-refine_mask"],
                 ["meanmask", "desc-globalmean_mask"],
+                ["preselectmask", "desc-globalmeanpreselect_mask"],
                 ["p_lt_0p050_mask", "desc-plt0p050_mask"],
                 ["p_lt_0p010_mask", "desc-plt0p010_mask"],
                 ["p_lt_0p005_mask", "desc-plt0p005_mask"],

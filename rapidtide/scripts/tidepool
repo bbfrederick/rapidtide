@@ -45,7 +45,8 @@ def selectFile():
     mydialog = QtGui.QFileDialog()
     options = mydialog.Options()
     lagfilename = mydialog.getOpenFileName(
-        options=options, filter="Lag time files (*_lagtimes.nii.gz *_desc-maxtime_map.nii.gz)",
+        options=options,
+        filter="Lag time files (*_lagtimes.nii.gz *_desc-maxtime_map.nii.gz)",
     )[0]
     # check to see which file type we got back
     bidsstartloc = lagfilename.find("desc-maxtime_map.nii.gz")
@@ -129,13 +130,28 @@ class xyztlocation(QtGui.QWidget):
         zmin = np.min([zllcoord, zulcoord])
         zmax = np.max([zllcoord, zulcoord])
         self.setupSpinBox(
-            self.XCoordSpinBox, self.getXcoord, xmin, xmax, (xmax - xmin) / self.xdim, self.xcoord,
+            self.XCoordSpinBox,
+            self.getXcoord,
+            xmin,
+            xmax,
+            (xmax - xmin) / self.xdim,
+            self.xcoord,
         )
         self.setupSpinBox(
-            self.YCoordSpinBox, self.getYcoord, ymin, ymax, (ymax - ymin) / self.ydim, self.ycoord,
+            self.YCoordSpinBox,
+            self.getYcoord,
+            ymin,
+            ymax,
+            (ymax - ymin) / self.ydim,
+            self.ycoord,
         )
         self.setupSpinBox(
-            self.ZCoordSpinBox, self.getZcoord, zmin, zmax, (zmax - zmin) / self.zdim, self.zcoord,
+            self.ZCoordSpinBox,
+            self.getZcoord,
+            zmin,
+            zmax,
+            (zmax - zmin) / self.zdim,
+            self.zcoord,
         )
 
     def setTInfo(self, tdim, tr, toffset):
@@ -149,7 +165,12 @@ class xyztlocation(QtGui.QWidget):
         tmin = np.min([tllcoord, tulcoord])
         tmax = np.max([tllcoord, tulcoord])
         self.setupSpinBox(
-            self.TCoordSpinBox, self.getTcoord, tmin, tmax, (tmax - tmin) / self.tdim, self.tcoord,
+            self.TCoordSpinBox,
+            self.getTcoord,
+            tmin,
+            tmax,
+            (tmax - tmin) / self.tdim,
+            self.tcoord,
         )
         self.setupTimeSlider(self.TimeSlider, self.getTimeSlider, 0, self.tdim - 1, self.tpos)
         self.setupRunMovieButton(self.runMovieButton, self.runMovieToggle)
@@ -369,10 +390,12 @@ def getMaxDispLimit():
 def updateDispLimits():
     global ui, overlays, currentdataset
     ui.dispmin_doubleSpinBox.setRange(
-        overlays[currentdataset.focusmap].minval, overlays[currentdataset.focusmap].maxval,
+        overlays[currentdataset.focusmap].minval,
+        overlays[currentdataset.focusmap].maxval,
     )
     ui.dispmax_doubleSpinBox.setRange(
-        overlays[currentdataset.focusmap].minval, overlays[currentdataset.focusmap].maxval,
+        overlays[currentdataset.focusmap].minval,
+        overlays[currentdataset.focusmap].maxval,
     )
     ui.dispmin_doubleSpinBox.setSingleStep(
         (overlays[currentdataset.focusmap].maxval - overlays[currentdataset.focusmap].minval)
@@ -865,6 +888,17 @@ def set_meanmask():
     updateUI(callingfunc="set_meanmask", orthoimages=True, histogram=True)
 
 
+def set_preselectmask():
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    print("Preselected mean regressor seed mask")
+    ui.setMask_Button.setText("Preselect mask")
+    for themap in currentdataset.loadedfuncmaps:
+        overlays[themap].setFuncMask(overlays["preselectmask"].data)
+    atlasaveragingdone = False
+    updateAveragingMode()
+    updateUI(callingfunc="set_preselectmask", orthoimages=True, histogram=True)
+
+
 def set_nomask():
     global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     print("disabling functional mask")
@@ -980,7 +1014,9 @@ def overlay_radioButton_clicked(which, enabled):
                 ui.rainbow_radioButton.setChecked(True)
 
             print(
-                "setting t position limits to ", 0, overlays[currentdataset.focusmap].tdim - 1,
+                "setting t position limits to ",
+                0,
+                overlays[currentdataset.focusmap].tdim - 1,
             )
             currentloc.setTInfo(
                 overlays[currentdataset.focusmap].tdim,
@@ -1008,7 +1044,10 @@ def updateTimepoint(event):
         currentloc.tpos = int(tide_util.valtoindex(timeaxis, tval))
         ui.TimeSlider.setValue(currentloc.tpos)
         updateUI(
-            callingfunc="updateTimepoint", orthoimages=True, similarityfunc=True, focusvals=True,
+            callingfunc="updateTimepoint",
+            orthoimages=True,
+            similarityfunc=True,
+            focusvals=True,
         )
 
 
@@ -1049,7 +1088,10 @@ def updateTFromControls():
     global mainwin, currentloc
     mainwin.setTpos(currentloc.tpos, emitsignal=False)
     updateUI(
-        callingfunc="updateTFromControls", orthoimages=True, similarityfunc=True, focusvals=True,
+        callingfunc="updateTFromControls",
+        orthoimages=True,
+        similarityfunc=True,
+        focusvals=True,
     )
 
 
@@ -1057,7 +1099,10 @@ def updateXYZFromControls():
     global mainwin, currentloc
     mainwin.setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos, emitsignal=False)
     updateUI(
-        callingfunc="updateXYZFromControls", orthoimages=True, similarityfunc=True, focusvals=True,
+        callingfunc="updateXYZFromControls",
+        orthoimages=True,
+        similarityfunc=True,
+        focusvals=True,
     )
 
 
@@ -1256,7 +1301,11 @@ def main():
         description="A program to display the results of a time delay analysis"
     )
     theparser.add_argument(
-        "--offsettime", help="Set lag offset", dest="offsettime", type=float, default=None,
+        "--offsettime",
+        help="Set lag offset",
+        dest="offsettime",
+        type=float,
+        default=None,
     )
     theparser.add_argument(
         "--risetime",
@@ -1273,7 +1322,11 @@ def main():
         default=False,
     )
     theparser.add_argument(
-        "--settr", help="Set similarity function TR", dest="trval", type=float, default=None,
+        "--settr",
+        help="Set similarity function TR",
+        dest="trval",
+        type=float,
+        default=None,
     )
     theparser.add_argument(
         "--dataset",
@@ -1282,7 +1335,10 @@ def main():
         default=None,
     )
     theparser.add_argument(
-        "--anatname", help="Set anatomic background image", dest="anatname", default=None,
+        "--anatname",
+        help="Set anatomic background image",
+        dest="anatname",
+        default=None,
     )
     theparser.add_argument(
         "--maskname", help="Set geometric mask image", dest="geommaskname", default=None
@@ -1403,7 +1459,13 @@ def main():
         },
         "meanmask": {
             "colormap": gray_state,
-            "label": "Refine mask",
+            "label": "Global mean mask",
+            "display": False,
+            "funcmask": None,
+        },
+        "preselectmask": {
+            "colormap": gray_state,
+            "label": "Global mean preselect mask",
             "display": False,
             "funcmask": None,
         },
@@ -1615,8 +1677,12 @@ def main():
     sel_lagmask.triggered.connect(set_lagmask)
     sel_refinemask = QtGui.QAction("Voxels used in refine", win)
     sel_meanmask = QtGui.QAction("Voxels used in mean regressor calculation", win)
+    sel_preselectmask = QtGui.QAction(
+        "Voxels chosen for the mean regressor calculation in the preselect pass", win
+    )
     sel_refinemask.triggered.connect(set_refinemask)
     sel_meanmask.triggered.connect(set_meanmask)
+    sel_preselectmask.triggered.connect(set_preselectmask)
     sel_0p05 = QtGui.QAction("p<0.05", win)
     sel_0p05.triggered.connect(set_0p05)
     sel_0p01 = QtGui.QAction("p<0.01", win)
@@ -1987,6 +2053,9 @@ def main():
             numspecial += 1
         if "meanmask" in currentdataset.loadedfuncmasks:
             popMenu.addAction(sel_meanmask)
+            numspecial += 1
+        if "preselectmask" in currentdataset.loadedfuncmasks:
+            popMenu.addAction(sel_preselectmask)
             numspecial += 1
         if numspecial > 0:
             popMenu.addSeparator()
