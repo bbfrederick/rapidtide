@@ -230,7 +230,7 @@ def refineregressor(
             np.int16(0),
         )
     else:
-        abslag = abs(lagtimes) - optiondict["offsettime"]
+        abslag = abs(lagtimes - optiondict["offsettime"])
         delaymask = np.where(
             abslag > optiondict["lagminthresh"], np.int16(1), np.int16(0)
         ) * np.where(abslag < optiondict["lagmaxthresh"], np.int16(1), np.int16(0))
