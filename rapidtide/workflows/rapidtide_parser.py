@@ -1508,6 +1508,15 @@ def process_args(inputargs=None):
         args["refineoffset"] = True
         args["doglmfilt"] = True
 
+    if args["globalpreselect"]:
+        args["passes"] = 1
+        args["pickleft"] = True
+        args["despeckle_passes"] = 0
+        args["refinedespeckle"] = False
+        args["limitoutput"] = True
+        pf.setifnotset(args, "doglmfilt", False)
+        args["saveintermediatemaps"] = False
+
     # process limitoutput
     if args["limitoutput"]:
         args["savemovingsignal"] = False

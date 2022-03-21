@@ -1215,7 +1215,11 @@ def rapidtide_main(argparsingfunc):
         lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     tide_util.logmem("after lagtc array allocation")
 
-    if optiondict["passes"] > 1 or optiondict["convergencethresh"] is not None:
+    if (
+        optiondict["passes"] > 1
+        or optiondict["globalpreselect"]
+        or optiondict["convergencethresh"] is not None
+    ):
         if optiondict["sharedmem"]:
             shiftedtcs, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
             weights, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
@@ -2011,7 +2015,11 @@ def rapidtide_main(argparsingfunc):
             )
 
         # Step 3 - regressor refinement for next pass
-        if thepass < optiondict["passes"] or optiondict["convergencethresh"] is not None:
+        if (
+            thepass < optiondict["passes"]
+            or optiondict["convergencethresh"] is not None
+            or optiondict["globalpreselect"]
+        ):
             LGR.info(f"\n\nRegressor refinement, pass {thepass}")
             TimingLGR.info(f"Regressor refinement start, pass {thepass}")
             if optiondict["refineoffset"]:
@@ -2815,7 +2823,9 @@ def rapidtide_main(argparsingfunc):
                         names=["p_lt_" + thepvalnames[i] + "_mask"],
                     )
 
-    if optiondict["passes"] > 1 and optiondict["refinestopreason"] != "emptymask":
+    if (optiondict["passes"] > 1 or optiondict["globalpreselect"]) and optiondict[
+        "refinestopreason"
+    ] != "emptymask":
         outmaparray[:] = 0.0
         outmaparray[validvoxels] = refinemask[:]
         if optiondict["textio"]:
@@ -2827,6 +2837,8 @@ def rapidtide_main(argparsingfunc):
                 savename = f"{outputname}_desc-refine_mask"
             else:
                 savename = f"{outputname}_refinemask"
+            if optiondict["globalpreselect"]:
+                savename = savename.replace("refine", "globalmeanpreselect")
             if not fileiscifti:
                 tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
             else:
