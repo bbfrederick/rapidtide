@@ -1,0 +1,11 @@
+#!/bin/bash
+
+docker run \
+    --mount type=bind,source=`pwd`/../dst,destination=/data_out \
+    fredericklab/rapidtide:latest \
+        rapidtide \
+            /src/rapidtide/rapidtide/data/examples/src/sub-RAPIDTIDETEST.nii.gz \
+            /data_out/dgsr \
+            --filterband lfo \
+            --searchrange -15 15 \
+            --passes 3
