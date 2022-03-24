@@ -5,15 +5,14 @@
 #
 # Written 2015 by Dan Stowell. Public domain.
 
-import numpy as np
-from numpy.fft import fft, ifft, ifftshift
-
 import matplotlib
+import matplotlib.cm as cm
 
 # matplotlib.use('PDF') # http://www.astrobetter.com/plotting-to-a-file-in-python/
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
+import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
+from numpy.fft import fft, ifft, ifftshift
 
 plt.rcParams.update({"font.size": 6})
 
