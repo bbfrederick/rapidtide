@@ -340,17 +340,6 @@ def _get_parser():
         default=None,
     )
     external_cardiac_opts.add_argument(
-        "--stdfreq",
-        dest="stdfreq",
-        metavar="FREQ",
-        action="store",
-        type=float,
-        help=(
-            "Frequency to which the cardiac signals are resampled for output. " "Default is 25. "
-        ),
-        default=25.0,
-    )
-    external_cardiac_opts.add_argument(
         "--forcehr",
         dest="forcedhr",
         metavar="BPM",
@@ -363,6 +352,76 @@ def _get_parser():
         ),
         default=None,
     )
+
+    respiration = True
+    if respiration:
+        # External respiration waveform options
+        external_respiration_opts = parser.add_argument_group(
+            "External respiration waveform options"
+        )
+        external_respiration_opts.add_argument(
+            "--respirationfile",
+            dest="respirationfilename",
+            metavar="FILE[:COL]",
+            help=(
+                "Read the respiration waveform from file FILE.  If COL is an integer, "
+                "and FILE is a text file, use the COL'th column.  If FILE is a BIDS "
+                "format json file, use column named COL."
+            ),
+            default=None,
+        )
+        respiration_freq = external_respiration_opts.add_mutually_exclusive_group()
+        respiration_freq.add_argument(
+            "--respirationfreq",
+            dest="respinputfreq",
+            action="store",
+            metavar="FREQ",
+            type=lambda x: pf.is_float(parser, x),
+            help=(
+                "Respiration waveform in respirationfile has sample frequency FREQ "
+                "(default is 32Hz). NB: --respirationfreq and --respirationtstep "
+                "are two ways to specify the same thing. "
+            ),
+            default=-32.0,
+        )
+        respiration_freq.add_argument(
+            "--respirationtstep",
+            dest="respinputfreq",
+            action="store",
+            metavar="TSTEP",
+            type=lambda x: pf.invert_float(parser, x),
+            help=(
+                "Respiration waveform in respirationfile has time step TSTEP "
+                "(default is 1/32 sec). NB: --respirationfreq and --respirationtstep "
+                "are two ways to specify the same thing. "
+            ),
+            default=-32.0,
+        )
+        external_respiration_opts.add_argument(
+            "--respirationstart",
+            dest="respinputstart",
+            metavar="START",
+            action="store",
+            type=float,
+            help=(
+                "The time delay in seconds into the respiration file, corresponding "
+                "to the first TR of the fMRI file (default is 0.0) "
+            ),
+            default=None,
+        )
+        external_respiration_opts.add_argument(
+            "--forcerr",
+            dest="forcedrr",
+            metavar="BreathsPM",
+            action="store",
+            type=lambda x: pf.is_float(parser, x) / 60.0,
+            help=(
+                "Force respiratory rate fundamental detector to be centered at BreathsPM "
+                "(overrides peak frequencies found from spectrum).  Useful"
+                "if there is structured noise that confuses the peak finder. "
+            ),
+            default=None,
+        )
 
     # Output processing
     output_proc = parser.add_argument_group("Output processing")
@@ -383,6 +442,18 @@ def _get_parser():
 
     # Output options
     output = parser.add_argument_group("Output options")
+    output.add_argument(
+        "--stdfreq",
+        dest="stdfreq",
+        metavar="FREQ",
+        action="store",
+        type=float,
+        help=(
+            "Frequency to which the physiological signals are resampled for output. "
+            "Default is 25. "
+        ),
+        default=25.0,
+    )
     output.add_argument(
         "--legacyoutput",
         dest="bidsoutput",
