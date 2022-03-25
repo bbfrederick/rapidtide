@@ -65,6 +65,20 @@ def fingerprint_main(
         theatlasregionsname = os.path.join(
             referencedir, "ATTbasedFlowTerritories_split_regions.txt"
         )
+    elif whichatlas == "JHU1":
+        theatlasname = os.path.join(
+            referencedir, "JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm.nii.gz"
+        )
+        theatlasregionsname = os.path.join(
+            referencedir, "JHU-ArterialTerritories-LVL1_regions.txt"
+        )
+    elif whichatlas == "JHU2":
+        theatlasname = os.path.join(
+            referencedir, "JHU-ArterialTerritoriesNoVent-LVL2_space-MNI152NLin6Asym_2mm.nii.gz"
+        )
+        theatlasregionsname = os.path.join(
+            referencedir, "JHU-ArterialTerritories-LVL2_regions.txt"
+        )
     else:
         print("illegal atlas:", whichatlas)
         sys.exit()
