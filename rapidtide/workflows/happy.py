@@ -74,7 +74,7 @@ def cardiacsig(thisphase, amps=(1.0, 0.0, 0.0), phases=None, overallphase=0.0):
     return total
 
 
-def physiofromimage(
+def cardiacfromimage(
     normdata_byslice,
     mask_byslice,
     numslices,
@@ -281,18 +281,20 @@ def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showpro
     return normdata, demeandata, means
 
 
-def cleancardiac(Fs, plethwaveform, cutoff=0.4, thresh=0.2, nyquist=None, debug=False):
+def cleanphysio(
+    Fs, physiowaveform, cutoff=0.4, thresh=0.2, nyquist=None, iscardiac=True, debug=False
+):
     # first bandpass the cardiac signal to calculate the envelope
     if debug:
-        print("Entering cleancardiac")
+        print("Entering cleanphysio")
 
     print("Filtering")
-    plethfilter = tide_filt.NoncausalFilter("cardiac", debug=debug)
+    physiofilter = tide_filt.NoncausalFilter("cardiac", debug=debug)
 
     print("Envelope detection")
     envelope = tide_math.envdetect(
         Fs,
-        tide_math.madnormalize(plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform))),
+        tide_math.madnormalize(physiofilter.apply(Fs, tide_math.madnormalize(physiowaveform))),
         cutoff=cutoff,
     )
     envmean = np.mean(envelope)
@@ -301,26 +303,26 @@ def cleancardiac(Fs, plethwaveform, cutoff=0.4, thresh=0.2, nyquist=None, debug=
     envlowerlim = thresh * np.max(envelope)
     envelope = np.where(envelope >= envlowerlim, envelope, envlowerlim)
 
-    # now high pass the plethysmogram to eliminate baseline
-    arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop = plethfilter.getfreqs()
-    plethfilter.settype("arb")
+    # now high pass the waveform to eliminate baseline
+    arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop = physiofilter.getfreqs()
+    physiofilter.settype("arb")
     arb_upper = 10.0
     arb_upperstop = arb_upper * 1.1
     if nyquist is not None:
         if nyquist < arb_upper:
             arb_upper = nyquist
             arb_upperstop = nyquist
-    plethfilter.setfreqs(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
-    filtplethwaveform = tide_math.madnormalize(
-        plethfilter.apply(Fs, tide_math.madnormalize(plethwaveform))
+    physiofilter.setfreqs(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
+    filtphysiowaveform = tide_math.madnormalize(
+        physiofilter.apply(Fs, tide_math.madnormalize(physiowaveform))
     )
     print("Normalizing")
-    normpleth = tide_math.madnormalize(envmean * filtplethwaveform / envelope)
+    normphysio = tide_math.madnormalize(envmean * filtphysiowaveform / envelope)
 
     # return the filtered waveform, the normalized waveform, and the envelope
     if debug:
-        print("Leaving cleancardiac")
-    return filtplethwaveform, normpleth, envelope, envmean
+        print("Leaving cleanphysio")
+    return filtphysiowaveform, normphysio, envelope, envmean
 
 
 def findbadpts(
@@ -561,7 +563,7 @@ def calcplethquality(
 
 
 def getphysiofile(
-    cardiacfile,
+    waveformfile,
     inputfreq,
     inputstart,
     slicetimeaxis,
@@ -570,20 +572,19 @@ def getphysiofile(
     envcutoff,
     envthresh,
     timings,
-    infodict,
     outputroot,
     slop=0.25,
     outputlevel=0,
+    iscardiac=True,
     debug=False,
 ):
     if debug:
         print("Entering getphysiofile")
-    print("Reading cardiac signal from file")
-    infodict["cardiacfromfmri"] = False
+    print("Reading physiological signal from file")
 
     # check file type
-    filefreq, filestart, dummy, pleth_fullres, dummy, dummy = tide_io.readvectorsfromtextfile(
-        cardiacfile, onecol=True, debug=debug
+    filefreq, filestart, dummy, waveform_fullres, dummy, dummy = tide_io.readvectorsfromtextfile(
+        waveformfile, onecol=True, debug=debug
     )
     if inputfreq < 0.0:
         if filefreq is not None:
@@ -600,11 +601,14 @@ def getphysiofile(
     if debug:
         print("inputfreq:", inputfreq)
         print("inputstart:", inputstart)
-        print("pleth_fullres:", pleth_fullres)
-        print("pleth_fullres.shape:", pleth_fullres.shape)
+        print("waveform_fullres:", waveform_fullres)
+        print("waveform_fullres.shape:", waveform_fullres.shape)
     inputtimeaxis = (
         np.linspace(
-            0.0, (1.0 / inputfreq) * len(pleth_fullres), num=len(pleth_fullres), endpoint=False
+            0.0,
+            (1.0 / inputfreq) * len(waveform_fullres),
+            num=len(waveform_fullres),
+            endpoint=False,
         )
         + inputstart
     )
@@ -643,51 +647,47 @@ def getphysiofile(
                 "<",
                 slicetimeaxis[-1] - slop,
             )
-        raise ValueError(
-            "getphysiofile: error - plethysmogram waveform does not cover the fmri time range"
-        )
+        raise ValueError("getphysiofile: error - waveform file does not cover the fmri time range")
     if debug:
-        print("pleth_fullres: len=", len(pleth_fullres), "vals=", pleth_fullres)
+        print("waveform_fullres: len=", len(waveform_fullres), "vals=", waveform_fullres)
         print("inputfreq =", inputfreq)
         print("inputstart =", inputstart)
         print("inputtimeaxis: len=", len(inputtimeaxis), "vals=", inputtimeaxis)
     timings.append(["Cardiac signal from physiology data read in", time.time(), None, None])
 
     # filter and amplitude correct the waveform to remove gain fluctuations
-    cleanpleth_fullres, normpleth_fullres, plethenv_fullres, envmean = cleancardiac(
+    cleanwaveform_fullres, normwaveform_fullres, waveformenv_fullres, envmean = cleanphysio(
         inputfreq,
-        pleth_fullres,
+        waveform_fullres,
+        iscardiac=iscardiac,
         cutoff=envcutoff,
         thresh=envthresh,
         nyquist=inputfreq / 2.0,
         debug=debug,
     )
-    infodict["plethsamplerate"] = inputfreq
-    infodict["numplethpts_fullres"] = len(pleth_fullres)
 
-    if outputlevel > 1:
-        tide_io.writevec(pleth_fullres, outputroot + "_rawpleth_native.txt")
-        tide_io.writevec(cleanpleth_fullres, outputroot + "_pleth_native.txt")
-        tide_io.writevec(plethenv_fullres, outputroot + "_cardenvelopefromfile_native.txt")
-    timings.append(["Cardiac signal from physiology data cleaned", time.time(), None, None])
+    if iscardiac:
+        if outputlevel > 1:
+            tide_io.writevec(waveform_fullres, outputroot + "_rawpleth_native.txt")
+            tide_io.writevec(cleanwaveform_fullres, outputroot + "_pleth_native.txt")
+            tide_io.writevec(waveformenv_fullres, outputroot + "_cardenvelopefromfile_native.txt")
+        timings.append(["Cardiac signal from physiology data cleaned", time.time(), None, None])
 
     # resample to slice time resolution and save
-    pleth_sliceres = tide_resample.doresample(
-        inputtimeaxis, cleanpleth_fullres, slicetimeaxis, method="univariate", padlen=0
+    waveform_sliceres = tide_resample.doresample(
+        inputtimeaxis, cleanwaveform_fullres, slicetimeaxis, method="univariate", padlen=0
     )
-    infodict["numplethpts_sliceres"] = len(pleth_sliceres)
 
     # resample to standard resolution and save
-    pleth_stdres = tide_math.madnormalize(
+    waveform_stdres = tide_math.madnormalize(
         tide_resample.doresample(
             inputtimeaxis,
-            cleanpleth_fullres,
+            cleanwaveform_fullres,
             stdtimeaxis,
             method="univariate",
             padlen=0,
         )
     )
-    infodict["numplethpts_stdres"] = len(pleth_stdres)
 
     timings.append(
         [
@@ -700,7 +700,7 @@ def getphysiofile(
 
     if debug:
         print("Leaving getphysiofile")
-    return pleth_sliceres, pleth_stdres
+    return waveform_sliceres, waveform_stdres, inputfreq, len(waveform_fullres)
 
 
 def readextmask(thefilename, nim_hdr, xsize, ysize, numslices, debug=False):
@@ -1123,7 +1123,7 @@ def happy_main(argparsingfunc):
             numsteps,
             cycleaverage,
             slicenorms,
-        ) = physiofromimage(
+        ) = cardiacfromimage(
             normdata_byslice,
             estmask_byslice,
             numslices,
@@ -1268,9 +1268,10 @@ def happy_main(argparsingfunc):
             normcardfromfmri_stdres,
             cardfromfmrienv_stdres,
             envmean,
-        ) = cleancardiac(
+        ) = cleanphysio(
             args.stdfreq,
             cardfromfmri_stdres,
+            iscardiac=True,
             cutoff=args.envcutoff,
             nyquist=slicesamplerate / 2.0,
             thresh=args.envthresh,
@@ -1482,7 +1483,7 @@ def happy_main(argparsingfunc):
         # get the cardiac signal from a file, if specified
         if args.cardiacfilename is not None:
             tide_util.logmem("before cardiacfromfile")
-            pleth_sliceres, pleth_stdres = getphysiofile(
+            pleth_sliceres, pleth_stdres, returnedinputfreq, fullrespts = getphysiofile(
                 args.cardiacfilename,
                 args.inputfreq,
                 args.inputstart,
@@ -1492,11 +1493,16 @@ def happy_main(argparsingfunc):
                 args.envcutoff,
                 args.envthresh,
                 timings,
-                infodict,
                 outputroot,
+                iscardiac=True,
                 outputlevel=args.outputlevel,
                 debug=args.debug,
             )
+            infodict["cardiacfromfmri"] = False
+            infodict["numplethpts_sliceres"] = len(pleth_sliceres)
+            infodict["numplethpts_stdres"] = len(pleth_stdres)
+            infodict["plethsamplerate"] = returnedinputfreq
+            infodict["numplethpts_fullres"] = fullrespts
 
             if args.dodlfilter and dlfilterexists:
                 maxval, maxdelay, failreason = checkcardmatch(
@@ -1575,8 +1581,12 @@ def happy_main(argparsingfunc):
                     )
 
             # now clean up cardiac signal
-            filtpleth_stdres, normpleth_stdres, plethenv_stdres, envmean = cleancardiac(
-                args.stdfreq, pleth_stdres, cutoff=args.envcutoff, thresh=args.envthresh
+            filtpleth_stdres, normpleth_stdres, plethenv_stdres, envmean = cleanphysio(
+                args.stdfreq,
+                pleth_stdres,
+                iscardiac=True,
+                cutoff=args.envcutoff,
+                thresh=args.envthresh,
             )
             if thispass == numpasses - 1:
                 if args.bidsoutput:
@@ -1823,6 +1833,32 @@ def happy_main(argparsingfunc):
         initialphase = instantaneous_cardiacphase[0]
         infodict["phi0"] = initialphase
         timings.append(["Phase waveform generated" + passstring, time.time(), None, None])
+
+        # get the respiration signal from a file, if specified
+        respiration = True
+        if respiration:
+            if args.respirationfilename is not None:
+                tide_util.logmem("before respirationfromfile")
+                pleth_sliceres, pleth_stdres, returnedinputfreq, fullrespts = getphysiofile(
+                    args.cardiacfilename,
+                    args.respinputfreq,
+                    args.respinputstart,
+                    slicetimeaxis,
+                    args.stdfreq,
+                    len(cardfromfmri_stdres),
+                    args.envcutoff,
+                    args.envthresh,
+                    timings,
+                    outputroot,
+                    iscardiac=False,
+                    outputlevel=args.outputlevel,
+                    debug=args.debug,
+                )
+                infodict["respirationfromfmri"] = False
+                infodict["numresppts_sliceres"] = len(pleth_sliceres)
+                infodict["numresppts_stdres"] = len(pleth_stdres)
+                infodict["respsamplerate"] = returnedinputfreq
+                infodict["numresppts_fullres"] = fullrespts
 
         # account for slice time offests
         offsets_byslice = np.zeros((xsize * ysize, numslices), dtype=np.float64)
