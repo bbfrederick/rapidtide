@@ -220,7 +220,7 @@ setup(
     zip_safe=False,
     package_data={
         "reference": [
-            "reference/JHU*txt",
+            "reference/JHU*NoVent*txt",
             "reference/JHU*NoVent*2mm*nii.gz",
             "reference/ASPECTS*",
             "reference/ATT*",
