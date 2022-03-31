@@ -180,6 +180,14 @@ class Overlay:
         else:
             self.affine = self.header.get_base_affine()
         self.invaffine = np.linalg.inv(self.affine)
+        if self.affine[0, 0] < 0.0:
+            self.RLfactor = -1.0
+            if self.verbose:
+                print("Overlay appears to be in neurological orientation")
+        else:
+            self.RLfactor = 1.0
+            if self.verbose:
+                print("Overlay appears to be in radiological orientation")
         self.xpos = 0
         self.ypos = 0
         self.zpos = 0
@@ -379,6 +387,10 @@ class Overlay:
         print("    zdim:             ", self.zdim)
         print("    tdim:             ", self.tdim)
         print("    space:            ", self.space)
+        if self.RLfactor < 0.0:
+            print("    orientation:       neurological")
+        else:
+            print("    orientation:       radiological")
         print("    toffset:          ", self.toffset)
         print("    tr:               ", self.tr)
         print("    min:              ", self.minval)
