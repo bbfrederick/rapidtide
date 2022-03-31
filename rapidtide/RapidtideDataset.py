@@ -184,10 +184,14 @@ class Overlay:
             self.RLfactor = -1.0
             if self.verbose:
                 print("Overlay appears to be in neurological orientation")
-        else:
+        elif self.affine[0, 0] > 0.0:
             self.RLfactor = 1.0
             if self.verbose:
                 print("Overlay appears to be in radiological orientation")
+        else:
+            self.RLfactor = 0.0
+            if self.verbose:
+                print("Overlay has indeterminate orientation")
         self.xpos = 0
         self.ypos = 0
         self.zpos = 0
@@ -389,8 +393,10 @@ class Overlay:
         print("    space:            ", self.space)
         if self.RLfactor < 0.0:
             print("    orientation:       neurological")
-        else:
+        elif self.RLfactor > 0.0:
             print("    orientation:       radiological")
+        else:
+            print("    orientation:       indeterminate")
         print("    toffset:          ", self.toffset)
         print("    tr:               ", self.tr)
         print("    min:              ", self.minval)
