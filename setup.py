@@ -220,8 +220,8 @@ setup(
     zip_safe=False,
     package_data={
         "reference": [
-            "reference/JHU*NoVent*txt",
-            "reference/JHU*NoVent*2mm*nii.gz",
+            "reference/JHU-ArterialTerritoriesNoVent-LVL*regions.txt",
+            "reference/JHU-ArterialTerritoriesNoVent-LVL*2mm.nii.gz",
             "reference/ASPECTS*",
             "reference/ATT*",
             "reference/HCP1200*",
