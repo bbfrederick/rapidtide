@@ -265,7 +265,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "inputfile",
-        help="rapidtide output map to decompose by vascular territory",
+        help="Rapidtide output map to decompose by vascular territory.  Must be in MNI152 coordinates, 2mm resolution",
         action=FullPaths,
         type=is_file,
     )
@@ -286,10 +286,15 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--atlas",
-        help="Atlas.  Options are\n"
-        "\tASPECTS:  ASPECTS territory atlas\n"
-        "\tATT:      Arterial transit time flow territories\n",
-        default="ASPECTS",
+        help=(
+            "Atlas.  Options are\n"
+            "\tASPECTS:  ASPECTS territory atlas\n"
+            "\tATT:      Arterial transit time flow territories\n"
+            "\tJHU1:     Johns Hopkins level 1 probabalistic flow territories\n"
+            "\tJHU2:     Johns Hopkins level 2 probabalistic flow territories\n"
+        ),
+        choices=["ASPECTS", "ATT", "JHU1", "JHU2"],
+        default="JHU1",
     )
 
     parser.add_argument(
@@ -307,10 +312,12 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--template",
-        help="Template.  Options are\n"
-        "\tlag:      time lag in seconds\n"
-        "\tstrength: correlation coefficient\n"
-        "\tsigma:    correlation peak width in seconds\n",
+        help=(
+            "Template.  Options are\n"
+            "\tlag:      time lag in seconds\n"
+            "\tstrength: correlation coefficient\n"
+            "\tsigma:    correlation peak width in seconds\n"
+        ),
         default="lag",
     )
 
@@ -320,7 +327,13 @@ if __name__ == "__main__":
         action="store_true",
     )
 
-    args = parser.parse_args()
+    # get the command line parameters
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        parser.print_help()
+        raise
+
     if args.debug:
         print(args)
 
