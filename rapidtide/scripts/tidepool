@@ -176,8 +176,11 @@ class xyztlocation(QtGui.QWidget):
         self.setupRunMovieButton(self.runMovieButton, self.runMovieToggle)
 
     def setupRunMovieButton(self, thebutton, thehandler):
+        global verbosity
+
         if thebutton is not None:
-            print("initializing movie button")
+            if verbosity > 1:
+                print("initializing movie button")
             thebutton.setText("Start Movie")
             thebutton.clicked.connect(thehandler)
 
@@ -351,14 +354,18 @@ class xyztlocation(QtGui.QWidget):
         self.movieTimer.start(int(self.frametime))
 
     def runMovieToggle(self, event):
-        print("entering runMovieToggle")
+        if verbosity > 1:
+            print("entering runMovieToggle")
         if self.movierunning:
-            print("movie is running - turning off")
+            if verbosity > 1:
+                print("movie is running - turning off")
             self.stopMovie()
         else:
-            print("movie is not running - turning on")
+            if verbosity > 1:
+                print("movie is not running - turning on")
             self.startMovie()
-        print("leaving runMovieToggle")
+        if verbosity > 1:
+            print("leaving runMovieToggle")
 
     def setFrametime(self, frametime):
         if self.movierunning:
@@ -428,6 +435,7 @@ def updateSimilarityFunc():
     global overlays, timeaxis, currentloc
     global currentdataset
     global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption, simfuncFitter
+    global verbosity
 
     if simfunc_ax is not None:
         corrvals = overlays["corrout"].data[currentloc.xpos, currentloc.ypos, currentloc.zpos, :]
@@ -470,8 +478,9 @@ def updateSimilarityFunc():
             thecaption = "No valid fit"
         simfunc_ax.setYRange(minval - 0.05 * valrange, maxval + 0.3 * valrange, padding=0)
         simfuncCaption.setText(thecaption)
-        print("current tpos:", currentloc.tpos)
-        print("setting line location:", timeaxis[currentloc.tpos])
+        if verbosity > 1:
+            print("current tpos:", currentloc.tpos)
+            print("setting line location:", timeaxis[currentloc.tpos])
         simfuncTLine.setPos(timeaxis[currentloc.tpos])
         simfuncCurvePoint.setPos(
             float(tide_util.valtoindex(timeaxis, peakmaxtime)) / (len(timeaxis) - 1)
@@ -756,11 +765,14 @@ def MAD_radioButton_clicked(enabled):
 
 def transparency_checkbox_clicked():
     global LUT_alpha, LUT_endalpha, ui, overlays, currentdataset
+    global verbosity
+
     if ui.transparency_checkBox.isChecked():
         LUT_endalpha = 0
     else:
         LUT_endalpha = 255
-    print("LUT_endalpha=", LUT_endalpha)
+    if verbosity > 1:
+        print("LUT_endalpha=", LUT_endalpha)
     for themap in currentdataset.loadedfuncmaps:
         overlays[themap].setLUT(overlays[themap].lut_state, alpha=LUT_alpha, endalpha=LUT_endalpha)
         overlays[themap].gradient.restoreState(overlays[themap].lut_state)
@@ -991,6 +1003,7 @@ def overlay_radioButton_08_clicked(enabled):
 def overlay_radioButton_clicked(which, enabled):
     global imageadj, overlays, currentdataset, panetomap, ui, overlaybuttons
     global currentloc, atlasaveragingdone
+    global verbosity
     if enabled:
         overlaybuttons[which].setChecked(True)
         currentloc.stopMovie()
@@ -999,7 +1012,8 @@ def overlay_radioButton_clicked(which, enabled):
                 currentdataset.setfocusmap(panetomap[which] + "_atlasstat")
             else:
                 currentdataset.setfocusmap(panetomap[which])
-            print("currentdataset.focusmap set to ", currentdataset.focusmap)
+            if verbosity > 1:
+                print("currentdataset.focusmap set to ", currentdataset.focusmap)
             if overlays[currentdataset.focusmap].lut_state == gray_state:
                 ui.gray_radioButton.setChecked(True)
             elif overlays[currentdataset.focusmap].lut_state == thermal_state:
@@ -1013,11 +1027,12 @@ def overlay_radioButton_clicked(which, enabled):
             else:
                 ui.rainbow_radioButton.setChecked(True)
 
-            print(
-                "setting t position limits to ",
-                0,
-                overlays[currentdataset.focusmap].tdim - 1,
-            )
+            if verbosity > 1:
+                print(
+                    "setting t position limits to ",
+                    0,
+                    overlays[currentdataset.focusmap].tdim - 1,
+                )
             currentloc.setTInfo(
                 overlays[currentdataset.focusmap].tdim,
                 overlays[currentdataset.focusmap].tr,
@@ -1036,7 +1051,10 @@ def updateTimepoint(event):
     global data, overlays, simfunc_ax, tr, tpos, timeaxis, currentloc, ui
     global currentdataset
     global vLine
-    print("arrived in updateTimepoint")
+    global verbosity
+
+    if verbosity > 1:
+        print("arrived in updateTimepoint")
     pos = event.pos()  ## using signal proxy turns original arguments into a tuple
     mousePoint = simfunc_ax.vb.mapToView(pos)
     tval = mousePoint.x()
@@ -1277,6 +1295,7 @@ def main():
     global datafileroot
     global atlasaveragingdone
     global currentdataset
+    global verbosity
 
     # initialize default values
     averagingmode = None
@@ -1298,6 +1317,7 @@ def main():
     ypos = 0
     zpos = 0
     tpos = 0
+    verbosity = 1
 
     theparser = argparse.ArgumentParser(
         description="A program to display the results of a time delay analysis"
@@ -1366,6 +1386,9 @@ def main():
         import rapidtide.tidepoolTemplate_alt as uiTemplate
     else:
         import rapidtide.tidepoolTemplate as uiTemplate
+
+    verbosity = args.verbose
+    print(f"verbosity: {args.verbose}")
 
     anatname = args.anatname
     if anatname is not None:
@@ -1839,29 +1862,36 @@ def main():
     scalefacy = (lg_imgsize / maxfov) * currentdataset.ysize
     scalefacz = (lg_imgsize / maxfov) * currentdataset.zsize
 
-    print("setting overlay defaults")
+    if verbosity > 1:
+        print("setting overlay defaults")
     for themap in currentdataset.allloadedmaps + currentdataset.loadedfuncmasks:
         overlays[themap].setLUT(
             defaultdict[themap]["colormap"], alpha=LUT_alpha, endalpha=LUT_endalpha
         )
         overlays[themap].setisdisplayed(defaultdict[themap]["display"])
         overlays[themap].setLabel(defaultdict[themap]["label"])
-    print("done setting overlay defaults")
+    if verbosity > 1:
+        print("done setting overlay defaults")
 
-    print("setting geometric masks")
+    if verbosity > 1:
+        print("setting geometric masks")
     if "geommask" in overlays:
         thegeommask = overlays["geommask"].data
-        print("setting geometric mask")
+        if verbosity > 1:
+            print("setting geometric mask")
     else:
         thegeommask = None
-        print("setting geometric mask to None")
+        if verbosity > 1:
+            print("setting geometric mask to None")
 
     for theoverlay in currentdataset.loadedfuncmaps:
         overlays[theoverlay].setGeomMask(thegeommask)
-    print("done setting geometric masks")
+    if verbosity > 1:
+        print("done setting geometric masks")
 
-    print("setting functional masks")
-    print(currentdataset.loadedfuncmaps)
+    if verbosity > 1:
+        print("setting functional masks")
+        print(currentdataset.loadedfuncmaps)
     for theoverlay in currentdataset.loadedfuncmaps:
         if theoverlay != "failimage":
             if "p_lt_0p050_mask" in overlays and False:  # disable this BBF 2/8/18
@@ -1870,7 +1900,8 @@ def main():
             else:
                 overlays[theoverlay].setFuncMask(overlays["lagmask"].data)
                 ui.setMask_Button.setText("Valid mask")
-    print("done setting functional masks")
+    if verbosity > 1:
+        print("done setting functional masks")
 
     if "anatomic" in overlays:
         overlays["anatomic"].setFuncMask(None)
@@ -1894,6 +1925,7 @@ def main():
                     view[thepane],
                     button=button[thepane],
                     imgsize=sm_imgsize,
+                    verbose=verbosity,
                 )
             else:
                 orthoimages[themap.name] = OrthoImageItem(
@@ -1904,10 +1936,12 @@ def main():
                     button=button[thepane],
                     bgmap=bgmap,
                     imgsize=sm_imgsize,
+                    verbose=verbosity,
                 )
             panemap[thepane] = themap.name
 
-    print("focusmap is:", currentdataset.focusmap, "bgmap is:", bgmap)
+    if verbosity > 1:
+        print("focusmap is:", currentdataset.focusmap, "bgmap is:", bgmap)
     if bgmap is None:
         mainwin = OrthoImageItem(
             overlays[currentdataset.focusmap],
@@ -1916,6 +1950,7 @@ def main():
             ui.main_graphicsView_sag,
             imgsize=lg_imgsize,
             enableMouse=True,
+            verbose=verbosity,
         )
     else:
         mainwin = OrthoImageItem(
@@ -1926,21 +1961,25 @@ def main():
             bgmap=overlays[bgmap],
             imgsize=lg_imgsize,
             enableMouse=True,
+            verbose=verbosity,
         )
     mainwin.updated.connect(updateXYZFromMainWin)
 
     orthoimages = {}
-    print("loading panes")
+    if verbosity > 1:
+        print("loading panes")
     availablepanes = len(overlayGraphicsViews)
     numnotloaded = 0
     numloaded = 0
     for idx, themap in enumerate(currentdataset.dispmaps):
         if overlays[themap].display_state:
             if numloaded > availablepanes - 1:
-                print("skipping map ", themap, "(", idx, "): out of display panes")
+                if verbosity > 1:
+                    print("skipping map ", themap, "(", idx, "): out of display panes")
                 numnotloaded += 1
             else:
-                print("loading map ", themap, "(", idx, ") into pane ", numloaded)
+                if verbosity > 1:
+                    print("loading map ", themap, "(", idx, ") into pane ", numloaded)
                 if bgmap is None:
                     loadpane(
                         overlays[themap],
@@ -1962,8 +2001,10 @@ def main():
                     )
                 numloaded += 1
         else:
-            print("not loading map ", themap, "(", idx, "): display_state is False")
-    print("done loading panes")
+            if verbosity > 1:
+                print("not loading map ", themap, "(", idx, "): display_state is False")
+    if verbosity > 1:
+        print("done loading panes")
     if numnotloaded > 0:
         print("WARNING:", numnotloaded, "maps could not be loaded - not enough panes")
 
@@ -1974,21 +2015,26 @@ def main():
     ui.dispmin_doubleSpinBox.valueChanged.connect(getMinDispLimit)
     ui.dispmax_doubleSpinBox.valueChanged.connect(getMaxDispLimit)
 
-    print("done setting up histogram window")
+    if verbosity > 1:
+        print("done setting up histogram window")
 
-    # set up the histogram window
-    print("about to set up the histogram")
+    # set up the histogram
+    if verbosity > 1:
+        print("about to set up the histogram")
     global hist_ax
     histtitle = ui.histogram_groupBox.title()
-    print("current histtitle", histtitle)
+    if verbosity > 1:
+        print("current histtitle", histtitle)
     ui.histogram_groupBox.setWindowTitle("blah")
     histtitle = ui.histogram_groupBox.title()
-    print("current histtitle", histtitle)
+    if verbosity > 1:
+        print("current histtitle", histtitle)
     histwin = ui.histogram_graphicsView
     hist_ax = histwin.addPlot()
 
     # set up the similarity function window
-    print("about to set up the similarity function window")
+    if verbosity > 1:
+        print("about to set up the similarity function window")
     global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption, simfuncFitter
 
     try:
@@ -1999,12 +2045,15 @@ def main():
         simfuncwindowexists = False
 
     if usecorrout and simfuncwindowexists:
-        print("setting up similarity window")
+        if verbosity > 1:
+            print("setting up similarity window")
         simfunctitle = ui.simfunc_groupBox.title()
-        print("current simfunctitle", simfunctitle)
+        if verbosity > 1:
+            print("current simfunctitle", simfunctitle)
         ui.simfunc_groupBox.setWindowTitle("blah")
         simfunctitle = ui.simfunc_groupBox.title()
-        print("current simfunctitle", simfunctitle)
+        if verbosity > 1:
+            print("current simfunctitle", simfunctitle)
         simfuncwin = ui.simfunc_graphicsView
         simfunc_ax = simfuncwin.addPlot()
         simfuncCurve = simfunc_ax.plot(
@@ -2037,21 +2086,24 @@ def main():
         simfunc_ax = None
 
     # set up the regressor timecourse window
-    print("about to set up the timecourse")
+    if verbosity > 1:
+        print("about to set up the timecourse")
     global regressor_ax
     regressorwin = ui.regressortimecourse_graphicsView
     regressor_ax = regressorwin.addPlot()
     updateRegressor()
 
     # set up the regressor spectrum window
-    print("about to set up the spectrum")
+    if verbosity > 1:
+        print("about to set up the spectrum")
     global regressorspectrum_ax
     regressorspectrumwin = ui.regressorspectrum_graphicsView
     regressorspectrum_ax = regressorspectrumwin.addPlot()
     updateRegressorSpectrum()
 
     # set up the mask selection popup window
-    print("loadedfuncmasks", currentdataset.loadedfuncmasks)
+    if verbosity > 1:
+        print("loadedfuncmasks", currentdataset.loadedfuncmasks)
     if len(currentdataset.loadedfuncmasks) > 0:
         popMenu.addSeparator()
         if "lagmask" in currentdataset.loadedfuncmasks:

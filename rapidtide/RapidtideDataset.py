@@ -38,6 +38,8 @@ from rapidtide.Colortables import *
 atlases = {
     "ASPECTS": {"atlasname": "ASPECTS"},
     "ATT": {"atlasname": "ATTbasedFlowTerritories_split"},
+    "JHU1": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym"},
+    "JHU2": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL2_space-MNI152NLin6Asym"},
 }
 
 
@@ -55,7 +57,7 @@ class Timecourse:
         label=None,
         report=False,
         isbids=False,
-        verbose=1,
+        verbose=0,
     ):
         self.verbose = verbose
         self.name = name
@@ -81,7 +83,8 @@ class Timecourse:
             try:
                 self.timedata = indata[columns.index(thename), :]
             except ValueError:
-                print("no column named", thename, "in", columns)
+                if self.verbose > 1:
+                    print("no column named", thename, "in", columns)
                 self.timedata = None
                 return
         else:
@@ -214,7 +217,8 @@ class Overlay:
                 self.dispmax,
                 self.maxval,
             )
-        self.summarize()
+        if self.verbose > 0:
+            self.summarize()
 
     def duplicate(self, newname, newlabel):
         return Overlay(
@@ -246,15 +250,16 @@ class Overlay:
             calcmaskeddata, bins=np.linspace(self.minval, self.maxval, 200)
         )
         self.quartiles = [self.pct25, self.pct50, self.pct75]
-        print(
-            self.name,
-            ":",
-            self.minval,
-            self.maxval,
-            self.robustmin,
-            self.robustmax,
-            self.quartiles,
-        )
+        if self.verbose > 1:
+            print(
+                self.name,
+                ":",
+                self.minval,
+                self.maxval,
+                self.robustmin,
+                self.robustmax,
+                self.quartiles,
+            )
 
     def setData(self, data, isaMask=False):
         self.data = data.copy()
@@ -373,7 +378,8 @@ class Overlay:
                     )
                 )
             theticks.append(lut_state["ticks"][-1])
-            print("setLUT alpha adjustment:\n", theticks)
+            if self.verbose > 1:
+                print("setLUT alpha adjustment:\n", theticks)
             self.lut_state = setendalpha({"ticks": theticks, "mode": lut_state["mode"]}, endalpha)
         else:
             self.lut_state = setendalpha(lut_state, endalpha)
@@ -487,12 +493,13 @@ class RapidtideDataset:
                 self.newstylenames = True
             else:
                 self.newstylenames = False
-        print(
-            "RapidtideDataset init: self.bidsformat=",
-            self.bidsformat,
-            "self.newstylenames=",
-            self.newstylenames,
-        )
+        if self.verbose > 1:
+            print(
+                "RapidtideDataset init: self.bidsformat=",
+                self.bidsformat,
+                "self.newstylenames=",
+                self.newstylenames,
+            )
 
         self.setupregressors()
         self.setupoverlays()
@@ -501,7 +508,8 @@ class RapidtideDataset:
         self.focusregressor = None
         for thisregressor in self.regressorspecs:
             if os.path.isfile(self.fileroot + thisregressor[2]):
-                print("file: ", self.fileroot + thisregressor[2], " exists - reading...")
+                if self.verbose > 1:
+                    print("file: ", self.fileroot + thisregressor[2], " exists - reading...")
                 thepath, thebase = os.path.split(self.fileroot + thisregressor[2])
                 theregressor = Timecourse(
                     thisregressor[0],
@@ -516,15 +524,17 @@ class RapidtideDataset:
                 )
                 if theregressor.timedata is not None:
                     self.regressors[thisregressor[0]] = copy.deepcopy(theregressor)
-                    theregressor.summarize()
+                    if self.verbose > 0:
+                        theregressor.summarize()
                 if self.focusregressor is None:
                     self.focusregressor = thisregressor[0]
             else:
-                print(
-                    "file: ",
-                    self.fileroot + thisregressor[2],
-                    " does not exist - skipping...",
-                )
+                if self.verbose > 1:
+                    print(
+                        "file: ",
+                        self.fileroot + thisregressor[2],
+                        " does not exist - skipping...",
+                    )
 
     def _loadfuncmaps(self):
         self.loadedfuncmaps = []
@@ -535,11 +545,12 @@ class RapidtideDataset:
             if self.verbose > 1:
                 print(f"loading {mapname} from {mapfilename}")
             if os.path.isfile(self.fileroot + mapfilename + ".nii.gz"):
-                print(
-                    "file: ",
-                    self.fileroot + mapfilename + ".nii.gz",
-                    " exists - reading...",
-                )
+                if self.verbose > 1:
+                    print(
+                        "file: ",
+                        self.fileroot + mapfilename + ".nii.gz",
+                        " exists - reading...",
+                    )
                 thepath, thebase = os.path.split(self.fileroot)
                 self.overlays[mapname] = Overlay(
                     mapname,
@@ -575,8 +586,10 @@ class RapidtideDataset:
                         sys.exit()
                 self.loadedfuncmaps.append(mapname)
             else:
-                print("map: ", self.fileroot + mapfilename + ".nii.gz", " does not exist!")
-        print("functional maps loaded:", self.loadedfuncmaps)
+                if self.verbose > 1:
+                    print("map: ", self.fileroot + mapfilename + ".nii.gz", " does not exist!")
+        if self.verbose > 1:
+            print("functional maps loaded:", self.loadedfuncmaps)
 
     def _loadfuncmasks(self):
         self.loadedfuncmasks = []
@@ -595,12 +608,14 @@ class RapidtideDataset:
                 )
                 self.loadedfuncmasks.append(maskname)
             else:
-                print(
-                    "mask: ",
-                    self.fileroot + maskfilename + ".nii.gz",
-                    " does not exist!",
-                )
-        print(self.loadedfuncmasks)
+                if self.verbose > 1:
+                    print(
+                        "mask: ",
+                        self.fileroot + maskfilename + ".nii.gz",
+                        " does not exist!",
+                    )
+        if self.verbose > 1:
+            print(self.loadedfuncmasks)
 
     def _loadgeommask(self):
         if self.geommaskname is not None:
@@ -614,7 +629,8 @@ class RapidtideDataset:
                     isaMask=True,
                     verbose=self.verbose,
                 )
-                print("using ", self.geommaskname, " as geometric mask")
+                if self.verbose > 1:
+                    print("using ", self.geommaskname, " as geometric mask")
                 # allloadedmaps.append('geommask')
                 return True
         elif self.coordinatespace == "MNI152":
@@ -622,7 +638,8 @@ class RapidtideDataset:
                 fsldir = os.environ["FSLDIR"]
             except KeyError:
                 fsldir = None
-            print("fsldir set to ", fsldir)
+            if self.verbose > 1:
+                print("fsldir set to ", fsldir)
             if self.xsize == 2.0 and self.ysize == 2.0 and self.zsize == 2.0:
                 if fsldir is not None:
                     self.geommaskname = os.path.join(
@@ -642,14 +659,17 @@ class RapidtideDataset:
                     isaMask=True,
                     verbose=self.verbose,
                 )
-                print("using ", self.geommaskname, " as background")
+                if self.verbose > 1:
+                    print("using ", self.geommaskname, " as background")
                 # allloadedmaps.append('geommask')
                 return True
             else:
-                print("no geometric mask loaded")
+                if self.verbose > 1:
+                    print("no geometric mask loaded")
                 return False
         else:
-            print("no geometric mask loaded")
+            if self.verbose > 1:
+                print("no geometric mask loaded")
             return False
 
     def _loadanatomics(self):
@@ -659,7 +679,8 @@ class RapidtideDataset:
             fsldir = None
 
         if self.anatname is not None:
-            print("using user input anatomic name")
+            if self.verbose > 1:
+                print("using user input anatomic name")
             if os.path.isfile(self.anatname):
                 thepath, thebase = os.path.split(self.anatname)
                 self.overlays["anatomic"] = Overlay(
@@ -669,14 +690,17 @@ class RapidtideDataset:
                     init_LUT=self.init_LUT,
                     verbose=self.verbose,
                 )
-                print("using ", self.anatname, " as background")
+                if self.verbose > 1:
+                    print("using ", self.anatname, " as background")
                 # allloadedmaps.append('anatomic')
                 return True
             else:
-                print("specified file does not exist!")
+                if self.verbose > 1:
+                    print("specified file does not exist!")
                 return False
         elif os.path.isfile(self.fileroot + "highres_head.nii.gz"):
-            print("using hires_head anatomic name")
+            if self.verbose > 1:
+                print("using hires_head anatomic name")
             thepath, thebase = os.path.split(self.fileroot)
             self.overlays["anatomic"] = Overlay(
                 "anatomic",
@@ -685,11 +709,13 @@ class RapidtideDataset:
                 init_LUT=self.init_LUT,
                 verbose=self.verbose,
             )
-            print("using ", self.fileroot + "highres_head.nii.gz", " as background")
+            if self.verbose > 1:
+                print("using ", self.fileroot + "highres_head.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
             return True
         elif os.path.isfile(self.fileroot + "highres.nii.gz"):
-            print("using hires anatomic name")
+            if self.verbose > 1:
+                print("using hires anatomic name")
             thepath, thebase = os.path.split(self.fileroot)
             self.overlays["anatomic"] = Overlay(
                 "anatomic",
@@ -698,17 +724,20 @@ class RapidtideDataset:
                 init_LUT=self.init_LUT,
                 verbose=self.verbose,
             )
-            print("using ", self.fileroot + "highres.nii.gz", " as background")
+            if self.verbose > 1:
+                print("using ", self.fileroot + "highres.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
             return True
         elif self.coordinatespace == "MNI152":
             mniname = ""
             if self.xsize == 2.0 and self.ysize == 2.0 and self.zsize == 2.0:
-                print("using 2mm MNI anatomic name")
+                if self.verbose > 1:
+                    print("using 2mm MNI anatomic name")
                 if fsldir is not None:
                     mniname = os.path.join(fsldir, "data", "standard", "MNI152_T1_2mm.nii.gz")
             elif self.xsize == 3.0 and self.ysize == 3.0 and self.zsize == 3.0:
-                print("using 3mm MNI anatomic name")
+                if self.verbose > 1:
+                    print("using 3mm MNI anatomic name")
                 mniname = os.path.join(self.referencedir, "MNI152_T1_3mm.nii.gz")
             if os.path.isfile(mniname):
                 self.overlays["anatomic"] = Overlay(
@@ -718,22 +747,26 @@ class RapidtideDataset:
                     init_LUT=self.init_LUT,
                     verbose=self.verbose,
                 )
-                print("using ", mniname, " as background")
+                if self.verbose > 1:
+                    print("using ", mniname, " as background")
                 # allloadedmaps.append('anatomic')
                 return True
             else:
-                print("xsize, ysize, zsize=", self.xsize, self.ysize, self.zsize)
-                print("MNI template brain ", mniname, " not loaded")
+                if self.verbose > 1:
+                    print("xsize, ysize, zsize=", self.xsize, self.ysize, self.zsize)
+                    print("MNI template brain ", mniname, " not loaded")
         elif self.coordinatespace == "MNI152NLin2009cAsym":
             mniname = ""
             if self.xsize == 2.0 and self.ysize == 2.0 and self.zsize == 2.0:
-                print("using 2mm MNI anatomic name")
+                if self.verbose > 1:
+                    print("using 2mm MNI anatomic name")
                 if fsldir is not None:
                     mniname = os.path.join(
                         self.referencedir, "mni_icbm152_nlin_asym_09c_2mm.nii.gz"
                     )
             elif self.xsize == 1.0 and self.ysize == 1.0 and self.zsize == 1.0:
-                print("using 1mm MNI anatomic name")
+                if self.verbose > 1:
+                    print("using 1mm MNI anatomic name")
                 mniname = os.path.join(self.referencedir, "mni_icbm152_nlin_asym_09c_1mm.nii.gz")
             if os.path.isfile(mniname):
                 self.overlays["anatomic"] = Overlay(
@@ -743,12 +776,14 @@ class RapidtideDataset:
                     init_LUT=self.init_LUT,
                     verbose=self.verbose,
                 )
-                print("using ", mniname, " as background")
+                if self.verbose > 1:
+                    print("using ", mniname, " as background")
                 # allloadedmaps.append('anatomic')
                 return True
             else:
-                print("xsize, ysize, zsize=", self.xsize, self.ysize, self.zsize)
-                print("MNI template brain ", mniname, " not loaded")
+                if self.verbose > 1:
+                    print("xsize, ysize, zsize=", self.xsize, self.ysize, self.zsize)
+                    print("MNI template brain ", mniname, " not loaded")
         elif os.path.isfile(self.fileroot + "mean.nii.gz"):
             thepath, thebase = os.path.split(self.fileroot)
             self.overlays["anatomic"] = Overlay(
@@ -758,7 +793,8 @@ class RapidtideDataset:
                 init_LUT=self.init_LUT,
                 verbose=self.verbose,
             )
-            print("using ", self.fileroot + "mean.nii.gz", " as background")
+            if self.verbose > 1:
+                print("using ", self.fileroot + "mean.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
             return True
         elif os.path.isfile(self.fileroot + "meanvalue.nii.gz"):
@@ -770,7 +806,8 @@ class RapidtideDataset:
                 init_LUT=self.init_LUT,
                 verbose=self.verbose,
             )
-            print("using ", self.fileroot + "meanvalue.nii.gz", " as background")
+            if self.verbose > 1:
+                print("using ", self.fileroot + "meanvalue.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
             return True
         elif os.path.isfile(self.fileroot + "desc-mean_map.nii.gz"):
@@ -782,15 +819,17 @@ class RapidtideDataset:
                 init_LUT=self.init_LUT,
                 verbose=self.verbose,
             )
-            print(
-                "using ",
-                self.fileroot + "desc-mean_map.nii.gz",
-                " as background",
-            )
+            if self.verbose > 1:
+                print(
+                    "using ",
+                    self.fileroot + "desc-mean_map.nii.gz",
+                    " as background",
+                )
             # allloadedmaps.append('anatomic')
             return True
         else:
-            print("no anatomic image loaded")
+            if self.verbose > 1:
+                print("no anatomic image loaded")
             return False
 
     def setupregressors(self):
@@ -804,7 +843,8 @@ class RapidtideDataset:
             )
         except KeyError:
             self.regressorfilterlimits = (0.0, 100.0)
-        print("regressor filter limits:", self.regressorfilterlimits)
+        if self.verbose > 1:
+            print("regressor filter limits:", self.regressorfilterlimits)
         try:
             self.fmrifreq = float(self.therunoptions["fmrifreq"])
         except KeyError:
@@ -1019,7 +1059,8 @@ class RapidtideDataset:
                 self.coordinatespace = "MNI152NLin2009cAsym"
 
         # report results of load
-        print("loaded functional maps: ", self.loadedfuncmaps)
+        if self.verbose > 1:
+            print("loaded functional maps: ", self.loadedfuncmaps)
 
         self.allloadedmaps = list(self.loadedfuncmaps)
         self.dispmaps = list(self.loadedfuncmaps)
@@ -1090,7 +1131,8 @@ class RapidtideDataset:
             self.atlaslabels = tide_io.readlabels(
                 os.path.join(self.referencedir, self.atlasname + "_regions.txt")
             )
-            print(self.atlaslabels)
+            if self.verbose > 1:
+                print(self.atlaslabels)
             self.atlasniftiname = None
             if self.coordinatespace == "MNI152":
                 if self.xsize == 2.0 and self.ysize == 2.0 and self.zsize == 2.0:
@@ -1141,14 +1183,17 @@ class RapidtideDataset:
 
         try:
             test = self.overlays["atlas"]
-            print("there is an atlas")
+            if self.verbose > 1:
+                print("there is an atlas")
             # ui.report_pushButton.show()
             # ui.report_pushButton.setDisabled(False)
         except KeyError:
-            print("there is not an atlas")
+            if self.verbose > 1:
+                print("there is not an atlas")
             # ui.report_pushButton.hide()
             # ui.report_pushButton.setDisabled(True)
-        print("done")
+        if self.verbose > 1:
+            print("done")
 
     def getoverlays(self):
         return self.overlays

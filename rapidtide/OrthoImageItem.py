@@ -116,7 +116,7 @@ class OrthoImageItem(QtGui.QWidget):
         imgsize=64,
         arrangement=0,
         bgmap=None,
-        verbose=False,
+        verbose=0,
     ):
         QtGui.QWidget.__init__(self)
         self.map = map
@@ -150,7 +150,7 @@ class OrthoImageItem(QtGui.QWidget):
         self.offsety = self.imgsize * (0.5 - self.yfov / (2.0 * self.maxfov))
         self.offsetz = self.imgsize * (0.5 - self.zfov / (2.0 * self.maxfov))
 
-        if self.verbose:
+        if self.verbose > 1:
             print("OrthoImageItem intialization:")
             print("    Dimensions:", self.xdim, self.ydim, self.zdim)
             print("    Voxel sizes:", self.xsize, self.ysize, self.zsize)
@@ -401,7 +401,8 @@ class OrthoImageItem(QtGui.QWidget):
             self.updated.emit()
 
     def handleaxkey(self, event):
-        print(event)
+        if self.verbose > 1:
+            print(event)
         self.updateAllViews()
         self.updated.emit()
 
@@ -452,7 +453,8 @@ class OrthoImageItem(QtGui.QWidget):
 
     def saveandcomposite(self, square_img, fg_img, bg_img, name, savedir, scalefach, scalefacv):
         if PILexists:
-            print("using PIL to save ", name)
+            if self.verbose > 1:
+                print("using PIL to save ", name)
             squarename = os.path.join(savedir, name + "_square.png")
             fgname = os.path.join(savedir, name + "_foreground.png")
             bgname = os.path.join(savedir, name + "_background.png")
@@ -465,41 +467,49 @@ class OrthoImageItem(QtGui.QWidget):
             square = Image.open(squarename)
             background = Image.open(bgname)
             foreground = Image.open(fgname)
-            print(foreground.getbands())
+            if self.verbose > 1:
+                print(foreground.getbands())
 
             # now composite
             background.paste(foreground, None, foreground)
             flipped = background.transpose(Image.FLIP_TOP_BOTTOM)
 
             # scale
-            print("scaling")
+            if self.verbose > 1:
+                print("scaling")
             mulfac = 8
             hsize = int(mulfac * scalefach)
             vsize = int(mulfac * scalefacv)
-            print("scaling to ", hsize, vsize)
+            if self.verbose > 1:
+                print("scaling to ", hsize, vsize)
             flipped = flipped.resize((hsize, vsize), Image.NEAREST)
 
             # save and clean up
-            print("saving to ", compositename)
+            if self.verbose > 1:
+                print("saving to ", compositename)
             flipped.save(compositename, "jpeg")
-            print("cleaning")
+            if self.verbose > 1:
+                print("cleaning")
             os.remove(fgname)
             os.remove(bgname)
             os.remove(squarename)
         else:
-            print("saving ", name)
+            if self.verbose > 1:
+                print("saving ", name)
             square_img.save(os.path.join(savedir, name + "_square.png"))
             fg_img.save(os.path.join(savedir, name + "_fg.png"))
             bg_img.save(os.path.join(savedir, name + "_bg.png"))
 
     def saveDisp(self):
-        print("saving main window")
+        if self.verbose > 1:
+            print("saving main window")
         mydialog = QtGui.QFileDialog()
         options = mydialog.Options()
         thedir = str(
             mydialog.getExistingDirectory(options=options, caption="Image output directory")
         )
-        print("thedir=", thedir)
+        if self.verbose > 1:
+            print("thedir=", thedir)
         thename = self.map.namebase + self.map.name
 
         # make a square background
@@ -531,9 +541,10 @@ class OrthoImageItem(QtGui.QWidget):
         )
         thecolorbarfgwin.setImage(cbim.astype("float"))
         thecolorbarbgwin.setImage(cbim.astype("float"), autoLevels=True)
-        print(thecolorbarfgwin)
-        print(thecolorbarbgwin)
-        print(thecolorbarviewbox)
+        if self.verbose > 1:
+            print(thecolorbarfgwin)
+            print(thecolorbarbgwin)
+            print(thecolorbarviewbox)
 
         self.saveandcomposite(
             thesquarewin,
