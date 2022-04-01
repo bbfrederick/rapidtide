@@ -1,5 +1,15 @@
 # Release history
 
+## Version 2.2.3 (4/1/22)
+* (rapidtide) Added a new feature, --globalmeanselect, to try to locate a good, uniform, short delay pool of voxels to use for the initial, global mean signal.  This is an attempt to fix the "poison regressor" problem - if the initial regressor contains data from multiple, distinct pools of voxels with different delays, the initial global regressor is strongly autocorrelated, and delay fits become ambiguous.  This cannot be corrected by refinement, so better to avoid it altogether. This option selects only voxels with clear, short delays, after a single pass with despeckling disabled.  The result is a mask (XXXdesc-globalmeanpreselect_mask.nii.gz) that can be used with --globalmeanincludemask for a subsequent run.
+* (rapidtide) Fixed a nasty bug that caused offsettime and lagminthresh to interact incorrectly, sometimes leading to almost no voxels for refinement).
+* (happy) Moved some code around, changes some internal names, and added secret bits to support future, secret features.
+* (tidepool) Trying to add a little more clarity to the user about image orientation (the image's affine transform is correct, so the mapping between voxel and MNI coordinate is correct, but currently it's not clear if displayed images are radiological or neurological orientation.
+* (fingerprint) Added the JHU atlases as options.
+* (package) Added slightly modified version of the JHU arterial territorial atlases to the reference section (Paper: https://doi.org/10.1101/2021.05.03.442478, Download: https://www.nitrc.org/projects/arterialatlas).
+* (Docker) Fixed a dependency problem for pyfftw (resolves https://github.com/bbfrederick/rapidtide/issues/79)
+* (pony) One time offer, today only - every user gets a pony upon request!
+
 ## Version 2.2.2 (3/16/22)
 * (happy, happy_legacy, simdata) This release corrects a flaw (or perhaps more accurately an ambiguity) in slice time specification.  In FSL slicetime files, slicetimes are specified in fractions of a TR. In .json sidecars, they are specified in seconds. This is now detected on file read, and slicetime files are now converted to seconds.  Until now, happy and simdata assumed all slice times were in seconds.  This will fix behavior when FSL-style (fractional TR) slicetime files are used.  Behavior with .json sidecars is not changed.  Non-json files are assumed to be the FSL style (fractions of a TR) UNLESS the --slicetimesareinseconds flag is used.
 
