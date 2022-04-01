@@ -55,7 +55,7 @@ class Timecourse:
         label=None,
         report=False,
         isbids=False,
-        verbose=False,
+        verbose=1,
     ):
         self.verbose = verbose
         self.name = name
@@ -71,7 +71,7 @@ class Timecourse:
         else:
             self.label = label
         self.report = report
-        if self.verbose:
+        if self.verbose > 1:
             print("reading Timecourse ", self.name, " from ", self.filename, "...")
         self.readTimeData(self.label)
 
@@ -95,7 +95,7 @@ class Timecourse:
         )
         self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(self.timedata)
 
-        if self.verbose:
+        if self.verbose > 1:
             print("Timecourse data range:", np.min(self.timedata), np.max(self.timedata))
             print("sample rate:", self.samplerate)
             print("Timecourse length:", self.length)
@@ -137,7 +137,7 @@ class Overlay:
         display_state=True,
         isaMask=False,
         init_LUT=True,
-        verbose=False,
+        verbose=1,
     ):
         self.verbose = verbose
         self.name = name
@@ -148,7 +148,7 @@ class Overlay:
         self.report = report
         self.filename = filename
         self.namebase = namebase
-        if self.verbose:
+        if self.verbose > 1:
             print("reading map ", self.name, " from ", self.filename, "...")
         self.readImageData(isaMask=isaMask)
         self.mask = None
@@ -180,17 +180,20 @@ class Overlay:
         else:
             self.affine = self.header.get_base_affine()
         self.invaffine = np.linalg.inv(self.affine)
-        if self.affine[0, 0] < 0.0:
+        if self.verbose > 1:
+            print("affine matrix:")
+            print(self.affine)
+        if self.affine[0][0] < 0.0:
             self.RLfactor = -1.0
-            if self.verbose:
+            if self.verbose > 1:
                 print("Overlay appears to be in neurological orientation")
-        elif self.affine[0, 0] > 0.0:
+        elif self.affine[0][0] > 0.0:
             self.RLfactor = 1.0
-            if self.verbose:
+            if self.verbose > 1:
                 print("Overlay appears to be in radiological orientation")
         else:
             self.RLfactor = 0.0
-            if self.verbose:
+            if self.verbose > 1:
                 print("Overlay has indeterminate orientation")
         self.xpos = 0
         self.ypos = 0
@@ -201,7 +204,7 @@ class Overlay:
         self.zcoord = 0.0
         self.tcoord = 0.0
 
-        if self.verbose:
+        if self.verbose > 1:
             print(
                 "Overlay initialized:",
                 self.name,
@@ -267,13 +270,13 @@ class Overlay:
         if isaMask:
             self.data[np.where(self.data < 0.5)] = 0.0
             self.data[np.where(self.data > 0.5)] = 1.0
-        if self.verbose:
+        if self.verbose > 1:
             print("Overlay data range:", np.min(self.data), np.max(self.data))
             print("header", self.header)
         self.xdim, self.ydim, self.zdim, self.tdim = tide_io.parseniftidims(self.dims)
         self.xsize, self.ysize, self.zsize, self.tr = tide_io.parseniftisizes(self.sizes)
         self.toffset = self.header["toffset"]
-        if self.verbose:
+        if self.verbose > 1:
             print("Overlay dims:", self.xdim, self.ydim, self.zdim, self.tdim)
             print("Overlay sizes:", self.xsize, self.ysize, self.zsize, self.tr)
             print("Overlay toffset:", self.toffset)
@@ -452,7 +455,7 @@ class RapidtideDataset:
         coordinatespace="unspecified",
         offsettime=0.0,
         init_LUT=True,
-        verbose=False,
+        verbose=1,
     ):
         self.verbose = verbose
         self.name = name
@@ -529,7 +532,7 @@ class RapidtideDataset:
         ydim = 0
         zdim = 0
         for mapname, mapfilename in self.funcmaps:
-            if self.verbose:
+            if self.verbose > 1:
                 print(f"loading {mapname} from {mapfilename}")
             if os.path.isfile(self.fileroot + mapfilename + ".nii.gz"):
                 print(
@@ -544,6 +547,7 @@ class RapidtideDataset:
                     thebase,
                     init_LUT=self.init_LUT,
                     report=True,
+                    verbose=self.verbose,
                 )
                 if xdim == 0:
                     xdim = self.overlays[mapname].xdim
@@ -577,7 +581,7 @@ class RapidtideDataset:
     def _loadfuncmasks(self):
         self.loadedfuncmasks = []
         for maskname, maskfilename in self.funcmasks:
-            if self.verbose:
+            if self.verbose > 1:
                 print(f"loading {maskname} from {maskfilename}")
             if os.path.isfile(self.fileroot + maskfilename + ".nii.gz"):
                 thepath, thebase = os.path.split(self.fileroot)
@@ -587,6 +591,7 @@ class RapidtideDataset:
                     thebase,
                     init_LUT=self.init_LUT,
                     isaMask=True,
+                    verbose=self.verbose,
                 )
                 self.loadedfuncmasks.append(maskname)
             else:
@@ -607,6 +612,7 @@ class RapidtideDataset:
                     thebase,
                     init_LUT=self.init_LUT,
                     isaMask=True,
+                    verbose=self.verbose,
                 )
                 print("using ", self.geommaskname, " as geometric mask")
                 # allloadedmaps.append('geommask')
@@ -634,6 +640,7 @@ class RapidtideDataset:
                     thebase,
                     init_LUT=self.init_LUT,
                     isaMask=True,
+                    verbose=self.verbose,
                 )
                 print("using ", self.geommaskname, " as background")
                 # allloadedmaps.append('geommask')
@@ -656,7 +663,11 @@ class RapidtideDataset:
             if os.path.isfile(self.anatname):
                 thepath, thebase = os.path.split(self.anatname)
                 self.overlays["anatomic"] = Overlay(
-                    "anatomic", self.anatname, thebase, init_LUT=self.init_LUT
+                    "anatomic",
+                    self.anatname,
+                    thebase,
+                    init_LUT=self.init_LUT,
+                    verbose=self.verbose,
                 )
                 print("using ", self.anatname, " as background")
                 # allloadedmaps.append('anatomic')
@@ -672,6 +683,7 @@ class RapidtideDataset:
                 self.fileroot + "highres_head.nii.gz",
                 thebase,
                 init_LUT=self.init_LUT,
+                verbose=self.verbose,
             )
             print("using ", self.fileroot + "highres_head.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
@@ -684,6 +696,7 @@ class RapidtideDataset:
                 self.fileroot + "highres.nii.gz",
                 thebase,
                 init_LUT=self.init_LUT,
+                verbose=self.verbose,
             )
             print("using ", self.fileroot + "highres.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
@@ -699,7 +712,11 @@ class RapidtideDataset:
                 mniname = os.path.join(self.referencedir, "MNI152_T1_3mm.nii.gz")
             if os.path.isfile(mniname):
                 self.overlays["anatomic"] = Overlay(
-                    "anatomic", mniname, "MNI152", init_LUT=self.init_LUT
+                    "anatomic",
+                    mniname,
+                    "MNI152",
+                    init_LUT=self.init_LUT,
+                    verbose=self.verbose,
                 )
                 print("using ", mniname, " as background")
                 # allloadedmaps.append('anatomic')
@@ -720,7 +737,11 @@ class RapidtideDataset:
                 mniname = os.path.join(self.referencedir, "mni_icbm152_nlin_asym_09c_1mm.nii.gz")
             if os.path.isfile(mniname):
                 self.overlays["anatomic"] = Overlay(
-                    "anatomic", mniname, "MNI152NLin2009cAsym", init_LUT=self.init_LUT
+                    "anatomic",
+                    mniname,
+                    "MNI152NLin2009cAsym",
+                    init_LUT=self.init_LUT,
+                    verbose=self.verbose,
                 )
                 print("using ", mniname, " as background")
                 # allloadedmaps.append('anatomic')
@@ -735,6 +756,7 @@ class RapidtideDataset:
                 self.fileroot + "mean.nii.gz",
                 thebase,
                 init_LUT=self.init_LUT,
+                verbose=self.verbose,
             )
             print("using ", self.fileroot + "mean.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
@@ -746,6 +768,7 @@ class RapidtideDataset:
                 self.fileroot + "meanvalue.nii.gz",
                 thebase,
                 init_LUT=self.init_LUT,
+                verbose=self.verbose,
             )
             print("using ", self.fileroot + "meanvalue.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
@@ -757,6 +780,7 @@ class RapidtideDataset:
                 self.fileroot + "desc-mean_map.nii.gz",
                 thebase,
                 init_LUT=self.init_LUT,
+                verbose=self.verbose,
             )
             print(
                 "using ",
@@ -1096,6 +1120,7 @@ class RapidtideDataset:
                         self.atlasname,
                         report=True,
                         init_LUT=self.init_LUT,
+                        verbose=self.verbose,
                     )
                     self.overlays["atlasmask"] = Overlay(
                         "atlasmask",
@@ -1103,6 +1128,7 @@ class RapidtideDataset:
                         self.atlasname,
                         init_LUT=self.init_LUT,
                         report=True,
+                        verbose=self.verbose,
                     )
                     self.allloadedmaps.append("atlas")
                     self.dispmaps.append("atlas")

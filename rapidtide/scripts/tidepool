@@ -1119,16 +1119,18 @@ def updateUI(
     similarityfunc=False,
     focusvals=False,
     callingfunc=None,
+    verbose=0,
 ):
-    if callingfunc is None:
-        print("updateUI called with:")
-    else:
-        print("updateUI called from", callingfunc, " with:")
-    print("\torthoimages=", orthoimages)
-    print("\thistogram=", histogram)
-    print("\tLUT=", LUT)
-    print("\tsimilarityfunc=", similarityfunc)
-    print("\tfocusvals=", focusvals)
+    if verbose > 1:
+        if callingfunc is None:
+            print("updateUI called with:")
+        else:
+            print("updateUI called from", callingfunc, " with:")
+        print("\torthoimages=", orthoimages)
+        print("\thistogram=", histogram)
+        print("\tLUT=", LUT)
+        print("\tsimilarityfunc=", similarityfunc)
+        print("\tfocusvals=", focusvals)
 
     if histogram:
         updateHistogram()
@@ -1349,6 +1351,14 @@ def main():
         dest="compact",
         action="store_false",
         default=True,
+    )
+    theparser.add_argument(
+        "--verbosity",
+        help="Specify level of truly devastatingly boring console messages.  Default is 1",
+        dest="verbose",
+        metavar="VERBOSITY",
+        type=int,
+        default=1,
     )
     args = theparser.parse_args()
 
@@ -1737,7 +1747,7 @@ def main():
             forcetr=forcetr,
             forceoffset=forceoffset,
             offsettime=offsettime,
-            verbose=True,
+            verbose=args.verbose,
         )
     )
     currentdataset = thesubjects[-1]
@@ -1870,8 +1880,7 @@ def main():
         overlays["atlas"].setGeomMask(thegeommask)
         overlays["atlas"].setFuncMask(overlays["atlasmask"].data)
 
-    verbose = False
-    if verbose:
+    if args.verbose > 0:
         for theoverlay in overlays:
             overlays[theoverlay].summarize()
 
