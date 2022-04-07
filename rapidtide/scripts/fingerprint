@@ -83,6 +83,8 @@ def fingerprint_main(
         print("illegal atlas:", whichatlas)
         sys.exit()
 
+    outputroot += f"_template-{whichtemplate}_atlas-{whichatlas}_O{fitorder}"
+
     if debug:
         print(f"reading atlas file {theatlasname}")
     (
