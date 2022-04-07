@@ -187,11 +187,17 @@ def fingerprint_main(
 
     # save the fit data
     tide_io.savetonifti(thefitmap, themap_hdr, outputroot + "_fit")
-    maskmap = 0.0 * themap_data[:, :, :, 0]
+    if nummaps == 1:
+        maskmap = 0.0 * themap_data
+    else:
+        maskmap = 0.0 * themap_data[:, :, :, 0]
     maskmap[np.where(atlas_data > 0)] = 1.0
 
     # save the fit error
-    diffmap = (themap_data - thefitmap) * maskmap[:, :, :, None]
+    if nummaps == 1:
+        diffmap = (themap_data - thefitmap) * maskmap
+    else:
+        diffmap = (themap_data - thefitmap) * maskmap[:, :, :, None]
     tide_io.savetonifti(diffmap, themap_hdr, outputroot + "_fitdiff")
 
     # save the Rs as nifti
@@ -318,6 +324,7 @@ if __name__ == "__main__":
             "\tstrength: correlation coefficient\n"
             "\tsigma:    correlation peak width in seconds\n"
         ),
+        choices=["lag", "strength", "sigma"],
         default="lag",
     )
 

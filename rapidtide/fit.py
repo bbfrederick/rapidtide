@@ -592,8 +592,12 @@ def territorydecomp(
         thecoffs = np.zeros((nummaps, np.max(atlas), fitorder))
     theRs = np.zeros((nummaps, np.max(atlas)))
     for whichmap in range(nummaps):
-        thismap = inputmap[:, :, :, whichmap]
-        thisfit = fitmap[:, :, :, whichmap]
+        if nummaps == 1:
+            thismap = inputmap
+            thisfit = fitmap
+        else:
+            thismap = inputmap[:, :, :, whichmap]
+            thisfit = fitmap[:, :, :, whichmap]
         if nummaps > 1:
             print(f"decomposing map {whichmap + 1} of {nummaps}")
         for i in range(1, np.max(atlas) + 1):
