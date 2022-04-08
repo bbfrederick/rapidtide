@@ -22,6 +22,7 @@ rapidtide \
 	--spatialfilt 2 \
         --nprocs -1 \
         --passes 3 \
+        --similaritymetric hybrid \
         --norefinedespeckled \
         --filterband lfo \
         sub-RAPIDTIDETEST.nii.gz \
