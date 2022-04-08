@@ -866,9 +866,9 @@ class RapidtideDataset:
         except KeyError:
             self.similaritymetric = "correlation"
         try:
-            self.numberofpasses = self.therunoptions["actual_passes"]
+            self.numberofpasses = int(self.therunoptions["actual_passes"])
         except KeyError:
-            self.numberofpasses = self.therunoptions["passes"]
+            self.numberofpasses = int(self.therunoptions["passes"])
         if self.numberofpasses > 4:
             secondtolast = self.numberofpasses - 1
             last = self.numberofpasses
