@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.2.4 (4/11/22)
+* (fingerprint) Now works properly for 3D input files.
+* (tidepool) Turned the default level of verbosity way down, but gave you the ability to crank it back up.
+* (RapidtideDataset.py) Fixed the default type of "numberofpasses".
+
 ## Version 2.2.3 (4/1/22)
 * (rapidtide) Added a new feature, --globalmeanselect, to try to locate a good, uniform, short delay pool of voxels to use for the initial global mean signal.  This is an attempt to fix the "poison regressor" problem - if the initial regressor contains data from multiple, distinct pools of voxels with different delays, the initial global regressor is strongly autocorrelated, and delay fits become ambiguous.  This cannot be corrected by refinement, so better to avoid it altogether. This option selects only voxels with clear, short delays, after a single pass with despeckling disabled.  The result is a mask (XXXdesc-globalmeanpreselect_mask.nii.gz) that can be used with --globalmeanincludemask for a subsequent run.
 * (rapidtide) Fixed a nasty bug that caused offsettime and lagminthresh to interact incorrectly, sometimes leading to almost no voxels for refinement.
