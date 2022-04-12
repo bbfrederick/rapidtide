@@ -25,6 +25,7 @@ import os
 import platform
 import sys
 import time
+import datetime
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -421,6 +422,13 @@ def timefmt(thenumber):
 
     """
     return "{:10.2f}".format(thenumber)
+
+
+def fileentrytotime(entry):
+    isotime = datetime.fromisoformat(
+        f"{entry[0:4]}-{entry[4:6]}-{entry[6:11]}:{entry[11:13]}:{entry[13:]}"
+    )
+    return isotime
 
 
 def proctiminglogfile(logfilename, timewidth=12):
