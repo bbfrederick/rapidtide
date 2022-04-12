@@ -3079,3 +3079,12 @@ def rapidtide_main(argparsingfunc):
         tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     else:
         tide_io.writedicttojson(optiondict, f"{outputname}_options.json")
+
+    # shut down logging
+    logging.shutdown()
+
+    # reformat timing information
+    tide_io.writevec(
+        tide_util.proctiminglogfile(f"{outputname}_runtimings.tsv"),
+        f"{outputname}_desc-formattedruntimings_info.tsv",
+    )
