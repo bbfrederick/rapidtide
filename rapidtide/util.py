@@ -424,13 +424,6 @@ def timefmt(thenumber):
     return "{:10.2f}".format(thenumber)
 
 
-def fileentrytotime(entry):
-    isotime = datetime.fromisoformat(
-        f"{entry[0:4]}-{entry[4:6]}-{entry[6:11]}:{entry[11:13]}:{entry[13:]}"
-    )
-    return isotime
-
-
 def proctiminglogfile(logfilename, timewidth=12):
     timingdata = pd.read_csv(
         logfilename,
@@ -445,8 +438,8 @@ def proctiminglogfile(logfilename, timewidth=12):
         f"{'0.0'.rjust(timewidth)}{'0.0'.rjust(timewidth)}{timingdata['description'].iloc[0]}"
     ]
     for therow in range(1, timingdata.shape[0]):
-        thistime = fileentrytotime(timingdata["time"].iloc[therow])
-        prevtime = fileentrytotime(timingdata["time"].iloc[therow - 1])
+        thistime = datetime.strptime(timingdata["time"].iloc[therow], "%Y%m%dT%H%M%S.%f")
+        prevtime = datetime.strptime(timingdata["time"].iloc[therow - 1], "%Y%m%dT%H%M%S.%f")
         totaldiff = (thistime - starttime).total_seconds()
         incdiff = (thistime - prevtime).total_seconds()
         totaldiffstr = f"{totaldiff:.2f}".rjust(timewidth)
