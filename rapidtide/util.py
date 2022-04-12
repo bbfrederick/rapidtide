@@ -424,7 +424,7 @@ def timefmt(thenumber):
     return "{:10.2f}".format(thenumber)
 
 
-def proctiminglogfile(logfilename, timewidth=12):
+def proctiminglogfile(logfilename, timewidth=10):
     timingdata = pd.read_csv(
         logfilename,
         sep=None,
@@ -433,9 +433,9 @@ def proctiminglogfile(logfilename, timewidth=12):
         engine="python",
     )
     starttime = datetime.strptime(timingdata["time"].iloc[0], "%Y%m%dT%H%M%S.%f")
-    outputlines = [f"{'Total'.rjust(timewidth)}{'Increment'.rjust(timewidth)}\tDescription"]
+    outputlines = [f"{'Total'.rjust(timewidth)}\t{'Increment'.rjust(timewidth)}\tDescription"]
     outputlines += [
-        f"{'0.0'.rjust(timewidth)}{'0.0'.rjust(timewidth)}\t{timingdata['description'].iloc[0]}"
+        f"{'0.0'.rjust(timewidth)}\t{'0.0'.rjust(timewidth)}\t{timingdata['description'].iloc[0]}"
     ]
     for therow in range(1, timingdata.shape[0]):
         thistime = datetime.strptime(timingdata["time"].iloc[therow], "%Y%m%dT%H%M%S.%f")
@@ -444,7 +444,7 @@ def proctiminglogfile(logfilename, timewidth=12):
         incdiff = (thistime - prevtime).total_seconds()
         totaldiffstr = f"{totaldiff:.2f}".rjust(timewidth)
         incdiffstr = f"{incdiff:.2f}".rjust(timewidth)
-        theoutputline = f"{totaldiffstr}{incdiffstr}\t{timingdata['description'].iloc[therow]}"
+        theoutputline = f"{totaldiffstr}\t{incdiffstr}\t{timingdata['description'].iloc[therow]}"
         if timingdata["number"].iloc[therow] != "None":
             speedunit = f"{timingdata['units'].iloc[therow]}/s"
             speed = f"{float(timingdata['number'].iloc[therow]) / incdiff:.2f}"
