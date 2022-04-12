@@ -43,7 +43,7 @@ MemoryLGR = logging.getLogger("MEMORY")
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
-donotusenumba = True
+donotusenumba = False
 donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
