@@ -451,7 +451,7 @@ def proctiminglogfile(logfilename, timewidth=12):
             theoutputline += f"\t({timingdata['number'].iloc[therow]} {timingdata['units'].iloc[therow]}@ {speed} {speedunit})"
         outputlines += [theoutputline]
 
-    return timingdata
+    return outputlines
 
 
 def proctiminginfo(thetimings, outputfile="", extraheader=None):
