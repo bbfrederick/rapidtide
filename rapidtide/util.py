@@ -25,7 +25,7 @@ import os
 import platform
 import sys
 import time
-import datetime
+from datetime import datetime
 
 import pandas as pd
 import matplotlib.pyplot as plt
