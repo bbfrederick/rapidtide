@@ -26,6 +26,7 @@ import platform
 import sys
 import time
 
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from numba import jit
@@ -420,6 +421,36 @@ def timefmt(thenumber):
 
     """
     return "{:10.2f}".format(thenumber)
+
+
+def proctiminglogfile(logfilename, timewidth=12):
+    timingdata = pd.read_csv(
+        logfilename,
+        sep=None,
+        header=None,
+        names=["time", "description", "number", "units"],
+        engine="python",
+    )
+    starttime = fileentrytotime(timingdata["time"].iloc[0])
+    outputlines = [f"{'Total'.rjust(timewidth)}{'Increment'.rjust(timewidth)}\tDescription"]
+    outputlines += [
+        f"{'0.0'.rjust(timewidth)}{'0.0'.rjust(timewidth)}{timingdata['description'].iloc[0]}"
+    ]
+    for therow in range(1, timingdata.shape[0]):
+        thistime = fileentrytotime(timingdata["time"].iloc[therow])
+        prevtime = fileentrytotime(timingdata["time"].iloc[therow - 1])
+        totaldiff = (thistime - starttime).total_seconds()
+        incdiff = (thistime - prevtime).total_seconds()
+        totaldiffstr = f"{totaldiff:.2f}".rjust(timewidth)
+        incdiffstr = f"{incdiff:.2f}".rjust(timewidth)
+        theoutputline = f"{totaldiffstr}{incdiffstr}\t{timingdata['description'].iloc[therow]}"
+        if timingdata["number"].iloc[therow] != "None":
+            speedunit = f"{timingdata['units'].iloc[therow]}/s"
+            speed = f"{float(timingdata['number'].iloc[therow]) / incdiff:.2f}"
+            theoutputline += f"\t({timingdata['number'].iloc[therow]} {timingdata['units'].iloc[therow]}@ {speed} {speedunit})"
+        outputlines += [theoutputline]
+
+    return timingdata
 
 
 def proctiminginfo(thetimings, outputfile="", extraheader=None):
