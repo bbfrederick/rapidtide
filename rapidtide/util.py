@@ -433,7 +433,7 @@ def proctiminglogfile(logfilename, timewidth=10):
         engine="python",
     )
     starttime = datetime.strptime(timingdata["time"].iloc[0], "%Y%m%dT%H%M%S.%f")
-    outputlines = [f"{'Total'.rjust(timewidth)}\t{'Increment'.rjust(timewidth)}\tDescription"]
+    outputlines = [f"{'Total (s)'.rjust(timewidth)}\t{'Diff. (s)'.rjust(timewidth)}\tDescription"]
     outputlines += [
         f"{'0.0'.rjust(timewidth)}\t{'0.0'.rjust(timewidth)}\t{timingdata['description'].iloc[0]}"
     ]
