@@ -435,7 +435,7 @@ def proctiminglogfile(logfilename, timewidth=12):
     starttime = datetime.strptime(timingdata["time"].iloc[0], "%Y%m%dT%H%M%S.%f")
     outputlines = [f"{'Total'.rjust(timewidth)}{'Increment'.rjust(timewidth)}\tDescription"]
     outputlines += [
-        f"{'0.0'.rjust(timewidth)}{'0.0'.rjust(timewidth)}{timingdata['description'].iloc[0]}"
+        f"{'0.0'.rjust(timewidth)}{'0.0'.rjust(timewidth)}\t{timingdata['description'].iloc[0]}"
     ]
     for therow in range(1, timingdata.shape[0]):
         thistime = datetime.strptime(timingdata["time"].iloc[therow], "%Y%m%dT%H%M%S.%f")
@@ -448,7 +448,7 @@ def proctiminglogfile(logfilename, timewidth=12):
         if timingdata["number"].iloc[therow] != "None":
             speedunit = f"{timingdata['units'].iloc[therow]}/s"
             speed = f"{float(timingdata['number'].iloc[therow]) / incdiff:.2f}"
-            theoutputline += f"\t({timingdata['number'].iloc[therow]} {timingdata['units'].iloc[therow]}@ {speed} {speedunit})"
+            theoutputline += f" ({timingdata['number'].iloc[therow]} {timingdata['units'].iloc[therow]} @ {speed} {speedunit})"
         outputlines += [theoutputline]
 
     return outputlines
