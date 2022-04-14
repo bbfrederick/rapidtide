@@ -27,9 +27,9 @@ import sys
 import time
 from datetime import datetime
 
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from numba import jit
 
 import rapidtide._version as tide_versioneer
