@@ -559,7 +559,7 @@ def findrisetimefunc(
 
 
 def territorydecomp(
-    inputmap, template, atlas, nummaps, inputmask=None, intercept=True, fitorder=1, debug=False
+    inputmap, template, atlas, inputmask=None, intercept=True, fitorder=1, debug=False
 ):
     """
 
@@ -575,6 +575,12 @@ def territorydecomp(
     -------
 
     """
+    datadims = len(inputmap.shape)
+    if datadims > 3:
+        nummaps = inputmap.shape[3]
+    else:
+        nummaps = 1
+
     if nummaps > 1:
         if inputmask is None:
             inputmask = inputmap[:, :, :, 0] * 0.0 + 1.0
@@ -583,6 +589,11 @@ def territorydecomp(
             inputmask = inputmap * 0.0 + 1.0
 
     tempmask = np.where(inputmask > 0.0, 1, 0)
+    maskdims = len(tempmask.shape)
+    if maskdims > 3:
+        nummasks = tempmask.shape[3]
+    else:
+        nummasks = 1
 
     fitmap = inputmap * 0.0
 
@@ -595,10 +606,12 @@ def territorydecomp(
         if nummaps == 1:
             thismap = inputmap
             thisfit = fitmap
-            thismask = tempmask
         else:
             thismap = inputmap[:, :, :, whichmap]
             thisfit = fitmap[:, :, :, whichmap]
+        if nummasks == 1:
+            thismask = tempmask
+        else:
             thismask = tempmask[:, :, :, whichmap]
         if nummaps > 1:
             print(f"decomposing map {whichmap + 1} of {nummaps}")
@@ -607,14 +620,13 @@ def territorydecomp(
                 print("fitting territory", i)
             maskedvoxels = np.where(atlas * thismask == i)
             if len(maskedvoxels) > 0:
-                territoryvoxels = np.where(atlas == i)
                 evs = []
                 for order in range(1, fitorder + 1):
                     evs.append(np.power(template[maskedvoxels], order))
                 thefit, R = mlregress(evs, thismap[maskedvoxels], intercept=intercept)
                 thecoffs[whichmap, i - 1, :] = np.asarray(thefit[0]).reshape((-1))
                 theRs[whichmap, i - 1] = 1.0 * R
-                thisfit[territoryvoxels] = mlproject(thecoffs[whichmap, i - 1, :], evs, intercept)
+                thisfit[maskedvoxels] = mlproject(thecoffs[whichmap, i - 1, :], evs, intercept)
 
     return fitmap, thecoffs, theRs
 

@@ -138,7 +138,6 @@ def fingerprint_main(
         themap_data,
         thetemplate_data,
         atlas_data.astype(int),
-        nummaps,
         inputmask=themask_data,
         fitorder=fitorder,
         intercept=intercept,
