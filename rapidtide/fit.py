@@ -595,23 +595,26 @@ def territorydecomp(
         if nummaps == 1:
             thismap = inputmap
             thisfit = fitmap
+            thismask = tempmask
         else:
             thismap = inputmap[:, :, :, whichmap]
             thisfit = fitmap[:, :, :, whichmap]
+            thismask = tempmask[:, :, :, whichmap]
         if nummaps > 1:
             print(f"decomposing map {whichmap + 1} of {nummaps}")
         for i in range(1, np.max(atlas) + 1):
             if debug:
                 print("fitting territory", i)
-            maskedvoxels = np.where(atlas * tempmask == i)
-            territoryvoxels = np.where(atlas == i)
-            evs = []
-            for order in range(1, fitorder + 1):
-                evs.append(np.power(template[maskedvoxels], order))
-            thefit, R = mlregress(evs, thismap[maskedvoxels], intercept=intercept)
-            thecoffs[whichmap, i - 1, :] = np.asarray(thefit[0]).reshape((-1))
-            theRs[whichmap, i - 1] = 1.0 * R
-            thisfit[territoryvoxels] = mlproject(thecoffs[whichmap, i - 1, :], evs, intercept)
+            maskedvoxels = np.where(atlas * thismask == i)
+            if len(maskedvoxels) > 0:
+                territoryvoxels = np.where(atlas == i)
+                evs = []
+                for order in range(1, fitorder + 1):
+                    evs.append(np.power(template[maskedvoxels], order))
+                thefit, R = mlregress(evs, thismap[maskedvoxels], intercept=intercept)
+                thecoffs[whichmap, i - 1, :] = np.asarray(thefit[0]).reshape((-1))
+                theRs[whichmap, i - 1] = 1.0 * R
+                thisfit[territoryvoxels] = mlproject(thecoffs[whichmap, i - 1, :], evs, intercept)
 
     return fitmap, thecoffs, theRs
 
