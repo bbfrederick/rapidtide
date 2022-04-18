@@ -77,6 +77,17 @@ def _get_parser():
         default=None,
     )
     parser.add_argument(
+        "--maskfile",
+        dest="maskfile",
+        action="store",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="MASK",
+        help=(
+            "Mask the final atlas with the 3D mask specified (if using a target file, mask must match it)."
+        ),
+        default=None,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -129,6 +140,8 @@ def main():
         print(f"{len(validvoxels)} valid voxels")
         for thevoxel in validvoxels:
             templatevoxels[thevoxel, int(round(rs_template[thevoxel], 0)) - 1] = 1
+    maskvoxels = np.max(templatevoxels, axis=1)
+    maskvoxels[np.where(maskvoxels > 0)] = 1
 
     # now we have a 4d file, regardless of what we started with
     if args.dosplit:
@@ -148,6 +161,21 @@ def main():
             )
         numregions *= 2
         templatevoxels = np.reshape(newtemplatevoxels, (numvoxels, numregions))
+
+    if args.maskfile is not None:
+        # Load the mask
+        print("loading mask file")
+        (
+            mask_img,
+            mask_data,
+            mask_hdr,
+            maskdims,
+            masksizes,
+        ) = tide_io.readfromnifti(args.maskfile)
+        if maskdims[4] > 1:
+            raise ValueError(f"{args.maskfile} is not 3D - exiting")
+        maskvoxels = mask_data.reshape((numvoxels))
+        maskvoxels[np.where(maskvoxels < 0.5)] = 0
 
     if args.targetfile is not None:
         # do the resampling here
@@ -198,6 +226,7 @@ def main():
                 templatedims,
                 templatesizes,
             ) = tide_io.readfromnifti("temppost")
+
             xsize = templatedims[1]
             ysize = templatedims[2]
             numslices = templatedims[3]
@@ -210,6 +239,15 @@ def main():
             print("FSL directory not found - aborting")
             sys.exit()
 
+    # mask data
+    if args.maskfile is not None:
+        if not tide_io.checkspacematch(template_hdr, mask_hdr):
+            raise ValueError(
+                f"Dimensions of {args.maskfile} do not match the target dimensions - exiting"
+            )
+    for theregion in range(numregions):
+        templatevoxels[:, theregion] *= maskvoxels
+
     if args.volumeperregion:
         outputvoxels = templatevoxels
         template_hdr["dim"][4] = numregions
@@ -220,10 +258,11 @@ def main():
         )
     else:
         print("collapsing back to 3d")
-        outputvoxels = templatevoxels[:, 0] * 0
-        for i in range(numvoxels):
-            if np.max(templatevoxels[i, :]) > 0.5:
-                outputvoxels[i] = np.argmax(templatevoxels[i, :]) + 1
+        # outputvoxels = templatevoxels[:, 0] * 0
+        # for i in range(numvoxels):
+        #    if np.max(templatevoxels[i, :]) > 0.5:
+        #        outputvoxels[i] = np.argmax(templatevoxels[i, :]) + 1
+        outputvoxels = np.argmax(templatevoxels, axis=1) + 1
         template_hdr["dim"][4] = 1
         tide_io.savetonifti(
             outputvoxels.reshape((xsize, ysize, numslices)),
