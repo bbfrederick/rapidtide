@@ -71,6 +71,13 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--transform",
+        dest="transform",
+        action="store_true",
+        help=("Replace data value with it's percentile score."),
+        default=False,
+    )
+    parser.add_argument(
         "--nozero",
         dest="nozero",
         action="store_true",
@@ -90,7 +97,7 @@ def _get_parser():
         "--normhist",
         dest="normhist",
         action="store_true",
-        help=("Return a probability density instead of raw counts.),
+        help=("Return a probability density instead of raw counts."),
         default=False,
     )
     parser.add_argument(
@@ -130,9 +137,13 @@ def main():
 
     if args.maskfile is not None:
         print("loading mask...")
-        (mask_img, mask_data, mask_hdr, themaskdims, themasksizes,) = tide_io.readfromnifti(
-            args.maskfile
-        )
+        (
+            mask_img,
+            mask_data,
+            mask_hdr,
+            themaskdims,
+            themasksizes,
+        ) = tide_io.readfromnifti(args.maskfile)
         if not tide_io.checkspacematch(mask_hdr, input_hdr):
             print("Dimensions of " + args.maskfile + " mask do not match the input data - exiting")
             sys.exit()
@@ -193,7 +204,9 @@ def main():
         outputimg = outmatrix.reshape((xsize, ysize, numslices, timepoints))
         theheader = copy.deepcopy(input_hdr)
         tide_io.savetonifti(
-            outputimg, theheader, args.outputroot + "_sorted",
+            outputimg,
+            theheader,
+            args.outputroot + "_sorted",
         )
 
         # now pull out and save the percentiles
@@ -225,7 +238,9 @@ def main():
         theheader["pixdim"][4] = 1.0 / (len(thepercentiles) - 1)
         theheader["toffset"] = 0.0
         tide_io.savetonifti(
-            outputimg, theheader, args.outputroot + "_pcts",
+            outputimg,
+            theheader,
+            args.outputroot + "_pcts",
         )
         del pcts_data
 
@@ -241,7 +256,7 @@ def main():
             outputhists[spatialloc, :], bins = np.histogram(
                 inputarray, bins=thehistlen, range=(histmin, histmax)
             )
-            #if args.normhist:
+            # if args.normhist:
             #    totalval = np.sum(outputhists[spatialloc, :])
             #    if totalval != 0.0:
             #        outputhists[spatialloc, :] /= totalval
@@ -261,7 +276,9 @@ def main():
         theheader["pixdim"][4] = bins[1] - bins[0]
         theheader["toffset"] = bins[0]
         tide_io.savetonifti(
-            outputimg, theheader, args.outputroot + "_hists",
+            outputimg,
+            theheader,
+            args.outputroot + "_hists",
         )
 
     else:
@@ -277,6 +294,25 @@ def main():
             ]
         else:
             validdata = dataasmatrix[validvoxels]
+        if args.transform:
+            thehist, bins = np.histogram(validdata, bins=thehistlen, range=(histmin, histmax))
+            npbins = np.asarray(bins[:-1], dtype=float) + (bins[1] - bins[0]) / 2.0
+            transformeddataasmatrix = dataasmatrix * 0.0
+            for thevoxel in validvoxels:
+                transformeddataasmatrix[thevoxel] = (
+                    100.0 * tide_util.valtoindex(npbins, dataasmatrix[thevoxel]) / len(npbins)
+                )
+            outputimg = transformeddataasmatrix.reshape((xsize, ysize, numslices))
+            theheader = copy.deepcopy(input_hdr)
+            theheader["dim"][0] = 3
+            theheader["dim"][4] = 1
+            theheader["pixdim"][4] = bins[1] - bins[0]
+            theheader["toffset"] = bins[0]
+            tide_io.savetonifti(
+                outputimg,
+                theheader,
+                args.outputroot + "_transformed",
+            )
         tide_stats.makeandsavehistogram(
             validdata,
             thehistlen,
