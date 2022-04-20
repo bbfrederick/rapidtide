@@ -257,12 +257,8 @@ def main():
             args.outputtemplatename,
         )
     else:
-        print("collapsing back to 3d")
-        # outputvoxels = templatevoxels[:, 0] * 0
-        # for i in range(numvoxels):
-        #    if np.max(templatevoxels[i, :]) > 0.5:
-        #        outputvoxels[i] = np.argmax(templatevoxels[i, :]) + 1
         outputvoxels = np.argmax(templatevoxels, axis=1) + 1
+        outputvoxels *= maskvoxels.astype(int)
         template_hdr["dim"][4] = 1
         tide_io.savetonifti(
             outputvoxels.reshape((xsize, ysize, numslices)),
