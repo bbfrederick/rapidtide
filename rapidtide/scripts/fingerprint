@@ -20,7 +20,6 @@ import argparse
 import copy
 import os
 import sys
-from argparse import RawTextHelpFormatter
 
 import numpy as np
 import pandas as pd
@@ -79,6 +78,10 @@ def fingerprint_main(
         theatlasregionsname = os.path.join(
             referencedir, "JHU-ArterialTerritoriesNoVent-LVL2_regions.txt"
         )
+    elif whichatlas[:5] == "USER_":
+        theatlasname = whichatlas[5:]
+        theatlasregionsname = theatlasname.replace(".nii.gz", ".txt")
+        whichatlas = "USER"
     else:
         print("illegal atlas:", whichatlas)
         sys.exit()
@@ -264,15 +267,16 @@ if __name__ == "__main__":
             return filename
 
     parser = argparse.ArgumentParser(
+        prog="fingerprint",
         description=(
             "Fit a rapidtide output map to a canonical delay map, by vascular territory.\n"
         ),
-        formatter_class=RawTextHelpFormatter,
+        allow_abbrev=False,
     )
 
     parser.add_argument(
         "inputfile",
-        help="Rapidtide output map to decompose by vascular territory.  Must be in MNI152 coordinates, 2mm resolution",
+        help="Rapidtide output map to decompose by vascular territory.  Must be in MNI152NLin6Asym coordinates, 2mm resolution",
         action=FullPaths,
         type=is_file,
     )
@@ -294,14 +298,28 @@ if __name__ == "__main__":
     parser.add_argument(
         "--atlas",
         help=(
-            "Atlas.  Options are\n"
-            "\tASPECTS:  ASPECTS territory atlas\n"
-            "\tATT:      Arterial transit time flow territories\n"
-            "\tJHU1:     Johns Hopkins level 1 probabalistic flow territories\n"
-            "\tJHU2:     Johns Hopkins level 2 probabalistic flow territories\n"
+            "Atlas.  Options are: "
+            "ASPECTS - ASPECTS territory atlas; "
+            "ATT - Arterial transit time flow territories; "
+            "JHU1 - Johns Hopkins level 1 probabalistic arterial flow territories; "
+            "JHU2 - Johns Hopkins level 2 probabalistic arterial flow territories."
         ),
         choices=["ASPECTS", "ATT", "JHU1", "JHU2"],
         default="JHU1",
+    )
+
+    parser.add_argument(
+        "--customatlas",
+        help=(
+            "The name of a custom atlas file.  The file must be a 3D NIFTI "
+            "file in MNI152NLin6Asym space, 2mm isotropic resolution.  The file values "
+            "must be consecutive integers from 1 to N with no missing values.  There "
+            "must be a text file with an identical path and name (but with .txt instead of .nii.gz "
+            "as the extension) containing the name of every region on a separate line.  This argument "
+            "overrides the --atlas argument."
+        ),
+        type=is_file,
+        default=None,
     )
 
     parser.add_argument(
@@ -333,6 +351,7 @@ if __name__ == "__main__":
         "--debug",
         help="output additionnal debugging information",
         action="store_true",
+        default=False,
     )
 
     # get the command line parameters
@@ -345,10 +364,18 @@ if __name__ == "__main__":
     if args.debug:
         print(args)
 
+    if args.customatlas is not None:
+        theatlas = f"USER_{args.customatlas}"
+    else:
+        theatlas = args.atlas
+
+    if args.debug:
+        print(f"Using atlas {theatlas}")
+
     fingerprint_main(
         args.inputfile,
         args.template,
-        args.atlas,
+        theatlas,
         args.outputroot,
         args.fitorder,
         intercept=not (args.nointercept),
