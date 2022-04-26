@@ -52,6 +52,8 @@ def fingerprint_main(
         thetemplatename = os.path.join(referencedir, "HCP1200_strength_2mm.nii.gz")
     elif whichtemplate == "sigma":
         thetemplatename = os.path.join(referencedir, "HCP1200_sigma_2mm.nii.gz")
+    elif whichtemplate == "constant":
+        thetemplatename = None
     else:
         print("illegal template:", whichtemplate)
         sys.exit()
@@ -88,19 +90,26 @@ def fingerprint_main(
 
     outputroot += f"_template-{whichtemplate}_atlas-{whichatlas}_O{fitorder}"
 
-    if debug:
-        print(f"reading atlas file {theatlasname}")
-    (
-        thetemplate,
-        thetemplate_data,
-        thetemplate_hdr,
-        thetemplatedims,
-        thetemplatesizes,
-    ) = tide_io.readfromnifti(thetemplatename)
+    # read the atlas
     atlas, atlas_data, atlas_hdr, atlasdims, atlassizes = tide_io.readfromnifti(theatlasname)
     atlaslabelsinput = pd.read_csv(
         theatlasregionsname, delimiter="\t", header=None, names=["Region"]
     )
+
+    # read the template
+    if thetemplatename is not None:
+        if debug:
+            print(f"reading atlas file {theatlasname}")
+        (
+            thetemplate,
+            thetemplate_data,
+            thetemplate_hdr,
+            thetemplatedims,
+            thetemplatesizes,
+        ) = tide_io.readfromnifti(thetemplatename)
+    else:
+        thetemplate_data = atlas_data * 0.0
+        thetemplate_data[np.where(atlas_data > 0)] = 1.0
 
     if debug:
         print(f"reading map file {themapname}")
@@ -125,8 +134,11 @@ def fingerprint_main(
         ) = tide_io.readfromnifti(themaskname)
 
     # check for compatible dimensions
-    if not tide_io.checkspacematch(thetemplate_hdr, themap_hdr):
-        raise ValueError(f"Dimensions of {themapname} do not match the atlas dimensions - exiting")
+    if thetemplatename is not None:
+        if not tide_io.checkspacematch(thetemplate_hdr, themap_hdr):
+            raise ValueError(
+                f"Dimensions of {themapname} do not match the atlas dimensions - exiting"
+            )
     if themask_data is not None:
         if not tide_io.checkspacematch(themask_hdr, themap_hdr):
             raise ValueError(
@@ -342,8 +354,9 @@ if __name__ == "__main__":
             "\tlag:      time lag in seconds\n"
             "\tstrength: correlation coefficient\n"
             "\tsigma:    correlation peak width in seconds\n"
+            "\tconstant: constant value (forces fit order to 0).\n"
         ),
-        choices=["lag", "strength", "sigma"],
+        choices=["lag", "strength", "sigma", "constant"],
         default="lag",
     )
 
@@ -368,6 +381,9 @@ if __name__ == "__main__":
         theatlas = f"USER_{args.customatlas}"
     else:
         theatlas = args.atlas
+
+    if args.template == "custom":
+        args.fitorder = 0
 
     if args.debug:
         print(f"Using atlas {theatlas}")
