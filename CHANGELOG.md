@@ -1,5 +1,12 @@
 # Release history
 
+## Version 2.2.5 (4/26/22)
+* (rapidtide) Postprocess timing information to make it more useful.
+* (rapidtide) Reenabled numba by default.
+* (fingerprint) Fixed handling of 4D atlases, empty regions, and 4D masks.  Added "constant" template, and allow 0th order processing (mean).
+* (atlastood) Fixed 4D atlas handling.  Now mask atlas after collapsing to 3D.
+* (histnifti) Added --transform flag to map values to percentiles.
+
 ## Version 2.2.4 (4/11/22)
 * (fingerprint) Now works properly for 3D input files.
 * (tidepool) Turned the default level of verbosity way down, but gave you the ability to crank it back up.
