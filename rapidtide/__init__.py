@@ -1,3 +1,5 @@
+# Copyright (c) 2021, Blaise Frederick
+
 # -*- coding: latin-1 -*-
 from ._version import get_versions
 
