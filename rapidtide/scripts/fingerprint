@@ -209,9 +209,11 @@ def fingerprint_main(
 
     # make a multiplicative mask
     if nummaps == 1:
-        maskmap = 0.0 * themask_data
+        maskmap = themask_data
     else:
-        maskmap = 0.0 * themask_data[:, :, :, 0]
+        maskmap = themask_data[:, :, :, 0]
+    maskmap[np.where(maskmap < maskthresh)] = 0.0
+    maskmap[np.where(maskmap >= maskthresh)] = 1.0
     maskmap[np.where(atlas_data < 1)] = 0.0
 
     # save the maskmap as nifti
