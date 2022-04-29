@@ -27,6 +27,8 @@ import pandas as pd
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 
+DEFAULTMASKTHRESH = 0.5
+
 
 def fingerprint_main(
     themapname,
@@ -36,6 +38,7 @@ def fingerprint_main(
     fitorder,
     themaskname=None,
     intercept=True,
+    maskthresh=0.5,
     debug=False,
 ):
     # read the data
@@ -145,6 +148,10 @@ def fingerprint_main(
                 f"Dimensions of {themaskname} and {themapname} do not match - exiting"
             )
 
+    # generate the mask
+    themask_data[np.where(themask_data < maskthresh)] = 0.0
+    themask_data[np.where(atlas_data == 0)] = 0.0
+
     # do the fit
     nx, ny, nz, nummaps = tide_io.parseniftidims(themapdims)
     if debug:
@@ -201,12 +208,11 @@ def fingerprint_main(
         newcols.columns = atlaslabelsinput["Region"]
         newcols.to_csv(f"{outputroot}_fit_O{str(i)}.tsv", index=False, sep="\t")
 
-    # generate the mask
+    # make a multiplicative mask
     if nummaps == 1:
         maskmap = 0.0 * themask_data
     else:
         maskmap = 0.0 * themask_data[:, :, :, 0]
-    maskmap[np.where(atlas_data > 0)] = 1.0
 
     # save the fit data
     if args.limittomask:
@@ -376,6 +382,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--maskthresh",
+        help=f"mask threshhold (default is {DEFAULTMASKTHRESH}).",
+        type=float,
+        default=DEFAULTMASKTHRESH,
+    )
+
+    parser.add_argument(
         "--debug",
         help="output additionnal debugging information",
         action="store_true",
@@ -415,5 +428,6 @@ if __name__ == "__main__":
         args.fitorder,
         intercept=not (args.nointercept),
         themaskname=args.maskname,
+        maskthresh=args.maskthresh,
         debug=args.debug,
     )
