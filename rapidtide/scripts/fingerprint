@@ -150,7 +150,6 @@ def fingerprint_main(
 
     # generate the mask
     themask_data[np.where(themask_data < maskthresh)] = 0.0
-    themask_data[np.where(atlas_data == 0)] = 0.0
 
     # do the fit
     nx, ny, nz, nummaps = tide_io.parseniftidims(themapdims)
@@ -213,6 +212,13 @@ def fingerprint_main(
         maskmap = 0.0 * themask_data
     else:
         maskmap = 0.0 * themask_data[:, :, :, 0]
+    maskmap[np.where(atlas_data < 1)] = 0.0
+
+    # save the maskmap as nifti
+    themaskmaphdr = copy.deepcopy(themap_hdr)
+    themaskmaphdr["dim"][0] = 3
+    themaskmaphdr["dim"][4] = 1
+    tide_io.savetonifti(maskmap, themaskmaphdr, outputroot + "_maskmap")
 
     # save the fit data
     if args.limittomask:
@@ -225,10 +231,13 @@ def fingerprint_main(
     tide_io.savetonifti(savemap, themap_hdr, outputroot + "_fit")
 
     # save the fit error
-    if nummaps == 1:
-        diffmap = (themap_data - thefitmap) * maskmap
+    if args.limittomask:
+        if nummaps == 1:
+            diffmap = (themap_data - thefitmap) * maskmap
+        else:
+            diffmap = (themap_data - thefitmap) * maskmap[:, :, :, None]
     else:
-        diffmap = (themap_data - thefitmap) * maskmap[:, :, :, None]
+        diffmap = themap_data - thefitmap
     tide_io.savetonifti(diffmap, themap_hdr, outputroot + "_fitdiff")
 
     # save the Rs as nifti
