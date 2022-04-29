@@ -203,9 +203,9 @@ def fingerprint_main(
 
     # generate the mask
     if nummaps == 1:
-        maskmap = 0.0 * themap_data
+        maskmap = 0.0 * themask_data
     else:
-        maskmap = 0.0 * themap_data[:, :, :, 0]
+        maskmap = 0.0 * themask_data[:, :, :, 0]
     maskmap[np.where(atlas_data > 0)] = 1.0
 
     # save the fit data
