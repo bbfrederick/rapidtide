@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.2.6 (5/17/22)
+* (fingerprint) Various fixes to mask handling.
+* (package) Staged some prep work on updating the setup/installation files.
+
 ## Version 2.2.5 (4/26/22)
 * (rapidtide) Postprocess timing information to make it more useful.
 * (rapidtide) Reenabled numba by default.
