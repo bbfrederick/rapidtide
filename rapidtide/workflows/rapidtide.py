@@ -2454,23 +2454,45 @@ def rapidtide_main(argparsingfunc):
         if (optiondict["gausssigma"] > 0.0) or (optiondict["glmsourcefile"] is not None):
             if optiondict["glmsourcefile"] is not None:
                 LGR.info(f"reading in {optiondict['glmsourcefile']} for GLM filter, please wait")
-                if optiondict["textio"]:
-                    nim_data = tide_io.readvecs(optiondict["glmsourcefile"])
+                if fileiscifti:
+                    LGR.info("input file is CIFTI")
+                    (
+                        cifti,
+                        cifti_hdr,
+                        nim_data,
+                        nim_hdr,
+                        thedims,
+                        thesizes,
+                        dummy,
+                    ) = tide_io.readfromcifti(optiondict["glmsourcefile"])
                 else:
-                    nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(
-                        optiondict["glmsourcefile"]
-                    )
+                    if optiondict["textio"]:
+                        nim_data = tide_io.readvecs(optiondict["glmsourcefile"])
+                    else:
+                        nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(
+                            optiondict["glmsourcefile"]
+                        )
             else:
                 LGR.info(f"rereading {fmrifilename} for GLM filter, please wait")
-                if optiondict["textio"]:
-                    nim_data = tide_io.readvecs(fmrifilename)
+                if fileiscifti:
+                    LGR.info("input file is CIFTI")
+                    (
+                        cifti,
+                        cifti_hdr,
+                        nim_data,
+                        nim_hdr,
+                        thedims,
+                        thesizes,
+                        dummy,
+                    ) = tide_io.readfromcifti(optiondict["glmsourcefile"])
                 else:
-                    nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
+                    if optiondict["textio"]:
+                        nim_data = tide_io.readvecs(fmrifilename)
+                    else:
+                        nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(
+                            fmrifilename
+                        )
 
-            """meanvalue = np.mean(
-                nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
-                axis=1,
-            )"""
             fmri_data_valid = (
                 nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
             )[validvoxels, :] + 0.0
