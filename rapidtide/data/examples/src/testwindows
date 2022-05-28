@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#rapidtide \
+	#--spatialfilt 2 \
+        #--nprocs -1 \
+        #--passes 3 \
+        #--similaritymetric hybrid \
+        #--norefinedespeckled \
+        #--filterband lfo \
+        #sub-RAPIDTIDETEST.nii.gz \
+        #../dst/sub-RAPIDTIDETEST_full
+
+for STARTTR in 000 015 030 045 060 075 090 105 120 135 150 165 180 195 210 225
+do
+    ENDTR=`echo ${STARTTR} | awk '{print $1+30}'`
+    rapidtide \
+	--spatialfilt 2 \
+        --nprocs -1 \
+        --similaritymetric correlation \
+        --filterband lfo \
+        --passes 1 \
+        --searchrange -20 20 \
+        --noglm \
+        --timerange ${STARTTR} ${ENDTR} \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_refined_start_${STARTTR}
+done
+
+        #--regressor ../dst/sub-RAPIDTIDETEST_full_desc-movingregressor_timeseries.json:pass3 \
