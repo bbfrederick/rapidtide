@@ -433,7 +433,7 @@ def cross_mutual_info(
     x : 1D array
         first variable
     y : 1D array
-        second variable
+        second variable.  The length of y must by >= the length of x
     returnaxis : bool
         set to True to return the time axis
     negstaps: int

@@ -157,6 +157,7 @@ class SimilarityFunctionator:
         ncprefilter=None,
         negativegradient=False,
         reftc=None,
+        reftcstart=0.0,
         detrendorder=1,
         debug=False,
     ):
@@ -171,6 +172,7 @@ class SimilarityFunctionator:
         self.debug = debug
         if self.reftc is not None:
             self.setreftc(self.reftc)
+            self.reftcstart = reftcstart
 
     def preptc(self, thetc, isreftc=False):
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function

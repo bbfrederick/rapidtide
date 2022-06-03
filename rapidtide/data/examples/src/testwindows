@@ -13,17 +13,23 @@
 for STARTTR in 000 015 030 045 060 075 090 105 120 135 150 165 180 195 210 225
 do
     ENDTR=`echo ${STARTTR} | awk '{print $1+30}'`
+    REGRESSORSTARTTIME=`echo ${STARTTR} | awk '{print $1*1.5}'`
     rapidtide \
 	--spatialfilt 2 \
         --nprocs -1 \
-        --similaritymetric correlation \
+        --nofitfilt \
+        --peakfittype quad \
+        --regressor ../dst/sub-RAPIDTIDETEST_full_desc-movingregressor_timeseries.json:pass3 \
+        --regressorstart ${REGRESSORSTARTTIME} \
+        --similaritymetric hybrid \
         --filterband lfo \
         --passes 1 \
+        --despecklepasses 4 \
         --searchrange -20 20 \
         --noglm \
         --timerange ${STARTTR} ${ENDTR} \
+        --norefineoffset \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_refined_start_${STARTTR}
+        ../dst/hybrid_pass1_start_${STARTTR}
 done
 
-        #--regressor ../dst/sub-RAPIDTIDETEST_full_desc-movingregressor_timeseries.json:pass3 \
