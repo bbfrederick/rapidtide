@@ -10,7 +10,7 @@
         #sub-RAPIDTIDETEST.nii.gz \
         #../dst/sub-RAPIDTIDETEST_full
 
-for STARTTR in 000 015 030 045 060 075 090 105 120 135 150 165 180 195 210 225
+for STARTTR in 000 010 020 030 040 050 060 070 080 090 100 110 120 130 140 150 160 170 180 190 200 210 220 230
 do
     ENDTR=`echo ${STARTTR} | awk '{print $1+30}'`
     REGRESSORSTARTTIME=`echo ${STARTTR} | awk '{print $1*1.5}'`
@@ -21,7 +21,7 @@ do
         --peakfittype quad \
         --regressor ../dst/sub-RAPIDTIDETEST_full_desc-movingregressor_timeseries.json:pass3 \
         --regressorstart ${REGRESSORSTARTTIME} \
-        --similaritymetric hybrid \
+        --similaritymetric correlation \
         --filterband lfo \
         --passes 1 \
         --despecklepasses 4 \
@@ -30,6 +30,6 @@ do
         --timerange ${STARTTR} ${ENDTR} \
         --norefineoffset \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/hybrid_pass1_start_${STARTTR}
+        ../dst/correlation_45s_start_${STARTTR}
 done
 
