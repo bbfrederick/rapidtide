@@ -78,6 +78,7 @@ script_list = [
     "rapidtide/scripts/calctexticc",
     "rapidtide/scripts/ccorrica",
     "rapidtide/scripts/endtidalproc",
+    "rapidtide/scripts/fdica",
     "rapidtide/scripts/filtnifti",
     "rapidtide/scripts/filttc",
     "rapidtide/scripts/fingerprint",
