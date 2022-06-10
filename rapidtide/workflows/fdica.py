@@ -170,20 +170,22 @@ def fdica(
     phasedata = np.unwrap(np.angle(trimmeddata))
     print(f"shape of phasedata: {phasedata.shape}")
     thepca = PCA(n_components=pcacomponents)
-    thepcaphasefit = thepca.fit_transform(phasedata)
+    thepcaphasefit = thepca.fit(phasedata)
     thepcaphasetransform = thepca.transform(phasedata)
-    thepcaphaseinvtrans = transposeifspatial(thepca.inverse_transform(thepcaphasetransform))
+    print(f"shape of thepcaphasetransform: {thepcaphasetransform.shape}")
+    thepcaphaseinvtrans = thepca.inverse_transform(thepcaphasetransform)
+    print(f"shape of thepcaphaseinvtrans: {thepcaphaseinvtrans.shape}")
     if pcacomponents < 1.0:
-        thepcacomponents = thefit.components_[:]
-        print("returning", thecomponents.shape[1], "components")
+        thepcacomponents = thepcaphasefit.components_[:]
+        print("returning", thepcacomponents.shape[1], "components")
     else:
-        thepcacomponents = thefit.components_[0 : int(pcacomponents)]
-    print(f"shape of thepcacomponents: {thecomponents.shape}")
+        thepcacomponents = thepcaphasefit.components_[0 : int(pcacomponents)]
+    print(f"shape of thepcacomponents: {thepcacomponents.shape}")
 
     # save the eigenvalues
-    print("variance explained by component:", 100.0 * thefit.explained_variance_ratio_)
+    print("variance explained by component:", 100.0 * thepcaphasefit.explained_variance_ratio_)
     tide_io.writenpvecs(
-        100.0 * thefit.explained_variance_ratio_,
+        100.0 * thepcaphasefit.explained_variance_ratio_,
         outputroot + "_explained_variance_pct.txt",
     )
 
@@ -207,7 +209,7 @@ def fdica(
         outputroot + "_phase",
     )
     rs_savearray[:, :] = 0.0
-    rs_savearray[voxelstofit, :] = pcaphasedata
+    rs_savearray[voxelstofit, :] = thepcaphaseinvtrans
     tide_io.savetonifti(
         savearray.reshape((xsize, ysize, numslices, trimmedsize)),
         saveheader,
@@ -219,14 +221,14 @@ def fdica(
     icainput = np.vstack((magdata, phasedata))
     print(f"shape of icainput: {icainput.shape}")
     theica = FastICA(n_components=icacomponents)
-    thefit = theica.fit_transform(icainput)
-    print(f"shape of thefit: {thefit.shape}")
+    theicafit = theica.fit_transform(icainput)
+    print(f"shape of theicafit: {theicafit.shape}")
     thecomponents = theica.components_
     print(f"shape of thecomponents: {thecomponents.shape}")
 
     # save magnitude and phase data
-    reconmagdata = thefit[:numfitvoxels, :]
-    reconphasedata = thefit[numfitvoxels:, :]
+    reconmagdata = theicafit[:numfitvoxels, :]
+    reconphasedata = theicafit[numfitvoxels:, :]
     rs_savearray[:, :] = 0.0
     rs_savearray[voxelstofit, :] = reconmagdata
     tide_io.savetonifti(
