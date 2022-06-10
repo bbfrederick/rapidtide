@@ -16,7 +16,6 @@
 #   limitations under the License.
 #
 #
-import sys
 
 import rapidtide.workflows.polyfitim as polyfitim_workflow
 
