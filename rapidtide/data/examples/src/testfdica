@@ -3,4 +3,6 @@
 fdica \
     sub-RAPIDTIDETEST.nii.gz \
     sub-RAPIDTIDETEST_brainmask.nii.gz \
-    ../dst/fdicatest
+    ../dst/fdicatest \
+    --icacomponents 2 \
+    --pcacomponents 0.85
