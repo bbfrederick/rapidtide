@@ -19,6 +19,7 @@
 import argparse
 import sys
 import pyfftw
+import copy
 
 fftpack = pyfftw.interfaces.scipy_fftpack
 pyfftw.interfaces.cache.enable()
@@ -113,6 +114,7 @@ def fdica(
     # figure out what bins we will retain
     lowerbin = int(np.floor(lowerfreq / hzperpoint))
     upperbin = int(np.ceil(upperfreq / hzperpoint))
+    trimmedsize = upperbin - lowerbin + 1
     print(f"will retain points {lowerbin} to {upperbin}")
 
     # check dimensions
@@ -130,6 +132,8 @@ def fdica(
     rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
     rs_datamask = datamask_data.reshape(numspatiallocs)
     rs_datamask_bin = np.where(rs_datamask > 0.9, 1.0, 0.0)
+    savearray = np.zeros(xsize, ysize, numslices, trimmedsize)
+    rs_savearray = savearray.reshape(numspatiallocs, trimmedsize)
 
     # select the voxels to process
     voxelstofit = np.where(rs_datamask_bin > 0.5)
@@ -137,93 +141,32 @@ def fdica(
 
     # calculating FFT
     print("calculating forward FFT")
-    complexfftdata = fftpack.fft(procvoxels, axis=0)
+    complexfftdata = fftpack.fft(procvoxels, axis=1)
 
     # trim the data
     trimmeddata = complexfftdata[:, lowerbin : min(upperbin + 1, timepoints)]
 
-    fitdata = np.zeros((numspatiallocs, timepoints), dtype="float")
+    # convert to polar
+    magdata = np.absolute(trimmeddata)
+    phasedata = np.unwrap(np.angle(trimmeddata))
 
-    # mask everything
-    print("masking template")
-    maskedtemplate = rs_templatefile * rs_templatemask_bin
+    saveheader = copy.deepcopy(datafile_hdr)
+    saveheader["dim"][4] = trimmedsize
+    saveheader["pixdim"][4] = hzperpoint
 
-    # cycle over all images
-    print("now cycling over all images")
-    for thetime in range(0, timepoints):
-        print("fitting timepoint", thetime)
-
-        # get the appropriate mask
-        if datamask3d:
-            for i in range(timepoints):
-                thisdatamask = rs_datamask_bin
-        else:
-            thisdatamask = rs_datamask_bin[:, thetime]
-        if regionatlas is not None:
-            for region in range(0, numregions):
-                voxelstofit = np.where(regionvoxels[:, region] * thisdatamask > 0.5)
-                voxelstoreconstruct = np.where(regionvoxels[:, region] > 0.5)
-                evlist = []
-                for i in range(1, order + 1):
-                    evlist.append((rs_templatefile[voxelstofit]) ** i)
-                thefit, R = tide_fit.mlregress(
-                    evlist,
-                    rs_datafile[voxelstofit, thetime][0],
-                )
-                for i in range(order + 1):
-                    polycoffs[region, i, thetime] = thefit[0, i]
-                fitdata[voxelstoreconstruct, thetime] = polycoffs[region, 0, thetime]
-                for i in range(1, order + 1):
-                    fitdata[voxelstoreconstruct, thetime] += polycoffs[region, i, thetime] * (
-                        rs_templatefile[voxelstoreconstruct] ** i
-                    )
-                rvals[region, thetime] = R
-        else:
-            voxelstofit = np.where(thisdatamask > 0.5)
-            voxelstoreconstruct = np.where(rs_templatemask > 0.5)
-            evlist = []
-            for i in range(1, order + 1):
-                evlist.append((rs_templatefile[voxelstofit]) ** i)
-            thefit, R = tide_fit.mlregress(evlist, rs_datafile[voxelstofit, thetime][0])
-            for i in range(order + 1):
-                polycoffs[i, thetime] = thefit[0, i]
-            fitdata[voxelstoreconstruct, thetime] = polycoffs[0, thetime]
-            for i in range(1, order + 1):
-                fitdata[voxelstoreconstruct, thetime] += polycoffs[i, thetime] * (
-                    rs_templatefile[voxelstoreconstruct] ** i
-                )
-            rvals[thetime] = R
-    residuals = rs_datafile - fitdata
-
-    # write out the data files
-    print("writing time series")
-
-    tide_io.writenpvecs(rvals, outputroot + "_rvals.txt")
-    if regionatlas is not None:
-        for region in range(0, numregions):
-            outstring = f"region {region + 1}:"
-            for i in range(order + 1):
-                tide_io.writenpvecs(polycoffs[i, :], outputroot + "_O_i_coffs.txt")
-                outstring += f" O_{i} mean, std {np.mean(polycoffs[region, i, :])}, {np.std(polycoffs[region, i, :])}"
-            print(outstring)
-    else:
-        outstring = ""
-        for i in range(order + 1):
-            tide_io.writenpvecs(polycoffs[:], outputroot + f"_O_{i}_coffs.txt")
-            outstring += f" O_{i} mean, std {np.mean(polycoffs[i, :])}, {np.std(polycoffs[i, :])}"
-        print(outstring)
-
-    print("writing nifti series")
+    rs_savearray[voxelstofit, :] = magdata
     tide_io.savetonifti(
-        fitdata.reshape((xsize, ysize, numslices, timepoints)),
-        datafile_hdr,
-        outputroot + "_fit",
+        savearray.reshape((xsize, ysize, numslices, trimmedsize)),
+        saveheader,
+        outputroot + "_mag",
     )
+    rs_savearray[voxelstofit, :] = phasedata
     tide_io.savetonifti(
-        residuals.reshape((xsize, ysize, numslices, timepoints)),
-        datafile_hdr,
-        outputroot + "_residuals",
+        savearray.reshape((xsize, ysize, numslices, trimmedsize)),
+        saveheader,
+        outputroot + "_phase",
     )
+    icainput = np.vstack(magdata, phasedata)
 
 
 def main():
