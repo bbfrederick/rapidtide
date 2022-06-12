@@ -283,9 +283,9 @@ def niftidecomp_workflow(
             print("writing component timecourses")
             tide_io.writenpvecs(thecomponents, outputroot + "_components.txt")
 
-            # save the singular values
+            """# save the singular values
             print("writing singular values")
-            tide_io.writenpvecs(np.transpose(thesingvals), outputroot + "_singvals.txt")
+            tide_io.writenpvecs(np.transpose(thesingvals), outputroot + "_singvals.txt")"""
 
             # save the coefficients
             print("writing out the coefficients")
