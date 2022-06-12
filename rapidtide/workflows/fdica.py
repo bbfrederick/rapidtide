@@ -17,16 +17,18 @@
 #
 #
 import argparse
+import copy
 import sys
+
 import numpy as np
 import pyfftw
-import copy
 from sklearn.decomposition import PCA, FastICA
 
 fftpack = pyfftw.interfaces.scipy_fftpack
 pyfftw.interfaces.cache.enable()
 
 
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_valid_file
 
@@ -148,6 +150,14 @@ def fdica(
     rs_datamask_bin = np.where(rs_datamask > 0.9, 1.0, 0.0)
     savearray = np.zeros((xsize, ysize, numslices, trimmedsize), dtype="float")
     rs_savearray = savearray.reshape(numspatiallocs, trimmedsize)
+    saveheader = copy.deepcopy(datafile_hdr)
+    saveheader["dim"][4] = trimmedsize
+    saveheader["pixdim"][4] = hzperpoint
+    savesinglearray = np.zeros((xsize, ysize, numslices), dtype="float")
+    rs_savesinglearray = savesinglearray.reshape(numspatiallocs)
+    savesingleheader = copy.deepcopy(datafile_hdr)
+    savesingleheader["dim"][4] = 1
+    savesingleheader["pixdim"][4] = 1.0
 
     # select the voxels to process
     voxelstofit = np.where(rs_datamask_bin > 0.5)[0]
@@ -169,8 +179,42 @@ def fdica(
     print(f"shape of magdata: {magdata.shape}")
     phasedata = np.unwrap(np.angle(trimmeddata))
     print(f"shape of phasedata: {phasedata.shape}")
+
+    # remove mean and linear component
+    phasemeans = np.zeros((numfitvoxels), dtype="float")
+    phaseslopes = np.zeros((numfitvoxels), dtype="float")
+    detrendedphasedata = phasedata * 0.0
+    print(f"shape of detrendedphasedata: {detrendedphasedata.shape}")
+    X = np.linspace(lowerbin * hzperpoint, upperbin * hzperpoint, trimmedsize)
+    for i in range(numfitvoxels):
+        thecoffs = np.polyfit(X, phasedata[i, :], 1)
+        phaseslopes[i], phasemeans[i] = thecoffs
+        detrendedphasedata[i, :] = phasedata[i, :] - tide_fit.trendgen(X, thecoffs, True)
+    rs_savearray[:, :] = 0.0
+    rs_savearray[voxelstofit, :] = detrendedphasedata
+    tide_io.savetonifti(
+        savearray.reshape((xsize, ysize, numslices, trimmedsize)),
+        saveheader,
+        outputroot + "_detrendedphase",
+    )
+    rs_savesinglearray[:] = 0.0
+    rs_savesinglearray[voxelstofit] = phasemeans
+    tide_io.savetonifti(
+        rs_savesinglearray.reshape((xsize, ysize, numslices)),
+        savesingleheader,
+        outputroot + "_phasemeans",
+    )
+    rs_savesinglearray[:] = 0.0
+    rs_savesinglearray[voxelstofit] = phaseslopes
+    tide_io.savetonifti(
+        rs_savesinglearray.reshape((xsize, ysize, numslices)),
+        savesingleheader,
+        outputroot + "_phaseslopes",
+    )
+
+    # do PCA data reduction on phase data
     thepca = PCA(n_components=pcacomponents)
-    thepcaphasefit = thepca.fit(phasedata)
+    thepcaphasefit = thepca.fit(detrendedphasedata)
     thepcaphasetransform = thepca.transform(phasedata)
     print(f"shape of thepcaphasetransform: {thepcaphasetransform.shape}")
     thepcaphaseinvtrans = thepca.inverse_transform(thepcaphasetransform)
@@ -189,9 +233,25 @@ def fdica(
         outputroot + "_explained_variance_pct.txt",
     )
 
-    saveheader = copy.deepcopy(datafile_hdr)
-    saveheader["dim"][4] = trimmedsize
-    saveheader["pixdim"][4] = hzperpoint
+    print("writing component timecourses")
+    tide_io.writenpvecs(thepcacomponents, outputroot + "_pcacomponents.txt")
+
+    # save the coefficients
+    """print("writing out the coefficients")
+    coefficients = thepcaphasetransform
+    print("coefficients shape:", coefficients.shape)
+    theheader = datafile_hdr
+    theheader["dim"][4] = coefficients.shape[1]
+    tempout = np.zeros((numspatiallocs, coefficients.shape[1]), dtype="float")
+    tempout[proclocs, :] = coefficients[:, :]
+    tide_io.savetonifti(
+        tempout.reshape((xsize, ysize, numslices, coefficients.shape[1])),
+        datafile_hdr,
+        outputroot + "_coefficients",
+    )
+    # unnormalize the dimensionality reduced data
+    for i in range(numspatiallocs):
+        theinvtrans[i, :] = thevar[i] * theinvtrans[i, :] + themean[i]"""
 
     # save magnitude and phase data
     rs_savearray[:, :] = 0.0
@@ -222,13 +282,14 @@ def fdica(
     print(f"shape of icainput: {icainput.shape}")
     theica = FastICA(n_components=icacomponents)
     theicafit = theica.fit_transform(icainput)
+    theicaproj = theica.inverse_transform((theicafit))
     print(f"shape of theicafit: {theicafit.shape}")
-    thecomponents = theica.components_
-    print(f"shape of thecomponents: {thecomponents.shape}")
+    theicacomponents = theica.components_
+    print(f"shape of theicacomponents: {theicacomponents.shape}")
 
     # save magnitude and phase data
-    reconmagdata = theicafit[:numfitvoxels, :]
-    reconphasedata = theicafit[numfitvoxels:, :]
+    reconmagdata = theicaproj[:numfitvoxels, :]
+    reconphasedata = theicaproj[numfitvoxels:, :]
     rs_savearray[:, :] = 0.0
     rs_savearray[voxelstofit, :] = reconmagdata
     tide_io.savetonifti(
