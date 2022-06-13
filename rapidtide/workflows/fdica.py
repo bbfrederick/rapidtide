@@ -33,6 +33,14 @@ import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_valid_file
 
 
+def P2R(radii, angles):
+    return radii * np.exp(1j * angles)
+
+
+def R2P(x):
+    return np.absolute(x), np.angle(x)
+
+
 def _get_parser():
     """
     Argument parser for fdica
@@ -175,9 +183,11 @@ def fdica(
     print(f"shape of trimmeddata: {trimmeddata.shape}")
 
     # convert to polar
-    magdata = np.absolute(trimmeddata)
+    magdata, phasedata = R2P(trimmeddata)
+    phasedata = np.unwrap(phasedata)
+    # magdata = np.absolute(trimmeddata)
     print(f"shape of magdata: {magdata.shape}")
-    phasedata = np.unwrap(np.angle(trimmeddata))
+    # phasedata = np.unwrap(np.angle(trimmeddata))
     print(f"shape of phasedata: {phasedata.shape}")
 
     # remove mean and linear component
@@ -189,7 +199,8 @@ def fdica(
     for i in range(numfitvoxels):
         thecoffs = np.polyfit(X, phasedata[i, :], 1)
         phaseslopes[i], phasemeans[i] = thecoffs
-        detrendedphasedata[i, :] = phasedata[i, :] - tide_fit.trendgen(X, thecoffs, True)
+        # detrendedphasedata[i, :] = phasedata[i, :] - tide_fit.trendgen(X, thecoffs, True)
+        detrendedphasedata[i, :] = phasedata[i, :] - np.mean(phasedata[i, :])
     rs_savearray[:, :] = 0.0
     rs_savearray[voxelstofit, :] = detrendedphasedata
     tide_io.savetonifti(
@@ -303,6 +314,21 @@ def fdica(
         savearray.reshape((xsize, ysize, numslices, trimmedsize)),
         saveheader,
         outputroot + "_reconphase",
+    )
+
+    # put the data back into rectangular components and go back to time domain
+    complexfftdata[:, :] = 0.0 + 0.0j
+    complexfftdata[:, lowerbin : min(upperbin + 1, timepoints)] = P2R(reconmagdata, reconphasedata)
+    procvoxels = fftpack.ifft(complexfftdata, axis=1).real
+    print(f"shape of procvoxels: {procvoxels.shape}")
+
+    savefullarray = np.zeros((xsize, ysize, numslices, timepoints), dtype="float")
+    rs_savefullarray = savefullarray.reshape(numspatiallocs, timepoints)
+    rs_savefullarray[voxelstofit, :] = procvoxels
+    tide_io.savetonifti(
+        savefullarray.reshape((xsize, ysize, numslices, timepoints)),
+        datafile_hdr,
+        outputroot + "_movingsignal",
     )
 
 
