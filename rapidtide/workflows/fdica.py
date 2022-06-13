@@ -178,6 +178,20 @@ def fdica(
     complexfftdata = fftpack.fft(procvoxels, axis=1)
     print(f"shape of complexfftdata: {complexfftdata.shape}")
 
+    procvoxels2 = fftpack.ifft(complexfftdata, axis=1).real
+    savefullarray = np.zeros((xsize, ysize, numslices, timepoints), dtype="float")
+    rs_savefullarray = savefullarray.reshape(numspatiallocs, timepoints)
+    rs_savefullarray[voxelstofit, :] = procvoxels2
+    tide_io.savetonifti(
+        savefullarray.reshape((xsize, ysize, numslices, timepoints)),
+        datafile_hdr,
+        outputroot + "_ifft",
+    )
+
+    # checking IFFT
+    print("calculating forward FFT")
+    procvoxels2 = fftpack.ifft(complexfftdata, axis=1).real
+
     # trim the data
     trimmeddata = complexfftdata[:, lowerbin : min(upperbin + 1, timepoints)]
     print(f"shape of trimmeddata: {trimmeddata.shape}")
@@ -236,6 +250,8 @@ def fdica(
     else:
         thepcacomponents = thepcaphasefit.components_[0 : int(pcacomponents)]
     print(f"shape of thepcacomponents: {thepcacomponents.shape}")
+    print("writing pca component timecourses")
+    tide_io.writenpvecs(thepcacomponents, outputroot + "_pcacomponents.txt")
 
     # save the eigenvalues
     print("variance explained by component:", 100.0 * thepcaphasefit.explained_variance_ratio_)
@@ -244,7 +260,7 @@ def fdica(
         outputroot + "_explained_variance_pct.txt",
     )
 
-    print("writing component timecourses")
+    print("writing pca component timecourses")
     tide_io.writenpvecs(thepcacomponents, outputroot + "_pcacomponents.txt")
 
     # save the coefficients
@@ -297,6 +313,9 @@ def fdica(
     print(f"shape of theicafit: {theicafit.shape}")
     theicacomponents = theica.components_
     print(f"shape of theicacomponents: {theicacomponents.shape}")
+    print("writing ica component timecourses")
+    tide_io.writenpvecs(theicacomponents, outputroot + "_icacomponents.txt")
+    tdicacomp = np.zeros((theicacomponents.shape[0], timepoints), dtype="float")
 
     # save magnitude and phase data
     reconmagdata = theicaproj[:numfitvoxels, :]
@@ -322,7 +341,7 @@ def fdica(
     procvoxels = fftpack.ifft(complexfftdata, axis=1).real
     print(f"shape of procvoxels: {procvoxels.shape}")
 
-    savefullarray = np.zeros((xsize, ysize, numslices, timepoints), dtype="float")
+    savefullarray[:, :, :, :] = 0.0
     rs_savefullarray = savefullarray.reshape(numspatiallocs, timepoints)
     rs_savefullarray[voxelstofit, :] = procvoxels
     tide_io.savetonifti(
