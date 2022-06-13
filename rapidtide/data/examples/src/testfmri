@@ -25,6 +25,7 @@ rapidtide \
         --similaritymetric hybrid \
         --norefinedespeckled \
         --filterband lfo \
+        --nolimitoutput \
         sub-RAPIDTIDETEST.nii.gz \
         ../dst/sub-RAPIDTIDETEST
 
