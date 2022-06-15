@@ -65,6 +65,20 @@ def _get_parser():
     parser.add_argument("outputroot", type=str, help="The root name for all output files.")
 
     parser.add_argument(
+        "--spatialfilt",
+        dest="gausssigma",
+        action="store",
+        type=float,
+        metavar="GAUSSSIGMA",
+        help=(
+            "Spatially filter fMRI data prior to analysis "
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to have rapidtide set it to half the mean voxel "
+            "dimension (a rule of thumb for a good value)."
+        ),
+        default=0.0,
+    )
+    parser.add_argument(
         "--pcacomponents",
         metavar="NCOMP",
         dest="pcacomponents",
@@ -166,6 +180,22 @@ def fdica(
     savesingleheader = copy.deepcopy(datafile_hdr)
     savesingleheader["dim"][4] = 1
     savesingleheader["pixdim"][4] = 1.0
+
+    # do spatial filtering if requested
+    if args.gausssigma < 0.0:
+        # set gausssigma automatically
+        args.gausssigma = np.mean([xdim, ydim, slicethickness]) / 2.0
+    if args.gausssigma > 0.0:
+        print(f"applying gaussian spatial filter with sigma={optiondict['gausssigma']}")
+        for i in range(timepoints):
+            nim_data[:, :, :, i] = tide_filt.ssmooth(
+                xdim,
+                ydim,
+                slicethickness,
+                args.gausssigma,
+                nim_data[:, :, :, i],
+            )
+        print("spatial filtering complete")
 
     # select the voxels to process
     voxelstofit = np.where(rs_datamask_bin > 0.5)[0]
