@@ -4,5 +4,6 @@ fdica \
     sub-RAPIDTIDETEST.nii.gz \
     sub-RAPIDTIDETEST_brainmask.nii.gz \
     ../dst/fdicatest \
+    --spatialfilt 5 \
     --icacomponents 2 \
     --pcacomponents 0.85
