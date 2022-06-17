@@ -305,7 +305,12 @@ def fdica(
 
     # run the ICA
     print("running ICA decomposition")
-    icainput = np.vstack((magdata, phasedata))
+    temporalstack = True
+    if temporalstack:
+        icainput = np.hstack((magdata, phasedata))
+    else:
+        icainput = np.vstack((magdata, phasedata))
+
     print(f"shape of icainput: {icainput.shape}")
     theica = FastICA(n_components=icacomponents)
     theicafit = theica.fit_transform(icainput)
@@ -318,8 +323,12 @@ def fdica(
     tdicacomp = np.zeros((theicacomponents.shape[0], timepoints), dtype="float")
 
     # save magnitude and phase data
-    reconmagdata = theicaproj[:numfitvoxels, :]
-    reconphasedata = theicaproj[numfitvoxels:, :]
+    if temporalstack:
+        reconmagdata = theicaproj[:, :trimmedsize]
+        reconphasedata = theicaproj[:, trimmedsize:]
+    else:
+        reconmagdata = theicaproj[:numfitvoxels, :]
+        reconphasedata = theicaproj[numfitvoxels:, :]
     rs_savearray[:, :] = 0.0
     rs_savearray[voxelstofit, :] = reconmagdata
     tide_io.savetonifti(
