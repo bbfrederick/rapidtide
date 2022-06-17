@@ -1,0 +1,15 @@
+#!/bin/bash
+
+rm -rf ../dst/magout.ica
+melodic \
+    -i ../dst/fdicatest_fullmagdata.nii.gz \
+    -m sub-RAPIDTIDETEST_brainmask.nii.gz \
+    -o ../dst/magout.ica \
+    --Oall 
+
+rm -rf ../dst/phaseout.ica
+melodic \
+    -i ../dst/fdicatest_fullphasedata.nii.gz \
+    -m sub-RAPIDTIDETEST_brainmask.nii.gz \
+    -o ../dst/phaseout.ica \
+    --Oall 

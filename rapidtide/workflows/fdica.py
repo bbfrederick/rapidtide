@@ -28,7 +28,7 @@ fftpack = pyfftw.interfaces.scipy_fftpack
 pyfftw.interfaces.cache.enable()
 
 
-import rapidtide.fit as tide_fit
+import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_valid_file
 
@@ -65,6 +65,20 @@ def _get_parser():
     parser.add_argument("outputroot", type=str, help="The root name for all output files.")
 
     parser.add_argument(
+        "--spatialfilt",
+        dest="gausssigma",
+        action="store",
+        type=float,
+        metavar="GAUSSSIGMA",
+        help=(
+            "Spatially filter fMRI data prior to analysis "
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to have rapidtide set it to half the mean voxel "
+            "dimension (a rule of thumb for a good value)."
+        ),
+        default=0.0,
+    )
+    parser.add_argument(
         "--pcacomponents",
         metavar="NCOMP",
         dest="pcacomponents",
@@ -94,6 +108,7 @@ def fdica(
     datafile,
     datamask,
     outputroot,
+    gausssigma=0.0,
     pcacomponents="mle",
     icacomponents=None,
     lowerfreq=0.009,
@@ -121,22 +136,26 @@ def fdica(
     print(f"shape of datafile_data: {datafile_data.shape}")
     print(f"shape of datamask_data: {datamask_data.shape}")
 
-    xsize = datafiledims[1]
-    ysize = datafiledims[2]
-    numslices = datafiledims[3]
-    timepoints = datafiledims[4]
+    xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
+    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
 
     if datafile_hdr.get_xyzt_units()[1] == "msec":
-        fmritr = datafilesizes[4] / 1000.0
+        fmritr = tr / 1000.0
     else:
-        fmritr = datafilesizes[4]
+        fmritr = tr
     nyquist = 0.5 / fmritr
     hzperpoint = nyquist / timepoints
     print(f"nyquist: {nyquist}Hz, hzperpoint: {hzperpoint}Hz")
 
     # figure out what bins we will retain
-    lowerbin = int(np.floor(lowerfreq / hzperpoint))
-    upperbin = int(np.ceil(upperfreq / hzperpoint))
+    if lowerfreq < 0.0:
+        lowerbin = 0
+    else:
+        lowerbin = int(np.floor(lowerfreq / hzperpoint))
+    if upperfreq < 0.0:
+        upperbin = timepoints - 1
+    else:
+        upperbin = int(np.ceil(upperfreq / hzperpoint))
     trimmedsize = upperbin - lowerbin + 1
     print(f"will retain points {lowerbin} to {upperbin}")
 
@@ -148,6 +167,22 @@ def fdica(
     if datamaskdims[4] != 1:
         print("specify a 3d data mask")
         sys.exit()
+
+    # do spatial filtering if requested
+    if gausssigma < 0.0:
+        # set gausssigma automatically
+        gausssigma = np.mean([xdim, ydim, slicethickness]) / 2.0
+    if gausssigma > 0.0:
+        print(f"applying gaussian spatial filter with sigma={gausssigma}")
+        for i in range(timepoints):
+            datafile_data[:, :, :, i] = tide_filt.ssmooth(
+                xdim,
+                ydim,
+                slicethickness,
+                gausssigma,
+                datafile_data[:, :, :, i],
+            )
+        print("spatial filtering complete")
 
     # create arrays
     print("allocating arrays")
@@ -188,6 +223,24 @@ def fdica(
         outputroot + "_ifft",
     )
 
+    # convert to polar
+    fullmagdata, fullphasedata = R2P(complexfftdata)
+    fullphasedata = np.unwrap(fullphasedata)
+
+    # save the polar data
+    rs_savefullarray[voxelstofit, :] = fullmagdata
+    tide_io.savetonifti(
+        savefullarray.reshape((xsize, ysize, numslices, timepoints)),
+        datafile_hdr,
+        outputroot + "_fullmagdata",
+    )
+    rs_savefullarray[voxelstofit, :] = fullphasedata
+    tide_io.savetonifti(
+        savefullarray.reshape((xsize, ysize, numslices, timepoints)),
+        datafile_hdr,
+        outputroot + "_fullphasedata",
+    )
+
     # checking IFFT
     print("calculating forward FFT")
     procvoxels2 = fftpack.ifft(complexfftdata, axis=1).real
@@ -197,11 +250,9 @@ def fdica(
     print(f"shape of trimmeddata: {trimmeddata.shape}")
 
     # convert to polar
-    magdata, phasedata = R2P(trimmeddata)
-    phasedata = np.unwrap(phasedata)
-    # magdata = np.absolute(trimmeddata)
+    magdata = fullmagdata[:, lowerbin : min(upperbin + 1, timepoints)]
+    phasedata = fullphasedata[:, lowerbin : min(upperbin + 1, timepoints)]
     print(f"shape of magdata: {magdata.shape}")
-    # phasedata = np.unwrap(np.angle(trimmeddata))
     print(f"shape of phasedata: {phasedata.shape}")
 
     # remove mean and linear component
@@ -374,6 +425,7 @@ def main():
         args.datafile,
         args.datamask,
         args.outputroot,
+        gausssigma=args.gausssigma,
         icacomponents=args.icacomponents,
         pcacomponents=args.pcacomponents,
         debug=args.debug,
