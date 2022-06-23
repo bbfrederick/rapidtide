@@ -32,24 +32,32 @@ def test_fastcorrelate(display=False):
     sig2[int(inlen // 2) + offset + 1] = 1.0
     fastcorrelate_result_pad0 = fastcorrelate(sig2, sig1, zeropadding=0)
     fastcorrelate_result_padneg1 = fastcorrelate(sig2, sig1, zeropadding=-1)
-    fastcorrelate_result_pad100 = fastcorrelate(sig2, sig1, zeropadding=100)
+    fastcorrelate_result_pad1000 = fastcorrelate(sig2, sig1, zeropadding=1000)
     print(
         "lengths:",
         len(fastcorrelate_result_pad0),
         len(fastcorrelate_result_padneg1),
-        len(fastcorrelate_result_pad100),
+        len(fastcorrelate_result_pad1000),
     )
     stdcorrelate_result = np.correlate(sig2, sig1, mode="full")
     midpoint = int(len(stdcorrelate_result) // 2) + 1
     if display:
         plt.figure()
-        plt.ylim([-1.0, 3.0])
-        plt.plot(fastcorrelate_result_pad100 + 3.0)
+        plt.ylim([-1.0, 4.0])
+        plt.plot(fastcorrelate_result_pad1000 + 3.0)
         plt.plot(fastcorrelate_result_padneg1 + 2.0)
         plt.plot(fastcorrelate_result_pad0 + 1.0)
         plt.plot(stdcorrelate_result)
+        print(stdcorrelate_result)
         print("maximum occurs at offset", np.argmax(stdcorrelate_result) - midpoint + 1)
-        plt.legend(["Fast correlate", "Standard correlate"])
+        plt.legend(
+            [
+                "Fast correlate pad 1000",
+                "Fast correlate pad -1",
+                "Fast correlate nopad",
+                "Standard correlate",
+            ]
+        )
         plt.show()
 
     aethresh = 10
