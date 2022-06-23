@@ -1100,6 +1100,7 @@ def rapidtide_main(argparsingfunc):
         windowfunc=optiondict["windowfunc"],
         corrweighting=optiondict["corrweighting"],
         corrpadding=optiondict["zeropadding"],
+        debug=optiondict["debug"],
     )
     theCorrelator.setreftc(
         np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float64)
