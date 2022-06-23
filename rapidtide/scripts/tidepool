@@ -340,6 +340,7 @@ class xyztlocation(QtGui.QWidget):
         # self.tpos = (self.tpos + 1) % self.tdim
         self.setTpos((self.tpos + 1) % self.tdim)
         self.updateTValues()
+        print(f"Tpos, t: {self.tpos}, {self.TCoordSpinBox.value()}")
 
     def stopMovie(self):
         self.movierunning = False
