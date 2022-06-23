@@ -863,8 +863,18 @@ def fastcorrelate(
         paddedinput1 = input1
         paddedinput2 = input2
         startpt = 0
-    if debug:
+    if displayplots:
         print(f"FASTCORRELATE - padding: {zeropadding}, startpt: {startpt}, outlen: {outlen}")
+        plt.plot(paddedinput1 + 1.0)
+        plt.plot(paddedinput2)
+        plt.legend(
+            [
+                "Padded timecourse 1",
+                "Padded timecourse 2",
+            ]
+        )
+
+        plt.show()
 
     if usefft:
         # Do an array flipped convolution, which is a correlation.
