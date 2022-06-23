@@ -568,10 +568,10 @@ def _get_parser():
         dest="similaritymetric",
         action="store",
         type=str,
-        choices=["correlation", "circularcorrelation", "mutualinfo", "hybrid"],
+        choices=["correlation", "mutualinfo", "hybrid"],
         help=(
             "Similarity metric for finding delay values.  "
-            'Choices are "correlation", "circularcorrelation", "mutualinfo", and "hybrid". '
+            'Choices are "correlation", "mutualinfo", and "hybrid". '
             f"Default is {DEFAULT_SIMILARITYMETRIC}."
         ),
         default=DEFAULT_SIMILARITYMETRIC,

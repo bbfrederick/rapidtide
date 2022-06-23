@@ -1701,8 +1701,6 @@ def rapidtide_main(argparsingfunc):
             similaritytype = "Mutual information"
         elif optiondict["similaritymetric"] == "correlation":
             similaritytype = "Correlation"
-        elif optiondict["similaritymetric"] == "circularcorrelation":
-            similaritytype = "Circular Correlation"
         else:
             similaritytype = "MI enhanced correlation"
         LGR.info(f"\n\n{similaritytype} calculation, pass {thepass}")

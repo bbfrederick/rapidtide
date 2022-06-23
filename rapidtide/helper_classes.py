@@ -891,11 +891,7 @@ class SimilarityFunctionFitter:
             )
 
         # set the baseline and baselinedev levels
-        if (
-            (self.functype == "correlation")
-            or (self.functype == "circularcorrelation")
-            or (self.functype == "hybrid")
-        ):
+        if (self.functype == "correlation") or (self.functype == "hybrid"):
             baseline = 0.0
             baselinedev = 0.0
         else:
@@ -913,11 +909,7 @@ class SimilarityFunctionFitter:
             thegrad = np.gradient(corrfunc).astype(
                 "float64"
             )  # the gradient of the correlation function
-            if (
-                (self.functype == "correlation")
-                or (self.functype == "circularcorrelation")
-                or (self.functype == "hybrid")
-            ):
+            if (self.functype == "correlation") or (self.functype == "hybrid"):
                 if self.peakfittype == "quad":
                     peakpoints = np.where(
                         corrfunc > maxval_init - 0.05, 1, 0
@@ -1016,11 +1008,7 @@ class SimilarityFunctionFitter:
                 )
                 if self.debug:
                     print("bad initial width - too low")
-            if (
-                (self.functype == "correlation")
-                or (self.functype == "circularcorrelation")
-                or (self.functype == "hybrid")
-            ):
+            if (self.functype == "correlation") or (self.functype == "hybrid"):
                 if not (self.lthreshval <= maxval_init <= self.uthreshval) and self.enforcethresh:
                     failreason |= self.FML_INITAMPLOW
                     if self.debug:
@@ -1140,11 +1128,7 @@ class SimilarityFunctionFitter:
                 lowestcorrcoeff = -1.0
             else:
                 lowestcorrcoeff = 0.0
-            if (
-                (self.functype == "correlation")
-                or (self.functype == "circularcorrelation")
-                or (self.functype == "hybrid")
-            ):
+            if (self.functype == "correlation") or (self.functype == "hybrid"):
                 if maxval < lowestcorrcoeff:
                     failreason |= self.FML_FITAMPLOW
                     maxval = lowestcorrcoeff
