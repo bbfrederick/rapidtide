@@ -855,9 +855,10 @@ def fastcorrelate(
         newlen2 = len2 + zeropadding
         paddedinput1 = np.zeros((newlen1), dtype=float)
         paddedinput2 = np.zeros((newlen2), dtype=float)
-        paddedinput1[0:len1] = input1
+        # paddedinput1[0:len1] = input1
+        paddedinput1[-len1:] = input1
         paddedinput2[0:len2] = input2
-        startpt = zeropadding
+        startpt = zeropaddings
     else:
         # no pad
         paddedinput1 = input1
@@ -879,17 +880,25 @@ def fastcorrelate(
     if usefft:
         # Do an array flipped convolution, which is a correlation.
         if weighting == "None":
-            return signal.fftconvolve(paddedinput1, paddedinput2[::-1], mode="full")[
-                startpt : startpt + outlen
-            ]
+            theweightedcorr = signal.fftconvolve(paddedinput1, paddedinput2[::-1], mode="full")
         else:
-            return convolve_weighted_fft(
+            theweightedcorr = convolve_weighted_fft(
                 paddedinput1,
                 paddedinput2[::-1],
                 mode="full",
                 weighting=weighting,
                 displayplots=displayplots,
-            )[startpt : startpt + outlen]
+            )
+        if displayplots:
+            plt.plot(theweightedcorr)
+            plt.legend(
+                [
+                    "Untrimmed correlation",
+                ]
+            )
+            plt.show()
+
+        return theweightedcorr[startpt : startpt + outlen]
     else:
         return np.correlate(paddedinput1, paddedinput2, mode="full")
 
