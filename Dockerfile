@@ -90,7 +90,7 @@ RUN mamba install -y python \
                      h5py \
                      "tensorflow>=2.4.0" \
                      pyqtgraph \
-                     "pyfftw=0.13.0=py39h51d1ae8_0" \
+                     pyfftw \
                      pandas \
                      versioneer \
                      numba; sync && \
