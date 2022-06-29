@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.2.7 (6/29/22)
+* (rapidtide) Fixed GLM noise removal in CIFTI files.
+* (rapidtide) Initial support for linear rather than circular correlation.
+* (happy) Fixed some pretty broken masking logic when you want to process more (rather than less) voxels than the brain.
+
 ## Version 2.2.6 (5/17/22)
 * (fingerprint) Various fixes to mask handling.
 * (package) Staged some prep work on updating the setup/installation files.
