@@ -76,7 +76,7 @@ def cardiacsig(thisphase, amps=(1.0, 0.0, 0.0), phases=None, overallphase=0.0):
 
 def cardiacfromimage(
     normdata_byslice,
-    mask_byslice,
+    estmask_byslice,
     numslices,
     timepoints,
     tr,
@@ -113,7 +113,7 @@ def cardiacfromimage(
 
     # make sure there is an appflips array
     if appflips_byslice is None:
-        appflips_byslice = mask_byslice * 0.0 + 1.0
+        appflips_byslice = estmask_byslice * 0.0 + 1.0
     else:
         if arteriesonly:
             appflips_byslice[np.where(appflips_byslice > 0.0)] = 0.0
@@ -127,30 +127,30 @@ def cardiacfromimage(
     if not verbose:
         print("Averaging slices...")
     if fliparteries:
-        thismask_byslice = appflips_byslice.astype(np.int64) * mask_byslice
+        thismask_byslice = appflips_byslice.astype(np.int64) * estmask_byslice
     else:
-        thismask_byslice = mask_byslice
+        thismask_byslice = estmask_byslice
     for theslice in range(numslices):
         if verbose:
             print("Averaging slice", theslice)
         if usemask:
-            validvoxels = np.where(np.abs(thismask_byslice[:, theslice]) > 0)[0]
+            validestvoxels = np.where(np.abs(thismask_byslice[:, theslice]) > 0)[0]
         else:
-            validvoxels = np.where(np.abs(thismask_byslice[:, theslice] >= 0))[0]
-        if len(validvoxels) > 0:
+            validestvoxels = np.where(np.abs(thismask_byslice[:, theslice] >= 0))[0]
+        if len(validestvoxels) > 0:
             if madnorm:
                 sliceavs[theslice, :], slicenorms[theslice] = tide_math.madnormalize(
                     np.mean(
-                        normdata_byslice[validvoxels, theslice, :]
-                        * thismask_byslice[validvoxels, theslice, np.newaxis],
+                        normdata_byslice[validestvoxels, theslice, :]
+                        * thismask_byslice[validestvoxels, theslice, np.newaxis],
                         axis=0,
                     ),
                     returnnormfac=True,
                 )
             else:
                 sliceavs[theslice, :] = np.mean(
-                    normdata_byslice[validvoxels, theslice, :]
-                    * thismask_byslice[validvoxels, theslice, np.newaxis],
+                    normdata_byslice[validsetvoxels, theslice, :]
+                    * thismask_byslice[validestvoxels, theslice, np.newaxis],
                     axis=0,
                 )
                 slicenorms[theslice] = 1.0
@@ -725,7 +725,7 @@ def readextmask(thefilename, nim_hdr, xsize, ysize, numslices, debug=False):
         raise ValueError("Dimensions of mask do not match the fmri data - exiting")
     if timepoints_extmask > 1:
         raise ValueError("Mask must have only 3 dimensions - exiting")
-    return extmask_data.reshape(xsize * ysize, numslices)
+    return extmask_data
 
 
 def checkcardmatch(reference, candidate, samplerate, refine=True, zeropadding=0, debug=False):
@@ -1005,18 +1005,23 @@ def happy_main(argparsingfunc):
     # read in projection mask if present otherwise fall back to intensity mask
     if args.projmaskname is not None:
         tide_util.logmem("before reading in projmask")
-        projmask_byslice = readextmask(
-            args.projmaskname, nim_hdr, xsize, ysize, numslices, args.debug
-        ) * np.float64(mask_byslice)
+        projmask = readextmask(args.projmaskname, nim_hdr, xsize, ysize, numslices, args.debug)
+        # * np.float64(mask_byslice)
+        projmask_byslice = projmask.reshape(xsize * ysize, numslices)
     else:
+        projmask = mask.reshape(xsize * ysize, numslices)
         projmask_byslice = mask_byslice
+
+    # output mask size
+    validprojvoxels = np.where(projmask.reshape(numspatiallocs) > 0)[0]
+    print(f"projmask has {len(validprojvoxels)} voxels above threshold.")
 
     # filter out motion regressors here
     if args.motionfilename is not None:
         timings.append(["Motion filtering start", time.time(), None, None])
         (motionregressors, motionregressorlabels, filtereddata,) = tide_glmpass.motionregress(
             args.motionfilename,
-            fmri_data[validvoxels, :],
+            fmri_data[validprojvoxels, :],
             tr,
             orthogonalize=args.orthogonalize,
             motstart=args.motskip,
@@ -1026,7 +1031,7 @@ def happy_main(argparsingfunc):
             deriv=args.motfilt_deriv,
             derivdelayed=args.motfilt_derivdelayed,
         )
-        fmri_data[validvoxels, :] = filtereddata[:, :]
+        fmri_data[validprojvoxels, :] = filtereddata[:, :]
         infodict["numorthogmotregressors"] = motionregressors.shape[0]
         timings.append(["Motion filtering end", time.time(), numspatiallocs, "voxels"])
         if args.orthogonalize:
@@ -1071,7 +1076,7 @@ def happy_main(argparsingfunc):
     normdata, demeandata, means = normalizevoxels(
         fmri_data,
         args.detrendorder,
-        validvoxels,
+        validprojvoxels,
         time,
         timings,
         showprogressbar=args.showprogressbar,
@@ -1084,9 +1089,9 @@ def happy_main(argparsingfunc):
         print(args.estmaskname)
     if args.estmaskname is not None:
         tide_util.logmem("before reading in estmask")
-        estmask_byslice = readextmask(
-            args.estmaskname, nim_hdr, xsize, ysize, numslices, args.debug
-        ) * np.float64(mask_byslice)
+        estmask = readextmask(args.estmaskname, nim_hdr, xsize, ysize, numslices, args.debug)
+        # * np.float64(mask_byslice)
+        estmask_byslice = estmask.reshape(xsize * ysize, numslices)
         print("using estmask from file", args.estmaskname)
         numpasses = 1
     else:
@@ -1098,6 +1103,9 @@ def happy_main(argparsingfunc):
         # add another pass to refine the waveform after getting the new appflips
         numpasses += 1
         print("Adding a pass to regenerate cardiac waveform using bettter appflips")
+
+    # output mask size
+    print(f"estmask has {len(np.where(estmask_byslice[:, :] > 0)[0])} voxels above threshold.")
 
     infodict["numpasses"] = numpasses
 
