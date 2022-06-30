@@ -15,5 +15,5 @@ docker build \
     --build-arg BUILD_DATE=${BUILD_DATE} \
     --build-arg VCS_REF=`git rev-parse HEAD` \
     . -t fredericklab/rapidtide:${VERSION} 
-docker push fredericklab/rapidtide:${VERSION}
-docker pull fredericklab/rapidtide:${VERSION}
+#docker push fredericklab/rapidtide:${VERSION}
+#docker pull fredericklab/rapidtide:${VERSION}
