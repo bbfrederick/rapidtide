@@ -46,9 +46,9 @@ RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca
 
 
 # Installing and setting up miniconda
-RUN curl -sSLO https://repo.anaconda.com/miniconda/Miniconda3-py39_4.11.0-Linux-x86_64.sh && \
-    bash Miniconda3-py39_4.11.0-Linux-x86_64.sh -b -p /usr/local/miniconda && \
-    rm Miniconda3-py39_4.11.0-Linux-x86_64.sh
+RUN curl -sSLO https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-Linux-x86_64.sh && \
+    bash Miniconda3-py39_4.12.0-Linux-x86_64.sh -b -p /usr/local/miniconda && \
+    rm Miniconda3-py39_4.12.0-Linux-x86_64.sh
 
 
 # Set CPATH for packages relying on compiled libs (e.g. indexed_gzip)
@@ -63,18 +63,17 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
 RUN conda config --add channels conda-forge
 
 # Install mamba so we can install packages before the heat death of the universe
-RUN conda install -y mamba
+RUN conda install -c conda-forge -y mamba
 RUN conda clean --all
 
 # install conda-build
 RUN conda install -y conda-build
 
 # Update to the newest version of conda
-RUN conda update -n base -c defaults conda conda-build
-
+#RUN conda update -n base -c defaults conda conda-build mamba
 
 # Installing precomputed python packages
-RUN mamba install -y "python=3.9" \
+RUN mamba install -y python \
                      pip \
                      scipy \
                      numpy \
