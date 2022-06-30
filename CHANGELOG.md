@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.2.7.1 (6/30/22)
+* (Dockerfile) Updated to a consistent python environment.
+
 ## Version 2.2.7 (6/29/22)
 * (rapidtide) Fixed GLM noise removal in CIFTI files.
 * (rapidtide) Initial support for linear rather than circular correlation.
