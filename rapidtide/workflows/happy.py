@@ -149,7 +149,7 @@ def cardiacfromimage(
                 )
             else:
                 sliceavs[theslice, :] = np.mean(
-                    normdata_byslice[validsetvoxels, theslice, :]
+                    normdata_byslice[validestvoxels, theslice, :]
                     * thismask_byslice[validestvoxels, theslice, np.newaxis],
                     axis=0,
                 )
