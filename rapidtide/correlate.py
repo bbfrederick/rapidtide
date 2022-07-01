@@ -808,6 +808,23 @@ def faststcorrelate(
     return corrtimes, times, stcorr
 
 
+def primefacs(thelen):
+    i = 2
+    factors = []
+    while i * i <= thelen:
+        if thelen % i:
+            i += 1
+        else:
+            factors.append(i)
+            thelen //= i
+    factors.append(thelen)
+    return factors
+
+
+def optfftlen(thelen):
+    return thelen
+
+
 def fastcorrelate(
     input1,
     input2,
@@ -842,13 +859,15 @@ def fastcorrelate(
     outlen = len1 + len2 - 1
     if zeropadding < 0:
         # autopad
-        newlen1 = len1 * 2
-        newlen2 = len2 * 2
+        newlen1 = optfftlen(len1 * 2)
+        newlen2 = optfftlen(len2 * 2)
+        zp1 = newlen1 - len1
+        zp2 = newlen2 - len2
         paddedinput1 = np.zeros((newlen1), dtype=float)
         paddedinput2 = np.zeros((newlen2), dtype=float)
         paddedinput1[0:len1] = input1
         paddedinput2[0:len2] = input2
-        startpt = (len1 + len2) // 2
+        startpt = (zp1 + zp2) // 2
     elif zeropadding > 0:
         # explicit pad
         newlen1 = len1 + zeropadding
@@ -858,7 +877,7 @@ def fastcorrelate(
         # paddedinput1[0:len1] = input1
         paddedinput1[-len1:] = input1
         paddedinput2[0:len2] = input2
-        startpt = zeropaddings
+        startpt = zeropadding
     else:
         # no pad
         paddedinput1 = input1

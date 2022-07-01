@@ -55,6 +55,7 @@ DEFAULT_WINDOW_TYPE = "hamming"
 DEFAULT_GLOBALMASK_METHOD = "mean"
 DEFAULT_GLOBALSIGNAL_METHOD = "sum"
 DEFAULT_CORRWEIGHTING = "None"
+DEFAULT_CORRTYPE = "circular"
 DEFAULT_SIMILARITYMETRIC = "correlation"
 DEFAULT_PEAKFIT_TYPE = "gauss"
 DEFAULT_REFINE_PRENORM = "mean"
@@ -537,6 +538,15 @@ def _get_parser():
         ),
         default=DEFAULT_CORRWEIGHTING,
     )
+    corr.add_argument(
+        "--corrtype",
+        dest="corrtype",
+        action="store",
+        type=str,
+        choices=["linear", "circular"],
+        help=("Cross-correlation type (linear or circular). " f'Default is "{DEFAULT_CORRTYPE}".'),
+        default=DEFAULT_CORRTYPE,
+    )
 
     mask_group = corr.add_mutually_exclusive_group()
     mask_group.add_argument(
@@ -563,6 +573,7 @@ def _get_parser():
         ),
         default=None,
     )
+
     corr.add_argument(
         "--similaritymetric",
         dest="similaritymetric",
@@ -1308,6 +1319,11 @@ def process_args(inputargs=None):
     # significance estimation
     args["sighistlen"] = 1000
     args["dosighistfit"] = True
+    if args["corrtype"] == "linear":
+        args["corrpadding"] = -1
+        pf.setifnotset(args, "windowfunc", "None")
+    else:
+        args["corrpadding"] = 0
 
     # output options
     args["savedespecklemasks"] = True

@@ -1099,7 +1099,7 @@ def rapidtide_main(argparsingfunc):
         detrendorder=optiondict["detrendorder"],
         windowfunc=optiondict["windowfunc"],
         corrweighting=optiondict["corrweighting"],
-        corrpadding=optiondict["zeropadding"],
+        corrpadding=optiondict["corrpadding"],
         debug=optiondict["debug"],
     )
     theCorrelator.setreftc(
