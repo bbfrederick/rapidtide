@@ -115,6 +115,7 @@ script_list = [
     "rapidtide/scripts/spatialmi",
     "rapidtide/scripts/spectrogram",
     "rapidtide/scripts/synthASL",
+    "rapidtide/scripts/tcfrom2col",
     "rapidtide/scripts/tcfrom3col",
     "rapidtide/scripts/temporaldecomp",
     "rapidtide/scripts/threeD",
