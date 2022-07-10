@@ -518,6 +518,35 @@ def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
     return outputvector
 
 
+def maketcfrom2col(inputdata, timeaxis, outputvector, debug=False):
+    theshape = np.shape(inputdata)
+    inputpos = 0
+    currentval = 0
+    currenttarget = inputdata[0, inputpos]
+    for i in range(len(outputvector)):
+        if debug:
+            print(inputpos, currenttarget)
+        if i >= currenttarget:
+            if debug:
+                print("i exceeds currenttarget")
+            if inputpos < theshape[1]:
+                inputpos += 1
+                currenttarget = inputdata[0, inputpos]
+            currentval = inputdata[1, inputpos]
+            if debug:
+                print(
+                    f"{i}: currrentval is now {currentval}, currenttarget is now {currenttarget}"
+                )
+        outputvector[i] = currentval
+    if debug:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title("temporal output vector")
+        plt.plot(timeaxis, outputvector)
+        plt.show()
+    return outputvector
+
+
 # --------------------------- simulation functions ----------------------------------------------
 def makeslicetimes(numslices, sliceordertype, tr=1.0, multibandfac=1, debug=False):
     outlist = np.zeros((numslices), dtype=np.float)

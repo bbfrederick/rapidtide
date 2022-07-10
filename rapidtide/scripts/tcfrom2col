@@ -48,17 +48,9 @@ def main():
 
     # now make the vector
     inputdata = tide_io.readvecs(args.infilename)
-    inputpos = 0
-    currentpos = 0
-    currentval = 0
     timeaxis = np.arange(0.0, args.numpoints * args.timestep, args.timestep)
     outputdata = 0.0 * timeaxis
-    for i in range(numpoints):
-        if i >= inputpos:
-            if inputpos < inputdata.shape(1):
-                inputpos += 1
-            currentval = inputdata[inputpos, 1]
-        outputdata[i] = currentval
+    outputdata = tide_util.maketcfrom2col(inputdata, timeaxis, outputdata, debug=args.debug)
     tide_io.writenpvecs(outputdata, args.outfilename)
 
 
