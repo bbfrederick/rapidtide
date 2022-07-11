@@ -520,24 +520,16 @@ def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
 
 def maketcfrom2col(inputdata, timeaxis, outputvector, debug=False):
     theshape = np.shape(inputdata)
-    inputpos = 0
-    currentval = 0
-    currenttarget = inputdata[0, inputpos]
-    for i in range(len(outputvector)):
-        if debug:
-            print(inputpos, currenttarget)
-        if i >= currenttarget:
-            if debug:
-                print("i exceeds currenttarget")
-            if inputpos < theshape[1]:
-                inputpos += 1
-                currenttarget = inputdata[0, inputpos]
-            currentval = inputdata[1, inputpos]
-            if debug:
-                print(
-                    f"{i}: currrentval is now {currentval}, currenttarget is now {currenttarget}"
-                )
-        outputvector[i] = currentval
+    rangestart = int(inputdata[0, 0])
+    for i in range(1, theshape[1]):
+        if rangestart < len(outputvector) - 1:
+            rangeend = int(np.min([inputdata[0, i], len(outputvector)]))
+            if rangeend > rangestart:
+                theval = inputdata[1, i - 1]
+                if debug:
+                    print(f"{i}: setting outputvector[{rangestart}:{rangeend}] to {theval}")
+                outputvector[rangestart:rangeend] = theval
+                rangestart = rangeend
     if debug:
         fig = plt.figure()
         ax = fig.add_subplot(111)
