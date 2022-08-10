@@ -479,3 +479,42 @@ def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):
         plt.plot(detrended)
         plt.show()
     return detrended + thefittc
+
+
+# found here: https://datascience.stackexchange.com/questions/75733/pca-for-complex-valued-data
+class ComplexPCA:
+    def __init__(self, n_components):
+        self.n_components = n_components
+        self.u = self.s = self.components_ = None
+        self.mean_ = None
+
+    @property
+    def explained_variance_ratio_(self):
+        return self.s
+
+    def fit(self, matrix, use_gpu=False):
+        self.mean_ = matrix.mean(axis=0)
+        if use_gpu:
+            import tensorflow as tf  # torch doesn't handle complex values.
+
+            tensor = tf.convert_to_tensor(matrix)
+            u, s, vh = tf.linalg.svd(
+                tensor, full_matrices=False
+            )  # full=False ==> num_pc = min(N, M)
+            # It would be faster if the SVD was truncated to only n_components instead of min(M, N)
+        else:
+            _, self.s, vh = np.linalg.svd(
+                matrix, full_matrices=False
+            )  # full=False ==> num_pc = min(N, M)
+            # It would be faster if the SVD was truncated to only n_components instead of min(M, N)
+        self.components_ = vh  # already conjugated.
+        # Leave those components as rows of matrix so that it is compatible with Sklearn PCA.
+
+    def transform(self, matrix):
+        data = matrix - self.mean_
+        result = data @ self.components_.T
+        return result
+
+    def inverse_transform(self, matrix):
+        result = matrix @ np.conj(self.components_)
+        return self.mean_ + result
