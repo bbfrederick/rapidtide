@@ -1784,8 +1784,6 @@ def happy_main(argparsingfunc):
                     cardiacwaveform * (1.0 - thebadcardpts),
                     slicesamplerate,
                     peakfreq,
-                    ncomps=args.hilbertcomponents,
-                    debug=True,
                 )
             )
         else:
