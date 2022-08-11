@@ -203,13 +203,27 @@ def savgolsmooth(data, smoothlen=101, polyorder=3):
     return savgol_filter(data, smoothlen, polyorder)
 
 
-def getfundamental(inputdata, Fs, fundfreq):
-    arb_lower = 0.71 * fundfreq
-    arb_upper = 1.4 * fundfreq
-    arb_lowerstop = 0.9 * arb_lower
-    arb_upperstop = 1.1 * arb_upper
-    thefundfilter = tide_filt.NoncausalFilter(filtertype="arb")
-    thefundfilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+def getperiodic(inputdata, Fs, fundfreq, ncomps=1, width=0.4, debug=False):
+    outputdata = inputdata * 0.0
+    lowerdist = fundfreq - fundfreq / (1.0 + width)
+    upperdist = fundfreq * width
+    if debug:
+        print(f"GETPERIODIC: starting with fundfreq={fundfreq}, ncomps={ncomps}, Fs={Fs}")
+    while ncomps * fundfreq >= Fs / 2.0:
+        ncomps -= 1
+        print(f"\tncomps reduced to {ncomps}")
+    for component in range(ncomps):
+        arb_lower = (component + 1) * fundfreq - lowerdist
+        arb_upper = (component + 1) * fundfreq + upperdist
+        arb_lowerstop = 0.9 * arb_lower
+        arb_upperstop = 1.1 * arb_upper
+        if debug:
+            print(
+                f"GETPERIODIC: component {component} - arb parameters:{arb_lowerstop}, {arb_lower}, {arb_upper}, {arb_upperstop}"
+            )
+        thefundfilter = tide_filt.NoncausalFilter(filtertype="arb")
+        thefundfilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+        outputdata += thefundfilter.apply(Fs, inputdata)
     return thefundfilter.apply(Fs, inputdata)
 
 
@@ -1766,11 +1780,23 @@ def happy_main(argparsingfunc):
             infodict["forcedhr"] = peakfreq
         if args.cardiacfilename is None:
             filthiresfund = tide_math.madnormalize(
-                getfundamental(cardiacwaveform * (1.0 - thebadcardpts), slicesamplerate, peakfreq)
+                getperiodic(
+                    cardiacwaveform * (1.0 - thebadcardpts),
+                    slicesamplerate,
+                    peakfreq,
+                    ncomps=args.hilbertcomponents,
+                    debug=True,
+                )
             )
         else:
             filthiresfund = tide_math.madnormalize(
-                getfundamental(cardiacwaveform, slicesamplerate, peakfreq)
+                getperiodic(
+                    cardiacwaveform,
+                    slicesamplerate,
+                    peakfreq,
+                    ncomps=args.hilbertcomponents,
+                    debug=True,
+                )
             )
         if args.outputlevel > 1:
             if thispass == numpasses - 1:
@@ -1790,7 +1816,9 @@ def happy_main(argparsingfunc):
 
         # now calculate the phase waveform
         tide_util.logmem("before analytic phase analysis")
-        instantaneous_cardiacphase, amplitude_envelope = tide_fit.phaseanalysis(filthiresfund)
+        instantaneous_cardiacphase, amplitude_envelope, analytic_signal = tide_fit.phaseanalysis(
+            filthiresfund
+        )
         if args.outputlevel > 0:
             if thispass == numpasses - 1:
                 if args.bidsoutput:
@@ -1799,6 +1827,14 @@ def happy_main(argparsingfunc):
                         amplitude_envelope,
                         slicesamplerate,
                         columns=["envelope"],
+                        append=True,
+                        debug=args.debug,
+                    )
+                    tide_io.writebidstsv(
+                        outputroot + "_desc-slicerescardfromfmri_timeseries",
+                        analytic_signal.real,
+                        slicesamplerate,
+                        columns=["analytic_real"],
                         append=True,
                         debug=args.debug,
                     )

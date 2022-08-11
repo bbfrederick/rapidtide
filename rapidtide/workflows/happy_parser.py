@@ -258,6 +258,15 @@ def _get_parser():
         default=1000.0,
     )
     cardiac_est_tuning.add_argument(
+        "--hilbertcomponents",
+        dest="hilbertcomponents",
+        action="store",
+        metavar="NCOMPS",
+        type=lambda x: pf.is_int(parser, x),
+        help="Retain NCOMPS components of the cardiac frequency signal to Hilbert transform (default is 1). ",
+        default=1,
+    )
+    cardiac_est_tuning.add_argument(
         "--envcutoff",
         dest="envcutoff",
         action="store",
