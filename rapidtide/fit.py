@@ -1817,4 +1817,4 @@ def phaseanalysis(firstharmonic, displayplots=False):
         plt.show()
         plt.savefig("phaseanalysistest.jpg")
     instantaneous_phase = np.unwrap(instantaneous_phase)
-    return instantaneous_phase, amplitude_envelope
+    return instantaneous_phase, amplitude_envelope, analytic_signal
