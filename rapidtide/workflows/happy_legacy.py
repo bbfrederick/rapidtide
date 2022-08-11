@@ -2265,7 +2265,9 @@ def happy_main(thearguments):
 
         # now calculate the phase waveform
         tide_util.logmem("before analytic phase analysis", file=memfile)
-        instantaneous_phase, amplitude_envelope = tide_fit.phaseanalysis(filthiresfund)
+        instantaneous_phase, amplitude_envelope, analytic_signal = tide_fit.phaseanalysis(
+            filthiresfund
+        )
         if outputlevel > 0:
             if thispass == numpasses - 1:
                 tide_io.writevec(amplitude_envelope, outputroot + "_ampenv_sliceres.txt")
