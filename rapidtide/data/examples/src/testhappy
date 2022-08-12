@@ -4,9 +4,28 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy \
+    ../dst/happy_1comp \
     --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
     --mklthreads 8 \
+    --hilbertcomponents 1 \
+    --model model_revised
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happy_2comp \
+    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
+    --mklthreads 8 \
+    --hilbertcomponents 2 \
+    --model model_revised
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happy_3comp \
+    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
+    --mklthreads 8 \
+    --hilbertcomponents 3 \
     --model model_revised
 
 #happy_legacy \
