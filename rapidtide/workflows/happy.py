@@ -212,6 +212,7 @@ def getperiodic(inputdata, Fs, fundfreq, ncomps=1, width=0.4, debug=False):
     while ncomps * fundfreq >= Fs / 2.0:
         ncomps -= 1
         print(f"\tncomps reduced to {ncomps}")
+    thefundfilter = tide_filt.NoncausalFilter(filtertype="arb")
     for component in range(ncomps):
         arb_lower = (component + 1) * fundfreq - lowerdist
         arb_upper = (component + 1) * fundfreq + upperdist
@@ -221,10 +222,9 @@ def getperiodic(inputdata, Fs, fundfreq, ncomps=1, width=0.4, debug=False):
             print(
                 f"GETPERIODIC: component {component} - arb parameters:{arb_lowerstop}, {arb_lower}, {arb_upper}, {arb_upperstop}"
             )
-        thefundfilter = tide_filt.NoncausalFilter(filtertype="arb")
         thefundfilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
-        outputdata += thefundfilter.apply(Fs, inputdata)
-    return thefundfilter.apply(Fs, inputdata)
+        outputdata += 1.0 * thefundfilter.apply(Fs, inputdata)
+    return outputdata
 
 
 def getcardcoeffs(
@@ -1784,6 +1784,7 @@ def happy_main(argparsingfunc):
                     cardiacwaveform * (1.0 - thebadcardpts),
                     slicesamplerate,
                     peakfreq,
+                    ncomps=args.hilbertcomponents,
                 )
             )
         else:
@@ -1792,6 +1793,7 @@ def happy_main(argparsingfunc):
                     cardiacwaveform,
                     slicesamplerate,
                     peakfreq,
+                    ncomps=args.hilbertcomponents,
                 )
             )
         if args.outputlevel > 1:
