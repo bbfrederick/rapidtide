@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+
+import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+
+def getperiodic(inputdata, Fs, fundfreq, ncomps=1, width=0.4, debug=False):
+    outputdata = inputdata * 0.0
+    lowerdist = fundfreq - fundfreq / (1.0 + width)
+    upperdist = fundfreq * width
+    if debug:
+        print(f"GETPERIODIC: starting with fundfreq={fundfreq}, ncomps={ncomps}, Fs={Fs}")
+    while ncomps * fundfreq >= Fs / 2.0:
+        ncomps -= 1
+        print(f"\tncomps reduced to {ncomps}")
+    thefundfilter = tide_filt.NoncausalFilter(filtertype="arb")
+    for component in range(ncomps):
+        arb_lower = (component + 1) * fundfreq - lowerdist
+        arb_upper = (component + 1) * fundfreq + upperdist
+        arb_lowerstop = 0.9 * arb_lower
+        arb_upperstop = 1.1 * arb_upper
+        if debug:
+            print(
+                f"GETPERIODIC: component {component} - arb parameters:{arb_lowerstop}, {arb_lower}, {arb_upper}, {arb_upperstop}"
+            )
+        thefundfilter.setfreqs(arb_lowerstop, arb_lower, arb_upper, arb_upperstop)
+        outputdata += 1.0 * thefundfilter.apply(Fs, inputdata)
+    return outputdata
+
+debug = True
+waveformfile = "happystdres_bids.tsv:cardiacfromfmri_25.0Hz"
+
+Fs, filestart, dummy, cardiacwaveform, dummy, dummy = tide_io.readvectorsfromtextfile(
+        waveformfile, onecol=True, debug=debug
+    )
+
+outputroot = "../dst/junk"
+tide_io.writebidstsv(
+    outputroot + "_desc-filtertest_timeseries",
+    cardiacwaveform,
+    Fs,
+    columns=["original"],
+    append=False,
+    debug=debug,
+)
+for ncomps in range(1, 4):
+    filthiresfund = tide_math.madnormalize(
+        getperiodic(
+            cardiacwaveform,
+            Fs,
+            0.9,
+            ncomps=ncomps,
+        )
+    )
+    tide_io.writebidstsv(
+        outputroot + "_desc-filtertest_timeseries",
+        filthiresfund,
+        Fs,
+        columns=[f"{ncomps}_comps"],
+        append=True,
+        debug=debug,
+    )
