@@ -880,17 +880,14 @@ def dobptransfuncfilt(
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, cyclic=cyclic)
     inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = (
-        getlptransfunc(
-            Fs,
-            padinputdata,
-            upperpass=upperpass,
-            upperstop=upperstop,
-            type=type,
-            debug=False,
-        )
-        * gethptransfunc(Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type)
-    )
+    transferfunc = getlptransfunc(
+        Fs,
+        padinputdata,
+        upperpass=upperpass,
+        upperstop=upperstop,
+        type=type,
+        debug=False,
+    ) * gethptransfunc(Fs, padinputdata, lowerstop=lowerstop, lowerpass=lowerpass, type=type)
     if debug:
         freqaxis = (
             np.linspace(0.0, 1.0, num=np.shape(padinputdata)[0], endpoint=False, dtype="float64")
@@ -1094,7 +1091,7 @@ def wiener_deconvolution(signal, kernel, lambd):
     )  # zero pad the kernel to same length
     H = fftpack.fft(kernel)
     deconvolved = np.roll(
-        np.real(fftpack.ifft(fftpack.fft(signal) * np.conj(H) / (H * np.conj(H) + lambd ** 2))),
+        np.real(fftpack.ifft(fftpack.fft(signal) * np.conj(H) / (H * np.conj(H) + lambd**2))),
         int(len(signal) // 2),
     )
     return deconvolved
@@ -1872,7 +1869,7 @@ class NoncausalFilter:
                 debug=self.debug,
             )
         else:
-            print("bad filter type")
+            print(f"bad filter type: {self.filtertype}")
             sys.exit()
 
 
