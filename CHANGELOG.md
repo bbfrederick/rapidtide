@@ -1,5 +1,14 @@
 # Release history
 
+## Version 2.2.8 (8/29/22)
+* (happy) Some under the hood tweaks to phase analysis to prep for multidimensional phase projection.
+* (rapidtide) Exploring the use of complex PCA.
+* (util) Added tcfrom2col.
+* (rapidtide) Added explicit selection of linear and circular correlations.
+* (package) Updated python environment for Docker.
+* (package) Updated versioneer.
+* (package) Changed some config files to try to fix documentation builds.
+
 ## Version 2.2.7.1 (6/30/22)
 * (Dockerfile) Updated to a consistent python environment.
 
