@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.2.8.1 (8/29/22)
+* (package) Fixed versioneer installation.
+
 ## Version 2.2.8 (8/29/22)
 * (happy) Some under the hood tweaks to phase analysis to prep for multidimensional phase projection.
 * (rapidtide) Exploring the use of complex PCA.
