@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools==40.8", "wheel"]
+requires = ["setuptools", "wheel"]
 
 [tool.isort]
 profile = "black"
