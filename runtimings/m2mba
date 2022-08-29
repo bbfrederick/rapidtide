@@ -1,0 +1,131 @@
+aarch64 python 3.9
+rapidtide \
+	--spatialfilt 2 \
+        --nprocs -1 \
+        --passes 3 \
+        --similaritymetric hybrid \
+        --norefinedespeckled \
+        --filterband lfo \
+        --nolimitoutput \
+        --corrtype linear \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_pcarefine
+
+ Total (s)	 Diff. (s)	Description
+       0.0	       0.0	Start
+      0.00	      0.00	Argument parsing done
+      0.16	      0.16	Finish reading fmrifile
+      0.44	      0.27	End 3D smoothing
+      2.30	      1.86	Start moving fmri_data to shared memory
+      2.96	      0.66	End moving fmri_data to shared memory
+      3.14	      0.18	Start of reference prep
+      3.16	      0.02	End of reference prep
+      3.41	      0.24	Significance estimation start, pass 1
+      4.89	      1.48	Significance estimation end, pass 1 (10000 repetitions @ 6738.54 repetitions/s)
+      4.89	      0.00	MI enhanced correlation calculation start, pass 1
+      7.33	      2.44	MI enhanced correlation calculation end, pass 1 (26253 voxels @ 10777.09 voxels/s)
+      7.33	      0.00	Peak prefit calculation start, pass 1
+     12.44	      5.11	Peak prefit end, pass 1 (26253 voxels @ 5135.56 voxels/s)
+     12.45	      0.01	Time lag estimation start, pass 1
+     14.19	      1.74	Time lag estimation end, pass 1 (26132 voxels @ 15053.00 voxels/s)
+     14.19	      0.00	Correlation despeckle start, pass 1
+     17.90	      3.72	Correlation despeckle end, pass 1 (7981 voxels @ 2147.16 voxels/s)
+     17.90	      0.00	Regressor refinement start, pass 1
+     19.68	      1.78	Regressor refinement end, pass 1 (14624 voxels @ 8220.35 voxels/s)
+     19.70	      0.01	Significance estimation start, pass 2
+     21.24	      1.54	Significance estimation end, pass 2 (10000 repetitions @ 6485.08 repetitions/s)
+     21.24	      0.00	MI enhanced correlation calculation start, pass 2
+     23.88	      2.64	MI enhanced correlation calculation end, pass 2 (26253 voxels @ 9940.55 voxels/s)
+     23.88	      0.00	Peak prefit calculation start, pass 2
+     29.46	      5.58	Peak prefit end, pass 2 (26253 voxels @ 4704.84 voxels/s)
+     29.47	      0.01	Time lag estimation start, pass 2
+     31.38	      1.91	Time lag estimation end, pass 2 (26111 voxels @ 13677.84 voxels/s)
+     31.38	      0.00	Correlation despeckle start, pass 2
+     35.46	      4.08	Correlation despeckle end, pass 2 (8056 voxels @ 1976.45 voxels/s)
+     35.46	      0.00	Regressor refinement start, pass 2
+     42.87	      7.41	Regressor refinement end, pass 2 (14157 voxels @ 1910.78 voxels/s)
+     42.88	      0.01	Significance estimation start, pass 3
+     44.51	      1.63	Significance estimation end, pass 3 (10000 repetitions @ 6142.51 repetitions/s)
+     44.51	      0.00	MI enhanced correlation calculation start, pass 3
+     47.68	      3.17	MI enhanced correlation calculation end, pass 3 (26253 voxels @ 8276.48 voxels/s)
+     47.68	      0.00	Peak prefit calculation start, pass 3
+     53.66	      5.98	Peak prefit end, pass 3 (26253 voxels @ 4390.87 voxels/s)
+     53.67	      0.01	Time lag estimation start, pass 3
+     55.48	      1.81	Time lag estimation end, pass 3 (26106 voxels @ 14415.24 voxels/s)
+     55.48	      0.00	Correlation despeckle start, pass 3
+     60.26	      4.78	Correlation despeckle end, pass 3 (8392 voxels @ 1756.75 voxels/s)
+     60.26	      0.00	GLM filtering start
+     60.67	      0.41	Start moving fmri_data to shared memory
+     61.29	      0.62	End moving fmri_data to shared memory
+     62.67	      1.38	GLM filtering end (26253 voxels @ 19037.71 voxels/s)
+     62.68	      0.01	Start saving histograms
+     62.69	      0.01	Finished saving histograms
+     62.69	      0.01	Start saving maps
+     67.23	      4.54	Finished saving maps
+     67.23	      0.00	Done
+
+rapidtide \
+	--spatialfilt 2 \
+        --nprocs -1 \
+        --passes 3 \
+        --similaritymetric hybrid \
+        --norefinedespeckled \
+        --filterband lfo \
+        --nolimitoutput \
+        --corrtype linear \
+        --refinetype unweighted_average \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_unweightedavgrefine
+
+ Total (s)	 Diff. (s)	Description
+       0.0	       0.0	Start
+      0.00	      0.00	Argument parsing done
+      0.17	      0.17	Finish reading fmrifile
+      0.44	      0.28	End 3D smoothing
+      2.36	      1.92	Start moving fmri_data to shared memory
+      3.04	      0.68	End moving fmri_data to shared memory
+      3.22	      0.18	Start of reference prep
+      3.24	      0.02	End of reference prep
+      3.48	      0.24	Significance estimation start, pass 1
+      5.02	      1.54	Significance estimation end, pass 1 (10000 repetitions @ 6497.73 repetitions/s)
+      5.02	      0.00	MI enhanced correlation calculation start, pass 1
+      8.09	      3.07	MI enhanced correlation calculation end, pass 1 (26253 voxels @ 8554.25 voxels/s)
+      8.09	      0.00	Peak prefit calculation start, pass 1
+     13.56	      5.47	Peak prefit end, pass 1 (26253 voxels @ 4795.94 voxels/s)
+     13.58	      0.01	Time lag estimation start, pass 1
+     15.18	      1.60	Time lag estimation end, pass 1 (26132 voxels @ 16301.93 voxels/s)
+     15.18	      0.00	Correlation despeckle start, pass 1
+     18.93	      3.75	Correlation despeckle end, pass 1 (7981 voxels @ 2127.13 voxels/s)
+     18.93	      0.00	Regressor refinement start, pass 1
+     20.16	      1.22	Regressor refinement end, pass 1 (14670 voxels @ 11985.29 voxels/s)
+     20.16	      0.01	Significance estimation start, pass 2
+     21.52	      1.36	Significance estimation end, pass 2 (10000 repetitions @ 7347.54 repetitions/s)
+     21.52	      0.00	MI enhanced correlation calculation start, pass 2
+     24.26	      2.73	MI enhanced correlation calculation end, pass 2 (26253 voxels @ 9609.44 voxels/s)
+     24.26	      0.00	Peak prefit calculation start, pass 2
+     29.95	      5.69	Peak prefit end, pass 2 (26253 voxels @ 4612.26 voxels/s)
+     29.96	      0.01	Time lag estimation start, pass 2
+     31.68	      1.71	Time lag estimation end, pass 2 (26111 voxels @ 15242.85 voxels/s)
+     31.68	      0.00	Correlation despeckle start, pass 2
+     35.85	      4.17	Correlation despeckle end, pass 2 (8056 voxels @ 1930.97 voxels/s)
+     35.85	      0.00	Regressor refinement start, pass 2
+     37.09	      1.25	Regressor refinement end, pass 2 (14260 voxels @ 11444.62 voxels/s)
+     37.11	      0.01	Significance estimation start, pass 3
+     38.57	      1.47	Significance estimation end, pass 3 (10000 repetitions @ 6821.28 repetitions/s)
+     38.57	      0.00	MI enhanced correlation calculation start, pass 3
+     41.35	      2.78	MI enhanced correlation calculation end, pass 3 (26253 voxels @ 9440.13 voxels/s)
+     41.35	      0.00	Peak prefit calculation start, pass 3
+     47.13	      5.78	Peak prefit end, pass 3 (26253 voxels @ 4542.04 voxels/s)
+     47.15	      0.01	Time lag estimation start, pass 3
+     48.85	      1.71	Time lag estimation end, pass 3 (26109 voxels @ 15313.20 voxels/s)
+     48.85	      0.00	Correlation despeckle start, pass 3
+     53.54	      4.68	Correlation despeckle end, pass 3 (8361 voxels @ 1785.78 voxels/s)
+     53.54	      0.00	GLM filtering start
+     53.95	      0.41	Start moving fmri_data to shared memory
+     54.58	      0.63	End moving fmri_data to shared memory
+     55.78	      1.20	GLM filtering end (26253 voxels @ 21877.50 voxels/s)
+     55.78	      0.00	Start saving histograms
+     55.78	      0.01	Finished saving histograms
+     55.79	      0.01	Start saving maps
+     60.18	      4.39	Finished saving maps
+     60.18	      0.00	Done
