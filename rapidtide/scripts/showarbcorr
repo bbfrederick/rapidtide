@@ -65,6 +65,13 @@ def _get_parser():
 
     # add optional arguments
     parser.add_argument(
+        "--nodisplay",
+        dest="display",
+        action="store_false",
+        help=("Do not plot the data (for noninteractive use)"),
+        default=True,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -159,6 +166,15 @@ def _get_parser():
         default=None,
     )
     output.add_argument(
+        "--graphfile",
+        dest="graphfile",
+        action="store",
+        type=str,
+        metavar="FILE",
+        help=("Output an image of the correlation function to FILE. "),
+        default=None,
+    )
+    output.add_argument(
         "--summarymode",
         dest="summarymode",
         action="store_true",
@@ -224,6 +240,12 @@ def main():
     args, theprefilter = pf.postprocessfilteropts(args)
     args = pf.postprocesssearchrangeopts(args)
     args = pf.postprocesstimerangeopts(args)
+
+    if args.display:
+        import matplotlib as mpl
+
+        mpl.use("TkAgg")
+        import matplotlib.pyplot as plt
 
     Fs1, starttime1, dummy, inputdata1, dummy, dummy = tide_io.readvectorsfromtextfile(
         args.infilename1
@@ -306,6 +328,18 @@ def main():
         debug=args.debug,
     )
 
+    if args.display:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(
+            xcorr_x,
+            thexcorr,
+        )
+        if args.outputfile is not None:
+            plt.savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)
+        else:
+            plt.show()
+
     # do the correlation
     print("Correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
     print("lagmin, lagmax", args.lagmin, args.lagmax)
@@ -348,7 +382,7 @@ def main():
         peakend,
     ) = thexsimfuncfitter.fit(thexcorr)
     if failreason > 0:
-        print("showxcorrx: FIT FAILED with reason:")
+        print("showarbcorr: FIT FAILED with reason:")
         print(thexsimfuncfitter.diagnosefail(np.uint32(failreason)))
     if args.debug:
         print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
