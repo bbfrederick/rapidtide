@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.2.9 (9/21/22)
+* (showarbcorr) Now show the correlation function, fixed a typo
+* (reference) Added slicetimes files for some large datasets
+
 ## Version 2.2.8.1 (8/29/22)
 * (package) Fixed versioneer installation.
 
