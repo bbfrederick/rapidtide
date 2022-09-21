@@ -228,6 +228,7 @@ setup(
             "reference/ATT*",
             "reference/HCP1200*",
             "reference/MNI152*",
+            "reference/slicetimes/*",
         ],
         "testdata": [
             "tests/testdata/*.txt",

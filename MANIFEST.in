@@ -8,6 +8,7 @@ recursive-include rapidtide/data/reference ASPECTS*
 recursive-include rapidtide/data/reference ATT*
 recursive-include rapidtide/data/reference HCP1200*
 recursive-include rapidtide/data/reference MNI152*
+recursive-include rapidtide/data/reference/slicetimes *
 recursive-include rapidtide/data/models *
 recursive-include rapidtide/data/examples/src \
     sub-RAPIDTIDETEST* \
