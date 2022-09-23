@@ -75,6 +75,7 @@ def main():
         "threeD",
         "tidepool",
         "xyzzy",
+        "xyzzz",
         "info",
     ]
 
@@ -86,6 +87,9 @@ def main():
         elif thecommand[0] == "xyzzy":
             print("command xyzzy given, launching shell...")
             subprocess.call("/bin/bash")
+        elif thecommand[0] == "xyzzz":
+            print("command xyzzz given, executing copy...")
+            subprocess.call("/bin/cp" + sys.argv[2:] )
         elif thecommand[0] == "info":
             print(f"isdocker: {isdocker}")
             print(f"execdir: {execdir}")
