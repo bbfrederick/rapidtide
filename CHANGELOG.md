@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.3.0 (9/23/22)
+* (rapidtide) Fixed option setting for nirs mode and did some tests on real data.
+* (Dockerfile) Rolled back the version of pyfftw in the container to avoid the annoying (and erroneous) warnings about the plan file.
+* (package) Made some changes to the reference files and dispatcher to help with upcoming AWS deployment.
+
 ## Version 2.2.9 (9/21/22)
 * (showarbcorr) Now show the correlation function, fixed a typo
 * (reference) Added slicetimes files for some large datasets
