@@ -1498,7 +1498,7 @@ def process_args(inputargs=None):
     if args["nirs"]:
         LGR.warning('Using "nirs" macro. Overriding any affected arguments.')
         args["nothresh"] = True
-        args["preservefiltering"] = False
+        pf.setifnotset(args, "preservefiltering", False)
         args["refineprenorm"] = "var"
         args["ampthresh"] = 0.7
         args["ampthreshfromsig"] = False
