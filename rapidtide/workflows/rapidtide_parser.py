@@ -167,7 +167,7 @@ def _get_parser():
         action="store_true",
         help=(
             "This is a NIRS analysis - this is a macro that "
-            "sets --nothresh, --preservefiltering, "
+            "sets --nothresh,"
             "--refineprenorm=var, --ampthresh=0.7, and "
             "--lagminthresh=0.1. "
         ),
@@ -1497,8 +1497,8 @@ def process_args(inputargs=None):
 
     if args["nirs"]:
         LGR.warning('Using "nirs" macro. Overriding any affected arguments.')
-        args["nothresh"] = False
-        args["preservefiltering"] = True
+        args["nothresh"] = True
+        args["preservefiltering"] = False
         args["refineprenorm"] = "var"
         args["ampthresh"] = 0.7
         args["ampthreshfromsig"] = False
