@@ -1,5 +1,12 @@
 # Release history
 
+## Version 2.3.1 (9/27/22)
+* (Dockerfile) Some tweaks to package versions to try to eliminate error messages.
+* (Dockerfile) Add some AWS libraries to facilitate using S3 volumes.
+* (Dockerfile) Moved timezone data loading earlier in the file to accomodate the new libraries.
+* (reference) Added HCP_negmask_2mm to improve map display.
+* (github) Updated codeql actions to v2.
+
 ## Version 2.3.0 (9/23/22)
 * (rapidtide) Fixed option setting for nirs mode and did some tests on real data.
 * (Dockerfile) Rolled back the version of pyfftw in the container to avoid the annoying (and erroneous) warnings about the plan file.
