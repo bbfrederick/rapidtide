@@ -74,7 +74,6 @@ RUN mamba install -y conda-build
 
 # Update to the newest version of conda
 #RUN conda update -n base -c defaults conda conda-build mamba
-RUN mamba update requests
 
 # Installing precomputed python packages
 RUN mamba install -y python \
@@ -99,6 +98,7 @@ RUN mamba install -y python \
                      numba; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
     chmod +x /usr/local/miniconda/bin/*; sync && \
+    mamba update requests; sync && \
     conda-build purge-all; sync && \
     conda clean -tipsy && sync
 RUN df -h
