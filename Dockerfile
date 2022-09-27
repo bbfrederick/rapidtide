@@ -21,6 +21,9 @@ RUN apt-get install -y --no-install-recommends \
                     libgl1-mesa-glx \
                     libx11-xcb1 \
                     lsb-release \
+                    s3fs \
+                    awscli \
+                    jq \
                     git
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/New_York
@@ -67,10 +70,11 @@ RUN conda install -c conda-forge -y mamba
 RUN conda clean --all
 
 # install conda-build
-RUN conda install -y conda-build
+RUN mamba install -y conda-build
 
 # Update to the newest version of conda
 #RUN conda update -n base -c defaults conda conda-build mamba
+RUN mamba update requests
 
 # Installing precomputed python packages
 RUN mamba install -y python \
@@ -127,7 +131,7 @@ WORKDIR /tmp/
 ENTRYPOINT ["/usr/local/miniconda/bin/rapidtide_dispatcher"]
 
 # set a non-root user
-USER rapidtide
+#USER rapidtide
 
 ARG VERSION
 ARG BUILD_DATE
