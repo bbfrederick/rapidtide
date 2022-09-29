@@ -6,8 +6,11 @@ COPY ./dockerbuild/neurodebian.gpg /usr/local/etc/neurodebian.gpg
 
 # Prepare environment
 RUN df -h
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends \
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/New_York
+RUN apt-get update && \
+    apt-get install -y tzdata && \
+    apt-get install -y --no-install-recommends \
                     curl \
                     bzip2 \
                     ca-certificates \
@@ -21,10 +24,10 @@ RUN apt-get install -y --no-install-recommends \
                     libgl1-mesa-glx \
                     libx11-xcb1 \
                     lsb-release \
+                    s3fs \
+                    awscli \
+                    jq \
                     git
-ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ=America/New_York
-RUN apt-get install -y tzdata
 RUN apt-get install -y --reinstall libqt5dbus5 
 RUN apt-get install -y --reinstall libqt5widgets5 
 RUN apt-get install -y --reinstall libqt5network5 
@@ -67,7 +70,7 @@ RUN conda install -c conda-forge -y mamba
 RUN conda clean --all
 
 # install conda-build
-RUN conda install -y conda-build
+RUN mamba install -y conda-build
 
 # Update to the newest version of conda
 #RUN conda update -n base -c defaults conda conda-build mamba
@@ -95,6 +98,7 @@ RUN mamba install -y python \
                      numba; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
     chmod +x /usr/local/miniconda/bin/*; sync && \
+    mamba update requests; sync && \
     conda-build purge-all; sync && \
     conda clean -tipsy && sync
 RUN df -h
@@ -127,7 +131,7 @@ WORKDIR /tmp/
 ENTRYPOINT ["/usr/local/miniconda/bin/rapidtide_dispatcher"]
 
 # set a non-root user
-USER rapidtide
+#USER rapidtide
 
 ARG VERSION
 ARG BUILD_DATE
