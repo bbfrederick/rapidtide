@@ -591,7 +591,7 @@ def rapidtide_main(argparsingfunc):
         if fileiscifti:
             corrmask = np.uint(nim_data[:, 0] * 0 + 1)
         else:
-            if np.mean(stdim) < np.mean(meanim):
+            if (np.mean(stdim) < np.mean(meanim)) and not optiondict["nirs"]:
                 LGR.info("generating correlation mask from mean image")
                 corrmask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
             else:
