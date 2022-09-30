@@ -2560,7 +2560,14 @@ def rapidtide_main(argparsingfunc):
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
+        varbefore = np.var(fmri_data_valid, axis=1)
+        varafter = np.var(filtereddata, axis=1)
+        divlocs = np.where(varbefore > 0.0)
+        varchange = varbefore * 0.0
+        varchange[divlocs] = varafter / varbefore - 1.0
         del fmri_data_valid
+        del varbefore
+        del varafter
 
         TimingLGR.info(
             "GLM filtering end",
@@ -2751,6 +2758,7 @@ def rapidtide_main(argparsingfunc):
             ("glmmean", "lfofilterMean"),
             ("fitcoeff", "lfofilterCoeff"),
             ("fitNorm", "lfofilterNorm"),
+            ("varchange", "lfofilterVarianceChange"),
         ]:
             if optiondict["memprofile"]:
                 memcheckpoint(f"about to write {mapname}")
