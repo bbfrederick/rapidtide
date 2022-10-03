@@ -183,7 +183,7 @@ def shorttermcorr_1D(
             detrendorder=detrendorder,
             windowfunc=windowfunc,
         )
-        thepcorr = sp.stats.stats.pearsonr(dataseg1, dataseg2)
+        thepcorr = sp.stats.pearsonr(dataseg1, dataseg2)
         times.append(i * sampletime)
         corrpertime.append(thepcorr[0])
         ppertime.append(thepcorr[1])
@@ -572,9 +572,7 @@ def delayedcorr(data1, data2, delayval, timestep):
     -------
     corr
     """
-    return sp.stats.stats.pearsonr(
-        data1, tide_resample.timeshift(data2, delayval / timestep, 30)[0]
-    )
+    return sp.stats.pearsonr(data1, tide_resample.timeshift(data2, delayval / timestep, 30)[0])
 
 
 def cepstraldelay(data1, data2, timestep, displayplots=True):

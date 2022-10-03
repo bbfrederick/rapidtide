@@ -27,7 +27,7 @@ import sys
 
 import numpy as np
 from scipy.signal import welch
-from scipy.stats.stats import pearsonr
+from scipy.stats import pearsonr
 from sklearn.decomposition import PCA, FastICA
 
 import rapidtide.filter as tide_filt

@@ -24,7 +24,7 @@ import sys
 
 import nibabel as nib
 import numpy as np
-from scipy.stats.stats import pearsonr
+from scipy.stats import pearsonr
 
 import rapidtide.correlate as tide_corr
 import rapidtide.fit as tide_fit
@@ -287,11 +287,13 @@ def main():
     )
     tide_io.savetonifti(outputcorrwidth, out3d_hdr, args.outputroot + "_corrwidth")
     tide_io.writenpvecs(
-        outputcorrwidth.reshape(numcomponents, numcomponents), args.outputroot + "_corrwidth.txt",
+        outputcorrwidth.reshape(numcomponents, numcomponents),
+        args.outputroot + "_corrwidth.txt",
     )
     tide_io.savetonifti(outputcorrmask, out3d_hdr, args.outputroot + "_corrmask")
     tide_io.writenpvecs(
-        outputcorrmask.reshape(numcomponents, numcomponents), args.outputroot + "_corrmask.txt",
+        outputcorrmask.reshape(numcomponents, numcomponents),
+        args.outputroot + "_corrmask.txt",
     )
 
     tide_io.writenpvecs(reformdata, args.outputroot + "_reformdata.txt")
