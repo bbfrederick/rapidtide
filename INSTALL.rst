@@ -167,7 +167,7 @@ Now that the file is downloaded, you can run and rapidtide command in the Docker
 rapidtide analysis, you would use the following command (you can do this all in one step - it will just integrate the
 first pull into the run time if the version you request hasn't already been downloaded).
 
-Docker runs completely in it's own self-contained environment.  If you want to be able to interact with disks outside of
+Docker runs completely in its own self-contained environment.  If you want to be able to interact with disks outside of
 container, you map the volume to a mount point in the container using the --volume=EXTERNALDIR:MOUNTPOINT[,ANOTHERDIR:ANOTHERMOUNTPOINT]
 option to docker.
 ::
