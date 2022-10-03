@@ -683,6 +683,10 @@ def rapidtide_main(argparsingfunc):
         internalrefineexcludemask_valid = None
     tide_util.logmem("after selecting valid voxels")
 
+    # calculate the initial bandlimited variance if we're going to filter the data
+    if optiondict["doglmfilt"]:
+        initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
+
     # move fmri_data_valid into shared memory
     if optiondict["sharedmem"]:
         LGR.info("moving fmri data to shared memory")
@@ -2560,14 +2564,12 @@ def rapidtide_main(argparsingfunc):
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
-        varbefore = np.var(fmri_data_valid, axis=1)
-        varafter = np.var(filtereddata, axis=1)
-        divlocs = np.where(varbefore > 0.0)
-        varchange = varbefore * 0.0
-        varchange[divlocs] = varafter / varbefore - 1.0
+        # calculate the final bandlimited variance
+        finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
+        divlocs = np.where(finalvariance > 0.0)
+        varchange = initialvariance * 0.0
+        varchange[divlocs] = finalvariance / initialvariance - 1.0
         del fmri_data_valid
-        del varbefore
-        del varafter
 
         TimingLGR.info(
             "GLM filtering end",
@@ -2758,7 +2760,9 @@ def rapidtide_main(argparsingfunc):
             ("glmmean", "lfofilterMean"),
             ("fitcoeff", "lfofilterCoeff"),
             ("fitNorm", "lfofilterNorm"),
-            ("varchange", "lfofilterVarianceChange"),
+            ("initialvariance", "lfofilterInbandVarianceBefore"),
+            ("finalvariance", "lfofilterInbandVarianceAfter"),
+            ("varchange", "lfofilterInbandVarianceChange"),
         ]:
             if optiondict["memprofile"]:
                 memcheckpoint(f"about to write {mapname}")
@@ -2793,6 +2797,9 @@ def rapidtide_main(argparsingfunc):
         del r2value
         del fitcoeff
         del fitNorm
+        del initialvariance
+        del finalvariance
+        del varchange
 
     for mapname, mapsuffix in [("meanvalue", "mean")]:
         if optiondict["memprofile"]:

@@ -362,6 +362,15 @@ def ppnormalize(vector):
         return demeaned
 
 
+def imagevariance(thedata, thefilter, samplefreq, debug=False):
+    if debug:
+        print(f"IMAGEVARIANCE: {thedata.shape}, {thefilter}, {samplefreq}")
+    filteredim = thedata * 0.0
+    for thevoxel in range(thedata.shape[0]):
+        filteredim[thevoxel, :] = thefilter.apply(samplefreq, thedata[thevoxel, :])
+    return np.var(filteredim, axis=1)
+
+
 @conditionaljit()
 def corrnormalize(thedata, detrendorder=1, windowfunc="hamming"):
     """
