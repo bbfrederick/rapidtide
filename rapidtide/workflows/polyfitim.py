@@ -187,17 +187,11 @@ def polyfitim(
         print(f"atlas file {regionatlas} has {numregions} regions.")
 
     fitdata = np.zeros((numspatiallocs, timepoints), dtype="float")
-    # residuals = np.zeros((numspatiallocs, timepoints), dtype='float')
-    # newtemplate = np.zeros((numspatiallocs), dtype='float')
-    # newmask = np.zeros((numspatiallocs), dtype='float')
     if regionatlas is not None:
         polycoffs = np.zeros((numregions, order + 1, timepoints), dtype="float")
         rvals = np.zeros((numregions, timepoints), dtype="float")
     else:
         polycoffs = np.zeros((order + 1, timepoints), dtype="float")
-        lincoffs = np.zeros(timepoints, dtype="float")
-        sqrcoffs = np.zeros(timepoints, dtype="float")
-        offsets = np.zeros(timepoints, dtype="float")
         rvals = np.zeros(timepoints, dtype="float")
 
     if regionatlas is not None:
@@ -206,10 +200,6 @@ def polyfitim(
         for region in range(0, numregions):
             thisregion = np.where((rs_regionatlas * rs_templatemask_bin) == (region + 1))
             regionvoxels[thisregion, region] = 1.0
-
-    # mask everything
-    print("masking template")
-    maskedtemplate = rs_templatefile * rs_templatemask_bin
 
     # cycle over all images
     print("now cycling over all images")
