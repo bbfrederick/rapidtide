@@ -40,7 +40,7 @@ def test_stcorrelate(debug=False):
     # create outputdir if it doesn't exist
     create_dir(get_test_temp_path())
 
-    dodetrend = True
+    # dodetrend = True
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
 
     testfilter = NoncausalFilter(filtertype="lfo")
@@ -51,13 +51,13 @@ def test_stcorrelate(debug=False):
         plt.figure()
         plt.plot(sig1)
         plt.plot(sig2)
-        legend = ["Original", "Shifted"]
+        # legend = ["Original", "Shifted"]
         plt.show()
 
     times, corrpertime, ppertime = shorttermcorr_1D(
         sig1, sig2, tr, windowtime, samplestep=int(stepsize // tr), detrendorder=0
     )
-    plength = len(times)
+    # plength = len(times)
     times, xcorrpertime, Rvals, delayvals, valid = shorttermcorr_2D(
         sig1,
         sig2,
@@ -68,7 +68,7 @@ def test_stcorrelate(debug=False):
         detrendorder=0,
         display=False,
     )
-    xlength = len(times)
+    # xlength = len(times)
     writenpvecs(corrpertime, outfilename + "_pearson.txt")
     writenpvecs(ppertime, outfilename + "_pvalue.txt")
     writenpvecs(Rvals, outfilename + "_Rvalue.txt")

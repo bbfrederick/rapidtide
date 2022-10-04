@@ -41,7 +41,6 @@ def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, display=Fal
     # now calculate the phase waveform
     instantaneous_phase, amplitude_envelope, analytic_signal = tide_fit.phaseanalysis(testwaveform)
     filtered_phase = tide_math.trendfilt(instantaneous_phase, order=3, ndevs=2.0)
-    initialphase = instantaneous_phase[0]
 
     if display:
         plt.figure()

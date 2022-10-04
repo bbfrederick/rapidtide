@@ -33,15 +33,12 @@ from rapidtide.tests.utils import get_test_data_path, get_test_temp_path
 
 def test_nullsimfunc(debug=False, display=False):
     # make the lfo filter
-    lfofilter = tide_filt.NoncausalFilter(filtertype="lfo")
+    # lfofilter = tide_filt.NoncausalFilter(filtertype="lfo")
 
     # make the starting regressor
     timestep = 1.5
     Fs = 1.0 / timestep
-    # sourcelen = 1200
-    # sourcedata = lfofilter.apply(Fs, np.random.rand(sourcelen))
     sourcedata = tide_io.readvecs(os.path.join(get_test_data_path(), "fmri_globalmean.txt"))[0]
-    sourcelen = len(sourcedata)
     numpasses = 1
 
     if display:
@@ -68,8 +65,8 @@ def test_nullsimfunc(debug=False, display=False):
     lagmininpts = int((-lagmin / timestep) - 0.5)
     lagmaxinpts = int((lagmax / timestep) + 0.5)
 
-    searchstart = int(np.round(corrzero + lagmin / timestep))
-    searchend = int(np.round(corrzero + lagmax / timestep))
+    # searchstart = int(np.round(corrzero + lagmin / timestep))
+    # searchend = int(np.round(corrzero + lagmax / timestep))
 
     optiondict = {
         "numestreps": 10000,
