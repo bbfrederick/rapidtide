@@ -7,7 +7,6 @@ happy \
     ../dst/happy_1comp \
     --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
     --mklthreads 8 \
-    --hilbertcomponents 1 \
     --model model_revised
 
 happy \
