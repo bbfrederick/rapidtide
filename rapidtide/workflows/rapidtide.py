@@ -26,7 +26,8 @@ import platform
 import warnings
 
 import numpy as np
-from matplotlib.pyplot import figure, plot, show
+
+# from matplotlib.pyplot import figure, plot, show
 from nilearn import masking
 from scipy import ndimage
 from sklearn.decomposition import PCA
