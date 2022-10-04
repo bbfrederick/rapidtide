@@ -447,7 +447,10 @@ def proctiminglogfile(logfilename, timewidth=10):
         theoutputline = f"{totaldiffstr}\t{incdiffstr}\t{timingdata['description'].iloc[therow]}"
         if timingdata["number"].iloc[therow] != "None":
             speedunit = f"{timingdata['units'].iloc[therow]}/s"
-            speed = f"{float(timingdata['number'].iloc[therow]) / incdiff:.2f}"
+            if incdiff == 0.0:
+                speed = "undefined"
+            else:
+                speed = f"{float(timingdata['number'].iloc[therow]) / incdiff:.2f}"
             theoutputline += f" ({timingdata['number'].iloc[therow]} {timingdata['units'].iloc[therow]} @ {speed} {speedunit})"
         outputlines += [theoutputline]
 
