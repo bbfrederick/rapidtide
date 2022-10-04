@@ -56,11 +56,6 @@ except ImportError:
 
 
 def checkimports(optiondict):
-    from numpy.distutils.system_info import get_info
-
-    optiondict["blas_opt"] = get_info("blas_opt")
-    optiondict["lapack_opt"] = get_info("lapack_opt")
-
     if memprofilerexists:
         print("memprofiler exists")
     else:
