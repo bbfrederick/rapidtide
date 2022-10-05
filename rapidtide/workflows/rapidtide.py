@@ -2799,7 +2799,7 @@ def rapidtide_main(argparsingfunc):
         del fitNorm
         del initialvariance
         del finalvariance
-        del varchange
+        # del varchange
 
     for mapname, mapsuffix in [("meanvalue", "mean")]:
         if optiondict["memprofile"]:
