@@ -2567,9 +2567,9 @@ def rapidtide_main(argparsingfunc):
         )
         # calculate the final bandlimited variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
-        divlocs = np.where(finalvariance > 0.0)
-        varchange = initialvariance * 0.0
-        varchange[divlocs] = finalvariance / initialvariance - 1.0
+        # divlocs = np.where(finalvariance > 0.0)
+        # varchange = initialvariance * 0.0
+        # varchange[divlocs] = finalvariance / initialvariance - 1.0
         del fmri_data_valid
 
         TimingLGR.info(
@@ -2763,7 +2763,6 @@ def rapidtide_main(argparsingfunc):
             ("fitNorm", "lfofilterNorm"),
             ("initialvariance", "lfofilterInbandVarianceBefore"),
             ("finalvariance", "lfofilterInbandVarianceAfter"),
-            ("varchange", "lfofilterInbandVarianceChange"),
         ]:
             if optiondict["memprofile"]:
                 memcheckpoint(f"about to write {mapname}")
