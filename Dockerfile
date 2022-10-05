@@ -21,14 +21,14 @@ FROM fredericklab/basecontainer:latest
 RUN mamba install -y statsmodels \
                      scikit-image \
                      scikit-learn \
-                     nibabel \
-                     nilearn \
-                     keras \
-                     h5py \
-                     "tensorflow>=2.4.0" \
-                     pyqtgraph \
-                     "pyfftw=0.13.0=py39h51d1ae8_0" \
                      pandas \
+                     nilearn; sync && \
+    mamba install -y nibabel \
+                     h5py; sync && \
+    mamba install -y keras \
+                     "tensorflow>=2.4.0"; sync && \
+    mamba install -y pyqtgraph \
+                     "pyfftw=0.13.0=py39h51d1ae8_0" \
                      versioneer \
                      numba; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
