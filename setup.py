@@ -187,6 +187,7 @@ setup(
         "pyfftw",
         "pyqtgraph>=0.11.0",
         "statsmodels",
+        "tqdm",
         "numba",
     ],
     # "keras",

@@ -21,6 +21,7 @@ installed first:
 -  nilearn
 -  matplotlib
 -  statsmodels
+-  tqdm
 
 If you want to use tidepool for image display, you will also need to
 install the following:
