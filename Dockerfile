@@ -2,25 +2,40 @@
 FROM fredericklab/basecontainer:v0.0.7
 
 # Installing precomputed python packages
-RUN mamba install -y statsmodels \
-                     scikit-image \
-                     scikit-learn \
-                     pandas \
-                     nilearn
-RUN mamba install -y nibabel \
-                     h5py
-RUN mamba install -y keras \
-                     tensorflow
-RUN mamba install -y pyqtgraph \
-                     versioneer \
-                     numba
-RUN mamba install -y "pyfftw=0.13.0=py39h51d1ae8_0"; true
-RUN chmod -R a+rX /usr/local/miniconda 
-RUN chmod +x /usr/local/miniconda/bin/* 
-RUN mamba update requests 
-RUN conda-build purge-all
-RUN mamba clean -y --all
-RUN df -h
+RUN pip install \
+                 statsmodels \
+                 scikit-image \
+                 scikit-learn \
+                 pandas \
+                 nilearn \
+                 nibabel \
+                 h5py \
+                 keras \
+                 tensorflow
+                 pyqtgraph \
+                 versioneer \
+                 numba \
+                 pyfftw
+#RUN mamba install -y "pyfftw=0.13.0=py39h51d1ae8_0"; true
+#RUN mamba install -y statsmodels \
+#                     scikit-image \
+#                     scikit-learn \
+#                     pandas \
+#                     nilearn
+#RUN mamba install -y nibabel \
+#                     h5py
+#RUN mamba install -y keras \
+#                     tensorflow
+#RUN mamba install -y pyqtgraph \
+#                     versioneer \
+#                     numba
+#RUN mamba install -y "pyfftw=0.13.0=py39h51d1ae8_0"; true
+#RUN chmod -R a+rX /usr/local/miniconda 
+#RUN chmod +x /usr/local/miniconda/bin/* 
+#RUN mamba update requests 
+#RUN conda-build purge-all
+#RUN mamba clean -y --all
+#RUN df -h
 
 
 # Create a shared $HOME directory
@@ -32,7 +47,7 @@ ENV HOME="/home/rapidtide"
 # Installing rapidtide
 COPY . /src/rapidtide
 RUN cd /src/rapidtide && \
-    python setup.py install && \
+    python3 setup.py install && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
 
 
