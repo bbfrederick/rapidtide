@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:v0.0.7
+FROM fredericklab/basecontainer:v0.0.9
 
 # Installing precomputed python packages
 RUN pip install \
@@ -11,10 +11,12 @@ RUN pip install \
                  nibabel \
                  h5py \
                  keras \
-                 tensorflow
+                 tensorflow \
                  pyqtgraph \
+                 pyqt5 \
                  versioneer \
                  numba \
+                 tqdm \
                  pyfftw
 #RUN mamba install -y "pyfftw=0.13.0=py39h51d1ae8_0"; true
 #RUN mamba install -y statsmodels \
@@ -57,7 +59,7 @@ RUN apt-get install -y --reinstall libxcb-xinerama0
 
 RUN ldconfig
 WORKDIR /tmp/
-ENTRYPOINT ["/usr/local/miniconda/bin/rapidtide_dispatcher"]
+ENTRYPOINT ["/usr/local/bin/rapidtide_dispatcher"]
 
 # set a non-root user
 #USER rapidtide
