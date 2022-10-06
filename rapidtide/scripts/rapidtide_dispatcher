@@ -25,10 +25,8 @@ def main():
     # get the command line parameters
     if os.getenv("IS_DOCKER_8395080871") is not None:
         isdocker = True
-        execdir = sys.path[0]
     else:
         isdocker = False
-        execdir = sys.path[0]
     validcommands = [
         "aligntcs",
         "applydlfilter",
@@ -79,6 +77,7 @@ def main():
         "info",
     ]
 
+    execdir = sys.path[0]
     thecommand = sys.argv[1:]
     if thecommand[0] in validcommands:
         # the script exists, now check if it is installed
