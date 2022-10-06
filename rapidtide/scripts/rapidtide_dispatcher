@@ -84,7 +84,7 @@ def main():
         isdocker = False
 
     if os.getenv("INPUT_BUCKET"):
-        # We are in CLOUD MODE; we will try to mount /data_{in,out} via s3fs
+        # We are in CLOUD MODE; we will try to mount /data_{in,out} via s3fs.
         show_instance_type()
         mount_s3fs()
 
