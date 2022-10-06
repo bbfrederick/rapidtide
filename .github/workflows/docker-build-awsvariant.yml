@@ -1,9 +1,9 @@
-name: Upload latest to DockerHub
+name: Upload latest cloud branch to DockerHub
 
 on:
   push:
     branches:
-      - 'main'
+      - 'cloud'
 
 jobs:
   docker:
@@ -33,4 +33,4 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: fredericklab/rapidtide:latest
+          tags: fredericklab/rapidtide-cloud:latest
