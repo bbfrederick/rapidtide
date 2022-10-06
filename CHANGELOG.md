@@ -1,5 +1,13 @@
 # Release history
 
+## Version 2.4.0 (10/6/22)
+* (rapidtide) Added enhanced variance removal assesment.
+* (rapidtide) Fixed a rare crashing bug in proctiminglogfile.
+* (rapidtide) Output some files indicating run status.
+* (package) Fixed a deprecation warning in pearsonr.
+* (Docker) Now build amd64 and arm64 containers.
+
+
 ## Version 2.3.1 (9/27/22)
 * (Dockerfile) Some tweaks to package versions to try to eliminate error messages.
 * (Dockerfile) Add some AWS libraries to facilitate using S3 volumes.
