@@ -42,10 +42,7 @@ RUN apt-get install -y --reinstall libxcb-xinerama0
 
 RUN ldconfig
 WORKDIR /tmp/
-ENTRYPOINT ["/usr/local/miniconda/bin/rapidtide_dispatcher"]
-
-# set a non-root user
-#USER rapidtide
+ENTRYPOINT ["/src/rapidtide/cloud/mount-and-run"]
 
 ARG VERSION
 ARG BUILD_DATE

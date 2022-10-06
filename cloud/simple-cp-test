@@ -9,7 +9,7 @@ fi
 P=$1
 
 if [[ $P == ARRAY ]]; then
-    P=$(cat /participant_from_array)
+    P=$PARTICIPANT_FROM_ARRAY
 fi
 
 mkdir -p /data_out/HCP_1200/$P

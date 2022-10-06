@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [[ $# -ne 1 ]]; then
+    echo "Missing participant id."
+    exit 1
+fi
+
+P=$1
+
+if [[ $P == ARRAY ]]; then
+    P=$PARTICIPANT_FROM_ARRAY
+fi
+
+mkdir -p /data_out/HCP_1200/$P
+rapidtide \
+            /data_in/HCP_1200/$P/MNINonLinear/Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz \
+            /data_out/HCP_1200/$P/rapidtide_rfMRI_REST1_LR \
+            --filterband lfo \
+            --searchrange -15 15 \
+            --passes 3 \
+            --nprocs -1

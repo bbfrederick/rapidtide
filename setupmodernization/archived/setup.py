@@ -97,7 +97,6 @@ script_list = [
     "rapidtide/scripts/rapidtide",
     "rapidtide/scripts/rapidtide2std",
     "rapidtide/scripts/rapidtide2x_legacy",
-    "rapidtide/scripts/rapidtide_dispatcher",
     "rapidtide/scripts/resamp1tc",
     "rapidtide/scripts/resamplenifti",
     "rapidtide/scripts/roisummarize",
