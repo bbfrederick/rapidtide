@@ -2,9 +2,9 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "aws" ]
+    branches: [ "cloud" ]
   pull_request:
-    branches: [ "aws" ]
+    branches: [ "cloud" ]
 
 jobs:
   docker:
@@ -34,4 +34,4 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: fredericklab/rapidtide-aws:latest
+          tags: fredericklab/rapidtide-cloud:latest
