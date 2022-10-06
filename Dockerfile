@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:latest
+FROM fredericklab/basecontainer:v0.0.7
 
 # Prepare environment
 #RUN apt-get install -y --no-install-recommends \
