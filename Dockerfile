@@ -14,7 +14,7 @@ RUN mamba install -y keras \
 RUN mamba install -y pyqtgraph \
                      versioneer \
                      numba
-RUN mamba install -y "pyfftw=0.13.0=py39h51d1ae8_0; sync"
+RUN mamba install -y "pyfftw=0.13.0=py39h51d1ae8_0"; true
 RUN chmod -R a+rX /usr/local/miniconda 
 RUN chmod +x /usr/local/miniconda/bin/* 
 RUN mamba update requests 
