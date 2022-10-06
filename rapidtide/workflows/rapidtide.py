@@ -24,6 +24,7 @@ import multiprocessing as mp
 import os
 import platform
 import warnings
+from pathlib import Path
 
 import numpy as np
 
@@ -317,6 +318,9 @@ def rapidtide_main(argparsingfunc):
     fmrifilename = optiondict["in_file"]
     outputname = optiondict["outputname"]
     filename = optiondict["regressorfile"]
+
+    # create the canary file
+    Path(f"{outputname}_ISRUNNING.txt").touch()
 
     # Set up loggers for workflow
     setup_logger(
@@ -3126,3 +3130,9 @@ def rapidtide_main(argparsingfunc):
         tide_util.proctiminglogfile(f"{outputname}_runtimings.tsv"),
         f"{outputname}_desc-formattedruntimings_info.tsv",
     )
+
+    # delete the canary file
+    Path(f"{outputname}_ISRUNNING.txt").unlink(missing_ok=True)
+
+    # created the finished file
+    Path(f"{outputname}_DONE.txt").touch()
