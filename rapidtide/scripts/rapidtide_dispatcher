@@ -88,7 +88,7 @@ def main():
             subprocess.call("/bin/bash")
         elif thecommand[0] == "xyzzz":
             print("command xyzzz given, executing copy...")
-            subprocess.call("/bin/cp" + sys.argv[2:])
+            subprocess.call(["/bin/cp"] + sys.argv[2:])
         elif thecommand[0] == "info":
             print(f"isdocker: {isdocker}")
             print(f"execdir: {execdir}")
