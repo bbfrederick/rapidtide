@@ -46,7 +46,8 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
     numchunks = int(totalnum // chunksize)
     remainder = totalnum - numchunks * chunksize
     if showprogressbar:
-        tide_util.progressbar(0, totalnum, label="Percent complete")
+        pbar = tide_util.tprogressbar(0, totalnum, label="Percent")
+        # tide_util.progressbar(0, totalnum, label="Percent complete")
 
     # process all of the complete chunks
     for thechunk in range(numchunks):
@@ -62,8 +63,10 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
             if ret is not None:
                 data_out.append(ret)
             numreturned += 1
-            if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
-                tide_util.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
+            # if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
+            #    tide_util.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
+            if showprogressbar:
+                pbar.update(numreturned + offset)
             if numreturned > chunksize - 1:
                 break
 
@@ -79,12 +82,16 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
         if ret is not None:
             data_out.append(ret)
         numreturned += 1
-        if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
-            tide_util.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
+        # if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
+        #    tide_util.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
+        if showprogressbar:
+            pbar.update(numreturned + offset)
         if numreturned > remainder - 1:
             break
     if showprogressbar:
-        tide_util.progressbar(totalnum, totalnum, label="Percent complete")
+        pbar.update(totalnum)
+        # tide_util.progressbar(totalnum, totalnum, label="Percent complete")
+
     print()
 
     return data_out

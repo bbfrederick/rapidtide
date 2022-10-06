@@ -515,14 +515,17 @@ def rapidtide_main(argparsingfunc):
             f"applying gaussian spatial filter to timepoints {validstart} "
             f"to {validend} with sigma={optiondict['gausssigma']}"
         )
-        reportstep = 10
+        # reportstep = 10
+        pbar = tide_util.tprogressbar(validstart, validend, label="Percent")
         for i in range(validstart, validend + 1):
-            if (i % reportstep == 0 or i == validend) and optiondict["showprogressbar"]:
-                tide_util.progressbar(
-                    i - validstart + 1,
-                    validend - validstart + 1,
-                    label="Percent complete",
-                )
+            if optiondict["showprogressbar"]:
+                pbar.update(i)
+            # if (i % reportstep == 0 or i == validend) and optiondict["showprogressbar"]:
+            #    tide_util.progressbar(
+            #        i - validstart + 1,
+            #        validend - validstart + 1,
+            #        label="Percent complete",
+            #    )
             nim_data[:, :, :, i] = tide_filt.ssmooth(
                 xdim,
                 ydim,

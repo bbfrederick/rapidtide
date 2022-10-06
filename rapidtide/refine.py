@@ -341,13 +341,16 @@ def refineregressor(
 
     else:
         psdlist = []
+        pbar = tide_util.tprogressbar(0, inputshape[0], label="Percent")
         for vox in range(0, inputshape[0]):
-            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict[
-                "showprogressbar"
-            ]:
-                tide_util.progressbar(
-                    vox + 1, inputshape[0], label="Percent complete (timeshifting)"
-                )
+            # if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict[
+            #    "showprogressbar"
+            # ]:
+            #    tide_util.progressbar(
+            #        vox + 1, inputshape[0], label="Percent complete (timeshifting)"
+            #    )
+            if optiondict["showprogressbar"]:
+                pbar.update(vox)
             if shiftmask[vox] > 0.5:
                 retvals = _procOneVoxelTimeShift(
                     vox,

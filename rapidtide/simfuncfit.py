@@ -289,9 +289,12 @@ def fitcorr(
 
         del data_out
     else:
+        pbar = tide_util.tprogressbar(0, inputshape[0], label="Percent")
         for vox in range(0, inputshape[0]):
-            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and showprogressbar:
-                tide_util.progressbar(vox + 1, inputshape[0], label="Percent complete")
+            if showprogressbar:
+                pbar.update(vox)
+            # if (vox % reportstep == 0 or vox == inputshape[0] - 1) and showprogressbar:
+            #    tide_util.progressbar(vox + 1, inputshape[0], label="Percent complete")
             if themask is None:
                 dothisone = True
                 thislag = None
