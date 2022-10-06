@@ -62,6 +62,9 @@ def mount_s3fs():
     else:
         raise RuntimeError("INPUT_BUCKET envvar exists, but I can't figure out where I'm running.")
 
+    os.mkdir('/data_in')
+    os.mkdir('/data_out')
+
     subprocess.call(["s3fs", *auth_method, os.environ["OUTPUT_BUCKET"], "/data_out"])
 
     ibs = "/tmp/input_bucket_secret"
