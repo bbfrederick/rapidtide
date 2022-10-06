@@ -186,6 +186,7 @@ setup(
         "matplotlib",
         "pyfftw",
         "pyqtgraph>=0.11.0",
+        "requests",
         "statsmodels",
         "numba",
     ],

@@ -19,6 +19,61 @@
 import os
 import subprocess
 import sys
+import requests
+
+
+def in_aws_batch():
+    return (os.getenv("AWS_EXECUTION_ENV") == "AWS_ECS_EC2") and (
+        os.getenv("INPUT_BUCKET") is not None
+    )
+
+
+def in_ec2():
+    url = "http://169.254.169.254/latest/dynamic/instance-identity/document"
+    try:
+        r = requests.get(url, timeout=0.5)
+        return "availabilityZone" in r.json()
+    except:
+        return False
+
+
+def note_participant_from_array():
+    array_file = os.getenv("PARTICIPANT_ARRAY_FILE")
+    line = int(os.getenv("AWS_BATCH_JOB_ARRAY_INDEX"))
+    participant = open(array_file).read().splitlines()[line]
+    open("/participant_from_array", "w").write(participant)
+    print(f"Set participant to {participant}.")
+
+
+def show_instance_type():
+    url = "http://169.254.169.254/latest/meta-data/instance-type"
+    try:
+        r = requests.get(url, timeout=0.5)
+        print(f"Instance type: {r.text}")
+    except:
+        print("Failed to fetch instance type.")
+
+
+def mount_s3fs():
+    if in_aws_batch():
+        auth_method = ["-o", "ecs"]
+    elif in_ec2():
+        auth_method = ["-o", "iam_role"]
+    else:
+        raise RuntimeError("INPUT_BUCKET envvar exists, but I can't figure out where I'm running.")
+
+    subprocess.call(["s3fs", *auth_method, os.environ["OUTPUT_BUCKET"], "/data_out"])
+
+    ibs = "/tmp/input_bucket_secret"
+    open(ibs, "w").write(os.environ["INPUT_BUCKET_SECRET"])
+    os.chmod(ibs, 0o400)
+    subprocess.call(["s3fs", "-o", f"passwd_file={ibs}", os.environ["INPUT_BUCKET"], "/data_in"])
+
+    with open("/proc/mounts", "r") as f:
+        mounts = [line.split()[1] for line in f.readlines() if line.split()[2] == "fuse.s3fs"]
+    for mount in ["/data_in", "/data_out"]:
+        if mount not in mounts:
+            raise RuntimeError(f"{mount} is not correctly mounted.")
 
 
 def main():
@@ -27,6 +82,16 @@ def main():
         isdocker = True
     else:
         isdocker = False
+
+    if os.getenv("INPUT_BUCKET"):
+        # We are in CLOUD MODE; we will try to mount /data_{in,out} via s3fs
+        show_instance_type()
+        mount_s3fs()
+
+        if os.getenv("AWS_BATCH_JOB_ARRAY_INDEX"):
+            # array mode
+            note_participant_from_array()
+
     validcommands = [
         "aligntcs",
         "applydlfilter",
