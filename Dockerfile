@@ -39,7 +39,7 @@ RUN cd /src/rapidtide && \
 
 ENV IS_DOCKER_8395080871=1
 RUN apt-get install -y --reinstall libxcb-xinerama0
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache
 
 
 RUN ldconfig
