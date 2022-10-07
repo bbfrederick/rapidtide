@@ -140,7 +140,7 @@ def main():
         print(f"{len(validvoxels)} valid voxels")
         for thevoxel in validvoxels:
             templatevoxels[thevoxel, int(round(rs_template[thevoxel], 0)) - 1] = 1
-    maskvoxels = np.max(templatevoxels, axis=1).astype("float64")
+    maskvoxels = np.max(templatevoxels, axis=1).astype(np.uint16)
     maskvoxels[np.where(maskvoxels > 0)] = 1
 
     # now we have a 4d file, regardless of what we started with
@@ -174,7 +174,7 @@ def main():
         ) = tide_io.readfromnifti(args.maskfile)
         if maskdims[4] > 1:
             raise ValueError(f"{args.maskfile} is not 3D - exiting")
-        maskvoxels = mask_data.reshape((numvoxels)).astype("float64")
+        maskvoxels = mask_data.reshape((numvoxels)).astype(np.uint16)
         maskvoxels[np.where(maskvoxels < 0.5)] = 0
 
     if args.targetfile is not None:
@@ -233,7 +233,7 @@ def main():
             numregions = templatedims[4]
             numvoxels = int(xsize) * int(ysize) * int(numslices)
             templatevoxels = np.around(np.reshape(template_data, (numvoxels, numregions))).astype(
-                "int"
+                np.uint16
             )
         else:
             print("FSL directory not found - aborting")
@@ -258,7 +258,7 @@ def main():
         )
     else:
         outputvoxels = np.argmax(templatevoxels, axis=1) + 1
-        outputvoxels *= maskvoxels.astype(int)
+        outputvoxels *= maskvoxels.astype(np.uint16)
         template_hdr["dim"][4] = 1
         tide_io.savetonifti(
             outputvoxels.reshape((xsize, ysize, numslices)),
