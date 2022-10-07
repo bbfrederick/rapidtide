@@ -34,7 +34,7 @@ ENV HOME="/home/rapidtide"
 # Installing rapidtide
 COPY . /src/rapidtide
 RUN cd /src/rapidtide && \
-    python3 setup.py install && \
+    python setup.py install && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
 
 
@@ -45,7 +45,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN ldconfig
 WORKDIR /tmp/
-ENTRYPOINT ["/usr/local/bin/rapidtide_dispatcher"]
+ENTRYPOINT ["/usr/local/miniconda/bin/rapidtide_dispatcher"]
 
 # set a non-root user
 #USER rapidtide
