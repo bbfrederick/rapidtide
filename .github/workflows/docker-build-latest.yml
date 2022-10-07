@@ -41,6 +41,5 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.DMD_ECR_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DMD_ECR_SECRET }}
         run: |
-           aws ecr-public get-login-password --region us-east-1 | skopeo login --username AWS --password-stdin public.ecr.aws/l0v4l2q2/rapidtide-cloud
-           skopeo copy --all docker://fredericklab/rapidtide docker://public.ecr.aws/l0v4l2q2/rapidtide
-
+           aws ecr-public get-login-password --region us-east-1 | skopeo login --username AWS --password-stdin public.ecr.aws/rapidtide-cloud/rapidtide
+           skopeo copy --all docker://fredericklab/rapidtide docker://public.ecr.aws/rapidtide-cloud/rapidtide
