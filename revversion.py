@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-import versioneer
 from os import path
+
+import versioneer
 
 # Write version number out to VERSION file
 version = versioneer.get_version()
@@ -13,4 +14,3 @@ try:
         f.write(version)
 except PermissionError:
     print("can't write to VERSION file - moving on")
-
