@@ -16,8 +16,9 @@ RUN pip install \
                  keras \
                  tensorflow
 RUN pip install \
-                 pyqtgraph \
                  pyqt5
+RUN pip install \
+                 pyqtgraph 
 RUN pip install \
                  versioneer \
                  tqdm \
@@ -39,6 +40,7 @@ RUN cd /src/rapidtide && \
 
 ENV IS_DOCKER_8395080871=1
 RUN apt-get install -y --reinstall libxcb-xinerama0
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 
 RUN ldconfig
