@@ -189,16 +189,17 @@ def main():
 
                 if args.debug:
                     print(f"writing out temp file {thisregion}")
-                """tide_io.savetonifti(
+                tide_io.savetonifti(
                     outputvoxels,
                     template_hdr,
                     f"temppre_{str(thisregion).zfill(4)}",
-                )"""
+                )
 
             mergecmd = os.path.join(fsldir, "bin", "fslmerge")
-            thecommand = []
-            thecommand.append(mergecmd)
-            sys.exit()
+            thecommand = [mergecmd, "-t", "temppre", "temppre_[0-9][0-9][0-9][0-9].nii.gz"]
+            if args.debug:
+                print(f"executing: {' '.join(thecommand)}")
+            subprocess.call(thecommand)
 
             flirtcmd = os.path.join(fsldir, "bin", "flirt")
             thecommand = []
