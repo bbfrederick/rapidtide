@@ -19,7 +19,7 @@ RUN mamba install -y \
                  pyqtgraph 
 RUN mamba install -y \
                  versioneer \
-                 tqdm \
+                 tqdm 
 RUN pip install \
                  pyfftw
 
