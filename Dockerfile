@@ -13,13 +13,13 @@ RUN mamba install -y \
                  nibabel \
                  h5py
 RUN mamba install -y \
-                 keras \
-                 tensorflow
-RUN mamba install -y \
                  pyqtgraph 
 RUN mamba install -y \
                  versioneer \
                  tqdm 
+RUN pip install \
+                 keras \
+                 tensorflow
 RUN pip install \
                  pyfftw
 
