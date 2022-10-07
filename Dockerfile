@@ -1,26 +1,27 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:v0.0.7
+FROM fredericklab/basecontainer:latest
 
 # Installing precomputed python packages
-RUN mamba install -y statsmodels \
-                     scikit-image \
-                     scikit-learn \
-                     pandas \
-                     nilearn
-RUN mamba install -y nibabel \
-                     h5py
-RUN mamba install -y keras \
-                     tensorflow
-RUN mamba install -y pyqtgraph \
-                     versioneer \
-                     numba
-RUN mamba install -y "pyfftw=0.13.0=py39h51d1ae8_0"; true
-RUN chmod -R a+rX /usr/local/miniconda 
-RUN chmod +x /usr/local/miniconda/bin/* 
-RUN mamba update requests 
-RUN conda-build purge-all
-RUN mamba clean -y --all
-RUN df -h
+RUN mamba install -y \
+                 statsmodels \
+                 scikit-image \
+                 scikit-learn \
+                 pandas \
+                 numba 
+RUN mamba install -y \
+                 nilearn \
+                 nibabel \
+                 h5py
+RUN mamba install -y \
+                 pyqtgraph 
+RUN mamba install -y \
+                 versioneer \
+                 tqdm 
+RUN pip install \
+                 keras \
+                 tensorflow
+RUN pip install \
+                 pyfftw
 
 
 # Create a shared $HOME directory
@@ -38,6 +39,7 @@ RUN cd /src/rapidtide && \
 
 ENV IS_DOCKER_8395080871=1
 RUN apt-get install -y --reinstall libxcb-xinerama0
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 
 RUN ldconfig
