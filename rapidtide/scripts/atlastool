@@ -140,7 +140,7 @@ def main():
         print(f"{len(validvoxels)} valid voxels")
         for thevoxel in validvoxels:
             templatevoxels[thevoxel, int(round(rs_template[thevoxel], 0)) - 1] = 1
-    maskvoxels = np.max(templatevoxels, axis=1)
+    maskvoxels = np.max(templatevoxels, axis=1).astype("float64")
     maskvoxels[np.where(maskvoxels > 0)] = 1
 
     # now we have a 4d file, regardless of what we started with
@@ -174,7 +174,7 @@ def main():
         ) = tide_io.readfromnifti(args.maskfile)
         if maskdims[4] > 1:
             raise ValueError(f"{args.maskfile} is not 3D - exiting")
-        maskvoxels = mask_data.reshape((numvoxels))
+        maskvoxels = mask_data.reshape((numvoxels)).astype("float64")
         maskvoxels[np.where(maskvoxels < 0.5)] = 0
 
     if args.targetfile is not None:
