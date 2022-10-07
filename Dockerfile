@@ -2,26 +2,25 @@
 FROM fredericklab/basecontainer:latest
 
 # Installing precomputed python packages
-RUN pip install \
+RUN mamba install -y \
                  statsmodels \
                  scikit-image \
                  scikit-learn \
                  pandas \
                  numba 
-RUN pip install \
+RUN mamba install -y \
                  nilearn \
                  nibabel \
                  h5py
-RUN pip install \
+RUN mamba install -y \
                  keras \
                  tensorflow
-RUN pip install \
-                 pyqt5
-RUN pip install \
+RUN mamba install -y \
                  pyqtgraph 
-RUN pip install \
+RUN mamba install -y \
                  versioneer \
                  tqdm \
+RUN pip install \
                  pyfftw
 
 
