@@ -7,16 +7,16 @@ RUN mamba install -y \
                  scikit-image \
                  scikit-learn \
                  pandas \
-                 numba 
+                 numba
 RUN mamba install -y \
                  nilearn \
                  nibabel \
                  h5py
 RUN mamba install -y \
-                 pyqtgraph 
+                 pyqtgraph
 RUN mamba install -y \
                  versioneer \
-                 tqdm 
+                 tqdm
 RUN pip install \
                  keras \
                  tensorflow
