@@ -1,6 +1,7 @@
 import time
 
 import numpy as np
+from tqdm import tqdm
 
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
@@ -204,9 +205,10 @@ def phaseproject(
         waveamp_byslice = waveamp.reshape((xsize * ysize, numslices))
 
     # now project the data
-    for theslice in range(numslices):
-        if args.showprogressbar:
-            tide_util.progressbar(theslice + 1, numslices, label="Percent complete")
+    for theslice in tqdm(
+        range(numslices),
+        desc="Slice",
+    ):
         if args.verbose:
             print("Phase projecting for slice", theslice)
         validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]

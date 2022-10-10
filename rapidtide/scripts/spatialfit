@@ -19,6 +19,7 @@
 import argparse
 
 from matplotlib.pyplot import *
+from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
@@ -208,7 +209,10 @@ def main():
 
     # cycle over all images
     print("now cycling over all images")
-    for thetime in range(0, timepoints):
+    for thetime in tqdm(
+        range(0, timepoints),
+        desc="Timepoint",
+    ):
         if args.debug:
             print("fitting")
         thefit, R = tide_fit.mlregress(maskedtemplate[:, 0], maskeddata[:, thetime])
@@ -230,7 +234,6 @@ def main():
         )
         newmask += rs_datamask[:, thetime].flatten() * bin_templatemask.flatten()
         normalized[:, thetime] = (rs_datafile[:, thetime] - offsets[thetime]) / lincoffs[thetime]
-        tide_util.progressbar(thetime + 1, timepoints, label="Percent complete")
     print()
     residuals = rs_datafile - fitdata
 

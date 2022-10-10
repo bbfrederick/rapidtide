@@ -23,6 +23,7 @@
 #
 #
 import numpy as np
+from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
@@ -111,11 +112,11 @@ def wienerpass(
         data_out = []
     else:
         volumetotal = 0
-        for vox in range(0, numspatiallocs):
-            if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict[
-                "showprogressbar"
-            ]:
-                tide_util.progressbar(vox + 1, numspatiallocs, label="Percent complete")
+        for vox in tqdm(
+            range(0, numspatiallocs),
+            desc="Voxel",
+            disable=(not optiondict["showprogressbar"]),
+        ):
             inittc = fmri_data[vox, :].copy()
             if np.mean(inittc) >= threshval:
                 (
