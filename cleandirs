@@ -15,3 +15,4 @@ do
         echo "$pipresult" - removing.
     fi
 done
+rm -r build dist rapidtide.egg-info
