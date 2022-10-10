@@ -30,7 +30,6 @@ from tqdm import tqdm
 import rapidtide.filter as tide_filt
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.util as tide_util
 
 
 # note: rawtimecourse has been filtered, but NOT windowed
@@ -188,6 +187,7 @@ def getNullDistributionDatax(
         for i in tqdm(
             range(0, numestreps),
             desc="Sham correlation",
+            unit="correlations",
             disable=(not showprogressbar),
         ):
             # make a shuffled copy of the regressors

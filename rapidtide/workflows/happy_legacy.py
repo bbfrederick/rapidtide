@@ -2807,7 +2807,6 @@ def happy_main(thearguments):
                 fitNorm,
                 datatoremove[validlocs, :],
                 filtereddata[validlocs, :],
-                reportstep=(timepoints // 100),
                 mp_chunksize=10,
                 procbyvoxel=False,
                 nprocs=nprocs,

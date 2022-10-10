@@ -31,7 +31,6 @@ from tqdm import tqdm
 
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
-import rapidtide.util as tide_util
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 LGR = logging.getLogger("GENERAL")
@@ -108,7 +107,6 @@ def correlationpass(
 
     inputshape = np.shape(fmridata)
     volumetotal = 0
-    reportstep = 1000
     thetc = np.zeros(np.shape(os_fmri_x), dtype=rt_floattype)
     theglobalmaxlist = []
     if nprocs > 1 or alwaysmultiproc:

@@ -34,8 +34,6 @@ try:
 except ImportError:
     import Queue as thrQueue
 
-import rapidtide.util as tide_util
-
 
 def maxcpus():
     return mp.cpu_count() - 1

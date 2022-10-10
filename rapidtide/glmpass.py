@@ -29,7 +29,6 @@ import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.util as tide_util
 
 
 def _procOneItemGLM(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"):
@@ -60,7 +59,6 @@ def glmpass(
     fitNorm,
     datatoremove,
     filtereddata,
-    reportstep=1000,
     nprocs=1,
     alwaysmultiproc=False,
     procbyvoxel=True,
@@ -163,6 +161,7 @@ def glmpass(
             for vox in tqdm(
                 range(0, numprocitems),
                 desc="Voxel",
+                unit="voxels",
                 disable=(not showprogressbar),
             ):
                 thedata = fmri_data[vox, :].copy()
@@ -188,6 +187,7 @@ def glmpass(
             for timepoint in tqdm(
                 range(0, numprocitems),
                 desc="Timepoint",
+                unit="timepoints",
                 disable=(not showprogressbar),
             ):
                 thedata = fmri_data[:, timepoint].copy()
@@ -274,7 +274,6 @@ def confoundglm(
     regressors,
     debug=False,
     showprogressbar=True,
-    reportstep=1000,
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
@@ -302,6 +301,7 @@ def confoundglm(
     for i in tqdm(
         range(data.shape[0]),
         desc="Voxel",
+        unit="voxels",
         disable=(not showprogressbar),
     ):
         datatoremove *= 0.0

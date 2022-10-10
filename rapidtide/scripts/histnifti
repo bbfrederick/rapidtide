@@ -216,6 +216,7 @@ def main():
             for spatialloc in tqdm(
                 range(0, numvalidvoxels),
                 desc="Voxel",
+                unit="voxels",
             ):
                 pcts_data[spatialloc, :] = tide_stats.getfracvals(
                     sorteddata[spatialloc, :], thepercentiles
@@ -246,6 +247,7 @@ def main():
         for spatialloc in tqdm(
             range(0, numvalidvoxels),
             desc="Voxel",
+            unit="voxels",
         ):
             if args.nozero:
                 inputarray = validdata[

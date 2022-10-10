@@ -140,13 +140,13 @@ def main():
             oddims = np.roll(oddims, 1, axis=1)
 
         # cycle over all voxels
-        reportstep = 1000
         print("Calculating temporal correlation over all voxels")
         temporalcorrelations = np.zeros((numvalid), dtype=np.double)
         temporalpvalues = np.zeros((numvalid), dtype=np.double)
         for vox in tqdm(
             range(0, numvalid),
             desc="Voxel",
+            unit="voxels",
         ):
             temporalcorrelations[vox], temporalpvalues[vox] = pearsonr(
                 tide_math.stdnormalize(evenims[vox, :]), tide_math.stdnormalize(oddims[vox, :])
@@ -164,13 +164,13 @@ def main():
         tide_io.savetonifti(outarray, temporal_hdr, f"{args.outputroot}_temporalpvalues_{therun}")
 
         # cycle over all timepoints
-        reportstep = 10
         print("Calculating spatial correlation over all subjects")
         spatialcorrelations = np.zeros((numsubjects), dtype=np.double)
         spatialpvalues = np.zeros((numsubjects), dtype=np.double)
         for subject in tqdm(
             range(0, numsubjects),
             desc="Subject",
+            unit="subjects",
         ):
             spatialcorrelations[subject], spatialpvalues[subject] = pearsonr(
                 tide_math.stdnormalize(evenims[:, subject]),

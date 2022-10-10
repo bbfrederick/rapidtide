@@ -190,7 +190,6 @@ def fitcorr(
         themask = None
     else:
         themask = np.where(initiallags > -100000.0, 1, 0)
-    reportstep = 1000
     (
         volumetotal,
         ampfails,
@@ -292,6 +291,7 @@ def fitcorr(
         for vox in tqdm(
             range(0, inputshape[0]),
             desc="Voxel",
+            unit="voxels",
             disable=(not showprogressbar),
         ):
             if themask is None:

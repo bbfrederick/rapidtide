@@ -6,7 +6,6 @@ import sys
 import time
 
 import numpy as np
-from scipy.linalg import pinv
 from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
@@ -298,6 +297,7 @@ def main():
     for voxel in tqdm(
         range(0, numvalid),
         desc="Voxel",
+        unit="voxels",
         disable=(not showprogressbar),
     ):
         # get the voxel data matrix

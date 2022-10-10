@@ -27,8 +27,6 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-
-# from matplotlib.pyplot import figure, plot, show
 from nilearn import masking
 from scipy import ndimage
 from sklearn.decomposition import PCA
@@ -519,6 +517,7 @@ def rapidtide_main(argparsingfunc):
         for i in tqdm(
             range(validstart, validend + 1),
             desc="Timpoint",
+            unit="timepoints",
             disable=(not optiondict["showprogressbar"]),
         ):
             nim_data[:, :, :, i] = tide_filt.ssmooth(
@@ -2307,7 +2306,6 @@ def rapidtide_main(argparsingfunc):
     if optiondict["calccoherence"]:
         TimingLGR.info("Coherence calculation start")
         LGR.info("\n\nCoherence calculation")
-        reportstep = 1000
 
         # make the Coherer
         theCoherer = tide_classes.Coherer(
@@ -2359,7 +2357,6 @@ def rapidtide_main(argparsingfunc):
             coherencefunc,
             coherencepeakval,
             coherencepeakfreq,
-            reportstep,
             alt=True,
             showprogressbar=optiondict["showprogressbar"],
             chunksize=optiondict["mp_chunksize"],
@@ -2419,7 +2416,6 @@ def rapidtide_main(argparsingfunc):
     if optiondict["dodeconv"]:
         TimingLGR.info("Wiener deconvolution start")
         LGR.info("\n\nWiener deconvolution")
-        reportstep = 1000
 
         # now allocate the arrays needed for Wiener deconvolution
         if optiondict["sharedmem"]:
@@ -2436,7 +2432,6 @@ def rapidtide_main(argparsingfunc):
         )
         voxelsprocessed_wiener = wienerpass_func(
             numspatiallocs,
-            reportstep,
             fmri_data_valid,
             threshval,
             optiondict,
@@ -2458,7 +2453,6 @@ def rapidtide_main(argparsingfunc):
     if optiondict["doglmfilt"]:
         TimingLGR.info("GLM filtering start")
         LGR.info("\n\nGLM filtering")
-        reportstep = 1000
         if (optiondict["gausssigma"] > 0.0) or (optiondict["glmsourcefile"] is not None):
             if optiondict["glmsourcefile"] is not None:
                 LGR.info(f"reading in {optiondict['glmsourcefile']} for GLM filter, please wait")
@@ -2559,7 +2553,6 @@ def rapidtide_main(argparsingfunc):
             fitNorm,
             movingsignal,
             filtereddata,
-            reportstep=reportstep,
             nprocs=optiondict["nprocs_glm"],
             alwaysmultiproc=optiondict["alwaysmultiproc"],
             showprogressbar=optiondict["showprogressbar"],

@@ -63,7 +63,6 @@ def coherencepass(
     coherencefunc,
     coherencepeakval,
     coherencepeakfreq,
-    reportstep,
     alt=False,
     chunksize=1000,
     nprocs=1,
@@ -81,7 +80,6 @@ def coherencepass(
     coherencefunc
     coherencepeakval
     coherencepeakfreq
-    reportstep
     chunksize
     nprocs
     alwaysmultiproc
@@ -144,6 +142,7 @@ def coherencepass(
         for vox in tqdm(
             range(0, inputshape[0]),
             desc="Voxel",
+            unit="voxels",
             disable=(not showprogressbar),
         ):
             (

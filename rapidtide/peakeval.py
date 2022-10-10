@@ -115,7 +115,6 @@ def peakevalpass(
 
     inputshape = np.shape(fmridata)
     volumetotal = 0
-    reportstep = 1000
     thetc = np.zeros(np.shape(os_fmri_x), dtype=rt_floattype)
     if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
@@ -169,6 +168,7 @@ def peakevalpass(
         for vox in tqdm(
             range(0, inputshape[0]),
             desc="Voxel",
+            unit="voxels",
             disable=(not showprogressbar),
         ):
             dummy, peakdict[str(vox)] = _procOneVoxelPeaks(

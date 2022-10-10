@@ -278,7 +278,6 @@ def refineregressor(
     else:
         shiftmask = refinemask
     volumetotal = np.sum(shiftmask)
-    reportstep = 1000
 
     # timeshift the valid voxels
     if optiondict["nprocs"] > 1:
@@ -344,6 +343,7 @@ def refineregressor(
         for vox in tqdm(
             range(0, inputshape[0]),
             desc="Voxel timeshifts",
+            unit="voxels",
             disable=(not showprogressbar),
         ):
             if shiftmask[vox] > 0.5:

@@ -27,7 +27,6 @@ from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.util as tide_util
 
 
 def _procOneVoxelWiener(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype="float64"):
@@ -48,7 +47,6 @@ def _procOneVoxelWiener(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype
 
 def wienerpass(
     numspatiallocs,
-    reportstep,
     fmri_data,
     threshval,
     lagtc,
@@ -115,6 +113,7 @@ def wienerpass(
         for vox in tqdm(
             range(0, numspatiallocs),
             desc="Voxel",
+            unit="voxels",
             disable=(not optiondict["showprogressbar"]),
         ):
             inittc = fmri_data[vox, :].copy()

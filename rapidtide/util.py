@@ -31,7 +31,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from numba import jit
-from tqdm import tqdm
 
 import rapidtide._version as tide_versioneer
 import rapidtide.io as tide_io
@@ -322,35 +321,6 @@ def valtoindex(
         return position
     else:
         return int((np.abs(thearray - thevalue)).argmin())
-
-
-class tprogressbar(tqdm):
-    def __init__(
-        self,
-        start_val,
-        end_val,
-        label="Percent",
-        barsize=100,
-        *args,
-        **kwargs,
-    ):
-        self.start_val = start_val
-        self.end_val = end_val
-        self.label = label
-        self.barsize = barsize
-        super(tprogressbar, self).__init__(
-            total=(self.end_val - self.start_val),
-            ncols=barsize,
-            desc=self.label,
-            unit="%",
-            ascii=True,
-            unit_scale=True,
-            *args,
-            **kwargs,
-        )
-
-    def update(self, thisval):
-        super(tprogressbar, self).update(thisval - self.start_val)
 
 
 def progressbar(thisval, end_val, label="Percent", barsize=60):

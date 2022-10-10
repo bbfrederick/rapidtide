@@ -281,6 +281,7 @@ def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showpro
             tqdm(
                 validvoxels,
                 desc="Voxel",
+                unit="voxels",
                 disable=(not showprogressbar),
             )
         ):
@@ -2186,6 +2187,7 @@ def happy_main(argparsingfunc):
         for theslice in tqdm(
             range(numslices),
             desc="Slice",
+            unit="slices",
             disable=(not args.showprogressbar),
         ):
             if args.verbose:
@@ -2545,7 +2547,6 @@ def happy_main(argparsingfunc):
                 fitNorm,
                 datatoremove[validlocs, :],
                 filtereddata[validlocs, :],
-                reportstep=(timepoints // 100),
                 mp_chunksize=10,
                 procbyvoxel=False,
                 nprocs=args.nprocs,

@@ -207,7 +207,8 @@ def phaseproject(
     # now project the data
     for theslice in tqdm(
         range(numslices),
-        desc="Slice",
+        desc="Slice"
+        unit="slices",
     ):
         if args.verbose:
             print("Phase projecting for slice", theslice)
