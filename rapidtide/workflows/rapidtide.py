@@ -32,6 +32,7 @@ import numpy as np
 from nilearn import masking
 from scipy import ndimage
 from sklearn.decomposition import PCA
+from tqdm import tqdm
 
 import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
@@ -515,17 +516,11 @@ def rapidtide_main(argparsingfunc):
             f"applying gaussian spatial filter to timepoints {validstart} "
             f"to {validend} with sigma={optiondict['gausssigma']}"
         )
-        # reportstep = 10
-        pbar = tide_util.tprogressbar(validstart, validend, label="Percent")
-        for i in range(validstart, validend + 1):
-            if optiondict["showprogressbar"]:
-                pbar.update(i)
-            # if (i % reportstep == 0 or i == validend) and optiondict["showprogressbar"]:
-            #    tide_util.progressbar(
-            #        i - validstart + 1,
-            #        validend - validstart + 1,
-            #        label="Percent complete",
-            #    )
+        for i in tqdm(
+            range(validstart, validend + 1),
+            desc="Timpoint",
+            disable=(not optiondict["showprogressbar"]),
+        ):
             nim_data[:, :, :, i] = tide_filt.ssmooth(
                 xdim,
                 ydim,

@@ -166,9 +166,11 @@ def peakevalpass(
             volumetotal += 1
         del data_out
     else:
-        for vox in range(0, inputshape[0]):
-            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and showprogressbar:
-                tide_util.progressbar(vox + 1, inputshape[0], label="Percent complete")
+        for vox in tqdm(
+            range(0, inputshape[0]),
+            desc="Voxel",
+            disable=(not showprogressbar),
+        ):
             dummy, peakdict[str(vox)] = _procOneVoxelPeaks(
                 vox,
                 thetc,
