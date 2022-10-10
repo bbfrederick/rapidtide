@@ -62,7 +62,7 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
                 if ret is not None:
                     data_out.append(ret)
                 numreturned += 1
-                pbar.update(numreturned + offset)
+                pbar.update(1)
                 if numreturned > chunksize - 1:
                     break
 
@@ -80,7 +80,7 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
             if ret is not None:
                 data_out.append(ret)
             numreturned += 1
-            pbar.update(numreturned + offset)
+            pbar.update(1)
             if numreturned > remainder - 1:
                 break
 

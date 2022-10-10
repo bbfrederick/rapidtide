@@ -4,10 +4,10 @@ import copy
 import platform
 import sys
 import time
-from tqdm import tqdm
 
 import numpy as np
 from scipy.linalg import pinv
+from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
@@ -294,7 +294,6 @@ def main():
         print("done removing median values")
 
     print("calculating ICC")
-    reportstep = 100
     iccstarttime = time.time()
     for voxel in tqdm(
         range(0, numvalid),
