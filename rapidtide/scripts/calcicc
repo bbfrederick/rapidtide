@@ -4,6 +4,7 @@ import copy
 import platform
 import sys
 import time
+from tqdm import tqdm
 
 import numpy as np
 from scipy.linalg import pinv
@@ -295,15 +296,11 @@ def main():
     print("calculating ICC")
     reportstep = 100
     iccstarttime = time.time()
-    for voxel in range(numvalid):
-        if not args.deepdebug:
-            if voxel % reportstep == 0 or voxel == numvalid - 1:
-                tide_util.progressbar(
-                    voxel + 1,
-                    numvalid,
-                    label="Percent complete",
-                )
-
+    for voxel in tqdm(
+        range(0, numvalid),
+        desc="Voxel",
+        disable=(not showprogressbar),
+    ):
         # get the voxel data matrix
         Y = validinvms[voxel, :, :]
 

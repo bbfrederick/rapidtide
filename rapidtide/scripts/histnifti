@@ -21,6 +21,7 @@ import copy
 import sys
 
 import numpy as np
+from tqdm import tqdm
 
 import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
@@ -212,17 +213,13 @@ def main():
         # now pull out and save the percentiles
         print("calculating percentiles", flush=True)
         if args.nozero:
-            for spatialloc in range(0, numvalidvoxels):
+            for spatialloc in tqdm(
+                range(0, numvalidvoxels),
+                desc="Voxel",
+            ):
                 pcts_data[spatialloc, :] = tide_stats.getfracvals(
                     sorteddata[spatialloc, :], thepercentiles
                 )
-                if spatialloc % 1000 == 0:
-                    tide_util.progressbar(
-                        spatialloc + 1, numvalidvoxels, label="Percentiles: percent complete"
-                    )
-            tide_util.progressbar(
-                spatialloc + 1, numvalidvoxels, label="Percentiles: percent complete"
-            )
             print()
         else:
             for idx, thispercentile in enumerate(thepercentiles):
@@ -246,7 +243,10 @@ def main():
 
         # cycle over all voxels
         print("calculating histograms", flush=True)
-        for spatialloc in range(0, numvalidvoxels):
+        for spatialloc in tqdm(
+            range(0, numvalidvoxels),
+            desc="Voxel",
+        ):
             if args.nozero:
                 inputarray = validdata[
                     spatialloc, np.where(np.fabs(validdata[spatialloc, :]) > args.nozerothresh)[0]
@@ -260,11 +260,6 @@ def main():
             #    totalval = np.sum(outputhists[spatialloc, :])
             #    if totalval != 0.0:
             #        outputhists[spatialloc, :] /= totalval
-            if spatialloc % 1000 == 0:
-                tide_util.progressbar(
-                    spatialloc + 1, numvalidvoxels, label="Histograms: percent complete"
-                )
-        tide_util.progressbar(spatialloc + 1, numvalidvoxels, label="Histograms: percent complete")
         print()
 
         # save the histogram data
