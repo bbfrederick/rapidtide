@@ -347,13 +347,13 @@ workflows:
   run_tests:
     jobs:
       - test_py36
-      - build_py38
-      - test_py38_cached:
+      #- build_py38
+      #- test_py38_cached:
           requires:
             - build_py38
-      - build_py39
-      - build_py310
-      - build_py311
+      #- build_py39
+      #- build_py310
+      - test_py38
       - test_py39
       - test_py310
       - build_py37
