@@ -351,6 +351,9 @@ workflows:
       - test_py39
       - test_py310
       - build_py37
+      - build_py38
+      - build_py39
+      - build_py310
       - build_docs:
           requires:
             - build_py37
