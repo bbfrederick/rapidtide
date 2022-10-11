@@ -37,7 +37,7 @@ import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
-import rapidtide.util as tide_util
+from tqdm import tqdm
 
 
 def _procOneVoxelTimeShift(
