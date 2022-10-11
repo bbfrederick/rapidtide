@@ -29,6 +29,7 @@ import numpy as np
 from scipy.signal import welch
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA, FastICA
+from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
@@ -37,7 +38,6 @@ import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
-from tqdm import tqdm
 
 
 def _procOneVoxelTimeShift(

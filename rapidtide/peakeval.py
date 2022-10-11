@@ -26,11 +26,11 @@ import gc
 import warnings
 
 import numpy as np
+from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
-from tqdm import tqdm
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 

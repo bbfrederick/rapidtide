@@ -26,10 +26,10 @@ import bisect
 import gc
 
 import numpy as np
+from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
-from tqdm import tqdm
 
 
 def onesimfuncfit(
