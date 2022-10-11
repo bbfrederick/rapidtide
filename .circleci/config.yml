@@ -61,6 +61,131 @@ jobs:
           paths:
             - "/opt/conda/envs/py37_env"
 
+  build_py38:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps2-{{ checksum "setup.py" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py38_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py38_env
+            else
+                conda create -n py38_env python=3.8 -yq
+                source activate py38_env
+                pip install -e .[tests,doc]
+            fi
+            python setup.py install --user
+      - save_cache:  # environment cache tied to requirements
+          key: deps2-{{ checksum "setup.py" }}
+          paths:
+            - "/opt/conda/envs/py38_env"
+
+  build_py39:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps2-{{ checksum "setup.py" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py39_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py39_env
+            else
+                conda create -n py39_env python=3.9 -yq
+                source activate py39_env
+                pip install --upgrade "setuptools>=54"
+                pip install --upgrade pip
+                pip install --upgrade distlib
+                pip install -e .[tests,doc]
+            fi
+            python setup.py install --user
+      - save_cache:  # environment cache tied to requirements
+          key: deps2-{{ checksum "setup.py" }}
+          paths:
+            - "/opt/conda/envs/py39_env"
+
+  build_py310:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps2-{{ checksum "setup.py" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py310_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py310_env
+            else
+                conda create -n py310_env python=3.10 -yq
+                source activate py310_env
+                pip install --upgrade "setuptools>=54"
+                pip install --upgrade pip
+                pip install --upgrade distlib
+                pip install -e .[tests,doc]
+            fi
+            python setup.py install --user
+      - save_cache:  # environment cache tied to requirements
+          key: deps2-{{ checksum "setup.py" }}
+          paths:
+            - "/opt/conda/envs/py310_env"
+
+  build_py311:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps2-{{ checksum "setup.py" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py311_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py311_env
+            else
+                conda create -n py311_env python=3.11 -yq
+                source activate py311_env
+                pip install --upgrade "setuptools>=54"
+                pip install --upgrade pip
+                pip install --upgrade distlib
+                pip install -e .[tests,doc]
+            fi
+            python setup.py install --user
+      - save_cache:  # environment cache tied to requirements
+          key: deps2-{{ checksum "setup.py" }}
+          paths:
+            - "/opt/conda/envs/py311_env"
+
   test_py38:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -85,6 +210,24 @@ jobs:
             apt-get install -yqq make
             source activate py38_env
             py.test --ignore=rapidtide/candidatetests rapidtide
+
+  test_py38_cached:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-{{ checksum "setup.py" }}
+      - run:
+          name: Coverage
+          command:  |
+            apt-get update
+            apt-get install -yqq curl
+            source activate py38_env
+            py.test --ignore=rapidtide/candidatetests rapidtide
+
 
   test_py39:
     working_directory: /tmp/src/rapidtide
