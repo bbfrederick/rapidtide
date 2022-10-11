@@ -7,6 +7,35 @@ orbs:
   codecov: codecov/codecov@1.0.5
 jobs:
 
+  build_py36:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps2-{{ checksum "setup.py" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py36_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py36_env
+            else
+                conda create -n py36_env python=3.6 -yq
+                source activate py36_env
+                pip install -e .[tests,doc]
+            fi
+            python setup.py install --user
+      - save_cache:  # environment cache tied to requirements
+          key: deps2-{{ checksum "setup.py" }}
+          paths:
+            - "/opt/conda/envs/py36_env"
+
   test_py36:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -347,7 +376,13 @@ workflows:
   run_tests:
     jobs:
       - test_py36
-      - test_py38
+      - build_py38
+      - test_py38_cached
+          requires:
+            - build_py38
+      - build_py39
+      - build_py310
+      - build_py311
       - test_py39
       - test_py310
       - build_py37
