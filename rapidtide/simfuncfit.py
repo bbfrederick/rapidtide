@@ -29,7 +29,7 @@ import numpy as np
 
 import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.util as tide_util
+from tqdm import tqdm
 
 
 def onesimfuncfit(
