@@ -344,7 +344,7 @@ def refineregressor(
             range(0, inputshape[0]),
             desc="Voxel timeshifts",
             unit="voxels",
-            disable=(not showprogressbar),
+            disable=(not optiondict["showprogressbar"]),
         ):
             if shiftmask[vox] > 0.5:
                 retvals = _procOneVoxelTimeShift(
