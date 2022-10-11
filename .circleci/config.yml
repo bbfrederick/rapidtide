@@ -72,7 +72,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-38-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -86,7 +86,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-38-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py38_env"
 
@@ -101,7 +101,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-39-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -118,7 +118,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-39-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py39_env"
 
@@ -133,7 +133,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-310-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -150,7 +150,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-310-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py310_env"
 
