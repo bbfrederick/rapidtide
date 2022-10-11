@@ -3123,7 +3123,7 @@ def rapidtide_main(argparsingfunc):
     )
 
     # delete the canary file
-    Path(f"{outputname}_ISRUNNING.txt").unlink(missing_ok=True)
+    Path(f"{outputname}_ISRUNNING.txt").unlink()
 
     # created the finished file
     Path(f"{outputname}_DONE.txt").touch()
