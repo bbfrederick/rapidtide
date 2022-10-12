@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:latest
+FROM fredericklab/basecontainer:0.1.1
 
 # Installing precomputed python packages
 RUN pip install \
