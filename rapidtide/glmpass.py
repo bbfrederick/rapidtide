@@ -23,12 +23,12 @@
 #
 #
 import numpy as np
+from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.util as tide_util
 
 
 def _procOneItemGLM(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"):
@@ -59,7 +59,6 @@ def glmpass(
     fitNorm,
     datatoremove,
     filtereddata,
-    reportstep=1000,
     nprocs=1,
     alwaysmultiproc=False,
     procbyvoxel=True,
@@ -159,9 +158,12 @@ def glmpass(
     else:
         itemstotal = 0
         if procbyvoxel:
-            for vox in range(0, numprocitems):
-                if (vox % reportstep == 0 or vox == numprocitems - 1) and showprogressbar:
-                    tide_util.progressbar(vox + 1, numprocitems, label="Percent complete")
+            for vox in tqdm(
+                range(0, numprocitems),
+                desc="Voxel",
+                unit="voxels",
+                disable=(not showprogressbar),
+            ):
                 thedata = fmri_data[vox, :].copy()
                 if (themask is None) or (themask[vox] > 0):
                     (
@@ -182,11 +184,12 @@ def glmpass(
                     )
                     itemstotal += 1
         else:
-            for timepoint in range(0, numprocitems):
-                if (
-                    timepoint % reportstep == 0 or timepoint == numprocitems - 1
-                ) and showprogressbar:
-                    tide_util.progressbar(timepoint + 1, numprocitems, label="Percent complete")
+            for timepoint in tqdm(
+                range(0, numprocitems),
+                desc="Timepoint",
+                unit="timepoints",
+                disable=(not showprogressbar),
+            ):
                 thedata = fmri_data[:, timepoint].copy()
                 if (themask is None) or (themask[timepoint] > 0):
                     (
@@ -271,7 +274,6 @@ def confoundglm(
     regressors,
     debug=False,
     showprogressbar=True,
-    reportstep=1000,
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
@@ -296,9 +298,12 @@ def confoundglm(
         print("regressors shape:", regressors.shape)
     datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
     filtereddata = data * 0.0
-    for i in range(data.shape[0]):
-        if showprogressbar and (i > 0) and (i % reportstep == 0 or i == data.shape[0] - 1):
-            tide_util.progressbar(i + 1, data.shape[0], label="Percent complete")
+    for i in tqdm(
+        range(data.shape[0]),
+        desc="Voxel",
+        unit="voxels",
+        disable=(not showprogressbar),
+    ):
         datatoremove *= 0.0
         thefit, R = tide_fit.mlregress(regressors, data[i, :])
         if i == 0 and debug:

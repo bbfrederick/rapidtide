@@ -43,7 +43,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-37-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -57,7 +57,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-37-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py37_env"
 
@@ -72,7 +72,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-38-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -86,7 +86,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-38-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py38_env"
 
@@ -101,7 +101,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-39-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -118,7 +118,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-39-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py39_env"
 
@@ -133,7 +133,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-310-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -150,7 +150,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-310-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py310_env"
 
@@ -165,7 +165,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "setup.py" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -182,11 +182,12 @@ jobs:
             fi
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py311_env"
 
-  test_py38:
+  buildandtest_py38:
+
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -211,7 +212,7 @@ jobs:
             source activate py38_env
             py.test --ignore=rapidtide/candidatetests rapidtide
 
-  test_py38_cached:
+  test_py38:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -219,9 +220,9 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-38-{{ checksum "setup.py" }}
       - run:
-          name: Coverage
+          name: Run tests
           command:  |
             apt-get update
             apt-get install -yqq curl
@@ -229,7 +230,7 @@ jobs:
             py.test --ignore=rapidtide/candidatetests rapidtide
 
 
-  test_py39:
+  buildandtest_py39:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -257,7 +258,25 @@ jobs:
             source activate py39_env
             py.test --ignore=rapidtide/candidatetests rapidtide
 
-  test_py310:
+  test_py39:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-39-{{ checksum "setup.py" }}
+      - run:
+          name: Run tests
+          command:  |
+            apt-get update
+            apt-get install -yqq curl
+            source activate py39_env
+            py.test --ignore=rapidtide/candidatetests rapidtide
+
+
+  buildandtest_py310:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -285,6 +304,24 @@ jobs:
             source activate py310_env
             py.test --ignore=rapidtide/candidatetests rapidtide
 
+  test_py310:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-310-{{ checksum "setup.py" }}
+      - run:
+          name: Run tests
+          command:  |
+            apt-get update
+            apt-get install -yqq curl
+            source activate py310_env
+            py.test --ignore=rapidtide/candidatetests rapidtide
+
+
   build_docs:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -293,7 +330,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-37-{{ checksum "setup.py" }}
       - run:
           name: Build documentation
           command: |
@@ -314,7 +351,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-37-{{ checksum "setup.py" }}
       - run:
           name: Linting
           command:  |
@@ -331,7 +368,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-{{ checksum "setup.py" }}
+          key: deps2-37-{{ checksum "setup.py" }}
       - run:
           name: Coverage
           command:  |
@@ -346,10 +383,6 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
-      - test_py36
-      - test_py38
-      - test_py39
-      - test_py310
       - build_py37
       - build_docs:
           requires:
@@ -360,3 +393,15 @@ workflows:
       - test_py37_with_coverage:
           requires:
             - build_py37
+      - build_py38
+      - test_py38:
+          requires:
+            - build_py38
+      - build_py39
+      - test_py39:
+          requires:
+            - build_py39
+      - build_py310
+      - test_py310:
+          requires:
+            - build_py310

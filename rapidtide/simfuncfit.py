@@ -26,10 +26,10 @@ import bisect
 import gc
 
 import numpy as np
+from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.util as tide_util
 
 
 def onesimfuncfit(
@@ -190,7 +190,6 @@ def fitcorr(
         themask = None
     else:
         themask = np.where(initiallags > -100000.0, 1, 0)
-    reportstep = 1000
     (
         volumetotal,
         ampfails,
@@ -289,9 +288,12 @@ def fitcorr(
 
         del data_out
     else:
-        for vox in range(0, inputshape[0]):
-            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and showprogressbar:
-                tide_util.progressbar(vox + 1, inputshape[0], label="Percent complete")
+        for vox in tqdm(
+            range(0, inputshape[0]),
+            desc="Voxel",
+            unit="voxels",
+            disable=(not showprogressbar),
+        ):
             if themask is None:
                 dothisone = True
                 thislag = None

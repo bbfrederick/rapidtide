@@ -25,11 +25,11 @@
 import sys
 
 import numpy as np
+from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.util as tide_util
 
 
 # note: rawtimecourse has been filtered, but NOT windowed
@@ -184,7 +184,12 @@ def getNullDistributionDatax(
     else:
         corrlist = np.zeros((numestreps), dtype=rt_floattype)
 
-        for i in range(0, numestreps):
+        for i in tqdm(
+            range(0, numestreps),
+            desc="Sham correlation",
+            unit="correlations",
+            disable=(not showprogressbar),
+        ):
             # make a shuffled copy of the regressors
             if permutationmethod == "shuffle":
                 permutedtc = np.random.permutation(normalizedreftc)
@@ -212,10 +217,6 @@ def getNullDistributionDatax(
                 rt_floattype=rt_floattype,
             )
             corrlist[i] = thexcorr
-
-            # progress
-            if showprogressbar:
-                tide_util.progressbar(i + 1, numestreps, label="Percent complete")
 
         # jump to line after progress bar
         print()

@@ -23,10 +23,10 @@
 #
 #
 import numpy as np
+from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.util as tide_util
 
 
 def _procOneVoxelWiener(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype="float64"):
@@ -47,7 +47,6 @@ def _procOneVoxelWiener(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype
 
 def wienerpass(
     numspatiallocs,
-    reportstep,
     fmri_data,
     threshval,
     lagtc,
@@ -111,11 +110,12 @@ def wienerpass(
         data_out = []
     else:
         volumetotal = 0
-        for vox in range(0, numspatiallocs):
-            if (vox % reportstep == 0 or vox == numspatiallocs - 1) and optiondict[
-                "showprogressbar"
-            ]:
-                tide_util.progressbar(vox + 1, numspatiallocs, label="Percent complete")
+        for vox in tqdm(
+            range(0, numspatiallocs),
+            desc="Voxel",
+            unit="voxels",
+            disable=(not optiondict["showprogressbar"]),
+        ):
             inittc = fmri_data[vox, :].copy()
             if np.mean(inittc) >= threshval:
                 (

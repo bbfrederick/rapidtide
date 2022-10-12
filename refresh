@@ -3,3 +3,4 @@
 git pull
 cleandirs
 python setup.py install
+rm -rf build dist rapidtide.egg-info

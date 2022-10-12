@@ -20,10 +20,10 @@ import argparse
 
 import numpy as np
 from scipy.stats import pearsonr
+from tqdm import tqdm
 
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
-import rapidtide.util as tide_util
 from rapidtide.workflows.parser_funcs import is_valid_file
 
 
@@ -140,16 +140,17 @@ def main():
             oddims = np.roll(oddims, 1, axis=1)
 
         # cycle over all voxels
-        reportstep = 1000
         print("Calculating temporal correlation over all voxels")
         temporalcorrelations = np.zeros((numvalid), dtype=np.double)
         temporalpvalues = np.zeros((numvalid), dtype=np.double)
-        for vox in range(numvalid):
+        for vox in tqdm(
+            range(0, numvalid),
+            desc="Voxel",
+            unit="voxels",
+        ):
             temporalcorrelations[vox], temporalpvalues[vox] = pearsonr(
                 tide_math.stdnormalize(evenims[vox, :]), tide_math.stdnormalize(oddims[vox, :])
             )
-            if vox % reportstep == 0 or vox == numvalid - 1:
-                tide_util.progressbar(vox + 1, numvalid, label="Percent complete")
         print()
 
         outarray = np.zeros((xsize, ysize, numslices), dtype=np.double)
@@ -163,17 +164,18 @@ def main():
         tide_io.savetonifti(outarray, temporal_hdr, f"{args.outputroot}_temporalpvalues_{therun}")
 
         # cycle over all timepoints
-        reportstep = 10
         print("Calculating spatial correlation over all subjects")
         spatialcorrelations = np.zeros((numsubjects), dtype=np.double)
         spatialpvalues = np.zeros((numsubjects), dtype=np.double)
-        for subject in range(numsubjects):
+        for subject in tqdm(
+            range(0, numsubjects),
+            desc="Subject",
+            unit="subjects",
+        ):
             spatialcorrelations[subject], spatialpvalues[subject] = pearsonr(
                 tide_math.stdnormalize(evenims[:, subject]),
                 tide_math.stdnormalize(oddims[:, subject]),
             )
-            if subject % reportstep == 0 or subject == numsubjects - 1:
-                tide_util.progressbar(subject + 1, numsubjects, label="Percent complete")
         print()
 
         tide_io.writenpvecs(

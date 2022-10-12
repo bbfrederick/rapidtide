@@ -27,12 +27,12 @@ import sys
 import threading as thread
 from platform import python_version, system
 
+from tqdm import tqdm
+
 try:
     import queue as thrQueue
 except ImportError:
     import Queue as thrQueue
-
-import rapidtide.util as tide_util
 
 
 def maxcpus():
@@ -45,46 +45,43 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
     totalnum = len(data_in)
     numchunks = int(totalnum // chunksize)
     remainder = totalnum - numchunks * chunksize
-    if showprogressbar:
-        tide_util.progressbar(0, totalnum, label="Percent complete")
+    with tqdm(total=totalnum, desc="Voxel", disable=(not showprogressbar)) as pbar:
+        # process all of the complete chunks
+        for thechunk in range(numchunks):
+            # queue the chunk
+            for i, dat in enumerate(data_in[thechunk * chunksize : (thechunk + 1) * chunksize]):
+                inQ.put(dat)
+            offset = thechunk * chunksize
 
-    # process all of the complete chunks
-    for thechunk in range(numchunks):
-        # queue the chunk
-        for i, dat in enumerate(data_in[thechunk * chunksize : (thechunk + 1) * chunksize]):
+            # retrieve the chunk
+            numreturned = 0
+            while True:
+                ret = outQ.get()
+                if ret is not None:
+                    data_out.append(ret)
+                numreturned += 1
+                pbar.update(1)
+                if numreturned > chunksize - 1:
+                    break
+
+        # queue the remainder
+        for i, dat in enumerate(
+            data_in[numchunks * chunksize : numchunks * chunksize + remainder]
+        ):
             inQ.put(dat)
-        offset = thechunk * chunksize
-
-        # retrieve the chunk
         numreturned = 0
+        offset = numchunks * chunksize
+
+        # retrieve the remainder
         while True:
             ret = outQ.get()
             if ret is not None:
                 data_out.append(ret)
             numreturned += 1
-            if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
-                tide_util.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
-            if numreturned > chunksize - 1:
+            pbar.update(1)
+            if numreturned > remainder - 1:
                 break
 
-    # queue the remainder
-    for i, dat in enumerate(data_in[numchunks * chunksize : numchunks * chunksize + remainder]):
-        inQ.put(dat)
-    numreturned = 0
-    offset = numchunks * chunksize
-
-    # retrieve the remainder
-    while True:
-        ret = outQ.get()
-        if ret is not None:
-            data_out.append(ret)
-        numreturned += 1
-        if (((numreturned + offset + 1) % reportstep) == 0) and showprogressbar:
-            tide_util.progressbar(numreturned + offset + 1, totalnum, label="Percent complete")
-        if numreturned > remainder - 1:
-            break
-    if showprogressbar:
-        tide_util.progressbar(totalnum, totalnum, label="Percent complete")
     print()
 
     return data_out

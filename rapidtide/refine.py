@@ -29,6 +29,7 @@ import numpy as np
 from scipy.signal import welch
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA, FastICA
+from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
@@ -37,7 +38,6 @@ import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
-import rapidtide.util as tide_util
 
 
 def _procOneVoxelTimeShift(
@@ -278,7 +278,6 @@ def refineregressor(
     else:
         shiftmask = refinemask
     volumetotal = np.sum(shiftmask)
-    reportstep = 1000
 
     # timeshift the valid voxels
     if optiondict["nprocs"] > 1:
@@ -341,13 +340,12 @@ def refineregressor(
 
     else:
         psdlist = []
-        for vox in range(0, inputshape[0]):
-            if (vox % reportstep == 0 or vox == inputshape[0] - 1) and optiondict[
-                "showprogressbar"
-            ]:
-                tide_util.progressbar(
-                    vox + 1, inputshape[0], label="Percent complete (timeshifting)"
-                )
+        for vox in tqdm(
+            range(0, inputshape[0]),
+            desc="Voxel timeshifts",
+            unit="voxels",
+            disable=(not optiondict["showprogressbar"]),
+        ):
             if shiftmask[vox] > 0.5:
                 retvals = _procOneVoxelTimeShift(
                     vox,

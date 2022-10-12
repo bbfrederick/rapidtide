@@ -19,7 +19,6 @@
 import copy
 import os
 import platform
-import sys
 import time
 import warnings
 
@@ -28,6 +27,7 @@ from nilearn import masking
 from scipy.signal import savgol_filter, welch
 from scipy.stats import kurtosis, skew
 from statsmodels.robust import mad
+from tqdm import tqdm
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
@@ -275,12 +275,16 @@ def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showpro
     starttime = time.time()
     # detrend if we are going to
     numspatiallocs = fmri_data.shape[0]
-    reportstep = int(numspatiallocs // 100)
     if detrendorder > 0:
         print("Detrending to order", detrendorder, "...")
-        for idx, thevox in enumerate(validvoxels):
-            if ((idx % reportstep == 0) or (idx == len(validvoxels) - 1)) and showprogressbar:
-                tide_util.progressbar(idx + 1, len(validvoxels), label="Percent complete")
+        for idx, thevox in enumerate(
+            tqdm(
+                validvoxels,
+                desc="Voxel",
+                unit="voxels",
+                disable=(not showprogressbar),
+            )
+        ):
             fmri_data[thevox, :] = tide_fit.detrend(
                 fmri_data[thevox, :], order=detrendorder, demean=False
             )
@@ -2180,9 +2184,12 @@ def happy_main(argparsingfunc):
 
         # now project the data
         fmri_data_byslice = input_data.byslice()
-        for theslice in range(numslices):
-            if args.showprogressbar:
-                tide_util.progressbar(theslice + 1, numslices, label="Percent complete")
+        for theslice in tqdm(
+            range(numslices),
+            desc="Slice",
+            unit="slices",
+            disable=(not args.showprogressbar),
+        ):
             if args.verbose:
                 print("Phase projecting for slice", theslice)
             validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
@@ -2540,7 +2547,6 @@ def happy_main(argparsingfunc):
                 fitNorm,
                 datatoremove[validlocs, :],
                 filtereddata[validlocs, :],
-                reportstep=(timepoints // 100),
                 mp_chunksize=10,
                 procbyvoxel=False,
                 nprocs=args.nprocs,
