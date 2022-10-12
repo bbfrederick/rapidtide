@@ -14,7 +14,7 @@ RUN pip install \
                  pyqtgraph \
                  versioneer \
                  numba \
-                 pyfftw
+                 pyfftw \
                  tqdm
 
 
