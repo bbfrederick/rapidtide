@@ -1,7 +1,9 @@
 # Release history
 
-## Version 2.4.1 (10/7/22)
-* (atlastool) Fixed several bugs and broken functions.
+## Version 2.4.1 (10/12/22)
+* (package) Spruced up all the progress bars with tqdm.
+* (deployment) Improved the testing structure to cache environment builds.
+* (Docker) Build python environment with pip rather than conda now.
 
 ## Version 2.4.0 (10/6/22)
 * (rapidtide) Added enhanced variance removal assesment.
@@ -9,7 +11,6 @@
 * (rapidtide) Output some files indicating run status.
 * (package) Fixed a deprecation warning in pearsonr.
 * (Docker) Now build amd64 and arm64 containers.
-
 
 ## Version 2.3.1 (9/27/22)
 * (Dockerfile) Some tweaks to package versions to try to eliminate error messages.
