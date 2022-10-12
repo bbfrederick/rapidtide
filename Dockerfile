@@ -3,6 +3,7 @@ FROM fredericklab/basecontainer:v0.0.9
 
 # Installing precomputed python packages
 RUN pip install \
+
                  statsmodels \
                  scikit-image \
                  scikit-learn \
@@ -55,14 +56,13 @@ RUN cd /src/rapidtide && \
 
 ENV IS_DOCKER_8395080871=1
 RUN apt-get install -y --reinstall libxcb-xinerama0
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache
 
 
 RUN ldconfig
 WORKDIR /tmp/
-ENTRYPOINT ["/usr/local/bin/rapidtide_dispatcher"]
-
-# set a non-root user
-#USER rapidtide
+RUN ln -s /src/rapidtide/cloud /
+ENTRYPOINT ["/cloud/mount-and-run"]
 
 ARG VERSION
 ARG BUILD_DATE

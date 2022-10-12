@@ -1,0 +1,50 @@
+#!/bin/bash
+
+if [[ -z $INPUT_BUCKET ]]; then
+    # we're not running in cloud mode. just pass through the command.
+    exec "$@"
+fi
+
+# we are in CLOUD MODE!
+
+mkdir /data_in /data_out
+
+# mount data output folder
+if [[ $AWS_EXECUTION_ENV == "AWS_ECS_EC2" ]]; then
+    # AWS Batch
+    S3FS_AUTH_METHOD="-o ecs"
+elif curl -s -m 1 http://169.254.169.254/latest/dynamic/instance-identity/document | grep -q availabilityZone ; then
+    # EC2
+    S3FS_AUTH_METHOD="-o iam_role"
+else
+    echo "Running in cloud mode but outside AWS is not supported."
+    exit 1
+fi
+
+s3fs $S3FS_AUTH_METHOD $OUTPUT_BUCKET /data_out
+
+# mount data input folder
+# credentials injected from AWS Secrets in env variable
+
+s3fs -o passwd_file=<( echo $INPUT_BUCKET_SECRET ) \
+     $INPUT_BUCKET /data_in
+
+for MOUNT in /data_in /data_out; do
+    if ! findmnt -n -P -t fuse.s3fs $MOUNT ; then
+        echo ERROR: $MOUNT is not correctly mounted
+        exit 1
+    fi
+done
+
+if [[ -n $AWS_BATCH_JOB_ARRAY_INDEX ]]; then
+    LINE=$((AWS_BATCH_JOB_ARRAY_INDEX + 1))
+    export PARTICIPANT_FROM_ARRAY=$(sed -n ${LINE}p /data_out/config/$PARTICIPANT_ARRAY_FILE)
+    if [[ -z $PARTICIPANT_FROM_ARRAY ]]; then
+        echo "Failed to retrieve index $AWS_BATCH_JOB_ARRAY_INDEX from $PARTICIPANT_ARRAY_FILE."
+        exit 1
+    fi
+    echo Set PARTICIPANT_FROM_ARRAY=$PARTICIPANT_FROM_ARRAY
+fi
+
+echo Instance type: $(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+exec "$@"

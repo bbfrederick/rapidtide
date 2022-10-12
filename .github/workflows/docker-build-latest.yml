@@ -1,6 +1,7 @@
-name: Upload latest to DockerHub
+name: Upload latest to DockerHub and ECR
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - 'main'
@@ -34,3 +35,11 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: fredericklab/rapidtide:latest
+
+      - name: Copy to public.ecr.aws/l0v4l2q2/rapidtide
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DMD_ECR_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DMD_ECR_SECRET }}
+        run: |
+           aws ecr-public get-login-password --region us-east-1 | skopeo login --username AWS --password-stdin public.ecr.aws/rapidtide-cloud/rapidtide
+           skopeo copy --all docker://fredericklab/rapidtide docker://public.ecr.aws/rapidtide-cloud/rapidtide

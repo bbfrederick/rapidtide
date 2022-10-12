@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.4.1 (10/7/22)
+* (atlastool) Fixed several bugs and broken functions.
+
 ## Version 2.4.0 (10/6/22)
 * (rapidtide) Added enhanced variance removal assesment.
 * (rapidtide) Fixed a rare crashing bug in proctiminglogfile.

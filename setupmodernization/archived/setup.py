@@ -9,10 +9,10 @@ https://github.com/pypa/sampleproject
 from codecs import open
 from os import path
 
+import versioneer
+
 # Always prefer setuptools over distutils
 from setuptools import find_packages, setup
-
-import versioneer
 
 here = path.abspath(path.dirname(__file__))
 
@@ -97,7 +97,6 @@ script_list = [
     "rapidtide/scripts/rapidtide",
     "rapidtide/scripts/rapidtide2std",
     "rapidtide/scripts/rapidtide2x_legacy",
-    "rapidtide/scripts/rapidtide_dispatcher",
     "rapidtide/scripts/resamp1tc",
     "rapidtide/scripts/resamplenifti",
     "rapidtide/scripts/roisummarize",

@@ -1,0 +1,30 @@
+#!/bin/bash
+set -eu
+
+if [[ $# -ne 1 ]]; then
+    echo "Missing participant id."
+    exit 1
+fi
+
+P=$1
+
+if [[ $P == ARRAY ]]; then
+    P=$PARTICIPANT_FROM_ARRAY
+fi
+
+mkdir -p /data_out/HCP_1200/$P
+
+F1=/data_in/HCP_1200/$P/release-notes/bedpostx.txt
+F2=/data_out/HCP_1200/$P/testfile
+echo COPY $P
+cp $F1 $F2
+
+echo CHECK...
+if ! diff $F1 $F2 ; then
+    echo COPY FAILED
+else
+    echo COPY PASSED
+fi
+
+echo CLEANING UP
+rm -f $F2
