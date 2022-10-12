@@ -5,7 +5,7 @@ FROM fredericklab/basecontainer:latest
 RUN pip install \
                  statsmodels \
                  scikit-image \
-                 scikit-learn 
+                 scikit-learn \
                  nilearn \
                  nibabel \
                  h5py \
