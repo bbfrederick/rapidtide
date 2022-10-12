@@ -3,21 +3,18 @@ FROM fredericklab/basecontainer:latest
 
 # Installing precomputed python packages
 RUN pip install \
-
                  statsmodels \
                  scikit-image \
-                 scikit-learn \
-                 pandas \
+                 scikit-learn 
                  nilearn \
                  nibabel \
                  h5py \
                  keras \
                  tensorflow \
                  pyqtgraph \
-                 pyqt5 \
                  versioneer \
                  numba \
-                 pyfftw \
+                 pyfftw
                  tqdm
 
 
