@@ -186,7 +186,7 @@ jobs:
           paths:
             - "/opt/conda/envs/py311_env"
 
-  test_py38:
+  buildandtest_py38:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -211,7 +211,7 @@ jobs:
             source activate py38_env
             py.test --ignore=rapidtide/candidatetests rapidtide
 
-  test_py38_cached:
+  test_py38:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -221,7 +221,7 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-38-{{ checksum "setup.py" }}
       - run:
-          name: Coverage
+          name: Run tests
           command:  |
             apt-get update
             apt-get install -yqq curl
@@ -229,7 +229,7 @@ jobs:
             py.test --ignore=rapidtide/candidatetests rapidtide
 
 
-  test_py39:
+  buildandtest_py39:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -257,7 +257,25 @@ jobs:
             source activate py39_env
             py.test --ignore=rapidtide/candidatetests rapidtide
 
-  test_py310:
+  test_py39:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-39-{{ checksum "setup.py" }}
+      - run:
+          name: Run tests
+          command:  |
+            apt-get update
+            apt-get install -yqq curl
+            source activate py39_env
+            py.test --ignore=rapidtide/candidatetests rapidtide
+
+
+  buildandtest_py310:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -284,6 +302,24 @@ jobs:
             apt-get install -yqq make
             source activate py310_env
             py.test --ignore=rapidtide/candidatetests rapidtide
+
+  test_py310:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-310-{{ checksum "setup.py" }}
+      - run:
+          name: Run tests
+          command:  |
+            apt-get update
+            apt-get install -yqq curl
+            source activate py310_env
+            py.test --ignore=rapidtide/candidatetests rapidtide
+
 
   build_docs:
     working_directory: /tmp/src/rapidtide
@@ -346,17 +382,7 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
-      - test_py36
-      - test_py38
-      - test_py39
-      - test_py310
       - build_py37
-      - build_py38
-      - test_py38_cached:
-          requires:
-            - build_py38
-      - build_py39
-      - build_py310
       - build_docs:
           requires:
             - build_py37
@@ -366,3 +392,15 @@ workflows:
       - test_py37_with_coverage:
           requires:
             - build_py37
+      - build_py38
+      - test_py38:
+          requires:
+            - build_py38
+      - build_py39
+      - test_py39:
+          requires:
+            - build_py39
+      - build_py310
+      - test_py310:
+          requires:
+            - build_py310
