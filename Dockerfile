@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:v0.0.9
+FROM fredericklab/basecontainer:latest
 
 # Installing precomputed python packages
 RUN pip install \
@@ -17,8 +17,9 @@ RUN pip install \
                  pyqt5 \
                  versioneer \
                  numba \
-                 tqdm \
-                 pyfftw
+                 pyfftw \
+                 tqdm
+
 #RUN mamba install -y "pyfftw=0.13.0=py39h51d1ae8_0"; true
 #RUN mamba install -y statsmodels \
 #                     scikit-image \
