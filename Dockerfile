@@ -16,7 +16,7 @@ RUN pip install \
                  numba \
                  pyfftw \
                  tqdm
-RUN pip install requests
+RUN pip install --upgrade --force-reinstall  requests
 
 
 # Create a shared $HOME directory
