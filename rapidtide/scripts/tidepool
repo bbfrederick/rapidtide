@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from nibabel.affines import apply_affine
-from pyqtgraph.Qt import QtCore, QtGui
+from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 from statsmodels.robust.scale import mad
 
 import rapidtide.util as tide_util
@@ -42,7 +42,7 @@ os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
 def selectFile():
     global datafileroot
-    mydialog = QtGui.QFileDialog()
+    mydialog = QtWidgets.QFileDialog()
     options = mydialog.Options()
     lagfilename = mydialog.getOpenFileName(
         options=options,
@@ -1431,9 +1431,9 @@ def main():
     theparser.print_help()
 
     # make the main window
-    app = QtGui.QApplication([])
+    app = QtWidgets.QApplication([])
     print("setting up output window")
-    win = QtGui.QMainWindow()
+    win = QtWidgets.QMainWindow()
     ui = uiTemplate.Ui_MainWindow()
     ui.setupUi(win)
     win.show()
@@ -1704,7 +1704,7 @@ def main():
         theview.hide()
 
     # define things for the popup mask menu
-    popMenu = QtGui.QMenu(win)
+    popMenu = QtWidgets.QMenu(win)
     sel_nomask = QtGui.QAction("No mask", win)
     sel_nomask.triggered.connect(set_nomask)
     sel_lagmask = QtGui.QAction("Valid fit", win)
