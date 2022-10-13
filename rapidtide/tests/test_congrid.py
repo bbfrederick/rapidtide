@@ -121,7 +121,7 @@ def test_congrid(debug=False, display=False):
                     plt.show()
 
                 # do the tests
-                msethresh = 1.5e-2
+                msethresh = 3.0e-2
                 themse = mse(target, griddeddata)
                 if debug:
                     if themse >= msethresh:
