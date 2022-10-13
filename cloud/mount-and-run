@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ $# -eq 0 ]]; then
+    echo "You must select a command! E.g., 'rapidtide'."
+    exit 1
+fi
+
 if [[ -z $INPUT_BUCKET ]]; then
     # we're not running in cloud mode. just pass through the command.
     exec "$@"
