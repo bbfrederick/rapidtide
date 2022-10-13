@@ -34,11 +34,11 @@ RUN cd /src/rapidtide && \
 
 ENV IS_DOCKER_8395080871=1
 
-# reinstall xinerama0 to get pyqt working
-RUN apt-get install -y --reinstall libxcb-xinerama0
+## reinstall xinerama0 to get pyqt working
+#RUN apt-get install -y --reinstall libxcb-xinerama0
 
-# clean up
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache
+## clean up
+#RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache
 
 
 RUN ldconfig
