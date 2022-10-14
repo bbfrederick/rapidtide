@@ -25,12 +25,29 @@ import sys
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
+import rapidtide.util as tide_util
 
 
 class IndicateSpecifiedAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, values)
         setattr(namespace, self.dest + "_nondefault", True)
+
+
+def detailedversion():
+    (
+        release_version,
+        git_longtag,
+        git_date,
+        git_isdirty,
+    ) = tide_util.version()
+    python_version = str(sys.version_info)
+    print(f"release version: {release_version}")
+    print(f"git_longtag: {git_longtag}")
+    print(f"git_date: {git_date}")
+    print(f"git_isdirty: {git_isdirty}")
+    print(f"python_version: {python_version}")
+    sys.exit()
 
 
 def setifnotset(thedict, thekey, theval):
@@ -695,7 +712,8 @@ def setargs(thegetparserfunc, inputargs=None):
             args = thegetparserfunc().parse_args()
             argstowrite = sys.argv
         except SystemExit:
-            thegetparserfunc().print_help()
+            print("Use --help option for detailed informtion on options.")
+            # thegetparserfunc().print_help()
             raise
     else:
         # get arguments from the passed list
@@ -705,7 +723,8 @@ def setargs(thegetparserfunc, inputargs=None):
             args = thegetparserfunc().parse_args(inputargs)
             argstowrite = inputargs
         except SystemExit:
-            thegetparserfunc().print_help()
+            print("Use --help option for detailed informtion on options.")
+            # thegetparserfunc().print_help()
             raise
 
     return args, argstowrite

@@ -1003,13 +1003,14 @@ def _get_parser():
         action="version",
         version=f"%(prog)s {tide_util.version()[0]}",
     )
-    misc.add_argument(
-        "--detailedversion",
-        dest="printversion",
-        action="store_true",
-        help=("Print exhaustive version information and exit."),
-        default=False,
-    )
+    # misc.add_argument(
+    #    "--detailedversion",
+    #    dest="printversion",
+    #    action="store",
+    #    type=pf.detailedversion(),
+    #    help=("Print exhaustive version information and exit."),
+    #    default=None,
+    # )
     misc.add_argument(
         "--noprogressbar",
         dest="showprogressbar",
@@ -1352,14 +1353,6 @@ def process_args(inputargs=None):
         args["git_isdirty"],
     ) = tide_util.version()
     args["python_version"] = str(sys.version_info)
-
-    if args["printversion"]:
-        print(f"release version: {args['release_version']}")
-        print(f"git_longtag: {args['git_longtag']}")
-        print(f"git_date: {args['git_date']}")
-        print(f"git_isdirty: {args['git_isdirty']}")
-        print(f"python_version: {args['python_version']}")
-        sys.exit()
 
     # configure the filter
     theobj, theprefilter = pf.postprocessfilteropts(Namespace(**args))
