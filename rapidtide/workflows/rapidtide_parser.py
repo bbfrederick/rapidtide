@@ -1004,6 +1004,13 @@ def _get_parser():
         version=f"%(prog)s {tide_util.version()[0]}",
     )
     misc.add_argument(
+        "--detailedversion",
+        dest="printversion",
+        action="store_true",
+        help=("Print exhaustive version information and exit."),
+        default=False,
+    )
+    misc.add_argument(
         "--noprogressbar",
         dest="showprogressbar",
         action="store_false",
