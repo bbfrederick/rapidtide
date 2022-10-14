@@ -60,7 +60,6 @@ try:
     mklexists = True
 except ImportError:
     mklexists = False
-print("mklexists:", mklexists)
 
 try:
     from memory_profiler import profile

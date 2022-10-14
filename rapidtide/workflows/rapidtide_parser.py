@@ -999,6 +999,11 @@ def _get_parser():
     # Miscellaneous options
     misc = parser.add_argument_group("Miscellaneous options")
     misc.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {tide_util.version()[0]}",
+    )
+    misc.add_argument(
         "--noprogressbar",
         dest="showprogressbar",
         action="store_false",
@@ -1101,13 +1106,6 @@ def _get_parser():
             "worker processes to n_cpus - 1."
         ),
         default=1,
-    )
-    misc.add_argument(
-        "--version",
-        dest="printversion",
-        action="store_true",
-        help=("Print version information and exit."),
-        default=False,
     )
 
     # Experimental options (not fully tested, may not work)
