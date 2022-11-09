@@ -109,6 +109,13 @@ def _get_parser():
         help="Only process voxels within the 3D mask MASK.",
         default=None,
     )
+    parser.add_argument(
+        "--nodisplay",
+        dest="display",
+        action="store_false",
+        help=("Do not display histogram."),
+        default=True,
+    )
     return parser
 
 
@@ -316,7 +323,7 @@ def main():
             0,
             args.outputroot + "_hist",
             displaytitle="Value histogram",
-            displayplots=True,
+            displayplots=args.display,
             normalize=args.normhist,
             refine=False,
         )
