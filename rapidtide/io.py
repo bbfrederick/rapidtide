@@ -1028,6 +1028,48 @@ def readlabelledtsv(inputfilename):
     return confounddict
 
 
+def readcsv(inputfilename, debug=False):
+    r"""Read time series out of an unlabelled csv file
+
+    Parameters
+    ----------
+    inputfilename : str
+        The root name of the csv (no extension)
+
+    Returns
+    -------
+        timeseriesdict: dict
+            All the timecourses in the file, keyed by the first row if it exists, by "col1, col2...colN"
+            if not.
+
+    NOTE:  If file does not exist or is not valid, return an empty dictionary
+
+    """
+    timeseriesdict = {}
+
+    # Read the data in initially with no header
+    df = pd.read_csv(inputfilename + ".csv", sep=",", quotechar='"')
+
+    # Check to see if the first element is a float
+    try:
+        dummy = np.float(df.columns[0])
+
+        # if we got to here, reread the data, but assume there is no header line
+        if debug:
+            print("there is no header line")
+        colnum = 1
+        for dummy, theseries in df.items():
+            timeseriesdict[f"col_{str(colnum).zfill(4)}"] = theseries.values
+            colnum += 1
+    except ValueError:
+        if debug:
+            print("there is a header line")
+        for thecolname, theseries in df.items():
+            timeseriesdict[thecolname] = theseries.values
+
+    return timeseriesdict
+
+
 def readoptionsfile(inputfileroot):
     if os.path.isfile(inputfileroot + ".json"):
         # options saved as json
@@ -1222,7 +1264,8 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     ----------
     fullfilespec : str
         The file name.  If extension is .tsv or .json, it will be assumed to be either a BIDS tsv, or failing that,
-         a non-BIDS tsv.  If any other extension or no extension, it will be assumed to be a text file.
+         a non-BIDS tsv.  If the extension is .csv, it will be assumed to be a csv file. If any other extension or
+         no extension, it will be assumed to be a plain, whitespace separated text file.
     colspec:  A valid list and/or range of column numbers, or list of column names, or None
     debug : bool
         Output additional debugging information
@@ -1240,7 +1283,7 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         compressed: bool
             True if time data is gzipped (as in a .tsv.gz file).
         filetype: str
-            One of "text", "plaintsv", "bidscontinuous".
+            One of "text", "csv", "plaintsv", "bidscontinuous".
 
     NOTE:  If file does not exist or is not valid, all return values are None"""
 
@@ -1268,11 +1311,14 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         else:
             filetype = "plaintsv"
     else:
-        filetype = "text"
-
+        csvexists = os.path.exists(thefileroot + ".csv")
+        if csvexists:
+            filetype = "csv"
+        else:
+            filetype = "text"
+    print("this is a sanity check")
     if debug:
-        print("filetype determined to be", filetype)
-
+        print(f"filetype of {fullfilespec} determined to be", filetype)
     if filetype == "text":
         # colspec can only be None or a list of integer ranges
         thedata = readvecs(thefilename, colspec=colspec, debug=debug)
@@ -1311,6 +1357,27 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         thesamplerate = None
         thestarttime = None
         compressed = None
+    elif filetype == "csv":
+        thedatadict = readcsv(thefileroot, debug=debug)
+        if colspec is None:
+            thecolumns = list(thedatadict.keys())
+        else:
+            thecolumns = colspec.split(",")
+        if onecol and len(thecolumns) > 1:
+            print("specify a single column from", thefilename)
+            sys.exit()
+        thedatacols = []
+        for thekey in thecolumns:
+            try:
+                thedatacols.append(thedatadict[thekey])
+            except KeyError:
+                print(thefilename, "does not contain column", thekey)
+                sys.exit()
+        thedata = np.array(thedatacols)
+        thesamplerate = None
+        thestarttime = None
+        compressed = None
+
     else:
         print("illegal file type:", filetype)
 
