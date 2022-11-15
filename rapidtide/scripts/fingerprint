@@ -186,6 +186,7 @@ def fingerprint_main(
             startpt = 1
         for i in range(startpt, fitorder + 1):
             columnnames += str(i)
+        # for thequantity in ["mean", "median", "std", "mad", "halfwidth", "kurtosis"]
         newcols.columns = columnnames
         atlaslabels = pd.concat([atlaslabels, newcols], axis=1)
         atlaslabels.to_csv(f"{outputroot}_{str(whichmap).zfill(4)}_fits.tsv", sep="\t")
@@ -211,7 +212,10 @@ def fingerprint_main(
     if nummaps == 1:
         maskmap = themask_data
     else:
-        maskmap = themask_data[:, :, :, 0]
+        if themaskdims[4] > 1:
+            maskmap = themask_data[:, :, :, 0]
+        else:
+            maskmap = themask_data
     maskmap[np.where(maskmap < maskthresh)] = 0.0
     maskmap[np.where(maskmap >= maskthresh)] = 1.0
     maskmap[np.where(atlas_data < 1)] = 0.0
@@ -307,7 +311,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="fingerprint",
         description=(
-            "Fit a rapidtide output map to a canonical delay map, by vascular territory.\n"
+            "Fit a rapidtide output map to a canonical map, by vascular territory, and calculate statistical metrics.\n"
         ),
         allow_abbrev=False,
     )
