@@ -9,8 +9,9 @@ rapidtide \
         --filterband lfo \
         --nolimitoutput \
         --corrtype linear \
+        --offsetinclude sub-RAPIDTIDETEST_cerebellarmask.nii.gz \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_linear
+        ../dst/sub-RAPIDTIDETEST_cerebellaroffsetmask
 
 rapidtide \
 	--spatialfilt 2 \
@@ -20,33 +21,45 @@ rapidtide \
         --norefinedespeckled \
         --filterband lfo \
         --nolimitoutput \
-        --corrtype circular \
-        sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_circular
-
-rapidtide \
-	--spatialfilt 2 \
-        --nprocs -1 \
-        --passes 3 \
-        --similaritymetric hybrid \
-        --norefinedespeckled \
-        --filterband lfo \
-        --nolimitoutput \
-        --corrtype circular \
-        --nowindow \
-        sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_circular_nowin
-
-rapidtide \
-	--spatialfilt 2 \
-        --nprocs -1 \
-        --passes 3 \
-        --similaritymetric hybrid \
-        --norefinedespeckled \
-        --filterband lfo \
-        --nolimitoutput \
-        --zeropadding -1 \
         --corrtype linear \
-        --windowfunc hamming \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_linear_hamming
+        ../dst/sub-RAPIDTIDETEST_nooffsetmask
+
+#rapidtide \
+	##--spatialfilt 2 \
+        #--nprocs -1 \
+        #--passes 3 \
+        #--similaritymetric hybrid \
+        #--norefinedespeckled \
+        #--filterband lfo \
+        #--nolimitoutput \
+        #--corrtype circular \
+        #sub-RAPIDTIDETEST.nii.gz \
+        #../dst/sub-RAPIDTIDETEST_circular
+#
+#rapidtide \
+	#--spatialfilt 2 \
+        #--nprocs -1 \
+        #--passes 3 \
+        #--similaritymetric hybrid \
+        #--norefinedespeckled \
+        #--filterband lfo \
+        #--nolimitoutput \
+        #--corrtype circular \
+        #--nowindow \
+        #sub-RAPIDTIDETEST.nii.gz \
+        #../dst/sub-RAPIDTIDETEST_circular_nowin
+#
+#rapidtide \
+	#--spatialfilt 2 \
+        #--nprocs -1 \
+        #--passes 3 \
+        #--similaritymetric hybrid \
+        #--norefinedespeckled \
+        #--filterband lfo \
+        #--nolimitoutput \
+        #--zeropadding -1 \
+        #--corrtype linear \
+        #--windowfunc hamming \
+        #sub-RAPIDTIDETEST.nii.gz \
+        ####../dst/sub-RAPIDTIDETEST_linear_hamming
