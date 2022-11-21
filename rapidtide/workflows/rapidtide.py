@@ -568,6 +568,17 @@ def rapidtide_main(argparsingfunc):
         istext=optiondict["textio"],
     )
 
+    internaloffsetincludemask, internaloffsetexcludemask = getmaskset(
+        "refine",
+        optiondict["offsetincludename"],
+        optiondict["offsetincludevals"],
+        optiondict["offsetexcludename"],
+        optiondict["offsetexcludevals"],
+        nim_hdr,
+        numspatiallocs,
+        istext=optiondict["textio"],
+    )
+
     tide_util.logmem("after setting masks")
 
     # read or make a mask of where to calculate the correlations
@@ -666,6 +677,7 @@ def rapidtide_main(argparsingfunc):
         )
     else:
         internalglobalmeanexcludemask_valid = None
+
     if internalrefineincludemask is not None:
         internalrefineincludemask_valid = 1.0 * internalrefineincludemask[validvoxels]
         del internalrefineincludemask
@@ -682,6 +694,24 @@ def rapidtide_main(argparsingfunc):
         )
     else:
         internalrefineexcludemask_valid = None
+
+    if internaloffsetincludemask is not None:
+        internaloffsetincludemask_valid = 1.0 * internaloffsetincludemask[validvoxels]
+        del internaloffsetincludemask
+        LGR.info(
+            "internaloffsetincludemask_valid has size: " f"{internaloffsetincludemask_valid.size}"
+        )
+    else:
+        internaloffsetincludemask_valid = None
+    if internaloffsetexcludemask is not None:
+        internaloffsetexcludemask_valid = 1.0 * internaloffsetexcludemask[validvoxels]
+        del internaloffsetexcludemask
+        LGR.info(
+            "internaloffsetexcludemask_valid has size: " f"{internaloffsetexcludemask_valid.size}"
+        )
+    else:
+        internaloffsetexcludemask_valid = None
+
     tide_util.logmem("after selecting valid voxels")
 
     # calculate the initial bandlimited variance if we're going to filter the data
@@ -2029,8 +2059,20 @@ def rapidtide_main(argparsingfunc):
             LGR.info(f"\n\nRegressor refinement, pass {thepass}")
             TimingLGR.info(f"Regressor refinement start, pass {thepass}")
             if optiondict["refineoffset"]:
+                # check that we won't end up excluding all voxels from offset calculation before accepting mask
+                offsetmask = np.uint16(fitmask)
+                if internaloffsetincludemask_valid is not None:
+                    offsetmask[np.where(internaloffsetincludemask_valid == 0)] = 0
+                if thisinternaloffsetexcludemask_valid is not None:
+                    offsetmask[np.where(thisinternaloffsetexcludemask_valid != 0.0)] = 0
+                if tide_stats.getmasksize(overallmask) == 0:
+                    print(
+                        "NB: cannot exclude voxels from offset calculation mask - including for this pass"
+                    )
+                    offsetmask = fitmask
+
                 peaklag, peakheight, peakwidth = tide_stats.gethistprops(
-                    lagtimes[np.where(fitmask > 0)],
+                    lagtimes[np.where(offsetmask > 0)],
                     optiondict["histlen"],
                     pickleft=optiondict["pickleft"],
                     peakthresh=optiondict["pickleftthresh"],
