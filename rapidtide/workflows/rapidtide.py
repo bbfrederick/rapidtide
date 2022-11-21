@@ -2065,7 +2065,7 @@ def rapidtide_main(argparsingfunc):
                     offsetmask[np.where(internaloffsetincludemask_valid == 0)] = 0
                 if internaloffsetexcludemask_valid is not None:
                     offsetmask[np.where(internaloffsetexcludemask_valid != 0.0)] = 0
-                if tide_stats.getmasksize(overallmask) == 0:
+                if tide_stats.getmasksize(offsetmask) == 0:
                     print(
                         "NB: cannot exclude voxels from offset calculation mask - including for this pass"
                     )
