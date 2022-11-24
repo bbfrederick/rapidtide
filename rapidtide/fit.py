@@ -28,6 +28,7 @@ import scipy as sp
 import scipy.special as sps
 from numba import jit
 from scipy.signal import find_peaks, hilbert
+from statsmodels.robust import mad
 
 import rapidtide.util as tide_util
 
@@ -637,6 +638,74 @@ def territorydecomp(
                     thisfit[maskedvoxels] = np.mean(thismap[maskedvoxels])
 
     return fitmap, thecoffs, theRs
+
+
+def territorystats(inputmap, atlas, inputmask=None, debug=False):
+    """
+
+    Parameters
+    ----------
+    inputmap
+    atlas
+    inputmask
+    debug
+
+    Returns
+    -------
+
+    """
+    datadims = len(inputmap.shape)
+    if datadims > 3:
+        nummaps = inputmap.shape[3]
+    else:
+        nummaps = 1
+
+    if nummaps > 1:
+        if inputmask is None:
+            inputmask = inputmap[:, :, :, 0] * 0.0 + 1.0
+    else:
+        if inputmask is None:
+            inputmask = inputmap * 0.0 + 1.0
+
+    tempmask = np.where(inputmask > 0.0, 1, 0)
+    maskdims = len(tempmask.shape)
+    if maskdims > 3:
+        nummasks = tempmask.shape[3]
+    else:
+        nummasks = 1
+
+    statsmap = inputmap * 0.0
+
+    themeans = np.zeros((nummaps, np.max(atlas)))
+    thestds = np.zeros((nummaps, np.max(atlas)))
+    themedians = np.zeros((nummaps, np.max(atlas)))
+    themads = np.zeros((nummaps, np.max(atlas)))
+    if debug:
+        print(f"themeans.shape: {themeans.shape}")
+    for whichmap in range(nummaps):
+        if nummaps == 1:
+            thismap = inputmap
+            thisstats = statsmap
+        else:
+            thismap = inputmap[:, :, :, whichmap]
+            thisstats = statsmap[:, :, :, whichmap]
+        if nummasks == 1:
+            thismask = tempmask
+        else:
+            thismask = tempmask[:, :, :, whichmap]
+        if nummaps > 1:
+            print(f"calculating stats for map {whichmap + 1} of {nummaps}")
+        for i in range(1, np.max(atlas) + 1):
+            if debug:
+                print("calculating stats for territory", i)
+            maskedvoxels = np.where(atlas * thismask == i)
+            if len(maskedvoxels) > 0:
+                themeans[whichmap, i - 1] = np.mean(thismap[maskedvoxels])
+                thestds[whichmap, i - 1] = np.std(thismap[maskedvoxels])
+                themedians[whichmap, i - 1] = np.median(thismap[maskedvoxels])
+                themads[whichmap, i - 1] = mad(thismap[maskedvoxels])
+
+    return statsmap, themeans, thestds, themedians, themads
 
 
 @conditionaljit()
