@@ -1,5 +1,14 @@
 # Release history
 
+## Version 2.4.2 (11/23/22)
+* (rapidtide) Added "offset masks" to set the region that defines "zero" time offset.
+* (fingerprint) Added several new summary statistics for each region.
+* (fingerprint) Allow the use of 3D masks with 4D data.
+* (tidepool) Resolve a deprecation in Qt.
+* (Docker) Cleaned up the containter build.
+* (package) Added ".csv" files as a supported text file type.
+* (package) Improved version handling when in a container.
+
 ## Version 2.4.1 (10/12/22)
 * (package) Spruced up all the progress bars with tqdm.
 * (deployment) Improved the testing structure to cache environment builds.
