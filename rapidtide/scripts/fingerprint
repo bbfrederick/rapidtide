@@ -164,6 +164,12 @@ def fingerprint_main(
         intercept=intercept,
         debug=debug,
     )
+    statsmap, themeans, thestds, themedians, themads = tide_fit.territorystats(
+        themap_data,
+        atlas_data.astype(int),
+        inputmask=themask_data,
+        debug=debug,
+    )
 
     # present the data
     numregions = len(atlaslabelsinput)
@@ -172,10 +178,19 @@ def fingerprint_main(
     else:
         numcoffs = fitorder
     R_array = np.zeros((numregions, nummaps), dtype="float")
+    mean_array = np.zeros((numregions, nummaps), dtype="float")
+    std_array = np.zeros((numregions, nummaps), dtype="float")
+    median_array = np.zeros((numregions, nummaps), dtype="float")
+    mad_array = np.zeros((numregions, nummaps), dtype="float")
+
     coff_array = np.zeros((numcoffs, numregions, nummaps), dtype="float")
     for whichmap in range(nummaps):
         atlaslabels = atlaslabelsinput.copy()
         R_array[:, whichmap] = theRs[whichmap]
+        mean_array[:, whichmap] = themeans[whichmap]
+        std_array[:, whichmap] = thestds[whichmap]
+        median_array[:, whichmap] = themedians[whichmap]
+        mad_array[:, whichmap] = themads[whichmap]
         atlaslabels["R"] = theRs[whichmap]
         newcols = pd.DataFrame(thecoffs[whichmap, :, :])
         coff_array[:, :, whichmap] = np.transpose(thecoffs[whichmap, :, :])
@@ -198,13 +213,19 @@ def fingerprint_main(
     newcols.columns = atlaslabelsinput["Region"]
     newcols.to_csv(f"{outputroot}_allRs.tsv", index=False, sep="\t")
 
+    # save the stats as tsv
+    for thestat in ["mean", "std", "median", "mad"]:
+        newcols = pd.DataFrame(np.transpose(eval(f"{thestat}_array")[:, :]))
+        newcols.columns = atlaslabelsinput["Region"]
+        newcols.to_csv(f"{outputroot}_all{thestat}s.tsv", index=False, sep="\t")
+
     # save the fits
     if intercept:
         startpt = 0
     else:
         startpt = 1
     for i in range(startpt, fitorder + 1):
-        newcols = pd.DataFrame(np.transpose(coff_array[i, :, :]))
+        newcols = pd.DataFrame(np.transpose(coff_array[i - (1 - startpt), :, :]))
         newcols.columns = atlaslabelsinput["Region"]
         newcols.to_csv(f"{outputroot}_fit_O{str(i)}.tsv", index=False, sep="\t")
 
