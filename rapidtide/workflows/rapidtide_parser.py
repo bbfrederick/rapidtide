@@ -814,6 +814,28 @@ def _get_parser():
         default=DEFAULT_SIGMATHRESH,
     )
     reg_ref.add_argument(
+        "--offsetinclude",
+        dest="offsetincludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "Only use voxels in file MASK for determining the zero time offset value "
+            "(if VALSPEC is given, only voxels "
+            "with integral values listed in VALSPEC are used). "
+        ),
+        default=None,
+    )
+    reg_ref.add_argument(
+        "--offsetexclude",
+        dest="offsetexcludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "Do not use voxels in file MASK for determining the zero time offset value "
+            "(if VALSPEC is given, voxels "
+            "with integral values listed in VALSPEC are excluded). "
+        ),
+        default=None,
+    )
+    reg_ref.add_argument(
         "--norefineoffset",
         dest="refineoffset",
         action="store_false",
@@ -1476,6 +1498,22 @@ def process_args(inputargs=None):
     else:
         args["refineexcludename"] = None
         args["refineexcludevals"] = None
+
+    if args["offsetincludespec"] is not None:
+        (args["offsetincludename"], args["offsetincludevals"],) = tide_io.processnamespec(
+            args["offsetincludespec"], "Including voxels where ", "in offset calculation."
+        )
+    else:
+        args["offsetincludename"] = None
+        args["offsetincludevals"] = None
+
+    if args["offsetexcludespec"] is not None:
+        (args["offsetexcludename"], args["offsetexcludevals"],) = tide_io.processnamespec(
+            args["offsetexcludespec"], "Excluding voxels where ", "from offset calculation."
+        )
+    else:
+        args["offsetexcludename"] = None
+        args["offsetexcludevals"] = None
 
     # motion processing
     if args["motionfilespec"] is not None:
