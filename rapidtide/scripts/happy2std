@@ -90,7 +90,11 @@ def transformmaps(
                     os.path.join(theoutputdir, subjroot + outputtag + themap + ".nii.gz")
                 )
                 thecommand = makefslcmd(
-                    inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile,
+                    inputname,
+                    reftarget,
+                    xformfuncmat,
+                    outputname,
+                    warpfile=warpfuncfile,
                 )
 
                 if preponly:
@@ -131,18 +135,18 @@ def _get_parser():
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="rapidtide2std",
-        description="Register rapidtide output maps to standard space.",
+        description="Register happy output maps to standard space.",
         usage="%(prog)s inputfileroot outputdir featdirectory",
     )
     parser.add_argument(
         "inputfileroot",
-        help="the root name of the input NIFTI files (up to but not including the underscore).",
+        help="the root name of the input NIFTI files (up and including the 'desc' but not the underscore).",
     )
     parser.add_argument("outputdir", help="The location for the output files")
     parser.add_argument(
         "featdirectory",
         help=(
-            "Either a feat directory (x.feat) or an fmriprep derivatives"
+            "Either a feat-like directory (x.feat or x.ica) or an fmriprep derivatives"
             "anat directory where the information needed for registration to standard space can be found"
         ),
     )
@@ -251,9 +255,17 @@ def main():
     theoutputdir = os.path.join(os.path.abspath("."), args.outputdir)
     thefileroot = glob.glob(os.path.join(args.inputfileroot + "*app.nii.gz"))[0]
 
-    thefmrimaps = ["arterymap", "mask", "normapp", "veinmap", "vesselmap", "vesselmask"]
+    thefmrimaps = [
+        "normapp_info",
+        "processvoxels_mask",
+        "arteries_map",
+        "veins_map",
+        "vessels_map",
+        "vessels_mask",
+    ]
+
     if args.all:
-        thefmrimaps += ["app", "arteries", "rawapp", "veins", "cine"]
+        thefmrimaps += ["app_info", "cine_info", "maxphase_map", "minphase_map", "rawapp_info"]
 
     absname = os.path.abspath(thefileroot)
     thepath, thebase = os.path.split(absname)
