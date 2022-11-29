@@ -569,7 +569,7 @@ def rapidtide_main(argparsingfunc):
     )
 
     internaloffsetincludemask, internaloffsetexcludemask = getmaskset(
-        "refine",
+        "offset",
         optiondict["offsetincludename"],
         optiondict["offsetincludevals"],
         optiondict["offsetexcludename"],
