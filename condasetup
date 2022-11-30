@@ -14,6 +14,7 @@ conda install \
     nilearn \
     pyfftw \
     numba \
+    pywavelets \
     pyqt \
     pyqtgraph \
     tensorflow \
