@@ -2,5 +2,21 @@
 
 conda create --name rapidtide
 conda activate rapidtide
-conda install nomkl 'numpy>=1.16' scipy matplotlib pandas statsmodels scikit-learn nibabel nilearn pyfftw numba pyqt 'pyqtgraph>=0.11' tensorflow keras
+conda install \
+    nomkl \
+    numpy \
+    scipy \
+    matplotlib \
+    pandas \
+    statsmodels \
+    scikit-learn \
+    nibabel \
+    nilearn \
+    pyfftw \
+    numba \
+    pyqt \
+    pyqtgraph \
+    tensorflow \
+    keras \
+    tqdm
 
