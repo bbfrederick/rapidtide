@@ -188,6 +188,7 @@ setup(
         "requests",
         "statsmodels",
         "tqdm",
+        "pywavelets",
         "numba",
     ],
     # "keras",
