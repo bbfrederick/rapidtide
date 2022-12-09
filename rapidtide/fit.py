@@ -720,9 +720,11 @@ def territorystats(
                 thevariances[whichmap, i - 1] = moment(thismap[maskedvoxels], moment=2)
                 theskewnesses[whichmap, i - 1] = moment(thismap[maskedvoxels], moment=3)
                 thekurtoses[whichmap, i - 1] = moment(thismap[maskedvoxels], moment=4)
-                theentropies[whichmap, i - 1] = np.histogram(
-                    thismap[maskedvoxels], bins=entropybins, range=entropyrange, density=True
-                )[0]
+                theentropies[whichmap, i - 1] = entropy(
+                    np.histogram(
+                        thismap[maskedvoxels], bins=entropybins, range=entropyrange, density=True
+                    )[0]
+                )
 
     return (
         statsmap,
