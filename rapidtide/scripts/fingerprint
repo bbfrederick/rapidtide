@@ -38,6 +38,8 @@ def fingerprint_main(
     fitorder,
     themaskname=None,
     intercept=True,
+    entropybins=101,
+    entropyrange=None,
     maskthresh=0.5,
     debug=False,
 ):
@@ -164,10 +166,41 @@ def fingerprint_main(
         intercept=intercept,
         debug=debug,
     )
-    statsmap, themeans, thestds, themedians, themads = tide_fit.territorystats(
+    (
+        statsmap,
+        themeans,
+        thestds,
+        themedians,
+        themads,
+        thevariances,
+        theskewnesses,
+        thekurtoses,
+        theentropies,
+    ) = tide_fit.territorystats(
         themap_data,
         atlas_data.astype(int),
         inputmask=themask_data,
+        entropybins=entropybins,
+        entropyrange=entropyrange,
+        debug=debug,
+    )
+
+    (
+        residualstatsmap,
+        theresidualmeans,
+        theresidualstds,
+        theresidualmedians,
+        theresidualmads,
+        theresidualvariances,
+        theresidualskewnesses,
+        theresidualkurtoses,
+        theresidualentropies,
+    ) = tide_fit.territorystats(
+        themap_data,
+        atlas_data.astype(int),
+        inputmask=themask_data,
+        entropybins=entropybins,
+        entropyrange=entropyrange,
         debug=debug,
     )
 
@@ -181,16 +214,43 @@ def fingerprint_main(
     mean_array = np.zeros((numregions, nummaps), dtype="float")
     std_array = np.zeros((numregions, nummaps), dtype="float")
     median_array = np.zeros((numregions, nummaps), dtype="float")
+    variance_array = np.zeros((numregions, nummaps), dtype="float")
+    skewness_array = np.zeros((numregions, nummaps), dtype="float")
+    kurtosis_array = np.zeros((numregions, nummaps), dtype="float")
     mad_array = np.zeros((numregions, nummaps), dtype="float")
+    entropy_array = np.zeros((numregions, nummaps), dtype="float")
+    residual_mean_array = np.zeros((numregions, nummaps), dtype="float")
+    residual_std_array = np.zeros((numregions, nummaps), dtype="float")
+    residual_median_array = np.zeros((numregions, nummaps), dtype="float")
+    residual_mad_array = np.zeros((numregions, nummaps), dtype="float")
+    residual_variance_array = np.zeros((numregions, nummaps), dtype="float")
+    residual_skewness_array = np.zeros((numregions, nummaps), dtype="float")
+    residual_kurtosis_array = np.zeros((numregions, nummaps), dtype="float")
+    residual_entropy_array = np.zeros((numregions, nummaps), dtype="float")
 
     coff_array = np.zeros((numcoffs, numregions, nummaps), dtype="float")
     for whichmap in range(nummaps):
         atlaslabels = atlaslabelsinput.copy()
         R_array[:, whichmap] = theRs[whichmap]
+
         mean_array[:, whichmap] = themeans[whichmap]
         std_array[:, whichmap] = thestds[whichmap]
         median_array[:, whichmap] = themedians[whichmap]
         mad_array[:, whichmap] = themads[whichmap]
+        variance_array[:, whichmap] = thevariances[whichmap]
+        skewness_array[:, whichmap] = theskewnesses[whichmap]
+        kurtosis_array[:, whichmap] = thekurtoses[whichmap]
+        entropy_array[:, whichmap] = theentropies[whichmap]
+
+        residual_mean_array[:, whichmap] = theresidualmeans[whichmap]
+        residual_std_array[:, whichmap] = theresidualstds[whichmap]
+        residual_median_array[:, whichmap] = theresidualmedians[whichmap]
+        residual_mad_array[:, whichmap] = theresidualmads[whichmap]
+        residual_variance_array[:, whichmap] = theresidualvariances[whichmap]
+        residual_skewness_array[:, whichmap] = theresidualskewnesses[whichmap]
+        residual_kurtosis_array[:, whichmap] = theresidualkurtoses[whichmap]
+        residual_entropy_array[:, whichmap] = theresidualentropies[whichmap]
+
         atlaslabels["R"] = theRs[whichmap]
         newcols = pd.DataFrame(thecoffs[whichmap, :, :])
         coff_array[:, :, whichmap] = np.transpose(thecoffs[whichmap, :, :])
@@ -201,7 +261,6 @@ def fingerprint_main(
             startpt = 1
         for i in range(startpt, fitorder + 1):
             columnnames += str(i)
-        # for thequantity in ["mean", "median", "std", "mad", "halfwidth", "kurtosis"]
         newcols.columns = columnnames
         atlaslabels = pd.concat([atlaslabels, newcols], axis=1)
         atlaslabels.to_csv(f"{outputroot}_{str(whichmap).zfill(4)}_fits.tsv", sep="\t")
@@ -214,7 +273,24 @@ def fingerprint_main(
     newcols.to_csv(f"{outputroot}_allRs.tsv", index=False, sep="\t")
 
     # save the stats as tsv
-    for thestat in ["mean", "std", "median", "mad"]:
+    for thestat in [
+        "mean",
+        "std",
+        "median",
+        "mad",
+        "variance",
+        "skewness",
+        "kurtosis",
+        "entropy",
+        "residual_mean",
+        "residual_std",
+        "residual_median",
+        "residual_mad",
+        "residual_variance",
+        "residual_skewness",
+        "residual_kurtosis",
+        "residual_entropy",
+    ]:
         newcols = pd.DataFrame(np.transpose(eval(f"{thestat}_array")[:, :]))
         newcols.columns = atlaslabelsinput["Region"]
         newcols.to_csv(f"{outputroot}_all{thestat}s.tsv", index=False, sep="\t")
@@ -399,6 +475,27 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--entropybins",
+        help="number of bins in the entropy histogram (default is 101).",
+        type=int,
+        default=101,
+    )
+
+    parser.add_argument(
+        "--entropyrange",
+        dest="entropyrange",
+        action="store",
+        nargs=2,
+        type=float,
+        metavar=("LOWERLIM", "UPPERLIM"),
+        help=(
+            "Upper and lower limits of the range for the entropy histogram "
+            "(default is to use data min and max)."
+        ),
+        default=None,
+    )
+
+    parser.add_argument(
         "--limittomask",
         help="only calculate fitdiff in masked region",
         action="store_true",
@@ -464,6 +561,8 @@ if __name__ == "__main__":
         args.fitorder,
         intercept=not (args.nointercept),
         themaskname=args.maskname,
+        entropybins=args.entropybins,
+        entropyrange=args.entropyrange,
         maskthresh=args.maskthresh,
         debug=args.debug,
     )
