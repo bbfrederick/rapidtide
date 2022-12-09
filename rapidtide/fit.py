@@ -694,6 +694,8 @@ def territorystats(
             thevoxels = inputmap
         entropyrange = [np.min(thevoxels), np.max(thevoxels)]
     if debug:
+        print(f"entropy bins: {entropybins}")
+        print(f"entropy range: {entropyrange}")
         print(f"themeans.shape: {themeans.shape}")
     for whichmap in range(nummaps):
         if nummaps == 1:
