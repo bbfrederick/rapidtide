@@ -683,6 +683,9 @@ def territorystats(
     thestds = np.zeros((nummaps, np.max(atlas)))
     themedians = np.zeros((nummaps, np.max(atlas)))
     themads = np.zeros((nummaps, np.max(atlas)))
+    thevariances = np.zeros((nummaps, np.max(atlas)))
+    theskewnesses = np.zeros((nummaps, np.max(atlas)))
+    thekurtoses = np.zeros((nummaps, np.max(atlas)))
     theentropies = np.zeros((nummaps, np.max(atlas)))
     if entropyrange is None:
         if inputmask is not None:
