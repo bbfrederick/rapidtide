@@ -10,8 +10,8 @@ rapidtide \
         --nolimitoutput \
         --corrtype linear \
         --offsetinclude sub-RAPIDTIDETEST_cerebellarmask.nii.gz \
-        sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_cerebellaroffsetmask
+        sub-HAPPYTEST.nii.gz \
+        ../dst/sub-HAPPYTESTRAPIDTIDE
 
 rapidtide \
 	--spatialfilt 2 \
