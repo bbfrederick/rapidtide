@@ -1,6 +1,6 @@
 # Release history
 
-## Version 2.4.2 (11/23/22)
+## Version 2.4.2 (12/9/22)
 * (rapidtide) Added "offset masks" to set the region that defines "zero" time offset.
 * (fingerprint) Added several new summary statistics for each region.
 * (fingerprint) Allow the use of 3D masks with 4D data.

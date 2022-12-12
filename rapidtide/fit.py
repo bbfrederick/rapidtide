@@ -28,6 +28,7 @@ import scipy as sp
 import scipy.special as sps
 from numba import jit
 from scipy.signal import find_peaks, hilbert
+from scipy.stats import entropy, moment
 from statsmodels.robust import mad
 
 import rapidtide.util as tide_util
@@ -640,7 +641,9 @@ def territorydecomp(
     return fitmap, thecoffs, theRs
 
 
-def territorystats(inputmap, atlas, inputmask=None, debug=False):
+def territorystats(
+    inputmap, atlas, inputmask=None, entropybins=101, entropyrange=None, debug=False
+):
     """
 
     Parameters
@@ -680,7 +683,19 @@ def territorystats(inputmap, atlas, inputmask=None, debug=False):
     thestds = np.zeros((nummaps, np.max(atlas)))
     themedians = np.zeros((nummaps, np.max(atlas)))
     themads = np.zeros((nummaps, np.max(atlas)))
+    thevariances = np.zeros((nummaps, np.max(atlas)))
+    theskewnesses = np.zeros((nummaps, np.max(atlas)))
+    thekurtoses = np.zeros((nummaps, np.max(atlas)))
+    theentropies = np.zeros((nummaps, np.max(atlas)))
+    if entropyrange is None:
+        if inputmask is not None:
+            thevoxels = inputmap(np.where(inputmask))
+        else:
+            thevoxels = inputmap
+        entropyrange = [np.min(thevoxels), np.max(thevoxels)]
     if debug:
+        print(f"entropy bins: {entropybins}")
+        print(f"entropy range: {entropyrange}")
         print(f"themeans.shape: {themeans.shape}")
     for whichmap in range(nummaps):
         if nummaps == 1:
@@ -704,8 +719,26 @@ def territorystats(inputmap, atlas, inputmask=None, debug=False):
                 thestds[whichmap, i - 1] = np.std(thismap[maskedvoxels])
                 themedians[whichmap, i - 1] = np.median(thismap[maskedvoxels])
                 themads[whichmap, i - 1] = mad(thismap[maskedvoxels])
+                thevariances[whichmap, i - 1] = moment(thismap[maskedvoxels], moment=2)
+                theskewnesses[whichmap, i - 1] = moment(thismap[maskedvoxels], moment=3)
+                thekurtoses[whichmap, i - 1] = moment(thismap[maskedvoxels], moment=4)
+                theentropies[whichmap, i - 1] = entropy(
+                    np.histogram(
+                        thismap[maskedvoxels], bins=entropybins, range=entropyrange, density=True
+                    )[0]
+                )
 
-    return statsmap, themeans, thestds, themedians, themads
+    return (
+        statsmap,
+        themeans,
+        thestds,
+        themedians,
+        themads,
+        thevariances,
+        theskewnesses,
+        thekurtoses,
+        theentropies,
+    )
 
 
 @conditionaljit()

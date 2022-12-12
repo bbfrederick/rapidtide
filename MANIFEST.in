@@ -1,8 +1,9 @@
-recursive-include cloud
+recursive-include cloud *
 include *.md *.rst *.in
-include rapidtide *.py *.ui
-include rapidtide/scripts *
-recursive-include rapidtide/workflows.py *
+include rapidtide/*.py
+include rapidtide/*.ui
+recursive-include rapidtide/scripts *
+recursive-include rapidtide/workflows *.py
 #recursive-include rapidtide/tests/tmp *
 recursive-include rapidtide/data/reference JHU-ArterialTerritoriesNoVent-LVL*regions.txt
 recursive-include rapidtide/data/reference JHU-ArterialTerritoriesNoVent-LVL*2mm.nii.gz
