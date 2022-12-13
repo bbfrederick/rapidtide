@@ -1,0 +1,102 @@
+<atlas>
+
+  <!-- The header defines the atlas name, type,
+       and paths to the atlas image files. -->
+  <header>
+
+    <!-- Human-readable atlas name -->
+    <name>JHU Arterial Territory Atlas, Level 1</name>
+
+    <!-- Abbreviated atlas name -->
+    <shortname>JHU-LVL1</shortname>
+
+    <!-- Atlas type - "Probabilistic" or "Label" -->
+    <type>Label</type>
+
+    <!-- Paths (defined relative to the location
+         of this XML file) to the atlas images.
+         Multiple <images> elements may be present
+         - one for each resolution in which the
+         atlas is available. -->
+    <images>
+
+      <!-- If the atlas type is "Probabilistic", the
+           <imagefile> must be a path to a 4D image
+           which contains one volume per region.
+           Otherwise, if the atlas type is "Label",
+           the <imagefile> must be a path to 3D
+           label image. -->
+      <imagefile>/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm</imagefile>
+
+      <!-- If the atlas type is "Probabilistic", the
+           <summaryimagefile> must be a path to a 3D
+           label image which 'summarises' the
+           probabilistic image. If the atlas type is
+           "Label", the <summaryimagefile> is identical
+           to the <imagefile>. There must be a
+           <summaryimagefile> for every <imagefile>. -->
+      <summaryimagefile>/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm</summaryimagefile>
+    </images>
+
+    <!-- A 1mm version of the same atlas images. -->
+    <images>
+      <imagefile>/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_1mm</imagefile>
+      <summaryimagefile>/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_1mm</summaryimagefile>
+    </images>
+  </header>
+
+  <!-- The <data> element contains descriptions
+       of all regions in the atlas. -->
+  <data>
+
+    <!-- Every region in the atlas has a <label> element which defines:
+
+         - The "index". For probabilistic atlases, this is the index
+           of the corresponding volume in the 4D image file. For
+           label images, the index is the value of voxels which
+           are in the corresponding region. For 3D summary images of
+           probabilistic atlases, add 1 to the index to get the
+           label value.
+
+         - The "x", "y", and "z" coordinates of a pre-
+           calculated "centre-of-gravity" for this region.
+           These are specified as voxel coordinates,
+           relative to the *first* image in the <images>
+           list, above.
+
+         - The name of the region. -->
+
+    <label index="1" x="51" y="62" z="59">Anterior cerebral artery left (ACAL)</label>
+    <label index="2" x="39" y="60" z="59">Anterior cerebral artery right (ACAR)</label>
+    <label index="3" x="49" y="67" z="46">Medial lenticulostriate left (MLSL)</label>
+    <label index="4" x="40" y="68" z="45">Medial lenticulostriate right (MSLR)</label>
+    <label index="5" x="56" y="63" z="40">Lateral lenticulostriate left (LLSL)</label>
+    <label index="6" x="34" y="63" z="40">Lateral lenticulostriate right (LLSR)</label>
+    <label index="7" x="61" y="77" z="44">Frontal pars of middle cerebral artery left (MCAFL)</label>
+    <label index="8" x="28" y="77" z="44">Frontal pars of middle cerebral artery right (MCAFR)</label>
+    <label index="9" x="67" y="44" z="57">Parietal pars of middle cerebral artery left (MCAPL)</label>
+    <label index="10" x="22" y="44" z="57">Parietal pars of middle cerebral artery right (MCAPR)</label>
+    <label index="11" x="68" y="54" z="30">Temporal pars of middle cerebral artery left (MCATL)</label>
+    <label index="12" x="21" y="54" z="30">Temporal pars of middle cerebral artery right (MCATR)</label>
+    <label index="13" x="65" y="26" z="44">Occipital pars of middle cerebral artery left (MCAOL)</label>
+    <label index="14" x="24" y="26" z="44">Occipital pars of middle cerebral artery right (MCAOR)</label>
+    <label index="15" x="63" y="64" z="36">Insular pars of middle cerebral artery left (MCAIL)</label>
+    <label index="16" x="27" y="65" z="36">Insular pars of middle cerebral artery right (MCAIR)</label>
+    <label index="17" x="64" y="43" z="27">Temporal pars of posterior cerebral artery left (PCATL)</label>
+    <label index="18" x="25" y="43" z="28">Temporal pars of posterior cerebral artery right (PCATR)</label>
+    <label index="19" x="53" y="25" z="42">Occipital pars of posterior cerebral artery left (PCAOL)</label>
+    <label index="20" x="35" y="26" z="42">Occipital pars of posterior cerebral artery right (PCAOR)</label>
+    <label index="21" x="51" y="53" z="37">Posterior choroidal and thalamoperfurators left (PCTPL)</label>
+    <label index="22" x="39" y="53" z="36">Posterior choroidal and thalamoperfurators right (PCTPR)</label>
+    <label index="23" x="59" y="51" z="30">Anterior choroidal and thalamoperfurators left (ACTPL)</label>
+    <label index="24" x="31" y="51" z="30">Anterior choroidal and thalamoperfurators right (ACTPR)</label>
+    <label index="25" x="49" y="47" z="17">Basilar left (BL)</label>
+    <label index="26" x="41" y="47" z="17">Basilar right (BR)</label>
+    <label index="27" x="54" y="35" z="25">Superior cerebellar left (SCL)</label>
+    <label index="28" x="35" y="36" z="25">Superior cerebellar right (SCR)</label>
+    <label index="29" x="58" y="31" z="15">Inferior cerebellar left (ICL)</label>
+    <label index="30" x="33" y="32" z="15">Inferior cerebellar right (ICR)</label>
+    <label index="31" x="52" y="55" z="43">Lateral ventricle left (LVL)</label>
+    <label index="32" x="37" y="53" z="43">Lateral ventricle right (LVR)</label>
+  </data>
+</atlas>

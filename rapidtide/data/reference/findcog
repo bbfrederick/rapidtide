@@ -1,0 +1,14 @@
+#!/bin/bash
+
+filename=JHU-ArterialTerritories-LVL1_space-MNI152NLin6Asym_2mm.nii.gz
+
+for region in `seq 32`
+do
+    lower=`echo ${region} | awk '{print $1-0.1}'`
+    upper=`echo ${region} | awk '{print $1+0.1}'`
+    thestats=`fslstats ${filename} -l ${lower} -u ${upper} -C`
+    thex=`echo ${thestats} | awk '{printf("%d", $1+0.5)}'`
+    they=`echo ${thestats} | awk '{printf("%d", $2+0.5)}'`
+    thez=`echo ${thestats} | awk '{printf("%d", $3+0.5)}'`
+    echo "<label index="\"${region}\"" x="\"${thex}\"" y="\"${they}\"" z="\"${thez}\"">"
+done
