@@ -5,10 +5,10 @@
   <header>
 
     <!-- Human-readable atlas name -->
-    <name>JHU Arterial Territory Atlas, Level 1</name>
+    <name>JHU Arterial Territory Atlas, No Ventricles, Level 1</name>
 
     <!-- Abbreviated atlas name -->
-    <shortname>JHU-LVL1</shortname>
+    <shortname>JHU-Arterial-LVL1</shortname>
 
     <!-- Atlas type - "Probabilistic" or "Label" -->
     <type>Label</type>
@@ -66,6 +66,7 @@
 
          - The name of the region. -->
 
+    <label index="0" x="0" y="0" z="0">Unclassified</label>
     <label index="1" x="51" y="62" z="59">Anterior cerebral artery left (ACAL)</label>
     <label index="2" x="39" y="60" z="59">Anterior cerebral artery right (ACAR)</label>
     <label index="3" x="49" y="67" z="46">Medial lenticulostriate left (MLSL)</label>
@@ -96,7 +97,5 @@
     <label index="28" x="35" y="36" z="25">Superior cerebellar right (SCR)</label>
     <label index="29" x="58" y="31" z="15">Inferior cerebellar left (ICL)</label>
     <label index="30" x="33" y="32" z="15">Inferior cerebellar right (ICR)</label>
-    <label index="31" x="52" y="55" z="43">Lateral ventricle left (LVL)</label>
-    <label index="32" x="37" y="53" z="43">Lateral ventricle right (LVR)</label>
   </data>
 </atlas>
