@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+import matplotlib.pyplot as plt
+import rapidtide.filter as tide_filt
+import numpy as np
+
+thefilter = tide_filt.NoncausalFilter()
+thefilter.settype("lfo")
+Fs = 2.0
+normalizedreftc = thefilter.apply(Fs, np.random.rand(1000))
+
+rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(normalizedreftc)
+
+for permutationmethod in ["phaserandom", "shuffle"]:
+    for i in range(10):
+        if permutationmethod == "shuffle":
+            permutedtc = np.random.permutation(normalizedreftc)
+        elif permutationmethod == "phaserandom":
+            scrambledphase = rawtcfft_ang + 0.0
+            scrambledphase[1:] = np.random.permutation(rawtcfft_ang[1:])
+            permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, scrambledphase).real
+        else:
+            print(f"illegal permutation method {permutationmethod}")
+            sys.exit()
+        #permutedtc = thefilter.apply(Fs, permutedtc)
+        #plt.plot(normalizedreftc)
+        #plt.plot(permutedtc + 0.2)
+        plt.plot(rawtcfft_ang)
+        plt.show()

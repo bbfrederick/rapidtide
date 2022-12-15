@@ -52,14 +52,13 @@ def _procOneNullCorrelationx(
     # make a shuffled copy of the regressors
     if permutationmethod == "shuffle":
         permutedtc = np.random.permutation(normalizedreftc)
+        # apply the appropriate filter
+        # permutedtc = theCorrelator.ncprefilter.apply(Fs, permutedtc)
     elif permutationmethod == "phaserandom":
         permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.permutation(rawtcfft_ang))
     else:
         print("illegal shuffling method")
         sys.exit()
-
-    # apply the appropriate filter
-    # permutedtc = theCorrelator.ncprefilter.apply(Fs, permutedtc)
 
     # crosscorrelate with original
     thexcorr_y, thexcorr_x, dummy = theCorrelator.run(permutedtc)
