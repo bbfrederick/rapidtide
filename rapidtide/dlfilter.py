@@ -869,69 +869,6 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.model.compile(optimizer="adam", loss="mse")
 
 
-"""
-class SepCNNDLFilter(DeepLearningFilter):
-    def __init__(self, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
-        self.num_filters = num_filters
-        self.kernel_size = kernel_size
-        self.dilation_rate = dilation_rate
-        self.infodict['nettype'] = 'sepcnn'
-        self.infodict['num_filters'] = self.num_filters
-        self.infodict['kernel_size'] = self.kernel_size
-        super(sepcnn, self).__init__(*args, **kwargs)
-
-    def getname(self):
-        self.modelname = '_'.join(['model',
-                                   'sepcnn',
-                                   'w' + str(self.window_size),
-                                   'l' + str(self.num_layers),
-                                   'fn' + str(self.num_filters),
-                                   'fl' + str(self.kernel_size),
-                                   'e' + str(self.num_epochs),
-                                   't' + str(self.excludethresh),
-                                   's' + str(self.step),
-                                   'd' + str(self.dilation_rate),
-                                   self.activation])
-        if self.usebadpts:
-            self.modelname += '_usebadpts'
-        if self.excludebysubject:
-            self.modelname += '_excludebysubject'
-        if self.namesuffix is not None:
-            self.modelname += '_' + self.namesuffix
-        self.modelpath = os.path.join(self.modelroot, self.modelname)
-
-        try:
-            os.makedirs(self.modelpath)
-        except OSError:
-            pass
-
-    def makenet(self):
-        self.model = Sequential()
-
-        # make the input layer
-        self.model.add(SeparableConvolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding='same',
-                                     input_shape=(None, self.inputsize)))
-        self.model.add(BatchNormalization())
-        self.model.add(Dropout(rate=self.dropout_rate))
-        self.model.add(Activation(self.activation))
-
-        # make the intermediate layers
-        for layer in range(self.num_layers - 2):
-            self.model.add(SeparableConvolution1D(filters=self.num_filters,
-                                         kernel_size=self.kernel_size,
-                                         dilation_rate=self.dilation_rate,
-                                         padding='same'))
-            self.model.add(BatchNormalization())
-            self.model.add(Dropout(rate=self.dropout_rate))
-            self.model.add(Activation(self.activation))
-
-        # make the output layer
-        self.model.add(SeparableConvolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding='same'))
-        self.model.compile(optimizer=RMSprop(),
-                           loss='mse')
-"""
-
-
 class LSTMDLFilter(DeepLearningFilter):
     def __init__(self, num_units=16, *args, **kwargs):
         self.num_units = num_units
