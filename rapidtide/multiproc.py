@@ -97,6 +97,7 @@ def run_multiproc(
     chunksize=1000,
 ):
     # initialize the workers and the queues
+    __spec__ = None
     n_workers = nprocs
     versioninfo = python_version().split(".")
     if (versioninfo[0] == "3") and (versioninfo[1] >= "8") and (system() != "Windows"):

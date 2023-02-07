@@ -1143,6 +1143,18 @@ def _get_parser():
         "Experimental options (not fully tested, may not work)"
     )
     experimental.add_argument(
+        "--spacetolerance",
+        dest="spacetolerance",
+        action="store",
+        type=float,
+        metavar="EPSILON",
+        help=(
+            "When checking to see if the spatial dimensions of two NIFTI files match, allow a relative difference "
+            "of EPSILON in any dimension.  By default, this is set to 0.0, requiring an exact match. "
+        ),
+        default=0.0,
+    )
+    experimental.add_argument(
         "--echocancel",
         dest="echocancel",
         action="store_true",

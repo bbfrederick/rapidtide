@@ -585,7 +585,7 @@ def fmritimeinfo(niftifilename):
     return tr, timepoints
 
 
-def checkspacematch(hdr1, hdr2, tolerance=1.0e-4):
+def checkspacematch(hdr1, hdr2, tolerance=1.0e-3):
     r"""Check the headers of two nifti files to determine if the cover the same volume at the same resolution (within tolerance)
 
     Parameters
@@ -606,7 +606,7 @@ def checkspacematch(hdr1, hdr2, tolerance=1.0e-4):
     return dimmatch and resmatch
 
 
-def checkspaceresmatch(sizes1, sizes2, tolerance=1.0e-4):
+def checkspaceresmatch(sizes1, sizes2, tolerance=1.0e-3):
     r"""Check the spatial pixdims of two nifti files to determine if they have the same resolution (within tolerance)
 
     Parameters
@@ -627,7 +627,7 @@ def checkspaceresmatch(sizes1, sizes2, tolerance=1.0e-4):
     for i in range(1, 4):
         if np.fabs(sizes1[i] - sizes2[i]) > sizes1[i] * tolerance:
             print(f"File spatial resolutions do not match within tolerance of {tolerance}")
-            print("sizeension ", i, ":", sizes1[i], "!=", sizes2[i])
+            print("size of dimension ", i, ":", sizes1[i], "!=", sizes2[i])
             return False
         else:
             return True
