@@ -625,9 +625,10 @@ def checkspaceresmatch(sizes1, sizes2, tolerance=1.0e-3):
 
     """
     for i in range(1, 4):
-        if np.fabs(sizes1[i] - sizes2[i]) > sizes1[i] * tolerance:
+        fracdiff = np.fabs(sizes1[i] - sizes2[i]) / sizes1[i]
+        if fracdiff > tolerance:
             print(f"File spatial resolutions do not match within tolerance of {tolerance}")
-            print("size of dimension ", i, ":", sizes1[i], "!=", sizes2[i])
+            print(f"\tsize of dimension {i}: {sizes1[i]} != {sizes2[i]} ({fracdiff} difference)")
             return False
         else:
             return True
