@@ -1,18 +1,17 @@
 # Release history
 
-## Version 2.4.3 (2/8/23)
+## Version 2.4.2 (2/8/22)
 * (rapidtide) Added ability set a threshold value for "equivalence" of spatial dimensions of NIFTI files (rather than requiring an exact match) using the --spatialtolerance option.
-* (multiproc) Critical bug fix for multiprocessing in python versions 3.10 and above.
-* (tidepool) Made tidepool less chatty by default (default verbosity is now 0).
-
-## Version 2.4.2 (12/9/22)
 * (rapidtide) Added "offset masks" to set the region that defines "zero" time offset.
 * (fingerprint) Added several new summary statistics for each region.
 * (fingerprint) Allow the use of 3D masks with 4D data.
 * (tidepool) Resolve a deprecation in Qt.
+* (tidepool) Made tidepool less chatty by default (default verbosity is now 0).
 * (Docker) Cleaned up the containter build.
+* (package) Critical bug fix for multiprocessing in python versions 3.10 and above ("10" < "8"!  Who knew?)
 * (package) Added ".csv" files as a supported text file type.
 * (package) Improved version handling when in a container.
+* (reference) Added XML files to make the JHU arterial atlases loadable in FSLeyes.
 
 ## Version 2.4.1 (10/12/22)
 * (package) Spruced up all the progress bars with tqdm.
