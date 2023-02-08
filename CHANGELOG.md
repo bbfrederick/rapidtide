@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.4.3 (2/7/23)
+* (rapidtide) Added ability set a threshold value for "equivalence" of spatial dimensions of NIFTI files (rather than requiring an exact match).
+* (multiproc) Critical bug fix for multiprocessing in python versions 3.10 and above.
+
 ## Version 2.4.2 (12/9/22)
 * (rapidtide) Added "offset masks" to set the region that defines "zero" time offset.
 * (fingerprint) Added several new summary statistics for each region.
