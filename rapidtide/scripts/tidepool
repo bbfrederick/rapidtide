@@ -2175,7 +2175,7 @@ def main():
     updateUI(callingfunc="main thread", orthoimages=True, focusvals=True)
     updateRegressor()
 
-    QtGui.QApplication.instance().exec_()
+    QtWidgets.QApplication.instance().exec_()
 
 
 if __name__ == "__main__":
