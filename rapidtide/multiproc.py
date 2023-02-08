@@ -97,9 +97,10 @@ def run_multiproc(
     chunksize=1000,
 ):
     # initialize the workers and the queues
+    __spec__ = None
     n_workers = nprocs
     versioninfo = python_version().split(".")
-    if (versioninfo[0] == "3") and (versioninfo[1] >= "8") and (system() != "Windows"):
+    if (versioninfo[0] == "3") and (int(versioninfo[1]) >= 8) and (system() != "Windows"):
         ctx = mp.get_context("fork")
         inQ = ctx.Queue()
         outQ = ctx.Queue()

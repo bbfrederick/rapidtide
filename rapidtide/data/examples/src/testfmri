@@ -1,17 +1,18 @@
 #!/bin/bash
 
-rapidtide \
-	--spatialfilt 2 \
-        --nprocs -1 \
-        --passes 3 \
-        --similaritymetric hybrid \
-        --norefinedespeckled \
-        --filterband lfo \
-        --nolimitoutput \
-        --corrtype linear \
-        --offsetinclude sub-RAPIDTIDETEST_cerebellarmask.nii.gz \
-        sub-HAPPYTEST.nii.gz \
-        ../dst/sub-HAPPYTESTRAPIDTIDE
+#rapidtide \
+	#--spatialfilt 2 \
+        #--nprocs -1 \
+        #--passes 3 \
+        #--similaritymetric hybrid \
+        #--norefinedespeckled \
+        #--spacetolerance 1.0e-3 \
+        #--filterband lfo \
+        #--nolimitoutput \
+        #--corrtype linear \
+        #--offsetinclude sub-RAPIDTIDETEST_cerebellarmask.nii.gz \
+        #sub-HAPPYTEST.nii.gz \
+        #../dst/sub-HAPPYTESTRAPIDTIDE
 
 rapidtide \
 	--spatialfilt 2 \
