@@ -475,7 +475,8 @@ def updateSimilarityFunc():
                 )
             )
             thefailreason = simfuncFitter.diagnosefail(np.uint32(failreason))
-            print(thefailreason)
+            if verbosity > 0:
+                print(thefailreason)
             thecaption = "No valid fit"
         simfunc_ax.setYRange(minval - 0.05 * valrange, maxval + 0.3 * valrange, padding=0)
         simfuncCaption.setText(thecaption)
@@ -1318,7 +1319,7 @@ def main():
     ypos = 0
     zpos = 0
     tpos = 0
-    verbosity = 1
+    verbosity = 0
 
     theparser = argparse.ArgumentParser(
         description="A program to display the results of a time delay analysis"
@@ -1375,7 +1376,7 @@ def main():
     )
     theparser.add_argument(
         "--verbosity",
-        help="Specify level of truly devastatingly boring console messages.  Default is 1",
+        help="Specify level of truly devastatingly boring console messages.  Default is 0",
         dest="verbose",
         metavar="VERBOSITY",
         type=int,
