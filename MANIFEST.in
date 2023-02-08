@@ -1,5 +1,5 @@
 recursive-include cloud *
-include *.md *.rst *.in
+include *.md *.rst 
 include rapidtide/*.py
 include rapidtide/*.ui
 recursive-include rapidtide/scripts *
