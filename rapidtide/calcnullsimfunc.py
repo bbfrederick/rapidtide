@@ -48,7 +48,6 @@ def _procOneNullCorrelationx(
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
-
     # make a shuffled copy of the regressors
     if permutationmethod == "shuffle":
         permutedtc = np.random.permutation(normalizedreftc)

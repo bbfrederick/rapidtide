@@ -188,7 +188,6 @@ class DeepLearningFilter:
         countlim=None,
         **kwargs,
     ):
-
         self.window_size = window_size
         self.dropout_rate = dropout_rate
         self.num_pretrain_epochs = num_pretrain_epochs
