@@ -1143,8 +1143,8 @@ def _get_parser():
         "Experimental options (not fully tested, may not work)"
     )
     experimental.add_argument(
-        "--spacetolerance",
-        dest="spacetolerance",
+        "--spatialtolerance",
+        dest="spatialtolerance",
         action="store",
         type=float,
         metavar="EPSILON",
@@ -1469,7 +1469,10 @@ def process_args(inputargs=None):
 
     # mask processing
     if args["corrmaskincludespec"] is not None:
-        (args["corrmaskincludename"], args["corrmaskincludevals"],) = tide_io.processnamespec(
+        (
+            args["corrmaskincludename"],
+            args["corrmaskincludevals"],
+        ) = tide_io.processnamespec(
             args["corrmaskincludespec"],
             "Including voxels where ",
             "in correlation calculations.",
@@ -1478,7 +1481,10 @@ def process_args(inputargs=None):
         args["corrmaskincludename"] = None
 
     if args["globalmeanincludespec"] is not None:
-        (args["globalmeanincludename"], args["globalmeanincludevals"],) = tide_io.processnamespec(
+        (
+            args["globalmeanincludename"],
+            args["globalmeanincludevals"],
+        ) = tide_io.processnamespec(
             args["globalmeanincludespec"], "Including voxels where ", "in global mean."
         )
     else:
@@ -1486,7 +1492,10 @@ def process_args(inputargs=None):
         args["globalmeanincludevals"] = None
 
     if args["globalmeanexcludespec"] is not None:
-        (args["globalmeanexcludename"], args["globalmeanexcludevals"],) = tide_io.processnamespec(
+        (
+            args["globalmeanexcludename"],
+            args["globalmeanexcludevals"],
+        ) = tide_io.processnamespec(
             args["globalmeanexcludespec"],
             "Excluding voxels where ",
             "from global mean.",
@@ -1496,7 +1505,10 @@ def process_args(inputargs=None):
         args["globalmeanexcludevals"] = None
 
     if args["refineincludespec"] is not None:
-        (args["refineincludename"], args["refineincludevals"],) = tide_io.processnamespec(
+        (
+            args["refineincludename"],
+            args["refineincludevals"],
+        ) = tide_io.processnamespec(
             args["refineincludespec"], "Including voxels where ", "in refinement."
         )
     else:
@@ -1504,7 +1516,10 @@ def process_args(inputargs=None):
         args["refineincludevals"] = None
 
     if args["refineexcludespec"] is not None:
-        (args["refineexcludename"], args["refineexcludevals"],) = tide_io.processnamespec(
+        (
+            args["refineexcludename"],
+            args["refineexcludevals"],
+        ) = tide_io.processnamespec(
             args["refineexcludespec"], "Excluding voxels where ", "from refinement."
         )
     else:
@@ -1512,7 +1527,10 @@ def process_args(inputargs=None):
         args["refineexcludevals"] = None
 
     if args["offsetincludespec"] is not None:
-        (args["offsetincludename"], args["offsetincludevals"],) = tide_io.processnamespec(
+        (
+            args["offsetincludename"],
+            args["offsetincludevals"],
+        ) = tide_io.processnamespec(
             args["offsetincludespec"], "Including voxels where ", "in offset calculation."
         )
     else:
@@ -1520,7 +1538,10 @@ def process_args(inputargs=None):
         args["offsetincludevals"] = None
 
     if args["offsetexcludespec"] is not None:
-        (args["offsetexcludename"], args["offsetexcludevals"],) = tide_io.processnamespec(
+        (
+            args["offsetexcludename"],
+            args["offsetexcludevals"],
+        ) = tide_io.processnamespec(
             args["offsetexcludespec"], "Excluding voxels where ", "from offset calculation."
         )
     else:

@@ -566,7 +566,7 @@ def rapidtide_main(argparsingfunc):
         nim_hdr,
         numspatiallocs,
         istext=optiondict["textio"],
-        tolerance=optiondict["spacetolerance"],
+        tolerance=optiondict["spatialtolerance"],
     )
 
     internalrefineincludemask, internalrefineexcludemask = getmaskset(
@@ -578,7 +578,7 @@ def rapidtide_main(argparsingfunc):
         nim_hdr,
         numspatiallocs,
         istext=optiondict["textio"],
-        tolerance=optiondict["spacetolerance"],
+        tolerance=optiondict["spatialtolerance"],
     )
 
     internaloffsetincludemask, internaloffsetexcludemask = getmaskset(
@@ -590,7 +590,7 @@ def rapidtide_main(argparsingfunc):
         nim_hdr,
         numspatiallocs,
         istext=optiondict["textio"],
-        tolerance=optiondict["spacetolerance"],
+        tolerance=optiondict["spatialtolerance"],
     )
 
     tide_util.logmem("after setting masks")
@@ -607,7 +607,7 @@ def rapidtide_main(argparsingfunc):
             istext=optiondict["textio"],
             valslist=optiondict["corrmaskincludevals"],
             maskname="correlation",
-            tolerance=optiondict["spacetolerance"],
+            tolerance=optiondict["spatialtolerance"],
         )
 
         corrmask = np.uint16(np.where(thecorrmask > 0, 1, 0).reshape(numspatiallocs))
@@ -759,7 +759,11 @@ def rapidtide_main(argparsingfunc):
         LGR.info("regressing out motion")
 
         TimingLGR.info("Motion filtering start")
-        (motionregressors, motionregressorlabels, fmri_data_valid,) = tide_glmpass.motionregress(
+        (
+            motionregressors,
+            motionregressorlabels,
+            fmri_data_valid,
+        ) = tide_glmpass.motionregress(
             optiondict["motionfilename"],
             fmri_data_valid,
             fmritr,
@@ -1335,7 +1339,11 @@ def rapidtide_main(argparsingfunc):
             windowfunc=optiondict["windowfunc"],
         )
 
-        (voxelsprocessed_echo, theglobalmaxlist, trimmedcorrscale,) = calcsimilaritypass_func(
+        (
+            voxelsprocessed_echo,
+            theglobalmaxlist,
+            trimmedcorrscale,
+        ) = calcsimilaritypass_func(
             fmri_data_valid[:, :],
             referencetc,
             theCorrelator,
@@ -1764,7 +1772,11 @@ def rapidtide_main(argparsingfunc):
 
         if optiondict["similaritymetric"] == "mutualinfo":
             theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
-            (voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale,) = calcsimilaritypass_func(
+            (
+                voxelsprocessed_cp,
+                theglobalmaxlist,
+                trimmedcorrscale,
+            ) = calcsimilaritypass_func(
                 fmri_data_valid[:, :],
                 cleaned_referencetc,
                 theMutualInformationator,
@@ -1784,7 +1796,11 @@ def rapidtide_main(argparsingfunc):
                 rt_floattype=rt_floattype,
             )
         else:
-            (voxelsprocessed_cp, theglobalmaxlist, trimmedcorrscale,) = calcsimilaritypass_func(
+            (
+                voxelsprocessed_cp,
+                theglobalmaxlist,
+                trimmedcorrscale,
+            ) = calcsimilaritypass_func(
                 fmri_data_valid[:, :],
                 cleaned_referencetc,
                 theCorrelator,
