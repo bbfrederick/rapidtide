@@ -3,8 +3,8 @@ FROM fredericklab/basecontainer:latest
 
 # Installing additional precomputed python packages
 # tensorflow seems to really want to install with pip
+RUN pip install h5py 
 RUN pip install \
-                 h5py \
                  keras \
                  tensorflow 
 
