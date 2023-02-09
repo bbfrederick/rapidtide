@@ -727,7 +727,6 @@ def setargs(thegetparserfunc, inputargs=None):
             argstowrite = sys.argv
         except SystemExit:
             print("Use --help option for detailed informtion on options.")
-            # thegetparserfunc().print_help()
             raise
     else:
         # get arguments from the passed list
