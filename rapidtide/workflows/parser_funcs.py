@@ -220,6 +220,20 @@ def addnormalizationopts(parser, normtarget="timecourse", defaultmethod=DEFAULT_
     )
 
 
+def addversionopts(parser):
+    version_opts = parser.add_argument_group("Version options")
+    version_opts.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {tide_util.version()[0]}",
+    )
+    version_opts.add_argument(
+        "--detailedversion",
+        action="version",
+        version=f"%(prog)s {tide_util.version()}",
+    )
+
+
 def addfilteropts(
     parser, filtertarget="timecourses", defaultmethod=DEFAULT_FILTERBAND, details=False
 ):
@@ -724,7 +738,6 @@ def setargs(thegetparserfunc, inputargs=None):
             argstowrite = inputargs
         except SystemExit:
             print("Use --help option for detailed informtion on options.")
-            # thegetparserfunc().print_help()
             raise
 
     return args, argstowrite
@@ -741,7 +754,7 @@ def generic_init(theparser, themain, inputargs=None):
             args = theparser().parse_args()
             argstowrite = sys.argv
         except SystemExit:
-            theparser().print_help()
+            print("Use --help option for detailed informtion on options.")
             raise
     else:
         print("processing passed argument list:")
@@ -749,7 +762,7 @@ def generic_init(theparser, themain, inputargs=None):
             args = theparser().parse_args(inputargs)
             argstowrite = inputargs
         except SystemExit:
-            theparser().print_help()
+            print("Use --help option for detailed informtion on options.")
             raise
 
     # save the raw and formatted command lines

@@ -1018,18 +1018,11 @@ def _get_parser():
         default=False,
     )
 
+    # Add version options
+    pf.addversionopts(parser)
+
     # Miscellaneous options
     misc = parser.add_argument_group("Miscellaneous options")
-    misc.add_argument(
-        "--version",
-        action="version",
-        version=f"%(prog)s {tide_util.version()[0]}",
-    )
-    misc.add_argument(
-        "--detailedversion",
-        action="version",
-        version=f"%(prog)s {tide_util.version()}",
-    )
     misc.add_argument(
         "--noprogressbar",
         dest="showprogressbar",

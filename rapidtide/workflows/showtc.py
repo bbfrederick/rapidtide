@@ -157,6 +157,9 @@ def _get_parser():
         default=False,
     )
 
+    # Add version options
+    pf.addversionopts(parser)
+
     return parser
 
 

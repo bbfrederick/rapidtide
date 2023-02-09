@@ -538,6 +538,9 @@ def _get_parser():
         default=False,
     )
 
+    # Add version options
+    pf.addversionopts(parser)
+
     # Debugging options
     debug_opts = parser.add_argument_group("Debugging options (probably not of interest to users)")
     debug_opts.add_argument(
@@ -669,7 +672,7 @@ def process_args(inputargs=None):
             args = _get_parser().parse_args(inputargs)
             argstowrite = inputargs
         except SystemExit:
-            _get_parser().print_help()
+            print("Use --help option for detailed informtion on options.")
             raise
 
     # save the raw and formatted command lines
