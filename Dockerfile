@@ -2,25 +2,23 @@
 FROM fredericklab/basecontainer:latest
 
 # Installing precomputed python packages
-RUN pip install \
-                 scikit-image \
-                 scikit-learn \
-                 nilearn 
-RUN pip install \
+RUN mamba install \
                  statsmodels \
                  nibabel \
                  h5py 
-RUN pip install \
+RUN mamba install \
                  keras \
-                 tensorflow \
-                 pyqtgraph 
-RUN pip install \
+                 tensorflow 
+RUN mamba install \
                  numba \
                  pyfftw 
-RUN pip install \
+RUN mamba install \
                  versioneer \
                  tqdm
-RUN pip install --upgrade --force-reinstall  requests
+
+# hack to get around the super annoying "urllib3 doesn't match" warning
+#RUN pip install --upgrade --force-reinstall  requests
+RUN mamba install -y requests --force-reinstall
 
 
 # Create a shared $HOME directory
