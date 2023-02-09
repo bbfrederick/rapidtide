@@ -1,6 +1,15 @@
 [build-system]
 requires = ["setuptools", "wheel"]
 
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "picachooser/_version.py"
+versionfile_build = "picachooser/_version.py"
+tag_prefix = ""
+parentdir_prefix = "picachooser-"
+
+
 [tool.isort]
 profile = "black"
 multi_line_output = 3
