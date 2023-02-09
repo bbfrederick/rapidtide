@@ -1,24 +1,15 @@
 # Start from the fredericklab base container
 FROM fredericklab/basecontainer:latest
 
-# Installing precomputed python packages
-RUN mamba install \
-                 statsmodels \
-                 nibabel \
-                 h5py 
-RUN mamba install \
+# Installing additional precomputed python packages
+# tensorflow seems to really want to install with pip
+RUN pip install \
+                 h5py \
                  keras \
                  tensorflow 
-RUN mamba install \
-                 numba \
-                 pyfftw 
-RUN mamba install \
-                 versioneer \
-                 tqdm
 
 # hack to get around the super annoying "urllib3 doesn't match" warning
-#RUN pip install --upgrade --force-reinstall  requests
-RUN mamba install -y requests --force-reinstall
+RUN pip install --upgrade --force-reinstall  requests
 
 
 # Create a shared $HOME directory
