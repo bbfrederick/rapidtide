@@ -34,6 +34,8 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
+          sbom: false
+          provenance: false
           tags: fredericklab/rapidtide:latest
 
       - name: Copy to public.ecr.aws/l0v4l2q2/rapidtide
