@@ -4,9 +4,8 @@ FROM fredericklab/basecontainer:latest
 # Installing additional precomputed python packages
 # tensorflow seems to really want to install with pip
 RUN pip install h5py 
-RUN pip install \
-                 keras \
-                 tensorflow 
+RUN pip install tensorflow 
+RUN pip install keras 
 
 # hack to get around the super annoying "urllib3 doesn't match" warning
 RUN pip install --upgrade --force-reinstall  requests
