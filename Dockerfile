@@ -4,7 +4,7 @@ FROM fredericklab/basecontainer:latest
 # Installing additional precomputed python packages
 # tensorflow seems to really want to install with pip
 RUN mamba install h5py 
-RUN mamba install tensorflow-cpu
+RUN mamba install tensorflow
 RUN mamba install keras 
 
 # hack to get around the super annoying "urllib3 doesn't match" warning
