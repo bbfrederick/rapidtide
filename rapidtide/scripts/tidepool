@@ -56,7 +56,7 @@ def selectFile():
         datafileroot = str(lagfilename[: lagfilename.find("lagtimes.nii.gz")])
 
 
-class xyztlocation(QtGui.QWidget):
+class xyztlocation(QtWidgets.QWidget):
     "Manage a location in time and space"
     updatedXYZ = QtCore.pyqtSignal()
     updatedT = QtCore.pyqtSignal()
@@ -86,7 +86,7 @@ class xyztlocation(QtGui.QWidget):
         TimeSlider=None,
         runMovieButton=None,
     ):
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
 
         self.XPosSpinBox = XPosSpinBox
         self.YPosSpinBox = YPosSpinBox
@@ -336,11 +336,11 @@ class xyztlocation(QtGui.QWidget):
         self.updateTValues()
 
     def updateMovie(self):
-        print("entering updateMovie")
         # self.tpos = (self.tpos + 1) % self.tdim
         self.setTpos((self.tpos + 1) % self.tdim)
         self.updateTValues()
-        print(f"Tpos, t: {self.tpos}, {self.TCoordSpinBox.value()}")
+        if verbosity > 1:
+            print(f"Tpos, t: {self.tpos}, {self.TCoordSpinBox.value()}")
 
     def stopMovie(self):
         self.movierunning = False
@@ -1706,25 +1706,25 @@ def main():
 
     # define things for the popup mask menu
     popMenu = QtWidgets.QMenu(win)
-    sel_nomask = QtGui.QAction("No mask", win)
+    sel_nomask = QtWidgets.QAction("No mask", win)
     sel_nomask.triggered.connect(set_nomask)
-    sel_lagmask = QtGui.QAction("Valid fit", win)
+    sel_lagmask = QtWidgets.QAction("Valid fit", win)
     sel_lagmask.triggered.connect(set_lagmask)
-    sel_refinemask = QtGui.QAction("Voxels used in refine", win)
-    sel_meanmask = QtGui.QAction("Voxels used in mean regressor calculation", win)
-    sel_preselectmask = QtGui.QAction(
+    sel_refinemask = QtWidgets.QAction("Voxels used in refine", win)
+    sel_meanmask = QtWidgets.QAction("Voxels used in mean regressor calculation", win)
+    sel_preselectmask = QtWidgets.QAction(
         "Voxels chosen for the mean regressor calculation in the preselect pass", win
     )
     sel_refinemask.triggered.connect(set_refinemask)
     sel_meanmask.triggered.connect(set_meanmask)
     sel_preselectmask.triggered.connect(set_preselectmask)
-    sel_0p05 = QtGui.QAction("p<0.05", win)
+    sel_0p05 = QtWidgets.QAction("p<0.05", win)
     sel_0p05.triggered.connect(set_0p05)
-    sel_0p01 = QtGui.QAction("p<0.01", win)
+    sel_0p01 = QtWidgets.QAction("p<0.01", win)
     sel_0p01.triggered.connect(set_0p01)
-    sel_0p005 = QtGui.QAction("p<0.005", win)
+    sel_0p005 = QtWidgets.QAction("p<0.005", win)
     sel_0p005.triggered.connect(set_0p005)
-    sel_0p001 = QtGui.QAction("p<0.001", win)
+    sel_0p001 = QtWidgets.QAction("p<0.001", win)
     sel_0p001.triggered.connect(set_0p001)
     popMenu.addAction(sel_nomask)
     numspecial = 0
