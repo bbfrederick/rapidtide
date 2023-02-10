@@ -30,7 +30,7 @@ import os
 
 import numpy as np
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
+from pyqtgraph.Qt import QtCore, QtWidgets
 
 try:
     from PIL import Image
@@ -102,7 +102,7 @@ def newViewWindow(
     return theviewfgwin, theviewbgwin, theviewvLine, theviewhLine, theviewbox
 
 
-class OrthoImageItem(QtGui.QWidget):
+class OrthoImageItem(QtWidgets.QWidget):
     updated = QtCore.pyqtSignal()
 
     def __init__(
@@ -118,7 +118,7 @@ class OrthoImageItem(QtGui.QWidget):
         bgmap=None,
         verbose=0,
     ):
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         self.map = map
         self.bgmap = bgmap
         self.axview = axview
@@ -503,7 +503,7 @@ class OrthoImageItem(QtGui.QWidget):
     def saveDisp(self):
         if self.verbose > 1:
             print("saving main window")
-        mydialog = QtGui.QFileDialog()
+        mydialog = QtWidgets.QFileDialog()
         options = mydialog.Options()
         thedir = str(
             mydialog.getExistingDirectory(options=options, caption="Image output directory")
