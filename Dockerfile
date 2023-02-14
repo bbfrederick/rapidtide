@@ -8,7 +8,7 @@ RUN mamba install keras
 RUN pip install tensorflow
 
 # hack to get around the super annoying "urllib3 doesn't match" warning
-RUN pip install --upgrade --force-reinstall  requests
+RUN pip install --upgrade --force-reinstall requests "certifi>=2022.12.07"
 
 
 # Create a shared $HOME directory
