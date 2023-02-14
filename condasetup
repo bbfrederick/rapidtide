@@ -3,20 +3,20 @@
 conda create --name rapidtide
 conda activate rapidtide
 conda install \
-    nomkl \
     numpy \
     scipy \
     matplotlib \
     pandas \
     statsmodels \
     scikit-learn \
+    scikit-image \
     nibabel \
     nilearn \
     pyfftw \
     numba \
     pywavelets \
     pyqt \
-    pyqtgraph \
+    "pyqtgraph<0.13" \
     tensorflow \
     keras \
     tqdm
