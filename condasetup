@@ -16,6 +16,7 @@ conda install \
     numba \
     pywavelets \
     pyqt \
+    pyqt5-sip \
     "pyqtgraph<0.13" \
     tensorflow \
     keras \
