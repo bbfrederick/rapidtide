@@ -4,6 +4,11 @@ VERSION
 DATE
 changecalls
 
+# mac desktop files
+.DS_Store
+*/.DS_Store
+*/*/.DS_Store
+
 safezone
 v2changes
 
