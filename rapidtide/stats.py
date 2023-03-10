@@ -298,6 +298,20 @@ def fisher(r):
     return 0.5 * np.log((1 + r) / (1 - r))
 
 
+def permute_phase(time_series):
+    # Compute the Fourier transform of the time series
+    freq_domain = np.fft.rfft(time_series)
+
+    # Randomly permute the phase of the Fourier coefficients
+    phase = 2.0 * np.pi * (np.random.random(len(freq_domain)) - 0.5)
+    freq_domain = np.abs(freq_domain) * np.exp(1j * phase)
+
+    # Compute the inverse Fourier transform to get the permuted time series
+    permuted_time_series = np.fft.irfft(freq_domain)
+
+    return permuted_time_series
+
+
 def kurtosisstats(timecourse):
     """
 

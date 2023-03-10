@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 import matplotlib.pyplot as plt
-import rapidtide.filter as tide_filt
 import numpy as np
+
+import rapidtide.filter as tide_filt
+import rapidtide.stats as tide_stats
 
 thefilter = tide_filt.NoncausalFilter()
 thefilter.settype("lfo")
@@ -11,19 +13,35 @@ normalizedreftc = thefilter.apply(Fs, np.random.rand(1000))
 
 rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(normalizedreftc)
 
-for permutationmethod in ["phaserandom", "shuffle"]:
-    for i in range(10):
+# Compute the Fourier transform of the time series
+freq_domain = np.fft.rfft(normalizedreftc)
+
+# Randomly permute the phase of the Fourier coefficients
+phase = np.angle(freq_domain)
+plt.plot(phase)
+plt.show()
+
+plt.plot(normalizedreftc)
+legends = ["original"]
+
+offset = 0.0
+for permutationmethod in ["chatgptphaserandom", "phaserandom", "shuffle"]:
+    for i in range(1):
         if permutationmethod == "shuffle":
             permutedtc = np.random.permutation(normalizedreftc)
         elif permutationmethod == "phaserandom":
             scrambledphase = rawtcfft_ang + 0.0
             scrambledphase[1:] = np.random.permutation(rawtcfft_ang[1:])
             permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, scrambledphase).real
+        elif permutationmethod == "chatgptphaserandom":
+            permutedtc = tide_stats.permute_phase(normalizedreftc)
         else:
             print(f"illegal permutation method {permutationmethod}")
             sys.exit()
-        #permutedtc = thefilter.apply(Fs, permutedtc)
-        #plt.plot(normalizedreftc)
-        #plt.plot(permutedtc + 0.2)
-        plt.plot(rawtcfft_ang)
-        plt.show()
+        permutedtc = thefilter.apply(Fs, permutedtc)
+        offset += 0.5
+        plt.plot(permutedtc + offset)
+        # plt.plot(rawtcfft_ang)
+        legends.append(permutationmethod)
+plt.legend(legends)
+plt.show()
