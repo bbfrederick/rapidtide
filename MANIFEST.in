@@ -3,23 +3,24 @@ include *.md *.rst
 include rapidtide/*.py
 include rapidtide/*.ui
 recursive-include rapidtide/scripts *
-recursive-include rapidtide/workflows *.py
-#recursive-include rapidtide/tests/tmp *
-recursive-include rapidtide/data/reference JHU-ArterialTerritoriesNoVent-LVL*regions.txt
-recursive-include rapidtide/data/reference JHU-ArterialTerritoriesNoVent-LVL*2mm.nii.gz
-recursive-include rapidtide/data/reference ASPECTS*
-recursive-include rapidtide/data/reference ATT*
-recursive-include rapidtide/data/reference HCP1200*
-recursive-include rapidtide/data/reference MNI152*
+rrecursive-ecursive-include rapidtide/workflows *.py
+include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*regions.txt
+include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL1.xml
+include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*2mm.nii.gz
+include rapidtide/data/reference/ASPECTS*
+include rapidtide/data/reference/ATT*
+include rapidtide/data/reference/HCP1200*
+include rapidtide/data/reference/MNI152*
 recursive-include rapidtide/data/reference/slicetimes *
 recursive-include rapidtide/data/models *
-recursive-include rapidtide/data/examples/src \
-    sub-RAPIDTIDETEST* \
-    sub-NIRSRAPIDTIDETEST* \
-    sub-HAPPYTEST* \
-    timecourse1.txt \
-    timecourse2.txt \
-    tmask*txt \
-    lt_rt.txt 
+include rapidtide/data/examples/src/sub-RAPIDTIDETEST*
+include rapidtide/data/examples/src/sub-NIRSRAPIDTIDETEST*
+include rapidtide/data/examples/src/sub-HAPPYTEST*
+include rapidtide/data/examples/src/timecourse1.txt
+include rapidtide/data/examples/src/timecourse2.txt
+include rapidtide/data/examples/src/tmask*txt
+include rapidtide/data/examples/src/lt_rt.txt 
+include rapidtide/data/examples/src/testfmri 
+include rapidtide/data/examples/src/testhappy
 include versioneer.py
 include rapidtide/_version.py

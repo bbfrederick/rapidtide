@@ -223,14 +223,21 @@ setup(
     include_package_data=True,
     zip_safe=False,
     package_data={
+        "examples": [
+            "data/examples/src/testfmri",
+        ],
         "reference": [
-            "reference/JHU-ArterialTerritoriesNoVent-LVL*regions.txt",
-            "reference/JHU-ArterialTerritoriesNoVent-LVL*2mm.nii.gz",
-            "reference/ASPECTS*",
-            "reference/ATT*",
-            "reference/HCP1200*",
-            "reference/MNI152*",
-            "reference/slicetimes/*",
+            "data/reference/JHU-ArterialTerritoriesNoVent-LVL1.xml",
+            "data/reference/JHU-ArterialTerritoriesNoVent-LVL*regions.txt",
+            "data/reference/JHU-ArterialTerritoriesNoVent-LVL*2mm.nii.gz",
+            "data/reference/ASPECTS*",
+            "data/reference/ATT*",
+            "data/reference/HCP1200*",
+            "data/reference/MNI152*",
+            "data/reference/slicetimes/*",
+        ],
+        "models": [
+            "data/models/*",
         ],
         "testdata": [
             "tests/testdata/*.txt",
