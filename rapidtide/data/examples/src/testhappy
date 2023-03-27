@@ -1,13 +1,22 @@
 #!/bin/csh -f
 
+happy \
+    ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/100206_3T_rfMRI_REST1_LR.nii.gz \
+    ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/slicetimes.txt \
+    ../dst/happy_1comp\
+    --mklthreads -1 \
+    --model model_revised
 
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_1comp \
+    ../dst/happy \
     --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
     --mklthreads 8 \
-    --model model_revised
+    --model model_revised \
+    --spatialglm \
+    --aliasedcorrelation
+
 
 happy \
     sub-HAPPYTEST.nii.gz \
