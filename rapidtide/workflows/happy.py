@@ -295,8 +295,8 @@ def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showpro
     means = np.mean(fmri_data[:, :], axis=1).flatten()
     demeandata[validvoxels, :] = fmri_data[validvoxels, :] - means[validvoxels, None]
     normdata[validvoxels, :] = np.nan_to_num(demeandata[validvoxels, :] / means[validvoxels, None])
-    medians = np.median(normdata[validvoxels, :], axis=1).flatten()
-    mads = mad(normdata[validvoxels, :], axis=1).flatten()
+    medians = np.median(normdata[:, :], axis=1).flatten()
+    mads = mad(normdata[:, :], axis=1).flatten()
     timings.append(["Normalization finished", time.time(), numspatiallocs, "voxels"])
     print("Normalization took", "{:.3f}".format(time.time() - starttime), "seconds")
     return normdata, demeandata, means, medians, mads
