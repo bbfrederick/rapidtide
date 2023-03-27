@@ -403,9 +403,15 @@ def mutual_info_2d(
         mi = (HX + HY) / (HXcommaY) - 1.0
     else:
         mi = -(HXcommaY - HX - HY)
+    pearson_r = (
+        np.sqrt(1.0 - np.exp(-2 * mi))
+        * np.sign(mi)
+        * np.sqrt(2.0 * (1.0 - np.exp(-2 * (HX + HY - HXcommaY))))
+        / np.sqrt(HX * HY)
+    )
 
     if debug:
-        print(f"{HX} {HY} {HXcommaY} {mi}")
+        print(f"{HX} {HY} {HXcommaY} {mi} {pearson_r}")
 
     return mi
 
@@ -436,7 +442,7 @@ def cross_mutual_info(
         second variable.  The length of y must by >= the length of x
     returnaxis : bool
         set to True to return the time axis
-    negstaps: int
+    negsteps: int
     possteps: int
     locs : list
         a set of offsets at which to calculate the cross mutual information
@@ -556,6 +562,35 @@ def cross_mutual_info(
 def mutual_info_to_r(themi, d=1):
     """Convert mutual information to Pearson product-moment correlation."""
     return np.power(1.0 - np.exp(-2.0 * themi / d), -0.5)
+
+
+def dtw_distance(s1, s2):
+    # Dynamic time warping function written by GPT-4
+    # Get the lengths of the two input sequences
+    n, m = len(s1), len(s2)
+
+    # Initialize a (n+1) x (m+1) matrix with zeros
+    DTW = np.zeros((n + 1, m + 1))
+
+    # Set the first row and first column of the matrix to infinity, since
+    # the first element of each sequence cannot be aligned with an empty sequence
+    DTW[1:, 0] = np.inf
+    DTW[0, 1:] = np.inf
+
+    # Compute the DTW distance by iteratively filling in the matrix
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            # Compute the cost of aligning the i-th element of s1 with the j-th element of s2
+            cost = abs(s1[i - 1] - s2[j - 1])
+
+            # Compute the minimum cost of aligning the first i-1 elements of s1 with the first j elements of s2,
+            # the first i elements of s1 with the first j-1 elements of s2, and the first i-1 elements of s1
+            # with the first j-1 elements of s2, and add this to the cost of aligning the i-th element of s1
+            # with the j-th element of s2
+            DTW[i, j] = cost + np.min([DTW[i - 1, j], DTW[i, j - 1], DTW[i - 1, j - 1]])
+
+    # Return the DTW distance between the two sequences, which is the value in the last cell of the matrix
+    return DTW[n, m]
 
 
 def delayedcorr(data1, data2, delayval, timestep):
