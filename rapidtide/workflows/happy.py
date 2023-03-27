@@ -295,9 +295,11 @@ def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showpro
     means = np.mean(fmri_data[:, :], axis=1).flatten()
     demeandata[validvoxels, :] = fmri_data[validvoxels, :] - means[validvoxels, None]
     normdata[validvoxels, :] = np.nan_to_num(demeandata[validvoxels, :] / means[validvoxels, None])
+    medians = np.median(demeandata[validvoxels, :], axis=1).flatten()
+    mads = mad(demeandata[validvoxels, :], axis=1).flatten()
     timings.append(["Normalization finished", time.time(), numspatiallocs, "voxels"])
     print("Normalization took", "{:.3f}".format(time.time() - starttime), "seconds")
-    return normdata, demeandata, means
+    return normdata, demeandata, means, medians, mads
 
 
 def cleanphysio(
@@ -1096,7 +1098,7 @@ def happy_main(argparsingfunc):
 
     # normalize the input data
     tide_util.logmem("before normalization")
-    normdata, demeandata, means = normalizevoxels(
+    normdata, demeandata, means, medians, mads = normalizevoxels(
         fmri_data,
         args.detrendorder,
         validprojvoxels,
@@ -1105,6 +1107,25 @@ def happy_main(argparsingfunc):
         showprogressbar=args.showprogressbar,
     )
     normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
+
+    # save means, medians, and mads
+    theheader = copy.deepcopy(nim_hdr)
+    theheader["dim"][4] = 1
+    if args.bidsoutput:
+        meansfilename = outputroot + "_desc-means_map"
+        mediansfilename = outputroot + "_desc-medians_map"
+        madsfilename = outputroot + "_desc-mads_map"
+        bidsdict = bidsbasedict.copy()
+        tide_io.writedicttojson(bidsdict, meansfilename + ".json")
+        tide_io.writedicttojson(bidsdict, mediansfilename + ".json")
+        tide_io.writedicttojson(bidsdict, madsfilename + ".json")
+    else:
+        meansfilename = outputroot + "_means"
+        mediansfilename = outputroot + "_medians"
+        madsfilename = outputroot + "_mads"
+    tide_io.savetonifti(means.reshape((xsize, ysize, numslices)), theheader, meansfilename)
+    tide_io.savetonifti(medians.reshape((xsize, ysize, numslices)), theheader, mediansfilename)
+    tide_io.savetonifti(mads.reshape((xsize, ysize, numslices)), theheader, madsfilename)
 
     # read in estimation mask if present. Otherwise, otherwise use intensity mask.
     infodict["estmaskname"] = args.estmaskname
