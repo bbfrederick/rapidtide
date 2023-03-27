@@ -194,6 +194,7 @@ def cardiacfromimage(
         respnormfac,
         slicesamplerate,
         numsteps,
+        sliceoffsets,
         cycleaverage,
         slicenorms,
     )
@@ -1037,7 +1038,11 @@ def happy_main(argparsingfunc):
     # filter out motion regressors here
     if args.motionfilename is not None:
         timings.append(["Motion filtering start", time.time(), None, None])
-        (motionregressors, motionregressorlabels, filtereddata,) = tide_glmpass.motionregress(
+        (
+            motionregressors,
+            motionregressorlabels,
+            filtereddata,
+        ) = tide_glmpass.motionregress(
             args.motionfilename,
             fmri_data[validprojvoxels, :],
             tr,
@@ -1147,6 +1152,7 @@ def happy_main(argparsingfunc):
             respfromfmri_normfac,
             slicesamplerate,
             numsteps,
+            sliceoffsets,
             cycleaverage,
             slicenorms,
         ) = cardiacfromimage(
@@ -1181,6 +1187,18 @@ def happy_main(argparsingfunc):
         slicetimeaxis = np.linspace(
             0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False
         )
+        if (thispass == 1) and args.doupsampling:
+            # allocate the upsampled image
+            upsampleimage = np.zeros((xsize, ysize, numslices, numsteps * timepoints), dtype=float)
+            for theslice in numslices:
+                upsampleimage[
+                    :, :, theslice, sliceoffsets[theslice] : timepoints : numsteps
+                ] = fmri_data[:, :, theslice, :]
+            theheader = copy.deepcopy(nim_hdr)
+            theheader["dim"][4] = timepoints * numsteps
+            theheader["pixdim"][4] = 1.0 / slicesamplerate
+            tide_io.savetonifti(upsampleimage, theheader, outputroot + "_upsampled")
+
         if thispass == numpasses - 1:
             if args.bidsoutput:
                 tide_io.writebidstsv(

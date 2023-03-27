@@ -558,6 +558,13 @@ def _get_parser():
         default=False,
     )
     debug_opts.add_argument(
+        "--upsample",
+        dest="doupsampling",
+        action="store_true",
+        help="Attempt to temporally upsample the fMRI data (experimental).",
+        default=False,
+    )
+    debug_opts.add_argument(
         "--noprogressbar",
         dest="showprogressbar",
         action="store_false",
