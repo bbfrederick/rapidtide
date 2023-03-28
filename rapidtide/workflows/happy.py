@@ -65,9 +65,11 @@ def rrifromphase(timeaxis, thephase):
     return None
 
 
-def calc_3d_optical_flow(video, flowhdr, outputroot, window_size=5, debug=False):
+def calc_3d_optical_flow(video, projmask, flowhdr, outputroot, window_size=3, debug=False):
     # window Define the window size for Lucas-Kanade method
     # Get the number of frames, height, and width of the video
+    singlehdr = copy.deepcopy(flowhdr)
+    singlehdr["dim"][4] = 1
     xsize, ysize, zsize, num_frames = video.shape
 
     # Create an empty array to store the optical flow vectors
@@ -94,35 +96,36 @@ def calc_3d_optical_flow(video, flowhdr, outputroot, window_size=5, debug=False)
                 print(f"\tz={z}")
             for y in range(window_size // 2, ysize - window_size // 2):
                 for x in range(window_size // 2, zsize - window_size // 2):
-                    # Define the window around the pixel
-                    window_prev = prev_frame[
-                        x - window_size // 2 : x + window_size // 2 + 1,
-                        y - window_size // 2 : y + window_size // 2 + 1,
-                        z - window_size // 2 : z + window_size // 2 + 1,
-                    ]
-                    window_next = next_frame[
-                        x - window_size // 2 : x + window_size // 2 + 1,
-                        y - window_size // 2 : y + window_size // 2 + 1,
-                        z - window_size // 2 : z + window_size // 2 + 1,
-                    ]
+                    if projmask[x, y, z] > 0:
+                        # Define the window around the pixel
+                        window_prev = prev_frame[
+                            x - window_size // 2 : x + window_size // 2 + 1,
+                            y - window_size // 2 : y + window_size // 2 + 1,
+                            z - window_size // 2 : z + window_size // 2 + 1,
+                        ]
+                        window_next = next_frame[
+                            x - window_size // 2 : x + window_size // 2 + 1,
+                            y - window_size // 2 : y + window_size // 2 + 1,
+                            z - window_size // 2 : z + window_size // 2 + 1,
+                        ]
 
-                    # Compute the gradient of the window in x, y, and z directions
-                    grad_x = np.gradient(window_prev)[0]
-                    grad_y = np.gradient(window_prev)[1]
-                    grad_z = np.gradient(window_prev)[2]
+                        # Compute the gradient of the window in x, y, and z directions
+                        grad_x = np.gradient(window_prev)[0]
+                        grad_y = np.gradient(window_prev)[1]
+                        grad_z = np.gradient(window_prev)[2]
 
-                    # Compute the temporal gradient between two frames
-                    grad_t = window_next - window_prev
+                        # Compute the temporal gradient between two frames
+                        grad_t = window_next - window_prev
 
-                    # Compute the optical flow vector using Lucas-Kanade method
-                    A = np.vstack((grad_x.ravel(), grad_y.ravel(), grad_z.ravel())).T
-                    b = -grad_t.ravel()
-                    flow_vec, _, _, _ = np.linalg.lstsq(A, b, rcond=None)
+                        # Compute the optical flow vector using Lucas-Kanade method
+                        A = np.vstack((grad_x.ravel(), grad_y.ravel(), grad_z.ravel())).T
+                        b = -grad_t.ravel()
+                        flow_vec, _, _, _ = np.linalg.lstsq(A, b, rcond=None)
 
-                    # Store the optical flow vector in the result array
-                    flow[x, y, z, 0] = flow_vec[0]
-                    flow[x, y, z, 1] = flow_vec[1]
-                    flow[x, y, z, 2] = flow_vec[2]
+                        # Store the optical flow vector in the result array
+                        flow[x, y, z, 0] = flow_vec[0]
+                        flow[x, y, z, 1] = flow_vec[1]
+                        flow[x, y, z, 2] = flow_vec[2]
 
         # Store the optical flow vectors in the result array
         flow_vectors[:, :, :, i, 0] = flow[..., 0]
@@ -130,6 +133,10 @@ def calc_3d_optical_flow(video, flowhdr, outputroot, window_size=5, debug=False)
         flow_vectors[:, :, :, i, 2] = flow[..., 2]
         thename = f"{outputroot}_desc-flow_phase-{str(i).zfill(2)}_map"
         tide_io.savetonifti(flow_vectors[:, :, :, i, :], flowhdr, thename)
+        thename = f"{outputroot}_desc-flowmag_phase-{str(i).zfill(2)}_map"
+        tide_io.savetonifti(
+            np.sqrt(np.sum(np.square(flow_vectors[:, :, :, i, :]), axis=3)), singlehdr, thename
+        )
 
     return flow_vectors
 
@@ -2431,7 +2438,14 @@ def happy_main(argparsingfunc):
             flowhdr["toffset"] = 0
             flowhdr["pixdim"][4] = 1
 
-            flowfield = calc_3d_optical_flow(app, flowhdr, outputroot, window_size=5, debug=True)
+            flowfield = calc_3d_optical_flow(
+                app,
+                projmask.reshape(xsize, ysize, numslices),
+                flowhdr,
+                outputroot,
+                window_size=3,
+                debug=True,
+            )
             print(f"flow field shape: {flowfield.shape}")
 
         # save the analytic phase projection image
