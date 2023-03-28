@@ -943,7 +943,7 @@ def cardiaccycleaverage(
     rawapp_bypoint = np.where(
         weight_bypoint > np.max(weight_bypoint) / 50.0, rawapp_bypoint - minval, 0.0
     )
-    return rawapp_bypoint
+    return rawapp_bypoint, weight_bypoint
 
 
 def circularderivs(timecourse):
@@ -2184,7 +2184,7 @@ def happy_main(argparsingfunc):
             procpoints = np.where(censorpoints < 1)[0]
 
         # do phase averaging
-        app_bypoint = cardiaccycleaverage(
+        app_bypoint, weight_bypoint = cardiaccycleaverage(
             instantaneous_cardiacphase,
             outphases,
             cardfromfmri_sliceres,
@@ -2205,8 +2205,18 @@ def happy_main(argparsingfunc):
                     append=False,
                     debug=args.debug,
                 )
+                tide_io.writebidstsv(
+                    outputroot + "_desc-cardiaccycleweightfromfmri_timeseries",
+                    weight_bypoint,
+                    1.0 / (outphases[1] - outphases[0]),
+                    starttime=outphases[0],
+                    columns=["cardiaccycleweightfromfmri"],
+                    append=False,
+                    debug=args.debug,
+                )
             else:
                 tide_io.writevec(app_bypoint, outputroot + "_cardcyclefromfmri.txt")
+                tide_io.writevec(weight_bypoint, outputroot + "_cardcycleweightfromfmri.txt")
 
         # now do time averaging
         lookaheadval = int(slicesamplerate / 4.0)
@@ -2346,9 +2356,10 @@ def happy_main(argparsingfunc):
                     )
                     for i in range(len(theindices)):
                         weight_byslice[validlocs, theslice, theindices[i]] += theweights[i]
-                        rawapp_byslice[validlocs, theslice, theindices[i]] += (
-                            theweights[i] * filteredmr
-                        )
+                        # rawapp_byslice[validlocs, theslice, theindices[i]] += (
+                        #    theweights[i] * filteredmr
+                        # )
+                        rawapp_byslice[validlocs, theslice, theindices[i]] += filteredmr
                         cine_byslice[validlocs, theslice, theindices[i]] += theweights[i] * cinemr
                 for d in range(args.destpoints):
                     if weight_byslice[validlocs[0], theslice, d] == 0.0:
