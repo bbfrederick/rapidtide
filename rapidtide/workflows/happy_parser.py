@@ -565,6 +565,13 @@ def _get_parser():
         default=False,
     )
     debug_opts.add_argument(
+        "--estimateflow",
+        dest="doflowfields",
+        action="store_true",
+        help="Estimate blood flow using optical flow (experimental).",
+        default=False,
+    )
+    debug_opts.add_argument(
         "--noprogressbar",
         dest="showprogressbar",
         action="store_false",
