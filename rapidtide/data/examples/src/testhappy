@@ -3,7 +3,7 @@
 happy \
     ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/100206_3T_rfMRI_REST1_LR.nii.gz \
     ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/slicetimes.txt \
-    ../dst/happy_1comp\
+    ~/Dropbox_PHC/MR_data_2/physioconn/happytest/happyarm \
     --mklthreads -1 \
     --model model_revised
 
