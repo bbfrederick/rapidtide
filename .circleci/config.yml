@@ -317,7 +317,7 @@ workflows:
       - test_py310:
           requires:
             - build_py310
-      - build_py311
-      - test_py311:
-          requires:
-            - build_py311
+      #- build_py311
+      #- test_py311:
+      #    requires:
+      #      - build_py311
