@@ -1,9 +1,0 @@
-#!/usr/bin/env python
-import numpy as np
-import tide_funcs as tide
-
-print("starting test")
-thepts = np.array([0.95, 0.99, 0.995, 0.999])
-print(tide.rfromp("../dst/quick_sigfit.txt", thepts, numbins=10000))
-print(tide.rfromp("../dst/quick_sigfit.txt", thepts, numbins=2000))
-print(tide.rfromp("../dst/quick_sigfit.txt", thepts, numbins=500))

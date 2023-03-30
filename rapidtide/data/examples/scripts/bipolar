@@ -1,9 +1,0 @@
-#!/bin/csh
-rapidtide2 ../src/fmri.nii.gz ../dst/dgsr_bipolar \
-    -N 10000 \
-    -B -F 0.01,0.15 -r -7.5,7.5 --refinepasses=3 --lagminthresh=0.5 &
-
-rapidtide2 ../src/fmri.nii.gz ../dst/finger_tHb_hf_biphasic \
-    -N 10000 \
-    --regressor=../src/lf_tHb --regressorfreq=12.5 --regressorstart=656.4 \
-    -B -F 0.01,0.2 -r -7.5,7.5 &
