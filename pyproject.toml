@@ -34,9 +34,9 @@ exclude = '''
   | get_version.py
   | versioneer.py
   | rapidtide/_version.py
-  | rapidtide/tests
   | rapidtide/candidatetests
   | rapidtide/disabledtests
   | rapidtide/data/examples/dst/*
+  | rapidtide/data/examples/extrasrc/*
 )
 '''

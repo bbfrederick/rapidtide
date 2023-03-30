@@ -165,7 +165,7 @@ setup(
     keywords=["fMRI", "correlation", "RIPTiDe", "noise"],
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=find_namespace_packages(exclude=["contrib", "docs"]),
+    packages=find_namespace_packages(exclude=["contrib", "docs", "rapidtide/data/examples/dst", "rapidtide/data/examples/extrasrc"]),
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
     #   py_modules=["my_module"],
@@ -224,7 +224,7 @@ setup(
     zip_safe=False,
     package_data={
         "examples": [
-            "data/examples/src/testfmri",
+            "data/examples/src/*",
         ],
         "reference": [
             "data/reference/JHU-ArterialTerritoriesNoVent-LVL1.xml",
