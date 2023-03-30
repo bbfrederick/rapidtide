@@ -4,33 +4,8 @@
 #
 version: 2.1
 orbs:
-  codecov: codecov/codecov@1.0.5
+  codecov: codecov/codecov@3.2.4
 jobs:
-
-  test_py36:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-              - src/rapidtide
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            conda create -n py36_env python=3.6 -yq
-            source activate py36_env
-            pip install -e .[tests,doc]
-            python setup.py install --user
-      - run:
-          name: Run tests
-          command:  |
-            apt-get update
-            apt-get install -yqq make
-            source activate py36_env
-            py.test --ignore=rapidtide/candidatetests rapidtide
 
   build_py37:
     working_directory: /tmp/src/rapidtide
