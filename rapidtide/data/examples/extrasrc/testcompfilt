@@ -4,6 +4,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 
+
 def getperiodic(inputdata, Fs, fundfreq, ncomps=1, width=0.4, debug=False):
     outputdata = inputdata * 0.0
     lowerdist = fundfreq - fundfreq / (1.0 + width)
@@ -27,12 +28,13 @@ def getperiodic(inputdata, Fs, fundfreq, ncomps=1, width=0.4, debug=False):
         outputdata += 1.0 * thefundfilter.apply(Fs, inputdata)
     return outputdata
 
+
 debug = True
 waveformfile = "happystdres_bids.tsv:cardiacfromfmri_25.0Hz"
 
 Fs, filestart, dummy, cardiacwaveform, dummy, dummy = tide_io.readvectorsfromtextfile(
-        waveformfile, onecol=True, debug=debug
-    )
+    waveformfile, onecol=True, debug=debug
+)
 
 outputroot = "../dst/junk"
 tide_io.writebidstsv(

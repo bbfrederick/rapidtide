@@ -46,7 +46,7 @@ def test_fastcorrelate(display=False):
     midpoint = int(len(stdcorrelate_result) // 2) + 1
     if display:
         plt.figure()
-        #plt.ylim([-1.0, 4.0])
+        # plt.ylim([-1.0, 4.0])
         plt.plot(fastcorrelate_result_pad1000 + 3.0)
         plt.plot(fastcorrelate_result_padneg1 + 2.0)
         plt.plot(fastcorrelate_result_pad0 + 1.0)
