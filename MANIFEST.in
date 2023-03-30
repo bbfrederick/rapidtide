@@ -7,6 +7,7 @@ recursive-include rapidtide/workflows *.py
 recursive-include rapidtide/data/reference/slicetimes *
 recursive-include rapidtide/data/models *
 recursive-include rapidtide/data/examples/src *
+recursive-include rapidtide/tests *
 include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*regions.txt
 include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL1.xml
 include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*2mm.nii.gz
