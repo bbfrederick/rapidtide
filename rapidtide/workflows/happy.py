@@ -2267,7 +2267,7 @@ def happy_main(argparsingfunc):
         outtimes = np.linspace(
             0.0, maxtime, num=int(maxtime / args.pulsereconstepsize), endpoint=False
         )
-        atp_bypoint = cardiaccycleaverage(
+        atp_bypoint, atpweight_bypoint = cardiaccycleaverage(
             instantaneous_cardiactime,
             outtimes,
             cardfromfmri_sliceres,
