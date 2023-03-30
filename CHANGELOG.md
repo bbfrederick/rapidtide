@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.4.4 (3/30/22)
+* (examples) Separated essential test data from developer test data to make the installation much smaller.
+* (package) Major modernization to package build and test files.
+
 ## Version 2.4.3 (3/30/22)
 * (rapidtide) Some work on phase permutation for null correlation calculation.
 * (happy) Put in the skeletons of some new features (upsampling, optical flow calculation).
