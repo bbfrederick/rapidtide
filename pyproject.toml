@@ -36,7 +36,6 @@ exclude = '''
   | rapidtide/_version.py
   | rapidtide/candidatetests
   | rapidtide/disabledtests
-  | rapidtide/data/examples/dst/*
-  | rapidtide/data/examples/extrasrc/*
+  | rapidtide/data/examples
 )
 '''
