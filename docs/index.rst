@@ -46,7 +46,7 @@ Contents
 
 .. toctree::
    :maxdepth: 2
-   :caption: Usage:
+   :caption: Installation:
 
    installation.rst
 
@@ -57,7 +57,7 @@ Contents
 
    usage.rst
    api.rst
-   auto_examples/index
+   #auto_examples/index
    contributing.rst
 
 
