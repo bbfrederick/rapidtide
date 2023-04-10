@@ -2,7 +2,7 @@
 
 rm ../testdatabundle.tar.gz
 
-COPYFILE_DISABLE=1 tar -cvzf ../testdatabundle.tar.gz \
+tar -cvzf ../testdatabundle.tar.gz \
     lt_rt.txt \
     sub-HAPPYTEST.json \
     sub-HAPPYTEST.nii.gz \
