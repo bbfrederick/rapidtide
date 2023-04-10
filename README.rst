@@ -435,7 +435,5 @@ Physiological noise identification and removal using time delay methods
    :target: https://codecov.io/gh/bbfrederick/rapidtide
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.814990.svg
    :target: https://doi.org/10.5281/zenodo.814990
-.. |Funded by NIH| image:: https://img.shields.io/badge/NIH-R01--NS097512--01A1-yellowgreen.svg
-   :target: http://grantome.com/grant/NIH/R01-NS097512-01A1
 .. |Funded by NIH| image:: https://img.shields.io/badge/NIH-RF1--MH130637--01-yellowgreen.svg
    :target: http://grantome.com/grant/NIH/RF1-MH130637-01-yellowgreen.svg

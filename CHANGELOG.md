@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.4.5.1 (4/10/23)
+* (docs) Removed duplicate funding source.  Hopefully this will resolve the Pypi upload issue.
+
 ## Version 2.4.5 (4/10/23)
 * (docs) Addded some new sections to theory.
 * (package) Completely changed the way I handle and distribute test data.  This makes the package much smaller (~17M), which should fix pypi deployment.  This involved several changes to the Docker and circleCI workflows, which I think are now stable.
