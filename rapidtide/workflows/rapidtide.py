@@ -2571,6 +2571,16 @@ def rapidtide_main(argparsingfunc):
                 nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
             )[validvoxels, :] + 0.0
 
+            if optiondict["preservefiltering"]:
+                print("reapplying temporal filters...")
+                print(f"fmri_data_valid.shape: {fmri_data_valid.shape}")
+                for i in range(len(validvoxels)):
+                    filteredtc = theprefilter.apply(
+                        optiondict["fmrifreq"], fmri_data_valid[i, :] + 0.0
+                    )
+                    fmri_data_valid[i, :] = filteredtc + 0.0
+                print("...done")
+
             # move fmri_data_valid into shared memory
             if optiondict["sharedmem"]:
                 LGR.info("moving fmri data to shared memory")
@@ -2607,9 +2617,7 @@ def rapidtide_main(argparsingfunc):
         else:
             tide_util.logmem("before glm")
 
-        if optiondict["preservefiltering"]:
-            for i in range(len(validvoxels)):
-                fmri_data_valid[i] = theprefilter.apply(optiondict["fmrifreq"], fmri_data_valid[i])
+        # and do the filtering
         glmpass_func = addmemprofiling(
             tide_glmpass.glmpass, optiondict["memprofile"], "before glmpass"
         )
