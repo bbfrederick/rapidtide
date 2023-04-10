@@ -288,9 +288,8 @@ jobs:
             apt-get install -yqq curl
             source activate py37_env
             py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
-            codecov/upload
-      #- codecov/upload:
-      #    file: /tmp/src/rapidtide/coverage.xml
+      - codecov/upload:
+          #file: /tmp/src/rapidtide/coverage.xml
 
 workflows:
   version: 2.1
@@ -318,7 +317,7 @@ workflows:
       - test_py310:
           requires:
             - build_py310
-      #- build_py311
+      - build_py311
       #- test_py311:
       #    requires:
       #      - build_py311
