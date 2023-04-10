@@ -31,9 +31,6 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-37-{{ checksum "setup.py" }}
           paths:
@@ -63,9 +60,6 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-38-{{ checksum "setup.py" }}
           paths:
@@ -98,9 +92,6 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-39-{{ checksum "setup.py" }}
           paths:
@@ -133,9 +124,6 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-310-{{ checksum "setup.py" }}
           paths:
@@ -168,9 +156,6 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "setup.py" }}
           paths:
@@ -193,6 +178,9 @@ jobs:
             apt-get install -yqq curl
             source activate py38_env
             pwd
+            pushd rapidtide/data/examples/src
+            ./installtestdata
+            popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
 
@@ -213,6 +201,9 @@ jobs:
             apt-get install -yqq curl
             source activate py39_env
             pwd
+            pushd rapidtide/data/examples/src
+            ./installtestdata
+            popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
 
@@ -233,6 +224,9 @@ jobs:
             apt-get install -yqq curl
             source activate py310_env
             pwd
+            pushd rapidtide/data/examples/src
+            ./installtestdata
+            popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
 
@@ -309,6 +303,9 @@ jobs:
             apt-get install -yqq curl
             source activate py37_env
             pwd
+            pushd rapidtide/data/examples/src
+            ./installtestdata
+            popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
             codecov/upload
