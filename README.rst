@@ -68,43 +68,6 @@ years, and corrected my code accordingly. So rather than repeat my
 boring mistakes, why not make new, interesting mistakes? Explore your
 own, unique chunk of wrongspace…
 
-What is the difference between RIPTiDE and rapidtide?
-`````````````````````````````````````````````````````
-
-RIPTiDe (Regressor Interpolation at Progressive Time Delays) is the name of
-the technique used for finding and removing time lagged physiological signals
-in fMRI data.  In the original RIPTiDe papers, we generated a
-set of regressors over a range of different time shifts (starting from a regressor recorded
-outside of the brain), and then ran a GLM in FSL using the entire set of regressors.
-We realized that this 1) doesn't give you the optimal delay value directly,
-which turns out to be a useful thing to know, and 2) burns degrees of freedom
-unnecessarily, since having one optimally delayed regressor in each voxel gets
-you pretty much the same degree of noise removal (this is assuming that in each
-voxel there is one and only one pool of delayed blood, which while not true,
-is true enough, since almost every voxel is dominated by a single pool of
-delayed blood), 3) is slow, since you're doing way more calculation than you
-need to, and 4) doesn't necessarily get you the best noise removal, since
-the systemic noise signal recorded outside the brain has its own characteristics
-and noise mechanisms that may make it diverge somewhat from what is actually
-getting into the brain (although on the plus side, it is inarguably non-neuronal, 
-so you don't have to have any arguments about slow neuronal waves).
-
-In contrast rapidtide (lets say it means Rapid Time Delay) is the newer faster,
-self-contained python program that implements an updated version of the RIPTiDe
-algorithm) estimates delay in every voxel and recursively refines an estimate
-of the "true" systemic noise signal propagating through the brain by shifting and
-merging the voxel timecourses to undo this effect. This refinement procedure is
-shown in Figure 5 of Tong, 2019 (reference 6 in the Physiology section below). In recent
-years, I've personally become more interested in estimating blood flow in the brain than
-denoising resting state data, so a lot of the documentation talks about that, but the
-two procedures are tightly coupled, and as the final step, rapidtide does regress
-the optimally delayed refined estimate of the systemic noise signal out of the data.
-We have found that it works quite well for resting state noise removal while avoiding
-the major problems of global signal regression (which we refer to as "static global
-signal regression" as opposed to "dynamic global signal regression", which is
-what rapidtide does). For a detailed exploration of this topic, see Erdogan, 2016 (also 
-in the Physiology section below).
-
 
 Happy
 -----
