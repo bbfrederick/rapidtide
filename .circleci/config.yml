@@ -31,6 +31,9 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
+            pushd rapidtide/data/examples/src
+            installtestdata
+            popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-37-{{ checksum "setup.py" }}
           paths:
@@ -60,6 +63,9 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
+            pushd rapidtide/data/examples/src
+            installtestdata
+            popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-38-{{ checksum "setup.py" }}
           paths:
@@ -92,6 +98,9 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
+            pushd rapidtide/data/examples/src
+            installtestdata
+            popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-39-{{ checksum "setup.py" }}
           paths:
@@ -124,6 +133,9 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
+            pushd rapidtide/data/examples/src
+            installtestdata
+            popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-310-{{ checksum "setup.py" }}
           paths:
@@ -156,6 +168,9 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
+            pushd rapidtide/data/examples/src
+            installtestdata
+            popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "setup.py" }}
           paths:
@@ -318,7 +333,7 @@ workflows:
       - test_py310:
           requires:
             - build_py310
-      - build_py311
+      #- build_py311
       #- test_py311:
       #    requires:
       #      - build_py311
