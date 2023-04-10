@@ -1,3 +1,25 @@
+#[project]
+#name = "example_package_YOUR_USERNAME_HERE"
+#version = "0.0.1"
+#authors = [
+  #{ name="Blaise Frederick", email="blaise.frederick@gmail.com" },
+#]
+#description = "A small example package"
+#readme = "README.rst"
+#requires-python = ">=3.6"
+#classifiers = [
+    #"Programming Language :: Python :: 3",
+    #"License :: OSI Approved :: Apache Software License",
+    #"Operating System :: OS Independent",
+#]
+
+#[project.urls]
+#"Homepage" = "https://github.com/bbfrederick/rapidtide"
+#"Bug Tracker" = "https://github.com/bbfrederick/rapidtide/issues"
+#"Repository" = "https://github.com/bbfrederick/rapidtide.git"
+#"Changelog" = "https://github.com/bbfrederick/rapidtide/blob/main/CHANGELOG.md"
+
+
 [build-system]
 requires = ["setuptools", "wheel"]
 
