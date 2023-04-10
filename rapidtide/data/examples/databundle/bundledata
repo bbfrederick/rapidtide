@@ -1,6 +1,8 @@
 #!/bin/bash
 
-tar -cvzf ../testdatabundle.tgz \
+rm ../testdatabundle.tgz
+
+COPYFILE_DISABLE=1 tar -cvzf ../testdatabundle.tgz \
     lt_rt.txt \
     sub-HAPPYTEST.json \
     sub-HAPPYTEST.nii.gz \
@@ -19,8 +21,6 @@ tar -cvzf ../testdatabundle.tgz \
     sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.tsv.gz \
     sub-RAPIDTIDETEST_nullmask.nii.gz \
     sub-RAPIDTIDETEST_restrictedmask.nii.gz \
-    testfmri* \
-    testhappy* \
     timecourse1.txt \
     timecourse2.txt \
     tmask.txt \

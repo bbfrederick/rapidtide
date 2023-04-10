@@ -28,7 +28,11 @@ rapidtide/data/examples/src/*trimmed*
 rapidtide/data/examples/src/sub-01*
 rapidtide/data/examples/src/testhappyx
 rapidtide/data/examples/src/filtereddata*
-test.nii.gz
+rapidtide/data/examples/src/*.txt
+rapidtide/data/examples/src/*.par
+rapidtide/data/examples/src/*.json
+rapidtide/data/examples/src/*.nii.gz
+rapidtide/data/examples/src/*.tsv.gz
 *junk*
 
 # local executables

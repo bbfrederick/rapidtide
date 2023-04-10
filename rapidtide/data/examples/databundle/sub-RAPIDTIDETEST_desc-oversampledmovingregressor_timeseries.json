@@ -1,0 +1,9 @@
+{
+    "Columns":[
+        "pass1",
+        "pass2",
+        "pass3"
+    ],
+    "SamplingFrequency":2.0,
+    "StartTime":0.0
+}
