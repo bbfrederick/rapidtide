@@ -32,7 +32,7 @@ jobs:
             fi
             python setup.py install --user
             pushd rapidtide/data/examples/src
-            installtestdata
+            ./installtestdata
             popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-37-{{ checksum "setup.py" }}
@@ -64,7 +64,7 @@ jobs:
             fi
             python setup.py install --user
             pushd rapidtide/data/examples/src
-            installtestdata
+            ./installtestdata
             popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-38-{{ checksum "setup.py" }}
@@ -99,7 +99,7 @@ jobs:
             fi
             python setup.py install --user
             pushd rapidtide/data/examples/src
-            installtestdata
+            ./installtestdata
             popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-39-{{ checksum "setup.py" }}
@@ -134,7 +134,7 @@ jobs:
             fi
             python setup.py install --user
             pushd rapidtide/data/examples/src
-            installtestdata
+            ./installtestdata
             popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-310-{{ checksum "setup.py" }}
@@ -169,7 +169,7 @@ jobs:
             fi
             python setup.py install --user
             pushd rapidtide/data/examples/src
-            installtestdata
+            ./installtestdata
             popd
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "setup.py" }}
