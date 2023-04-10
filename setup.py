@@ -231,7 +231,8 @@ setup(
     zip_safe=False,
     package_data={
         "examples": [
-            "data/examples/src/*",
+            "data/examples/src/test*",
+            "data/examples/src/unbundledata",
         ],
         "reference": [
             "data/reference/JHU-ArterialTerritoriesNoVent-LVL1.xml",

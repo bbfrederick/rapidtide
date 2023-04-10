@@ -1,0 +1,30 @@
+#!/bin/bash
+
+tar -cvzf ../testdatabundle.tgz \
+    lt_rt.txt \
+    sub-HAPPYTEST.json \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json \
+    sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.tsv.gz \
+    sub-HAPPYTEST_mask.nii.gz \
+    sub-HAPPYTEST_mcf.par \
+    sub-HAPPYTEST_smallmask.nii.gz \
+    sub-NIRSRAPIDTIDETEST.txt \
+    sub-NIRSRAPIDTIDETEST_mask.txt \
+    sub-RAPIDTIDETEST.nii.gz \
+    sub-RAPIDTIDETEST_brainmask.nii.gz \
+    sub-RAPIDTIDETEST_cerebellarmask.nii.gz \
+    sub-RAPIDTIDETEST_cifti.ptseries.nii \
+    sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json \
+    sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.tsv.gz \
+    sub-RAPIDTIDETEST_nullmask.nii.gz \
+    sub-RAPIDTIDETEST_restrictedmask.nii.gz \
+    testfmri* \
+    testhappy* \
+    timecourse1.txt \
+    timecourse2.txt \
+    tmask.txt \
+    tmask3.txt \
+    tmask_seg1.txt \
+    tmask_seg2.txt \
+    tmask_seg3.txt
