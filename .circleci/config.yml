@@ -192,6 +192,8 @@ jobs:
             apt-get update
             apt-get install -yqq curl
             source activate py38_env
+            pwd
+            ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
 
 
@@ -210,6 +212,8 @@ jobs:
             apt-get update
             apt-get install -yqq curl
             source activate py39_env
+            pwd
+            ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
 
 
@@ -228,6 +232,8 @@ jobs:
             apt-get update
             apt-get install -yqq curl
             source activate py310_env
+            pwd
+            ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
 
 
@@ -302,6 +308,8 @@ jobs:
             apt-get update
             apt-get install -yqq curl
             source activate py37_env
+            pwd
+            ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
             codecov/upload
       #- codecov/upload:
