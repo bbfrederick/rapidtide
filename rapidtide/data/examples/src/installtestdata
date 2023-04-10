@@ -1,5 +1,5 @@
 #!/bin/bash
 
 wget \
-    https://github.com/bbfrederick/rapidtide/blob/main/rapidtide/data/examples/testdatabundle.tar.gz \
-    -O - | tar -xz
+    https://github.com/bbfrederick/rapidtide/blob/main/rapidtide/data/examples/testdatabundle.tar \
+    -O - | tar -x

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-rm ../testdatabundle.tar.gz
+rm ../testdatabundle.tar
 
-tar -cvzf ../testdatabundle.tar.gz \
+COPYFILE_DISABLE=1 tar -cvf ../testdatabundle.tar \
     lt_rt.txt \
     sub-HAPPYTEST.json \
     sub-HAPPYTEST.nii.gz \
