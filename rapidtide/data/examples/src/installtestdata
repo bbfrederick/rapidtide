@@ -1,4 +1,3 @@
 #!/bin/bash
 
 wget  https://github.com/bbfrederick/rapidtide/raw/main/rapidtide/data/examples/testdatabundle.tgz -O - | tar -xz
-#curl -L https://github.com/bbfrederick/rapidtide/raw/main/rapidtide/data/examples/testdatabundle.tgz | tar -xz
