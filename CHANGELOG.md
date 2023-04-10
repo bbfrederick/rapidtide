@@ -1,17 +1,21 @@
 # Release history
 
-## Version 2.4.4 (3/30/22)
+## Version 2.4.5 (4/10/23)
+* (docs) Addded some new sections to theory.
+* (package) Completely changed the way I handle and distribute test data.  This makes the package much smaller (~17M), which should fix pypi deployment.  This involved several changes to the Docker and circleCI workflows, which I think are now stable.
+
+## Version 2.4.4 (3/30/23)
 * (examples) Separated essential test data from developer test data to make the installation much smaller.
 * (package) Major modernization to package build and test files.
 
-## Version 2.4.3 (3/30/22)
+## Version 2.4.3 (3/30/23)
 * (rapidtide) Some work on phase permutation for null correlation calculation.
 * (happy) Put in the skeletons of some new features (upsampling, optical flow calculation).
 * (OrthoImageItem.py) Removed the last of the obsolete pyqtgraph calls.
 * (package) Attempting to modernize the packaging scripts to avoid deprecated behavior.
 * (package) Several changes to fix the build environment.
 
-## Version 2.4.2 (2/8/22)
+## Version 2.4.2 (2/8/23)
 * (rapidtide) Added ability set a threshold value for "equivalence" of spatial dimensions of NIFTI files (rather than requiring an exact match) using the --spatialtolerance option.
 * (rapidtide) Added "offset masks" to set the region that defines "zero" time offset.
 * (fingerprint) Added several new summary statistics for each region.
