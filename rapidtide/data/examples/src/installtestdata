@@ -1,5 +1,7 @@
 #!/bin/bash
 
-installdir=`findinstalldir`
+#installdir=`findinstalldir`
+installdir=/tmp/src/rapidtide/rapidtide/data/examples/src/
+ls
 cd ${installdir}
 wget  https://github.com/bbfrederick/rapidtide/raw/main/rapidtide/data/examples/testdatabundle.tgz -O - | tar -xz
