@@ -232,7 +232,7 @@ setup(
     package_data={
         "examples": [
             "data/examples/src/test*",
-            "data/examples/src/unbundledata",
+            "data/examples/src/installtestdata",
         ],
         "reference": [
             "data/reference/JHU-ArterialTerritoriesNoVent-LVL1.xml",

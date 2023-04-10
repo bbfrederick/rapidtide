@@ -22,6 +22,8 @@ COPY . /src/rapidtide
 RUN cd /src/rapidtide && \
     python3 setup.py install && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
+RUN cd /src/rapidtide/rapidtide/data/examples/src && \
+    ./installtestdata
 
 
 ENV IS_DOCKER_8395080871=1
