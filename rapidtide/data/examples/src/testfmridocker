@@ -1,0 +1,35 @@
+#!/bin/bash
+
+EXAMPLEDIR=/Users/frederic/code/rapidtide/rapidtide/data/examples
+
+docker run \
+    --mount type=bind,source=${EXAMPLEDIR}/dst,destination=/data_out \
+    --mount type=bind,source=${EXAMPLEDIR}/src,destination=/data_in \
+    fredericklab/rapidtide:latest \
+        rapidtide \
+	    --spatialfilt 2 \
+            --nprocs -1 \
+            --passes 3 \
+            --similaritymetric hybrid \
+            --norefinedespeckled \
+            --filterband lfo \
+            --nolimitoutput \
+            --corrtype linear \
+            /src/rapidtide/rapidtide/data/examples/src/sub-RAPIDTIDETEST.nii.gz \
+            /data_out/dgsr_dockersource
+
+docker run \
+    --mount type=bind,source=${EXAMPLEDIR}/dst,destination=/data_out \
+    --mount type=bind,source=${EXAMPLEDIR}/src,destination=/data_in \
+    fredericklab/rapidtide:latest \
+        rapidtide \
+	    --spatialfilt 2 \
+            --nprocs -1 \
+            --passes 3 \
+            --similaritymetric hybrid \
+            --norefinedespeckled \
+            --filterband lfo \
+            --nolimitoutput \
+            --corrtype linear \
+            /data_in/sub-RAPIDTIDETEST.nii.gz \
+            /data_out/dgsr_distsource
