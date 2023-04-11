@@ -413,7 +413,7 @@ def timefmt(thenumber):
     thenumber
 
     Returns
-    -------
+    -------:
 
     """
     return "{:10.2f}".format(thenumber)
@@ -449,7 +449,7 @@ def proctiminglogfile(logfilename, timewidth=10):
             theoutputline += f" ({timingdata['number'].iloc[therow]} {timingdata['units'].iloc[therow]} @ {speed} {speedunit})"
         outputlines += [theoutputline]
 
-    return outputlines
+    return outputlines, totaldiff
 
 
 def proctiminginfo(thetimings, outputfile="", extraheader=None):

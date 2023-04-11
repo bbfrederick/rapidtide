@@ -3187,20 +3187,23 @@ def rapidtide_main(argparsingfunc):
     optiondict["platform_information"] = nodeline
     tide_util.logmem("status")
 
+    # shut down logging
+    logging.shutdown()
+
+    # reformat timing information
+    timingdata, optiondict["totalruntime"] = tide_util.proctiminglogfile(
+        f"{outputname}_runtimings.tsv"
+    )
+    tide_io.writevec(
+        timingdata,
+        f"{outputname}_desc-formattedruntimings_info.tsv",
+    )
+
     # do a final save of the options file
     if optiondict["bidsoutput"]:
         tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     else:
         tide_io.writedicttojson(optiondict, f"{outputname}_options.json")
-
-    # shut down logging
-    logging.shutdown()
-
-    # reformat timing information
-    tide_io.writevec(
-        tide_util.proctiminglogfile(f"{outputname}_runtimings.tsv"),
-        f"{outputname}_desc-formattedruntimings_info.tsv",
-    )
 
     # delete the canary file
     Path(f"{outputname}_ISRUNNING.txt").unlink()
