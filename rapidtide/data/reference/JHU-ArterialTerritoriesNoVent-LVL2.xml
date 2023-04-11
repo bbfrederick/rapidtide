@@ -1,0 +1,79 @@
+<atlas>
+
+  <!-- The header defines the atlas name, type,
+       and paths to the atlas image files. -->
+  <header>
+
+    <!-- Human-readable atlas name -->
+    <name>JHU Arterial Territory Atlas, No Ventricles, Level 2</name>
+
+    <!-- Abbreviated atlas name -->
+    <shortname>JHU-Arterial-LVL2</shortname>
+
+    <!-- Atlas type - "Probabilistic" or "Label" -->
+    <type>Label</type>
+
+    <!-- Paths (defined relative to the location
+         of this XML file) to the atlas images.
+         Multiple <images> elements may be present
+         - one for each resolution in which the
+         atlas is available. -->
+    <images>
+
+      <!-- If the atlas type is "Probabilistic", the
+           <imagefile> must be a path to a 4D image
+           which contains one volume per region.
+           Otherwise, if the atlas type is "Label",
+           the <imagefile> must be a path to 3D
+           label image. -->
+      <imagefile>/JHU-ArterialTerritoriesNoVent-LVL2_space-MNI152NLin6Asym_2mm</imagefile>
+
+      <!-- If the atlas type is "Probabilistic", the
+           <summaryimagefile> must be a path to a 3D
+           label image which 'summarises' the
+           probabilistic image. If the atlas type is
+           "Label", the <summaryimagefile> is identical
+           to the <imagefile>. There must be a
+           <summaryimagefile> for every <imagefile>. -->
+      <summaryimagefile>/JHU-ArterialTerritoriesNoVent-LVL2_space-MNI152NLin6Asym_2mm</summaryimagefile>
+    </images>
+
+    <!-- A 1mm version of the same atlas images. -->
+    <images>
+      <imagefile>/JHU-ArterialTerritoriesNoVent-LVL2_space-MNI152NLin6Asym_1mm</imagefile>
+      <summaryimagefile>/JHU-ArterialTerritoriesNoVent-LVL2_space-MNI152NLin6Asym_1mm</summaryimagefile>
+    </images>
+  </header>
+
+  <!-- The <data> element contains descriptions
+       of all regions in the atlas. -->
+  <data>
+
+    <!-- Every region in the atlas has a <label> element which defines:
+
+         - The "index". For probabilistic atlases, this is the index
+           of the corresponding volume in the 4D image file. For
+           label images, the index is the value of voxels which
+           are in the corresponding region. For 3D summary images of
+           probabilistic atlases, add 1 to the index to get the
+           label value.
+
+         - The "x", "y", and "z" coordinates of a pre-
+           calculated "centre-of-gravity" for this region.
+           These are specified as voxel coordinates,
+           relative to the *first* image in the <images>
+           list, above.
+
+         - The name of the region. -->
+
+    <label index="0" x="0" y="0" z="0">Unclassified</label>
+    <label index="1" x="51" y="62" z="58">Anterior cerebral artery left (ACAL)</label>
+    <label index="2" x="39" y="61" z="59">Anterior cerebral artery right (ACAR)</label>
+    <label index="3" x="64" y="60" z="43">Medial cerebral artery left (MCAL)</label>
+    <label index="4" x="25" y="60" z="43">Medial cerebral artery right (MCAR)</label>
+    <label index="5" x="54" y="32" z="39">Posterior cerebral artery left (PCAL)</label>
+    <label index="6" x="34" y="33" z="39">Posterior cerebral artery right (PCAR)</label>
+    <label index="7" x="56" y="35" z="18">Vertebro-basilar left (VBL)</label>
+    <label index="8" x="35" y="35" z="18">Vertebro-basilar right (VBR)</label>
+  </data>
+</atlas>
