@@ -26,19 +26,19 @@ rapidtide \
         sub-RAPIDTIDETEST.nii.gz \
         ../dst/sub-RAPIDTIDETEST
 
-rapidtide \
-	--spatialfilt 2 \
-        --nprocs -1 \
-        --passes 3 \
-        --similaritymetric hybrid \
-        --norefinedespeckled \
-        --filterband lfo \
-        --nolimitoutput \
-        --corrtype linear \
-        --preservefiltering \
-        --singleproc_glm \
-        sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_preserve
+#rapidtide \
+#	--spatialfilt 2 \
+#        --nprocs -1 \
+#        --passes 3 \
+#        --similaritymetric hybrid \
+#        --norefinedespeckled \
+#        --filterband lfo \
+#        --nolimitoutput \
+#        --corrtype linear \
+#        --preservefiltering \
+#        --singleproc_glm \
+#        sub-RAPIDTIDETEST.nii.gz \
+#        ../dst/sub-RAPIDTIDETEST_preserve
 
 #rapidtide \
 	##--spatialfilt 2 \
