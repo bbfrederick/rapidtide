@@ -298,6 +298,7 @@ jobs:
           key: deps2-37-{{ checksum "setup.py" }}
       - run:
           name: Coverage
+          file: /tmp/src/rapidtide/coverage.xml
           command:  |
             apt-get update
             apt-get install -yqq curl
@@ -308,9 +309,7 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
-      - upload:
-          - codecov/upload
-          #file: /tmp/src/rapidtide/coverage.xml
+            codecov/upload
 
 
 workflows:
