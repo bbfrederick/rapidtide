@@ -310,7 +310,7 @@ jobs:
           file: /tmp/src/rapidtide/coverage.xml
           command:  |
             apt-get update
-            apt-get install -yqq curl
+            apt-get install -yqq curl gpg
             source activate py37_env
             pwd
             pushd rapidtide/data/examples/src
@@ -321,7 +321,7 @@ jobs:
       - store_test_results:
           path: test-results
       - codecov/upload:
-          file: /tmp/src/rapidtide/coverage.xml
+           file: /tmp/src/rapidtide/coverage.xml
 
 
   test_py310_with_coverage:
@@ -349,7 +349,9 @@ jobs:
       - store_test_results:
           path: test-results
       - codecov/upload:
+          validate_url: true 
           file: /tmp/src/rapidtide/coverage.xml
+      
 
 workflows:
   version: 2.1
