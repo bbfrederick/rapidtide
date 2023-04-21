@@ -183,6 +183,8 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
+      - store_test_results:
+          path: test-results
 
 
   test_py39:
@@ -206,6 +208,8 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
+      - store_test_results:
+          path: test-results
 
 
   test_py310:
@@ -229,6 +233,8 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
+      - store_test_results:
+          path: test-results
 
 
   test_py311:
@@ -247,6 +253,8 @@ jobs:
             apt-get install -yqq curl
             source activate py311_env
             py.test --ignore=rapidtide/candidatetests rapidtide
+      - store_test_results:
+          path: test-results
 
 
   build_docs:
@@ -282,7 +290,7 @@ jobs:
       - run:
           name: Linting
           command:  |
-            source activate py37_env
+            source activate py310_env
             flake8 --ignore=E127,E203,E231,E501,E722,E114,E116,F401,W503,W504 /tmp/src/rapidtide/rapidtide
       - store_artifacts:
           path: /tmp/data/lint
@@ -292,6 +300,7 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     steps:
+      - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
@@ -309,9 +318,38 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
+      - store_test_results:
+          path: test-results
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
 
+
+  test_py310_with_coverage:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-310-{{ checksum "setup.py" }}
+      - run:
+          name: Coverage
+          file: /tmp/src/rapidtide/coverage.xml
+          command:  |
+            apt-get update
+            apt-get install -yqq curl
+            source activate py310_env
+            pwd
+            pushd rapidtide/data/examples/src
+            ./installtestdata
+            popd
+            ls /tmp/src/rapidtide/rapidtide/data/examples/src
+            py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
+      - store_test_results:
+          path: test-results
+      - codecov/upload:
+          file: /tmp/src/rapidtide/coverage.xml
 
 workflows:
   version: 2.1
@@ -339,6 +377,9 @@ workflows:
       - test_py310:
           requires:
             - build_py310
+      #- test_py310_with_coverage:
+      #    requires:
+      #      - build_py310
       #- build_py311
       #- test_py311:
       #    requires:
