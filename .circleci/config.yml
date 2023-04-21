@@ -309,8 +309,8 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
-        - codecov/upload:
-            file: {{ coverage.xml }}
+            codecov/upload:
+                file: {{ coverage.xml }}
 
 
 workflows:
