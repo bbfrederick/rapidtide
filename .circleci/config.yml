@@ -185,6 +185,7 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
+            ls -ltr
       - store_test_results:
           path: test-results
 
@@ -211,13 +212,13 @@ jobs:
             ./installtestdata
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            #py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
-            py.test --ignore=rapidtide/candidatetests --cov rapidtide
+            py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
+            ls -ltr
       - codecov/upload:
-          #file: /tmp/src/rapidtide/coverage.xml
+          file: /tmp/src/rapidtide/coverage.xml
           token: CODECOV_TOKEN
       - store_test_results:
-          path: test-results
+          path: /tmp/src/rapidtide/coverage.xml
 
 
   test_py38:
@@ -241,6 +242,7 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
+            ls -ltr
       - store_test_results:
           path: test-results
 
@@ -249,6 +251,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    resource_class: large
     steps:
       - attach_workspace:  # get rapidtide
           at: /tmp
@@ -266,6 +269,7 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
+            ls -ltr
       - store_test_results:
           path: test-results
 
@@ -291,6 +295,7 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests rapidtide
+            ls -ltr
       - store_test_results:
           path: test-results
 
@@ -316,13 +321,13 @@ jobs:
             ./installtestdata
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            #py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
-            py.test --ignore=rapidtide/candidatetests --cov rapidtide
+            py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
+            ls -ltr
       - codecov/upload:
-          #file: /tmp/src/rapidtide/coverage.xml
+          file: /tmp/src/rapidtide/coverage.xml
           token: CODECOV_TOKEN
       - store_test_results:
-          path: test-results
+          path: /tmp/src/rapidtide/coverage.xml
       
 
   test_py311:
@@ -345,6 +350,7 @@ jobs:
             ./installtestdata
             popd
             py.test --ignore=rapidtide/candidatetests rapidtide
+            ls -ltr
       - store_test_results:
           path: test-results
 
