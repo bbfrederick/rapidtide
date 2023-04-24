@@ -216,7 +216,7 @@ jobs:
           path: test-results
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
-          token: $CODECOV_TOKEN
+          token: ${CODECOV_TOKEN}
 
 
   test_py38:
@@ -320,7 +320,7 @@ jobs:
           path: test-results
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
-          token: $CODECOV_TOKEN
+          token: ${CODECOV_TOKEN}
       
 
   test_py311:
