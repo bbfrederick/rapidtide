@@ -1,0 +1,11 @@
+#!/bin/bash
+
+conda create --name rapidtide
+conda activate rapidtide
+mamba install \
+    codecov \
+    coverage \
+    coveralls \
+    flake8-black \
+    pytest \
+    pytest-cov
