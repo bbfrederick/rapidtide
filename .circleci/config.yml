@@ -167,7 +167,6 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     resource_class: large
-    parallelism: 4
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
@@ -185,41 +184,13 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            ls /tmp/src/rapidtide/rapidtide/data/examples/src
             mkdir test-results
-            pytest --ignore=rapidtide/candidatetests --junitxml=test-results/junit.xml
+            pytest \
+                --ignore=rapidtide/candidatetests \
+                --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
 
-
-  test_py37_fast:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    resource_class: large
-    parallelism: 4
-    steps:
-      - checkout
-      - attach_workspace:  # get rapidtide
-          at: /tmp
-      - restore_cache:  # load environment
-          key: deps2-37-{{ checksum "setup.py" }}
-      - run:
-          name: Coverage
-          file: /tmp/src/rapidtide/coverage.xml
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg
-            source activate py37_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            mkdir test-results
-            pytest --ignore=rapidtide/tests/test_fullrun*py --ignore=rapidtide/candidatetests --junitxml=test-results/junit.xml
-      - store_test_results:
-          path: test-results
 
 
   test_py37_with_coverage:
@@ -227,7 +198,6 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     resource_class: large
-    parallelism: 4
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
@@ -245,14 +215,12 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            #py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
-            py.test \
+            mkdir test-results
+            pytest \
                 --ignore=rapidtide/candidatetests \
                 --html=pytest_report.html \
                 --cov-report xml:coverage.xml \
                 --cov=rapidtide rapidtide
-            ls -ltr
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
           token: CODECOV_TOKEN
@@ -268,7 +236,6 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     resource_class: large
-    parallelism: 4
     steps:
       - attach_workspace:  # get rapidtide
           at: /tmp
@@ -284,12 +251,12 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            #py.test --ignore=rapidtide/candidatetests rapidtide
-            py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
-            ls -ltr
-      - store_artifacts:
-          path: /tmp/src/rapidtide/pytest_report.html
+            mkdir test-results
+            pytest  \
+                --ignore=rapidtide/candidatetests \
+                --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: test-results
 
 
   test_py39:
@@ -297,7 +264,6 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     resource_class: large
-    parallelism: 4
     steps:
       - attach_workspace:  # get rapidtide
           at: /tmp
@@ -313,11 +279,13 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            #py.test --ignore=rapidtide/candidatetests rapidtide
-            py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
-      - store_artifacts:
-          path: /tmp/src/rapidtide/pytest_report.html
+            mkdir test-results
+            #pytest --ignore=rapidtide/candidatetests --junitxml=test-results/junit.xml
+            pytest  \
+                --ignore=rapidtide/candidatetests \
+                --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: test-results
 
 
   test_py310:
@@ -325,7 +293,6 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     resource_class: large
-    parallelism: 4
     steps:
       - attach_workspace:  # get rapidtide
           at: /tmp
@@ -341,11 +308,12 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
-            ls -ltr
-      - store_artifacts:
-          path: /tmp/src/rapidtide/pytest_report.html
+            mkdir test-results
+            pytest  \
+                --ignore=rapidtide/candidatetests \
+                --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: test-results
 
 
   test_py310_with_coverage:
@@ -353,7 +321,6 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     resource_class: large
-    parallelism: 4
     steps:
       - attach_workspace:  # get rapidtide
           at: /tmp
@@ -370,52 +337,21 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            py.test --ignore=rapidtide/candidatetests --html=pytest_report.html --cov-report xml:coverage.xml --cov=rapidtide rapidtide
-            ls -ltr
+            mkdir test-results
+            pytest \
+                --ignore=rapidtide/candidatetests \
+                --cov-report xml:coverage.xml \
+                --cov=rapidtide rapidtide \
+                --junitxml=test-results/junit.xml
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
-          token: CODECOV_TOKEN
       - store_artifacts:
           path: /tmp/src/rapidtide/coverage.xml
           destination: artifact-file
       - store_artifacts:
           path: /tmp/src/rapidtide/pytest_report.html
-      
-
-  test_py310_fast:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    resource_class: large
-    parallelism: 4
-    steps:
-      - attach_workspace:  # get rapidtide
-          at: /tmp
-      - restore_cache:  # load environment
-          key: deps2-310-{{ checksum "setup.py" }}
-      - run:
-          name: Coverage
-          file: /tmp/src/rapidtide/coverage.xml
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg
-            source activate py310_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            py.test --ignore=rapidtide/tests/test_fullrun*py --ignore=rapidtide/candidatetests --html=pytest_report.html --cov-report xml:coverage.xml --cov=rapidtide rapidtide
-            ls -ltr
-      - codecov/upload:
-          file: /tmp/src/rapidtide/coverage.xml
-          token: CODECOV_TOKEN
-      - store_artifacts:
-          path: /tmp/src/rapidtide/coverage.xml
-          destination: artifact-file
-      - store_artifacts:
-          path: /tmp/src/rapidtide/pytest_report.html
+      - store_test_results:
+          path: test-results
       
 
   test_py311:
@@ -423,7 +359,6 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     resource_class: large
-    parallelism: 4
     steps:
       - attach_workspace:  # get rapidtide
           at: /tmp
@@ -439,11 +374,12 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            #py.test --ignore=rapidtide/candidatetests rapidtide
-            py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
-            ls -ltr
-      - store_artifacts:
-          path: /tmp/src/rapidtide/pytest_report.html
+            mkdir test-results
+            pytest \
+                --ignore=rapidtide/candidatetests \
+                --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: test-results
 
 
   build_docs:
@@ -495,31 +431,22 @@ workflows:
       #- style_check:
       #    requires:
       #      - build_py37
-#      - test_py37:
-#          requires:
-#            - build_py37
-#      - build_py38
-#      - test_py38:
-#          requires:
-#            - build_py38
-#      - build_py39
-#      - test_py39:
-#          requires:
-#            - build_py39
-      - build_py310
-      #- test_py310:
-      #    requires:
-      #      - build_py310
-#      - test_py310_with_coverage:
-#          requires:
-#            - build_py310
-#      - build_py311
-#      - test_py311:
-#          requires:
-#            - build_py311
-      - test_py310_fast:
-          requires:
-            - build_py310
-      - test_py37_fast:
+      - test_py37:
           requires:
             - build_py37
+      - build_py38
+      - test_py38:
+          requires:
+            - build_py38
+      - build_py39
+      - test_py39:
+          requires:
+            - build_py39
+      - build_py310
+      - test_py310_with_coverage:
+          requires:
+            - build_py310
+      - build_py311
+      - test_py311:
+          requires:
+            - build_py311
