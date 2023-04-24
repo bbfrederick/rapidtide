@@ -187,10 +187,11 @@ jobs:
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             #py.test --ignore=rapidtide/candidatetests rapidtide
-            py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
-            ls -ltr
+            #py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
+            mkdir test-results
+            pytest --junitxml=test-results/junit.xml
       - store_test_results:
-          path: /tmp/src/rapidtide/pytest_report.html
+          path: test-results
 
 
   test_py37_with_coverage:
@@ -227,10 +228,10 @@ jobs:
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
           token: CODECOV_TOKEN
-      - store_test_results:
+      - store_artifacts:
           path: /tmp/src/rapidtide/coverage.xml
           destination: artifact-file
-      - store_test_results:
+      - store_artifacts:
           path: /tmp/src/rapidtide/pytest_report.html
 
 
@@ -259,7 +260,7 @@ jobs:
             #py.test --ignore=rapidtide/candidatetests rapidtide
             py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
             ls -ltr
-      - store_test_results:
+      - store_artifacts:
           path: /tmp/src/rapidtide/pytest_report.html
 
 
@@ -287,7 +288,7 @@ jobs:
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             #py.test --ignore=rapidtide/candidatetests rapidtide
             py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
-      - store_test_results:
+      - store_artifacts:
           path: /tmp/src/rapidtide/pytest_report.html
 
 
@@ -315,7 +316,7 @@ jobs:
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
             py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
             ls -ltr
-      - store_test_results:
+      - store_artifacts:
           path: /tmp/src/rapidtide/pytest_report.html
 
 
@@ -347,10 +348,10 @@ jobs:
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
           token: CODECOV_TOKEN
-      - store_test_results:
+      - store_artifacts:
           path: /tmp/src/rapidtide/coverage.xml
           destination: artifact-file
-      - store_test_results:
+      - store_artifacts:
           path: /tmp/src/rapidtide/pytest_report.html
       
 
@@ -378,7 +379,7 @@ jobs:
             #py.test --ignore=rapidtide/candidatetests rapidtide
             py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
             ls -ltr
-      - store_test_results:
+      - store_artifacts:
           path: /tmp/src/rapidtide/pytest_report.html
 
 
