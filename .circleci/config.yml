@@ -215,7 +215,7 @@ jobs:
       - store_test_results:
           path: test-results
       - codecov/upload:
-           file: /tmp/src/rapidtide/coverage.xml
+          file: /tmp/src/rapidtide/coverage.xml
 
 
   test_py38:
@@ -318,7 +318,6 @@ jobs:
       - store_test_results:
           path: test-results
       - codecov/upload:
-          validate_url: true 
           file: /tmp/src/rapidtide/coverage.xml
       
 
