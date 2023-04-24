@@ -338,6 +338,10 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg
             source activate py311_env
+            pwd
+            pushd rapidtide/data/examples/src
+            ./installtestdata
+            popd
             py.test --ignore=rapidtide/candidatetests rapidtide
       - store_test_results:
           path: test-results
