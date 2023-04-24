@@ -26,7 +26,6 @@ import numpy as np
 import pyfftw
 import pyfftw.interfaces.scipy_fftpack as fftpack
 import scipy as sp
-from numba import jit
 from numpy.fft import irfftn, rfftn
 from scipy import signal
 from sklearn.metrics import mutual_info_score
@@ -43,10 +42,17 @@ LGR = logging.getLogger("GENERAL")
 defaultbutterorder = 6
 MAXLINES = 10000000
 donotbeaggressive = True
-donotusenumba = True
 
 
 # ----------------------------------------- Conditional imports ---------------------------------------
+try:
+    from numba import jit
+except ImportError:
+    donotusenumba = True
+else:
+    donotusenumba = False
+
+
 def conditionaljit():
     """Wrap functions in jit if numba is enabled."""
 

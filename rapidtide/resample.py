@@ -26,7 +26,6 @@ import numpy as np
 import pyfftw
 import pylab as pl
 import scipy as sp
-from numba import jit
 from scipy import fftpack, signal
 
 import rapidtide.filter as tide_filt
@@ -42,10 +41,15 @@ import warnings
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 # ---------------------------------------- Global constants -------------------------------------------
-donotusenumba = False
 donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
+try:
+    from numba import jit
+except ImportError:
+    donotusenumba = True
+else:
+    donotusenumba = False
 
 
 def conditionaljit():

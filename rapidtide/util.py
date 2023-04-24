@@ -30,7 +30,6 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from numba import jit
 
 import rapidtide._version as tide_versioneer
 import rapidtide.io as tide_io
@@ -43,7 +42,6 @@ MemoryLGR = logging.getLogger("MEMORY")
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
-donotusenumba = False
 donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
@@ -53,6 +51,13 @@ try:
     memprofilerexists = True
 except ImportError:
     memprofilerexists = False
+
+try:
+    from numba import jit
+except ImportError:
+    donotusenumba = True
+else:
+    donotusenumba = False
 
 
 def checkimports(optiondict):

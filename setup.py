@@ -196,7 +196,6 @@ setup(
         "statsmodels",
         "tqdm",
         "pywavelets",
-        "numba",
     ],
     # "keras",
     # "tensorflow>=2.4.0",

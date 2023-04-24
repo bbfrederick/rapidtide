@@ -26,7 +26,6 @@ import numpy as np
 import pyfftw
 import scipy as sp
 import scipy.special as sps
-from numba import jit
 from scipy.signal import find_peaks, hilbert
 from scipy.stats import entropy, moment
 from statsmodels.robust import mad
@@ -49,7 +48,12 @@ try:
 except ImportError:
     memprofilerexists = False
 
-donotusenumba = True
+try:
+    from numba import jit
+except ImportError:
+    donotusenumba = True
+else:
+    donotusenumba = False
 
 
 def conditionaljit():

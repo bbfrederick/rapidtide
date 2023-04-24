@@ -23,7 +23,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pyfftw
 import scipy as sp
-from numba import jit
 from scipy.stats import johnsonsb, kurtosis, kurtosistest
 
 import rapidtide.fit as tide_fit
@@ -31,6 +30,7 @@ import rapidtide.io as tide_io
 
 fftpack = pyfftw.interfaces.scipy_fftpack
 pyfftw.interfaces.cache.enable()
+
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -45,8 +45,12 @@ try:
 except ImportError:
     memprofilerexists = False
 
-
-donotusenumba = False
+try:
+    from numba import jit
+except ImportError:
+    donotusenumba = True
+else:
+    donotusenumba = False
 
 
 def disablenumba():

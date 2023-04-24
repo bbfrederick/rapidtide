@@ -22,7 +22,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pyfftw
-from numba import jit
 from scipy import fftpack
 from statsmodels.robust import mad
 
@@ -35,7 +34,6 @@ pyfftw.interfaces.cache.enable()
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
-donotusenumba = True
 donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
@@ -45,6 +43,13 @@ try:
     memprofilerexists = True
 except ImportError:
     memprofilerexists = False
+
+try:
+    from numba import jit
+except ImportError:
+    donotusenumba = True
+else:
+    donotusenumba = False
 
 
 # ----------------------------------------- Conditional jit handling ----------------------------------
@@ -126,6 +131,7 @@ def complex_cepstrum(x):
     -------
 
     """
+
     # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
     def _unwrap(phase):
         samples = phase.shape[-1]
