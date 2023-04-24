@@ -186,10 +186,8 @@ jobs:
             ./installtestdata
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            #py.test --ignore=rapidtide/candidatetests rapidtide
-            #py.test --ignore=rapidtide/candidatetests --html=pytest_report.html rapidtide
             mkdir test-results
-            pytest --junitxml=test-results/junit.xml
+            pytest --ignore=rapidtide/candidatetests --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
 
