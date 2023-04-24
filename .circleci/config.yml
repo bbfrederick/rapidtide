@@ -218,7 +218,6 @@ jobs:
             mkdir test-results
             pytest \
                 --ignore=rapidtide/candidatetests \
-                --html=pytest_report.html \
                 --cov-report xml:coverage.xml \
                 --cov=rapidtide rapidtide
       - codecov/upload:
@@ -227,8 +226,6 @@ jobs:
       - store_artifacts:
           path: /tmp/src/rapidtide/coverage.xml
           destination: artifact-file
-      - store_artifacts:
-          path: /tmp/src/rapidtide/pytest_report.html
 
 
   test_py38:
@@ -280,7 +277,6 @@ jobs:
             ./installtestdata
             popd
             mkdir test-results
-            #pytest --ignore=rapidtide/candidatetests --junitxml=test-results/junit.xml
             pytest  \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
@@ -348,8 +344,6 @@ jobs:
       - store_artifacts:
           path: /tmp/src/rapidtide/coverage.xml
           destination: artifact-file
-      - store_artifacts:
-          path: /tmp/src/rapidtide/pytest_report.html
       - store_test_results:
           path: test-results
       
