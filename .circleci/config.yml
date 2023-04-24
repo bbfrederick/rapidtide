@@ -211,12 +211,13 @@ jobs:
             ./installtestdata
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
+            #py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
+            py.test --ignore=rapidtide/candidatetests --cov rapidtide
+      - codecov/upload:
+          #file: /tmp/src/rapidtide/coverage.xml
+          token: CODECOV_TOKEN
       - store_test_results:
           path: test-results
-      - codecov/upload:
-          file: /tmp/src/rapidtide/coverage.xml
-          token: CODECOV_TOKEN
 
 
   test_py38:
@@ -315,12 +316,13 @@ jobs:
             ./installtestdata
             popd
             ls /tmp/src/rapidtide/rapidtide/data/examples/src
-            py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
+            #py.test --ignore=rapidtide/candidatetests --cov-report xml:coverage.xml --cov=rapidtide rapidtide
+            py.test --ignore=rapidtide/candidatetests --cov rapidtide
+      - codecov/upload:
+          #file: /tmp/src/rapidtide/coverage.xml
+          token: CODECOV_TOKEN
       - store_test_results:
           path: test-results
-      - codecov/upload:
-          file: /tmp/src/rapidtide/coverage.xml
-          token: CODECOV_TOKEN
       
 
   test_py311:
