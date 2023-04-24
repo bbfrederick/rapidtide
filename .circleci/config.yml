@@ -216,7 +216,7 @@ jobs:
           path: test-results
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
-          token: $CODECOV_UPLOAD
+          token: $CODECOV_TOKEN
 
 
   test_py38:
@@ -320,7 +320,7 @@ jobs:
           path: test-results
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
-          token: $CODECOV_UPLOAD
+          token: $CODECOV_TOKEN
       
 
   test_py311:
@@ -408,8 +408,6 @@ workflows:
       #    requires:
       #      - build_py310
       - test_py310_with_coverage:
-          context:
-            - rapidtide
           requires:
             - build_py310
       - build_py311
