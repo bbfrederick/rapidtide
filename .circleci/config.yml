@@ -336,7 +336,6 @@ jobs:
             mkdir test-results
             pytest \
                 --ignore=rapidtide/candidatetests \
-                --ignore=rapidtide/hiddentests \
                 --cov-report xml:coverage.xml \
                 --cov=rapidtide rapidtide \
                 --junitxml=test-results/junit.xml
@@ -372,7 +371,6 @@ jobs:
             mkdir test-results
             pytest \
                 --ignore=rapidtide/candidatetests \
-                --ignore=rapidtide/hiddentests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
@@ -420,24 +418,24 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
-#      - build_py37
-#      - build_docs:
-#          requires:
-#            - build_py37
+      - build_py37
+      - build_docs:
+          requires:
+            - build_py37
       #- style_check:
       #    requires:
       #      - build_py37
-#      - test_py37:
-#          requires:
-#            - build_py37
-#      - build_py38
-#      - test_py38:
-#          requires:
-#            - build_py38
-#      - build_py39
-#      - test_py39:
-#          requires:
-#            - build_py39
+      - test_py37:
+          requires:
+            - build_py37
+      - build_py38
+      - test_py38:
+          requires:
+            - build_py38
+      - build_py39
+      - test_py39:
+          requires:
+            - build_py39
       - build_py310
       - test_py310_with_coverage:
           requires:
