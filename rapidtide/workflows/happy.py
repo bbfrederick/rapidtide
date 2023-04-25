@@ -2084,7 +2084,7 @@ def happy_main(argparsingfunc):
                         1.0 / (upsampledslicetimeaxis[1] - upsampledslicetimeaxis[0]),
                         starttime=upsampledslicetimeaxis[0],
                         columns=["instphase"],
-                        append=True,
+                        append=False,
                         debug=args.debug,
                     )
                 else:
