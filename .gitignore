@@ -4,6 +4,8 @@ VERSION
 DATE
 changecalls
 
+.circleci/*.safe
+
 # mac desktop files
 .DS_Store
 */.DS_Store
