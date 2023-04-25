@@ -134,7 +134,7 @@ class Overlay:
         geommask=None,
         label=None,
         report=False,
-        lut_state=gray_state,
+        lut_state=gen_gray_state(),
         alpha=128,
         endalpha=0,
         display_state=True,

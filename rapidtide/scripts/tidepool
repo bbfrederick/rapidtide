@@ -784,9 +784,10 @@ def transparency_checkbox_clicked():
 
 def gray_radioButton_clicked(enabled):
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
+
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
-            gray_state, alpha=LUT_alpha, endalpha=LUT_endalpha
+            gen_gray_state(), alpha=LUT_alpha, endalpha=LUT_endalpha
         )
         overlays[currentdataset.focusmap].gradient.restoreState(
             overlays[currentdataset.focusmap].lut_state
@@ -799,7 +800,7 @@ def thermal_radioButton_clicked(enabled):
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
-            thermal_state, alpha=LUT_alpha, endalpha=LUT_endalpha
+            gen_thermal_state(), alpha=LUT_alpha, endalpha=LUT_endalpha
         )
         overlays[currentdataset.focusmap].gradient.restoreState(
             overlays[currentdataset.focusmap].lut_state
@@ -812,7 +813,7 @@ def flame_radioButton_clicked(enabled):
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
-            flame_state, alpha=LUT_alpha, endalpha=LUT_endalpha
+            gen_flame_state(), alpha=LUT_alpha, endalpha=LUT_endalpha
         )
         overlays[currentdataset.focusmap].gradient.restoreState(
             overlays[currentdataset.focusmap].lut_state
@@ -825,7 +826,7 @@ def viridis_radioButton_clicked(enabled):
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
-            viridis_state, alpha=LUT_alpha, endalpha=LUT_endalpha
+            gen_viridis_state(), alpha=LUT_alpha, endalpha=LUT_endalpha
         )
         overlays[currentdataset.focusmap].gradient.restoreState(
             overlays[currentdataset.focusmap].lut_state
@@ -838,7 +839,7 @@ def jet_radioButton_clicked(enabled):
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
-            cyclic_state, alpha=LUT_alpha, endalpha=LUT_endalpha
+            gen_cyclic_state(), alpha=LUT_alpha, endalpha=LUT_endalpha
         )
         overlays[currentdataset.focusmap].gradient.restoreState(
             overlays[currentdataset.focusmap].lut_state
@@ -851,7 +852,7 @@ def rainbow_radioButton_clicked(enabled):
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
-            spectrum_state, alpha=LUT_alpha, endalpha=LUT_endalpha
+            gen_spectrum_state(), alpha=LUT_alpha, endalpha=LUT_endalpha
         )
         overlays[currentdataset.focusmap].gradient.restoreState(
             overlays[currentdataset.focusmap].lut_state
@@ -1006,6 +1007,7 @@ def overlay_radioButton_clicked(which, enabled):
     global imageadj, overlays, currentdataset, panetomap, ui, overlaybuttons
     global currentloc, atlasaveragingdone
     global verbosity
+
     if enabled:
         overlaybuttons[which].setChecked(True)
         currentloc.stopMovie()
@@ -1016,15 +1018,15 @@ def overlay_radioButton_clicked(which, enabled):
                 currentdataset.setfocusmap(panetomap[which])
             if verbosity > 1:
                 print("currentdataset.focusmap set to ", currentdataset.focusmap)
-            if overlays[currentdataset.focusmap].lut_state == gray_state:
+            if overlays[currentdataset.focusmap].lut_state == gen_gray_state():
                 ui.gray_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == thermal_state:
+            elif overlays[currentdataset.focusmap].lut_state == gen_thermal_state():
                 ui.thermal_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == flame_state:
+            elif overlays[currentdataset.focusmap].lut_state == gen_flame_state():
                 ui.flame_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == viridis_state:
+            elif overlays[currentdataset.focusmap].lut_state == gen_viridis_state():
                 ui.viridis_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == cyclic_state:
+            elif overlays[currentdataset.focusmap].lut_state == gen_cyclic_state():
                 ui.jet_radioButton.setChecked(True)
             else:
                 ui.rainbow_radioButton.setChecked(True)
@@ -1469,151 +1471,151 @@ def main():
 
     # configure the gradient scale
     imageadj = pg.GradientWidget(orientation="right", allowAdd=True)
-    imageadj.restoreState(gray_state)
+    imageadj.restoreState(gen_gray_state())
     if harvestcolormaps:
         ui.largeimage_horizontalLayout.addWidget(imageadj)
 
     defaultdict = {
         "lagmask": {
-            "colormap": gray_state,
+            "colormap": gen_gray_state(),
             "label": "Lag mask",
             "display": False,
             "funcmask": None,
         },
         "geommask": {
-            "colormap": gray_state,
+            "colormap": gen_gray_state(),
             "label": "Geometric mask",
             "display": False,
             "funcmask": None,
         },
         "refinemask": {
-            "colormap": gray_state,
+            "colormap": gen_gray_state(),
             "label": "Refine mask",
             "display": False,
             "funcmask": None,
         },
         "meanmask": {
-            "colormap": gray_state,
+            "colormap": gen_gray_state(),
             "label": "Global mean mask",
             "display": False,
             "funcmask": None,
         },
         "preselectmask": {
-            "colormap": gray_state,
+            "colormap": gen_gray_state(),
             "label": "Global mean preselect mask",
             "display": False,
             "funcmask": None,
         },
         "p_lt_0p050_mask": {
-            "colormap": gray_state,
+            "colormap": gen_gray_state(),
             "label": "p<0.05",
             "display": False,
             "funcmask": None,
         },
         "p_lt_0p010_mask": {
-            "colormap": gray_state,
+            "colormap": gen_gray_state(),
             "label": "p<0.01",
             "display": False,
             "funcmask": None,
         },
         "p_lt_0p005_mask": {
-            "colormap": gray_state,
+            "colormap": gen_gray_state(),
             "label": "p<0.005",
             "display": False,
             "funcmask": None,
         },
         "p_lt_0p001_mask": {
-            "colormap": gray_state,
+            "colormap": gen_gray_state(),
             "label": "p<0.001",
             "display": False,
             "funcmask": None,
         },
         "risetime_epoch_0": {
-            "colormap": viridis_state,
+            "colormap": gen_viridis_state(),
             "label": "Rise times",
             "display": False,
             "funcmask": "p_lt_0p050_mask",
         },
         "maxamp_epoch_0": {
-            "colormap": viridis_state,
+            "colormap": gen_viridis_state(),
             "label": "CVR",
             "display": False,
             "funcmask": "p_lt_0p050_mask",
         },
         "starttime_epoch_0": {
-            "colormap": viridis_state,
+            "colormap": gen_viridis_state(),
             "label": "Start times",
             "display": False,
             "funcmask": "p_lt_0p050_mask",
         },
         "lagtimes": {
-            "colormap": viridis_state,
+            "colormap": gen_viridis_state(),
             "label": "Lag times",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "lagstrengths": {
-            "colormap": thermal_state,
+            "colormap": gen_thermal_state(),
             "label": "Similarity coefficient",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "lagsigma": {
-            "colormap": spectrum_state,
+            "colormap": gen_spectrum_state(),
             "label": "Similarity width",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "MTT": {
-            "colormap": spectrum_state,
+            "colormap": gen_spectrum_state(),
             "label": "MTT",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "fitNorm": {
-            "colormap": thermal_state,
+            "colormap": gen_thermal_state(),
             "label": "fitNorm",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "R2": {
-            "colormap": thermal_state,
+            "colormap": gen_thermal_state(),
             "label": "R2",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "corrout": {
-            "colormap": thermal_state,
+            "colormap": gen_thermal_state(),
             "label": "Similarity function",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "gaussout": {
-            "colormap": thermal_state,
+            "colormap": gen_thermal_state(),
             "label": "Gauss fit",
             "display": False,
             "funcmask": "p_lt_0p050_mask",
         },
         "failimage": {
-            "colormap": spectrum_state,
+            "colormap": gen_spectrum_state(),
             "label": "Fit failure reason",
             "display": False,
             "funcmask": None,
         },
         "anatomic": {
-            "colormap": gray_state,
+            "colormap": gen_gray_state(),
             "label": "Anatomic image",
             "display": False,
             "funcmask": None,
         },
         "atlas": {
-            "colormap": spectrum_state,
+            "colormap": gen_spectrum_state(),
             "label": "Atlas territories",
             "display": True,
             "funcmask": None,
         },
         "fitcoff": {
-            "colormap": thermal_state,
+            "colormap": gen_thermal_state(),
             "label": "GLM fit coefficient",
             "display": True,
             "funcmask": "p_lt_0p050_mask",

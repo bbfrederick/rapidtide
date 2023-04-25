@@ -30,7 +30,7 @@ def main():
     # initialize default values
     print(f"get_test_temp_path={get_test_temp_path()}")
     datafileroot = (os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST2_"),)
-    #datafileroot = "../data/examples/dst/sub-RAPIDTIDETEST_"
+    # datafileroot = "../data/examples/dst/sub-RAPIDTIDETEST_"
     anatname = None
     geommaskname = None
     userise = False

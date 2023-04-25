@@ -21,9 +21,6 @@
 # $Id: OrthoImageItem.py,v 1.13 2016/04/07 21:46:54 frederic Exp $
 #
 # -*- coding: utf-8 -*-
-from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
-
-
 def setendalpha(thestate, alpha, debug=False):
     if debug:
         print("color mode:", thestate["mode"])
@@ -68,40 +65,112 @@ def setendalpha(thestate, alpha, debug=False):
     return adjustedgradient
 
 
-# some predefined colortables
-thermal_state = Gradients["thermal"]
-flame_state = Gradients["flame"]
-yellowy_state = Gradients["yellowy"]
-bipolar_state = Gradients["bipolar"]
-spectrum_state = Gradients["spectrum"]
-cyclic_state = Gradients["cyclic"]
-gray_state = Gradients["grey"]
-grey_state = gray_state
+def gen_thermal_state():
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-viridis_state = Gradients["viridis"]
-inferno_state = Gradients["inferno"]
-plasma_state = Gradients["plasma"]
-magma_state = Gradients["magma"]
+    return Gradients["thermal"]
 
-g2y2r_state = {
-    "ticks": [
-        (0.0000, (0, 0, 0, 0)),
-        (0.0001, (0, 255, 0, 255)),
-        (0.5000, (255, 255, 0, 255)),
-        (0.9999, (255, 0, 0, 255)),
-        (1.0000, (255, 0, 0, 0)),
-    ],
-    "mode": "rgb",
-}
-mask_state = {
-    "ticks": [(0.0000, (0, 0, 0, 255)), (1.0000, (255, 255, 255, 0))],
-    "mode": "rgb",
-}
-greyclip_state = {
-    "ticks": [
-        (0.0, (0, 0, 0, 255)),
-        (0.99, (255, 255, 255, 255)),
-        (1.0, (255, 0, 0, 255)),
-    ],
-    "mode": "rgb",
-}
+
+def gen_flame_state():
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
+    return Gradients["flame"]
+
+
+def gen_yellowy_state():
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
+    return Gradients["yellowy"]
+
+
+def gen_bipolar_state():
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
+    return Gradients["bipolar"]
+
+
+def gen_spectrum_state():
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
+    return Gradients["spectrum"]
+
+
+def gen_cyclic_state():
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
+    return Gradients["cyclic"]
+
+
+def gen_gray_state():
+    return {
+        "ticks": [
+            (0.0000, (0, 0, 0, 255)),
+            (1.0000, (255, 255, 255, 255)),
+        ],
+        "mode": "rgb",
+    }
+
+
+def gen_grey_state():
+    return {
+        "ticks": [
+            (0.0000, (0, 0, 0, 255)),
+            (1.0000, (255, 255, 255, 255)),
+        ],
+        "mode": "rgb",
+    }
+
+
+def gen_viridis_state():
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
+    return Gradients["viridis"]
+
+
+def gen_inferno_state():
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
+    return Gradients["inferno"]
+
+
+def gen_plasma_state():
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
+    return Gradients["plasma"]
+
+
+def gen_magma_state():
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
+    return Gradients["magma"]
+
+
+def gen_g2y2r_state():
+    return {
+        "ticks": [
+            (0.0000, (0, 0, 0, 0)),
+            (0.0001, (0, 255, 0, 255)),
+            (0.5000, (255, 255, 0, 255)),
+            (0.9999, (255, 0, 0, 255)),
+            (1.0000, (255, 0, 0, 0)),
+        ],
+        "mode": "rgb",
+    }
+
+
+def gen_mask_state():
+    return {
+        "ticks": [(0.0000, (0, 0, 0, 255)), (1.0000, (255, 255, 255, 0))],
+        "mode": "rgb",
+    }
+
+
+def gen_greyclip_state():
+    return {
+        "ticks": [
+            (0.0, (0, 0, 0, 255)),
+            (0.99, (255, 255, 255, 255)),
+            (1.0, (255, 0, 0, 255)),
+        ],
+        "mode": "rgb",
+    }
