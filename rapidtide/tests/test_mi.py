@@ -20,13 +20,14 @@ import numpy as np
 
 import rapidtide.io as tide_io
 from rapidtide.correlate import calc_MI
+from rapidtide.tests.utils import get_examples_path
 
 
 def test_calc_MI(display=False):
     inlen = 1000
     offset = 100
-    filename1 = "testdata/lforegressor.txt"
-    filename2 = "testdata/lforegressor.txt"
+    filename1 = os.path.join(get_examples_path(), "lforegressor.txt")
+    filename2 = os.path.join(get_examples_path(), "lforegressor.txt")
     sig1 = tide_io.readvec(filename1)
     sig2 = np.power(sig1, 2.0)
     sig3 = np.power(sig1, 3.0)
