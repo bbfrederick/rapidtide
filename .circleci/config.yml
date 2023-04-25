@@ -11,6 +11,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    resource_class: medium
     steps:
       - checkout
       - persist_to_workspace:
@@ -40,6 +41,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    resource_class: medium
     steps:
       - checkout
       - persist_to_workspace:
@@ -69,6 +71,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    resource_class: medium
     steps:
       - checkout
       - persist_to_workspace:
@@ -101,6 +104,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    resource_class: medium
     steps:
       - checkout
       - persist_to_workspace:
@@ -133,6 +137,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    resource_class: medium
     steps:
       - checkout
       - persist_to_workspace:
@@ -380,6 +385,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    resource_class: small
     steps:
       - attach_workspace:  # get rapidtide
           at: /tmp
@@ -401,6 +407,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    resource_class: small
     steps:
       - attach_workspace:  # get rapidtide
           at: /tmp
