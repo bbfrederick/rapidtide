@@ -29,7 +29,7 @@ def test_fullrunrapidtide_v3(debug=False, display=False):
     # run rapidtide
     inputargs = [
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST"),
+        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST3"),
         "--corrmask",
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_restrictedmask.nii.gz:1"),
         "--legacyoutput",

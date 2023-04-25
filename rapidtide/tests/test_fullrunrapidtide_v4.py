@@ -29,7 +29,7 @@ def test_fullrunrapidtide_v4(debug=False, display=False):
     # run rapidtide
     inputargs = [
         os.path.join(get_examples_path(), "sub-NIRSRAPIDTIDETEST.txt"),
-        os.path.join(get_test_temp_path(), "sub-NIRSRAPIDTIDETEST"),
+        os.path.join(get_test_temp_path(), "sub-NIRSRAPIDTIDETEST4"),
         "--globalmeaninclude",
         os.path.join(get_examples_path(), "sub-NIRSRAPIDTIDETEST_mask.txt"),
         "--nirs",
