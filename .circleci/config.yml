@@ -197,42 +197,6 @@ jobs:
           path: test-results
 
 
-
-  test_py37_with_coverage:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    resource_class: large
-    steps:
-      - checkout
-      - attach_workspace:  # get rapidtide
-          at: /tmp
-      - restore_cache:  # load environment
-          key: deps2-37-{{ checksum "setup.py" }}
-      - run:
-          name: Coverage
-          file: /tmp/src/rapidtide/coverage.xml
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg 
-            source activate py37_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            mkdir test-results
-            pytest \
-                --ignore=rapidtide/candidatetests \
-                --cov-report xml:coverage.xml \
-                --cov=rapidtide rapidtide
-      - codecov/upload:
-          file: /tmp/src/rapidtide/coverage.xml
-          token: CODECOV_TOKEN
-      - store_artifacts:
-          path: /tmp/src/rapidtide/coverage.xml
-          destination: artifact-file
-
-
   test_py38:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -426,12 +390,6 @@ workflows:
   run_tests:
     jobs:
       - build_py37
-      - build_docs:
-          requires:
-            - build_py37
-      #- style_check:
-      #    requires:
-      #      - build_py37
       - test_py37:
           requires:
             - build_py37
@@ -451,3 +409,9 @@ workflows:
       - test_py311:
           requires:
             - build_py311
+      - build_docs:
+          requires:
+            - build_py37
+      #- style_check:
+      #    requires:
+      #      - build_py37

@@ -57,6 +57,9 @@ def main():
         verbose=verbose,
     )
 
+    theoverlays = thesubject.getoverlays()
+    theregressors = thesubject.getregressors()
+
 
 if __name__ == "__main__":
     main()

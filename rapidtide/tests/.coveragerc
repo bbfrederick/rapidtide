@@ -2,9 +2,14 @@
  branch = True
  source = .
  omit =
-  .coveragerc
-  xtest_*
+  __init__.py
   ../__init__.py
   ../workflows/rapidtide2x.py
+  ../workflows/rapidtide2x_parser.py
+  ../workflows/happy_legacy.py
+  ../scripts/__init__.py
   ../OrthoImageItem.py
-  ../tidepoolTemplate_qt5.py
+  ../weiner.py
+  ../weiner2.py
+  ../tidepoolTemplate.py
+  ../tidepoolTemplate_alt.py
