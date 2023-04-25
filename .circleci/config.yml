@@ -307,6 +307,7 @@ jobs:
                 --ignore=rapidtide/candidatetests \
                 --cov-report xml:coverage.xml \
                 --cov=rapidtide rapidtide \
+                --cov-config=.coveragerc \
                 --junitxml=test-results/junit.xml
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml

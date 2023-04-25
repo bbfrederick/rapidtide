@@ -15,7 +15,7 @@
 #   limitations under the License.
 #
 #
-pytest -W ignore --cov-report html:coveragereport --cov=rapidtide
+pytest -W ignore --cov-report html:coveragereport --cov=rapidtide --cov-config=.coveragerc
 open coveragereport/index.html
 #pytest -W ignore --cov-report html:coveragereport.html term-missing --cov=rapidtide
 #coverage run /Users/frederic/code/rapidtide/rapidtide/tests
