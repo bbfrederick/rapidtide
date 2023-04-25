@@ -1185,13 +1185,9 @@ class RapidtideDataset:
             test = self.overlays["atlas"]
             if self.verbose > 1:
                 print("there is an atlas")
-            # ui.report_pushButton.show()
-            # ui.report_pushButton.setDisabled(False)
         except KeyError:
             if self.verbose > 1:
                 print("there is not an atlas")
-            # ui.report_pushButton.hide()
-            # ui.report_pushButton.setDisabled(True)
         if self.verbose > 1:
             print("done")
 
