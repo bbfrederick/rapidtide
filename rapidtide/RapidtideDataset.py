@@ -27,13 +27,20 @@ import sys
 
 import nibabel as nib
 import numpy as np
-import pyqtgraph as pg
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
 from rapidtide.Colortables import *
+
+try:
+    import pyqtgraph as pg
+except ImportError:
+    print("pyqtgraph not available")
+    usepyqtgraph = False
+else:
+    usepyqtgraph = True
 
 atlases = {
     "ASPECTS": {"atlasname": "ASPECTS"},
@@ -160,7 +167,7 @@ class Overlay:
         self.setGeomMask(geommask, maskdata=False)
         self.maskData()
         self.updateStats()
-        if init_LUT:
+        if init_LUT and usepyqtgraph:
             self.gradient = pg.GradientWidget(orientation="right", allowAdd=True)
             self.lut_state = lut_state
             self.display_state = display_state
