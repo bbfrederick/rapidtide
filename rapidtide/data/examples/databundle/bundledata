@@ -2,8 +2,9 @@
 
 rm ../testdatabundle.tgz
 
-COPYFILE_DISABLE=1 tar -czf ../testdatabundle.tgz \
+COPYFILE_DISABLE=1 tar --no-mac-metadata -czf ../testdatabundle.tgz \
     lt_rt.txt \
+    lforegressor.txt \
     sub-HAPPYTEST.json \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json \

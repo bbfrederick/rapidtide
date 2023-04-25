@@ -1,3 +1,8 @@
++ If there are any new tests, make sure the data to run the test is included in the data bundle
+    Add files to rapidtide/rapidtide/data/examples/databundle if needed
+    Change the "bundledata" script accordingly
+    Run the bundledata script
+
 + Edit CHANGELOG.md (use git log to get the history)
 
 + Sync everything to GitHub
