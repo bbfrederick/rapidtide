@@ -14,6 +14,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import os
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,8 +56,8 @@ def test_calc_MI(display=False):
         )
         plt.show()
 
-    aethresh = 10
-    np.testing.assert_almost_equal(1.0, 1.0, 1e-5)
+    aethresh = 1e-5
+    np.testing.assert_almost_equal(1.0, 1.0, aethresh)
 
 
 def main():
