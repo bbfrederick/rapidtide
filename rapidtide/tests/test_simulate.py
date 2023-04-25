@@ -26,6 +26,7 @@ from rapidtide.tests.utils import mse
 
 
 def test_simulate(display=False):
+    np.random.seed(12345)
     fmritr = 1.5
     numtrs = 260
     fmriskip = 0

@@ -29,6 +29,7 @@ from rapidtide.tests.utils import create_dir, get_test_temp_path
 
 
 def test_stcorrelate(debug=False):
+    np.random.seed(12345)
     tr = 0.72
     testlen = 800
     shiftdist = 5

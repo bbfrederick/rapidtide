@@ -75,6 +75,7 @@ def spectralfilterprops(thefilter, debug=False):
 
 
 def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=False):
+    np.random.seed(12345)
     tclen = int(tclengthinsecs // sampletime)
     print("Testing transfer function:")
     lowestfreq = 1.0 / (sampletime * tclen)

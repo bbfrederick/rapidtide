@@ -42,6 +42,7 @@ def gen2d(xsize=150, xcycles=11, tsize=200, tcycles=13, mean=10.0):
 
 
 def test_glmpass(debug=True, display=False):
+    np.random.seed(12345)
     xsize = 150
     xcycles = 7
     tsize = 200
