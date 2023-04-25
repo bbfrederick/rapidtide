@@ -336,6 +336,7 @@ jobs:
             mkdir test-results
             pytest \
                 --ignore=rapidtide/candidatetests \
+                --ignore=rapidtide/hiddentests \
                 --cov-report xml:coverage.xml \
                 --cov=rapidtide rapidtide \
                 --junitxml=test-results/junit.xml
@@ -371,6 +372,7 @@ jobs:
             mkdir test-results
             pytest \
                 --ignore=rapidtide/candidatetests \
+                --ignore=rapidtide/hiddentests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
