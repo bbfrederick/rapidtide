@@ -2,7 +2,7 @@
 
 rm ../testdatabundle.tgz
 
-COPYFILE_DISABLE=1 tar --no-mac-metadata -czf ../testdatabundle.tgz \
+COPYFILE_DISABLE=1 tar --no-mac-metadata -cvzf ../testdatabundle.tgz \
     lt_rt.txt \
     lforegressor.txt \
     sub-HAPPYTEST.json \
