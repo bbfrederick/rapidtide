@@ -183,7 +183,7 @@ jobs:
           file: /tmp/src/rapidtide/coverage.xml
           command:  |
             apt-get update
-            apt-get install -yqq curl gpg
+            apt-get install -yqq curl gpg 
             source activate py37_env
             pwd
             pushd rapidtide/data/examples/src
@@ -214,7 +214,7 @@ jobs:
           file: /tmp/src/rapidtide/coverage.xml
           command:  |
             apt-get update
-            apt-get install -yqq curl gpg
+            apt-get install -yqq curl gpg 
             source activate py37_env
             pwd
             pushd rapidtide/data/examples/src
@@ -247,7 +247,7 @@ jobs:
           name: Run tests
           command:  |
             apt-get update
-            apt-get install -yqq curl gpg
+            apt-get install -yqq curl gpg 
             source activate py38_env
             pwd
             pushd rapidtide/data/examples/src
@@ -275,7 +275,7 @@ jobs:
           name: Run tests
           command:  |
             apt-get update
-            apt-get install -yqq curl gpg
+            apt-get install -yqq curl gpg 
             source activate py39_env
             pwd
             pushd rapidtide/data/examples/src
@@ -303,7 +303,7 @@ jobs:
           name: Run tests
           command:  |
             apt-get update
-            apt-get install -yqq curl gpg
+            apt-get install -yqq curl gpg 
             source activate py310_env
             pwd
             pushd rapidtide/data/examples/src
@@ -332,7 +332,7 @@ jobs:
           file: /tmp/src/rapidtide/coverage.xml
           command:  |
             apt-get update
-            apt-get install -yqq curl gpg
+            apt-get install -yqq curl gpg 
             source activate py310_env
             pwd
             pushd rapidtide/data/examples/src
@@ -367,7 +367,7 @@ jobs:
           name: Run tests
           command:  |
             apt-get update
-            apt-get install -yqq curl gpg
+            apt-get install -yqq curl gpg 
             source activate py311_env
             pwd
             pushd rapidtide/data/examples/src

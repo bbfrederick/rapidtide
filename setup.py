@@ -192,6 +192,7 @@ setup(
         "matplotlib",
         "pyfftw",
         "pyqtgraph>=0.11.0",
+        "pyqt5-sip",
         "requests",
         "statsmodels",
         "tqdm",
