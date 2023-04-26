@@ -113,10 +113,6 @@ def test_aliasedcorrelate(displayplots=False):
     # np.testing.assert_almost_equal(fastcorrelate_result, stdcorrelate_result, aethresh)
 
 
-def main():
-    test_aliasedcorrelate(displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_aliasedcorrelate(displayplots=True)

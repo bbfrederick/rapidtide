@@ -42,10 +42,6 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
 
-def main():
-    test_fullrunrapidtide_v1(debug=True, displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_fullrunrapidtide_v1(debug=True, displayplots=True)

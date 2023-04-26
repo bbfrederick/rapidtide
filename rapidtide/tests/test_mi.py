@@ -60,10 +60,6 @@ def test_calc_MI(displayplots=False):
     np.testing.assert_almost_equal(1.0, 1.0, aethresh)
 
 
-def main():
-    test_calc_MI(displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_calc_MI(displayplots=True)

@@ -88,10 +88,6 @@ def test_timeshift(debug=False):
         plt.show()
 
 
-def main():
-    test_timeshift(debug=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_timeshift(debug=True)

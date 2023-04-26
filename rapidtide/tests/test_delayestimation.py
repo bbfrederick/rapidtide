@@ -400,10 +400,6 @@ def test_delayestimation(displayplots=False, debug=False):
         print(proctype, "glmpass", np.mean(diffsignal), np.max(np.fabs(diffsignal)))
 
 
-def main():
-    test_delayestimation(displayplots=False, debug=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_delayestimation(displayplots=False, debug=True)

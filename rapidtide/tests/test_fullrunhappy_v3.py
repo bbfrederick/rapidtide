@@ -46,10 +46,6 @@ def test_fullrunhappy_v3(debug=False, displayplots=False):
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
 
 
-def main():
-    test_fullrunhappy_v3(debug=True, displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_fullrunhappy_v3(debug=True, displayplots=True)

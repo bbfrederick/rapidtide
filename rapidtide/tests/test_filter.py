@@ -251,10 +251,6 @@ def test_filterprops(displayplots=False):
     eval_filterprops(sampletime=0.1, tclengthinsecs=1000.0, numruns=10, displayplots=displayplots)
 
 
-def main():
-    test_filterprops(displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_filterprops(displayplots=True)

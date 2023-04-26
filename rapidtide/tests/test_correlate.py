@@ -68,10 +68,6 @@ def test_fastcorrelate(displayplots=False):
         weighted_result = fastcorrelate(sig2, sig1, weighting=weighting)
 
 
-def main():
-    test_fastcorrelate(displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_fastcorrelate(displayplots=True)

@@ -77,10 +77,6 @@ def test_stcorrelate(debug=False):
     writenpvecs(valid, outfilename + "_mask.txt")
 
 
-def main():
-    test_stcorrelate(debug=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_stcorrelate(debug=True)

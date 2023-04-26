@@ -86,10 +86,6 @@ def test_doresample(debug=False):
         plt.show()
 
 
-def main():
-    test_doresample(debug=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_doresample(debug=True)

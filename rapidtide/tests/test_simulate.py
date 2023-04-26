@@ -99,10 +99,6 @@ def test_simulate(displayplots=False):
     # np.testing.assert_almost_equal(simdata, initial_fmri_y)
 
 
-def main():
-    test_simulate(displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_simulate(displayplots=True)

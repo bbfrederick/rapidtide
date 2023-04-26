@@ -95,10 +95,6 @@ def test_runmisc(debug=False, displayplots=False):
     pf.generic_init(showtc._get_parser, showtc.showtc, inputargs=inputargs)
 
 
-def main():
-    test_runmisc(debug=True, displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_runmisc(debug=True, displayplots=True)

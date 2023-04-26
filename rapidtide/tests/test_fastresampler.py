@@ -79,10 +79,6 @@ def test_FastResampler(debug=False):
         plt.show()
 
 
-def main():
-    test_FastResampler(debug=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_FastResampler(debug=True)

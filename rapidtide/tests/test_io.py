@@ -98,9 +98,5 @@ def test_io(debug=True, displayplots=False):
     assert not tide_io.checktimematch(happydims, fmridims)
 
 
-def main():
-    test_io(debug=True, displayplots=True)
-
-
 if __name__ == "__main__":
-    main()
+    test_io(debug=True, displayplots=True)

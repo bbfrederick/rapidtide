@@ -159,10 +159,6 @@ def test_congrid(debug=False, displayplots=False):
             print(theline)
 
 
-def main():
-    test_congrid(debug=True, displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_congrid(debug=True, displayplots=True)

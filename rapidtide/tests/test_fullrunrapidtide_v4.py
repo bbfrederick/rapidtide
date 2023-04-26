@@ -43,14 +43,12 @@ def test_fullrunrapidtide_v4(debug=False, displayplots=False):
         "1000",
         "--respdelete",
         "--echocancel",
+        "--nprocs",
+        "1",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
 
-def main():
-    test_fullrunrapidtide_v4(debug=True, displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_fullrunrapidtide_v4(debug=True, displayplots=True)

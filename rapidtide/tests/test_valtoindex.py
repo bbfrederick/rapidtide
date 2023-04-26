@@ -36,9 +36,5 @@ def test_valtoindex(debug=False):
         print(testval, xaxis[indclosest])
 
 
-def main():
-    test_valtoindex(debug=True)
-
-
 if __name__ == "__main__":
-    main()
+    test_valtoindex(debug=True)

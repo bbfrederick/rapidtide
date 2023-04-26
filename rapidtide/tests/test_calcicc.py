@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import numpy as np
 
@@ -25,3 +26,7 @@ def test_ICC_rep_anova():
     assert dfc == 3
     assert dfe == 15
     assert np.isclose(r_var / (r_var + e_var), icc)
+
+
+if __name__ == "__main__":
+    test_ICC_rep_anova()

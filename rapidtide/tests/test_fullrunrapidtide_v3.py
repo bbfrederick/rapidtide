@@ -50,6 +50,7 @@ def test_fullrunrapidtide_v3(debug=False, displayplots=False):
         "--spcalculation",
         "--globalsignalmethod",
         "pca",
+        "--calccoherence",
         "--regressor",
         os.path.join(
             get_examples_path(),
@@ -59,10 +60,6 @@ def test_fullrunrapidtide_v3(debug=False, displayplots=False):
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
 
-def main():
-    test_fullrunrapidtide_v3(debug=True, displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_fullrunrapidtide_v3(debug=True, displayplots=True)

@@ -212,10 +212,6 @@ def test_glmpass(debug=True, displayplots=False):
     assert mse(datatoremove, targetarray) < 1e-3
 
 
-def main():
-    test_glmpass(debug=True, displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_glmpass(debug=True, displayplots=True)

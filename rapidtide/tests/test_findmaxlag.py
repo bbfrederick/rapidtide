@@ -316,10 +316,6 @@ def test_findmaxlag(displayplots=False, fittype="gauss", debug=False):
     assert eval_fml_result(absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_wfailreasons)
 
 
-def main():
-    test_findmaxlag(displayplots=True, debug=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_findmaxlag(displayplots=True, debug=True)

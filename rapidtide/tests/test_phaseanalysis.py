@@ -62,10 +62,6 @@ def test_phaseanalysis(debug=False, displayplots=False):
     assert filtered_mse < msethresh
 
 
-def main():
-    test_phaseanalysis(debug=True, displayplots=True)
-
-
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    main()
+    test_phaseanalysis(debug=True, displayplots=True)
