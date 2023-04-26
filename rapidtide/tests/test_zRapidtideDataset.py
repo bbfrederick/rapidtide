@@ -26,11 +26,13 @@ from rapidtide.RapidtideDataset import RapidtideDataset
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
-def main():
+def main(runninglocally=False):
     # initialize default values
-    print(f"get_test_temp_path={get_test_temp_path()}")
-    datafileroot = (os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST2_"),)
-    # datafileroot = "../data/examples/dst/sub-RAPIDTIDETEST_"
+    if runninglocally:
+        datafileroot = "../data/examples/dst/sub-RAPIDTIDETEST_"
+    else:
+        print(f"get_test_temp_path={get_test_temp_path()}")
+        datafileroot = (os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST2_"),)
     anatname = None
     geommaskname = None
     userise = False
@@ -62,4 +64,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(runninglocally=True)
