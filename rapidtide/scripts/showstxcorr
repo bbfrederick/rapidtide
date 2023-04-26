@@ -48,7 +48,10 @@ def _get_parser():
     pf.addreqinputtextfile(parser, "infilename1", onecol=True)
     pf.addreqinputtextfile(parser, "infilename2", onecol=True)
     parser.add_argument(
-        "outfilename", type=str, action="store", help="The root name of the output files.",
+        "outfilename",
+        type=str,
+        action="store",
+        help="The root name of the output files.",
     )
 
     sampling = parser.add_mutually_exclusive_group()
@@ -231,7 +234,10 @@ def main():
         )
         theprefilter.settype("arb")
         theprefilter.setfreqs(
-            window_lowestfreq, window_lowestfreq, init_upperpass, init_upperstop,
+            window_lowestfreq,
+            window_lowestfreq,
+            init_upperpass,
+            init_upperstop,
         )
 
     startpoint = max([int(args.starttime * args.samplerate), 0])
@@ -309,7 +315,7 @@ def main():
             weighting=args.corrweighting,
             windowfunc=args.windowfunc,
             detrendorder=0,
-            display=False,
+            displayplots=False,
         )
         xlength = len(times)
 
@@ -354,7 +360,7 @@ def main():
                     weighting=args.corrweighting,
                     windowfunc=args.windowfunc,
                     detrendorder=0,
-                    display=False,
+                    displayplots=False,
                 )
 
         outputaffine = np.eye(4)
@@ -378,28 +384,33 @@ def main():
             df = pd.DataFrame(data=corrpertime[:, :, 0, 0], columns=cols)
             df.insert(0, "sources", pd.Series(rows))
             df.to_csv(
-                args.outfilename + "_seg_" + str(segment).zfill(4) + "_pearsonR.csv", index=False,
+                args.outfilename + "_seg_" + str(segment).zfill(4) + "_pearsonR.csv",
+                index=False,
             )
             df = pd.DataFrame(data=ppertime[:, :, 0, 0], columns=cols)
             df.insert(0, "sources", pd.Series(rows))
             df.to_csv(
-                args.outfilename + "_seg_" + str(segment).zfill(4) + "_corrp.csv", index=False,
+                args.outfilename + "_seg_" + str(segment).zfill(4) + "_corrp.csv",
+                index=False,
             )
         for segment in range(xlength):
             df = pd.DataFrame(data=Rvals[:, :, 0, 0], columns=cols)
             df.insert(0, "sources", pd.Series(rows))
             df.to_csv(
-                args.outfilename + "_seg_" + str(segment).zfill(4) + "_maxxcorr.csv", index=False,
+                args.outfilename + "_seg_" + str(segment).zfill(4) + "_maxxcorr.csv",
+                index=False,
             )
             df = pd.DataFrame(data=delayvals[:, :, 0, 0], columns=cols)
             df.insert(0, "sources", pd.Series(rows))
             df.to_csv(
-                args.outfilename + "_seg_" + str(segment).zfill(4) + "_delayvals.csv", index=False,
+                args.outfilename + "_seg_" + str(segment).zfill(4) + "_delayvals.csv",
+                index=False,
             )
             df = pd.DataFrame(data=valid[:, :, 0, 0], columns=cols)
             df.insert(0, "sources", pd.Series(rows))
             df.to_csv(
-                args.outfilename + "_seg_" + str(segment).zfill(4) + "_valid.csv", index=False,
+                args.outfilename + "_seg_" + str(segment).zfill(4) + "_valid.csv",
+                index=False,
             )
 
     else:
@@ -422,7 +433,7 @@ def main():
             weighting=args.corrweighting,
             windowfunc=args.windowfunc,
             detrendorder=0,
-            display=False,
+            displayplots=False,
         )
         tide_io.writenpvecs(corrpertime, args.outfilename + "_pearson.txt")
         tide_io.writenpvecs(ppertime, args.outfilename + "_pvalue.txt")
@@ -435,7 +446,10 @@ def main():
 
         # do a polynomial fit to the delay function
         thefit = np.polyfit(
-            times[validlocs], delayvals[validlocs], 7, w=(Rvals[validlocs] * Rvals[validlocs]),
+            times[validlocs],
+            delayvals[validlocs],
+            7,
+            w=(Rvals[validlocs] * Rvals[validlocs]),
         )
         smoothdelayvals = np.poly1d(thefit)(times)
 
@@ -447,7 +461,10 @@ def main():
             print("len(reformdata[1, :]):", len(reformdata[1, :]))
 
         timewarped = tide_resamp.timewarp(
-            hirestimeaxis, reformdata[1, :], highresdelayvals, debug=args.debug,
+            hirestimeaxis,
+            reformdata[1, :],
+            highresdelayvals,
+            debug=args.debug,
         )
         tide_io.writenpvecs(timewarped, args.outfilename + "_timewarped.txt")
         tide_io.writenpvecs(highresdelayvals, args.outfilename + "_hiresdelayvals.txt")

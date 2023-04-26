@@ -74,7 +74,7 @@ def spectralfilterprops(thefilter, debug=False):
     return response
 
 
-def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=False):
+def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=False):
     np.random.seed(12345)
     tclen = int(tclengthinsecs // sampletime)
     print("Testing transfer function:")
@@ -169,7 +169,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
         allfilters[index]["transferfunc"] = psd_filt / psd_raw
 
     # show transfer functions
-    if display:
+    if displayplots:
         legend = []
         plt.figure()
         plt.ylim([-1.0, 1.0 * len(allfilters)])
@@ -225,7 +225,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
     )
 
     # show the end effects waveforms
-    if display:
+    if displayplots:
         legend = []
         plt.figure()
         plt.ylim([-2.2, 2.2 * len(testwaves)])
@@ -245,14 +245,14 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
             plt.show()
 
 
-def test_filterprops(display=False):
-    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=display)
-    eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100, display=display)
-    eval_filterprops(sampletime=0.1, tclengthinsecs=1000.0, numruns=10, display=display)
+def test_filterprops(displayplots=False):
+    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=displayplots)
+    eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100, displayplots=displayplots)
+    eval_filterprops(sampletime=0.1, tclengthinsecs=1000.0, numruns=10, displayplots=displayplots)
 
 
 def main():
-    test_filterprops(display=True)
+    test_filterprops(displayplots=True)
 
 
 if __name__ == "__main__":

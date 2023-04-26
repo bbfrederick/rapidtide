@@ -137,7 +137,7 @@ def main():
     # get the command line parameters
     searchrange = 15.0
     uselabel = False
-    display = True
+    displayplots = True
     gccphat = False
     windowfunc = "None"
     detrendorder = 0
@@ -187,7 +187,7 @@ def main():
 
     for o, a in opts:
         if o == "-d":
-            display = False
+            displayplots = False
             if verbose:
                 print("disable display")
         elif o == "-Y":
@@ -524,7 +524,7 @@ def main():
                     print("pearson_r\tpearson_p\txcorr_R\txcorr_t\txcorr_maxdelay")
                 print(thepxcorr[0], "\t", thepxcorr[1], "\t", R, "\t", -maxdelay)
 
-    if display:
+    if displayplots:
         fig = figure()
         ax = fig.add_subplot(111)
         # ax.set_title('GCC')

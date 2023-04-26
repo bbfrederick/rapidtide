@@ -471,7 +471,7 @@ def getcardcoeffs(
     maxhr=140.0,
     smoothlen=101,
     debug=False,
-    display=False,
+    displayplots=False,
 ):
     if len(cardiacwaveform) > 1024:
         thex, they = welch(cardiacwaveform, slicesamplerate, nperseg=1024)
@@ -497,7 +497,7 @@ def getcardcoeffs(
 
     # find the max
     ampspec = savgolsmooth(np.abs(spectrum), smoothlen=smoothlen)
-    if display:
+    if displayplots:
         figure()
         plot(freqaxis, ampspec, "r")
         show()
@@ -1663,7 +1663,11 @@ def happy_main(thearguments):
     # filter out motion regressors here
     if motionfilename is not None:
         timings.append(["Motion filtering start", time.time(), None, None])
-        (motionregressors, motionregressorlabels, filtereddata,) = tide_glmpass.motionregress(
+        (
+            motionregressors,
+            motionregressorlabels,
+            filtereddata,
+        ) = tide_glmpass.motionregress(
             motionfilename,
             fmri_data[validvoxels, :],
             tr,
@@ -2928,7 +2932,6 @@ def happy_main(thearguments):
 
 
 if __name__ == "__main__":
-
     # grab the command line arguments then pass them off.
     nargs = len(sys.argv)
     if nargs < 4:

@@ -1678,7 +1678,7 @@ def mlregress(x, y, intercept=True):
 # You can redistribute it and/or modify it under the terms of the Do What The
 # Fuck You Want To Public License, Version 2, as published by Sam Hocevar. See
 # http://www.wtfpl.net/ for more details.
-def getpeaks(xvals, yvals, xrange=None, bipolar=False, display=False):
+def getpeaks(xvals, yvals, xrange=None, bipolar=False, displayplots=False):
     peaks, dummy = find_peaks(yvals, height=0)
     if bipolar:
         negpeaks, dummy = find_peaks(-yvals, height=0)
@@ -1711,7 +1711,7 @@ def getpeaks(xvals, yvals, xrange=None, bipolar=False, display=False):
                             - originloc,
                         ]
                     )
-    if display:
+    if displayplots:
         plotx = []
         ploty = []
         offset = []

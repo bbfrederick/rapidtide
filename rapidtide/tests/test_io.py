@@ -24,8 +24,7 @@ import rapidtide.io as tide_io
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
 
-def test_io(debug=True, display=False):
-
+def test_io(debug=True, displayplots=False):
     # create outputdir if it doesn't exist
     create_dir(get_test_temp_path())
 
@@ -100,7 +99,7 @@ def test_io(debug=True, display=False):
 
 
 def main():
-    test_io(debug=True, display=True)
+    test_io(debug=True, displayplots=True)
 
 
 if __name__ == "__main__":

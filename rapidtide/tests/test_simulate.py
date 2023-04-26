@@ -25,7 +25,7 @@ import rapidtide.resample as tide_res
 from rapidtide.tests.utils import mse
 
 
-def test_simulate(display=False):
+def test_simulate(displayplots=False):
     np.random.seed(12345)
     fmritr = 1.5
     numtrs = 260
@@ -74,7 +74,7 @@ def test_simulate(display=False):
     genlagtc = tide_res.FastResampler(nirs_x, nirs_y, padtime=padtime, doplot=False)
     initial_fmri_y = genlagtc.yfromx(initial_fmri_x)
 
-    if display:
+    if displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title("Regressors")
@@ -88,7 +88,7 @@ def test_simulate(display=False):
     fmri_y = genlagtc.yfromx(fmri_x)
     thenoise = noiselevel * np.random.standard_normal(len(fmri_y))
     simdata[:] = immean * (1.0 + (boldpc / 100.0) * fmri_y) + thenoise
-    if display:
+    if displayplots:
         plt.plot(initial_fmri_x, simdata, initial_fmri_x, initial_fmri_y)
         plt.show()
 
@@ -100,7 +100,7 @@ def test_simulate(display=False):
 
 
 def main():
-    test_simulate(display=True)
+    test_simulate(displayplots=True)
 
 
 if __name__ == "__main__":

@@ -41,7 +41,7 @@ def gen2d(xsize=150, xcycles=11, tsize=200, tcycles=13, mean=10.0):
     return thearray, xwaves, twaves
 
 
-def test_glmpass(debug=True, display=False):
+def test_glmpass(debug=True, displayplots=False):
     np.random.seed(12345)
     xsize = 150
     xcycles = 7
@@ -54,7 +54,7 @@ def test_glmpass(debug=True, display=False):
         xsize=xsize, xcycles=xcycles, tsize=tsize, tcycles=tcycles
     )
     testarray = targetarray + np.random.random((xsize, tsize)) + mean
-    if display:
+    if displayplots:
         plt.figure()
         plt.imshow(targetarray)
         plt.show()
@@ -92,7 +92,7 @@ def test_glmpass(debug=True, display=False):
         procbyvoxel=True,
         nprocs=1,
     )
-    if display:
+    if displayplots:
         plt.figure()
         plt.imshow(datatoremove)
         plt.show()
@@ -119,7 +119,7 @@ def test_glmpass(debug=True, display=False):
         procbyvoxel=True,
         nprocs=2,
     )
-    if display:
+    if displayplots:
         plt.figure()
         plt.imshow(datatoremove)
         plt.show()
@@ -147,7 +147,7 @@ def test_glmpass(debug=True, display=False):
         procbyvoxel=False,
         nprocs=1,
     )
-    if display:
+    if displayplots:
         plt.figure()
         plt.imshow(datatoremove)
         plt.show()
@@ -174,7 +174,7 @@ def test_glmpass(debug=True, display=False):
         procbyvoxel=False,
         nprocs=2,
     )
-    if display:
+    if displayplots:
         plt.figure()
         plt.imshow(datatoremove)
         plt.show()
@@ -201,7 +201,7 @@ def test_glmpass(debug=True, display=False):
         procbyvoxel=False,
         nprocs=1,
     )
-    if display:
+    if displayplots:
         plt.figure()
         plt.imshow(datatoremove)
         plt.show()
@@ -213,7 +213,7 @@ def test_glmpass(debug=True, display=False):
 
 
 def main():
-    test_glmpass(debug=True, display=True)
+    test_glmpass(debug=True, displayplots=True)
 
 
 if __name__ == "__main__":

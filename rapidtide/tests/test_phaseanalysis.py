@@ -25,11 +25,11 @@ import rapidtide.miscmath as tide_math
 from rapidtide.tests.utils import mse
 
 
-def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, display=False):
+def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, displayplots=False):
     # read in some data
     phases = np.linspace(0.0, numpoints * phasestep, num=numpoints, endpoint=False)
     testwaveform = amplitude * np.cos(phases)
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(phases)
         plt.show()
@@ -42,7 +42,7 @@ def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, display=Fal
     instantaneous_phase, amplitude_envelope, analytic_signal = tide_fit.phaseanalysis(testwaveform)
     filtered_phase = tide_math.trendfilt(instantaneous_phase, order=3, ndevs=2.0)
 
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(instantaneous_phase)
         plt.plot(filtered_phase)
@@ -52,10 +52,10 @@ def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, display=Fal
     return mse(phases, instantaneous_phase), mse(phases, filtered_phase)
 
 
-def test_phaseanalysis(debug=False, display=False):
+def test_phaseanalysis(debug=False, displayplots=False):
     msethresh = 1e-3
     instantaneous_mse, filtered_mse = eval_phaseanalysis(
-        phasestep=0.1, amplitude=3.0, numpoints=1000, display=display
+        phasestep=0.1, amplitude=3.0, numpoints=1000, displayplots=displayplots
     )
     print(instantaneous_mse, filtered_mse)
     assert instantaneous_mse < msethresh
@@ -63,7 +63,7 @@ def test_phaseanalysis(debug=False, display=False):
 
 
 def main():
-    test_phaseanalysis(debug=True, display=True)
+    test_phaseanalysis(debug=True, displayplots=True)
 
 
 if __name__ == "__main__":

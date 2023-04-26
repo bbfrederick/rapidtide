@@ -84,8 +84,7 @@ def checkfits(foundvalues, testvalues, tolerance=0.001):
     return True
 
 
-def test_delayestimation(display=False, debug=False):
-
+def test_delayestimation(displayplots=False, debug=False):
     # set the number of MKL threads to use
     if mklexists:
         print("disabling MKL")
@@ -137,7 +136,7 @@ def test_delayestimation(display=False, debug=False):
     for i in range(numlocs):
         offsets[i] = timestep * (i - refnum)
         waveforms[i, :] = multisine(timepoints - offsets[i], paramlist) + pedestal
-    if display:
+    if displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         for i in range(numlocs):
@@ -256,7 +255,7 @@ def test_delayestimation(display=False, debug=False):
         if debug:
             print(voxelsprocessed_cp, len(theglobalmaxlist), len(trimmedcorrscale))
 
-        if display:
+        if displayplots:
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)
             for i in range(numlocs):
@@ -294,7 +293,7 @@ def test_delayestimation(display=False, debug=False):
         thefitter.setcorrtimeaxis(trimmedcorrscale)
         genlagtc = tide_resample.FastResampler(timepoints, waveforms[refnum, :])
 
-        if display:
+        if displayplots:
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)
         if nprocs == 1:
@@ -343,7 +342,7 @@ def test_delayestimation(display=False, debug=False):
                         lagstrengths[i],
                         lagsigma[i],
                     )
-                if display:
+                if displayplots:
                     ax.plot(offsets, lagtimes, label=peakfittype)
             if checkfits(lagtimes, offsets, tolerance=0.01):
                 print(proctype, peakfittype, " lagtime: pass")
@@ -358,7 +357,7 @@ def test_delayestimation(display=False, debug=False):
                 print(proctype, peakfittype, " lagstrength: fail")
                 assert False
 
-    if display:
+    if displayplots:
         ax.legend()
         plt.show()
 
@@ -402,7 +401,7 @@ def test_delayestimation(display=False, debug=False):
 
 
 def main():
-    test_delayestimation(display=False, debug=True)
+    test_delayestimation(displayplots=False, debug=True)
 
 
 if __name__ == "__main__":

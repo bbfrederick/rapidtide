@@ -211,7 +211,7 @@ def shorttermcorr_2D(
     zeropadding=0,
     windowfunc="None",
     detrendorder=0,
-    display=False,
+    displayplots=False,
 ):
     """Calculate short-term sliding-window correlation between two 2D arrays.
 
@@ -227,7 +227,7 @@ def shorttermcorr_2D(
     zeropadding
     windowfunc
     detrendorder
-    display
+    displayplots
 
     Returns
     -------
@@ -311,7 +311,7 @@ def shorttermcorr_2D(
             valid.append(1)
         else:
             valid.append(0)
-    if display:
+    if displayplots:
         plt.imshow(xcorrpertime)
     return (
         np.asarray(times, dtype="float64"),

@@ -25,7 +25,7 @@ import rapidtide.workflows.happy_parser as happy_parser
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
 
-def test_fullrunhappy_v1(debug=False, display=False):
+def test_fullrunhappy_v1(debug=False, displayplots=False):
     # run happy
     inputargs = [
         os.path.join(get_examples_path(), "sub-HAPPYTEST.nii.gz"),
@@ -42,7 +42,7 @@ def test_fullrunhappy_v1(debug=False, display=False):
 
 
 def main():
-    test_fullrunhappy_v1(debug=True, display=True)
+    test_fullrunhappy_v1(debug=True, displayplots=True)
 
 
 if __name__ == "__main__":

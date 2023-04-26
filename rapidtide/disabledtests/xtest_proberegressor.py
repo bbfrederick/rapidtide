@@ -21,7 +21,7 @@ import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 
 
-def test_proberegressor(debug=False, display=False):
+def test_proberegressor(debug=False, displayplots=False):
     fmritr = 1.5
     offsettime = 0.0
     inputstarttime = 0.0
@@ -63,7 +63,7 @@ def test_proberegressor(debug=False, display=False):
     else:
         reference_y = invertfac * (inputvec[0:numreference] - np.mean(inputvec[0:numreference]))
 
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(reference_x, reference_y)
         plt.show()
@@ -72,4 +72,4 @@ def test_proberegressor(debug=False, display=False):
 
 
 if __name__ == "__main__":
-    test_proberegressor(debug=True, display=True)
+    test_proberegressor(debug=True, displayplots=True)

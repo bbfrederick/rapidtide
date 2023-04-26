@@ -25,7 +25,7 @@ from rapidtide.correlate import calc_MI
 from rapidtide.tests.utils import get_examples_path
 
 
-def test_calc_MI(display=False):
+def test_calc_MI(displayplots=False):
     inlen = 1000
     offset = 100
     filename1 = os.path.join(get_examples_path(), "lforegressor.txt")
@@ -44,7 +44,7 @@ def test_calc_MI(display=False):
         sqmivals.append(calc_MI(sig2, sig1, bins=clustersize) / np.log(clustersize))
         cubemivals.append(calc_MI(sig3, sig1, bins=clustersize) / np.log(clustersize))
 
-    if display:
+    if displayplots:
         plt.figure()
         # plt.ylim([-1.0, 3.0])
         plt.plot(np.array(range(kstart, kend, 2)), np.array(linmivals), "r")
@@ -61,7 +61,7 @@ def test_calc_MI(display=False):
 
 
 def main():
-    test_calc_MI(display=True)
+    test_calc_MI(displayplots=True)
 
 
 if __name__ == "__main__":

@@ -31,7 +31,7 @@ import rapidtide.stats as tide_stats
 from rapidtide.tests.utils import get_test_data_path, get_test_temp_path
 
 
-def test_nullsimfunc(debug=False, display=False):
+def test_nullsimfunc(debug=False, displayplots=False):
     # make the lfo filter
     # lfofilter = tide_filt.NoncausalFilter(filtertype="lfo")
 
@@ -41,7 +41,7 @@ def test_nullsimfunc(debug=False, display=False):
     sourcedata = tide_io.readvecs(os.path.join(get_test_data_path(), "fmri_globalmean.txt"))[0]
     numpasses = 1
 
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(sourcedata)
         plt.show()
@@ -54,7 +54,7 @@ def test_nullsimfunc(debug=False, display=False):
         + timestep / 2.0
     )
 
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(xcorr_x, thexcorr)
         plt.show()
@@ -174,7 +174,7 @@ def test_nullsimfunc(debug=False, display=False):
             thestore = np.zeros((2, len(thehist[0])), dtype="float64")
             thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
             thestore[1, :] = thehist[0][-histlen:]
-            if display:
+            if displayplots:
                 plt.figure()
                 plt.plot(thestore[0, :], thestore[1, :])
                 plt.show()
@@ -188,4 +188,4 @@ def test_nullsimfunc(debug=False, display=False):
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_nullsimfunc(debug=True, display=True)
+    test_nullsimfunc(debug=True, displayplots=True)

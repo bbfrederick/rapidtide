@@ -25,7 +25,7 @@ import rapidtide.workflows.showtc as showtc
 from rapidtide.tests.utils import get_examples_path
 
 
-def test_runmisc(debug=False, display=False):
+def test_runmisc(debug=False, displayplots=False):
     # run showtc
     inputargs = [
         os.path.join(
@@ -96,7 +96,7 @@ def test_runmisc(debug=False, display=False):
 
 
 def main():
-    test_runmisc(debug=True, display=True)
+    test_runmisc(debug=True, displayplots=True)
 
 
 if __name__ == "__main__":

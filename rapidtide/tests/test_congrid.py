@@ -28,7 +28,7 @@ def funcvalue2(x, frequency=1.0, phase=0.0, amplitude=1.5):
     return amplitude * np.sin(2.0 * np.pi * frequency * x + phase)
 
 
-def test_congrid(debug=False, display=False):
+def test_congrid(debug=False, displayplots=False):
     # make the source axis
     starttime = 0.0
     endtime = 1.0
@@ -105,7 +105,7 @@ def test_congrid(debug=False, display=False):
                 print("debug:", debug)
 
                 # plot if we are doing that
-                if display:
+                if displayplots:
                     offset = 0.0
                     legend = []
                     plt.plot(sourceaxis, timecoursein)
@@ -160,7 +160,7 @@ def test_congrid(debug=False, display=False):
 
 
 def main():
-    test_congrid(debug=True, display=True)
+    test_congrid(debug=True, displayplots=True)
 
 
 if __name__ == "__main__":

@@ -22,7 +22,7 @@ def rando(thetimes, thevals, theamp, lo=0.0, hi=0.15):
     thevals += thefilter.apply(fs, theamp * np.random.normal(size=len(thevals)))
 
 
-def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=False):
+def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=False):
     tclen = int(tclengthinsecs // sampletime)
     lowestfreq = 1.0 / (sampletime * tclen)
     nyquist = 0.5 / sampletime

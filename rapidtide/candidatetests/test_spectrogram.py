@@ -73,7 +73,7 @@ def spectralfilterprops(thefilter, debug=False):
     return response
 
 
-def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
+def makewaves(sampletime=0.50, tclengthinsecs=300.0, displayplots=False):
     tclen = int(tclengthinsecs // sampletime)
     lowestfreq = 1.0 / (sampletime * tclen)
     nyquist = 0.5 / sampletime
@@ -99,7 +99,7 @@ def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
             ),
         }
     )
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(testwaves[-1]["timeaxis"], testwaves[-1]["waveform"])
         plt.legend([testwaves[-1]["name"]])
@@ -112,7 +112,7 @@ def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
             "waveform": np.cos(timeaxis),
         }
     )
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(testwaves[-1]["timeaxis"], testwaves[-1]["waveform"])
         plt.legend([testwaves[-1]["name"]])
@@ -135,7 +135,7 @@ def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
             "waveform": np.cos(np.cumsum(scratch)),
         }
     )
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(testwaves[-1]["timeaxis"], testwaves[-1]["waveform"])
         plt.legend([testwaves[-1]["name"]])
@@ -144,7 +144,7 @@ def makewaves(sampletime=0.50, tclengthinsecs=300.0, display=False):
     return testwaves
 
 
-def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display=False):
+def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, displayplots=False):
     tclen = int(tclengthinsecs // sampletime)
     print("Testing transfer function:")
     lowestfreq = 1.0 / (sampletime * tclen)
@@ -205,7 +205,7 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
         allfilters[index]["transferfunc"] = psd_filt / psd_raw
 
     # show transfer functions
-    if display:
+    if displayplots:
         legend = []
         plt.figure()
         plt.ylim([-1.1, 1.1 * len(allfilters)])
@@ -244,7 +244,7 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
     )
 
     # show the end effects waveforms
-    if display:
+    if displayplots:
         legend = []
         plt.figure()
         plt.ylim([-2.2, 2.2 * len(testwaves)])
@@ -265,14 +265,14 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
     assert True
 
 
-def test_filterprops(display=False):
-    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display=display)
-    eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100, display=display)
-    eval_filterprops(sampletime=0.1, tclengthinsecs=1000.0, numruns=10, display=display)
+def test_filterprops(displayplots=False):
+    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=displayplots)
+    eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100, displayplots=displayplots)
+    eval_filterprops(sampletime=0.1, tclengthinsecs=1000.0, numruns=10, displayplots=displayplots)
 
 
 def main():
-    makewaves(display=True)
+    makewaves(displayplots=True)
 
 
 if __name__ == "__main__":

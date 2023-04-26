@@ -19,6 +19,7 @@ omit =
 [report]
 exclude_lines = 
     # Don't complain if non-runnable code isn't run:
+    if displayplots:
     if False:
     if __name__ == .__main__.:
 

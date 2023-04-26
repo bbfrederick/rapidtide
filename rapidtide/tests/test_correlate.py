@@ -23,7 +23,7 @@ import numpy as np
 from rapidtide.correlate import fastcorrelate
 
 
-def test_fastcorrelate(display=False):
+def test_fastcorrelate(displayplots=False):
     inlen = 1000
     offset = 100
     sig1 = np.zeros((inlen), dtype="float")
@@ -41,7 +41,7 @@ def test_fastcorrelate(display=False):
     )
     stdcorrelate_result = np.correlate(sig2, sig1, mode="full")
     midpoint = int(len(stdcorrelate_result) // 2) + 1
-    if display:
+    if displayplots:
         plt.figure()
         plt.ylim([-1.0, 4.0])
         plt.plot(fastcorrelate_result_pad1000 + 3.0)
@@ -69,7 +69,7 @@ def test_fastcorrelate(display=False):
 
 
 def main():
-    test_fastcorrelate(display=True)
+    test_fastcorrelate(displayplots=True)
 
 
 if __name__ == "__main__":

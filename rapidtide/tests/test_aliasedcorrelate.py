@@ -69,7 +69,7 @@ def aliasedcorrelate(
     return corrfunc
 
 
-def test_aliasedcorrelate(display=False):
+def test_aliasedcorrelate(displayplots=False):
     Fs_hi = 10.0
     Fs_lo = 1.0
     siginfo = [[1.0, 1.36129345], [0.33, 2.0]]
@@ -94,7 +94,7 @@ def test_aliasedcorrelate(display=False):
     theAliasedCorrelator = AliasedCorrelator(sighi, Fs_hi, Fs_lo, timerange, padtime=width)
     aliasedcorrelate_result2 = theAliasedCorrelator.apply(siglo, 0.0)
 
-    if display:
+    if displayplots:
         plt.figure()
         # plt.ylim([-1.0, 3.0])
         plt.plot(hiaxis, sighi, "k")
@@ -114,7 +114,7 @@ def test_aliasedcorrelate(display=False):
 
 
 def main():
-    test_aliasedcorrelate(display=True)
+    test_aliasedcorrelate(displayplots=True)
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ import rapidtide.simfuncfit as tide_simfuncfit
 from rapidtide.tests.utils import mse
 
 
-def test_calcsimfunc(debug=False, display=False):
+def test_calcsimfunc(debug=False, displayplots=False):
     # make the lfo filter
     lfofilter = tide_filt.NoncausalFilter(filtertype="lfo")
 
@@ -62,7 +62,7 @@ def test_calcsimfunc(debug=False, display=False):
     for i in range(numvoxels):
         theinputdata[i, :] = np.sin(2.0 * np.pi * testfreq * (init_fmri_x - voxelshifts[i]))
 
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(sourcedata)
         plt.show()
@@ -76,7 +76,7 @@ def test_calcsimfunc(debug=False, display=False):
         + tr / 2.0
     )
 
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(xcorr_x, thexcorr)
         plt.show()
@@ -189,7 +189,7 @@ def test_calcsimfunc(debug=False, display=False):
                 chunksize=optiondict["mp_chunksize"],
             )
 
-            if display:
+            if displayplots:
                 plt.figure()
                 plt.plot(trimmedcorrscale, corrout[numvoxels // 2, :], "k")
                 plt.show()
@@ -215,7 +215,7 @@ def test_calcsimfunc(debug=False, display=False):
                 chunksize=optiondict["mp_chunksize"],
                 despeckle_thresh=optiondict["despeckle_thresh"],
             )
-            if display:
+            if displayplots:
                 plt.figure()
                 plt.plot(voxelshifts, "k")
                 plt.plot(lagtimes, "r")
@@ -236,4 +236,4 @@ def test_calcsimfunc(debug=False, display=False):
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_calcsimfunc(debug=True, display=True)
+    test_calcsimfunc(debug=True, displayplots=True)

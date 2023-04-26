@@ -37,7 +37,10 @@ def parsearglist():
         "textfilename", help="A text input files, with optional column specification"
     )
     parser.add_argument(
-        "--display", dest="display", action="store_true", help="display the fit spectrum",
+        "--display",
+        dest="displayplots",
+        action="store_true",
+        help="display the fit spectrum",
     )
     parser.add_argument(
         "--samplerate",
@@ -80,7 +83,7 @@ def getwavefreq(
     smooth=True,
     smoothlen=101,
     debug=False,
-    display=False,
+    displayplots=False,
 ):
     if len(thewaveform) % 2 == 1:
         thewaveform = thewaveform[:-1]
@@ -89,11 +92,14 @@ def getwavefreq(
     else:
         thex, they = welch(thewaveform, thesamplerate)
     initpeakfreq = np.round(thex[np.argmax(they)] * 60.0, 2)
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(thex, they, "k")
         plt.plot(
-            [initpeakfreq / 60.0, initpeakfreq / 60.0], [np.min(they), np.max(they)], "r-", lw=2,
+            [initpeakfreq / 60.0, initpeakfreq / 60.0],
+            [np.min(they), np.max(they)],
+            "r-",
+            lw=2,
         )
         plt.show()
     if initpeakfreq > maxpermin:
@@ -122,7 +128,7 @@ def getwavefreq(
     else:
         ampspec = spectrum
     peakfreq = freqaxis[np.argmax(ampspec)]
-    if display:
+    if displayplots:
         plt.figure()
         plt.plot(freqaxis, ampspec, "k")
         plt.plot([peakfreq, peakfreq], [np.min(ampspec), np.max(ampspec)], "r-", lw=2)
@@ -141,9 +147,13 @@ def main():
     textfileinfo, textfilecolspec = tide_io.parsefilespec(theargs.textfilename)
     filebase, extension = os.path.splitext(textfileinfo[0])
     if extension == ".json":
-        (thissamplerate, thisstartoffset, colnames, invec, compressed,) = tide_io.readbidstsv(
-            textfileinfo[0]
-        )
+        (
+            thissamplerate,
+            thisstartoffset,
+            colnames,
+            invec,
+            compressed,
+        ) = tide_io.readbidstsv(textfileinfo[0])
     else:
         invec = tide_io.readvecs(textfileinfo[0])[0]
         thissamplerate = theargs.samplerate
@@ -155,7 +165,7 @@ def main():
         minpermin=theargs.lowestbpm,
         maxpermin=theargs.highestbpm,
         smooth=(not theargs.nosmooth),
-        display=theargs.display,
+        displayplots=theargs.displayplots,
     )
     print(
         textfileinfo[0]

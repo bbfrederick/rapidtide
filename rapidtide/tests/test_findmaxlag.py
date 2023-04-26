@@ -61,7 +61,7 @@ def eval_fml_result(absmin, absmax, testvalues, foundvalues, failflags, toleranc
     return True
 
 
-def test_findmaxlag(display=False, fittype="gauss", debug=False):
+def test_findmaxlag(displayplots=False, fittype="gauss", debug=False):
     textfilename = op.join(get_examples_path(), "lt_rt.txt")
 
     # set default variable values
@@ -176,7 +176,7 @@ def test_findmaxlag(display=False, fittype="gauss", debug=False):
     assert eval_fml_result(absminval, absmaxval, testvals, fmlc_maxvals, fmlc_lfailreasons)
     assert eval_fml_result(absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_lfailreasons)
 
-    if display:
+    if displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(testlags, fml_maxlags, "r")
@@ -299,7 +299,7 @@ def test_findmaxlag(display=False, fittype="gauss", debug=False):
                 thefitter.diagnosefail(np.uint32(fmlc_wfailreasons[i])),
             )
 
-    if display:
+    if displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.loglog(testsigmas, fml_maxsigmas, "r")
@@ -317,7 +317,7 @@ def test_findmaxlag(display=False, fittype="gauss", debug=False):
 
 
 def main():
-    test_findmaxlag(display=True, debug=True)
+    test_findmaxlag(displayplots=True, debug=True)
 
 
 if __name__ == "__main__":
