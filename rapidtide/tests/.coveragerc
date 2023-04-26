@@ -2,7 +2,7 @@
 branch = True
 concurrency = multiprocessing
 parallel = true
-#sigterm = true
+sigterm = true
 source = .
 omit =
     __init__.py
