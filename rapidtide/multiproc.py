@@ -196,8 +196,5 @@ def run_multithread(
     # shut down workers
     for i in range(n_workers):
         inQ.put(None)
-    # for w in workers:
-    #   #.terminate()
-    #   w.join()
 
     return data_out
