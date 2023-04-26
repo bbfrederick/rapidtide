@@ -29,6 +29,9 @@ jobs:
             else
                 conda create -n py37_env python=3.7 -yq
                 source activate py37_env
+                pip install --upgrade "setuptools>=54"
+                pip install --upgrade pip
+                pip install --upgrade distlib
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
@@ -59,6 +62,9 @@ jobs:
             else
                 conda create -n py38_env python=3.8 -yq
                 source activate py38_env
+                pip install --upgrade "setuptools>=54"
+                pip install --upgrade pip
+                pip install --upgrade distlib
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
