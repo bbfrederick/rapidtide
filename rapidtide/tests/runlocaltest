@@ -15,10 +15,19 @@
 #   limitations under the License.
 #
 #
+
+# make sure the test data is installed
+pushd ../data/examples/src
+cleanupdir
+installtestdatahere
+popd
+
+# run the tests
 pytest \
     -W ignore \
     --cov-report html:coveragereport \
     --cov=rapidtide \
     --cov-config=.coveragerc
 
+# show the results
 open coveragereport/index.html
