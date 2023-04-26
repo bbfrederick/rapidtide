@@ -151,8 +151,8 @@ def run_multiproc(
     for i in range(n_workers):
         inQ.put(None)
     for w in workers:
-        w.close()
         w.join()
+        w.close()
 
     return data_out
 
