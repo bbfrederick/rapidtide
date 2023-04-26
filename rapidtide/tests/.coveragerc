@@ -1,5 +1,6 @@
 [run]
 branch = True
+concurrency = multiprocessing
 source = .
 omit =
     __init__.py
