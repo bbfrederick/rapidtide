@@ -197,7 +197,7 @@ jobs:
           path: test-results
 
 
-  test_py7_with_coverage:
+  test_py37_with_coverage:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
