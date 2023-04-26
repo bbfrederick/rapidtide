@@ -179,8 +179,7 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-37-{{ checksum "setup.py" }}
       - run:
-          name: Coverage
-          file: /tmp/src/rapidtide/coverage.xml
+          name: Run tests
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
@@ -190,7 +189,10 @@ jobs:
             ./installtestdata
             popd
             mkdir test-results
+            ls -ltra
+            ls ./tmp
             pytest \
+                -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
@@ -203,6 +205,7 @@ jobs:
       - image: continuumio/miniconda3
     resource_class: large
     steps:
+      - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
@@ -219,6 +222,7 @@ jobs:
             popd
             mkdir test-results
             pytest  \
+                -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
@@ -231,6 +235,7 @@ jobs:
       - image: continuumio/miniconda3
     resource_class: large
     steps:
+      - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
@@ -247,6 +252,7 @@ jobs:
             popd
             mkdir test-results
             pytest  \
+                -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
@@ -259,6 +265,7 @@ jobs:
       - image: continuumio/miniconda3
     resource_class: large
     steps:
+      - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
@@ -275,6 +282,7 @@ jobs:
             popd
             mkdir test-results
             pytest  \
+                -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
@@ -287,6 +295,7 @@ jobs:
       - image: continuumio/miniconda3
     resource_class: large
     steps:
+      - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
@@ -304,6 +313,7 @@ jobs:
             popd
             mkdir test-results
             pytest \
+                -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --cov-report xml:coverage.xml \
                 --cov=rapidtide rapidtide \
@@ -324,6 +334,7 @@ jobs:
       - image: continuumio/miniconda3
     resource_class: large
     steps:
+      - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
@@ -340,6 +351,7 @@ jobs:
             popd
             mkdir test-results
             pytest \
+                -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
