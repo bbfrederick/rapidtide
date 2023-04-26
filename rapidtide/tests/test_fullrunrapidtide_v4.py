@@ -41,6 +41,8 @@ def test_fullrunrapidtide_v4(debug=False, displayplots=False):
         "0",
         "--numnull",
         "1000",
+        "--permutationmethod",
+        "phaserandom",
         "--respdelete",
         "--echocancel",
         "--nprocs",
