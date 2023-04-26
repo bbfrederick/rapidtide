@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
+import rapidtide.io as tide_io
 
 
 def phaseproject(
@@ -12,6 +13,7 @@ def phaseproject(
     means,
     destpoints,
     numsteps,
+    timings,
     centric=True,
     passstring="",
     badpointlist=None,
