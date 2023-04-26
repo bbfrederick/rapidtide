@@ -1,15 +1,22 @@
 [run]
- branch = True
- source = .
- omit =
-  __init__.py
-  ../__init__.py
-  ../workflows/rapidtide2x.py
-  ../workflows/rapidtide2x_parser.py
-  ../workflows/happy_legacy.py
-  ../scripts/__init__.py
-  ../OrthoImageItem.py
-  ../weiner.py
-  ../weiner2.py
-  ../tidepoolTemplate.py
-  ../tidepoolTemplate_alt.py
+branch = True
+source = .
+omit =
+    __init__.py
+    ../__init__.py
+    ../workflows/rapidtide2x.py
+    ../workflows/rapidtide2x_parser.py
+    ../workflows/happy_legacy.py
+    ../scripts/__init__.py
+    ../OrthoImageItem.py
+    ../weiner.py
+    ../weiner2.py
+    ../tidepoolTemplate.py
+    ../tidepoolTemplate_alt.py
+
+[report]
+exclude_lines = 
+    # Don't complain if non-runnable code isn't run:
+    if False:
+    if __name__ == .__main__.:
+
