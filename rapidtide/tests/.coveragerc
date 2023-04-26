@@ -1,6 +1,8 @@
 [run]
 branch = True
 concurrency = multiprocessing
+parallel = true
+sigterm = true
 source = .
 omit =
     __init__.py
@@ -10,8 +12,7 @@ omit =
     ../workflows/happy_legacy.py
     ../scripts/__init__.py
     ../OrthoImageItem.py
-    ../weiner.py
-    ../weiner2.py
+    ../wiener2.py
     ../tidepoolTemplate.py
     ../tidepoolTemplate_alt.py
 
