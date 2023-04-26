@@ -189,8 +189,6 @@ jobs:
             ./installtestdata
             popd
             mkdir test-results
-            ls -ltra
-            ls ./tmp
             pytest \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
@@ -311,21 +309,22 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
+            cd rapidtide/tests
             mkdir test-results
             pytest \
                 -W ignore \
-                --ignore=rapidtide/candidatetests \
-                --cov-report xml:coverage.xml \
-                --cov=rapidtide rapidtide \
-                --cov-config=.coveragerc \
-                --junitxml=test-results/junit.xml
+                --ignore=/tmp/src/rapidtide/rapidtide/candidatetests \
+                --cov-report xml:/tmp/src/rapidtide/coverage.xml \
+                --cov=rapidtide \
+                --cov-config=/tmp/src/rapidtide/rapidtide/tests/.coveragerc \
+                --junitxml=/tmp/src/rapidtide/rapidtide/tests/test-results/junit.xml
       - codecov/upload:
           file: /tmp/src/rapidtide/coverage.xml
       - store_artifacts:
           path: /tmp/src/rapidtide/coverage.xml
           destination: artifact-file
       - store_test_results:
-          path: test-results
+          path: /tmp/src/rapidtide/rapidtide/tests/test-results
       
 
   test_py311:
