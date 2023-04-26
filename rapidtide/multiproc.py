@@ -96,6 +96,14 @@ def run_multiproc(
     showprogressbar=True,
     chunksize=1000,
 ):
+    # try adding this magic incantation to get coverage to record multiprocessing properly
+    try:
+        from pytest_cov.embed import cleanup_on_sigterm
+    except ImportError:
+        pass
+    else:
+        cleanup_on_sigterm()
+
     # initialize the workers and the queues
     __spec__ = None
     n_workers = nprocs
