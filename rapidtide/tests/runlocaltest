@@ -1,4 +1,4 @@
-#!/bin/csh -f
+#!/bin/sh
 #
 #   Copyright 2016-2021 Blaise Frederick
 #
@@ -17,10 +17,10 @@
 #
 
 # make sure the test data is installed
-pushd ../data/examples/src
-cleanupdir
-installtestdatahere
-popd
+#pushd ../data/examples/src
+#cleanupdir
+#installtestdatahere
+#popd
 
 # clean out old tests
 rm -rf coveragereport
@@ -28,6 +28,8 @@ rm .coverage
 rm .coverage\.*
 
 # run the tests
+export COVERAGE_PROCESS_START=.coveragerc
+export PYTHONPATH=.:${PYTHONPATH}
 pytest \
     -W ignore \
     --cov-report html:coveragereport \
