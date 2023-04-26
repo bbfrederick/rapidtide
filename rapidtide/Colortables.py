@@ -175,6 +175,8 @@ def gen_greyclip_state():
         "mode": "rgb",
     }
 
+
 def getagradient():
     from pyqtgraph import GradientWidget
+
     return GradientWidget(orientation="right", allowAdd=True)

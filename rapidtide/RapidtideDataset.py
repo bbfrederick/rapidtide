@@ -34,8 +34,6 @@ import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
 from rapidtide.Colortables import *
 
-#import pyqtgraph as pg
-
 atlases = {
     "ASPECTS": {"atlasname": "ASPECTS"},
     "ATT": {"atlasname": "ATTbasedFlowTerritories_split"},
@@ -162,7 +160,6 @@ class Overlay:
         self.maskData()
         self.updateStats()
         if init_LUT:
-            #self.gradient = pg.GradientWidget(orientation="right", allowAdd=True)
             self.gradient = getagradient()
             self.lut_state = lut_state
             self.display_state = display_state
