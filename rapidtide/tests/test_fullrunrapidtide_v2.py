@@ -49,7 +49,6 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
         "--saveintermediatemaps",
         "--nolimitoutput",
         "--bipolar",
-        "--dodispersioncalc",
         "--calccoherence",
         "--cleanrefined",
         "--nprocs",
