@@ -98,11 +98,9 @@ def run_multiproc(
 ):
     # try adding this magic incantation to get coverage to record multiprocessing properly
     try:
-        from pytest_cov.embed import cleanup_on_sigterm
+        from pytest_cov.embed import cleanup
     except ImportError:
-        pass
-    else:
-        cleanup_on_sigterm()
+        cleanup = None
 
     # initialize the workers and the queues
     __spec__ = None
@@ -153,6 +151,8 @@ def run_multiproc(
     for w in workers:
         w.join()
         w.close()
+    if cleanup is not None:
+        cleanup()
 
     return data_out
 
