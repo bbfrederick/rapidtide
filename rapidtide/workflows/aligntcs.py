@@ -28,7 +28,7 @@ import rapidtide.workflows.parser_funcs as pf
 
 def main(args):
     print(args)
-    if args.display:
+    if args.displayplots:
         import matplotlib as mpl
 
         mpl.use("TkAgg")
@@ -108,7 +108,7 @@ def main(args):
     aligneddata2 = tide_resample.doresample(timeaxis2, inputdata2, timeaxis1 - maxdelay)
     tide_io.writevec(aligneddata2, args.outputfile)
 
-    if args.display:
+    if args.displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         # ax.set_title('GCC')
