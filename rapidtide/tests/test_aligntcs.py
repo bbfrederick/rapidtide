@@ -19,7 +19,7 @@ from types import SimpleNamespace
 
 import matplotlib as mpl
 
-import rapidtide.workflows.aligntcs as aligntcs_main
+import rapidtide.workflows.aligntcs as aligntcs_workflow
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
@@ -43,7 +43,7 @@ def test_aligntcs(displayplots=False, localrun=False):
     args.passvec = None
     args.lag_extrema = (-10.0, 10.0)
 
-    aligntcs_main.main(args)
+    aligntcs_workflow.aligntcs_main(args)
 
 
 if __name__ == "__main__":

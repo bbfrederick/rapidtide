@@ -16,6 +16,8 @@
 #   limitations under the License.
 #
 #
+import argparse
+
 import numpy as np
 
 import rapidtide.correlate as tide_corr
@@ -26,7 +28,62 @@ import rapidtide.resample as tide_resample
 import rapidtide.workflows.parser_funcs as pf
 
 
-def main(args):
+def _get_parser():
+    # get the command line parameters
+    parser = argparse.ArgumentParser(
+        prog="aligntcs",
+        description="Resample and align two time series.",
+        usage="%(prog)s infile1 insamplerate1 infile2 insamplerate2 outputfile [options]",
+    )
+
+    # Required arguments
+    parser.add_argument(
+        "infile1",
+        metavar="infile1[:COLNUM]",
+        type=str,
+        help="text file containing a timeseries.  Select column COLNUM if multicolumn file.",
+    )
+    parser.add_argument(
+        "insamplerate1",
+        type=lambda x: pf.is_float(parser, x),
+        help="The input data file (BOLD fmri file or NIRS text file)",
+    )
+    parser.add_argument(
+        "infile2",
+        metavar="infile2[:COLNUM]",
+        type=str,
+        help="text file containing a timeseries.  Select column COLNUM if multicolumn file.",
+    )
+    parser.add_argument(
+        "insamplerate2",
+        type=lambda x: pf.is_float(parser, x),
+        help="The input data file (BOLD fmri file or NIRS text file)",
+    )
+    parser.add_argument("outputfile", help="The name of the output file")
+
+    parser.add_argument(
+        "--nodisplay",
+        dest="displayplots",
+        action="store_false",
+        help=("Do not plot the data (for noninteractive use)"),
+        default=True,
+    )
+    parser.add_argument(
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help=("Print out more debugging information"),
+        default=False,
+    )
+    pf.addsearchrangeopts(parser)
+
+    # Filter arguments
+    pf.addfilteropts(parser, filtertarget="timecourses")
+
+    return parser
+
+
+def aligntcs_main(args):
     print(args)
     if args.displayplots:
         import matplotlib as mpl
