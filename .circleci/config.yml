@@ -227,7 +227,7 @@ jobs:
             popd
             cd rapidtide/tests
             mkdir test-results
-            COVERAGE_PROCESS_START=/tmp/src/rapidtide/rapidtide/tests/.coveragerc
+            #COVERAGE_PROCESS_START=/tmp/src/rapidtide/rapidtide/tests/.coveragerc
             PYTHONPATH=.:${PYTHONPATH}
             pytest \
                 -W ignore \

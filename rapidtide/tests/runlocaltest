@@ -28,7 +28,7 @@ rm .coverage
 rm .coverage\.*
 
 # run the tests
-export COVERAGE_PROCESS_START=./.coveragerc
+#export COVERAGE_PROCESS_START=./.coveragerc
 export PYTHONPATH=.:${PYTHONPATH}
 pytest \
     -W ignore \
