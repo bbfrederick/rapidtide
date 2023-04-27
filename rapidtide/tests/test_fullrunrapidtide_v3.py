@@ -51,14 +51,14 @@ def test_fullrunrapidtide_v3(debug=False, displayplots=False):
         "--globalsignalmethod",
         "pca",
         "--calccoherence",
-        "--psdfilter",
-        "--cleanrefined",
         "--regressor",
         os.path.join(
             get_examples_path(),
             "sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3",
         ),
     ]
+    #    "--psdfilter",
+    #    "--cleanrefined",
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
 

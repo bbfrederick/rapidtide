@@ -17,10 +17,10 @@
 #
 
 # make sure the test data is installed
-#pushd ../data/examples/src
-#cleanupdir
-#installtestdatahere
-#popd
+pushd ../data/examples/src
+cleanupdir
+installtestdatahere
+popd
 
 # clean out old tests
 rm -rf coveragereport

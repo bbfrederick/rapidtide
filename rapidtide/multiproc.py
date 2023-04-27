@@ -107,13 +107,14 @@ def run_multiproc(
         outQ = ctx.Queue()
         workers = [ctx.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
     else:
-        # try adding this magic incantation to get coverage to record multiprocessing properly
+        """# try adding this magic incantation to get coverage to record multiprocessing properly
         # This fails for python 3.8 and above
         try:
             from pytest_cov.embed import cleanup
         except ImportError:
             cleanup = None
-
+        """
+        cleanup = None  # just disable this for now
         inQ = mp.Queue()
         outQ = mp.Queue()
         workers = [mp.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]

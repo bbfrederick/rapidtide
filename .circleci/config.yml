@@ -228,7 +228,7 @@ jobs:
             cd rapidtide/tests
             mkdir test-results
             #COVERAGE_PROCESS_START=/tmp/src/rapidtide/rapidtide/tests/.coveragerc
-            PYTHONPATH=.:${PYTHONPATH}
+            #PYTHONPATH=.:${PYTHONPATH}
             pytest \
                 -W ignore \
                 --ignore=/tmp/src/rapidtide/rapidtide/candidatetests \

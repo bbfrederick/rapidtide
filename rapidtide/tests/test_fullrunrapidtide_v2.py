@@ -47,8 +47,8 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
         "--savelags",
         "--checkpoint",
         "--saveintermediatemaps",
-        "--nolimitoutput",
         "--bipolar",
+        "--nolimitoutput",
         "--calccoherence",
         "--nprocs",
         "1",
@@ -61,6 +61,8 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
         "--globalsignalmethod",
         "meanscale",
     ]
+    if debug:
+        print(inputargs)
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
 
