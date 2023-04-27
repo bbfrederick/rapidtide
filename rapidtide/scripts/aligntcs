@@ -64,7 +64,7 @@ def _get_parser():
 
     parser.add_argument(
         "--nodisplay",
-        dest="display",
+        dest="displayplots",
         action="store_false",
         help=("Do not plot the data (for noninteractive use)"),
         default=True,
@@ -87,7 +87,7 @@ def _get_parser():
 def main(inputargs=None):
     args, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
 
-    if args.display:
+    if args.displayplots:
         import matplotlib as mpl
 
         mpl.use("TkAgg")
@@ -167,7 +167,7 @@ def main(inputargs=None):
     aligneddata2 = tide_resample.doresample(timeaxis2, inputdata2, timeaxis1 - maxdelay)
     tide_io.writevec(aligneddata2, args.outputfile)
 
-    if args.display:
+    if args.displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         # ax.set_title('GCC')
