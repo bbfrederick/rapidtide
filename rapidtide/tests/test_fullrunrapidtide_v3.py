@@ -52,6 +52,7 @@ def test_fullrunrapidtide_v3(debug=False, displayplots=False):
         "pca",
         "--calccoherence",
         "--psdfilter",
+        "--cleanrefined",
         "--regressor",
         os.path.join(
             get_examples_path(),
