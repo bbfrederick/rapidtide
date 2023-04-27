@@ -23,13 +23,19 @@ import rapidtide.workflows.aligntcs as aligntcs_main
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
-def test_aligntcs(displayplots=False):
+def test_aligntcs(displayplots=False, localrun=False):
     args = SimpleNamespace()
-    args.infile1 = os.path.join(get_examples_path(), "lforegressor.txt")
-    args.infile2 = os.path.join(get_examples_path(), "lforegressor.txt")
+    if localrun:
+        inputdatapath = "../data/examples/src"
+        outputdatapath = "./tmp"
+    else:
+        inputdatapath = get_examples_path()
+        outputdatapath = get_test_temp_path()
+    args.infile1 = os.path.join(inputdatapath, "lforegressor.txt")
+    args.infile2 = os.path.join(inputdatapath, "lforegressor.txt")
     args.insamplerate1 = 1.0
     args.insamplerate2 = 1.0
-    args.outputfile = os.path.join(get_test_temp_path(), "aligntcout")
+    args.outputfile = os.path.join(outputdatapath, "aligntcout")
     args.displayplots = displayplots
     args.filterband = "lfo"
     args.filterfreqs = None
@@ -42,4 +48,4 @@ def test_aligntcs(displayplots=False):
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_aligntcs(displayplots=True)
+    test_aligntcs(displayplots=True, localrun=True)
