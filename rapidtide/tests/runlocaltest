@@ -29,7 +29,7 @@ rm .coverage\.*
 
 # run the tests
 #export COVERAGE_PROCESS_START=./.coveragerc
-export PYTHONPATH=.:${PYTHONPATH}
+#export PYTHONPATH=.:${PYTHONPATH}
 pytest \
     -W ignore \
     --cov-report html:coveragereport \

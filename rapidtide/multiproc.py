@@ -96,22 +96,24 @@ def run_multiproc(
     showprogressbar=True,
     chunksize=1000,
 ):
-    # try adding this magic incantation to get coverage to record multiprocessing properly
-    try:
-        from pytest_cov.embed import cleanup
-    except ImportError:
-        cleanup = None
-
     # initialize the workers and the queues
     __spec__ = None
     n_workers = nprocs
     versioninfo = python_version().split(".")
     if (versioninfo[0] == "3") and (int(versioninfo[1]) >= 8) and (system() != "Windows"):
+        cleanup = None
         ctx = mp.get_context("fork")
         inQ = ctx.Queue()
         outQ = ctx.Queue()
         workers = [ctx.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
     else:
+        # try adding this magic incantation to get coverage to record multiprocessing properly
+        # This fails for python 3.8 and above
+        try:
+            from pytest_cov.embed import cleanup
+        except ImportError:
+            cleanup = None
+
         inQ = mp.Queue()
         outQ = mp.Queue()
         workers = [mp.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
