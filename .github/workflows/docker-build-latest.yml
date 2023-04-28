@@ -1,4 +1,4 @@
-name: Upload latest to DockerHub and ECR
+name: Upload latest to DockerHub
 
 on:
   workflow_dispatch:

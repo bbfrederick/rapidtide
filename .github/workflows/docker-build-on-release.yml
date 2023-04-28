@@ -1,4 +1,4 @@
-name: Upload release to DockerHub
+name: Upload release to DockerHub and ECR
 
 on:
   release:
