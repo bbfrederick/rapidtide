@@ -1,5 +1,11 @@
 # Release history
 
+## Version 2.5 (4/28/23)
+* (package) Fixed and upgraded tests both locally and on CircleCI.
+* (package) Fixed coverage calculation and upload and increased coverage to 52%.
+* (package) Made some changes to support our new AWS account (dmd).
+* (reference) Added XML files for the JHU level 2 arterial atlases.
+
 ## Version 2.4.5.1 (4/10/23)
 * (docs) Removed duplicate funding source.  Hopefully this will resolve the Pypi upload issue.
 
