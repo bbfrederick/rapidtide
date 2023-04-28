@@ -34,7 +34,9 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }},latest-release
+          tags: |
+              ${{ steps.meta.outputs.tags }}
+              fredericklab/rapidtide:latest-release
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Copy to public.ecr.aws/rapidtide/rapidtide
