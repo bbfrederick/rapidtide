@@ -45,4 +45,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DELAY_ECR_SECRET }}
         run: |
            aws ecr-public get-login-password --region us-east-1 | skopeo login --username AWS --password-stdin public.ecr.aws/rapidtide/rapidtide
-           skopeo copy --all docker://fredericklab/rapidtide:latest-release docker://public.ecr.aws/rapidtide/rapidtide
+           skopeo copy --all docker://fredericklab/rapidtide:latest-release docker://public.ecr.aws/rapidtide/rapidtide:latest-release
