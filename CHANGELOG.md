@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.5.1 (4/28/23)
+* (package) New release to trigger ECR upload.
+
 ## Version 2.5 (4/28/23)
 * (package) Fixed and upgraded tests both locally and on CircleCI.
 * (package) Fixed coverage calculation and upload and increased coverage to 52%.
