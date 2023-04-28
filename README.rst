@@ -436,4 +436,4 @@ Physiological noise identification and removal using time delay methods
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.814990.svg
    :target: https://doi.org/10.5281/zenodo.814990
 .. |Funded by NIH| image:: https://img.shields.io/badge/NIH-RF1--MH130637--01-yellowgreen.svg
-   :target: http://grantome.com/grant/NIH/RF1-MH130637-01-yellowgreen.svg
+   :target: https://reporter.nih.gov/project-details/10509534
