@@ -116,6 +116,20 @@ def bland_altman_plot(data1, data2, usex=False, *args, **kwargs):
     plt.axhline(md - 2 * sd, color="gray", linestyle="--")
 
 
+def pairdata(input1_data, input2_data, totalmask):
+    nonzeropoints = np.where(totalmask > 0)
+    pairlist = []
+    for i in range(0, len(nonzeropoints[0])):
+        pairlist.append(
+            [
+                input1_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]],
+                input2_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]],
+            ]
+        )
+
+    return np.asarray(pairlist)
+
+
 def main():
     # read the arguments
     try:
@@ -162,17 +176,7 @@ def main():
         exit()
 
     totalmask = mask1_data * mask2_data
-    nonzeropoints = np.where(totalmask > 0)
-    pairlist = []
-    for i in range(0, len(nonzeropoints[0])):
-        pairlist.append(
-            [
-                input1_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]],
-                input2_data[nonzeropoints[0][i], nonzeropoints[1][i], nonzeropoints[2][i]],
-            ]
-        )
-
-    thearray = np.asarray(pairlist)
+    thearray = pairdata(input1_data input2_data, totalmask)
 
     plt.figure()
     if args.scatter:
@@ -180,7 +184,6 @@ def main():
         theplotname = args.outputroot + "_scatterplot.png"
     else:
         # construct a 2d histogram
-        numbins = 100
         H, xedges, yedges = np.histogram2d(
             thearray[:, 0], thearray[:, 1], bins=args.histbins, normed=True
         )
