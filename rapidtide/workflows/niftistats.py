@@ -296,10 +296,19 @@ def niftistats_main(calctype="icc"):
     # smooth the data
     if args.sigma > 0.0:
         print("smoothing data")
-        for i in range(numsubjs * nummeas):
-            datafile_data[:, :, :, i] = tide_filt.ssmooth(
-                xdim, ydim, slicethickness, args.sigma, datafile_data[:, :, :, i]
-            )
+        if calctype == "icc":
+            for i in range(numsubjs * nummeas):
+                datafile_data[:, :, :, i] = tide_filt.ssmooth(
+                    xdim, ydim, slicethickness, args.sigma, datafile_data[:, :, :, i]
+                )
+        elif calctype == "ttest":
+            for i in range(numsubjs):
+                datafile_data[:, :, :, i, 0] = tide_filt.ssmooth(
+                    xdim, ydim, slicethickness, args.sigma, datafile_data[:, :, :, i, 0]
+                )
+                datafile_data[:, :, :, i, 1] = tide_filt.ssmooth(
+                    xdim, ydim, slicethickness, args.sigma, datafile_data[:, :, :, i, 1]
+                )
         print("done smoothing data")
     if args.datamaskname is not None:
         print("reading in mask array")
