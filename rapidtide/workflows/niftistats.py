@@ -6,6 +6,7 @@ import sys
 import time
 
 import numpy as np
+from scipy.stats import ttest_ind, ttest_rel
 from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
@@ -72,6 +73,29 @@ def _get_parser(calctype="icc"):
         help=("Spatially smooth the input data with a SIGMA mm kernel prior to calculation."),
         default=0.0,
     )
+    if calctype == "ttest":
+        parser.add_argument(
+            "--paired",
+            dest="paired",
+            action="store_true",
+            help=("Perform a paired t test (default is independent)."),
+            default=False,
+        )
+        parser.add_argument(
+            "--alternative",
+            dest="alternative",
+            action="store",
+            type=str,
+            choices=["two-sided", "less", "greater"],
+            help=(
+                "Defines the alternative hypothesis. The options are:‘two-sided’ - the means of the "
+                "distributions underlying the samples are unequal. ‘less’: the mean of the distribution "
+                "underlying the first sample is less than the mean of the distribution underlying the "
+                "second sample.  ‘greater’: the mean of the distribution underlying the first sample is "
+                "greater than the mean of the distribution underlying the second sample."
+            ),
+            default="two-sided",
+        )
     parser.add_argument(
         "--demedian",
         dest="demedian",
@@ -264,8 +288,9 @@ def niftistats_main(calctype="icc"):
                         f"copying file:{thisfile}, volume:{volumesel[themeas, thesubject]} (meas:{themeas}, subject:{thesubject}) to volume {thesubject * nummeas + themeas}"
                     )
         elif calctype == "ttest":
-            datafile_data[:, :, :, :, thisfile] = inputfile_data[:, :, :, :]
+            datafile_data[:, :, :, :, thisfile] = inputfile_data[:, :, :, :] + 0.0
     print(f"Done reading in data for {nummeas} measurements on {numsubjs} subjects")
+    print(f"Datafile shape is {datafile_data.shape}")
     del inputfile_data
 
     # smooth the data
@@ -290,22 +315,30 @@ def niftistats_main(calctype="icc"):
             sys.exit()
         print("done reading in mask array")
     else:
-        datamask_data = datafile_data[:, :, :, 0] * 0.0 + 1.0
+        if calctype == "icc":
+            datamask_data = datafile_data[:, :, :, 0] * 0.0 + 1.0
+        elif calctype == "ttest":
+            datamask_data = datafile_data[:, :, :, 0, 0] * 0.0 + 1.0
 
     # now reformat from x, y, z, time to voxelnumber, measurement, subject
     numvoxels = int(xsize) * int(ysize) * int(numslices)
-
-    print("reshaping to voxel by (numsubjs * nummeas)")
-    data_in_voxacq = datafile_data.reshape((numvoxels, numsubjs * nummeas))
     mask_in_vox = datamask_data.reshape((numvoxels))
 
     print("finding valid voxels")
     validvoxels = np.where(mask_in_vox > 0)[0]
     numvalid = int(len(validvoxels))
-    valid_in_voxacq = data_in_voxacq[validvoxels, :]
 
-    print("reshaping to validvox by numsubjects by nummeas")
-    validinvms = valid_in_voxacq.reshape((numvalid, numsubjs, nummeas))
+    if calctype == "icc":
+        print("reshaping to voxel by (numsubjs * nummeas)")
+        data_in_voxacq = datafile_data.reshape((numvoxels, numsubjs * nummeas))
+        valid_in_voxacq = data_in_voxacq[validvoxels, :]
+        print("reshaping to validvox by numsubjects by nummeas")
+        validinvms = valid_in_voxacq.reshape((numvalid, numsubjs, nummeas))
+    elif calctype == "ttest":
+        print("reshaping to voxel by numsubjs by nummeas")
+        data_in_vms = datafile_data.reshape((numvoxels, numsubjs, nummeas))
+        print("reshaping to validvox by numsubjects by nummeas")
+        validinvms = data_in_vms[validvoxels, :, :]
     print(validinvms.shape)
 
     # remove median from each map, if requested
@@ -361,13 +394,44 @@ def niftistats_main(calctype="icc"):
 
         extraline = f"ICC calculation time: {1000.0 * iccduration / numvalid:.3f} ms per voxel.  nocache={args.nocache}"
         print(extraline)
+    elif calctype == "ttest":
+        t_in_valid = np.zeros((numvalid), dtype=float)
+        p_in_valid = np.zeros((numvalid), dtype=float)
 
-        outarray_in_vox = mask_in_vox * 0.0
+        tteststarttime = time.time()
+        for voxel in tqdm(
+            range(0, numvalid),
+            desc="Voxel",
+            unit="voxels",
+            disable=(not args.showprogressbar),
+        ):
+            if args.paired:
+                t_in_valid[voxel], p_in_valid[voxel], df = ttest_rel(
+                    validinvms[voxel, :, 0],
+                    validinvms[voxel, :, 1],
+                    alternative=args.alternative,
+                )
+            else:
+                t_in_valid[voxel], p_in_valid[voxel] = ttest_ind(
+                    validinvms[voxel, :, 0],
+                    validinvms[voxel, :, 1],
+                    alternative=args.alternative,
+                )
 
-        theheader = copy.deepcopy(datafile_hdr)
-        theheader["dim"][0] = 3
-        theheader["dim"][4] = 1
+        ttestduration = time.time() - tteststarttime
 
+        extraline = (
+            f"t test calculation time: {1000.0 * ttestduration / numvalid:.3f} ms per voxel."
+        )
+        print(extraline)
+
+    outarray_in_vox = mask_in_vox * 0.0
+
+    theheader = copy.deepcopy(datafile_hdr)
+    theheader["dim"][0] = 3
+    theheader["dim"][4] = 1
+
+    if calctype == "icc":
         outarray_in_vox[validvoxels] = ICC_in_valid[:]
         tide_io.savetonifti(
             outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{args.outputroot}_ICC"
@@ -385,6 +449,15 @@ def niftistats_main(calctype="icc"):
             outarray_in_vox.reshape(xsize, ysize, numslices),
             theheader,
             f"{args.outputroot}_session_effect_F",
+        )
+    elif calctype == "ttest":
+        outarray_in_vox[validvoxels] = t_in_valid[:]
+        tide_io.savetonifti(
+            outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{args.outputroot}_t"
+        )
+        outarray_in_vox[validvoxels] = p_in_valid[:]
+        tide_io.savetonifti(
+            outarray_in_vox.reshape(xsize, ysize, numslices), theheader, f"{args.outputroot}_p"
         )
 
     runendtime = time.time()
