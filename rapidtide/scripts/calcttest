@@ -2,4 +2,4 @@
 import rapidtide.workflows.niftistats
 
 if __name__ == "__main__":
-    rapidtide.workflows.niftistats.niftistats_main(calctype="icc")
+    rapidtide.workflows.niftistats.niftistats_main(calctype="ttest")

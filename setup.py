@@ -55,6 +55,7 @@ modules_list = [
     "rapidtide/_version",
     "rapidtide/workflows/parser_funcs",
     "rapidtide/workflows/aligntcs",
+    "rapidtide/workflows/niftistats",
     "rapidtide/workflows/happy_parser",
     "rapidtide/workflows/niftidecomp",
     "rapidtide/workflows/rapidtide_parser",
@@ -75,6 +76,7 @@ script_list = [
     "rapidtide/scripts/atlasaverage",
     "rapidtide/scripts/atlastool",
     "rapidtide/scripts/calcicc",
+    "rapidtide/scripts/calcttest",
     "rapidtide/scripts/calctexticc",
     "rapidtide/scripts/ccorrica",
     "rapidtide/scripts/endtidalproc",
@@ -160,6 +162,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     # What does your project relate to?
     keywords=["fMRI", "correlation", "RIPTiDe", "noise"],
