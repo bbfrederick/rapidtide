@@ -418,7 +418,11 @@ def timefmt(thenumber):
     thenumber
 
     Returns
-    -------:
+    -------
+    outputlines:
+        The formatted lines to save to the formatted runtimings file
+    totaldiff:
+        The total time from start to finish, in seconds
 
     """
     return "{:10.2f}".format(thenumber)
@@ -445,7 +449,7 @@ def proctiminglogfile(logfilename, timewidth=10):
         totaldiffstr = f"{totaldiff:.2f}".rjust(timewidth)
         incdiffstr = f"{incdiff:.2f}".rjust(timewidth)
         theoutputline = f"{totaldiffstr}\t{incdiffstr}\t{timingdata['description'].iloc[therow]}"
-        if timingdata["number"].iloc[therow] != "None":
+        if not np.isnan(timingdata["number"].iloc[therow]):
             speedunit = f"{timingdata['units'].iloc[therow]}/s"
             if incdiff == 0.0:
                 speed = "undefined"
