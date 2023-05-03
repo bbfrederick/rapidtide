@@ -34,6 +34,8 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
+          sbom: false
+          provenance: false
           tags: |
               ${{ steps.meta.outputs.tags }}
               fredericklab/rapidtide:latest-release

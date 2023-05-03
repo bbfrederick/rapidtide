@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.5.1.2 (4/28/23)
+* (package) New release to trigger ECR upload.
+
 ## Version 2.5.1.1 (4/28/23)
 * (package) New release to trigger ECR upload.
 
