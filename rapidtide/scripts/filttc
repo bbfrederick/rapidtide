@@ -76,6 +76,13 @@ def _get_parser():
     pf.addnormalizationopts(parser, normtarget="timecourses", defaultmethod="None")
 
     parser.add_argument(
+        "--normfirst",
+        dest="normfirst",
+        action="store_true",
+        help=("Normalize before filtering, rather than after."),
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -129,9 +136,14 @@ def main():
     print("samplerate is", samplerate)
     outvecs = invecs * 0.0
     for i in range(numvecs):
-        outvecs[i, :] = tide_math.normalize(
-            thefilter.apply(samplerate, invecs[i, :]), method=args.normmethod
-        )
+        if args.normfirst:
+            outvecs[i, :] = thefilter.apply(
+                samplerate, tide_math.normalize(invecs[i, :], method=args.normmethod)
+            )
+        else:
+            outvecs[i, :] = tide_math.normalize(
+                thefilter.apply(samplerate, invecs[i, :]), method=args.normmethod
+            )
 
     tide_io.writevectorstotextfile(
         outvecs,
