@@ -36,6 +36,9 @@ import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
+DEFAULT_SIGMAMAX = 1000.0
+DEFAULT_SIGMAMIN = 0.25
+
 
 def printthresholds(pcts, thepercentiles, labeltext):
     print(labeltext)
@@ -203,6 +206,31 @@ def _get_parser():
         ),
         default="correlation",
     )
+    similarityopts.add_argument(
+        "--sigmamax",
+        dest="absmaxsigma",
+        action="store",
+        type=float,
+        metavar="SIGMAMAX",
+        help=(
+            "Reject lag fits with linewidth wider than "
+            f"SIGMAMAX Hz. Default is {DEFAULT_SIGMAMAX} Hz."
+        ),
+        default=DEFAULT_SIGMAMAX,
+    )
+    similarityopts.add_argument(
+        "--sigmamin",
+        dest="absminsigma",
+        action="store",
+        type=float,
+        metavar="SIGMAMIN",
+        help=(
+            "Reject lag fits with linewidth narrower than "
+            f"SIGMAMIN Hz. Default is {DEFAULT_SIGMAMIN} Hz."
+        ),
+        default=DEFAULT_SIGMAMIN,
+    )
+
     pf.addsimilarityopts(similarityopts)
 
     # Output options
@@ -295,8 +323,6 @@ def _get_parser():
 
 def main():
     # set some default values
-    absmaxsigma = 1000.0
-    absminsigma = 0.25
     zerooutbadfit = False
     peakfittype = "gauss"
 
@@ -534,8 +560,8 @@ def main():
             corrtimeaxis=MI_x_trim,
             lagmin=args.lagmin,
             lagmax=args.lagmax,
-            absmaxsigma=absmaxsigma,
-            absminsigma=absminsigma,
+            absmaxsigma=args.absmaxsigma,
+            absminsigma=args.absminsigma,
             debug=args.debug,
             peakfittype="quad",
             functype="mutualinfo",
@@ -549,8 +575,8 @@ def main():
             corrtimeaxis=xcorr_x,
             lagmin=args.lagmin,
             lagmax=args.lagmax,
-            absmaxsigma=absmaxsigma,
-            absminsigma=absminsigma,
+            absmaxsigma=args.absmaxsigma,
+            absminsigma=args.absminsigma,
             debug=args.debug,
             peakfittype=peakfittype,
             functype="correlation",
