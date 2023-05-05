@@ -449,13 +449,18 @@ def proctiminglogfile(logfilename, timewidth=10):
         totaldiffstr = f"{totaldiff:.2f}".rjust(timewidth)
         incdiffstr = f"{incdiff:.2f}".rjust(timewidth)
         theoutputline = f"{totaldiffstr}\t{incdiffstr}\t{timingdata['description'].iloc[therow]}"
-        if not np.isnan(timingdata["number"].iloc[therow]):
-            speedunit = f"{timingdata['units'].iloc[therow]}/s"
-            if incdiff == 0.0:
-                speed = "undefined"
-            else:
-                speed = f"{float(timingdata['number'].iloc[therow]) / incdiff:.2f}"
-            theoutputline += f" ({timingdata['number'].iloc[therow]} {timingdata['units'].iloc[therow]} @ {speed} {speedunit})"
+        try:
+            dummy = np.isnan(timingdata["number"].iloc[therow])
+        except:
+            pass
+        else:
+            if not np.isnan(timingdata["number"].iloc[therow]):
+                speedunit = f"{timingdata['units'].iloc[therow]}/s"
+                if incdiff == 0.0:
+                    speed = "undefined"
+                else:
+                    speed = f"{float(timingdata['number'].iloc[therow]) / incdiff:.2f}"
+                theoutputline += f" ({timingdata['number'].iloc[therow]} {timingdata['units'].iloc[therow]} @ {speed} {speedunit})"
         outputlines += [theoutputline]
 
     return outputlines, totaldiff
