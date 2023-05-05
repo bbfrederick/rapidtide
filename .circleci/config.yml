@@ -450,7 +450,7 @@ workflows:
   run_tests:
     jobs:
       - build_py37
-      - test_py37_with_coverage:
+      - test_py37:
           requires:
             - build_py37
       - build_py38
@@ -462,7 +462,7 @@ workflows:
           requires:
             - build_py39
       - build_py310
-      - test_py310:
+      - test_py310_with_coverage:
           requires:
             - build_py310
       - build_py311
