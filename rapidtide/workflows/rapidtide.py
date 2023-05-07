@@ -674,24 +674,6 @@ def rapidtide_main(argparsingfunc):
     LGR.info(f"validvoxels shape = {numvalidspatiallocs}")
     fmri_data_valid = fmri_data[validvoxels, :] + 0.0
     LGR.info(f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}")
-    if internalglobalmeanincludemask is not None:
-        internalglobalmeanincludemask_valid = 1.0 * internalglobalmeanincludemask[validvoxels]
-        del internalglobalmeanincludemask
-        LGR.info(
-            "internalglobalmeanincludemask_valid has size: "
-            f"{internalglobalmeanincludemask_valid.size}"
-        )
-    else:
-        internalglobalmeanincludemask_valid = None
-    if internalglobalmeanexcludemask is not None:
-        internalglobalmeanexcludemask_valid = 1.0 * internalglobalmeanexcludemask[validvoxels]
-        del internalglobalmeanexcludemask
-        LGR.info(
-            "internalglobalmeanexcludemask_valid has size: "
-            f"{internalglobalmeanexcludemask_valid.size}"
-        )
-    else:
-        internalglobalmeanexcludemask_valid = None
 
     if internalrefineincludemask is not None:
         internalrefineincludemask_valid = 1.0 * internalrefineincludemask[validvoxels]
@@ -749,6 +731,19 @@ def rapidtide_main(argparsingfunc):
         nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
         axis=1,
     )
+
+    # calculate the global mean whether we intend to use it or not, before deleting full fmri_data array
+    meanfreq = 1.0 / fmritr
+    meanperiod = 1.0 * fmritr
+    meanstarttime = 0.0
+    meanvec, meanmask = getglobalsignal(
+        fmri_data,
+        optiondict,
+        includemask=internalglobalmeanincludemask,
+        excludemask=internalglobalmeanexcludemask,
+        pcacomponents=optiondict["globalpcacomponents"],
+    )
+
     del fmri_data
     del nim_data
     gc.collect()
@@ -823,18 +818,6 @@ def rapidtide_main(argparsingfunc):
     else:
         optiondict["useglobalref"] = False
 
-    # calculate the global mean whether we intend to use it or not
-    meanfreq = 1.0 / fmritr
-    meanperiod = 1.0 * fmritr
-    meanstarttime = 0.0
-    meanvec, meanmask = getglobalsignal(
-        fmri_data_valid,
-        optiondict,
-        includemask=internalglobalmeanincludemask_valid,
-        excludemask=internalglobalmeanexcludemask_valid,
-        pcacomponents=optiondict["globalpcacomponents"],
-    )
-
     # now set the regressor that we'll use
     if optiondict["useglobalref"]:
         LGR.info("using global mean as probe regressor")
@@ -842,8 +825,6 @@ def rapidtide_main(argparsingfunc):
         inputperiod = meanperiod
         inputstarttime = meanstarttime
         inputvec = meanvec
-        fullmeanmask = np.zeros(numspatiallocs, dtype=rt_floattype)
-        fullmeanmask[validvoxels] = meanmask[:]
         if optiondict["bidsoutput"]:
             savename = f"{outputname}_desc-globalmean_mask"
         else:
@@ -855,7 +836,7 @@ def rapidtide_main(argparsingfunc):
             theheader["dim"][timeindex] = 1
             theheader["dim"][spaceindex] = numspatiallocs
             tide_io.savetocifti(
-                fullmeanmask,
+                meanmask,
                 cifti_hdr,
                 theheader,
                 savename,
@@ -864,7 +845,7 @@ def rapidtide_main(argparsingfunc):
             )
         elif optiondict["textio"]:
             tide_io.writenpvecs(
-                fullmeanmask,
+                meanmask,
                 savename + ".txt",
             )
         else:
@@ -872,9 +853,7 @@ def rapidtide_main(argparsingfunc):
             theheader["dim"][0] = 3
             theheader["dim"][4] = 1
             theheader["pixdim"][4] = 1.0
-            tide_io.savetonifti(
-                fullmeanmask.reshape((xsize, ysize, numslices)), theheader, savename
-            )
+            tide_io.savetonifti(meanmask.reshape((xsize, ysize, numslices)), theheader, savename)
 
         optiondict["preprocskip"] = 0
     else:
