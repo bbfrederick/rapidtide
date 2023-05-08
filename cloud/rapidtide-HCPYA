@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if [[ $# -ne 1 ]]; then
+    echo "Missing participant id."
+    exit 1
+fi
+
+SUBJ=$1
+RUN=$2
+PEDIR=$3
+
+if [[ ${SUBJ} == ARRAY ]]; then
+    SUBJ=${PARTICIPANT_FROM_ARRAY}
+fi
+
+mkdir -p /data_out/HCP_1200/${SUBJ}
+rapidtide \
+    /data_in/HCP_1200/${SUBJ}/MNINonLinear/Results/rfMRI_${RUN}_${PEDIR}/rfMRI_${RUN}_${PEDIR}.nii.gz \
+    /data_out/HCP_1200/${SUBJ}/rapidtide_rfMRI_${RUN}_${PEDIR} \
+    --glmsourcefile=/data_in/HCP_1200/${SUBJ}/MNINonLinear/Results/rfMRI_${RUN}_${PEDIR}/rfMRI_${RUN}_${PEDIR}_hp2000_clean.nii.gz \
+    --despecklepasses 4 \
+    --filterfreqs 0.009 0.15 \
+    --searchrange -7.5 15.0 \
+    --lagminthresh 0.25 \
+    --lagmaxthresh 2.5 \
+    --nprocs -1 \
+    --pickleft \
+    --nofitfilt \
+    --similaritymetric hybrid \
+    --peakfittype gauss \
+    --noprogressbar \
+    --ampthresh 0.15 \
+    --spatialfilt 2.0 \
+    --passes 3 \
+
