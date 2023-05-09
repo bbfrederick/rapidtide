@@ -541,6 +541,41 @@ def _get_parser():
     # Add version options
     pf.addversionopts(parser)
 
+    # Add miscellaneous options
+    misc_opts = parser.add_argument_group("Miscellaneous options.")
+    misc_opts.add_argument(
+        "--aliasedcorrelation",
+        dest="doaliasedcorrelation",
+        action="store_true",
+        help="Attempt to calculate absolute delay using an aliased correlation (experimental).",
+        default=False,
+    )
+    misc_opts.add_argument(
+        "--upsample",
+        dest="doupsampling",
+        action="store_true",
+        help="Attempt to temporally upsample the fMRI data (experimental).",
+        default=False,
+    )
+    misc_opts.add_argument(
+        "--estimateflow",
+        dest="doflowfields",
+        action="store_true",
+        help="Estimate blood flow using optical flow (experimental).",
+        default=False,
+    )
+    misc_opts.add_argument(
+        "--noprogressbar",
+        dest="showprogressbar",
+        action="store_false",
+        help="Will disable showing progress bars (helpful if stdout is going to a file). ",
+        default=True,
+    )
+    pf.addtagopts(
+        misc_opts,
+        helptext="Additional key, value pairs to add to the info json file (useful for tracking analyses).",
+    )
+
     # Debugging options
     debug_opts = parser.add_argument_group("Debugging options (probably not of interest to users)")
     debug_opts.add_argument(
@@ -549,34 +584,6 @@ def _get_parser():
         action="store_true",
         help="Turn on debugging information.",
         default=False,
-    )
-    debug_opts.add_argument(
-        "--aliasedcorrelation",
-        dest="doaliasedcorrelation",
-        action="store_true",
-        help="Attempt to calculate absolute delay using an aliased correlation (experimental).",
-        default=False,
-    )
-    debug_opts.add_argument(
-        "--upsample",
-        dest="doupsampling",
-        action="store_true",
-        help="Attempt to temporally upsample the fMRI data (experimental).",
-        default=False,
-    )
-    debug_opts.add_argument(
-        "--estimateflow",
-        dest="doflowfields",
-        action="store_true",
-        help="Estimate blood flow using optical flow (experimental).",
-        default=False,
-    )
-    debug_opts.add_argument(
-        "--noprogressbar",
-        dest="showprogressbar",
-        action="store_false",
-        help="Will disable showing progress bars (helpful if stdout is going to a file). ",
-        default=True,
     )
     debug_opts.add_argument(
         "--nodetrend",
@@ -741,6 +748,9 @@ def process_args(inputargs=None):
     # deal with notch filter logic
     if args.disablenotch:
         args.notchpct = None
+
+    # process infotags
+    args = pf.postprocesstagopts(args)
 
     # determine the outputlevel
     args.outputlevel = np.max([0, args.outputlevel + args.inc_outputlevel - args.dec_outputlevel])

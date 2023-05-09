@@ -5,6 +5,8 @@ happy \
     ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/slicetimes.txt \
     ~/Dropbox_PHC/MR_data_2/physioconn/happytest/happyarm \
     --mklthreads -1 \
+    --infotag tag1 value1 \
+    --infotag tag2 value2 \
     --model model_revised
 
 happy \

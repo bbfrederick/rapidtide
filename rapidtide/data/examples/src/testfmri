@@ -24,6 +24,8 @@ rapidtide \
         --nolimitoutput \
         --corrtype linear \
         sub-RAPIDTIDETEST.nii.gz \
+        --infotag tag1 value1 \
+        --infotag tag2 value2 \
         ../dst/sub-RAPIDTIDETEST
 
 #rapidtide \

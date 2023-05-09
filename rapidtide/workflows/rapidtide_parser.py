@@ -1127,6 +1127,7 @@ def _get_parser():
         ),
         default=1,
     )
+    pf.addtagopts(misc)
 
     # Experimental options (not fully tested, may not work)
     experimental = parser.add_argument_group(
@@ -1377,6 +1378,10 @@ def process_args(inputargs=None):
         args["git_isdirty"],
     ) = tide_util.version()
     args["python_version"] = str(sys.version_info)
+
+    # split infotags
+    theobj = pf.postprocesstagopts(Namespace(**args))
+    args = vars(theobj)
 
     # configure the filter
     theobj, theprefilter = pf.postprocessfilteropts(Namespace(**args))

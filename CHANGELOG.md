@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.5.3 (5/9/23)
+* (rapidtide, happy) Added the ability to save arbitrary informational tags to the run options (or info) json files using the --infotag command line argument.
+
 ## Version 2.5.2 (5/8/23)
 * (rapidtide) Now allow the global mean mask to be completely outside of the correlation mask (the fact this previously wasn't allowed was a bug).  Thank you to Daniele Marinazzo for finding this.
 * (rapidtide) Fixed a bug in formatting run timings.

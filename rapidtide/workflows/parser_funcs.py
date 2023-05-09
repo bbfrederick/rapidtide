@@ -22,6 +22,7 @@ Functions for parsers.
 import argparse
 import os.path as op
 import sys
+from argparse import Namespace
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
@@ -120,6 +121,20 @@ def is_range(parser, arg):
     return arg
 
 
+def is_valid_tag(parser, arg):
+    """
+    Check if argument is existing file.
+    """
+    if arg is not None:
+        argparts = arg.split(",")
+        if len(argparts) < 2:
+            parser.error("No tag value specified.")
+        tagname = argparts[0]
+        tagval = ",".join(argparts[1:])
+
+    return (tagname, tagval)
+
+
 DEFAULT_FILTER_ORDER = 6
 DEFAULT_PAD_SECONDS = 30.0
 DEFAULT_PERMUTATIONMETHOD = "shuffle"
@@ -195,6 +210,29 @@ def addreqoutputtextfile(parser, varname, rootname=False):
         type=str,
         help=helpline,
     )
+
+
+def addtagopts(
+    opt_group,
+    helptext="Additional key, value pairs to add to the options json file (useful for tracking analyses).",
+):
+    opt_group.add_argument(
+        "--infotag",
+        action="append",
+        nargs=2,
+        metavar=("tagname", "tagvalue"),
+        help=helptext,
+        default=None,
+    )
+
+
+def postprocesstagopts(args):
+    if args.infotag is not None:
+        argvars = vars(args)
+        for thetag in argvars["infotag"]:
+            argvars[f"INFO_{thetag[0]}"] = thetag[1]
+        del argvars["infotag"]
+    return Namespace(**argvars)
 
 
 def addnormalizationopts(parser, normtarget="timecourse", defaultmethod=DEFAULT_NORMTYPE):
