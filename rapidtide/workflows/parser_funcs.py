@@ -232,7 +232,9 @@ def postprocesstagopts(args):
         for thetag in argvars["infotag"]:
             argvars[f"INFO_{thetag[0]}"] = thetag[1]
         del argvars["infotag"]
-    return Namespace(**argvars)
+        return Namespace(**argvars)
+    else:
+        return args
 
 
 def addnormalizationopts(parser, normtarget="timecourse", defaultmethod=DEFAULT_NORMTYPE):

@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.5.3.1 (5/9/23)
+* (rapidtide, happy) Fixed a crash when you DIDN'T specify informational tags (SMH).
+
 ## Version 2.5.3 (5/9/23)
 * (rapidtide, happy) Added the ability to save arbitrary informational tags to the run options (or info) json files using the --infotag command line argument.
 
