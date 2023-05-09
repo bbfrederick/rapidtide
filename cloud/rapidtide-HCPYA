@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ $# -ne 1 ]]; then
-    echo "Missing participant id."
+if [[ $# -ne 3 ]]; then
+    echo "Missing arguments."
     exit 1
 fi
 
@@ -12,6 +12,8 @@ PEDIR=$3
 if [[ ${SUBJ} == ARRAY ]]; then
     SUBJ=${PARTICIPANT_FROM_ARRAY}
 fi
+
+echo "Subject="${SUBJ}", RUN="${RUN}", PEDIR="${PEDIR}
 
 mkdir -p /data_out/HCP_1200/${SUBJ}
 rapidtide \
