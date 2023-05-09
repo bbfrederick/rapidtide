@@ -1,5 +1,14 @@
 # Release history
 
+## Version 2.5.2 (5/8/23)
+* (rapidtide) Now allow the global mean mask to be completely outside of the correlation mask (the fact this previously wasn't allowed was a bug).  Thank you to Daniele Marinazzo for finding this.
+* (rapidtide) Fixed a bug in formatting run timings.
+* (filttc) Now allow normalization before or after filtering.
+* (showxcorrx) Made fit width limits configurable.
+* (calcicc) Moved main calculations into niftistats, made two shells to calculate either icc or ttests.
+* (package) Disabled numba because of multiple bugs and incompatibility with py3.11 and ARM.
+* (package) Made some updates to rapidtide cloud routines to make things a bit more stable.
+
 ## Version 2.5.1.2 (4/28/23)
 * (package) New release to trigger ECR upload.
 
