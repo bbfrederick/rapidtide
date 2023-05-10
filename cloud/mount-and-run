@@ -51,5 +51,7 @@ if [[ -n $AWS_BATCH_JOB_ARRAY_INDEX ]]; then
     echo Set PARTICIPANT_FROM_ARRAY=$PARTICIPANT_FROM_ARRAY
 fi
 
-echo Instance type: $(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+export INSTANCETYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+echo Instance type: ${INSTANCETYPE}
+
 exec "$@"
