@@ -1123,9 +1123,19 @@ def _get_parser():
         help=(
             "Use NPROCS worker processes for multiprocessing. "
             "Setting NPROCS to less than 1 sets the number of "
-            "worker processes to n_cpus - 1."
+            "worker processes to n_cpus (unless --reservecpu is used)."
         ),
         default=1,
+    )
+    misc.add_argument(
+        "--reservecpu",
+        dest="reservecpu",
+        action="store_true",
+        help=(
+            "When automatically setting nprocs, reserve one CPU for "
+            "process management rather than using them all for worker threads."
+        ),
+        default=False,
     )
     pf.addtagopts(misc)
 
