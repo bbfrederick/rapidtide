@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo $(dirname $(readlink -nf $0))
+echo $(readlink -nf $0)
