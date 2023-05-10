@@ -324,6 +324,13 @@ def rapidtide_main(argparsingfunc):
 
     optiondict["nodename"] = platform.node()
 
+    # if we are running on AWS, store the instance type
+    theenviron = os.environ
+    try:
+        optiondict["AWS_instancetype"] = theenviron["INSTANCETYPE"]
+    except KeyError:
+        pass
+
     fmrifilename = optiondict["in_file"]
     outputname = optiondict["outputname"]
     filename = optiondict["regressorfile"]
@@ -386,7 +393,7 @@ def rapidtide_main(argparsingfunc):
 
     # set set the number of worker processes if multiprocessing
     if optiondict["nprocs"] < 1:
-        optiondict["nprocs"] = tide_multiproc.maxcpus()
+        optiondict["nprocs"] = tide_multiproc.maxcpus(reservecpu=optiondict["reservecpu"])
 
     if optiondict["singleproc_getNullDist"]:
         optiondict["nprocs_getNullDist"] = 1
