@@ -35,8 +35,11 @@ except ImportError:
     import Queue as thrQueue
 
 
-def maxcpus():
-    return mp.cpu_count() - 1
+def maxcpus(reservecpu=True):
+    if reservecpu:
+        return mp.cpu_count() - 1
+    else:
+        return mp.cpu_count()
 
 
 def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chunksize=10000):
