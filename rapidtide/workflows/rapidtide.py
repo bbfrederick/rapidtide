@@ -325,9 +325,8 @@ def rapidtide_main(argparsingfunc):
     optiondict["nodename"] = platform.node()
 
     # if we are running on AWS, store the instance type
-    theenviron = os.environ
     try:
-        optiondict["AWS_instancetype"] = theenviron["INSTANCETYPE"]
+        optiondict["AWS_instancetype"] = os.environ["AWS_INSTANCETYPE"]
     except KeyError:
         pass
 
