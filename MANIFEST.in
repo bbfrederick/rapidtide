@@ -12,7 +12,7 @@ include rapidtide/data/examples/src/test*
 include rapidtide/data/examples/src/installtestdata
 recursive-include rapidtide/tests *
 include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*regions.txt
-include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL1.xml
+include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*.xml
 include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*2mm.nii.gz
 include rapidtide/data/reference/ASPECTS*
 include rapidtide/data/reference/ATT*

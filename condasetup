@@ -13,7 +13,6 @@ conda install \
     nibabel \
     nilearn \
     pyfftw \
-    numba \
     pywavelets \
     pyqt \
     pyqt5-sip \

@@ -185,7 +185,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        "numpy>=1.16",
+        "numpy",
         "scipy",
         "pandas",
         "scikit-image",
@@ -194,12 +194,12 @@ setup(
         "nilearn",
         "matplotlib",
         "pyfftw",
-        "pyqtgraph>=0.11.0",
+        "pyqtgraph<0.13.0",
         "pyqt5-sip",
         "requests",
         "statsmodels",
-        "tqdm",
         "pywavelets",
+        "tqdm",
     ],
     # "keras",
     # "tensorflow>=2.4.0",
@@ -238,7 +238,7 @@ setup(
             "data/examples/src/installtestdata",
         ],
         "reference": [
-            "data/reference/JHU-ArterialTerritoriesNoVent-LVL1.xml",
+            "data/reference/JHU-ArterialTerritoriesNoVent-LVL*.xml",
             "data/reference/JHU-ArterialTerritoriesNoVent-LVL*regions.txt",
             "data/reference/JHU-ArterialTerritoriesNoVent-LVL*2mm.nii.gz",
             "data/reference/ASPECTS*",
