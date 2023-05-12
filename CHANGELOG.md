@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.5.5 (5/11/23)
+* (Docker) Updated to python 3.11 basecontainer.
+* (package) Modernized install procedure.
+
 ## Version 2.5.4 (5/10/23)
 * (rapidtide) Default to using N processors rather than N-1 when nprocs=-1.  You can toggle old behavior with --reservecpu.
 * (rapidtide-cloud) Rapidtide will record the instance type if running on AWS in the options file (AWS_instancetype).
