@@ -118,7 +118,7 @@ def transposeifspatial(data, decompaxis="temporal"):
 
 def niftidecomp_workflow(
     decompaxis,
-    datafile,
+    datafilelist,
     datamaskname=None,
     decomptype="pca",
     pcacomponents=0.5,
@@ -145,16 +145,38 @@ def niftidecomp_workflow(
             datamasksizes,
         ) = tide_io.readfromnifti(datamaskname)
 
-    (
-        datafile_img,
-        datafile_data,
-        datafile_hdr,
-        datafiledims,
-        datafilesizes,
-    ) = tide_io.readfromnifti(datafile)
+    numfiles = len(datafilelist)
+    for idx, datafile in enumerate(datafilelist):
+        (
+            datafile_img,
+            datafile_data,
+            datafile_hdr,
+            datafiledims,
+            datafilesizes,
+        ) = tide_io.readfromnifti(datafile)
 
-    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
-    xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
+        if idx == 0:
+            xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
+            xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
+            totaltimepoints = timepoints * numfiles
+            originaldatafiledims = datafiledims.copy()
+
+            fulldataarray = np.zeros((xsize, ysize, numslices, timepoints * numfiles), dtype=float)
+        else:
+            if (not tide_io.checkspacedimmatch(datafiledims, originaldatafiledims)) or (
+                not tide_io.checktimematch(datafiledims, originaldatafiledims)
+            ):
+                print("all input data files must have the same dimensions")
+                exit()
+
+        # smooth the data
+        if sigma > 0.0:
+            print("smoothing data")
+            for i in range(timepoints):
+                fulldataarray[:, :, :, i] = tide_filt.ssmooth(
+                    xdim, ydim, slicethickness, sigma, fulldataarray[:, :, :, i]
+                )
+        fulldataarray[:, :, :, idx * timepoints : (idx + 1) * timepoints]
 
     # check dimensions
     if datamaskname is not None:
@@ -166,18 +188,10 @@ def niftidecomp_workflow(
             print("input mask time dimension does not match image")
             exit()
 
-    # smooth the data
-    if sigma > 0.0:
-        print("smoothing data")
-        for i in range(timepoints):
-            datafile_data[:, :, :, i] = tide_filt.ssmooth(
-                xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i]
-            )
-
     # allocating arrays
     print("reshaping arrays")
     numspatiallocs = int(xsize) * int(ysize) * int(numslices)
-    rs_datafile = datafile_data.reshape((numspatiallocs, timepoints))
+    rs_datafile = fulldataarray.reshape((numspatiallocs, totaltimepoints))
 
     print("masking arrays")
     maskthresh = 0.25
@@ -186,9 +200,10 @@ def niftidecomp_workflow(
             proclocs = np.where(datamask_data.reshape(numspatiallocs) > maskthresh)
         else:
             proclocs = np.where(
-                np.mean(datamask_data.reshape((numspatiallocs, timepoints)), axis=1) > maskthresh
+                np.mean(datamask_data.reshape((numspatiallocs, totaltimepoints)), axis=1)
+                > maskthresh
             )
-            rs_mask = datamask_data.reshape((numspatiallocs, timepoints))[proclocs, :]
+            rs_mask = datamask_data.reshape((numspatiallocs, totaltimepoints))[proclocs, :]
             rs_mask = np.where(rs_mask > maskthresh, 1.0, 0.0)[0]
     else:
         datamaskdims = [1, xsize, ysize, numslices, 1]
@@ -288,8 +303,6 @@ def niftidecomp_workflow(
             # save the coefficients
             coefficients = thetransform
             print("coefficients shape:", coefficients.shape)
-            theheader = datafile_hdr.copy()
-            theheader["dim"][4] = coefficients.shape[1]
             outputcoefficients = np.zeros((numspatiallocs, coefficients.shape[1]), dtype="float")
             outputcoefficients[proclocs, :] = coefficients[:, :]
             outputcoefficients = outputcoefficients.reshape(
@@ -302,8 +315,6 @@ def niftidecomp_workflow(
 
         else:
             # save the component images
-            theheader = datafile_hdr.copy()
-            theheader["dim"][4] = thecomponents.shape[1]
             outputcomponents = np.zeros((numspatiallocs, thecomponents.shape[1]), dtype="float")
             outputcomponents[proclocs, :] = thecomponents[:, :]
             outputcomponents = outputcomponents.reshape(
@@ -317,7 +328,7 @@ def niftidecomp_workflow(
             # )
 
             # unnormalize the dimensionality reduced data
-            for i in range(timepoints):
+            for i in range(totaltimepoints):
                 theinvtrans[:, i] = thevar[i] * theinvtrans[:, i] + themean[i]
 
         print("writing fit data")
@@ -373,7 +384,7 @@ def main(decompaxis):
         datafilesizes,
     ) = niftidecomp_workflow(
         decompaxis,
-        args["datafile"],
+        [args["datafile"], args["datafile"]],
         datamaskname=args["datamaskname"],
         decomptype=args["decomptype"],
         pcacomponents=args["pcacomponents"],
