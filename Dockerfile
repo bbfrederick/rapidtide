@@ -20,7 +20,7 @@ ENV HOME="/home/rapidtide"
 # Install rapidtide
 COPY . /src/rapidtide
 RUN cd /src/rapidtide && \
-    python3 setup.py install && \
+    pip install . && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
 RUN cd /src/rapidtide/rapidtide/data/examples/src && \
     ./installtestdatadocker
