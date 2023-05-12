@@ -121,7 +121,6 @@ def niftidecomp_workflow(
     demean=True,
     sigma=0.0,
 ):
-
     print(f"Will perform {decomptype} analysis along the {decompaxis} axis")
 
     if decompaxis == "temporal":
@@ -131,19 +130,8 @@ def niftidecomp_workflow(
         decompaxisnum = 0
         transposeifspatial = np.transpose
 
-    # save the command line
-    tide_io.writevec([" ".join(sys.argv)], outputroot + "_commandline.txt")
-
     # read in data
     print("reading in data arrays")
-    (
-        datafile_img,
-        datafile_data,
-        datafile_hdr,
-        datafiledims,
-        datafilesizes,
-    ) = tide_io.readfromnifti(datafile)
-
     if datamaskname is not None:
         (
             datamask_img,
@@ -152,6 +140,14 @@ def niftidecomp_workflow(
             datamaskdims,
             datamasksizes,
         ) = tide_io.readfromnifti(datamaskname)
+
+    (
+        datafile_img,
+        datafile_data,
+        datafile_hdr,
+        datafiledims,
+        datafilesizes,
+    ) = tide_io.readfromnifti(datafile)
 
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(datafiledims)
     xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(datafilesizes)
@@ -361,6 +357,9 @@ def getparameters(decompaxis):
 
 def main(decompaxis):
     args = getparameters(decompaxis)
+
+    # save the command line
+    tide_io.writevec([" ".join(sys.argv)], args["outputroot"] + "_commandline.txt")
 
     niftidecomp_workflow(
         decompaxis,

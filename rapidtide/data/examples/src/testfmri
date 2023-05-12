@@ -14,19 +14,34 @@
         #sub-HAPPYTEST.nii.gz \
         #../dst/sub-HAPPYTESTRAPIDTIDE
 
+#rapidtide \
+	#--spatialfilt 2 \
+        #--nprocs -1 \
+        #--passes 3 \
+        #--similaritymetric hybrid \
+        #--norefinedespeckled \
+        #--filterband lfo \
+        #--nolimitoutput \
+        #--corrtype linear \
+        #sub-RAPIDTIDETEST.nii.gz \
+        #--infotag tag1 value1 \
+        #--infotag tag2 value2 \
+        #../dst/sub-RAPIDTIDETEST_tagged
+
+for run in 00 01 02 03 04 05 06 07
+do
 rapidtide \
 	--spatialfilt 2 \
         --nprocs -1 \
         --passes 3 \
+        --reservecpu \
         --similaritymetric hybrid \
         --norefinedespeckled \
         --filterband lfo \
         --nolimitoutput \
         --corrtype linear \
         sub-RAPIDTIDETEST.nii.gz \
-        --infotag tag1 value1 \
-        --infotag tag2 value2 \
-        ../dst/sub-RAPIDTIDETEST_tagged
+        ../dst/sub-RAPIDTIDETEST_reserve_${run}
 
 rapidtide \
 	--spatialfilt 2 \
@@ -38,7 +53,32 @@ rapidtide \
         --nolimitoutput \
         --corrtype linear \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST
+        ../dst/sub-RAPIDTIDETEST_noreserve_${run}
+
+rapidtide \
+	--spatialfilt 2 \
+        --nprocs 15 \
+        --passes 3 \
+        --similaritymetric hybrid \
+        --norefinedespeckled \
+        --filterband lfo \
+        --nolimitoutput \
+        --corrtype linear \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_nprocs15_${run}
+
+rapidtide \
+	--spatialfilt 2 \
+        --nprocs 16 \
+        --passes 3 \
+        --similaritymetric hybrid \
+        --norefinedespeckled \
+        --filterband lfo \
+        --nolimitoutput \
+        --corrtype linear \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_noprocs16_${run}
+done
 
 #rapidtide \
 #	--spatialfilt 2 \
