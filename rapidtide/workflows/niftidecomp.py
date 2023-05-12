@@ -109,8 +109,11 @@ def _get_parser(decompaxis):
     return parser
 
 
-def nullfunc(arg):
-    return arg
+def transposeifspatial(data, decompaxis="temporal"):
+    if decompaxis == "spatial":
+        return np.transpose(data)
+    else:
+        return data
 
 
 def niftidecomp_workflow(
@@ -129,10 +132,8 @@ def niftidecomp_workflow(
 
     if decompaxis == "temporal":
         decompaxisnum = 1
-        transposeifspatial = nullfunc
     else:
         decompaxisnum = 0
-        transposeifspatial = np.transpose
 
     # read in data
     print("reading in data arrays")
@@ -237,13 +238,15 @@ def niftidecomp_workflow(
         else:
             print("will return", icacomponents, "components")
         thefit = FastICA(n_components=icacomponents).fit(
-            transposeifspatial(procdata)
+            transposeifspatial(procdata, decompaxis=decompaxis)
         )  # Reconstruct signals
         if icacomponents is None:
-            thecomponents = transposeifspatial(thefit.components_[:])
+            thecomponents = transposeifspatial(thefit.components_[:], decompaxis=decompaxis)
             print(thecomponents.shape[1], "components found")
         else:
-            thecomponents = transposeifspatial(thefit.components_[0:icacomponents])
+            thecomponents = transposeifspatial(
+                thefit.components_[0:icacomponents], decompaxis=decompaxis
+            )
             print("returning first", thecomponents.shape[1], "components found")
     else:
         print("performing pca decomposition")
@@ -259,14 +262,18 @@ def niftidecomp_workflow(
             thepca = PCA(n_components=pcacomponents)
         else:
             thepca = SparsePCA(n_components=pcacomponents)
-        thefit = thepca.fit(transposeifspatial(procdata))
-        thetransform = thepca.transform(transposeifspatial(procdata))
-        theinvtrans = transposeifspatial(thepca.inverse_transform(thetransform))
+        thefit = thepca.fit(transposeifspatial(procdata, decompaxis=decompaxis))
+        thetransform = thepca.transform(transposeifspatial(procdata, decompaxis=decompaxis))
+        theinvtrans = transposeifspatial(
+            thepca.inverse_transform(thetransform), decompaxis=decompaxis
+        )
         if pcacomponents < 1.0:
-            thecomponents = transposeifspatial(thefit.components_[:])
+            thecomponents = transposeifspatial(thefit.components_[:], decompaxis=decompaxis)
             print("returning", thecomponents.shape[1], "components")
         else:
-            thecomponents = transposeifspatial(thefit.components_[0:pcacomponents])
+            thecomponents = transposeifspatial(
+                thefit.components_[0:pcacomponents], decompaxis=decompaxis
+            )
 
         # stash the eigenvalues
         exp_var_pct = 100.0 * thefit.explained_variance_ratio_
@@ -289,7 +296,9 @@ def niftidecomp_workflow(
             theheader["dim"][4] = coefficients.shape[1]
             outputcoefficients = np.zeros((numspatiallocs, coefficients.shape[1]), dtype="float")
             outputcoefficients[proclocs, :] = coefficients[:, :]
-            outputcoefficients.reshape((xsize, ysize, numslices, coefficients.shape[1]))
+            outputcoefficients = outputcoefficients.reshape(
+                (xsize, ysize, numslices, coefficients.shape[1])
+            )
             # tide_io.savetonifti(
             #    outputcoefficients.reshape((xsize, ysize, numslices, coefficients.shape[1])),
             #    theheader,
@@ -444,12 +453,10 @@ def main(decompaxis):
         #    outputcoefficients * thevar[i], args["outputroot"] + "_denormcoefficients.txt"
         # )
     print("writing fit data")
-    theheader = datafile_hdr
-    # theheader["dim"][4] = outinvtrans.shape[3]
     tide_io.savetonifti(
         outinvtrans,
         datafile_hdr,
-        outputroot + "_fit",
+        args["outputroot"] + "_fit",
     )
 
 
