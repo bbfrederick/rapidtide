@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:v0.1.6
+FROM fredericklab/basecontainer:v0.1.8
 
 # Installing additional precomputed python packages
 # tensorflow seems to really want to install with pip
@@ -20,7 +20,7 @@ ENV HOME="/home/rapidtide"
 # Install rapidtide
 COPY . /src/rapidtide
 RUN cd /src/rapidtide && \
-    python3 setup.py install && \
+    pip install . && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
 RUN cd /src/rapidtide/rapidtide/data/examples/src && \
     ./installtestdatadocker
