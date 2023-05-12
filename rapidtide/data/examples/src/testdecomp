@@ -1,0 +1,13 @@
+#!/bin/bash
+
+spatialdecomp \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/spatialdecomptest \
+    --dmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    --smooth 2
+
+temporaldecomp \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/temporaldecomptest \
+    --dmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    --smooth 2

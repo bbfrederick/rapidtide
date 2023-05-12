@@ -109,6 +109,10 @@ def _get_parser(decompaxis):
     return parser
 
 
+def nullfunc(arg):
+    return arg
+
+
 def niftidecomp_workflow(
     decompaxis,
     datafile,
@@ -125,7 +129,7 @@ def niftidecomp_workflow(
 
     if decompaxis == "temporal":
         decompaxisnum = 1
-        transposeifspatial = lambda *a, **k: None
+        transposeifspatial = nullfunc
     else:
         decompaxisnum = 0
         transposeifspatial = np.transpose
@@ -161,9 +165,6 @@ def niftidecomp_workflow(
         if not (tide_io.checktimematch(datafiledims, datamaskdims) or datamaskdims[4] == 1):
             print("input mask time dimension does not match image")
             exit()
-
-    # save the command line
-    tide_io.writevec([" ".join(sys.argv)], outputroot + "_commandline.txt")
 
     # smooth the data
     if sigma > 0.0:
@@ -267,17 +268,14 @@ def niftidecomp_workflow(
         else:
             thecomponents = transposeifspatial(thefit.components_[0:pcacomponents])
 
-        # save the eigenvalues
-        print("variance explained by component:", 100.0 * thefit.explained_variance_ratio_)
-        tide_io.writenpvecs(
-            100.0 * thefit.explained_variance_ratio_,
-            outputroot + "_explained_variance_pct.txt",
-        )
+        # stash the eigenvalues
+        exp_var_pct = 100.0 * thefit.explained_variance_ratio_
 
         if decompaxis == "temporal":
             # save the components
             print("writing component timecourses")
-            tide_io.writenpvecs(thecomponents, outputroot + "_components.txt")
+            outputcomponents = thecomponents
+            # tide_io.writenpvecs(outputcomponents, outputroot + "_components.txt")
 
             """# save the singular values
             print("writing singular values")
@@ -287,37 +285,44 @@ def niftidecomp_workflow(
             print("writing out the coefficients")
             coefficients = thetransform
             print("coefficients shape:", coefficients.shape)
-            theheader = datafile_hdr
+            theheader = datafile_hdr.copy()
             theheader["dim"][4] = coefficients.shape[1]
-            tempout = np.zeros((numspatiallocs, coefficients.shape[1]), dtype="float")
-            tempout[proclocs, :] = coefficients[:, :]
-            tide_io.savetonifti(
-                tempout.reshape((xsize, ysize, numslices, coefficients.shape[1])),
-                datafile_hdr,
-                outputroot + "_coefficients",
-            )
+            outputcoefficients = np.zeros((numspatiallocs, coefficients.shape[1]), dtype="float")
+            outputcoefficients[proclocs, :] = coefficients[:, :]
+            outputcoefficients.reshape((xsize, ysize, numslices, coefficients.shape[1]))
+            # tide_io.savetonifti(
+            #    outputcoefficients.reshape((xsize, ysize, numslices, coefficients.shape[1])),
+            #    theheader,
+            #    outputroot + "_coefficients",
+            # )
+
             # unnormalize the dimensionality reduced data
-            for i in range(numspatiallocs):
+            for i in range(procdata.shape[1 - decompaxisnum]):
                 theinvtrans[i, :] = thevar[i] * theinvtrans[i, :] + themean[i]
 
         else:
             # save the component images
             print("writing component images")
-            theheader = datafile_hdr
+            theheader = datafile_hdr.copy()
             theheader["dim"][4] = thecomponents.shape[1]
-            tempout = np.zeros((numspatiallocs, thecomponents.shape[1]), dtype="float")
-            tempout[proclocs, :] = thecomponents[:, :]
-            tide_io.savetonifti(
-                tempout.reshape((xsize, ysize, numslices, thecomponents.shape[1])),
-                datafile_hdr,
-                outputroot + "_components",
+            outputcomponents = np.zeros((numspatiallocs, thecomponents.shape[1]), dtype="float")
+            outputcomponents[proclocs, :] = thecomponents[:, :]
+            outputcomponents = outputcomponents.reshape(
+                (xsize, ysize, numslices, thecomponents.shape[1])
             )
+            # tide_io.savetonifti(
+            #    outputcomponents.reshape((xsize, ysize, numslices, thecomponents.shape[1])),
+            #    theheader,
+            #    outputroot + "_components",
+            # )
 
             # save the coefficients
             print("writing out the coefficients")
-            coefficients = np.transpose(thetransform)
-            tide_io.writenpvecs(coefficients, outputroot + "_coefficients.txt")
-            tide_io.writenpvecs(coefficients * thevar[i], outputroot + "_denormcoefficients.txt")
+            outputcoefficients = np.transpose(thetransform)
+            # tide_io.writenpvecs(outputcoefficients, outputroot + "_coefficients.txt")
+            # tide_io.writenpvecs(
+            #    outputcoefficients * thevar[i], outputroot + "_denormcoefficients.txt"
+            # )
 
             # unnormalize the dimensionality reduced data
             for i in range(timepoints):
@@ -326,13 +331,23 @@ def niftidecomp_workflow(
         print("writing fit data")
         theheader = datafile_hdr
         theheader["dim"][4] = theinvtrans.shape[1]
-        tempout = np.zeros((numspatiallocs, theinvtrans.shape[1]), dtype="float")
-        tempout[proclocs, :] = theinvtrans[:, :]
-        tide_io.savetonifti(
-            tempout.reshape((xsize, ysize, numslices, theinvtrans.shape[1])),
-            datafile_hdr,
-            outputroot + "_fit",
-        )
+        outinvtrans = np.zeros((numspatiallocs, theinvtrans.shape[1]), dtype="float")
+        outinvtrans[proclocs, :] = theinvtrans[:, :]
+        outinvtrans = outinvtrans.reshape((xsize, ysize, numslices, theinvtrans.shape[1]))
+        # tide_io.savetonifti(
+        #    outinvtrans.reshape((xsize, ysize, numslices, theinvtrans.shape[1])),
+        #    datafile_hdr,
+        #    outputroot + "_fit",
+        # )
+    return (
+        outputcomponents,
+        outputcoefficients,
+        outinvtrans,
+        exp_var_pct,
+        datafile_hdr,
+        datafiledims,
+        datafilesizes,
+    )
 
 
 def getparameters(decompaxis):
@@ -361,7 +376,15 @@ def main(decompaxis):
     # save the command line
     tide_io.writevec([" ".join(sys.argv)], args["outputroot"] + "_commandline.txt")
 
-    niftidecomp_workflow(
+    (
+        outputcomponents,
+        outputcoefficients,
+        outinvtrans,
+        exp_var_pct,
+        datafile_hdr,
+        datafiledims,
+        datafilesizes,
+    ) = niftidecomp_workflow(
         decompaxis,
         args["datafile"],
         args["outputroot"],
@@ -372,6 +395,61 @@ def main(decompaxis):
         varnorm=args["varnorm"],
         demean=args["demean"],
         sigma=args["sigma"],
+    )
+
+    print(f"{outputcomponents.shape=}")
+    print(f"{outputcoefficients.shape=}")
+    print(f"{outinvtrans.shape=}")
+    print(f"{exp_var_pct.shape=}")
+    # print(f"{datafile_hdr.shape=}")
+    print(f"{datafiledims.shape=}")
+    print(f"{datafilesizes.shape=}")
+
+    # save the eigenvalues
+    print("variance explained by component:", exp_var_pct)
+    tide_io.writenpvecs(
+        exp_var_pct,
+        args["outputroot"] + "_explained_variance_pct.txt",
+    )
+
+    if decompaxis == "temporal":
+        # save the components
+        print("writing component timecourses")
+        tide_io.writenpvecs(outputcomponents, args["outputroot"])
+
+        # save the coefficients
+        print("writing out the coefficients")
+        theheader = datafile_hdr.copy()
+        theheader["dim"][4] = outputcoefficients.shape[3]
+        tide_io.savetonifti(
+            outputcoefficients,
+            theheader,
+            args["outputroot"] + "_coefficients",
+        )
+    else:
+        # save the component images
+        print("writing component images")
+        theheader = datafile_hdr.copy()
+        theheader["dim"][4] = outputcomponents.shape[3]
+        tide_io.savetonifti(
+            outputcomponents,
+            theheader,
+            args["outputroot"] + "_components",
+        )
+
+        # save the coefficients
+        print("writing out the coefficients")
+        tide_io.writenpvecs(outputcoefficients, args["outputroot"] + "_coefficients.txt")
+        # tide_io.writenpvecs(
+        #    outputcoefficients * thevar[i], args["outputroot"] + "_denormcoefficients.txt"
+        # )
+    print("writing fit data")
+    theheader = datafile_hdr
+    # theheader["dim"][4] = outinvtrans.shape[3]
+    tide_io.savetonifti(
+        outinvtrans,
+        datafile_hdr,
+        outputroot + "_fit",
     )
 
 
