@@ -173,10 +173,12 @@ def niftidecomp_workflow(
         if sigma > 0.0:
             print("smoothing data")
             for i in range(timepoints):
-                fulldataarray[:, :, :, i] = tide_filt.ssmooth(
-                    xdim, ydim, slicethickness, sigma, fulldataarray[:, :, :, i]
+                datafile_data[:, :, :, i] = tide_filt.ssmooth(
+                    xdim, ydim, slicethickness, sigma, datafile_data[:, :, :, i]
                 )
-        fulldataarray[:, :, :, idx * timepoints : (idx + 1) * timepoints]
+        fulldataarray[:, :, :, idx * timepoints : (idx + 1) * timepoints] = datafile_data[
+            :, :, :, :
+        ]
 
     # check dimensions
     if datamaskname is not None:
@@ -384,7 +386,7 @@ def main(decompaxis):
         datafilesizes,
     ) = niftidecomp_workflow(
         decompaxis,
-        [args["datafile"], args["datafile"]],
+        [args["datafile"]],
         datamaskname=args["datamaskname"],
         decomptype=args["decomptype"],
         pcacomponents=args["pcacomponents"],
