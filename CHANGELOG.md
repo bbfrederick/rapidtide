@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.5.6 (5/14/23)
+* (niftidecomp) Made some major internal changes to allow processing multiple files at once.
+* (gmscalc) New program to do some global mean signal calculations within the package (so we can do them on AWS).
+
 ## Version 2.5.5 (5/11/23)
 * (Docker) Updated to python 3.11 basecontainer.
 * (package) Modernized install procedure.
