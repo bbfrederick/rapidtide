@@ -1,0 +1,5 @@
+#!/usr/bin/env python
+import rapidtide.workflows.gmscalc
+
+if __name__ == "__main__":
+    rapidtide.workflows.gmscalc.gmscalc_main()
