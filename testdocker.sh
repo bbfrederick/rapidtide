@@ -12,6 +12,18 @@ docker run \
     -it \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide fredericklab/rapidtide:latest \
+    gmscalc \
+        /data/src/sub-RAPIDTIDETEST.nii.gz \
+        /data/dst/sub-RAPIDTIDETEST_GMS \
+        --dmask /data/src/sub-RAPIDTIDETEST_brainmask.nii.gz
+
+docker run \
+    --rm \
+    --ipc host \
+    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
+    -it \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -u rapidtide fredericklab/rapidtide:latest \
     rapidtide \
         /data/src/sub-RAPIDTIDETEST.nii.gz \
         /data/dst/sub-RAPIDTIDETEST \
