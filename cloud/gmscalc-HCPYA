@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [[ $# -ne 3 ]]; then
+    echo "Missing arguments."
+    exit 1
+fi
+
+SUBJ=$1
+RUN=$2
+PEDIR=$3
+
+if [[ ${SUBJ} == ARRAY ]]; then
+    SUBJ=${PARTICIPANT_FROM_ARRAY}
+fi
+
+echo "Subject="${SUBJ}", RUN="${RUN}", PEDIR="${PEDIR}
+
+mkdir -p /data_out/HCP_1200/minpreprocglm/${SUBJ}
+gmscalc \
+    /data_out/HCP_1200/${SUBJ}/rapidtide_rfMRI_${RUN}_${PEDIR}_desc-lfofilterCleaned_bold.nii.gz
+    /data_out/HCP_1200/fixglm/${SUBJ}/rapidtide_rfMRI_${RUN}_${PEDIR}_lfofilteredCleanedGMS \
+    --dmask /data_out/HCP_1200/${SUBJ}/rapidtide_rfMRI_${RUN}_${PEDIR}_desc-corrfit_mask.nii.gz
