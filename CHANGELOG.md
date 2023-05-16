@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.5.7 (5/15/23)
+* (glmfilt) Added ability to specify a mask, and to limit output files.
+
 ## Version 2.5.6 (5/14/23)
 * (niftidecomp) Made some major internal changes to allow processing multiple files at once.
 * (gmscalc) New program to do some global mean signal calculations within the package (so we can do them on AWS).
