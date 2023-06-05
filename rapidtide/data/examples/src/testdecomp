@@ -1,6 +1,6 @@
 #!/bin/bash
 
-spatialdecomp \
+ccspatialdecomp \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/spatialdecomptest \
     --dmask sub-RAPIDTIDETEST_brainmask.nii.gz
