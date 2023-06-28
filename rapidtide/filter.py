@@ -1964,6 +1964,25 @@ def hann(length, debug=False):
 hammingwindows = {}
 
 
+def rect(length, L):
+    thearray = np.abs(np.linspace(0, length, length, endpoint=False) - length / 2.0)
+    return np.where(thearray <= L / 2.0, 1.0, 0.0)
+
+
+def mRect(length, alpha=0.5, omegac=0.01, phi=0.0, debug=False):
+    L = 1.0 / omegac
+    indices = np.linspace(0, length, length, endpoint=False) - length / 2.0
+    firstrect = rect(length, L)
+    secondrect = alpha * rect(length, L * 2.0)
+    costerm = np.cos(np.pi * omegac * indices + phi)
+    thewindow = firstrect + secondrect * costerm
+    if debug:
+        plt.plot(firstrect)
+        plt.plot(1.0 + secondrect * costerm)
+        plt.show()
+    return thewindow / np.max(thewindow)
+
+
 def hamming(length, debug=False):
     #   return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
     r"""Returns a Hamming window function of the specified length.  Once calculated, windows
