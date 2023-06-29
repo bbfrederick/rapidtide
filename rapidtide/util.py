@@ -52,12 +52,12 @@ try:
 except ImportError:
     memprofilerexists = False
 
-"""try:
+try:
     from numba import jit
 except ImportError:
     donotusenumba = True
 else:
-    donotusenumba = False"""
+    donotusenumba = False
 
 # hard disable numba, since it is currently broken on arm
 donotusenumba = True

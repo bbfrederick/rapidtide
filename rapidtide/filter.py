@@ -50,6 +50,9 @@ except ImportError:
 else:
     donotusenumba = False
 
+# hard disable numba, since it is currently broken on arm
+donotusenumba = True
+
 
 # ----------------------------------------- Conditional jit handling ----------------------------------
 def conditionaljit():
@@ -57,7 +60,7 @@ def conditionaljit():
         global donotusenumba
         if donotusenumba:
             return f
-        return jit(f, nopython=False)
+        return jit(f, nopython=True)
 
     return resdec
 
