@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 thelen = 300
 
-thevals = tide_filt.mRect(thelen, phi=0.0, debug=True)
+thevals = tide_filt.mRect(thelen, phi=0.0)
 plt.plot(thevals)
+plt.plot(tide_filt.hamming(thelen))
 plt.show()

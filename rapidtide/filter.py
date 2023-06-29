@@ -1969,7 +1969,9 @@ def rect(length, L):
     return np.where(thearray <= L / 2.0, 1.0, 0.0)
 
 
-def mRect(length, alpha=0.5, omegac=0.01, phi=0.0, debug=False):
+def mRect(length, alpha=0.5, omegac=None, phi=0.0, debug=False):
+    if omegac is None:
+        omegac = 2.0 / length
     L = 1.0 / omegac
     indices = np.linspace(0, length, length, endpoint=False) - length / 2.0
     firstrect = rect(length, L)
