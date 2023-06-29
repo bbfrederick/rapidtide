@@ -62,7 +62,7 @@ def conditionaljit():
     def resdec(f):
         if donotusenumba:
             return f
-        return jit(f, nopython=False)
+        return jit(f, nopython=True)
 
     return resdec
 

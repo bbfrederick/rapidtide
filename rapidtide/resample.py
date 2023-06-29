@@ -59,7 +59,7 @@ def conditionaljit():
     def resdec(f):
         if donotusenumba:
             return f
-        return jit(f, nopython=False)
+        return jit(f, nopython=True)
 
     return resdec
 
@@ -68,7 +68,7 @@ def conditionaljit2():
     def resdec(f):
         if donotusenumba or donotbeaggressive:
             return f
-        return jit(f, nopython=False)
+        return jit(f, nopython=True)
 
     return resdec
 
