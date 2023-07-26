@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-import rapidtide.filter as tide_filt
 import matplotlib.pyplot as plt
+
+import rapidtide.filter as tide_filt
 
 thelen = 300
 
