@@ -98,6 +98,7 @@ script_list = [
     "rapidtide/scripts/pixelcomp",
     "rapidtide/scripts/plethquality",
     "rapidtide/scripts/polyfitim",
+    "rapidtide/scripts/proj2flow",
     "rapidtide/scripts/rapidtide",
     "rapidtide/scripts/rapidtide2std",
     "rapidtide/scripts/rapidtide2x_legacy",
