@@ -70,6 +70,10 @@ DEFAULT_DELAYMAPPING_LAGMIN = -10.0
 DEFAULT_DELAYMAPPING_LAGMAX = 30.0
 DEFAULT_DELAYMAPPING_DESPECKLE_PASSES = 4
 
+DEFAULT_CVRMAPPING_LAGMIN = -5.0
+DEFAULT_CVRMAPPING_LAGMAX = 20.0
+DEFAULT_CVRMAPPING_DESPECKLE_PASSES = 4
+
 
 def _get_parser():
     """
@@ -133,6 +137,23 @@ def _get_parser():
             "refineoffset=True, pickleft=True, limitoutput=True, "
             "doglmfilt=False. "
             "Any of these options can be overridden with the appropriate "
+            "additional arguments."
+        ),
+        default=False,
+    )
+    analysis_type.add_argument(
+        "--CVR",
+        dest="cvrmapping",
+        action="store_true",
+        help=(
+            "Preset for calibrated CVR mapping.  Given an input regressor that represents some measured "
+            "quantity over time (e.g. mmHg CO2 in the EtCO2 trace), rapidtide will calculate and output a map of percent "
+            "BOLD change in units of the input regressor.  To do this, this macro:"
+            f"sets passes=1, despeckle_passes={DEFAULT_CVRMAPPING_DESPECKLE_PASSES}, "
+            f"sets lagmin={DEFAULT_DELAYMAPPING_LAGMIN}, lagmax={DEFAULT_DELAYMAPPING_LAGMAX}, "
+            "and calculates a voxelwise GLM using the optimally delayed "
+            "input regressor and the percent normalized, demeaned BOLD data as inputs. "
+            "If no input regressor is supplied, this will generate an error.  These options can be overridden with the appropriate "
             "additional arguments."
         ),
         default=False,
@@ -1580,7 +1601,7 @@ def process_args(inputargs=None):
         args["despeckle_passes"] = 0
 
     if args["delaymapping"]:
-        pf.setifnotset(args, "despeckle_passes", 4)
+        pf.setifnotset(args, "despeckle_passes", DEFAULT_DELAYMAPPING_DESPECKLE_PASSES)
         pf.setifnotset(args, "lagmin", DEFAULT_DELAYMAPPING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_DELAYMAPPING_LAGMAX)
         args["passes"] = 3
@@ -1589,14 +1610,19 @@ def process_args(inputargs=None):
         args["limitoutput"] = True
         pf.setifnotset(args, "doglmfilt", False)
 
-    if args["denoising"]:
-        pf.setifnotset(args, "despeckle_passes", 4)
-        pf.setifnotset(args, "lagmin", DEFAULT_DENOISING_LAGMIN)
-        pf.setifnotset(args, "lagmax", DEFAULT_DENOISING_LAGMAX)
-        pf.setifnotset(args, "peakfittype", DEFAULT_DENOISING_PEAKFITTYPE)
-        args["passes"] = 3
-        args["refineoffset"] = True
-        args["doglmfilt"] = True
+    if args["CVR"]:
+        if args["regressorfile"] is None:
+            raise ValueError(
+                "CVR mapping requires an externally supplied regresssor file - terminating."
+            )
+        pf.setifnotset(args, "despeckle_passes", DEFAULT_CVRMAPPING_DESPECKLE_PASSES)
+        pf.setifnotset(args, "lagmin", DEFAULT_CVRMAPPING_LAGMIN)
+        pf.setifnotset(args, "lagmax", DEFAULT_CVRMAPPING_LAGMAX)
+        args["passes"] = 1
+        args["limitoutput"] = False
+        args["docvrmap"] = True
+    else:
+        args["docvrmap"] = False
 
     if args["globalpreselect"]:
         args["passes"] = 1

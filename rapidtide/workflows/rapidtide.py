@@ -332,7 +332,7 @@ def rapidtide_main(argparsingfunc):
 
     fmrifilename = optiondict["in_file"]
     outputname = optiondict["outputname"]
-    filename = optiondict["regressorfile"]
+    regressorfilename = optiondict["regressorfile"]
 
     # create the canary file
     Path(f"{outputname}_ISRUNNING.txt").touch()
@@ -818,7 +818,7 @@ def rapidtide_main(argparsingfunc):
 
     # read in the timecourse to resample
     TimingLGR.info("Start of reference prep")
-    if filename is None:
+    if regressorfilename is None:
         LGR.info("no regressor file specified - will use the global mean regressor")
         optiondict["useglobalref"] = True
     else:
@@ -863,7 +863,7 @@ def rapidtide_main(argparsingfunc):
 
         optiondict["preprocskip"] = 0
     else:
-        LGR.info(f"using externally supplied probe regressor {filename}")
+        LGR.info(f"using externally supplied probe regressor {regressorfilename}")
         (
             fileinputfreq,
             filestarttime,
@@ -871,7 +871,7 @@ def rapidtide_main(argparsingfunc):
             inputvec,
             dummy,
             dummy,
-        ) = tide_io.readvectorsfromtextfile(filename, onecol=True)
+        ) = tide_io.readvectorsfromtextfile(regressorfilename, onecol=True)
         inputfreq = optiondict["inputfreq"]
         inputstarttime = optiondict["inputstarttime"]
         if inputfreq is None:
@@ -887,7 +887,6 @@ def rapidtide_main(argparsingfunc):
                 LGR.warning("no regressor start time specified - defaulting to 0.0")
                 inputstarttime = 0.0
         inputperiod = 1.0 / inputfreq
-        # inputvec = tide_io.readvec(filename)
     numreference = len(inputvec)
     optiondict["inputfreq"] = inputfreq
     optiondict["inputstarttime"] = inputstarttime
@@ -997,6 +996,9 @@ def rapidtide_main(argparsingfunc):
         reference_y = -np.gradient(reference_y_classfilter)
     else:
         reference_y = reference_y_classfilter
+
+    # save the factor used to normalize the input regressor
+    optiondict["initialmovingregressornormfac"] = np.std(reference_y)
 
     # write out the reference regressor used
     if optiondict["bidsoutput"]:
