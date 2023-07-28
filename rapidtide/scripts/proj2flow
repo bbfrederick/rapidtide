@@ -78,9 +78,10 @@ def main():
 
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
     xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
-    forwarddiffs = np.zeros((xsize - 2, ysize - 2, numslices - 2, 3, 3, 3), dtype="float")
-    backwarddiffs = np.zeros((xsize - 2, ysize - 2, numslices - 2, 3, 3, 3), dtype="float")
-    velocities = np.zeros((xsize, ysize, numslices, timepoints, 3), dtype="float")
+    forwarddiffs = np.zeros((xsize - 2, ysize - 2, numslices - 2, 3, 3, 3), dtype="float32")
+    backwarddiffs = np.zeros((xsize - 2, ysize - 2, numslices - 2, 3, 3, 3), dtype="float32")
+    velocities = np.zeros((xsize, ysize, numslices, timepoints, 3), dtype="float32")
+    averagevelocity = np.zeros((xsize, ysize, numslices, 3), dtype="float32")
 
     # cycle over all timepoints
     print("now cycling over all timepoints")
@@ -134,35 +135,46 @@ def main():
                                 1 + xoffset : xsize + xoffset - 1,
                                 1 + yoffset : ysize + yoffset - 1,
                                 1 + zoffset : numslices + zoffset - 1,
-                                (timepoint + 1) % timepoints,
+                                (timepoint - 1) % timepoints,
                             ]
                         )
                     ) * distance
                     if args.debug:
                         print(f"{np.min(forwarddiffs)=}, {np.max(forwarddiffs)=}")
                         print(f"{np.min(backwarddiffs)=}, {np.max(backwarddiffs)=}")
+                        print(f"{forwarddiffs.dtype=}")
         velocities[1:-1, 1:-1, 1:-1, timepoint, 0] = np.sum(
             forwarddiffs[:, :, :, :, 1, 1], axis=3
-        ) + 0.0 * np.sum(backwarddiffs[:, :, :, :, 1, 1], axis=3)
+        ) + np.sum(backwarddiffs[:, :, :, :, 1, 1], axis=3)
         velocities[1:-1, 1:-1, 1:-1, timepoint, 1] = np.sum(
             forwarddiffs[:, :, :, 1, :, 1], axis=3
-        ) + 0.0 * np.sum(backwarddiffs[:, :, :, 1, :, 1], axis=3)
+        ) + np.sum(backwarddiffs[:, :, :, 1, :, 1], axis=3)
         velocities[1:-1, 1:-1, 1:-1, timepoint, 2] = np.sum(
             forwarddiffs[:, :, :, 1, 1, :], axis=3
-        ) + 0.0 * np.sum(backwarddiffs[:, :, :, 1, 1, :], axis=3)
+        ) + np.sum(backwarddiffs[:, :, :, 1, 1, :], axis=3)
 
         # now do the ones with other numbers of time points
         output_hdr = copy.deepcopy(input_hdr)
-        output_hdr.set_intent(1007)
-        output_hdr.set_intent("NIFTI_INTENT_VECTOR")
-        output_hdr["dim"][0] = 5
-        output_hdr["dim"][4] = 1
-        output_hdr["dim"][5] = 3
+        output_hdr.set_intent(2003)
+        output_hdr["dim"][0] = 4
+        output_hdr["dim"][4] = 3
+        output_hdr["dim"][5] = 1
+        output_hdr.datatype = 16
+        if args.debug:
+            print(f"{velocities.dtype=}")
         tide_io.savetonifti(
-            velocities[:, :, :, timepoint, :].reshape((xsize, ysize, numslices, 1, 3)),
+            velocities[:, :, :, timepoint, :].reshape((xsize, ysize, numslices, 3)),
             output_hdr,
             f"{args.outputroot}_{str(timepoint).zfill(2)}",
+            debug=args.debug,
         )
+        averagevelocity += velocities[:, :, :, timepoint, :].reshape((xsize, ysize, numslices, 3))
+    tide_io.savetonifti(
+        averagevelocity[:, :, :, :] / timepoints,
+        output_hdr,
+        f"{args.outputroot}_average",
+        debug=args.debug,
+    )
 
 
 if __name__ == "__main__":
