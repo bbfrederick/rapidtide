@@ -143,7 +143,7 @@ def _get_parser():
     )
     analysis_type.add_argument(
         "--CVR",
-        dest="cvrmapping",
+        dest="docvrmap",
         action="store_true",
         help=(
             "Preset for calibrated CVR mapping.  Given an input regressor that represents some measured "
@@ -1610,7 +1610,7 @@ def process_args(inputargs=None):
         args["limitoutput"] = True
         pf.setifnotset(args, "doglmfilt", False)
 
-    if args["CVR"]:
+    if args["docvrmap"]:
         if args["regressorfile"] is None:
             raise ValueError(
                 "CVR mapping requires an externally supplied regresssor file - terminating."
@@ -1620,9 +1620,6 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "lagmax", DEFAULT_CVRMAPPING_LAGMAX)
         args["passes"] = 1
         args["limitoutput"] = False
-        args["docvrmap"] = True
-    else:
-        args["docvrmap"] = False
 
     if args["globalpreselect"]:
         args["passes"] = 1
