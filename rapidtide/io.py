@@ -226,7 +226,7 @@ def savetonifti(thearray, theheader, thename, debug=False):
         print(f"savetonifti:")
         print(f"\tinput data array is type {thedtype}")
         targetdatatype = theheader["datatype"]
-        print(f"\t{targetdatatype=}")
+        print(f"\ttargetdatatype={targetdatatype}")
 
     if theheader["magic"] == "n+2":
         output_nifti = nib.Nifti2Image(thearray.astype(thedtype), outputaffine, header=theheader)
