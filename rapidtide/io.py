@@ -225,14 +225,14 @@ def savetonifti(thearray, theheader, thename, debug=False):
     if debug:
         print(f"savetonifti:")
         print(f"\tinput data array is type {thedtype}")
-        print(f"\t{theheader['datatype']=}")
-        print(f"\t{theheader['datatype']=}")
+        targetdatatype = theheader["datatype"]
+        print(f"\t{targetdatatype=}")
 
     if theheader["magic"] == "n+2":
-        output_nifti = nib.Nifti2Image(thearray, outputaffine, header=theheader)
+        output_nifti = nib.Nifti2Image(thearray.astype(thedtype), outputaffine, header=theheader)
         suffix = ".nii"
     else:
-        output_nifti = nib.Nifti1Image(thearray, outputaffine, header=theheader)
+        output_nifti = nib.Nifti1Image(thearray.astype(thedtype), outputaffine, header=theheader)
         suffix = ".nii.gz"
     output_nifti.set_qform(qaffine, code=int(qcode))
     output_nifti.set_sform(saffine, code=int(scode))
