@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.5.8 (8/3/23)
+* (rapidtide) --nofitfilt now actually works.  Thank you to https://github.com/poeplau for finding (and fixing) the problem!  Resolves https://github.com/bbfrederick/rapidtide/issues/114
+
 ## Version 2.5.7 (5/15/23)
 * (glmfilt) Added ability to specify a mask, and to limit output files.
 
