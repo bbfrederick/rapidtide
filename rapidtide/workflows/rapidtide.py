@@ -1308,6 +1308,7 @@ def rapidtide_main(argparsingfunc):
         searchfrac=optiondict["searchfrac"],
         enforcethresh=optiondict["enforcethresh"],
         hardlimit=optiondict["hardlimit"],
+        zerooutbadfit=optiondict["zerooutbadfit"],
     )
 
     # Preprocessing - echo cancellation
