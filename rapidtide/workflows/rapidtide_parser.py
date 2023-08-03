@@ -1618,8 +1618,10 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "despeckle_passes", DEFAULT_CVRMAPPING_DESPECKLE_PASSES)
         pf.setifnotset(args, "lagmin", DEFAULT_CVRMAPPING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_CVRMAPPING_LAGMAX)
+        args["preservefiltering"] = True
         args["passes"] = 1
         args["limitoutput"] = False
+        args["doglmfilt"] = False
 
     if args["globalpreselect"]:
         args["passes"] = 1

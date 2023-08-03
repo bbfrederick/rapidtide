@@ -997,9 +997,6 @@ def rapidtide_main(argparsingfunc):
     else:
         reference_y = reference_y_classfilter
 
-    # save the factor used to normalize the input regressor
-    optiondict["initialmovingregressornormfac"] = np.std(reference_y)
-
     # write out the reference regressor used
     if optiondict["bidsoutput"]:
         tide_io.writebidstsv(
@@ -1082,6 +1079,9 @@ def rapidtide_main(argparsingfunc):
         f"{len(resampnonosref_y)}"
     )
     previousnormoutputdata = resampnonosref_y + 0.0
+
+    # save the factor used to normalize the input regressor
+    optiondict["initialmovingregressornormfac"] = np.std(resampnonosref_y)
 
     # prepare the temporal mask
     if optiondict["tmaskname"] is not None:
@@ -2509,11 +2509,19 @@ def rapidtide_main(argparsingfunc):
             },
         )
 
-    # Post refinement step 1 - GLM fitting to remove moving signal
-    if optiondict["doglmfilt"]:
-        TimingLGR.info("GLM filtering start")
-        LGR.info("\n\nGLM filtering")
-        if (optiondict["gausssigma"] > 0.0) or (optiondict["glmsourcefile"] is not None):
+    # Post refinement step 1 - GLM fitting, either to remove moving signal, or to calculate delayed CVR
+    if optiondict["doglmfilt"] or optiondict["docvrmap"]:
+        if optiondict["doglmfilt"]:
+            TimingLGR.info("GLM filtering start")
+            LGR.info("\n\nGLM filtering")
+        else:
+            TimingLGR.info("CVR map generation start")
+            LGR.info("\n\nCVR mapping")
+        if (
+            (optiondict["gausssigma"] > 0.0)
+            or (optiondict["glmsourcefile"] is not None)
+            or optiondict["docvrmap"]
+        ):
             if optiondict["glmsourcefile"] is not None:
                 LGR.info(f"reading in {optiondict['glmsourcefile']} for GLM filter, please wait")
                 if fileiscifti:
@@ -2558,6 +2566,11 @@ def rapidtide_main(argparsingfunc):
             fmri_data_valid = (
                 nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
             )[validvoxels, :] + 0.0
+
+            if optiondict["docvrmap"]:
+                # percent normalize the fmri data
+                themean = np.mean(fmri_data_valid, axis=1)
+                fmri_data_valid /= themean
 
             if optiondict["preservefiltering"]:
                 print("reapplying temporal filters...")
