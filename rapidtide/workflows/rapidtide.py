@@ -2837,7 +2837,7 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict["doglmfilt"] or optiondict["docvrmap"]:
         if optiondict["doglmfilt"]:
-            maplist =  [
+            maplist = [
                 ("rvalue", "lfofilterR"),
                 ("r2value", "lfofilterR2"),
                 ("glmmean", "lfofilterMean"),
@@ -2845,7 +2845,7 @@ def rapidtide_main(argparsingfunc):
                 ("fitNorm", "lfofilterNorm"),
                 ("initialvariance", "lfofilterInbandVarianceBefore"),
                 ("finalvariance", "lfofilterInbandVarianceAfter"),
-                ("varchange","lfofilterInbandVarianceChange"),
+                ("varchange", "lfofilterInbandVarianceChange"),
             ]
         else:
             maplist = [
@@ -2855,7 +2855,7 @@ def rapidtide_main(argparsingfunc):
                 ("initialvariance", "lfofilterInbandVarianceBefore"),
                 ("finalvariance", "lfofilterInbandVarianceAfter"),
                 ("varchange", "CVRVariance"),
-                ]
+            ]
         for mapname, mapsuffix in maplist:
             if optiondict["memprofile"]:
                 memcheckpoint(f"about to write {mapname}")
