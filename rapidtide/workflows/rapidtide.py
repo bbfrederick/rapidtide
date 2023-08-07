@@ -718,7 +718,7 @@ def rapidtide_main(argparsingfunc):
     tide_util.logmem("after selecting valid voxels")
 
     # calculate the initial bandlimited variance if we're going to filter the data
-    if optiondict["doglmfilt"]:
+    if optiondict["doglmfilt"] or optiondict["docvrmap"]:
         initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
     # move fmri_data_valid into shared memory
@@ -2569,8 +2569,13 @@ def rapidtide_main(argparsingfunc):
 
             if optiondict["docvrmap"]:
                 # percent normalize the fmri data
+                print("normalzing data for CVR map")
                 themean = np.mean(fmri_data_valid, axis=1)
-                fmri_data_valid /= themean
+                fmri_data_valid /= themean[:, None]
+
+                # denormalize the lagged regressors
+                print("denormalizing lagged regressors for CVR map")
+                lagtc *= optiondict["initialmovingregressornormfac"]
 
             if optiondict["preservefiltering"]:
                 print("reapplying temporal filters...")
@@ -2643,9 +2648,9 @@ def rapidtide_main(argparsingfunc):
         )
         # calculate the final bandlimited variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
-        # divlocs = np.where(finalvariance > 0.0)
-        # varchange = initialvariance * 0.0
-        # varchange[divlocs] = finalvariance / initialvariance - 1.0
+        divlocs = np.where(finalvariance > 0.0)
+        varchange = initialvariance * 0.0
+        varchange[divlocs] = finalvariance / initialvariance - 1.0
         del fmri_data_valid
 
         TimingLGR.info(
@@ -2830,16 +2835,28 @@ def rapidtide_main(argparsingfunc):
                     names=[mapsuffix],
                 )
 
-    if optiondict["doglmfilt"]:
-        for mapname, mapsuffix in [
-            ("rvalue", "lfofilterR"),
-            ("r2value", "lfofilterR2"),
-            ("glmmean", "lfofilterMean"),
-            ("fitcoeff", "lfofilterCoeff"),
-            ("fitNorm", "lfofilterNorm"),
-            ("initialvariance", "lfofilterInbandVarianceBefore"),
-            ("finalvariance", "lfofilterInbandVarianceAfter"),
-        ]:
+    if optiondict["doglmfilt"] or optiondict["docvrmap"]:
+        if optiondict["doglmfilt"]:
+            maplist =  [
+                ("rvalue", "lfofilterR"),
+                ("r2value", "lfofilterR2"),
+                ("glmmean", "lfofilterMean"),
+                ("fitcoeff", "lfofilterCoeff"),
+                ("fitNorm", "lfofilterNorm"),
+                ("initialvariance", "lfofilterInbandVarianceBefore"),
+                ("finalvariance", "lfofilterInbandVarianceAfter"),
+                ("varchange","lfofilterInbandVarianceChange"),
+            ]
+        else:
+            maplist = [
+                ("rvalue", "CVRR"),
+                ("r2value", "CVRR2"),
+                ("fitcoeff", "CVR"),
+                ("initialvariance", "lfofilterInbandVarianceBefore"),
+                ("finalvariance", "lfofilterInbandVarianceAfter"),
+                ("varchange", "CVRVariance"),
+                ]
+        for mapname, mapsuffix in maplist:
             if optiondict["memprofile"]:
                 memcheckpoint(f"about to write {mapname}")
             else:
@@ -2875,7 +2892,7 @@ def rapidtide_main(argparsingfunc):
         del fitNorm
         del initialvariance
         del finalvariance
-        # del varchange
+        del varchange
 
     for mapname, mapsuffix in [("meanvalue", "mean")]:
         if optiondict["memprofile"]:
