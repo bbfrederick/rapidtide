@@ -107,15 +107,20 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
     return maskvector
 
 
-def numpy2shared(inarray, thetype):
+def numpy2shared(inarray, thetype, debug=False):
     thesize = inarray.size
     theshape = inarray.shape
+    if debug:
+        print(f"numpy2shared: {thesize=}")
+        print(f"numpy2shared: {theshape=}")
     if thetype == np.float64:
         inarray_shared = mp.RawArray("d", inarray.reshape(thesize))
     else:
         inarray_shared = mp.RawArray("f", inarray.reshape(thesize))
     inarray = np.frombuffer(inarray_shared, dtype=thetype, count=thesize)
     inarray.shape = theshape
+    if debug:
+        print(f"numpy2shared: done")
     return inarray
 
 
@@ -728,7 +733,7 @@ def rapidtide_main(argparsingfunc):
         numpy2shared_func = addmemprofiling(
             numpy2shared, optiondict["memprofile"], "before fmri data move"
         )
-        fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
+        fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset, debug=True)
         TimingLGR.info("End moving fmri_data to shared memory")
 
     # get rid of memory we aren't using
@@ -2573,9 +2578,10 @@ def rapidtide_main(argparsingfunc):
                 themean = np.mean(fmri_data_valid, axis=1)
                 fmri_data_valid /= themean[:, None]
 
-                # denormalize the lagged regressors
-                print("denormalizing lagged regressors for CVR map")
-                lagtc *= optiondict["initialmovingregressornormfac"]
+                # set the threshval to zero
+                glmthreshval = 0.0
+            else:
+                glmthreshval = threshval
 
             if optiondict["preservefiltering"]:
                 print("reapplying temporal filters...")
@@ -2630,7 +2636,7 @@ def rapidtide_main(argparsingfunc):
         voxelsprocessed_glm = glmpass_func(
             numvalidspatiallocs,
             fmri_data_valid,
-            threshval,
+            glmthreshval,
             lagtc,
             glmmean,
             rvalue,
@@ -2645,6 +2651,7 @@ def rapidtide_main(argparsingfunc):
             mp_chunksize=optiondict["mp_chunksize"],
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
+            debug=True,
         )
         # calculate the final bandlimited variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)

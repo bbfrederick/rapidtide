@@ -66,8 +66,14 @@ def glmpass(
     mp_chunksize=1000,
     rt_floatset=np.float64,
     rt_floattype="float64",
+    debug=False,
 ):
     inputshape = np.shape(fmri_data)
+    if debug:
+        print(f"{numprocitems=}")
+        print(f"{fmri_data.shape=}")
+        print(f"{threshval=}")
+        print(f"{theevs.shape=}")
     if threshval is None:
         themask = None
     else:
