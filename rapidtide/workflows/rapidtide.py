@@ -733,7 +733,7 @@ def rapidtide_main(argparsingfunc):
         numpy2shared_func = addmemprofiling(
             numpy2shared, optiondict["memprofile"], "before fmri data move"
         )
-        fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset, debug=True)
+        fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
         TimingLGR.info("End moving fmri_data to shared memory")
 
     # get rid of memory we aren't using
@@ -2651,13 +2651,17 @@ def rapidtide_main(argparsingfunc):
             mp_chunksize=optiondict["mp_chunksize"],
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
-            debug=True,
         )
+
+        if optiondict["docvrmap"]:
+            # if we are doing a cvr map, multiply the fitcoeff by 100 so we are in percent
+            fitcoeff *= 100.0
+
         # calculate the final bandlimited variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
         divlocs = np.where(finalvariance > 0.0)
         varchange = initialvariance * 0.0
-        varchange[divlocs] = finalvariance / initialvariance - 1.0
+        varchange[divlocs] = finalvariance[divlocs] / initialvariance[divlocs] - 1.0
         del fmri_data_valid
 
         TimingLGR.info(
