@@ -950,6 +950,7 @@ def circularderivs(timecourse):
         np.argmin(firstderiv),
     )
 
+
 def phaseproject(
     datatoproject,
     means,
@@ -974,7 +975,6 @@ def phaseproject(
     congridbins=3.0,
     gridkernel="kaiser",
 ):
-
     xsize, ysize, numslices, timepoints = datatoproject.shape
     # construct the destination arrays
     tide_util.logmem("before making destination arrays")

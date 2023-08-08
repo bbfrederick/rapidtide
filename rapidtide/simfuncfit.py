@@ -44,7 +44,6 @@ def onesimfuncfit(
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
-
     if initiallag is not None:
         thefitter.setguess(True, maxguess=initiallag)
         widthlimit = despeckle_thresh
@@ -95,8 +94,16 @@ def _procOneVoxelFitcorr(
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
-
-    (maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason,) = onesimfuncfit(
+    (
+        maxindex,
+        maxlag,
+        maxval,
+        maxsigma,
+        maskval,
+        peakstart,
+        peakend,
+        failreason,
+    ) = onesimfuncfit(
         corr_y,
         thefitter,
         disablethresholds=disablethresholds,
@@ -183,7 +190,6 @@ def fitcorr(
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
-
     thefitter.setcorrtimeaxis(corrtimescale)
     inputshape = np.shape(corrout)
     if initiallags is None:

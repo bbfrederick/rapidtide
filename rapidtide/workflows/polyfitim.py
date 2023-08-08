@@ -280,7 +280,6 @@ def polyfitim(
 
 
 def main():
-
     try:
         args = _get_parser().parse_args()
     except SystemExit:

@@ -674,7 +674,6 @@ class SimilarityFunctionFitter:
         functype="correlation",
         peakfittype="gauss",
     ):
-
         r"""
 
         Parameters
@@ -1252,7 +1251,6 @@ class FrequencyTracker:
         self.nfft = self.nperseg
 
     def track(self, x, fs):
-
         self.freqs, self.times, thespectrogram = sp.signal.spectrogram(
             np.concatenate(
                 [np.zeros(int(self.nperseg // 2)), x, np.zeros(int(self.nperseg // 2))],

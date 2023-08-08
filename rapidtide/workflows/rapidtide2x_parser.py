@@ -1461,7 +1461,6 @@ def process_args(inputargs=None):
                 )
             linkchar = "="
         elif o == "--globalmeaninclude":
-
             optiondict["globalmeanincludename"], colspec = tide_io.parsefilespec(a)
             if colspec is not None:
                 optiondict["globalmeanincludevals"] = tide_io.colspectolist(colspec)

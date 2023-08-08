@@ -115,7 +115,6 @@ def fdica(
     upperfreq=0.15,
     debug=False,
 ):
-
     # read in data
     print("reading in data arrays")
     (
@@ -412,7 +411,6 @@ def fdica(
 
 
 def main():
-
     try:
         args = _get_parser().parse_args()
     except SystemExit:

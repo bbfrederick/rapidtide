@@ -102,7 +102,6 @@ def checktests(testvec, testlist, theargs, epsilon):
 
 
 def main():
-
     epsilon = 0.00001
 
     # construct the first test vector
