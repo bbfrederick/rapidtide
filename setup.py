@@ -45,6 +45,7 @@ modules_list = [
     "rapidtide/calcnullsimfunc",
     "rapidtide/calcsimfunc",
     "rapidtide/calccoherence",
+    "rapidtide/happy_supportfuncs",
     "rapidtide/simfuncfit",
     "rapidtide/peakeval",
     "rapidtide/helper_classes",
