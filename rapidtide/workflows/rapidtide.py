@@ -2625,7 +2625,10 @@ def rapidtide_main(argparsingfunc):
             filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
 
         if optiondict["memprofile"]:
-            memcheckpoint("about to start glm noise removal...")
+            if optiondict["doglmfilt"]:
+                memcheckpoint("about to start glm noise removal...")
+            else:
+                memcheckpoint("about to start CVR magnitude estimation...")
         else:
             tide_util.logmem("before glm")
 
