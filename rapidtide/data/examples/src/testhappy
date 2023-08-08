@@ -1,42 +1,40 @@
 #!/bin/csh -f
 
-happy \
-    ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/100206_3T_rfMRI_REST1_LR.nii.gz \
-    ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/slicetimes.txt \
-    ~/Dropbox_PHC/MR_data_2/physioconn/happytest/happyarm \
-    --mklthreads -1 \
-    --infotag tag1 value1 \
-    --infotag tag2 value2 \
-    --model model_revised
+#happy \
+#    ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/100206_3T_rfMRI_REST1_LR.nii.gz \
+#    ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/slicetimes.txt \
+#    ~/Dropbox_PHC/MR_data_2/physioconn/happytest/happyarm \
+#    --mklthreads -1 \
+#    --infotag tag1 value1 \
+#    --infotag tag2 value2 \
+#    --model model_revised
 
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy \
-    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
     --mklthreads 8 \
     --model model_revised \
-    --spatialglm \
-    --aliasedcorrelation
+    --spatialglm 
 
 
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    ../dst/happy_2comp \
-    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
-    --mklthreads 8 \
-    --hilbertcomponents 2 \
-    --model model_revised
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    ../dst/happy_3comp \
-    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
-    --mklthreads 8 \
-    --hilbertcomponents 3 \
-    --model model_revised
+#happy \
+#    sub-HAPPYTEST.nii.gz \
+#    sub-HAPPYTEST.json \
+#    ../dst/happy_2comp \
+#    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
+#    --mklthreads 8 \
+#    --hilbertcomponents 2 \
+#    --model model_revised
+#
+#happy \
+#    sub-HAPPYTEST.nii.gz \
+#    sub-HAPPYTEST.json \
+#    ../dst/happy_3comp \
+#    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
+#    --mklthreads 8 \
+#    --hilbertcomponents 3 \
+#    --model model_revised
 
 #happy_legacy \
     #sub-HAPPYTEST.nii.gz \
