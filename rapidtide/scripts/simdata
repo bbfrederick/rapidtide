@@ -27,110 +27,6 @@ import rapidtide.resample as tide_resample
 import rapidtide.workflows.parser_funcs as pf
 
 
-def prepareband(
-    fmridims,
-    pctfile,
-    lagfile,
-    regressorfile,
-    samprate,
-    starttime,
-    regressorname,
-    padtime=30.0,
-    debug=False,
-):
-
-    if debug:
-        print("fmridims:", fmridims)
-        print("pctfile:", pctfile)
-        print("lagfile:", lagfile)
-        print("regressorfile:", regressorfile)
-        print("regressorname:", regressorname)
-        print("padtime:", padtime)
-
-    (
-        insamprate,
-        instarttime,
-        colnames,
-        invec,
-        compressed,
-        filetype,
-    ) = tide_io.readvectorsfromtextfile(regressorfile, onecol=True)
-    rawvec = tide_math.stdnormalize(invec)
-
-    if starttime is None:
-        if instarttime is None:
-            starttime = 0.0
-        else:
-            starttime = instarttime
-    if samprate is None:
-        if insamprate is not None:
-            samprate = insamprate
-    if debug:
-        print("samprate:", samprate)
-        print("starttime:", starttime)
-
-    # read in the timecourse to resample
-    # rawvec = tide_math.stdnormalize(tide_io.readvec(regressorfile))
-    regressorpts = len(rawvec)
-
-    print("Input regressor has ", regressorpts, " points")
-    regressor_x = (
-        np.linspace(0.0, (1.0 / samprate) * regressorpts, num=regressorpts, endpoint=False)
-        - starttime
-    )
-    regressor_y = rawvec[0:regressorpts]
-    print(
-        regressorname,
-        "regressor has length",
-        len(regressor_x),
-        "and runs from ",
-        regressor_x[0],
-        " to ",
-        regressor_x[-1],
-    )
-
-    nim_pct, pctdata, pctheader, pctdims, pctsizes = tide_io.readfromnifti(pctfile)
-    if not tide_io.checkspacedimmatch(pctdims, fmridims):
-        print(regressorname, "pct file does not match fmri")
-        exit()
-    nim_lag, lagdata, lagheader, lagdims, lagsizes = tide_io.readfromnifti(lagfile)
-    if not tide_io.checkspacedimmatch(lagdims, fmridims):
-        print(regressorname, "lag file does not match fmri")
-        exit()
-
-    generator = tide_resample.FastResampler(
-        regressor_x, regressor_y, padtime=padtime, doplot=False
-    )
-    return pctdata, lagdata, generator
-
-
-def fmrisignal(
-    times,
-    meanvalue,
-    dolfo=False,
-    lfowave=None,
-    lfomag=None,
-    lfodelay=None,
-    doresp=False,
-    respwave=None,
-    respmag=None,
-    respdelay=None,
-    docardiac=False,
-    cardiacwave=None,
-    cardiacmag=None,
-    cardiacdelay=None,
-):
-
-    thesignal = np.zeros((len(times)), dtype=np.float)
-    if dolfo:
-        thesignal += meanvalue * (lfomag / 100.0) * lfowave.yfromx(times - lfodelay)
-    if doresp:
-        thesignal += meanvalue * (respmag / 100.0) * respwave.yfromx(times - respdelay)
-    if docardiac:
-        thesignal += meanvalue * (cardiacmag / 100.0) * cardiacwave.yfromx(times - cardiacdelay)
-    return thesignal + meanvalue
-
-
 def _get_parser():
     """
     Argument parser for simdata
@@ -219,12 +115,21 @@ def _get_parser():
         default=0,
     )
     parser.add_argument(
-        "--noiselevel",
-        dest="noiselevel",
+        "--globalnoiselevel",
+        dest="globalnoiselevel",
         action="store",
         type=float,
         metavar="LEVEL",
-        help=("The variance of the noise.  Default is 0.0"),
+        help=("The variance of the noise common to every voxel.  Default is 0.0"),
+        default=0.0,
+    )
+    parser.add_argument(
+        "--voxelnoiselevel",
+        dest="voxelnoiselevel",
+        action="store",
+        type=float,
+        metavar="LEVEL",
+        help=("The variance of the voxel specific noise.  Default is 0.0"),
         default=0.0,
     )
     parser.add_argument(
@@ -238,6 +143,108 @@ def _get_parser():
     # Miscellaneous options
 
     return parser
+
+
+def prepareband(
+    fmridims,
+    pctfile,
+    lagfile,
+    regressorfile,
+    samprate,
+    starttime,
+    regressorname,
+    padtime=30.0,
+    debug=False,
+):
+    if debug:
+        print("fmridims:", fmridims)
+        print("pctfile:", pctfile)
+        print("lagfile:", lagfile)
+        print("regressorfile:", regressorfile)
+        print("regressorname:", regressorname)
+        print("padtime:", padtime)
+
+    (
+        insamprate,
+        instarttime,
+        colnames,
+        invec,
+        compressed,
+        filetype,
+    ) = tide_io.readvectorsfromtextfile(regressorfile, onecol=True)
+    rawvec = tide_math.stdnormalize(invec)
+
+    if starttime is None:
+        if instarttime is None:
+            starttime = 0.0
+        else:
+            starttime = instarttime
+    if samprate is None:
+        if insamprate is not None:
+            samprate = insamprate
+    if debug:
+        print("samprate:", samprate)
+        print("starttime:", starttime)
+
+    # read in the timecourse to resample
+    # rawvec = tide_math.stdnormalize(tide_io.readvec(regressorfile))
+    regressorpts = len(rawvec)
+
+    print("Input regressor has ", regressorpts, " points")
+    regressor_x = (
+        np.linspace(0.0, (1.0 / samprate) * regressorpts, num=regressorpts, endpoint=False)
+        - starttime
+    )
+    regressor_y = rawvec[0:regressorpts]
+    print(
+        regressorname,
+        "regressor has length",
+        len(regressor_x),
+        "and runs from ",
+        regressor_x[0],
+        " to ",
+        regressor_x[-1],
+    )
+
+    nim_pct, pctdata, pctheader, pctdims, pctsizes = tide_io.readfromnifti(pctfile)
+    if not tide_io.checkspacedimmatch(pctdims, fmridims):
+        print(regressorname, "pct file does not match fmri")
+        exit()
+    nim_lag, lagdata, lagheader, lagdims, lagsizes = tide_io.readfromnifti(lagfile)
+    if not tide_io.checkspacedimmatch(lagdims, fmridims):
+        print(regressorname, "lag file does not match fmri")
+        exit()
+
+    generator = tide_resample.FastResampler(
+        regressor_x, regressor_y, padtime=padtime, doplot=False
+    )
+    return pctdata, lagdata, generator
+
+
+def fmrisignal(
+    times,
+    meanvalue,
+    dolfo=False,
+    lfowave=None,
+    lfomag=None,
+    lfodelay=None,
+    doresp=False,
+    respwave=None,
+    respmag=None,
+    respdelay=None,
+    docardiac=False,
+    cardiacwave=None,
+    cardiacmag=None,
+    cardiacdelay=None,
+):
+    thesignal = np.zeros((len(times)), dtype=float)
+    if dolfo:
+        thesignal += meanvalue * (lfomag / 100.0) * lfowave.yfromx(times - lfodelay)
+    if doresp:
+        thesignal += meanvalue * (respmag / 100.0) * respwave.yfromx(times - respdelay)
+    if docardiac:
+        thesignal += meanvalue * (cardiacmag / 100.0) * cardiacwave.yfromx(times - cardiacdelay)
+    return thesignal + meanvalue
 
 
 def simdata_main(thearguments):
@@ -400,13 +407,16 @@ def simdata_main(thearguments):
         )
 
     # loop over space
+    theglobalnoise = args.globalnoiselevel * np.random.standard_normal(len(initial_fmri_x))
     for k in range(0, numslices):
         fmri_x_slice = initial_fmri_x - sliceoffsettimes[k]
         print("processing slice ", k, ": sliceoffsettime=", sliceoffsettimes[k])
         for j in range(0, ysize):
             for i in range(0, xsize):
                 # generate the noise
-                thenoise = args.noiselevel * np.random.standard_normal(len(initial_fmri_x))
+                thevoxelnoise = args.voxelnoiselevel * np.random.standard_normal(
+                    len(initial_fmri_x)
+                )
 
                 # add in the signals
                 if dolfo:
@@ -445,13 +455,13 @@ def simdata_main(thearguments):
                         cardiacmag=cardiacpct,
                         cardiacdelay=cardiaclag,
                     )
-                    + thenoise
+                    + theglobalnoise
+                    + thevoxelnoise
                 )
 
     tide_io.savetonifti(simdata, fmriheader, args.outputroot)
 
 
 if __name__ == "__main__":
-
     # grab the command line arguments then pass them off.
     simdata_main(sys.argv)

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+rapidtide \
+	--spatialfilt 2 \
+        --nprocs -1 \
+        --passes 3 \
+        --nofitfilt \
+        --similaritymetric hybrid \
+        --norefinedespeckled \
+        --filterband lfo \
+        --corrtype linear \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST
+
+simdata \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_desc-mean_map.nii.gz \
+    ../dst/simulatedfmri \
+    sub-RAPIDTIDETEST.json \
+    --lfopctfile ../dst/sub-RAPIDTIDETEST_desc-corrfit_mask.nii.gz \
+    --lfolagfile ../dst/sub-RAPIDTIDETEST_desc-maxtime_map.nii.gz \
+    --lforegressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 
+
+rapidtide \
+        --spatialfilt 2 \
+        --nprocs -1 \
+        --passes 3 \
+        --nofitfilt \
+        --similaritymetric hybrid \
+        --regressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 \
+        --CVR \
+        --filterband lfo \
+        --corrtype linear \
+        ../dst/simulatedfmri.nii.gz \
+        ../dst/simrapidtide
+
