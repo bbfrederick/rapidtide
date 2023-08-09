@@ -21,7 +21,6 @@ import time
 import warnings
 
 import numpy as np
-
 from scipy.signal import savgol_filter, welch
 from scipy.stats import kurtosis, skew
 from statsmodels.robust import mad
@@ -35,7 +34,6 @@ import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 

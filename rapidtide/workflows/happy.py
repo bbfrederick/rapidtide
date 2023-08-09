@@ -30,13 +30,13 @@ import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.glmpass as tide_glmpass
+import rapidtide.happy_supportfuncs as happy_support
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-import rapidtide.happy_supportfuncs as happy_support
 
 from .utils import setup_logger
 
