@@ -35,7 +35,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="atlastool",
         description=("A tool to manipulate nifti atlas files"),
-        usage="%(prog)s inputtemplatename outputtemplatename [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

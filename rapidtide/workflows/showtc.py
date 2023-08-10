@@ -41,7 +41,8 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="showtc",
         description="Plots the data in text files.",
-        usage="%(prog)s texfilename[:col1,col2...,coln] [textfilename]... [options]",
+        allow_abbrev=False,
+        # usage="%(prog)s texfilename[:col1,col2...,coln] [textfilename]... [options]",
     )
 
     parser.add_argument(

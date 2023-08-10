@@ -35,13 +35,13 @@ def _get_parser(decompaxis):
         parser = argparse.ArgumentParser(
             prog="temporaldecomp",
             description="Perform PCA or ICA decomposition on a data file in the time dimension.",
-            usage="%(prog)s datafile outputroot [options]",
+            allow_abbrev=False,
         )
     elif decompaxis == "spatial":
         parser = argparse.ArgumentParser(
             prog="spatialdecomp",
             description="Perform PCA or ICA decomposition on a data file in the spatial dimension.",
-            usage="%(prog)s datafile outputroot [options]",
+            allow_abbrev=False,
         )
     else:
         raise ValueError(f"Illegal decomposition type: {type}")

@@ -32,7 +32,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="resamp1tc",
         description=("Resample a timeseries file"),
-        usage="%(prog)s infilename insamplerate outputfile outsamplerate [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments
@@ -90,9 +90,14 @@ def main():
 
     intimestep = 1.0 / args.insamplerate
     outtimestep = 1.0 / args.outsamplerate
-    (dummy, dummy, dummy, inputdata, compressed, filetype,) = tide_io.readvectorsfromtextfile(
-        args.inputfile, onecol=True
-    )
+    (
+        dummy,
+        dummy,
+        dummy,
+        inputdata,
+        compressed,
+        filetype,
+    ) = tide_io.readvectorsfromtextfile(args.inputfile, onecol=True)
 
     outputdata = tide_resample.arbresample(
         inputdata, args.insamplerate, args.outsamplerate, decimate=False, antialias=args.antialias

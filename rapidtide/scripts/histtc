@@ -32,7 +32,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="histtc",
         description=("Generate a histogram of the values in a timecourse"),
-        usage="%(prog)s inputfile outputroot [--numbins BINS]",
+        allow_abbrev=False,
     )
 
     # Required arguments

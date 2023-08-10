@@ -34,7 +34,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="pixelcomp",
         description=("Compare two nifti files, voxel by voxel, in a contour plot"),
-        usage="%(prog)s inputfile1 maskfile1 inputfile2 maskfile2 outputfile [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

@@ -32,7 +32,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="filttc",
         description=("Extract summary timecourses from the regions in an atlas"),
-        usage="%(prog)s inputfilename templatefile outputfile [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

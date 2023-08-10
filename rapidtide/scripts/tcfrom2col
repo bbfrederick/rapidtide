@@ -26,7 +26,11 @@ import rapidtide.util as tide_util
 
 def main():
     # get the command line parameters
-    parser = argparse.ArgumentParser(description="Plots the data in text files.")
+    parser = argparse.ArgumentParser(
+        prog="tcfrom2col",
+        description="Plots the data in text files.",
+        allow_abbrev=False,
+    )
     parser.add_argument("infilename", help="the name of the input two column file")
     parser.add_argument(
         "timestep",

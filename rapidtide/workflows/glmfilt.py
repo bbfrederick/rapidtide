@@ -32,7 +32,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="glmfilt",
         description="Fits and removes the effect of voxel specific and/or global regressors.",
-        usage="%(prog)s inputfile outputroot --numskip NUM --evfile FILE [FILE [FILE...]]",
+        allow_abbrev=False,
     )
 
     # Required arguments

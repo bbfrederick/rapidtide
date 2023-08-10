@@ -33,7 +33,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="polyfitim",
         description="Fit a spatial template to a 3D or 4D NIFTI file.",
-        usage="%(prog)s datafile datamask templatefile templatmask outputroot [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

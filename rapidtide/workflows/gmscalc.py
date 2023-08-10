@@ -17,7 +17,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="gmscalc",
         description="Calculate the global mean signal, and filtered versions",
-        usage="%(prog)s datafile outputroot [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

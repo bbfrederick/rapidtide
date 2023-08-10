@@ -48,7 +48,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="fdica",
         description="Fit a spatial template to a 3D or 4D NIFTI file.",
-        usage="%(prog)s fdica datafile datamask outputroot [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

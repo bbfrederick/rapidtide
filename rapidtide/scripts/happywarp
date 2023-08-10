@@ -315,6 +315,7 @@ if __name__ == "__main__":
             "fmriprep does not align other anatomic images to the T1 by default.  This fixes that.\n"
         ),
         formatter_class=RawTextHelpFormatter,
+        allow_abbrev=False,
     )
 
     parser.add_argument(
@@ -325,11 +326,17 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--scalefac", help="scale factor to exaggerate motion", type=float, default=20.0,
+        "--scalefac",
+        help="scale factor to exaggerate motion",
+        type=float,
+        default=20.0,
     )
 
     parser.add_argument(
-        "--threads", help="number of threads to use for registration", type=int, default=1,
+        "--threads",
+        help="number of threads to use for registration",
+        type=int,
+        default=1,
     )
 
     parser.add_argument(
@@ -341,7 +348,10 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--splinesize", help="spline size in voxels", type=int, default=10,
+        "--splinesize",
+        help="spline size in voxels",
+        type=int,
+        default=10,
     )
 
     parser.add_argument(
@@ -373,7 +383,9 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--debug", help="ouput additionnal debugging information", action="store_true",
+        "--debug",
+        help="ouput additionnal debugging information",
+        action="store_true",
     )
 
     args = parser.parse_args()

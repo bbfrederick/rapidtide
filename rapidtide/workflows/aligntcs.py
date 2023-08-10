@@ -33,7 +33,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="aligntcs",
         description="Resample and align two time series.",
-        usage="%(prog)s infile1 insamplerate1 infile2 insamplerate2 outputfile [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

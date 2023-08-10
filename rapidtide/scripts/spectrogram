@@ -35,7 +35,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="spectrogram",
         description="Computes and shows the spectrogram of a text file.",
-        usage="%(prog)s textfilename samplerate [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

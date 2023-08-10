@@ -1324,7 +1324,9 @@ def main():
     verbosity = 0
 
     theparser = argparse.ArgumentParser(
-        description="A program to display the results of a time delay analysis"
+        prog="tidepool",
+        description="A program to display the results of a time delay analysis",
+        allow_abbrev=False,
     )
     theparser.add_argument(
         "--offsettime",

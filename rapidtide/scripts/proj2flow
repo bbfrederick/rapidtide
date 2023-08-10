@@ -33,7 +33,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog="proj2flow",
         description="Convert phase projection movie to velocity map.",
-        usage="%(prog)s inputfile outputname",
+        allow_abbrev=False,
     )
     parser.add_argument("inputfilename", type=str, help="The name of the input nifti file.")
     parser.add_argument("outputroot", type=str, help="The root name of the output nifti files.")

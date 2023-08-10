@@ -35,7 +35,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="spatialmi",
         description=("Calculate the localized spatial mutual information between two images"),
-        usage="%(prog)s inputfile1 maskfile1 inputfile2 maskfile2 outputfile [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

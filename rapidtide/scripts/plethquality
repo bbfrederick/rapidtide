@@ -79,7 +79,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="plethquality",
         description=("Calculate quality metrics from a cardiac text file."),
-        usage="%(prog)s infilename outfilename [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

@@ -34,7 +34,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="histnifti",
         description="Generates a histogram of the values in a NIFTI file.",
-        usage="%(prog)s inputfile outputroot",
+        allow_abbrev=False,
     )
     parser.add_argument("inputfile", help="The name of the input NIFTI file.")
     parser.add_argument("outputroot", help="The root of the output file names.")

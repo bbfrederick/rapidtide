@@ -39,7 +39,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="applydlfilter",
         description=("Apply a deep learning filter to a timecourse."),
-        usage="%(prog)s infilename outfilename [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments
@@ -92,10 +92,14 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, zeropadding=0,
     trimlength = np.min([len(reference), len(candidate)])
     thexcorr = tide_corr.fastcorrelate(
         tide_math.corrnormalize(
-            thecardfilt.apply(samplerate, reference), detrendorder=3, windowfunc="hamming",
+            thecardfilt.apply(samplerate, reference),
+            detrendorder=3,
+            windowfunc="hamming",
         )[:trimlength],
         tide_math.corrnormalize(
-            thecardfilt.apply(samplerate, candidate), detrendorder=3, windowfunc="hamming",
+            thecardfilt.apply(samplerate, candidate),
+            detrendorder=3,
+            windowfunc="hamming",
         )[:trimlength],
         usefft=True,
         zeropadding=zeropadding,
@@ -197,7 +201,9 @@ def main():
             badpts = tide_io.readvec(args.infilename.replace(".txt", "_badpts.txt"))
         except:
             print(
-                "bad points file", args.infilename.replace(".txt", "_badpts.txt"), "not found!",
+                "bad points file",
+                args.infilename.replace(".txt", "_badpts.txt"),
+                "not found!",
             )
             sys.exit()
 

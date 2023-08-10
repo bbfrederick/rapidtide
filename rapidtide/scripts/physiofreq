@@ -31,7 +31,9 @@ import rapidtide.miscmath as tide_math
 
 def parsearglist():
     parser = argparse.ArgumentParser(
-        description="Finds the dominant frequency in a cardiac or respiratory waveform."
+        prog="physiofreq",
+        description="Finds the dominant frequency in a cardiac or respiratory waveform.",
+        allow_abbrev=False,
     )
     parser.add_argument(
         "textfilename", help="A text input files, with optional column specification"

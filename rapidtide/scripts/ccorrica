@@ -42,7 +42,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="ccorrica",
         description=("Find temporal crosscorrelations between ICA components"),
-        usage="%(prog)s inputfile outputfile [options]",
+        allow_abbrev=False,
     )
 
     # Required arguments

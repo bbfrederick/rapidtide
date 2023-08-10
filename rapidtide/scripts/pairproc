@@ -31,7 +31,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog="pairproc",
         description="Compare the even and odd volumes of a 4D nifti file.",
-        usage="%(prog)s inputfile outputroot",
+        allow_abbrev=False,
     )
 
     parser.add_argument("inputfile", help="The name of the input nifti file, including extension")

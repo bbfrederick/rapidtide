@@ -46,7 +46,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog="variabilityizer",
         description="Transform a nifti fmri file into a temporal variability file.",
-        usage="%(prog)s inputfile outputname windowlength",
+        allow_abbrev=False,
     )
     parser.add_argument("inputfilename", type=str, help="The name of the input nifti file.")
     parser.add_argument("outputfilename", type=str, help="The name of the output nifti file.")

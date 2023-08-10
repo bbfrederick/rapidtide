@@ -32,6 +32,7 @@ def _get_parser():
     parser = argparse.ArgumentParser(
         prog="happy",
         description="Hypersampling by Analytic Phase Projection - Yay!.",
+        allow_abbrev=False,
     )
 
     # Required arguments

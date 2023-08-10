@@ -21,13 +21,13 @@ def _get_parser(calctype="icc"):
         parser = argparse.ArgumentParser(
             prog="calcicc",
             description="Calculate per-voxel ICC(3,1) on a set of nifti images. (workflow version)",
-            usage="%(prog)s datafilelist pairlist outputroot [options]",
+            allow_abbrev=False,
         )
     elif calctype == "ttest":
         parser = argparse.ArgumentParser(
             prog="calcttest",
             description="Calculate per-voxel t tests between pairs of nifti files. (workflow version)",
-            usage="%(prog)s datafilelist outputroot [options]",
+            allow_abbrev=False,
         )
     else:
         raise ("Illegal calculation type")
