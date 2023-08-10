@@ -148,13 +148,13 @@ def _get_parser():
         help=(
             "Preset for calibrated CVR mapping.  Given an input regressor that represents some measured "
             "quantity over time (e.g. mmHg CO2 in the EtCO2 trace), rapidtide will calculate and output a map of percent "
-            "BOLD change in units of the input regressor.  To do this, this macro:"
-            f"sets passes=1, despeckle_passes={DEFAULT_CVRMAPPING_DESPECKLE_PASSES}, "
-            f"sets lagmin={DEFAULT_DELAYMAPPING_LAGMIN}, lagmax={DEFAULT_DELAYMAPPING_LAGMAX}, "
+            "BOLD change in units of the input regressor.  To do this, this sets:"
+            f"passes=1, despeckle_passes={DEFAULT_CVRMAPPING_DESPECKLE_PASSES}, "
+            f"lagmin={DEFAULT_DELAYMAPPING_LAGMIN}, lagmax={DEFAULT_DELAYMAPPING_LAGMAX}, "
             "and calculates a voxelwise GLM using the optimally delayed "
-            "input regressor and the percent normalized, demeaned BOLD data as inputs. "
-            "If no input regressor is supplied, this will generate an error.  These options can be overridden with the appropriate "
-            "additional arguments."
+            "input regressor and the percent normalized, demeaned BOLD data as inputs. This map is output as "
+            "(XXX_desc-CVR_map.nii.gz).  If no input regressor is supplied, this will generate an error.  "
+            "These options can be overridden with the appropriate additional arguments."
         ),
         default=False,
     )
