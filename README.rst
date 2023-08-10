@@ -230,8 +230,8 @@ Ok, I\'m sold. What\'s in here?
 Financial Support
 =================
 
-This code base is being developed and supported by a grant from the US
-NIH (`1R01 NS097512 <http://grantome.com/grant/NIH/R01-NS097512-02>`__).
+This code base is being developed and supported by grants from the US
+NIH (`1R01 NS097512 <http://grantome.com/grant/NIH/R01-NS097512-02>`__, RF1 MH130637-01)
 
 Additional packages used
 ========================
