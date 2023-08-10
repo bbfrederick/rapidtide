@@ -137,7 +137,7 @@ The file you input here should be the result of any preprocessing you intend to 
 Outputs:
 ^^^^^^^^
 
-Outputs are space or space by time Nifti or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  File formats and naming follow BIDS conventions for derivative data for fMRI input data.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
+Outputs are space or space by time NIFTI or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  File formats and naming follow BIDS conventions for derivative data for fMRI input data.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
 
 
 BIDS Outputs:
@@ -165,8 +165,11 @@ BIDS Outputs:
    "XXX_desc-lfofilterCoeff_map", ".nii.gz", "Magnitude of the delayed sLFO regressor from GLM filter", "If GLM filtering is enabled (default)"
    "XXX_desc-lfofilterMean_map", ".nii.gz", "Mean value over time, from GLM fit", "If GLM filtering is enabled (default)"
    "XXX_desc-lfofilterNorm_map", ".nii.gz", "GLM filter coefficient, divided by the voxel mean over time", "If GLM filtering is enabled (default)"
-   "XXX_desc-lfofilterR2_map", ".nii.gz", "R value for the GLM fit in the voxel, squared", "If GLM filtering is enabled (default)"
    "XXX_desc-lfofilterR_map", ".nii.gz", "R value for the GLM fit in the voxel", "If GLM filtering is enabled (default)"
+   "XXX_desc-lfofilterR2_map", ".nii.gz", "R value for the GLM fit in the voxel, squared. Multiply by 100 to get percentage variance explained", "If GLM filtering is enabled (default)"
+   "XXX_desc-CVR_map", ".nii.gz", "Cerebrovascular response, in units of % BOLD per unit of the supplied regressor (probably mmHg)", "If CVR mapping is enabled"
+   "XXX_desc-CVRR_map", ".nii.gz", "R value for the CVR map fit in the voxel", "If CVR mapping is enabled"
+   "XXX_desc-CVRR2_map", ".nii.gz", "R value for the CVR map fit in the voxel, squared. Multiply by 100 to get percentage variance explained", "If CVR mapping is enabled"
    "XXX_desc-processed_mask", ".nii.gz", "Mask of all voxels in which the similarity function is calculated", "Always"
    "XXX_desc-globalmean_mask", ".nii.gz", "Mask of voxels used to calculate the global mean signal", "This file will exist if no external regressor is specified"
    "XXX_desc-refine_mask", ".nii.gz", "Mask of voxels used in the last estimate a refined version of the probe regressor", "Present if passes > 1"
@@ -1272,3 +1275,4 @@ Usage:
 		  -d DATAFILEROOT  Use this dataset (skip initial selection step)
 		  -a ANATNAME      Set anatomic mask image
 		  -m GEOMASKNAME   Set geometric mask image
+
