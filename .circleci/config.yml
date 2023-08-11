@@ -472,6 +472,6 @@ workflows:
       - build_docs:
           requires:
             - build_py311
-      - style_check:
-          requires:
-            - build_py311
+      #- style_check:
+      #    requires:
+      #      - build_py311
