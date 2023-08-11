@@ -54,7 +54,6 @@ exclude = '''
     | dist
   )/
   | get_version.py
-  | versioneer.py
   | rapidtide/_version.py
   | rapidtide/candidatetests
   | rapidtide/disabledtests

@@ -93,6 +93,7 @@ author = "Blaise Frederick"
 #
 # The short X.Y version.
 import rapidtide.util as tide_util
+import rapidtide.workflows.rapidtide as tide_dummy
 
 version = tide_util.version()[0].replace("v", "").split("+")[0]
 # The full version, including alpha/beta/rc tags.
