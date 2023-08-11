@@ -619,10 +619,6 @@ Usage:
 
 
 
-	These options are somewhat self-explanatory.  I will be expanding this
-  section of the manual going forward, but I want to put something
-  here to get this out here.
-
 Example:
 ^^^^^^^^^
 
