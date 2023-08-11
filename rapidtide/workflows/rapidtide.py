@@ -2578,11 +2578,6 @@ def rapidtide_main(argparsingfunc):
                 themean = np.mean(fmri_data_valid, axis=1)
                 fmri_data_valid /= themean[:, None]
 
-                # set the threshval to zero
-                glmthreshval = 0.0
-            else:
-                glmthreshval = threshval
-
             if optiondict["preservefiltering"]:
                 print("reapplying temporal filters...")
                 print(f"fmri_data_valid.shape: {fmri_data_valid.shape}")
@@ -2636,6 +2631,12 @@ def rapidtide_main(argparsingfunc):
         glmpass_func = addmemprofiling(
             tide_glmpass.glmpass, optiondict["memprofile"], "before glmpass"
         )
+        if optiondict["docvrmap"]:
+            # set the threshval to zero
+            glmthreshval = 0.0
+        else:
+            glmthreshval = threshval
+
         voxelsprocessed_glm = glmpass_func(
             numvalidspatiallocs,
             fmri_data_valid,
