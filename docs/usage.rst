@@ -853,9 +853,9 @@ Usage:
 ^^^^^^
 
 .. argparse::
-   :ref: rapidtide.workflows.temporaldecomp._get_parser
+   :ref: rapidtide.workflows.niftidecomp._get_parser_temporal
    :prog: temporaldecomp
-   :func: _get_parser
+   :func: _get_parser_temporal
 
    Debugging options : @skip
       skip debugging options
@@ -878,9 +878,9 @@ Usage:
 ^^^^^^
 
 .. argparse::
-   :ref: rapidtide.workflows.spatialdecomp._get_parser
+   :ref: rapidtide.workflows.niftidecomp._get_parser_spatial
    :prog: spatialdecomp
-   :func: _get_parser
+   :func: _get_parser_spatial
 
    Debugging options : @skip
       skip debugging options
@@ -932,14 +932,13 @@ None
 Usage:
 ^^^^^^
 
-	::
+.. argparse::
+   :ref: rapidtide.workflows.histnifti._get_parser
+   :prog: histnifti
+   :func: _get_parser
 
-		usage: histnifti inputfile outputroot
-
-		required arguments:
-			inputfile	- the name of the input nifti file
-			outputroot	- the root of the output nifti names
-
+   Debugging options : @skip
+      skip debugging options
 
 
 showhist
