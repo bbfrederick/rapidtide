@@ -16,7 +16,8 @@
 #   limitations under the License.
 #
 #
-import rapidtide.workflows.niftidecomp as niftidecomp_workflow
+import rapidtide.workflows.niftidecomp as theworkflow
+import rapidtide.workflows.parser_funcs as pf
 
 if __name__ == "__main__":
-    niftidecomp_workflow.main("temporal")
+    pf.generic_init(theworkflow._get_parser_temporal, theworkflow.main_temporal)

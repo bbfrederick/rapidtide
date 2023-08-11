@@ -109,6 +109,14 @@ def _get_parser(decompaxis):
     return parser
 
 
+def _get_parser_temporal():
+    return _get_parser("temporal")
+
+
+def _get_parser_spatial():
+    return _get_parser("spatial")
+
+
 def transposeifspatial(data, decompaxis="temporal"):
     if decompaxis == "spatial":
         return np.transpose(data)
@@ -350,13 +358,7 @@ def niftidecomp_workflow(
     )
 
 
-def getparameters(decompaxis):
-    try:
-        args = vars(_get_parser(decompaxis).parse_args())
-    except SystemExit:
-        _get_parser(decompaxis).print_help()
-        raise
-
+def main(decompaxis, args):
     if args["ncomp"] < 0.0:
         args["pcacomponents"] = 0.5
         args["icacomponents"] = None
@@ -367,11 +369,7 @@ def getparameters(decompaxis):
         args["pcacomponents"] = int(args["ncomp"])
         args["icacomponents"] = int(args["ncomp"])
 
-    return args
-
-
-def main(decompaxis):
-    args = getparameters(decompaxis)
+    # args = getparameters(decompaxis)
 
     # save the command line
     tide_io.writevec([" ".join(sys.argv)], args["outputroot"] + "_commandline.txt")
@@ -395,13 +393,6 @@ def main(decompaxis):
         demean=args["demean"],
         sigma=args["sigma"],
     )
-
-    """print(f"{outputcomponents.shape=}")
-    print(f"{outputcoefficients.shape=}")
-    print(f"{outinvtrans.shape=}")
-    print(f"{exp_var_pct.shape=}")
-    print(f"{datafiledims.shape=}")
-    print(f"{datafilesizes.shape=}")"""
 
     # save the eigenvalues
     print("variance explained by component:", exp_var_pct)
@@ -449,5 +440,9 @@ def main(decompaxis):
     )
 
 
-if __name__ == "__main__":
-    main("spatial")
+def main_temporal(args):
+    main("temporal", vars(args))
+
+
+def main_spatial(args):
+    main("spatial", vars(args))
