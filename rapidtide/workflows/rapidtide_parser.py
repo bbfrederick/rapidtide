@@ -174,9 +174,9 @@ def _get_parser():
         dest="venousrefine",
         action="store_true",
         help=(
-            "This is a macro that sets --lagminthresh=2.5, "
-            "--lagmaxthresh=6.0, --ampthresh=0.5, and "
-            "--refineupperlag to bias refinement towards "
+            "This is a macro that sets lagminthresh=2.5, "
+            "lagmaxthresh=6.0, ampthresh=0.5, and "
+            "refineupperlag to bias refinement towards "
             "voxels in the draining vasculature for an "
             "fMRI scan."
         ),
@@ -188,9 +188,8 @@ def _get_parser():
         action="store_true",
         help=(
             "This is a NIRS analysis - this is a macro that "
-            "sets --nothresh,"
-            "--refineprenorm=var, --ampthresh=0.7, and "
-            "--lagminthresh=0.1. "
+            "sets nothresh, refineprenorm=var, ampthresh=0.7, and "
+            "lagminthresh=0.1. "
         ),
         default=False,
     )
