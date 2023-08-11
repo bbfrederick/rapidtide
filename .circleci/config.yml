@@ -414,13 +414,13 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-37-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "setup.py" }}
       - run:
           name: Build documentation
           command: |
             apt-get update
             apt-get install -yqq make
-            source activate py37_env
+            source activate py311_env
             pip install -e .[tests,doc]
             pip install numpydoc
             make -C docs html
@@ -436,11 +436,11 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-37-{{ checksum "setup.py" }}
-      - run:
+          key: deps2-311-{{ checksum "setup.py" }}
+     - run:
           name: Linting
           command:  |
-            source activate py310_env
+            source activate py311_env
             flake8 --ignore=E127,E203,E231,E501,E722,E114,E116,F401,W503,W504 /tmp/src/rapidtide/rapidtide
       - store_artifacts:
           path: /tmp/data/lint
@@ -449,10 +449,10 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
-      - build_py37
-      - test_py37:
-          requires:
-            - build_py37
+      #- build_py37
+      #- test_py37:
+      #    requires:
+      #      - build_py37
       - build_py38
       - test_py38:
           requires:
@@ -471,7 +471,7 @@ workflows:
             - build_py311
       - build_docs:
           requires:
-            - build_py37
-      #- style_check:
-      #    requires:
-      #      - build_py37
+            - build_py311
+      - style_check:
+          requires:
+            - build_py311
