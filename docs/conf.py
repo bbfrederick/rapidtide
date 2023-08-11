@@ -22,8 +22,30 @@ from m2r import MdInclude
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
+sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath("sphinxext"))
 sys.path.insert(0, os.path.abspath("../rapidtide"))
+print(sys.path)
+
+import versioneer
+
+current_dir = os.getcwd()
+os.chdir(os.path.dirname(versioneer.__file__))
+
+versioneer.VCS = 'git'
+versioneer.versionfile_source = '../rapidtide/_version.py'
+versioneer.versionfile_build = '../rapidtide/_version.py'
+versioneer.tag_prefix = 'rapidtide-'  # tags are like rapidtide-1.2.0
+versioneer.parentdir_prefix = '..'
+
+__version = versioneer.get_version().replace('.dirty', '')
+
+del versioneer
+os.chdir(current_dir)
+
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
 
 from github_link import make_linkcode_resolve
 
