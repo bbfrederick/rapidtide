@@ -437,7 +437,7 @@ jobs:
           at: /tmp
       - restore_cache:  # load environment
           key: deps2-311-{{ checksum "setup.py" }}
-     - run:
+      - run:
           name: Linting
           command:  |
             source activate py311_env
