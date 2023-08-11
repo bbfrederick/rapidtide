@@ -199,9 +199,6 @@ Usage:
    :prog: rapidtide
    :func: _get_parser
 
-   Debugging options : @skip
-      skip debugging options
-
 
 Legacy interface:
 ^^^^^^^^^^^^^^^^^
@@ -822,7 +819,7 @@ Inputs:
 ^^^^^^^
 
 Outputs:
-^^^^^^^
+^^^^^^^^
 
 Usage:
 ^^^^^^
@@ -847,7 +844,7 @@ Inputs:
 ^^^^^^^
 
 Outputs:
-^^^^^^^
+^^^^^^^^
 
 Usage:
 ^^^^^^
@@ -872,7 +869,7 @@ Inputs:
 ^^^^^^^
 
 Outputs:
-^^^^^^^
+^^^^^^^^
 
 Usage:
 ^^^^^^
@@ -897,7 +894,7 @@ Inputs:
 ^^^^^^^
 
 Outputs:
-^^^^^^^
+^^^^^^^^
 
 Usage:
 ^^^^^^
@@ -1254,20 +1251,8 @@ Outputs:
 Usage:
 ^^^^^^
 
-	::
-
-		usage: tidepool [-h] [-o OFFSETTIME] [-r] [-n] [-t TRVAL] [-d DATAFILEROOT]
-					[-a ANATNAME] [-m GEOMASKNAME]
-
-		A program to display the results of a time delay analysis
-
-		optional arguments:
-		  -h, --help       show this help message and exit
-		  -o OFFSETTIME    Set lag offset
-		  -r               enable risetime display
-		  -n               enable movie mode
-		  -t TRVAL         Set correlation TR
-		  -d DATAFILEROOT  Use this dataset (skip initial selection step)
-		  -a ANATNAME      Set anatomic mask image
-		  -m GEOMASKNAME   Set geometric mask image
+.. argparse::
+   :ref: rapidtide.workflows.rapidtide_parser._get_parser
+   :prog: tidepool
+   :func: _get_parser
 
