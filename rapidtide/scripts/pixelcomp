@@ -176,7 +176,7 @@ def main():
         exit()
 
     totalmask = mask1_data * mask2_data
-    thearray = pairdata(input1_data input2_data, totalmask)
+    thearray = pairdata(input1_data, input2_data, totalmask)
 
     plt.figure()
     if args.scatter:
@@ -197,7 +197,7 @@ def main():
 
     # now fit the line
     try:
-        thecoffs = np.polyfit(np.array(pairlist[0]), np.array(pairlist[1]), args.fitorder)
+        thecoffs = np.polyfit(thearray[:, 0], thearray[:, 1], args.fitorder)
     except np.RankWarning:
         thecoffs = [0.0, 0.0]
     print("thecoffs=", thecoffs)
@@ -206,8 +206,8 @@ def main():
 
     if not args.fitonly:
         with open(args.outputroot, "w") as file:
-            for pair in pairlist:
-                file.writelines(str(pair[0]) + "\t" + str(pair[1]) + "\n")
+            for pair in range(thearray.shape[0]):
+                file.writelines(str(thearray[pair, 0]) + "\t" + str(thearray[pair, 1]) + "\n")
         plt.figure()
         bland_altman_plot(thearray[:, 0], thearray[:, 1])
         plt.title("Bland-Altman Plot")
