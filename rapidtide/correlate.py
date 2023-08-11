@@ -1029,14 +1029,16 @@ def convolve_weighted_fft(in1, in2, mode="full", weighting="None", displayplots=
     mode : str {'full', 'valid', 'same'}, optional
         A string indicating the size of the output:
         ``full``
-           The output is the full discrete linear convolution
-           of the inputs. (Default)
+            The output is the full discrete linear convolution
+            of the inputs. (Default)
+
         ``valid``
-           The output consists only of those elements that do not
-           rely on the zero-padding.
+            The output consists only of those elements that do not
+            rely on the zero-padding.
+
         ``same``
-           The output is the same size as `in1`, centered
-           with respect to the 'full' output.
+            The output is the same size as `in1`, centered
+            with respect to the 'full' output.
 
     Returns
     -------

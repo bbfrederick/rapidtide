@@ -531,8 +531,17 @@ The ``--noglm`` option disables data filtering.  If you are using rapidtide to e
 ``--nofitfilt`` skips a step after peak estimation.  Estimating the delay and correlation amplitude in each voxel is a two step process. First you make a quick estimate (where is the maximum point of the correlation function, and what is its amplitude?), then you refine it by fitting a Gaussian function to the peak to improve the estimate.  If this step fails, which it can if the peak is too close to the end of the lag range, or strangely shaped, the default behavior is to mark the point as bad and zero out the parameters for the voxel.  The nofitfilt option means that if the fit fails, output the initial estimates rather than all zeros.   This means that you get some information, even if it's not fully refined.  In my experience it does tend to make the maps for the gas challenge experiments a lot cleaner to use this option since the correlation function is pretty well behaved.
 
 
-Denoising NIRS data (NEW)
-"""""""""""""""""""""""""
+CVR mapping:
+""""""""""""
+
+This is a slightly different twist on interpreting the strength of the lagged correlation.  In this case, you supply an input regressor that corresponds to a measured, calibrated CO2 quantity (for example, etCO2 in mmHg).  Rapidtide then does a modified analysis - it still uses the cross-correlation to find when the input regressor is maximally aligned with the variance in the voxel signal, but instead of only returning a correlation strength, it calculates the percentage BOLD change in each voxel in units of the input regressor (e.g. %BOLD/mmHg), which is the standard in CVR analysis.
+
+* You invoke this with the --CVR option.
+* To do this, I disabled refinement, hijacked the GLM filtering routine, and messed with some normalizations.  If you want to refine your regressor estimate, or filter the sLFO signal out of your data, you need to do a separate analysis.
+
+
+Denoising NIRS data:
+""""""""""""""""""""
 
 When we started this whole research effort, I waw originally planning to denoise NIRS data, not fMRI data.  But one thing led to another, and the NIRS got derailed for the fMRI effort.  Now that we have some time to catch our breaths, and more importantly, we have access to some much higher quality NIRS data, this moved back to the front burner.  The majority of the work was already done, I just needed to account for a few qualities that make NIRS data different from fMRI data:
 
@@ -1252,7 +1261,7 @@ Usage:
 ^^^^^^
 
 .. argparse::
-   :ref: rapidtide.workflows.rapidtide_parser._get_parser
+   :ref: rapidtide.workflows.tidepool._get_parser
    :prog: tidepool
    :func: _get_parser
 
