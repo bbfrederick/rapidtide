@@ -395,7 +395,7 @@ def rapidtide_main(argparsingfunc):
         rt_outfloattype = "float32"
         rt_outfloatset = np.float32
 
-    # set set the number of worker processes if multiprocessing
+    # set the number of worker processes if multiprocessing
     if optiondict["nprocs"] < 1:
         optiondict["nprocs"] = tide_multiproc.maxcpus(reservecpu=optiondict["reservecpu"])
 
@@ -1201,7 +1201,7 @@ def rapidtide_main(argparsingfunc):
             tide_io.writenpvecs(trimmedcorrscale, f"{outputname}_corrtimes.txt")
             tide_io.writenpvecs(trimmedmiscale, f"{outputname}_mitimes.txt")
 
-    # allocate all of the data arrays
+    # allocate all the data arrays
     tide_util.logmem("before main array allocation")
     if optiondict["textio"]:
         nativespaceshape = xsize
@@ -2657,7 +2657,7 @@ def rapidtide_main(argparsingfunc):
         )
 
         if optiondict["docvrmap"]:
-            # if we are doing a cvr map, multiply the fitcoeff by 100 so we are in percent
+            # if we are doing a cvr map, multiply the fitcoeff by 100, so we are in percent
             fitcoeff *= 100.0
 
         # calculate the final bandlimited variance
@@ -2773,7 +2773,7 @@ def rapidtide_main(argparsingfunc):
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
-    # Post refinement step 3 - save out all of the important arrays to nifti files
+    # Post refinement step 3 - save out all the important arrays to nifti files
     # write out the options used
     tide_io.writedicttojson(optiondict, f"{outputname}_options.json")
 
