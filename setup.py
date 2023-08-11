@@ -30,29 +30,28 @@ except PermissionError:
     print("can't write to VERSION file - moving on")
 
 
-addtidepool = True
-
 modules_list = [
-    "rapidtide/miscmath",
-    "rapidtide/correlate",
-    "rapidtide/filter",
-    "rapidtide/fit",
-    "rapidtide/io",
-    "rapidtide/resample",
-    "rapidtide/stats",
-    "rapidtide/util",
-    "rapidtide/multiproc",
+    "rapidtide/OrthoImageItem",
+    "rapidtide/calccoherence",
     "rapidtide/calcnullsimfunc",
     "rapidtide/calcsimfunc",
-    "rapidtide/calccoherence",
-    "rapidtide/happy_supportfuncs",
-    "rapidtide/simfuncfit",
-    "rapidtide/peakeval",
-    "rapidtide/helper_classes",
-    "rapidtide/glmpass",
+    "rapidtide/correlate",
     "rapidtide/dlfilter",
-    "rapidtide/wiener",
+    "rapidtide/filter",
+    "rapidtide/fit",
+    "rapidtide/glmpass",
+    "rapidtide/happy_supportfuncs",
+    "rapidtide/helper_classes",
+    "rapidtide/io",
+    "rapidtide/miscmath",
+    "rapidtide/multiproc",
+    "rapidtide/peakeval",
     "rapidtide/refine",
+    "rapidtide/resample",
+    "rapidtide/simfuncfit",
+    "rapidtide/stats",
+    "rapidtide/util",
+    "rapidtide/wiener",
     "rapidtide/_version",
     "rapidtide/workflows/aligntcs",
     "rapidtide/workflows/fdica",
@@ -71,13 +70,11 @@ modules_list = [
     "rapidtide/workflows/rapidtide_parser",
     "rapidtide/workflows/roisummarize",
     "rapidtide/workflows/showtc",
+    "rapidtide/workflows/tidepool",
     "rapidtide/workflows/utils",
+    "rapidtide/tidepoolTemplate",
+    "rapidtide/tidepoolTemplate_alt",
 ]
-
-if addtidepool:
-    modules_list.append("rapidtide/tidepoolTemplate")
-    modules_list.append("rapidtide/tidepoolTemplate_alt")
-    modules_list.append("rapidtide/OrthoImageItem")
 
 
 script_list = [
@@ -132,11 +129,9 @@ script_list = [
     "rapidtide/scripts/tcfrom3col",
     "rapidtide/scripts/temporaldecomp",
     "rapidtide/scripts/threeD",
+    "rapidtide/scripts/tidepool",
     "rapidtide/scripts/variabilityizer",
 ]
-
-if addtidepool:
-    script_list.append("rapidtide/scripts/tidepool")
 
 
 setup(
