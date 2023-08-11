@@ -16,13 +16,19 @@
 #   limitations under the License.
 #
 #
-import rapidtide.workflows.aligntcs as aligntcs_workflow
+# import rapidtide.workflows.aligntcs as aligntcs_workflow
+
+# if __name__ == "__main__":
+#    try:
+#        args = aligntcs_workflow._get_parser().parse_args()
+#    except SystemExit:
+#        aligntcs_workflow._get_parser().print_help()
+#        raise
+
+#    aligntcs_workflow.aligntcs_main(args)
+
+import rapidtide.workflows.aligntcs as theworkflow
+import rapidtide.workflows.parser_funcs as pf
 
 if __name__ == "__main__":
-    try:
-        args = aligntcs_workflow._get_parser().parse_args()
-    except SystemExit:
-        aligntcs_workflow._get_parser().print_help()
-        raise
-
-    aligntcs_workflow.aligntcs_main(args)
+    pf.generic_init(theworkflow._get_parser, theworkflow.aligntcs)

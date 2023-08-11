@@ -54,15 +54,17 @@ modules_list = [
     "rapidtide/wiener",
     "rapidtide/refine",
     "rapidtide/_version",
-    "rapidtide/workflows/parser_funcs",
     "rapidtide/workflows/aligntcs",
-    "rapidtide/workflows/niftistats" "rapidtide/workflows/gmscalc",
+    "rapidtide/workflows/gmscalc",
     "rapidtide/workflows/happy_parser",
+    "rapidtide/workflows/histnifti",
     "rapidtide/workflows/niftidecomp",
+    "rapidtide/workflows/niftistats",
+    "rapidtide/workflows/parser_funcs",
     "rapidtide/workflows/rapidtide_parser",
     "rapidtide/workflows/rapidtide2x_parser",
-    "rapidtide/workflows/showtc",
     "rapidtide/workflows/roisummarize",
+    "rapidtide/workflows/showtc",
 ]
 
 if addtidepool:

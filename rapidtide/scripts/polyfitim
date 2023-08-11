@@ -16,8 +16,8 @@
 #   limitations under the License.
 #
 #
-
-import rapidtide.workflows.polyfitim as polyfitim_workflow
+import rapidtide.workflows.parser_funcs as pf
+import rapidtide.workflows.polyfitim as theworkflow
 
 if __name__ == "__main__":
-    polyfitim_workflow.main()
+    pf.generic_init(theworkflow._get_parser, theworkflow.main)

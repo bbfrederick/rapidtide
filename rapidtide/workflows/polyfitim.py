@@ -279,15 +279,7 @@ def polyfitim(
     )
 
 
-def main():
-    try:
-        args = _get_parser().parse_args()
-    except SystemExit:
-        _get_parser().print_help()
-        raise
-
-    print(args)
-
+def main(args):
     polyfitim(
         args.datafile,
         args.datamask,
@@ -297,7 +289,3 @@ def main():
         regionatlas=args.regionatlas,
         order=args.order,
     )
-
-
-if __name__ == "__main__":
-    main()
