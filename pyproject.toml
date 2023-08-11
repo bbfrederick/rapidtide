@@ -1,39 +1,76 @@
-[project]
-name = "rapidtide"
-#version = "0.0.1"
-authors = [
-  { name="Blaise Frederick", email="blaise.frederick@gmail.com" },
-]
-description = "Tools for performing correlation analysis on fMRI data."
-readme = "README.rst"
-requires-python = ">=3.6"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent",
-]
+#[project]
+#name = 'rapidtide'
+#authors = [
+#  { name='Blaise Frederick', email='blaise.frederick@gmail.com' },
+#]
+#version = '0.0.1'
+#description = 'Tools for performing correlation analysis on fMRI data.'
+#readme = 'README.rst'
+#requires-python = '>=3.6'
+#classifiers = [
+#    'Programming Language :: Python :: 3',
+#    'License :: OSI Approved :: Apache Software License',
+#    'Operating System :: OS Independent',
+#]
+#dependencies = [
+#  'numpy',
+#  'scipy',
+#  'pandas',
+#  'scikit-image',
+#  'scikit-learn',
+#  'nibabel',
+#  'nilearn',
+#  'matplotlib',
+#  'pyfftw',
+#  'pyqtgraph<0.13.0',
+#  'pyqt5-sip',
+#  'requests',
+#  'statsmodels',
+#  'pywavelets',
+#  'tqdm',
+##]
+#
+#[project.optional-dependencies]
+#tests = [
+#  'codecov',
+#  'coverage',
+#  'coveralls',
+#  'flake8-black',
+#  'pytest',
+#  'pytest-cov',
+#]
+#docs = [
+#  'sphinx',
+#  'sphinx_rtd_theme',
+#  'sphinx-argparse',
+#  'sphinx-gallery',
+#  'm2r',
+#  'numpydoc',
+#  'recommonmark',
+#  'mistune',
+#]
 
-[project.urls]
-"Homepage" = "https://github.com/bbfrederick/rapidtide"
-"Bug Tracker" = "https://github.com/bbfrederick/rapidtide/issues"
-"Repository" = "https://github.com/bbfrederick/rapidtide.git"
-"Changelog" = "https://github.com/bbfrederick/rapidtide/blob/main/CHANGELOG.md"
+#[project.urls]
+#'Homepage' = 'https://github.com/bbfrederick/rapidtide'
+#'Bug Tracker' = 'https://github.com/bbfrederick/rapidtide/issues'
+#'Repository' = 'https://github.com/bbfrederick/rapidtide.git'
+#'Changelog' = 'https://github.com/bbfrederick/rapidtide/blob/main/CHANGELOG.md'
 
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ['setuptools', 'wheel']
 
 [tool.versioneer]
-VCS = "git"
-style = "pep440"
-versionfile_source = "rapidtide/_version.py"
-versionfile_build = "rapidtide/_version.py"
-tag_prefix = ""
-parentdir_prefix = "rapidtide-"
+VCS = 'git'
+style = 'pep440'
+versionfile_source = 'rapidtide/_version.py'
+versionfile_build = 'rapidtide/_version.py'
+tag_prefix = ''
+parentdir_prefix = 'rapidtide-'
 
 
 [tool.isort]
-profile = "black"
+profile = 'black'
 multi_line_output = 3
 
 
