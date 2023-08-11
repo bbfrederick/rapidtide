@@ -14,7 +14,7 @@ API
     :no-members:
     :no-inherited-members:
 
-.. currentmodule:: rapidtide.workflows
+.. currentmodule:: rapidtide.workflows.rapidtide
 
 .. autosummary::
     :toctree: generated/
