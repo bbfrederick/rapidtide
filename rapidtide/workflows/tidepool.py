@@ -39,6 +39,7 @@ from rapidtide.RapidtideDataset import RapidtideDataset
 
 os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
+
 def _get_parser():
     parser = argparse.ArgumentParser(
         prog="tidepool",
@@ -105,6 +106,7 @@ def _get_parser():
     )
 
     return parser
+
 
 def selectFile():
     global datafileroot

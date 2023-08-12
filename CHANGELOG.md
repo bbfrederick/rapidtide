@@ -7,7 +7,7 @@
 * (simdata) Added separate voxel level and volume level noise specification, and a test script.
 * (documentation) Added information on CVR mapping outputs, updated funding information.
 * (package) Made ArgumentParser initialization uniform to make automatic documentation easier.
-* (package) Removed Python 3.7 suppoort (mostly because it doesn't support all the features of f-strings I use.)
+* (package) Removed Python 3.7 support (mostly because it doesn't support all the features of f-strings I use.)
 
 ## Version 2.5.8 (8/3/23)
 * (rapidtide) --nofitfilt now actually works.  Thank you to https://github.com/poeplau for finding (and fixing) the problem!  Resolves https://github.com/bbfrederick/rapidtide/issues/114
