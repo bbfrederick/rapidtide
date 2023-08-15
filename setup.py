@@ -263,12 +263,12 @@ setup(
             "tests/tmp/.placeholder.txt",
         ],
     },
-    #additional_packagedata={
+    # additional_packagedata={
     #    "testtargets": [
     #        "tests/testtargets/*.txt",
     #        "tests/testtargets/*.nii.gz",
     #    ],
-    #},
+    # },
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
