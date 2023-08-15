@@ -226,13 +226,15 @@ def main():
         for theregion in regionlist:
             theregnums.append(str(theregion))
             theregionvoxels = inputvoxels[np.where(templatevoxels == theregion)]
+            if args.debug:
+                print(theregionvoxels.shape[0])
             if theregionvoxels.shape[0] > 0:
                 regionval = summarize(theregionvoxels, method=args.summarymethod)
                 outputvoxels[np.where(templatevoxels == theregion)] = regionval
                 thevals.append(str(regionval))
             else:
                 if args.debug:
-                    print(f"region {theregion} is empty")
+                    print(f"\tregion {theregion} is empty")
                 thevals.append("None")
         template_hdr["dim"][4] = numregions
         tide_io.savetonifti(
