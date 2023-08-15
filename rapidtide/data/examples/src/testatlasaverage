@@ -1,0 +1,8 @@
+#!/bin/bash
+
+atlasaverage \
+    ../../reference/HCP1200_lag_2mm.nii.gz \
+    ../../reference/JHU-ArterialTerritories-LVL1_space-MNI152NLin6Asym_2mm.nii.gz \
+    ../dst/atlastest \
+    --regionlistfile regionlist \
+    --headerline

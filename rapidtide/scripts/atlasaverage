@@ -92,6 +92,22 @@ def _get_parser():
         default="mean",
     )
     parser.add_argument(
+        "--regionlistfile",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help=(
+            "The name of of a text file containing the integer region numbers to summarize, one per line.  "
+            "Values that do not exist in the atlas will return NaNs."
+        ),
+        default=None,
+    )
+    parser.add_argument(
+        "--headerline",
+        dest="headerline",
+        action="store_true",
+        help="Add a header line to the text output summary of 3D files.",
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -144,16 +160,24 @@ def main():
     numslices = thedims[3]
     numtimepoints = thedims[4]
     numvoxels = int(xsize) * int(ysize) * int(numslices)
+
     templatevoxels = np.reshape(template_data, numvoxels).astype(int)
     inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
-    numregions = np.max(templatevoxels)
-    timecourses = np.zeros((numregions, numtimepoints), dtype="float")
-
     print("reshaped inputdata shape", inputvoxels.shape)
+
+    # decide what regions we will summarize
+    if args.regionlistfile is None:
+        numregions = np.max(templatevoxels)
+        regionlist = range(1, numregions + 1)
+    else:
+        regionlist = tide_io.readvec(args.regionlistfile).astype(int)
+        numregions = len(regionlist)
+    timecourses = np.zeros((numregions, numtimepoints), dtype="float")
+    print(f"{numregions=}, {regionlist=}")
 
     if numtimepoints > 1:
         print("processing 4D input file")
-        for theregion in range(1, numregions + 1):
+        for theregion in regionlist:
             theregionvoxels = inputvoxels[np.where(templatevoxels == theregion)[0], :] + 0.0
             print(
                 "extracting",
@@ -196,17 +220,34 @@ def main():
         tide_io.writenpvecs(timecourses, args.outputfile)
     else:
         print("processing 3D input file")
-        outputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
-        for theregion in range(1, numregions + 1):
+        outputvoxels = inputvoxels * 0.0
+        # outputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
+        theregnums = []
+        thevals = []
+        for theregion in regionlist:
             theregionvoxels = inputvoxels[np.where(templatevoxels == theregion)]
+            print(theregionvoxels.shape)
             regionval = summarize(theregionvoxels, method=args.summarymethod)
             outputvoxels[np.where(templatevoxels == theregion)] = regionval
+            theregnums.append(str(theregion))
+            thevals.append(str(regionval))
         template_hdr["dim"][4] = numregions
         tide_io.savetonifti(
-            outputvoxels.reshape((xsize, ysize, numslices, numregions)),
+            outputvoxels.reshape((xsize, ysize, numslices)),
             template_hdr,
             args.outputfile,
         )
+        if args.headerline:
+            tide_io.writevec(
+                [",".join(theregnums), ",".join(thevals)],
+                f"{args.outputfile}_regionsummaries.txt",
+            )
+        else:
+            tide_io.writevec(
+                [",".join(thevals)],
+                args.outputfile,
+                f"{args.outputfile}_regionsummaries.txt",
+            )
 
 
 if __name__ == "__main__":
