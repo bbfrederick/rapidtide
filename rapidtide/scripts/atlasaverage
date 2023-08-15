@@ -88,9 +88,7 @@ def _get_parser():
         action="store",
         type=str,
         choices=["mean", "median"],
-        help=(
-            "Method to summarize a region.  Choices are 'mean' (default), 'median', and 'sum'."
-        ),
+        help=("Method to summarize a region.  Choices are 'mean' (default), 'median', and 'sum'."),
         default="mean",
     )
     parser.add_argument(
@@ -140,9 +138,7 @@ def main():
         print("will normalize timecourses to p-p deviation of 1.0")
 
     print("loading fmri data")
-    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(
-        args.datafile
-    )
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.datafile)
     if args.debug:
         print("loading template data")
     (
@@ -182,9 +178,7 @@ def main():
     if numtimepoints > 1:
         print("processing 4D input file")
         for theregion in regionlist:
-            theregionvoxels = (
-                inputvoxels[np.where(templatevoxels == theregion)[0], :] + 0.0
-            )
+            theregionvoxels = inputvoxels[np.where(templatevoxels == theregion)[0], :] + 0.0
             print(
                 "extracting",
                 theregionvoxels.shape[1],
@@ -207,9 +201,7 @@ def main():
             elif args.normmethod == "std":
                 thenormfac = np.std(theregionvoxels, axis=1)
             elif args.normmethod == "p2p":
-                thenormfac = np.max(theregionvoxels, axis=1) - np.min(
-                    theregionvoxels, axis=1
-                )
+                thenormfac = np.max(theregionvoxels, axis=1) - np.min(theregionvoxels, axis=1)
             else:
                 print("illegal normalization method", args.normmethod)
                 _get_parser().print_help()
@@ -239,6 +231,8 @@ def main():
                 outputvoxels[np.where(templatevoxels == theregion)] = regionval
                 thevals.append(str(regionval))
             else:
+                if args.debug:
+                    print(f"region {theregion} is empty")
                 thevals.append("None")
         template_hdr["dim"][4] = numregions
         tide_io.savetonifti(
