@@ -1,4 +1,5 @@
-recursive-include cloud *
+include cloud/*
+include VERSION
 exclude rapidtide/data/examples
 exclude rapidtide/workflows/phaseproject.py
 include *.md *.rst 

@@ -1,17 +1,26 @@
+[build-system]
+requires = ['setuptools', 'wheel', 'versioneer-518']
+build-backend = 'setuptools.build_meta'
+
 [project]
 name = 'rapidtide'
+description = 'Tools for performing correlation analysis on fMRI data.'
 authors = [
   { name='Blaise Frederick', email='blaise.frederick@gmail.com' },
 ]
-dynamic = ['version']
-description = 'Tools for performing correlation analysis on fMRI data.'
 readme = 'README.rst'
-requires-python = '>=3.8'
 classifiers = [
-    'Programming Language :: Python :: 3',
-    'License :: OSI Approved :: Apache Software License',
     'Operating System :: OS Independent',
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Science/Research',
+    'Topic :: Scientific/Engineering :: Image Recognition',
+    'License :: OSI Approved :: Apache Software License',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
 ]
+requires-python = '>=3.8'
 dependencies = [
   'numpy',
   'scipy',
@@ -29,9 +38,17 @@ dependencies = [
   'pywavelets',
   'tqdm',
 ]
+dynamic = ['version']
+
+[project.urls]
+'Homepage' = 'https://github.com/bbfrederick/rapidtide'
+'Bug Tracker' = 'https://github.com/bbfrederick/rapidtide/issues'
+'Repository' = 'https://github.com/bbfrederick/rapidtide.git'
+'Documentation' = 'https://rapidtide.readthedocs.io'
+'Changelog' = 'https://github.com/bbfrederick/rapidtide/blob/main/CHANGELOG.md'
 
 [project.optional-dependencies]
-tests = [
+test = [
   'codecov',
   'coverage',
   'coveralls',
@@ -39,7 +56,7 @@ tests = [
   'pytest',
   'pytest-cov',
 ]
-docs = [
+doc = [
   'sphinx',
   'sphinx_rtd_theme',
   'sphinx-argparse',
@@ -50,30 +67,27 @@ docs = [
   'mistune',
 ]
 
-[project.urls]
-'Homepage' = 'https://github.com/bbfrederick/rapidtide'
-'Bug Tracker' = 'https://github.com/bbfrederick/rapidtide/issues'
-'Repository' = 'https://github.com/bbfrederick/rapidtide.git'
-'Changelog' = 'https://github.com/bbfrederick/rapidtide/blob/main/CHANGELOG.md'
+#[project.scripts]
+#rapidtide = 'rapidtide.scripts.rapidtide:entrypoint'
+#tidepool = 'rapidtide.scripts.tidepool:entrypoint'
+#calcicc = 'rapidtide.scripts.calcicc:main'
 
+[tool.setuptools]
+include-package-data = true 
 
-[build-system]
-requires = ['setuptools', 'wheel', 'versioneer-518']
-build-backend = 'setuptools.build_meta'
+[tool.setuptools.packages.find]
+include = ['rapidtide', 'cloud']
 
-[tool.versioneer]
-VCS = 'git'
-style = 'pep440'
-versionfile_source = 'rapidtide/_version.py'
-versionfile_build = 'rapidtide/_version.py'
-tag_prefix = ''
-parentdir_prefix = 'rapidtide-'
+[tool.setuptools.package-data]
+rapidtide = ['rapidtide/*.py', 'rapidtide/workflows/*.py', 'rapidtide/scripts/*']
 
+[tool.setuptools.exclude-package-data]
+rapidtide = ['.eggs', '.git', '.github', '.pytest_cache', 'rapidtide/candidatetests', 'rapidtide/disabledtests', 'rapidtide/data/examples']
 
-[tool.isort]
-profile = 'black'
-multi_line_output = 3
-
+# Aliases
+docs = ['rapidtide[doc]']
+tests = ['rapidtide[test]']
+all = ['rapidtide[docs,tests]']
 
 [tool.black]
 line-length = 99
@@ -99,3 +113,15 @@ exclude = '''
   | rapidtide/data/examples
 )
 '''
+
+[tool.isort]
+profile = 'black'
+multi_line_output = 3
+
+[tool.versioneer]
+VCS = 'git'
+style = 'pep440'
+versionfile_source = 'rapidtide/_version.py'
+versionfile_build = 'rapidtide/_version.py'
+tag_prefix = ''
+parentdir_prefix = 'rapidtide-'
