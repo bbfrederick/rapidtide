@@ -10,12 +10,6 @@ RUN pip install tensorflow
 # hack to get around the super annoying "urllib3 doesn't match" warning
 RUN pip install --upgrade --force-reinstall requests "certifi>=2022.12.07"
 
-# Create a shared $HOME directory
-RUN useradd -m -s /bin/bash -G users rapidtide
-WORKDIR /home/rapidtide
-ENV HOME="/home/rapidtide"
-
-
 # Install rapidtide
 COPY . /src/rapidtide
 RUN cd /src/rapidtide && \
@@ -27,6 +21,11 @@ RUN cd /src/rapidtide/rapidtide/data/examples/src && \
 # clean up
 RUN mamba clean -y --all
 RUN pip cache purge
+
+# Create a shared $HOME directory
+RUN useradd -m -s /bin/bash -G users rapidtide
+WORKDIR /home/rapidtide
+ENV HOME="/home/rapidtide"
 
 ENV IS_DOCKER_8395080871=1
 
