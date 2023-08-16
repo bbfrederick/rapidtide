@@ -37,6 +37,7 @@ modules_list = [
     "rapidtide/calcsimfunc",
     "rapidtide/correlate",
     "rapidtide/dlfilter",
+    "rapidtide/externaltools",
     "rapidtide/filter",
     "rapidtide/fit",
     "rapidtide/glmpass",

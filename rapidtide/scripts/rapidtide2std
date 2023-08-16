@@ -19,10 +19,9 @@
 import argparse
 import glob
 import os
-import subprocess
 import sys
 
-import rapidtide.util as tide_util
+import rapidtide.externaltools as tide_exttools
 
 fsldir = os.environ.get("FSLDIR")
 if fsldir is not None:
@@ -32,37 +31,6 @@ if fsldir is not None:
 else:
     print("FSL directory not found - aborting")
     sys.exit()
-
-c3dexists = tide_util.isexecutable("c3d_affine_tool")
-print("c3dexists =", c3dexists)
-antsexists = tide_util.isexecutable("antsApplyTransforms")
-print("antsexists =", antsexists)
-
-
-def makefslcmd(theinputfile, reftarget, xform, outputname, warpfile=None):
-    thecommand = []
-    if warpfile is None:
-        print("doing linear transformation")
-        thecommand.append(fslsubcmd)
-        thecommand.append(flirtcmd)
-        thecommand.append("-in")
-        thecommand.append(theinputfile)
-        thecommand.append("-ref")
-        thecommand.append(reftarget)
-        thecommand.append("-applyxfm")
-        thecommand.append("-init")
-        thecommand.append(xform)
-        thecommand.append("-out")
-        thecommand.append(outputname)
-    else:
-        print("doing nonlinear transformation")
-        thecommand.append(fslsubcmd)
-        thecommand.append(applywarpcmd)
-        thecommand.append("--ref=" + reftarget)
-        thecommand.append("--in=" + theinputfile)
-        thecommand.append("--out=" + outputname)
-        thecommand.append("--warp=" + warpfile)
-    return thecommand
 
 
 def _get_parser():
@@ -174,14 +142,15 @@ def main():
         thepath, thebase = os.path.split(inputname)
         if os.path.isfile(inputname):
             outputname = os.path.abspath(os.path.join(thepath, outputtag[1:] + thebase))
-            thecommand = makefslcmd(
-                inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile
+            thecommand = tide_exttools.makeflirtcmd(
+                inputname,
+                reftarget,
+                xformfuncmat,
+                outputname,
+                warpfile=warpfuncfile,
+                cluster=True,
             )
-
-            if args.preponly:
-                print(" ".join(thecommand))
-            else:
-                subprocess.call(thecommand)
+            tide_exttools.runcmd(thecommand, fake=args.preponly)
         else:
             print("file", inputname, "does not exist - exiting")
         sys.exit(0)
@@ -219,14 +188,15 @@ def main():
             outputname = os.path.abspath(
                 os.path.join(theoutputdir, subjroot + outputtag + themap + ".nii.gz")
             )
-            thecommand = makefslcmd(
-                inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile
+            thecommand = tide_exttools.makeflirtcmd(
+                inputname,
+                reftarget,
+                xformfuncmat,
+                outputname,
+                warpfile=warpfuncfile,
+                cluster=True,
             )
-
-            if args.preponly:
-                print(" ".join(thecommand))
-            else:
-                subprocess.call(thecommand)
+            tide_exttools.runcmd(thecommand, fake=args.preponly)
 
     for themap in theanatmaps:
         try:
@@ -248,12 +218,14 @@ def main():
                             0
                         ]
                     )
-                    thecommand = makefslcmd(inputname, reftarget, xform, outputname)
-
-                if args.preponly:
-                    print(" ".join(thecommand))
-                else:
-                    subprocess.call(thecommand)
+                    thecommand = tide_exttools.makeflirtcmd(
+                        inputname,
+                        reftarget,
+                        xform,
+                        outputname,
+                        cluster=True,
+                    )
+                tide_exttools.runcmd(thecommand, fake=args.preponly)
         except:
             print("no hires anatomic found - skipping")
 
