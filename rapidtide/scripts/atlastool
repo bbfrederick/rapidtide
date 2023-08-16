@@ -153,7 +153,8 @@ def main():
         _get_parser().print_help()
         raise
 
-    print(args)
+    if args.debug:
+        print(args)
 
     print("loading template data")
     (
