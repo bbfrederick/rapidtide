@@ -33,6 +33,7 @@ rapidtide \
         --nprocs -1 \
         --passes 3 \
         --nofitfilt \
+        --acfix \
         --similaritymetric hybrid \
         --norefinedespeckled \
         --filterband lfo \

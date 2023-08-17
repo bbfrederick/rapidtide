@@ -476,6 +476,7 @@ def _get_parser():
         default=False,
     )
 
+
     # Correlation options
     corr = parser.add_argument_group("Correlation options")
     corr.add_argument(
@@ -1190,6 +1191,13 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
+        "--acfix",
+        dest="fix_autocorrelation",
+        action="store_true",
+        help=("Check probe regressor for autocorrelations in order to disambiguate peak location."),
+        default=False,
+    )
+    experimental.add_argument(
         "--negativegradient",
         dest="negativegradient",
         action="store_true",
@@ -1222,13 +1230,6 @@ def _get_parser():
         dest="dodispersioncalc",
         action="store_true",
         help=("Generate extra data during refinement to " "allow calculation of dispersion."),
-        default=False,
-    )
-    experimental.add_argument(
-        "--acfix",
-        dest="fix_autocorrelation",
-        action="store_true",
-        help=("Perform a secondary correlation to " "disambiguate peak location. Experimental."),
         default=False,
     )
     experimental.add_argument(
