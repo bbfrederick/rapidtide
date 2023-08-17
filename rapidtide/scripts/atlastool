@@ -198,8 +198,11 @@ def main():
         slop = 0.1
         print("going from 3d to 4d")
         if args.maxval is not None:
+            print(f"using a maxval of {args.maxval}")
             np.where(template_data > args.maxval, 0, template_data)
         numregions = np.floor(np.max(template_data)).astype(np.uint16)
+        if args.debug:
+            print(f"numregions is {numregions}")
         rs_template = np.reshape(template_data, numvoxels)
         templatevoxels = np.zeros((numvoxels, numregions))
         validvoxels = np.where(rs_template > 0)[0]
