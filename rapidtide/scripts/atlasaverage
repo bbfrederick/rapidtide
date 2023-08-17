@@ -257,13 +257,12 @@ def main():
         if args.headerline:
             tide_io.writevec(
                 [",".join(theregnums), ",".join(thevals)],
-                f"{args.outputfile}_regionsummaries.txt",
+                f"{args.outputfile}_regionsummaries.csv",
             )
         else:
             tide_io.writevec(
                 [",".join(thevals)],
-                args.outputfile,
-                f"{args.outputfile}_regionsummaries.txt",
+                f"{args.outputfile}_regionsummaries.csv",
             )
 
 
