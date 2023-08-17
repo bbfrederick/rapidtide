@@ -135,13 +135,24 @@ def _get_parser():
         ),
         default=True,
     )
-    parser.add_argument(
+    debugging = parser.add_argument_group("Debugging options")
+    debugging.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
         help=("Output debugging information"),
         default=False,
     )
+    debugging.add_argument(
+        "--maxval",
+        dest="maxval",
+        action="store",
+        type=lambda x: pf.is_int(parser, x),
+        metavar="MAXVAL",
+        help=("Only process atlas values up to MAXVAL"),
+        default=None,
+    )
+
 
     return parser
 
@@ -176,12 +187,18 @@ def main():
     # make a 4d array
     if numtimepoints > 1:
         # array is already 4d, just reshape it
+        if args.maxval is not None:
+            numtimepoints = args.maxval
+            templatevoxels = np.reshape(template_data[:,:,:,:numtimepoints], (numvoxels, numtimepoints))
+        else:
+            templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints))
         numregions = numtimepoints
-        templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints))
     else:
         # file is 3d, construct a 4d array
         slop = 0.1
         print("going from 3d to 4d")
+        if args.maxval is not None:
+            np.where(template_data > args.maxval, 0, template_data)
         numregions = np.floor(np.max(template_data)).astype(np.uint16)
         rs_template = np.reshape(template_data, numvoxels)
         templatevoxels = np.zeros((numvoxels, numregions))
@@ -315,7 +332,7 @@ def main():
                     print(f"aligning {thisregion}")
                     infile = f"{preroot}_{str(thisregion).zfill(4)}.nii.gz"
                     outfile = f"{postroot}_{str(thisregion).zfill(4)}.nii.gz"
-                    tide_exttools.antsapply(infile, args.targetfile, outfile, thexfm)
+                    tide_exttools.antsapply(infile, args.targetfile, outfile, thexfm, debug=args.debug)
                 mergecmd = os.path.join(fsldir, "bin", "fslmerge")
                 filelist = glob(f"{postroot}_*.nii.gz")
                 if args.debug:
