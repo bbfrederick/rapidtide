@@ -335,7 +335,7 @@ def main():
                     print(f"aligning {thisregion}")
                     infile = f"{preroot}_{str(thisregion).zfill(4)}.nii.gz"
                     outfile = f"{postroot}_{str(thisregion).zfill(4)}.nii.gz"
-                    tide_exttools.antsapply(infile, args.targetfile, outfile, thexfm, debug=args.debug)
+                    tide_exttools.antsapply(infile, args.targetfile, outfile, [thexfm], debug=args.debug)
                 mergecmd = os.path.join(fsldir, "bin", "fslmerge")
                 filelist = glob(f"{postroot}_*.nii.gz")
                 if args.debug:
