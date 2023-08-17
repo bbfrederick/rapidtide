@@ -254,7 +254,7 @@ def main():
         # do the resampling here
         print("resampling to new resolution")
         fsldir = os.environ.get("FSLDIR")
-        targetdir, targetfilename = os.path.split(args.targetfile)
+        outputdir, outputfilename = os.path.split(args.outputtemplatename)
         if args.xfm is None:
             thexfm = os.path.join(fsldir, "data", "atlases", "bin", "eye.mat")
             alignttype = 'flirt'
@@ -265,8 +265,8 @@ def main():
                 aligntype = 'flirt'
             else:
                 aligntype = 'ants'
-        preroot = os.path.join(targetdir, "temppre")
-        postroot = os.path.join(targetdir, "temppost")
+        preroot = os.path.join(outputdir, "temppre")
+        postroot = os.path.join(outputdir, "temppost")
         if fsldir is not None:
             for thisregion in range(numregions):
                 # first write out a temp file with the data
@@ -313,8 +313,8 @@ def main():
             elif aligntype == 'ants':
                 for thisregion in range(numregions):
                     print(f"aligning {thisregion}")
-                    infile = f"{preroot}_{str(thisregion).zfill(4)}"
-                    outfile = f"{postroot}_{str(thisregion).zfill(4)}"
+                    infile = f"{preroot}_{str(thisregion).zfill(4)}.nii.gz"
+                    outfile = f"{postroot}_{str(thisregion).zfill(4)}.nii.gz"
                     tide_exttools.antsapply(infile, args.targetfile, outfile, thexfm)
                 mergecmd = os.path.join(fsldir, "bin", "fslmerge")
                 filelist = glob(f"{postroot}_*.nii.gz")
@@ -323,7 +323,7 @@ def main():
                 sortedlist = sorted(filelist)
                 if args.debug:
                     print(sortedlist)
-                thecommand = [mergecmd, "-t", os.path.join(targetdir, "temppost")] + sortedlist
+                thecommand = [mergecmd, "-t", f"{postroot}"] + sortedlist
                 if args.debug:
                     print(f"executing: {' '.join(thecommand)}")
                 subprocess.call(thecommand)
