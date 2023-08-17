@@ -87,7 +87,7 @@ def makeflirtcmd(inputfile, targetname, xform, outputname, warpfile=None, cluste
     return thecommand
 
 
-def runflirt(inputfile, targetname, xform, outputname, warpfile=None, fake=fake, debug=debug):
+def runflirt(inputfile, targetname, xform, outputname, warpfile=None, fake=False, debug=False):
     thecommand = makeflirtcmd(inputfile, targetname, xform, outputname, warpfile=warpfile)
     runcmd(thecommand, fake=fake, debug=debug)
 

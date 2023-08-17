@@ -26,6 +26,7 @@ import numpy as np
 
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
+import rapidtide.externaltools as tide_exttools
 
 
 def _get_parser():
@@ -210,7 +211,7 @@ def main():
         tempvoxels[int(xsize // 2) + 1 :, :, :, :] *= 2
         templatevoxels = np.reshape(tempvoxels, (numvoxels, numregions))
         newtemplatevoxels = np.zeros((numvoxels, numregions * 2), dtype=np.uint16)
-        if argsLtoR:
+        if args.LtoR:
             prefixes = ["L_", "R_"]
         else:
             prefixes = ["R_", "L_"]
@@ -253,6 +254,19 @@ def main():
         # do the resampling here
         print("resampling to new resolution")
         fsldir = os.environ.get("FSLDIR")
+        targetdir, targetfilename = os.path.split(args.targetfile)
+        if args.xfm is None:
+            thexfm = os.path.join(fsldir, "data", "atlases", "bin", "eye.mat")
+            alignttype = 'flirt'
+        else:
+            thexfm = args.xfm
+            dummy, theext = os.path.splitext(thexfm)
+            if theext == 'mat':
+                aligntype = 'flirt'
+            else:
+                aligntype = 'ants'
+        preroot = os.path.join(targetdir, "temppre")
+        postroot = os.path.join(targetdir, "temppost")
         if fsldir is not None:
             for thisregion in range(numregions):
                 # first write out a temp file with the data
@@ -264,52 +278,66 @@ def main():
                 tide_io.savetonifti(
                     outputvoxels,
                     template_hdr,
-                    f"temppre_{str(thisregion).zfill(4)}",
+                    f"{preroot}_{str(thisregion).zfill(4)}",
                 )
+            if aligntype == 'flirt':
+                mergecmd = os.path.join(fsldir, "bin", "fslmerge")
+                filelist = glob(f"{preroot}_*.nii.gz")
+                if args.debug:
+                    print(filelist)
+                sortedlist = sorted(filelist)
+                if args.debug:
+                    print(sortedlist)
+                thecommand = [mergecmd, "-t", preroot] + sortedlist
+                if args.debug:
+                    print(f"executing: {' '.join(thecommand)}")
+                subprocess.call(thecommand)
 
-            mergecmd = os.path.join(fsldir, "bin", "fslmerge")
-            filelist = glob("temppre_*.nii.gz")
-            if args.debug:
-                print(filelist)
-            sortedlist = sorted(filelist)
-            if args.debug:
-                print(sortedlist)
-            thecommand = [mergecmd, "-t", "temppre"] + sortedlist
-            if args.debug:
-                print(f"executing: {' '.join(thecommand)}")
-            subprocess.call(thecommand)
+                flirtcmd = os.path.join(fsldir, "bin", "flirt")
+                thecommand = []
+                thecommand.append(flirtcmd)
+                thecommand.append("-in")
+                thecommand.append(preroot)
+                thecommand.append("-ref")
+                thecommand.append(args.targetfile)
+                thecommand.append("-applyxfm")
+                thecommand.append("-init")
+                thecommand.append(thexfm)
+                thecommand.append("-out")
+                thecommand.append(postroot)
+                if args.debug:
+                    thecommand.append("-v")
+                    print(f"executing: {' '.join(thecommand)}")
+                subprocess.call(thecommand)
 
-            if args.xfm is None:
-                thexfm = os.path.join(fsldir, "data", "atlases", "bin", "eye.mat")
+            elif aligntype == 'ants':
+                for thisregion in range(numregions):
+                    print(f"aligning {thisregion}")
+                    infile = f"{preroot}_{str(thisregion).zfill(4)}"
+                    outfile = f"{postroot}_{str(thisregion).zfill(4)}"
+                    tide_exttools.antsapply(infile, args.targetfile, outfile, thexfm)
+                mergecmd = os.path.join(fsldir, "bin", "fslmerge")
+                filelist = glob(f"{postroot}_*.nii.gz")
+                if args.debug:
+                    print(filelist)
+                sortedlist = sorted(filelist)
+                if args.debug:
+                    print(sortedlist)
+                thecommand = [mergecmd, "-t", os.path.join(targetdir, "temppost")] + sortedlist
+                if args.debug:
+                    print(f"executing: {' '.join(thecommand)}")
+                subprocess.call(thecommand)
             else:
-                thexfm = args.xfm
-            flirtcmd = os.path.join(fsldir, "bin", "flirt")
-            thecommand = []
-            thecommand.append(flirtcmd)
-            thecommand.append("-in")
-            thecommand.append("temppre")
-            thecommand.append("-ref")
-            thecommand.append(args.targetfile)
-            thecommand.append("-applyxfm")
-            thecommand.append("-init")
-            thecommand.append(thexfm)
-            thecommand.append("-out")
-            thecommand.append("temppost")
+                raise("Illegal alignment type")
             if args.debug:
-                thecommand.append("-v")
-                print(f"executing: {' '.join(thecommand)}")
-            subprocess.call(thecommand)
-
-            if args.debug:
-                print(f"reading back FLIRTed file")
+                print(f"reading back aligned file")
             (
                 template_img,
                 template_data,
                 template_hdr,
                 templatedims,
                 templatesizes,
-            ) = tide_io.readfromnifti("temppost")
-
+            ) = tide_io.readfromnifti(postroot)
             xsize = templatedims[1]
             ysize = templatedims[2]
             numslices = templatedims[3]
