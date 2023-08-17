@@ -1,5 +1,13 @@
 # Release history
 
+## Version 2.6.1 (8/17/23)
+* (rapidtide) Fixed crash when using --acfix option.  Thanks to Jakub Szewczyk for spotting this.  Should resolve https://github.com/bbfrederick/rapidtide/issues/115.
+* (atlasaverage) Added text region summary outputs.
+* (atlastool) Enhancing spatial registration options.
+* (package) Initial steps to implementing a more flexible way of applying external registration tools to data.
+* (package) Moving closer to a single pyproject.toml file with all the packaging information in it.:
+* (Docker) Updated to basecontainer 0.2.1 and added new cleanup operations - the container is now ~30% smaller.
+
 ## Version 2.6.0 (8/10/23)
 * (rapidtide) Added new "--CVR" analysis type to generate calibrated CVR maps when given a CO2 regressor as input.  Thanks to Kristina Zvolanek for the suggestion to add it!
 * (rapidtide) Fixed calculation and output of variance change after GLM filtering.
