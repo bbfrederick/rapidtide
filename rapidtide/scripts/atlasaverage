@@ -92,6 +92,13 @@ def _get_parser():
         default="mean",
     )
     parser.add_argument(
+        "--ignorezeros",
+        dest="ignorezeros",
+        action="store_true",
+        help=("Zero value voxels will not be included in calculation of summary statistics."),
+        default=False,
+    )
+    parser.add_argument(
         "--regionlistfile",
         type=lambda x: pf.is_valid_file(parser, x),
         help=(
@@ -238,8 +245,19 @@ def main():
         for theregion in regionlist:
             theregnums.append(str(theregion))
             theregionvoxels = inputvoxels[np.where(templatevoxels == theregion)]
-            if args.debug:
-                print(theregionvoxels.shape[0])
+            if not args.ignorezeros:
+                theregionvoxels = theregionvoxels[np.where(theregionvoxels != 0.0)]
+                if args.debug:
+                    print(
+                        f"extracting {theregionvoxels.shape[0]} "
+                        f"non-zero voxels from region {theregion} of {numregions}"
+                    )
+            else:
+                if args.debug:
+                    print(
+                        f"extracting {theregionvoxels.shape[0]} "
+                        f"voxels from region {theregion} of {numregions}"
+                    )
             if theregionvoxels.shape[0] > 0:
                 regionval = summarize(theregionvoxels, method=args.summarymethod)
                 outputvoxels[np.where(templatevoxels == theregion)] = regionval
