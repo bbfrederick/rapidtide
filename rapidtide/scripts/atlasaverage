@@ -245,7 +245,7 @@ def main():
         for theregion in regionlist:
             theregnums.append(str(theregion))
             theregionvoxels = inputvoxels[np.where(templatevoxels == theregion)]
-            if not args.ignorezeros:
+            if args.ignorezeros:
                 theregionvoxels = theregionvoxels[np.where(theregionvoxels != 0.0)]
                 if args.debug:
                     print(
