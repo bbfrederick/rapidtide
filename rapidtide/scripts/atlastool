@@ -24,9 +24,9 @@ from glob import glob
 
 import numpy as np
 
+import rapidtide.externaltools as tide_exttools
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
-import rapidtide.externaltools as tide_exttools
 
 
 def _get_parser():
@@ -117,8 +117,8 @@ def _get_parser():
         default=None,
     )
     parser.add_argument(
-        "--removezeros",
-        dest="removezeros",
+        "--removeemptyregions",
+        dest="removeemptyregions",
         action="store_true",
         help=(
             "Remove regions with no voxels, so that label values are consecutive.  "
@@ -152,7 +152,6 @@ def _get_parser():
         help=("Only process atlas values up to MAXVAL"),
         default=None,
     )
-
 
     return parser
 
@@ -189,7 +188,9 @@ def main():
         # array is already 4d, just reshape it
         if args.maxval is not None:
             numtimepoints = args.maxval
-            templatevoxels = np.reshape(template_data[:,:,:,:numtimepoints], (numvoxels, numtimepoints))
+            templatevoxels = np.reshape(
+                template_data[:, :, :, :numtimepoints], (numvoxels, numtimepoints)
+            )
         else:
             templatevoxels = np.reshape(template_data, (numvoxels, numtimepoints))
         numregions = numtimepoints
@@ -258,7 +259,7 @@ def main():
     numnonzero = 0
     threshold = 0.5
     outputlabels = []
-    if args.removezeros:
+    if args.removeemptyregions:
         for i in range(numregions):
             thevolume = 1.0 * templatevoxels[:, i]
             if np.max(thevolume) > threshold:
@@ -277,14 +278,14 @@ def main():
         outputdir, outputfilename = os.path.split(args.outputtemplatename)
         if args.xfm is None:
             thexfm = os.path.join(fsldir, "data", "atlases", "bin", "eye.mat")
-            alignttype = 'flirt'
+            alignttype = "flirt"
         else:
             thexfm = args.xfm
             dummy, theext = os.path.splitext(thexfm)
-            if theext == 'mat':
-                aligntype = 'flirt'
+            if theext == "mat":
+                aligntype = "flirt"
             else:
-                aligntype = 'ants'
+                aligntype = "ants"
         preroot = os.path.join(outputdir, "temppre")
         postroot = os.path.join(outputdir, "temppost")
         if fsldir is not None:
@@ -300,7 +301,7 @@ def main():
                     template_hdr,
                     f"{preroot}_{str(thisregion).zfill(4)}",
                 )
-            if aligntype == 'flirt':
+            if aligntype == "flirt":
                 mergecmd = os.path.join(fsldir, "bin", "fslmerge")
                 filelist = glob(f"{preroot}_*.nii.gz")
                 if args.debug:
@@ -330,12 +331,14 @@ def main():
                     print(f"executing: {' '.join(thecommand)}")
                 subprocess.call(thecommand)
 
-            elif aligntype == 'ants':
+            elif aligntype == "ants":
                 for thisregion in range(numregions):
                     print(f"aligning {thisregion}")
                     infile = f"{preroot}_{str(thisregion).zfill(4)}.nii.gz"
                     outfile = f"{postroot}_{str(thisregion).zfill(4)}.nii.gz"
-                    tide_exttools.antsapply(infile, args.targetfile, outfile, [thexfm], debug=args.debug)
+                    tide_exttools.antsapply(
+                        infile, args.targetfile, outfile, [thexfm], debug=args.debug
+                    )
                 mergecmd = os.path.join(fsldir, "bin", "fslmerge")
                 filelist = glob(f"{postroot}_*.nii.gz")
                 if args.debug:
@@ -348,7 +351,7 @@ def main():
                     print(f"executing: {' '.join(thecommand)}")
                 subprocess.call(thecommand)
             else:
-                raise("Illegal alignment type")
+                raise ("Illegal alignment type")
             if args.debug:
                 print(f"reading back aligned file")
             (
@@ -397,7 +400,7 @@ def main():
     numnonzero = 0
     threshold = 0.5
     finallabels = []
-    if args.removezeros:
+    if args.removeemptyregions:
         for i in range(numregions):
             thevolume = 1.0 * templatevoxels[:, i]
             if np.max(thevolume) > threshold:
