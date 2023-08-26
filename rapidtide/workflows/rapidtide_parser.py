@@ -476,7 +476,6 @@ def _get_parser():
         default=False,
     )
 
-
     # Correlation options
     corr = parser.add_argument_group("Correlation options")
     corr.add_argument(
@@ -1194,7 +1193,9 @@ def _get_parser():
         "--acfix",
         dest="fix_autocorrelation",
         action="store_true",
-        help=("Check probe regressor for autocorrelations in order to disambiguate peak location."),
+        help=(
+            "Check probe regressor for autocorrelations in order to disambiguate peak location."
+        ),
         default=False,
     )
     experimental.add_argument(
