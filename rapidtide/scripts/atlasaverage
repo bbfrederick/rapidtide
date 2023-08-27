@@ -245,12 +245,18 @@ def main():
         for theregion in regionlist:
             theregnums.append(str(theregion))
             theregionvoxels = inputvoxels[np.where(templatevoxels == theregion)]
+            initnum = theregionvoxels.shape[0]
             if args.ignorezeros:
                 theregionvoxels = theregionvoxels[np.where(theregionvoxels != 0.0)]
+                numremoved = theregionvoxels.shape[0] - initnum
+                if numremoved > 0:
+                    extrabit = f" ({numremoved} voxels removed)"
+                else:
+                    extrabit = ""
                 if args.debug:
                     print(
                         f"extracting {theregionvoxels.shape[0]} "
-                        f"non-zero voxels from region {theregion} of {numregions}"
+                        f"non-zero voxels from region {theregion} of {numregions}{extrabit}"
                     )
             else:
                 if args.debug:
