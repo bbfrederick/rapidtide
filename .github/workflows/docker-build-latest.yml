@@ -3,8 +3,7 @@ name: Upload latest to DockerHub
 on:
   workflow_dispatch:
   push:
-    branches:
-      - 'main'
+    branches: [ main, dockermods, dev ]
 
 jobs:
   docker:
@@ -45,4 +44,6 @@ jobs:
           push: true
           sbom: false
           provenance: false
-          tags: fredericklab/rapidtide:latest
+          tags: fredericklab/rapidtide:${{ env.BRANCH }}
+          build-args: |
+            BRANCH=${{ env.BRANCH }}
