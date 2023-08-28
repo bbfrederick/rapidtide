@@ -78,7 +78,7 @@ def happy_main(argparsingfunc):
     else:
         args.runningindocker = True
         args.dockermemlimit = tide_util.findavailablemem()
-        # tide_util.setmemlimit(args.dockermemlimit)
+        tide_util.setmemlimit(args.dockermemlimit)
 
     # Set up loggers for workflow
     setup_logger(

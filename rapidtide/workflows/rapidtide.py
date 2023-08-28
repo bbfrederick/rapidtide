@@ -350,7 +350,7 @@ def rapidtide_main(argparsingfunc):
     else:
         optiondict["runningindocker"] = True
         optiondict["dockermemlimit"] = tide_util.findavailablemem()
-        # tide_util.setmemlimit(optiondict["dockermemlimit"])
+        tide_util.setmemlimit(optiondict["dockermemlimit"])
 
     # Set up loggers for workflow
     setup_logger(
