@@ -118,10 +118,9 @@ def findavailablemem():
             return mem
     else:
         retdata = subprocess.run(["free", "-m"], capture_output=True).stdout.decode().split("\n")
-        free = int((retdata[1].split())[3])
-        swap = int((retdata[2].split())[3])
-        total = (free + swap) * 1024 * 1024
-        return total
+        free = int((retdata[1].split())[3]) * 1024 * 1024
+        swap = int((retdata[2].split())[3]) * 1024 * 1024
+        return free, swap
 
 
 def setmemlimit(memlimit):
