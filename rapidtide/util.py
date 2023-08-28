@@ -21,6 +21,7 @@
 #
 import bisect
 import logging
+import subprocess
 import os
 import platform
 import resource
