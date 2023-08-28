@@ -23,6 +23,7 @@ import bisect
 import logging
 import os
 import platform
+import resource
 import sys
 import time
 from datetime import datetime
@@ -109,6 +110,23 @@ def disablenumba():
 
 
 # --------------------------- Utility functions -------------------------------------------------
+def findavailablemem():
+    if os.path.isfile("/sys/fs/cgroup/memory/memory.limit_in_bytes"):
+        with open("/sys/fs/cgroup/memory/memory.limit_in_bytes") as limit:
+            mem = int(limit.read())
+            return mem
+    else:
+        retdata = subprocess.run(["free", "-m"], capture_output=True).stdout.decode().split("\n")
+        free = int((retdata[1].split())[3])
+        swap = int((retdata[2].split())[3])
+        total = (free + swap) * 1024 * 1024
+        return total
+
+
+def setmemlimit(memlimit):
+    resource.setrlimit(resource.RLIMIT_AS, (memlimit, memlimit))
+
+
 def logmem(msg=None):
     """Log memory usage with a logging object.
 
