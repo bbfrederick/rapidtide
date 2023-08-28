@@ -47,7 +47,7 @@ avoids generating spurious correlations.  For a detailed consideration of this,
 look here [Erdogan2016]_.
 
 
-What is the difference between RIPTiDE and rapidtide?
+What is the difference between RIPTiDe and rapidtide?
 `````````````````````````````````````````````````````
 
 RIPTiDe (Regressor Interpolation at Progressive Time Delays) is the name of
@@ -107,23 +107,61 @@ In order to perform this task, rapidtide does a number of things:
 
 Each of these steps has nuances which will be discussed below.
 
+
 Generation of Masks
-^^^^^^^^^^^^^^^^^^^
+```````````````````
 
-By default, rapidtide calculates masks dynamically at run time.  There are 4 masks used 1) the global mean mask, which determines which voxels are used to generate the initial global mean regressor, 2) The correlation mask, which determines which voxels you actually calculate rapidtide fits in (what you are describing here), 3) the refine mask, which selects which voxels are used to generate a refined regressor for the next fitting pass, and 4) the GLM mask, which determines which voxels have the rapidtide regressors removed.
+By default, rapidtide calculates masks dynamically at run time.  There
+are 4 masks used 1) the global mean mask, which determines which voxels
+are used to generate the initial global mean regressor, 2) The
+correlation mask, which determines which voxels you actually calculate
+rapidtide fits in (what you are describing here), 3) the refine mask,
+which selects which voxels are used to generate a refined regressor for
+the next fitting pass, and 4) the GLM mask, which determines which
+voxels have the rapidtide regressors removed.
 
-Below is a description of how this works currently.  NB: this is not how I THOUGHT is worked - until I just looked at the code just now.  It built up over time, and evolved into something not quite what I designed.  I'm going to fix it up, but this what it's doing as of 2.6.1, which works most of the time, but may not be what you want. 
+Below is a description of how this works currently.  NB: this is not how
+I THOUGHT is worked - until I just looked at the code just now.  It
+built up over time, and evolved into something not quite what I
+designed.  I'm going to fix it up, but this what it's doing as of 2.6.1,
+which works most of the time, but may not be what you want.
 
-The default behavior is to first calculate the correlation mask using nilearn.masking.compute_epi_mask with default values.  This is a complicated function, which I'm using as a bit of a black box.  Documentation for it is here: https://nilearn.github.io/stable/modules/generated/nilearn.masking.compute_epi_mask.html#nilearn.masking.compute_epi_mask.  If you have standard, non-zero-mean fMRI data, it seems to work pretty well, but you can specify your own mask using --corrmask NAME[:VALSPEC] (include any non-zero voxels in NAME in the mask.  If VALSPEC is provided, only include voxels with integral values listed in VALSPEC in the mask).  VALSPEC is a comma separated list of integers (1,2,7,12) and/or integer ranges (2-7,12-15) so you can make masks of complicated combinations of regions from an atlas.  So for example --corrmask mymask.nii.gz:1,7-9,54 would include any voxels in mymask with values of 1, 7, 8, 9, or 54, whereas --corrmask mymask.nii.gz would include any non-zero voxels in mymask.
+The default behavior is to first calculate the correlation mask using
+nilearn.masking.compute_epi_mask with default values.  This is a
+complicated function, which I'm using as a bit of a black box.
+Documentation for it is here:
+https://nilearn.github.io/stable/modules/generated/nilearn.masking.
+compute_epi_mask.html#nilearn.masking.compute_epi_mask.  If you have
+standard, non-zero-mean fMRI data, it seems to work pretty well, but you
+can specify your own mask using --corrmask NAME[:VALSPEC] (include any
+non-zero voxels in NAME in the mask.  If VALSPEC is provided, only
+include voxels with integral values listed in VALSPEC in the mask).
+VALSPEC is a comma separated list of integers (1,2,7,12) and/or integer
+ranges (2-7,12-15) so you can make masks of complicated combinations of
+regions from an atlas.  So for example --corrmask mymask.nii.gz:1,7-9,54
+would include any voxels in mymask with values of 1, 7, 8, 9, or 54,
+whereas --corrmask mymask.nii.gz would include any non-zero voxels in
+mymask.
 
-For the global mean mask:
-If --globalmeaninclude MASK[:VALSPEC] is specified, include all voxels selected by MASK[:VALSPEC].  If it is not specified, include all voxels in the mask.  Then, if --globalmeanexclude MASK[:VALSPEC] is specified, remove any voxels selected by MASK[:VALSPEC] from the mask.  If it is not specified, don't change the mask.
+**For the global mean mask:**
+If --globalmeaninclude MASK[:VALSPEC] is specified, include all voxels
+selected by MASK[:VALSPEC].  If it is not specified, include all voxels
+in the mask.  Then, if --globalmeanexclude MASK[:VALSPEC] is specified,
+remove any voxels selected by MASK[:VALSPEC] from the mask.  If it is
+not specified, don't change the mask.
 
-For the refine mean mask:
-If --refineinclude MASK[:VALSPEC] is specified, include all voxels selected by MASK[:VALSPEC].  If it is not specified, include all voxels in the mask.  Then if --refineexclude MASK[:VALSPEC] is specified, remove any voxels selected by MASK[:VALSPEC] from the mask.  If it is not specified, don't change the mask.  Then multiply by corrmask, since you can't used voxels rwhere rapidtide was not run to do refinement.
+**For the refine mean mask:**
+If --refineinclude MASK[:VALSPEC] is specified, include all voxels
+selected by MASK[:VALSPEC].  If it is not specified, include all voxels
+in the mask.  Then if --refineexclude MASK[:VALSPEC] is specified,
+remove any voxels selected by MASK[:VALSPEC] from the mask.  If it is
+not specified, don't change the mask.  Then multiply by corrmask, since
+you can't used voxels rwhere rapidtide was not run to do refinement.
 
-For the GLM mask:
-Include all voxels, unless you are calculating a CVR map, in which case only perform the calculation on voxels exceeding 25% of the robust mean value (this is weird and will change).
+**For the GLM mask:**
+Include all voxels, unless you are calculating a CVR map, in which case
+only perform the calculation on voxels exceeding 25% of the robust mean
+value (this is weird and will change).
 
 Depending on your data (including pathology), and what you want to accomplish, using the default correlation 
 mask is not idea.  For example, if a subject has obvious pathology, you may want to exclude these voxels
@@ -131,31 +169,39 @@ from being used to generate the intial global mean signal estimate, or from bein
 
 
 Initial Moving Signal Estimation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+````````````````````````````````
+
 
 Moving Signal Preprocessing
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+```````````````````````````
+
 
 Moving Signal Massaging
-^^^^^^^^^^^^^^^^^^^^^^^
+```````````````````````
+
 
 Dataset Preprocessing
-^^^^^^^^^^^^^^^^^^^^^
+`````````````````````
+
 
 Time delay determination
-^^^^^^^^^^^^^^^^^^^^^^^^
+````````````````````````
+
 
 Generating a Better Moving Signal Estimate
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``````````````````````````````````````````
+
 
 Lather, Rinse, Repeat
-^^^^^^^^^^^^^^^^^^^^^
+`````````````````````
+
 
 Save Useful Parameters
-^^^^^^^^^^^^^^^^^^^^^^
+``````````````````````
+
 
 Regress Out the Moving Signal
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+`````````````````````````````
 
 .. [Tong2019] Tong, Y., Hocke, L.M., and Frederick, B.B., Low Frequency
    Systemic Hemodynamic "Noise" in Resting State BOLD fMRI: Characteristics,
