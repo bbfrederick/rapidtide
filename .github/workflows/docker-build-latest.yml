@@ -47,6 +47,7 @@ jobs:
           push: true
           sbom: false
           provenance: false
-          tags: fredericklab/rapidtide:${{ env.BRANCH }}
+          # tags: fredericklab/rapidtide:${{ env.BRANCH }}
+          tags: fredericklab/rapidtide:latest
           build-args: |
             BRANCH=${{ env.BRANCH }}
