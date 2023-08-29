@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:latest
+FROM fredericklab/basecontainer:v0.2.2
 
 # Installing additional precomputed python packages
 # tensorflow seems to really want to install with pip
@@ -8,7 +8,7 @@ RUN mamba install keras
 RUN pip install tensorflow
 
 # hack to get around the super annoying "urllib3 doesn't match" warning
-RUN pip install --upgrade --force-reinstall requests "certifi>=2022.12.07"
+RUN pip install --upgrade --force-reinstall requests "certifi>=2023.7.22"
 
 # Install rapidtide
 COPY . /src/rapidtide
