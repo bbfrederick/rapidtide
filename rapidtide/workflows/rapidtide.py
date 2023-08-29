@@ -342,6 +342,16 @@ def rapidtide_main(argparsingfunc):
     # create the canary file
     Path(f"{outputname}_ISRUNNING.txt").touch()
 
+    # if we are running in a Docker container, make sure we enforce memory limits properly
+    try:
+        testval = os.environ["IS_DOCKER_8395080871"]
+    except KeyError:
+        optiondict["runningindocker"] = False
+    else:
+        optiondict["runningindocker"] = True
+        optiondict["dockermemfree"], optiondict["dockermemswap"] = tide_util.findavailablemem()
+        tide_util.setmemlimit(optiondict["dockermemfree"])
+
     # Set up loggers for workflow
     setup_logger(
         logger_filename=f"{outputname}_log.txt",

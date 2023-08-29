@@ -70,6 +70,16 @@ def happy_main(argparsingfunc):
     slicetimename = args.slicetimename
     outputroot = args.outputroot
 
+    # if we are running in a Docker container, make sure we enforce memory limits properly
+    try:
+        testval = os.environ["IS_DOCKER_8395080871"]
+    except KeyError:
+        args.runningindocker = False
+    else:
+        args.runningindocker = True
+        args.dockermemfree, args.dockermemswap = tide_util.findavailablemem()
+        tide_util.setmemlimit(args.dockermemfree)
+
     # Set up loggers for workflow
     setup_logger(
         logger_filename=f"{outputroot}_log.txt",

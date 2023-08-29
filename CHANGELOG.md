@@ -1,5 +1,11 @@
 # Release history
 
+## Version 2.6.2 (8/29/23)
+* (atlastool) Add ability to use ANTs alignments.
+* (atlasaverage) Add ability to restrict statistics to non-zero voxels.
+* (documentation) Started beefing up the "Theory of operation" section.
+* (Docker) Set memory limits on resource use when running in Docker containers so you don't get silent out of memory failures.
+
 ## Version 2.6.1 (8/17/23)
 * (rapidtide) Fixed crash when using --acfix option.  Thanks to Jakub Szewczyk for spotting this.  Should resolve https://github.com/bbfrederick/rapidtide/issues/115.
 * (atlasaverage) Added text region summary outputs.

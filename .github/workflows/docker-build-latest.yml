@@ -3,8 +3,7 @@ name: Upload latest to DockerHub
 on:
   workflow_dispatch:
   push:
-    branches:
-      - 'main'
+    branches: [ main, dockermods, dev ]
 
 jobs:
   docker:
@@ -14,6 +13,9 @@ jobs:
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
+
+      - name: What
+        run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -45,4 +47,6 @@ jobs:
           push: true
           sbom: false
           provenance: false
-          tags: fredericklab/rapidtide:latest
+          tags: fredericklab/rapidtide:${{ env.BRANCH }}
+          build-args: |
+            BRANCH=${{ env.BRANCH }}
