@@ -21,10 +21,10 @@
 #
 import bisect
 import logging
-import subprocess
 import os
 import platform
 import resource
+import subprocess
 import sys
 import time
 from datetime import datetime
