@@ -130,8 +130,8 @@ The default behavior is to first calculate the correlation mask using
 nilearn.masking.compute_epi_mask with default values.  This is a
 complicated function, which I'm using as a bit of a black box.
 Documentation for it is here:
-https://nilearn.github.io/stable/modules/generated/nilearn.masking.
-compute_epi_mask.html#nilearn.masking.compute_epi_mask.  If you have
+https://nilearn.github.io/stable/modules/generated/nilearn.masking.compute_epi_mask.html#nilearn.masking.compute_epi_mask.  
+If you have
 standard, non-zero-mean fMRI data, it seems to work pretty well, but you
 can specify your own mask using --corrmask NAME[:VALSPEC] (include any
 non-zero voxels in NAME in the mask.  If VALSPEC is provided, only
