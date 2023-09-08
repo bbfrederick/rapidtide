@@ -180,7 +180,7 @@ def main():
     absname = os.path.abspath(thefileroot)
     thepath, thebase = os.path.split(absname)
     theprevpath, theprevbase = os.path.split(thepath)
-    subjroot = thebase[:-15]
+    subjroot = thebase[:-25]
     print("SUBJROOT:", subjroot)
 
     for themap in thefmrimaps:
