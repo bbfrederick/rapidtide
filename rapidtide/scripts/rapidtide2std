@@ -156,26 +156,26 @@ def main():
         sys.exit(0)
 
     theoutputdir = os.path.join(os.path.abspath("."), args.outputdir)
-    thefileroot = glob.glob(os.path.join(args.inputfileroot + "*corrout.nii.gz"))[0]
+    thefileroot = glob.glob(os.path.join(args.inputfileroot + "*desc-corrout_info.nii.gz"))[0]
 
     thefmrimaps = [
-        "lagtimes",
-        "lagstrengths",
-        "lagsigma",
-        "MTT",
-        "lagmask",
-        "refinemask",
-        "R2",
-        "fitNorm",
-        "fitcoff",
-        "p_lt_0p050_mask",
-        "p_lt_0p010_mask",
-        "p_lt_0p005_mask",
-        "p_lt_0p001_mask",
+        "desc-maxtime_map",
+        "desc-maxcorr_map",
+        "desc-maxwidth_map",
+        "desc-MTT_map",
+        "desc-corrfit_mask",
+        "desc-refine_mask",
+        "desc-maxcorrsq_map",
+        "desc-lfofilterNorm_map",
+        "desc-lfofilterCoeff_map",
+        "desc-plt0p050_mask",
+        "desc-plt0p010_mask",
+        "desc-plt0p005_mask",
+        "desc-plt0p001_mask",
     ]
 
     if args.all:
-        thefmrimaps.append("corrout")
+        thefmrimaps.append("desc-corrout_info")
 
     absname = os.path.abspath(thefileroot)
     thepath, thebase = os.path.split(absname)
