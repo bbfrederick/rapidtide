@@ -181,6 +181,7 @@ def main():
     thepath, thebase = os.path.split(absname)
     theprevpath, theprevbase = os.path.split(thepath)
     subjroot = thebase[:-15]
+    print("SUBJROOT:", subjroot)
 
     for themap in thefmrimaps:
         inputname = os.path.abspath(os.path.join(thepath, subjroot + "_" + themap + ".nii.gz"))
