@@ -115,7 +115,7 @@ def findavailablemem():
     if os.path.isfile("/sys/fs/cgroup/memory/memory.limit_in_bytes"):
         with open("/sys/fs/cgroup/memory/memory.limit_in_bytes") as limit:
             mem = int(limit.read())
-            return mem
+            return mem, mem
     else:
         retdata = subprocess.run(["free", "-m"], capture_output=True).stdout.decode().split("\n")
         free = int((retdata[1].split())[3]) * 1024 * 1024
