@@ -2,6 +2,8 @@
 
 ## Version 2.6.3 (9/13/23)
 * Mass merge of a bunch of dependabot PRs.
+* (rapidtide) Fixed return values from findavailablemem() when running in a Docker container with cgroups v1.  Thank you to Jeffrey N Stout for finding this.  Should resolve https://github.com/bbfrederick/rapidtide/issues/122. 
+* (Docker) Updated to basecontainer 0.2.3.
 
 ## Version 2.6.2 (8/29/23)
 * (atlastool) Add ability to use ANTs alignments.
