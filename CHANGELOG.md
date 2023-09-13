@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.6.3 (9/13/23)
+* Mass merge of a bunch of dependabot PRs.
+
 ## Version 2.6.2 (8/29/23)
 * (atlastool) Add ability to use ANTs alignments.
 * (atlasaverage) Add ability to restrict statistics to non-zero voxels.
