@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:v0.2.2
+FROM fredericklab/basecontainer:v0.2.3
 
 # Installing additional precomputed python packages
 # tensorflow seems to really want to install with pip
