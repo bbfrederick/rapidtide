@@ -1075,7 +1075,7 @@ def readcsv(inputfilename, debug=False):
 
     # Check to see if the first element is a float
     try:
-        dummy = np.float(df.columns[0])
+        dummy = float(df.columns[0])
 
         # if we got to here, reread the data, but assume there is no header line
         if debug:
