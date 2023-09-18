@@ -87,7 +87,7 @@ def _get_parser():
         dest="summarymethod",
         action="store",
         type=str,
-        choices=["mean", "median"],
+        choices=["mean", "median", "sum"],
         help=("Method to summarize a region.  Choices are 'mean' (default), 'median', and 'sum'."),
         default="mean",
     )
