@@ -80,7 +80,7 @@ def main():
     # prepare the output timepoint list
     outputstarttime = inputstarttime
     outputendtime = inputendtime
-    numoutputtrs = np.int(np.ceil((outputendtime - outputstarttime) / args.outputtr) + 1)
+    numoutputtrs = int(np.ceil((outputendtime - outputstarttime) / args.outputtr) + 1)
     if args.debug:
         print(
             "output start,end,tr,numtrs",

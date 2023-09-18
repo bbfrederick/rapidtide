@@ -284,7 +284,7 @@ class FastResampler:
             self.hires_y[
                 int(self.padtime // self.hiresstep)
                 + 1 : -(int(self.padtime // self.hiresstep) + 1)
-            ] = signal.resample_poly(timecourse, np.int(self.upsampleratio * 10), 10)
+            ] = signal.resample_poly(timecourse, int(self.upsampleratio * 10), 10)
         elif method == "fourier":
             self.hires_y = 0.0 * self.hires_x
             self.hires_y[
