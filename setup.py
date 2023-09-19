@@ -87,6 +87,7 @@ script_list = [
     "rapidtide/scripts/calcttest",
     "rapidtide/scripts/calctexticc",
     "rapidtide/scripts/ccorrica",
+    "rapidtide/scripts/diffrois",
     "rapidtide/scripts/endtidalproc",
     "rapidtide/scripts/fdica",
     "rapidtide/scripts/filtnifti",

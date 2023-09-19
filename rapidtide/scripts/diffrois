@@ -1,0 +1,107 @@
+#!/usr/bin/env python
+
+import argparse
+
+import nibabel as nib
+import numpy as np
+import pandas as pd
+
+import rapidtide.io as tide_io
+from rapidtide.workflows.parser_funcs import is_float, is_valid_file
+
+
+def _get_parser():
+    """
+    Argument parser for diffrois
+    """
+    parser = argparse.ArgumentParser(
+        prog="diffrois",
+        description="Create matrices showing the difference in values between ROIs in a CSV file.",
+        allow_abbrev=False,
+    )
+
+    # Required arguments
+    parser.add_argument(
+        "datafile",
+        type=lambda x: is_valid_file(parser, x),
+        help="The name of the CSV file containing the ROI data.  Assumes a 1 line header row.",
+    )
+    parser.add_argument("outputroot", help="The root name for the output nifti files")
+
+    # Optional arguments
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Output debugging information."),
+        default=False,
+    )
+
+    return parser
+
+
+def main():
+    # grab the command line arguments then pass them off.
+    try:
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
+
+    keyfile = None
+
+    df = pd.read_csv(args.datafile)
+
+    theregions = np.array(df.columns[1:].values)
+    numregions = len(theregions)
+    print(theregions)
+
+    outlist = theregions
+
+    thelabels = df["Region"].values
+    numlabels = len(thelabels)
+    print(thelabels)
+
+    colkeys = {}
+    if keyfile is not None:
+        with open(keyfile) as thefile:
+            for idx, region in enumerate(thefile):
+                colkeys[region] = idx
+    else:
+        for idx, region in enumerate(theregions):
+            colkeys[region] = idx
+
+    thediffs = np.zeros((numregions, numregions, 1, numlabels), dtype=float)
+    themask = np.ones((numregions, numregions, 1, numlabels), dtype=int)
+    for z in range(numlabels):
+        print(z)
+        for i in range(numregions):
+            for j in range(i, numregions):
+                ival = df[outlist[i]].values[z]
+                jval = df[outlist[j]].values[z]
+                # print(z, i, j, ival, jval)
+                if (ival == "None") or (jval == "None"):
+                    themask[i, j, 0, z] = 0
+                    themask[j, i, 0, z] = 0
+                else:
+                    thediffs[i, j, 0, z] = float(ival) - float(jval)
+                    thediffs[j, i, 0, z] = float(ival) - float(jval)
+
+    outputaffine = np.eye(4)
+    init_img = nib.Nifti1Image(thediffs, outputaffine)
+    init_hdr = init_img.header
+    init_sizes = init_hdr["pixdim"]
+    tide_io.savetonifti(
+        thediffs,
+        init_hdr,
+        args.outputroot + "_diffs",
+    )
+    tide_io.savetonifti(
+        themask,
+        init_hdr,
+        args.outputroot + "_mask",
+    )
+
+
+if __name__ == "__main__":
+    main()
