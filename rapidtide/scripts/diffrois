@@ -26,7 +26,7 @@ def _get_parser():
         type=lambda x: is_valid_file(parser, x),
         help="The name of the CSV file containing the ROI data.  Assumes a 1 line header row.",
     )
-    parser.add_argument("outputroot", help="The root name for the output files")
+    parser.add_argument("outputroot", help="The root name for the output files.")
 
     # Optional arguments
     parser.add_argument(
