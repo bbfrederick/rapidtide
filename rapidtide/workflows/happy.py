@@ -33,6 +33,7 @@ import rapidtide.glmpass as tide_glmpass
 import rapidtide.happy_supportfuncs as happy_support
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
+import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
@@ -194,9 +195,8 @@ def happy_main(argparsingfunc):
 
     # make and save a mask of the voxels to process based on image intensity
     tide_util.logmem("before mask creation")
-    mask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
-    # mask = np.uint16(tide_stats.makemask(np.mean(fmri_data[:, :], axis=1),
-    #                                     threshpct=args.maskthreshpct))
+    # mask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
+    mask = np.uint16(tide_mask.makeepimask(nim).dataobj.reshape(numspatiallocs))
     validvoxels = np.where(mask > 0)[0]
     theheader = copy.deepcopy(nim_hdr)
     theheader["dim"][4] = 1

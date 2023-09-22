@@ -44,6 +44,7 @@ modules_list = [
     "rapidtide/happy_supportfuncs",
     "rapidtide/helper_classes",
     "rapidtide/io",
+    "rapidtide/maskutil",
     "rapidtide/miscmath",
     "rapidtide/multiproc",
     "rapidtide/peakeval",

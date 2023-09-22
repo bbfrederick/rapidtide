@@ -41,6 +41,7 @@ import rapidtide.fit as tide_fit
 import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
+import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.peakeval as tide_peakeval
@@ -86,27 +87,6 @@ def memcheckpoint(message):
     print(message)
 
 
-def maketmask(filename, timeaxis, maskvector, debug=False):
-    inputdata = tide_io.readvecs(filename)
-    theshape = np.shape(inputdata)
-    if theshape[0] == 1:
-        # this is simply a vector, one per TR.  If the value is nonzero, include the point, otherwise don't
-        if theshape[1] == len(timeaxis):
-            maskvector = np.where(inputdata[0, :] > 0.0, 1.0, 0.0)
-        else:
-            raise ValueError("tmask length does not match fmri data")
-    else:
-        maskvector *= 0.0
-        for idx in range(0, theshape[1]):
-            starttime = inputdata[0, idx]
-            endtime = starttime + inputdata[1, idx]
-            startindex = np.max((bisect.bisect_left(timeaxis, starttime), 0))
-            endindex = np.min((bisect.bisect_right(timeaxis, endtime), len(maskvector) - 1))
-            maskvector[startindex:endindex] = 1.0
-            LGR.info(f"{starttime}, {startindex}, {endtime}, {endindex}")
-    return maskvector
-
-
 def numpy2shared(inarray, thetype, debug=False):
     thesize = inarray.size
     theshape = inarray.shape
@@ -138,95 +118,6 @@ def allocshared(theshape, thetype):
     outarray = np.frombuffer(outarray_shared, dtype=thetype, count=thesize)
     outarray.shape = theshape
     return outarray, outarray_shared, theshape
-
-
-def readamask(
-    maskfilename,
-    nim_hdr,
-    xsize,
-    istext=False,
-    valslist=None,
-    maskname="the",
-    tolerance=1.0e-3,
-):
-    LGR.verbose(f"readamask called with filename: {maskfilename} vals: {valslist}")
-    if istext:
-        maskarray = tide_io.readvecs(maskfilename).astype("uint16")
-        theshape = np.shape(maskarray)
-        theincludexsize = theshape[0]
-        if not theincludexsize == xsize:
-            raise ValueError(
-                f"Dimensions of {maskname} mask do not match the input data - exiting"
-            )
-    else:
-        themask, maskarray, mask_hdr, maskdims, masksizes = tide_io.readfromnifti(maskfilename)
-        maskarray = np.round(maskarray, 0).astype("uint16")
-        if not tide_io.checkspacematch(mask_hdr, nim_hdr, tolerance=tolerance):
-            raise ValueError(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
-
-    if valslist is not None:
-        tempmask = (0 * maskarray).astype("uint16")
-        for theval in valslist:
-            LGR.verbose(f"looking for voxels matching {theval}")
-            tempmask[np.where(maskarray - theval == 0)] += 1
-        maskarray = np.where(tempmask > 0, 1, 0)
-    return maskarray
-
-
-def getmaskset(
-    maskname,
-    includename,
-    includevals,
-    excludename,
-    excludevals,
-    datahdr,
-    numspatiallocs,
-    istext=False,
-    tolerance=1.0e-3,
-):
-    internalincludemask = None
-    internalexcludemask = None
-
-    if includename is not None:
-        LGR.info(f"constructing {maskname} include mask")
-        theincludemask = readamask(
-            includename,
-            datahdr,
-            numspatiallocs,
-            istext=istext,
-            valslist=includevals,
-            maskname=f"{maskname} include",
-            tolerance=tolerance,
-        )
-        internalincludemask = theincludemask.reshape(numspatiallocs)
-        if tide_stats.getmasksize(internalincludemask) == 0:
-            raise ValueError(
-                f"ERROR: there are no voxels in the {maskname} include mask - exiting"
-            )
-
-    if excludename is not None:
-        LGR.info(f"constructing {maskname} exclude mask")
-        theexcludemask = readamask(
-            excludename,
-            datahdr,
-            numspatiallocs,
-            istext=istext,
-            valslist=excludevals,
-            maskname=f"{maskname} exclude",
-            tolerance=tolerance,
-        )
-        internalexcludemask = theexcludemask.reshape(numspatiallocs)
-        if tide_stats.getmasksize(internalexcludemask) == numspatiallocs:
-            raise ValueError(
-                f"ERROR: the {maskname} exclude mask does not leave any voxels - exiting"
-            )
-
-    if (internalincludemask is not None) and (internalexcludemask is not None):
-        if tide_stats.getmasksize(internalincludemask * (1 - internalexcludemask)) == 0:
-            raise ValueError(
-                f"ERROR: the {maskname} include and exclude masks not leave any voxels between them - exiting"
-            )
-    return internalincludemask, internalexcludemask
 
 
 def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcacomponents=0.8):
@@ -578,7 +469,7 @@ def rapidtide_main(argparsingfunc):
     # read in the optional masks
     tide_util.logmem("before setting masks")
 
-    internalglobalmeanincludemask, internalglobalmeanexcludemask = getmaskset(
+    internalglobalmeanincludemask, internalglobalmeanexcludemask = tide_mask.getmaskset(
         "global mean",
         optiondict["globalmeanincludename"],
         optiondict["globalmeanincludevals"],
@@ -590,7 +481,7 @@ def rapidtide_main(argparsingfunc):
         tolerance=optiondict["spatialtolerance"],
     )
 
-    internalrefineincludemask, internalrefineexcludemask = getmaskset(
+    internalrefineincludemask, internalrefineexcludemask = tide_mask.getmaskset(
         "refine",
         optiondict["refineincludename"],
         optiondict["refineincludevals"],
@@ -602,7 +493,7 @@ def rapidtide_main(argparsingfunc):
         tolerance=optiondict["spatialtolerance"],
     )
 
-    internaloffsetincludemask, internaloffsetexcludemask = getmaskset(
+    internaloffsetincludemask, internaloffsetexcludemask = tide_mask.getmaskset(
         "offset",
         optiondict["offsetincludename"],
         optiondict["offsetincludevals"],
@@ -621,7 +512,7 @@ def rapidtide_main(argparsingfunc):
     threshval = tide_stats.getfracvals(fmri_data[:, :], [0.98])[0] / 25.0
     LGR.info("constructing correlation mask")
     if optiondict["corrmaskincludename"] is not None:
-        thecorrmask = readamask(
+        thecorrmask = tide_mask.readamask(
             optiondict["corrmaskincludename"],
             nim_hdr,
             xsize,
@@ -641,7 +532,7 @@ def rapidtide_main(argparsingfunc):
         else:
             if (np.mean(stdim) < np.mean(meanim)) and not optiondict["nirs"]:
                 LGR.info("generating correlation mask from mean image")
-                corrmask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
+                corrmask = np.uint16(tide_mask.makeepimask(nim).dataobj.reshape(numspatiallocs))
             else:
                 LGR.info("generating correlation mask from std image")
                 corrmask = np.uint16(
@@ -1100,7 +991,9 @@ def rapidtide_main(argparsingfunc):
 
     # prepare the temporal mask
     if optiondict["tmaskname"] is not None:
-        tmask_y = maketmask(optiondict["tmaskname"], reference_x, rt_floatset(reference_y))
+        tmask_y = tide_mask.maketmask(
+            optiondict["tmaskname"], reference_x, rt_floatset(reference_y)
+        )
         tmaskos_y = tide_resample.doresample(
             reference_x, tmask_y, os_fmri_x, method=optiondict["interptype"]
         )
