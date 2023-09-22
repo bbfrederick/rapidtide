@@ -69,16 +69,11 @@ def main():
         _get_parser().print_help()
         raise
 
-    keyfile = None
-
     df = pd.read_csv(args.datafile)
 
     theregions = np.array(df.columns[1:].values)
-    numregions = len(theregions)
     if args.debug:
         print(theregions)
-
-    outlist = theregions
 
     thelabels = df["Region"].values
     numlabels = len(thelabels)
@@ -88,24 +83,29 @@ def main():
     if args.debug:
         print(thelabels)
 
-    colkeys = {}
+    colkeys = []
     if args.keyfile is not None:
         with open(args.keyfile) as thefile:
-            for idx, region in enumerate(thefile):
-                colkeys[region] = idx
+            for region in thefile:
+                colkeys.append(region.strip())
     else:
-        for idx, region in enumerate(theregions):
-            colkeys[region] = idx
+        for region in theregions:
+            colkeys.append(str(region))
 
-    thediffs = np.zeros((numregions, numregions, 1, numlabels), dtype=float)
-    thedemeaneddiffs = np.zeros((numregions, numregions, 1, numlabels), dtype=float)
-    themask = np.ones((numregions, numregions, 1, numlabels), dtype=int)
+    if args.debug:
+        print(f"{colkeys=}")
+
+    numoutregions = len(colkeys)
+
+    thediffs = np.zeros((numoutregions, numoutregions, 1, numlabels), dtype=float)
+    thedemeaneddiffs = np.zeros((numoutregions, numoutregions, 1, numlabels), dtype=float)
+    themask = np.ones((numoutregions, numoutregions, 1, numlabels), dtype=int)
     for z in range(numlabels):
         print(z)
-        for i in range(numregions):
-            for j in range(i, numregions):
-                ival = df[outlist[i]].values[z]
-                jval = df[outlist[j]].values[z]
+        for i in range(numoutregions):
+            for j in range(i, numoutregions):
+                ival = df[colkeys[i]].values[z]
+                jval = df[colkeys[j]].values[z]
                 # print(z, i, j, ival, jval)
                 if (ival == "None") or (jval == "None"):
                     themask[i, j, 0, z] = 0
@@ -129,7 +129,7 @@ def main():
     )
 
     # make some summaries
-    numvox = numregions * numregions
+    numvox = numoutregions * numoutregions
     thediffs_rs = thediffs.reshape((numvox, numlabels))
     themask_rs = themask.reshape((numvox, numlabels))
     themeandiffs_rs = thediffs_rs[:, 0] * 0.0
@@ -139,8 +139,8 @@ def main():
         inputmask = themask_rs[idx, :]
         themeandiffs_rs[idx] = np.mean(inputvec[np.where(inputmask > 0)])
         thestddiffs_rs[idx] = np.std(inputvec[np.where(inputmask > 0)])
-    themeandiffs = themeandiffs_rs.reshape((numregions, numregions, 1, 1))
-    thestddiffs = thestddiffs_rs.reshape((numregions, numregions, 1, 1))
+    themeandiffs = themeandiffs_rs.reshape((numoutregions, numoutregions, 1, 1))
+    thestddiffs = thestddiffs_rs.reshape((numoutregions, numoutregions, 1, 1))
     map_hdr = copy.deepcopy(init_hdr)
     map_hdr["dim"][4] = 1
     map_hdr["pixdim"][4] = 1.0
