@@ -327,7 +327,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--debug",
-        help="ouput additionnal debugging information",
+        help="ouput additional debugging information",
         action="store_true",
     )
 
