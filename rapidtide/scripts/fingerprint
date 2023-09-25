@@ -19,6 +19,7 @@
 import argparse
 import copy
 import os
+import site
 import sys
 
 import numpy as np
@@ -26,8 +27,8 @@ import pandas as pd
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-
-DEFAULTMASKTHRESH = 0.5
+import rapidtide.maskutil as tide_mask
+import rapidtide.util as tide_util
 
 
 def fingerprint_main(
@@ -36,20 +37,17 @@ def fingerprint_main(
     whichatlas,
     outputroot,
     fitorder,
-    themaskname=None,
+    includespec=None,
+    excludespec=None,
     intercept=True,
     entropybins=101,
     entropyrange=None,
-    maskthresh=0.5,
     debug=False,
 ):
     # read the data
-    referencedir = os.path.join(
-        os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0],
-        "rapidtide",
-        "data",
-        "reference",
-    )
+    referencedir = tide_util.findreferencedir()
+    if debug:
+        print(f"Reference directory is {referencedir}")
 
     if whichtemplate == "lag":
         thetemplatename = os.path.join(referencedir, "HCP1200_lag_2mm.nii.gz")
@@ -96,6 +94,8 @@ def fingerprint_main(
     outputroot += f"_template-{whichtemplate}_atlas-{whichatlas}_O{fitorder}"
 
     # read the atlas
+    if debug:
+        print(f"Reading atlas {theatlasname}")
     atlas, atlas_data, atlas_hdr, atlasdims, atlassizes = tide_io.readfromnifti(theatlasname)
     atlaslabelsinput = pd.read_csv(
         theatlasregionsname, delimiter="\t", header=None, names=["Region"]
@@ -127,42 +127,47 @@ def fingerprint_main(
     ) = tide_io.readfromnifti(themapname)
     nx, ny, nz, nummaps = tide_io.parseniftidims(themapdims)
 
-    if themaskname is None:
-        themask_data = None
-    else:
-        if debug:
-            print(f"reading mask file {themaskname}")
+    # process masks
+    if includespec is not None:
         (
-            themask,
-            themask_data,
-            themask_hdr,
-            themaskdims,
-            thetemplatesizes,
-        ) = tide_io.readfromnifti(themaskname)
+            includename,
+            includevals,
+        ) = tide_io.processnamespec(
+            includespec, "Including voxels where ", "in offset calculation."
+        )
+    else:
+        includename = None
+        includevals = None
+    if excludespec is not None:
+        (
+            excludename,
+            excludevals,
+        ) = tide_io.processnamespec(
+            excludespec, "Excluding voxels where ", "from offset calculation."
+        )
+    else:
+        excludename = None
+        excludevals = None
 
-    # check for compatible dimensions
-    if thetemplatename is not None:
-        if not tide_io.checkspacematch(thetemplate_hdr, themap_hdr):
-            raise ValueError(
-                f"Dimensions of {themapname} do not match the atlas dimensions - exiting"
-            )
-    if themask_data is not None:
-        if not tide_io.checkspacematch(themask_hdr, themap_hdr):
-            raise ValueError(
-                f"Dimensions of {themaskname} and {themapname} do not match - exiting"
-            )
+    includemask, excludemask = tide_mask.getmaskset(
+        "anatomic",
+        includename,
+        includevals,
+        excludename,
+        excludevals,
+        themap_hdr,
+        nx * ny * nz,
+    )
+
+    theflatmask = themap_data.reshape((nx * ny * nz)) * 0 + 1
+    if includemask is not None:
+        theflatmask = theflatmask * includemask
+    if excludemask is not None:
+        theflatmask = theflatmask * (1 - excludemask)
 
     # generate the mask
-    themask_data[np.where(themask_data < maskthresh)] = 0.0
-    if nummaps == 1:
-        maskmap = themask_data
-    else:
-        if themaskdims[4] > 1:
-            maskmap = themask_data[:, :, :, 0]
-        else:
-            maskmap = themask_data
-    maskmap[np.where(maskmap < maskthresh)] = 0.0
-    maskmap[np.where(maskmap >= maskthresh)] = 1.0
+    themask_data = theflatmask.reshape((nx, ny, nz))
+    maskmap = themask_data
     maskmap[np.where(atlas_data < 1)] = 0.0
 
     # save the maskmap as nifti
@@ -438,9 +443,26 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--maskname",
-        help="mask defining voxels with valid values",
-        type=is_file,
+        "--includemask",
+        dest="includespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "Only use atlas voxels that are also in file MASK in calculating the fit values "
+            "(if VALSPEC is given, only voxels "
+            "with integral values listed in VALSPEC are used). "
+        ),
+        default=None,
+    )
+
+    parser.add_argument(
+        "--excludemask",
+        dest="excludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "Do not use atlas voxels that are also in file MASK in calculating the fit values "
+            "(if VALSPEC is given, voxels "
+            "with integral values listed in VALSPEC are excluded). "
+        ),
         default=None,
     )
 
@@ -525,15 +547,8 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--maskthresh",
-        help=f"mask threshhold (default is {DEFAULTMASKTHRESH}).",
-        type=float,
-        default=DEFAULTMASKTHRESH,
-    )
-
-    parser.add_argument(
         "--debug",
-        help="output additionnal debugging information",
+        help="output additional debugging information",
         action="store_true",
         default=False,
     )
@@ -570,9 +585,9 @@ if __name__ == "__main__":
         args.outputroot,
         args.fitorder,
         intercept=not (args.nointercept),
-        themaskname=args.maskname,
+        includespec=args.includespec,
+        excludespec=args.excludespec,
         entropybins=args.entropybins,
         entropyrange=args.entropyrange,
-        maskthresh=args.maskthresh,
         debug=args.debug,
     )
