@@ -28,9 +28,7 @@ from nilearn import masking
 import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
 
-LGR = logging.getLogger(__name__)
-TimingLGR = logging.getLogger("TIMING")
-MemoryLGR = logging.getLogger("MEMORY")
+LGR = logging.getLogger("GENERAL")
 
 
 def makeepimask(nim):
@@ -67,7 +65,7 @@ def readamask(
     maskname="the",
     tolerance=1.0e-3,
 ):
-    LGR.verbose(f"readamask called with filename: {maskfilename} vals: {valslist}")
+    LGR.debug(f"readamask called with filename: {maskfilename} vals: {valslist}")
     if istext:
         maskarray = tide_io.readvecs(maskfilename).astype("uint16")
         theshape = np.shape(maskarray)

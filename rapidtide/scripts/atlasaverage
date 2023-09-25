@@ -22,6 +22,7 @@ import sys
 import numpy as np
 
 import rapidtide.io as tide_io
+import rapidtide.maskutil as tide_mask
 import rapidtide.workflows.parser_funcs as pf
 
 
@@ -66,7 +67,7 @@ def _get_parser():
         type=lambda x: pf.is_valid_file(parser, x),
         help="The name of the atlas region NIFTI file",
     )
-    parser.add_argument("outputfile", help="The name of the output NIFTI file.")
+    parser.add_argument("outputroot", help="The root name of the output files.")
 
     # add optional arguments
     parser.add_argument(
@@ -104,6 +105,28 @@ def _get_parser():
         help=(
             "The name of of a text file containing the integer region numbers to summarize, one per line.  "
             "Values that do not exist in the atlas will return NaNs."
+        ),
+        default=None,
+    )
+    parser.add_argument(
+        "--includemask",
+        dest="includespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "Only use atlas voxels that are also in file MASK in calculating the region summaries "
+            "(if VALSPEC is given, only voxels "
+            "with integral values listed in VALSPEC are used). "
+        ),
+        default=None,
+    )
+    parser.add_argument(
+        "--excludemask",
+        dest="excludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "Do not use atlas voxels that are also in file MASK in calculating the region summaries "
+            "(if VALSPEC is given, voxels "
+            "with integral values listed in VALSPEC are excluded). "
         ),
         default=None,
     )
@@ -181,6 +204,43 @@ def main():
     inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
     print("reshaped inputdata shape", inputvoxels.shape)
 
+    # process masks
+    if args.includespec is not None:
+        (
+            args.includename,
+            args.includevals,
+        ) = tide_io.processnamespec(
+            args.includespec, "Including voxels where ", "in offset calculation."
+        )
+    else:
+        args.includename = None
+        args.includevals = None
+    if args.excludespec is not None:
+        (
+            args.excludename,
+            args.excludevals,
+        ) = tide_io.processnamespec(
+            args.excludespec, "Excluding voxels where ", "from offset calculation."
+        )
+    else:
+        args.excludename = None
+        args.excludevals = None
+
+    includemask, excludemask = tide_mask.getmaskset(
+        "anatomic",
+        args.includename,
+        args.includevals,
+        args.excludename,
+        args.excludevals,
+        template_hdr,
+        numvoxels,
+    )
+    themask = inputvoxels[:, 0] * 0 + 1
+    if includemask is not None:
+        themask = themask * includemask
+    if excludemask is not None:
+        themask = themask * (1 - excludemask)
+
     # decide what regions we will summarize
     if args.regionlistfile is None:
         numregions = np.max(templatevoxels)
@@ -194,7 +254,9 @@ def main():
     if numtimepoints > 1:
         print("processing 4D input file")
         for theregion in regionlist:
-            theregionvoxels = inputvoxels[np.where(templatevoxels == theregion)[0], :] + 0.0
+            theregionvoxels = (
+                inputvoxels[np.where(templatevoxels * themask == theregion)[0], :] + 0.0
+            )
             print(
                 "extracting",
                 theregionvoxels.shape[1],
@@ -233,7 +295,7 @@ def main():
                 )
         if args.debug:
             print("timecourses shape:", timecourses.shape)
-        tide_io.writenpvecs(timecourses, args.outputfile)
+        tide_io.writenpvecs(timecourses, args.outputroot)
     else:
         print("processing 3D input file")
         outputvoxels = inputvoxels * 0.0
@@ -244,7 +306,7 @@ def main():
             thevals.append(args.datalabel)
         for theregion in regionlist:
             theregnums.append(str(theregion))
-            theregionvoxels = inputvoxels[np.where(templatevoxels == theregion)]
+            theregionvoxels = inputvoxels[np.where(templatevoxels * themask == theregion)]
             initnum = theregionvoxels.shape[0]
             if args.ignorezeros:
                 theregionvoxels = theregionvoxels[np.where(theregionvoxels != 0.0)]
@@ -276,17 +338,23 @@ def main():
         tide_io.savetonifti(
             outputvoxels.reshape((xsize, ysize, numslices)),
             template_hdr,
-            args.outputfile,
+            args.outputroot,
         )
+        if args.includename is not None or args.excludename is not None:
+            tide_io.savetonifti(
+                (templatevoxels * themask).reshape((xsize, ysize, numslices)),
+                template_hdr,
+                f"{args.outputroot}_maskedatlas",
+            )
         if args.headerline:
             tide_io.writevec(
                 [",".join(theregnums), ",".join(thevals)],
-                f"{args.outputfile}_regionsummaries.csv",
+                f"{args.outputroot}_regionsummaries.csv",
             )
         else:
             tide_io.writevec(
                 [",".join(thevals)],
-                f"{args.outputfile}_regionsummaries.csv",
+                f"{args.outputroot}_regionsummaries.csv",
             )
 
 
