@@ -77,19 +77,21 @@ def readamask(
             )
     else:
         themask, maskarray, mask_hdr, maskdims, masksizes = tide_io.readfromnifti(maskfilename)
+        if not tide_io.checkspacematch(mask_hdr, nim_hdr, tolerance=tolerance):
+            raise ValueError(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
         if thresh is None:
             maskarray = np.round(maskarray, 0).astype("uint16")
         else:
             maskarray = np.where(maskarray > thresh, 1, 0).astype("uint16")
-        if not tide_io.checkspacematch(mask_hdr, nim_hdr, tolerance=tolerance):
-            raise ValueError(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
 
     if valslist is not None:
         tempmask = (0 * maskarray).astype("uint16")
         for theval in valslist:
-            LGR.verbose(f"looking for voxels matching {theval}")
+            LGR.debug(f"looking for voxels matching {theval}")
             tempmask[np.where(maskarray - theval == 0)] += 1
         maskarray = np.where(tempmask > 0, 1, 0)
+
+    maskarray = np.where(maskarray > 0, 1, 0).astype("uint16")
     return maskarray
 
 
@@ -146,7 +148,7 @@ def getmaskset(
 
     if extramask is not None:
         LGR.info(f"reading {maskname} extra mask")
-        theextramask = readamask(
+        internalextramask = readamask(
             extramask,
             datahdr,
             numspatiallocs,
@@ -160,6 +162,17 @@ def getmaskset(
     if (internalincludemask is not None) and (internalexcludemask is not None):
         if tide_stats.getmasksize(internalincludemask * (1 - internalexcludemask)) == 0:
             raise ValueError(
-                f"ERROR: the {maskname} include and exclude masks not leave any voxels between them - exiting"
+                f"ERROR: the {maskname} include and exclude masks do not leave any voxels between them - exiting"
             )
+        if internalextramask is not None:
+            if (
+                tide_stats.getmasksize(
+                    internalincludemask * (1 - internalexcludemask) * internalextramask
+                )
+                == 0
+            ):
+                raise ValueError(
+                    f"ERROR: the {maskname} include, exclude, and extra masks do not leave any voxels between them - exiting"
+                )
+
     return internalincludemask, internalexcludemask, internalextramask
