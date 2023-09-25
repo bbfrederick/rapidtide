@@ -696,7 +696,7 @@ def territorystats(
     theentropies = np.zeros((nummaps, np.max(atlas)))
     if entropyrange is None:
         if inputmask is not None:
-            thevoxels = inputmap(np.where(inputmask))
+            thevoxels = inputmap[np.where(inputmask > 0.0)]
         else:
             thevoxels = inputmap
         entropyrange = [np.min(thevoxels), np.max(thevoxels)]
