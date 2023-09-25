@@ -32,6 +32,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
+import rapidtide.util as tide_util
 from rapidtide.Colortables import *
 
 atlases = {
@@ -475,12 +476,7 @@ class RapidtideDataset:
         self.coordinatespace = coordinatespace
         self.offsettime = offsettime
         self.init_LUT = init_LUT
-        self.referencedir = os.path.join(
-            os.path.split(os.path.split(__file__)[0])[0],
-            "rapidtide",
-            "data",
-            "reference",
-        )
+        self.referencedir = tide_util.findreferencedir()
 
         # check which naming style the dataset has
         if os.path.isfile(self.fileroot + "desc-maxtime_map.nii.gz"):
