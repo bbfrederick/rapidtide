@@ -5,7 +5,7 @@ atlasaverage \
     ../../reference/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm.nii.gz \
     ../dst/atlastest_nomask \
     --ignorezeros \
-    --headerline --debug
+    --headerline
 
 atlasaverage \
     ../../reference/HCP1200_lag_2mm.nii.gz \
@@ -13,4 +13,5 @@ atlasaverage \
     ../dst/atlastest_withmask \
     --ignorezeros \
     --includemask /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
-    --headerline --debug
+    --extramaskname /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
+    --headerline

@@ -3,12 +3,11 @@
 fingerprint \
     ../../reference/HCP1200_lag_2mm.nii.gz \
     ../dst/fingerprint_nomask \
-    --template lag \
-    --debug
+    --template lag
 
 fingerprint \
     ../../reference/HCP1200_lag_2mm.nii.gz \
     ../dst/fingerprint_withmask \
     --includemask /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
-    --template lag \
-    --debug
+    --extramaskname /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
+    --template lag
