@@ -24,6 +24,7 @@ import logging
 import os
 import platform
 import resource
+import site
 import subprocess
 import sys
 import time
@@ -238,6 +239,26 @@ def isexecutable(command):
             os.access(os.path.join(path, command), os.X_OK)
             for path in os.environ["PATH"].split(os.pathsep)
         )
+
+
+def findreferencedir():
+    # Get the list of directories
+    site_packages_dirs = site.getsitepackages()
+
+    # Find the "site-packages" directory in the list
+    for dir in site_packages_dirs:
+        if dir.endswith("site-packages"):
+            sitepackages_dir = dir
+            break
+        else:
+            sitepackages_dir = None
+    referencedir = os.path.join(
+        sitepackages_dir,
+        "rapidtide",
+        "data",
+        "reference",
+    )
+    return referencedir
 
 
 def savecommandline(theargs, thename):
