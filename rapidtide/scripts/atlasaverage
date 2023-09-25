@@ -247,12 +247,32 @@ def main():
         extramask=args.extramaskname,
     )
     themask = inputvoxels[:, 0] * 0 + 1
+    if args.debug:
+        print(f"{themask.shape=}")
     if includemask is not None:
-        themask = themask * includemask
+        themask = themask * includemask.reshape((numvoxels))
+        if args.debug:
+            tide_io.savetonifti(
+                includemask.reshape((xsize, ysize, numslices)),
+                template_hdr,
+                f"{args.outputroot}_includemask",
+            )
     if excludemask is not None:
-        themask = themask * (1 - excludemask)
+        themask = themask * (1 - excludemask.reshape((numvoxels)))
+        if args.debug:
+            tide_io.savetonifti(
+                excludemask.reshape((xsize, ysize, numslices)),
+                template_hdr,
+                f"{args.outputroot}_excludemask",
+            )
     if extramask is not None:
-        themask = themask * extramask
+        themask = themask * extramask.reshape((numvoxels))
+        if args.debug:
+            tide_io.savetonifti(
+                extramask.reshape((xsize, ysize, numslices)),
+                template_hdr,
+                f"{args.outputroot}_extramask",
+            )
 
     # decide what regions we will summarize
     if args.regionlistfile is None:
