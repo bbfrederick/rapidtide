@@ -19,7 +19,6 @@
 import argparse
 import copy
 import os
-import site
 import sys
 
 import numpy as np
@@ -29,6 +28,160 @@ import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.maskutil as tide_mask
 import rapidtide.util as tide_util
+import rapidtide.workflows.parser_funcs as pf
+
+
+def _get_parser():
+    class FullPaths(argparse.Action):
+        """Expand user- and relative-paths"""
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            if values == "":
+                setattr(namespace, self.dest, "__EMPTY__")
+            else:
+                setattr(namespace, self.dest, os.path.abspath(os.path.expanduser(values)))
+
+    # get the command line parameters
+    parser = argparse.ArgumentParser(
+        prog="fingerprint",
+        description=(
+            "Fit a rapidtide output map to a canonical map, by vascular territory, and calculate statistical metrics.\n"
+        ),
+        allow_abbrev=False,
+    )
+    parser.add_argument(
+        "inputfile",
+        help="Rapidtide output map to decompose by vascular territory.  Must be in MNI152NLin6Asym coordinates, 2mm resolution",
+        action=FullPaths,
+        type=lambda x: pf.is_valid_file(parser, x),
+    )
+    parser.add_argument(
+        "outputroot",
+        help="name root for output files",
+        action=FullPaths,
+        type=str,
+    )
+
+    maskopts = parser.add_argument_group("Masking options")
+    maskopts.add_argument(
+        "--includemask",
+        dest="includespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "Only use atlas voxels that are also in file MASK in calculating the fit values "
+            "(if VALSPEC is given, only voxels "
+            "with integral values listed in VALSPEC are used). "
+        ),
+        default=None,
+    )
+    maskopts.add_argument(
+        "--excludemask",
+        dest="excludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "Do not use atlas voxels that are also in file MASK in calculating the fit values "
+            "(if VALSPEC is given, voxels "
+            "with integral values listed in VALSPEC are excluded). "
+        ),
+        default=None,
+    )
+    maskopts.add_argument(
+        "--extramaskname",
+        dest="extramaskname",
+        metavar="MASK",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help=(
+            "Additional mask to apply to select voxels for fitting.  Zero voxels in this mask will be excluded."
+        ),
+        default=None,
+    )
+
+    atlasopts = parser.add_argument_group("Atlas options")
+    atlasopts.add_argument(
+        "--atlas",
+        help=(
+            "Atlas.  Options are: "
+            "ASPECTS - ASPECTS territory atlas; "
+            "ATT - Arterial transit time flow territories; "
+            "JHU1 - Johns Hopkins level 1 probabalistic arterial flow territories, without ventricles (default); "
+            "JHU2 - Johns Hopkins level 2 probabalistic arterial flow territories, without ventricles."
+        ),
+        choices=["ASPECTS", "ATT", "JHU1", "JHU2"],
+        default="JHU1",
+    )
+    atlasopts.add_argument(
+        "--customatlas",
+        help=(
+            "The name of a custom atlas file.  The file must be a 3D NIFTI "
+            "file in MNI152NLin6Asym space, 2mm isotropic resolution.  The file values "
+            "must be consecutive integers from 1 to N with no missing values.  There "
+            "must be a text file with an identical path and name (but with .txt instead of .nii.gz "
+            "as the extension) containing the name of every region on a separate line.  This argument "
+            "overrides the --atlas argument."
+        ),
+        type=lambda x: pf.is_valid_file(parser, x),
+        default=None,
+    )
+
+    fitopts = parser.add_argument_group("Fitting options")
+    fitopts.add_argument(
+        "--fitorder",
+        help="order of polynomial fit to template (default is 1).",
+        type=int,
+        default=1,
+    )
+    fitopts.add_argument(
+        "--nointercept",
+        help="do not use the zeroth order component when fitting",
+        action="store_true",
+    )
+    fitopts.add_argument(
+        "--limittomask",
+        help="only calculate fitdiff in masked region",
+        action="store_true",
+    )
+    fitopts.add_argument(
+        "--template",
+        help=(
+            "Template to fit.  Default is 'lag'.  Options are\n"
+            "\tlag:      time lag in seconds\n"
+            "\tstrength: correlation coefficient\n"
+            "\tsigma:    correlation peak width in seconds\n"
+            "\tconstant: constant value (forces fit order to 0).\n"
+        ),
+        choices=["lag", "strength", "sigma", "constant"],
+        default="lag",
+    )
+    fitopts.add_argument(
+        "--entropybins",
+        help="number of bins in the entropy histogram (default is 101).",
+        type=int,
+        default=101,
+    )
+
+    fitopts.add_argument(
+        "--entropyrange",
+        dest="entropyrange",
+        action="store",
+        nargs=2,
+        type=float,
+        metavar=("LOWERLIM", "UPPERLIM"),
+        help=(
+            "Upper and lower limits of the range for the entropy histogram "
+            "(default is to use data min and max)."
+        ),
+        default=None,
+    )
+
+    miscopts = parser.add_argument_group("Fitting options")
+    miscopts.add_argument(
+        "--debug",
+        help="output additional debugging information",
+        action="store_true",
+        default=False,
+    )
+
+    return parser
 
 
 def fingerprint_main(
@@ -39,6 +192,7 @@ def fingerprint_main(
     fitorder,
     includespec=None,
     excludespec=None,
+    extramaskname=None,
     intercept=True,
     entropybins=101,
     entropyrange=None,
@@ -149,21 +303,25 @@ def fingerprint_main(
         excludename = None
         excludevals = None
 
-    includemask, excludemask = tide_mask.getmaskset(
+    numspatiallocs = int(nx) * int(ny) * int(nz)
+    includemask, excludemask, extramask = tide_mask.getmaskset(
         "anatomic",
         includename,
         includevals,
         excludename,
         excludevals,
         themap_hdr,
-        nx * ny * nz,
+        numspatiallocs,
+        extramask=extramaskname,
     )
 
-    theflatmask = themap_data.reshape((nx * ny * nz)) * 0 + 1
+    theflatmask = themap_data.reshape((numspatiallocs)) * 0 + 1
     if includemask is not None:
         theflatmask = theflatmask * includemask
     if excludemask is not None:
         theflatmask = theflatmask * (1 - excludemask)
+    if extramask is not None:
+        theflatmask = theflatmask * extramask
 
     # generate the mask
     themask_data = theflatmask.reshape((nx, ny, nz))
@@ -394,170 +552,11 @@ def fingerprint_main(
 
 
 if __name__ == "__main__":
-
-    class FullPaths(argparse.Action):
-        """Expand user- and relative-paths"""
-
-        def __call__(self, parser, namespace, values, option_string=None):
-            if values == "":
-                setattr(namespace, self.dest, "__EMPTY__")
-            else:
-                setattr(namespace, self.dest, os.path.abspath(os.path.expanduser(values)))
-
-    def is_dir(dirname):
-        """Checks if a path is an actual directory"""
-        if not os.path.isdir(dirname):
-            msg = "{0} is not a directory".format(dirname)
-            raise argparse.ArgumentTypeError(msg)
-        else:
-            return dirname
-
-    def is_file(filename):
-        """Checks if a file exists"""
-        if not os.path.exists(filename):
-            msg = "{0} does not exist".format(filename)
-            raise argparse.ArgumentTypeError(msg)
-        else:
-            return filename
-
-    parser = argparse.ArgumentParser(
-        prog="fingerprint",
-        description=(
-            "Fit a rapidtide output map to a canonical map, by vascular territory, and calculate statistical metrics.\n"
-        ),
-        allow_abbrev=False,
-    )
-
-    parser.add_argument(
-        "inputfile",
-        help="Rapidtide output map to decompose by vascular territory.  Must be in MNI152NLin6Asym coordinates, 2mm resolution",
-        action=FullPaths,
-        type=is_file,
-    )
-
-    parser.add_argument(
-        "outputroot",
-        help="name root for output files",
-        action=FullPaths,
-        type=str,
-    )
-
-    parser.add_argument(
-        "--includemask",
-        dest="includespec",
-        metavar="MASK[:VALSPEC]",
-        help=(
-            "Only use atlas voxels that are also in file MASK in calculating the fit values "
-            "(if VALSPEC is given, only voxels "
-            "with integral values listed in VALSPEC are used). "
-        ),
-        default=None,
-    )
-
-    parser.add_argument(
-        "--excludemask",
-        dest="excludespec",
-        metavar="MASK[:VALSPEC]",
-        help=(
-            "Do not use atlas voxels that are also in file MASK in calculating the fit values "
-            "(if VALSPEC is given, voxels "
-            "with integral values listed in VALSPEC are excluded). "
-        ),
-        default=None,
-    )
-
-    parser.add_argument(
-        "--atlas",
-        help=(
-            "Atlas.  Options are: "
-            "ASPECTS - ASPECTS territory atlas; "
-            "ATT - Arterial transit time flow territories; "
-            "JHU1 - Johns Hopkins level 1 probabalistic arterial flow territories, without ventricles (default); "
-            "JHU2 - Johns Hopkins level 2 probabalistic arterial flow territories, without ventricles."
-        ),
-        choices=["ASPECTS", "ATT", "JHU1", "JHU2"],
-        default="JHU1",
-    )
-
-    parser.add_argument(
-        "--customatlas",
-        help=(
-            "The name of a custom atlas file.  The file must be a 3D NIFTI "
-            "file in MNI152NLin6Asym space, 2mm isotropic resolution.  The file values "
-            "must be consecutive integers from 1 to N with no missing values.  There "
-            "must be a text file with an identical path and name (but with .txt instead of .nii.gz "
-            "as the extension) containing the name of every region on a separate line.  This argument "
-            "overrides the --atlas argument."
-        ),
-        type=is_file,
-        default=None,
-    )
-
-    parser.add_argument(
-        "--fitorder",
-        help="order of polynomial fit to template (default is 1).",
-        type=int,
-        default=1,
-    )
-
-    parser.add_argument(
-        "--nointercept",
-        help="do not use the zeroth order component when fitting",
-        action="store_true",
-    )
-
-    parser.add_argument(
-        "--entropybins",
-        help="number of bins in the entropy histogram (default is 101).",
-        type=int,
-        default=101,
-    )
-
-    parser.add_argument(
-        "--entropyrange",
-        dest="entropyrange",
-        action="store",
-        nargs=2,
-        type=float,
-        metavar=("LOWERLIM", "UPPERLIM"),
-        help=(
-            "Upper and lower limits of the range for the entropy histogram "
-            "(default is to use data min and max)."
-        ),
-        default=None,
-    )
-
-    parser.add_argument(
-        "--limittomask",
-        help="only calculate fitdiff in masked region",
-        action="store_true",
-    )
-
-    parser.add_argument(
-        "--template",
-        help=(
-            "Template.  Options are\n"
-            "\tlag:      time lag in seconds\n"
-            "\tstrength: correlation coefficient\n"
-            "\tsigma:    correlation peak width in seconds\n"
-            "\tconstant: constant value (forces fit order to 0).\n"
-        ),
-        choices=["lag", "strength", "sigma", "constant"],
-        default="lag",
-    )
-
-    parser.add_argument(
-        "--debug",
-        help="output additional debugging information",
-        action="store_true",
-        default=False,
-    )
-
     # get the command line parameters
     try:
-        args = parser.parse_args()
+        args = _get_parser().parse_args()
     except SystemExit:
-        parser.print_help()
+        _get_parser().print_help()
         raise
 
     if args.debug:
@@ -587,6 +586,7 @@ if __name__ == "__main__":
         intercept=not (args.nointercept),
         includespec=args.includespec,
         excludespec=args.excludespec,
+        extramaskname=args.extramaskname,
         entropybins=args.entropybins,
         entropyrange=args.entropyrange,
         debug=args.debug,

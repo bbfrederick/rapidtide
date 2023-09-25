@@ -131,6 +131,16 @@ def _get_parser():
         default=None,
     )
     parser.add_argument(
+        "--extramaskname",
+        dest="extramaskname",
+        metavar="MASK",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help=(
+            "Additional mask to apply select voxels for region summaries. Zero voxels in this mask will be excluded."
+        ),
+        default=None,
+    )
+    parser.add_argument(
         "--headerline",
         dest="headerline",
         action="store_true",
@@ -226,7 +236,7 @@ def main():
         args.excludename = None
         args.excludevals = None
 
-    includemask, excludemask = tide_mask.getmaskset(
+    includemask, excludemask, extramask = tide_mask.getmaskset(
         "anatomic",
         args.includename,
         args.includevals,
@@ -234,12 +244,15 @@ def main():
         args.excludevals,
         template_hdr,
         numvoxels,
+        extramask=args.extramaskname,
     )
     themask = inputvoxels[:, 0] * 0 + 1
     if includemask is not None:
         themask = themask * includemask
     if excludemask is not None:
         themask = themask * (1 - excludemask)
+    if extramask is not None:
+        themask = themask * extramask
 
     # decide what regions we will summarize
     if args.regionlistfile is None:

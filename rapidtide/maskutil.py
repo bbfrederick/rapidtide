@@ -62,6 +62,7 @@ def readamask(
     xsize,
     istext=False,
     valslist=None,
+    thresh=None,
     maskname="the",
     tolerance=1.0e-3,
 ):
@@ -76,7 +77,10 @@ def readamask(
             )
     else:
         themask, maskarray, mask_hdr, maskdims, masksizes = tide_io.readfromnifti(maskfilename)
-        maskarray = np.round(maskarray, 0).astype("uint16")
+        if thresh is None:
+            maskarray = np.round(maskarray, 0).astype("uint16")
+        else:
+            maskarray = np.where(maskarray > thresh, 1, 0).astype("uint16")
         if not tide_io.checkspacematch(mask_hdr, nim_hdr, tolerance=tolerance):
             raise ValueError(f"Dimensions of {maskname} mask do not match the fmri data - exiting")
 
@@ -97,11 +101,14 @@ def getmaskset(
     excludevals,
     datahdr,
     numspatiallocs,
+    extramask=None,
+    extramaskthresh=0.1,
     istext=False,
     tolerance=1.0e-3,
 ):
     internalincludemask = None
     internalexcludemask = None
+    internalextramask = None
 
     if includename is not None:
         LGR.info(f"constructing {maskname} include mask")
@@ -137,9 +144,22 @@ def getmaskset(
                 f"ERROR: the {maskname} exclude mask does not leave any voxels - exiting"
             )
 
+    if extramask is not None:
+        LGR.info(f"reading {maskname} extra mask")
+        theextramask = readamask(
+            extramask,
+            datahdr,
+            numspatiallocs,
+            istext=istext,
+            valslist=None,
+            thresh=extramaskthresh,
+            maskname=f"{maskname} extra",
+            tolerance=tolerance,
+        )
+
     if (internalincludemask is not None) and (internalexcludemask is not None):
         if tide_stats.getmasksize(internalincludemask * (1 - internalexcludemask)) == 0:
             raise ValueError(
                 f"ERROR: the {maskname} include and exclude masks not leave any voxels between them - exiting"
             )
-    return internalincludemask, internalexcludemask
+    return internalincludemask, internalexcludemask, internalextramask
