@@ -469,7 +469,7 @@ def rapidtide_main(argparsingfunc):
     # read in the optional masks
     tide_util.logmem("before setting masks")
 
-    internalglobalmeanincludemask, internalglobalmeanexcludemask = tide_mask.getmaskset(
+    internalglobalmeanincludemask, internalglobalmeanexcludemask, dummy = tide_mask.getmaskset(
         "global mean",
         optiondict["globalmeanincludename"],
         optiondict["globalmeanincludevals"],
@@ -481,7 +481,7 @@ def rapidtide_main(argparsingfunc):
         tolerance=optiondict["spatialtolerance"],
     )
 
-    internalrefineincludemask, internalrefineexcludemask = tide_mask.getmaskset(
+    internalrefineincludemask, internalrefineexcludemask, dummy = tide_mask.getmaskset(
         "refine",
         optiondict["refineincludename"],
         optiondict["refineincludevals"],
@@ -493,7 +493,7 @@ def rapidtide_main(argparsingfunc):
         tolerance=optiondict["spatialtolerance"],
     )
 
-    internaloffsetincludemask, internaloffsetexcludemask = tide_mask.getmaskset(
+    internaloffsetincludemask, internaloffsetexcludemask, dummy = tide_mask.getmaskset(
         "offset",
         optiondict["offsetincludename"],
         optiondict["offsetincludevals"],
