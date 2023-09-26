@@ -86,7 +86,7 @@ def _get_parser():
         default=None,
     )
     maskopts.add_argument(
-        "--extramaskname",
+        "--extramask",
         dest="extramaskname",
         metavar="MASK",
         type=lambda x: pf.is_valid_file(parser, x),
