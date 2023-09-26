@@ -317,11 +317,11 @@ def fingerprint_main(
 
     theflatmask = themap_data.reshape((numspatiallocs)) * 0 + 1
     if includemask is not None:
-        theflatmask = theflatmask * includemask
+        theflatmask = theflatmask * includemask.reshape((numspatiallocs))
     if excludemask is not None:
-        theflatmask = theflatmask * (1 - excludemask)
+        theflatmask = theflatmask * (1 - excludemask.reshape((numspatiallocs)))
     if extramask is not None:
-        theflatmask = theflatmask * extramask
+        theflatmask = theflatmask * extramask.reshape((numspatiallocs))
 
     # generate the mask
     themask_data = theflatmask.reshape((nx, ny, nz))
