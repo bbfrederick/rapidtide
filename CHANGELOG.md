@@ -1,5 +1,11 @@
 # Release history
 
+## Version 2.6.4 (9/28/23)
+* Mass merge of more dependabot PRs.
+* (diffrois) Added a new program to make "vasculomes" - measuring delay differences between ROIs.  This is still in flux.
+* (fingerprint, atlasaverage) Implemented a standard masking method with atlas indexed include and exclude masks, and an extra geometric mask.
+* (fingerprint) Bug fixes.
+
 ## Version 2.6.3 (9/13/23)
 * Mass merge of a bunch of dependabot PRs.
 * (rapidtide) Fixed return values from findavailablemem() when running in a Docker container with cgroups v1.  Thank you to Jeffrey N Stout for finding this.  Should resolve https://github.com/bbfrederick/rapidtide/issues/122. 
