@@ -14,7 +14,7 @@ RUN pip install --upgrade --force-reinstall requests "certifi>=2023.7.22"
 COPY . /src/rapidtide
 RUN cd /src/rapidtide && \
     pip install . && \
-    versioneer install --no-vendor \
+    versioneer install --no-vendor && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
 RUN cd /src/rapidtide/rapidtide/data/examples/src && \
     ./installtestdatadocker
