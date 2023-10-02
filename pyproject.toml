@@ -1,5 +1,5 @@
 [build-system]
-requires = ['setuptools', 'wheel', 'versioneer-518']
+requires = ['setuptools', 'wheel', 'versioneer[toml]']
 build-backend = 'setuptools.build_meta'
 
 [project]
