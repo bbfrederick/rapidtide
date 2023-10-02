@@ -805,7 +805,7 @@ def setargs(thegetparserfunc, inputargs=None):
             args = thegetparserfunc().parse_args()
             argstowrite = sys.argv
         except SystemExit:
-            print("Use --help option for detailed informtion on options.")
+            print("Use --help option for detailed information on options.")
             raise
     else:
         # get arguments from the passed list
@@ -815,7 +815,7 @@ def setargs(thegetparserfunc, inputargs=None):
             args = thegetparserfunc().parse_args(inputargs)
             argstowrite = inputargs
         except SystemExit:
-            print("Use --help option for detailed informtion on options.")
+            print("Use --help option for detailed information on options.")
             raise
 
     return args, argstowrite
@@ -832,7 +832,7 @@ def generic_init(theparser, themain, inputargs=None):
             args = theparser().parse_args()
             argstowrite = sys.argv
         except SystemExit:
-            print("Use --help option for detailed informtion on options.")
+            print("Use --help option for detailed information on options.")
             raise
     else:
         print("processing passed argument list:")
@@ -840,7 +840,7 @@ def generic_init(theparser, themain, inputargs=None):
             args = theparser().parse_args(inputargs)
             argstowrite = inputargs
         except SystemExit:
-            print("Use --help option for detailed informtion on options.")
+            print("Use --help option for detailed information on options.")
             raise
 
     # save the raw and formatted command lines
