@@ -12,8 +12,7 @@ RUN pip install --upgrade --force-reinstall requests "certifi>=2023.7.22"
 
 # Install rapidtide
 #COPY . /src/rapidtide
-RUN cd /src && \
-    git clone https://github.com/bbfrederick/rapidtide.git
+RUN git clone https://github.com/bbfrederick/rapidtide.git /src/rapidtide
 RUN cd /src/rapidtide && \
     pip install . && \
     versioneer install --no-vendor && \
