@@ -56,5 +56,6 @@ jobs:
           # tags: fredericklab/rapidtide:${{ env.BRANCH }}
           tags: fredericklab/rapidtide:latest
           build-args: |
-            "BRANCH"=${{ env.BRANCH }}
-            "GITVERSION"=${{ github.ref }}
+            BRANCH=${{ env.BRANCH }}
+            GITVERSION=${{ github.ref }}
+            XYZZY=xyzzy
