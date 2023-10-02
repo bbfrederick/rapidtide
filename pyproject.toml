@@ -81,6 +81,9 @@ include = ['rapidtide', 'cloud']
 [tool.setuptools.package-data]
 rapidtide = ['rapidtide/*.py', 'rapidtide/workflows/*.py', 'rapidtide/scripts/*']
 
+[tool.setuptools.dynamic]
+version = {attr = "rapidtide.__version__"}
+
 [tool.setuptools.exclude-package-data]
 rapidtide = ['.eggs', '.git', '.github', '.pytest_cache', 'rapidtide/candidatetests', 'rapidtide/disabledtests', 'rapidtide/data/examples']
 
