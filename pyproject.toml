@@ -38,7 +38,7 @@ dependencies = [
   'pywavelets',
   'tqdm',
 ]
-dynamic = ['version']
+dynamic = ['version', 'license', 'keywords']
 
 [project.urls]
 'Homepage' = 'https://github.com/bbfrederick/rapidtide'
