@@ -48,6 +48,9 @@ jobs:
           tags: |
               ${{ steps.meta.outputs.tags }}
               fredericklab/rapidtide:latest-release
+          build-args: |
+            "BRANCH"=${{ env.BRANCH }}
+            "GITVERSION"=${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Copy to public.ecr.aws/rapidtide/rapidtide

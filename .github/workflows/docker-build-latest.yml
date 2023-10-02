@@ -26,6 +26,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: fredericklab/rapidtide
+
       - name: Get version number
         id: get_version
         run: echo "VERSION=${{ github.ref }}" >> $GITHUB_OUTPUT
@@ -50,4 +56,5 @@ jobs:
           # tags: fredericklab/rapidtide:${{ env.BRANCH }}
           tags: fredericklab/rapidtide:latest
           build-args: |
-            BRANCH=${{ env.BRANCH }}
+            "BRANCH"=${{ env.BRANCH }}
+            "GITVERSION"=${{ github.ref }}
