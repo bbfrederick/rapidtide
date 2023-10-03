@@ -19,10 +19,10 @@ jobs:
       - name: Install Checkout
         uses: actions/checkout@v4.1.0
 
-      - name: Checkout
-        run: |
-          git fetch --tags
-          git branch --create-reflog main origin/main
+      #- name: Checkout
+      #  run: |
+      #    git fetch --tags
+      #    git branch --create-reflog main origin/main
 
       - name: Determine Version
         id:   gitversion # id to later be referenced
