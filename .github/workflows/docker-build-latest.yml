@@ -14,6 +14,28 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0
+        with:
+          versionSpec: '5.x'
+
+      - name: Install Checkout
+        uses: actions/checkout@v4.1.0
+        with:
+          ref: ${{ github.head_ref }}   # checkout the correct branch name
+          fetch-depth: 0                # fetch the whole repo history
+
+      - name: Determine Version
+        id:   gitversion # id to later be referenced
+        uses: gittools/actions/gitversion/execute@v0
+
+      - name: Display GitVersion outputs (step output)
+        run: |
+          echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
+          echo "ShortSha: ${{ steps.gitversion.outputs.shortSha }}"
+          GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.${{ steps.gitversion.outputs.shortSha }}
+          echo "GITVERSION: ${GITVERSION}"
+
       - name: What
         run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
@@ -57,5 +79,4 @@ jobs:
           tags: fredericklab/rapidtide:latest
           build-args: |
             BRANCH=${{ env.BRANCH }}
-            GITVERSION=${{ github.ref }}
-            XYZZY=xyzzy
+            GITVERSION=${GITVERSION}

@@ -43,17 +43,15 @@ ARG BRANCH
 ENV BRANCH ${BRANCH}
 ARG GITVERSION
 ENV GITVERSION ${GITVERSION}
-ARG XYZZY
-ENV XYZZY ${XYZZY}
 
 RUN echo $VERSION
 RUN echo $BUILD_DATE
-RUN echo $VCS_REF
+RUN echo $GITVERSION
 
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="rapidtide" \
       org.label-schema.description="rapidtide - a set of tools for delay processing" \
       org.label-schema.url="http://nirs-fmri.net" \
-      org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.vcs-ref=$GITVERSION \
       org.label-schema.vcs-url="https://github.com/bbfrederick/rapidtide" \
       org.label-schema.version=$VERSION
