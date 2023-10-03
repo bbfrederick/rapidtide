@@ -16,6 +16,8 @@ jobs:
         with:
           versionSpec: '5.x'
 
+      - uses: actions/checkout@v4.1.0
+
       - name: Determine Version
         id:   gitversion # id to later be referenced
         uses: gittools/actions/gitversion/execute@v0
