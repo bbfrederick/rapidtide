@@ -36,6 +36,6 @@ jobs:
           GITLONGTAG=${{ steps.gitversion.outputs.Sha }}
           GITDATE=${{ steps.gitversion.outputs.commitDate }}
           echo "GITVERSION: ${GITVERSION}"
-          echo "GITLONGTAG: ${GITSHA}"
+          echo "GITLONGTAG: ${GITLONGTAG}"
           echo "GITDATE: ${GITDATE}"
           echo "CommitTime: ${{ steps.gitversion.outputs.commitTime }}"

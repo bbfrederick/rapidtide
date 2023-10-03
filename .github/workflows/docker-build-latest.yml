@@ -35,7 +35,7 @@ jobs:
           GITLONGTAG=${{ steps.gitversion.outputs.Sha }}
           GITDATE=${{ steps.gitversion.outputs.commitDate }}
           echo "GITVERSION: ${GITVERSION}"
-          echo "GITLONGTAG: ${GITSHA}"
+          echo "GITLONGTAG: ${GITLONGTAG}"
           echo "GITDATE: ${GITSHA}"
 
       - name: What
@@ -66,6 +66,7 @@ jobs:
           sudo swapoff -a
           sudo rm -f /swapfile
           sudo apt clean
+          sudo rm -rf .git
           #docker rmi $(docker image ls -aq)
           df -h
 
