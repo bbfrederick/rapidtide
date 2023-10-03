@@ -18,11 +18,9 @@ jobs:
 
       - name: Install Checkout
         uses: actions/checkout@v4.1.0
-
-      #- name: Checkout
-      #  run: |
-      #    git fetch --tags
-      #    git branch --create-reflog main origin/main
+        with:
+          ref: ${{ github.head_ref }}   # checkout the correct branch name
+          fetch-depth: 0                # fetch the whole repo history
 
       - name: Determine Version
         id:   gitversion # id to later be referenced
