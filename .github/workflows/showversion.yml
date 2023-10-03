@@ -17,8 +17,9 @@ jobs:
           versionSpec: '5.x'
 
       - uses: actions/checkout@v4.1.0
-        run: |
-          git fetch --unshallow
+        - run: |
+          git fetch --tags
+          git branch --create-reflog main origin/main
 
       - name: Determine Version
         id:   gitversion # id to later be referenced
