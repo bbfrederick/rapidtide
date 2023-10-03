@@ -17,6 +17,8 @@ jobs:
           versionSpec: '5.x'
 
       - uses: actions/checkout@v4.1.0
+        run: |
+          git fetch --unshallow
 
       - name: Determine Version
         id:   gitversion # id to later be referenced
