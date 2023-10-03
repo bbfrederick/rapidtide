@@ -30,5 +30,12 @@ jobs:
         run: |
           echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
           echo "ShortSha: ${{ steps.gitversion.outputs.shortSha }}"
+          echo "Sha: ${{ steps.gitversion.outputs.Sha }}"
+          echo "CommitDate: ${{ steps.gitversion.outputs.commitDate }}"
           GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.${{ steps.gitversion.outputs.shortSha }}
+          GITLONGTAG=${{ steps.gitversion.outputs.Sha }}
+          GITDATE=${{ steps.gitversion.outputs.commitDate }}
           echo "GITVERSION: ${GITVERSION}"
+          echo "GITLONGTAG: ${GITSHA}"
+          echo "GITDATE: ${GITDATE}"
+          echo "CommitTime: ${{ steps.gitversion.outputs.commitTime }}"

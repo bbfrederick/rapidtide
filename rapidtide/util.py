@@ -431,23 +431,45 @@ def version():
 
     """
     try:
-        versioninfo = tide_versioneer.get_versions()
+        dummy = os.environ["IS_DOCKER_8395080871"]
+    except KeyError:
+        isdocker = False
+    else:
+        isdocker = True
 
-    except:
-        return "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"
+    if isdocker:
+        try:
+            version = os.environ["GITVERSION"]
+        except KeyError:
+            version = "UNKNOWN"
+        try:
+            longgittag = os.environ["GITSHA"]
+        except KeyError:
+            longgittag = "UNKNOWN"
+        try:
+            thedate = os.environ("GITDATE")
+        except KeyError:
+            thedate = "UNKNOWN"
+        isdirty = False
+    else:
+        try:
+            versioninfo = tide_versioneer.get_versions()
+        except:
+            return "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"
 
-    version = versioninfo["version"]
-    if version is None:
-        version = "UNKNOWN"
-    longgittag = versioninfo["full-revisionid"]
-    if longgittag is None:
-        longgittag = "UNKNOWN"
-    thedate = versioninfo["date"]
-    if thedate is None:
-        thedate = "UNKNOWN"
-    isdirty = versioninfo["dirty"]
-    if isdirty is None:
-        isdirty = "UNKNOWN"
+        version = versioninfo["version"]
+        if version is None:
+            version = "UNKNOWN"
+        longgittag = versioninfo["full-revisionid"]
+        if longgittag is None:
+            longgittag = "UNKNOWN"
+        thedate = versioninfo["date"]
+        if thedate is None:
+            thedate = "UNKNOWN"
+        isdirty = versioninfo["dirty"]
+        if isdirty is None:
+            isdirty = "UNKNOWN"
+
     return version, longgittag, thedate, isdirty
 
 
