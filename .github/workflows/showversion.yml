@@ -10,10 +10,10 @@ jobs:
 
     runs-on: ubuntu-latest
 
-  - name: Checkout
-    uses: actions/checkout@v2
+  - name: Install GitVersion
+    uses: gittools/actions/gitversion/setup@v0
     with:
-      fetch-depth: 0
+      versionSpec: '5.x'
 
   - name: Determine Version
     id:   gitversion # id to later be referenced
