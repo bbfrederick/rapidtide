@@ -28,14 +28,9 @@ jobs:
 
       - name: Display GitVersion outputs (step output)
         run: |
-          echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
-          echo "ShortSha: ${{ steps.gitversion.outputs.shortSha }}"
-          echo "Sha: ${{ steps.gitversion.outputs.Sha }}"
-          echo "CommitDate: ${{ steps.gitversion.outputs.commitDate }}"
           GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.${{ steps.gitversion.outputs.shortSha }}
           GITLONGTAG=${{ steps.gitversion.outputs.Sha }}
-          GITDATE=${{ steps.gitversion.outputs.commitDate }}
+          GITDATE=${{ steps.gitversion.outputs.commitDate }}"T00:00:00-0000"
           echo "GITVERSION: ${GITVERSION}"
           echo "GITLONGTAG: ${GITLONGTAG}"
           echo "GITDATE: ${GITDATE}"
-          echo "CommitTime: ${{ steps.gitversion.outputs.commitTime }}"
