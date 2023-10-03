@@ -6,11 +6,14 @@ on:
     branches: [ main ]
 
 jobs:
-  showversion:
+  docker:
 
     runs-on: ubuntu-latest
 
-  # gitversion/setup@v0 action omitted for brevity.
+  - name: Checkout
+    uses: actions/checkout@v2
+    with:
+      fetch-depth: 0
 
   - name: Determine Version
     id:   gitversion # id to later be referenced
