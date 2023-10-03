@@ -107,7 +107,7 @@ def main():
                 ival = df[colkeys[i]].values[z]
                 jval = df[colkeys[j]].values[z]
                 # print(z, i, j, ival, jval)
-                if (ival == "None") or (jval == "None"):
+                if np.isnan(ival) or np.isnan(jval):
                     themask[i, j, 0, z] = 0
                     themask[j, i, 0, z] = 0
                 else:
