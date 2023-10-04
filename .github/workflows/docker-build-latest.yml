@@ -86,6 +86,6 @@ jobs:
           tags: fredericklab/rapidtide:latest
           build-args: |
             BRANCH=${{ env.BRANCH }}
-            GITVERSION=$GITVERSION
-            GITLONGTAG=$GITLONGTAG
-            GITDATE=$GITDATE
+            GITVERSION=${{ env.GITVERSION }}
+            GITLONGTAG=${{ env.GITLONGTAG }}
+            GITDATE=${{ env.GITDATE }}
