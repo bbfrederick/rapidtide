@@ -8,6 +8,11 @@ on:
 jobs:
   docker:
 
+    env:
+      GITVERSION: 'UNKNOWN'
+      GITLONGTAG: 'UNKNOWN'
+      GITDATE: 'UNKNOWN'
+
     runs-on: ubuntu-latest
 
     steps:

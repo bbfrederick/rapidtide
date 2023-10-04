@@ -1,14 +1,14 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:v0.2.3
+FROM fredericklab/basecontainer:latest
 
 # Installing additional precomputed python packages
 # tensorflow seems to really want to install with pip
-RUN mamba install h5py 
-RUN mamba install keras 
-RUN pip install tensorflow
+#RUN mamba install h5py 
+#RUN mamba install keras 
+#RUN pip install tensorflow
 
 # hack to get around the super annoying "urllib3 doesn't match" warning
-RUN pip install --upgrade --force-reinstall requests "certifi>=2023.7.22"
+#RUN pip install --upgrade --force-reinstall requests "certifi>=2023.7.22"
 
 # Install rapidtide
 COPY . /src/rapidtide
@@ -49,10 +49,10 @@ ENV GITVERSION=${GITVERSION}
 ENV GITLONGTAG=${GITLONGTAG}
 ENV GITDATE=${GITDATE}
 
+RUN echo $BRANCH
 RUN echo $VERSION
 RUN echo $BUILD_DATE
 RUN echo $GITVERSION
-RUN echo ${GITVERSION}
 RUN echo $GITLONGTAG
 RUN echo $GITDATE
 
