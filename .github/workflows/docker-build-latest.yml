@@ -63,10 +63,12 @@ jobs:
       - name: Free disk space
         run: | 
           df -h
+          sudo rm -rf ${GITHUB_WORKSPACE}/.git
           sudo swapoff -a
           sudo rm -f /swapfile
           sudo apt clean
-          sudo rm -rf .git
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           #docker rmi $(docker image ls -aq)
           df -h
 
