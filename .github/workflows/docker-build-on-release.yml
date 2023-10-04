@@ -81,8 +81,8 @@ jobs:
           build-args: |
             "BRANCH"=${{ env.BRANCH }}
             "GITVERSION"=${{ steps.meta.outputs.tags }}
-            GITLONGTAG=${GITLONGTAG}
-            GITDATE=${GITDATE}
+            "GITLONGTAG"=$GITLONGTAG
+            "GITDATE"=$GITDATE
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Copy to public.ecr.aws/rapidtide/rapidtide
