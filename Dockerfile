@@ -1,18 +1,28 @@
 # Start from the fredericklab base container
 FROM fredericklab/basecontainer:latest
 
-# Installing additional precomputed python packages
-# tensorflow seems to really want to install with pip
-#RUN mamba install h5py 
-#RUN mamba install keras 
-#RUN pip install tensorflow
+# get build arguments
+ARG BUILD_DATE
+ARG BRANCH
+ARG GITVERSION
+ARG GITSHA
+ARG GITDATE
 
-# hack to get around the super annoying "urllib3 doesn't match" warning
-#RUN pip install --upgrade --force-reinstall requests "certifi>=2023.7.22"
+# set and echo environment variables
+ENV BRANCH $BRANCH
+ENV GITVERSION=${GITVERSION}
+ENV GITSHA=${GITSHA}
+ENV GITDATE=${GITDATE}
+
+RUN echo "BRANCH: "$BRANCH
+RUN echo "BUILD_DATE: "$BUILD_DATE
+RUN echo "GITVERSION: "$GITVERSION
+RUN echo "GITSHA: "$GITSHA
+RUN echo "GITDATE: "$GITDATE
 
 # Install rapidtide
 COPY . /src/rapidtide
-#RUN git clone https://github.com/bbfrederick/rapidtide.git /src/rapidtide
+RUN echo $GITVERSION > /src/rapidtide/VERSION
 RUN cd /src/rapidtide && \
     pip install . && \
     versioneer install --no-vendor && \
@@ -35,23 +45,6 @@ RUN ldconfig
 WORKDIR /tmp/
 RUN ln -s /src/rapidtide/cloud /
 ENTRYPOINT ["/cloud/mount-and-run"]
-
-ARG BUILD_DATE
-ARG BRANCH
-ARG GITVERSION
-ARG GITSHA
-ARG GITDATE
-
-ENV BRANCH $BRANCH
-ENV GITVERSION=${GITVERSION}
-ENV GITSHA=${GITSHA}
-ENV GITDATE=${GITDATE}
-
-RUN echo "BRANCH: "$BRANCH
-RUN echo "BUILD_DATE: "$BUILD_DATE
-RUN echo "GITVERSION: "$GITVERSION
-RUN echo "GITSHA: "$GITSHA
-RUN echo "GITDATE: "$GITDATE
 
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="rapidtide" \
