@@ -38,6 +38,8 @@ jobs:
           echo "GITVERSION=${GITVERSION}" >> $GITHUB_ENV
           echo "GITSHA=${GITSHA}" >> $GITHUB_ENV
           echo "GITDATE=${GITDATE}" >> $GITHUB_ENV
+          BUILD_TIME=$(date -Iseconds)
+          echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
 
       - name: What
         run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
@@ -89,3 +91,4 @@ jobs:
             GITVERSION=${{ env.GITVERSION }}
             GITSHA=${{ env.GITSHA }}
             GITDATE=${{ env.GITDATE }}
+            BUILD_TIME=${{ env.BUILD_TIME }}

@@ -2,20 +2,21 @@
 FROM fredericklab/basecontainer:latest
 
 # get build arguments
-ARG BUILD_DATE
+ARG BUILD_TIME
 ARG BRANCH
 ARG GITVERSION
 ARG GITSHA
 ARG GITDATE
 
 # set and echo environment variables
+ENV BUILD_TIME $BUILD_TIME
 ENV BRANCH $BRANCH
 ENV GITVERSION=${GITVERSION}
 ENV GITSHA=${GITSHA}
 ENV GITDATE=${GITDATE}
 
 RUN echo "BRANCH: "$BRANCH
-RUN echo "BUILD_DATE: "$BUILD_DATE
+RUN echo "BUILD_TIME: "$BUILD_TIME
 RUN echo "GITVERSION: "$GITVERSION
 RUN echo "GITSHA: "$GITSHA
 RUN echo "GITDATE: "$GITDATE
@@ -46,7 +47,7 @@ WORKDIR /tmp/
 RUN ln -s /src/rapidtide/cloud /
 ENTRYPOINT ["/cloud/mount-and-run"]
 
-LABEL org.label-schema.build-date=$BUILD_DATE \
+LABEL org.label-schema.build-date=$BUILD_TIME \
       org.label-schema.name="rapidtide" \
       org.label-schema.description="rapidtide - a set of tools for delay processing" \
       org.label-schema.url="http://nirs-fmri.net" \
