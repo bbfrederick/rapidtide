@@ -36,16 +36,14 @@ jobs:
           echo "GITLONGTAG: ${GITLONGTAG}"
           echo "GITDATE: ${GITDATE}"
 
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: fredericklab/rapidtide
+
       - name: Get version number
         id: get_version
         run: |
-          echo "VERSION=${{ github.ref }}" >> $GITHUB_OUTPUT
-          #GITFULLSEMVER=`echo ${GITHUB_OUTPUT} | grep GitVersion_FullSemVer | awk '{print $2}'`
-          #GITSHORTSHA=`echo ${GITHUB_OUTPUT} | grep GitVersion_ShortSha | awk '{print $2}'`
-          #GITVERSION2=${GITFULLSEMVER}.${GITSHORTSHA}
-          #GITLONGTAG2=`echo ${GITHUB_OUTPUT} | grep GitVersion_Sha`
-          #GITDATE2=`echo ${GITHUB_OUTPUT} | grep GitVersion_CommitDate | awk '{print $2}'`"T00:00:00-0000"
-          #echo "GITVERSION2: ${GITVERSION2}"
-          #echo "GITLONGTAG2: ${GITLONGTAG2}"
-          #echo "GITDATE2: ${GITDATE2}"
-          echo "VERSION: ${VERSION}"
+          GITVERSION2=${{ steps.meta.outputs.tags }}
+          echo "GITVERSION2: ${GITVERSION2}"
