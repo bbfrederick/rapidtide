@@ -13,6 +13,34 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0
+        with:
+          versionSpec: '5.x'
+
+      - name: Install Checkout
+        uses: actions/checkout@v4.1.0
+        with:
+          ref: ${{ github.head_ref }}   # checkout the correct branch name
+          fetch-depth: 0
+
+      - name: Determine Version
+        id:   gitversion # id to later be referenced
+        uses: gittools/actions/gitversion/execute@v0
+
+      - name: Display GitVersion outputs (step output)
+        run: |
+          GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.${{ steps.gitversion.outputs.shortSha }}
+          GITLONGTAG=${{ steps.gitversion.outputs.Sha }}
+          GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
+          GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
+          echo "GITVERSION: ${GITVERSION}"
+          echo "GITLONGTAG: ${GITLONGTAG}"
+          echo "GITDATE: ${GITDATE}"
+
+      - name: What
+        run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -31,10 +59,12 @@ jobs:
       - name: Free disk space
         run: | 
           df -h
+          sudo rm -rf ${GITHUB_WORKSPACE}/.git
           sudo swapoff -a
           sudo rm -f /swapfile
           sudo apt clean
-          #docker rmi $(docker image ls -aq)
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           df -h
 
       - name: Build and push
@@ -51,6 +81,8 @@ jobs:
           build-args: |
             "BRANCH"=${{ env.BRANCH }}
             "GITVERSION"=${{ steps.meta.outputs.tags }}
+            GITLONGTAG=${GITLONGTAG}
+            GITDATE=${GITDATE}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Copy to public.ecr.aws/rapidtide/rapidtide

@@ -33,8 +33,7 @@ jobs:
         run: |
           GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.${{ steps.gitversion.outputs.shortSha }}
           GITLONGTAG=${{ steps.gitversion.outputs.Sha }}
-          GITTIME=`git show | grep Date | awk '{print $5 $7}'`
-          #GITDATE=${{ steps.gitversion.outputs.commitDate }}"T00:00:00-0000"
+          GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
           GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
           echo "GITVERSION: ${GITVERSION}"
           echo "GITLONGTAG: ${GITLONGTAG}"
@@ -60,7 +59,9 @@ jobs:
 
       - name: Get version number
         id: get_version
-        run: echo "VERSION=${{ github.ref }}" >> $GITHUB_OUTPUT
+        run: |
+          echo "VERSION=${{ github.ref }}" >> $GITHUB_OUTPUT
+          echo ${GITHUB_OUTPUT}
 
       - name: Free disk space
         run: | 
@@ -71,7 +72,6 @@ jobs:
           sudo apt clean
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          #docker rmi $(docker image ls -aq)
           df -h
 
       - name: Build and push
@@ -87,3 +87,5 @@ jobs:
           build-args: |
             BRANCH=${{ env.BRANCH }}
             GITVERSION=${GITVERSION}
+            GITLONGTAG=${GITLONGTAG}
+            GITDATE=${GITDATE}
