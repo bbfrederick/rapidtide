@@ -8,11 +8,6 @@ on:
 jobs:
   docker:
 
-    env:
-      GITVERSION: 'UNKNOWN'
-      GITLONGTAG: 'UNKNOWN'
-      GITDATE: 'UNKNOWN'
-
     runs-on: ubuntu-latest
 
     steps:
@@ -40,9 +35,9 @@ jobs:
           GITLONGTAG=${{ steps.gitversion.outputs.Sha }}
           GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
           GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
-          echo "GITVERSION: ${GITVERSION}"
-          echo "GITLONGTAG: ${GITLONGTAG}"
-          echo "GITDATE: ${GITDATE}"
+          echo "GITVERSION=${GITVERSION}" >> $GITHUB_ENV
+          echo "GITLONGTAG=${GITLONGTAG}" >> $GITHUB_ENV
+          echo "GITDATE=${GITDATE}" >> $GITHUB_ENV
 
       - name: What
         run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
