@@ -1405,7 +1405,7 @@ def process_args(inputargs=None):
     # diagnostic information about version
     (
         args["release_version"],
-        args["git_longtag"],
+        args["git_sha"],
         args["git_date"],
         args["git_isdirty"],
     ) = tide_util.version()

@@ -439,15 +439,15 @@ def version():
 
     if isdocker:
         try:
-            version = os.environ["GITVERSION"]
+            theversion = os.environ["GITVERSION"]
         except KeyError:
-            version = "UNKNOWN"
+            theversion = "UNKNOWN"
         try:
-            longgittag = os.environ["GITSHA"]
+            thesha = os.environ["GITSHA"]
         except KeyError:
-            longgittag = "UNKNOWN"
+            thesha = "UNKNOWN"
         try:
-            thedate = os.environ("GITDATE")
+            thedate = os.environ["GITDATE"]
         except KeyError:
             thedate = "UNKNOWN"
         isdirty = False
@@ -457,12 +457,12 @@ def version():
         except:
             return "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"
 
-        version = versioninfo["version"]
-        if version is None:
+        theversion = versioninfo["version"]
+        if theversion is None:
             version = "UNKNOWN"
-        longgittag = versioninfo["full-revisionid"]
-        if longgittag is None:
-            longgittag = "UNKNOWN"
+        thesha = versioninfo["full-revisionid"]
+        if thesha is None:
+            thesha = "UNKNOWN"
         thedate = versioninfo["date"]
         if thedate is None:
             thedate = "UNKNOWN"
@@ -470,7 +470,7 @@ def version():
         if isdirty is None:
             isdirty = "UNKNOWN"
 
-    return version, longgittag, thedate, isdirty
+    return theversion, thesha, thedate, isdirty
 
 
 # --------------------------- timing functions -------------------------------------------------

@@ -114,7 +114,7 @@ def happy_main(argparsingfunc):
     # save program version
     (
         infodict["release_version"],
-        infodict["git_longtag"],
+        infodict["git_sha"],
         infodict["git_date"],
         infodict["git_isdirty"],
     ) = tide_util.version()

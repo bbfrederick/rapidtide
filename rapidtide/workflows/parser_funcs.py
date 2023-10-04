@@ -38,13 +38,13 @@ class IndicateSpecifiedAction(argparse.Action):
 def detailedversion():
     (
         release_version,
-        git_longtag,
+        git_sha,
         git_date,
         git_isdirty,
     ) = tide_util.version()
     python_version = str(sys.version_info)
     print(f"release version: {release_version}")
-    print(f"git_longtag: {git_longtag}")
+    print(f"git_sha: {git_sha}")
     print(f"git_date: {git_date}")
     print(f"git_isdirty: {git_isdirty}")
     print(f"python_version: {python_version}")

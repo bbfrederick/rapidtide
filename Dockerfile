@@ -36,25 +36,22 @@ WORKDIR /tmp/
 RUN ln -s /src/rapidtide/cloud /
 ENTRYPOINT ["/cloud/mount-and-run"]
 
-ARG VERSION
 ARG BUILD_DATE
-ARG VCS_REF
 ARG BRANCH
 ARG GITVERSION
-ARG GITLONGTAG
+ARG GITSHA
 ARG GITDATE
 
 ENV BRANCH $BRANCH
 ENV GITVERSION=${GITVERSION}
-ENV GITLONGTAG=${GITLONGTAG}
+ENV GITSHA=${GITSHA}
 ENV GITDATE=${GITDATE}
 
-RUN echo $BRANCH
-RUN echo $VERSION
-RUN echo $BUILD_DATE
-RUN echo $GITVERSION
-RUN echo $GITLONGTAG
-RUN echo $GITDATE
+RUN echo "BRANCH: "$BRANCH
+RUN echo "BUILD_DATE: "$BUILD_DATE
+RUN echo "GITVERSION: "$GITVERSION
+RUN echo "GITSHA: "$GITSHA
+RUN echo "GITDATE: "$GITDATE
 
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="rapidtide" \
@@ -62,4 +59,4 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.url="http://nirs-fmri.net" \
       org.label-schema.vcs-ref=$GITVERSION \
       org.label-schema.vcs-url="https://github.com/bbfrederick/rapidtide" \
-      org.label-schema.version=$VERSION
+      org.label-schema.version=$GITVERSION

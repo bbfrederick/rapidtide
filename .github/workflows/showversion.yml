@@ -29,11 +29,11 @@ jobs:
       - name: Display GitVersion outputs (step output)
         run: |
           GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.${{ steps.gitversion.outputs.shortSha }}
-          GITLONGTAG=${{ steps.gitversion.outputs.Sha }}
+          GITSHA=${{ steps.gitversion.outputs.Sha }}
           GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
           GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
           echo "GITVERSION: ${GITVERSION}"
-          echo "GITLONGTAG: ${GITLONGTAG}"
+          echo "GITSHA: ${GITSHA}"
           echo "GITDATE: ${GITDATE}"
 
       - name: Extract metadata (tags, labels) for Docker

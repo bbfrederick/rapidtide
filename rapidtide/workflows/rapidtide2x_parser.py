@@ -773,7 +773,7 @@ def process_args(inputargs=None):
     optiondict["verbose"] = False
     (
         optiondict["release_version"],
-        optiondict["git_longtag"],
+        optiondict["git_sha"],
         optiondict["git_date"],
         optiondict["git_isdirty"],
     ) = tide_util.version()

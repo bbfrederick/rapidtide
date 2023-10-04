@@ -31,12 +31,12 @@ jobs:
       - name: Display GitVersion outputs (step output)
         run: |
           GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.${{ steps.gitversion.outputs.shortSha }}
-          GITLONGTAG=${{ steps.gitversion.outputs.Sha }}
+          GITSHA=${{ steps.gitversion.outputs.Sha }}
           GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
           GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
-          echo "GITVERSION: ${GITVERSION}"
-          echo "GITLONGTAG: ${GITLONGTAG}"
-          echo "GITDATE: ${GITDATE}"
+          echo "GITVERSION=${GITVERSION}" >> $GITHUB_ENV
+          echo "GITSHA=${GITSHA}" >> $GITHUB_ENV
+          echo "GITDATE=${GITDATE}" >> $GITHUB_ENV
 
       - name: What
         run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
@@ -80,8 +80,8 @@ jobs:
               fredericklab/rapidtide:latest-release
           build-args: |
             "BRANCH"=${{ env.BRANCH }}
-            "GITVERSION"=${{ steps.meta.outputs.tags }}
-            GITLONGTAG=${{ env.GITLONGTAG }}
+            GITVERSION=${{ env.GITVERSION }}
+            GITSHA=${{ env.GITSHA }}
             GITDATE=${{ env.GITDATE }}
           labels: ${{ steps.meta.outputs.labels }}
 
