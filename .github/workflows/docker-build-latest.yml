@@ -89,6 +89,3 @@ jobs:
             GITVERSION=$GITVERSION
             GITLONGTAG=$GITLONGTAG
             GITDATE=$GITDATE
-            GITDATE2=${{ GITDATE }}
-            GITDATE3=${GITDATE}
-            GITDATE4=${ GITDATE }
