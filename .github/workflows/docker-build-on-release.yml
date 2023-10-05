@@ -37,6 +37,8 @@ jobs:
           echo "GITVERSION=${GITVERSION}" >> $GITHUB_ENV
           echo "GITSHA=${GITSHA}" >> $GITHUB_ENV
           echo "GITDATE=${GITDATE}" >> $GITHUB_ENV
+          BUILD_TIME=$(date -Iseconds)
+          echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
 
       - name: What
         run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
@@ -79,10 +81,11 @@ jobs:
               ${{ steps.meta.outputs.tags }}
               fredericklab/rapidtide:latest-release
           build-args: |
-            "BRANCH"=${{ env.BRANCH }}
+            BRANCH=${{ env.BRANCH }}
             GITVERSION=${{ env.GITVERSION }}
             GITSHA=${{ env.GITSHA }}
             GITDATE=${{ env.GITDATE }}
+            BUILD_TIME=${{ env.BUILD_TIME }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Copy to public.ecr.aws/rapidtide/rapidtide
