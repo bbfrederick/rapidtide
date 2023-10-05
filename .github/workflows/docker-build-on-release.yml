@@ -30,10 +30,26 @@ jobs:
         with:
           config: config commit-date-format="yyyy-MM-ddTHH:mm:ssZ"
 
+      - name: Alternate Git Version
+        id: alternategitversion
+        uses: codacy/git-version@2.7.1
+        with:
+          release-branch: 'main'
+          prefix: 'v'
+
+      - name: Direct Git Version
+        id: directgitversion
+        run: |
+          GITDIRECTVERSION=`git describe --tags --dirty`
+          echo "GITDIRECTVERSION=${GITDIRECTVERSION}" >> $GITHUB_ENV
+
       - name: Display GitVersion outputs (step output)
         run: |
-          GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.${{ steps.gitversion.outputs.shortSha }}
           GITSHA=${{ steps.gitversion.outputs.Sha }}
+          GITSHA8=${GITSHA:0:8}
+          GITCOMMITS=${{ steps.gitversion.outputs.CommitsSinceVersionSource }}
+          GITPREVVERSION=${{ steps.alternategitversion.outputs.previous-version }}
+          GITVERSION=${GITPREVVERSION}+${GITCOMMITS}.g${GITSHA8}
           GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
           GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
           echo "GITVERSION=${GITVERSION}" >> $GITHUB_ENV

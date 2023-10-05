@@ -26,7 +26,6 @@ jobs:
         id:   gitversion # id to later be referenced
         uses: gittools/actions/gitversion/execute@v0.10.2
         with:
-          #additionalArguments: "/showConfig"
           additionalArguments: /config commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
 
       - name: Alternate Git Version
@@ -48,27 +47,15 @@ jobs:
           GITSHA8=${GITSHA:0:8}
           GITCOMMITS=${{ steps.gitversion.outputs.CommitsSinceVersionSource }}
           GITPREVVERSION=${{ steps.alternategitversion.outputs.previous-version }}
-          GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.g${GITSHA8}
-          GITALTVERSION=${GITPREVVERSION}+${GITCOMMITS}.g${GITSHA8}
+          GITVERSION=${GITPREVVERSION}+${GITCOMMITS}.g${GITSHA8}
           GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
-          #GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
-          GITDATE=${{ steps.gitversion.outputs.commitDate }}
+          GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
+          BUILD_TIME=$(date -Iseconds)
+          echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
           echo "GITVERSION: ${GITVERSION}"
           echo "GITALTVERSION: ${GITALTVERSION}"
           echo "GITDIRECTVERSION: ${{ env.GITDIRECTVERSION}}"
           echo "GITSHA: ${GITSHA}"
+          echo "GITCOMMITS: ${GITCOMMITS}"
           echo "GITSHA8: ${GITSHA8}"
           echo "GITDATE: ${GITDATE}"
-          echo ${{ steps.gitversion.outputs }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: fredericklab/rapidtide
-
-      - name: Get version number
-        id: get_version
-        run: |
-          GITVERSION2=${{ steps.meta.outputs.tags }}
-          echo "GITVERSION2: ${GITVERSION2}"
