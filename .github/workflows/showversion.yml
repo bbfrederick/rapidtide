@@ -32,6 +32,9 @@ jobs:
       - name: Alternate Git Version
         id: alternategitversion
         uses: codacy/git-version@2.7.1
+        with:
+          release-branch: 'main'
+          prefix: 'v'
 
       - name: Display GitVersion outputs (step output)
         run: |
