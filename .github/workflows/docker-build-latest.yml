@@ -19,15 +19,15 @@ jobs:
         with:
           versionSpec: '5.x'
 
-      #- name: Install Checkout
-      #  uses: actions/checkout@v4.1.0
-      #  with:
-      #    ref: ${{ github.head_ref }}   # checkout the correct branch name
-      #    fetch-depth: 0
+      - name: Install Checkout
+        uses: actions/checkout@v4.1.0
+        with:
+          ref: ${{ github.head_ref }}   # checkout the correct branch name
+          fetch-depth: 0
 
-      #- name: Determine Version
-      #  id:   gitversion # id to later be referenced
-      #  uses: gittools/actions/gitversion/execute@v0
+      - name: Determine Version
+        id:   gitversion # id to later be referenced
+        uses: gittools/actions/gitversion/execute@v0
 
       - name: Display GitVersion outputs (step output)
         run: |

@@ -437,8 +437,6 @@ def version():
     else:
         isdocker = True
 
-    isdocker = False
-
     if isdocker:
         try:
             theversion = os.environ["GITVERSION"]

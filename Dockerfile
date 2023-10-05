@@ -22,11 +22,8 @@ RUN echo "GITSHA: "$GITSHA
 RUN echo "GITDATE: "$GITDATE
 
 # Install rapidtide
-#COPY . /src/rapidtide
-RUN mkdir /src && \
-    cd /src && \
-    git clone --depth 1 https://github.com/bbfrederick/rapidtide.git
-#RUN echo $GITVERSION > /src/rapidtide/VERSION
+COPY . /src/rapidtide
+RUN echo $GITVERSION > /src/rapidtide/VERSION
 RUN cd /src/rapidtide && \
     pip install . && \
     versioneer install --no-vendor && \
