@@ -27,6 +27,8 @@ jobs:
       - name: Determine Version
         id:   gitversion # id to later be referenced
         uses: gittools/actions/gitversion/execute@v0
+        with:
+          config: config commit-date-format="yyyy-MM-ddTHH:mm:ssZ"
 
       - name: Display GitVersion outputs (step output)
         run: |
