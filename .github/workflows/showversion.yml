@@ -26,7 +26,7 @@ jobs:
         id:   gitversion # id to later be referenced
         uses: gittools/actions/gitversion/execute@v0
         with:
-          overrideconfig: commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
+          overrideconfig: commit-date-format="yyyy-MM-ddTHH:mm:ss"
           tag-prefix: "v"
 
       - name: Display GitVersion outputs (step output)
@@ -40,7 +40,9 @@ jobs:
           GITDATE=${{ steps.gitversion.outputs.commitDate }}
           echo "GITVERSION: ${GITVERSION}"
           echo "GITSHA: ${GITSHA}"
+          echo "GITSHA8: ${GITSHA8}"
           echo "GITDATE: ${GITDATE}"
+          echo ${{ steps.gitversion.outputs }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
