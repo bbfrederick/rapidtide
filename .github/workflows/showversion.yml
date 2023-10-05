@@ -53,7 +53,6 @@ jobs:
           BUILD_TIME=$(date -Iseconds)
           echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
           echo "GITVERSION: ${GITVERSION}"
-          echo "GITALTVERSION: ${GITALTVERSION}"
           echo "GITDIRECTVERSION: ${{ env.GITDIRECTVERSION}}"
           echo "GITSHA: ${GITSHA}"
           echo "GITCOMMITS: ${GITCOMMITS}"
