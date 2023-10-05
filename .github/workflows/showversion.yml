@@ -36,18 +36,26 @@ jobs:
           release-branch: 'main'
           prefix: 'v'
 
+      - name: Direct Git Version
+        id: directgitversion
+        run: |
+          GITDIRECTVERSION=`git describe --tags --dirty`
+          echo "GITDIRECTVERSION=${GITDIRECTVERSION}" >> $GITHUB_ENV
+
       - name: Display GitVersion outputs (step output)
         run: |
           GITSHA=${{ steps.gitversion.outputs.Sha }}
           GITSHA8=${GITSHA:0:8}
-          #GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.${{ steps.gitversion.outputs.shortSha }}
+          GITCOMMITS=${{ steps.gitversion.outputs.CommitsSinceVersionSource }}
+          GITPREVVERSION=${{ steps.alternategitversion.outputs.previous-version }}
           GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.g${GITSHA8}
-          GITALTVERSION=${{ steps.alternategitversion.outputs.previous-version }}+${{ steps.alternategitversion.outputs.commits-distance }}.g${GITSHA8}
+          GITALTVERSION=${GITPREVVERSION}+${GITCOMMITS}.g${GITSHA8}
           GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
           #GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
           GITDATE=${{ steps.gitversion.outputs.commitDate }}
           echo "GITVERSION: ${GITVERSION}"
           echo "GITALTVERSION: ${GITALTVERSION}"
+          echo "GITDIRECTVERSION: ${{ env.GITDIRECTVERSION}}"
           echo "GITSHA: ${GITSHA}"
           echo "GITSHA8: ${GITSHA8}"
           echo "GITDATE: ${GITDATE}"
