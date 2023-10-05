@@ -26,8 +26,8 @@ jobs:
         id:   gitversion # id to later be referenced
         uses: gittools/actions/gitversion/execute@v0.10.2
         with:
-          additionalArguments: "/showConfig"
-          #additionalArguments: config commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
+          #additionalArguments: "/showConfig"
+          additionalArguments: /config commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
 
       - name: Alternate Git Version
         id: alternategitversion
@@ -44,6 +44,7 @@ jobs:
           #GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
           GITDATE=${{ steps.gitversion.outputs.commitDate }}
           echo "GITVERSION: ${GITVERSION}"
+          echo "GITALTVERSION: ${GITALTVERSION}"
           echo "GITSHA: ${GITSHA}"
           echo "GITSHA8: ${GITSHA8}"
           echo "GITDATE: ${GITDATE}"
