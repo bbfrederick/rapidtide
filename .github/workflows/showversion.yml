@@ -27,6 +27,7 @@ jobs:
         uses: gittools/actions/gitversion/execute@v0
         with:
           overrideconfig: commit-date-format="yyyy-MM-ddTHH:mm:ssZ"
+          tag-prefix: "v"
 
       - name: Display GitVersion outputs (step output)
         run: |
