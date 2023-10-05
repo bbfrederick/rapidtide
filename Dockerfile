@@ -23,7 +23,8 @@ RUN echo "GITDATE: "$GITDATE
 
 # Install rapidtide
 #COPY . /src/rapidtide
-RUN cd /src && \
+RUN mkdir /src && \
+    cd /src && \
     git clone --depth 1 https://github.com/bbfrederick/rapidtide.git
 #RUN echo $GITVERSION > /src/rapidtide/VERSION
 RUN cd /src/rapidtide && \
