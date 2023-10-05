@@ -42,7 +42,7 @@ jobs:
           GITSHA8=${GITSHA:0:8}
           #GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.${{ steps.gitversion.outputs.shortSha }}
           GITVERSION=${{ steps.gitversion.outputs.fullSemVer }}.g${GITSHA8}
-          GITALTVERSION=${{ steps.alternategitversion.outputs.previous-version }}.g${GITSHA8}
+          GITALTVERSION=${{ steps.alternategitversion.outputs.previous-version }}+${{ steps.alternategitversion.outputs.commits-distance }}.g${GITSHA8}
           GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
           #GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
           GITDATE=${{ steps.gitversion.outputs.commitDate }}
