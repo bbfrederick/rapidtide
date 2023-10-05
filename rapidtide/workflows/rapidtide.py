@@ -253,6 +253,10 @@ def rapidtide_main(argparsingfunc):
     )
     TimingLGR.info("Start")
 
+    # print version
+    theversion = optiondict["release_version"]
+    LGR.info(f"starting rapidtide {theversion}")
+
     # construct the BIDS base dictionary
     outputpath = os.path.dirname(optiondict["outputname"])
     rawsources = [os.path.relpath(optiondict["in_file"], start=outputpath)]
