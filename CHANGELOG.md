@@ -1,6 +1,7 @@
 # Release history
 
 ## Version 2.6.5 (10/4/23)
+* (rapidtide) Report version on startup.  Resolves https://github.com/bbfrederick/rapidtide/issues/91.
 * (Docker, package) Fixed version tagging and reporting.  Resolves https://github.com/bbfrederick/rapidtide/issues/96.
 * (Docker) Moved some time consuming installations into basecontainer to make building new containers MUCH faster.
 * (package) Merged some dependabot security PRs.
