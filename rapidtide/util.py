@@ -440,6 +440,8 @@ def version():
     if isdocker:
         try:
             theversion = os.environ["GITVERSION"]
+            if theversion.find("+") < 0:
+                theverion = theversion.split(".")[0]
         except KeyError:
             theversion = "UNKNOWN"
         try:
@@ -459,7 +461,7 @@ def version():
 
         theversion = versioninfo["version"]
         if theversion is None:
-            version = "UNKNOWN"
+            theversion = "UNKNOWN"
         thesha = versioninfo["full-revisionid"]
         if thesha is None:
             thesha = "UNKNOWN"
