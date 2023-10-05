@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v0
+        uses: gittools/actions/gitversion/setup@v0.10.0
         with:
           versionSpec: '5.x'
 
@@ -24,10 +24,9 @@ jobs:
 
       - name: Determine Version
         id:   gitversion # id to later be referenced
-        uses: gittools/actions/gitversion/execute@v0
+        uses: gittools/actions/gitversion/execute@v0.10.0
         with:
-          overrideconfig: commit-date-format="yyyy-MM-ddTHH:mm:ss"
-          tag-prefix: "v"
+          additionalArguments: config commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
 
       - name: Display GitVersion outputs (step output)
         run: |
