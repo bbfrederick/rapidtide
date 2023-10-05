@@ -1,5 +1,11 @@
 # Release history
 
+## Version 2.6.5 (10/4/23)
+* (Docker, package) Fixed version tagging and reporting.  Resolves https://github.com/bbfrederick/rapidtide/issues/96.
+* (Docker) Moved some time consuming installations into basecontainer to make building new containers MUCH faster.
+* (package) Merged some dependabot security PRs.
+* (diffrois) Fixed handling of missing values.
+
 ## Version 2.6.4 (9/28/23)
 * Mass merge of more dependabot PRs.
 * (diffrois) Added a new program to make "vasculomes" - measuring delay differences between ROIs.  This is still in flux.
