@@ -3,13 +3,11 @@
 import argparse
 import copy
 
-
 import numpy as np
 
-
 import rapidtide.io as tide_io
-import rapidtide.workflows.parser_funcs as pf
 import rapidtide.stats as tide_stats
+import rapidtide.workflows.parser_funcs as pf
 
 
 def _get_parser():
@@ -155,22 +153,22 @@ def main():
     maskmap[np.where(atlas_data < 1)] = 0.0
 
     tide_stats.makeandsavehistogram(
-            indata,
-            histlen,
-            endtrim,
-            outname,
-            binsize=None,
-            displaytitle="histogram",
-            displayplots=False,
-            refine=False,
-            therange=None,
-            normalize=False,
-            dictvarname=None,
-            thedict=None,
-            saveasbids=False,
-            append=False,
-            debug=False,
-    ):
+        indata,
+        histlen,
+        endtrim,
+        outname,
+        binsize=None,
+        displaytitle="histogram",
+        displayplots=False,
+        refine=False,
+        therange=None,
+        normalize=False,
+        dictvarname=None,
+        thedict=None,
+        saveasbids=False,
+        append=False,
+        debug=False,
+    )
 
     # save the maskmap as nifti
     themaskmaphdr = copy.deepcopy(themap_hdr)
