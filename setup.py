@@ -80,6 +80,7 @@ modules_list = [
 
 
 script_list = [
+    "rapidtide/scripts/adjustoffset",
     "rapidtide/scripts/aligntcs",
     "rapidtide/scripts/applydlfilter",
     "rapidtide/scripts/atlasaverage",

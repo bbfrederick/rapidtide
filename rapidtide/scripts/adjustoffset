@@ -1,0 +1,183 @@
+#!/usr/bin/env python
+
+import argparse
+import copy
+
+
+import numpy as np
+
+
+import rapidtide.io as tide_io
+import rapidtide.workflows.parser_funcs as pf
+import rapidtide.stats as tide_stats
+
+
+def _get_parser():
+    """
+    Argument parser for adjust offset
+    """
+    parser = argparse.ArgumentParser(
+        prog="adjustoffset",
+        description="Adjust the offset of a rapidtide delay map.",
+        allow_abbrev=False,
+    )
+
+    # Required arguments
+    parser.add_argument(
+        "inputmap",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help="The name of the rapidtide maxtime map.",
+    )
+    parser.add_argument("outputroot", help="The root name for the output files.")
+
+    maskopts = parser.add_argument_group("Masking options")
+    maskopts.add_argument(
+        "--includemask",
+        dest="includespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "Only use voxels that are also in file MASK in calculating the offset values "
+            "(if VALSPEC is given, only voxels "
+            "with integral values listed in VALSPEC are used). "
+        ),
+        default=None,
+    )
+    maskopts.add_argument(
+        "--excludemask",
+        dest="excludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "Do not use voxels that are also in file MASK in calculating the offset values "
+            "(if VALSPEC is given, voxels "
+            "with integral values listed in VALSPEC are excluded). "
+        ),
+        default=None,
+    )
+    maskopts.add_argument(
+        "--extramask",
+        dest="extramaskname",
+        metavar="MASK",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help=(
+            "Additional mask to apply to select voxels for adjustment.  Zero voxels in this mask will be excluded.  "
+            "If not specified, the corrfit_mask will be used."
+        ),
+        default=None,
+    )
+
+    parser.add_argument(
+        "--histonly",
+        dest="histonly",
+        action="store_true",
+        help=("Only calculate offset histograms - do not perform adjustments."),
+        default=False,
+    )
+
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Output debugging information."),
+        default=False,
+    )
+
+    return parser
+
+
+def main():
+    # grab the command line arguments then pass them off.
+    try:
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
+
+    if debug:
+        print(f"reading map file {args.inputmap}")
+    (
+        themap,
+        themap_data,
+        themap_hdr,
+        themapdims,
+        thetemplatesizes,
+    ) = tide_io.readfromnifti(args.inputmap)
+    nx, ny, nz, nummaps = tide_io.parseniftidims(themapdims)
+
+    # process masks
+    if args.includespec is not None:
+        (
+            includename,
+            includevals,
+        ) = tide_io.processnamespec(
+            args.includespec, "Including voxels where ", "in offset calculation."
+        )
+    else:
+        includename = None
+        includevals = None
+    if args.excludespec is not None:
+        (
+            excludename,
+            excludevals,
+        ) = tide_io.processnamespec(
+            args.excludespec, "Excluding voxels where ", "from offset calculation."
+        )
+    else:
+        excludename = None
+        excludevals = None
+
+    if args.extramaskname is None:
+        args.extramaskname = (args.inputmap).replace("maxtime_map", "corrfit_mask")
+
+    numspatiallocs = int(nx) * int(ny) * int(nz)
+    includemask, excludemask, extramask = tide_mask.getmaskset(
+        "anatomic",
+        includename,
+        includevals,
+        excludename,
+        excludevals,
+        themap_hdr,
+        numspatiallocs,
+        extramask=args.extramaskname,
+    )
+
+    theflatmask = themap_data.reshape((numspatiallocs)) * 0 + 1
+    if includemask is not None:
+        theflatmask = theflatmask * includemask.reshape((numspatiallocs))
+    if excludemask is not None:
+        theflatmask = theflatmask * (1 - excludemask.reshape((numspatiallocs)))
+    if extramask is not None:
+        theflatextramask = extramask.reshape((numspatiallocs))
+        theflatmask = theflatmask * theflatextramask
+
+    # generate the mask
+    themask_data = theflatmask.reshape((nx, ny, nz))
+    maskmap = themask_data
+    maskmap[np.where(atlas_data < 1)] = 0.0
+
+    tide_stats.makeandsavehistogram(
+            indata,
+            histlen,
+            endtrim,
+            outname,
+            binsize=None,
+            displaytitle="histogram",
+            displayplots=False,
+            refine=False,
+            therange=None,
+            normalize=False,
+            dictvarname=None,
+            thedict=None,
+            saveasbids=False,
+            append=False,
+            debug=False,
+    ):
+
+    # save the maskmap as nifti
+    themaskmaphdr = copy.deepcopy(themap_hdr)
+    themaskmaphdr["dim"][0] = 3
+    themaskmaphdr["dim"][4] = 1
+    tide_io.savetonifti(maskmap, themaskmaphdr, outputroot + "_maskmap")
+
+
+if __name__ == "__main__":
+    main()
