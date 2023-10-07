@@ -3,11 +3,18 @@
 import argparse
 import copy
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.io as tide_io
+import rapidtide.maskutil as tide_mask
 import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
+
+DEFAULT_LAGMIN = -10
+DEFAULT_LAGMAX = 20
+DEFAULT_PEAKTHRESH = 0.33
+DEFAULT_HISTBINS = 151
 
 
 def _get_parser():
@@ -64,13 +71,67 @@ def _get_parser():
     )
 
     parser.add_argument(
+        "--searchrange",
+        dest="searchrange",
+        action=pf.IndicateSpecifiedAction,
+        nargs=2,
+        type=float,
+        metavar=("LAGMIN", "LAGMAX"),
+        help=(
+            "Limit fit to a range of lags from LAGMIN to "
+            f"LAGMAX.  Default is {DEFAULT_LAGMIN} to {DEFAULT_LAGMAX} seconds. "
+        ),
+        default=(DEFAULT_LAGMIN, DEFAULT_LAGMAX),
+    )
+    parser.add_argument(
+        "--histbins",
+        metavar="BINS",
+        help=f"Number of bins in the entropy histogram (default is {DEFAULT_HISTBINS}).",
+        type=int,
+        default=DEFAULT_HISTBINS,
+    )
+    parser.add_argument(
         "--histonly",
         dest="histonly",
         action="store_true",
         help=("Only calculate offset histograms - do not perform adjustments."),
         default=False,
     )
-
+    parser.add_argument(
+        "--display",
+        dest="display",
+        action="store_true",
+        help=("Show the delay histogram."),
+        default=False,
+    )
+    parser.add_argument(
+        "--pickleft",
+        dest="pickleft",
+        action="store_true",
+        help=("Choose the leftmost peak of the histogram that exceeds the threshold."),
+        default=False,
+    )
+    parser.add_argument(
+        "--pickleftthresh",
+        metavar="THRESH",
+        help=f"Fraction of the maximum height that can be considered a peak.  Default is {DEFAULT_PEAKTHRESH}",
+        type=float,
+        default=DEFAULT_PEAKTHRESH,
+    )
+    parser.add_argument(
+        "--setoffset",
+        metavar="OFFSET",
+        help=f"Directly set the offset value to OFFSET.  Overrides histogram.",
+        type=float,
+        default=None,
+    )
+    parser.add_argument(
+        "--norefine",
+        dest="refine",
+        action="store_false",
+        help=("Do not fit the histogram peak."),
+        default=True,
+    )
     parser.add_argument(
         "--debug",
         dest="debug",
@@ -90,7 +151,7 @@ def main():
         _get_parser().print_help()
         raise
 
-    if debug:
+    if args.debug:
         print(f"reading map file {args.inputmap}")
     (
         themap,
@@ -138,7 +199,8 @@ def main():
         extramask=args.extramaskname,
     )
 
-    theflatmask = themap_data.reshape((numspatiallocs)) * 0 + 1
+    theflatmap = themap_data.reshape((numspatiallocs))
+    theflatmask = theflatmap * 0 + 1
     if includemask is not None:
         theflatmask = theflatmask * includemask.reshape((numspatiallocs))
     if excludemask is not None:
@@ -150,31 +212,54 @@ def main():
     # generate the mask
     themask_data = theflatmask.reshape((nx, ny, nz))
     maskmap = themask_data
-    maskmap[np.where(atlas_data < 1)] = 0.0
 
-    tide_stats.makeandsavehistogram(
-        indata,
-        histlen,
-        endtrim,
-        outname,
-        binsize=None,
-        displaytitle="histogram",
-        displayplots=False,
-        refine=False,
-        therange=None,
-        normalize=False,
-        dictvarname=None,
-        thedict=None,
-        saveasbids=False,
-        append=False,
-        debug=False,
+    peakloc, peakheight, peakwidth = tide_stats.gethistprops(
+        theflatmap[np.where(theflatmask > 0.0)],
+        args.histbins,
+        therange=args.searchrange,
+        refine=args.refine,
+        pickleft=args.pickleft,
+        peakthresh=args.pickleftthresh,
     )
+    print(f"{peakloc=}, {peakheight=}, {peakwidth=}")
+
+    thehist, peakheight2, peakloc2, peakwidth2, centerofmass2 = tide_stats.makehistogram(
+        theflatmap[np.where(theflatmask > 0.0)],
+        args.histbins,
+        binsize=None,
+        therange=args.searchrange,
+        refine=args.refine,
+        normalize=False,
+    )
+    # print(f"{peakloc=}, {peakheight=}, {peakwidth=}, {centerofmass=}")
+
+    endtrim = 1
+    if args.display:
+        thestore = np.zeros((2, len(thehist[0])), dtype="float64")
+        thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
+        thestore[1, :] = thehist[0][-args.histbins :]
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title("histogram")
+        plt.plot(thestore[0, : (-1 - endtrim)], thestore[1, : (-1 - endtrim)])
+        plt.show()
 
     # save the maskmap as nifti
     themaskmaphdr = copy.deepcopy(themap_hdr)
     themaskmaphdr["dim"][0] = 3
     themaskmaphdr["dim"][4] = 1
-    tide_io.savetonifti(maskmap, themaskmaphdr, outputroot + "_maskmap")
+    tide_io.savetonifti(maskmap, themaskmaphdr, args.outputroot + "_maskmap")
+
+    if not args.histonly:
+        # actually change the offset
+        if args.setoffset is not None:
+            offsetvalue = args.setoffset
+        else:
+            offsetvalue = peakloc
+        theflatmap[np.where(theflatmask > 0.0)] += offsetvalue
+        tide_io.savetonifti(
+            theflatmap.reshape((nx, ny, nz)), themap_hdr, args.outputroot + "_adjustedmaxtime"
+        )
 
 
 if __name__ == "__main__":
