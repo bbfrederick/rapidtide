@@ -1267,6 +1267,13 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
+        "--disabledockermemfix",
+        dest="dockermemfix",
+        action="store_false",
+        help=("Disable docker memory limit setting."),
+        default=True,
+    )
+    debugging.add_argument(
         "--alwaysmultiproc",
         dest="alwaysmultiproc",
         action="store_true",
