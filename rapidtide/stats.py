@@ -588,6 +588,9 @@ def makeandsavehistogram(
     normalize
     dictvarname
     thedict
+    saveasbids
+    append
+    debug
 
     Returns
     -------
