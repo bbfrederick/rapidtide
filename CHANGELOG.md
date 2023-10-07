@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.6.6 (10/7/23)
+* (adjustoffset) New tool to alter overall delay offset in maxtime maps.
+* (Docker, package) Really, truly, actually fixed version reporting.
+* (rapidtide) Added debugging option to disable docker memory limit "fix".
+
 ## Version 2.6.5 (10/4/23)
 * (rapidtide) Report version on startup.  Resolves https://github.com/bbfrederick/rapidtide/issues/91.
 * (Docker, package) Fixed version tagging and reporting.  Resolves https://github.com/bbfrederick/rapidtide/issues/96.
