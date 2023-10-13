@@ -159,12 +159,16 @@ not specified, don't change the mask.  Then multiply by corrmask, since
 you can't used voxels rwhere rapidtide was not run to do refinement.
 
 **For the GLM mask:**
-Include all voxels, unless you are calculating a CVR map, in which case
-only perform the calculation on voxels exceeding 25% of the robust mean
-value (this is weird and will change).
+Include all voxels, unless you are calculating a CVR map, in which caserates other than the TR. Therefore
+the first step in moving regressor processing is to resample the moving regressor estimate to match the (oversampled)
+data sample rate.
 
-Depending on your data (including pathology), and what you want to accomplish, using the default correlation 
-mask is not idea.  For example, if a subject has obvious pathology, you may want to exclude these voxels
+**Temporal filtering:**  By default, all data and moving regressors are temporally bandpass filtered to 0.009-0.15Hz
+(our standard definition of the LFO band).  This can be overridden with ``--filterband`` and ``--filterfreqs`` command line
+options.
+
+Depending on your data (including pathology), and what you want to accomplish, using the default correlation
+mask is not ideal.  For example, if a subject has obvious pathology, you may want to exclude these voxels
 from being used to generate the intial global mean signal estimate, or from being used in refinement.
 
 
@@ -184,13 +188,16 @@ integral factor that results in a sample rate >= 2Hz.
 
 **Regressor resampling:** In the case where we are using the global mean signal as the moving signal, the moving signal
 estimate and the fMRI data have the same sample rate, but if we use external
-recordings, such as NIRS or etCO2 timecourses, these will in general have sample rates other than the TR. Therefore
-the first step in moving regressor processing is to resample the moving regressor estimate to match the (oversampled)
-data sample rate.
-
-**Temporal filtering:**  By default, all data and moving regressors are temporally bandpass filtered to 0.009-0.15Hz
-(our standard definition of the LFO band).  This can be overridden with ``--filterband`` and ``--filterfreqs`` command line
-options.
+recordings, such as NIRS or etCO2 timecourses, these will in general have sample
+presence of noise, or extreme spectral concentration of the sLFO, the
+wrong crosscorrelation peak can appear larger, leading to an incorrect
+delay estimation.  This is particularly problematic if the pseudoperiod
+is shorter than the reciprocal of the search window (for example, if the
+search window for correlation peaks is between -5 and +5 seconds, and
+the sLFO has a strong spectral component at 0.1Hz or higher, more than
+one correlation peak will occur within the search window).  As the width
+of the search range increases, the spectral range of potentially
+confounding spectral peaks covers more of the sLFO frequency band.
 
 **Pseudoperiodicity:**  The first uncontrolled quantity is
 pseudoperiodicity.  From time to time, signal energy in the 0.09-0.15 Hz
@@ -202,15 +209,8 @@ when looking at multiple runs in the same subject, where one run is
 pseudoperiodic while the rest are not. The effect of this is to cause
 the crosscorrelation between the probe signal and voxel timecourses to
 have more than one strong correlation peak.  This means that in the
-presence of noise, or extreme spectral concentration of the sLFO, the
-wrong crosscorrelation peak can appear larger, leading to an incorrect
-delay estimation.  This is particularly problematic if the pseudoperiod
-is shorter than the reciprocal of the search window (for example, if the
-search window for correlation peaks is between -5 and +5 seconds, and
-the sLFO has a strong spectral component at 0.1Hz or higher, more than
-one correlation peak will occur within the search window).  As the width
-of the search range increases, the spectral range of potentially
-confounding spectral peaks covers more of the sLFO frequency band.
+only perform the calculation on voxels exceeding 25% of the robust mean
+value (this is weird and will change).
 
 **Implications of pseudoperiodicity:** The extent to which
 pseudoperiodicity is a problem depends on the application.  In the case
