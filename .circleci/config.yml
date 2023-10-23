@@ -451,7 +451,7 @@ jobs:
             apt-get update
             apt-get install -yqq make
             source activate py311_env
-            pip install -e .[tests,doc]
+            pip install -e .[doc]
             pip install numpydoc
             make -C docs html
       - store_artifacts:
@@ -495,13 +495,13 @@ workflows:
       - test_py311:
           requires:
             - build_py311
+      - build_docs:
+          requires:
+            - build_py311
       #- build_py312
       #- test_py312:
       #    requires:
       #      - build_py312
-      - build_docs:
-          requires:
-            - build_py311
       #- style_check:
       #    requires:
       #      - build_py311
