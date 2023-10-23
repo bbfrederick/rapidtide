@@ -112,12 +112,14 @@ Generation of Masks
 ```````````````````
 
 By default, rapidtide calculates masks dynamically at run time.  There
-are 4 masks used 1) the global mean mask, which determines which voxels
+are 5 masks used: 1) the global mean mask, which determines which voxels
 are used to generate the initial global mean regressor, 2) The
 correlation mask, which determines which voxels you actually calculate
 rapidtide fits in (what you are describing here), 3) the refine mask,
 which selects which voxels are used to generate a refined regressor for
-the next fitting pass, and 4) the GLM mask, which determines which
+the next fitting pass, 4) the offset mask, which determines which voxels are 
+used to estimate the "zero" time of the delay distribution, 
+and 4) the GLM mask, which determines which
 voxels have the rapidtide regressors removed.
 
 Below is a description of how this works currently.  NB: this is not how
@@ -181,14 +183,31 @@ Moving Signal Preprocessing
 ```````````````````````````
 
 **Oversampling:**  In order to simplify delay calculation, rapidtide performs all delay estimation operations
-on data with a sample rate of 2Hz or faster.  The oversampling factor can be specified explicitly (using the
-``--oversampfac`` command line argument), but if it is
-not, for data with a sample rate of less than 2Hz, all data and regressors are internally upsampled by the lowest
+on data with a sample rate of 2Hz or faster.  Since most fMRI is recorded with a TR > 0.5s, this is acheived by 
+oversampling the data.  The oversampling factor can be specified explicitly 
+(using the ``--oversampfac`` command line argument), but if it is
+not, for data with a sample rate of less than 2Hz, all data and regressors 
+are internally upsampled by the lowest
 integral factor that results in a sample rate >= 2Hz.
 
-**Regressor resampling:** In the case where we are using the global mean signal as the moving signal, the moving signal
-estimate and the fMRI data have the same sample rate, but if we use external
+**Regressor resampling:** In the case where we are using the global mean signal 
+as the moving signal, the moving signal estimate and the fMRI data have 
+the same sample rate, but if we use external
 recordings, such as NIRS or etCO2 timecourses, these will in general have sample
+rates other than the TR. Therefore the first step in moving regressor processing 
+is to resample the moving regressor estimate to match the (oversampled)
+data sample rate.
+
+**Pseudoperiodicity:**  The first uncontrolled quantity is
+pseudoperiodicity.  From time to time, signal energy in the 0.09-0.15 Hz
+band will be strongly concentrated in one or more spectral peaks.
+Whether this is completely random, or due to some pathological or
+congenital condition that affects circulation is not known. It seems
+for the most part to be purely by chance, as it is occasionally seen
+when looking at multiple runs in the same subject, where one run is
+pseudoperiodic while the rest are not. The effect of this is to cause
+the crosscorrelation between the probe signal and voxel timecourses to
+have more than one strong correlation peak.  This means that in the
 presence of noise, or extreme spectral concentration of the sLFO, the
 wrong crosscorrelation peak can appear larger, leading to an incorrect
 delay estimation.  This is particularly problematic if the pseudoperiod
@@ -199,16 +218,7 @@ one correlation peak will occur within the search window).  As the width
 of the search range increases, the spectral range of potentially
 confounding spectral peaks covers more of the sLFO frequency band.
 
-**Pseudoperiodicity:**  The first uncontrolled quantity is
-pseudoperiodicity.  From time to time, signal energy in the 0.09-0.15 Hz
-band will be strongly concentrated in one or more spectral peaks.
-Whether this is completely random, or due to some pathological or
-congenital condition that affects circulation is not known – it seems
-for the most part to be purely by chance, as it is occasionally seen
-when looking at multiple runs in the same subject, where one run is
-pseudoperiodic while the rest are not. The effect of this is to cause
-the crosscorrelation between the probe signal and voxel timecourses to
-have more than one strong correlation peak.  This means that in the
+
 only perform the calculation on voxels exceeding 25% of the robust mean
 value (this is weird and will change).
 
@@ -216,7 +226,7 @@ value (this is weird and will change).
 pseudoperiodicity is a problem depends on the application.  In the case
 of noise removal, where the goal is to remove the global sLFO signal,
 and leave the local or networked neuronal signal variance, it turns out
-not to be much of a problem at all.  If the sLFO signal in given voxel
+not to be much of a problem at all.  If the sLFO signal in a given voxel
 is sufficiently periodic that that the correctly delayed signal is
 indistinguishable from the signal one or more periods away, then it
 doesn’t matter which signal is removed – the resulting denoised signal
@@ -232,8 +242,8 @@ signals are present.  Then after delay maps are calculated, they are
 processed with an iterative despeckling process analogous to phase
 unwrapping.  The delay of each voxel is compared to the median delay of
 its neighbors.  If the voxel delay differs by the period of an
-identified problematic sidelobe, the delay is constrained to “correct”
-value and refit.  This procedure greatly attenuates, but does not
+identified problematic sidelobe, the delay is constrained to the “correct”
+value, and refit.  This procedure greatly attenuates, but does not
 completely solve, the problem of bad sidelobes.  A more general solution
 to the problem of non-uniform spectra will likely improve the
 correction.
