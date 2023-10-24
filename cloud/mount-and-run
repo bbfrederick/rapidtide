@@ -18,7 +18,7 @@ mkdir /data_in /data_out
 # mount data output folder
 
 # check for EC2
-TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+TOKEN=$(curl -s -m 1 -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 
 if [[ $AWS_EXECUTION_ENV == "AWS_ECS_EC2" ]]; then
     # AWS Batch
