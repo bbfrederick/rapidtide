@@ -31,6 +31,11 @@ import rapidtide.stats as tide_stats
 LGR = logging.getLogger("GENERAL")
 
 
+def resampmask(themask, thetargetres):
+    resampmask = themask
+    return themask
+
+
 def makeepimask(nim):
     return masking.compute_epi_mask(nim)
 

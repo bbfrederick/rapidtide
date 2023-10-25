@@ -21,6 +21,7 @@
 #
 import copy
 import json
+import operator as op
 import os
 import platform
 import sys
@@ -1646,6 +1647,18 @@ def parsefilespec(filespec, debug=False):
     return thefilename, thecolspec
 
 
+def unique(list1):
+    # initialize a null list
+    unique_list = []
+
+    # traverse for all elements
+    for x in list1:
+        # check if exists in unique_list or not
+        if op.countOf(unique_list, x) == 0:
+            unique_list.append(x)
+    return unique_list
+
+
 def colspectolist(colspec, debug=False):
     if colspec is None:
         print("COLSPECTOLIST: no range specification - exiting")
@@ -1661,7 +1674,24 @@ def colspectolist(colspec, debug=False):
             print("COLSPECTOLIST:", s, "is not a legal integer - exiting")
             return None
 
+    # convert value macros, if present
+    macros = (
+        ("APARC_SUBCORTGRAY", "8-13,17-20,26-28,47-56,58-60,96,97"),
+        ("APARC_CORTGRAY", "1000-1035,2000-2035"),
+        ("APARC_GRAY", "8-13,17-20,26-28,47-56,58-60,96,97,1000-1035,2000-2035"),
+    )
+    preprocessedranges = []
     for thisrange in theranges:
+        converted = False
+        for themacro in macros:
+            if thisrange == themacro[0]:
+                if debug:
+                    print(f"COLSPECTOLIST: macro {thisrange} detected.")
+                preprocessedranges += themacro[1].split(",")
+                converted = True
+        if not converted:
+            preprocessedranges.append(thisrange)
+    for thisrange in preprocessedranges:
         if debug:
             print("processing range", thisrange)
         theendpoints = thisrange.split("-")
@@ -1681,7 +1711,8 @@ def colspectolist(colspec, debug=False):
         else:
             print("COLSPECTOLIST: bad range specification - exiting")
             return None
-    return sorted(collist)
+
+    return unique(sorted(collist))
 
 
 def processnamespec(maskspec, spectext1, spectext2):

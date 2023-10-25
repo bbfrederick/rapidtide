@@ -1,5 +1,18 @@
 # Release history
 
+## Version 2.6.8 (10/25/23)
+* (Docker) Update to basecontainer v0.2.7.
+* (rapidtide) Started adding the ability to delete noise signals from the probe regressor (mostly due to slow breathing).
+* (package) Added macros for selecting all the gray matter values in an aparc+aseg file.
+* (package) Accepted dependabot changes.
+* (rapidtide-cloud) Added basecontainer to AWS.
+* (rapidtide-cloud) Various tweaks and changes to AWS authentication procedures to deal with NDA.
+
+## Version 2.6.7 (10/24/23)
+* (Docker) Update to basecontainer v0.2.6.
+* (package) Accepted some dependabot PR's.
+* (docs) Some updates to theory of operation.
+
 ## Version 2.6.6 (10/7/23)
 * (adjustoffset) New tool to alter overall delay offset in maxtime maps.
 * (Docker, package) Really, truly, actually fixed version reporting.
