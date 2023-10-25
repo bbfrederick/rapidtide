@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.6.7 (10/24/23)
+* (Docker) Update to basecontainer v0.2.6.
+* (package) Accepted some dependabot PR's.
+* (docs) Some updates to theory of operation.
+
 ## Version 2.6.6 (10/7/23)
 * (adjustoffset) New tool to alter overall delay offset in maxtime maps.
 * (Docker, package) Really, truly, actually fixed version reporting.
