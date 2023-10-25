@@ -444,7 +444,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-312-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "setup.py" }}
       - run:
           name: Build documentation
           command: |
