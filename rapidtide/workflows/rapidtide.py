@@ -833,6 +833,45 @@ def rapidtide_main(argparsingfunc):
     LGR.verbose(f"the timepoint spacing is {1.0 / inputfreq}")
     LGR.verbose(f"the input timecourse start time is {inputstarttime}")
 
+    if optiondict["noisetimecoursespec"] is not None:
+        noisetimecoursespec = optiondict["noisetimecoursespec"]
+        LGR.info(f"using externally supplied noise regressor {noisetimecoursespec}")
+        (
+            filenoisefreq,
+            filenoisestarttime,
+            dummy,
+            noisevec,
+            dummy,
+            dummy,
+        ) = tide_io.readvectorsfromtextfile(noisetimecoursespec, onecol=True)
+        noisefreq = optiondict["noisefreq"]
+        noisestarttime = optiondict["noisestarttime"]
+        if noisefreq is None:
+            if filenoisefreq is not None:
+                noisefreq = filenoisefreq
+            else:
+                noisefreq = 1.0 / fmritr
+            LGR.warning(f"no regressor frequency specified - defaulting to {noisefreq} (1/tr)")
+        if noisestarttime is None:
+            if filenoisestarttime is not None:
+                noisestarttime = filenoisestarttime
+            else:
+                LGR.warning("no regressor start time specified - defaulting to 0.0")
+                noisestarttime = 0.0
+        noiseperiod = 1.0 / noisefreq
+        numnoise = len(noisevec)
+        optiondict["noisefreq"] = noisefreq
+        optiondict["noisestarttime"] = noisestarttime
+        LGR.info(
+            "Noise timecourse start time, end time, and step: {:.3f}, {:.3f}, {:.3f}".format(
+                -noisestarttime, noisestarttime + numreference * noiseperiod, noiseperiod
+            )
+        )
+        LGR.verbose("noise vector")
+        LGR.verbose(f"length: {len(noisevec)}")
+        LGR.verbose(f"noise freq: {noisefreq}")
+        LGR.verbose(f"noise start time: {noisestarttime:.3f}")
+
     # generate the time axes
     fmrifreq = 1.0 / fmritr
     optiondict["fmrifreq"] = fmrifreq
