@@ -43,6 +43,47 @@ def test_io(debug=True, displayplots=False):
     assert tide_io.getniftiroot("test.nii.gz") == "test"
     assert tide_io.getniftiroot("test.txt") == "test.txt"
 
+    # test parsefilespec
+    thefile, thespec = tide_io.parsefilespec("mymask.nii.gz:1,3,4-8,APARC_SUBCORTGRAY")
+    assert thefile == "mymask.nii.gz"
+    assert thespec == "1,3,4-8,APARC_SUBCORTGRAY"
+    assert tide_io.colspectolist(thespec) == [
+        1,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        17,
+        18,
+        19,
+        20,
+        26,
+        27,
+        28,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        58,
+        59,
+        60,
+        96,
+        97,
+    ]
+
     # test fmritimeinfo
     fmritimeinfothresh = 1e-2
     tr, timepoints = tide_io.fmritimeinfo(
