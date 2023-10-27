@@ -1674,6 +1674,45 @@ def mlregress(x, y, intercept=True):
     return np.atleast_1d(solution[0].T), R
 
 
+def glmfilt(thedata, theevs, debug=False):
+    r"""Performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
+    and returns the result.  Ends are padded to reduce transients.
+
+    Parameters
+    ----------
+    thedata : 1D numpy array
+        Input data to be filtered
+        :param inputdata:
+
+    theevs : 2D numpy array
+        Explanatory variables to be
+        :param theevs:
+    """
+
+    if debug:
+        print(f"{thedata.shape=}")
+        print(f"{theevs.shape=}")
+    thefit, R = mlregress(theevs, thedata)
+    if debug:
+        print(f"{thefit.shape=}")
+        print(f"{thefit=}")
+        print(f"{R=}")
+    datatoremove = thedata * 0.0
+    if theevs.ndim > 1:
+        for ev in range(1, thefit.shape[1]):
+            if debug:
+                print(f"{ev=}")
+            datatoremove += thefit[0, ev] * theevs[:, ev - 1]
+            if debug:
+                print(f"{ev=}")
+                print(f"\t{thefit[0, ev]=}")
+                print(f"\tdatatoremove min max = {np.min(datatoremove)}, {np.max(datatoremove)}")
+    else:
+        datatoremove += thefit[0, 1] * theevs[:]
+    filtered = thedata - datatoremove
+    return filtered, datatoremove, R
+
+
 # --------------------------- Peak detection functions ----------------------------------------------
 # The following three functions are taken from the peakdetect distribution by Sixten Bergman
 # They were distributed under the DWTFYWTPL, so I'm relicensing them under Apache 2.0
