@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+
+arrlen = 100
+xaxis = 2.0 * np.pi * np.linspace(0.0, 1.0, arrlen, endpoint=False)
+
+freq1 = 1.0
+freq2 = 3.4
+freq3 = 7.0
+amp1 = 1.0
+amp2 = 0.5
+amp3 = 0.25
+noiseamp = 0.1
+
+evs = np.zeros((arrlen, 3), dtype=float)
+
+evs[:, 0] = np.sin(freq1 * xaxis)
+evs[:, 1] = np.sin(freq2 * xaxis)
+evs[:, 2] = np.sin(freq3 * xaxis)
+
+invec = amp1 * evs[:, 0] + amp2 * evs[:, 1] + amp3 * evs[:, 2] + noiseamp * np.random.rand(arrlen)
+
+filtered, datatoremove, R = tide_fit.glmfilt(invec, evs, debug=True)
+
+offset = 0.0
+plt.plot(evs[:, 0])
+offset += 1.0
+plt.plot(evs[:, 1] + offset)
+offset += 1.0
+plt.plot(evs[:, 2] + offset)
+offset += 1.0
+plt.plot(invec + offset)
+offset += 1.0
+plt.plot(datatoremove + offset)
+offset += 1.0
+plt.plot(filtered + offset)
+print(R)
+plt.show()
+
+filtered, datatoremove, R = tide_fit.glmfilt(invec, evs[:, 0], debug=True)
+offset = 0.0
+plt.plot(evs[:, 0])
+offset += 1.0
+plt.plot(invec + offset)
+offset += 1.0
+plt.plot(datatoremove + offset)
+offset += 1.0
+plt.plot(filtered + offset)
+print(R)
+plt.show()
