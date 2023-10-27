@@ -833,6 +833,7 @@ def rapidtide_main(argparsingfunc):
     LGR.verbose(f"the timepoint spacing is {1.0 / inputfreq}")
     LGR.verbose(f"the input timecourse start time is {inputstarttime}")
 
+    # if there is an externally specified noise regressor, read it in here
     if optiondict["noisetimecoursespec"] is not None:
         noisetimecoursespec = optiondict["noisetimecoursespec"]
         LGR.info(f"using externally supplied noise regressor {noisetimecoursespec}")
@@ -843,7 +844,7 @@ def rapidtide_main(argparsingfunc):
             noisevec,
             dummy,
             dummy,
-        ) = tide_io.readvectorsfromtextfile(noisetimecoursespec, onecol=True)
+        ) = tide_io.readvectorsfromtextfile(optiondict["noisetimecoursespec"], onecol=True)
         noisefreq = optiondict["noisefreq"]
         noisestarttime = optiondict["noisestarttime"]
         if noisefreq is None:
@@ -864,9 +865,11 @@ def rapidtide_main(argparsingfunc):
         optiondict["noisestarttime"] = noisestarttime
         LGR.info(
             "Noise timecourse start time, end time, and step: {:.3f}, {:.3f}, {:.3f}".format(
-                -noisestarttime, noisestarttime + numreference * noiseperiod, noiseperiod
+                -noisestarttime, noisestarttime + numnoise * noiseperiod, noiseperiod
             )
         )
+        noise_x = np.arange(0.0, numnoise) * noiseperiod - noisestarttime
+        noise_y = noisevec[0:numnoise] - np.mean(noisevec[0:numnoise])
         LGR.verbose("noise vector")
         LGR.verbose(f"length: {len(noisevec)}")
         LGR.verbose(f"noise freq: {noisefreq}")
@@ -974,6 +977,16 @@ def rapidtide_main(argparsingfunc):
             debug=optiondict["debug"],
         )
         reference_y = rt_floatset(reference_y_filt.real)
+        if optiondict["noisetimecoursespec"] is not None:
+            noise_y_filt = tide_filt.dolptrapfftfilt(
+                noisefreq,
+                0.25 * fmrifreq,
+                0.5 * fmrifreq,
+                noise_y,
+                padlen=int(noisefreq * optiondict["padseconds"]),
+                debug=optiondict["debug"],
+            )
+            noise_y = rt_floatset(noise_y_filt.real)
 
     warnings.filterwarnings("ignore", "Casting*")
 
@@ -988,7 +1001,7 @@ def rapidtide_main(argparsingfunc):
                 reference_x,
                 reference_y,
                 initial_fmri_x,
-                padlen=int(inputfreq * optiondict["padseconds"]),
+                padlen=int((1.0 / fmritr) * optiondict["padseconds"]),
                 method=optiondict["interptype"],
                 debug=optiondict["debug"],
             ),
@@ -1007,12 +1020,39 @@ def rapidtide_main(argparsingfunc):
             order=optiondict["detrendorder"],
             demean=optiondict["dodemean"],
         )
+        if optiondict["noisetimecoursespec"] is not None:
+            if optiondict["detrendorder"] > 0:
+                resampnonosnoise_y = tide_fit.detrend(
+                    tide_resample.doresample(
+                        noise_x,
+                        noise_y,
+                        initial_fmri_x,
+                        padlen=int((1.0 / fmritr) * optiondict["padseconds"]),
+                        method=optiondict["interptype"],
+                        debug=optiondict["debug"],
+                    ),
+                    order=optiondict["detrendorder"],
+                    demean=optiondict["dodemean"],
+                )
+                resampnoise_y = tide_fit.detrend(
+                    tide_resample.doresample(
+                        noise_x,
+                        noise_y,
+                        os_fmri_x,
+                        padlen=int(oversampfreq * optiondict["padseconds"]),
+                        method=optiondict["interptype"],
+                        debug=optiondict["debug"],
+                    ),
+                    order=optiondict["detrendorder"],
+                    demean=optiondict["dodemean"],
+                )
+
     else:
         resampnonosref_y = tide_resample.doresample(
             reference_x,
             reference_y,
             initial_fmri_x,
-            padlen=int(inputfreq * optiondict["padseconds"]),
+            padlen=int((1.0 / fmritr) * optiondict["padseconds"]),
             method=optiondict["interptype"],
         )
         resampref_y = tide_resample.doresample(
@@ -1022,6 +1062,22 @@ def rapidtide_main(argparsingfunc):
             padlen=int(oversampfreq * optiondict["padseconds"]),
             method=optiondict["interptype"],
         )
+        if optiondict["noisetimecoursespec"] is not None:
+            resampnonosnoise_y = tide_resample.doresample(
+                noise_x,
+                noise_y,
+                initial_fmri_x,
+                padlen=int((1.0 / fmritr) * optiondict["padseconds"]),
+                method=optiondict["interptype"],
+            )
+            resampnoise_y = tide_resample.doresample(
+                noise_x,
+                noise_y,
+                os_fmri_x,
+                padlen=int(oversampfreq * optiondict["padseconds"]),
+                method=optiondict["interptype"],
+            )
+
     LGR.info(
         f"{len(os_fmri_x)} "
         f"{len(resampref_y)} "
@@ -1054,6 +1110,9 @@ def rapidtide_main(argparsingfunc):
 
     nonosrefname = "_reference_fmrires_pass1.txt"
     osrefname = "_reference_resampres_pass1.txt"
+    if optiondict["noisetimecoursespec"] is not None:
+        nonosnoisename = "_noise_fmrires.txt"
+        osnoisename = "_noise_resampres.txt"
 
     (
         optiondict["kurtosis_reference_pass1"],
@@ -1384,6 +1443,57 @@ def rapidtide_main(argparsingfunc):
                 detrendorder=optiondict["detrendorder"],
                 windowfunc=optiondict["windowfunc"],
             )
+        if optiondict["noisetimecoursespec"] is not None:
+            # see if there is a time delay between the referencetc and the noise signal
+            # noisecorrx, noisecorry, dummy, dummy = tide_corr.arbcorr(
+            #    resampref_y, oversampfreq, resampnoise_y, oversampfreq
+            # )
+            if True:
+                noisecorrx, noisecorry, corrFs, zeroloc = tide_corr.arbcorr(
+                    resampref_y,
+                    oversampfreq,
+                    resampnoise_y,
+                    oversampfreq,
+                )
+                noisecorrx = noisecorrx * corrFs - noisecorrx[zeroloc]
+            else:
+                numsteps = int(0.5 + optiondict["noisesearchwindow"] * oversampfreq / 2.0)
+                noisecorrx, noisecorry, dummy = tide_corr.cross_mutual_info(
+                    resampref_y,
+                    resampnoise_y,
+                    returnaxis=True,
+                    negsteps=numsteps,
+                    possteps=numsteps,
+                    Fs=oversampfreq,
+                )
+            noiseind = np.argmax(np.fabs(noisecorry))
+            optiondict["noisedelay"] = noisecorrx[noiseind]
+            optiondict["noisecorr"] = noisecorry[noiseind]
+            print(
+                "Maximum correlation amplitude with noise regressor is ",
+                optiondict["noisecorr"],
+                " at ",
+                optiondict["noisedelay"],
+            )
+            # timeshift noise regressor
+            shifttr = optiondict["noisedelay"] * oversampfreq
+            shiftednoise, dummy, paddedshiftednoise, dummy = tide_resample.timeshift(
+                resampnoise_y, shifttr, int(oversampfreq * optiondict["padseconds"])
+            )
+            # regress out
+            resampref_y, datatoremove, R = tide_fit.glmfilt(resampref_y, shiftednoise, debug=True)
+
+            # save
+            if optiondict["bidsoutput"]:
+                tide_io.writebidstsv(
+                    f"{outputname}_desc-regressornoiseremoved_timeseries",
+                    datatoremove,
+                    1.0 / oversamptr,
+                    starttime=0.0,
+                    columns=[f"pass{thepass}"],
+                    append=(thepass > 1),
+                )
+
         if optiondict["check_autocorrelation"]:
             LGR.info("checking reference regressor autocorrelation properties")
             optiondict["lagmod"] = 1000.0
