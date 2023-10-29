@@ -870,6 +870,18 @@ def rapidtide_main(argparsingfunc):
         )
         noise_x = np.arange(0.0, numnoise) * noiseperiod - noisestarttime
         noise_y = noisevec[0:numnoise] - np.mean(noisevec[0:numnoise])
+        # write out the noise regressor as read
+        if optiondict["bidsoutput"]:
+            tide_io.writebidstsv(
+                f"{outputname}_desc-initialnoiseregressor_timeseries",
+                noise_y,
+                noisefreq,
+                starttime=noisestarttime,
+                columns=["prefilt"],
+                append=False,
+            )
+        else:
+            tide_io.writenpvecs(reference_y, f"{outputname}_noise_origres_prefilt.txt")
         LGR.verbose("noise vector")
         LGR.verbose(f"length: {len(noisevec)}")
         LGR.verbose(f"noise freq: {noisefreq}")
@@ -987,6 +999,18 @@ def rapidtide_main(argparsingfunc):
                 debug=optiondict["debug"],
             )
             noise_y = rt_floatset(noise_y_filt.real)
+            # write out the noise regressor after filtering
+            if optiondict["bidsoutput"]:
+                tide_io.writebidstsv(
+                    f"{outputname}_desc-initialnoiseregressor_timeseries",
+                    noise_y,
+                    noisefreq,
+                    starttime=noisestarttime,
+                    columns=["postfilt"],
+                    append=True,
+                )
+            else:
+                tide_io.writenpvecs(reference_y, f"{outputname}_noise_origres_postfilt.txt")
 
     warnings.filterwarnings("ignore", "Casting*")
 
@@ -1444,41 +1468,23 @@ def rapidtide_main(argparsingfunc):
                 windowfunc=optiondict["windowfunc"],
             )
         if optiondict["noisetimecoursespec"] is not None:
-            # see if there is a time delay between the referencetc and the noise signal
-            # noisecorrx, noisecorry, dummy, dummy = tide_corr.arbcorr(
-            #    resampref_y, oversampfreq, resampnoise_y, oversampfreq
-            # )
-            if True:
-                noisecorrx, noisecorry, corrFs, zeroloc = tide_corr.arbcorr(
-                    resampref_y,
-                    oversampfreq,
-                    resampnoise_y,
-                    oversampfreq,
-                )
-                noisecorrx = noisecorrx * corrFs - noisecorrx[zeroloc]
-            else:
-                numsteps = int(0.5 + optiondict["noisesearchwindow"] * oversampfreq / 2.0)
-                noisecorrx, noisecorry, dummy = tide_corr.cross_mutual_info(
-                    resampref_y,
-                    resampnoise_y,
-                    returnaxis=True,
-                    negsteps=numsteps,
-                    possteps=numsteps,
-                    Fs=oversampfreq,
-                )
-            noiseind = np.argmax(np.fabs(noisecorry))
-            optiondict["noisedelay"] = noisecorrx[noiseind]
-            optiondict["noisecorr"] = noisecorry[noiseind]
+            # align the noise signal with referencetc
+            (
+                shiftednoise,
+                optiondict["noisedelay"],
+                optiondict["noisecorr"],
+                thisfailreason,
+            ) = tide_corr.aligntcwithref(
+                resampref_y,
+                resampnoise_y,
+                oversampfreq,
+                zerooutbadfit=False,
+            )
             print(
                 "Maximum correlation amplitude with noise regressor is ",
                 optiondict["noisecorr"],
                 " at ",
                 optiondict["noisedelay"],
-            )
-            # timeshift noise regressor
-            shifttr = optiondict["noisedelay"] * oversampfreq
-            shiftednoise, dummy, paddedshiftednoise, dummy = tide_resample.timeshift(
-                resampnoise_y, shifttr, int(oversampfreq * optiondict["padseconds"])
             )
             # regress out
             resampref_y, datatoremove, R = tide_fit.glmfilt(resampref_y, shiftednoise, debug=True)
