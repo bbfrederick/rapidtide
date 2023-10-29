@@ -83,7 +83,7 @@ def _get_parser():
     return parser
 
 
-def aligntcs(args):
+def doaligntcs(args):
     if args.displayplots:
         import matplotlib as mpl
 
