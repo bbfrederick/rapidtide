@@ -1674,19 +1674,76 @@ def mlregress(x, y, intercept=True):
     return np.atleast_1d(solution[0].T), R
 
 
-def glmfilt(thedata, theevs, debug=False):
-    r"""Performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
-    and returns the result.  Ends are padded to reduce transients.
+def expandedglmfilt(thedata, theevs, ncomps=1, debug=False):
+    r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
+    its square, its cube, etc.).  Then perform a glm fit of thedata using the vectors
+    in thenewevs and return the result.
 
     Parameters
     ----------
     thedata : 1D numpy array
-        Input data to be filtered
-        :param inputdata:
+        Input data of length N to be filtered
+        :param thedata:
 
     theevs : 2D numpy array
-        Explanatory variables to be
+        NxP array of explanatory variables to be fit
         :param theevs:
+
+    ncomps : integer
+        Number of components to use for each ev.  Each successive component is a
+        higher power of the initial ev (initial, square, cube, etc.)
+        :param ncomps:
+
+    debug: bool
+        Flag to toggle debugging output
+        :param debug:
+    """
+    if debug:
+        print(f"{thedata.shape=}")
+        print(f"{theevs.shape=}")
+    if ncomps == 1:
+        thenewevs = theevs
+    else:
+        if theevs.ndim > 1:
+            thenewevs = np.zeros((theevs.shape[0], theevs.shape[1] * ncomps), dtype=float)
+            for ev in range(1, theevs.shape[1]):
+                thenewevs[:, ncomps * (ev - 1)] = theevs[:, ev - 1] * 1.0
+                for i in range(1, ncomps):
+                    thenewevs[:, ncomps * (ev - 1) + i] = (
+                        thenewevs[:, ncomps * (ev - 1) + i - 1] * theevs[:, ev - 1]
+                    )
+        else:
+            thenewevs = np.zeros((theevs.shape[0], ncomps), dtype=float)
+            thenewevs[:, 0] = theevs * 1.0
+            for i in range(1, ncomps):
+                thenewevs[:, i] = thenewevs[:, i - 1] * theevs
+    if debug:
+        print(f"{ncomps=}")
+        print(f"{thenewevs.shape=}")
+    filtered, datatoremove, R = glmfilt(thedata, thenewevs, debug=debug)
+    if debug:
+        print(f"{R=}")
+
+    return filtered, thenewevs, datatoremove, R
+
+
+def glmfilt(thedata, theevs, debug=False):
+    r"""Performs a glm fit of thedata using the vectors in theevs
+    and returns the result.
+
+    Parameters
+    ----------
+    thedata : 1D numpy array
+        Input data of length N to be filtered
+        :param thedata:
+
+    theevs : 2D numpy array
+        NxP array of explanatory variables to be fit
+        :param theevs:
+
+    debug: bool
+        Flag to toggle debugging output
+        :param debug:
     """
 
     if debug:
