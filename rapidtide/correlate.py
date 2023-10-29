@@ -1150,3 +1150,52 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
             )
     else:
         return 0.0 * product
+
+
+def aligntcwithref(
+    fixedtc,
+    movingtc,
+    Fs,
+    lagmin=-30,
+    lagmax=30,
+    refine=True,
+    zerooutbadfit=False,
+    widthlimit=1000.0,
+    verbose=False,
+):
+    # now fixedtc and 2 are on the same timescales
+    thexcorr = fastcorrelate(fixedtc, movingtc)
+    xcorrlen = len(thexcorr)
+    xcorr_x = np.r_[0.0:xcorrlen] * Fs - (xcorrlen * Fs) / 2.0 + Fs / 2.0
+    timeaxis = np.linspace(0.0, 1.0 / Fs * len(fixedtc), num=len(fixedtc), endpoint=False)
+
+    (
+        maxindex,
+        maxdelay,
+        maxval,
+        maxsigma,
+        maskval,
+        failreason,
+        peakstart,
+        peakend,
+    ) = tide_fit.findmaxlag_gauss(
+        xcorr_x,
+        thexcorr,
+        lagmin,
+        lagmax,
+        widthlimit=widthlimit,
+        refine=refine,
+        useguess=False,
+        fastgauss=False,
+        displayplots=False,
+        zerooutbadfit=zerooutbadfit,
+    )
+
+    if verbose:
+        print("Crosscorrelation_Rmax:\t", maxval)
+        print("Crosscorrelation_maxdelay:\t", maxdelay)
+
+    # now align the second timecourse to the first
+
+    aligneddata = tide_resample.doresample(timeaxis, movingtc, timeaxis - maxdelay)
+    return aligneddata, maxdelay, maxval, failreason
