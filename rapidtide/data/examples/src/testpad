@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+import rapidtide.correlate as tide_corr
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+
+arrlen = 200
+padlen = 50
+xaxis = 2.0 * np.pi * np.linspace(0.0, 1.0, arrlen, endpoint=False)
+
+Fs = 1.0
+freq1 = 1.0
+amp1 = 1.0
+phase1 = np.pi / 2.0
+
+invec = amp1 * np.sin(freq1 * xaxis + phase1)
+
+padvec1 = tide_filt.padvec(invec, padlen=padlen, padtype="reflect")
+padvec2 = tide_filt.padvec(invec, padlen=padlen, padtype="zero")
+padvec3 = tide_filt.padvec(invec, padlen=padlen, padtype="constant")
+
+offset = 0.0
+plt.plot(padvec1 + offset)
+offset += 1.0
+plt.plot(padvec2 + offset)
+offset += 1.0
+plt.plot(padvec3 + offset)
+plt.show()
