@@ -1161,13 +1161,13 @@ def aligntcwithref(
     refine=True,
     zerooutbadfit=False,
     widthlimit=1000.0,
+    display=False,
     verbose=False,
 ):
     # now fixedtc and 2 are on the same timescales
-    thexcorr = fastcorrelate(fixedtc, movingtc)
+    thexcorr = fastcorrelate(tide_math.corrnormalize(fixedtc), tide_math.corrnormalize(movingtc))
     xcorrlen = len(thexcorr)
     xcorr_x = np.r_[0.0:xcorrlen] * Fs - (xcorrlen * Fs) / 2.0 + Fs / 2.0
-    timeaxis = np.linspace(0.0, 1.0 / Fs * len(fixedtc), num=len(fixedtc), endpoint=False)
 
     (
         maxindex,
@@ -1195,7 +1195,13 @@ def aligntcwithref(
         print("Crosscorrelation_Rmax:\t", maxval)
         print("Crosscorrelation_maxdelay:\t", maxdelay)
 
-    # now align the second timecourse to the first
+    if display:
+        plt.plot(xcorr_x, thexcorr, "r")
+        plt.plot(maxdelay, maxval, "kv")
+        plt.title("aligntcwithref correlation function")
+        plt.show()
 
-    aligneddata = tide_resample.doresample(timeaxis, movingtc, timeaxis - maxdelay)
+    # now align the second timecourse to the first
+    timeaxis = np.linspace(0.0, 1.0 / Fs * len(fixedtc), num=len(fixedtc), endpoint=False)
+    aligneddata = tide_resample.doresample(timeaxis, movingtc, timeaxis - maxdelay, padtype="zero")
     return aligneddata, maxdelay, maxval, failreason
