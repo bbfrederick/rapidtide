@@ -876,7 +876,7 @@ def rapidtide_main(argparsingfunc):
                 f"{outputname}_desc-initialnoiseregressor_timeseries",
                 noise_y,
                 noisefreq,
-                starttime=noisestarttime,
+                starttime=-noisestarttime,
                 columns=["prefilt"],
                 append=False,
             )
@@ -1005,7 +1005,7 @@ def rapidtide_main(argparsingfunc):
                     f"{outputname}_desc-initialnoiseregressor_timeseries",
                     noise_y,
                     noisefreq,
-                    starttime=noisestarttime,
+                    starttime=-noisestarttime,
                     columns=["postfilt"],
                     append=True,
                 )
@@ -1052,6 +1052,7 @@ def rapidtide_main(argparsingfunc):
                         noise_y,
                         initial_fmri_x,
                         padlen=int((1.0 / fmritr) * optiondict["padseconds"]),
+                        padtype="zero",
                         method=optiondict["interptype"],
                         debug=optiondict["debug"],
                     ),
@@ -1064,6 +1065,7 @@ def rapidtide_main(argparsingfunc):
                         noise_y,
                         os_fmri_x,
                         padlen=int(oversampfreq * optiondict["padseconds"]),
+                        padtype="zero",
                         method=optiondict["interptype"],
                         debug=optiondict["debug"],
                     ),
@@ -1092,6 +1094,7 @@ def rapidtide_main(argparsingfunc):
                 noise_y,
                 initial_fmri_x,
                 padlen=int((1.0 / fmritr) * optiondict["padseconds"]),
+                padtype="zero",
                 method=optiondict["interptype"],
             )
             resampnoise_y = tide_resample.doresample(
@@ -1099,6 +1102,7 @@ def rapidtide_main(argparsingfunc):
                 noise_y,
                 os_fmri_x,
                 padlen=int(oversampfreq * optiondict["padseconds"]),
+                padtype="zero",
                 method=optiondict["interptype"],
             )
 
@@ -1479,6 +1483,8 @@ def rapidtide_main(argparsingfunc):
                 resampnoise_y,
                 oversampfreq,
                 zerooutbadfit=False,
+                display=True,
+                verbose=True,
             )
             print(
                 "Maximum correlation amplitude with noise regressor is ",
