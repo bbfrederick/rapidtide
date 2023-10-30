@@ -74,7 +74,7 @@ def disablenumba():
 # NB: No automatic padding for precalculated filters
 
 
-def padvec(inputdata, padlen=20, cyclic=False):
+def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect"):
     r"""Returns a padded copy of the input data; padlen points of
     reflected data are prepended and appended to the input data to reduce
     end effects when the data is then filtered.
@@ -113,9 +113,24 @@ def padvec(inputdata, padlen=20, cyclic=False):
         if cyclic:
             return np.concatenate((inputdata[-padlen:], inputdata, inputdata[0:padlen]))
         else:
-            return np.concatenate(
-                (inputdata[::-1][-padlen:], inputdata, inputdata[::-1][0:padlen])
-            )
+            if padtype == "reflect":
+                return np.concatenate(
+                    (inputdata[::-1][-padlen:], inputdata, inputdata[::-1][0:padlen])
+                )
+            elif padtype == "zero":
+                return np.concatenate(
+                    (np.zeros((padlen), dtype=float), inputdata, np.zeros((padlen), dtype=float))
+                )
+            elif padtype == "constant":
+                return np.concatenate(
+                    (
+                        inputdata[0] * np.ones((padlen), dtype=float),
+                        inputdata,
+                        inputdata[-1] * np.ones((padlen), dtype=float),
+                    )
+                )
+            else:
+                raise ValueError("Padtype must be one of 'reflect', 'zero', or 'constant'")
     else:
         return inputdata
 

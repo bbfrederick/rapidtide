@@ -350,7 +350,16 @@ class FastResampler:
         return out_y
 
 
-def doresample(orig_x, orig_y, new_x, method="cubic", padlen=0, antialias=False, debug=False):
+def doresample(
+    orig_x,
+    orig_y,
+    new_x,
+    method="cubic",
+    padlen=0,
+    padtype="reflect",
+    antialias=False,
+    debug=False,
+):
     """
     Resample data from one spacing to another.  By default, does not apply any antialiasing filter.
 
@@ -372,7 +381,7 @@ def doresample(orig_x, orig_y, new_x, method="cubic", padlen=0, antialias=False,
         frontpad = rawxpad + orig_x[0] - padlen * tstep
         backpad = rawxpad + orig_x[-1] + tstep
         pad_x = np.concatenate((frontpad, orig_x, backpad))
-        pad_y = tide_filt.padvec(orig_y, padlen=padlen)
+        pad_y = tide_filt.padvec(orig_y, padlen=padlen, padtype=padtype)
     else:
         pad_x = orig_x
         pad_y = orig_y
