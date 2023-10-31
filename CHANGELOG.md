@@ -3,6 +3,10 @@
 ## Version 2.6.7 (10/31/23)
 * (Docker) Update to basecontainer v0.2.7.
 * (rapidtide) Added the option to delete noise signals from the probe regressor (mostly due to slow breathing).  Currently not working.
+* (rapidtide) All outputs from rapidtide are in BIDS derivative format.  The ability to select legacy outputs has been removed.
+* (happy) All outputs from happy are in BIDS derivative format.  The ability to select legacy outputs has been removed.
+* (rapidtide2x_legacy) The legacy version of rapidtide (rapidtide2x_legacy) has been removed.
+* (happy_legacy) The legacy version of happy (happy_legacy) has been removed.
 * (showtc) Fixed a very old bug that caused some timecourses to not be properly aligned if they had different start times.
 * (showtc) Added ability to normalize all timecourses to make displaying them together more informative.
 * (package) Added selfcontained routines to do glm filtering (with or without polynomial expansion, and to align timecourses.
