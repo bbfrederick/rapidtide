@@ -1189,6 +1189,7 @@ def _get_parser():
         help=("Attempt to detect and remove respiratory signal that strays into " "the LFO band."),
         default=False,
     )
+
     experimental.add_argument(
         "--noisetimecourse",
         dest="noisetimecoursespec",
@@ -1229,7 +1230,6 @@ def _get_parser():
         ),
         default="auto",
     )
-
     experimental.add_argument(
         "--noisestart",
         dest="noisestarttime",
@@ -1242,6 +1242,13 @@ def _get_parser():
             "file (default is 0.0)."
         ),
         default=0.0,
+    )
+    experimental.add_argument(
+        "--noiseinvert",
+        dest="noiseinvert",
+        action="store_true",
+        help=("Invert noise regressor prior to alignment."),
+        default=False,
     )
 
     experimental.add_argument(

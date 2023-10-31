@@ -845,6 +845,8 @@ def rapidtide_main(argparsingfunc):
             dummy,
             dummy,
         ) = tide_io.readvectorsfromtextfile(optiondict["noisetimecoursespec"], onecol=True)
+        if optiondict["noiseinvert"]:
+            noisevec *= -1.0
         noisefreq = optiondict["noisefreq"]
         noisestarttime = optiondict["noisestarttime"]
         if noisefreq is None:
