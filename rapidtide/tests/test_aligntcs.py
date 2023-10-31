@@ -43,7 +43,7 @@ def test_aligntcs(displayplots=False, localrun=False):
     args.passvec = None
     args.lag_extrema = (-10.0, 10.0)
 
-    aligntcs_workflow.aligntcs(args)
+    aligntcs_workflow.doaligntcs(args)
 
 
 if __name__ == "__main__":
