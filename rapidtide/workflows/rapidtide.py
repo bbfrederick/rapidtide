@@ -945,6 +945,8 @@ def rapidtide_main(argparsingfunc):
         reference_y = -np.gradient(reference_y_classfilter)
     else:
         reference_y = reference_y_classfilter
+    if optiondict["noisetimecoursespec"] is not None:
+        noise_y = theprefilter.apply(noisefreq, noise_y)
 
     # write out the reference regressor used
     tide_io.writebidstsv(
@@ -978,6 +980,7 @@ def rapidtide_main(argparsingfunc):
                 debug=optiondict["debug"],
             )
             noise_y = rt_floatset(noise_y_filt.real)
+
             # write out the noise regressor after filtering
             tide_io.writebidstsv(
                 f"{outputname}_desc-initialnoiseregressor_timeseries",
@@ -1118,11 +1121,21 @@ def rapidtide_main(argparsingfunc):
         thefit, R = tide_fit.mlregress(tmaskos_y, resampref_y)
         resampref_y -= thefit[0, 1] * tmaskos_y
 
-    nonosrefname = "_reference_fmrires_pass1.txt"
-    osrefname = "_reference_resampres_pass1.txt"
     if optiondict["noisetimecoursespec"] is not None:
-        nonosnoisename = "_noise_fmrires.txt"
-        osnoisename = "_noise_resampres.txt"
+        tide_io.writebidstsv(
+            f"{outputname}_desc-noiseregressor_timeseries",
+            tide_math.stdnormalize(resampnonosref_y),
+            1.0 / fmritr,
+            columns=["resamplled"],
+            append=False,
+        )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-oversamplednoiseregressor_timeseries",
+            tide_math.stdnormalize(resampref_y),
+            oversampfreq,
+            columns=["oversampled"],
+            append=False,
+        )
 
     (
         optiondict["kurtosis_reference_pass1"],
@@ -1455,34 +1468,49 @@ def rapidtide_main(argparsingfunc):
             # align the noise signal with referencetc
             (
                 shiftednoise,
-                optiondict["noisedelay"],
-                optiondict["noisecorr"],
+                optiondict[f"noisedelay_pass{thepass}"],
+                optiondict[f"noisecorr_pass{thepass}"],
                 thisfailreason,
             ) = tide_corr.aligntcwithref(
                 resampref_y,
                 resampnoise_y,
                 oversampfreq,
                 zerooutbadfit=False,
-                display=True,
                 verbose=True,
             )
             print(
                 "Maximum correlation amplitude with noise regressor is ",
-                optiondict["noisecorr"],
+                optiondict[f"noisecorr_pass{thepass}"],
                 " at ",
-                optiondict["noisedelay"],
+                optiondict[f"noisedelay_pass{thepass}"],
             )
             # regress out
             resampref_y, datatoremove, R = tide_fit.glmfilt(resampref_y, shiftednoise, debug=True)
 
             # save
             tide_io.writebidstsv(
-                f"{outputname}_desc-regressornoiseremoved_timeseries",
+                f"{outputname}_desc-regressornoiseremoval_timeseries",
+                shiftednoise,
+                1.0 / oversamptr,
+                starttime=0.0,
+                columns=[f"shiftednoise_pass{thepass}"],
+                append=(thepass > 1),
+            )
+            tide_io.writebidstsv(
+                f"{outputname}_desc-regressornoiseremoval_timeseries",
                 datatoremove,
                 1.0 / oversamptr,
                 starttime=0.0,
-                columns=[f"pass{thepass}"],
-                append=(thepass > 1),
+                columns=[f"removed_pass{thepass}"],
+                append=True,
+            )
+            tide_io.writebidstsv(
+                f"{outputname}_desc-regressornoiseremoval_timeseries",
+                resampref_y,
+                1.0 / oversamptr,
+                starttime=0.0,
+                columns=[f"filtered_pass{thepass}"],
+                append=True,
             )
 
         if optiondict["check_autocorrelation"]:
@@ -2274,8 +2302,6 @@ def rapidtide_main(argparsingfunc):
                 genlagtc = tide_resample.FastResampler(
                     initial_fmri_x, normoutputdata, padtime=padtime
                 )
-                nonosrefname = "_reference_fmrires_pass" + str(thepass + 1) + ".txt"
-                osrefname = "_reference_resampres_pass" + str(thepass + 1) + ".txt"
                 (
                     optiondict["kurtosis_reference_pass" + str(thepass + 1)],
                     optiondict["kurtosisz_reference_pass" + str(thepass + 1)],
