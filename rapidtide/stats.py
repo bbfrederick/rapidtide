@@ -569,7 +569,6 @@ def makeandsavehistogram(
     normalize=False,
     dictvarname=None,
     thedict=None,
-    saveasbids=False,
     append=False,
     debug=False,
 ):
@@ -588,7 +587,6 @@ def makeandsavehistogram(
     normalize
     dictvarname
     thedict
-    saveasbids
     append
     debug
 
@@ -620,18 +618,15 @@ def makeandsavehistogram(
     else:
         thedict[varroot + "_centerofmass.txt"] = centerofmass
         thedict[varroot + "_peak.txt"] = peakloc
-    if saveasbids:
-        tide_io.writebidstsv(
-            outname,
-            np.transpose(thestore[1, :]),
-            1.0 / (thestore[0, 1] - thestore[0, 0]),
-            starttime=thestore[0, 0],
-            columns=[varroot],
-            append=append,
-            debug=debug,
-        )
-    else:
-        tide_io.writenpvecs(thestore, outname + ".txt")
+    tide_io.writebidstsv(
+        outname,
+        np.transpose(thestore[1, :]),
+        1.0 / (thestore[0, 1] - thestore[0, 0]),
+        starttime=thestore[0, 0],
+        columns=[varroot],
+        append=append,
+        debug=debug,
+    )
     if displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(111)

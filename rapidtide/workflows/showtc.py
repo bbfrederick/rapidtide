@@ -307,7 +307,7 @@ def showtc(args):
             else:
                 if args.debug:
                     print(f"args.thestarttime is {args.thestarttime}")
-                    thestarttime = args.thestarttime
+                thestarttime = args.thestarttime
                 thisstartoffset = thestarttime
 
         if overallstarttime is None:

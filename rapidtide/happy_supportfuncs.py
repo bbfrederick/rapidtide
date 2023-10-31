@@ -524,7 +524,6 @@ def calcplethquality(
     E_windowsecs=1.0,
     detrendorder=8,
     outputlevel=0,
-    bidsoutput=False,
     initfile=True,
     debug=False,
 ):
@@ -621,35 +620,30 @@ def calcplethquality(
     infodict["E_sqi_std" + suffix] = E_sqi_std
 
     if outputlevel > 1:
-        if bidsoutput:
-            tide_io.writebidstsv(
-                outputroot + "_desc-qualitymetrics" + str(Fs) + "Hz_timeseries",
-                S_waveform,
-                Fs,
-                columns=["S_sqi" + suffix],
-                append=(not initfile),
-                debug=debug,
-            )
-            tide_io.writebidstsv(
-                outputroot + "_desc-qualitymetrics" + str(Fs) + "Hz_timeseries",
-                K_waveform,
-                Fs,
-                columns=["K_sqi" + suffix],
-                append=True,
-                debug=debug,
-            )
-            tide_io.writebidstsv(
-                outputroot + "_desc-qualitymetrics" + str(Fs) + "Hz_timeseries",
-                E_waveform,
-                Fs,
-                columns=["E_sqi" + suffix],
-                append=True,
-                debug=debug,
-            )
-        else:
-            tide_io.writevec(S_waveform, outputroot + suffix + "_S_sqi_" + str(Fs) + "Hz.txt")
-            tide_io.writevec(K_waveform, outputroot + suffix + "_K_sqi_" + str(Fs) + "Hz.txt")
-            tide_io.writevec(E_waveform, outputroot + suffix + "_E_sqi_" + str(Fs) + "Hz.txt")
+        tide_io.writebidstsv(
+            outputroot + "_desc-qualitymetrics" + str(Fs) + "Hz_timeseries",
+            S_waveform,
+            Fs,
+            columns=["S_sqi" + suffix],
+            append=(not initfile),
+            debug=debug,
+        )
+        tide_io.writebidstsv(
+            outputroot + "_desc-qualitymetrics" + str(Fs) + "Hz_timeseries",
+            K_waveform,
+            Fs,
+            columns=["K_sqi" + suffix],
+            append=True,
+            debug=debug,
+        )
+        tide_io.writebidstsv(
+            outputroot + "_desc-qualitymetrics" + str(Fs) + "Hz_timeseries",
+            E_waveform,
+            Fs,
+            columns=["E_sqi" + suffix],
+            append=True,
+            debug=debug,
+        )
 
 
 def getphysiofile(
@@ -1033,18 +1027,15 @@ def phaseproject(
         cyclic=True,
     )
     if thispass == numpasses - 1:
-        if args.bidsoutput:
-            tide_io.writebidstsv(
-                outputroot + "_desc-cardiaccyclefromfmri_timeseries",
-                app_bypoint,
-                1.0 / (outphases[1] - outphases[0]),
-                starttime=outphases[0],
-                columns=["cardiaccyclefromfmri"],
-                append=False,
-                debug=args.debug,
-            )
-        else:
-            tide_io.writevec(app_bypoint, outputroot + "_cardcyclefromfmri.txt")
+        tide_io.writebidstsv(
+            outputroot + "_desc-cardiaccyclefromfmri_timeseries",
+            app_bypoint,
+            1.0 / (outphases[1] - outphases[0]),
+            starttime=outphases[0],
+            columns=["cardiaccyclefromfmri"],
+            append=False,
+            debug=args.debug,
+        )
 
     # now do time averaging
     lookaheadval = int(slicesamplerate / 4.0)
@@ -1106,18 +1097,15 @@ def phaseproject(
         cyclic=True,
     )
     if thispass == numpasses - 1:
-        if args.bidsoutput:
-            tide_io.writebidstsv(
-                outputroot + "_desc-cardpulsefromfmri_timeseries",
-                atp_bypoint,
-                1.0 / (outtimes[1] - outtimes[0]),
-                starttime=outtimes[0],
-                columns=["pulsefromfmri"],
-                append=False,
-                debug=args.debug,
-            )
-        else:
-            tide_io.writevec(atp_bypoint, outputroot + "_cardpulsefromfmri.txt")
+        tide_io.writebidstsv(
+            outputroot + "_desc-cardpulsefromfmri_timeseries",
+            atp_bypoint,
+            1.0 / (outtimes[1] - outtimes[0]),
+            starttime=outtimes[0],
+            columns=["pulsefromfmri"],
+            append=False,
+            debug=args.debug,
+        )
 
     if not args.verbose:
         print("Phase projecting...")
