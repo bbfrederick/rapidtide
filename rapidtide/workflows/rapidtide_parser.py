@@ -1021,16 +1021,6 @@ def _get_parser():
         default=False,
     )
     output.add_argument(
-        "--legacyoutput",
-        dest="bidsoutput",
-        action="store_false",
-        help=(
-            "Use legacy file naming and formats rather than BIDS naming and "
-            "format conventions for output files."
-        ),
-        default=True,
-    )
-    output.add_argument(
         "--calccoherence",
         dest="calccoherence",
         action="store_true",

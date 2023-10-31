@@ -464,16 +464,6 @@ def _get_parser():
         ),
         default=25.0,
     )
-    output.add_argument(
-        "--legacyoutput",
-        dest="bidsoutput",
-        action="store_false",
-        help=(
-            "Use legacy file naming and formats rather than BIDS naming and "
-            "format conventions for output files."
-        ),
-        default=True,
-    )
 
     # Phase projection tuning
     phase_proj_tuning = parser.add_argument_group("Phase projection tuning")
