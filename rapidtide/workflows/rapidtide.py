@@ -941,7 +941,7 @@ def rapidtide_main(argparsingfunc):
             f"{outputname}_desc-initialmovingregressor_timeseries",
             reference_y,
             inputfreq,
-            starttime=inputstarttime,
+            starttime=-inputstarttime,
             columns=["prefilt"],
             append=False,
         )
@@ -968,7 +968,7 @@ def rapidtide_main(argparsingfunc):
             f"{outputname}_desc-initialmovingregressor_timeseries",
             tide_math.stdnormalize(reference_y),
             inputfreq,
-            starttime=inputstarttime,
+            starttime=-inputstarttime,
             columns=["postfilt"],
             append=True,
         )
