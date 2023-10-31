@@ -172,6 +172,8 @@ def showtc(args):
     else:
         samplerate = args.samplerate
 
+    starttime = 0.0
+
     # set the appropriate display mode
     if args.displaymode == "time":
         dospectrum = False
@@ -250,6 +252,8 @@ def showtc(args):
 
     minlen = 100000000
     shortcolnames = True
+    overallstarttime = None
+
     # read in all the data
     for i in range(0, len(args.textfilenames)):
         thisfilename, thiscolspec = tide_io.parsefilespec(args.textfilenames[i])
@@ -280,21 +284,31 @@ def showtc(args):
             if args.thestarttime is None:
                 if args.debug:
                     print("args.thestarttime is None")
-                args.thestarttime = 0.0
+                thestarttime = 0.0
             else:
                 if args.debug:
                     print(f"args.thestarttime is {args.thestarttime}")
-            thisstartoffset = args.thestarttime
+                    thestarttime = args.thestarttime
+            thisstartoffset = thestarttime
         else:
             # print(f"thisstartoffset is {thisstartoffset}")
             if args.thestarttime is None:
                 if args.debug:
                     print("args.thestarttime is None")
-                args.thestarttime = thisstartoffset
+                thestarttime = thisstartoffset
             else:
                 if args.debug:
                     print(f"args.thestarttime is {args.thestarttime}")
-                thisstartoffset = args.thestarttime
+                    thestarttime = args.thestarttime
+                thisstartoffset = thestarttime
+
+        if overallstarttime is None:
+            overallstarttime = thisstartoffset
+        else:
+            if args.thestarttime is None:
+                overallstarttime = np.min((overallstarttime, thisstartoffset))
+            else:
+                overallstarttime = args.thestarttime
 
         if args.debug:
             print("After preprocessing time variables:")
@@ -382,7 +396,7 @@ def showtc(args):
                 )
             numvecs += 1
 
-    thestartpoint = tide_util.valtoindex(xvecs[0], args.thestarttime, debug=args.debug)
+    thestartpoint = tide_util.valtoindex(xvecs[0], overallstarttime, debug=args.debug)
     theendpoint = tide_util.valtoindex(xvecs[0], args.theendtime, debug=args.debug)
     args.thestarttime = xvecs[0][thestartpoint]
     args.theendtime = xvecs[0][theendpoint]
