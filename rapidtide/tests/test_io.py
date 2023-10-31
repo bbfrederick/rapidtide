@@ -138,6 +138,139 @@ def test_io(debug=True, displayplots=False):
     assert tide_io.checktimematch(happydims, happydims)
     assert not tide_io.checktimematch(happydims, fmridims)
 
+    # test writing and reading text files
+    EPSILON = 1e-5
+    numpoints = 10
+    the2darray = np.zeros((3, numpoints), dtype=float)
+    the2darray[0, :] = np.linspace(0, 1.0, numpoints, endpoint=False)
+    the2darray[1, :] = np.sin(the2darray[0, :] * 2.0 * np.pi)
+    the2darray[2, :] = np.cos(the2darray[0, :] * 2.0 * np.pi)
+
+    thecols = ["lin", "sin", "cos"]
+
+    inputsamplerate = 10.0
+    inputstarttime = 0.5
+
+    thetests = [
+        ["text", False, ".txt"],
+        ["bidscontinuous", False, ".tsv"],
+        ["bidscontinuous", True, ".tsv.gz"],
+        ["plaintsv", False, ".tsv"],
+        ["plaintsv", True, ".tsv.gz"],
+    ]
+    for thistest in thetests:
+        thetype = thistest[0]
+        compressed = thistest[1]
+        if compressed:
+            compname = "compressed"
+        else:
+            compname = "uncompressed"
+
+        thefileroot = os.path.join(get_test_temp_path(), f"testout_withcol_{thetype}_{compname}")
+        if thetype == "text":
+            thefileroot = thefileroot + ".txt"
+        tide_io.writevectorstotextfile(
+            the2darray,
+            thefileroot,
+            samplerate=inputsamplerate,
+            starttime=inputstarttime,
+            columns=thecols,
+            compressed=compressed,
+            filetype=thetype,
+            lineend="",
+            debug=False,
+        )
+        thefileroot = os.path.join(get_test_temp_path(), f"testout_nocol_{thetype}_{compname}")
+        if thetype == "text":
+            thefileroot = thefileroot + ".txt"
+        tide_io.writevectorstotextfile(
+            the2darray,
+            thefileroot,
+            samplerate=inputsamplerate,
+            starttime=inputstarttime,
+            columns=None,
+            compressed=compressed,
+            filetype=thetype,
+            lineend="",
+            debug=False,
+        )
+
+    for thistest in thetests:
+        thetype = thistest[0]
+        compressed = thistest[1]
+        if compressed:
+            compname = "compressed"
+        else:
+            compname = "uncompressed"
+
+        for colspec in ["withcol", "nocol"]:
+            thefileroot = os.path.join(
+                get_test_temp_path(), f"testout_{colspec}_{thetype}_{compname}"
+            )
+
+            if thetype == "text":
+                theextension = ".txt"
+            else:
+                if compressed:
+                    theextension = ".tsv.gz"
+                else:
+                    theextension = ".tsv"
+
+            print(thetype, compressed, thefileroot)
+            (
+                thesamplerate,
+                thestarttime,
+                thecolumns,
+                thedata,
+                compressed,
+                filetype,
+            ) = tide_io.readvectorsfromtextfile(
+                thefileroot + theextension, onecol=False, debug=False
+            )
+            """
+            print(f"\t{thesamplerate=}")
+            print(f"\t{thestarttime=}")
+            print(f"\t{thecolumns=}")
+            print(f"\t{thedata=}")
+            print(f"\t{compressed=}")
+            print(f"\t{filetype=}")
+            """
+
+            if thetype == "text":
+                assert thesamplerate is None
+                assert thestarttime is None
+                assert thecolumns is None
+                assert filetype == "text"
+            elif thetype == "bidscontinuous":
+                assert thesamplerate == inputsamplerate
+                assert thestarttime == inputstarttime
+                if thefileroot.find("nocol") > 0:
+                    assert len(thecolumns) == 3
+                    assert thecolumns[0] == "col_00"
+                    assert thecolumns[1] == "col_01"
+                    assert thecolumns[2] == "col_02"
+                else:
+                    assert len(thecolumns) == 3
+                    assert thecolumns[0] == "lin"
+                    assert thecolumns[1] == "sin"
+                    assert thecolumns[2] == "cos"
+                assert filetype == "bidscontinuous"
+            elif thetype == "plaintsv":
+                assert thesamplerate == None
+                assert thestarttime == None
+                if thefileroot.find("nocol") > 0:
+                    assert len(thecolumns) == 3
+                    assert thecolumns[0] == "col_00"
+                    assert thecolumns[1] == "col_01"
+                    assert thecolumns[2] == "col_02"
+                else:
+                    assert len(thecolumns) == 3
+                    assert thecolumns[0] == "lin"
+                    assert thecolumns[1] == "sin"
+                    assert thecolumns[2] == "cos"
+                assert filetype == "plaintsv"
+            assert np.max(np.fabs(thedata - the2darray)) < EPSILON
+
 
 if __name__ == "__main__":
     test_io(debug=True, displayplots=True)
