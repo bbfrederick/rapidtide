@@ -29,6 +29,7 @@ from matplotlib.pyplot import figure, savefig, setp, show
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
@@ -120,6 +121,13 @@ def _get_parser():
         action="store_true",
         dest="dotranspose",
         help="Swap rows and columns in the input files.",
+        default=False,
+    )
+    parser.add_argument(
+        "--normall",
+        action="store_true",
+        dest="normall",
+        help="Normalize all displayed timecourses to unit standard deviation and zero mean.",
         default=False,
     )
 
@@ -338,6 +346,9 @@ def showtc(args):
                 elif demean:
                     invec = invec - np.mean(invec)
 
+                if args.normall:
+                    invec = tide_math.stdnormalize(invec)
+
                 if useHamming:
                     freqaxis, spectrum = tide_filt.spectrum(
                         tide_filt.hamming(len(invec)) * invec,
@@ -356,7 +367,10 @@ def showtc(args):
                 xvecs.append(freqaxis)
                 yvecs.append(spectrum)
             else:
-                yvecs.append(invecs[j] * 1.0)
+                if args.normall:
+                    yvecs.append(tide_math.stdnormalize(invecs[j] * 1.0))
+                else:
+                    yvecs.append(invecs[j] * 1.0)
                 xvecs.append(
                     thisstartoffset + np.arange(0.0, len(yvecs[-1]), 1.0) / thissamplerate
                 )
