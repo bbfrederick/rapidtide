@@ -1,8 +1,11 @@
 # Release history
 
-## Version 2.6.7 (10/26/23)
+## Version 2.6.7 (10/31/23)
 * (Docker) Update to basecontainer v0.2.7.
 * (rapidtide) Added the option to delete noise signals from the probe regressor (mostly due to slow breathing).  Currently not working.
+* (showtc) Fixed a very old bug that caused some timecourses to not be properly aligned if they had different start times.
+* (showtc) Added ability to normalize all timecourses to make displaying them together more informative.
+* (package) Added selfcontained routines to do glm filtering (with or without polynomial expansion, and to align timecourses.
 * (package) Added macros for selecting all the gray matter values in an aparc+aseg file.
 * (package) Accepted dependabot changes.
 * (rapidtide-cloud) Added basecontainer to AWS.
