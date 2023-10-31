@@ -821,7 +821,7 @@ def readmotion(filename):
             ]
         )
     elif extension == ".tsv":
-        allmotion = readlabelledtsv(filebase)
+        allmotion = readlabelledtsv(filebase, compressed=False)
         motiondict = {}
         motiondict["xtrans"] = allmotion["trans_x"] * 1.0
         motiondict["ytrans"] = allmotion["trans_y"] * 1.0
@@ -1029,7 +1029,7 @@ def readdictfromjson(inputfilename):
         return {}
 
 
-def readlabelledtsv(inputfilename):
+def readlabelledtsv(inputfilename, compressed=False):
     r"""Read time series out of an fmriprep confounds tsv file
 
     Parameters
@@ -1046,7 +1046,11 @@ def readlabelledtsv(inputfilename):
 
     """
     confounddict = {}
-    df = pd.read_csv(inputfilename + ".tsv", sep="\t", quotechar='"')
+    if compressed:
+        theext = ".tsv.gz"
+    else:
+        theext = ".tsv"
+    df = pd.read_csv(inputfilename + theext, sep="\t", quotechar='"')
     for thecolname, theseries in df.items():
         confounddict[thecolname] = theseries.values
     return confounddict
@@ -1242,12 +1246,12 @@ def writebidstsv(
     if columns is None:
         columns = []
         for i in range(reshapeddata.shape[0]):
-            columns.append(f"col_{(i + startcol).zfill(2)}")
+            columns.append(f"col_{str(i + startcol).zfill(2)}")
     else:
         if len(columns) != reshapeddata.shape[0]:
             raise ValueError(
                 f"number of column names ({len(columns)}) ",
-                f"does not match number of columns ({reshapeddata.shape[1]}) in data",
+                f"does not match number of columns ({reshapeddata.shape[0]}) in data",
             )
     if startcol > 0:
         df = pd.DataFrame(data=np.transpose(indata), columns=incolumns)
@@ -1362,7 +1366,7 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
             print("specify a single column from", thefilename)
             sys.exit()
     elif filetype == "plaintsv":
-        thedatadict = readlabelledtsv(thefileroot)
+        thedatadict = readlabelledtsv(thefileroot, compressed=compressed)
         if colspec is None:
             thecolumns = list(thedatadict.keys())
         else:
@@ -2000,6 +2004,7 @@ def writevectorstotextfile(
     compressed=True,
     filetype="text",
     lineend="",
+    debug=False,
 ):
     if filetype == "text":
         writenpvecs(thevecs, outputfile, lineend=lineend)
@@ -2014,7 +2019,7 @@ def writevectorstotextfile(
             append=False,
             colsinjson=True,
             colsintsv=False,
-            debug=False,
+            debug=debug,
         )
     elif filetype == "plaintsv":
         writebidstsv(
@@ -2028,7 +2033,7 @@ def writevectorstotextfile(
             colsinjson=False,
             colsintsv=True,
             omitjson=True,
-            debug=False,
+            debug=debug,
         )
     else:
         raise ValueError("illegal file type")
