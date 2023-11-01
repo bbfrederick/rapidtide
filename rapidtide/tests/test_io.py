@@ -424,6 +424,32 @@ def test_io(debug=True, displayplots=False):
         print(mergelist)
     tide_io.niftimerge(mergelist, os.path.join(DESTDIR, "merged"))
 
+    tide_io.niftiroi(
+        os.path.join(SOURCEDIR, "sub-HAPPYTEST.nii.gz"), os.path.join(DESTDIR, "roi"), 2, 9
+    )
+
+    dummy, dataarray, theheader, thedims, thesizes = tide_io.readfromnifti(
+        os.path.join(DESTDIR, "roi")
+    )
+    thetypes = [
+        np.uint8,
+        np.int16,
+        np.int32,
+        np.float32,
+        np.complex64,
+        np.float64,
+        np.int8,
+        np.uint16,
+        np.uint32,
+        np.int64,
+        np.uint64,
+        np.complex128,
+    ]
+    for thedtype in thetypes:
+        tide_io.savetonifti(
+            dataarray.astype(thedtype), theheader, os.path.join(DESTDIR, "dtypetest"), debug=debug
+        )
+
 
 if __name__ == "__main__":
     test_io(debug=True, displayplots=True)
