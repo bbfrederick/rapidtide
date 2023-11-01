@@ -2010,7 +2010,7 @@ def writevectorstotextfile(
         writenpvecs(thevecs, outputfile, lineend=lineend)
     elif filetype == "bidscontinuous":
         writebidstsv(
-            outputfile.split(".")[0],
+            niftisplitext(outputfile)[0],
             thevecs,
             samplerate,
             compressed=compressed,
@@ -2023,7 +2023,7 @@ def writevectorstotextfile(
         )
     elif filetype == "plaintsv":
         writebidstsv(
-            outputfile.split(".")[0],
+            niftisplitext(outputfile)[0],
             thevecs,
             samplerate,
             compressed=compressed,
