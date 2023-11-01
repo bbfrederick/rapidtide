@@ -386,6 +386,7 @@ def test_io(debug=True, displayplots=False):
     assert not tide_io.checkifparfile("afilename.txt")
     assert tide_io.checkifparfile("afilename.par")
 
+    othermotiondict = tide_io.readparfile(motionfilename)
     theinitmotiondict = tide_io.readmotion(motionfilename)
     theexpandedmotionregressors, thelabels = tide_io.calcmotregressors(
         theinitmotiondict, derivdelayed=True
