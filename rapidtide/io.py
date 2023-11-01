@@ -210,15 +210,15 @@ def savetonifti(thearray, theheader, thename, debug=False):
     elif thedtype == np.uint64:
         thedatatypecode = 1280
         thebitpix = 64
-    elif thedtype == np.float128:
-        thedatatypecode = 1536
-        thebitpix = 128
+    # elif thedtype == np.float128:
+    #        thedatatypecode = 1536
+    #        thebitpix = 128
     elif thedtype == np.complex128:
         thedatatypecode = 1792
         thebitpix = 128
-    elif thedtype == np.complex256:
-        thedatatypecode = 2048
-        thebitpix = 256
+    # elif thedtype == np.complex256:
+    #    thedatatypecode = 2048
+    #    thebitpix = 256
     else:
         raise TypeError("type", thedtype, "is not legal")
     theheader["datatype"] = thedatatypecode
