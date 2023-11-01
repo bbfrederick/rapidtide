@@ -1,17 +1,32 @@
 #!/usr/bin/env python
 
+import os
+
 import numpy as np
 
 import rapidtide.io as tide_io
 
+debug = False
+# DESTDIR = get_test_temp_path()
+DESTDIR = "../dst"
 EPSILON = 1e-5
 numpoints = 10
-the2darray = np.zeros((3, numpoints), dtype=float)
+the2darray = np.zeros((6, numpoints), dtype=float)
 the2darray[0, :] = np.linspace(0, 1.0, numpoints, endpoint=False)
 the2darray[1, :] = np.sin(the2darray[0, :] * 2.0 * np.pi)
 the2darray[2, :] = np.cos(the2darray[0, :] * 2.0 * np.pi)
+the2darray[3, :] = np.cos(2.0 * the2darray[0, :] * 2.0 * np.pi)
+the2darray[4, :] = np.cos(3.0 * the2darray[0, :] * 2.0 * np.pi)
+the2darray[5, :] = np.cos(4.0 * the2darray[0, :] * 2.0 * np.pi)
 
-thecols = ["lin", "sin", "cos"]
+thecols = [
+    "RotX",
+    "RotY",
+    "RotZ",
+    "X",
+    "Y",
+    "Z",
+]
 
 inputsamplerate = 10.0
 inputstarttime = 0.5
@@ -23,8 +38,8 @@ thetests = [
     ["plaintsv", False, ".tsv"],
     ["plaintsv", True, ".tsv.gz"],
 ]
-outputfiles = []
 
+print("writing files")
 for thistest in thetests:
     thetype = thistest[0]
     compressed = thistest[1]
@@ -33,9 +48,10 @@ for thistest in thetests:
     else:
         compname = "uncompressed"
 
-    thefileroot = f"testout_withcol_{thetype}_{compname}"
+    thefileroot = os.path.join(DESTDIR, f"testout_withcol_{thetype}_{compname}")
     if thetype == "text":
-        thefileroot = thefileroot + ".txt"
+        thefileroot += ".par"
+    print(f"\t writing: {thefileroot}")
     tide_io.writevectorstotextfile(
         the2darray,
         thefileroot,
@@ -45,11 +61,12 @@ for thistest in thetests:
         compressed=compressed,
         filetype=thetype,
         lineend="",
-        debug=False,
+        debug=debug,
     )
-    thefileroot = f"testout_nocol_{thetype}_{compname}"
+    thefileroot = os.path.join(DESTDIR, f"testout_nocol_{thetype}_{compname}")
     if thetype == "text":
-        thefileroot = thefileroot + ".txt"
+        thefileroot += ".par"
+    print(f"\t writing: {thefileroot}")
     tide_io.writevectorstotextfile(
         the2darray,
         thefileroot,
@@ -59,9 +76,10 @@ for thistest in thetests:
         compressed=compressed,
         filetype=thetype,
         lineend="",
-        debug=False,
+        debug=debug,
     )
 
+print("reading files")
 for thistest in thetests:
     thetype = thistest[0]
     compressed = thistest[1]
@@ -71,17 +89,19 @@ for thistest in thetests:
         compname = "uncompressed"
 
     for colspec in ["withcol", "nocol"]:
-        thefileroot = f"testout_{colspec}_{thetype}_{compname}"
+        thefileroot = os.path.join(DESTDIR, f"testout_{colspec}_{thetype}_{compname}")
 
         if thetype == "text":
-            theextension = ".txt"
+            theextension = ".par"
+            if colspec == "nocol":
+                motionfilename = thefileroot + theextension
         else:
             if compressed:
                 theextension = ".tsv.gz"
             else:
                 theextension = ".tsv"
 
-        print(thetype, compressed, thefileroot)
+        print("reading:", thetype, compressed, thefileroot)
         (
             thesamplerate,
             thestarttime,
@@ -108,28 +128,42 @@ for thistest in thetests:
             assert thesamplerate == inputsamplerate
             assert thestarttime == inputstarttime
             if thefileroot.find("nocol") > 0:
-                assert len(thecolumns) == 3
-                assert thecolumns[0] == "col_00"
-                assert thecolumns[1] == "col_01"
-                assert thecolumns[2] == "col_02"
+                assert len(thecolumns) == len(thecols)
+                for i in range(6):
+                    assert thecolumns[i] == "col_" + str(i).zfill(2)
             else:
-                assert len(thecolumns) == 3
-                assert thecolumns[0] == "lin"
-                assert thecolumns[1] == "sin"
-                assert thecolumns[2] == "cos"
+                assert len(thecolumns) == len(thecols)
+                for i in range(6):
+                    assert thecolumns[i] == thecols[i]
             assert filetype == "bidscontinuous"
         elif thetype == "plaintsv":
             assert thesamplerate == None
             assert thestarttime == None
             if thefileroot.find("nocol") > 0:
-                assert len(thecolumns) == 3
-                assert thecolumns[0] == "col_00"
-                assert thecolumns[1] == "col_01"
-                assert thecolumns[2] == "col_02"
+                assert len(thecolumns) == len(thecols)
+                for i in range(6):
+                    assert thecolumns[i] == "col_" + str(i).zfill(2)
             else:
-                assert len(thecolumns) == 3
-                assert thecolumns[0] == "lin"
-                assert thecolumns[1] == "sin"
-                assert thecolumns[2] == "cos"
+                assert len(thecolumns) == len(thecols)
+                for i in range(6):
+                    assert thecolumns[i] == thecols[i]
             assert filetype == "plaintsv"
         assert np.max(np.fabs(thedata - the2darray)) < EPSILON
+
+assert not tide_io.checkifparfile("afilename.txt")
+assert tide_io.checkifparfile("afilename.par")
+
+theinitmotiondict = tide_io.readmotion(motionfilename)
+theexpandedmotionregressors, thelabels = tide_io.calcmotregressors(
+    theinitmotiondict, derivdelayed=True
+)
+if debug:
+    print(theexpandedmotionregressors.shape)
+    print(theexpandedmotionregressors)
+assert np.max(np.fabs(theexpandedmotionregressors[3, :] - the2darray[0, :])) < EPSILON
+assert np.max(np.fabs(theexpandedmotionregressors[4, :] - the2darray[1, :])) < EPSILON
+assert np.max(np.fabs(theexpandedmotionregressors[5, :] - the2darray[2, :])) < EPSILON
+assert np.max(np.fabs(theexpandedmotionregressors[0, :] - the2darray[3, :])) < EPSILON
+assert np.max(np.fabs(theexpandedmotionregressors[1, :] - the2darray[4, :])) < EPSILON
+assert np.max(np.fabs(theexpandedmotionregressors[2, :] - the2darray[5, :])) < EPSILON
+assert np.max(np.fabs(theexpandedmotionregressors[3, :] - the2darray[0, :])) < EPSILON
