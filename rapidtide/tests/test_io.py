@@ -141,6 +141,7 @@ def test_io(debug=True, displayplots=False):
     # test writing and reading text files
     debug = False
     DESTDIR = get_test_temp_path()
+    SOURCEDIR = get_examples_path()
     EPSILON = 1e-5
     numpoints = 10
     the2darray = np.zeros((6, numpoints), dtype=float)
@@ -399,6 +400,29 @@ def test_io(debug=True, displayplots=False):
     assert np.max(np.fabs(theexpandedmotionregressors[1, :] - the2darray[4, :])) < EPSILON
     assert np.max(np.fabs(theexpandedmotionregressors[2, :] - the2darray[5, :])) < EPSILON
     assert np.max(np.fabs(theexpandedmotionregressors[3, :] - the2darray[0, :])) < EPSILON
+
+    # test fmriheaderinfo
+    fmritimeinfothresh = 1e-2
+    thesizes, thedims = tide_io.fmriheaderinfo(os.path.join(SOURCEDIR, "sub-HAPPYTEST.nii.gz"))
+    if debug:
+        print(thedims)
+        print(thesizes)
+    targetdims = [4, 65, 89, 64, 110, 1, 1, 1]
+    targetsizes = [-1.000000, 2.395830, 2.395830, 2.400000, 1.160000, 0.000000, 0.000000, 0.000000]
+    for i in range(len(targetdims)):
+        assert targetdims[i] == thedims[i]
+        assert np.fabs(targetsizes[i] - thesizes[i]) < EPSILON
+
+    tide_io.niftisplit(
+        os.path.join(SOURCEDIR, "sub-HAPPYTEST.nii.gz"), os.path.join(DESTDIR, "splittest"), axis=3
+    )
+
+    mergelist = []
+    for i in range(10):
+        mergelist.append(os.path.join(DESTDIR, "splittest" + str(i).zfill(4)))
+    if debug:
+        print(mergelist)
+    tide_io.niftimerge(mergelist, os.path.join(DESTDIR, "merged"))
 
 
 if __name__ == "__main__":
