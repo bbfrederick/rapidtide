@@ -1153,6 +1153,10 @@ def readoptionsfile(inputfileroot):
     return thedict
 
 
+def makecolname(colnum, startcol):
+    return f"col_{str(colnum + startcol).zfill(2)}"
+
+
 def writebidstsv(
     outputfileroot,
     data,
@@ -1204,12 +1208,12 @@ def writebidstsv(
     else:
         reshapeddata = data
     if append:
-        insamplerate, instarttime, incolumns, indata, incompressed = readbidstsv(
+        insamplerate, instarttime, incolumns, indata, incompressed, incolsource = readbidstsv(
             outputfileroot + ".json", debug=debug
         )
         if debug:
             print("appending")
-            print(insamplerate, instarttime, incolumns, indata, incompressed)
+            print(insamplerate, instarttime, incolumns, indata, incompressed, incolsource)
         if insamplerate is None:
             # file does not already exist
             if debug:
@@ -1223,6 +1227,7 @@ def writebidstsv(
                     insamplerate,
                     instarttime,
                     incolumns,
+                    incolsource,
                     indata.shape,
                     reshapeddata.shape,
                 )
@@ -1237,7 +1242,7 @@ def writebidstsv(
                 print("data dimensions not compatible with existing dimensions")
                 print(samplerate, insamplerate)
                 print(starttime, instarttime)
-                print(columns, incolumns)
+                print(columns, incolumns, incolsource)
                 print(indata.shape, reshapeddata.shape)
                 sys.exit()
     else:
@@ -1246,7 +1251,7 @@ def writebidstsv(
     if columns is None:
         columns = []
         for i in range(reshapeddata.shape[0]):
-            columns.append(f"col_{str(i + startcol).zfill(2)}")
+            columns.append(makecolname(i, startcol))
     else:
         if len(columns) != reshapeddata.shape[0]:
             raise ValueError(
@@ -1359,8 +1364,14 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         compressed = None
     elif filetype == "bidscontinuous":
         # colspec can be None or a list of comma separated column names
-        thesamplerate, thestarttime, thecolumns, thedata, compressed = readbidstsv(
-            thefilename, colspec=colspec, debug=debug
+        colspectouse = None
+        if colspec is not None:
+            try:
+                colspectouse = makecolname(int(colspec), 0)
+            except ValueError:
+                colspectouse = colspec
+        thesamplerate, thestarttime, thecolumns, thedata, compressed, colsource = readbidstsv(
+            thefilename, colspec=colspectouse, debug=debug
         )
         if onecol and thedata.shape[0] > 1:
             print("specify a single column from", thefilename)
@@ -1370,7 +1381,10 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         if colspec is None:
             thecolumns = list(thedatadict.keys())
         else:
-            thecolumns = colspec.split(",")
+            try:
+                thecolumns = [makecolname(int(colspec), 0)]
+            except ValueError:
+                thecolumns = colspec.split(",")
         if onecol and len(thecolumns) > 1:
             print("specify a single column from", thefilename)
             sys.exit()
@@ -1497,6 +1511,8 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                         + thefileroot
                         + ".json.  This is not BIDS compliant."
                     )
+            else:
+                columnsource = "json"
         if os.path.exists(thefileroot + ".tsv.gz"):
             compression = "gzip"
             theextension = ".tsv.gz"
@@ -1542,6 +1558,7 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
 
         if columns is None:
             columns = list(df.columns.values)
+            columnsource = "tsv"
         if debug:
             print(
                 samplerate,
@@ -1561,6 +1578,7 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 columns,
                 np.transpose(df.to_numpy()),
                 (compression == "gzip"),
+                columnsource,
             )
         else:
             collist = colspec.split(",")
@@ -1568,7 +1586,7 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 selectedcols = df[collist]
             except KeyError:
                 print("specified column list cannot be found in", inputfilename)
-                return [None, None, None, None, None]
+                return [None, None, None, None, None, None]
             columns = list(selectedcols.columns.values)
             return (
                 samplerate,
@@ -1576,10 +1594,11 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 columns,
                 np.transpose(selectedcols.to_numpy()),
                 (compression == "gzip"),
+                columnsource,
             )
     else:
         print("file pair does not exist")
-        return [None, None, None, None, None]
+        return [None, None, None, None, None, None]
 
 
 def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False):
@@ -1595,7 +1614,9 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
     -------
 
     """
-    samplerate, starttime, columns, data, compressed = readbidstsv(inputfilename, debug=debug)
+    samplerate, starttime, columns, data, compressed, colsource = readbidstsv(
+        inputfilename, debug=debug
+    )
     if data is None:
         print("no valid datafile found")
         return None, None, None

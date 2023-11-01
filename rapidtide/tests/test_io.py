@@ -211,7 +211,7 @@ def test_io(debug=True, displayplots=False):
             debug=debug,
         )
 
-    print("reading files")
+    print("reading complete files")
     for thistest in thetests:
         thetype = thistest[0]
         compressed = thistest[1]
@@ -242,7 +242,7 @@ def test_io(debug=True, displayplots=False):
                 compressed,
                 filetype,
             ) = tide_io.readvectorsfromtextfile(
-                thefileroot + theextension, onecol=False, debug=False
+                thefileroot + theextension, onecol=False, debug=debug
             )
             """
             print(f"\t{thesamplerate=}")
@@ -264,7 +264,7 @@ def test_io(debug=True, displayplots=False):
                 if thefileroot.find("nocol") > 0:
                     assert len(thecolumns) == len(thecols)
                     for i in range(6):
-                        assert thecolumns[i] == "col_" + str(i).zfill(2)
+                        assert thecolumns[i] == tide_io.makecolname(i, 0)
                 else:
                     assert len(thecolumns) == len(thecols)
                     for i in range(6):
@@ -276,7 +276,7 @@ def test_io(debug=True, displayplots=False):
                 if thefileroot.find("nocol") > 0:
                     assert len(thecolumns) == len(thecols)
                     for i in range(6):
-                        assert thecolumns[i] == "col_" + str(i).zfill(2)
+                        assert thecolumns[i] == tide_io.makecolname(i, 0)
                 else:
                     assert len(thecolumns) == len(thecols)
                     for i in range(6):
@@ -284,6 +284,70 @@ def test_io(debug=True, displayplots=False):
                 assert filetype == "plaintsv"
             assert np.max(np.fabs(thedata - the2darray)) < EPSILON
 
+    print("reading single columns")
+    for thistest in thetests:
+        print()
+        thetype = thistest[0]
+        compressed = thistest[1]
+        if compressed:
+            compname = "compressed"
+        else:
+            compname = "uncompressed"
+
+        for colspec in ["withcol", "nocol"]:
+            thefileroot = os.path.join(DESTDIR, f"testout_{colspec}_{thetype}_{compname}")
+
+            if thetype == "text":
+                theextension = ".par"
+                if colspec == "nocol":
+                    motionfilename = thefileroot + theextension
+            else:
+                if compressed:
+                    theextension = ".tsv.gz"
+                else:
+                    theextension = ".tsv"
+
+            if thetype == "text" or thetype == "csv":
+                thespec = ":4"
+            elif thetype == "bidscontinuous":
+                if colspec == "nocol":
+                    thespec = ":4"
+                else:
+                    thespec = ":Y"
+            elif thetype == "plaintsv":
+                if colspec == "nocol":
+                    thespec = ":4"
+                else:
+                    thespec = ":Y"
+            else:
+                raise ValueError("illegal file type")
+            print("reading:", thetype, compressed, thefileroot)
+            (
+                thesamplerate,
+                thestarttime,
+                thecolumns,
+                thedata,
+                compressed,
+                filetype,
+            ) = tide_io.readvectorsfromtextfile(
+                thefileroot + theextension + thespec, onecol=True, debug=debug
+            )
+            if thetype == "text":
+                assert thesamplerate is None
+                assert thestarttime is None
+                assert thecolumns is None
+                assert filetype == "text"
+            elif thetype == "bidscontinuous":
+                assert thesamplerate == inputsamplerate
+                assert thestarttime == inputstarttime
+                assert filetype == "bidscontinuous"
+            elif thetype == "plaintsv":
+                assert thesamplerate == None
+                assert thestarttime == None
+                assert filetype == "plaintsv"
+            assert np.max(np.fabs(thedata - the2darray[4, :])) < EPSILON
+
+    # now check motion file routines
     assert not tide_io.checkifparfile("afilename.txt")
     assert tide_io.checkifparfile("afilename.par")
 

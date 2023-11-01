@@ -24,9 +24,11 @@ print("file created")
 
 
 # read it back
-samplerate, starttime, columns, data, compressed = tide_io.readbidstsv("testbids", debug=True)
+samplerate, starttime, columns, data, compressed, fakecolumns = tide_io.readbidstsv(
+    "testbids", debug=True
+)
 print("file read back")
-print(samplerate, starttime, columns, data.shape, compressed)
+print(samplerate, starttime, columns, data.shape, compressed, fakecolumns)
 
 # make a new regressor and add it to the file
 scaled = 1.1 * data[0, :].reshape((-1))
@@ -43,9 +45,11 @@ tide_io.writebidstsv(
 print("column appended")
 
 # read it back
-samplerate, starttime, columns, data, compressed = tide_io.readbidstsv("testbids", debug=True)
+samplerate, starttime, columns, data, compressed, fakecolumns = tide_io.readbidstsv(
+    "testbids", debug=True
+)
 print("file read back again")
-print(samplerate, starttime, columns, data.shape, compressed)
+print(samplerate, starttime, columns, data.shape, compressed, fakecolumns)
 
 # negate both timecourses and write to teh file
 tide_io.writebidstsv(

@@ -79,7 +79,7 @@ class Timecourse:
 
     def readTimeData(self, thename):
         if self.isbids:
-            dummy, dummy, columns, indata, dummy = tide_io.readbidstsv(self.filename)
+            dummy, dummy, columns, indata, dummy, dummy = tide_io.readbidstsv(self.filename)
             try:
                 self.timedata = indata[columns.index(thename), :]
             except ValueError:
