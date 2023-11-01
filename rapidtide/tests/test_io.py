@@ -165,6 +165,7 @@ def test_io(debug=True, displayplots=False):
 
     thetests = [
         ["text", False, ".txt"],
+        ["csv", False, ".csv"],
         ["bidscontinuous", False, ".tsv"],
         ["bidscontinuous", True, ".tsv.gz"],
         ["plaintsv", False, ".tsv"],
@@ -183,6 +184,8 @@ def test_io(debug=True, displayplots=False):
         thefileroot = os.path.join(DESTDIR, f"testout_withcol_{thetype}_{compname}")
         if thetype == "text":
             thefileroot += ".par"
+        if thetype == "csv":
+            thefileroot += ".csv"
         print(f"\t writing: {thefileroot}")
         tide_io.writevectorstotextfile(
             the2darray,
@@ -198,6 +201,8 @@ def test_io(debug=True, displayplots=False):
         thefileroot = os.path.join(DESTDIR, f"testout_nocol_{thetype}_{compname}")
         if thetype == "text":
             thefileroot += ".par"
+        if thetype == "csv":
+            thefileroot += ".csv"
         print(f"\t writing: {thefileroot}")
         tide_io.writevectorstotextfile(
             the2darray,
@@ -221,12 +226,16 @@ def test_io(debug=True, displayplots=False):
             compname = "uncompressed"
 
         for colspec in ["withcol", "nocol"]:
+            if debug:
+                print("\n\n\n")
             thefileroot = os.path.join(DESTDIR, f"testout_{colspec}_{thetype}_{compname}")
 
             if thetype == "text":
                 theextension = ".par"
                 if colspec == "nocol":
                     motionfilename = thefileroot + theextension
+            elif thetype == "csv":
+                theextension = ".csv"
             else:
                 if compressed:
                     theextension = ".tsv.gz"
@@ -258,6 +267,18 @@ def test_io(debug=True, displayplots=False):
                 assert thestarttime is None
                 assert thecolumns is None
                 assert filetype == "text"
+            elif thetype == "csv":
+                assert thesamplerate is None
+                assert thestarttime is None
+                if thefileroot.find("nocol") > 0:
+                    assert len(thecolumns) == len(thecols)
+                    for i in range(6):
+                        assert thecolumns[i] == tide_io.makecolname(i, 0)
+                else:
+                    assert len(thecolumns) == len(thecols)
+                    for i in range(6):
+                        assert thecolumns[i] == thecols[i]
+                assert filetype == "csv"
             elif thetype == "bidscontinuous":
                 assert thesamplerate == inputsamplerate
                 assert thestarttime == inputstarttime
@@ -295,20 +316,29 @@ def test_io(debug=True, displayplots=False):
             compname = "uncompressed"
 
         for colspec in ["withcol", "nocol"]:
+            if debug:
+                print("\n\n\n")
             thefileroot = os.path.join(DESTDIR, f"testout_{colspec}_{thetype}_{compname}")
 
             if thetype == "text":
                 theextension = ".par"
                 if colspec == "nocol":
                     motionfilename = thefileroot + theextension
+            elif thetype == "csv":
+                theextension = ".csv"
             else:
                 if compressed:
                     theextension = ".tsv.gz"
                 else:
                     theextension = ".tsv"
 
-            if thetype == "text" or thetype == "csv":
+            if thetype == "text":
                 thespec = ":4"
+            elif thetype == "csv":
+                if colspec == "nocol":
+                    thespec = ":4"
+                else:
+                    thespec = ":Y"
             elif thetype == "bidscontinuous":
                 if colspec == "nocol":
                     thespec = ":4"
@@ -337,6 +367,10 @@ def test_io(debug=True, displayplots=False):
                 assert thestarttime is None
                 assert thecolumns is None
                 assert filetype == "text"
+            elif thetype == "csv":
+                assert thesamplerate is None
+                assert thestarttime is None
+                assert filetype == "csv"
             elif thetype == "bidscontinuous":
                 assert thesamplerate == inputsamplerate
                 assert thestarttime == inputstarttime

@@ -1076,24 +1076,26 @@ def readcsv(inputfilename, debug=False):
     timeseriesdict = {}
 
     # Read the data in initially with no header
-    df = pd.read_csv(inputfilename + ".csv", sep=",", quotechar='"')
+    df = pd.read_csv(inputfilename + ".csv", sep=",", quotechar='"', header=0)
 
     # Check to see if the first element is a float
     try:
         dummy = float(df.columns[0])
-
-        # if we got to here, reread the data, but assume there is no header line
-        if debug:
-            print("there is no header line")
-        colnum = 1
-        for dummy, theseries in df.items():
-            timeseriesdict[f"col_{str(colnum).zfill(4)}"] = theseries.values
-            colnum += 1
     except ValueError:
         if debug:
             print("there is a header line")
         for thecolname, theseries in df.items():
             timeseriesdict[thecolname] = theseries.values
+    else:
+        # if we got to here, reread the data, but assume there is no header line
+        df = pd.read_csv(inputfilename + ".csv", sep=",", quotechar='"', header=None)
+        if debug:
+            print("there is no header line")
+        colnum = 0
+        for dummy, theseries in df.items():
+            timeseriesdict[makecolname(colnum, 0)] = theseries.values
+            colnum += 1
+        # timeseriesdict["columnsource"] = "synthetic"
 
     return timeseriesdict
 
@@ -1349,7 +1351,8 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
             filetype = "csv"
         else:
             filetype = "text"
-    print("this is a sanity check")
+    if debug:
+        print(f"detected file type is {filetype}")
     if debug:
         print(f"filetype of {fullfilespec} determined to be", filetype)
     if filetype == "text":
@@ -1385,6 +1388,9 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
                 thecolumns = [makecolname(int(colspec), 0)]
             except ValueError:
                 thecolumns = colspec.split(",")
+                colsource = "data"
+            else:
+                colsource = "synthetic"
         if onecol and len(thecolumns) > 1:
             print("specify a single column from", thefilename)
             sys.exit()
@@ -1413,8 +1419,12 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
             try:
                 thedatacols.append(thedatadict[thekey])
             except KeyError:
-                print(thefilename, "does not contain column", thekey)
-                sys.exit()
+                # try expanding the numbers
+                try:
+                    thedatacols.append(thedatadict[makecolname(int(thekey), 0)])
+                except:
+                    print(thefilename, "does not contain column", thekey)
+                    sys.exit()
         thedata = np.array(thedatacols)
         thesamplerate = None
         thestarttime = None
@@ -1828,6 +1838,11 @@ def readvecs(inputfilename, colspec=None, numskip=0, debug=False, thedtype=float
         if max(collist) > len(lines[0].split()) - 1:
             raise ValueError("READVECS: requested column", max(collist), "too large - exiting")
     inputvec = []
+    if numskip == 0:
+        try:
+            test = float((lines[0].split())[0])
+        except ValueError:
+            numskip = 1
     for line in lines[numskip:]:
         if len(line) > 1:
             thetokens = line.split()
@@ -2028,7 +2043,9 @@ def writevectorstotextfile(
     debug=False,
 ):
     if filetype == "text":
-        writenpvecs(thevecs, outputfile, lineend=lineend)
+        writenpvecs(thevecs, outputfile, headers=columns, lineend=lineend)
+    elif filetype == "csv":
+        writenpvecs(thevecs, outputfile, headers=columns, ascsv=True, lineend=lineend)
     elif filetype == "bidscontinuous":
         writebidstsv(
             niftisplitext(outputfile)[0],
@@ -2056,12 +2073,13 @@ def writevectorstotextfile(
             omitjson=True,
             debug=debug,
         )
+
     else:
         raise ValueError("illegal file type")
 
 
 # rewritten to guarantee file closure, combines writenpvec and writenpvecs
-def writenpvecs(thevecs, outputfile, lineend=""):
+def writenpvecs(thevecs, outputfile, ascsv=False, headers=None, altmethod=True, lineend=""):
     r"""Write out a two dimensional numpy array to a text file
 
     Parameters
@@ -2090,12 +2108,29 @@ def writenpvecs(thevecs, outputfile, lineend=""):
     else:
         thelineending = "\n"
         openmode = "w"
+    if ascsv:
+        theseparator = ","
+    else:
+        theseparator = "\t"
+    if headers is not None:
+        if thevecs.ndim == 2:
+            if len(headers) != theshape[0]:
+                raise ValueError("number of header lines must equal the number of data columns")
+        else:
+            if len(headers) != 1:
+                raise ValueError("number of header lines must equal the number of data columns")
     with open(outputfile, openmode) as FILE:
+        if headers is not None:
+            FILE.writelines(theseparator.join(headers) + thelineending)
         if thevecs.ndim == 2:
             for i in range(0, theshape[1]):
-                for j in range(0, theshape[0]):
-                    FILE.writelines(str(thevecs[j, i]) + "\t")
-                FILE.writelines(thelineending)
+                if altmethod:
+                    outline = theseparator.join(thevecs[:, i].astype(str).tolist()) + thelineending
+                    FILE.writelines(outline)
+                else:
+                    for j in range(0, theshape[0]):
+                        FILE.writelines(str(thevecs[j, i]) + "\t")
+                    FILE.writelines(thelineending)
         else:
             for i in range(0, theshape[0]):
                 FILE.writelines(str(thevecs[i]) + thelineending)
