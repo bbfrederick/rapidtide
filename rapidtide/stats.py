@@ -741,51 +741,6 @@ def getfracvals(datamat, thefracs, nozero=False, debug=False):
     return thevals
 
 
-def getfracvalsfromfit_old(histfit, thefracs, numbins=2000, displayplots=False):
-    """
-
-    Parameters
-    ----------
-    histfit
-    thefracs
-    numbins
-    displayplots
-
-    Returns
-    -------
-
-    """
-    themax = 1.0
-    themin = 0.0
-    bins = np.arange(themin, themax, (themax - themin) / numbins)
-    meanhist = johnsonsb.pdf(bins, histfit[0], histfit[1], histfit[2], histfit[3])
-    corrfac = (1.0 - histfit[-1]) / (1.0 * numbins)
-    meanhist *= corrfac
-    meanhist[0] = histfit[-1]
-
-    cummeanhist = histfit[-1] + (1.0 - histfit[-1]) * johnsonsb.cdf(
-        bins, histfit[0], histfit[1], histfit[2], histfit[3]
-    )
-    thevals = []
-    if displayplots:
-        fig = plt.figure()
-        ax = fig.add_subplot(211)
-        ax.set_title("probability histogram")
-        plt.plot(bins[-numbins:], meanhist[-numbins:])
-        ax = fig.add_subplot(212)
-        ax.set_title("cumulative mean sum of histogram")
-        plt.plot(bins[-numbins:], cummeanhist[-numbins:])
-        plt.show()
-    for thisfrac in thefracs:
-        target = cummeanhist[numbins - 1] * thisfrac
-        thevals.append(0.0)
-        for i in range(0, numbins):
-            if cummeanhist[i] >= target:
-                thevals[-1] = bins[i]
-                break
-    return thevals
-
-
 def getfracvalsfromfit(histfit, thefracs):
     """
 
@@ -793,7 +748,6 @@ def getfracvalsfromfit(histfit, thefracs):
     ----------
     histfit
     thefracs
-    displayplots
 
     Returns
     -------
