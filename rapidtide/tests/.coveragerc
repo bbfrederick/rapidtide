@@ -7,9 +7,6 @@ source = .
 omit =
     __init__.py
     ../__init__.py
-    ../workflows/rapidtide2x.py
-    ../workflows/rapidtide2x_parser.py
-    ../workflows/happy_legacy.py
     ../scripts/__init__.py
     ../OrthoImageItem.py
     ../wiener2.py
