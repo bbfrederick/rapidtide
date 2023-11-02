@@ -22,6 +22,7 @@ import matplotlib as mpl
 
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
+from rapidtide.RapidtideDataset import RapidtideDataset
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
