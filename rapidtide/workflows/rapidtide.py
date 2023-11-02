@@ -269,12 +269,12 @@ def rapidtide_main(argparsingfunc):
         "CommandLineArgs": optiondict["commandlineargs"],
     }
 
-    TimingLGR.info("Argument parsing done")
+    TimingLGR.debug("Argument parsing done")
 
     # don't use shared memory if there is only one process
     if (optiondict["nprocs"] == 1) and not optiondict["alwaysmultiproc"]:
         optiondict["sharedmem"] = False
-        LGR.info("running single process - disabled shared memory use")
+        LGR.debug("running single process - disabled shared memory use")
 
     # disable numba now if we're going to do it (before any jits)
     if optiondict["nonumba"]:
@@ -283,21 +283,21 @@ def rapidtide_main(argparsingfunc):
     # set the internal precision
     global rt_floatset, rt_floattype
     if optiondict["internalprecision"] == "double":
-        LGR.info("setting internal precision to double")
+        LGR.debug("setting internal precision to double")
         rt_floattype = "float64"
         rt_floatset = np.float64
     else:
-        LGR.info("setting internal precision to single")
+        LGR.debug("setting internal precision to single")
         rt_floattype = "float32"
         rt_floatset = np.float32
 
     # set the output precision
     if optiondict["outputprecision"] == "double":
-        LGR.info("setting output precision to double")
+        LGR.debug("setting output precision to double")
         rt_outfloattype = "float64"
         rt_outfloatset = np.float64
     else:
-        LGR.info("setting output precision to single")
+        LGR.debug("setting output precision to single")
         rt_outfloattype = "float32"
         rt_outfloatset = np.float32
 
@@ -345,7 +345,7 @@ def rapidtide_main(argparsingfunc):
     # open the fmri datafile
     tide_util.logmem("before reading in fmri data")
     if tide_io.checkiftext(fmrifilename):
-        LGR.info("input file is text - all I/O will be to text files")
+        LGR.debug("input file is text - all I/O will be to text files")
         optiondict["textio"] = True
         if optiondict["gausssigma"] > 0.0:
             optiondict["gausssigma"] = 0.0
@@ -367,7 +367,7 @@ def rapidtide_main(argparsingfunc):
     else:
         fileiscifti = tide_io.checkifcifti(fmrifilename)
         if fileiscifti:
-            LGR.info("input file is CIFTI")
+            LGR.debug("input file is CIFTI")
             (
                 cifti,
                 cifti_hdr,
@@ -380,10 +380,10 @@ def rapidtide_main(argparsingfunc):
             optiondict["isgrayordinate"] = True
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
-            LGR.info(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
+            LGR.debug(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
             slicesize = numspatiallocs
         else:
-            LGR.info("input file is NIFTI")
+            LGR.debug("input file is NIFTI")
             nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
             optiondict["isgrayordinate"] = False
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
@@ -411,7 +411,7 @@ def rapidtide_main(argparsingfunc):
     # check to see if we need to adjust the oversample factor
     if optiondict["oversampfactor"] < 0:
         optiondict["oversampfactor"] = int(np.max([np.ceil(fmritr / 0.5), 1]))
-        LGR.info(f"oversample factor set to {optiondict['oversampfactor']}")
+        LGR.debug(f"oversample factor set to {optiondict['oversampfactor']}")
 
     oversamptr = fmritr / optiondict["oversampfactor"]
     LGR.verbose(f"fmri data: {timepoints} timepoints, tr = {fmritr}, oversamptr = {oversamptr}")
@@ -515,7 +515,7 @@ def rapidtide_main(argparsingfunc):
     # read or make a mask of where to calculate the correlations
     tide_util.logmem("before selecting valid voxels")
     threshval = tide_stats.getfracvals(fmri_data[:, :], [0.98])[0] / 25.0
-    LGR.info("constructing correlation mask")
+    LGR.debug("constructing correlation mask")
     if optiondict["corrmaskincludename"] is not None:
         thecorrmask = tide_mask.readamask(
             optiondict["corrmaskincludename"],
@@ -536,10 +536,10 @@ def rapidtide_main(argparsingfunc):
             corrmask = np.uint(nim_data[:, 0] * 0 + 1)
         else:
             if (np.mean(stdim) < np.mean(meanim)) and not optiondict["nirs"]:
-                LGR.info("generating correlation mask from mean image")
+                LGR.verbose("generating correlation mask from mean image")
                 corrmask = np.uint16(tide_mask.makeepimask(nim).dataobj.reshape(numspatiallocs))
             else:
-                LGR.info("generating correlation mask from std image")
+                LGR.verbose("generating correlation mask from std image")
                 corrmask = np.uint16(
                     tide_stats.makemask(stdim, threshpct=optiondict["corrmaskthreshpct"])
                 )
@@ -585,14 +585,16 @@ def rapidtide_main(argparsingfunc):
     LGR.verbose(f"image threshval = {threshval}")
     validvoxels = np.where(corrmask > 0)[0]
     numvalidspatiallocs = np.shape(validvoxels)[0]
-    LGR.info(f"validvoxels shape = {numvalidspatiallocs}")
+    LGR.debug(f"validvoxels shape = {numvalidspatiallocs}")
     fmri_data_valid = fmri_data[validvoxels, :] + 0.0
-    LGR.info(f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}")
+    LGR.verbose(
+        f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}"
+    )
 
     if internalrefineincludemask is not None:
         internalrefineincludemask_valid = 1.0 * internalrefineincludemask[validvoxels]
         del internalrefineincludemask
-        LGR.info(
+        LGR.debug(
             "internalrefineincludemask_valid has size: " f"{internalrefineincludemask_valid.size}"
         )
     else:
@@ -600,7 +602,7 @@ def rapidtide_main(argparsingfunc):
     if internalrefineexcludemask is not None:
         internalrefineexcludemask_valid = 1.0 * internalrefineexcludemask[validvoxels]
         del internalrefineexcludemask
-        LGR.info(
+        LGR.debug(
             "internalrefineexcludemask_valid has size: " f"{internalrefineexcludemask_valid.size}"
         )
     else:
@@ -609,7 +611,7 @@ def rapidtide_main(argparsingfunc):
     if internaloffsetincludemask is not None:
         internaloffsetincludemask_valid = 1.0 * internaloffsetincludemask[validvoxels]
         del internaloffsetincludemask
-        LGR.info(
+        LGR.debug(
             "internaloffsetincludemask_valid has size: " f"{internaloffsetincludemask_valid.size}"
         )
     else:
@@ -617,7 +619,7 @@ def rapidtide_main(argparsingfunc):
     if internaloffsetexcludemask is not None:
         internaloffsetexcludemask_valid = 1.0 * internaloffsetexcludemask[validvoxels]
         del internaloffsetexcludemask
-        LGR.info(
+        LGR.debug(
             "internaloffsetexcludemask_valid has size: " f"{internaloffsetexcludemask_valid.size}"
         )
     else:
@@ -632,12 +634,12 @@ def rapidtide_main(argparsingfunc):
     # move fmri_data_valid into shared memory
     if optiondict["sharedmem"]:
         LGR.info("moving fmri data to shared memory")
-        TimingLGR.info("Start moving fmri_data to shared memory")
+        TimingLGR.verbose("Start moving fmri_data to shared memory")
         numpy2shared_func = addmemprofiling(
             numpy2shared, optiondict["memprofile"], "before fmri data move"
         )
         fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
-        TimingLGR.info("End moving fmri_data to shared memory")
+        TimingLGR.verbose("End moving fmri_data to shared memory")
 
     # get rid of memory we aren't using
     tide_util.logmem("before purging full sized fmri data")
@@ -667,7 +669,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict["motionfilename"] is not None:
         LGR.info("regressing out motion")
 
-        TimingLGR.info("Motion filtering start")
+        TimingLGR.verbose("Motion filtering start")
         (
             motionregressors,
             motionregressorlabels,
@@ -728,7 +730,7 @@ def rapidtide_main(argparsingfunc):
 
     # now set the regressor that we'll use
     if optiondict["useglobalref"]:
-        LGR.info("using global mean as probe regressor")
+        LGR.verbose("using global mean as probe regressor")
         inputfreq = meanfreq
         inputperiod = meanperiod
         inputstarttime = meanstarttime
@@ -789,7 +791,7 @@ def rapidtide_main(argparsingfunc):
     numreference = len(inputvec)
     optiondict["inputfreq"] = inputfreq
     optiondict["inputstarttime"] = inputstarttime
-    LGR.info(
+    LGR.debug(
         "Regressor start time, end time, and step: {:.3f}, {:.3f}, {:.3f}".format(
             -inputstarttime, inputstarttime + numreference * inputperiod, inputperiod
         )
@@ -853,7 +855,7 @@ def rapidtide_main(argparsingfunc):
         numnoise = len(noisevec)
         optiondict["noisefreq"] = noisefreq
         optiondict["noisestarttime"] = noisestarttime
-        LGR.info(
+        LGR.debug(
             "Noise timecourse start time, end time, and step: {:.3f}, {:.3f}, {:.3f}".format(
                 -noisestarttime, noisestarttime + numnoise * noiseperiod, noiseperiod
             )
@@ -878,7 +880,7 @@ def rapidtide_main(argparsingfunc):
     fmrifreq = 1.0 / fmritr
     optiondict["fmrifreq"] = fmrifreq
     skiptime = fmritr * (optiondict["preprocskip"])
-    LGR.info(f"first fMRI point is at {skiptime} seconds relative to time origin")
+    LGR.debug(f"first fMRI point is at {skiptime} seconds relative to time origin")
     initial_fmri_x = np.arange(0.0, validtimepoints) * fmritr + skiptime
     os_fmri_x = (
         np.arange(
@@ -1085,7 +1087,7 @@ def rapidtide_main(argparsingfunc):
                 method=optiondict["interptype"],
             )
 
-    LGR.info(
+    LGR.debug(
         f"{len(os_fmri_x)} "
         f"{len(resampref_y)} "
         f"{len(initial_fmri_x)} "
@@ -1269,7 +1271,7 @@ def rapidtide_main(argparsingfunc):
             nativecorrshape = (xsize, ysize, numslices, corroutlen)
     internalcorrshape = (numspatiallocs, corroutlen)
     internalvalidcorrshape = (numvalidspatiallocs, corroutlen)
-    LGR.info(
+    LGR.debug(
         f"allocating memory for correlation arrays {internalcorrshape} {internalvalidcorrshape}"
     )
     if optiondict["sharedmem"]:
@@ -1484,6 +1486,7 @@ def rapidtide_main(argparsingfunc):
                 " at ",
                 optiondict[f"noisedelay_pass{thepass}"],
             )
+
             # regress out
             resampref_y, datatoremove, R = tide_fit.glmfilt(resampref_y, shiftednoise, debug=True)
 
