@@ -24,7 +24,7 @@ import rapidtide.miscmath as tide_math
 from rapidtide.tests.utils import mse
 
 
-def test_math(debug=True, displayplots=False):
+def test_math(debug=False, displayplots=False):
     # test math functions
     EPSILON = 1e-5
     numpoints = 500
@@ -69,7 +69,7 @@ def test_math(debug=True, displayplots=False):
     basefunc = np.sin(hifreq * 2.0 * np.pi * xaxis)
     modfunc = 0.5 + 0.1 * np.sin(lowfreq * 2.0 * np.pi * xaxis)
     theenvelope = tide_math.envdetect(1.0, basefunc * modfunc, cutoff=0.1, padlen=100)
-    if debug:
+    if displayplots:
         matplotlib.use("TkAgg")
         offset = 0.0
         plt.plot(xaxis, basefunc + offset)
@@ -81,7 +81,7 @@ def test_math(debug=True, displayplots=False):
         print(mse(theenvelope, modfunc))
     assert mse(theenvelope, modfunc) < 0.04
 
-    # thephase test
+    # phasemod test
     # thephase = tide_math.phasemod(phase, centric=True)
 
     # trendfilt test
