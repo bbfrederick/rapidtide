@@ -36,6 +36,7 @@ def test_fullrunrapidtide_v5(debug=False, displayplots=False):
         "2",
         "--numnull",
         "0",
+        "--pickleft",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
