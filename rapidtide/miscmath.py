@@ -423,7 +423,7 @@ def rms(vector):
     return np.sqrt(np.mean(np.square(vector)))
 
 
-def envdetect(Fs, inputdata, cutoff=0.25):
+def envdetect(Fs, inputdata, cutoff=0.25, padlen=10):
     """
 
     Parameters
@@ -445,7 +445,7 @@ def envdetect(Fs, inputdata, cutoff=0.25):
     sigabs = abs(demeaned)
     theenvbpf = tide_filt.NoncausalFilter(filtertype="arb")
     theenvbpf.setfreqs(0.0, 0.0, cutoff, 1.1 * cutoff)
-    return theenvbpf.apply(Fs, sigabs)
+    return tide_filt.unpadvec(theenvbpf.apply(Fs, tide_filt.padvec(sigabs, padlen)), padlen)
 
 
 def phasemod(phase, centric=True):
