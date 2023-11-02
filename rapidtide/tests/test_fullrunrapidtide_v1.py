@@ -41,6 +41,23 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
+    datafileroot = os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1")
+    thedataset = RapidtideDataset(
+        "main",
+        datafileroot,
+        usecorrout=True,
+        verbose=True,
+        init_LUT=False,
+    )
+
+    assert thedataset.focusregressor == "prefilt"
+    thedataset.setfocusregressor("pass3")
+    assert thedataset.focusregressor == "pass3"
+
+    if debug:
+        print(thedataset.regressorfilterlimits)
+    assert thedataset.regressorfilterlimits == (0.01, 0.15)
+
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
