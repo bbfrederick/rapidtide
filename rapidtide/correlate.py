@@ -1167,7 +1167,12 @@ def aligntcwithref(
     # now fixedtc and 2 are on the same timescales
     thexcorr = fastcorrelate(tide_math.corrnormalize(fixedtc), tide_math.corrnormalize(movingtc))
     xcorrlen = len(thexcorr)
-    xcorr_x = np.r_[0.0:xcorrlen] * Fs - (xcorrlen * Fs) / 2.0 + Fs / 2.0
+    timestep = 1.0 / Fs
+    xcorr_x = (
+        timestep * xcorrlen * np.linspace(0.0, 1.0, xcorrlen, endpoint=False)
+        - (xcorrlen * timestep) / 2.0
+        + timestep / 2.0
+    )
 
     (
         maxindex,
@@ -1204,4 +1209,11 @@ def aligntcwithref(
     # now align the second timecourse to the first
     timeaxis = np.linspace(0.0, 1.0 / Fs * len(fixedtc), num=len(fixedtc), endpoint=False)
     aligneddata = tide_resample.doresample(timeaxis, movingtc, timeaxis - maxdelay, padtype="zero")
+    if display:
+        plt.plot(timeaxis, tide_math.stdnormalize(fixedtc), "r")
+        plt.plot(timeaxis, tide_math.stdnormalize(aligneddata) + 0.2, "b")
+        plt.title("Timecourses")
+        plt.legend(["fixedtc", "alignedtc"])
+        plt.show()
+
     return aligneddata, maxdelay, maxval, failreason
