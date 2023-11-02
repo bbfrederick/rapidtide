@@ -51,12 +51,16 @@ def test_math(debug=False, displayplots=False):
     # normalize smoke test
     for themethod in ["None", "percent", "variance", "stddev", "z", "p2p", "mad"]:
         thenorm = tide_math.normalize(the1darray, method=themethod)
+        thenorm = tide_math.normalize(0.0 * the1darray, method=themethod)
 
     # corrnormalize smoke test
     for window in ["None", "hamming"]:
         for detrendorder in range(2):
             thenorm = tide_math.corrnormalize(
                 the1darray, detrendorder=detrendorder, windowfunc=window
+            )
+            thenorm = tide_math.corrnormalize(
+                0.0 * the1darray, detrendorder=detrendorder, windowfunc=window
             )
 
     # rms test
@@ -82,10 +86,10 @@ def test_math(debug=False, displayplots=False):
     assert mse(theenvelope, modfunc) < 0.04
 
     # phasemod test
-    # thephase = tide_math.phasemod(phase, centric=True)
+    # tested externally
 
     # trendfilt test
-    # thefilt = tide_math.trendfilt(inputdata, order=3, ndevs=3.0, debug=False)
+    # tested externally
 
     # ComplexPCA test
     the2darray = np.zeros((6, numpoints), dtype=float)
