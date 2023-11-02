@@ -32,7 +32,7 @@ def main(runninglocally=False):
         datafileroot = "../data/examples/dst/sub-RAPIDTIDETEST_"
     else:
         print(f"get_test_temp_path={get_test_temp_path()}")
-        datafileroot = (os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST2_"),)
+        datafileroot = (os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1_"),)
     anatname = None
     geommaskname = None
     userise = False
@@ -61,6 +61,14 @@ def main(runninglocally=False):
 
     theoverlays = thesubject.getoverlays()
     theregressors = thesubject.getregressors()
+
+    assert thesubject.focusregressor == "prefilt"
+    thesubject.setfocusregressor("pass3")
+    assert thesubject.focusregressor == "pass3"
+
+    if debug:
+        print(thesubject.regressorfilterlimits)
+    assert thesubject.regressorfilterlimits == (0.01, 0.15)
 
 
 if __name__ == "__main__":
