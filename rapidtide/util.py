@@ -882,7 +882,7 @@ def comparerapidtideruns(root1, root2, debug=False):
             else:
                 print("timecourse dimensions don't match - skipping")
         else:
-            print(f"{timecourse} not present in both dataset - skipping")
+            print(f"{timecourse} not present in both datasets - skipping")
     return results
 
 
