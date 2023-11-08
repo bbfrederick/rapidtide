@@ -1376,9 +1376,10 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         thesamplerate, thestarttime, thecolumns, thedata, compressed, colsource = readbidstsv(
             thefilename, colspec=colspectouse, debug=debug
         )
+        if thedata is None:
+            raise ValueError(f"specified column {colspectouse} does not exist")
         if onecol and thedata.shape[0] > 1:
-            print("specify a single column from", thefilename)
-            sys.exit()
+            raise ValueError("specify a single column from", thefilename)
     elif filetype == "plaintsv":
         thedatadict = readlabelledtsv(thefileroot, compressed=compressed)
         if colspec is None:

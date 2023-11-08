@@ -1,0 +1,10 @@
+#!/usr/bin/env python
+
+import rapidtide.util as tide_util
+
+root1 = "../dst/sub-RAPIDTIDETEST_s2p0"
+root2 = "../dst/sub-RAPIDTIDETEST_s2p5"
+
+theresults = tide_util.comparerapidtideruns(root1, root2)
+
+print(theresults)

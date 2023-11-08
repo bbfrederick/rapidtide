@@ -30,7 +30,7 @@ def test_fullrunhappy_v4(debug=False, displayplots=False):
     inputargs = [
         os.path.join(get_examples_path(), "sub-HAPPYTEST.nii.gz"),
         os.path.join(get_examples_path(), "sub-HAPPYTEST.json"),
-        os.path.join(get_test_temp_path(), "happyout"),
+        os.path.join(get_test_temp_path(), "happyout4"),
         "--estmask",
         os.path.join(get_examples_path(), "sub-HAPPYTEST_smallmask.nii.gz"),
         "--projmask",

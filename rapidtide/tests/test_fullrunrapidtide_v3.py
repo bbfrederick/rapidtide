@@ -50,6 +50,10 @@ def test_fullrunrapidtide_v3(debug=False, displayplots=False):
         "--globalsignalmethod",
         "pca",
         "--calccoherence",
+        "--refineprenorm",
+        "std",
+        "--refineweighting",
+        "R",
         "--regressor",
         os.path.join(
             get_examples_path(),

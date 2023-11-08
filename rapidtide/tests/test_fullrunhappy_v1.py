@@ -30,7 +30,7 @@ def test_fullrunhappy_v1(debug=False, displayplots=False):
     inputargs = [
         os.path.join(get_examples_path(), "sub-HAPPYTEST.nii.gz"),
         os.path.join(get_examples_path(), "sub-HAPPYTEST.json"),
-        os.path.join(get_test_temp_path(), "happyout"),
+        os.path.join(get_test_temp_path(), "happyout1"),
         "--mklthreads",
         "-1",
         "--spatialglm",

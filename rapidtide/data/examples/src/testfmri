@@ -29,6 +29,20 @@
         #../dst/sub-RAPIDTIDETEST_tagged
 
 rapidtide \
+	--spatialfilt 2.5 \
+        --nprocs -1 \
+        --passes 3 \
+        --nofitfilt \
+        --acfix \
+        --similaritymetric hybrid \
+        --norefinedespeckled \
+        --filterband lfo \
+        --disabledockermemfix \
+        --corrtype linear \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_s2p5
+
+rapidtide \
 	--spatialfilt 2 \
         --nprocs -1 \
         --passes 3 \
@@ -40,7 +54,7 @@ rapidtide \
         --disabledockermemfix \
         --corrtype linear \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST
+        ../dst/sub-RAPIDTIDETEST_s2p0
 
 #rapidtide \
 	#--spatialfilt 2 \

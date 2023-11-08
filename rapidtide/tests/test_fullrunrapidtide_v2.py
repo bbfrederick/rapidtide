@@ -66,6 +66,8 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
         "hybrid",
         "--globalsignalmethod",
         "meanscale",
+        "--refineprenorm",
+        "var",
     ]
     if debug:
         print(inputargs)

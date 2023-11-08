@@ -758,27 +758,43 @@ def comparemap(map1, map2, mask=None, debug=False):
     return mindiff, maxdiff, meandiff, mse, minreldiff, maxreldiff, meanreldiff, relmse
 
 
-def comparerapidtideruns(root1, root2):
+def comparerapidtideruns(root1, root2, debug=False):
     results = {}
-    for map in ["lagtimes", "lagstrengths", "lagsigma", "MTT", "fitCoff"]:
-        filename1 = root1 + "_" + map + ".nii.gz"
-        maskname1 = root1 + "_lagmask.nii.gz"
-        filename2 = root2 + "_" + map + ".nii.gz"
-        maskname2 = root2 + "_lagmask.nii.gz"
-        (
-            masknim1,
-            maskdata1,
-            maskhdr1,
-            themaskdims1,
-            themasksizes1,
-        ) = tide_io.readfromnifti(maskname1)
-        (
-            masknim2,
-            maskdata2,
-            maskhdr2,
-            themaskdims2,
-            themasksizes2,
-        ) = tide_io.readfromnifti(maskname2)
+    maskname1 = f"{root1}_desc-corrfit_mask.nii.gz"
+    (
+        masknim1,
+        maskdata1,
+        maskhdr1,
+        themaskdims1,
+        themasksizes1,
+    ) = tide_io.readfromnifti(maskname1)
+    maskname2 = f"{root2}_desc-corrfit_mask.nii.gz"
+    (
+        masknim2,
+        maskdata2,
+        maskhdr2,
+        themaskdims2,
+        themasksizes2,
+    ) = tide_io.readfromnifti(maskname2)
+
+    # compare maps
+    for map in [
+        "maxtime",
+        "maxcorr",
+        "maxwidth",
+        "MTT",
+        "mean",
+        "lfofilterCoeff",
+        "lfofilterMean",
+        "lfofilterNorm",
+        "lfofilterR",
+        "lfofilterR2",
+        "lfofilterInbandVarianceChange",
+    ]:
+        if debug:
+            print(f"checking map {map}")
+        filename1 = f"{root1}_desc-{map}_map.nii.gz"
+        filename2 = f"{root2}_desc-{map}_map.nii.gz"
         if tide_io.checkspacematch(maskhdr1, maskhdr2):
             mask = maskdata1 * maskdata2
             if os.path.isfile(filename1) and os.path.isfile(filename2):
@@ -797,7 +813,9 @@ def comparerapidtideruns(root1, root2):
                         results[map]["relmaxdiff"],
                         results[map]["relmeandiff"],
                         results[map]["relmse"],
-                    ) = comparemap(data1, data2, mask=mask)
+                    ) = comparemap(data1, data2, mask=mask, debug=debug)
+                    if debug:
+                        print(results[map])
                 else:
                     print("mask dimensions don't match - aborting")
                     sys.exit()
@@ -806,6 +824,65 @@ def comparerapidtideruns(root1, root2):
         else:
             print("mask dimensions don't match - aborting")
             sys.exit()
+    for timecourse in [
+        "initialmovingregressor_timeseries.json:prefilt",
+        "initialmovingregressor_timeseries.json:postfilt",
+        "oversampledmovingregressor_timeseries.json:pass1",
+        "oversampledmovingregressor_timeseries.json:pass2",
+        "oversampledmovingregressor_timeseries.json:pass3",
+        "oversampledmovingregressor_timeseries.json:pass4",
+    ]:
+        if debug:
+            print(f"checking timecourse {timecourse}")
+        filespec1 = f"{root1}_desc-{timecourse}"
+        filespec2 = f"{root2}_desc-{timecourse}"
+        allpresent = True
+        try:
+            dummy, dummy, dummy, timecourse1, dummy, dummy = tide_io.readvectorsfromtextfile(
+                filespec1, onecol=True
+            )
+        except FileNotFoundError:
+            if debug:
+                print(f"{filespec2} file not found")
+            allpresent = False
+        except ValueError:
+            if debug:
+                print(f"{filespec2} column not found")
+            allpresent = False
+
+        try:
+            dummy, dummy, dummy, timecourse2, dummy, dummy = tide_io.readvectorsfromtextfile(
+                filespec2, onecol=True
+            )
+        except FileNotFoundError:
+            if debug:
+                print(f"{filespec2} file not found")
+            allpresent = False
+        except ValueError:
+            if debug:
+                print(f"{filespec2} column not found")
+            allpresent = False
+
+        if allpresent:
+            tcname = timecourse.replace("_timeseries.json:", "_")
+            if len(timecourse1) == len(timecourse2):
+                results[tcname] = {}
+                (
+                    results[tcname]["mindiff"],
+                    results[tcname]["maxdiff"],
+                    results[tcname]["meandiff"],
+                    results[tcname]["mse"],
+                    results[tcname]["relmindiff"],
+                    results[tcname]["relmaxdiff"],
+                    results[tcname]["relmeandiff"],
+                    results[tcname]["relmse"],
+                ) = comparemap(timecourse1, timecourse2, debug=debug)
+                if debug:
+                    print(results[tcname])
+            else:
+                print("timecourse dimensions don't match - skipping")
+        else:
+            print(f"{timecourse} not present in both dataset - skipping")
     return results
 
 
@@ -813,11 +890,11 @@ def comparehappyruns(root1, root2, debug=False):
     results = {}
     if debug:
         print("comparehappyruns rootnames:", root1, root2)
-    for map in ["app", "mask", "vesselmask"]:
-        filename1 = root1 + "_" + map + ".nii.gz"
-        maskname1 = root1 + "_mask.nii.gz"
-        filename2 = root2 + "_" + map + ".nii.gz"
-        maskname2 = root2 + "_mask.nii.gz"
+    for map in ["app_info", "vessels_mask"]:
+        filename1 = f"{root1}_desc-{map}.nii.gz"
+        maskname1 = f"{root1}_processvoxels_mask.nii.gz"
+        filename2 = f"{root2}_desc-{map}.nii.gz"
+        maskname2 = f"{root2}_processvoxels_mask.nii.gz"
         (
             masknim1,
             maskdata1,
