@@ -318,7 +318,7 @@ def gasboxcar(
     return None
 
 
-def locpeak(data, samplerate, lastpeaktime, winsizeinsecs=5.0, thresh=0.75, hysteresissecs=0.4):
+'''def locpeak(data, samplerate, lastpeaktime, winsizeinsecs=5.0, thresh=0.75, hysteresissecs=0.4):
     """
 
     Parameters
@@ -372,6 +372,7 @@ def locpeak(data, samplerate, lastpeaktime, winsizeinsecs=5.0, thresh=0.75, hyst
     else:
         # print(currenttime,'not less')
         return -1.0
+'''
 
 
 # generate the polynomial fit timecourse from the coefficients
@@ -1074,7 +1075,7 @@ def maxindex_noedge(thexcorr_x, thexcorr_y, bipolar=False):
 
 
 # disabled conditionaljit on 11/8/16.  This causes crashes on some machines (but not mine, strangely enough)
-@conditionaljit2()
+'''@conditionaljit2()
 def findmaxlag_gauss_rev(
     thexcorr_x,
     thexcorr_y,
@@ -1372,9 +1373,10 @@ def findmaxlag_gauss_rev(
         peakstart,
         peakend,
     )
+'''
 
 
-@conditionaljit2()
+'''@conditionaljit2()
 def findmaxlag_quad(
     thexcorr_x,
     thexcorr_y,
@@ -1541,6 +1543,7 @@ def findmaxlag_quad(
             maxsigma,
         )
     return maxindex, maxlag, maxval, maxsigma, maskval, failreason, 0, 0
+'''
 
 
 def gaussfitsk(height, loc, width, skewness, xvals, yvals):
