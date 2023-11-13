@@ -580,11 +580,11 @@ def updateHistogram():
     pct50 = overlays[currentdataset.focusmap].quartiles[1]
     pct75 = overlays[currentdataset.focusmap].quartiles[2]
     pct98 = overlays[currentdataset.focusmap].robustmax
-    hist_ax.addLine(x=pct02, pen="008800")
+    hist_ax.addLine(x=pct02, pen="#008800")
     hist_ax.addLine(x=pct25, pen="g")
     hist_ax.addLine(x=pct50, pen="g")
     hist_ax.addLine(x=pct75, pen="g")
-    hist_ax.addLine(x=pct98, pen="008800")
+    hist_ax.addLine(x=pct98, pen="#008800")
     updateDispLimits()
 
 
