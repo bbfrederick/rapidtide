@@ -26,11 +26,12 @@
 A widget for orthographically displaying 3 and 4 dimensional data
 """
 
+import copy
 import os
 
 import numpy as np
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtWidgets
+from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 try:
     from PIL import Image
@@ -38,6 +39,16 @@ try:
     PILexists = True
 except ImportError:
     PILexists = False
+
+thepgversion = (pg.__version__).split(".")
+print(thepgversion)
+if int(thepgversion[0]) == 0 and int(thepgversion[1]) <= 12:
+    newpyqtgraph = False
+    print("using old pyqtgraph")
+else:
+    newpyqtgraph = True
+    print("using new pyqtgraph")
+newpyqtgraph = True
 
 
 def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
@@ -57,14 +68,23 @@ def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
     thecolorbarfgwin = pg.ImageItem()
     theviewbox.addItem(thecolorbarfgwin)
     thecolorbarfgwin.setZValue(10)
-    thecolorbarfgwin.translate(left, top)
-    thecolorbarfgwin.scale(impixpervoxx, impixpervoxy)
+    if newpyqtgraph:
+        tr = QtGui.QTransform()  # prepare ImageItem transformation:
+        tr.translate(left, top)  # move
+        tr.scale(impixpervoxx, impixpervoxy)  # scale horizontal and vertical axes
+        thecolorbarfgwin.setTransform(tr)
+    else:
+        thecolorbarfgwin.translate(left, top)
+        thecolorbarfgwin.scale(impixpervoxx, impixpervoxy)
 
     thecolorbarbgwin = pg.ImageItem()
     theviewbox.addItem(thecolorbarbgwin)
     thecolorbarbgwin.setZValue(0)
-    thecolorbarbgwin.translate(left, top)
-    thecolorbarbgwin.scale(impixpervoxx, impixpervoxy)
+    if newpyqtgraph:
+        thecolorbarbgwin.setTransform(tr)
+    else:
+        thecolorbarbgwin.translate(left, top)
+        thecolorbarbgwin.scale(impixpervoxx, impixpervoxy)
 
     colorbarvals = np.zeros((cb_xdim, cb_ydim), dtype=np.float64)
     for i in range(0, cb_ydim):
@@ -72,25 +92,34 @@ def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
     return thecolorbarfgwin, thecolorbarbgwin, theviewbox, colorbarvals
 
 
-def newViewWindow(
-    view, xdim, ydim, left, top, impixpervoxx, impixpervoxy, imgsize, enableMouse=False
-):
+def newViewWindow(view, left, top, impixpervoxx, impixpervoxy, imgsize, enableMouse=False):
     theviewbox = view.addViewBox(enableMouse=enableMouse, enableMenu=False, lockAspect=1.0)
     theviewbox.setAspectLocked()
     theviewbox.setRange(QtCore.QRectF(0, 0, imgsize, imgsize), padding=0.0, disableAutoRange=True)
     theviewbox.setBackgroundColor([50, 50, 50])
 
-    theviewfgwin = pg.ImageItem()
-    theviewbox.addItem(theviewfgwin)
-    theviewfgwin.setZValue(10)
-    theviewfgwin.translate(left, top)
-    theviewfgwin.scale(impixpervoxx, impixpervoxy)
-
     theviewbgwin = pg.ImageItem()
-    theviewbox.addItem(theviewbgwin)
+    if newpyqtgraph:
+        tr = QtGui.QTransform()  # prepare ImageItem transformation:
+        tr.translate(left, top)  # move 3x3 image to locate center at axis origin
+        tr.scale(impixpervoxx, impixpervoxy)  # scale horizontal and vertical axes
+        theviewbgwin.setTransform(tr)
+    else:
+        theviewbgwin.translate(left, top)
+        theviewbgwin.scale(impixpervoxx, impixpervoxy)
+
     theviewbgwin.setZValue(0)
-    theviewbgwin.translate(left, top)
-    theviewbgwin.scale(impixpervoxx, impixpervoxy)
+    theviewbox.addItem(theviewbgwin)
+
+    theviewfgwin = pg.ImageItem()
+    if newpyqtgraph:
+        theviewfgwin.setTransform(tr)
+    else:
+        theviewfgwin.translate(left, top)
+        theviewfgwin.scale(impixpervoxx, impixpervoxy)
+
+    theviewfgwin.setZValue(10)
+    theviewbox.addItem(theviewfgwin)
 
     theviewvLine = pg.InfiniteLine(angle=90, movable=False, pen="g")
     theviewvLine.setZValue(20)
@@ -187,8 +216,6 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.axviewbox,
         ) = newViewWindow(
             self.axview,
-            self.xdim,
-            self.ydim,
             self.offsetx,
             self.offsety,
             self.impixpervoxx,
@@ -204,8 +231,6 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.corviewbox,
         ) = newViewWindow(
             self.corview,
-            self.xdim,
-            self.zdim,
             self.offsetx,
             self.offsetz,
             self.impixpervoxx,
@@ -221,8 +246,6 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.sagviewbox,
         ) = newViewWindow(
             self.sagview,
-            self.ydim,
-            self.zdim,
             self.offsety,
             self.offsetz,
             self.impixpervoxy,
@@ -514,16 +537,27 @@ class OrthoImageItem(QtWidgets.QWidget):
 
         # make a square background
         thesquarewin = pg.ImageItem()
-        thesquarewin.translate(0, 0)
         maximpervox = np.max([self.impixpervoxx, self.impixpervoxy, self.impixpervoxz])
         maxdim = np.max([self.xdim, self.ydim, self.zdim])
-        thesquarewin.scale(maximpervox, maximpervox)
+        if newpyqtgraph:
+            tr = QtGui.QTransform()  # prepare ImageItem transformation:
+            tr.translate(0, 0)  # move 3x3 image to locate center at axis origin
+            tr.scale(maximpervox, maximpervox)
+            thesquarewin.setTransform(tr)
+        else:
+            thesquarewin.translate(0, 0)
+            thesquarewin.scale(maximpervox, maximpervox)
+
         thesquarewin.setImage(np.zeros((maxdim, maxdim), dtype=float), autoLevels=True)
 
         # make a rectangular background
         therectwin = pg.ImageItem()
-        therectwin.translate(0, 0)
-        therectwin.scale(maximpervox, maximpervox)
+        if newpyqtgraph:
+            therectwin.setTransform(tr)
+        else:
+            therectwin.translate(0, 0)
+            therectwin.scale(maximpervox, maximpervox)
+
         therectwin.setImage(np.zeros((maxdim // 10, maxdim), dtype=float), autoLevels=True)
 
         (
