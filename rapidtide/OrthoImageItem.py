@@ -40,16 +40,6 @@ try:
 except ImportError:
     PILexists = False
 
-thepgversion = (pg.__version__).split(".")
-print(thepgversion)
-if int(thepgversion[0]) == 0 and int(thepgversion[1]) <= 12:
-    newpyqtgraph = False
-    print("using old pyqtgraph")
-else:
-    newpyqtgraph = True
-    print("using new pyqtgraph")
-newpyqtgraph = True
-
 
 def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
     cb_xdim = imgsize // 10
@@ -68,23 +58,15 @@ def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
     thecolorbarfgwin = pg.ImageItem()
     theviewbox.addItem(thecolorbarfgwin)
     thecolorbarfgwin.setZValue(10)
-    if newpyqtgraph:
-        tr = QtGui.QTransform()  # prepare ImageItem transformation:
-        tr.translate(left, top)  # move
-        tr.scale(impixpervoxx, impixpervoxy)  # scale horizontal and vertical axes
-        thecolorbarfgwin.setTransform(tr)
-    else:
-        thecolorbarfgwin.translate(left, top)
-        thecolorbarfgwin.scale(impixpervoxx, impixpervoxy)
+    tr = QtGui.QTransform()  # prepare ImageItem transformation:
+    tr.translate(left, top)  # move
+    tr.scale(impixpervoxx, impixpervoxy)  # scale horizontal and vertical axes
+    thecolorbarfgwin.setTransform(tr)
 
     thecolorbarbgwin = pg.ImageItem()
     theviewbox.addItem(thecolorbarbgwin)
     thecolorbarbgwin.setZValue(0)
-    if newpyqtgraph:
-        thecolorbarbgwin.setTransform(tr)
-    else:
-        thecolorbarbgwin.translate(left, top)
-        thecolorbarbgwin.scale(impixpervoxx, impixpervoxy)
+    thecolorbarbgwin.setTransform(tr)
 
     colorbarvals = np.zeros((cb_xdim, cb_ydim), dtype=np.float64)
     for i in range(0, cb_ydim):
@@ -99,24 +81,16 @@ def newViewWindow(view, left, top, impixpervoxx, impixpervoxy, imgsize, enableMo
     theviewbox.setBackgroundColor([50, 50, 50])
 
     theviewbgwin = pg.ImageItem()
-    if newpyqtgraph:
-        tr = QtGui.QTransform()  # prepare ImageItem transformation:
-        tr.translate(left, top)  # move 3x3 image to locate center at axis origin
-        tr.scale(impixpervoxx, impixpervoxy)  # scale horizontal and vertical axes
-        theviewbgwin.setTransform(tr)
-    else:
-        theviewbgwin.translate(left, top)
-        theviewbgwin.scale(impixpervoxx, impixpervoxy)
+    tr = QtGui.QTransform()  # prepare ImageItem transformation:
+    tr.translate(left, top)  # move 3x3 image to locate center at axis origin
+    tr.scale(impixpervoxx, impixpervoxy)  # scale horizontal and vertical axes
+    theviewbgwin.setTransform(tr)
 
     theviewbgwin.setZValue(0)
     theviewbox.addItem(theviewbgwin)
 
     theviewfgwin = pg.ImageItem()
-    if newpyqtgraph:
-        theviewfgwin.setTransform(tr)
-    else:
-        theviewfgwin.translate(left, top)
-        theviewfgwin.scale(impixpervoxx, impixpervoxy)
+    theviewfgwin.setTransform(tr)
 
     theviewfgwin.setZValue(10)
     theviewbox.addItem(theviewfgwin)
@@ -539,24 +513,16 @@ class OrthoImageItem(QtWidgets.QWidget):
         thesquarewin = pg.ImageItem()
         maximpervox = np.max([self.impixpervoxx, self.impixpervoxy, self.impixpervoxz])
         maxdim = np.max([self.xdim, self.ydim, self.zdim])
-        if newpyqtgraph:
-            tr = QtGui.QTransform()  # prepare ImageItem transformation:
-            tr.translate(0, 0)  # move 3x3 image to locate center at axis origin
-            tr.scale(maximpervox, maximpervox)
-            thesquarewin.setTransform(tr)
-        else:
-            thesquarewin.translate(0, 0)
-            thesquarewin.scale(maximpervox, maximpervox)
+        tr = QtGui.QTransform()  # prepare ImageItem transformation:
+        tr.translate(0, 0)  # move 3x3 image to locate center at axis origin
+        tr.scale(maximpervox, maximpervox)
+        thesquarewin.setTransform(tr)
 
         thesquarewin.setImage(np.zeros((maxdim, maxdim), dtype=float), autoLevels=True)
 
         # make a rectangular background
         therectwin = pg.ImageItem()
-        if newpyqtgraph:
-            therectwin.setTransform(tr)
-        else:
-            therectwin.translate(0, 0)
-            therectwin.scale(maximpervox, maximpervox)
+        therectwin.setTransform(tr)
 
         therectwin.setImage(np.zeros((maxdim // 10, maxdim), dtype=float), autoLevels=True)
 

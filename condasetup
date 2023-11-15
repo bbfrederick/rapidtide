@@ -16,7 +16,7 @@ conda install \
     pywavelets \
     pyqt \
     pyqt5-sip \
-    "pyqtgraph<0.13" \
+    pyqtgraph \
     tqdm
 
 pip install tensorflow keras

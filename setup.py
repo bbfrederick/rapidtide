@@ -200,7 +200,7 @@ setup(
         "nilearn",
         "matplotlib",
         "pyfftw",
-        "pyqtgraph<0.13.0",
+        "pyqtgraph",
         "pyqt5-sip",
         "requests",
         "statsmodels",
