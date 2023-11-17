@@ -19,48 +19,47 @@ docker run \
         --nprocs 4 \
         --noglm
 
-docker run \
-    --rm \
-    --ipc host \
-    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
-    -it \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide:latest \
-    rapidtide \
-        /data/src/sub-RAPIDTIDETEST.nii.gz \
-        /data/dst/sub-RAPIDTIDETEST_disabledockermemfix \
-        --disabledockermemfix \
-        --passes 3 \
-        --nprocs 4 \
-        --noglm
+#docker run \
+#    --rm \
+#    --ipc host \
+#    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
+#    -it \
+#    -v /tmp/.X11-unix:/tmp/.X11-unix \
+#    -u rapidtide fredericklab/rapidtide:latest \
+#    rapidtide \
+#        /data/src/sub-RAPIDTIDETEST.nii.gz \
+#        /data/dst/sub-RAPIDTIDETEST_disabledockermemfix \
+#        --disabledockermemfix \
+#        --passes 3 \
+#        --nprocs 4 \
+#        --noglm
 
-exit
 
-docker run \
-    --rm \
-    --ipc host \
-    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
-    -it \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide:latest \
-    happy \
-        /data/src/sub-HAPPYTEST.nii.gz \
-        /data/src/sub-HAPPYTEST.json \
-        /data/dst/sub-HAPPYTEST \
-        --model model_revised \
-        --mklthreads -1 
+#docker run \
+#    --rm \
+#    --ipc host \
+#    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
+#    -it \
+#    -v /tmp/.X11-unix:/tmp/.X11-unix \
+#    -u rapidtide fredericklab/rapidtide:latest \
+#    happy \
+#        /data/src/sub-HAPPYTEST.nii.gz \
+#        /data/src/sub-HAPPYTEST.json \
+#        /data/dst/sub-HAPPYTEST \
+#        --model model_revised \
+#        --mklthreads -1 
 
-docker run \
-    --rm \
-    --ipc host \
-    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
-    -it \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide:latest \
-    gmscalc \
-        /data/src/sub-RAPIDTIDETEST.nii.gz \
-        /data/dst/sub-RAPIDTIDETEST_GMS \
-        --dmask /data/src/sub-RAPIDTIDETEST_brainmask.nii.gz
+#docker run \
+#    --rm \
+#    --ipc host \
+#    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
+#    -it \
+#    -v /tmp/.X11-unix:/tmp/.X11-unix \
+#    -u rapidtide fredericklab/rapidtide:latest \
+#    gmscalc \
+#        /data/src/sub-RAPIDTIDETEST.nii.gz \
+#        /data/dst/sub-RAPIDTIDETEST_GMS \
+#        --dmask /data/src/sub-RAPIDTIDETEST_brainmask.nii.gz
 
 docker run \
     --network host\
