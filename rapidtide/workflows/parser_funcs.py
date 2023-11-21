@@ -665,7 +665,8 @@ def addplotopts(parser, multiline=True):
 
 
 def addpermutationopts(parser, numreps=10000):
-    permutationmethod = parser.add_mutually_exclusive_group()
+    sigcalc_opts = parser.add_argument_group("Significance calculation options")
+    permutationmethod = sigcalc_opts.add_mutually_exclusive_group()
     permutationmethod.add_argument(
         "--permutationmethod",
         dest="permutationmethod",
@@ -678,7 +679,7 @@ def addpermutationopts(parser, numreps=10000):
         ),
         default=DEFAULT_PERMUTATIONMETHOD,
     )
-    parser.add_argument(
+    sigcalc_opts.add_argument(
         "--numnull",
         dest="numestreps",
         action="store",
@@ -691,7 +692,7 @@ def addpermutationopts(parser, numreps=10000):
         ),
         default=numreps,
     )
-    parser.add_argument(
+    sigcalc_opts.add_argument(
         "--skipsighistfit",
         dest="dosighistfit",
         action="store_false",
