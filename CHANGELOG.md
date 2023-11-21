@@ -1,5 +1,13 @@
 # Release history
 
+## Version 2.6.8 (11/21/23)
+* (rapidtide) Rapidtide is now less chatty by default.
+* (rapidtide) Put the significance estimation command line options in their own subsection.
+* (tidepool) Updated to support the newest pyqtgraph (>=0.13.0).
+* (Docker) Update to basecontainer v0.2.9.1.
+* (package) Increased test coverage to 49.26%.
+* (docs) Fully documented tidepool.
+
 ## Version 2.6.7 (10/31/23)
 * (Docker) Update to basecontainer v0.2.7.
 * (rapidtide) Added the option to delete noise signals from the probe regressor (mostly due to slow breathing).  Currently not working.
