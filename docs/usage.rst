@@ -1262,7 +1262,7 @@ Inputs:
         Tidepool loads most of the output files from a rapidtide analysis.  The files must all be in the same directory, and use the naming convention and file formats that rapidtide uses.
 
 Features:
-^^^^^^^^
+^^^^^^^^^
         There are many panels to the tidepool window.  They are described in detail below.
 
 
