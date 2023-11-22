@@ -31,6 +31,7 @@ dependencies = [
   'nilearn',
   'matplotlib',
   'pyfftw',
+  'pyqt',
   'pyqtgraph',
   'pyqt5-sip',
   'requests',

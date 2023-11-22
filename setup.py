@@ -201,6 +201,7 @@ setup(
         "matplotlib",
         "pyfftw",
         "pyqtgraph",
+        "pyqt",
         "pyqt5-sip",
         "requests",
         "statsmodels",
