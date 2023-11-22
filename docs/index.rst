@@ -16,11 +16,11 @@ band (rapditide2) and now in the cardiac band (happy).
    :target: https://pypi.python.org/pypi/rapidtide/
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/Apache-2.0
-.. image:: https://readthedocs.org/projects/rapidtide/badge/?version=dev
-   :target: http://rapidtide.readthedocs.io/en/dev/?badge=dev
-.. image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?branch=dev&style=shield
+.. image:: https://readthedocs.org/projects/rapidtide/badge/?version=main
+   :target: http://rapidtide.readthedocs.io/en/main/?badge=main
+.. image:: https://circleci.com/gh/bbfrederick/rapidtide.svg?branch=main&style=shield
    :target: https://circleci.com/gh/bbfrederick/rapidtide
-.. image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/dev/graph/badge.svg
+.. image:: https://codecov.io/gh/bbfrederick/rapidtide/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/bbfrederick/rapidtide
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.814990.svg
    :target: https://doi.org/10.5281/zenodo.814990

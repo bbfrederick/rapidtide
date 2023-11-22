@@ -493,6 +493,7 @@ jobs:
             source activate py311_env
             pip install -e .[doc]
             pip install numpydoc
+            pip install pyqt5-sip
             make -C docs html
       - store_artifacts:
           path: /tmp/src/rapidtide/docs/_build/html
