@@ -926,7 +926,25 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, de
 
 
 def sliceinfo(slicetimes, tr):
-    # find out what timepoints we have, and their spacing
+    r"""Find out what slicetimes we have, their spacing, and which timepoint each slice occurs at.  This assumes
+    uniform slice time spacing, but supports any slice acquisition order and multiband acquisitions.
+
+    Parameters
+    ----------
+    slicetimes : 1d float array
+        List of all the slicetimes relative to the start of the TR
+    tr: float
+        The TR of the acquisition
+
+    Returns
+    -------
+    numsteps : int
+        The number of unique slicetimes in the list
+    stepsize: float
+        The stepsize in seconds between subsequent slice acquisitions
+    sliceoffsets: 1d int array
+        Which acquisition time each slice was acquired at
+    """
     sortedtimes = np.sort(slicetimes)
     diffs = sortedtimes[1:] - sortedtimes[0:-1]
     minstep = np.max(diffs)
