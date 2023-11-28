@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+import rapidtide.correlate as tide_corr
+import rapidtide.miscmath as tide_math
+
+arrlen = 1024
+dsfac = 8
+
+origvec = np.random.rand(arrlen)
+
+normorig = tide_math.corrnormalize(origvec)
+thecorr = tide_corr.fastcorrelate(normorig, normorig)
+plt.plot(thecorr)
+for offset in range(dsfac):
+    dsvec = origvec[offset::dsfac]
+    osvec = np.zeros(arrlen, dtype=float)
+    osvec[offset::dsfac] = dsvec[:]
+    normosvec = tide_math.corrnormalize(osvec)
+    thecorr = tide_corr.fastcorrelate(normorig, normosvec)
+    plt.plot(thecorr)
+
+plt.show()
