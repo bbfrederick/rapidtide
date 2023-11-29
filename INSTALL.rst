@@ -26,7 +26,7 @@ installed first:
 If you want to use tidepool for image display, you will also need to
 install the following:
 
--  pyqt5
+-  pyqt5-sip
 -  pyqtgraph
 
 Optional dependencies
