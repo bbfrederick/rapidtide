@@ -148,12 +148,12 @@ As of 1.9.0, there is now a Docker container with a full rapidtide installation.
 first make sure you have docker installed and properly configured, then run the following:
 ::
 
-    docker pull fredericklab/rapidtide:VERSIONNUMBER
+    docker pull fredericklab/rapidtide:latest-release
 
 
 This will download the docker container from dockerhub.
-It's around 4GB, so it may take some time, but it caches the file locally, so you won't have to do this again
-unless the container updates.  To use a particular version, replace VERSIONNUMBER with the version of the
+It's around a 3GB download, so it may take some time, but it caches the file locally, so you won't have to do this again
+unless the container updates.  To use a particular version, replace "latest-release" with the version of the
 container you want.
 
 If you like to live on the edge, just use:
@@ -162,7 +162,9 @@ If you like to live on the edge, just use:
     docker pull fredericklab/rapidtide:latest
 
 
-This will use the most recent version on dockerhub.
+This will use the most recent version on dockerhub, which is built automatically on every git push.
+NOTE: I don't advise doing this unless you're helping debug something - 
+there's no guarantee that "latest" is functional at any given time.
 
 Now that the file is downloaded, you can run and rapidtide command in the Docker container.  For example, to run a simple
 rapidtide analysis, you would use the following command (you can do this all in one step - it will just integrate the
@@ -176,7 +178,7 @@ option to docker.
     docker run \
         --mount type=bind,source=INPUTDIRECTORY,destination=/data_in \
         --mount type=bind,source=OUTPUTDIRECTORY,destination=/data_out \
-        fredericklab/rapidtide:VERSIONNUMBER \
+        fredericklab/rapidtide:latest-release \
             rapidtide \
                 /data_in/YOURNIFTIFILE.nii.gz \
                 /data_out/outputname \
@@ -190,7 +192,7 @@ in the Docker container in the /src/rapidtide/rapidtide/data/examples/src direct
 
     docker run \
         --mount type=bind,source=OUTPUTDIRECTORY,destination=/data_out \
-        fredericklab/rapidtide:latest \
+        fredericklab/rapidtide:latest-release \
             rapidtide \
                 /src/rapidtide/rapidtide/data/examples/src/sub-RAPIDTIDETEST.nii.gz \
                 /data_out/dgsr \
@@ -199,7 +201,7 @@ in the Docker container in the /src/rapidtide/rapidtide/data/examples/src direct
                 --passes 3
 
 
-You can replace the ``rapidtide blah blah blah`` command with any program in the package - after the fredericklab/rapidtide:latest,
+You can replace the ``rapidtide blah blah blah`` command with any program in the package - after the fredericklab/rapidtide:latest-release,
 just specify the command and arguments as you usually would.  If you're running a program that displays anything,
 you'll have to add a few extra arguments to the docker call.  Docker is a little weird about X forwarding - the easiest thing to
 do is find the IP address of the machine you're running on (lets call it MYIPADDRESS), and do the following:
@@ -232,7 +234,7 @@ Then the following command will work (you can replace 'tidepool' with any of the
         -it \
         -e DISPLAY=MYIPADDRESS:0 \
         -u rapidtide \
-        fredericklab/rapidtide:latest \
+        fredericklab/rapidtide:latest-release \
             tidepool
 
 
@@ -244,7 +246,7 @@ that runs entirely in user space, so the amount of mischief you can get up to is
 containers can be created from Docker containers as follows (stealing from the fMRIprep documentation):
 ::
 
-    singularity build /my_images/rapidtide-VERSIONNUMBER.simg docker://fredericklab/rapidtide:VERSIONNUMBER
+    singularity build /my_images/rapidtide.simg docker://fredericklab/rapidtide:latest-release
 
 
 Running the container is similar to Docker.  The "-B" option is used to bind filesystems to mountpoints in the container.
@@ -254,7 +256,7 @@ For example, to run the simple rapidtide2x analysis above, type the following:
     singularity run \
         --cleanenv \
         -B INPUTDIRECTORY:/data_in,OUTPUTDIRECTORY:/data_out \
-        rapidtide-VERSIONNUMBER.simg \
+        rapidtide.simg \
             rapidtide \
                 /data_in/YOURNIFTIFILE.nii.gz \
                 /data_out/outputname \
@@ -263,7 +265,7 @@ For example, to run the simple rapidtide2x analysis above, type the following:
                 --passes 3
 
 
-To run a GUI application, you need to disable x security on your host (see comment about this above):
+To run a GUI application, you need to disable X security on your host (see comment about this above):
 
 ::
 
@@ -278,7 +280,7 @@ or
 
 ::
 
-    export SINGULARITY_DISPLAY="MYIPADDRESS:0" (if you are using sh/bash)
+    export SINGULARITY_DISPLAY="MYIPADDRESS:0" (if you are using sh/bash/zsh)
 
 then just run the gui command with the command given above.
 
