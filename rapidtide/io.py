@@ -949,7 +949,7 @@ def sliceinfo(slicetimes, tr):
     diffs = sortedtimes[1:] - sortedtimes[0:-1]
     minstep = np.max(diffs)
     numsteps = int(np.round(tr / minstep, 0))
-    sliceoffsets = np.around(slicetimes / minstep).astype(np.int32) % numsteps
+    sliceoffsets = np.around(slicetimes / minstep).astype(int) % numsteps
     return numsteps, minstep, sliceoffsets
 
 
