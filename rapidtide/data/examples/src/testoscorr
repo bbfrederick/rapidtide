@@ -11,15 +11,14 @@ dsfac = 8
 
 origvec = np.random.rand(arrlen)
 
+thealiasedcorrelator = tide_corr.AliasedCorrelator(origvec, 1.0, dsfac, None)
 normorig = tide_math.corrnormalize(origvec)
 thecorr = tide_corr.fastcorrelate(normorig, normorig)
 plt.plot(thecorr)
 for offset in range(dsfac):
+    print(offset)
     dsvec = origvec[offset::dsfac]
-    osvec = np.zeros(arrlen, dtype=float)
-    osvec[offset::dsfac] = dsvec[:]
-    normosvec = tide_math.corrnormalize(osvec)
-    thecorr = tide_corr.fastcorrelate(normorig, normosvec)
+    thecorr = thealiasedcorrelator.apply(dsvec, offset, debug=True)
     plt.plot(thecorr)
 
 plt.show()
