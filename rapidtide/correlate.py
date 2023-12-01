@@ -30,6 +30,7 @@ from numpy.fft import irfftn, rfftn
 from scipy import signal
 from sklearn.metrics import mutual_info_score
 
+import rapidtide.correlate as tide_corr
 import rapidtide.fit as tide_fit
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
@@ -684,71 +685,47 @@ class AliasedCorrelator:
         The unaliased waveform to match
     hires_Fs : float
         The sample rate of the unaliased waveform
-    lores_Fs : float
-        The sample rate of the aliased waveform
-    timerange : 1D array
-        The delays for which to calculate the correlation function
-    hiresstarttime : float, optional
-    loresstarttime : float, optional
-    padtime : float, optional
+    numsteps : int
+        Number of distinct slice acquisition times within the TR.
     """
 
-    def __init__(
-        self,
-        hiressignal,
-        hires_Fs,
-        lores_Fs,
-        timerange,
-        hiresstarttime=0.0,
-        loresstarttime=0.0,
-        padtime=30.0,
-    ):
-        self.hiressignal = hiressignal
+    def __init__(self, hiressignal, hires_Fs, numsteps):
+        self.hiressignal = tide_math.corrnormalize(hiressignal)
         self.hires_Fs = hires_Fs
-        self.hiresstarttime = hiresstarttime
-        self.lores_Fs = lores_Fs
-        self.timerange = timerange
-        self.loresstarttime = loresstarttime
-        self.highresaxis = (
-            np.arange(0.0, len(self.hiressignal)) * (1.0 / self.hires_Fs) - self.hiresstarttime
+        self.numsteps = numsteps
+        self.corrlen = len(self.hiressignal) * 2 + 1
+        self.corrx = (
+            np.linspace(0.0, self.corrlen, num=self.corrlen) / self.hires_Fs
+            - len(self.hiressignal) / self.hires_Fs
         )
-        self.padtime = padtime
-        self.tcgenerator = tide_resample.FastResampler(
-            self.highresaxis, self.hiressignal, padtime=self.padtime
-        )
-        self.aliasedsignals = {}
 
-    def apply(self, loressignal, extraoffset):
+    def getxaxis(self):
+        return self.corrx
+
+    def apply(self, loressignal, offset, debug=False):
         """Apply correlator to aliased waveform.
-
+        NB: Assumes the highres frequency is an integral multiple of the lowres frequency
         Parameters
         ----------
         loressignal: 1D array
             The aliased waveform to match
-        extraoffset: float
-            Additional offset to apply to hiressignal (e.g. for slice offset)
-
+        offset: int
+            Integer offset to apply to the upsampled lowressignal (to account for slice time offset)
+        debug: bool, optional
+            Whether to print diagnostic information
         Returns
         -------
         corrfunc: 1D array
-            The correlation function evaluated at timepoints of timerange
+            The full correlation function
         """
-        loresaxis = np.arange(0.0, len(loressignal)) * (1.0 / self.lores_Fs) - self.loresstarttime
-        targetsignal = tide_math.corrnormalize(loressignal)
-        corrfunc = self.timerange * 0.0
-        for i in range(len(self.timerange)):
-            theoffset = self.timerange[i] + extraoffset
-            offsetkey = "{:.3f}".format(theoffset)
-            try:
-                aliasedhiressignal = self.aliasedsignals[offsetkey]
-                # LGR.info(f"{offsetkey} - cache hit")
-            except KeyError:
-                # LGR.info(f"{offsetkey} - cache miss")
-                self.aliasedsignals[offsetkey] = tide_math.corrnormalize(
-                    self.tcgenerator.yfromx(loresaxis + theoffset)
-                )
-                aliasedhiressignal = self.aliasedsignals[offsetkey]
-            corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
+        if debug:
+            print(offset, self.numsteps)
+        osvec = self.hiressignal * 0.0
+        osvec[offset :: self.numsteps] = loressignal[:]
+        corrfunc = (
+            tide_corr.fastcorrelate(tide_math.corrnormalize(osvec), self.hiressignal)
+            * self.numsteps
+        )
         return corrfunc
 
 

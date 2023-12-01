@@ -1315,28 +1315,29 @@ def happy_main(argparsingfunc):
 
         # setup for aliased correlation if we're going to do it
         if args.doaliasedcorrelation and (thispass == numpasses - 1):
-            if args.cardiacfilename:
+            if args.cardiacfilename and False:
                 signal_sliceres = pleth_sliceres
                 # signal_stdres = pleth_stdres
             else:
                 signal_sliceres = cardfromfmri_sliceres
                 # signal_stdres = dlfilteredcard_stdres
-            corrsearchvals = (
-                np.linspace(0.0, args.aliasedcorrelationwidth, num=args.aliasedcorrelationpts)
-                - args.aliasedcorrelationwidth / 2.0
-            )
+
             theAliasedCorrelator = tide_corr.AliasedCorrelator(
                 signal_sliceres,
                 slicesamplerate,
-                mrsamplerate,
-                corrsearchvals,
-                padtime=args.aliasedcorrelationwidth,
+                numsteps,
             )
+            thealiasedcorrx = theAliasedCorrelator.getxaxis()
+            corrstartloc = tide_util.valtoindex(
+                thealiasedcorrx, -args.aliasedcorrelationwidth / 2.0
+            )
+            correndloc = tide_util.valtoindex(thealiasedcorrx, args.aliasedcorrelationwidth / 2.0)
+            aliasedcorrelationpts = correndloc - corrstartloc + 1
             thecorrfunc = np.zeros(
-                (xsize, ysize, numslices, args.aliasedcorrelationpts), dtype=np.float64
+                (xsize, ysize, numslices, aliasedcorrelationpts), dtype=np.float64
             )
             thecorrfunc_byslice = thecorrfunc.reshape(
-                (xsize * ysize, numslices, args.aliasedcorrelationpts)
+                (xsize * ysize, numslices, aliasedcorrelationpts)
             )
             wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float64)
             wavedelay_byslice = wavedelay.reshape((xsize * ysize, numslices))
@@ -1411,10 +1412,12 @@ def happy_main(argparsingfunc):
                         thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
                             -appflips_byslice[theloc, theslice]
                             * demeandata_byslice[theloc, theslice, :],
-                            -thetimes[theslice][0],
-                        )
+                            int(sliceoffsets[theslice]),
+                        )[corrstartloc : correndloc + 1]
                         maxloc = np.argmax(thecorrfunc_byslice[theloc, theslice, :])
-                        wavedelay_byslice[theloc, theslice] = corrsearchvals[maxloc]
+                        wavedelay_byslice[theloc, theslice] = (
+                            thealiasedcorrx[corrstartloc : correndloc + 1]
+                        )[maxloc]
                         waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[
                             theloc, theslice, maxloc
                         ]
@@ -1426,10 +1429,12 @@ def happy_main(argparsingfunc):
                     for theloc in validlocs:
                         thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
                             -demeandata_byslice[theloc, theslice, :],
-                            -thetimes[theslice][0],
-                        )
+                            int(sliceoffsets[theslice]),
+                        )[corrstartloc : correndloc + 1]
                         maxloc = np.argmax(np.abs(thecorrfunc_byslice[theloc, theslice, :]))
-                        wavedelay_byslice[theloc, theslice] = corrsearchvals[maxloc]
+                        wavedelay_byslice[theloc, theslice] = (
+                            thealiasedcorrx[corrstartloc : correndloc + 1]
+                        )[maxloc]
                         waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[
                             theloc, theslice, maxloc
                         ]
@@ -1499,9 +1504,9 @@ def happy_main(argparsingfunc):
 
         if args.doaliasedcorrelation and thispass == numpasses - 1:
             theheader = copy.deepcopy(nim_hdr)
-            theheader["dim"][4] = args.aliasedcorrelationpts
+            theheader["dim"][4] = aliasedcorrelationpts
             theheader["toffset"] = 0.0
-            theheader["pixdim"][4] = corrsearchvals[1] - corrsearchvals[0]
+            theheader["pixdim"][4] = thealiasedcorrx[1] - thealiasedcorrx[0]
             corrfuncfilename = outputroot + "_desc-corrfunc_info"
             wavedelayfilename = outputroot + "_desc-wavedelay_map"
             waveampfilename = outputroot + "_desc-waveamp_map"
