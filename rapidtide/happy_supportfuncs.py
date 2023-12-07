@@ -1131,9 +1131,7 @@ def phaseproject(
         theAliasedCorrelator = tide_corr.AliasedCorrelator(
             signal_sliceres,
             slicesamplerate,
-            mrsamplerate,
-            corrsearchvals,
-            padtime=args.aliasedcorrelationwidth,
+            numsteps,
         )
         thecorrfunc = np.zeros(
             (xsize, ysize, numslices, args.aliasedcorrelationpts), dtype=np.float64

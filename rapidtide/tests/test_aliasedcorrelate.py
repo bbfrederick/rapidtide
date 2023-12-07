@@ -72,6 +72,7 @@ def aliasedcorrelate(
 def test_aliasedcorrelate(displayplots=False):
     Fs_hi = 10.0
     Fs_lo = 1.0
+    numsteps = 10
     siginfo = [[1.0, 1.36129345], [0.33, 2.0]]
     modamp = 0.01
     inlenhi = 1000
@@ -91,7 +92,7 @@ def test_aliasedcorrelate(displayplots=False):
         sighi, Fs_hi, siglo, Fs_lo, timerange, padtime=width
     )
 
-    theAliasedCorrelator = AliasedCorrelator(sighi, Fs_hi, Fs_lo, timerange, padtime=width)
+    theAliasedCorrelator = AliasedCorrelator(sighi, Fs_hi, numsteps)
     aliasedcorrelate_result2 = theAliasedCorrelator.apply(siglo, 0.0)
 
     if displayplots:
