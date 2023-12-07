@@ -93,7 +93,7 @@ def test_aliasedcorrelate(displayplots=False):
     )
 
     theAliasedCorrelator = AliasedCorrelator(sighi, Fs_hi, numsteps)
-    aliasedcorrelate_result2 = theAliasedCorrelator.apply(siglo, 0.0)
+    aliasedcorrelate_result2 = theAliasedCorrelator.apply(siglo, 0)
 
     if displayplots:
         plt.figure()
