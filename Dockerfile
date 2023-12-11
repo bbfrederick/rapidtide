@@ -32,7 +32,7 @@ RUN cd /src/rapidtide/rapidtide/data/examples/src && \
     ./installtestdatadocker
 
 # clean up
-RUN mamba clean -y --all
+#RUN mamba clean -y --all
 RUN pip cache purge
 
 # Create a shared $HOME directory

@@ -24,7 +24,7 @@ import scipy as sp
 from rapidtide.filter import NoncausalFilter
 
 
-def spectralfilterprops(thefilter, debug=False):
+def spectralfilterprops(thefilter, thefiltername, debug=False):
     lowerstop, lowerpass, upperpass, upperstop = thefilter["filter"].getfreqs()
     freqspace = thefilter["frequencies"][1] - thefilter["frequencies"][0]
     lowerstopindex = int(np.floor(lowerstop / freqspace))
@@ -34,7 +34,10 @@ def spectralfilterprops(thefilter, debug=False):
         np.min([np.ceil(upperstop / freqspace), len(thefilter["frequencies"]) - 1])
     )
     if debug:
+        print("filter name:", thefiltername)
+        print("freqspace:", freqspace)
         print("target freqs:", lowerstop, lowerpass, upperpass, upperstop)
+        print("target indices:", lowerstopindex, lowerpassindex, upperpassindex, upperstopindex)
         print(
             "actual freqs:",
             thefilter["frequencies"][lowerstopindex],
@@ -74,7 +77,7 @@ def spectralfilterprops(thefilter, debug=False):
     return response
 
 
-def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=False):
+def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=False, debug=False):
     np.random.seed(12345)
     tclen = int(tclengthinsecs // sampletime)
     print("Testing transfer function:")
@@ -89,10 +92,10 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
         lowestfreq,
         nyquist,
     )
-    timeaxis = np.arange(0.0, 1.0 * tclen) * sampletime
+    timeaxis = np.linspace(0.0, sampletime * tclen, num=tclen, endpoint=False)
 
     overall = np.random.normal(size=tclen)
-    nperseg = np.min([tclen, 256])
+    nperseg = np.min([tclen, 2048])
     f, dummy = sp.signal.welch(overall, fs=1.0 / sampletime, nperseg=nperseg)
 
     transferfunclist = ["brickwall", "trapezoidal", "butterworth"]
@@ -100,7 +103,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
     allfilters = []
 
     # construct all the physiological filters
-    for filtertype in ["lfo", "resp", "cardiac", "hrv_vlf", "hrv_lf", "hrv_hf", "hrv_vhf"]:
+    for filtertype in ["lfo", "resp", "cardiac", "hrv_lf", "hrv_hf", "hrv_vhf"]:
         testfilter = NoncausalFilter(filtertype=filtertype)
         lstest, lptest, uptest, ustest = testfilter.getfreqs()
         if lptest < nyquist:
@@ -165,7 +168,9 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
             f, filt = sp.signal.welch(outputsig, fs=1.0 / sampletime, nperseg=nperseg)
             psd_raw += raw
             psd_filt += filt
-        allfilters[index]["frequencies"] = f
+        if debug:
+            print(f"freqspace for index {index} is {f[1] - f[0]}")
+        allfilters[index]["frequencies"] = 1.0 * f
         allfilters[index]["transferfunc"] = psd_filt / psd_raw
 
     # show transfer functions
@@ -183,7 +188,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
 
     # test transfer function responses
     for thefilter in allfilters:
-        response = spectralfilterprops(thefilter)
+        response = spectralfilterprops(thefilter, thefilter["name"], debug=debug)
         print("    Evaluating", thefilter["name"], "transfer function")
         print("\tpassbandripple:", response["passbandripple"])
         print("\tlowerstopmax:", response["lowerstopmax"])
@@ -245,12 +250,12 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
             plt.show()
 
 
-def test_filterprops(displayplots=False):
-    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=displayplots)
-    eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100, displayplots=displayplots)
-    eval_filterprops(sampletime=0.1, tclengthinsecs=500.0, numruns=10, displayplots=displayplots)
+def test_filterprops(displayplots=False, debug=False):
+    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=displayplots, debug=debug)
+    eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100, displayplots=displayplots, debug=debug)
+    eval_filterprops(sampletime=0.1, tclengthinsecs=30000.0, numruns=10, displayplots=displayplots, debug=debug)
 
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_filterprops(displayplots=True)
+    test_filterprops(displayplots=True, debug=True)
