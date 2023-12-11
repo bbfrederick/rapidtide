@@ -311,7 +311,19 @@ def addfilteropts(
         dest="filterband",
         action="store",
         type=str,
-        choices=["None", "vlf", "lfo", "resp", "cardiac", "lfo_legacy"],
+        choices=[
+            "None",
+            "vlf",
+            "lfo",
+            "resp",
+            "cardiac",
+            "hrv_ulf",
+            "hrv_vlf",
+            "hrv_lf",
+            "hrv_hf",
+            "hrv_vhf",
+            "lfo_legacy",
+        ],
         help=(
             f'Filter {filtertarget} to specific band. Use "None" to disable filtering.  '
             f'Default is "{defaultmethod}".'

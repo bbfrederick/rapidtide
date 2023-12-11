@@ -1501,7 +1501,7 @@ class NoncausalFilter:
 
         Parameters
         ----------
-        filtertype : {'None' 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'}, optional
+        filtertype : {'None' 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop', 'hrv_ulf', 'hrv_vlf', 'hrv_lf', 'hrv_hf', 'hrv_vhf', 'hrv_ulf_stop', 'hrv_vlf_stop', 'hrv_lf_stop', 'hrv_hf_stop', 'hrv_vhf_stop', 'arb', 'arb_stop', 'ringstop'}, optional
             The type of filter.
         butterworthorder: int, optional
             Butterworth filter order.  Default is 6.
@@ -1517,8 +1517,12 @@ class NoncausalFilter:
         Methods
         -------
         settype(thetype)
-            Set the filter type. Options are 'None' (default), 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop',
-            'resp_stop', 'card_stop', 'arb', 'arb_stop', 'ringstop'.
+            Set the filter type. Options are 'None' (default), 'vlf', 'lfo', 'resp', 'card',
+            'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop',
+            'hrv_ulf', 'hrv_vlf', 'hrv_lf', 'hrv_hf', 'hrv_vhf',
+            'hrv_ulf_stop', 'hrv_vlf_stop', 'hrv_lf_stop', 'hrv_hf_stop', 'hrv_vhf_stop',
+            'arb', 'arb_stop',
+            'ringstop'.
         gettype()
             Return the current filter type.
         getfreqs()
@@ -1582,6 +1586,30 @@ class NoncausalFilter:
         self.CARD_UPPERPASS = 3.0
         self.CARD_LOWERSTOP = self.CARD_LOWERPASS * (1.0 - self.transitionfrac)
         self.CARD_UPPERSTOP = self.CARD_UPPERPASS * (1.0 + self.transitionfrac)
+
+        self.HRVULF_UPPERPASS = 0.0033
+        self.HRVULF_UPPERSTOP = self.HRVULF_UPPERPASS * (1.0 + self.transitionfrac)
+
+        self.HRVVLF_LOWERPASS = 0.0033
+        self.HRVVLF_UPPERPASS = 0.04
+        self.HRVVLF_LOWERSTOP = self.HRVVLF_LOWERPASS * (1.0 - self.transitionfrac)
+        self.HRVVLF_UPPERSTOP = self.HRVVLF_UPPERPASS * (1.0 + self.transitionfrac)
+
+        self.HRVLF_LOWERPASS = 0.04
+        self.HRVLF_UPPERPASS = 0.15
+        self.HRVLF_LOWERSTOP = self.HRVLF_LOWERPASS * (1.0 - self.transitionfrac)
+        self.HRVLF_UPPERSTOP = self.HRVLF_UPPERPASS * (1.0 + self.transitionfrac)
+
+        self.HRVHF_LOWERPASS = 0.15
+        self.HRVHF_UPPERPASS = 0.4
+        self.HRVHF_LOWERSTOP = self.HRVHF_LOWERPASS * (1.0 - self.transitionfrac)
+        self.HRVHF_UPPERSTOP = self.HRVHF_UPPERPASS * (1.0 + self.transitionfrac)
+
+        self.HRVVHF_LOWERPASS = 0.4
+        self.HRVVHF_UPPERPASS = 0.5
+        self.HRVVHF_LOWERSTOP = self.HRVVHF_LOWERPASS * (1.0 - self.transitionfrac)
+        self.HRVVHF_UPPERSTOP = self.HRVVHF_UPPERPASS * (1.0 + self.transitionfrac)
+
         self.settype(self.filtertype)
 
     def settype(self, thetype):
@@ -1611,6 +1639,31 @@ class NoncausalFilter:
             self.lowerpass = 1.0 * self.CARD_LOWERPASS
             self.upperpass = 1.0 * self.CARD_UPPERPASS
             self.upperstop = 1.0 * self.CARD_UPPERSTOP
+        elif self.filtertype == "hrv_ulf" or self.filtertype == "hrv_ulf_stop":
+            self.lowerstop = 0.0
+            self.lowerpass = 0.0
+            self.upperpass = 1.0 * self.HRVULF_UPPERPASS
+            self.upperstop = 1.0 * self.HRVULF_UPPERSTOP
+        elif self.filtertype == "hrv_vlf" or self.filtertype == "hrv_vlf_stop":
+            self.lowerstop = 1.0 * self.HRVVLF_LOWERSTOP
+            self.lowerpass = 1.0 * self.HRVVLF_LOWERPASS
+            self.upperpass = 1.0 * self.HRVVLF_UPPERPASS
+            self.upperstop = 1.0 * self.HRVVLF_UPPERSTOP
+        elif self.filtertype == "hrv_lf" or self.filtertype == "hrv_lf_stop":
+            self.lowerstop = 1.0 * self.HRVLF_LOWERSTOP
+            self.lowerpass = 1.0 * self.HRVLF_LOWERPASS
+            self.upperpass = 1.0 * self.HRVLF_UPPERPASS
+            self.upperstop = 1.0 * self.HRVLF_UPPERSTOP
+        elif self.filtertype == "hrv_hf" or self.filtertype == "hrv_hf_stop":
+            self.lowerstop = 1.0 * self.HRVHF_LOWERSTOP
+            self.lowerpass = 1.0 * self.HRVHF_LOWERPASS
+            self.upperpass = 1.0 * self.HRVHF_UPPERPASS
+            self.upperstop = 1.0 * self.HRVHF_UPPERSTOP
+        elif self.filtertype == "hrv_vhf" or self.filtertype == "hrv_vhf_stop":
+            self.lowerstop = 1.0 * self.HRVVHF_LOWERSTOP
+            self.lowerpass = 1.0 * self.HRVVHF_LOWERPASS
+            self.upperpass = 1.0 * self.HRVVHF_UPPERPASS
+            self.upperstop = 1.0 * self.HRVVHF_UPPERSTOP
         elif self.filtertype == "arb" or self.filtertype == "arb_stop":
             self.lowerstop = 1.0 * self.arb_lowerstop
             self.lowerpass = 1.0 * self.arb_lowerpass
@@ -1827,6 +1880,11 @@ class NoncausalFilter:
             or self.filtertype == "lfo_legacy"
             or self.filtertype == "resp"
             or self.filtertype == "cardiac"
+            or self.filtertype == "hrv_ulf"
+            or self.filtertype == "hrv_vlf"
+            or self.filtertype == "hrv_lf"
+            or self.filtertype == "hrv_hf"
+            or self.filtertype == "hrv_vhf"
         ):
             return arb_pass(
                 Fs,
@@ -1847,6 +1905,11 @@ class NoncausalFilter:
             or self.filtertype == "lfo_legacy_stop"
             or self.filtertype == "resp_stop"
             or self.filtertype == "cardiac_stop"
+            or self.filtertype == "hrv_ulf_stop"
+            or self.filtertype == "hrv_vlf_stop"
+            or self.filtertype == "hrv_lf_stop"
+            or self.filtertype == "hrv_hf_stop"
+            or self.filtertype == "hrv_vhf_stop"
         ):
             return data - arb_pass(
                 Fs,

@@ -56,8 +56,9 @@ def test_FastResampler(debug=False):
         tcshifted = genlaggedtc.yfromx(timeaxis - shiftdist, debug=debug)
 
         # print out all elements
-        for i in range(0, len(tcrolled)):
-            print(i, tcrolled[i], tcshifted[i], tcshifted[i] - tcrolled[i])
+        if debug:
+            for i in range(0, len(tcrolled)):
+                print(i, tcrolled[i], tcshifted[i], tcshifted[i] - tcrolled[i])
 
         # plot if we are doing that
         if debug:

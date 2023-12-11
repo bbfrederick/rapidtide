@@ -100,7 +100,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
     allfilters = []
 
     # construct all the physiological filters
-    for filtertype in ["lfo", "resp", "cardiac"]:
+    for filtertype in ["lfo", "resp", "cardiac", "hrv_vlf", "hrv_lf", "hrv_hf", "hrv_vhf"]:
         testfilter = NoncausalFilter(filtertype=filtertype)
         lstest, lptest, uptest, ustest = testfilter.getfreqs()
         if lptest < nyquist:
