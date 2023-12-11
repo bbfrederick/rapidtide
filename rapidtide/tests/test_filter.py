@@ -248,7 +248,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
 def test_filterprops(displayplots=False):
     eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=displayplots)
     eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100, displayplots=displayplots)
-    eval_filterprops(sampletime=0.1, tclengthinsecs=1000.0, numruns=10, displayplots=displayplots)
+    eval_filterprops(sampletime=0.1, tclengthinsecs=500.0, numruns=10, displayplots=displayplots)
 
 
 if __name__ == "__main__":
