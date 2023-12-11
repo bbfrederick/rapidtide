@@ -96,6 +96,8 @@ jobs:
           push: true
           sbom: false
           provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: fredericklab/rapidtide:latest
           build-args: |
             BRANCH=${{ env.BRANCH }}

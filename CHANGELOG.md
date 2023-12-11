@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.7.0 (12/11/23)
+* (Docker) Added caching to build.
+
 ## Version 2.6.9.1 (12/11/23)
 * (package) Fixing some mysterious deploy errors.
 
