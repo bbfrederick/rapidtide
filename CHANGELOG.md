@@ -1,5 +1,12 @@
 # Release history
 
+## Version 2.6.9 (12/11/23)
+* (filter) Updated predefined filter bands to include hrv frequency ranges.
+* (happy) Tried a new approach for aliased correlation.  Not really done yet.
+* (docs) Updated installation instructions.
+* (docs) Fixed a build problem.
+* (Docker) Update to basecontainer v0.3.0.
+
 ## Version 2.6.8 (11/21/23)
 * (rapidtide) Rapidtide is now less chatty by default.
 * (rapidtide) Put the significance estimation command line options in their own subsection.
