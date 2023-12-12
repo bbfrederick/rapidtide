@@ -77,7 +77,9 @@ def spectralfilterprops(thefilter, thefiltername, debug=False):
     return response
 
 
-def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=False, debug=False):
+def eval_filterprops(
+    sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=False, debug=False
+):
     np.random.seed(12345)
     tclen = int(tclengthinsecs // sampletime)
     print("Testing transfer function:")
@@ -251,9 +253,15 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
 
 
 def test_filterprops(displayplots=False, debug=False):
-    eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=displayplots, debug=debug)
-    eval_filterprops(sampletime=2.0, tclengthinsecs=300.0, numruns=100, displayplots=displayplots, debug=debug)
-    eval_filterprops(sampletime=0.1, tclengthinsecs=30000.0, numruns=10, displayplots=displayplots, debug=debug)
+    eval_filterprops(
+        sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=displayplots, debug=debug
+    )
+    eval_filterprops(
+        sampletime=2.0, tclengthinsecs=300.0, numruns=100, displayplots=displayplots, debug=debug
+    )
+    eval_filterprops(
+        sampletime=0.1, tclengthinsecs=30000.0, numruns=10, displayplots=displayplots, debug=debug
+    )
 
 
 if __name__ == "__main__":

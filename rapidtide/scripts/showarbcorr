@@ -319,6 +319,8 @@ def main():
         tide_io.writenpvecs(filtereddata1, "filtereddata1.txt")
         tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
 
+    if args.debug:
+        print(f"{Fs1=}, {Fs2=}, {starttime1=}, {starttime2=}, {args.windowfunc=}")
     xcorr_x, thexcorr, corrFs, zeroloc = tide_corr.arbcorr(
         filtereddata1,
         Fs1,
