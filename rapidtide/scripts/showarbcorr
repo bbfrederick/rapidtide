@@ -281,11 +281,16 @@ def main():
     if Fs1 is None:
         print("sample rate must be specified for timecourse 1 - exiting")
         sys.exit()
+    if starttime1 == None:
+        starttime1 = 0.0
+
     if args.samplerate2 is not None:
         Fs2 = args.samplerate2
     if Fs2 is None:
         print("sample rate must be specified for timecourse 2 - exiting")
         sys.exit()
+    if starttime2 == None:
+        starttime2 = 0.0
 
     trimdata1 = inputdata1
     trimdata2 = inputdata2
