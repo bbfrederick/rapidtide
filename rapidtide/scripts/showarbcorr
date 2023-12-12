@@ -144,10 +144,21 @@ def _get_parser():
 
     pf.addpermutationopts(preproc)
 
+
     # similarity function options
     similarityopts = parser.add_argument_group("Similarity function options")
     pf.addsimilarityopts(similarityopts)
 
+
+    # fitting options
+    fittingopts = parser.add_argument_group("Fitting options")
+    fittingopts.add_argument(
+        "--bipolar",
+        dest="bipolar",
+        action="store_true",
+        help=("Fit largest magnitude peak regardless of sign."),
+        default=False,
+    )
     # Output options
     output = parser.add_argument_group("Output options")
     output.add_argument(
@@ -389,7 +400,15 @@ def main():
         useguess=False,
     )
 
-    maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
+    if args.bipolar:
+        maxdelay = xcorr_x_trim[np.argmax(np.fabs(thexcorr_trim))]
+        if thexcorr_trim[maxdelay] < 0.0:
+            peakflip = -1.0
+        else:
+            peakflip = 1.0
+    else:
+        maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
+        peakflip = 1.0
     if args.debug:
         print("\n\nmaxdelay before refinement", maxdelay)
 
@@ -402,12 +421,12 @@ def main():
         failreason,
         peakstart,
         peakend,
-    ) = thexsimfuncfitter.fit(thexcorr)
+    ) = thexsimfuncfitter.fit(peakflip * thexcorr)
     if failreason > 0:
         print("showarbcorr: FIT FAILED with reason:")
         print(thexsimfuncfitter.diagnosefail(np.uint32(failreason)))
     if args.debug:
-        print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
+        print(maxindex, maxdelay, peakflip * maxval, maxsigma, maskval, failreason)
     R = maxval
     if args.debug:
         print("maxdelay after refinement", maxdelay)
@@ -415,7 +434,7 @@ def main():
     if args.summarymode:
         thelabelitems = ["xcorr_R", "xcorr_maxdelay"]
         thedataitems = [
-            str(R),
+            str(peakflip * R),
             str(-maxdelay),
         ]
 
@@ -439,7 +458,7 @@ def main():
         if args.label is not None:
             print(args.label, ":\t", -maxdelay)
         else:
-            print("Crosscorrelation_Rmax:\t", R)
+            print("Crosscorrelation_Rmax:\t", peakflip * R)
             print("Crosscorrelation_maxdelay:\t", -maxdelay)
             print(
                 args.infilename1, "[0 seconds] == ", args.infilename2, "[", -maxdelay, " seconds]"
