@@ -443,7 +443,7 @@ def rapidtide_main(argparsingfunc):
         )
         for i in tqdm(
             range(validstart, validend + 1),
-            desc="Timpoint",
+            desc="Timepoint",
             unit="timepoints",
             disable=(not optiondict["showprogressbar"]),
         ):
