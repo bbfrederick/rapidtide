@@ -273,9 +273,7 @@ def main():
         mpl.use("TkAgg")
         import matplotlib.pyplot as plt
 
-    Fs1, starttime1, dummy, inputdata1, dummy, dummy = tide_io.readvectorsfromtextfile(
-        args.infilename1
-    )
+    Fs1, starttime1, dummy, inputdata1, dummy, dummy = tide_io.readvectorsfromtextfile(args.infilename1)
     inputdata1 = np.transpose(inputdata1)
     if np.shape(inputdata1)[1] > 1:
         print("specify only one column for input file 1")
@@ -283,9 +281,7 @@ def main():
     else:
         inputdata1 = inputdata1[:, 0]
 
-    Fs2, starttime2, dummy, inputdata2, dummy, dummy = tide_io.readvectorsfromtextfile(
-        args.infilename2
-    )
+    Fs2, starttime2, dummy, inputdata2, dummy, dummy = tide_io.readvectorsfromtextfile(args.infilename2)
     inputdata2 = np.transpose(inputdata2)
     if np.shape(inputdata2)[1] > 1:
         print("specify only one column for input file 2")
@@ -394,6 +390,7 @@ def main():
         absmaxsigma=absmaxsigma,
         absminsigma=absminsigma,
         debug=args.debug,
+        bipolar=args.bipolar,
         peakfittype=peakfittype,
         functype="correlation",
         zerooutbadfit=zerooutbadfit,
@@ -402,13 +399,8 @@ def main():
 
     if args.bipolar:
         maxdelay = xcorr_x_trim[np.argmax(np.fabs(thexcorr_trim))]
-        if thexcorr_trim[maxdelay] < 0.0:
-            peakflip = -1.0
-        else:
-            peakflip = 1.0
     else:
         maxdelay = xcorr_x_trim[np.argmax(thexcorr_trim)]
-        peakflip = 1.0
     if args.debug:
         print("\n\nmaxdelay before refinement", maxdelay)
 
@@ -421,12 +413,12 @@ def main():
         failreason,
         peakstart,
         peakend,
-    ) = thexsimfuncfitter.fit(peakflip * thexcorr)
+    ) = thexsimfuncfitter.fit(thexcorr)
     if failreason > 0:
         print("showarbcorr: FIT FAILED with reason:")
         print(thexsimfuncfitter.diagnosefail(np.uint32(failreason)))
     if args.debug:
-        print(maxindex, maxdelay, peakflip * maxval, maxsigma, maskval, failreason)
+        print(maxindex, maxdelay, maxval, maxsigma, maskval, failreason)
     R = maxval
     if args.debug:
         print("maxdelay after refinement", maxdelay)
@@ -434,7 +426,7 @@ def main():
     if args.summarymode:
         thelabelitems = ["xcorr_R", "xcorr_maxdelay"]
         thedataitems = [
-            str(peakflip * R),
+            str(R),
             str(-maxdelay),
         ]
 
@@ -458,7 +450,7 @@ def main():
         if args.label is not None:
             print(args.label, ":\t", -maxdelay)
         else:
-            print("Crosscorrelation_Rmax:\t", peakflip * R)
+            print("Crosscorrelation_Rmax:\t", R)
             print("Crosscorrelation_maxdelay:\t", -maxdelay)
             print(
                 args.infilename1, "[0 seconds] == ", args.infilename2, "[", -maxdelay, " seconds]"
