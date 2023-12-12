@@ -222,6 +222,18 @@ def _get_parser():
         default=1,
     )
 
+    misc.add_argument(
+        "--saveres",
+        dest="saveres",
+        action="store",
+        type=int,
+        metavar="SAVERES",
+        help=(
+            "If saving graphics, use SAVERES ppi."
+        ),
+        default=1,
+    )
+
     return parser
 
 
@@ -345,8 +357,8 @@ def main():
             xcorr_x,
             thexcorr,
         )
-        if args.outputfile is not None:
-            plt.savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)
+        if args.graphfile is not None:
+            plt.savefig(args.graphfile, bbox_inches="tight", dpi=args.saveres)
         else:
             plt.show()
 
