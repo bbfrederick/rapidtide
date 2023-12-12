@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.7.2 (12/12/23)
+* (Docker) Bumped to basecontainer_plus v0.0.3.
+* (Docker) Removed push of new containers to ECR.
+
 ## Version 2.7.1 (12/12/23)
 * (Docker) Fixed deployment of new containers to ECR.
 

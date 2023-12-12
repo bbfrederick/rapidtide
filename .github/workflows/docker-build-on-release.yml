@@ -115,7 +115,3 @@ jobs:
         run: |
            aws ecr-public get-login-password --region us-east-1 | skopeo login --username AWS --password-stdin public.ecr.aws/rapidtide/rapidtide
            skopeo copy --all docker://fredericklab/rapidtide:latest-release docker://public.ecr.aws/rapidtide/rapidtide:latest-release
-           aws ecr-public get-login-password --region us-east-1 | skopeo login --username AWS --password-stdin public.ecr.aws/rapidtide/basecontainer_plus
-           skopeo copy --all docker://fredericklab/basecontainer_plus:latest-release docker://public.ecr.aws/rapidtide/basecontainer_plus:latest-release
-           aws ecr-public get-login-password --region us-east-1 | skopeo login --username AWS --password-stdin public.ecr.aws/rapidtide/basecontainer
-           skopeo copy --all docker://fredericklab/basecontainer:latest-release docker://public.ecr.aws/rapidtide/basecontainer:latest-release
