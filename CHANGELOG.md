@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.7.1 (12/12/23)
+* (Docker) Fixed deployment of new containers to ECR.
+
 ## Version 2.7.0 (12/11/23)
 * (Docker) Added caching to build.
 * (Docker) Switched to basecontainer_plus to pick up some FSL utilities.
