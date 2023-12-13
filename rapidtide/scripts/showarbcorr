@@ -108,6 +108,7 @@ def _get_parser():
         help=("Set order of trend removal (0 to disable, default is 1 - linear). "),
         default=1,
     )
+
     # add window options
     pf.addwindowopts(parser)
 
@@ -143,8 +144,7 @@ def _get_parser():
     )
 
     # significance testing
-    permutationopts = parser.add_argument_group("Significance calculation options")
-    pf.addpermutationopts(permutationopts)
+    pf.addpermutationopts(parser, numreps=0)
 
     # similarity function options
     similarityopts = parser.add_argument_group("Similarity function options")
