@@ -143,7 +143,8 @@ def _get_parser():
     )
 
     # significance testing
-    pf.addpermutationopts(parser)
+    permutationopts = parser.add_argument_group("Significance calculation options")
+    pf.addpermutationopts(permutationopts)
 
     # similarity function options
     similarityopts = parser.add_argument_group("Similarity function options")
