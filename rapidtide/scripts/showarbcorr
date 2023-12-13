@@ -142,13 +142,12 @@ def _get_parser():
         default="None",
     )
 
-    pf.addpermutationopts(preproc)
-
+    # significance testing
+    pf.addpermutationopts(parser)
 
     # similarity function options
     similarityopts = parser.add_argument_group("Similarity function options")
     pf.addsimilarityopts(similarityopts)
-
 
     # fitting options
     fittingopts = parser.add_argument_group("Fitting options")
@@ -239,9 +238,7 @@ def _get_parser():
         action="store",
         type=int,
         metavar="SAVERES",
-        help=(
-            "If saving graphics, use SAVERES ppi."
-        ),
+        help=("If saving graphics, use SAVERES ppi."),
         default=1,
     )
 
@@ -273,7 +270,9 @@ def main():
         mpl.use("TkAgg")
         import matplotlib.pyplot as plt
 
-    Fs1, starttime1, dummy, inputdata1, dummy, dummy = tide_io.readvectorsfromtextfile(args.infilename1)
+    Fs1, starttime1, dummy, inputdata1, dummy, dummy = tide_io.readvectorsfromtextfile(
+        args.infilename1
+    )
     inputdata1 = np.transpose(inputdata1)
     if np.shape(inputdata1)[1] > 1:
         print("specify only one column for input file 1")
@@ -281,7 +280,9 @@ def main():
     else:
         inputdata1 = inputdata1[:, 0]
 
-    Fs2, starttime2, dummy, inputdata2, dummy, dummy = tide_io.readvectorsfromtextfile(args.infilename2)
+    Fs2, starttime2, dummy, inputdata2, dummy, dummy = tide_io.readvectorsfromtextfile(
+        args.infilename2
+    )
     inputdata2 = np.transpose(inputdata2)
     if np.shape(inputdata2)[1] > 1:
         print("specify only one column for input file 2")
