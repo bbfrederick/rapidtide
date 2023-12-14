@@ -368,7 +368,7 @@ def main():
         )
         ax.set_title(f"{args.label} crosscorrelation function")
         if args.graphfile is not None:
-            plt.savefig(args.graphfile, bbox_inches="tight", dpi=args.saveres)
+            plt.savefig(args.graphfile, bbox_inches="tight")
         else:
             plt.show()
 
