@@ -143,7 +143,7 @@ def _get_parser():
         default="None",
     )
 
-    # significance testing
+    # Add permutation options
     pf.addpermutationopts(parser, numreps=0)
 
     # similarity function options
@@ -366,6 +366,7 @@ def main():
             xcorr_x,
             thexcorr,
         )
+        ax.set_title(f"{args.label} crosscorrelation function")
         if args.graphfile is not None:
             plt.savefig(args.graphfile, bbox_inches="tight", dpi=args.saveres)
         else:
