@@ -340,7 +340,6 @@ def main():
         detrendorder=args.detrendorder,
         windowfunc=args.windowfunc,
     )
-    filtereddata2 *= flipfac
     if dumpfiltered:
         tide_io.writenpvecs(filtereddata1, "filtereddata1.txt")
         tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
@@ -416,7 +415,7 @@ def main():
         failreason,
         peakstart,
         peakend,
-    ) = thexsimfuncfitter.fit(thexcorr)
+    ) = thexsimfuncfitter.fit(flipfac * thexcorr)
     if failreason > 0:
         print("showarbcorr: FIT FAILED with reason:")
         print(thexsimfuncfitter.diagnosefail(np.uint32(failreason)))
@@ -429,7 +428,7 @@ def main():
     if args.summarymode:
         thelabelitems = ["xcorr_R", "xcorr_maxdelay", "failreason"]
         thedataitems = [
-            str(R),
+            str(flipfac * R),
             str(-maxdelay),
             '"' + thexsimfuncfitter.diagnosefail(np.uint32(failreason)) + '"',
         ]
