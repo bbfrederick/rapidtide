@@ -2111,6 +2111,9 @@ def rapidtide_main(argparsingfunc):
                     "message3": "voxels",
                 },
             )
+        # Step 2c - make a rank order map
+        order = lagtimes.argsort()
+        timepercentile = 100.0 * order.argsort() / numvalidspatiallocs
 
         # Step 3 - regressor refinement for next pass
         if (
@@ -2340,6 +2343,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict["saveintermediatemaps"]:
             maplist = [
                 ("lagtimes", "maxtime"),
+                ("timepercentile", "timepercentile"),
                 ("lagstrengths", "maxcorr"),
                 ("lagsigma", "maxwidth"),
                 ("fitmask", "fitmask"),
@@ -2790,6 +2794,7 @@ def rapidtide_main(argparsingfunc):
     # Prepare extra maps
     savelist = [
         ("lagtimes", "maxtime"),
+        ("timepercentile", "timepercentile"),
         ("lagstrengths", "maxcorr"),
         ("lagsigma", "maxwidth"),
         ("R2", "maxcorrsq"),

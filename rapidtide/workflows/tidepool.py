@@ -1557,6 +1557,12 @@ def tidepool(args):
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
+        "timepercentile": {
+            "colormap": gen_viridis_state(),
+            "label": "Lag percentile",
+            "display": True,
+            "funcmask": "p_lt_0p050_mask",
+        },
         "lagstrengths": {
             "colormap": gen_thermal_state(),
             "label": "Similarity coefficient",
@@ -1575,12 +1581,6 @@ def tidepool(args):
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
-        "fitNorm": {
-            "colormap": gen_thermal_state(),
-            "label": "fitNorm",
-            "display": True,
-            "funcmask": "p_lt_0p050_mask",
-        },
         "R2": {
             "colormap": gen_thermal_state(),
             "label": "R2",
@@ -1590,6 +1590,12 @@ def tidepool(args):
         "corrout": {
             "colormap": gen_thermal_state(),
             "label": "Similarity function",
+            "display": True,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "fitNorm": {
+            "colormap": gen_thermal_state(),
+            "label": "fitNorm",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
@@ -1980,7 +1986,9 @@ def tidepool(args):
     numloaded = 0
     for idx, themap in enumerate(currentdataset.dispmaps):
         if overlays[themap].display_state:
-            if numloaded > availablepanes - 1:
+            if (numloaded > availablepanes - 1) or (
+                (numloaded > availablepanes - 2) and (themap != "corrout")
+            ):
                 if verbosity > 1:
                     print("skipping map ", themap, "(", idx, "): out of display panes")
                 numnotloaded += 1
