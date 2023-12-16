@@ -50,14 +50,20 @@ def _get_parser():
     return parser
 
 
-def imtopercentile(image, mask):
+def imtopercentile(image, mask, debug=False):
+    outmaparray = image * 0.0
     nativespaceshape = image.shape
-    validvoxels = np.where(mask > 0)[0]
-    numvalidspatiallocs = np.shape(validvoxels)[0]
+    validvoxels = np.where(mask > 0)
+    numvalidspatiallocs = np.shape(validvoxels[0])[0]
     input_data_valid = image[validvoxels] + 0.0
+
+    if debug:
+        print(
+            f"Processing {numvalidspatiallocs} of {nativespaceshape[0] * nativespaceshape[1] * nativespaceshape[2]} voxels"
+        )
+        print(f"{np.shape(input_data_valid)=}")
     order = input_data_valid.argsort()
     percentilescore = 100.0 * order.argsort() / numvalidspatiallocs
-    outmaparray = image * 0.0
     outmaparray[validvoxels] = percentilescore[:]
     return outmaparray.reshape(nativespaceshape)
 
@@ -69,9 +75,6 @@ def main():
     except SystemExit:
         _get_parser().print_help()
         raise
-
-    if args.display:
-        mpl.use("TkAgg")
 
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfilename)
     (
@@ -94,11 +97,15 @@ def main():
         is4d = False
 
     if is4d:
+        print("processing 4D nifti file")
         percentiles = input_data * 0.0
         for i in range(timepoints):
-            percentiles[:, :, :, i] = imtopercentile(input_data[:, :, :, i], mask_data[:, :, :, i])
+            percentiles[:, :, :, i] = imtopercentile(
+                input_data[:, :, :, i], mask_data[:, :, :, i], debug=args.debug
+            )
     else:
-        percentiles = imtopercentile(input_data, mask_data)
+        print("processing 3D nifti file")
+        percentiles = imtopercentile(input_data, mask_data, debug=args.debug)
 
     savename = args.outputroot
     bidsdict = {
