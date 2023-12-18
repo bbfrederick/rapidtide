@@ -1,0 +1,67 @@
+#!/bin/bash
+set -eu
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage; $0 SUB_SES, e.g. HCA9953406_V1, or $0 ARRAY (where PARTICIPANT_FROM_ARRAY is set)"
+    exit 1
+fi
+
+SUB_SES=${1:-HCA9953406_V1}
+
+if [[ $SUB_SES == ARRAY ]]; then
+    SUB_SES=$PARTICIPANT_FROM_ARRAY
+fi
+
+SUB=$(echo "$SUB_SES" | cut -d'_' -f1)
+SES=$(echo "$SUB_SES" | cut -d'_' -f2)
+
+# download the data from NDA
+/cloud/downloadcmd-auther
+downloadcmd --username $NDA_USERNAME \
+            --package $NDA_PACKAGE \
+			--file-regex datastructure_manifest
+
+/cloud/list-rapidtide-relevant-images \
+    --participant $SUB \
+    --session $SES \
+> /s3-files-requested
+
+downloadcmd --package $NDA_PACKAGE \
+            --username $NDA_USERNAME \
+			--txt /s3-files-requested \
+			--directory /data_in 
+
+# fix filenames broken by NDA until https://github.com/NDAR/nda-tools/issues/88 resolved
+find /data_in -type f -name '*_1.*' | while read fname; do mv "$fname" "${fname/_1/}"; done
+find /data_in -type f -name '*_2.*' | while read fname; do mv "$fname" "${fname/_2/}"; done
+
+SOURCEKEY=/data_in/fmriresults01/${SUB}_${SES}_MR
+DESTDIR=/data_out/hcp-a/sub-${SUB}/ses-${SES}
+
+. ${FSLDIR}/etc/fslconf/fsl.sh
+
+mkdir -p ${DESTDIR}
+
+flirt \
+    -in ${SOURCEKEY}/MNINonLinear/aparc+aseg.nii.gz \
+    -ref ${SOURCEKEY}/MNINonLinear/Results/rfMRI_REST1_PA/brainmask_fs.2.nii.gz \
+    -applyxfm \
+    -init ${FSLDIR}/data/atlases/bin/eye.mat \
+    -interp nearestneighbour \
+    -out ${DESTDIR}/sub-${SUB}_ses-${SES}_desc-aparc+aseg_res-2.nii.gz
+
+rapidtide \
+    ${SOURCEKEY}/MNINonLinear/Results/rfMRI_REST1_PA/rfMRI_REST1_PA.nii.gz \
+    ${DESTDIR}/sub-${SUB}_ses-${SES} \
+    --spatialfilt 2 \
+    --passes 3 \
+    --pickleft \
+    --despecklepasses 4 \
+    --nprocs -1 \
+    --searchrange -10 15 \
+    --globalmeaninclude ${DESTDIR}/sub-${SUB}_ses-${SES}_desc-aparc+aseg_res-2.nii.gz:APARC_GRAY \
+    --globalmeanexclude ${SOURCEKEY}/MNINonLinear/Results/rfMRI_REST1_PA/rfMRI_REST1_PA_dropouts.nii.gz \
+    --corrmask ${SOURCEKEY}/MNINonLinear/Results/rfMRI_REST1_PA/brainmask_fs.2.nii.gz \
+    --refineexclude ${SOURCEKEY}/MNINonLinear/Results/rfMRI_REST1_PA/rfMRI_REST1_PA_dropouts.nii.gz \
+    --noglm
+
