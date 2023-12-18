@@ -32,14 +32,18 @@ else
 fi
 
 s3fs $S3FS_AUTH_METHOD $OUTPUT_BUCKET /data_out
+MOUNTS_TO_CHECK=("/data_out")
 
 # mount data input folder
 # credentials injected from AWS Secrets in env variable
 
-s3fs -o passwd_file=<( echo $INPUT_BUCKET_SECRET ) \
-     $INPUT_BUCKET /data_in
+if [[ $INPUT_BUCKET != "local" ]]; then
+    s3fs -o passwd_file=<( echo $INPUT_BUCKET_SECRET ) \
+         $INPUT_BUCKET /data_in
+    MOUNTS_TO_CHECK+=("/data_in")
+fi
 
-for MOUNT in /data_in /data_out; do
+for MOUNT in "${MOUNTS_TO_CHECK[@]}"; do
     if ! findmnt -n -P -t fuse.s3fs $MOUNT ; then
         echo ERROR: $MOUNT is not correctly mounted
         exit 1
