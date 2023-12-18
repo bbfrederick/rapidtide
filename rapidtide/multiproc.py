@@ -23,6 +23,7 @@
 #
 #
 import multiprocessing as mp
+import signal
 import sys
 import threading as thread
 from platform import python_version, system
@@ -108,7 +109,9 @@ def run_multiproc(
         ctx = mp.get_context("fork")
         inQ = ctx.Queue()
         outQ = ctx.Queue()
+        # original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
         workers = [ctx.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
+        # signal.signal(signal.SIGINT, original_sigint_handler)
     else:
         """# try adding this magic incantation to get coverage to record multiprocessing properly
         # This fails for python 3.8 and above
