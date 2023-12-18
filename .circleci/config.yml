@@ -494,6 +494,7 @@ jobs:
             pip install -e .[doc]
             pip install numpydoc
             pip install pyqt5-sip
+            pip install pyqt
             make -C docs html
       - store_artifacts:
           path: /tmp/src/rapidtide/docs/_build/html
