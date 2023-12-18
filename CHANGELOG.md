@@ -1,5 +1,15 @@
 # Release history
 
+## Version 2.7.3 (12/18/23)
+* (correlate) Added a new correlation weighting - "regressor", that whitens the correlation spectrum relative to the probe regressor.
+* (rapidtide) Add support for the "regressor" correlation weighting.
+* (rapidtide) Add infrastructure to support baseline correction of correlation function during lag estimation.
+* (rapidtide) Added lag rank map (each voxel is the percentile within the lag time distribution)
+* (showarbcorr) Numerous bugfixes and functionality improvements.
+* (tidepool) Support new lag rank map.
+* (rankimage) Convert lag maps to lag rank maps.
+* (rapidtide-cloud) Added tools for NDA download.
+
 ## Version 2.7.2 (12/12/23)
 * (Docker) Bumped to basecontainer_plus v0.0.3.
 * (Docker) Removed push of new containers to ECR.
