@@ -352,6 +352,9 @@ class MutualInformationator(SimilarityFunctionator):
         self.theglobalmax = np.argmax(self.thesimfunc)
         self.datavalid = True
 
+        # make a dummy filtered baseline
+        self.filteredbaseline = self.thesimfunc * 0.0
+
         if trim:
             return (
                 self.trim(self.thesimfunc),
@@ -363,10 +366,19 @@ class MutualInformationator(SimilarityFunctionator):
 
 
 class Correlator(SimilarityFunctionator):
-    def __init__(self, windowfunc="hamming", corrweighting="None", corrpadding=0, *args, **kwargs):
+    def __init__(
+        self,
+        windowfunc="hamming",
+        corrweighting="None",
+        corrpadding=0,
+        baselinefilter=None,
+        *args,
+        **kwargs,
+    ):
         self.windowfunc = windowfunc
         self.corrweighting = corrweighting
         self.corrpadding = corrpadding
+        self.baselinefilter = baselinefilter
         super(Correlator, self).__init__(*args, **kwargs)
 
     def setlimits(self, lagmininpts, lagmaxinpts):
@@ -412,6 +424,11 @@ class Correlator(SimilarityFunctionator):
         )
         self.similarityfunclen = len(self.thesimfunc)
         self.similarityfuncorigin = self.similarityfunclen // 2 + 1
+
+        if self.baselinefilter is not None:
+            self.filteredbaseline = self.baselinefilter.apply(self.Fs, self.thesimfunc)
+        else:
+            self.filteredbaseline = self.thesimfunc * 0.0
 
         # find the global maximum value
         self.theglobalmax = np.argmax(self.thesimfunc)

@@ -551,7 +551,7 @@ def _get_parser():
         dest="corrweighting",
         action="store",
         type=str,
-        choices=["None", "phat", "liang", "eckart"],
+        choices=["None", "phat", "liang", "eckart", "regressor"],
         help=(
             "Method to use for cross-correlation weighting. "
             f'Default is "{DEFAULT_CORRWEIGHTING}".'
@@ -1152,6 +1152,26 @@ def _get_parser():
     # Experimental options (not fully tested, may not work)
     experimental = parser.add_argument_group(
         "Experimental options (not fully tested, may not work)"
+    )
+    experimental.add_argument(
+        "--corrbaselinespatialsigma",
+        dest="corrbaselinespatialsigma",
+        action="store",
+        type=float,
+        metavar="SIGMA",
+        help=("Spatial lowpass kernel, in mm, for filtering the correlation function baseline. "),
+        default=0.0,
+    )
+    experimental.add_argument(
+        "--corrbaselinetemphpfcutoff",
+        dest="corrbaselinetemphpfcutoff",
+        action="store",
+        type=float,
+        metavar="FREQ",
+        help=(
+            "Temporal highpass cutoff, in Hz, for filtering the correlation function baseline. "
+        ),
+        default=0.0,
     )
     experimental.add_argument(
         "--spatialtolerance",

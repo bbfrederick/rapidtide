@@ -34,6 +34,7 @@ import rapidtide.correlate as tide_corr
 import rapidtide.fit as tide_fit
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
+import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 
 pyfftw.interfaces.cache.enable()
@@ -215,6 +216,7 @@ def shorttermcorr_2D(
     zeropadding=0,
     windowfunc="None",
     detrendorder=0,
+    compress=False,
     displayplots=False,
 ):
     """Calculate short-term sliding-window correlation between two 2D arrays.
@@ -264,7 +266,9 @@ def shorttermcorr_2D(
     dataseg2 = tide_math.corrnormalize(
         data2[0 : 2 * halfwindow], detrendorder=detrendorder, windowfunc=windowfunc
     )
-    thexcorr = fastcorrelate(dataseg1, dataseg2, weighting=weighting, zeropadding=zeropadding)
+    thexcorr = fastcorrelate(
+        dataseg1, dataseg2, weighting=weighting, compress=compress, zeropadding=zeropadding
+    )
     xcorrlen = np.shape(thexcorr)[0]
     xcorr_x = (
         np.arange(0.0, xcorrlen) * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
@@ -287,7 +291,9 @@ def shorttermcorr_2D(
         )
         times.append(i * sampletime)
         xcorrpertime.append(
-            fastcorrelate(dataseg1, dataseg2, weighting=weighting, zeropadding=zeropadding)
+            fastcorrelate(
+                dataseg1, dataseg2, weighting=weighting, compress=compress, zeropadding=zeropadding
+            )
         )
         (
             maxindex,
@@ -850,6 +856,7 @@ def fastcorrelate(
     usefft=True,
     zeropadding=0,
     weighting="None",
+    compress=False,
     displayplots=False,
     debug=False,
 ):
@@ -862,6 +869,7 @@ def fastcorrelate(
     usefft
     zeropadding
     weighting
+    compress
     displayplots
     debug
 
@@ -925,6 +933,7 @@ def fastcorrelate(
                 paddedinput2[::-1],
                 mode="full",
                 weighting=weighting,
+                compress=compress,
                 displayplots=displayplots,
             )
         if displayplots:
@@ -986,7 +995,9 @@ def _check_valid_mode_shapes(shape1, shape2):
             )
 
 
-def convolve_weighted_fft(in1, in2, mode="full", weighting="None", displayplots=False):
+def convolve_weighted_fft(
+    in1, in2, mode="full", weighting="None", compress=False, displayplots=False
+):
     """Convolve two N-dimensional arrays using FFT.
 
     Convolve `in1` and `in2` using the fast Fourier transform method, with
@@ -1047,22 +1058,26 @@ def convolve_weighted_fft(in1, in2, mode="full", weighting="None", displayplots=
     if not complex_result:
         fft1 = rfftn(in1, fsize)
         fft2 = rfftn(in2, fsize)
-        theorigmax = np.max(np.absolute(irfftn(gccproduct(fft1, fft2, "None"), fsize)[fslice]))
-        ret = irfftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots), fsize)[
-            fslice
-        ].copy()
-        ret = irfftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots), fsize)[
-            fslice
-        ].copy()
+        theorigmax = np.max(
+            np.absolute(irfftn(gccproduct(fft1, fft2, "None", compress=compress), fsize)[fslice])
+        )
+        ret = irfftn(
+            gccproduct(fft1, fft2, weighting, compress=compress, displayplots=displayplots), fsize
+        )[fslice].copy()
+        ret = irfftn(
+            gccproduct(fft1, fft2, weighting, compress=compress, displayplots=displayplots), fsize
+        )[fslice].copy()
         ret = ret.real
         ret *= theorigmax / np.max(np.absolute(ret))
     else:
         fft1 = fftpack.fftn(in1, fsize)
         fft2 = fftpack.fftn(in2, fsize)
-        theorigmax = np.max(np.absolute(fftpack.ifftn(gccproduct(fft1, fft2, "None"))[fslice]))
-        ret = fftpack.ifftn(gccproduct(fft1, fft2, weighting, displayplots=displayplots))[
-            fslice
-        ].copy()
+        theorigmax = np.max(
+            np.absolute(fftpack.ifftn(gccproduct(fft1, fft2, "None", compress=compress))[fslice])
+        )
+        ret = fftpack.ifftn(
+            gccproduct(fft1, fft2, weighting, compress=compress, displayplots=displayplots)
+        )[fslice].copy()
         ret *= theorigmax / np.max(np.absolute(ret))
 
     # scale to preserve the maximum
@@ -1075,7 +1090,7 @@ def convolve_weighted_fft(in1, in2, mode="full", weighting="None", displayplots=
         return _centered(ret, s1 - s2 + 1)
 
 
-def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
+def gccproduct(fft1, fft2, weighting, threshfrac=0.1, compress=False, displayplots=False):
     """Calculate product for generalized crosscorrelation.
 
     Parameters
@@ -1106,6 +1121,8 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
         )
     elif weighting == "phat":
         denom = np.absolute(product)
+    elif weighting == "regressor":
+        denom = np.absolute(fft1 * fft1)
     else:
         raise ValueError("illegal weighting function specified in gccproduct")
 
@@ -1120,11 +1137,15 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, displayplots=False):
     # now apply it while preserving the max
     theorigmax = np.max(np.absolute(denom))
     thresh = theorigmax * threshfrac
+
     if thresh > 0.0:
+        scalefac = np.absolute(denom)
+        if compress:
+            pct10, pct90 = tide_stats.getfracvals(np.absolute(denom), [0.10, 0.90], nozero=True)
+            scalefac[np.where(scalefac > pct90)] = pct90
+            scalefac[np.where(scalefac < pct10)] = pct10
         with np.errstate(invalid="ignore", divide="ignore"):
-            return np.nan_to_num(
-                np.where(np.absolute(denom) > thresh, product / denom, np.float64(0.0))
-            )
+            return np.nan_to_num(np.where(scalefac > thresh, product / denom, np.float64(0.0)))
     else:
         return 0.0 * product
 
