@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.7.3.2 (12/18/23)
+* (rapidtide-cloud) Another bump to improve NDA access.
+
 ## Version 2.7.3.1 (12/18/23)
 * (rapidtide-cloud) Redoing push to fix a regression due to _somebody_ not testing before deploying (tsk tsk).
 
