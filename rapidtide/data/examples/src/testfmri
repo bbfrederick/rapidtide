@@ -52,10 +52,10 @@ rapidtide \
         --norefinedespeckled \
         --filterband lfo \
         --corrweighting regressor \
-        --disabledockermemfix \
         --corrtype linear \
+        --disabledockermemfix \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_weighted2
+        ../dst/sub-RAPIDTIDETEST_weighted2_linear
 
 #rapidtide \
 	#--spatialfilt 2 \
