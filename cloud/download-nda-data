@@ -12,8 +12,8 @@ downloadcmd --username $NDA_USERNAME \
             --file-regex datastructure_manifest
 
 /cloud/list-rapidtide-relevant-images \
-    --participant $SUB \
-    --session $SES \
+    --participant $1 \
+    --session $2 \
 > /s3-files-requested
 
 downloadcmd --package $NDA_PACKAGE \
