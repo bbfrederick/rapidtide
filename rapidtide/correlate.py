@@ -1122,7 +1122,8 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, compress=False, displayplo
     elif weighting == "phat":
         denom = np.absolute(product)
     elif weighting == "regressor":
-        denom = np.absolute(fft1 * fft1)
+        # determine weighting entirely from regressor 2 (the reference regressor)
+        denom = np.absolute(fft2 * np.conjugate(fft2))
     else:
         raise ValueError("illegal weighting function specified in gccproduct")
 
