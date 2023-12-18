@@ -1,21 +1,11 @@
 #!/bin/bash
 set -eu
 
-if [[ $# -ne 1 ]]; then
-    echo "Usage; $0 SUB_SES, e.g. HCA9953406_V1, or $0 ARRAY (where PARTICIPANT_FROM_ARRAY is set)"
+if [[ $# -ne 2 ]]; then
+    echo "Usage; $0 SUB SES, e.g. HCA9953406 V1"
     exit 1
 fi
 
-SUB_SES=${1:-HCA9953406_V1}
-
-if [[ $SUB_SES == ARRAY ]]; then
-    SUB_SES=$PARTICIPANT_FROM_ARRAY
-fi
-
-SUB=$(echo "$SUB_SES" | cut -d'_' -f1)
-SES=$(echo "$SUB_SES" | cut -d'_' -f2)
-
-# download the data from NDA
 /cloud/downloadcmd-auther
 downloadcmd --username $NDA_USERNAME \
             --package $NDA_PACKAGE \
