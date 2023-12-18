@@ -3,6 +3,7 @@
 ## Version 2.7.3 (12/18/23)
 * (correlate) Added a new correlation weighting - "regressor", that whitens the correlation spectrum relative to the probe regressor.
 * (rapidtide) Add support for the "regressor" correlation weighting.
+* (rapidtide) Linear (rather than circular) correlations are now the default.
 * (rapidtide) Add infrastructure to support baseline correction of correlation function during lag estimation.
 * (rapidtide) Added lag rank map (each voxel is the percentile within the lag time distribution)
 * (showarbcorr) Numerous bugfixes and functionality improvements.
