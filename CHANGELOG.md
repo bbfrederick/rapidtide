@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.7.3.1 (12/18/23)
+* (rapidtide-cloud) Redoing push to fix a regression due to _somebody_ not testing before deploying (tsk tsk).
+
 ## Version 2.7.3 (12/18/23)
 * (correlate) Added a new correlation weighting - "regressor", that whitens the correlation spectrum relative to the probe regressor.
 * (rapidtide) Add support for the "regressor" correlation weighting.

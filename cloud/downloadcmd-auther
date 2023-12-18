@@ -3,6 +3,7 @@
 # Load authorization data for the NDA downloadcmd
 
 import os
+
 import keyring
 
 username = os.getenv("NDA_USERNAME")

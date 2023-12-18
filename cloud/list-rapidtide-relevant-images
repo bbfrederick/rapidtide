@@ -2,9 +2,10 @@
 
 # From NDA datastructure manifest, create a list of NDA S3 paths for resting state noise removal.
 
+import argparse
 import os
 from pathlib import Path
-import argparse
+
 import pandas as pd
 
 
