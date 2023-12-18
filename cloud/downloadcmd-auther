@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+
+# Load authorization data for the NDA downloadcmd
+
+import os
+import keyring
+
+username = os.getenv("NDA_USERNAME")
+password = os.getenv("NDA_PASSWORD")
+if username and password:
+    keyring.set_password("nda-tools", os.environ["NDA_USERNAME"], os.environ["NDA_PASSWORD"])
+else:
+    print("NDA_USERNAME and NDA_PASSWORD missing from container environment.")

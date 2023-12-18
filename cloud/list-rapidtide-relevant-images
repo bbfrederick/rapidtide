@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+
+# From NDA datastructure manifest, create a list of NDA S3 paths for resting state noise removal.
+
+import os
+from pathlib import Path
+import argparse
+import pandas as pd
+
+
+def get_HCPA_files(
+    participant,
+    session,
+    manifest,
+):
+    df = pd.read_csv(manifest, sep="\t", dtype=str)
+
+    subjsess_key = f"{participant}_{session}_MR"
+    subjsess_df = df[df.associated_file.str.contains(subjsess_key)]
+
+    search_patterns = [
+        ["PreprocStrucRecommended", "MNINonLinear/brainmask_fs.2.nii.gz"],
+        ["PreprocStrucRecommended", "MNINonLinear/aparc[+]aseg.nii.gz"],
+        ["PreprocStrucRecommended", "MNINonLinear/T1w.nii.gz"],
+        ["PreprocStrucRecommended", "MNINonLinear/aparc.a2009s[+]aseg.nii.gz"],
+        ["PreprocStrucRecommended", "MNINonLinear/ROIs/ROIs.2.nii.gz"],
+        ["PreprocStrucRecommended", "MNINonLinear/T2w.nii.gz"],
+        [
+            "UnprocRfmri",
+            f"unprocessed/rfMRI_REST[12]_[AP][PA]/{participant}_{session}_MR_rfMRI_REST[12]_[AP][PA].nii.gz",
+        ],
+        [
+            "UnprocRfmri",
+            "unprocessed/rfMRI_REST[12]_[AP][PA]/LINKED_DATA/PHYSIO/Physio_combined",
+        ],
+        [
+            "UnprocRfmri",
+            f"unprocessed/rfMRI_REST[12]_[AP][PA]/{participant}_{session}_MR_rfMRI_REST[12]_[AP][PA].json",
+        ],
+        ["PreprocRfmriExtended", "MNINonLinear/xfms/standard2rfMRI_REST1_PA.nii.gz"],
+        [
+            "PreprocRfmriExtended",
+            "MNINonLinear/Results/rfMRI_REST[12]_PA/rfMRI_REST1_PA_mean.nii.gz",
+        ],
+        [
+            "PreprocRfmriUncleaned",
+            "MNINonLinear/Results/rfMRI_REST[12]_PA/Movement_Regressors.txt",
+        ],
+        [
+            "PreprocRfmriUncleaned",
+            "MNINonLinear/Results/rfMRI_REST[12]_PA/rfMRI_REST[12]_[AP][PA]_dropouts.nii.gz",
+        ],
+        [
+            "PreprocRfmriUncleaned",
+            "MNINonLinear/Results/rfMRI_REST[12]_PA/rfMRI_REST[12]_[AP][PA].nii.gz",
+        ],
+        [
+            "PreprocRfmriUncleaned",
+            "MNINonLinear/Results/rfMRI_REST[12]_[AP][PA]/Physio_combined",
+        ],
+        [
+            "PreprocRfmriUncleaned",
+            "MNINonLinear/Results/rfMRI_REST[12]_[AP][PA]/Movement_RelativeRMS_mean.txt",
+        ],
+        [
+            "PreprocRfmriUncleaned",
+            "MNINonLinear/Results/rfMRI_REST[12]_[AP][PA]/brainmask_fs.2.nii.gz",
+        ],
+        [
+            "PreprocRfmriLegacyVolume",
+            "MNINonLinear/Results/rfMRI_REST[12]_[AP][PA]/Movement_AbsoluteRMS.txt",
+        ],
+    ]
+    filestoget = []
+    for manifest_name, associated_pattern in search_patterns:
+        pattern_match = subjsess_df["associated_file"].str.contains(
+            associated_pattern
+        ) & subjsess_df["manifest_name"].str.contains(manifest_name)
+        filestoget.extend(subjsess_df.loc[pattern_match, "associated_file"].tolist())
+
+    return filestoget
+
+
+if __name__ == "__main__":
+    if "NDA_PACKAGE" in os.environ:
+        default_manifest_path = (
+            Path.home() / f"NDA/nda-tools/downloadcmd/packages/{os.environ['NDA_PACKAGE']}"
+        )
+    else:
+        default_manifest_path = "."
+
+    parser = argparse.ArgumentParser(
+        description="From NDA datastructure manifest, create a list of S3 paths for resting state noise removal."
+    )
+    parser.add_argument(
+        "--participant",
+        "-p",
+        default="HCA9953406",
+        help="Participant ID. (Default, for test: HCA9953406)",
+    )
+    parser.add_argument("--session", "-s", default="V1", help="Session. (Default: V1)")
+    parser.add_argument(
+        "--manifest",
+        "-m",
+        type=str,
+        default=str(default_manifest_path),
+        help=f"Path to datastructure_manifest.txt. (Default: {default_manifest_path})",
+    )
+    args = parser.parse_args()
+
+    onesubjonesess = get_HCPA_files(
+        args.participant,
+        args.session,
+        Path(args.manifest) / "datastructure_manifest.txt",
+    )
+    print("\n".join(onesubjonesess))
