@@ -17,11 +17,13 @@
 #
 #
 import argparse
+import sys
 
 import numpy as np
 
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
+import rapidtide.workflows.parser_funcs as pf
 
 
 def main():
@@ -42,6 +44,14 @@ def main():
         action="store_false",
         help="Disable antialiasing filter",
         default=True,
+    )
+    parser.add_argument(
+        "--phasefile",
+        dest="phasefile",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="PHASEFILE",
+        help="Phase map for the inputfile.",
+        default=None,
     )
     parser.add_argument(
         "--debug",
@@ -98,6 +108,20 @@ def main():
     xsize = thedims[1]
     ysize = thedims[2]
     numslices = thedims[3]
+
+    if args.phasefile is not None:
+        phase_img, phase_data, phase_hdr, phasedims, phasesizes = tide_io.readfromnifti(
+            args.phasefile
+        )
+        if (not tide_io.checkspacematch(phase_hdr, input_hdr)) or (
+            not tide_io.checktimematch(phasedims, thedims)
+        ):
+            print(
+                "Dimensions of " + args.phasefile + " mask do not match the input data - exiting"
+            )
+            sys.exit()
+        cmplxdata = input_data * exp(1j * phase_data)
+        print(input_data.shape, phase_data.shape, cmplxdata.shape)
 
     # make the output array
     resampledtcs = np.zeros((xsize, ysize, numslices, len(output_x)), dtype="float")
