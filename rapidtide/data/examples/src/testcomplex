@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+import sys
+import time
+
+import numpy as np
+import pyfftw
+import pylab as pl
+import scipy as sp
+from scipy import fftpack, signal
+
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+import rapidtide.util as tide_util
+
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
+
+def complexupsample(inputcplx, debug=False):
+    thelen = inputcplx.shape
+    fftdata = fftpack.fft(inputcplx)
+    if debug:
+        print(f"{thelen=}")
+        print(f"{inputcplx.shape=}")
+        print(f"{fftdata.shape=}")
+    return fftdata
+
+def dumparray(thearray, ascomplex=False, showlen=False):
+    thelen = thearray.shape[0]
+    if showlen:
+        print(f"array len: {thelen}")
+    for i in range(thelen):
+        if ascomplex:
+            print(f"{i}\t{thearray[i]}")
+        else:
+            print(f"{thearray[i].real}\t{thearray[i].imag}")
+
+def main():
+    evenlen = 100
+    oddlen = 101
+    Fs = 10.0
+    totaltime = 100.0
+    wavefreq = 1.0
+    ascomplex = False
+    showlen = True
+    debug = False
+
+    oddxaxis =  np.linspace(0.0, totaltime, num=oddlen, endpoint=True) / Fs
+    oddarray = np.cos(2.0 * np.pi * wavefreq * oddxaxis) + 1j*np.sin(2.0 * np.pi * wavefreq * oddxaxis)
+    oddreal = oddarray.real
+    oddimag = oddarray.imag
+    print("Odd array:")
+    dumparray(oddarray, ascomplex=ascomplex, showlen=showlen)
+    print("\n")
+    oddfft = complexupsample(oddarray, debug=debug)
+    print("Odd FFT:")
+    dumparray(oddfft, ascomplex=ascomplex, showlen=showlen)
+    
+
+    evenxaxis =  np.linspace(0.0, totaltime, num=evenlen, endpoint=True) / Fs
+    evenarray = np.cos(2.0 * np.pi * wavefreq * evenxaxis) + 1j*np.sin(2.0 * np.pi * wavefreq * evenxaxis)
+    evenreal = evenarray.real
+    evenimag = evenarray.imag
+    print("Even array:")
+    dumparray(evenarray, ascomplex=ascomplex, showlen=showlen)
+    print("\n")
+    evenfft = complexupsample(evenarray.real, debug=debug)
+    print("Even FFT:")
+    dumparray(evenfft, ascomplex=ascomplex, showlen=showlen)
+
+
+
+if __name__ == "__main__":
+    main()

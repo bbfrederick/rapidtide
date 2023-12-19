@@ -822,3 +822,13 @@ def timewarp(orig_x, orig_y, timeoffset, demean=True, method="univariate", debug
         print("maximum deviation in samples:", maxsamps)
         print("padlen in samples:", padlen)
     return doresample(orig_x, orig_y, orig_x + demeanedoffset, method=method, padlen=padlen)
+
+
+def complexupsample(inputcplx, debug=True):
+    thelen = inputcplx.shape
+    fftdata = fftpack.fft(inputcplx)  # do the actual shifting
+    if debug:
+        print(f"{thelen=}")
+        print(f"{inputcplx.shape=}")
+        print(f"{fftdata.shape=}")
+    #shifted_y = fftpack.ifft(modvec * fftdata).real
