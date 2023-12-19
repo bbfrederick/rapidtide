@@ -38,7 +38,7 @@ MOUNTS_TO_CHECK=("/data_out")
 # credentials injected from AWS Secrets in env variable
 
 if [[ $INPUT_BUCKET != "local" ]]; then
-    s3fs -o passwd_file=<( echo $INPUT_BUCKET_SECRET ) \
+    s3fs -o passwd_file=<( jq -r .IBS3SECRET <<< $INPUT_BUCKET_SECRET ) \
          $INPUT_BUCKET /data_in
     MOUNTS_TO_CHECK+=("/data_in")
 fi
@@ -61,9 +61,9 @@ if [[ -n $AWS_BATCH_JOB_ARRAY_INDEX ]]; then
 fi
 
 if [[ $INPUT_BUCKET == "local" ]] && [[ $(awk -F: '{print NF-1}' <<< $INPUT_BUCKET_SECRET) -eq 2 ]]; then
-    export NDA_PACKAGE=$(cut -d: -f1 <<< $INPUT_BUCKET_SECRET)
-    export NDA_USERNAME=$(cut -d: -f2 <<< $INPUT_BUCKET_SECRET)
-    export NDA_PASSWORD=$(cut -d: -f3 <<< $INPUT_BUCKET_SECRET)
+    export NDA_PACKAGE=$(jq -r .NDA_PACKAGE <<< $INPUT_BUCKET_SECRET)
+    export NDA_USERNAME=$(jq -r .NDA_USERNAME <<< $INPUT_BUCKET_SECRET)
+    export NDA_PASSWORD=$(jq -r .NDA_PASSWORD <<< $INPUT_BUCKET_SECRET)
 fi
 
 export AWS_INSTANCETYPE=$(curl -s -m 1 http://169.254.169.254/latest/meta-data/instance-type -H "X-aws-ec2-metadata-token: $TOKEN")
