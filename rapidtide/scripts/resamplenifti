@@ -120,7 +120,7 @@ def main():
                 "Dimensions of " + args.phasefile + " mask do not match the input data - exiting"
             )
             sys.exit()
-        cmplxdata = input_data * exp(1j * phase_data)
+        cmplxdata = input_data * np.exp(1j * phase_data)
         print(input_data.shape, phase_data.shape, cmplxdata.shape)
 
     # make the output array
