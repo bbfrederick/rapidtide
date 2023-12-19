@@ -60,7 +60,7 @@ if [[ -n $AWS_BATCH_JOB_ARRAY_INDEX ]]; then
     echo Set PARTICIPANT_FROM_ARRAY=$PARTICIPANT_FROM_ARRAY
 fi
 
-if [[ $INPUT_BUCKET == "local" ]] && [[ $(awk -F: '{print NF-1}' <<< $INPUT_BUCKET_SECRET) -eq 2 ]]; then
+if [[ $INPUT_BUCKET == "local" ]]; then
     export NDA_PACKAGE=$(jq -r .NDA_PACKAGE <<< $INPUT_BUCKET_SECRET)
     export NDA_USERNAME=$(jq -r .NDA_USERNAME <<< $INPUT_BUCKET_SECRET)
     export NDA_PASSWORD=$(jq -r .NDA_PASSWORD <<< $INPUT_BUCKET_SECRET)
