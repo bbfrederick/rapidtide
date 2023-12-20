@@ -22,7 +22,7 @@ import numpy as np
 import pyfftw
 
 import rapidtide.io as tide_io
-import rapidtide.maskutil as tide_mask
+import copy
 import rapidtide.resample as tide_resample
 import rapidtide.workflows.parser_funcs as pf
 
@@ -129,37 +129,37 @@ def main():
             )
             sys.exit()
         cmplxdata = input_data * np.exp(1j * phase_data)
-        cmplxfft = cmplxdata * 0.0
+        upsampled = np.zeros((xsize, ysize, numslices, 2 * timepoints), dtype=float)
         for i in range(xsize):
             for j in range(ysize):
                 for k in range(numslices):
-                    cmplxfft[i, j, k, :] = fftpack.fft(cmplxdata[i, j, k, :])
-                    cmplxfft[i, j, k, (timepoints // 2) :] = 0.0
-                    cmplxdata[i, j, k, :] = fftpack.ifft(cmplxfft[i, j, k, :])
-        tide_io.savetonifti(np.abs(cmplxdata), input_hdr, args.outputfile + "_fft")
-        print(input_data.shape, phase_data.shape, cmplxdata.shape)
+                    upsampled[i, j, k, :] = tide_resample.complexupsample(cmplxdata[i, j, k, :])
+        theheader = copy.deepcopy(input_hdr)
+        theheader["dim"][4] = 2 * theheader["dim"][4]
+        theheader["pixdim"][4] = theheader["pixdim"][4] / 2.0
+        tide_io.savetonifti(upsampled, theheader, args.outputfile)
+    else:
+        # make the output array
+        resampledtcs = np.zeros((xsize, ysize, numslices, len(output_x)), dtype="float")
 
-    # make the output array
-    resampledtcs = np.zeros((xsize, ysize, numslices, len(output_x)), dtype="float")
+        # cycle over all voxels
+        print("now cycling over all voxels")
+        for zloc in range(0, numslices):
+            print("processing slice ", zloc)
+            for yloc in range(0, ysize):
+                for xloc in range(0, xsize):
+                    resampledtcs[xloc, yloc, zloc, :] = tide_resample.doresample(
+                        input_x,
+                        input_data[xloc, yloc, zloc, :],
+                        output_x,
+                        antialias=args.antialias,
+                    )
 
-    # cycle over all voxels
-    print("now cycling over all voxels")
-    for zloc in range(0, numslices):
-        print("processing slice ", zloc)
-        for yloc in range(0, ysize):
-            for xloc in range(0, xsize):
-                resampledtcs[xloc, yloc, zloc, :] = tide_resample.doresample(
-                    input_x,
-                    input_data[xloc, yloc, zloc, :],
-                    output_x,
-                    antialias=args.antialias,
-                )
-
-    # now do the ones with other numbers of time points
-    resampled_hdr = input_hdr.copy()
-    resampled_hdr["pixdim"][4] = args.outputtr
-    outputroot, dummy = tide_io.niftisplitext(args.outputfile)
-    tide_io.savetonifti(resampledtcs, input_hdr, outputroot)
+        # now do the ones with other numbers of time points
+        resampled_hdr = input_hdr.copy()
+        resampled_hdr["pixdim"][4] = args.outputtr
+        outputroot, dummy = tide_io.niftisplitext(args.outputfile)
+        tide_io.savetonifti(resampledtcs, input_hdr, outputroot)
 
 
 if __name__ == "__main__":

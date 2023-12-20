@@ -834,4 +834,4 @@ def complexupsample(inputcplx, debug=False):
         print(f"{inputcplx.shape=}")
         print(f"{upsampled.shape=}")
         print(f"{fftdata.shape=}")
-    return fftpack.ifft(concatfft)
+    return fftpack.ifft(concatfft).real
