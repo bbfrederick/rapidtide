@@ -58,6 +58,12 @@ def main():
         default=None,
     )
     parser.add_argument(
+        "--normalize",
+        action="store_true",
+        help="Normalize data and save as UINT16",
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         help="Print debugging information",
@@ -129,6 +135,10 @@ def main():
             )
             sys.exit()
         cmplxdata = input_data * np.exp(1j * np.pi * phase_data / 4096.0)
+        correctionim = np.conjugate(np.mean(cmplxdata, axis=3))
+        for timepoint in range(timepoints):
+            print(f"aligning timepoint {timepoint}")
+            cmplxdata[:,:,:,timepoint] *= correctionim
         upsampled = np.zeros((xsize, ysize, numslices, 2 * timepoints), dtype=float)
         for k in range(numslices):
             print(f"resampling slice {k}")
