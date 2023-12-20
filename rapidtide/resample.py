@@ -824,11 +824,14 @@ def timewarp(orig_x, orig_y, timeoffset, demean=True, method="univariate", debug
     return doresample(orig_x, orig_y, orig_x + demeanedoffset, method=method, padlen=padlen)
 
 
-def complexupsample(inputcplx, debug=True):
-    thelen = inputcplx.shape
-    fftdata = fftpack.fft(inputcplx)  # do the actual shifting
+def complexupsample(inputcplx, debug=False):
+    fftdata = fftpack.fft(inputcplx)
+    conjdata = np.roll(np.conjugate(fftdata[::-1]), 1)
+    conjdata[0] = 0.0
+    concatfft = np.concatenate([fftdata, conjdata])
     if debug:
         print(f"{thelen=}")
         print(f"{inputcplx.shape=}")
+        print(f"{upsampled.shape=}")
         print(f"{fftdata.shape=}")
-    # shifted_y = fftpack.ifft(modvec * fftdata).real
+    return fftpack.ifft(concatfft)

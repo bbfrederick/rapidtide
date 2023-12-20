@@ -18,13 +18,16 @@ pyfftw.interfaces.cache.enable()
 
 
 def complexupsample(inputcplx, debug=False):
-    thelen = inputcplx.shape
     fftdata = fftpack.fft(inputcplx)
+    conjdata = np.roll(np.conjugate(fftdata[::-1]), 1)
+    conjdata[0] = 0.0
+    concatfft = np.concatenate([fftdata, conjdata])
     if debug:
         print(f"{thelen=}")
         print(f"{inputcplx.shape=}")
+        print(f"{upsampled.shape=}")
         print(f"{fftdata.shape=}")
-    return fftdata
+    return fftpack.ifft(concatfft)
 
 
 def dumparray(thearray, ascomplex=False, showlen=False):
@@ -54,12 +57,12 @@ def main():
     )
     oddreal = oddarray.real
     oddimag = oddarray.imag
-    print("Odd array:")
-    dumparray(oddarray, ascomplex=ascomplex, showlen=showlen)
+    #print("Odd array:")
+    #dumparray(oddarray, ascomplex=ascomplex, showlen=showlen)
     print("\n")
-    oddfft = complexupsample(oddarray, debug=debug)
-    print("Odd FFT:")
-    dumparray(oddfft, ascomplex=ascomplex, showlen=showlen)
+    oddupsampled = complexupsample(oddarray, debug=debug)
+    print("Odd upsampled:")
+    dumparray(oddupsampled, ascomplex=ascomplex, showlen=showlen)
 
     evenxaxis = np.linspace(0.0, totaltime, num=evenlen, endpoint=True) / Fs
     evenarray = np.cos(2.0 * np.pi * wavefreq * evenxaxis) + 1j * np.sin(
@@ -67,12 +70,12 @@ def main():
     )
     evenreal = evenarray.real
     evenimag = evenarray.imag
-    print("Even array:")
-    dumparray(evenarray, ascomplex=ascomplex, showlen=showlen)
+    #print("Even array:")
+    #dumparray(evenarray, ascomplex=ascomplex, showlen=showlen)
     print("\n")
-    evenfft = complexupsample(evenarray.real, debug=debug)
-    print("Even FFT:")
-    dumparray(evenfft, ascomplex=ascomplex, showlen=showlen)
+    evenupsampled = complexupsample(evenarray, debug=debug)
+    print("Even upsampled:")
+    dumparray(evenupsampled, ascomplex=ascomplex, showlen=showlen)
 
 
 if __name__ == "__main__":
