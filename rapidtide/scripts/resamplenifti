@@ -15,15 +15,19 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#
 import argparse
 import sys
 
 import numpy as np
+import pyfftw
 
 import rapidtide.io as tide_io
+import rapidtide.maskutil as tide_mask
 import rapidtide.resample as tide_resample
 import rapidtide.workflows.parser_funcs as pf
+
+fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
 
 
 def main():
@@ -108,6 +112,10 @@ def main():
     xsize = thedims[1]
     ysize = thedims[2]
     numslices = thedims[3]
+    timepoints = thedims[4]
+    numspatiallocs = xsize * ysize * numslices
+
+    mask_data = tide_mask.makeepimask(input_data)
 
     if args.phasefile is not None:
         phase_img, phase_data, phase_hdr, phasedims, phasesizes = tide_io.readfromnifti(
@@ -121,6 +129,14 @@ def main():
             )
             sys.exit()
         cmplxdata = input_data * np.exp(1j * phase_data)
+        cmplxfft = cmplxdata * 0.0
+        for i in range(xsize):
+            for j in range(ysize):
+                for k in range(numslices):
+                    cmplxfft[i, j, k, :] = fftpack.fft(cmplxdata[i, j, k, :])
+                    cmplxfft[i, j, k, (timepoints // 2) :] = 0.0
+                    cmplxdata[i, j, k, :] = fftpack.ifft(cmplxfft[i, j, k, :])
+        tide_io.savetonifti(np.abs(cmplxdata), input_hdr, args.outputfile + "_fft")
         print(input_data.shape, phase_data.shape, cmplxdata.shape)
 
     # make the output array
@@ -143,7 +159,7 @@ def main():
     resampled_hdr = input_hdr.copy()
     resampled_hdr["pixdim"][4] = args.outputtr
     outputroot, dummy = tide_io.niftisplitext(args.outputfile)
-    tide_io.savetonifti(resampledtcs, resampled_hdr, outputroot)
+    tide_io.savetonifti(resampledtcs, input_hdr, outputroot)
 
 
 if __name__ == "__main__":
