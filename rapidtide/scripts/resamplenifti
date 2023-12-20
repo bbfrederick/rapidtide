@@ -115,7 +115,7 @@ def main():
     timepoints = thedims[4]
     numspatiallocs = xsize * ysize * numslices
 
-    mask_data = tide_mask.makeepimask(np.mean(input_data, axis=3))
+    # mask_data = tide_mask.makeepimask(np.mean(input_data, axis=3))
 
     if args.phasefile is not None:
         phase_img, phase_data, phase_hdr, phasedims, phasesizes = tide_io.readfromnifti(
