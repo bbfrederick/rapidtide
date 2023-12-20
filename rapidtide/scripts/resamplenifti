@@ -16,13 +16,13 @@
 #   limitations under the License.
 #
 import argparse
+import copy
 import sys
 
 import numpy as np
 import pyfftw
 
 import rapidtide.io as tide_io
-import copy
 import rapidtide.resample as tide_resample
 import rapidtide.workflows.parser_funcs as pf
 
@@ -138,7 +138,7 @@ def main():
         correctionim = np.conjugate(np.mean(cmplxdata, axis=3))
         for timepoint in range(timepoints):
             print(f"aligning timepoint {timepoint}")
-            cmplxdata[:,:,:,timepoint] *= correctionim
+            cmplxdata[:, :, :, timepoint] *= correctionim
         upsampled = np.zeros((xsize, ysize, numslices, 2 * timepoints), dtype=float)
         for k in range(numslices):
             print(f"resampling slice {k}")
