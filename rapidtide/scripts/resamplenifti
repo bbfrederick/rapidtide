@@ -128,11 +128,12 @@ def main():
                 "Dimensions of " + args.phasefile + " mask do not match the input data - exiting"
             )
             sys.exit()
-        cmplxdata = input_data * np.exp(1j * phase_data)
+        cmplxdata = input_data * np.exp(1j * np.pi * phase_data / 4096.0)
         upsampled = np.zeros((xsize, ysize, numslices, 2 * timepoints), dtype=float)
-        for i in range(xsize):
+        for k in range(numslices):
+            print(f"resampling slice {k}")
             for j in range(ysize):
-                for k in range(numslices):
+                for i in range(xsize):
                     upsampled[i, j, k, :] = tide_resample.complexupsample(cmplxdata[i, j, k, :])
         theheader = copy.deepcopy(input_hdr)
         theheader["dim"][4] = 2 * theheader["dim"][4]
