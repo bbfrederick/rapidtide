@@ -75,7 +75,7 @@ def test_nullsimfunc(debug=False, displayplots=False):
         "windowfunc": "hamming",
         "corrweighting": "None",
         "nprocs": 1,
-        "widthlimit": 1000.0,
+        "widthmax": 1000.0,
         "bipolar": False,
         "fixdelay": False,
         "peakfittype": "gauss",

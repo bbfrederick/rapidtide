@@ -1159,7 +1159,7 @@ def aligntcwithref(
     lagmax=30,
     refine=True,
     zerooutbadfit=False,
-    widthlimit=1000.0,
+    widthmax=1000.0,
     display=False,
     verbose=False,
 ):
@@ -1187,7 +1187,7 @@ def aligntcwithref(
         thexcorr,
         lagmin,
         lagmax,
-        widthlimit=widthlimit,
+        widthmax=widthmax,
         refine=refine,
         useguess=False,
         fastgauss=False,

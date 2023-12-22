@@ -46,7 +46,7 @@ def onesimfuncfit(
 ):
     if initiallag is not None:
         thefitter.setguess(True, maxguess=initiallag)
-        widthlimit = despeckle_thresh
+        widthmax = despeckle_thresh
     else:
         thefitter.setguess(False)
 

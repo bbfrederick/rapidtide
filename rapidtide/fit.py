@@ -785,7 +785,7 @@ def findmaxlag_gauss(
     thexcorr_y,
     lagmin,
     lagmax,
-    widthlimit,
+    widthmax,
     edgebufferfrac=0.0,
     threshval=0.0,
     uthreshval=30.0,
@@ -811,7 +811,7 @@ def findmaxlag_gauss(
     thexcorr_y
     lagmin
     lagmax
-    widthlimit
+    widthmax
     edgebufferfrac
     threshval
     uthreshval
@@ -832,7 +832,7 @@ def findmaxlag_gauss(
 
     """
     # set initial parameters
-    # widthlimit is in seconds
+    # widthmax is in seconds
     # maxsigma is in Hz
     # maxlag is in seconds
     warnings.filterwarnings("ignore", "Number*")
@@ -843,7 +843,7 @@ def findmaxlag_gauss(
     maskval = np.uint16(1)
     numlagbins = len(thexcorr_y)
     binwidth = thexcorr_x[1] - thexcorr_x[0]
-    searchbins = int(widthlimit // binwidth)
+    searchbins = int(widthmax // binwidth)
     lowerlim = int(numlagbins * edgebufferfrac)
     upperlim = numlagbins - lowerlim - 1
     if tweaklims:
@@ -866,14 +866,14 @@ def findmaxlag_gauss(
     # start with finding the maximum value
     if useguess:
         maxindex = tide_util.valtoindex(thexcorr_x, maxguess)
-        nlowerlim = int(maxindex - widthlimit / 2.0)
-        nupperlim = int(maxindex + widthlimit / 2.0)
+        nlowerlim = int(maxindex - widthmax / 2.0)
+        nupperlim = int(maxindex + widthmax / 2.0)
         if nlowerlim < lowerlim:
             nlowerlim = lowerlim
-            nupperlim = lowerlim + int(widthlimit)
+            nupperlim = lowerlim + int(widthmax)
         if nupperlim > upperlim:
             nupperlim = upperlim
-            nlowerlim = upperlim - int(widthlimit)
+            nlowerlim = upperlim - int(widthmax)
         maxval_init = thexcorr_y[maxindex].astype("float64")
     else:
         maxindex = (np.argmax(thexcorr_y[lowerlim:upperlim]) + lowerlim).astype("int32")
@@ -925,9 +925,9 @@ def findmaxlag_gauss(
         maxsigma_init = np.float64(
             (3.0 * binwidth / (2.0 * np.sqrt(-np.log(searchfrac)))) / np.sqrt(2.0)
         )
-    if maxsigma_init > widthlimit:
+    if maxsigma_init > widthmax:
         failreason += FML_BADWIDTH
-        maxsigma_init = widthlimit
+        maxsigma_init = widthmax
     if (maxval_init < threshval) and enforcethresh:
         failreason += FML_BADAMPLOW
     if maxval_init < 0.0:
@@ -1081,7 +1081,7 @@ def findmaxlag_gauss_rev(
     thexcorr_y,
     lagmin,
     lagmax,
-    widthlimit,
+    widthmax,
     absmaxsigma=1000.0,
     hardlimit=True,
     bipolar=False,
@@ -1112,7 +1112,7 @@ def findmaxlag_gauss_rev(
         The minimum allowed lag time in seconds
     lagmax: float
         The maximum allowed lag time in seconds
-    widthlimit: float
+    widthmax: float
         The maximum allowed peak halfwidth in seconds
     absmaxsigma
     hardlimit
@@ -1138,7 +1138,7 @@ def findmaxlag_gauss_rev(
 
     """
     # set initial parameters
-    # widthlimit is in seconds
+    # widthmax is in seconds
     # maxsigma is in Hz
     # maxlag is in seconds
     warnings.filterwarnings("ignore", "Number*")
@@ -1382,7 +1382,7 @@ def findmaxlag_quad(
     thexcorr_y,
     lagmin,
     lagmax,
-    widthlimit,
+    widthmax,
     edgebufferfrac=0.0,
     threshval=0.0,
     uthreshval=30.0,
@@ -1405,7 +1405,7 @@ def findmaxlag_quad(
     thexcorr_y
     lagmin
     lagmax
-    widthlimit
+    widthmax
     edgebufferfrac
     threshval
     uthreshval
@@ -1425,7 +1425,7 @@ def findmaxlag_quad(
 
     """
     # set initial parameters
-    # widthlimit is in seconds
+    # widthmax is in seconds
     # maxsigma is in Hz
     # maxlag is in seconds
     warnings.filterwarnings("ignore", "Number*")
@@ -1433,7 +1433,7 @@ def findmaxlag_quad(
     maskval = np.uint16(1)
     numlagbins = len(thexcorr_y)
     binwidth = thexcorr_x[1] - thexcorr_x[0]
-    searchbins = int(widthlimit // binwidth)
+    searchbins = int(widthmax // binwidth)
     lowerlim = int(numlagbins * edgebufferfrac)
     upperlim = numlagbins - lowerlim - 1
     if tweaklims:

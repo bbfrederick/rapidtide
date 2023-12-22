@@ -196,7 +196,7 @@ def main():
     sampletime = 1.0 / Fs
     xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
     searchrange = 15.0
-    widthlimit = 15.0
+    widthmax = 15.0
 
     halfwindow = int(searchrange * Fs)
     corrzero = xcorrlen // 2
@@ -238,7 +238,7 @@ def main():
                 thexcorr[searchstart:searchend],
                 -searchrange,
                 searchrange,
-                widthlimit,
+                widthmax,
                 refine=True,
                 useguess=False,
                 fastgauss=False,

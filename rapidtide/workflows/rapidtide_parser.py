@@ -38,7 +38,8 @@ DEFAULT_CORRMASK_THRESHPCT = 1.0
 DEFAULT_MUTUALINFO_SMOOTHINGTIME = 3.0
 DEFAULT_LAGMIN = -30.0
 DEFAULT_LAGMAX = 30.0
-DEFAULT_SIGMALIMIT = 1000.0
+DEFAULT_SIGMAMAX = 1000.0
+DEFAULT_SIGMAMIN = 0.0
 DEFAULT_DESPECKLE_PASSES = 4
 DEFAULT_DESPECKLE_THRESH = 5.0
 DEFAULT_PASSES = 3
@@ -650,15 +651,15 @@ def _get_parser():
     )
     corr_fit.add_argument(
         "--sigmalimit",
-        dest="widthlimit",
+        dest="widthmax",
         action="store",
         type=float,
         metavar="SIGMALIMIT",
         help=(
             "Reject lag fits with linewidth wider than "
-            f"SIGMALIMIT Hz. Default is {DEFAULT_SIGMALIMIT} Hz."
+            f"SIGMALIMIT Hz. Default is {DEFAULT_SIGMAMAX} Hz."
         ),
-        default=DEFAULT_SIGMALIMIT,
+        default=DEFAULT_SIGMAMAX,
     )
     corr_fit.add_argument(
         "--bipolar",

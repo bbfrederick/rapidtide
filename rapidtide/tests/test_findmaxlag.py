@@ -74,7 +74,7 @@ def test_findmaxlag(displayplots=False, fittype="gauss", debug=False):
     # set some fit parameters
     lagmin = -20.0
     lagmax = 20.0
-    widthlimit = 1000.0
+    widthmax = 1000.0
     absmaxsigma = 1000.0
     absminsigma = 0.1
     absmaxval = 1.0
@@ -129,7 +129,7 @@ def test_findmaxlag(displayplots=False, fittype="gauss", debug=False):
             yvecs,
             lagmin,
             lagmax,
-            widthlimit,
+            widthmax,
             tweaklims=False,
             refine=True,
             debug=debug,
@@ -241,7 +241,7 @@ def test_findmaxlag(displayplots=False, fittype="gauss", debug=False):
             yvecs,
             lagmin,
             lagmax,
-            widthlimit,
+            widthmax,
             tweaklims=False,
             refine=True,
             debug=debug,
