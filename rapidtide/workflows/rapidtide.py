@@ -775,12 +775,12 @@ def rapidtide_main(argparsingfunc):
         ) = tide_io.readvectorsfromtextfile(regressorfilename, onecol=True)
         inputfreq = optiondict["inputfreq"]
         inputstarttime = optiondict["inputstarttime"]
-        if inputfreq is None:
+        if not args["inputfreq_nondefault"]:
+            # user did not set inputfreq on the command line
             if fileinputfreq is not None:
                 inputfreq = fileinputfreq
             else:
-                inputfreq = 1.0 / fmritr
-            LGR.warning(f"no regressor frequency specified - defaulting to {inputfreq} (1/tr)")
+                LGR.warning(f"no regressor frequency specified - defaulting to {inputfreq} (1/tr)")
         if inputstarttime is None:
             if filestarttime is not None:
                 inputstarttime = filestarttime

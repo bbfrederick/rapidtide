@@ -1575,6 +1575,9 @@ def process_args(inputargs=None):
 
     if args["inputfreq"] == "auto":
         args["inputfreq"] = 1.0 / fmri_tr
+        args["inputfreq_nondefault"] = False
+    else:
+        args["inputfreq_nondefault"] = True
 
     if args["noisetimecoursespec"] is not None:
         (
