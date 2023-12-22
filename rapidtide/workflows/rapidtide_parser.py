@@ -1448,7 +1448,7 @@ def process_args(inputargs=None):
     # width of the reference autocorrelation function
     args["absmaxsigma"] = 10000.0
     # width of the reference autocorrelation function
-    args["absminsigma"] = 0.25
+    args["absminsigma"] = 0.05
     # search window width for noise regressor mutual information function
     args["noisesearchwindow"] = 30.0
 
