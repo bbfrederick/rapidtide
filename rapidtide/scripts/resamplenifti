@@ -50,14 +50,6 @@ def main():
         default=True,
     )
     parser.add_argument(
-        "--phasefile",
-        dest="phasefile",
-        type=lambda x: pf.is_valid_file(parser, x),
-        metavar="PHASEFILE",
-        help="Phase map for the inputfile.",
-        default=None,
-    )
-    parser.add_argument(
         "--normalize",
         action="store_true",
         help="Normalize data and save as UINT16",
@@ -123,54 +115,27 @@ def main():
 
     # mask_data = tide_mask.makeepimask(np.mean(input_data, axis=3))
 
-    if args.phasefile is not None:
-        phase_img, phase_data, phase_hdr, phasedims, phasesizes = tide_io.readfromnifti(
-            args.phasefile
-        )
-        if (not tide_io.checkspacematch(phase_hdr, input_hdr)) or (
-            not tide_io.checktimematch(phasedims, thedims)
-        ):
-            print(
-                "Dimensions of " + args.phasefile + " mask do not match the input data - exiting"
-            )
-            sys.exit()
-        cmplxdata = input_data * np.exp(1j * np.pi * phase_data / 4096.0)
-        correctionim = np.conjugate(np.mean(cmplxdata, axis=3))
-        for timepoint in range(timepoints):
-            print(f"aligning timepoint {timepoint}")
-            cmplxdata[:, :, :, timepoint] *= correctionim
-        upsampled = np.zeros((xsize, ysize, numslices, 2 * timepoints), dtype=float)
-        for k in range(numslices):
-            print(f"resampling slice {k}")
-            for j in range(ysize):
-                for i in range(xsize):
-                    upsampled[i, j, k, :] = tide_resample.complexupsample(cmplxdata[i, j, k, :])
-        theheader = copy.deepcopy(input_hdr)
-        theheader["dim"][4] = 2 * theheader["dim"][4]
-        theheader["pixdim"][4] = theheader["pixdim"][4] / 2.0
-        tide_io.savetonifti(upsampled, theheader, args.outputfile)
-    else:
-        # make the output array
-        resampledtcs = np.zeros((xsize, ysize, numslices, len(output_x)), dtype="float")
+    # make the output array
+    resampledtcs = np.zeros((xsize, ysize, numslices, len(output_x)), dtype="float")
 
-        # cycle over all voxels
-        print("now cycling over all voxels")
-        for zloc in range(0, numslices):
-            print("processing slice ", zloc)
-            for yloc in range(0, ysize):
-                for xloc in range(0, xsize):
-                    resampledtcs[xloc, yloc, zloc, :] = tide_resample.doresample(
-                        input_x,
-                        input_data[xloc, yloc, zloc, :],
-                        output_x,
-                        antialias=args.antialias,
-                    )
+    # cycle over all voxels
+    print("now cycling over all voxels")
+    for zloc in range(0, numslices):
+        print("processing slice ", zloc)
+        for yloc in range(0, ysize):
+            for xloc in range(0, xsize):
+                resampledtcs[xloc, yloc, zloc, :] = tide_resample.doresample(
+                    input_x,
+                    input_data[xloc, yloc, zloc, :],
+                    output_x,
+                    antialias=args.antialias,
+                )
 
-        # now do the ones with other numbers of time points
-        resampled_hdr = input_hdr.copy()
-        resampled_hdr["pixdim"][4] = args.outputtr
-        outputroot, dummy = tide_io.niftisplitext(args.outputfile)
-        tide_io.savetonifti(resampledtcs, input_hdr, outputroot)
+    # now do the ones with other numbers of time points
+    resampled_hdr = input_hdr.copy()
+    resampled_hdr["pixdim"][4] = args.outputtr
+    outputroot, dummy = tide_io.niftisplitext(args.outputfile)
+    tide_io.savetonifti(resampledtcs, input_hdr, outputroot)
 
 
 if __name__ == "__main__":
