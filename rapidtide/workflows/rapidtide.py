@@ -641,30 +641,6 @@ def rapidtide_main(argparsingfunc):
         fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
         TimingLGR.verbose("End moving fmri_data to shared memory")
 
-    # get rid of memory we aren't using
-    tide_util.logmem("before purging full sized fmri data")
-    meanvalue = np.mean(
-        nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
-        axis=1,
-    )
-
-    # calculate the global mean whether we intend to use it or not, before deleting full fmri_data array
-    meanfreq = 1.0 / fmritr
-    meanperiod = 1.0 * fmritr
-    meanstarttime = 0.0
-    meanvec, meanmask = getglobalsignal(
-        fmri_data,
-        optiondict,
-        includemask=internalglobalmeanincludemask,
-        excludemask=internalglobalmeanexcludemask,
-        pcacomponents=optiondict["globalpcacomponents"],
-    )
-
-    del fmri_data
-    del nim_data
-    gc.collect()
-    tide_util.logmem("after purging full sized fmri data")
-
     # filter out motion regressors here
     if optiondict["motionfilename"] is not None:
         LGR.info("regressing out motion")
@@ -719,6 +695,30 @@ def rapidtide_main(argparsingfunc):
                     nim_hdr,
                     savename,
                 )
+
+    # get rid of memory we aren't using
+    tide_util.logmem("before purging full sized fmri data")
+    meanvalue = np.mean(
+        nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
+        axis=1,
+    )
+
+    # calculate the global mean whether we intend to use it or not, before deleting full fmri_data array
+    meanfreq = 1.0 / fmritr
+    meanperiod = 1.0 * fmritr
+    meanstarttime = 0.0
+    meanvec, meanmask = getglobalsignal(
+        fmri_data,
+        optiondict,
+        includemask=internalglobalmeanincludemask,
+        excludemask=internalglobalmeanexcludemask,
+        pcacomponents=optiondict["globalpcacomponents"],
+    )
+
+    del fmri_data
+    del nim_data
+    gc.collect()
+    tide_util.logmem("after purging full sized fmri data")
 
     # read in the timecourse to resample
     TimingLGR.info("Start of reference prep")
