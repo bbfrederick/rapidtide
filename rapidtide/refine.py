@@ -137,6 +137,27 @@ def refineregressor(
     rt_floattype="float64",
 ):
     """
+    This routine generates a new, refined regressor given the results of a correlation and fitting pass.
+    Inputs are:
+        fmridata - the fmri data, filtered to the passband
+        fmritr - the timestep of the data
+        passnum - the number of the pass (for labelling)
+        lagstrengths, lagtimes, lagsigma, lagmask, R2 - the results of the correlation fit.
+        theprefilter - the filter to apply to data
+        optiondict - all the various options you'll need to process things
+
+    Explicit outputs are:
+        volumetotal - the number of voxels processed
+        outputdata - the refined regressor
+        refinemask - map of voxels used to generate the refined regressor
+        locationfails - number of voxels rejected due to being outside a mask
+        ampfails - number of voxels that failed due to correlation strength limits
+        lagfails - number of voxels that failed due to correlation lagtime limits
+        sigmafails - number of voxels that failed due to correlation width limits
+
+    Implicit outputs:
+        shiftedtcs - voxelwise fmri data timeshifted to zero lag
+        weights - the weights of every timepoint in the final regressor
 
     Parameters
     ----------
@@ -145,7 +166,7 @@ def refineregressor(
     fmritr : float
         Data repetition rate, in seconds
     shiftedtcs : 4D numpy float array
-        Time aligned voxel timecourses
+        Destination array for time aligned voxel timecourses
     weights :  unknown
         unknown
     passnum : int
