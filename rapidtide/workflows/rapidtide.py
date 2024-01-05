@@ -697,7 +697,7 @@ def rapidtide_main(argparsingfunc):
             motionregressors,
             1.0 / fmritr,
             columns=motionregressorlabels,
-            append=True,
+            append=False,
         )
         if optiondict["memprofile"]:
             memcheckpoint("...done")
