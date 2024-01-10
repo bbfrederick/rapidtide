@@ -2062,7 +2062,7 @@ def rapidtide_main(argparsingfunc):
                 medianlags,
                 0.0,
             )
-            if optiondict["savedespecklemasks"]:
+            if optiondict["savedespecklemasks"] and (optiondict["despeckle_passes"] > 0):
                 despecklesavemask = np.where(
                     internaldespeckleincludemask[validvoxels] == 0.0, 0, 1
                 )
@@ -2349,7 +2349,7 @@ def rapidtide_main(argparsingfunc):
                 ("fitmask", "fitmask"),
                 ("failreason", "corrfitfailreason"),
             ]
-            if optiondict["savedespecklemasks"]:
+            if optiondict["savedespecklemasks"] and (optiondict["despeckle_passes"] > 0):
                 maplist.append(("despecklesavemask", "despecklemask"))
             if thepass < optiondict["passes"]:
                 maplist.append(("refinemask", "refinemask"))
