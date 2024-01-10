@@ -775,7 +775,7 @@ def rapidtide_main(argparsingfunc):
         ) = tide_io.readvectorsfromtextfile(regressorfilename, onecol=True)
         inputfreq = optiondict["inputfreq"]
         inputstarttime = optiondict["inputstarttime"]
-        if not args["inputfreq_nondefault"]:
+        if not optiondict["inputfreq_nondefault"]:
             # user did not set inputfreq on the command line
             if fileinputfreq is not None:
                 inputfreq = fileinputfreq
