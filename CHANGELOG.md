@@ -1,5 +1,12 @@
 # Release history
 
+## Version 2.7.4 (1/10/24)
+* (rapidtide) Fixed a crash when despeckling is turned off. (thank you to Wesley Richerson for finding this).
+* (rapidtide) Adjusted the regreessor frequency setting logic.
+* (rapidtide) Adjusted the default absminsigma to 0.05s.
+* (rapidtide) Moved motion regression before global mean correction.
+* (rapidtide) Properly reinitialize the motion regression output file if you have a previous run.
+
 ## Version 2.7.3.3 (12/18/23)
 * (rapidtide-cloud) Another bump to improve NDA access.
 
