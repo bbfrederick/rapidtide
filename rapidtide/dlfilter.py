@@ -28,7 +28,10 @@ import sys
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import pyfftw
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import pyfftw
 import pyfftw.interfaces.scipy_fftpack as fftpack
 from statsmodels.robust.scale import mad
 

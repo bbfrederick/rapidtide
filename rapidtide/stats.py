@@ -21,7 +21,10 @@
 #
 import matplotlib.pyplot as plt
 import numpy as np
-import pyfftw
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import pyfftw
 import scipy as sp
 from scipy.stats import johnsonsb, kurtosis, kurtosistest
 

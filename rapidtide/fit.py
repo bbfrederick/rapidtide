@@ -23,7 +23,10 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pyfftw
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import pyfftw
 import scipy as sp
 import scipy.special as sps
 from scipy.signal import find_peaks, hilbert

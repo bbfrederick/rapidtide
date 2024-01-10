@@ -23,7 +23,10 @@ import sys
 import time
 
 import numpy as np
-import pyfftw
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import pyfftw
 import pylab as pl
 import scipy as sp
 from scipy import fftpack, signal
