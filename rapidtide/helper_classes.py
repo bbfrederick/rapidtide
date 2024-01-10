@@ -922,6 +922,7 @@ class SimilarityFunctionFitter:
             peakstart = np.max([1, maxindex - 2])
             peakend = np.min([len(self.corrtimeaxis) - 2, maxindex + 2])
         else:
+            # come here for peakfittype of None, quad, gauss, fastgauss
             thegrad = np.gradient(corrfunc).astype(
                 "float64"
             )  # the gradient of the correlation function
