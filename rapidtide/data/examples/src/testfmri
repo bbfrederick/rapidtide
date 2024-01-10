@@ -1,61 +1,21 @@
 #!/bin/bash
 
-#rapidtide \
-	#--spatialfilt 2 \
-        #--nprocs -1 \
-        #--passes 3 \
-        #--similaritymetric hybrid \
-        #--norefinedespeckled \
-        #--spacetolerance 1.0e-3 \
-        #--filterband lfo \
-        #--nolimitoutput \
-        #--corrtype linear \
-        #--offsetinclude sub-RAPIDTIDETEST_cerebellarmask.nii.gz \
-        #sub-HAPPYTEST.nii.gz \
-        #../dst/sub-HAPPYTESTRAPIDTIDE
-
-#rapidtide \
-	#--spatialfilt 2 \
-        #--nprocs -1 \
-        #--passes 3 \
-        #--similaritymetric hybrid \
-        #--norefinedespeckled \
-        #--filterband lfo \
-        #--nolimitoutput \
-        #--corrtype linear \
-        #sub-RAPIDTIDETEST.nii.gz \
-        #--infotag tag1 value1 \
-        #--infotag tag2 value2 \
-        #../dst/sub-RAPIDTIDETEST_tagged
-
-#rapidtide \
-#	--spatialfilt 2.5 \
-#        --nprocs -1 \
-#        --passes 3 \
-#        --nofitfilt \
-#        --acfix \
-#        --similaritymetric hybrid \
-#        --norefinedespeckled \
-#        --filterband lfo \
-#        --disabledockermemfix \
-#        --corrtype linear \
-#        sub-RAPIDTIDETEST.nii.gz \
-#        ../dst/sub-RAPIDTIDETEST_s2p5
-
-rapidtide \
-	--spatialfilt 2 \
-        --nprocs -1 \
-        --passes 3 \
-        --nofitfilt \
-        --acfix \
-        --similaritymetric hybrid \
-        --norefinedespeckled \
-        --filterband lfo \
-        --corrweighting regressor \
-        --corrtype linear \
-        --disabledockermemfix \
-        sub-RAPIDTIDETEST.nii.gz \
-        ../dst/sub-RAPIDTIDETEST_weighted2_linear
+for fittype in None quad fastquad COM gauss fastgauss
+do
+    rapidtide \
+	    --spatialfilt 2 \
+            --nprocs -1 \
+            --passes 3 \
+            --nofitfilt \
+            --despecklepasses 0 \
+            --acfix \
+            --filterband lfo \
+            --corrweighting regressor \
+            --corrtype linear \
+            --peakfittype ${fittype} \
+            sub-RAPIDTIDETEST.nii.gz \
+            ../dst/sub-RAPIDTIDETEST_${fittype}_nodespeckle
+done
 
 #rapidtide \
 	#--spatialfilt 2 \
