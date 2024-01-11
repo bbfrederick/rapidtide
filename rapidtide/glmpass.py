@@ -35,6 +35,8 @@ def _procOneItemGLM(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="
     thefit, R = tide_fit.mlregress(theevs, thedata)
     fitcoeff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoeff * theevs)
+    if fitcoeff == 0.0:
+        R = 0.0
     return (
         vox,
         rt_floatset(thefit[0, 0]),
