@@ -120,7 +120,7 @@ def _procOneVoxelFitcorr(
 
     # question - should maxlag be added or subtracted?  As of 10/18, it is subtracted
     #  potential answer - tried adding, results are terrible.
-    thelagtc = rt_floatset(lagtcgenerator.yfromx(timeaxis - maxlag))
+    thelagtc = 0.0 * rt_floatset(lagtcgenerator.yfromx(timeaxis - maxlag))
 
     # now tuck everything away in the appropriate output array
     volumetotalinc = 0

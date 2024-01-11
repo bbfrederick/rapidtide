@@ -41,6 +41,7 @@ import rapidtide.fit as tide_fit
 import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
+import rapidtide.makelaggedtcs as tide_makelagged
 import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
@@ -2303,7 +2304,7 @@ def rapidtide_main(argparsingfunc):
                     thefit, R = tide_fit.mlregress(tmaskos_y, resampref_y)
                     resampref_y -= thefit[0, 1] * tmaskos_y
 
-                # reinitialize lagtc for resampling
+                # reinitialize genlagtc for resampling
                 previousnormoutputdata = normoutputdata + 0.0
                 genlagtc = tide_resample.FastResampler(
                     initial_fmri_x, normoutputdata, padtime=padtime
@@ -2642,7 +2643,39 @@ def rapidtide_main(argparsingfunc):
         else:
             tide_util.logmem("before glm")
 
+        # generate the voxel specific regressors
+        LGR.info("Start lagged timecourse creation")
+        TimingLGR.info("Start lagged timecourse creation")
+        makelagged_func = addmemprofiling(
+            tide_makelagged.makelaggedtcs,
+            optiondict["memprofile"],
+            "before making lagged timecourses",
+        )
+        voxelsprocessed_makelagged = tide_makelagged.makelaggedtcs(
+            genlagtc,
+            initial_fmri_x,
+            fitmask,
+            lagtimes,
+            lagtc,
+            nprocs=optiondict["nprocs_fitcorr"],
+            alwaysmultiproc=optiondict["alwaysmultiproc"],
+            showprogressbar=optiondict["showprogressbar"],
+            chunksize=optiondict["mp_chunksize"],
+            rt_floatset=rt_floatset,
+            rt_floattype=rt_floattype,
+        )
+        LGR.info("End lagged timecourse creation")
+        TimingLGR.info(
+            "Lagged timecourse creation end",
+            {
+                "message2": voxelsprocessed_makelagged,
+                "message3": "voxels",
+            },
+        )
+
         # and do the filtering
+        LGR.info("Start filtering operation")
+        TimingLGR.info("Start filtering operation")
         glmpass_func = addmemprofiling(
             tide_glmpass.glmpass, optiondict["memprofile"], "before glmpass"
         )
@@ -2683,6 +2716,7 @@ def rapidtide_main(argparsingfunc):
         varchange[divlocs] = finalvariance[divlocs] / initialvariance[divlocs] - 1.0
         del fmri_data_valid
 
+        LGR.info("End filtering operation")
         TimingLGR.info(
             "GLM filtering end",
             {
