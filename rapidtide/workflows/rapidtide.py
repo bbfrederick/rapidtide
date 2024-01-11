@@ -326,6 +326,11 @@ def rapidtide_main(argparsingfunc):
     else:
         optiondict["nprocs_fitcorr"] = optiondict["nprocs"]
 
+    if optiondict["singleproc_makelaggedtcs"]:
+        optiondict["nprocs_makelaggedtcs"] = 1
+    else:
+        optiondict["nprocs_makelaggedtcs"] = optiondict["nprocs"]
+
     if optiondict["singleproc_glm"]:
         optiondict["nprocs_glm"] = 1
     else:
@@ -1296,11 +1301,6 @@ def rapidtide_main(argparsingfunc):
             nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
     internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-    if optiondict["sharedmem"]:
-        lagtc, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
-    else:
-        lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-    tide_util.logmem("after lagtc array allocation")
 
     if (
         optiondict["passes"] > 1
@@ -1956,9 +1956,6 @@ def rapidtide_main(argparsingfunc):
             initlags = None
 
         voxelsprocessed_fc = fitcorr_func(
-            genlagtc,
-            initial_fmri_x,
-            lagtc,
             trimmedcorrscale,
             thefitter,
             corrout,
@@ -2016,9 +2013,6 @@ def rapidtide_main(argparsingfunc):
                 if len(initlags) > 0:
                     if len(np.where(initlags != -1000000.0)[0]) > 0:
                         voxelsprocessed_thispass = fitcorr_func(
-                            genlagtc,
-                            initial_fmri_x,
-                            lagtc,
                             trimmedcorrscale,
                             thefitter,
                             corrout,
@@ -2625,6 +2619,7 @@ def rapidtide_main(argparsingfunc):
             fitNorm, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             fitcoeff, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             movingsignal, dummy, dummy = allocshared(internalvalidfmrishape, rt_outfloatset)
+            lagtc, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
             filtereddata, dummy, dummy = allocshared(internalvalidfmrishape, rt_outfloatset)
         else:
             glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
@@ -2633,6 +2628,7 @@ def rapidtide_main(argparsingfunc):
             fitNorm = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             fitcoeff = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+            lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
 
         if optiondict["memprofile"]:
@@ -2657,7 +2653,7 @@ def rapidtide_main(argparsingfunc):
             fitmask,
             lagtimes,
             lagtc,
-            nprocs=optiondict["nprocs_fitcorr"],
+            nprocs=optiondict["nprocs_makelaggedtcs"],
             alwaysmultiproc=optiondict["alwaysmultiproc"],
             showprogressbar=optiondict["showprogressbar"],
             chunksize=optiondict["mp_chunksize"],

@@ -83,8 +83,6 @@ def onesimfuncfit(
 def _procOneVoxelFitcorr(
     vox,
     corr_y,
-    lagtcgenerator,
-    timeaxis,
     thefitter,
     disablethresholds=False,
     despeckle_thresh=5.0,
@@ -118,10 +116,6 @@ def _procOneVoxelFitcorr(
     if maxval > 0.3:
         displayplots = False
 
-    # question - should maxlag be added or subtracted?  As of 10/18, it is subtracted
-    #  potential answer - tried adding, results are terrible.
-    thelagtc = 0.0 * rt_floatset(lagtcgenerator.yfromx(timeaxis - maxlag))
-
     # now tuck everything away in the appropriate output array
     volumetotalinc = 0
     thewindowout = rt_floatset(0.0 * corr_y)
@@ -151,7 +145,6 @@ def _procOneVoxelFitcorr(
     return (
         vox,
         volumetotalinc,
-        thelagtc,
         thetime,
         thestrength,
         thesigma,
@@ -164,9 +157,6 @@ def _procOneVoxelFitcorr(
 
 
 def fitcorr(
-    lagtcgenerator,
-    timeaxis,
-    lagtc,
     corrtimescale,
     thefitter,
     corrout,
@@ -207,9 +197,6 @@ def fitcorr(
         fitfails,
     ) = (0, 0, 0, 0, 0, 0, 0, 0)
 
-    zerolagtc = rt_floatset(lagtcgenerator.yfromx(timeaxis))
-    sliceoffsettime = 0.0
-
     if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def fitcorr_consumer(inQ, outQ):
@@ -231,8 +218,6 @@ def fitcorr(
                         _procOneVoxelFitcorr(
                             val,
                             corrout[val, :],
-                            lagtcgenerator,
-                            timeaxis,
                             thefitter,
                             disablethresholds=False,
                             despeckle_thresh=despeckle_thresh,
@@ -264,33 +249,32 @@ def fitcorr(
                 | thefitter.FML_INITAMPHIGH
                 | thefitter.FML_FITAMPLOW
                 | thefitter.FML_FITAMPHIGH
-            ) & voxel[10]:
+            ) & voxel[9]:
                 ampfails += 1
-            if (thefitter.FML_INITWIDTHLOW | thefitter.FML_FITWIDTHLOW) & voxel[10]:
+            if (thefitter.FML_INITWIDTHLOW | thefitter.FML_FITWIDTHLOW) & voxel[9]:
                 lowwidthfails += 1
-            if (thefitter.FML_INITWIDTHHIGH | thefitter.FML_FITWIDTHHIGH) & voxel[10]:
+            if (thefitter.FML_INITWIDTHHIGH | thefitter.FML_FITWIDTHHIGH) & voxel[9]:
                 highwidthfails += 1
-            if (thefitter.FML_INITLAGLOW | thefitter.FML_FITLAGLOW) & voxel[10]:
+            if (thefitter.FML_INITLAGLOW | thefitter.FML_FITLAGLOW) & voxel[9]:
                 lowlagfails += 1
-            if (thefitter.FML_INITLAGHIGH | thefitter.FML_FITLAGHIGH) & voxel[10]:
+            if (thefitter.FML_INITLAGHIGH | thefitter.FML_FITLAGHIGH) & voxel[9]:
                 highlagfails += 1
-            if thefitter.FML_INITFAIL & voxel[10]:
+            if thefitter.FML_INITFAIL & voxel[9]:
                 initfails += 1
-            if thefitter.FML_FITFAIL & voxel[10]:
+            if thefitter.FML_FITFAIL & voxel[9]:
                 fitfails += 1
 
             # if this is a despeckle pass, only accept the new values if the fit did not fail
-            if (voxel[10] == 0) or not despeckling:
+            if (voxel[9] == 0) or not despeckling:
                 volumetotal += voxel[1]
-                lagtc[voxel[0], :] = voxel[2]
-                lagtimes[voxel[0]] = voxel[3]
-                lagstrengths[voxel[0]] = voxel[4]
-                lagsigma[voxel[0]] = voxel[5]
-                gaussout[voxel[0], :] = voxel[6]
-                windowout[voxel[0], :] = voxel[7]
-                R2[voxel[0]] = voxel[8]
-                lagmask[voxel[0]] = voxel[9]
-                failimage[voxel[0]] = voxel[10] & 0xFFFF
+                lagtimes[voxel[0]] = voxel[2]
+                lagstrengths[voxel[0]] = voxel[3]
+                lagsigma[voxel[0]] = voxel[4]
+                gaussout[voxel[0], :] = voxel[5]
+                windowout[voxel[0], :] = voxel[6]
+                R2[voxel[0]] = voxel[7]
+                lagmask[voxel[0]] = voxel[8]
+                failimage[voxel[0]] = voxel[9] & 0xFFFF
 
         del data_out
     else:
@@ -313,7 +297,6 @@ def fitcorr(
                 (
                     dummy,
                     volumetotalinc,
-                    lagtc[vox, :],
                     lagtimes[vox],
                     lagstrengths[vox],
                     lagsigma[vox],
@@ -325,8 +308,6 @@ def fitcorr(
                 ) = _procOneVoxelFitcorr(
                     vox,
                     corrout[vox, :],
-                    lagtcgenerator,
-                    timeaxis,
                     thefitter,
                     disablethresholds=False,
                     despeckle_thresh=despeckle_thresh,

@@ -1382,6 +1382,13 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
+        "--singleproc_makelaggedtcs",
+        dest="singleproc_makelaggedtcs",
+        action="store_true",
+        help=("Force single proc path for makelaggedtcs."),
+        default=False,
+    )
+    debugging.add_argument(
         "--singleproc_glm",
         dest="singleproc_glm",
         action="store_true",
