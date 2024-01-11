@@ -173,6 +173,7 @@ def fitcorr(
     nprocs=1,
     alwaysmultiproc=False,
     fixdelay=False,
+    fixdelayvalue=0.0,
     showprogressbar=True,
     chunksize=1000,
     despeckle_thresh=5.0,
@@ -210,10 +211,17 @@ def fitcorr(
                         break
 
                     # process and send the data
-                    if initiallags is None:
+                    if (lagmask is None) or (initiallags is None):
                         thislag = None
                     else:
-                        thislag = initiallags[val]
+                        if lagmask[val] > 0:
+                            thislag = initiallags[val]
+                        else:
+                            thislag = None
+                    """if initiallags is None:
+                        thislag = None
+                    else:
+                        thislag = initiallags[val]"""
                     outQ.put(
                         _procOneVoxelFitcorr(
                             val,
@@ -223,7 +231,7 @@ def fitcorr(
                             despeckle_thresh=despeckle_thresh,
                             initiallag=thislag,
                             fixdelay=fixdelay,
-                            fixeddelayvalue=0.0,
+                            fixeddelayvalue=fixdelayvalue,
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
@@ -313,6 +321,7 @@ def fitcorr(
                     despeckle_thresh=despeckle_thresh,
                     initiallag=thislag,
                     fixdelay=fixdelay,
+                    fixeddelayvalue=fixdelayvalue,
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
                 )
