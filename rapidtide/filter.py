@@ -25,13 +25,15 @@ package.
 """
 
 import sys
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-import warnings
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import pyfftw
+
 from scipy import fftpack, ndimage, signal
 from scipy.signal import savgol_filter
 

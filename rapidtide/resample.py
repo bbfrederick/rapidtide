@@ -24,6 +24,7 @@ import time
 
 import numpy as np
 import warnings
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import pyfftw

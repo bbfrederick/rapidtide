@@ -20,13 +20,15 @@
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 """Functions for calculating correlations and similar metrics between arrays."""
 import logging
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-import warnings
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import pyfftw
+
 import pyfftw.interfaces.scipy_fftpack as fftpack
 import scipy as sp
 from numpy.fft import irfftn, rfftn
