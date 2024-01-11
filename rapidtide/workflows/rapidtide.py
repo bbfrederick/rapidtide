@@ -326,6 +326,11 @@ def rapidtide_main(argparsingfunc):
     else:
         optiondict["nprocs_fitcorr"] = optiondict["nprocs"]
 
+    if optiondict["singleproc_refine"]:
+        optiondict["nprocs_refine"] = 1
+    else:
+        optiondict["nprocs_refine"] = optiondict["nprocs"]
+
     if optiondict["singleproc_makelaggedtcs"]:
         optiondict["nprocs_makelaggedtcs"] = 1
     else:
@@ -2202,6 +2207,10 @@ def rapidtide_main(argparsingfunc):
                 R2,
                 theprefilter,
                 optiondict,
+                nprocs=optiondict["nprocs_refine"],
+                alwaysmultiproc=optiondict["alwaysmultiproc"],
+                showprogressbar=optiondict["showprogressbar"],
+                chunksize=optiondict["mp_chunksize"],
                 bipolar=optiondict["bipolar"],
                 padtrs=numpadtrs,
                 includemask=internalrefineincludemask_valid,
@@ -2439,7 +2448,7 @@ def rapidtide_main(argparsingfunc):
             showprogressbar=optiondict["showprogressbar"],
             chunksize=optiondict["mp_chunksize"],
             nprocs=1,
-            alwaysmultiproc=False,
+            alwaysmultiproc=optiondict["alwaysmultiproc"],
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )

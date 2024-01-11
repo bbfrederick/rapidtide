@@ -128,6 +128,10 @@ def refineregressor(
     R2,
     theprefilter,
     optiondict,
+    nprocs=1,
+    alwaysmultiproc=False,
+    showprogressbar=True,
+    chunksize=1000,
     padtrs=60,
     bipolar=False,
     includemask=None,
@@ -301,7 +305,7 @@ def refineregressor(
     volumetotal = np.sum(shiftmask)
 
     # timeshift the valid voxels
-    if optiondict["nprocs"] > 1:
+    if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def timeshift_consumer(inQ, outQ):
             while True:
@@ -345,9 +349,9 @@ def refineregressor(
             timeshift_consumer,
             inputshape,
             shiftmask,
-            nprocs=optiondict["nprocs"],
-            showprogressbar=True,
-            chunksize=optiondict["mp_chunksize"],
+            nprocs=nprocs,
+            showprogressbar=showprogressbar,
+            chunksize=chunksize,
         )
 
         # unpack the data
@@ -365,7 +369,7 @@ def refineregressor(
             range(0, inputshape[0]),
             desc="Voxel timeshifts",
             unit="voxels",
-            disable=(not optiondict["showprogressbar"]),
+            disable=(not showprogressbar),
         ):
             if shiftmask[vox] > 0.5:
                 retvals = _procOneVoxelTimeShift(

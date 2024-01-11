@@ -1382,6 +1382,13 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
+        "--singleproc_refine",
+        dest="singleproc_refine",
+        action="store_true",
+        help=("Force single proc path for refine."),
+        default=False,
+    )
+    debugging.add_argument(
         "--singleproc_makelaggedtcs",
         dest="singleproc_makelaggedtcs",
         action="store_true",
