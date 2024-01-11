@@ -303,9 +303,6 @@ def test_delayestimation(displayplots=False, debug=False):
         for peakfittype in ["fastgauss", "quad", "fastquad", "gauss"]:
             thefitter.setpeakfittype(peakfittype)
             voxelsprocessed_fc = tide_simfuncfit.fitcorr(
-                genlagtc,
-                timepoints,
-                lagtc,
                 trimmedcorrscale,
                 thefitter,
                 corrout,

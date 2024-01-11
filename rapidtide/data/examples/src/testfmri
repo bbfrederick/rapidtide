@@ -6,6 +6,7 @@ do
 #    rapidtide \
 #            --searchrange -10 15 \
 #            --spatialfilt 2 \
+#            --numnull 50000 \
 #            --nprocs 1 \
 #            --passes 3 \
 #            --nofitfilt \
@@ -34,17 +35,11 @@ do
     rapidtide \
             --searchrange -10 15 \
 	    --spatialfilt 2 \
+            --numnull 31000 \
             --nprocs -1 \
             --passes 3 \
             --nofitfilt \
             --despecklepasses 4 \
-            --singleproc_getNullDist \
-            --singleproc_calcsimilarity \
-            --singleproc_peakeval \
-            --singleproc_fitcorr \
-            --singleproc_refine \
-            --singleproc_makelaggedtcs \
-            --singleproc_glm \
             --acfix \
             --filterband lfo \
             --corrweighting regressor \
@@ -52,6 +47,18 @@ do
             --peakfittype ${fittype} \
             sub-RAPIDTIDETEST.nii.gz \
             ../dst/sub-RAPIDTIDETEST_${fittype}_multiproc_alloff
+#            --singleproc_fitcorr \
+#            --singleproc_getNullDist \
+#            --singleproc_calcsimilarity \
+#            --singleproc_peakeval \
+#            --singleproc_refine \
+#            --singleproc_makelaggedtcs \
+#            --singleproc_glm \
+
+    ../extrasrc/diffmaps \
+        ../dst/sub-RAPIDTIDETEST_${fittype}_multiproc_alloff \
+        ../dst/sub-RAPIDTIDETEST_${fittype}_singleproc \
+        ../dst/thediff_${fittype}
 done
 
 #rapidtide \

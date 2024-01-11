@@ -195,9 +195,6 @@ def test_calcsimfunc(debug=False, displayplots=False):
                 plt.show()
 
             voxelsprocessed_fc = tide_simfuncfit.fitcorr(
-                genlagtc,
-                init_fmri_x,
-                lagtc,
                 trimmedcorrscale,
                 thefitter,
                 corrout,
