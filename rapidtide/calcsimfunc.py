@@ -153,7 +153,6 @@ def correlationpass(
         # unpack the data
         volumetotal = 0
         for voxel in data_out:
-            # corrmask[voxel[0]] = 1
             meanval[voxel[0]] = voxel[1]
             corrout[voxel[0], :] = voxel[2]
             thecorrscale = voxel[3]

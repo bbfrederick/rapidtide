@@ -123,7 +123,6 @@ def getNullDistributionDatax(
         The upper edge of the search range for correlation peaks, in number of bins above corrorigin
 
     """
-
     inputshape = np.asarray([numestreps])
     normalizedreftc = theCorrelator.ncprefilter.apply(
         Fs,
