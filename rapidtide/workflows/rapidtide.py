@@ -1677,10 +1677,6 @@ def rapidtide_main(argparsingfunc):
         if optiondict["numestreps"] > 0:
             TimingLGR.info(f"Significance estimation start, pass {thepass}")
             LGR.info(f"\n\nSignificance estimation, pass {thepass}")
-            LGR.verbose(
-                "calling getNullDistributionData with args: "
-                f"{oversampfreq} {fmritr} {corrorigin} {lagmininpts} {lagmaxinpts}"
-            )
             getNullDistributionData_func = addmemprofiling(
                 tide_nullsimfunc.getNullDistributionDatax,
                 optiondict["memprofile"],
@@ -2974,7 +2970,10 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict["numestreps"] > 0:
         for i in range(0, len(thepercentiles)):
-            pmask = np.where(np.abs(lagstrengths) > pcts[i], fitmask, 0 * fitmask)
+            if optiondict["dosighistfit"]:
+                pmask = np.where(np.abs(lagstrengths) > pcts_fit[i], fitmask, 0 * fitmask)
+            else:
+                pmask = np.where(np.abs(lagstrengths) > pcts[i], fitmask, 0 * fitmask)
             outmaparray[:] = 0.0
             outmaparray[validvoxels] = pmask[:]
             if optiondict["textio"]:
