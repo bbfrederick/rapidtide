@@ -55,7 +55,6 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
             # queue the chunk
             for i, dat in enumerate(data_in[thechunk * chunksize : (thechunk + 1) * chunksize]):
                 inQ.put(dat)
-            offset = thechunk * chunksize
 
             # retrieve the chunk
             numreturned = 0
@@ -69,22 +68,22 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
                     break
 
         # queue the remainder
-        for i, dat in enumerate(
-            data_in[numchunks * chunksize : numchunks * chunksize + remainder]
-        ):
-            inQ.put(dat)
-        numreturned = 0
-        offset = numchunks * chunksize
+        if remainder != 0:
+            for i, dat in enumerate(
+                data_in[numchunks * chunksize : numchunks * chunksize + remainder]
+            ):
+                inQ.put(dat)
+            numreturned = 0
 
-        # retrieve the remainder
-        while True:
-            ret = outQ.get()
-            if ret is not None:
-                data_out.append(ret)
-            numreturned += 1
-            pbar.update(1)
-            if numreturned > remainder - 1:
-                break
+            # retrieve the remainder
+            while True:
+                ret = outQ.get()
+                if ret is not None:
+                    data_out.append(ret)
+                numreturned += 1
+                pbar.update(1)
+                if numreturned > remainder - 1:
+                    break
 
     print()
 
