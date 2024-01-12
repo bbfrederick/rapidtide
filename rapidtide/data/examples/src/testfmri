@@ -35,7 +35,7 @@ do
     rapidtide \
             --searchrange -10 15 \
 	    --spatialfilt 2 \
-            --numnull 31000 \
+            --numnull 49999 \
             --nprocs -1 \
             --passes 3 \
             --nofitfilt \
