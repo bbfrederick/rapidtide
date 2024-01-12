@@ -166,7 +166,9 @@ jobs:
                 pip install --upgrade distlib
                 pip install -e .[tests,doc]
             fi
-            python setup.py install --user
+            conda install numpy scipy matplotlib pandas statsmodels scikit-learn scikit-image nibabel nilearn pywavelets pyqt pyqt5-sip pyqtgraph tqdm keras
+            # the next line doesn't work because pyfftw and tensorflow don't seem to be compatible
+            #python setup.py install --user
       - save_cache:  # environment cache tied to requirements
           key: deps2-312-{{ checksum "setup.py" }}
           paths:
