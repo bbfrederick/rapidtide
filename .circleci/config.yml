@@ -540,10 +540,10 @@ workflows:
       - build_docs:
           requires:
             - build_py311
-      #- build_py312
-      #- test_py312:
-      #    requires:
-      #      - build_py312
+      - build_py312
+      - test_py312:
+          requires:
+            - build_py312
       #- style_check:
       #    requires:
       #      - build_py311
