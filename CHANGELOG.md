@@ -1,5 +1,13 @@
 # Release history
 
+## Version 2.7.5 (1/13/24)
+* (rapidtide) Moved lagtc generation out of fitcorr into its own module.  This will help with implementation of new, secret evil plans.
+* (rapidtide) Altered voxel selection logic for multiproc correlation fitting.  Now singleproc and multiproc outputs are the same.
+* (rapidtide) Fixed a multiprocessing bug that's been there since multiprocessing was added - any job with an integral multiple of 50000 tasks would die (don't ask).
+* (rapidtide) Fixed a bug that allowed NaNs into the lfoCleanedR2 map.
+* (rapidtide) General code cleanup.
+* (package) Accepted some dependabot PRs for security updates.
+
 ## Version 2.7.4 (1/10/24)
 * (rapidtide) Fixed a crash when despeckling is turned off. (thank you to Wesley Richerson for finding this).
 * (rapidtide) Adjusted the regreessor frequency setting logic.
