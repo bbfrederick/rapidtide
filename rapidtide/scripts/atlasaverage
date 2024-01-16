@@ -367,7 +367,7 @@ def main():
                 if args.debug:
                     print(f"\tregion {theregion} is empty")
                 thevals.append("None")
-        template_hdr["dim"][4] = numregions
+        template_hdr["dim"][4] = 1
         tide_io.savetonifti(
             outputvoxels.reshape((xsize, ysize, numslices)),
             template_hdr,
