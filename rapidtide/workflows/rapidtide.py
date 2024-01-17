@@ -32,7 +32,7 @@ from scipy import ndimage
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
-import rapidtide.alignvoxels as tide_align
+import rapidtide.refine_factored as tide_refine2
 import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
@@ -1317,11 +1317,11 @@ def rapidtide_main(argparsingfunc):
     padtime = fmritr * numpadtrs
     genlagtc = tide_resample.FastResampler(reference_x, reference_y, padtime=padtime)
 
-    externalalign = False
+    alternaterefine = False
 
     internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-    if externalalign:
+    if alternaterefine:
         internalpaddedfmrishape = (numspatiallocs, 2 * numpadtrs + np.shape(initial_fmri_x)[0])
         internalvalidpaddedfmrishape = (
             numvalidspatiallocs,
@@ -1345,7 +1345,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict["sharedmem"]:
             shiftedtcs, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
             weights, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
-            if externalalign:
+            if alternaterefine:
                 paddedshiftedtcs, dummy, dummy = allocshared(
                     internalvalidpaddedfmrishape, rt_floatset
                 )
@@ -1355,7 +1355,7 @@ def rapidtide_main(argparsingfunc):
         else:
             shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-            if externalalign:
+            if alternaterefine:
                 paddedshiftedtcs, dummy, dummy = allocshared(
                     internalvalidpaddedfmrishape, rt_floatset
                 )
@@ -1365,11 +1365,11 @@ def rapidtide_main(argparsingfunc):
         tide_util.logmem("after refinement array allocation")
     if optiondict["sharedmem"]:
         outfmriarray, dummy, dummy = allocshared(internalfmrishape, rt_floatset)
-        if externalalign:
+        if alternaterefine:
             paddedoutfmriarray, dummy, dummy = allocshared((internalpaddedfmrishape), rt_floatset)
     else:
         outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
-        if externalalign:
+        if alternaterefine:
             paddedoutfmriarray, dummy, dummy = allocshared((internalpaddedfmrishape), rt_floatset)
 
             # cycle over all voxels
@@ -2213,14 +2213,42 @@ def rapidtide_main(argparsingfunc):
                     )
                     thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
 
-            # align timecourses to prepare for refinement
-            if externalalign:
+            # regenerate regressor for next pass
+            if alternaterefine:
+                # create the refinement mask
+                print("making refine mask")
+                (
+                    voxelsprocessed_rrm,
+                    refinemask,
+                    locationfails,
+                    ampfails,
+                    lagfails,
+                    sigmafails,
+                ) = tide_refine2.makerefinemask(
+                    lagstrengths,
+                    lagtimes,
+                    lagsigma,
+                    fitmask,
+                    offsettime=optiondict["offsettime"],
+                    ampthresh=optiondict["ampthresh"],
+                    lagmaskside=optiondict["lagmaskside"],
+                    lagminthresh=optiondict["lagminthresh"],
+                    lagmaxthresh=optiondict["lagmaxthresh"],
+                    sigmathresh=optiondict["sigmathresh"],
+                    cleanrefined=optiondict["cleanrefined"],
+                    bipolar=optiondict["bipolar"],
+                    includemask=internalrefineincludemask_valid,
+                    excludemask=thisinternalrefineexcludemask_valid,
+                )
+
+                # align timecourses to prepare for refinement
                 alignvoxels_func = addmemprofiling(
-                    tide_align.alignvoxels,
+                    tide_refine2.alignvoxels,
                     optiondict["memprofile"],
                     "before aligning voxel timecourses",
                 )
-                voxelsprocessed_av = alignvoxels_func(
+                print("aligning timecourses")
+                voxelsprocessed_rra = alignvoxels_func(
                     fmri_data_valid,
                     fmritr,
                     shiftedtcs,
@@ -2228,7 +2256,7 @@ def rapidtide_main(argparsingfunc):
                     paddedshiftedtcs,
                     paddedweights,
                     lagtimes,
-                    fitmask,
+                    refinemask,
                     nprocs=optiondict["nprocs_refine"],
                     detrendorder=optiondict["detrendorder"],
                     offsettime=optiondict["offsettime"],
@@ -2239,7 +2267,49 @@ def rapidtide_main(argparsingfunc):
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
                 )
-                theheader = copy.deepcopy(nim_hdr)
+                print(f"align complete: {voxelsprocessed_rra=}")
+
+                print("prenormalizing timecourses")
+                tide_refine2.prenorm(
+                    shiftedtcs,
+                    refinemask,
+                    lagtimes,
+                    optiondict["lagmaxthresh"],
+                    lagstrengths,
+                    R2,
+                    optiondict["refineprenorm"],
+                    optiondict["refineweighting"],
+                )
+
+                (
+                    voxelsprocessed_rr,
+                    outputdata,
+                ) = tide_refine2.dorefine(
+                    shiftedtcs,
+                    refinemask,
+                    weights,
+                    theprefilter,
+                    fmritr,
+                    thepass,
+                    lagstrengths,
+                    lagtimes,
+                    optiondict["refinetype"],
+                    optiondict["fmrifreq"],
+                    optiondict["outputname"],
+                    detrendorder=optiondict["detrendorder"],
+                    pcacomponents=optiondict["pcacomponents"],
+                    dodispersioncalc=optiondict["dodispersioncalc"],
+                    dispersioncalc_lower=optiondict["dispersioncalc_lower"],
+                    dispersioncalc_upper=optiondict["dispersioncalc_upper"],
+                    dispersioncalc_step=optiondict["dispersioncalc_step"],
+                    windowfunc=optiondict["windowfunc"],
+                    cleanrefined=optiondict["cleanrefined"],
+                    bipolar=optiondict["bipolar"],
+                    debug=optiondict["debug"],
+                    rt_floatset=rt_floatset,
+                    rt_floattype=rt_floattype,
+                )
+                """theheader = copy.deepcopy(nim_hdr)
                 outfmriarray[validvoxels, :] = shiftedtcs[:, :]
                 savename = f"{outputname}_desc-alignvoxels_bold"
                 tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
@@ -2258,45 +2328,47 @@ def rapidtide_main(argparsingfunc):
                 tide_io.savetonifti(
                     paddedoutfmriarray.reshape(nativepaddedfmrishape), thepaddedheader, savename
                 )
+                if optiondict["psdfilter"]:
+                    outputdata = tide_filt.transferfuncfilt(outputdata, psdsnrfilterfunc)"""
 
-            # regenerate regressor for next pass
-            refineregressor_func = addmemprofiling(
-                tide_refine.refineregressor,
-                optiondict["memprofile"],
-                "before refineregressor",
-            )
-            (
-                voxelsprocessed_rr,
-                outputdata,
-                refinemask,
-                locationfails,
-                ampfails,
-                lagfails,
-                sigmafails,
-            ) = refineregressor_func(
-                fmri_data_valid,
-                fmritr,
-                shiftedtcs,
-                weights,
-                thepass,
-                lagstrengths,
-                lagtimes,
-                lagsigma,
-                fitmask,
-                R2,
-                theprefilter,
-                optiondict,
-                nprocs=optiondict["nprocs_refine"],
-                alwaysmultiproc=optiondict["alwaysmultiproc"],
-                showprogressbar=optiondict["showprogressbar"],
-                chunksize=optiondict["mp_chunksize"],
-                bipolar=optiondict["bipolar"],
-                padtrs=numpadtrs,
-                includemask=internalrefineincludemask_valid,
-                excludemask=thisinternalrefineexcludemask_valid,
-                rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype,
-            )
+            else:
+                refineregressor_func = addmemprofiling(
+                    tide_refine.refineregressor,
+                    optiondict["memprofile"],
+                    "before refineregressor",
+                )
+                (
+                    voxelsprocessed_rr,
+                    outputdata,
+                    refinemask,
+                    locationfails,
+                    ampfails,
+                    lagfails,
+                    sigmafails,
+                ) = refineregressor_func(
+                    fmri_data_valid,
+                    fmritr,
+                    shiftedtcs,
+                    weights,
+                    thepass,
+                    lagstrengths,
+                    lagtimes,
+                    lagsigma,
+                    fitmask,
+                    R2,
+                    theprefilter,
+                    optiondict,
+                    nprocs=optiondict["nprocs_refine"],
+                    alwaysmultiproc=optiondict["alwaysmultiproc"],
+                    showprogressbar=optiondict["showprogressbar"],
+                    chunksize=optiondict["mp_chunksize"],
+                    bipolar=optiondict["bipolar"],
+                    padtrs=numpadtrs,
+                    includemask=internalrefineincludemask_valid,
+                    excludemask=thisinternalrefineexcludemask_valid,
+                    rt_floatset=rt_floatset,
+                    rt_floattype=rt_floattype,
+                )
             optiondict["refinemasksize_pass" + str(thepass)] = voxelsprocessed_rr
             optiondict["refinemaskpct_pass" + str(thepass)] = (
                 100.0 * voxelsprocessed_rr / optiondict["corrmasksize"]
