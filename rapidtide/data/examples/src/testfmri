@@ -47,7 +47,7 @@ do
             --corrtype linear \
             --peakfittype ${fittype} \
             sub-RAPIDTIDETEST.nii.gz \
-            ../dst/sub-RAPIDTIDETEST_${fittype}_multiproc_alloff
+            ../dst/sub-RAPIDTIDETEST_${fittype}_newrefine
 #            --singleproc_fitcorr \
 #            --singleproc_getNullDist \
 #            --singleproc_calcsimilarity \
@@ -56,10 +56,10 @@ do
 #            --singleproc_makelaggedtcs \
 #            --singleproc_glm \
 
-#    ../extrasrc/diffmaps \
-#        ../dst/sub-RAPIDTIDETEST_${fittype}_multiproc_alloff \
-#        ../dst/sub-RAPIDTIDETEST_${fittype}_singleproc \
-#        ../dst/thediff_${fittype}
+    ../extrasrc/diffmaps \
+        ../dst/sub-RAPIDTIDETEST_${fittype}_multiproc_alloff \
+        ../dst/sub-RAPIDTIDETEST_${fittype}_singleproc \
+        ../dst/thediff_${fittype}
 done
 
 #rapidtide \
