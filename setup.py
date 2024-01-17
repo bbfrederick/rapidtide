@@ -32,6 +32,7 @@ except PermissionError:
 
 modules_list = [
     "rapidtide/OrthoImageItem",
+    "rapidtide/alignvoxels",
     "rapidtide/calccoherence",
     "rapidtide/calcnullsimfunc",
     "rapidtide/calcsimfunc",

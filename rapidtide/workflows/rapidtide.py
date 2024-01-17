@@ -32,6 +32,7 @@ from scipy import ndimage
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
+import rapidtide.alignvoxels as tide_align
 import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
@@ -1304,25 +1305,6 @@ def rapidtide_main(argparsingfunc):
             nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
         else:
             nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
-    internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
-    internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-
-    if (
-        optiondict["passes"] > 1
-        or optiondict["globalpreselect"]
-        or optiondict["convergencethresh"] is not None
-    ):
-        if optiondict["sharedmem"]:
-            shiftedtcs, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
-            weights, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
-        else:
-            shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-            weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-        tide_util.logmem("after refinement array allocation")
-    if optiondict["sharedmem"]:
-        outfmriarray, dummy, dummy = allocshared(internalfmrishape, rt_floatset)
-    else:
-        outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
 
     # prepare for fast resampling
     padtime = (
@@ -1335,7 +1317,62 @@ def rapidtide_main(argparsingfunc):
     padtime = fmritr * numpadtrs
     genlagtc = tide_resample.FastResampler(reference_x, reference_y, padtime=padtime)
 
-    # cycle over all voxels
+    externalalign = False
+
+    internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
+    internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
+    if externalalign:
+        internalpaddedfmrishape = (numspatiallocs, 2 * numpadtrs + np.shape(initial_fmri_x)[0])
+        internalvalidpaddedfmrishape = (
+            numvalidspatiallocs,
+            2 * numpadtrs + np.shape(initial_fmri_x)[0],
+        )
+        nativepaddedfmrishape = (
+            xsize,
+            ysize,
+            numslices,
+            2 * numpadtrs + np.shape(initial_fmri_x)[0],
+        )
+        print(f"{internalpaddedfmrishape=}")
+        print(f"{internalvalidpaddedfmrishape=}")
+        print(f"{nativepaddedfmrishape=}")
+
+    if (
+        optiondict["passes"] > 1
+        or optiondict["globalpreselect"]
+        or optiondict["convergencethresh"] is not None
+    ):
+        if optiondict["sharedmem"]:
+            shiftedtcs, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
+            weights, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
+            if externalalign:
+                paddedshiftedtcs, dummy, dummy = allocshared(
+                    internalvalidpaddedfmrishape, rt_floatset
+                )
+                paddedweights, dummy, dummy = allocshared(
+                    internalvalidpaddedfmrishape, rt_floatset
+                )
+        else:
+            shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
+            weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
+            if externalalign:
+                paddedshiftedtcs, dummy, dummy = allocshared(
+                    internalvalidpaddedfmrishape, rt_floatset
+                )
+                paddedweights, dummy, dummy = allocshared(
+                    internalvalidpaddedfmrishape, rt_floatset
+                )
+        tide_util.logmem("after refinement array allocation")
+    if optiondict["sharedmem"]:
+        outfmriarray, dummy, dummy = allocshared(internalfmrishape, rt_floatset)
+        if externalalign:
+            paddedoutfmriarray, dummy, dummy = allocshared((internalpaddedfmrishape), rt_floatset)
+    else:
+        outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
+        if externalalign:
+            paddedoutfmriarray, dummy, dummy = allocshared((internalpaddedfmrishape), rt_floatset)
+
+            # cycle over all voxels
     refine = True
     LGR.verbose(f"refine is set to {refine}")
     optiondict["edgebufferfrac"] = max(
@@ -2175,6 +2212,52 @@ def rapidtide_main(argparsingfunc):
                         "NB: cannot exclude despeckled voxels from refinement - including for this pass"
                     )
                     thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
+
+            # align timecourses to prepare for refinement
+            if externalalign:
+                alignvoxels_func = addmemprofiling(
+                    tide_align.alignvoxels,
+                    optiondict["memprofile"],
+                    "before aligning voxel timecourses",
+                )
+                voxelsprocessed_av = alignvoxels_func(
+                    fmri_data_valid,
+                    fmritr,
+                    shiftedtcs,
+                    weights,
+                    paddedshiftedtcs,
+                    paddedweights,
+                    lagtimes,
+                    fitmask,
+                    nprocs=optiondict["nprocs_refine"],
+                    detrendorder=optiondict["detrendorder"],
+                    offsettime=optiondict["offsettime"],
+                    alwaysmultiproc=optiondict["alwaysmultiproc"],
+                    showprogressbar=optiondict["showprogressbar"],
+                    chunksize=optiondict["mp_chunksize"],
+                    padtrs=numpadtrs,
+                    rt_floatset=rt_floatset,
+                    rt_floattype=rt_floattype,
+                )
+                theheader = copy.deepcopy(nim_hdr)
+                outfmriarray[validvoxels, :] = shiftedtcs[:, :]
+                savename = f"{outputname}_desc-alignvoxels_bold"
+                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+                outfmriarray[validvoxels, :] = weights[:, :]
+                savename = f"{outputname}_desc-alignweights_bold"
+                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+                thepaddedheader = copy.deepcopy(nim_hdr)
+                thepaddedheader["dim"][4] = theheader["dim"][4] + 2 * numpadtrs
+                paddedoutfmriarray[validvoxels, :] = paddedshiftedtcs[:, :]
+                savename = f"{outputname}_desc-paddedalignvoxels_bold"
+                tide_io.savetonifti(
+                    paddedoutfmriarray.reshape(nativepaddedfmrishape), thepaddedheader, savename
+                )
+                paddedoutfmriarray[validvoxels, :] = paddedweights[:, :]
+                savename = f"{outputname}_desc-paddedalignweights_bold"
+                tide_io.savetonifti(
+                    paddedoutfmriarray.reshape(nativepaddedfmrishape), thepaddedheader, savename
+                )
 
             # regenerate regressor for next pass
             refineregressor_func = addmemprofiling(
