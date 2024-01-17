@@ -404,7 +404,9 @@ def refineregressor(
         print(np.shape(np.asarray(psdlist, dtype=rt_floattype)))
         averagepsd = np.mean(np.asarray(psdlist, dtype=rt_floattype), axis=0)
         stdpsd = np.std(np.asarray(psdlist, dtype=rt_floattype), axis=0)
-        snr = np.nan_to_num(averagepsd / stdpsd)
+        psdsnrfilterfunc = np.nan_to_num(averagepsd / stdpsd)
+    else:
+        psdsnrfilterfunc = None
 
     # now generate the refined timecourse(s)
     validlist = np.where(refinemask > 0)[0]
@@ -583,7 +585,7 @@ def refineregressor(
     )
 
     if optiondict["psdfilter"]:
-        outputdata = tide_filt.transferfuncfilt(outputdata, snr)
+        outputdata = tide_filt.transferfuncfilt(outputdata, psdsnrfilterfunc)
 
     # garbage collect
     collected = gc.collect()
