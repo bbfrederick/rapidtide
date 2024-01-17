@@ -19,13 +19,15 @@
 # $Date: 2016/07/12 13:50:29 $
 # $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
-import warnings
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import pyfftw
+
 from scipy import fftpack
 from statsmodels.robust import mad
 
