@@ -202,7 +202,7 @@ def main():
                 xformfuncmat,
                 outputname,
                 warpfile=warpfuncfile,
-                cluster=True,
+                cluster=args.sequential,
             )
             tide_exttools.runcmd(thecommand, fake=args.preponly)
 
@@ -231,7 +231,7 @@ def main():
                         reftarget,
                         xform,
                         outputname,
-                        cluster=True,
+                        cluster=args.sequential,
                     )
                 tide_exttools.runcmd(thecommand, fake=args.preponly)
         except:
