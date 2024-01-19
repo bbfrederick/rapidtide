@@ -95,6 +95,13 @@ def _get_parser():
         help=("Output, but do not execute, alignment commands."),
         default=False,
     )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Output additional debugging information."),
+        default=False,
+    )
     return parser
 
 
@@ -105,6 +112,9 @@ def main():
     except SystemExit:
         _get_parser().print_help()
         raise
+
+    if args.debug:
+        print(args)
 
     # make sure the appropriate transformation matrix and targets exist
     if args.aligntohires:
@@ -156,6 +166,7 @@ def main():
                 outputname,
                 warpfile=warpfuncfile,
                 cluster=(not args.sequential),
+                debug=args.debug,
             )
             tide_exttools.runcmd(thecommand, fake=args.preponly)
         else:
@@ -167,6 +178,7 @@ def main():
 
     thefmrimaps = [
         "desc-maxtime_map",
+        "desc-timepercentile_map",
         "desc-maxcorr_map",
         "desc-maxwidth_map",
         "desc-MTT_map",
@@ -203,6 +215,7 @@ def main():
                 outputname,
                 warpfile=warpfuncfile,
                 cluster=args.sequential,
+                debug=args.debug,
             )
             tide_exttools.runcmd(thecommand, fake=args.preponly)
 
@@ -232,6 +245,7 @@ def main():
                         xform,
                         outputname,
                         cluster=args.sequential,
+                        debug=args.debug,
                     )
                 tide_exttools.runcmd(thecommand, fake=args.preponly)
         except:

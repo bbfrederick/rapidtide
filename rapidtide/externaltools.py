@@ -58,7 +58,9 @@ def runcmd(thecmd, fake=False, debug=False):
         subprocess.call(thecmd)
 
 
-def makeflirtcmd(inputfile, targetname, xform, outputname, warpfile=None, cluster=False):
+def makeflirtcmd(
+    inputfile, targetname, xform, outputname, warpfile=None, cluster=False, debug=False
+):
     thecommand = []
     if warpfile is None:
         print("doing linear transformation")
@@ -83,7 +85,8 @@ def makeflirtcmd(inputfile, targetname, xform, outputname, warpfile=None, cluste
         thecommand.append("--in=" + inputfile)
         thecommand.append("--out=" + outputname)
         thecommand.append("--warp=" + warpfile)
-
+    if debug:
+        print(f"MAKEFILIRTCMD: {thecommand}")
     return thecommand
 
 
