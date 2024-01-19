@@ -208,7 +208,7 @@ def main():
     print("SUBJROOT:", subjroot)
 
     for timecoursefile in thetimecoursefiles:
-        for extension in [".nii.gz", ".json"]:
+        for extension in [".tsv.gz", ".json"]:
             inputname = os.path.abspath(
                 os.path.join(thepath, subjroot + "_" + timecoursefile + extension)
             )
