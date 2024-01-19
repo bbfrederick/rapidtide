@@ -176,6 +176,11 @@ def main():
     theoutputdir = os.path.join(os.path.abspath("."), args.outputdir)
     thefileroot = glob.glob(os.path.join(args.inputfileroot + "*desc-corrout_info.nii.gz"))[0]
 
+    thetimecoursefiles = [
+        "desc-initialmovingregressor_timeseries",
+        "desc-oversampledmovingregressor_timeseries",
+    ]
+
     thefmrimaps = [
         "desc-maxtime_map",
         "desc-timepercentile_map",
@@ -201,6 +206,17 @@ def main():
     theprevpath, theprevbase = os.path.split(thepath)
     subjroot = thebase[:-25]
     print("SUBJROOT:", subjroot)
+
+    for timecoursefile in thetimecoursefiles:
+        for extension in [".nii.gz", ".json"]:
+            inputname = os.path.abspath(
+                os.path.join(thepath, subjroot + "_" + timecoursefile + extension)
+            )
+            outputname = os.path.abspath(
+                os.path.join(theoutputdir, subjroot + outputtag + timecoursefile + extension)
+            )
+            thecommand = ["cp", inputname, outputname]
+            tide_exttools.runcmd(thecommand, fake=args.preponly)
 
     for themap in thefmrimaps:
         inputname = os.path.abspath(os.path.join(thepath, subjroot + "_" + themap + ".nii.gz"))
