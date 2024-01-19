@@ -207,6 +207,13 @@ def main():
     subjroot = thebase[:-25]
     print("SUBJROOT:", subjroot)
 
+    # copy the options file
+    inputname = os.path.abspath(os.path.join(thepath, subjroot + "_options.json"))
+    outputname = os.path.abspath(os.path.join(theoutputdir, subjroot + outputtag + "options.json"))
+    thecommand = ["cp", inputname, outputname]
+    tide_exttools.runcmd(thecommand, fake=args.preponly)
+
+    # copy the timecourses
     for timecoursefile in thetimecoursefiles:
         for extension in [".tsv.gz", ".json"]:
             inputname = os.path.abspath(
@@ -218,6 +225,7 @@ def main():
             thecommand = ["cp", inputname, outputname]
             tide_exttools.runcmd(thecommand, fake=args.preponly)
 
+    # transform the functional maps
     for themap in thefmrimaps:
         inputname = os.path.abspath(os.path.join(thepath, subjroot + "_" + themap + ".nii.gz"))
         if os.path.isfile(inputname):
@@ -235,6 +243,7 @@ def main():
             )
             tide_exttools.runcmd(thecommand, fake=args.preponly)
 
+    # transform the anatomic maps
     for themap in theanatmaps:
         try:
             inputname = os.path.abspath(
