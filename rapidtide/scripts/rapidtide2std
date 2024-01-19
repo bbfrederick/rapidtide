@@ -48,7 +48,7 @@ def _get_parser():
     parser.add_argument(
         "featdirectory",
         help=(
-            "Either a feat directory (x.feat) or an fmriprep derivatives"
+            "Either a feat directory (x.feat) or an fmriprep derivatives "
             "anat directory where the information needed for registration to standard space can be found"
         ),
     )
@@ -80,6 +80,13 @@ def _get_parser():
         metavar="FILE",
         help="Align a single file, specified by name without extension (ignore INPUTFILEROOT).",
         default=None,
+    )
+    parser.add_argument(
+        "--sequential",
+        dest="sequential",
+        action="store_true",
+        help=("Execute commands sequentially - do not submit to the cluster."),
+        default=False,
     )
     parser.add_argument(
         "--fake",
@@ -148,7 +155,7 @@ def main():
                 xformfuncmat,
                 outputname,
                 warpfile=warpfuncfile,
-                cluster=True,
+                cluster=(not args.sequential),
             )
             tide_exttools.runcmd(thecommand, fake=args.preponly)
         else:
