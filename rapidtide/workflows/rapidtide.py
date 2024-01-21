@@ -32,7 +32,6 @@ from scipy import ndimage
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
-import rapidtide.refine_factored as tide_refine2
 import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
@@ -48,6 +47,7 @@ import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.refine as tide_refine
+import rapidtide.refine_factored as tide_refine2
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
