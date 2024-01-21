@@ -594,7 +594,6 @@ def _get_parser():
         ),
         default=None,
     )
-
     corr.add_argument(
         "--similaritymetric",
         dest="similaritymetric",
@@ -621,6 +620,21 @@ def _get_parser():
             "TAU <=0.0 disables smoothing."
         ),
         default=DEFAULT_MUTUALINFO_SMOOTHINGTIME,
+    )
+    corr.add_argument(
+        "--simcalcrange",
+        dest="simcalcrange",
+        action="store",
+        nargs=2,
+        type=int,
+        metavar=("START", "END"),
+        help=(
+            "Limit correlation caculation to data between timepoints "
+            "START and END in the fmri file. If END is set to -1, "
+            "analysis will go to the last timepoint.  Negative values "
+            "of START will be set to 0. Default is to use all timepoints."
+        ),
+        default=(-1, -1),
     )
 
     # Correlation fitting options
@@ -1529,6 +1543,13 @@ def process_args(inputargs=None):
         args["endpoint"] = 100000000
     else:
         args["endpoint"] = args["timerange"][1]
+    args["simcalcstartpoint"] = args["simcalcrange"][0]
+    if args["simcalcstartpoint"] < args["startpoint"]:
+        raise (f"Similarity function range start point must be >= {args['startpoint']}.")
+    if args["simcalcrange"][1] == -1:
+        args["simcalcendpoint"] = np.min((100000000, args["endpoint"]))
+    else:
+        raise (f"Similarity function range end point must be <= {args['endpoint']}.")
 
     args["offsettime_total"] = args["offsettime"] + 0.0
 
