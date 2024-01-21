@@ -594,7 +594,6 @@ def _get_parser():
         ),
         default=None,
     )
-
     corr.add_argument(
         "--similaritymetric",
         dest="similaritymetric",
