@@ -178,7 +178,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
-    #parallelism: 4
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -259,7 +259,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
-    #parallelism: 4
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -297,7 +297,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
-    #parallelism: 4
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -413,7 +413,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
-    #parallelism: 4
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -492,7 +492,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
-    #parallelism: 4
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
