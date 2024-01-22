@@ -195,7 +195,10 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            mkdir -p test-results
+            shopt -u globstar
             pytest \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
@@ -269,7 +272,10 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            mkdir -p test-results
+            shopt -u globstar
             pytest  \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
@@ -301,7 +307,10 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            mkdir -p test-results
+            shopt -u globstar
             pytest  \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
@@ -316,7 +325,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
-    parallelism: 4
+    #parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -411,7 +420,10 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            mkdir -p test-results
+            shopt -u globstar
             pytest \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
@@ -483,7 +495,10 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            mkdir -p test-results
+            shopt -u globstar
             pytest \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
