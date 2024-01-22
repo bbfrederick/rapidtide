@@ -202,6 +202,8 @@ jobs:
                 --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
+      - store_artifacts:
+          path: test-results
 
 
   test_py37_with_coverage:
@@ -274,6 +276,8 @@ jobs:
                 --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
+      - store_artifacts:
+          path: test-results
 
 
   test_py39:
@@ -303,6 +307,8 @@ jobs:
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
+          path: test-results
+      - store_artifacts:
           path: test-results
 
   # to convert back, remove any line with "parallelism" or "TESTFILES" in it
@@ -412,6 +418,8 @@ jobs:
                 --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
+      - store_artifacts:
+          path: test-results
 
 
   test_py311_with_coverage:
@@ -481,6 +489,8 @@ jobs:
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
+          path: test-results
+      - store_artifacts:
           path: test-results
 
 
