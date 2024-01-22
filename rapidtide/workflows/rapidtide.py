@@ -434,6 +434,8 @@ def rapidtide_main(argparsingfunc):
     validstart, validend = tide_util.startendcheck(
         timepoints, optiondict["startpoint"], optiondict["endpoint"]
     )
+    optiondict["validstart"] = validstart
+    optiondict["validstart"] = validend
     if abs(optiondict["lagmin"]) > (validend - validstart + 1) * fmritr / 2.0:
         raise ValueError(
             f"magnitude of lagmin exceeds {(validend - validstart + 1) * fmritr / 2.0} - invalid"
@@ -1405,6 +1407,10 @@ def rapidtide_main(argparsingfunc):
     )
     osvalidsimcalcstart = validsimcalcstart * optiondict["oversampfactor"]
     osvalidsimcalcend = validsimcalcend * optiondict["oversampfactor"]
+    optiondict["validsimcalcstart"] = validsimcalcstart
+    optiondict["validsimcalcend"] = validsimcalcend
+    optiondict["osvalidsimcalcstart"] = osvalidsimcalcstart
+    optiondict["osvalidsimcalcend"] = osvalidsimcalcend
 
     # Preprocessing - echo cancellation
     if optiondict["echocancel"]:
